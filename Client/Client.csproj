@@ -1,0 +1,161 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>main.ico</ApplicationIcon>
+    <AssemblyVersion>0.4.3.0</AssemblyVersion>
+    <FileVersion>0.4.3.0</FileVersion>
+    <Version>0.4.3</Version>
+    <Authors></Authors>
+    <Company>Microsoft Corporation</Company>
+    <Product>IR Explorer</Product>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AssemblyName>irexplorer</AssemblyName>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <OutputPath></OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <OutputPath></OutputPath>
+    <PlatformTarget>x64</PlatformTarget>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ServerGarbageCollection>true</ServerGarbageCollection>
+    <Copyright>Microsoft Corporation</Copyright>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Compile Remove="Themes\**" />
+    <EmbeddedResource Remove="Themes\**" />
+    <None Remove="Themes\**" />
+    <Page Remove="Themes\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autoupdater.NET.Official" Version="1.5.8" />
+    <PackageReference Include="AvalonEdit" Version="6.0.0" />
+    <PackageReference Include="CS-Script.Core" Version="1.2.2" />
+    <PackageReference Include="DiffPlex" Version="1.5.0" />
+    <PackageReference Include="Dirkster.AvalonDock" Version="3.6.0" />
+    <PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.78" />
+    <PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.73" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="2.10.0" />
+    <PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.3.14" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.4.33" />
+    <PackageReference Include="protobuf-net" Version="3.0.0-alpha.122" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2013">
+      <HintPath>..\Xceed.Wpf.AvalonDock.Themes.VS2013.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Options\GraphOptionsPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\ScriptingPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\PassOutputPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\NotesPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+    <Compile Update="Panels\IRInfoPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\ReferencesPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\SourceFilePanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\SectionPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\BookmarksPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Update="Query\InputQueryViewElement.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Options\GraphOptionsPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\ScriptingPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\PassOutputPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\NotesPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\IRInfoPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\ReferencesPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\SourceFilePanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\SectionPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\BookmarksPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Query\InputQueryViewElement.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="copy /y $(SolutionDir)resources\*.xshd $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)resources\*.xml $(TargetDir)&#xD;&#xA;mkdir -p $(TargetDir)themes&#xD;&#xA;copy /y $(SolutionDir)resources\themes\*.xshd $(TargetDir)themes" />
+  </Target>
+
+</Project>

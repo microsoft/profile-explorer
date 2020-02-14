@@ -1,0 +1,63 @@
+// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using Core;
+
+namespace Client {
+    public enum ToolPanelKind {
+        Section,
+        References,
+        Notes,
+        Definition,
+        Bookmarks,
+        Source,
+        FlowGraph,
+        DominatorTree,
+        PostDominatorTree,
+        PassOutput,
+        SearchResults,
+        Scripting,
+        Developer,
+        Other
+    }
+
+    [Flags]
+    public enum HandledEventKind {
+        None,
+        ElementSelection,
+        ElementHighlighting
+    }
+
+    public interface IToolPanel {
+        ToolPanelKind PanelKind { get; }
+        HandledEventKind HandledEvents { get; }
+        bool SavesStateToFile { get; }
+
+        ISessionManager Session { get; set; }
+        IRDocument BoundDocument { get; set; }
+        bool IsPanelEnabled { get; set; }
+        bool HasCommandFocus { get; set; }
+        bool HasPinnedContent { get; set; }
+
+        void OnRegisterPanel();
+        void OnUnregisterPanel();
+
+        void OnShowPanel();
+        void OnHidePanel();
+        void OnActivatePanel();
+        void OnDeactivatePanel();
+
+        void OnSessionStart();
+        void OnSessionEnd();
+        void OnSessionSave();
+
+        void OnDocumentSectionLoaded(IRTextSection section, IRDocument document);
+        void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document);
+
+        void OnElementSelected(IRElementEventArgs e);
+        void OnElementHighlighted(IRHighlightingEventArgs e);
+
+        void ClonePanel(IToolPanel basePanel);
+    }
+}
