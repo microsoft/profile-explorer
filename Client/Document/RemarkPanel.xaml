@@ -1,0 +1,169 @@
+﻿<UserControl
+    x:Class="Client.Document.RemarkPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:client="clr-namespace:Client"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Client.Document"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <Border BorderBrush="Gray" BorderThickness="1,1,1,1">
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="50" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="20" />
+                <ColumnDefinition Width="20" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="20" />
+                <RowDefinition Height="*" />
+                <RowDefinition>
+                    <RowDefinition.Style>
+                        <Style TargetType="{x:Type RowDefinition}">
+                            <Setter Property="Height" Value="Auto" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding ShowPreview}" Value="True">
+                                    <Setter Property="Height" Value="200" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding ShowPreview}" Value="False">
+                                    <Setter Property="Height" Value="0" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </RowDefinition.Style>
+                </RowDefinition>
+            </Grid.RowDefinitions>
+
+            <Border
+                Grid.Row="0"
+                Grid.ColumnSpan="6"
+                Background="LightSteelBlue"
+                BorderBrush="Gray"
+                BorderThickness="0,0,0,1">
+                <TextBlock
+                    Margin="4,0,4,0"
+                    VerticalAlignment="Center"
+                    FontWeight="DemiBold"
+                    Text="Remarks" />
+            </Border>
+
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="0,0,4,0"
+                VerticalAlignment="Center"
+                Text="Filter:"
+                TextAlignment="Right" />
+
+            <ToggleButton
+                Grid.Row="0"
+                Grid.Column="2"
+                Margin="0,0,0,1"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                ToolTip="Close query panel">
+                <TextBlock
+                    Margin="0,0,0,1"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Text="V" />
+            </ToggleButton>
+
+            <ToggleButton
+                Grid.Row="0"
+                Grid.Column="3"
+                Margin="0,0,0,1"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                ToolTip="Close query panel">
+                <TextBlock
+                    Margin="0,0,0,1"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="Bold"
+                    Text="T" />
+            </ToggleButton>
+
+            <ToggleButton
+                Grid.Row="0"
+                Grid.Column="4"
+                Margin="0,0,0,1"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                ToolTip="Close query panel">
+                <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource ZapIcon}" />
+            </ToggleButton>
+
+            <Button
+                Grid.Row="0"
+                Grid.Column="5"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                ToolTip="Close query panel">
+                <Image
+                    Width="16"
+                    Height="16"
+                    Source="{StaticResource CloseIcon}" />
+            </Button>
+
+            <ListView
+                x:Name="RemarkList"
+                Grid.Row="1"
+                Grid.ColumnSpan="6"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                BorderBrush="{x:Null}"
+                BorderThickness="0,0,0,0"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                SelectionChanged="RemarkList_SelectionChanged"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn DisplayMemberBinding="{Binding RemarkText}" />
+                    </GridView>
+                </ListView.View>
+
+                <ListView.Resources>
+                    <Style TargetType="GridViewColumnHeader">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                    </Style>
+                </ListView.Resources>
+                <ListView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <Style.Setters>
+                            <Setter Property="FontFamily" Value="Consolas" />
+                            <Setter Property="FontSize" Value="12" />
+                        </Style.Setters>
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+
+            <Grid
+                Grid.Row="2"
+                Grid.Column="0"
+                Grid.ColumnSpan="6">
+                <DockPanel LastChildFill="True">
+                    <Separator Margin="0,0,0,0" DockPanel.Dock="Top" />
+                    <client:LightIRDocument
+                        x:Name="TextView"
+                        Background="#DDE5ED"
+                        DockPanel.Dock="Bottom"
+                        FontFamily="Consolas"
+                        FontSize="12"
+                        ShowLineNumbers="True" />
+                </DockPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

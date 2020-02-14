@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+
+<!-- Syntax definition for Compiler Studio internal IR -->
+<SyntaxDefinition name="UTC" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+	<Color name="Digits" foreground="Blue" />
+	<Color name="Comment" foreground="Silver" />
+	<Color name="Keywords" foreground="MediumBlue" fontWeight="bold"/>
+	<Color name="Opcodes" foreground="Purple" fontWeight="bold"/>
+	<Color name="TransferOpcodes" foreground="Firebrick" fontWeight="bold"/>
+    <Color name="Indir" foreground="DarkMagenta" fontWeight="bold" />
+	<Color name="Type" foreground="Maroon" />
+	
+    <RuleSet ignoreCase="false">
+		<Keywords color="Keywords">
+            <Word>func</Word>
+            <Word>block</Word>
+			<Word>label</Word>
+        </Keywords>
+		
+		<Keywords color="Opcodes">
+            <Word>var</Word>
+			<Word>temp</Word>
+			<Word>indir</Word>
+            <Word>metadata</Word>
+			<Word>exception</Word>
+			<Word>other</Word>
+			<Word>intconst</Word>
+			<Word>floatconst</Word>
+			<Word>address</Word>
+        </Keywords>
+        
+		<Keywords color="TransferOpcodes">
+            <Word>branch</Word>
+            <Word>goto</Word>
+            <Word>switch</Word>
+            <Word>return</Word>
+        </Keywords>
+        
+		<Keywords color="Type">
+            <Word>int8></Word>
+            <Word>int16</Word>
+			<Word>int32</Word>
+			<Word>int64</Word>
+			<Word>uint8></Word>
+            <Word>uint16</Word>
+			<Word>uint32</Word>
+			<Word>uint64</Word>
+			<Word>float32</Word>
+			<Word>float64</Word>
+			<Word>unknown</Word>
+			<Word>void</Word>
+			<Word>bool</Word>
+			<Word>mb4</Word>
+			<Word>mb8</Word>
+			<Word>mb16</Word>
+        </Keywords>
+
+		<Span color="Indir">
+            <Begin>\[</Begin>
+            <End>\]</End>
+		</Span>
+		
+        <Rule color="Digits">\b0[xX][0-9a-fA-F]+|(\b(?&lt;!\$)\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
+   </RuleSet>
+</SyntaxDefinition>

@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+
+<!-- Syntax definition for UTC IR -->
+<SyntaxDefinition name="UTC" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+    <Color name="String" foreground="Black" />
+	<Color name="Digits" foreground="Blue" />
+	<Color name="Comment" foreground="Silver" />
+	<Color name="Keywords" foreground="DarkBlue" fontWeight="bold"/>
+	<Color name="Opcodes" foreground="Crimson" fontWeight="bold"/>
+	<Color name="X86Opcodes" foreground="Crimson" fontWeight="bold"/>
+	<Color name="TransferOpcodes" foreground="DarkGreen" fontWeight="bold"/>
+	<Color name="CallOpcodes" foreground="DarkOrchid" fontWeight="bold" />
+    <Color name="Indir" foreground="DarkMagenta" fontWeight="bold" />
+	<Color name="Type" foreground="Maroon" />
+	<Color name="EH" foreground="DarkGreen" fontWeight="bold" />
+	<Color name="Annotation" foreground="Silver" />
+	<Color name="Pragma" foreground="CadetBlue" fontWeight="bold" />
+    <RuleSet ignoreCase="false">
+        <Rule color="Comment">\#[0-9]+.*</Rule>
+		
+        <Span color="String">
+            <Begin>"</Begin>
+            <End>"</End>
+            <RuleSet>
+                <!-- nested span for escape sequences -->
+                <Span begin="\\" end="." />
+            </RuleSet>
+        </Span>
+        
+        <Keywords color="Keywords">
+            <Word>ENTRY</Word>
+            <Word>BLOCK</Word>
+			<Word>EXIT</Word>
+        </Keywords>
+		
+		<Keywords color="Opcodes">
+            <Word>OPASSIGN</Word>
+			<Word>OPMBASSIGN</Word>
+			<Word>OPVOLATILEASSIGN</Word>
+            <Word>OPADD</Word>
+			<Word>OPSUB</Word>
+			<Word>OPMUL</Word>
+			<Word>OPDIV</Word>
+			<Word>OPREM</Word>
+			<Word>OPAND</Word>
+			<Word>OPOR</Word>
+			<Word>OPXOR</Word>
+			<Word>OPSHR</Word>
+			<Word>OPSHL</Word>
+			<Word>OPNOT</Word>
+			<Word>OPNEG</Word>
+			<Word>OPCONVERT</Word>
+			<Word>OPCMP</Word>
+			<Word>OPLOAD</Word>
+			<Word>OPQUESTION</Word>
+			<Word>OPMIN</Word>
+			<Word>OPMAX</Word>
+			<Word>OPPAREN</Word>
+        </Keywords>
+        
+        <Keywords color="X86Opcodes">
+			<Word>add</Word>
+			<Word>sub</Word>
+			<Word>mul</Word>
+			<Word>imul</Word>
+			<Word>div</Word>
+			<Word>idiv</Word>
+			<Word>mov</Word>
+			<Word>test</Word>
+			<Word>cdqe</Word>
+			<Word>inc</Word>
+			<Word>dec</Word>
+			<Word>push</Word>
+			<Word>pop</Word>
+			<Word>cmp</Word>
+			<Word>cmov</Word>
+			<Word>lea</Word>
+			<Word>_jcc</Word>
+			<Word>movs</Word>
+			<Word>movd</Word>
+			<Word>movzx</Word>
+			<Word>movxz</Word>
+			<Word>movsd</Word>
+			<Word>stos</Word>
+			<Word>shr</Word>
+			<Word>shl</Word>
+			<Word>sar</Word>
+			<Word>movzxd</Word>
+			<Word>and</Word>
+			<Word>or</Word>
+			<Word>xor</Word>
+			<Word>sete</Word>
+			<Word>setg</Word>
+			<Word>setgt</Word>
+			<Word>setae</Word>
+			<Word>seta</Word>
+			<Word>setle</Word>
+			<Word>setne</Word>
+			<Word>setlt</Word>
+			<Word>setb</Word>
+			<Word>setbe</Word>
+			<Word>setl</Word>
+			<Word>setge</Word>
+			<Word>movsxd</Word>
+			<Word>movzxw</Word>
+			<Word>ret</Word>
+			<Word>call</Word>
+			<Word>cmovl</Word>
+			<Word>xchg</Word>
+			<Word>adc</Word>
+			<Word>bsf</Word>
+			<Word>bsr</Word>
+			<Word>bt</Word>
+			<Word>btr</Word>
+			<Word>btr</Word>
+			<Word>bts</Word>
+			<Word>bswap</Word>
+			<Word>cdq</Word>
+			<Word>cbw</Word>
+			<Word>cld</Word>
+			<Word>cmovl</Word>
+			<Word>rcr</Word>
+			<Word>rcl</Word>
+			<Word>rol</Word>
+			<Word>ror</Word>
+		</Keywords>
+		
+		<Keywords color="TransferOpcodes">
+            <Word>OPGOTO</Word>
+			<Word>OPSWITCH</Word>
+			<Word>OPRET</Word>
+			<Word>OPPHI</Word>
+			<Word>jmp</Word>
+        </Keywords>
+		
+		<Rule color="TransferOpcodes">OPBRANCH(\{\w+\})?\(\w+\'?\)</Rule>
+		<Rule color="Annotation">\(([0-9]+\|.*|\?\|.*)\)</Rule>
+		<Rule color="Annotation">\;\s+uses.*</Rule>
+		
+		<Keywords color="CallOpcodes">
+            <Word>OPCALL</Word>
+            <Word>OPINTRINSIC</Word>
+			<Word>OPHARDINTRIN</Word>
+            <Word>OPARG</Word>
+            <Word>OPMBARG</Word>
+        </Keywords>
+		
+		<Keywords color="Type">
+            <Word>i8></Word>
+            <Word>i16</Word>
+			<Word>i32</Word>
+			<Word>i64</Word>
+			<Word>u8></Word>
+            <Word>u16</Word>
+			<Word>u32</Word>
+			<Word>u64</Word>
+			<Word>f32</Word>
+			<Word>f64</Word>
+			<Word>cc</Word>
+			<Word>vd</Word>
+			<Word>mb1</Word>
+			<Word>mb4</Word>
+			<Word>mb8</Word>
+			<Word>mb16</Word>
+			<Word>xmm</Word>
+			<Word>xmmi</Word>
+			<Word>xmmd</Word>
+			<Word>yxmm</Word>
+			<Word>ymmi</Word>
+			<Word>ymmd</Word>
+        </Keywords>
+        
+		<Keywords color="EH">
+            <Word>OPPUSHSTATE</Word>
+            <Word>OPPOPSTATE</Word>
+			<Word>OPNEWSTATE</Word>
+			<Word>OPDTORACTION</Word>
+			<Word>OPSIDEEFFECT</Word>
+			<Word>OPEXITGOTO</Word>
+			<Word>OPCATCHRET</Word>
+			<Word>OPNEWSTATE_DONTOPT</Word>
+        </Keywords>
+		
+		<Span color="Indir">
+            <Begin>\[</Begin>
+            <End>\]</End>
+		</Span>
+		
+		<Rule color="Pragma">PRAGMA(\s?\w*\s?)*</Rule>
+			
+        <Rule color="Digits">\b0[xX][0-9a-fA-F]+|(\b(?&lt;!\$)\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
+   </RuleSet>
+</SyntaxDefinition>

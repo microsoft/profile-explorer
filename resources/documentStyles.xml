@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+
+<SyntaxDefinitions>
+	<SyntaxDefinition name="Default">
+		<Color name="BackgroundColor" background="#FFFAFA" />
+		<Color name="AlternateBackgroundColor" background="#f5f5f5" />
+		<Color name="TextColor" background="#000000" />
+		<Color name="BlockSeparatorColor" background="#c0c0c0" />
+		<Color name="MarginBackgroundColor" background="#dcdcdc" />
+		<Color name="SelectedValueColor" background="#C5DEEA" />
+		<Color name="DefinitionValueColor" background="#F2E67C" />
+		<Color name="UseValueColor" background="#95DBAD" />
+		<Color name="BorderColor" background="#000000" />
+	</SyntaxDefinition>
+	
+	<SyntaxDefinition name="Gray">
+		<Color name="BackgroundColor" background="#F4F4F4" />
+		<Color name="AlternateBackgroundColor" background="#EDEDED" />
+		<Color name="TextColor" background="#000000" />
+		<Color name="BlockSeparatorColor" background="#B5001E" />
+		<Color name="MarginBackgroundColor" background="#dcdcdc" />
+		<Color name="SelectedValueColor" background="#C5DEEA" />
+		<Color name="DefinitionValueColor" background="#F2E67C" />
+		<Color name="UseValueColor" background="#95DBAD" />
+		<Color name="BorderColor" background="#000000" />
+	</SyntaxDefinition>
+	
+	<SyntaxDefinition name="Yellow">
+		<Color name="BackgroundColor" background="#FFF8E0" />
+		<Color name="AlternateBackgroundColor" background="#FFF8D3" />
+		<Color name="TextColor" background="#000000" />
+		<Color name="BlockSeparatorColor" background="#9E8A96" />
+		<Color name="MarginBackgroundColor" background="#dcdcdc" />
+		<Color name="SelectedValueColor" background="#B2E6FF" />
+		<Color name="DefinitionValueColor" background="#FFAE7F" />
+		<Color name="UseValueColor" background="#95DBAD" />
+		<Color name="BorderColor" background="#000000" />
+	</SyntaxDefinition>
+
+	<SyntaxDefinition name="Orange">
+		<Color name="BackgroundColor" background="#FFF5F0" />
+		<Color name="AlternateBackgroundColor" background="#FFEBE6" />
+		<Color name="TextColor" background="#000000" />
+		<Color name="BlockSeparatorColor" background="#E5989B" />
+		<Color name="MarginBackgroundColor" background="#dcdcdc" />
+		<Color name="SelectedValueColor" background="#C5DEEA" />
+		<Color name="DefinitionValueColor" background="#F2E67C" />
+		<Color name="UseValueColor" background="#95DBAD" />
+		<Color name="BorderColor" background="#000000" />
+	</SyntaxDefinition>
+	
+	<SyntaxDefinition name="Blue">
+		<Color name="BackgroundColor" background="#F2F8FF" />
+		<Color name="AlternateBackgroundColor" background="#E2F0FF" />
+		<Color name="TextColor" background="#000000" />
+		<Color name="BlockSeparatorColor" background="#85B8E6" />
+		<Color name="MarginBackgroundColor" background="#dcdcdc" />
+		<Color name="SelectedValueColor" background="#C5DEEA" />
+		<Color name="DefinitionValueColor" background="#F2E67C" />
+		<Color name="UseValueColor" background="#95DBAD" />
+		<Color name="BorderColor" background="#000000" />
+	</SyntaxDefinition>
+	
+	<SyntaxDefinition name="Lavender">
+		<Color name="BackgroundColor" background="#F8F4FF" />
+		<Color name="AlternateBackgroundColor" background="#F5EDFF" />
+		<Color name="TextColor" background="#000000" />
+		<Color name="BlockSeparatorColor" background="#7955FC" />
+		<Color name="MarginBackgroundColor" background="#dcdcdc" />
+		<Color name="SelectedValueColor" background="#C5DEEA" />
+		<Color name="DefinitionValueColor" background="#FFAE7F" />
+		<Color name="UseValueColor" background="#95DBAD" />
+		<Color name="BorderColor" background="#000000" />
+	</SyntaxDefinition>
+
+	<SyntaxDefinition name="Dark">
+		<Color name="BackgroundColor" background="#393939" />
+		<Color name="AlternateBackgroundColor" background="#303030" />
+		<Color name="TextColor" background="#F5F5DC" />
+		<Color name="BlockSeparatorColor" background="#808080" />
+		<Color name="MarginBackgroundColor" background="#A9A9A9" />
+		<Color name="SelectedValueColor" background="#02027C" />
+		<Color name="DefinitionValueColor" background="#5D2983" />
+		<Color name="UseValueColor" background="#1E5515" />
+		<Color name="BorderColor" background="#C0C0C0" />
+	</SyntaxDefinition>
+</SyntaxDefinitions>
