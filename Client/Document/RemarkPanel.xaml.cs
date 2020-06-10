@@ -17,30 +17,51 @@ using Core.IR;
 namespace Client.Document
 {
     public class PassRemarkExtension {
-        public PassRemarkExtension(PassRemark remark, bool inCurrentSection) {
+        public PassRemarkExtension(PassRemark remark, string sectionName, bool inCurrentSection) {
             Remark = remark;
             InCurrentSection = inCurrentSection;
+            SectionName = sectionName;
         }
 
-        PassRemark Remark { get; set; }
-        bool InCurrentSection { get; set; }
+        public PassRemark Remark { get; set; }
+        public bool InCurrentSection { get; set; }
+        public string SectionName { get; set; }
 
-        string Description => Remark.Section.Name;
-        string Text => Remark.RemarkText;
+        public bool IsOptimization => Remark.Kind == RemarkKind.Optimization;
+        public bool IsAnalysis => Remark.Kind == RemarkKind.Analysis;
+        public string Description => SectionName;
+        public string Text => $"({Remark.Section.Number}) {Remark.RemarkText}";
     }
 
-    public partial class RemarkPanel : UserControl, INotifyPropertyChanged
+    public partial class RemarkPanel : Window, INotifyPropertyChanged
     {
-        static readonly double RemarkListTop = 24;
+        static readonly double RemarkListTop = 48;
+        static readonly double RemarkPreviewWidth = 700;
         static readonly double RemarkPreviewHeight = 200;
         static readonly double RemarkListItemHeight = 20;
         static readonly double MaxRemarkListItems = 10;
-        static readonly double MinRemarkListItems = 2;
+        static readonly double MinRemarkListItems = 3;
+
+        RemarkFilterState remarkFilter_;
+        public RemarkFilterState RemarkFilter
+        {
+            get => remarkFilter_;
+            set => remarkFilter_ = value;
+        }
 
         public RemarkPanel()
         {
             InitializeComponent();
             DataContext = this;
+
+            remarkFilter_ = new RemarkFilterState();
+            remarkFilter_.PropertyChanged += RemarkFilter__PropertyChanged;
+            ToolbarPanel.DataContext = remarkFilter_;
+        }
+
+        private void RemarkFilter__PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            UpdateRemarkList();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -55,7 +76,7 @@ namespace Client.Document
                 {
                     showPreview_ = value;
                     NotifyPropertyChanged(nameof(ShowPreview));
-                    UpdateHeight();
+                    UpdateSize();
                 }
             }
         }
@@ -72,15 +93,30 @@ namespace Client.Document
                 }
 
                 element_ = value;
-                RemarkList.ItemsSource = null;
+                UpdateRemarkList();
+            }
+        }
 
-                var remarkTag = element_.GetTag<RemarkTag>();
+        void UpdateRemarkList()
+        {
+            RemarkList.ItemsSource = null;
+            var remarkTag = element_.GetTag<RemarkTag>();
 
-                if(remarkTag != null)
+            if (remarkTag != null)
+            {
+                var list = new List<PassRemarkExtension>();
+
+                foreach (var remark in remarkTag.Remarks)
                 {
-                    RemarkList.ItemsSource = new CollectionView(remarkTag.Remarks);
-                    UpdateHeight();            
+                    if (remarkFilter_.IsAcceptedRemark(remark, Section))
+                    {
+                        var sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
+                        sectionName = $"({remark.Section.Number}) {sectionName}";
+                        list.Add(new PassRemarkExtension(remark, sectionName, remark.Section == Section));
+                    }
                 }
+
+                RemarkList.ItemsSource = list;
             }
         }
 
@@ -89,8 +125,9 @@ namespace Client.Document
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        void UpdateHeight()
+        void UpdateSize()
         {
+            Width = RemarkPreviewWidth;
             Height = RemarkListTop + RemarkListItemHeight *
                         Math.Clamp(RemarkList.Items.Count, MinRemarkListItems, MaxRemarkListItems);
             if (ShowPreview) {
@@ -102,20 +139,36 @@ namespace Client.Document
         public IRTextSection Section { get; set; }
         public ISessionManager Session { get; set; }
 
+        public void Initialize()
+        {
+            RemarkList.UnselectAll();
+            SectionLabel.Content = "";
+            ShowPreview = false;
+            UpdateSize();
+        }
+
         private async void RemarkList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+
             if(e.AddedItems.Count != 1)
             {
                 return;
             }
 
-            var item = e.AddedItems[0] as PassRemark;
+            var itemEx = e.AddedItems[0] as PassRemarkExtension;
+            var item = itemEx.Remark;
             var outputText = await Session.GetSectionPassOutputAsync(item.Section.OutputBefore, item.Section);
 
             TextView.Text = outputText;
             TextView.ScrollToLine(item.RemarkLocation.Line);
             TextView.Select(item.RemarkLocation.Offset, item.RemarkText.Length);
+            SectionLabel.Content = itemEx.Description;
             ShowPreview = true;
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

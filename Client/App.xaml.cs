@@ -24,21 +24,48 @@ namespace Client {
         public static DateTime WindowShowTime;
         public static ApplicationSettings Settings;
 
-        static readonly string settingsFile = "CompilerStudio.settings";
-        static readonly string traceFile = "CompilerStudio.trace";
+        static readonly string SettingsPath = @"Microsoft\IRExplorer";
+        static readonly string SettingsFile = "IRExplorer.settings";
+        static readonly string TraceFile = "IRExplorer.trace";
         static readonly string SyntaxHighlightingFile = @"utc.xshd";
         static readonly string InternalIRSyntaxHighlightingFile = @"ir.xshd";
         static readonly string ThemeFileDirectory = @"themes";
         static readonly string ThemeFileExtension = @"*.xshd";
 
-        private static string GetSettingsFilePath() {
+        private static bool CreateSettingsDirectory()
+        {
+            try
+            {
+                var path = GetSettingsDirectoryPath();
+
+                if (!Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
+
+                return true;
+            }
+            catch(Exception ex)
+            {
+                Trace.TraceError($"Failed to create settings directory: {ex}");
+                return false;
+            }
+        }
+
+        private static string GetSettingsDirectoryPath()
+        {
             var path = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            return Path.Combine(path, settingsFile);
+            return Path.Combine(path, SettingsPath);
+        }
+
+        private static string GetSettingsFilePath() {
+            var path = GetSettingsDirectoryPath();
+            return Path.Combine(path, SettingsFile);
         }
 
         private static string GetTraceFilePath() {
-            var path = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            return Path.Combine(path, traceFile);
+            var path = GetSettingsDirectoryPath();
+            return Path.Combine(path, TraceFile);
         }
 
         public static string GetSyntaxHighlightingFilePath() {
@@ -82,6 +109,7 @@ namespace Client {
 
         public static void LoadApplicationSettings() {
             try {
+                CreateSettingsDirectory();
                 var path = GetSettingsFilePath();
                 var data = File.ReadAllBytes(path);
                 Settings = StateSerializer.Deserialize<ApplicationSettings>(data);
@@ -96,6 +124,7 @@ namespace Client {
         public static void SaveApplicationSettings() {
             try {
                 var data = StateSerializer.Serialize<ApplicationSettings>(Settings);
+                CreateSettingsDirectory();
                 var path = GetSettingsFilePath();
                 File.WriteAllBytes(path, data);
             }
@@ -113,8 +142,10 @@ namespace Client {
                 SetupExceptionHandling(showUIPrompt: true);
             }
 
+#if DEBUG
             // Enable file output for tracing.
-            try {
+            try
+            {
                 var traceFilePath = GetTraceFilePath();
 
                 if (File.Exists(traceFilePath))
@@ -129,7 +160,7 @@ namespace Client {
             {
                 Debug.WriteLine($"Failed to create trace file: {ex}");
             }
-
+#endif
             LoadApplicationSettings();
         }
 

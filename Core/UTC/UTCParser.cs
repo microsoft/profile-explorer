@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Core.IR;
+using Core.IR.Tags;
 using Core.Lexer;
 
 namespace Core.UTC {
@@ -37,7 +38,9 @@ namespace Core.UTC {
         EHFinally,
         EHFilter,
         EHDestructor,
-        EHExcept
+        EHExcept,
+        Irx,
+        Address
     }
 
     // keyword -> type map
@@ -54,8 +57,8 @@ namespace Core.UTC {
             }
         }
 
-        public FunctionIR ParseSection(string sectionText) {
-            parser_ = new UTCParser(sectionText, errorHandler_);
+        public FunctionIR ParseSection(IRTextSection section, string sectionText) {
+            parser_ = new UTCParser(sectionText, errorHandler_, section?.LineMetadata);
             return parser_.Parse();
         }
 
@@ -123,6 +126,7 @@ namespace Core.UTC {
             { "PAS", Keyword.PointsAtSet },
             { "In", Keyword.In },
             { "Out", Keyword.Out },
+            // Type keywoards.
             { "i8", Keyword.Int8 },
             { "i16", Keyword.Int16 },
             { "i32", Keyword.Int32 },
@@ -134,6 +138,7 @@ namespace Core.UTC {
             { "f32", Keyword.Float },
             { "f64", Keyword.Double },
             { "vd", Keyword.Void },
+            // Condition flag keywords.
             { "cc", Keyword.CC },
             { "cc_sozp", Keyword.CC },
             { "cc_soz", Keyword.CC },
@@ -146,13 +151,17 @@ namespace Core.UTC {
             { "cc_zf", Keyword.CC },
             { "cc_cf", Keyword.CC },
             { "INF", Keyword.Infinity},
+            // EH keywords.
             { "r", Keyword.EHRoot },
             { "d", Keyword.EHDestructor },
             { "T", Keyword.EHTry },
             { "TC", Keyword.EHTryCatch},
             { "TF", Keyword.EHFinally},
             { "Tf", Keyword.EHFilter},
-            { "TE", Keyword.EHExcept}
+            { "TE", Keyword.EHExcept},
+            // Metadata keywords.
+            { "irx", Keyword.Irx},
+            { "address", Keyword.Address}
         };
 
 
@@ -176,21 +185,27 @@ namespace Core.UTC {
         private Dictionary<int, BlockIR> blockMap_;
         private Dictionary<string, BlockLabelIR> labelMap_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
+        private Dictionary<long, IRElement> elementAddressMap_;
+        private Dictionary<int, string> lineMetadataMap_;
         private Lexer.Lexer lexer_;
         private Token current_;
         private Token previous_;
         private int nextBlockNumber;
         private IRElementId nextElementId_;
 
-        public UTCParser(string text, UTCParsingErrorHandler errorHandler) {
+        public UTCParser(string text, UTCParsingErrorHandler errorHandler,
+                         Dictionary<int, string> lineMetadata) {
             nextElementId_ = IRElementId.FromLong(0);
             errorHandler_ = errorHandler;
+            lineMetadataMap_ = lineMetadata;
+
             lexer_ = new Lexer.Lexer(text);
             SkipToken(); // Get first token.
 
             blockMap_ = new Dictionary<int, BlockIR>();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
+            elementAddressMap_ = new Dictionary<long, IRElement>();
         }
 
         //? TODO: Handle SWITCH
@@ -203,6 +218,10 @@ namespace Core.UTC {
 
             if (function != null) {
                 function.BuildElementIdMap();
+
+                if(elementAddressMap_.Count > 0) {
+                    function.AddTag(new AddressMetadataTag(elementAddressMap_));
+                }
             }
 
             return function;
@@ -590,19 +609,111 @@ namespace Core.UTC {
             return value;
         }
 
+        bool ParseAddressList(List<long> list) {
+            list.Clear();
+
+            while(!TokenIs(TokenKind.SemiColon) && !IsEOF()) {
+                if (!TokenLongIntNumber(out var address)) {
+                    // Try to parse again as a HEX int.
+                    try {
+                        address = Convert.ToInt64(TokenStringData().ToString(), 16);
+                    }
+                    catch (Exception ex) {
+                        return false;
+                    }
+                }
+
+                list.Add(address);
+                SkipToken();
+            }
+
+            SkipToken();
+            return true;
+        }
+
+        void SetElementAddress(IRElement element, long address,
+                               Dictionary<long, IRElement> addressMap)
+        {
+            addressMap[address] = element;
+        }
+
+        void ParseMetadata(IRElement element, int lineNumber)
+        {
+            if (lineMetadataMap_ != null &&
+                lineMetadataMap_.TryGetValue(lineNumber, out string metadata)) {
+                var metadataParser = new UTCParser(metadata, null, null);
+                metadataParser.ParseMetadata(element, elementAddressMap_);
+            }
+        }
+
+        void ParseMetadata(IRElement element, Dictionary<long, IRElement> addressMap) {
+            // Metadata starts with /// followed by irx:metadata_type
+            if (TokenIs(TokenKind.Div) &&
+                NextTokenIs(TokenKind.Div) &&
+                NextAfterTokenIs(TokenKind.Div)) {
+                if(!SkipToAnyKeyword(Keyword.Irx)) {
+                    SkipToLineStart();
+                    return;
+                }
+
+                SkipToken();
+
+                if(!ExpectAndSkipToken(TokenKind.Colon))
+                {
+                    SkipToLineStart();
+                    return;
+                }
+
+                if(!ExpectAndSkipKeyword(Keyword.Address)) {
+                    SkipToLineStart();
+                    return;
+                }
+
+                // Parse instr. address.
+                var addressList = new List<long>();
+                ParseAddressList(addressList);
+
+                if (addressList.Count > 0) {
+                    SetElementAddress(element, addressList[0], addressMap);
+                }
+
+                if(!(element is InstructionIR instr))
+                {
+                    SkipToLineStart();
+                    return;
+                }
+
+                // Parse destination list address.
+                ParseAddressList(addressList);
+                
+                for(int i = 0; i < instr.Destinations.Count; i++)
+                {
+                    if (i < addressList.Count)
+                    {
+                        SetElementAddress(instr.Destinations[i], addressList[i], addressMap);
+                    }
+                    else break;
+                }
+
+                // Parse source list address.
+                ParseAddressList(addressList);
+
+                for (int i = 0; i < instr.Sources.Count; i++)
+                {
+                    if (i < addressList.Count)
+                    {
+                        SetElementAddress(instr.Sources[i], addressList[i], addressMap);
+                    }
+                    else break;
+                }
+
+                SkipToLineStart();
+            }
+        }
+
         BlockIR ParseBlock(FunctionIR function) {
             var startToken = current_;
             bool cfgAvailable = true;
-
-            // For vectorizer output, one or more blocks can be found
-            // between line markers, just skip over and parse the code inside.
-            // >>> Begin landing pad
-            // <<< End landing pad
-            if (TokenIs(TokenKind.Greater) &&
-                NextTokenIs(TokenKind.Greater) &&
-                NextAfterTokenIs(TokenKind.Greater)) {
-                SkipToLineStart();
-            }
 
             // For vectorizer output, one or more blocks can be found
             // between line markers, just skip over and parse the code inside.
@@ -652,6 +763,9 @@ namespace Core.UTC {
             }
 
             SkipToLineStart(); // Skip to first tuple.
+
+            // Check if there is any metadata.
+            ParseMetadata(block, startToken.Location.Line);
 
             // Collect all tuples in block, which extends
             // until the next BLOCK keyword is found.
@@ -730,12 +844,12 @@ namespace Core.UTC {
                 case Keyword.EHFinally:
                 case Keyword.EHFilter:
                 case Keyword.EHExcept: {
-                        if (!NextTokenIs(TokenKind.Dot)) {
-                            SkipToken();
-                            return true;
-                        }
-                        break;
+                    if (!NextTokenIs(TokenKind.Dot)) {
+                        SkipToken();
+                        return true;
                     }
+                    break;
+                }
             }
 
             return false;
@@ -756,35 +870,41 @@ namespace Core.UTC {
                     case Keyword.EHFinally:
                     case Keyword.EHFilter:
                     case Keyword.EHExcept: {
-                            if (!sawEHAttribute && !NextTokenIs(TokenKind.Dot)) {
-                                SkipToken(); //? TODO: save EH annotation
-                                sawEHAttribute = true;
-                            }
-                            else {
-                                // This is likely a short variable name that
-                                // happens to have the same name as the EH keywords.
-                                tuple = ParseCodeTuple(parent);
-                                stop = true;
-                            }
-                            break;
+                        if (!sawEHAttribute && !NextTokenIs(TokenKind.Dot)) {
+                            SkipToken(); //? TODO: save EH annotation
+                            sawEHAttribute = true;
                         }
-                    case Keyword.Pragma: {
-                            SkipToLineEnd();
-                            tuple = new TupleIR(nextElementId_, TupleKind.Metadata, parent);
-                            stop = true;
-                            break;
-                        }
-                    case Keyword.Entry: {
-                            tuple = ParseEntry(parent);
-                            stop = true;
-                            break;
-                        }
-                    default: {
+                        else {
+                            // This is likely a short variable name that
+                            // happens to have the same name as the EH keywords.
                             tuple = ParseCodeTuple(parent);
                             stop = true;
-                            break;
                         }
+                        break;
+                    }
+                    case Keyword.Pragma: {
+                        SkipToLineEnd();
+                        tuple = new TupleIR(nextElementId_, TupleKind.Metadata, parent);
+                        stop = true;
+                        break;
+                    }
+                    case Keyword.Entry: {
+                        tuple = ParseEntry(parent);
+                        stop = true;
+                        break;
+                    }
+                    default: {
+                        tuple = ParseCodeTuple(parent);
+                        stop = true;
+                        break;
+                    }
                 }
+            }
+
+            // Set the tuple range so it doesn't include comments
+            // and other annotations found at the end of the line.
+            if (tuple != null) { 
+                SetTextRange(tuple, startToken, previous_);
             }
 
             // Skip over size annotation.
@@ -811,7 +931,8 @@ namespace Core.UTC {
                 return null;
             }
 
-            SetTextRange(tuple, startToken, Environment.NewLine.Length);
+            // Check if there is any metadata.
+            ParseMetadata(tuple, startToken.Location.Line);
             return tuple;
         }
 
@@ -987,6 +1108,13 @@ namespace Core.UTC {
 
         void SetTextRange(IRElement element, Token startToken, int adjustment = 0) {
             int distance = Math.Max(0, LocationDistance(startToken) - adjustment);
+            element.SetTextRange(startToken.Location, distance);
+        }
+
+        void SetTextRange(IRElement element, Token startToken, Token endToken)
+        {
+            int distance = Math.Max(0, (endToken.Location.Offset -
+                                        startToken.Location.Offset) + endToken.Length);
             element.SetTextRange(startToken.Location, distance);
         }
 

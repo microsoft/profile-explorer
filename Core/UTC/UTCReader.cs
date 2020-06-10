@@ -36,9 +36,13 @@ namespace Core.UTC {
             long fileSize = new FileInfo(filePath).Length;
 
             if (fileSize < MAX_PRELOADED_FILE_SIZE) {
-                preloadedData_ = File.ReadAllBytes(filePath);
-                preloadedDataStream_ = new MemoryStream(preloadedData_, true);
-                dataStream_ = preloadedDataStream_;
+                using (var stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                {
+                    preloadedData_ = new byte[fileSize];
+                    stream.Read(preloadedData_, 0, (int)fileSize);
+                    preloadedDataStream_ = new MemoryStream(preloadedData_, true);
+                    dataStream_ = preloadedDataStream_;
+                }
             }
             else {
                 dataStream_ = new FileStream(filePath, FileMode.Open, FileAccess.Read,

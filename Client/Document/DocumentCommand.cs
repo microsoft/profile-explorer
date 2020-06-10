@@ -22,6 +22,8 @@ namespace Client {
             new RoutedUICommand("Untitled", "MarkBlock", typeof(IRDocumentHost));
         public static readonly RoutedUICommand MarkReferences =
             new RoutedUICommand("Untitled", "MarkReferences", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand ShowExpressionGraph =
+            new RoutedUICommand("Untitled", "ShowExpressionGraph", typeof(IRDocumentHost));
 
         public static readonly RoutedUICommand NextBlock =
             new RoutedUICommand("Untitled", "NextBlock", typeof(IRDocumentHost));

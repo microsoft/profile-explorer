@@ -52,8 +52,8 @@ namespace Client {
 
         public static async Task<List<HasDiffResult>>
         ComputeSectionDiffs(List<Tuple<IRTextSection, IRTextSection>> comparedSections,
-                            DocumentSectionLoader leftDocLoader,
-                            DocumentSectionLoader rightDocLoader) {
+                            SectionLoader leftDocLoader,
+                            SectionLoader rightDocLoader) {
             int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
             var tasks = new Task<HasDiffResult>[comparedSections.Count];
 
@@ -70,8 +70,8 @@ namespace Client {
 
         private static async Task
         ComputeSectionDiffsImpl(List<Tuple<IRTextSection, IRTextSection>> comparedSections,
-                                DocumentSectionLoader leftDocLoader,
-                                DocumentSectionLoader rightDocLoader,
+                                SectionLoader leftDocLoader,
+                                SectionLoader rightDocLoader,
                                 Task<HasDiffResult>[] tasks, int maxConcurrency) {
             using (SemaphoreSlim concurrencySemaphore = new SemaphoreSlim(maxConcurrency)) {
                 int index = 0;

@@ -26,7 +26,7 @@ namespace Client {
             }
 
             try {
-                if (AutoUpdater.DownloadUpdate()) {
+                if (AutoUpdater.DownloadUpdate(new UpdateInfoEventArgs())) {
                     InstallUpdate = true;
                     DialogResult = true;
                     Close();

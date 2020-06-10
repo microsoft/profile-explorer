@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Core.IR;
-using Core;
 using Core.Analysis;
 using Core.UTC;
 using Humanizer;
@@ -84,7 +83,7 @@ namespace Client {
                     }
 
                     var lineChunk = line.Substring(index);
-                    var lineParser = new UTCParser(lineChunk, null);
+                    var lineParser = new UTCParser(lineChunk, null, null);
                     var tuple = lineParser.ParseTuple(fakeBlock);
 
                     if (tuple is InstructionIR instr) {
@@ -136,7 +135,7 @@ namespace Client {
 
 
             var refFinder = new ReferenceFinder(function);
-            var parser = new UTCParser(text, null);
+            var parser = new UTCParser(text, null, null);
 
             while (!parser.IsDone()) {
                 var op = parser.ParseOperand(fakeTuple, isIndirBaseOp: false,

@@ -21,7 +21,7 @@ namespace Core.GraphViz {
         public double Width { get; set; }
         public double Height { get; set; }
 
-        public BlockIR Block { get; set; }
+        public IRElement Element { get; set; }
         public List<Edge> InEdges { get; set; }
         public List<Edge> OutEdges { get; set; }
         public object Tag { get; set; }
@@ -68,15 +68,16 @@ namespace Core.GraphViz {
         public List<Edge> Edges { get; set; }
         public double Width { get; set; }
         public double Height { get; set; }
-        public Dictionary<BlockIR, Node> BlockNodeMap { get; set; }
-        public Dictionary<string, BlockIR> BlockNameMap { get; set; }
+        public Dictionary<IRElement, Node> BlockNodeMap { get; set; }
+        public Dictionary<string, IRElement> BlockNameMap { get; set; }
+        public Dictionary<IRElement, List<IRElement>> BlockNodeGroupsMap { get; set; }
         public string SourceText { get; set; }
 
         public LayoutGraph(GraphKind kind) {
             GraphKind = kind;
             Nodes = new List<Node>();
             Edges = new List<Edge>();
-            BlockNodeMap = new Dictionary<BlockIR, Node>();
+            BlockNodeMap = new Dictionary<IRElement, Node>();
         }
     }
 
@@ -102,9 +103,10 @@ namespace Core.GraphViz {
         private string sourceText_;
         private Lexer.Lexer lexer_;
         private Token current_;
-        private Dictionary<string, BlockIR> blockNameMap_;
+        private Dictionary<string, IRElement> blockNameMap_;
 
-        public GraphvizReader(GraphKind kind, string text, Dictionary<string, BlockIR> blockNameMap) {
+        public GraphvizReader(GraphKind kind, string text, 
+                              Dictionary<string, IRElement> blockNameMap) {
             graphKind_ = kind;
             blockNameMap_ = blockNameMap;
             sourceText_ = text;
@@ -163,7 +165,33 @@ namespace Core.GraphViz {
         }
 
         bool ReadString(out ReadOnlyMemory<char> value) {
-            if (current_.IsIdentifier() || current_.IsString()) {
+            if (current_.IsIdentifier() || 
+                current_.IsString()) {
+                value = TokenData();
+                SkipToken();
+                return true;
+            }
+
+            value = default;
+            return false;
+        }
+
+        bool ReadLabel(out ReadOnlyMemory<char> value)
+        {
+            if (current_.IsIdentifier() ||
+                current_.IsString()) {
+                value = TokenData();
+                SkipToken();
+                return true;
+            }
+
+            // The Graphviz output doesn't seem to quite integers at least,
+            // which also includes negative values.
+            if (IsToken(TokenKind.Minus)) {
+                SkipToken();
+            }
+
+            if(current_.IsNumber()) {
                 value = TokenData();
                 SkipToken();
                 return true;
@@ -223,8 +251,7 @@ namespace Core.GraphViz {
 
         public LayoutGraph ReadGraph() {
             graph_ = new LayoutGraph(graphKind_) {
-                SourceText = sourceText_,
-                BlockNameMap = blockNameMap_
+                SourceText = sourceText_
             };
 
             if (!ExpectAndSkipKeyword(Keyword.Graph)) {
@@ -279,7 +306,7 @@ namespace Core.GraphViz {
             node.Width = width;
             node.Height = height;
 
-            if (!ReadString(out var label) ||
+            if (!ReadLabel(out var label) ||
                 !ReadString(out var style) ||
                 !ReadString(out var shape) ||
                 !ReadString(out var borderColor) ||
@@ -295,12 +322,12 @@ namespace Core.GraphViz {
             node.BackgroundColor = backgroundColor;
 
             // Associate with IR objects.
-            if (blockNameMap_.TryGetValue(name.ToString(), out BlockIR block)) {
-                node.Block = block;
+            if (blockNameMap_.TryGetValue(name.ToString(), out IRElement block)) {
+                node.Element = block;
                 graph_.BlockNodeMap.Add(block, node);
             }
             else {
-                // Debug.Assert(false, "Could not find block");
+                Debug.Assert(false, "Could not find block");
             }
 
             return node;
@@ -353,7 +380,7 @@ namespace Core.GraphViz {
             edge.Color = color;
 
             // Associate with IR objects.
-            if (blockNameMap_.TryGetValue(fromNode.ToString(), out BlockIR fromBlock)) {
+            if (blockNameMap_.TryGetValue(fromNode.ToString(), out IRElement fromBlock)) {
                 var node = graph_.BlockNodeMap[fromBlock];
                 edge.NodeFrom = node;
 
@@ -367,7 +394,7 @@ namespace Core.GraphViz {
                 //Debug.Assert(false, "Could not find from block");
             }
 
-            if (blockNameMap_.TryGetValue(toNode.ToString(), out BlockIR toBlock)) {
+            if (blockNameMap_.TryGetValue(toNode.ToString(), out IRElement toBlock)) {
                 var node = graph_.BlockNodeMap[toBlock];
                 edge.NodeTo = node;
 

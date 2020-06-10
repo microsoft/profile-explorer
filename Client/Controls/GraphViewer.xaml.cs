@@ -18,7 +18,7 @@ namespace Client {
         public static Pen DefaultPen = Pens.GetPen(Colors.Black, 0.025);
         public static Pen DefaultBoldPen = Pens.GetPen(Colors.Black, 0.05);
 
-        private FlowGraphSettings settings_;
+        private GraphSettings settings_;
         private LayoutGraph graph_;
         private DrawingVisual graphVisual_;
         private GraphRenderer graphRenderer_;
@@ -97,7 +97,7 @@ namespace Client {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                SelectElement(graphNode.NodeInfo.Block);
+                SelectElement(graphNode.NodeInfo.Element);
             }
 
             e.Handled = graphNode != null;
@@ -159,15 +159,15 @@ namespace Client {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                if (graphNode.NodeInfo.Block == null) {
+                if (graphNode.NodeInfo.Element == null) {
                     return;
                 }
 
-                SelectElement(graphNode.NodeInfo.Block);
+                SelectElement(graphNode.NodeInfo.Element);
                 e.Handled = true;
 
                 BlockSelected?.Invoke(this, new IRElementEventArgs() {
-                    Element = graphNode.NodeInfo.Block
+                    Element = graphNode.NodeInfo.Element
                 });
             }
         }
@@ -210,7 +210,7 @@ namespace Client {
             HighlightNode(node, style, HighlighingType.Marked);
 
             BlockMarked?.Invoke(this, new IRElementMarkedEventArgs() {
-                Element = node.NodeInfo.Block,
+                Element = node.NodeInfo.Element,
                 Style = style
             });
         }
@@ -246,7 +246,7 @@ namespace Client {
                 return;
             }
 
-            var loopTag = node.NodeInfo.Block.GetTag<LoopBlockTag>();
+            var loopTag = node.NodeInfo.Element.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -262,7 +262,7 @@ namespace Client {
                 return;
             }
 
-            var loopTag = node.NodeInfo.Block.GetTag<LoopBlockTag>();
+            var loopTag = node.NodeInfo.Element.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -470,7 +470,7 @@ namespace Client {
                 RestoreNodeStyle(node);
 
                 BlockUnmarked?.Invoke(this, new IRElementMarkedEventArgs() {
-                    Element = node.NodeInfo.Block
+                    Element = node.NodeInfo.Element
                 });
             }
         }
@@ -479,7 +479,7 @@ namespace Client {
             if (BlockUnmarked != null) {
                 foreach (var node in markedNodes_.Keys) {
                     BlockUnmarked(this, new IRElementMarkedEventArgs() {
-                        Element = node.NodeInfo.Block
+                        Element = node.NodeInfo.Element
                     });
                 }
             }
@@ -581,7 +581,7 @@ namespace Client {
         public double MaxZoomLevel { get; set; }
         public GraphPanel HostPanel { get; set; }
 
-        public FlowGraphSettings Settings {
+        public GraphSettings Settings {
             get => settings_;
             set {
                 settings_ = value;

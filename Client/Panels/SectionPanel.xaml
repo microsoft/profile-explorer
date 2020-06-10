@@ -9,18 +9,10 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
     <local:ToolPanelControl.CommandBindings>
-        <CommandBinding
-            Command="local:Command.ClearTextbox"
-            Executed="ExecuteClearTextbox" />
-        <CommandBinding
-            Command="local:Command.OpenInNewTab"
-            Executed="OpenInNewTabExecuted" />
-        <CommandBinding
-            Command="local:Command.OpenLeft"
-            Executed="OpenLeftExecuted" />
-        <CommandBinding
-            Command="local:Command.OpenRight"
-            Executed="OpenRightExecuted" />
+        <CommandBinding Command="local:Command.ClearTextbox" Executed="ExecuteClearTextbox" />
+        <CommandBinding Command="local:Command.OpenInNewTab" Executed="OpenInNewTabExecuted" />
+        <CommandBinding Command="local:Command.OpenLeft" Executed="OpenLeftExecuted" />
+        <CommandBinding Command="local:Command.OpenRight" Executed="OpenRightExecuted" />
         <CommandBinding
             CanExecute="OpenSideBySideCanExecute"
             Command="local:Command.OpenSideBySide"
@@ -33,46 +25,26 @@
             CanExecute="DiffWithOtherDocumentCanExecute"
             Command="local:Command.DiffWithOtherDocument"
             Executed="DiffWithOtherDocumentExecuted" />
-        <CommandBinding
-            Command="local:Command.Open"
-            Executed="OpenExecuted" />
-        <CommandBinding
-            Command="local:Command.ToggleTag"
-            Executed="ToggleTagExecuted" />
-        <CommandBinding
-            Command="local:Command.PreviousSection"
-            Executed="PreviousSectionExecuted" />
-        <CommandBinding
-            Command="local:Command.NextSection"
-            Executed="NextSectionExecuted" />
-        <CommandBinding
-            Command="local:Command.FocusSearch"
-            Executed="FocusSearchExecuted" />
-        <CommandBinding
-            Command="local:Command.ShowFunctions"
-            Executed="ShowFunctionsExecuted" />
+        <CommandBinding Command="local:Command.Open" Executed="OpenExecuted" />
+        <CommandBinding Command="local:Command.ToggleTag" Executed="ToggleTagExecuted" />
+        <CommandBinding Command="local:Command.PreviousSection" Executed="PreviousSectionExecuted" />
+        <CommandBinding Command="local:Command.NextSection" Executed="NextSectionExecuted" />
+        <CommandBinding Command="local:Command.FocusSearch" Executed="FocusSearchExecuted" />
+        <CommandBinding Command="local:Command.ShowFunctions" Executed="ShowFunctionsExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <local:ToolPanelControl.Resources>
-        <Style
-            x:Key="IconTagged"
-            TargetType="Image">
+        <Style x:Key="IconTagged" TargetType="Image">
             <Style.Triggers>
-                <DataTrigger
-                    Binding="{Binding Path=IsTagged}"
-                    Value="False">
+                <DataTrigger Binding="{Binding Path=IsTagged}" Value="False">
                     <Setter Property="Visibility" Value="Collapsed" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
-        <Style
-            x:Key="IconSelected"
-            TargetType="Image">
+        <Style x:Key="IconSelected" TargetType="Image">
             <Style.Triggers>
-                <DataTrigger
-                    Binding="{Binding Path=IsSelected}"
-                    Value="False">
+                <DataTrigger Binding="{Binding Path=IsSelected}" Value="False">
                     <Setter Property="Visibility" Value="Hidden" />
                 </DataTrigger>
             </Style.Triggers>
@@ -179,9 +151,9 @@
                     </GridView>
                 </ListView.View>
                 <ListView.ItemContainerStyle>
-                    <Style
-                        BasedOn="{StaticResource FlatListViewItem}"
-                        TargetType="{x:Type ListViewItem}" />
+                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                    </Style>
                 </ListView.ItemContainerStyle>
             </ListView>
 
@@ -215,17 +187,13 @@
             VerticalAlignment="Stretch"
             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" />
 
-        <Grid
-            x:Name="SectionGrid"
-            Grid.Column="2">
+        <Grid x:Name="SectionGrid" Grid.Column="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="28" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid
-                x:Name="SectionToolbarGrid"
-                Grid.Row="0">
+            <Grid x:Name="SectionToolbarGrid" Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="25" />
@@ -359,9 +327,7 @@
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
-                        <GridViewColumn
-                            Width="280"
-                            DisplayMemberBinding="{Binding Name}">
+                        <GridViewColumn Width="280" DisplayMemberBinding="{Binding Name}">
                             <GridViewColumnHeader
                                 x:Name="NameColumnHeader"
                                 Click="GridViewColumnHeader_Click"
@@ -373,9 +339,7 @@
                             </GridViewColumn.HeaderContainerStyle>
 
                         </GridViewColumn>
-                        <GridViewColumn
-                            Width="50"
-                            DisplayMemberBinding="{Binding BlockCountString}">
+                        <GridViewColumn Width="50" DisplayMemberBinding="{Binding BlockCountString}">
                             <GridViewColumnHeader
                                 x:Name="BlocksColumnHeader"
                                 Width="50"
@@ -391,64 +355,49 @@
                     </GridView>
                 </ListView.View>
                 <ListView.ItemContainerStyle>
-                    <Style
-                        BasedOn="{StaticResource FlatListViewItem}"
-                        TargetType="{x:Type ListViewItem}">
+                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <EventSetter Event="MouseDoubleClick" Handler="SectionDoubleClick" />
+
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+
                         <Style.Triggers>
-                            <DataTrigger
-                                Binding="{Binding Path=IsSelected}"
-                                Value="True">
+                            <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">
                                 <Setter Property="FontWeight" Value="Bold" />
                             </DataTrigger>
 
-                            <DataTrigger
-                                Binding="{Binding Path=IsTagged}"
-                                Value="True">
+                            <DataTrigger Binding="{Binding Path=IsTagged}" Value="True">
                                 <Setter Property="Background">
                                     <Setter.Value>
-                                        <SolidColorBrush
-                                            Opacity="0.5"
-                                            Color="{StaticResource {x:Static SystemColors.MenuHighlightColorKey}}" />
+                                        <SolidColorBrush Opacity="0.5" Color="{StaticResource {x:Static SystemColors.MenuHighlightColorKey}}" />
                                     </Setter.Value>
                                 </Setter>
                             </DataTrigger>
 
-                            <DataTrigger
-                                Binding="{Binding Path=IsMarked}"
-                                Value="True">
+                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
                                 <Setter Property="Foreground" Value="{Binding Path=TextColor}" />
                             </DataTrigger>
 
-                            <DataTrigger
-                                Binding="{Binding Path=IsDeletionDiff}"
-                                Value="True">
+                            <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
                                 <Setter Property="Foreground" Value="#BB0025" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="#BB0025" />
                                 <Setter Property="BorderThickness" Value="0.5" />
                             </DataTrigger>
 
-                            <DataTrigger
-                                Binding="{Binding Path=IsInsertionDiff}"
-                                Value="True">
+                            <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
                                 <Setter Property="Foreground" Value="#007200" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="#007200" />
                                 <Setter Property="BorderThickness" Value="0.5" />
                             </DataTrigger>
 
-                            <DataTrigger
-                                Binding="{Binding Path=HasDiffs}"
-                                Value="True">
+                            <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="#DE8000" />
                                 <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>
                         </Style.Triggers>
 
-                        <EventSetter
-                            Event="MouseDoubleClick"
-                            Handler="SectionDoubleClick" />
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.ContextMenu>

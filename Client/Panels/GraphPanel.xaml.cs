@@ -69,6 +69,7 @@ namespace Client {
         static readonly double VerticalViewMargin = 100;
 
         private FlowGraphSettings settings_;
+        private ExpressionGraphSettings expressionSettings_;
         private IRDocument document_;
         private IRTextSection section_;
         private LayoutGraph graph_;
@@ -113,14 +114,25 @@ namespace Client {
 
             OptionsPanel.PanelClosed += OptionsPanel_PanelClosed;
             OptionsPanel.PanelReset += OptionsPanel_PanelReset;
+            ExpressionOptionsPanel.PanelClosed += OptionsPanel_PanelClosed;
+            ExpressionOptionsPanel.PanelReset += OptionsPanel_PanelReset;
 
             SetupCommands();
         }
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
-            var newOptions = new FlowGraphSettings();
-            newOptions.Reset();
-            OptionsPanel.DataContext = newOptions;
+            Settings.Reset();
+
+            if (PanelKind == ToolPanelKind.ExpressionGraph)
+            {
+                ExpressionOptionsPanel.DataContext = null;
+                ExpressionOptionsPanel.DataContext = Settings.Clone();
+            }
+            else
+            {
+                OptionsPanel.DataContext = null;
+                OptionsPanel.DataContext = Settings.Clone();
+            }
         }
 
         private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
@@ -545,7 +557,7 @@ namespace Client {
             var node = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
             if (node != null &&
-                node.NodeInfo.Block != null) {
+                node.NodeInfo.Element != null) {
                 ShowTooltipForNode(node);
                 hoveredNode_ = node;
             }
@@ -585,13 +597,19 @@ namespace Client {
 
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                SetQueryBlock1(hoveredNode_.NodeInfo.Block);
+                if (hoveredNode_.NodeInfo.Element is BlockIR block)
+                {
+                    SetQueryBlock1(block);
+                }
             }
         }
 
         private void SelectQueryBlock2Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                SetQueryBlock2(hoveredNode_.NodeInfo.Block);
+                if (hoveredNode_.NodeInfo.Element is BlockIR block)
+                {
+                    SetQueryBlock2(block);
+                }
             }
         }
 
@@ -623,13 +641,24 @@ namespace Client {
             var node = nodeToolTip_.Tag as GraphNode;
             var previewer = Utils.FindChild<IRPreview>(nodeToolTip_, "IRPreviewer");
             previewer.InitializeFromDocument(document_);
-            var block = node.NodeInfo.Block;
-            previewer.PreviewedElement = block;
-            nodeToolTip_.DataContext = new BlockTooltipInfo(block);
 
-            int lines = Math.Max(1, Math.Min(block.Tuples.Count + 1, 20));
-            nodeToolTip_.Height = previewer.ResizeForLines(lines);
-            previewer.UpdateView(false);
+            if (node.NodeInfo.Element is BlockIR block)
+            {
+                previewer.PreviewedElement = block;
+                nodeToolTip_.DataContext = new BlockTooltipInfo(block);
+                int lines = Math.Max(1, Math.Min(block.Tuples.Count + 1, 20));
+                nodeToolTip_.Height = previewer.ResizeForLines(lines);
+                previewer.UpdateView(false);
+            }
+            else
+            {
+                var element = node.NodeInfo.Element;
+                previewer.PreviewedElement = element;
+                nodeToolTip_.DataContext = new IRPreviewToolTip(600, 100, document_, element);
+                int lines = Math.Max(1, Math.Min(element.ParentBlock.Tuples.Count + 1, 20));
+                nodeToolTip_.Height = previewer.ResizeForLines(lines);
+                previewer.UpdateView();
+            }
         }
 
         private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {
@@ -706,11 +735,22 @@ namespace Client {
             queryPanelVisible_ = false;
         }
 
+        //? TODO: Should be a virtual overriden in the expr panel
         void ShowOptionsPanel() {
-            OptionsPanel.DataContext = Settings.Clone();
-            OptionsPanel.Visibility = Visibility.Visible;
-            OptionsPanel.Focus();
-            optionsPanelVisible_ = true;
+            if (PanelKind == ToolPanelKind.ExpressionGraph)
+            {
+                ExpressionOptionsPanel.DataContext = Settings.Clone();
+                ExpressionOptionsPanel.Visibility = Visibility.Visible;
+                ExpressionOptionsPanel.Focus();
+                optionsPanelVisible_ = true;
+            }
+            else
+            {
+                OptionsPanel.DataContext = Settings.Clone();
+                OptionsPanel.Visibility = Visibility.Visible;
+                OptionsPanel.Focus();
+                optionsPanelVisible_ = true;
+            }
         }
 
         void CloseOptionsPanel() {
@@ -718,15 +758,33 @@ namespace Client {
                 return;
             }
 
-            OptionsPanel.Visibility = Visibility.Collapsed;
-            var newSettings = (FlowGraphSettings)OptionsPanel.DataContext;
-            OptionsPanel.DataContext = null;
-            optionsPanelVisible_ = false;
+            if (PanelKind == ToolPanelKind.ExpressionGraph)
+            {
+                var newSettings = (ExpressionGraphSettings)ExpressionOptionsPanel.DataContext;
+                ExpressionOptionsPanel.Visibility = Visibility.Collapsed;
+                ExpressionOptionsPanel.DataContext = null;
+                optionsPanelVisible_ = false;
 
-            if (newSettings.HasChanges(Settings)) {
-                Settings = newSettings;
-                App.Settings.FlowGraphSettings = newSettings;
-                App.SaveApplicationSettings();
+                if (newSettings.HasChanges(Settings))
+                {
+                    App.Settings.ExpressionGraphSettings = newSettings;
+                    App.SaveApplicationSettings();
+                    ReloadSettings();
+                }
+            }
+            else
+            {
+                var newSettings = (FlowGraphSettings)OptionsPanel.DataContext;
+                OptionsPanel.Visibility = Visibility.Collapsed;
+                OptionsPanel.DataContext = null;
+                optionsPanelVisible_ = false;
+
+                if (newSettings.HasChanges(Settings))
+                {
+                    App.Settings.FlowGraphSettings = newSettings;
+                    App.SaveApplicationSettings();
+                    ReloadSettings();
+                }
             }
         }
 
@@ -776,7 +834,9 @@ namespace Client {
             }
 
             nodeToolTip_ = new ToolTip();
-            nodeToolTip_.Style = Application.Current.FindResource("BlockIRPreviewTooltip") as Style;
+            var previewControl = PanelKind == ToolPanelKind.ExpressionGraph ?
+                                 "ExpressionIRPreviewTooltip" : "BlockIRPreviewTooltip";
+            nodeToolTip_.Style = Application.Current.FindResource(previewControl) as Style;
             nodeToolTip_.Width = 600;
             nodeToolTip_.Height = 100;
             nodeToolTip_.Tag = node;
@@ -820,17 +880,19 @@ namespace Client {
         public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection |
                                                           HandledEventKind.ElementHighlighting;
 
-        public FlowGraphSettings Settings {
-            get => settings_;
-            set {
-                settings_ = value;
-                ReloadSettings();
+        public GraphSettings Settings
+        {
+            get
+            {
+                return (PanelKind == ToolPanelKind.ExpressionGraph) ?
+                    (GraphSettings)App.Settings.ExpressionGraphSettings :
+                    (GraphSettings)App.Settings.FlowGraphSettings;
             }
         }
 
         public override void OnRegisterPanel() {
             IsPanelEnabled = false;
-            Settings = App.Settings.FlowGraphSettings;
+            ReloadSettings();
         }
 
         void ReloadSettings() {
@@ -843,6 +905,13 @@ namespace Client {
 
             if (document.DuringSectionLoading) {
                 Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: Ignore graph reload during section switch");
+                return;
+            }
+
+            //? TODO: Implement switching for expressions
+            if(PanelKind == ToolPanelKind.ExpressionGraph)
+            {
+                HideGraph();
                 return;
             }
 

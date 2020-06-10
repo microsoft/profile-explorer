@@ -17,9 +17,11 @@ using Client.Utilities;
 using Core;
 using Core.Analysis;
 using Core.IR;
+using Core.IR.Tags;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
+using ICSharpCode.AvalonEdit.Rendering;
 
 namespace Client {
     public enum DocumentActionKind {
@@ -31,16 +33,25 @@ namespace Client {
         MarkReferences,
         ShowUses,
         MarkUses,
+        MarkExpression,
         ClearMarker,
         ClearAllMarkers,
         ClearBlockMarkers,
         ClearInstructionMarkers,
+        ClearTemporaryMarkers,
         UndoAction,
-        VerticalScroll
+        VerticalScroll,
+        ShowExpressionGraph
+    }
+
+    public class MarkActionData
+    {
+        public bool IsTemporary { get; set; }
+        public PairHighlightingStyle Style { get; set; }
     }
 
     public class DocumentAction {
-        public DocumentAction(DocumentActionKind actionKind, IRElement element,
+        public DocumentAction(DocumentActionKind actionKind, IRElement element = null,
                               object optionalData = null) {
             ActionKind = actionKind;
             Element = element;
@@ -416,6 +427,31 @@ namespace Client {
                     }
                     break;
                 }
+                case DocumentActionKind.MarkExpression: {
+                    if (action.Element != null) {
+                        var data = action.OptionalData as MarkActionData;
+                        var highlighter = data != null && data.IsTemporary ?
+                                        selectedHighlighter_ : markedHighlighter_;
+
+                        if (action.Element is InstructionIR instr) {
+                            if (instr.Destinations.Count > 0) {
+                                HandleElement(instr.Destinations[0], highlighter, true);
+                            }
+                        }
+                        else {
+                            HandleElement(action.Element, highlighter, true);
+                        }
+                        }
+                    break;
+                }
+                case DocumentActionKind.ShowExpressionGraph:
+                {
+                    if (action.Element != null)
+                    {
+                        ShowExpressionGraph(action.Element);
+                    }
+                    break;
+                }
                 case DocumentActionKind.MarkBlock: {
                     if (action.Element != null) {
                         MarkBlock(action.Element, action.OptionalData as HighlightingStyle);
@@ -432,11 +468,23 @@ namespace Client {
                     if (action.Element is OperandIR op) {
                         ShowReferences(op);
                     }
+                    else if (action.Element is InstructionIR instr) {
+                        // For an instruction, look for the references of the dest. operand.
+                        if (instr.Destinations.Count > 0) {
+                            ShowReferences(instr.Destinations[0]);
+                        }
+                    }
                     break;
                 }
                 case DocumentActionKind.MarkReferences: {
                     if (action.Element is OperandIR op) {
                         MarkReferences(op);
+                    }
+                    else if (action.Element is InstructionIR instr) {
+                        // For an instruction, look for the references of the dest. operand.
+                        if (instr.Destinations.Count > 0) {
+                            MarkReferences(instr.Destinations[0]);
+                        }
                     }
                     break;
                 }
@@ -444,11 +492,23 @@ namespace Client {
                     if (action.Element is OperandIR op) {
                         ShowUses(op);
                     }
+                    else if (action.Element is InstructionIR instr) {
+                        // For an instruction, look for the uses of the dest. operand.
+                        if (instr.Destinations.Count > 0) {
+                            ShowUses(instr.Destinations[0]);
+                        }
+                    }
                     break;
                 }
                 case DocumentActionKind.MarkUses: {
                     if (action.Element is OperandIR op) {
                         MarkUses(op, action.OptionalData as PairHighlightingStyle);
+                    }
+                    else if (action.Element is InstructionIR instr) {
+                        // For an instruction, look for the uses of the dest. operand.
+                        if (instr.Destinations.Count > 0) {
+                            MarkUses(instr.Destinations[0], action.OptionalData as PairHighlightingStyle);
+                        }
                     }
                     break;
                 }
@@ -468,6 +528,11 @@ namespace Client {
                 }
                 case DocumentActionKind.ClearInstructionMarkers: {
                     ClearInstructionMarkers();
+                    break;
+                }
+                case DocumentActionKind.ClearTemporaryMarkers: {
+                    ClearTemporaryHighlighting();
+                    UpdateHighlighting();
                     break;
                 }
                 case DocumentActionKind.UndoAction: {
@@ -1077,6 +1142,12 @@ namespace Client {
                     }
                     break;
                 }
+                case Key.E:
+                    {
+                        ShowExpressionGraphExecuted(this, null);
+                        e.Handled = true;
+                        break;
+                    }
             }
 
             base.OnPreviewKeyDown(e);
@@ -1434,6 +1505,16 @@ namespace Client {
             return null;
         }
 
+        public IRElement GetElementAt(Point position) {
+            int offset = DocumentUtils.GetOffsetFromMousePosition(position, this, out _);
+
+            if (offset != -1) {
+                return FindElementAtOffset(offset);
+            }
+
+            return null;
+        }
+
         private void FirstBookmarkExecuted(object sender, ExecutedRoutedEventArgs e) {
             JumpToBookmark(bookmarks_.JumpToFirstBookmark());
         }
@@ -1624,7 +1705,7 @@ namespace Client {
         private bool HandleOperandElement(ElementHighlighter highlighter, bool markExpression,
                                           HighlightingEventAction action, OperandIR op) {
             if (markExpression) {
-                HighlightSSAExpression(op, highlighter, expressionStyle_);
+                HighlightSSAExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
                 return true;
             }
             else {
@@ -1788,15 +1869,31 @@ namespace Client {
         }
 
         private void HighlightSSAExpression(IRElement element, ElementHighlighter highlighter,
-                                            HighlightingStyleCollection style) {
-            HighlightSSAExpression(element, element, highlighter, style, 0);
+                                            HighlightingStyleCollection style,
+                                            HighlightingStyleCollection instrStyle) {
+            int styleIndex;
+            var locationTag = element.GetTag<SourceLocationTag>();
+
+            if (locationTag != null)
+            {
+                styleIndex = locationTag.Line % style.Styles.Count;
+            }
+            else
+            {
+                styleIndex = new Random().Next(style.Styles.Count - 1);
+            }
+
+            HighlightSSAExpression(element, element, highlighter, style, instrStyle, styleIndex, 0);
         }
 
         private void HighlightSSAExpression(IRElement element, IRElement parent, ElementHighlighter highlighter,
-                                            HighlightingStyleCollection style, int level) {
+                                            HighlightingStyleCollection style, HighlightingStyleCollection instrStyle,
+                                            int styleIndex, int level) {
             if (element is OperandIR op) {
                 if (parent != null) {
-                    highlighter.Add(new HighlightedGroup(op, expressionOperandStyle_.ForIndex(parent.TextLocation.Line)));
+                    //? TODO: Add option for "rainbow" style
+                    //highlighter.Add(new HighlightedGroup(op, expressionOperandStyle_.ForIndex(parent.TextLocation.Line)));
+                    highlighter.Add(new HighlightedGroup(op, style.ForIndex(styleIndex)));
                 }
 
                 if (level >= 4) {
@@ -1807,31 +1904,32 @@ namespace Client {
 
                 if (defTag != null) {
                     if (defTag.Parent is OperandIR defOp) {
-                        HighlightSSAExpression(defOp.Parent, parent, highlighter, style, level);
+                        HighlightSSAExpression(defOp.Parent, parent, highlighter, style, instrStyle, styleIndex, level);
                     }
                 }
                 else {
                     var sourceDefOp = ReferenceFinder.GetSSADefinition(op);
 
                     if (sourceDefOp != null) {
-                        HighlightSSAExpression(sourceDefOp, parent, highlighter, style, level);
+                        HighlightSSAExpression(sourceDefOp, parent, highlighter, style, instrStyle, styleIndex, level);
                     }
                 }
             }
             else if (element is InstructionIR instr) {
-                highlighter.Add(new HighlightedGroup(instr, expressionStyle_.ForIndex(parent.TextLocation.Line)));
+                //highlighter.Add(new HighlightedGroup(instr, expressionStyle_.ForIndex(parent.TextLocation.Line)));
+                highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
 
                 if (level >= 4) {
                     return;
                 }
 
                 foreach (var sourceOp in instr.Sources) {
-                    HighlightSSAExpression(sourceOp, instr, highlighter, style, level + 1);
+                    HighlightSSAExpression(sourceOp, instr, highlighter, style, instrStyle, styleIndex, level + 1);
                 }
 
                 if (level > 0) {
                     foreach (var destOp in instr.Destinations) {
-                        HighlightSSAExpression(destOp, parent, highlighter, style, level + 1);
+                        HighlightSSAExpression(destOp, parent, highlighter, style, instrStyle, styleIndex, level + 1);
                     }
                 }
             }
@@ -2098,17 +2196,14 @@ namespace Client {
         }
 
         private void MarkLoopBlocks() {
-            //? TODO: Fix this mess
-            //? TODO: Fix this mess
-            //? TODO: Fix this mess
-            var gr = new GraphRenderer(null, App.Settings.FlowGraphSettings);
+            var graphStyle = new FlowGraphStyleProvider(App.Settings.FlowGraphSettings);
             var loopGroups = new Dictionary<HighlightingStyle, HighlightedGroup>();
 
             foreach (var block in function_.Blocks) {
                 var loopTag = block.GetTag<LoopBlockTag>();
 
                 if (loopTag != null) {
-                    var style = gr.GetDefaultBlockStyle(block);
+                    var style = graphStyle.GetBlockNodeStyle(block);
 
                     if (!loopGroups.TryGetValue(style, out var group)) {
                         group = new HighlightedGroup(style);
@@ -2586,6 +2681,7 @@ namespace Client {
             AddCommand(DocumentCommand.MarkUses, MarkUsesExecuted);
             AddCommand(DocumentCommand.MarkReferences, MarkReferencesExecuted);
             AddCommand(DocumentCommand.ShowReferences, ShowReferencesExecuted);
+            AddCommand(DocumentCommand.ShowExpressionGraph, ShowExpressionGraphExecuted);
 
             AddCommand(DocumentCommand.ClearMarker, ClearMarkerExecuted);
             AddCommand(DocumentCommand.ClearAllMarkers, ClearAllMarkersExecuted);
@@ -2772,6 +2868,10 @@ namespace Client {
             //? TODO: Add option to disable
             remarkHighlighter_ = new RemarkHighlighter(HighlighingType.Marked);
             TextArea.TextView.BackgroundRenderers.Add(remarkHighlighter_);
+
+            var overlayRenderer = new Client.Document.OverlayRenderer(markedHighlighter_);
+            TextArea.TextView.BackgroundRenderers.Add(overlayRenderer);
+            TextArea.TextView.InsertLayer(overlayRenderer, KnownLayer.Text, LayerInsertionPosition.Above);
         }
 
         public void AddDiffTextSegments(List<DiffTextSegment> segments) {
@@ -2808,7 +2908,7 @@ namespace Client {
             {
                 foreach (var element in remark.ReferencedElements)
                 {
-                    if (remark.Kind == RemarkKind.Optimization || 
+                    if (remark.Kind == RemarkKind.Optimization ||
                         remark.Kind == RemarkKind.Analysis)
                     {
                         HighlightingStyle style = null;
@@ -2829,11 +2929,29 @@ namespace Client {
 
                         var bookmark = new Bookmark(0, element, remark.RemarkText, style);
                         margin_.AddRemarkBookmark(bookmark, remark.Kind);
+
+                        //var color = remark.Kind switch
+                        //{
+                        //    RemarkKind.Optimization => Colors.DarkGoldenrod,
+                        //    RemarkKind.Analysis => Colors.BlueViolet,
+                        //    _ => Colors.Transparent
+                        //};
+
+                        //var style2 = new HighlightingStyle(Brushes.Transparent, Pens.GetPen(color, 2));
+                        //var group = new HighlightedGroup(element, style2);
+                        //remarkHighlighter_.Add(group);
                     }
                     else
                     {
-                        var style = new HighlightingStyle(Colors.Sienna, null);
-                        var group = new HighlightedGroup(element, style);
+                        var color = remark.Kind switch {
+                            RemarkKind.Default => Colors.CornflowerBlue,
+                            RemarkKind.Verbose => Colors.DarkSeaGreen,
+                            RemarkKind.Trace => Colors.Silver,
+                            _ => Colors.Transparent
+                        };
+
+                        var style2 = new HighlightingStyle(Brushes.Transparent, Pens.GetPen(color, 1));
+                        var group = new HighlightedGroup(element, style2);
                         remarkHighlighter_.Add(group);
                     }
                 }
@@ -2841,6 +2959,20 @@ namespace Client {
 
             UpdateMargin();
             UpdateHighlighting();
+        }
+
+        public void RemoveRemarks()
+        {
+            margin_.RemoveRemarkBookmarks();
+            remarkHighlighter_.Clear();
+            UpdateMargin();
+            UpdateHighlighting();
+        }
+
+        public void UpdateRemarks(List<PassRemark> remarks)
+        {
+            RemoveRemarks();
+            AddRemarks(remarks);
         }
 
         private void ShowDefinitionPreview(IRElement element) {
@@ -2872,6 +3004,22 @@ namespace Client {
                 ShowReferences(op);
                 MirrorAction(DocumentActionKind.ShowReferences, selectedOp);
             }
+        }
+
+        private void ShowExpressionGraphExecuted(object sender, ExecutedRoutedEventArgs e)
+        {
+            var element = GetSelectedElement();
+
+            if (element != null)
+            {
+                ShowExpressionGraph(element);
+            }
+        }
+
+        private void ShowExpressionGraph(IRElement element)
+        {
+            var action = new DocumentAction(DocumentActionKind.ShowExpressionGraph, element);
+            ActionPerformed?.Invoke(this, action);
         }
 
         private void ShowReferences(OperandIR op) {

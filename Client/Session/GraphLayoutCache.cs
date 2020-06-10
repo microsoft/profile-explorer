@@ -12,9 +12,9 @@ namespace Client {
     public class GraphLayoutCache {
         public struct CachedGraphLayout {
             public string Text;
-            public Dictionary<string, BlockIR> BlockNameMap;
+            public Dictionary<string, IRElement> BlockNameMap;
 
-            public CachedGraphLayout(string text, Dictionary<string, BlockIR> blockNameMap) {
+            public CachedGraphLayout(string text, Dictionary<string, IRElement> blockNameMap) {
                 Text = text;
                 BlockNameMap = blockNameMap;
             }
@@ -30,13 +30,15 @@ namespace Client {
             graphLayout_ = new Dictionary<IRTextSection, byte[]>();
         }
 
-        public LayoutGraph GenerateGraph(FunctionIR function, IRTextSection section,
-                                         CancelableTaskInfo task) {
-            var printer = GraphPrinterFactory.CreateInstance(graphKind_, function);
+        public LayoutGraph GenerateGraph<T, U>(T element, IRTextSection section,
+                                         CancelableTaskInfo task, U options = null) where T:class where U:class {
+            var printer = GraphPrinterFactory.CreateInstance(graphKind_, element, options);
             string graphText;
 
             lock (this) {
-                if (graphLayout_.TryGetValue(section, out var graphData)) {
+                bool useCache = typeof(T) == typeof(FunctionIR);
+
+                if (useCache && graphLayout_.TryGetValue(section, out var graphData)) {
                     Trace.TraceInformation($"Graph cache: Loading cached section graph for {section}");
                     graphText = CompressionUtils.DecompressString(graphData);
                     task.Completed();
@@ -62,7 +64,7 @@ namespace Client {
                         }
 
                         // Cache the text only if there wasn't a failure for some reason.
-                        if (!string.IsNullOrEmpty(graphText)) {
+                        if (useCache && !string.IsNullOrEmpty(graphText)) {
                             var compresedGraphText = CompressionUtils.CompressString(graphText);
                             graphLayout_.Add(section, compresedGraphText);
                             shapeGraphLayout_.Add(inputText, compresedGraphText);
@@ -71,8 +73,18 @@ namespace Client {
                 }
             }
 
-            var graphReader = new GraphvizReader(graphKind_, graphText, printer.CreateBlockNodeMap());
-            return graphReader.ReadGraph();
+            var blockNodeMap = printer.CreateBlockNodeMap();
+            var blockNodeGroupsMap = printer.CreateBlockNodeGroupsMap();
+            var graphReader = new GraphvizReader(graphKind_, graphText, blockNodeMap);
+            var layoutGraph = graphReader.ReadGraph();
+
+            if(layoutGraph != null)
+            {
+                layoutGraph.BlockNameMap = blockNodeMap;
+                layoutGraph.BlockNodeGroupsMap = blockNodeGroupsMap;
+            }
+
+            return layoutGraph;
         }
 
         public void ClearCache() {

@@ -10,10 +10,39 @@ using Core.IR;
 
 namespace Core.GraphViz {
     public class GraphVizPrinter {
-        protected string CreateNode(ulong id, string label, StringBuilder builder) {
+        int subgraphIndex_;
+
+        protected string CreateNode(ulong id, string label, StringBuilder builder, string labelPrefix = null) {
             string nodeName = $"n{id}";
-            builder.AppendFormat("{0}[shape=rectangle, label=\"B{1}\"];\n",
-                                 nodeName, label);
+
+            if (!string.IsNullOrEmpty(labelPrefix))
+            {
+                builder.AppendFormat("{0}[shape=rectangle, label=\"{1}{2}\"];\n",
+                                         nodeName, labelPrefix, label);
+            }
+            else
+            {
+                builder.AppendFormat("{0}[shape=rectangle, label=\"{1}\"];\n",
+                                     nodeName, label);
+            }
+            return nodeName;
+        }
+
+        protected string CreateNodeWithMargins(ulong id, string label, StringBuilder builder,
+                                               double horizontalMargin, double verticalMargin, string labelPrefix = null)
+        {
+            string nodeName = $"n{id}";
+
+            if (!string.IsNullOrEmpty(labelPrefix))
+            {
+                builder.AppendFormat("{0}[shape=rectangle, margin=\"{1},{2}\", label=\"{3}{4}\"];\n",
+                                     nodeName, horizontalMargin, verticalMargin, labelPrefix, label);
+            }
+            else
+            {
+                builder.AppendFormat("{0}[shape=rectangle, margin=\"{1},{2}\", label=\"{3}\"];\n",
+                                     nodeName, horizontalMargin, verticalMargin, label);
+            }
             return nodeName;
         }
 
@@ -25,8 +54,28 @@ namespace Core.GraphViz {
             builder.AppendFormat("n{0} -> n{1};\n", id1, id2);
         }
 
+        protected void CreateEdge(ulong id1, ulong id2, string attribute, StringBuilder builder)
+        {
+            builder.AppendFormat("n{0} -> n{1} {2};\n", id1, id2, attribute);
+        }
+
+        // [constraint=false]
+
         protected void CreateEdgeWithStyle(ulong id1, ulong id2, string style, StringBuilder builder) {
             builder.AppendFormat("n{0} -> n{1}[style={2}];\n", id1, id2, style);
+        }
+
+
+        protected void StartSubgraph(int margin, StringBuilder builder)
+        {
+            builder.AppendLine($"subgraph cluster_{subgraphIndex_} {{");
+            builder.AppendLine($"margin={margin};");
+            subgraphIndex_++;
+        }
+
+        protected void EndSubgraph(StringBuilder builder)
+        {
+            builder.AppendLine("}");
         }
 
         public string PrintGraph() {
@@ -46,7 +95,12 @@ namespace Core.GraphViz {
             return "";
         }
 
-        public virtual Dictionary<string, BlockIR> CreateBlockNodeMap() {
+        public virtual Dictionary<string, IRElement> CreateBlockNodeMap() {
+            throw new NotImplementedException();
+        }
+
+        public virtual Dictionary<IRElement, List<IRElement>> CreateBlockNodeGroupsMap()
+        {
             throw new NotImplementedException();
         }
 
@@ -61,6 +115,7 @@ namespace Core.GraphViz {
             try {
                 inputFilePath = Path.GetTempFileName();
                 File.WriteAllText(inputFilePath, inputText);
+                Debug.WriteLine("Printed to " + inputFilePath);
             }
             catch (Exception ex) {
                 Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: Failed writing GraphViz input file: {ex}");
@@ -110,10 +165,12 @@ namespace Core.GraphViz {
                 return null;
             }
 
+#if !DEBUG
             try {
                 File.Delete(inputFilePath);
             }
             catch (Exception) { }
+#endif
 
             task.Completed();
             Trace.TraceInformation($"Graphviz task {ObjectTracker.Track(task)}: Completed");

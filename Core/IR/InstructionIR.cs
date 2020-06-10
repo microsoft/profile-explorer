@@ -39,6 +39,7 @@ namespace Core.IR {
         }
 
         public bool OpcodeIs<T>(T value) where T : System.Enum {
+            if (Opcode == null) return false;
             return ((T)Opcode).Equals(value);
         }
 
@@ -67,7 +68,7 @@ namespace Core.IR {
             var hashCode = -493299099;
             hashCode = hashCode * -1521134295 + base.GetHashCode();
             hashCode = hashCode * -1521134295 + Kind.GetHashCode();
-            hashCode = hashCode * -1521134295 + Opcode.GetHashCode();
+            hashCode = hashCode * -1521134295 + (Opcode?.GetHashCode() ?? 0);
             hashCode = hashCode * -1521134295 + EqualityComparer<List<OperandIR>>.Default.GetHashCode(Sources);
             hashCode = hashCode * -1521134295 + EqualityComparer<List<OperandIR>>.Default.GetHashCode(Destinations);
             return hashCode;

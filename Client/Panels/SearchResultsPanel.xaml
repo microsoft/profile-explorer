@@ -158,6 +158,7 @@
             </ListView.View>
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
                     <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
 
                     <Style.Triggers>

@@ -3,6 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using Core.IR;
 using ICSharpCode.AvalonEdit.Rendering;
@@ -115,6 +118,9 @@ namespace Client {
             get { return KnownLayer.Background; }
         }
 
+        public List<HighlightedSegmentGroup> Groups
+        { get => groups_; set => groups_ = value; }
+
         public ElementHighlighterState SaveState(FunctionIR function) {
             return new ElementHighlighterState(StateSerializer.SaveElementGroupState(groups_));
         }
@@ -150,17 +156,16 @@ namespace Client {
             }
         }
 
-        private static void DrawGroup(HighlightedSegmentGroup group,
-                                      TextView textView, DrawingContext drawingContext,
-                                      int viewStart, int viewEnd) {
+        private void DrawGroup(HighlightedSegmentGroup group,
+                               TextView textView, DrawingContext drawingContext,
+                               int viewStart, int viewEnd) {
             BackgroundGeometryBuilder geoBuilder = new BackgroundGeometryBuilder();
-            geoBuilder.AlignToWholePixels = true;
+            //geoBuilder.AlignToWholePixels = true;
             geoBuilder.BorderThickness = 0;
             geoBuilder.CornerRadius = 0;
 
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 geoBuilder.AddSegment(textView, segment);
-                
             }
 
             Geometry geometry = geoBuilder.CreateGeometry();
@@ -169,5 +174,7 @@ namespace Client {
                 drawingContext.DrawGeometry(group.BackColor, group.Border, geometry);
             }
         }
+
+
     }
 }

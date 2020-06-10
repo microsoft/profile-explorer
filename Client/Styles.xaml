@@ -1,8 +1,7 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:Client"
-    xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit">
+    xmlns:local="clr-namespace:Client">
 
     <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
 
@@ -126,6 +125,23 @@
         </Setter>
     </Style>
 
+
+    <Style x:Key="ExpressionIRPreviewTooltip" TargetType="ToolTip">
+        <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Grid>
+                        <local:IRPreview
+                            x:Name="IRPreviewer"
+                            Grid.Column="0"
+                            Background="Silver" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#FFB1D6F1" />
     <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#888" />
 
@@ -138,7 +154,7 @@
                     <Border
                         Name="Border"
                         Padding="2"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         SnapsToDevicePixels="true">

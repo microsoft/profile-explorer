@@ -17,7 +17,7 @@
 	<Color name="Pragma" foreground="CadetBlue" fontWeight="bold" />
     <RuleSet ignoreCase="false">
         <Rule color="Comment">\#[0-9]+.*</Rule>
-		
+		<Span color="Comment" begin="//" />
         <Span color="String">
             <Begin>"</Begin>
             <End>"</End>
