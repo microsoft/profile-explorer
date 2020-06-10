@@ -162,23 +162,22 @@ namespace Client {
             geoBuilder.AlignToWholePixels = true;
             geoBuilder.BorderThickness = 0;
             geoBuilder.CornerRadius = 0;
-            double lineThickness = 1;
 
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart))
             {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment))
                 {
+                    var lineThickness = group.Border.Thickness;
                     geoBuilder.AddRectangle(textView, new Rect(rect.X, rect.Y + (rect.Height - lineThickness),
                                                                rect.Width, lineThickness));
                 }
-
             }
 
             Geometry geometry = geoBuilder.CreateGeometry();
 
             if (geometry != null)
             {
-                drawingContext.DrawGeometry(group.BackColor, group.Border, geometry);
+                drawingContext.DrawGeometry(group.Border.Brush, null, geometry);
             }
         }
     }

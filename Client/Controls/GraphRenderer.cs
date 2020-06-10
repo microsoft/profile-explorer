@@ -10,7 +10,8 @@ using Core.Graph;
 using Core.GraphViz;
 using Core.IR;
 
-namespace Client {
+namespace Client
+{
     public sealed class GraphNode {
         public Node NodeInfo { get; set; }
         public DrawingVisual Visual { get; set; }
@@ -25,11 +26,12 @@ namespace Client {
                     new Rect(NodeInfo.CenterX - NodeInfo.Width / 2,
                              NodeInfo.CenterY - NodeInfo.Height / 2,
                              NodeInfo.Width, NodeInfo.Height));
+                var textSize = NodeInfo.Element is BlockIR ? 0.225 : 0.225;
 
                 var text = new FormattedText(NodeInfo.Label.ToString(),
                                              CultureInfo.InvariantCulture,
                                              FlowDirection.LeftToRight,
-                                             TextFont, 0.25, TextColor,
+                                             TextFont, textSize, TextColor,
                                              VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
 
                 dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,
@@ -38,58 +40,70 @@ namespace Client {
         }
     }
 
+    public enum GraphEdgeKind
+    {
+        Default,
+        Loop,
+        Branch,
+        Return,
+        ImmediateDominator,
+        ImmediatePostDominator
+    }
+
+    public interface GraphStyleProvider
+    {
+        Brush GetDefaultTextColor();
+        Brush GetDefaultNodeBackground();
+        HighlightingStyle GetDefaultNodeStyle();
+        HighlightingStyle GetNodeStyle(Node node);
+        Pen GetEdgeStyle(GraphEdgeKind kind);
+        GraphEdgeKind GetEdgeKind(Edge edge);
+        bool ShouldRenderEdges(GraphEdgeKind kind);
+    }
+
     public sealed class GraphRenderer {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
         private const double DashedEdgeThickness = 0.035;
+        private const double GroupBoundingBoxMargin = 0.20;
+        private const double GroupBoundingBoxTextMargin = 0.10;
         private const int PolylineEdgeThreshold = 100;
 
-        private FlowGraphSettings options_;
+        private GraphSettings options_;
         private LayoutGraph graph_;
         private DrawingVisual visual_;
+        private GraphStyleProvider graphStyle_;
         private Typeface defaultNodeFont_;
         private Typeface edgeFont_;
 
-        private Brush defaultTextColor_;
-        private Brush defaultNodeBackground_;
-        private HighlightingStyle defaultBlockStyle_;
-        private HighlightingStyle emptyBlockStyle_;
-        private HighlightingStyle branchBlockStyle_;
-        private HighlightingStyle switchBlockStyle_;
-        private HighlightingStyle loopBackedgeBlockStyle_;
-        private HighlightingStyle returnBlockStyle_;
-        private List<HighlightingStyle> loopBlockStyles_;
-
-        public HighlightingStyle DefaultNodeStyle { get; set; }
-
-        public GraphRenderer(LayoutGraph graph, FlowGraphSettings options) {
+        public GraphRenderer(LayoutGraph graph, GraphSettings options) {
             options_ = options;
             graph_ = graph;
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
 
-            defaultTextColor_ = ColorBrushes.GetBrush(options.TextColor);
-            defaultNodeBackground_ = ColorBrushes.GetBrush(options.NodeColor);
-            DefaultNodeStyle = new HighlightingStyle(defaultNodeBackground_,
-                                                     Pens.GetPen(options.NodeBorderColor, DefaultEdgeThickness)); ;
-            defaultBlockStyle_ = new HighlightingStyle(defaultNodeBackground_, Pens.GetPen(options.NodeBorderColor, DefaultEdgeThickness));
-            branchBlockStyle_ = new HighlightingStyle(defaultNodeBackground_, Pens.GetPen(options.BranchNodeBorderColor, 0.035));
-            switchBlockStyle_ = new HighlightingStyle(defaultNodeBackground_, Pens.GetPen(options.SwitchNodeBorderColor, 0.035));
-            loopBackedgeBlockStyle_ = new HighlightingStyle(defaultNodeBackground_, Pens.GetPen(options.LoopNodeBorderColor, BoldEdgeThickness));
-            returnBlockStyle_ = new HighlightingStyle(defaultNodeBackground_, Pens.GetPen(options.ReturnNodeBorderColor, BoldEdgeThickness));
-            emptyBlockStyle_ = new HighlightingStyle(Colors.Gainsboro, Pens.GetPen(options.NodeBorderColor, DefaultEdgeThickness));
-
-            if (options.MarkLoopBlocks) {
-                loopBlockStyles_ = new List<HighlightingStyle>();
-
-                foreach (var color in options.LoopNodeColors) {
-                    loopBlockStyles_.Add(new HighlightingStyle(color, Pens.GetPen(options.NodeBorderColor, DefaultEdgeThickness)));
-                }
+            if(options is FlowGraphSettings)
+            {
+                graphStyle_ = new FlowGraphStyleProvider(options as FlowGraphSettings);
+            }
+            else if(options is ExpressionGraphSettings)
+            {
+                graphStyle_ = new ExpressionGraphStyleProvider(options as ExpressionGraphSettings);
+            }
+            else
+            {
+                throw new InvalidOperationException("Unknown graph settings type!");
             }
         }
 
         public DrawingVisual Render() {
             visual_ = new DrawingVisual();
+
+            if (graph_.BlockNodeGroupsMap != null)
+            {
+                DrawNodeBoundingBoxes();
+            }
+
             DrawNodes();
             DrawEdges();
 
@@ -101,48 +115,80 @@ namespace Client {
             return visual_;
         }
 
-        public HighlightingStyle GetDefaultBlockStyle(BlockIR block) {
-            if (block == null) {
-                return defaultBlockStyle_;
-            }
+        private void DrawNodeBoundingBoxes()
+        {
+            var pen = Pens.GetPen(Colors.Gray, DefaultEdgeThickness);
 
-            var loopTag = block.GetTag<LoopBlockTag>();
+            foreach (var group in graph_.BlockNodeGroupsMap)
+            {
+                var boundingBox = ComputeBoundingBox(group.Value);
+                boundingBox.Inflate(GroupBoundingBoxMargin, GroupBoundingBoxMargin);
 
-            if (loopTag != null && options_.MarkLoopBlocks) {
-                if (loopTag.NestingLevel < loopBlockStyles_.Count - 1) {
-                    return loopBlockStyles_[loopTag.NestingLevel];
+                var groupVisual = new DrawingVisual();
+
+                using (var dc = groupVisual.RenderOpen())
+                {
+                    dc.DrawRectangle(Brushes.Transparent, pen, boundingBox);
+
+                    var textSize = 0.25;
+
+                    var text = new FormattedText($"B{((BlockIR)group.Key).Number.ToString()}",
+                                                 CultureInfo.InvariantCulture,
+                                                 FlowDirection.LeftToRight,
+                                                 defaultNodeFont_, textSize, Brushes.DimGray,
+                                                 VisualTreeHelper.GetDpi(groupVisual).PixelsPerDip);
+
+                    dc.DrawText(text, new Point(boundingBox.Right + GroupBoundingBoxTextMargin,
+                                                boundingBox.Top + GroupBoundingBoxTextMargin));
                 }
-                else return loopBlockStyles_[loopBlockStyles_.Count - 1];
+
+                visual_.Children.Add(groupVisual);
+            }
+        }
+
+        private Rect ComputeBoundingBox(List<IRElement> nodeElements)
+        {
+            double xMin = double.MaxValue;
+            double yMin = double.MaxValue;
+            double xMax = double.MinValue;
+            double yMax = double.MinValue;
+
+            foreach(var element in nodeElements)
+            {
+                var node = graph_.BlockNodeMap[element];
+                xMin = Math.Min(xMin, node.CenterX - node.Width / 2);
+                yMin = Math.Min(yMin, node.CenterY - node.Height / 2);
+                xMax = Math.Max(xMax, node.CenterX + node.Width / 2);
+                yMax = Math.Max(yMax, node.CenterY + node.Height / 2);
             }
 
-            if (options_.ColorizeNodes) {
-                if (block.HasLoopBackedge) return loopBackedgeBlockStyle_;
-                else if (block.IsBranchBlock) return branchBlockStyle_;
-                else if (block.IsSwitchBlock) return switchBlockStyle_;
-                else if (block.IsReturnBlock) return returnBlockStyle_;
-                else if (block.IsEmpty) return emptyBlockStyle_;
-            }
-
-            return defaultBlockStyle_;
+            return new Rect(xMin, yMin, xMax - xMin, yMax - yMin);
         }
 
         public HighlightingStyle GetDefaultNodeStyle() {
-            return defaultBlockStyle_;
+            return graphStyle_.GetDefaultNodeStyle();
         }
 
         public HighlightingStyle GetDefaultNodeStyle(GraphNode node) {
-            return GetDefaultBlockStyle(node.NodeInfo.Block);
+            return graphStyle_.GetNodeStyle(node.NodeInfo);
+        }
+
+        public HighlightingStyle GetDefaultNodeStyle(Node node)
+        {
+            return graphStyle_.GetNodeStyle(node);
         }
 
         private void DrawNodes() {
+            var textColor = graphStyle_.GetDefaultTextColor();
+
             foreach (var node in graph_.Nodes) {
                 var nodeVisual = new DrawingVisual();
                 var graphNode = new GraphNode() {
                     NodeInfo = node,
                     Visual = nodeVisual,
                     TextFont = defaultNodeFont_,
-                    TextColor = defaultTextColor_,
-                    Style = GetDefaultBlockStyle(node.Block)
+                    TextColor = textColor,
+                    Style = GetDefaultNodeStyle(node)
                 };
 
                 graphNode.Draw();
@@ -156,56 +202,12 @@ namespace Client {
             return new Point(value.Item1, value.Item2);
         }
 
-        enum EdgeKind {
-            Default,
-            Loop,
-            Branch,
-            Return,
-            ImmediateDominator,
-            ImmediatePostDominator
-        }
-
-        EdgeKind GetEdgeType(Edge edge) {
-            if (!options_.ColorizeEdges) {
-                return EdgeKind.Default;
-            }
-
-            if (edge.Style == Edge.EdgeKind.Dotted) {
-                return EdgeKind.ImmediateDominator;
-            }
-
-            if (graph_.GraphKind != GraphKind.FlowGraph) {
-                return EdgeKind.Default;
-            }
-
-            var fromBlock = edge.NodeFrom?.Block;
-            var toBlock = edge.NodeTo?.Block;
-
-            if (fromBlock != null && toBlock != null) {
-                if (toBlock.Number <= fromBlock.Number) {
-                    return EdgeKind.Loop;
-                }
-                else if (toBlock.IsReturnBlock) {
-                    return EdgeKind.Return;
-                }
-                else if (fromBlock.Successors.Count == 2) {
-                    var targetBlock = fromBlock.BranchTargetBlock;
-
-                    if (targetBlock == toBlock) {
-                        return EdgeKind.Branch;
-                    }
-                }
-            }
-
-            return EdgeKind.Default;
-        }
-
         private void DrawEdges() {
-            var pen = Pens.GetPen(Brushes.Black, DefaultEdgeThickness);
-            var loopPen = Pens.GetPen(loopBackedgeBlockStyle_.Border.Brush, BoldEdgeThickness);
-            var branchPen = Pens.GetPen(branchBlockStyle_.Border.Brush, DefaultEdgeThickness);
-            var returnPen = Pens.GetPen(returnBlockStyle_.Border.Brush, DefaultEdgeThickness);
-            var immDomPen = Pens.GetDashedPen(Colors.Blue, DashStyles.Dot, DashedEdgeThickness);
+            var pen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Default);
+            var loopPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Loop);
+            var branchPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Branch);
+            var returnPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Return);
+            var immDomPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.ImmediateDominator);
             var dc = visual_.RenderOpen();
 
             var defaultEdgeGeometry = new StreamGeometry();
@@ -226,13 +228,13 @@ namespace Client {
                                                            (node.InEdges.Count > PolylineEdgeThreshold)) != null;
             foreach (var edge in graph_.Edges) {
                 var points = edge.LinePoints;
-                var edgeType = GetEdgeType(edge);
+                var edgeType = graphStyle_.GetEdgeKind(edge);
                 var sc = edgeType switch {
-                    EdgeKind.Default => defaultSC,
-                    EdgeKind.Branch => branchSC,
-                    EdgeKind.Loop => loopSC,
-                    EdgeKind.Return => returnSC,
-                    EdgeKind.ImmediateDominator => immDomSC
+                    GraphEdgeKind.Default => defaultSC,
+                    GraphEdgeKind.Branch => branchSC,
+                    GraphEdgeKind.Loop => loopSC,
+                    GraphEdgeKind.Return => returnSC,
+                    GraphEdgeKind.ImmediateDominator => immDomSC
                 };
 
                 //? TODO: Avoid making copies at all
@@ -273,12 +275,12 @@ namespace Client {
             branchEdgeGeometry.Freeze();
             returnEdgeGeometry.Freeze();
             immDomEdgeGeometry.Freeze();
-            dc.DrawGeometry(Brushes.Black, pen, defaultEdgeGeometry);
+            dc.DrawGeometry(pen.Brush, pen, defaultEdgeGeometry);
             dc.DrawGeometry(loopPen.Brush, loopPen, loopEdgeGeometry);
             dc.DrawGeometry(branchPen.Brush, branchPen, branchEdgeGeometry);
             dc.DrawGeometry(returnPen.Brush, returnPen, returnEdgeGeometry);
 
-            if (options_.ShowImmDominatorEdges) {
+            if (graphStyle_.ShouldRenderEdges(GraphEdgeKind.ImmediateDominator)) {
                 dc.DrawGeometry(immDomPen.Brush, immDomPen, immDomEdgeGeometry);
             }
 

@@ -21,7 +21,7 @@ namespace Core.GraphViz {
         }
 
         void CreateNode(BlockIR block, StringBuilder builder) {
-            var blockName = base.CreateNode(block.Id, block.Number.ToString(), builder);
+            var blockName = base.CreateNode(block.Id, block.Number.ToString(), builder, "B");
             BlockNameMap[blockName] = block;
         }
 
@@ -52,14 +52,19 @@ namespace Core.GraphViz {
             }
         }
 
-        public override Dictionary<string, BlockIR> CreateBlockNodeMap() {
-            Dictionary<string, BlockIR> map = new Dictionary<string, BlockIR>();
+        public override Dictionary<string, IRElement> CreateBlockNodeMap() {
+            Dictionary<string, IRElement> map = new Dictionary<string, IRElement>();
 
             foreach (var block in function_.Blocks) {
                 map[GetNodeName(block.Id)] = block;
             }
 
             return map;
+        }
+
+        public override Dictionary<IRElement, List<IRElement>> CreateBlockNodeGroupsMap()
+        {
+            return null;
         }
     }
 }

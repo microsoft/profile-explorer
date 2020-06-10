@@ -107,7 +107,7 @@ namespace CompilerStudio {
 
                                          text = reader.GetSectionText(section);
                                          var sectionParser = new UTCSectionParser(errorHandler);
-                                         var function = sectionParser.ParseSection(text);
+                                         var function = sectionParser.ParseSection(section, text);
 
                                          if (function != null) {
                                              CFGPrinter p = new CFGPrinter(function);

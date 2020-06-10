@@ -1,0 +1,166 @@
+﻿syntax = "proto3";
+
+service DebugService {
+  rpc StartSession(StartSessionRequest) returns (StartSessionResult);
+  rpc EndSession(EndSessionRequest) returns (Result);
+  rpc UpdateIR(UpdateIRRequest) returns (Result);
+  rpc MarkElement(MarkElementRequest) returns (Result);
+  rpc SetCurrentElement(SetCurrentElementRequest) returns (Result);
+  rpc ExecuteCommand(ElementCommandRequest) returns (Result);
+  rpc HasActiveBreakpoint(ActiveBreakpointRequest) returns (ActiveBreakpointResult);
+  rpc ClearTemporaryHighlighting(ClearHighlightingRequest) returns (Result);
+  rpc SetSessionState(SessionStateRequest) returns (Result);
+  rpc UpdateCurrentStackFrame(CurrentStackFrameRequest) returns (Result);
+}
+
+enum SessionState {
+  Listening = 0;
+  Paused = 1;
+}
+
+message SessionStateRequest {
+  SessionState state = 1;
+}
+
+enum ClientKind {
+  debugger = 0;
+  runtime = 1;
+}
+
+message StartSessionRequest {
+  ClientKind kind = 1;
+  int64 processId = 2;
+  int64 processArgs = 3;
+}
+
+message StartSessionResult {
+  int32 errorCode = 1;
+  string errorMessage = 2;
+  int64 sessionId = 3;
+}
+
+message EndSessionRequest {
+  int64 sessionId = 1;
+}
+
+message StackFrame {
+  string file = 1;
+  string function = 2;
+  int32 lineNumber = 3;
+}
+
+message CurrentStackFrameRequest {
+  StackFrame currentFrame = 1;
+}
+
+message UpdateIRRequest {
+  int64 sessionId = 1;
+  string text = 2;
+}
+
+message Result {
+  bool success = 1;
+  int32 errorCode = 2;
+  string errorMessage = 3;
+}
+
+message RGBColor {
+  int32 R = 1;
+  int32 G = 2;
+  int32 B = 3;
+}
+
+enum HighlightingType {
+  temporary = 0;
+  permanent = 1;
+}
+
+message ClearHighlightingRequest {
+  HighlightingType highlighting = 1;
+}
+
+message MarkElementRequest {
+  int64 elementAddress = 1;
+  RGBColor color = 2;
+  string label = 3;
+  HighlightingType highlighting = 4;
+}
+
+enum IRElementKind {
+  Instruction = 0;
+  Operand = 1;
+  Block = 2;
+  User = 3;
+  UserParent = 4;
+}
+
+message SetCurrentElementRequest {
+  int32 elementId = 1;
+  int64 elementAddress = 2;
+  IRElementKind elementKind = 3;
+  string label = 4;
+}
+
+
+
+// Color
+//   r
+//   g
+//   b
+
+// ClientKid
+//   debugger
+//   runtime
+
+enum ElementCommand {
+   GoToDefinition = 0;
+   MarkBlock = 1;
+   ShowUses = 2;
+   MarkUses = 3;
+   ShowReferences = 4;
+   MarkReferences = 5;
+   MarkExpression = 6;
+   ShowExpression = 7;
+   ClearMarker = 8;
+}
+
+message ElementCommandRequest {
+  ElementCommand command = 1;
+  int64 elementAddress = 2;
+  string label = 3;
+  HighlightingType highlighting = 4;
+  StackFrame stackFrame = 5;
+}
+
+message ActiveBreakpointRequest {
+  int64 elementAddress = 1;
+}
+
+message ActiveBreakpointResult {
+  bool success = 1;
+  int32 errorCode = 2;
+  string errorMessage = 3;
+  bool hasBreakpoint = 4;
+}
+
+// NoteVerbosity
+//   default
+//   verbose
+//   trace
+
+// NoteKind
+//    general
+//    analysis
+//    optimization
+
+// AddNote
+//   long sessionId
+//   long element
+//   string text
+//   NoteKind kind
+//   NoteVerbosity verbosity
+
+// HasActiveBreakpoint
+//    long element
+// AddElementBreakpoint
+// RemoveElementBreakpoint

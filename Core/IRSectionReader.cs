@@ -140,11 +140,33 @@ namespace Core {
         public IRTextFunction ParentFunction { get; set; }
         public IRPassOutput OutputBefore;
         public IRPassOutput OutputAfter;
+        public Dictionary<int, string> LineMetadata{ get; set; }
 
         public int LineCount {
             get {
                 return Output.EndLine - Output.StartLine + 1;
             }
+        }
+
+        public void AddLineMetadata(int lineNumber, string metadata)
+        {
+            if(LineMetadata == null)
+            {
+                LineMetadata = new Dictionary<int, string>();
+            }
+
+            LineMetadata[lineNumber] = metadata;
+        }
+
+        public string GetLineMetadata(int lineNumber)
+        {
+            if(LineMetadata != null &&
+               LineMetadata.TryGetValue(lineNumber, out string value))
+            {
+                return value;
+            }
+
+            return null;
         }
 
         public override bool Equals(object obj) {

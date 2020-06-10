@@ -2,14 +2,20 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
 using Core.UTC;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 
 namespace Client {
     public static class ErrorReporting {
+        static TelemetryClient telemetry_;
+
         public static string CreateMiniDump() {
             var time = DateTime.Now;
             var fileName = $"CompilerStudio-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.dmp";
@@ -76,6 +82,39 @@ namespace Client {
             return path;
         }
 
+        static bool InitializeTelemetry()
+        {
+            if (telemetry_ != null)
+            {
+                return true;
+            }
+
+            try
+            {
+                TelemetryConfiguration configuration = TelemetryConfiguration.CreateDefault();
+                configuration.DisableTelemetry = false;
+                configuration.InstrumentationKey = "da7d4359-13f9-40c0-a2bb-c3fb54a76275";
+                telemetry_ = new TelemetryClient(configuration);
+
+                telemetry_.Context.Session.Id = Guid.NewGuid().ToString();
+                byte[] userId = Encoding.UTF8.GetBytes(Environment.UserName + Environment.MachineName);
+
+                using (var crypto = new MD5CryptoServiceProvider())
+                {
+                    byte[] hash = crypto.ComputeHash(userId);
+                    telemetry_.Context.User.Id = Convert.ToBase64String(hash);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                telemetry_ = null;
+                Debug.Write(ex);
+            }
+
+            return telemetry_ != null;
+        }
+
         public static void LogUnhandledException(Exception exception, string source, bool showUIPrompt = true) {
             var message = $"Unhandled exception:\n{exception}";
 
@@ -91,6 +130,14 @@ namespace Client {
                 if (exception.InnerException != null) {
                     stackTrace += $"\n\nInner exception: {exception.InnerException.StackTrace}";
                 }
+
+                // Report exception to telemetry service.
+                telemetry_.TrackException(exception, new Dictionary<string, string>()
+                    {{"StackTrace", stackTrace},
+                     {"Source", source }
+                });
+
+                telemetry_.Flush();
 
                 var stackTracePath = CreateStackTraceDump(stackTrace);
                 var sectionPath = CreateSectionDump();

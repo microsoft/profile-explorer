@@ -194,6 +194,11 @@ namespace Client {
         private async void JumpToNextSectionExecuted(object sender, ExecutedRoutedEventArgs e) {
             int index = ResultList.SelectedIndex;
 
+            if(index < 0)
+            {
+                index = 0;
+            }
+
             if (index < ResultList.Items.Count - 1) {
                 IRTextSection startSection = searchResults_[index].Section;
 

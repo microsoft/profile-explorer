@@ -7,24 +7,33 @@ using System.Threading;
 using System.Threading.Tasks;
 using Core;
 using ProtoBuf;
-using Xceed.Wpf.AvalonDock.Layout;
+using AvalonDock.Layout;
 
 namespace Client {
+    public enum SessionKind {
+        Default = 0,
+        FileSession = 1,
+        DebugSession = 2
+    };
+
     [ProtoContract]
     public class SessionInfo {
         [ProtoMember(1)]
         public string FilePath;
         [ProtoMember(2)]
-        public bool IsSessionFile;
+        public SessionKind Kind;
         [ProtoMember(3)]
         public string Notes;
 
         public SessionInfo() { }
 
-        public SessionInfo(string filePath, bool isSessionFile) {
+        public SessionInfo(string filePath, SessionKind kind) {
             FilePath = filePath;
-            IsSessionFile = isSessionFile;
+            Kind = kind;
         }
+
+        public bool IsDebugSession => Kind == SessionKind.DebugSession;
+        public bool IsFileSession => Kind == SessionKind.FileSession;
     }
 
     [ProtoContract]
@@ -154,8 +163,8 @@ namespace Client {
 
         public event EventHandler DocumentChanged;
 
-        public SessionStateManager(string filePath, bool isSessionFile) {
-            Info = new SessionInfo(filePath, isSessionFile);
+        public SessionStateManager(string filePath, SessionKind sessionKind) {
+            Info = new SessionInfo(filePath, sessionKind);
             Info.Notes = "";
 
             documents_ = new List<LoadedDocument>();
@@ -170,7 +179,7 @@ namespace Client {
         public void NewLoadedDocument(LoadedDocument docInfo) {
             documents_.Add(docInfo);
 
-            if (!Info.IsSessionFile) {
+            if (!Info.IsFileSession && !Info.IsDebugSession) {
                 docInfo.SetupDocumentWatcher();
                 docInfo.DocumentChanged += DocumentWatcher_Changed;
                 docInfo.ChangeDocumentWatcherState(watchDocumentChanges_);
@@ -230,7 +239,7 @@ namespace Client {
             return docInfo.LoadSectionState(section);
         }
 
-        public Task<byte[]> SerializeSession(DocumentSectionLoader docLoader) {
+        public Task<byte[]> SerializeSession(SectionLoader docLoader) {
             var state = new SessionState();
             state.Info = Info;
 

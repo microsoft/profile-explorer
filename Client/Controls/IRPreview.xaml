@@ -39,7 +39,7 @@
 
                 <local:IRDocument
                     x:Name="TextView"
-                    Background="Beige"
+                    Background="OldLace"
                     DockPanel.Dock="Bottom"
                     Focusable="False"
                     FontFamily="Consolas"

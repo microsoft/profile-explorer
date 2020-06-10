@@ -37,6 +37,6 @@ namespace Core {
         void SkipToNextBlock();
         void SkipToFunctionEnd();
 
-        FunctionIR ParseSection(string sectionText);
+        FunctionIR ParseSection(IRTextSection section, string sectionText);
     }
 }

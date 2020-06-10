@@ -1,8 +1,8 @@
-﻿<Window
+<Window
     x:Class="Client.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:avalonDock="http://schemas.xceed.com/wpf/xaml/avalondock"
+    xmlns:avalonDock="https://github.com/Dirkster99/AvalonDock"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:Client"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -520,6 +520,7 @@
                         <MenuItem Click="MenuItem_Click_2" Header="Create debug files" />
                         <MenuItem Click="MenuItem_Click" Header="Crash application" />
                         <MenuItem Click="MenuItem_Click_7" Header="Query" />
+                        <MenuItem Click="MenuItem_Click_8" Header="Start Grpc Server" />
                     </MenuItem>
                 </MenuItem>
             </Menu>
@@ -615,16 +616,15 @@
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable
-                                    Title="Expression DAG"
+                                    x:Name="ExpressionGraphPanelHost"
+                                    Title="Expression Graph"
                                     CanAutoHide="False"
                                     CanDockAsTabbedDocument="False"
                                     CanHide="False"
-                                    ContentId="ExpressionDAG"
+                                    ContentId="ExpressionGraph"
                                     IsActiveChanged="LayoutAnchorable_IsActiveChanged"
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <Grid>
-                                        <Button Content="Placeholder" />
-                                    </Grid>
+                                    <local:ExpressionGraphPanel x:Name="ExpressionGraphPanel" />
                                 </avalonDock:LayoutAnchorable>
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
@@ -851,11 +851,6 @@
                 <ComboBoxItem Content="Light">
                     <ComboBoxItem.Tag>
                         <avalonDock:Vs2013LightTheme />
-                    </ComboBoxItem.Tag>
-                </ComboBoxItem>
-                <ComboBoxItem Content="Gray">
-                    <ComboBoxItem.Tag>
-                        <avalonDock:Vs2013GrayTheme />
                     </ComboBoxItem.Tag>
                 </ComboBoxItem>
                 <ComboBoxItem Content="Dark">

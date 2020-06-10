@@ -25,9 +25,9 @@ namespace Client {
     }
 
     public class SectionTextSearcher {
-        private DocumentSectionLoader sectionLoader_;
+        private SectionLoader sectionLoader_;
 
-        public SectionTextSearcher(DocumentSectionLoader sectionLoader) {
+        public SectionTextSearcher(SectionLoader sectionLoader) {
             sectionLoader_ = sectionLoader;
         }
 

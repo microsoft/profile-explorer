@@ -282,6 +282,13 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
                 Visibility="Collapsed" />
+            <options:ExpressionGraphOptionsPanel
+                x:Name="ExpressionOptionsPanel"
+                Width="320"
+                Height="Auto"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Visibility="Collapsed" />
         </Grid>
 
 

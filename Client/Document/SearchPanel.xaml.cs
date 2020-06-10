@@ -127,6 +127,7 @@ namespace Client.Document {
         public void Show(SearchInfo initialInfo = null, bool searchAll = false) {
             Reset(initialInfo, searchAll);
             TextSearch.Focus();
+            Keyboard.Focus(TextSearch);
         }
 
         public void Reset(SearchInfo initialInfo = null, bool searchAll = false) {

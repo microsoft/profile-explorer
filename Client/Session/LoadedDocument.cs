@@ -30,10 +30,11 @@ namespace Client {
         private bool disposed_;
 
         public string FilePath { get; set; }
-        public DocumentSectionLoader Loader { get; set; }
+        public SectionLoader Loader { get; set; }
         public IRTextSummary Summary { get; set; }
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
+        public bool IsDebugDocument;
 
         public string FileName {
             get {
@@ -96,7 +97,7 @@ namespace Client {
             var fileDir = Path.GetDirectoryName(FilePath);
             var fileName = Path.GetFileName(FilePath);
             documentWatcher_ = new FileSystemWatcher(fileDir, fileName);
-            documentWatcher_.NotifyFilter = NotifyFilters.LastWrite;
+            documentWatcher_.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.LastAccess;
             documentWatcher_.Changed += DocumentWatcher_Changed;
         }
 
@@ -141,8 +142,6 @@ namespace Client {
         protected virtual void Dispose(bool disposing) {
             if (!disposed_) {
                 if (disposing) {
-                    Loader.Dispose();
-
                     if (documentWatcher_ != null) {
                         documentWatcher_.Dispose();
                     }

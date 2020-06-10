@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Media;
+using Core.GraphViz;
 using ProtoBuf;
 
 namespace Client {
@@ -155,6 +156,14 @@ namespace Client {
         public bool HighlightConnectedNodesOnSelection { get; set; }
         [ProtoMember(10)]
         public Color BackgroundColor { get; set; }
+        [ProtoMember(11)]
+        public Color TextColor { get; set; }
+        [ProtoMember(12)]
+        public Color NodeColor { get; set; }
+        [ProtoMember(23)]
+        public Color NodeBorderColor { get; set; }
+        [ProtoMember(24)]
+        public Color EdgeColor { get; set; }
 
         public GraphSettings() {
             Reset();
@@ -170,10 +179,18 @@ namespace Client {
             HighlightConnectedNodesOnHover = true;
             HighlightConnectedNodesOnSelection = true;
             BackgroundColor = Utils.ColorFromString("#EFECE2");
+            TextColor = Colors.Black;
+            EdgeColor = Colors.Black;
+            NodeColor = Utils.ColorFromString("#CBCBCB");
+            NodeBorderColor = Utils.ColorFromString("#000000");
         }
 
         public override bool Equals(object obj) {
             return obj is GraphSettings options &&
+                   TextColor.Equals(options.TextColor) &&
+                   EdgeColor.Equals(options.EdgeColor) &&
+                   NodeColor.Equals(options.NodeColor) &&
+                   NodeBorderColor.Equals(options.NodeBorderColor) &&
                    SyncSelectedNodes == options.SyncSelectedNodes &&
                    SyncMarkedNodes == options.SyncMarkedNodes &&
                    BringNodesIntoView == options.BringNodesIntoView &&
@@ -190,27 +207,23 @@ namespace Client {
     [ProtoContract(SkipConstructor = true)]
     public class FlowGraphSettings : GraphSettings {
         [ProtoMember(1)]
-        public Color NodeColor { get; set; }
-        [ProtoMember(2)]
-        public Color NodeBorderColor { get; set; }
-        [ProtoMember(3)]
         public Color EmptyNodeColor { get; set; }
-        [ProtoMember(4)]
+        [ProtoMember(2)]
         public Color BranchNodeBorderColor { get; set; }
-        [ProtoMember(5)]
+        [ProtoMember(3)]
         public Color SwitchNodeBorderColor { get; set; }
-        [ProtoMember(6)]
+        [ProtoMember(4)]
         public Color LoopNodeBorderColor { get; set; }
-        [ProtoMember(7)]
+        [ProtoMember(5)]
         public Color ReturnNodeBorderColor { get; set; }
-        [ProtoMember(8)]
+        [ProtoMember(6)]
         public bool MarkLoopBlocks { get; set; }
-        [ProtoMember(9, OverwriteList = true)]
+        [ProtoMember(7, OverwriteList = true)]
         public Color[] LoopNodeColors { get; set; }
-        [ProtoMember(10)]
-        public Color TextColor { get; set; }
-        [ProtoMember(11)]
+        [ProtoMember(8)]
         public bool ShowImmDominatorEdges { get; set; }
+        [ProtoMember(9)]
+        public Color DominatorEdgeColor { get; set; }
 
         static FlowGraphSettings() {
             StateSerializer.RegisterDerivedClass<FlowGraphSettings, GraphSettings>();
@@ -240,6 +253,7 @@ namespace Client {
             };
 
             ShowImmDominatorEdges = true;
+            DominatorEdgeColor = Utils.ColorFromString("#0042B6");
         }
 
         public override SettingsBase Clone() {
@@ -250,9 +264,6 @@ namespace Client {
         public override bool Equals(object obj) {
             return obj is FlowGraphSettings options &&
                    base.Equals(obj) &&
-                   TextColor.Equals(options.TextColor) &&
-                   NodeColor.Equals(options.NodeColor) &&
-                   NodeBorderColor.Equals(options.NodeBorderColor) &&
                    EmptyNodeColor.Equals(options.EmptyNodeColor) &&
                    BranchNodeBorderColor.Equals(options.BranchNodeBorderColor) &&
                    SwitchNodeBorderColor.Equals(options.SwitchNodeBorderColor) &&
@@ -260,7 +271,111 @@ namespace Client {
                    ReturnNodeBorderColor.Equals(options.ReturnNodeBorderColor) &&
                    MarkLoopBlocks == options.MarkLoopBlocks &&
                    ShowImmDominatorEdges == options.ShowImmDominatorEdges &&
+                   DominatorEdgeColor.Equals(options.DominatorEdgeColor) &&
                    EqualityComparer<Color[]>.Default.Equals(LoopNodeColors, options.LoopNodeColors);
+        }
+    }
+
+    [ProtoContract(SkipConstructor = true)]
+    public class ExpressionGraphSettings : GraphSettings
+    {
+        [ProtoMember(1)]
+        public Color UnaryInstructionNodeColor { get; set; }
+        [ProtoMember(2)]
+        public Color BinaryInstructionNodeColor { get; set; }
+        [ProtoMember(3)]
+        public Color CopyInstructionNodeColor { get; set; }
+        [ProtoMember(4)]
+        public Color PhiInstructionNodeColor { get; set; }
+        [ProtoMember(5)]
+        public Color OperandNodeColor { get; set; }
+        [ProtoMember(6)]
+        public Color NumberOperandNodeColor { get; set; }
+        [ProtoMember(7)]
+        public Color IndirectionOperandNodeColor { get; set; }
+        [ProtoMember(8)]
+        public Color AddressOperandNodeColor { get; set; }
+        [ProtoMember(9)]
+        public Color LoopPhiBackedgeColor { get; set; }
+
+        [ProtoMember(10)]
+        public bool PrintVariableNames { get; set; }
+        [ProtoMember(11)]
+        public bool PrintSSANumbers { get; set; }
+        [ProtoMember(12)]
+        public bool GroupInstructions { get; set; }
+        [ProtoMember(13)]
+        public bool PrintBottomUp { get; set; }
+        [ProtoMember(14)]
+        public int MaxExpressionDepth { get; set; }
+
+        static ExpressionGraphSettings()
+        {
+            StateSerializer.RegisterDerivedClass<ExpressionGraphSettings, GraphSettings>();
+        }
+
+        public ExpressionGraphSettings() : base()
+        {
+            Reset();
+        }
+
+        public ExpressionGraphPrinterOptions GetGraphPrinterOptions()
+        {
+            return new ExpressionGraphPrinterOptions()
+            {
+                PrintVariableNames = this.PrintVariableNames,
+                PrintSSANumbers = this.PrintSSANumbers,
+                GroupInstructions = this.GroupInstructions,
+                PrintBottomUp = this.PrintBottomUp,
+                MaxExpressionDepth = this.MaxExpressionDepth
+            };
+        }
+
+        public override void Reset()
+        {
+            base.Reset();
+            
+            UnaryInstructionNodeColor = Utils.ColorFromString("#FFFACD");
+            BinaryInstructionNodeColor = Utils.ColorFromString("#FFE4C4");
+            CopyInstructionNodeColor = Utils.ColorFromString("#F5F5F5");
+            PhiInstructionNodeColor = Utils.ColorFromString("#B6E8DE");
+            OperandNodeColor = Utils.ColorFromString("#D3F8D5");
+            NumberOperandNodeColor = Utils.ColorFromString("#c6def1");
+            IndirectionOperandNodeColor = Utils.ColorFromString("#b8bedd");
+            AddressOperandNodeColor = Utils.ColorFromString("#D8BFD8");
+            LoopPhiBackedgeColor = Utils.ColorFromString("#178D1F");
+
+            PrintVariableNames = true;
+            PrintSSANumbers = true;
+            GroupInstructions = true;
+            PrintBottomUp = false;
+            MaxExpressionDepth = 8;
+        }
+
+        public override SettingsBase Clone()
+        {
+            var serialized = StateSerializer.Serialize(this);
+            return StateSerializer.Deserialize<ExpressionGraphSettings>(serialized);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is ExpressionGraphSettings options &&
+                   base.Equals(obj) &&
+                   UnaryInstructionNodeColor.Equals(options.UnaryInstructionNodeColor) &&
+                   BinaryInstructionNodeColor.Equals(options.BinaryInstructionNodeColor) &&
+                   CopyInstructionNodeColor.Equals(options.CopyInstructionNodeColor) &&
+                   PhiInstructionNodeColor.Equals(options.PhiInstructionNodeColor) &&
+                   OperandNodeColor.Equals(options.OperandNodeColor) &&
+                   NumberOperandNodeColor.Equals(options.NumberOperandNodeColor) &&
+                   IndirectionOperandNodeColor.Equals(options.IndirectionOperandNodeColor) &&
+                   AddressOperandNodeColor.Equals(options.AddressOperandNodeColor) &&
+                   LoopPhiBackedgeColor.Equals(options.LoopPhiBackedgeColor) &&
+                   PrintVariableNames == options.PrintVariableNames &&
+                   PrintSSANumbers == options.PrintSSANumbers &&
+                   GroupInstructions == options.GroupInstructions &&
+                   PrintBottomUp == options.PrintBottomUp &&
+                   MaxExpressionDepth == options.MaxExpressionDepth;
         }
     }
 
@@ -280,6 +395,8 @@ namespace Client {
         public DocumentSettings DocumentSettings;
         [ProtoMember(7)]
         public FlowGraphSettings FlowGraphSettings;
+        [ProtoMember(8)]
+        public ExpressionGraphSettings ExpressionGraphSettings;
 
         public ApplicationSettings() {
             RecentFiles = new List<string>();
@@ -289,6 +406,7 @@ namespace Client {
 
             DocumentSettings = new DocumentSettings();
             FlowGraphSettings = new FlowGraphSettings();
+            ExpressionGraphSettings = new ExpressionGraphSettings();
         }
 
         public void AddRecentFile(string path) {

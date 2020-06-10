@@ -108,7 +108,7 @@
                                 Text="Text color" />
                         </Grid>
 
-                        <Grid>
+                        <Grid Margin="0,2,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70" />
                                 <ColumnDefinition />
@@ -153,6 +153,30 @@
                                 VerticalAlignment="Center"
                                 Text="Node color" />
                         </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=EdgeColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Edge color" />
+                        </Grid>
+
                         <Grid Margin="0,2,0,0">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="70" />
@@ -290,6 +314,29 @@
                                 Text="Loop header node border color" />
                         </Grid>
 
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=DominatorEdgeColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Immediate dominator edge color" />
+                        </Grid>
 
                         <Separator Margin="0,4,0,4" />
                         <TextBlock FontWeight="DemiBold" Text="Loop Graph Colors" />

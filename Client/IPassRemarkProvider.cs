@@ -9,6 +9,7 @@ using Core;
 
 namespace Client
 {
+    [Flags]
     public enum RemarkKind
     {
         Default,

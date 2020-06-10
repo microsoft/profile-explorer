@@ -742,5 +742,20 @@ namespace Client {
                      ButtonIconWidth, drawingContext);
             return bounds;
         }
+
+        public void RemoveRemarkBookmarks()
+        {
+            var newBookmarkSegments = new TextSegmentCollection<BookmarkSegment>();
+
+            foreach (var segment in bookmarkSegments_)
+            {
+                if(segment.Kind == BookmarkSegmentKind.Bookmark)
+                {
+                    newBookmarkSegments.Add(segment);
+                }
+            }
+
+            bookmarkSegments_ = newBookmarkSegments;
+        }
     }
 }

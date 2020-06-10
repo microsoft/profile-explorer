@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<Favorites xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <folders>
+    <Folder>
+      <name>Client</name>
+      <folders />
+      <favorites>
+        <Favorite>
+          <name>MainWindow.xaml.cs</name>
+          <path>Client\MainWindow.xaml.cs</path>
+          <absolutePath>C:\personal\projects\compiler_studio\Client\MainWindow.xaml.cs</absolutePath>
+        </Favorite>
+        <Favorite>
+          <name>IRDocument.cs</name>
+          <path>Client\Document\IRDocument.cs</path>
+          <absolutePath>C:\personal\projects\compiler_studio\Client\Document\IRDocument.cs</absolutePath>
+        </Favorite>
+      </favorites>
+    </Folder>
+    <Folder>
+      <name>Core</name>
+      <folders />
+      <favorites />
+    </Folder>
+  </folders>
+  <favorites />
+</Favorites>

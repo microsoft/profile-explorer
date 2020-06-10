@@ -271,6 +271,8 @@
                             </MenuItem>
                         </Menu>
 
+                        <Separator />
+
                         <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                             <MenuItem
                                 Padding="0,2,2,2"
@@ -286,35 +288,46 @@
                                         Source="{StaticResource TagIcon}" />
                                 </MenuItem.Icon>
                                 <MenuItem
-                                    Command="local:DocumentCommand.ClearMarker"
-                                    CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Standard"
-                                    IsCheckable="True"
-                                    IsChecked="True" />
-                                <MenuItem
-                                    Command="local:DocumentCommand.ClearMarker"
-                                    CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Verbose"
-                                    IsCheckable="True"
-                                    IsChecked="False" />
-                                <MenuItem
-                                    Command="local:DocumentCommand.ClearMarker"
-                                    CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Trace"
-                                    IsCheckable="True"
-                                    IsChecked="False" />
-                                <MenuItem
-                                    Command="local:DocumentCommand.ClearMarker"
-                                    CommandTarget="{Binding ElementName=TextView}"
                                     Header="Optimization"
                                     IsCheckable="True"
-                                    IsChecked="True" />
+                                    IsChecked="{Binding Path=Optimization}" />
                                 <MenuItem
-                                    Command="local:DocumentCommand.ClearMarker"
-                                    CommandTarget="{Binding ElementName=TextView}"
                                     Header="Analysis"
                                     IsCheckable="True"
-                                    IsChecked="True" />
+                                    IsChecked="{Binding Path=Analysis}" />
+                                <Separator />
+                                <MenuItem
+                                    Header="Default"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding Path=Default}" />
+                                <MenuItem
+                                    Header="Verbose"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding Path=Verbose}" />
+                                <MenuItem
+                                    Header="Trace"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding Path=Trace}" />
+                                <Separator />
+                                <MenuItem
+                                    Header="Show Remarks"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding Path=HighlightRemarks}"
+                                    ToolTip="Show remark annotations on document text and left margin" />
+                                <MenuItem
+                                    Header="Only Current Section"
+                                    IsCheckable="True"
+                                    IsChecked="{Binding Path=OnlyCurrentSection}"
+                                    ToolTip="Include only remarks associated with the current section" />
+                                <Separator />
+                                <MenuItem Header="Edit Remark Definitions" ToolTip="Edit the JSON definition file for remark types and styes">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource EditIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
                             </MenuItem>
                         </Menu>
 
@@ -358,6 +371,20 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
+                            Command="local:DocumentHostCommand.SearchSymbol"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            Header="Search Symbol"
+                            InputGestureText="Ctrl+Shift+F">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource SearchIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <Separator />
+
+                        <MenuItem
                             Command="local:DocumentCommand.ShowReferences"
                             CommandTarget="{Binding ElementName=TextView}"
                             Header="Show All References"
@@ -366,7 +393,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource SectionIcon}" />
+                                    Source="{StaticResource ListIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
@@ -382,17 +409,18 @@
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
-                            Command="local:DocumentHostCommand.SearchSymbol"
+                            Command="local:DocumentCommand.ShowExpressionGraph"
                             CommandTarget="{Binding ElementName=TextView}"
-                            Header="Search Symbol"
-                            InputGestureText="Ctrl+Shift+F">
+                            Header="View Expression Graph"
+                            InputGestureText="Ctrl+E">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource SearchIcon}" />
+                                    Source="{StaticResource GraphIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
+
                         <Separator />
 
                         <MenuItem
@@ -544,19 +572,6 @@
                         <MenuItem Header="Query" IsEnabled="False" />
                         <MenuItem Header="Scripts" IsEnabled="False" />
 
-                        <MenuItem Header="Expression">
-                            <MenuItem
-                                Header="Mark Expression"
-                                InputGestureText="Ctrl+E"
-                                IsEnabled="false">
-                                <MenuItem Header="Depth 4" />
-                                <MenuItem Header="Depth 8" />
-                                <MenuItem Header="Depth 12" />
-                                <MenuItem Header="Depth 16" />
-                            </MenuItem>
-                            <MenuItem Header="Mark Single-Use Expression" IsEnabled="false" />
-                        </MenuItem>
-
                         <MenuItem Header="Block">
                             <MenuItem Header="Show in Control Flow Graph" />
                             <MenuItem Header="Show in Dominator Tree" IsEnabled="False" />
@@ -643,65 +658,36 @@
         </Grid>
 
         <Canvas x:Name="DocumentCanvas" Panel.ZIndex="100">
-            <doc:RemarkPanel
-                x:Name="RemarkPanel"
-                Grid.Row="1"
-                Width="600"
-                Height="100"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch" />
-
             <Border
                 x:Name="ActionPanel"
-                Width="62"
+                Width="70"
                 Height="22"
                 Background="LightSteelBlue"
-                BorderBrush="Gray"
+                BorderBrush="DimGray"
                 BorderThickness="1,1,1,1"
                 MouseEnter="ActionPanel_MouseEnter"
                 MouseLeave="ActionPanel_MouseLeave">
-                <StackPanel
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Stretch"
-                    Orientation="Horizontal">
-                    <Button
-                        Width="20"
-                        Height="20"
-                        VerticalAlignment="Center"
-                        Background="LightSteelBlue"
-                        BorderBrush="{x:Null}">
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource ResetWidthIcon}" />
-                    </Button>
-                    <Button
-                        Width="20"
-                        Height="20"
-                        VerticalAlignment="Center"
-                        Background="LightSteelBlue"
-                        BorderBrush="{x:Null}">
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource SourceIcon}" />
-                    </Button>
+                <Grid HorizontalAlignment="Left" VerticalAlignment="Stretch">
                     <ToggleButton
                         x:Name="RemarkPanelButton"
-                        Width="20"
+                        Width="70"
                         Height="20"
+                        Padding="4,0,1,2"
                         VerticalAlignment="Center"
-                        Background="LightSteelBlue"
+                        HorizontalContentAlignment="Left"
+                        Background="#FFFFFBCF"
                         BorderBrush="{x:Null}"
                         Checked="RemarkPanelButton_Checked"
-                        Unchecked="RemarkPanelButton_Unchecked">
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource DownArrowIcon}" />
-                    </ToggleButton>
+                        Content="Remarks"
+                        Unchecked="RemarkPanelButton_Unchecked" />
+                    <Image
+                        Width="16"
+                        Height="16"
+                        Margin="0,0,4,0"
+                        HorizontalAlignment="Right"
+                        Source="{StaticResource DownArrowIcon}" />
 
-                </StackPanel>
+                </Grid>
             </Border>
         </Canvas>
     </Grid>

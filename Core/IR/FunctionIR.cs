@@ -108,7 +108,7 @@ namespace Core.IR {
 
         public override int GetHashCode()
         {
-            return Name.GetHashCode();
+            return Name?.GetHashCode() ?? 0;
         }
     }
 }

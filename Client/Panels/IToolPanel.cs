@@ -15,6 +15,7 @@ namespace Client {
         FlowGraph,
         DominatorTree,
         PostDominatorTree,
+        ExpressionGraph,
         PassOutput,
         SearchResults,
         Scripting,

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
@@ -11,6 +12,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using Client.Document;
 using Core;
 using Core.IR;
 using ICSharpCode.AvalonEdit.Rendering;
@@ -44,18 +46,147 @@ namespace Client {
         public bool HasAnnotations => DocumentState.HasAnnotations;
     }
 
-    public partial class IRDocumentHost : UserControl {
-        private ISessionManager session_;
-        private DocumentSettings settings_;
-        private Point hoverPoint_;
-        private IRElement selectedBlock_;
-        private SectionSearchResult searchResult_;
-        private bool duringSwitchSearchResults_;
-        private bool searchPanelVisible_;
-        private bool optionsPanelVisible_;
+    [ProtoContract]
+    public class RemarkFilterState : BindableObject
+    {
+        [ProtoMember(1)]
+        private bool default_;
+        public bool Default
+        {
+            get => default_;
+            set => SetAndNotify(ref default_, value);
+        }
 
-        static readonly double AnimationDuration = 0.1;
-        static readonly double ActionPanelInitialOpacity = 0.5;
+        [ProtoMember(2)]
+        private bool verbose_;
+        public bool Verbose
+        {
+            get => verbose_;
+            set => SetAndNotify(ref verbose_, value);
+        }
+
+        [ProtoMember(3)]
+        private bool trace_;
+        public bool Trace
+        {
+            get => trace_;
+            set => SetAndNotify(ref trace_, value);
+        }
+
+        [ProtoMember(4)]
+        private bool analysis_;
+        public bool Analysis
+        {
+            get => analysis_;
+            set => SetAndNotify(ref analysis_, value);
+        }
+
+        [ProtoMember(5)]
+        private bool optimization_;
+        public bool Optimization
+        {
+            get => optimization_;
+            set => SetAndNotify(ref optimization_, value);
+        }
+
+        [ProtoMember(6)]
+        private bool highlightRemarks_;
+        public bool HighlightRemarks
+        {
+            get => highlightRemarks_;
+            set => SetAndNotify(ref highlightRemarks_, value);
+        }
+
+        [ProtoMember(6)]
+        private bool onlyCurrentSection_;
+        public bool OnlyCurrentSection
+        {
+            get => onlyCurrentSection_;
+            set => SetAndNotify(ref onlyCurrentSection_, value);
+        }
+
+        private string searchedText_;
+        public string SearchedText
+        {
+            get => searchedText_;
+            set => SetAndNotify(ref searchedText_, value);
+        }
+
+        public RemarkFilterState()
+        {
+            Default = true;
+            Verbose = true;
+            Optimization = true;
+            Analysis = true;
+            HighlightRemarks = true;
+        }
+
+
+        public bool IsAcceptedRemark(PassRemark remark, IRTextSection section)
+        {
+            if (OnlyCurrentSection &&
+                remark.Section != section)
+            {
+                return false;
+            }
+
+            if(!string.IsNullOrEmpty(SearchedText))
+            {
+                if(!remark.RemarkText.Contains(SearchedText))
+                {
+                    return false;
+                }
+            }
+
+            switch (remark.Kind)
+            {
+                case RemarkKind.Analysis:
+                    {
+                        return Analysis;
+                    }
+                case RemarkKind.Optimization:
+                    {
+                        return Optimization;
+                    }
+                case RemarkKind.Default:
+                    {
+                        return Default;
+                    }
+                case RemarkKind.Verbose:
+                    {
+                        return Verbose;
+                    }
+                case RemarkKind.Trace:
+                    {
+                        return Trace;
+                    }
+            }
+
+            return false;
+        }
+    }
+
+    public partial class IRDocumentHost : UserControl {
+        ISessionManager session_;
+        DocumentSettings settings_;
+        Point hoverPoint_;
+        IRElement hoveredElement_;
+        IRElement selectedBlock_;
+        SectionSearchResult searchResult_;
+        bool duringSwitchSearchResults_;
+        bool searchPanelVisible_;
+        bool optionsPanelVisible_;
+
+        bool remarkPanelVisible_;
+        bool actionPanelVisible_;
+        private Point remarkPanelLocation_;
+        bool actionPanelHovered_;
+        RemarkFilterState remarkFilter_;
+        List<PassRemark> remarkList_;
+        RemarkPanel remarkPanel_;
+
+        static readonly double ActionPanelInitialOpacity = 0.6;
+        private readonly double AnimationDuration = 0.1;
 
         public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
 
@@ -81,7 +212,6 @@ namespace Client {
 
         public IRDocumentHost(ISessionManager session) {
             InitializeComponent();
-            RemarkPanel.Visibility = Visibility.Collapsed;
             ActionPanel.Visibility = Visibility.Collapsed;
 
             Session = session;
@@ -89,6 +219,8 @@ namespace Client {
 
             PreviewKeyDown += IRDocumentHost_PreviewKeyDown;
             TextView.PreviewMouseRightButtonDown += TextView_PreviewMouseRightButtonDown;
+            TextView.PreviewMouseMove += TextView_PreviewMouseMove;
+            TextView.PreviewMouseDown += TextView_PreviewMouseDown;
             TextView.BlockSelected += TextView_BlockSelected;
             TextView.ElementSelected += TextView_ElementSelected;
             TextView.ElementUnselected += TextView_ElementUnselected;
@@ -103,86 +235,222 @@ namespace Client {
             SearchPanel.NaviateToPreviousResult += SearchPanel_NaviateToPreviousResult;
             SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
             SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
+
+            var hover = new MouseHoverLogic(this);
+            hover.MouseHover += Hover_MouseHover;
+
+            remarkFilter_ = new RemarkFilterState();
+            remarkFilter_.PropertyChanged += RemarkFilter__PropertyChanged;
+            this.DataContext = remarkFilter_;
+
+            this.Unloaded += IRDocumentHost_Unloaded;
+        }
+
+        private void IRDocumentHost_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if(remarkPanel_ != null)
+            {
+                remarkPanel_.Close();
+            }
+        }
+
+        private void RemarkFilter__PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            UpdateDocumentMarginRemarks();
+        }
+
+        private void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            var point = e.GetPosition(TextView.TextArea.TextView);
+
+            var element = TextView.GetElementAt(point);
+
+            if (element == null)
+            {
+                HideActionPanel();
+                HideRemarkPanel();
+            }
+            else if (element != hoveredElement_ &&
+                    !actionPanelHovered_)
+            {
+                ShowActionPanel(element, useAnimation: false);
+            }
+        }
+
+        private void TextView_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            var point = e.GetPosition(TextView.TextArea.TextView);
+
+            if (!actionPanelVisible_)
+            {
+                return;
+            }
+
+            var element = TextView.GetElementAt(point);
+
+            if (!remarkPanelVisible_ && !actionPanelHovered_)
+            {
+                if (element == null || element != hoveredElement_)
+                {
+                    HideActionPanel();
+                    HideRemarkPanel();
+                }
+            }
+        }
+
+        private void Hover_MouseHover(object sender, MouseEventArgs e)
+        {
+            if (remarkPanelVisible_ || actionPanelHovered_)
+            {
+                return;
+            }
+
+            var point = e.GetPosition(TextView.TextArea.TextView);
+            var element = TextView.GetElementAt(point);
+
+            if (element != null)
+            {
+                ShowActionPanel(element, true);
+                hoveredElement_ = element;
+            }
+            else
+            {
+                HideActionPanel();
+                hoveredElement_ = null;
+            }
         }
 
         private void TextView_ElementUnselected(object sender, IRElementEventArgs e) {
             HideActionPanel();
+            HideRemarkPanel();
         }
 
         private void TextView_ElementSelected(object sender, IRElementEventArgs e) {
             ShowActionPanel(e.Element);
         }
 
-        void ShowActionPanel(IRElement element) {
+        void ShowActionPanel(IRElement element, bool useAnimation = true) {
+            if (element.GetTag<RemarkTag>() == null)
+            {
+                HideRemarkPanel();
+                HideActionPanel();
+                return;
+            }
+
             var visualLine = TextView.TextArea.TextView.GetVisualLine(element.TextLocation.Line + 1);
 
             if (visualLine != null) {
                 var linePos = visualLine.GetVisualPosition(0, VisualYPosition.LineBottom);
 
-                var x = Mouse.GetPosition(this).X - ActionPanel.ActualWidth / 2;
+                var x = Mouse.GetPosition(this).X + ActionPanel.ActualWidth / 8;
                 var y = linePos.Y + DocumentToolbar.ActualHeight - 1 -
                         TextView.TextArea.TextView.ScrollOffset.Y;
-                Canvas.SetLeft(RemarkPanel, x);
-                Canvas.SetTop(RemarkPanel, y + ActionPanel.ActualHeight - 1);
 
                 Canvas.SetLeft(ActionPanel, x);
                 Canvas.SetTop(ActionPanel, y);
 
                 ActionPanel.Visibility = Visibility.Visible;
-                ActionPanel.Opacity = 0.0;
-                DoubleAnimation animation2 = new DoubleAnimation(ActionPanelInitialOpacity, TimeSpan.FromSeconds(0.1));
-                ActionPanel.BeginAnimation(Grid.OpacityProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+
+                if (useAnimation)
+                {
+                    ActionPanel.Opacity = 0.0;
+                    DoubleAnimation animation2 = new DoubleAnimation(ActionPanelInitialOpacity, TimeSpan.FromSeconds(AnimationDuration));
+                    ActionPanel.BeginAnimation(Grid.OpacityProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+                }
+                else
+                {
+                    ActionPanel.Opacity = 1.0;
+                }
+
+                actionPanelVisible_ = true;
+                remarkPanelLocation_ = PointToScreen(new Point(x, y + 20));
 
                 if (remarkPanelVisible_) {
+                    // Panel already visible, update element.
                     InitializeRemarkPanel(element);
                 }
-            }
-
-            if (element.GetTag<RemarkTag>() == null) {
-                HideRemarkPanel();
-                RemarkPanelButton.IsEnabled = false;
-            }
-            else {
-                RemarkPanelButton.IsEnabled = true;
             }
         }
 
         void HideActionPanel() {
-            DoubleAnimation animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(0.1));
-            animation.Completed += (s, e) => ActionPanel.Visibility = Visibility.Collapsed;
-            ActionPanel.BeginAnimation(Grid.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
-        }
-
-        bool remarkPanelVisible_;
-
-        void ShowRemarkPanel() {
-            var element = TextView.TryGetSelectedElement();
-
-            if (element == null) {
+            if(!actionPanelVisible_)
+            {
                 return;
             }
 
-            RemarkPanel.Visibility = Visibility.Visible;
-            RemarkPanel.Opacity = 0.0;
-            DoubleAnimation animation2 = new DoubleAnimation(1.0, TimeSpan.FromSeconds(0.1));
-            RemarkPanel.BeginAnimation(Grid.OpacityProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+            DoubleAnimation animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(AnimationDuration));
+            animation.Completed += (s, e) =>
+            {
+                ActionPanel.Visibility = Visibility.Collapsed;
+            };
+
+            ActionPanel.BeginAnimation(Grid.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
+            actionPanelVisible_ = false;
+
+        }
+
+
+        void ShowRemarkPanel() {
+            if(remarkPanelVisible_)
+            {
+                return;
+            }
+
+            var element = hoveredElement_;
+
+            if (element == null)
+            {
+                element = TextView.TryGetSelectedElement();
+                if (element == null)
+                {
+                    return;
+                }
+            }
+
+            remarkPanel_ = new RemarkPanel();
+            remarkPanel_.Opacity = 0.0;
+            remarkPanel_.Show();
+
+            DoubleAnimation animation = new DoubleAnimation(1.0, TimeSpan.FromSeconds(AnimationDuration));
+            remarkPanel_.BeginAnimation(Window.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
             remarkPanelVisible_ = true;
 
             InitializeRemarkPanel(element);
         }
 
+
         private void InitializeRemarkPanel(IRElement element) {
-            RemarkPanel.Session = Session;
-            RemarkPanel.Function = Function;
-            RemarkPanel.Section = Section;
-            RemarkPanel.Element = element;
+            remarkPanel_.Session = Session;
+            remarkPanel_.Function = Function;
+            remarkPanel_.Section = Section;
+            remarkPanel_.Element = element;
+
+            var workingArea = System.Windows.Forms.Screen.PrimaryScreen.WorkingArea;
+            var transform = PresentationSource.FromVisual(this).CompositionTarget.TransformFromDevice;
+            var corner = transform.Transform(new Point(remarkPanelLocation_.X, remarkPanelLocation_.Y));
+            //remarkPanel_.Left = remarkPanelLocation_.X - this.ActualWidth;
+            //remarkPanel_.Top = remarkPanelLocation_.Y - this.ActualHeight;
+
+            remarkPanel_.Left = corner.X;
+            remarkPanel_.Top = corner.Y;
+            remarkPanel_.Initialize();
         }
 
         void HideRemarkPanel() {
+            if(!remarkPanelVisible_)
+            {
+                return;
+            }
+
+            DoubleAnimation animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(AnimationDuration));
+            animation.Completed += (s, e) =>
+            {
+                remarkPanel_.Close();
+                remarkPanel_ = null;
+            };
+
+            remarkPanel_.BeginAnimation(Window.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
             remarkPanelVisible_ = false;
-            DoubleAnimation animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(0.1));
-            animation.Completed += (s, e) => RemarkPanel.Visibility = Visibility.Collapsed;
-            RemarkPanel.BeginAnimation(Grid.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
         }
 
         private void OptionsPanel_SettingsChanged(object sender, bool syntaxFileChanged) {
@@ -270,10 +538,20 @@ namespace Client {
             }
 
             SaveSectionState(section);
+            RemoveRemarks();
+        }
+
+        private void RemoveRemarks()
+        {
+            if(remarkList_ != null)
+            {
+
+                remarkList_ = null;
+            }
         }
 
         private void SaveSectionState(IRTextSection section) {
-            // Annotations made in diff mode are not saved right h=now,
+            // Annotations made in diff mode are not saved right now,
             // since the text and function IR can be different than the original function.
             if (TextView.DiffModeEnabled) {
                 return;
@@ -335,13 +613,12 @@ namespace Client {
             else {
                 TextView.ScrollToVerticalOffset(0);
                 TextView.LoadSection(parsedSection);
-                await AddRemarks();
-
             }
+
+            await AddRemarks();
         }
 
         private async Task AddRemarks() {
-            var text = await Session.GetSectionPassOutputAsync(Section.OutputBefore, Section);
             var remarkProvider = Session.CompilerInfo.RemarkProvider as UTCRemarkProvider;
 
             var time = Stopwatch.StartNew();
@@ -351,7 +628,7 @@ namespace Client {
             var document = Session.SessionState.FindDocument(Section);
             var remarks = remarkProvider.ExtractAllRemarks(sections, Function, document);
             var remarkDict = new Dictionary<int, PassRemark>(remarks.Count);
-            var remarkList = new List<PassRemark>(remarks.Count);
+            remarkList_ = new List<PassRemark>(remarks.Count);
 
             time.Stop();
 
@@ -370,20 +647,11 @@ namespace Client {
                     }
                 }
 
-                //if (!found) {
-                //    remarkList.Add(remark);
-                //    remarkDict.Add(elementLine, remark);
-                //}
-                //else if(remark.Kind == RemarkKind.Optimization ||
-                //    remark.Kind == RemarkKind.Analysis)
-                //{
-                    remarkList.Add(remark);
-                //}
+                remarkList_.Add(remark);
             }
 
-            //? Query system can be used to mark VNs and show how many other isntrs have same VN
-            TextView.AddRemarks(remarkList);
-            AddRemarkTags(remarks);
+            UpdateDocumentMarginRemarks();
+            AddRemarkTags(remarkList_);
 
             allTime.Stop();
 
@@ -391,7 +659,35 @@ namespace Client {
             // MessageBox.Show($"Load Duration {time.ElapsedMilliseconds}, all {allTime.ElapsedMilliseconds}");
         }
 
+        void UpdateDocumentMarginRemarks()
+        {
+            if(remarkList_ == null)
+            {
+                return;
+            }
+
+            if(!remarkFilter_.HighlightRemarks)
+            {
+                TextView.RemoveRemarks();
+                return;
+            }
+
+            var filteredList = new List<PassRemark>(remarkList_.Count);
+
+            foreach(var remark in remarkList_)
+            {
+                if(remarkFilter_.IsAcceptedRemark(remark, Section))
+                {
+                    filteredList.Add(remark);
+                }
+            }
+
+            TextView.UpdateRemarks(filteredList);
+        }
+
+
         void AddRemarkTags(List<PassRemark> remarks) {
+            // Remove current tags.
             Function.ForEachElement((element) => {
                 element.RemoveTag<RemarkTag>();
                 return true;
@@ -500,10 +796,9 @@ namespace Client {
 
         private void ShowSearchPanel(Document.SearchInfo searchInfo = null, bool searchAll = false) {
             searchPanelVisible_ = true;
-            SearchButton.IsChecked = true;
             SearchPanel.Visibility = Visibility.Visible;
             SearchPanel.Show(searchInfo, searchAll);
-            searchPanelVisible_ = true;
+            SearchButton.IsChecked = true;
         }
 
         private void ShowSectionListExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -615,15 +910,18 @@ namespace Client {
         }
 
         private void ActionPanel_MouseEnter(object sender, MouseEventArgs e) {
-            DoubleAnimation animation = new DoubleAnimation(1, TimeSpan.FromSeconds(0.1));
+            DoubleAnimation animation = new DoubleAnimation(1, TimeSpan.FromSeconds(AnimationDuration));
             ActionPanel.BeginAnimation(Grid.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
+            actionPanelHovered_ = true;
         }
 
         private void ActionPanel_MouseLeave(object sender, MouseEventArgs e) {
             if (!remarkPanelVisible_) {
-                DoubleAnimation animation = new DoubleAnimation(ActionPanelInitialOpacity, TimeSpan.FromSeconds(0.1));
+                DoubleAnimation animation = new DoubleAnimation(ActionPanelInitialOpacity, TimeSpan.FromSeconds(AnimationDuration));
                 ActionPanel.BeginAnimation(Grid.OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
             }
+
+            actionPanelHovered_ = false;
         }
     }
 }

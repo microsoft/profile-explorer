@@ -13,6 +13,7 @@
 	
     <RuleSet ignoreCase="false">
         <Span color="Comment" begin="#" />
+        <Span color="Comment" begin="//" />
         <Span color="Comment" multiline="true" 
            begin="/\*" end="\*/" />
         

@@ -22,7 +22,12 @@ using Core.IR;
 using Core.UTC;
 using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
-using Xceed.Wpf.AvalonDock.Layout;
+using AvalonDock.Layout;
+using Core.IR.Tags;
+using System.Windows.Media;
+using Microsoft.ApplicationInsights.Extensibility;
+using Microsoft.ApplicationInsights;
+using Grpc.Core;
 
 namespace Client {
     public static class AppCommand {
@@ -152,6 +157,7 @@ namespace Client {
             graphLayout_.Add(GraphKind.FlowGraph, new GraphLayoutCache(GraphKind.FlowGraph));
             graphLayout_.Add(GraphKind.DominatorTree, new GraphLayoutCache(GraphKind.DominatorTree));
             graphLayout_.Add(GraphKind.PostDominatorTree, new GraphLayoutCache(GraphKind.PostDominatorTree));
+            graphLayout_.Add(GraphKind.ExpressionGraph, new GraphLayoutCache(GraphKind.ExpressionGraph));
 
         }
 
@@ -227,7 +233,7 @@ namespace Client {
                 return;
             }
 
-            if (sessionState_.Info.IsSessionFile) {
+            if (sessionState_.Info.IsFileSession) {
                 if (MessageBox.Show($"Save session changes before closing?", "IR Explorer",
                                     MessageBoxButton.YesNo, MessageBoxImage.Question,
                                     MessageBoxResult.No,
@@ -299,8 +305,8 @@ namespace Client {
             docHostInfo.HostParent.Children.Remove(docHostInfo.Host);
         }
 
-        private void StartSession(string filePath, bool isSessionFile) {
-            sessionState_ = new SessionStateManager(filePath, isSessionFile);
+        private void StartSession(string filePath, SessionKind sessionKind) {
+            sessionState_ = new SessionStateManager(filePath, sessionKind);
             sessionState_.DocumentChanged += DocumentState_DocumentChangedEvent;
             sessionState_.ChangeDocumentWatcherState(App.Settings.AutoReloadDocument);
 
@@ -326,6 +332,7 @@ namespace Client {
         }
 
         private bool ShowDocumentReloadQuery(string filePath) {
+            return false;
             return MessageBox.Show($"File {filePath} changed by an external application?\nDo you want to reload?",
                                   "IR Explorer", MessageBoxButton.YesNo, MessageBoxImage.Question,
                                   MessageBoxResult.No,
@@ -394,17 +401,24 @@ namespace Client {
             }
 
             //? TODO: For huge files, autosaving uses a lot of memory.
-            try {
-                long fileSize = new FileInfo(sessionState_.Info.FilePath).Length;
+            if (!sessionState_.Info.IsDebugSession)
+            {
 
-                if (fileSize > UTCReader.MAX_PRELOADED_FILE_SIZE) {
-                    Trace.TraceWarning($"Disabling auto-saving for large file: {sessionState_.Info.FilePath}");
-                    sessionState_.IsAutoSaveEnabled = false;
-                    return;
+                try
+                {
+                    long fileSize = new FileInfo(sessionState_.Info.FilePath).Length;
+
+                    if (fileSize > UTCReader.MAX_PRELOADED_FILE_SIZE)
+                    {
+                        Trace.TraceWarning($"Disabling auto-saving for large file: {sessionState_.Info.FilePath}");
+                        sessionState_.IsAutoSaveEnabled = false;
+                        return;
+                    }
                 }
-            }
-            catch (Exception ex) {
-                Trace.TraceError($"Failed to get auto-saved file size: {ex}");
+                catch (Exception ex)
+                {
+                    Trace.TraceError($"Failed to get auto-saved file size: {ex}");
+                }
             }
 
             sessionState_.IsAutoSaveEnabled = true;
@@ -434,7 +448,7 @@ namespace Client {
                 var result = await Task.Run(() => LoadDocument(filePath));
 
                 if (result != null) {
-                    SetupOpenedIRDocument(filePath, result);
+                    SetupOpenedIRDocument(SessionKind.Default, filePath, result);
                     return true;
                 }
             }
@@ -446,9 +460,9 @@ namespace Client {
             return false;
         }
 
-        private void SetupOpenedIRDocument(string filePath, LoadedDocument result) {
+        private void SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
             mainDocument_ = result;
-            StartSession(filePath, isSessionFile: false);
+            StartSession(filePath, sessionKind);
             sessionState_.NewLoadedDocument(result);
 
             UpdateUIAfterLoadDocument();
@@ -486,10 +500,10 @@ namespace Client {
             SectionPanel.DiffTitle = result.FileName;
         }
 
-        private async Task<bool> LoadSessionDocument(SessionState state, string path) {
+        private async Task<bool> LoadSessionDocument(SessionState state) {
             try {
                 //? TODO: Proper support for multiple docs
-                StartSession(state.Info.FilePath, isSessionFile: true);
+                StartSession(state.Info.FilePath, SessionKind.FileSession);
                 bool failed = false;
 
                 foreach (var docState in state.Documents) {
@@ -603,6 +617,13 @@ namespace Client {
             RegisterDefaultToolPanels();
             ResetStatusBar();
 
+            //TelemetryConfiguration configuration = TelemetryConfiguration.CreateDefault();
+            //configuration.DisableTelemetry = false;
+            //configuration.InstrumentationKey = "da7d4359-13f9-40c0-a2bb-c3fb54a76275";
+            //var telemetryClient = new TelemetryClient(configuration);
+            //telemetryClient.TrackEvent("IRX: Start");
+            //telemetryClient.Flush();
+
             var args = Environment.GetCommandLineArgs();
 
             if (args.Length >= 3) {
@@ -619,6 +640,15 @@ namespace Client {
 
                 if (File.Exists(filePath)) {
                     await OpenDocument(filePath);
+                }
+            }
+
+            foreach(var arg in args)
+            {
+                if(arg.Contains("grpc-server"))
+                {
+                    StartGrpcServer();
+                    break;
                 }
             }
 
@@ -673,6 +703,7 @@ namespace Client {
             RegisterPanel(this.PassOutputPanel, PassOutputHost);
             RegisterPanel(this.SearchPanel, SearchPanelHost);
             RegisterPanel(this.ScriptingPanel, ScriptingPanelHost);
+            RegisterPanel(this.ExpressionGraphPanel, ExpressionGraphPanelHost);
 
             RenameAllPanels();
         }
@@ -708,6 +739,36 @@ namespace Client {
         private void TextView_ActionPerformed(object sender, DocumentAction e) {
             var document = sender as IRDocument;
             Debug.Assert(document != null);
+
+            if(e.ActionKind == DocumentActionKind.ShowExpressionGraph)
+            {
+                var section = document.Section;
+                var loadTask = ExpressionGraphPanel.OnGenerateGraphStart(section);
+
+                var graphLayout = GetGraphLayoutCache(GraphKind.ExpressionGraph);
+                var options = App.Settings.ExpressionGraphSettings.GetGraphPrinterOptions();
+                var graph = graphLayout.GenerateGraph(e.Element, section, loadTask, options);
+
+                if (graph != null)
+                {
+                    ExpressionGraphPanel.DisplayGraph(graph);
+                    ExpressionGraphPanel.OnGenerateGraphDone(loadTask);
+
+                    var panelHost = FindPanelHost(ExpressionGraphPanel).Host;
+
+                    if(!panelHost.IsActive)
+                    {
+                        panelHost.IsActive = true;
+                    }
+                }
+                else
+                {
+                    ExpressionGraphPanel.OnGenerateGraphDone(loadTask, failed: true);
+                    Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to load CFG");
+                }
+
+                return;
+            }
 
             MirrorElementAction(e.Element, document, (otherElement, otherDocument) => {
                 otherDocument.ExecuteDocumentAction(e.WithNewElement(otherElement));
@@ -922,6 +983,9 @@ namespace Client {
             await SwitchDocumentSection(args, args.TargetDocument);
         }
 
+        FileSystemWatcher documentWatcher_;
+        AddressMetadataTag addressTag_;
+
         private async Task<IRDocumentHost>
         SwitchDocumentSection(OpenSectionEventArgs args,
                               IRDocumentHost targetDocument = null,
@@ -1130,7 +1194,8 @@ namespace Client {
             {
                 GraphKind.FlowGraph => ToolPanelKind.FlowGraph,
                 GraphKind.DominatorTree => ToolPanelKind.DominatorTree,
-                GraphKind.PostDominatorTree => ToolPanelKind.PostDominatorTree
+                GraphKind.PostDominatorTree => ToolPanelKind.PostDominatorTree,
+                _ => throw new InvalidOperationException("Unexpected graph kind!")
             };
 
             var action = GetComputeGraphAction(graphKind);
@@ -1147,7 +1212,8 @@ namespace Client {
             {
                 GraphKind.FlowGraph => ComputeFlowGraph,
                 GraphKind.DominatorTree => ComputeDominatorTree,
-                GraphKind.PostDominatorTree => ComputePostDominatorTree
+                GraphKind.PostDominatorTree => ComputePostDominatorTree,
+                _ => throw new InvalidOperationException("Unexpected graph kind!")
             };
         }
 
@@ -1157,7 +1223,8 @@ namespace Client {
             {
                 ToolPanelKind.FlowGraph => ComputeFlowGraph,
                 ToolPanelKind.DominatorTree => ComputeDominatorTree,
-                ToolPanelKind.PostDominatorTree => ComputePostDominatorTree
+                ToolPanelKind.PostDominatorTree => ComputePostDominatorTree,
+                _ => throw new InvalidOperationException("Unexpected graph kind!")
             };
         }
 
@@ -1243,27 +1310,29 @@ namespace Client {
             return parsedSection;
         }
 
-        private static void AnalyzeLoadedFunction(FunctionIR function) {
+        private void AnalyzeLoadedFunction(FunctionIR function) {
             var loopGraph = new LoopGraph(function);
             loopGraph.FindLoops();
+
+            addressTag_ = function.GetTag<AddressMetadataTag>();
         }
 
         async Task<LayoutGraph> ComputeFlowGraph(FunctionIR function, IRTextSection section,
                                                  CancelableTaskInfo loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.FlowGraph);
-            return graphLayout.GenerateGraph(function, section, loadTask);
+            return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
         async Task<LayoutGraph> ComputeDominatorTree(FunctionIR function, IRTextSection section,
                                                      CancelableTaskInfo loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.DominatorTree);
-            return graphLayout.GenerateGraph(function, section, loadTask);
+            return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
         async Task<LayoutGraph> ComputePostDominatorTree(FunctionIR function, IRTextSection section,
                                                          CancelableTaskInfo loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.PostDominatorTree);
-            return graphLayout.GenerateGraph(function, section, loadTask);
+            return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
         private void SetupPanelEvents(PanelHostInfo panelHost) {
@@ -1277,6 +1346,12 @@ namespace Client {
                     flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
                     flowGraphPanel.GraphViewer.BlockMarked += GraphViewer_BlockMarked;
                     flowGraphPanel.GraphViewer.BlockUnmarked += GraphViewer_BlockUnmarked;
+                    flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
+                    break;
+                }
+                case ToolPanelKind.ExpressionGraph: {
+                    var flowGraphPanel = panelHost.Panel as GraphPanel;
+                    flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
                     flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
                     break;
                 }
@@ -1403,7 +1478,7 @@ namespace Client {
 
                 if (baseTask.Result != null &&
                     diffTask.Result != null) {
-                    SetupOpenedIRDocument(baseFilePath, baseTask.Result);
+                    SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
                     SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
                     return true;
                 }
@@ -1505,7 +1580,7 @@ namespace Client {
 
         private async void ReloadDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (sessionState_ != null &&
-               !sessionState_.Info.IsSessionFile) {
+               !sessionState_.Info.IsFileSession) {
                 await ReloadDocument(sessionState_.Info.FilePath);
             }
         }
@@ -1528,7 +1603,7 @@ namespace Client {
         }
 
         private bool RequestSessionFilePath(bool forceNewFile = false) {
-            if (!forceNewFile && sessionState_.Info.IsSessionFile) {
+            if (!forceNewFile && sessionState_.Info.IsFileSession) {
                 return true; // Save over same session file.
             }
 
@@ -1541,7 +1616,7 @@ namespace Client {
 
             if (result.HasValue && result.Value) {
                 sessionState_.Info.FilePath = fileDialog.FileName;
-                sessionState_.Info.IsSessionFile = true;
+                sessionState_.Info.Kind = SessionKind.FileSession;
                 UpdateWindowTitle();
                 return true;
             }
@@ -1585,7 +1660,7 @@ namespace Client {
         }
 
         private void LayoutAnchorable_IsActiveChanged(object sender, EventArgs e) {
-            if (!(sender is Xceed.Wpf.AvalonDock.Layout.LayoutAnchorable panelHost)) {
+            if (!(sender is AvalonDock.Layout.LayoutAnchorable panelHost)) {
                 return;
             }
 
@@ -1602,7 +1677,7 @@ namespace Client {
         }
 
         private void LayoutAnchorable_IsSelectedChanged(object sender, EventArgs e) {
-            if (!(sender is Xceed.Wpf.AvalonDock.Layout.LayoutAnchorable panelHost)) {
+            if (!(sender is AvalonDock.Layout.LayoutAnchorable panelHost)) {
                 return;
             }
 
@@ -1683,7 +1758,7 @@ namespace Client {
         }
 
         private async void DocumentHost_Closed(object sender, EventArgs e) {
-            if (!(sender is Xceed.Wpf.AvalonDock.Layout.LayoutDocument docHost)) {
+            if (!(sender is AvalonDock.Layout.LayoutDocument docHost)) {
                 return;
             }
 
@@ -1723,7 +1798,7 @@ namespace Client {
         }
 
         private void DocumentHost_IsActiveChanged(object sender, EventArgs e) {
-            if (!(sender is Xceed.Wpf.AvalonDock.Layout.LayoutDocument docHost)) {
+            if (!(sender is AvalonDock.Layout.LayoutDocument docHost)) {
                 return;
             }
 
@@ -1920,6 +1995,7 @@ namespace Client {
                 ToolPanelKind.FlowGraph => "Flow Graph",
                 ToolPanelKind.DominatorTree => "Dominator Tree",
                 ToolPanelKind.PostDominatorTree => "Post-Dominator Tree",
+                ToolPanelKind.ExpressionGraph => "Expression Graph",
                 ToolPanelKind.Developer => "Developer",
                 ToolPanelKind.Notes => "Notes",
                 ToolPanelKind.References => "References",
@@ -2447,7 +2523,7 @@ namespace Client {
             try {
                 var errorHandler = new UTCParsingErrorHandler();
                 var sectionParser = new UTCSectionParser(errorHandler);
-                diffResult.DiffFunction = sectionParser.ParseSection(diffResult.DiffText);
+                diffResult.DiffFunction = sectionParser.ParseSection(null, diffResult.DiffText);
 
                 if (diffResult.DiffFunction != null) {
                     AnalyzeLoadedFunction(diffResult.DiffFunction);
@@ -2878,6 +2954,11 @@ namespace Client {
                     PostDominatorTreePanelHost.IsVisible = true;
                     break;
                 }
+                case "ExpressionGraph":
+                {
+                    ExpressionGraphPanelHost.IsVisible = true;
+                    break;
+                }
             }
         }
 
@@ -2911,7 +2992,7 @@ namespace Client {
                 bool loaded = false;
 
                 if (state != null) {
-                    loaded = await LoadSessionDocument(state, filePath);
+                    loaded = await LoadSessionDocument(state);
                 }
 
                 UpdateUIAfterLoadDocument();
@@ -3055,6 +3136,410 @@ namespace Client {
         {
             var x = new Query.QueryPanelPreview();
             x.Show();
+        }
+
+        void SetOptionalStatus(string text, string tooltip = "")
+        {
+            OptionalStatusText.Text = text;
+            OptionalStatusText.Foreground = Brushes.DarkGreen;
+            OptionalStatusText.ToolTip = tooltip;
+        }
+
+        DebugServer.DebugService debugService_;
+        DebugSectionLoader debugSections_;
+        IRTextFunction debugFunction_;
+        IRTextSummary debugSummary_;
+        IRTextSection previousDebugSection_;
+        long debugProcessId_;
+        int debugSectionId_;
+
+        struct ElementIteratorId
+        {
+            public int ElementId;
+            public IRElementKind ElementKind;
+
+            public ElementIteratorId(int elementId, IRElementKind elementKind)
+            {
+                ElementId = elementId;
+                ElementKind = elementKind;
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is ElementIteratorId id &&
+                       ElementId == id.ElementId &&
+                       ElementKind == id.ElementKind;
+            }
+
+            public override int GetHashCode()
+            {
+                return HashCode.Combine(ElementId, ElementKind);
+            }
+        }
+
+        Dictionary<ElementIteratorId, IRElement> debugCurrentIteratorElement_;
+        StackFrame debugCurrentStackFrame_;
+
+        private void MenuItem_Click_8(object sender, RoutedEventArgs e)
+        {
+            StartGrpcServer();
+        }
+
+        private void StartGrpcServer()
+        {
+            try
+            {
+                debugService_ = new DebugServer.DebugService();
+                debugService_.OnStartSession += DebugService_OnSessionStarted;
+                debugService_.OnUpdateIR += DebugService_OnIRUpdated;
+                debugService_.OnMarkElement += DebugService_OnElementMarked;
+                debugService_.OnSetCurrentElement += DebugService_OnSetCurrentElement;
+                debugService_.OnExecuteCommand += DebugService_OnExecuteCommand;
+                debugService_.OnHasActiveBreakpoint += DebugService_OnHasActiveBreakpoint;
+                debugService_.OnClearTemporaryHighlighting += DebugService__OnClearTemporaryHighlighting;
+                debugService_.OnUpdateCurrentStackFrame += DebugService__OnUpdateCurrentStackFrame;
+                
+                DebugServer.DebugService.StartServer(debugService_);
+                SetOptionalStatus("Waiting for client...");
+            }
+            catch (Exception ex)
+            {
+                SetOptionalStatus("Failed to start Grpc server.", $"{ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
+        private void DebugService__OnUpdateCurrentStackFrame(object sender, CurrentStackFrameRequest e)
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                debugCurrentStackFrame_ = e.CurrentFrame;
+            });
+        }
+
+        private void DebugService__OnClearTemporaryHighlighting(object sender, ClearHighlightingRequest e)
+        {
+            Dispatcher.BeginInvoke(() =>
+            {
+                var activeDoc = FindActiveDocument();
+                if (activeDoc == null) return;
+
+                var action = new DocumentAction(DocumentActionKind.ClearTemporaryMarkers);
+                activeDoc.TextView.ExecuteDocumentAction(action);
+            });
+        }
+
+        private void DebugService_OnHasActiveBreakpoint(object sender, DebugServer.RequestResponsePair<ActiveBreakpointRequest, bool> e)
+        {
+            if (addressTag_ == null)
+            {
+                return;
+            }
+
+            if (addressTag_.AddressToElementMap.TryGetValue(e.Request.ElementAddress, out var element))
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    var activeDoc = FindActiveDocument();
+                    if (activeDoc == null) return;
+
+                    e.Response = activeDoc.TextView.BookmarkManager.FindBookmark(element) != null;
+                });
+            }
+        }
+
+        DocumentActionKind CommandToAction(ElementCommand command)
+        {
+            switch(command)
+            {
+                case ElementCommand.GoToDefinition: return DocumentActionKind.GoToDefinition;
+                case ElementCommand.MarkBlock: return DocumentActionKind.MarkBlock;
+                case ElementCommand.MarkExpression: return DocumentActionKind.MarkExpression;
+                case ElementCommand.MarkReferences: return DocumentActionKind.MarkReferences;
+                case ElementCommand.MarkUses: return DocumentActionKind.MarkUses;
+                case ElementCommand.ShowExpression: return DocumentActionKind.ShowExpressionGraph;
+                case ElementCommand.ShowReferences: return DocumentActionKind.ShowReferences;
+                case ElementCommand.ShowUses: return DocumentActionKind.ShowUses;
+                case ElementCommand.ClearMarker: return DocumentActionKind.ClearMarker;
+            }
+
+            throw new NotImplementedException();
+        }
+
+        private void DebugService_OnExecuteCommand(object sender, ElementCommandRequest e)
+        {
+            if (addressTag_ == null)
+            {
+                return;
+            }
+
+            if (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element))
+            {
+                Dispatcher.BeginInvoke(() =>
+                {
+                    var activeDoc = FindActiveDocument();
+                    if (activeDoc == null) return;
+
+                    AppendNotesTag(element, e.Label);
+                    
+                    var style = new PairHighlightingStyle();
+                    style.ParentStyle = new HighlightingStyle(Colors.Transparent,
+                                                     Pens.GetPen(Colors.Purple));
+                    style.ChildStyle = new HighlightingStyle(Colors.LightPink,
+                                                     Pens.GetPen(Colors.MediumVioletRed));
+                    var actionKind = CommandToAction(e.Command);
+
+                    if (actionKind == DocumentActionKind.MarkExpression)
+                    {
+                        var data = new MarkActionData()
+                        {
+                            IsTemporary = e.Highlighting == HighlightingType.Temporary
+                        };
+                        var action = new DocumentAction(actionKind, element, data);
+                        activeDoc.TextView.ExecuteDocumentAction(action);
+                    }
+                    else {
+                        var action = new DocumentAction(actionKind, element, style);
+                        activeDoc.TextView.ExecuteDocumentAction(action);
+                    }
+                });
+            }
+        }
+
+        private void DebugService_OnSetCurrentElement(object sender, SetCurrentElementRequest e)
+        {
+            if (addressTag_ == null)
+            {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(() =>
+            {
+                var activeDoc = FindActiveDocument();
+                if (activeDoc == null) return;
+
+                var elementIteratorId = new ElementIteratorId(e.ElementId, e.ElementKind);
+
+                if(debugCurrentIteratorElement_.TryGetValue(elementIteratorId, out var currentElement))
+                {
+                    currentElement.RemoveTag<NotesTag>();
+                    activeDoc.TextView.ClearMarkedElement(currentElement);
+                    debugCurrentIteratorElement_.Remove(elementIteratorId);
+                }
+
+                if (e.ElementAddress != 0 &&
+                    (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element)))
+                {
+                    var notesTag = AppendNotesTag(element, e.Label);
+
+                    if (e.ElementKind == IRElementKind.Block)
+                    {
+                        activeDoc.TextView.MarkBlock(element, GetIteratorElementStyle(elementIteratorId));
+                    }
+                    else
+                    {
+                        activeDoc.TextView.MarkElement(element, GetIteratorElementStyle(elementIteratorId));
+                    }
+
+                    activeDoc.TextView.BringElementIntoView(element);
+                    debugCurrentIteratorElement_[elementIteratorId] = element;
+                }
+            });
+        }
+
+        private NotesTag AppendNotesTag(IRElement element, string label)
+        {
+            if (!string.IsNullOrEmpty(label))
+            {
+                element.RemoveTag<NotesTag>();
+                var notesTag = element.GetOrAddTag<NotesTag>();
+                notesTag.Title = label;
+
+                if(debugCurrentStackFrame_ != null)
+                {
+                    notesTag.Notes.Add($"{debugCurrentStackFrame_.Function}:{debugCurrentStackFrame_.LineNumber}");
+                }
+
+                return notesTag;
+            }
+
+            return null;
+        }
+
+        private HighlightingStyle GetIteratorElementStyle(ElementIteratorId elementIteratorId)
+        {
+            switch(elementIteratorId.ElementKind)
+            {
+                case IRElementKind.Instruction:
+                    {
+                        return new HighlightingStyle(Colors.LightBlue,
+                                                     Pens.GetPen(Colors.MediumBlue));
+                    }
+                case IRElementKind.Operand:
+                    {
+                        return new HighlightingStyle(Colors.PeachPuff,
+                                                     Pens.GetPen(Colors.SaddleBrown));
+                    }
+                case IRElementKind.User:
+                    {
+                        return new HighlightingStyle(Utils.ColorFromString("#EFBEE6"),
+                                                     Pens.GetPen(Colors.Purple));
+                    }
+                case IRElementKind.UserParent:
+                    {
+                        return new HighlightingStyle(Colors.Lavender,
+                                                     Pens.GetPen(Colors.Purple));
+                    }
+                case IRElementKind.Block:
+                    {
+                        return new HighlightingStyle(Colors.LightBlue,
+                                                     Pens.GetPen(Colors.LightBlue));
+                    }
+            }
+
+            return new HighlightingStyle(Colors.Gray);
+        }
+
+        private void DebugService_OnElementMarked(object sender, MarkElementRequest e)
+        {
+            if(addressTag_ == null)
+            {
+                return;
+            }
+
+            if (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element))
+            {
+                Dispatcher.BeginInvoke(() =>
+                {
+                    var activeDoc = FindActiveDocument();
+                    if (activeDoc == null) return;
+
+                    var notesTag = AppendNotesTag(element, e.Label);
+
+                    if (e.Highlighting == HighlightingType.Temporary)
+                    {
+                        activeDoc.TextView.HighlightElement(element, HighlighingType.Selected);
+                    }
+                    else
+                    {
+                        if (debugCurrentStackFrame_ != null)
+                        {
+                            var style = HighlightingStyles.StyleSet.ForIndex(debugCurrentStackFrame_.LineNumber);
+                            activeDoc.TextView.MarkElement(element, style);
+                        }
+                        else
+                        {
+                            activeDoc.TextView.MarkElement(element, Colors.Gray);
+
+                        }
+                    }
+                    
+                    activeDoc.TextView.BringElementIntoView(element);
+                });
+            }
+        }
+
+        private void DebugService_OnIRUpdated(object sender, UpdateIRRequest e)
+        {
+            Dispatcher.BeginInvoke(async () => {
+                if(mainDocument_ == null)
+                {
+                    return;
+                }
+
+                if (debugFunction_ == null)
+                {
+                    //? TODO: Try to extract function name from ENTRY
+                    debugFunction_ = new IRTextFunction("Debugged function");
+                    mainDocument_.Summary.AddFunction(debugFunction_);
+                }
+
+                var sectionName = $"Version {debugSectionId_ + 1}";
+
+                if (debugCurrentStackFrame_ != null)
+                {
+                    sectionName += $" ({debugCurrentStackFrame_.Function}:{debugCurrentStackFrame_.LineNumber})";
+                }
+
+                var section = new IRTextSection(debugFunction_, (ulong)debugSectionId_, debugSectionId_,
+                                                sectionName, new IRPassOutput(0, 0, 0, 0));
+                var filteredText = ExtractLineMetadata(section, e.Text);
+
+                try
+                {
+                    if (previousDebugSection_ != null &&
+                        debugSections_.GetSectionText(previousDebugSection_) == filteredText)
+                    {
+                        return; // Text unchanged
+                    }
+                }
+                catch(Exception ex)
+                {
+                    MessageBox.Show($"Unexpected RPC failure: {ex.Message}\n {ex.StackTrace}");
+                }
+
+                debugFunction_.Sections.Add(section);
+                debugSections_.AddSection(section, filteredText);
+                debugSummary_.AddSection(section);
+
+                SectionPanel.MainSummary = null;
+                SectionPanel.MainSummary = debugSummary_;
+                SectionPanel.SelectSection(section);
+                previousDebugSection_ = section;
+                debugSectionId_++;
+                
+                await SwitchDocumentSection(new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent));
+            });
+        }
+
+        private string ExtractLineMetadata(IRTextSection section, string text)
+        {
+            StringBuilder builder = new StringBuilder(text.Length);
+            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            int metadataLines = 0;
+
+            for(int i = 0; i < lines.Length; i++)
+            {
+                var line = lines[i];
+
+                if (line.StartsWith("/// irx:"))
+                {
+                    section.AddLineMetadata(i - metadataLines - 1, line);
+                    metadataLines++;
+                }
+                else
+                {
+                    builder.AppendLine(line);
+                }
+            }
+
+            return builder.ToString();
+        }
+
+        private async void DebugService_OnSessionStarted(object sender, StartSessionRequest e)
+        {
+            if(e.ProcessId == debugProcessId_)
+            {
+                return;
+            }
+
+            await Dispatcher.BeginInvoke(() =>
+            {
+                SetOptionalStatus(string.Format("Client connected, process {0}", e.ProcessId));
+                EndSession();
+
+                var result = new LoadedDocument("Debug session");
+                debugSections_ = new DebugSectionLoader();
+                debugSummary_ = debugSections_.LoadDocument();
+                result.Loader = debugSections_;
+                result.Summary = debugSummary_;
+                SetupOpenedIRDocument(SessionKind.DebugSession, "Debug session", result);
+
+                debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
+                debugProcessId_ = e.ProcessId;
+                debugSectionId_ = 0;
+                previousDebugSection_ = null;
+            });
+
         }
     }
 }
