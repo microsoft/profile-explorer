@@ -142,16 +142,24 @@ namespace Client {
             return list;
         }
 
-        public static void LoadApplicationSettings() {
+        public static bool LoadApplicationSettings() {
             try {
                 CreateSettingsDirectory();
                 string path = GetSettingsFilePath();
                 var data = File.ReadAllBytes(path);
                 Settings = StateSerializer.Deserialize<ApplicationSettings>(data);
+
+                // Do some basic sanity checks in case the settings file is incompatible.
+                if(Settings.RecentFiles == null || Settings.RecentComparedFiles == null) {
+                    return false;
+                }
+
+                return true;
             }
             catch (Exception ex) {
                 Settings = new ApplicationSettings();
                 Trace.TraceError($"Failed to load app settings: {ex}");
+                return false;
             }
         }
 
@@ -193,7 +201,10 @@ namespace Client {
                 Debug.WriteLine($"Failed to create trace file: {ex}");
             }
 
-            LoadApplicationSettings();
+            if (!LoadApplicationSettings()) {
+                // Failed to load settings, reset them.
+                Settings = new ApplicationSettings();
+            }
         }
 
         public void SetupExceptionHandling(bool showUIPrompt = true) {

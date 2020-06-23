@@ -88,10 +88,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Options\ExpressionGraphOptionsPanel.xaml.cs">
+    <Compile Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Options\GraphOptionsPanel.xaml.cs">
+    <Compile Update="OptionsPanels\GraphOptionsPanel.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Panels\ScriptingPanel.xaml.cs">
@@ -148,10 +148,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Update="Options\ExpressionGraphOptionsPanel.xaml">
+    <Page Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="Options\GraphOptionsPanel.xaml">
+    <Page Update="OptionsPanels\GraphOptionsPanel.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="Panels\ScriptingPanel.xaml">
@@ -184,7 +184,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy /y $(SolutionDir)..\resources\*.xshd $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)..\resources\*.xml $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)..\resources\*.json $(TargetDir)&#xD;&#xA;mkdir -p $(TargetDir)themes&#xD;&#xA;copy /y $(SolutionDir)..\resources\themes\*.xshd $(TargetDir)themes" />
+    <Exec Command="copy /y $(SolutionDir)resources\*.xshd $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)resources\*.xml $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)resources\*.json $(TargetDir)&#xD;&#xA;mkdir -p $(TargetDir)themes&#xD;&#xA;copy /y $(SolutionDir)resources\themes\*.xshd $(TargetDir)themes" />
   </Target>
 
 </Project>
