@@ -1,0 +1,68 @@
+﻿<Window
+    x:Class="Client.UpdateWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Client"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="Compiler Studio Update"
+    Width="600"
+    Height="500"
+    Loaded="Window_Loaded"
+    ResizeMode="CanResizeWithGrip"
+    ShowInTaskbar="False"
+    SnapsToDevicePixels="True"
+    WindowStartupLocation="CenterOwner"
+    WindowStyle="ToolWindow"
+    mc:Ignorable="d">
+    <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="70" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="32" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="8,4,0,0" Text="Available version: " />
+                <TextBlock
+                    x:Name="NewVersionLabel"
+                    Margin="8,4,0,0"
+                    FontWeight="SemiBold"
+                    Text="0.0.0" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Margin="8,2,0,0" Text="Current version: " />
+                <TextBlock
+                    x:Name="CurrentVersionLabel"
+                    Margin="8,2,0,0"
+                    FontWeight="SemiBold"
+                    Text="0.0.0" />
+            </StackPanel>
+
+            <TextBlock Margin="8,8,0,8" Text="Release notes" />
+        </StackPanel>
+        <WebBrowser
+            x:Name="Browser"
+            Grid.Row="1"
+            Margin="0,4,0,4" />
+        <StackPanel
+            Grid.Row="2"
+            Margin="0,4,8,4"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal">
+            <Button
+                x:Name="CancelButton"
+                Margin="0,0,4,0"
+                Padding="4,1,4,1"
+                Click="CancelButton_Click"
+                Content="Cancel" />
+            <Button
+                x:Name="UpdateButton"
+                Padding="4,1,4,1"
+                Background="#FF95FFAF"
+                Click="UpdateButton_Click"
+                Content="Install Update" />
+        </StackPanel>
+    </Grid>
+</Window>

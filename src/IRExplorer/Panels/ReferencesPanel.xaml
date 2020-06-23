@@ -1,0 +1,299 @@
+﻿<local:ToolPanelControl
+    x:Class="Client.ReferencesPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Client"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="28" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid
+            Grid.Row="0"
+            HorizontalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="75" />
+            </Grid.ColumnDefinitions>
+            <ToolBarTray
+                Grid.Column="0"
+                Height="28"
+                HorizontalAlignment="Stretch"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                IsLocked="True">
+                <ToolBar
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Loaded="ToolBar_Loaded">
+
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="Show" />
+
+                    <ComboBox
+                        x:Name="FilterComboBox"
+                        Width="150"
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Loaded="ComboBox_Loaded"
+                        SelectedIndex="0"
+                        SelectionChanged="FilterComboBox_SelectionChanged">
+                        <ComboBoxItem Tag="All">
+                            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                <TextBlock Width="100" Text="Overview" />
+                                <Separator />
+                                <TextBlock Text="" />
+                            </StackPanel>
+                        </ComboBoxItem>
+                        <ComboBoxItem Tag="SSA">
+                            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                <TextBlock Width="100" Text="SSA uses" />
+                                <Separator />
+                                <TextBlock Text="{Binding SSACount}" />
+                            </StackPanel>
+                        </ComboBoxItem>
+                        <ComboBoxItem Tag="Load">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Width="100" Text="Load uses" />
+                                <TextBlock Text="{Binding LoadCount}" />
+                            </StackPanel>
+                        </ComboBoxItem>
+                        <ComboBoxItem Tag="Store">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Width="100" Text="Store uses" />
+                                <TextBlock Text="{Binding StoreCount}" />
+                            </StackPanel>
+                        </ComboBoxItem>
+                        <ComboBoxItem Tag="Address">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Width="100" Text="Address uses" />
+                                <TextBlock Text="{Binding AddressCount}" />
+                            </StackPanel>
+                        </ComboBoxItem>
+                    </ComboBox>
+
+                    <Separator />
+
+
+                    <Button
+                        Margin="4,0,0,0"
+                        Command="local:ReferenceCommand.JumpToReference"
+                        CommandParameter="{Binding ElementName=ReferenceList, Path=SelectedItem}"
+                        CommandTarget="{Binding ElementName=ReferenceList}"
+                        ToolTip="Jump to reference (Return)">
+                        <Image Source="{StaticResource JumpIcon}" />
+                    </Button>
+
+
+                    <Button
+                        Command="local:ReferenceCommand.CopyToClipboard"
+                        CommandTarget="{Binding ElementName=ReferenceList}"
+                        ToolTip="Copy reference list to clipboard (Ctrl+C)">
+                        <Image Source="{StaticResource ClipboardIcon}" />
+                    </Button>
+
+                    <Separator />
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Text="Symbol" />
+                    <TextBlock
+                        x:Name="SymbolName"
+                        MinWidth="100"
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="DemiBold"
+                        Text="" />
+                </ToolBar>
+            </ToolBarTray>
+
+            <local:PanelToolbarTray
+                x:Name="FixedToolbar"
+                Grid.Column="1"
+                BindMenuItemSelected="FixedToolbar_BindMenuItemSelected"
+                BindMenuOpen="FixedToolbar_BindMenuOpen"
+                DuplicateClicked="PanelToolbarTray_DuplicateClicked"
+                PinnedChanged="PanelToolbarTray_PinnedChanged"
+                SettingsClicked="PanelToolbarTray_SettingsClicked" />
+        </Grid>
+
+        <ListView
+            x:Name="ReferenceList"
+            Grid.RowSpan="2"
+            Margin="0,27,0,0"
+            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            BorderBrush="{x:Null}"
+            BorderThickness="0,0,0,0"
+            VirtualizingPanel.IsVirtualizing="True"
+            VirtualizingPanel.VirtualizationMode="Recycling">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn
+                        Width="30"
+                        DisplayMemberBinding="{Binding Index}"
+                        Header="#">
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+                    <GridViewColumn
+                        Width="60"
+                        DisplayMemberBinding="{Binding Kind}"
+                        Header="Kind">
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+
+                    <GridViewColumn
+                        Width="100"
+                        DisplayMemberBinding="{Binding Block}"
+                        Header="Block">
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+
+                    <GridViewColumn Width="400" Header="Preview">
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <ContentPresenter Content="{Binding Preview}" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <GridViewColumn
+                        Width="70"
+                        DisplayMemberBinding="{Binding Line}"
+                        Header="Line">
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+            <ListView.ItemContainerStyle>
+                <Style BasedOn="{StaticResource FlatListViewItem}"
+                       TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background"
+                            Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                    <EventSetter Event="Control.MouseDoubleClick"
+                                 Handler="ListViewItem_MouseDoubleClick" />
+                    <EventSetter Event="UIElement.MouseEnter" Handler="ListViewItem_MouseEnter" />
+
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Kind}" Value="Store">
+                            <Setter Property="Foreground" Value="#006700" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Kind}" Value="Load">
+                            <Setter Property="Foreground" Value="#4E0088" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Kind}" Value="Address">
+                            <Setter Property="FontWeight" Value="DemiBold" />
+                            <Setter Property="Foreground" Value="#BE0000" />
+                        </DataTrigger>
+                    </Style.Triggers>
+
+                </Style>
+            </ListView.ItemContainerStyle>
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem
+                        Command="local:ReferenceCommand.JumpToReference"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        Header="Jump to Reference"
+                        InputGestureText="Return">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource JumpIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <Separator />
+
+                    <MenuItem
+                        Focusable="False"
+                        Header="Mark Reference"
+                        IsHitTestVisible="False" />
+                    <MenuItem>
+                        <MenuItem.Header>
+                            <local:ColorSelector
+                                ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
+                        </MenuItem.Header>
+                    </MenuItem>
+                    <MenuItem Command="local:ReferenceCommand.UnmarkReference"
+                              Header="Clear Marker" />
+                    <Separator />
+
+                    <MenuItem Header="Mark Visible References">
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <local:ColorSelector
+                                    ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
+
+                    <MenuItem Header="Mark All References" />
+
+                </ContextMenu>
+            </ListView.ContextMenu>
+            <ListView.InputBindings>
+                <KeyBinding
+                    Key="Enter"
+                    Command="local:ReferenceCommand.JumpToReference"
+                    CommandParameter="{Binding SelectedItem, ElementName=BookmarkList}" />
+            </ListView.InputBindings>
+        </ListView>
+    </Grid>
+
+    <local:ToolPanelControl.CommandBindings>
+        <CommandBinding Command="local:ReferenceCommand.JumpToReference"
+                        Executed="JumpToReferenceExecuted" />
+        <CommandBinding Command="local:ReferenceCommand.CopyToClipboard"
+                        Executed="CopyToClipboardExecuted" />
+        <CommandBinding Command="local:ReferenceCommand.MarkReference"
+                        Executed="MarkReferenceExecuted" />
+        <CommandBinding Command="local:ReferenceCommand.UnmarkReference"
+                        Executed="UnmarkReferenceExecuted" />
+    </local:ToolPanelControl.CommandBindings>
+
+
+    <local:ToolPanelControl.InputBindings>
+        <KeyBinding
+            Key="Return"
+            Command="local:ReferenceCommand.JumpToReference"
+            CommandParameter="{Binding ElementName=ReferenceList, Path=SelectedItem}" />
+        <KeyBinding
+            Key="C"
+            Command="local:ReferenceCommand.CopyToClipboard"
+            Modifiers="Ctrl" />
+    </local:ToolPanelControl.InputBindings>
+</local:ToolPanelControl>
