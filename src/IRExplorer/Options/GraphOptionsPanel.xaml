@@ -1,0 +1,473 @@
+﻿<UserControl
+    x:Class="Client.Options.GraphOptionsPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Client.Options"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
+    d:DesignHeight="600"
+    d:DesignWidth="400              "
+    mc:Ignorable="d">
+    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="2,1,0,2">
+        <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="32" />
+            </Grid.RowDefinitions>
+
+            <ScrollViewer
+                Grid.Row="0"
+                HorizontalScrollBarVisibility="Disabled"
+                VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="4,4,4,4">
+                    <TextBlock FontWeight="DemiBold" Text="Graph Interaction" />
+                    <StackPanel Margin="0,0,0,2" Orientation="Horizontal" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Sync selected/hovered nodes with document"
+                        IsChecked="{Binding Path=SyncSelectedNodes, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Sync marked nodes with document"
+                        IsChecked="{Binding Path=SyncMarkedNodes, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Bring selected node into view"
+                        IsChecked="{Binding Path=BringNodesIntoView, Mode=TwoWay}" />
+
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Show immediate dominator edges"
+                        IsChecked="{Binding Path=ShowImmDominatorEdges, Mode=TwoWay}" />
+
+                    <CheckBox
+                        x:Name="ShowPreviewCheckbox"
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Show node preview popup on hover"
+                        IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="20,3,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Only when the Shift key is pressed"
+                        IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
+                        IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
+                    <Separator Margin="0,4,0,4" />
+
+                    <TextBlock FontWeight="DemiBold" Text="Graph Node Style" />
+                    <CheckBox
+                        Margin="0,4,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Use semantic colorization for nodes"
+                        IsChecked="{Binding Path=ColorizeNodes, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Use semantic colorization for edges"
+                        IsChecked="{Binding Path=ColorizeEdges, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Highlight connected nodes on hover"
+                        IsChecked="{Binding Path=HighlightConnectedNodesOnHover, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Content="Highlight connected nodes on selection"
+                        IsChecked="{Binding Path=HighlightConnectedNodesOnSelection, Mode=TwoWay}" />
+                    <Separator Margin="0,4,0,4" />
+
+                    <TextBlock FontWeight="DemiBold" Text="Graph Colors" />
+                    <StackPanel Margin="0,4,0,0" Orientation="Vertical">
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Text color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Background color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=NodeColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Node color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=EdgeColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Edge color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Node border color" />
+                        </Grid>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=EmptyNodeColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Empty node color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=BranchNodeBorderColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Branch node border color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=SwitchNodeBorderColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Switch node border color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=ReturnNodeBorderColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Return node border color" />
+                        </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=LoopNodeBorderColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Loop header node border color" />
+                        </Grid>
+
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                SelectedColor="{Binding Path=DominatorEdgeColor, Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Immediate dominator edge color" />
+                        </Grid>
+
+                        <Separator Margin="0,4,0,4" />
+                        <TextBlock FontWeight="DemiBold" Text="Loop Graph Colors" />
+                        <CheckBox
+                            x:Name="LoopCheckbox"
+                            Margin="0,4,0,2"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            Content="Colorize loop nodes"
+                            IsChecked="{Binding Path=MarkLoopBlocks, Mode=TwoWay}" />
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
+                                SelectedColor="{Binding Path=LoopNodeColors[0], Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Loop node color - nesting level 1" />
+                        </Grid>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
+                                SelectedColor="{Binding Path=LoopNodeColors[1], Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Loop node color - nesting level 2" />
+                        </Grid>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
+                                SelectedColor="{Binding Path=LoopNodeColors[2], Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Loop node color - nesting level 3" />
+                        </Grid>
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <toolkit:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="Gray"
+                                IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
+                                SelectedColor="{Binding Path=LoopNodeColors[3], Mode=TwoWay}"
+                                ShowDropDownButton="True"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Loop node color - nesting level 4+" />
+                        </Grid>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Grid Grid.Row="1" Margin="4,4,4,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="50" />
+                </Grid.ColumnDefinitions>
+                <Button
+                    x:Name="ResetButton"
+                    Grid.Column="0"
+                    Width="50"
+                    Height="24"
+                    VerticalAlignment="Top"
+                    BorderThickness="1,1,1,1"
+                    Click="ResetButton_Click"
+                    Content="Reset" />
+                <Button
+                    x:Name="CloseButton"
+                    Grid.Column="2"
+                    Width="50"
+                    Height="24"
+                    VerticalAlignment="Top"
+                    BorderThickness="1,1,1,1"
+                    Click="CloseButton_Click"
+                    Content="Close" />
+            </Grid>
+        </Grid>
+    </Border>
+</UserControl>

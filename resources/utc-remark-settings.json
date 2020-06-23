@@ -1,0 +1,98 @@
+{
+    "Comment1": "Add remark definitions to the list found below, including the kind, searched text that should be part of the remark, a type of search to perform (simple/regex,etc) and how to highlight the remark, using an underline and/or marker on the left-side margin with a certain color",
+    "Comment2": "Remark categories are defined in the RemarkCategoryList, remark section stop boundaries in SectionBoundaryList",
+    "Comment3": "Use the KindValues/SearchKindValues strings listed below as the enumeration values for the corresponding members",
+    "KindValues": [
+      "default",
+      "optimization",
+      "analysis",
+      "verbose",
+      "trace"
+    ],
+    "SearchKindValues": [
+      "default",
+      "regex",
+      "caseSensitive",
+      "wholeWord"
+    ],
+    "RemarkCategoryList": [
+      {
+        "Kind": "optimization",
+        "Title": "CSE",
+        "SearchedText": "CSE of instr",
+        "SearchKind": "default",
+        "AddTextMark": true,
+        "TextMarkBorderColor": "#74d95f",
+        "TextMarkBorderWeight": 1.5,
+        "AddLeftMarginMark": true,
+        "MarkColor": "#b2f5a4",
+        "MarkIconIndex": 1
+      },
+      {
+        "Kind": "optimization",
+        "Title": "PEEP",
+        "SearchedText": "PEEP ",
+        "SearchKind": "default",
+        "AddTextMark": true,
+        "TextMarkBorderColor": "#f5dd56",
+        "TextMarkBorderWeight": 1.5,
+        "AddLeftMarginMark": true,
+        "MarkColor": "#fff1a1",
+        "MarkIconIndex": 1
+      },
+      {
+        "Kind": "analysis",
+        "Title": "VN",
+        "SearchedText": "VN ",
+        "SearchKind": "default",
+        "AddTextMark": true,
+        "TextMarkBorderColor": "#bd93d9",
+        "TextMarkBorderWeight": 1.5,
+        "AddLeftMarginMark": true,
+        "MarkColor": "#eccfff",
+        "MarkIconIndex": 0
+      },
+      {
+        "Kind": "analysis",
+        "Title": "BE",
+        "SearchedText": "-> Instr:",
+        "SearchKind": "default",
+        "AddTextMark": true,
+        "TextMarkBorderColor": "#5ddebb",
+        "TextMarkBorderWeight": 1.5,
+        "AddLeftMarginMark": true,
+        "MarkColor": "#b5f7e5",
+        "MarkIconIndex": 0
+      },
+      {
+        "Kind": "verbose",
+        "Title": "",
+        "SearchedText": "[V]",
+        "SearchKind": "default",
+        "AddTextMark": true,
+        "TextMarkBorderColor": "#365bb3",
+        "TextMarkBorderWeight": 1,
+        "AddLeftMarginMark": false,
+        "MarkColor": "#000000",
+        "MarkIconIndex": 0
+      },
+      {
+        "Kind": "trace",
+        "Title": "",
+        "SearchedText": "[T]",
+        "SearchKind": "default",
+        "AddTextMark": true,
+        "TextMarkBorderColor": "#9e9e9e",
+        "TextMarkBorderWeight": 1,
+        "AddLeftMarginMark": false,
+        "MarkColor": "#000000",
+        "MarkIconIndex": 0
+      }
+    ],
+    "SectionBoundaryList": [
+      {
+        "SearchedText": "Tuples \\w+ SSA Optimizer - \\w+ pass",
+        "SearchKind": "regex"
+      }
+    ]
+  }
