@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace Client.Scripting {
+namespace IRExplorer.Scripting {
     [Flags]
     public enum QueryValueKind {
         Other = 0,

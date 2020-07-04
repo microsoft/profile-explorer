@@ -3,7 +3,7 @@
 
 using System.Windows.Input;
 
-namespace Client {
+namespace IRExplorer {
     public static class DocumentCommand {
         public static readonly RoutedUICommand GoToDefinition =
             new RoutedUICommand("Untitled", "GoToDefinition", typeof(IRDocumentHost));

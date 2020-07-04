@@ -3,12 +3,12 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using Client.Utilities;
-using CoreLib.IR;
-using CoreLib.IR.Tags;
+using IRExplorer.Utilities;
+using IRExplorerCore.IR;
+using IRExplorerCore.IR.Tags;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace Client.Document {
+namespace IRExplorer.Document {
     public class VisualHost : UIElement {
         public Visual Visual { get; set; }
 

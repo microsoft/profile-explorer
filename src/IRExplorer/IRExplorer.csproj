@@ -5,15 +5,21 @@
     <TargetFramework>net5.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>main.ico</ApplicationIcon>
-    <AssemblyVersion>0.4.3.0</AssemblyVersion>
-    <FileVersion>0.4.3.0</FileVersion>
-    <Version>0.4.3</Version>
+    <AssemblyVersion>0.6.0.0</AssemblyVersion>
+    <FileVersion>0.6.0.0</FileVersion>
+    <Version>0.6</Version>
     <Authors></Authors>
     <Company>Microsoft Corporation</Company>
     <Product>IR Explorer</Product>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>irexplorer</AssemblyName>
   </PropertyGroup>
+
+    <PropertyGroup>
+        <ServerGarbageCollection>true</ServerGarbageCollection>
+        <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+        <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+    </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <OutputPath></OutputPath>
@@ -31,9 +37,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <ServerGarbageCollection>true</ServerGarbageCollection>
     <Copyright>Microsoft Corporation</Copyright>
-    <StartupObject>Client.App</StartupObject>
+    <StartupObject>IRExplorer.App</StartupObject>
   </PropertyGroup>
   
   <ItemGroup>
@@ -41,6 +46,10 @@
     <EmbeddedResource Remove="Themes\**" />
     <None Remove="Themes\**" />
     <Page Remove="Themes\**" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <None Remove="refresh.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -73,6 +82,7 @@
     <PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.4.33" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
     <PackageReference Include="protobuf-net" Version="3.0.0-alpha.122" />
+    <PackageReference Include="System.IO" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -88,10 +98,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Resource Include="refresh.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="OptionsPanels\GraphOptionsPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Panels\RemarksPanel.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Panels\ScriptingPanel.xaml.cs">
@@ -152,6 +169,9 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Update="OptionsPanels\GraphOptionsPanel.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Panels\RemarksPanel.xaml">
       <SubType>Designer</SubType>
     </Page>
     <Page Update="Panels\ScriptingPanel.xaml">

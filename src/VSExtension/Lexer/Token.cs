@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace CoreLib.Lexer {
+namespace IRExplorerCore.Lexer {
     // Definitions for token types.
     // Some tokens (identifier, string, number, etc.) have additional associated data.
     public enum TokenKind {

@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using CoreLib;
-using CoreLib.UTC;
+using IRExplorerCore;
+using IRExplorerCore.UTC;
 
-namespace Client {
+namespace IRExplorer {
     public class UTCCompilerInfoProvider : ICompilerInfoProvider {
         private UTCCompilerIRInfo ir_;
         private UTCNameProvider names_;
@@ -21,7 +21,7 @@ namespace Client {
         public string CompilerIRName => "UTC";
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;
-        public ISectionStyleProvider StyleProvider => styles_;
+        public ISectionStyleProvider SectionStyleProvider => styles_;
         public IRRemarkProvider RemarkProvider => remarks_;
     }
 }

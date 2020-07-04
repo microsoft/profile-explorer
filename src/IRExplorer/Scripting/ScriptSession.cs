@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace Client.Scripting {
+namespace IRExplorer.Scripting {
     public class ScriptSession {
         private AnalysisInfo analysis_;
         private StringBuilder builder_;

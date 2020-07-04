@@ -8,9 +8,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using CoreLib;
-using CoreLib.GraphViz;
-using CoreLib.UTC;
+using IRExplorerCore;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.UTC;
 
 namespace CompilerStudio {
     class Program {
@@ -69,14 +69,14 @@ namespace CompilerStudio {
 
             Console.WriteLine("Loading file");
 
-            UTCReader reader;
+            UTCSectionReader reader;
             IRTextSummary summary;
             int failed = 0;
 
             try {
                 var start = DateTime.Now;
-                reader = new UTCReader(filePath, expectSectionHeaders: false);
-                summary = reader.GenerateSummary();
+                reader = new UTCSectionReader(filePath, expectSectionHeaders: false);
+                summary = reader.GenerateSummary(null);
                 var end = DateTime.Now;
                 Console.WriteLine($"Summary done in {(end - start).TotalMilliseconds} ms");
             }

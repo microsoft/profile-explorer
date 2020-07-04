@@ -1,6 +1,6 @@
-﻿using CoreLib.IR;
+﻿using IRExplorerCore.IR;
 
-namespace CoreLib {
+namespace IRExplorerCore {
     public interface ICompilerIRInfo {
         bool IsCopyInstruction(InstructionIR instr);
         bool IsLoadInstruction(InstructionIR instr);

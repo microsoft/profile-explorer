@@ -6,7 +6,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace Client {
+namespace IRExplorer {
     public sealed class CurrentLineHighlighter : IBackgroundRenderer {
         private Brush backgroundBrush_;
         private Pen borderPen_;

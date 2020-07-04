@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using CoreLib;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     public enum FilteredSectionNameKind {
         TrimPrefix,
         TrimSuffix,

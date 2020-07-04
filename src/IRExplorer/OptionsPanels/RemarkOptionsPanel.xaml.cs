@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IRExplorer.OptionsPanels;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -14,16 +15,20 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Client.Options
-{
+namespace IRExplorer.OptionsPanels {
     /// <summary>
     /// Interaction logic for RemarkOptionsPanel.xaml
     /// </summary>
-    public partial class RemarkOptionsPanel : UserControl
-    {
-        public RemarkOptionsPanel()
-        {
+    public partial class RemarkOptionsPanel : OptionsPanelBase {
+        public const double DefaultHeight = 480;
+        public const double MinimumHeight = 300;
+        public const double DefaultWidth = 350;
+        public const double MinimumWidth = 350;
+        public const double LeftMargin = 166;
+
+        public RemarkOptionsPanel(ICompilerInfoProvider compilerInfo) {
             InitializeComponent();
+            compilerInfo_ = compilerInfo;
             PreviewMouseUp += RemarkOptionsPanel_PreviewMouseUp;
             PreviewKeyUp += RemarkOptionsPanel_PreviewKeyUp;
 
@@ -34,32 +39,24 @@ namespace Client.Options
             kindCheckboxes_.Add(VerboseCheckbox);
             kindCheckboxes_.Add(TraceCheckbox);
         }
-        
+
         private List<CheckBox> kindCheckboxes_;
         private List<CheckBox> categoryCheckboxes_;
+        private ICompilerInfoProvider compilerInfo_;
 
-        private void SetCheckboxesState(List<CheckBox> list, bool state)
-        {
+        private void SetCheckboxesState(List<CheckBox> list, bool state) {
             list.ForEach((item) => item.IsChecked = state);
         }
 
-        private void RemarkOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e)
-        {
+        private void RemarkOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
             NotifySettingsChanged();
         }
 
-        private void RemarkOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e)
-        {
+        private void RemarkOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
             NotifySettingsChanged();
         }
 
-        public ICompilerInfoProvider CompilerInfo { get; set; }
-
-        public event EventHandler PanelClosed;
-        public event EventHandler PanelReset;
-        public event EventHandler SettingsChanged;
-
-        public void Initialize() {
+        public override void Initialize() {
             PopulateCategoryList();
         }
 
@@ -68,9 +65,9 @@ namespace Client.Options
             categoryCheckboxes_ = new List<CheckBox>();
 
             bool initialLoad = !remarkSettings.HasCategoryFilters;
-            var categories = CompilerInfo.RemarkProvider.LoadRemarkCategories();
+            var categories = compilerInfo_.RemarkProvider.LoadRemarkCategories();
 
-            if(categories == null) {
+            if (categories == null) {
                 MessageBox.Show("Failed to load remark settings file,\ncheck JSON for any syntax errors!", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
@@ -117,58 +114,29 @@ namespace Client.Options
             var remarkSettings = (RemarkSettings)DataContext;
             remarkSettings.CategoryFilter = new Dictionary<string, bool>();
 
-            foreach(var checkbox in categoryCheckboxes_) {
+            foreach (var checkbox in categoryCheckboxes_) {
                 var category = (RemarkCategory)checkbox.Tag;
                 remarkSettings.CategoryFilter[category.Title] = checkbox.IsChecked.HasValue && checkbox.IsChecked.Value;
             }
         }
 
         private void NotifySettingsChanged() {
-            if (SettingsChanged != null) {
-                DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-                    SettingsChanged(this, null);
-                });
-            }
+            DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
+                RaiseSettingsChanged(null);
+            });
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e) {
-            UpdateCategoryFilter();
-            PanelClosed?.Invoke(this, new EventArgs());
-        }
-
-        private void ResetButton_Click(object sender, RoutedEventArgs e) {
-            UpdateCategoryFilter();
-            PanelReset?.Invoke(this, new EventArgs());
-        }
-
-        private void SetAllKindCheckboxesButton_Click(object sender, RoutedEventArgs e)
-        {
+        private void SetAllKindCheckboxesButton_Click(object sender, RoutedEventArgs e) {
             SetCheckboxesState(kindCheckboxes_, true);
         }
 
-        private void ResetAllKindCheckboxesButton_Click(object sender, RoutedEventArgs e)
-        {
+        private void ResetAllKindCheckboxesButton_Click(object sender, RoutedEventArgs e) {
             SetCheckboxesState(kindCheckboxes_, false);
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e) {
             var settingsPath = App.GetRemarksDefinitionFilePath("utc");
-
-            if (settingsPath == null) {
-                MessageBox.Show($"Failed to setup settings file at\n{settingsPath}", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
-                return;
-            }
-
-            try {
-                var psi = new ProcessStartInfo(settingsPath) {
-                    UseShellExecute = true
-                };
-
-                Process.Start(psi);
-            }
-            catch (Exception ex) {
-                MessageBox.Show($"Failed to open settings file\n{ex.Message}", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            App.LaunchSettingsFileEditor(settingsPath);
         }
 
         private void SetAllCategoryCheckboxesButton_Click(object sender, RoutedEventArgs e) {

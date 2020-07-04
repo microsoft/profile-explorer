@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public enum TupleKind {
         Instruction,
         Label,

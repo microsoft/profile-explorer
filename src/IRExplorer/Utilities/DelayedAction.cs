@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Client {
+namespace IRExplorer {
     public class DelayedAction {
         private bool canceled_;
 

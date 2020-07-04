@@ -9,14 +9,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Client.Utilities;
-using CoreLib.IR;
+using IRExplorer.Utilities;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     public enum BookmarkSegmentKind {
         Bookmark,
         Remark
@@ -106,8 +106,8 @@ namespace Client {
         private static readonly HighlightingStyle nearbyBookmarkStyle_ =
             new HighlightingStyle(Colors.LightBlue, Pens.GetPen(Colors.Silver));
         private SolidColorBrush backgroundBrush_;
+        
         private HashSet<IRElement> blockElements_;
-
         private List<HighlightedSegmentGroup> blockGroups_;
 
         private IconDrawing bookmarkIcon_;
@@ -273,6 +273,16 @@ namespace Client {
         public void ClearBookmarks() {
             bookmarkSegments_.Clear();
             Version++;
+        }
+
+        public void Reset() {
+            ClearMarkers();
+            ClearBookmarks();
+            blockElements_.Clear();
+            blockGroups_.Clear();
+            nearbyBookmarks_.Clear();
+            selectedBookmark_ = null;
+            hoveredBookmark_ = null;
         }
 
         public void ForEachBlockElement(Action<IRElement> action) {
@@ -741,15 +751,20 @@ namespace Client {
         }
 
         public void RemoveRemarkBookmarks() {
-            var newBookmarkSegments = new TextSegmentCollection<BookmarkSegment>();
+            var bookmarkList = new List<BookmarkSegment>();
 
             foreach (var segment in bookmarkSegments_) {
                 if (segment.Kind == BookmarkSegmentKind.Bookmark) {
-                    newBookmarkSegments.Add(segment);
+                    bookmarkList.Add(segment);
                 }
             }
 
-            bookmarkSegments_ = newBookmarkSegments;
+            // Clear current segments and add back just the bookmarks.
+            bookmarkSegments_.Clear();
+
+            foreach(var segment in bookmarkList) {
+                bookmarkSegments_.Add(segment);
+            }
         }
 
         private class IconDrawing {

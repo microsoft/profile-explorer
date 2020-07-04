@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 
-namespace Client {
+namespace IRExplorer {
     public static class Pens {
         private static readonly double BoldPenThickness = 1.5;
         private static readonly Dictionary<Tuple<Color, double>, Pen> pens_;

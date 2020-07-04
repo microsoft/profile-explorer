@@ -3,7 +3,7 @@
 
 using System.Windows;
 
-namespace Client {
+namespace IRExplorer {
     /// <summary>
     ///     Interaction logic for AboutWindow.xaml
     /// </summary>

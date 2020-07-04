@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using IRExplorer.OptionsPanels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +14,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml;
 
-namespace Client.Options {
+namespace IRExplorer.OptionsPanels {
     public class FontFamilyConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
             try {
@@ -29,7 +30,12 @@ namespace Client.Options {
         }
     }
 
-    public partial class DocumentOptionsPanel : UserControl {
+    public partial class DocumentOptionsPanel : OptionsPanelBase {
+        public const double DefaultHeight = 500;
+        public const double MinimumHeight = 300;
+        public const double DefaultWidth = 360;
+        public const double MinimumWidth = 360;
+
         private const string DocumentStylesFilePath = @"documentStyles.xml";
         private bool syntaxEditPanelVisible_;
 
@@ -42,6 +48,8 @@ namespace Client.Options {
             PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
         }
 
+        public bool SyntaxFileChanged { get; set; }
+
         private void DocumentOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
             NotifySettingsChanged();
         }
@@ -51,28 +59,22 @@ namespace Client.Options {
         }
 
         private void NotifySettingsChanged() {
-            if (SettingsChanged != null) {
-                DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-                    bool syntaxFileChanged = DataContext != null && UpdateSyntaxHighlightingStyle();
-                    SettingsChanged(this, syntaxFileChanged);
-                });
-            }
+            DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
+                SyntaxFileChanged = DataContext != null && UpdateSyntaxHighlightingStyle();
+                RaiseSettingsChanged(null);
+            });
         }
 
-        public event EventHandler<bool> PanelClosed;
-        public event EventHandler<bool> SettingsChanged;
-        public event EventHandler PanelReset;
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e) {
-            bool syntaxFileChanged = UpdateSyntaxHighlightingStyle();
-            PanelClosed?.Invoke(this, syntaxFileChanged);
+        public override void PanelClosing() {
+            SyntaxFileChanged = UpdateSyntaxHighlightingStyle();
         }
 
-        private void ResetButton_Click(object sender, RoutedEventArgs e) {
+        public override void PanelResetting() {
             syntaxHighlightingStyle_ = null;
             syntaxHighlightingColors_ = null;
-            PanelReset?.Invoke(this, new EventArgs());
+        }
 
+        public override void PanelResetted() {
             if (syntaxEditPanelVisible_) {
                 ShowSyntaxEditPanel(null);
             }

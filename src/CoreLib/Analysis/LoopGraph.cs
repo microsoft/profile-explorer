@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace CoreLib.Analysis {
+namespace IRExplorerCore.Analysis {
     public enum LoopKind {
         Natural,
         NonReducible

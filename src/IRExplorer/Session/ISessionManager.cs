@@ -3,12 +3,12 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Client.Document;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorer.Document;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     public enum DuplicatePanelKind {
         NewSetDockedLeft,
         NewSetDockedRight,
@@ -22,6 +22,7 @@ namespace Client {
         List<IRDocument> OpenDocuments { get; }
         ICompilerInfoProvider CompilerInfo { get; }
         SessionStateManager SessionState { get; }
+        bool IsInDiffMode { get; }
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
         IRDocument FindAssociatedDocument(IToolPanel panel);
@@ -41,6 +42,8 @@ namespace Client {
         void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations);
 
         Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section);
+        Task<string> GetSectionTextAsync(IRTextSection section, IRDocument document = null);
+
         Task SwitchGraphsAsync(GraphPanel flowGraphPanel, IRTextSection section, IRDocument document);
 
         Task<SectionSearchResult> SearchSectionAsync(SearchInfo searchInfo, IRTextSection section,

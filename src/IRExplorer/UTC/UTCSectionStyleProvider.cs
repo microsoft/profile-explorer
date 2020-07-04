@@ -2,55 +2,17 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows.Media;
-using CoreLib;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     public class UTCSectionStyleProvider : ISectionStyleProvider {
-        private static readonly string SettingsFile = "utc-section-styles.json";
         private List<MarkedSectionName> sectionNameMarkers_;
 
         public UTCSectionStyleProvider() {
             sectionNameMarkers_ = new List<MarkedSectionName>();
-
-            sectionNameMarkers_.Add(
-                new MarkedSectionName("Tuples before SSA Optimizer - second pass", TextSearchKind.Default) {
-                    TextColor = Colors.Indigo
-                });
-
-            sectionNameMarkers_.Add(new MarkedSectionName("SSA Optimizer", TextSearchKind.Default) {
-                TextColor = Colors.MediumBlue
-            });
-
-            sectionNameMarkers_.Add(new MarkedSectionName("SSAOpt", TextSearchKind.Default) {
-                TextColor = Colors.MediumBlue
-            });
-
-            sectionNameMarkers_.Add(new MarkedSectionName("SSA CFG Optimizer", TextSearchKind.Default) {
-                TextColor = Colors.DarkGreen
-            });
-
-            sectionNameMarkers_.Add(new MarkedSectionName("Vectorizer", TextSearchKind.Default) {
-                TextColor = Colors.Indigo
-            });
-
-            sectionNameMarkers_.Add(new MarkedSectionName("const/copy prop", TextSearchKind.Default)
-                                        {TextColor = Colors.DarkRed});
-
-            sectionNameMarkers_.Add(new MarkedSectionName("dead store", TextSearchKind.Default)
-                                        {TextColor = Colors.DarkRed});
-
-            sectionNameMarkers_.Add(new MarkedSectionName("build hash table", TextSearchKind.Default)
-                                        {TextColor = Colors.DarkRed});
-
-            sectionNameMarkers_.Add(new MarkedSectionName("common sub expressions", TextSearchKind.Default)
-                                        {TextColor = Colors.DarkRed});
-
-            sectionNameMarkers_.Add(new MarkedSectionName("loop opts", TextSearchKind.Default)
-                                        {TextColor = Colors.DarkRed});
-
-            //new SectionStyleProviderSerializer().Save(sectionNameMarkers_, @"C:\test\sectionMarkers.json");
-            //new SectionStyleProviderSerializer().Load(@"C:\test\sectionMarkers.json", out var result);
+            LoadSettings();
         }
 
         public bool IsMarkedSection(IRTextSection section, out MarkedSectionName result) {
@@ -65,10 +27,22 @@ namespace Client {
             return false;
         }
 
-        public string SettingsFilePath => SettingsFile;
+        public string SettingsFilePath => App.GetSectionsDefinitionFilePath("utc");
 
         public bool LoadSettings() {
-            return false;
+            var serializer = new SectionStyleProviderSerializer();
+            var settingsPath = App.GetSectionsDefinitionFilePath("utc");
+
+            if (settingsPath == null) {
+                return false;
+            }
+
+            if (!serializer.Load(settingsPath, out sectionNameMarkers_)) {
+                Trace.TraceError("Failed to load UTCSectionStyleProvider data");
+                return false;
+            }
+
+            return true;
         }
 
         public bool SaveSettings() {

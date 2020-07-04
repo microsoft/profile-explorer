@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace CoreLib.GraphViz {
+namespace IRExplorerCore.GraphViz {
     public class ExpressionGraphPrinterOptions {
         public bool PrintVariableNames { get; set; }
         public bool PrintSSANumbers { get; set; }

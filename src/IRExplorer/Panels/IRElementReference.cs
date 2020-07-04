@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract]
     public class IRElementReference {
         [ProtoMember(1)]

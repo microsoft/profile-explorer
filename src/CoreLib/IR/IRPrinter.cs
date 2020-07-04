@@ -3,7 +3,7 @@
 
 using System.Text;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public class IRPrinter {
         private StringBuilder builder_;
         private FunctionIR function_;

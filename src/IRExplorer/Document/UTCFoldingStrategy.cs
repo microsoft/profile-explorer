@@ -2,11 +2,11 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 
-namespace Client {
+namespace IRExplorer {
     //? TODO: Introduce interface
     public sealed class UTCFoldingStrategy {
         public UTCFoldingStrategy(FunctionIR function) {

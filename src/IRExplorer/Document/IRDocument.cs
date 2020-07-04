@@ -13,18 +13,18 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
-using Client.Document;
-using Client.Query;
-using Client.Utilities;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.Graph;
-using CoreLib.IR;
+using IRExplorer.Document;
+using IRExplorer.Query;
+using IRExplorer.Utilities;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.Graph;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace Client {
+namespace IRExplorer {
     public enum DocumentActionKind {
         SelectElement,
         MarkElement,
@@ -147,6 +147,7 @@ namespace Client {
         private PairHighlightingStyle definitionStyle_;
 
         private DiffLineHighlighter diffHighlighter_;
+        private List<DiffTextSegment> diffSegments_;
         private bool disableCaretEvent_;
         private ScrollBar docVerticalScrollbar_;
         private bool duringDiffModeSetup_;
@@ -695,13 +696,13 @@ namespace Client {
         public void UnloadDocument() {
             section_ = null;
             function_ = null;
+            Text = "";
             hoverHighlighter_?.Clear();
             selectedHighlighter_?.Clear();
             markedHighlighter_?.Clear();
             diffHighlighter_?.Clear();
             bookmarks_?.Clear();
-            margin_?.ClearBookmarks();
-            margin_?.ClearMarkers();
+            margin_?.Reset();
         }
 
         public void InitializeFromDocument(IRDocument doc, string text = null) {
@@ -1368,10 +1369,9 @@ namespace Client {
             selectedHighlighter_.Clear();
             markedHighlighter_.Clear();
             blockHighlighter_.Clear();
-            diffHighlighter_.Clear();
+            diffHighlighter_?.Clear();
             remarkHighlighter_.Clear();
-            margin_.ClearBookmarks();
-            margin_.ClearMarkers();
+            margin_.Reset();
             ComputeElementLists();
         }
 
@@ -2855,15 +2855,40 @@ namespace Client {
                 TextArea.LeftMargins.Add(margin_);
             }
 
-            //? TODO: Add option to disable
+            if(remarkHighlighter_ != null) {
+                TextArea.TextView.BackgroundRenderers.Remove(remarkHighlighter_);
+            }
+
             remarkHighlighter_ = new RemarkHighlighter(HighlighingType.Marked);
             TextArea.TextView.BackgroundRenderers.Add(remarkHighlighter_);
+
+            if(overlayRenderer_ != null) {
+                TextArea.TextView.BackgroundRenderers.Remove(overlayRenderer_);
+            }
+
             overlayRenderer_ = new OverlayRenderer(markedHighlighter_);
             TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+
+            if (DiffModeEnabled) {
+                if(diffHighlighter_ != null) {
+                    diffHighlighter_.Clear();
+                    TextArea.TextView.BackgroundRenderers.Remove(diffHighlighter_);
+                }
+
+                if(diffSegments_ != null) {
+                    diffHighlighter_ = new DiffLineHighlighter();
+                    TextArea.TextView.BackgroundRenderers.Add(diffHighlighter_);
+
+                    StartDiffSegmentAdding();
+                    AddDiffTextSegments(diffSegments_);
+                    AllDiffSegmentsAdded();
+                }
+            }
         }
 
         public void AddDiffTextSegments(List<DiffTextSegment> segments) {
+            diffSegments_ = segments;
             diffHighlighter_.Add(segments);
             AllDiffSegmentsAdded();
         }

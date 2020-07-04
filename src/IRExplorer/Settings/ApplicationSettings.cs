@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     public class SettingsBase {
         public virtual void Reset() { }
 
@@ -22,41 +22,64 @@ namespace Client {
     public class ApplicationSettings {
         [ProtoMember(1)]
         public List<string> RecentFiles;
+
         [ProtoMember(2)]
         public bool AutoReloadDocument;
+        
         [ProtoMember(3)]
         public string MainWindowPlacement;
+        
         [ProtoMember(4)]
         public int ThemeIndex;
+        
         [ProtoMember(5)]
         public List<Tuple<string, string>> RecentComparedFiles;
+        
         [ProtoMember(6)]
         public DocumentSettings DocumentSettings;
+        
         [ProtoMember(7)]
         public FlowGraphSettings FlowGraphSettings;
+        
         [ProtoMember(8)]
         public ExpressionGraphSettings ExpressionGraphSettings;
+        
         [ProtoMember(9)]
         public RemarkSettings RemarkSettings;
+
+        [ProtoMember(10)]
+        public DiffSettings DiffSettings;
+
+        [ProtoMember(11)]
+        public SectionSettings SectionSettings;
 
         public ApplicationSettings() {
             Reset();
         }
 
         public void Reset() {
-            RecentFiles = new List<string>();
-            RecentComparedFiles = new List<Tuple<string, string>>();
-            AutoReloadDocument = true;
-            ThemeIndex = 2; // Blue theme.
-            DocumentSettings = new DocumentSettings();
-            FlowGraphSettings = new FlowGraphSettings();
-            ExpressionGraphSettings = new ExpressionGraphSettings();
-            RemarkSettings = new RemarkSettings();
+            InitializeReferenceMembers();
 
             DocumentSettings.Reset();
             FlowGraphSettings.Reset();
             ExpressionGraphSettings.Reset();
             RemarkSettings.Reset();
+            DiffSettings.Reset();
+            SectionSettings.Reset();
+            AutoReloadDocument = true;
+            ThemeIndex = 2; // Blue theme.
+        }
+
+        [ProtoAfterDeserialization]
+        private void InitializeReferenceMembers() {
+            RecentFiles ??= new List<string>();
+            RecentComparedFiles ??= new List<Tuple<string, string>>();
+            DocumentSettings ??= new DocumentSettings();
+            FlowGraphSettings ??= new FlowGraphSettings();
+            ExpressionGraphSettings ??= new ExpressionGraphSettings();
+            RemarkSettings ??= new RemarkSettings();
+            DiffSettings ??= new DiffSettings();
+            SectionSettings ??= new SectionSettings();
         }
 
         public void AddRecentFile(string path) {

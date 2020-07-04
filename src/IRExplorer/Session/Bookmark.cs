@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract]
     public class Bookmark {
         [ProtoMember(1)]

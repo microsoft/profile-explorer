@@ -1,9 +1,9 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using CoreLib.Analysis;
+using IRExplorerCore.Analysis;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public sealed class LoopBlockTag : ITag {
         public LoopBlockTag(Loop parentLoop, int nestingLevel = 0) {
             Loop = parentLoop;

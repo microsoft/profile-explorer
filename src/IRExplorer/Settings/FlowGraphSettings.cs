@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract(SkipConstructor = true)]
     public class FlowGraphSettings : GraphSettings {
         public FlowGraphSettings() {

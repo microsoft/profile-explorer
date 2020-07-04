@@ -2,9 +2,9 @@
 using System.Globalization;
 using System.Windows.Controls;
 using System.Windows.Data;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace Client.Query {
+namespace IRExplorer.Query {
     public class BoolObjectConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
             try {

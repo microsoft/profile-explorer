@@ -5,12 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using CoreLib;
+using IRExplorerCore;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 
-namespace Client {
+namespace IRExplorer {
     public class HasDiffResult {
         public HasDiffResult(IRTextSection leftSection, IRTextSection rightSection, SideBySideDiffModel model,
                              bool hasDiffs) {

@@ -7,10 +7,10 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
-using CoreLib.GraphViz;
-using CoreLib.IR;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     /// <summary>
     ///     Interaction logic for GraphViewer.xaml
     /// </summary>
@@ -223,7 +223,7 @@ namespace Client {
         }
 
         public void Mark(BlockIR block, Color selectedColor, bool useBoldBorder = true) {
-            var node = (GraphNode) graph_.BlockNodeMap[block].Tag;
+            var node = (GraphNode) graph_.ElementNodeMap[block].Tag;
             MarkNode(node, selectedColor);
         }
 
@@ -336,7 +336,7 @@ namespace Client {
         }
 
         private GraphNode GetBlockNode(BlockIR block) {
-            return graph_.BlockNodeMap.TryGetValue(block, out var node) ? node.Tag as GraphNode : null;
+            return graph_.ElementNodeMap.TryGetValue(block, out var node) ? node.Tag as GraphNode : null;
         }
 
         private double TransformPoint(double value) {
@@ -360,7 +360,7 @@ namespace Client {
             var block = element_?.ParentBlock;
 
             if (block != null) {
-                if (graph_.BlockNodeMap.TryGetValue(block, out var node)) {
+                if (graph_.ElementNodeMap.TryGetValue(block, out var node)) {
                     var graphNode = node.Tag as GraphNode;
 
                     HighlightConnectedNodes(graphNode, selectedNodes_,
@@ -394,8 +394,8 @@ namespace Client {
             foreach (var element in info.Group.Elements) {
                 var block = element.ParentBlock;
 
-                if (block != null && graph_.BlockNodeMap.ContainsKey(block)) {
-                    var node = graph_.BlockNodeMap[block];
+                if (block != null && graph_.ElementNodeMap.ContainsKey(block)) {
+                    var node = graph_.ElementNodeMap[block];
                     var graphNode = node.Tag as GraphNode;
 
                     // If it's a block not being marked, highlight
@@ -518,18 +518,24 @@ namespace Client {
         }
 
         public void HideGraph() {
-            if (graphVisual_ != null) {
-                RemoveVisualChild(graphVisual_);
-                graphVisual_ = null;
-                graphRenderer_ = null;
-                graph_ = null;
-                markedNodes_.Clear();
-                hoverNodes_.Clear();
-                selectedNodes_.Clear();
+            if (graphVisual_ == null) {
+                return; // In case the graph fails to load.
             }
+
+            RemoveVisualChild(graphVisual_);
+            graphVisual_ = null;
+            graphRenderer_ = null;
+            graph_ = null;
+            markedNodes_.Clear();
+            hoverNodes_.Clear();
+            selectedNodes_.Clear();
         }
 
         public void FitWidthToSize(Size size) {
+            if (graphVisual_ == null) {
+                return; // In case the graph fails to load.
+            }
+
             var bounds = graphVisual_.ContentBounds;
             bounds.Union(graphVisual_.DescendantBounds);
             double requiredSpace = bounds.Width + 2 * GraphMargin;
@@ -538,6 +544,10 @@ namespace Client {
         }
 
         public void FitToSize(Size size) {
+            if(graphVisual_ == null) {
+                return; // In case the graph fails to load.
+            }
+
             var bounds = graphVisual_.ContentBounds;
             bounds.Union(graphVisual_.DescendantBounds);
             double requiredWidth = bounds.Width + 2 * GraphMargin;

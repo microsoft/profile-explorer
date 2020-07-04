@@ -10,12 +10,12 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     public static class ReferenceCommand {
         public static readonly RoutedUICommand JumpToReference =
             new RoutedUICommand("Untitled", "JumpToReference", typeof(ReferencesPanel));

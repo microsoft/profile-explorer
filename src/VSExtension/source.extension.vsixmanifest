@@ -6,7 +6,7 @@
         <Description xml:space="preserve">IR Explorer debugger integration</Description>
         <Icon>main.ico</Icon>
     </Metadata>
-    <Installation>
+    <Installation AllUsers="true">
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[16.0, 17.0)" />
     </Installation>
     <Dependencies>

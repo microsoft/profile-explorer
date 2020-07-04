@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Client {
+namespace IRExplorer {
     // Shorter way to have property notifications for data-binding.
     // Based on code from https://www.danrigby.com/2012/04/01/inotifypropertychanged-the-net-4-5-way-revisited/
     public class BindableObject : INotifyPropertyChanged {

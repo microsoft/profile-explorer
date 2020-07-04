@@ -3,7 +3,7 @@
 
 using System.Windows.Media;
 
-namespace Client {
+namespace IRExplorer {
     public static class HighlightingStyles {
         public static HighlightingStyleCollection StyleSet;
         public static HighlightingStyleCollection LightStyleSet;

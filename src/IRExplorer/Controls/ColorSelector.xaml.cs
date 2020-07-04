@@ -7,7 +7,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 
-namespace Client {
+namespace IRExplorer {
     public sealed class ColorEventArgs : EventArgs {
         public Color SelectedColor { get; set; }
     }

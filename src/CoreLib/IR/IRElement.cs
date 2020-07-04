@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public class IRElementId {
         public ushort BlockId;
         public ushort OperandId;

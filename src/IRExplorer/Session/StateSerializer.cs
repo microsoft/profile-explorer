@@ -8,11 +8,11 @@ using System.IO;
 using System.Reflection;
 using System.Windows;
 using System.Windows.Media;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ProtoBuf;
 using ProtoBuf.Meta;
 
-namespace Client {
+namespace IRExplorer {
     static class StateSerializer {
         public static readonly int subtypeIdStep_ = 100;
         public static int nextSubtypeId_;

@@ -4,19 +4,28 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace CoreLib.Analysis {
+namespace IRExplorerCore.Analysis {
+    //? TODO: Caching needs some settings like if it should be used, max cached items, etc
+
     public class FunctionAnalysisCache {
         private static Dictionary<FunctionIR, FunctionAnalysisCache> functionCacheMap_;
+        private static bool cacheEnabled_;
         private static object lockObject_ = new object();
-        private volatile DominatorAlgorithm dominators_;
+
         private FunctionIR function_;
+        private volatile DominatorAlgorithm dominators_;
         private volatile DominatorAlgorithm postDominators_;
         private volatile CFGReachability reachability_;
 
         static FunctionAnalysisCache() {
             functionCacheMap_ = new Dictionary<FunctionIR, FunctionAnalysisCache>();
+            cacheEnabled_ = true;
+        }
+
+        public static void DisableCache() {
+            cacheEnabled_ = false;
         }
 
         public FunctionAnalysisCache(FunctionIR function) {
@@ -25,8 +34,13 @@ namespace CoreLib.Analysis {
 
         public async Task<DominatorAlgorithm> GetDominatorsAsync() {
             if (dominators_ == null) {
-                Interlocked.Exchange(ref dominators_,
-                                     await ComputeDominators().ConfigureAwait(false));
+                var result = await ComputeDominators().ConfigureAwait(false);
+
+                if (cacheEnabled_) {
+                    Interlocked.Exchange(ref dominators_, result);
+                }
+                
+                return result;
             }
 
             return dominators_;
@@ -34,8 +48,13 @@ namespace CoreLib.Analysis {
 
         public async Task<DominatorAlgorithm> GetPostDominatorsAsync() {
             if (postDominators_ == null) {
-                Interlocked.Exchange(ref postDominators_,
-                                     await ComputePostDominators().ConfigureAwait(false));
+                var result = await ComputePostDominators().ConfigureAwait(false);
+
+                if (cacheEnabled_) {
+                    Interlocked.Exchange(ref postDominators_, result);
+                }
+
+                return result;
             }
 
             return postDominators_;
@@ -43,8 +62,13 @@ namespace CoreLib.Analysis {
 
         public async Task<CFGReachability> GetReachabilityAsync() {
             if (reachability_ == null) {
-                Interlocked.Exchange(ref reachability_,
-                                     await ComputeReachability().ConfigureAwait(false));
+                var result = await ComputeReachability().ConfigureAwait(false);
+
+                if (cacheEnabled_) {
+                    Interlocked.Exchange(ref reachability_, result);
+                }
+
+                return result;
             }
 
             return reachability_;
@@ -61,20 +85,15 @@ namespace CoreLib.Analysis {
         private Task<DominatorAlgorithm> ComputeDominators() {
             return Task.Run(() => new DominatorAlgorithm(function_,
                                                          DominatorAlgorithmOptions.Dominators |
-                                                         DominatorAlgorithmOptions
-                                                             .BuildQueryCache |
-                                                         DominatorAlgorithmOptions
-                                                             .BuildDominatorTree));
+                                                         DominatorAlgorithmOptions.BuildQueryCache |
+                                                         DominatorAlgorithmOptions.BuildDominatorTree));
         }
 
         private Task<DominatorAlgorithm> ComputePostDominators() {
             return Task.Run(() => new DominatorAlgorithm(function_,
-                                                         DominatorAlgorithmOptions
-                                                             .PostDominators |
-                                                         DominatorAlgorithmOptions
-                                                             .BuildQueryCache |
-                                                         DominatorAlgorithmOptions
-                                                             .BuildDominatorTree));
+                                                         DominatorAlgorithmOptions.PostDominators |
+                                                         DominatorAlgorithmOptions.BuildQueryCache |
+                                                         DominatorAlgorithmOptions.BuildDominatorTree));
         }
 
         private Task<CFGReachability> ComputeReachability() {
@@ -108,7 +127,11 @@ namespace CoreLib.Analysis {
                 }
 
                 cache = new FunctionAnalysisCache(function);
-                functionCacheMap_[function] = cache;
+                
+                if (cacheEnabled_) {
+                    functionCacheMap_[function] = cache;
+                }
+
                 return cache;
             }
         }

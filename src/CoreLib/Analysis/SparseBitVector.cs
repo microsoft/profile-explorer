@@ -1,3 +1,3 @@
-﻿namespace CoreLib.Analysis {
+﻿namespace IRExplorerCore.Analysis {
     class SparseBitVector { }
 }

@@ -4,15 +4,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public sealed class FunctionIR : IRElement {
-        public Dictionary<ulong, IRElement> elementMap_;
+        private Dictionary<ulong, IRElement> elementMap_;
 
         public FunctionIR() : base(IRElementId.NewFunctionId()) {
             ReturnType = TypeIR.GetUnknown();
             Parameters = new List<OperandIR>();
             Blocks = new List<BlockIR>();
-            elementMap_ = new Dictionary<ulong, IRElement>();
         }
 
         public FunctionIR(string name, TypeIR returnType) : this() {
@@ -28,10 +27,17 @@ namespace CoreLib.IR {
         public BlockIR ExitBlock => Blocks.Count > 0 ? Blocks[^1] : null;
 
         public IRElement GetElementWithId(ulong id) {
+            BuildElementIdMap();
             return elementMap_.TryGetValue(id, out var value) ? value : null;
         }
 
         public void BuildElementIdMap() {
+            if (elementMap_ != null) {
+                return;
+            }
+
+            elementMap_ = new Dictionary<ulong, IRElement>();
+
             foreach (var block in Blocks) {
                 elementMap_[block.Id] = block;
 
@@ -74,6 +80,8 @@ namespace CoreLib.IR {
         }
 
         public void ForEachElement(Func<IRElement, bool> action) {
+            BuildElementIdMap();
+
             foreach (var element in elementMap_.Values) {
                 if (!action(element)) {
                     return;

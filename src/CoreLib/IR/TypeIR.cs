@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public enum TypeKind {
         Integer,
         Float,

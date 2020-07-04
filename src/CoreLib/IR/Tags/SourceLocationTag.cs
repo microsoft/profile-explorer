@@ -3,7 +3,7 @@
 
 using System;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public sealed class SourceLocationTag : ITag {
         public SourceLocationTag(int line, int column) {
             Line = line;

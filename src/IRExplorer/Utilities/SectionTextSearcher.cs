@@ -3,9 +3,9 @@
 
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using CoreLib;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     public class SectionSearchResult {
         public SectionSearchResult(IRTextSection section, string sectionText,
                                    List<TextSearchResult> results = null) {

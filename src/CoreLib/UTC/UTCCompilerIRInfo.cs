@@ -1,7 +1,7 @@
-﻿using CoreLib.Analysis;
-using CoreLib.IR;
+﻿using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace CoreLib.UTC {
+namespace IRExplorerCore.UTC {
     public class UTCCompilerIRInfo : ICompilerIRInfo {
         public bool IsCopyInstruction(InstructionIR instr) {
             return SkipCopyInstruction(instr) != null;

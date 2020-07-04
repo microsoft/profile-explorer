@@ -4,10 +4,10 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using CoreLib;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.IR;
 
-namespace Client.Document {
+namespace IRExplorer.Document {
     public class RemarkExtension {
         public RemarkExtension(Remark remark, string sectionName, bool inCurrentSection) {
             Remark = remark;

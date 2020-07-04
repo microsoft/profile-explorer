@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace Client {
+namespace IRExplorer {
     [Flags]
     public enum TextSearchKind {
         Default = 1 << 0, // Case sensitive

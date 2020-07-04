@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public sealed class BlockIR : IRElement {
         public BlockIR(IRElementId elementId, int number, FunctionIR parent) :
             base(elementId) {

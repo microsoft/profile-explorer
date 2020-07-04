@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace CoreLib.Analysis {
+namespace IRExplorerCore.Analysis {
     public class SimilarValueFinder {
         private FunctionIR function_;
         private Dictionary<int, InstructionIR> ssaDefTable_;

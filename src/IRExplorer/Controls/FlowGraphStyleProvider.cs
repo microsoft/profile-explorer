@@ -3,11 +3,11 @@
 
 using System.Collections.Generic;
 using System.Windows.Media;
-using CoreLib.Graph;
-using CoreLib.GraphViz;
-using CoreLib.IR;
+using IRExplorerCore.Graph;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     public class FlowGraphStyleProvider : IGraphStyleProvider {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;

@@ -4,10 +4,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace CoreLib.GraphViz {
+namespace IRExplorerCore.GraphViz {
     public sealed class CFGPrinter : GraphVizPrinter {
         private const string LargeGraphSettings = @"
 splines=polyline;

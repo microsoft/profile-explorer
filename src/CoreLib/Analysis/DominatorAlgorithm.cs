@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace CoreLib.Analysis {
+namespace IRExplorerCore.Analysis {
     public class DominatorTreeNode {
         public DominatorTreeNode(BlockIR block, int childCount = 0) {
             Block = block;
@@ -35,13 +35,14 @@ namespace CoreLib.Analysis {
         private DominatorAlgorithmOptions options_;
         private List<BlockIR> postorderList_;
         private Dictionary<int, BlockIR> postorderNumberBlockMap_;
+        private BlockIR treeStartBlock_;
         private DominatorTreeNode treeRootNode_;
 
         public DominatorAlgorithm(FunctionIR function, DominatorAlgorithmOptions options) {
             function_ = function;
             options_ = options;
             bool usePostDominators = options.HasFlag(DominatorAlgorithmOptions.PostDominators);
-            var startBlock = usePostDominators ? function.ExitBlock : function.EntryBlock;
+            treeStartBlock_ = usePostDominators ? function.ExitBlock : function.EntryBlock;
             int blockCount = function.Blocks.Count;
 
             // Build a list of the blocks  in postorder.
@@ -54,7 +55,7 @@ namespace CoreLib.Analysis {
             }
 
             // Build map of block to its ID in the immDom array.
-            blockIdMap_ = new Dictionary<BlockIR, int>();
+            blockIdMap_ = new Dictionary<BlockIR, int>(blockCount);
 
             for (int i = 0; i < postorderList_.Count; i++) {
                 blockIdMap_[postorderList_[i]] = i;
@@ -68,7 +69,7 @@ namespace CoreLib.Analysis {
                 postorderNumberBlockMap_[GetBlockId(block)] = block;
             }
 
-            if (!InitializeImmediateDoms(startBlock)) {
+            if (!InitializeImmediateDoms(treeStartBlock_)) {
                 return; // CFG is invalid.
             }
 
@@ -80,11 +81,7 @@ namespace CoreLib.Analysis {
             }
 
             if (options.HasFlag(DominatorAlgorithmOptions.BuildDominatorTree)) {
-                BuildTree(startBlock);
-            }
-
-            if (options.HasFlag(DominatorAlgorithmOptions.BuildQueryCache)) {
-                BuildQueryCache(startBlock);
+                BuildTree(treeStartBlock_);
             }
         }
 
@@ -106,7 +103,7 @@ namespace CoreLib.Analysis {
                 return true;
             }
 
-            if (dominanceCache_ != null) {
+            if(BuildQueryCache(treeStartBlock_)) { 
                 var pair = new Tuple<BlockIR, BlockIR>(block, dominatedBlock);
                 return dominanceCache_.Contains(pair);
             }
@@ -285,7 +282,15 @@ namespace CoreLib.Analysis {
             return node;
         }
 
-        private void BuildQueryCache(BlockIR startBlock) {
+        private bool BuildQueryCache(BlockIR startBlock) {
+            if(dominanceCache_ != null) {
+                return true;
+            }
+
+            if (!options_.HasFlag(DominatorAlgorithmOptions.BuildQueryCache)) {
+                return false;
+            }
+
             dominanceCache_ = new HashSet<Tuple<BlockIR, BlockIR>>(function_.Blocks.Count * 4);
 
             foreach (var block in postorderList_) {
@@ -303,6 +308,8 @@ namespace CoreLib.Analysis {
                     immDom = immDoms_[immDom];
                 }
             }
+
+            return true;
         }
     }
 }

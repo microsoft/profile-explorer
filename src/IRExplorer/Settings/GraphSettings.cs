@@ -4,7 +4,7 @@
 using System.Windows.Media;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract(SkipConstructor = true)]
     [ProtoInclude(100, typeof(FlowGraphSettings))]
     [ProtoInclude(200, typeof(ExpressionGraphSettings))]

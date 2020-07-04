@@ -3,7 +3,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace CoreLib {
+namespace IRExplorerCore {
     public struct TextLocation {
         public int Offset {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]

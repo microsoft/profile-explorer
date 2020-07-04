@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Windows.Media;
 
-namespace Client {
+namespace IRExplorer {
     public static class ColorBrushes {
         private static readonly Dictionary<Color, SolidColorBrush> brushes_;
 

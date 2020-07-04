@@ -3,9 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace CoreLib.UTC {
+namespace IRExplorerCore.UTC {
     public enum UTCOpcode {
         OPARG,
         OPASSIGN,

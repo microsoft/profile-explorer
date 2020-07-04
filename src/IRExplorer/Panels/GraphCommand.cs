@@ -3,7 +3,7 @@
 
 using System.Windows.Input;
 
-namespace Client {
+namespace IRExplorer {
     public static class GraphCommand {
         public static readonly RoutedCommand GraphFitWidth =
             new RoutedCommand("GraphFitWidth", typeof(GraphPanel));

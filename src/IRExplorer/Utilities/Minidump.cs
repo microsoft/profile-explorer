@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Client {
+namespace IRExplorer {
     static class Minidump {
         public enum ExceptionInfo {
             None,

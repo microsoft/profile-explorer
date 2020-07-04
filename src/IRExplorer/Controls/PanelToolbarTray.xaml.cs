@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Client {
+namespace IRExplorer {
     public class PinEventArgs : EventArgs {
         public bool IsPinned { get; set; }
     }

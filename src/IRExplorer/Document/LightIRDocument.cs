@@ -7,17 +7,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
-using Client.Document;
-using Client.Utilities;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorer.Document;
+using IRExplorer.Utilities;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit;
 
 // TODO: Clicking on scroll bar not working if there is an IR element under it,
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
 
-namespace Client {
+namespace IRExplorer {
     public class RemarkTag : ITag {
         public RemarkTag() {
             Remarks = new List<Remark>();
@@ -213,6 +213,13 @@ namespace Client {
 
             selectedElementRefs_ = null;
             prevSelectedElement_ = null;
+        }
+
+        public void UnloadDocument() {
+            Text = "";
+            section_ = null;
+            function_ = null;
+            initialText_ = null;;
         }
 
         private async void TextView_TextChanged(object sender, EventArgs e) {

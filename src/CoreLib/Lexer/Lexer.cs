@@ -3,7 +3,7 @@
 
 using System;
 
-namespace CoreLib.Lexer {
+namespace IRExplorerCore.Lexer {
     public sealed class Lexer {
         private char current_; // The current character.
         private bool hasReturnedToken_;

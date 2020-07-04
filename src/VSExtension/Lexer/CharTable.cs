@@ -3,7 +3,7 @@
 
 using System.Runtime.CompilerServices;
 
-namespace CoreLib.Lexer {
+namespace IRExplorerCore.Lexer {
     public static class CharTable {
         private static readonly byte[] CHAR_TYPE = {
             0, 0, 0, 0, 0, 0, 0, 0,         // 8

@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace Client {
+namespace IRExplorer {
     public sealed class BlockBackgroundHighlighter : IBackgroundRenderer {
         private Pen blockSeparatorPen_;
         private Brush oddBlockBrush_;

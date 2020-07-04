@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace CoreLib.IR.Tags {
+namespace IRExplorerCore.IR.Tags {
     public class NotesTag : ITag {
         public NotesTag() {
             Title = "";

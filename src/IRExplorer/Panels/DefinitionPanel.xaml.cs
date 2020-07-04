@@ -3,11 +3,11 @@
 
 using System.Windows;
 using System.Windows.Controls;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     public class DefinitionPanelState {
         public int CaretOffset;
 
@@ -120,7 +120,6 @@ namespace Client {
                 savedState.HasPinnedContent = HasPinnedContent;
                 Session.SavePanelState(savedState, this, section);
                 definedOperand_ = null;
-                TextView.UnloadDocument();
                 SymbolName.Text = "";
             }
 

@@ -5,11 +5,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Client.Document;
-using CoreLib;
+using IRExplorer.Document;
+using IRExplorerCore;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract]
     public class NotesPanelState {
         [ProtoMember(2)]

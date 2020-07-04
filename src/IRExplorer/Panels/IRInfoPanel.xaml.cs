@@ -6,10 +6,10 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using CoreLib;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     /// <summary>
     ///     Interaction logic for SectionPanel.xaml
     /// </summary>
@@ -36,7 +36,7 @@ namespace Client {
             ErrorList.Visibility = Visibility.Visible;
             TextView.Visibility = Visibility.Collapsed;
             var section = Session.FindAssociatedDocument(this).Section;
-            var loader = Session.SessionState.FindDocument(section).Loader;
+            var loader = Session.SessionState.FindLoadedDocument(section).Loader;
             var loadedSection = loader.TryGetLoadedSection(section);
 
             if (loadedSection != null && loadedSection.HadParsingErrors) {

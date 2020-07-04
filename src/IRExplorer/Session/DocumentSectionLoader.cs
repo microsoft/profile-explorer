@@ -4,11 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CoreLib;
-using CoreLib.IR;
-using CoreLib.UTC;
+using IRExplorerCore;
+using IRExplorerCore.IR;
+using IRExplorerCore.UTC;
 
-namespace Client {
+namespace IRExplorer {
     public class ParsedSection {
         public IRTextSection Section;
 
@@ -32,27 +32,45 @@ namespace Client {
         protected UTCParsingErrorHandler errorHandler_;
         protected Dictionary<IRTextSection, ParsedSection> sectionCache_;
         protected UTCSectionParser sectionParser_;
+        protected bool cacheEnabled_;
 
-        protected void Initialize() {
-            sectionCache_ = new Dictionary<IRTextSection, ParsedSection>();
+        protected void Initialize(bool cacheEnabled) {
+            cacheEnabled_ = cacheEnabled;
+
+            if (cacheEnabled) {
+                sectionCache_ = new Dictionary<IRTextSection, ParsedSection>();
+            }
+        }
+
+        protected void InitializeParser() {
             errorHandler_ = new UTCParsingErrorHandler();
             sectionParser_ = new UTCSectionParser(errorHandler_);
         }
 
-        public abstract IRTextSummary LoadDocument();
+        protected void FreeParser() {
+            // Allow memory to be freed, for large functions can be fairly significant.
+            errorHandler_ = null;
+            sectionParser_ = null;
+        }
+
+        public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
         public abstract byte[] GetDocumentText();
         public abstract ParsedSection LoadSection(IRTextSection section);
         public abstract string GetSectionText(IRTextSection section);
         public abstract string LoadSectionPassOutput(IRPassOutput output);
 
         public ParsedSection TryGetLoadedSection(IRTextSection section) {
+            if (!cacheEnabled_) {
+                return null;
+            }
+
             lock (this) {
                 return sectionCache_.TryGetValue(section, out var result) ? result : null;
             }
         }
 
         public string LoadSectionText(IRTextSection section, bool useCache = true) {
-            if (useCache) {
+            if (useCache && cacheEnabled_) {
                 lock (this) {
                     return sectionCache_.TryGetValue(section, out var result)
                         ? result.Text
@@ -66,24 +84,24 @@ namespace Client {
     }
 
     public class DocumentSectionLoader : SectionLoader, IDisposable {
-        private UTCReader documentReader_;
+        private UTCSectionReader documentReader_;
 
         public DocumentSectionLoader() {
-            Initialize();
+            Initialize(true);
         }
 
         public DocumentSectionLoader(string filePath) {
-            Initialize();
-            documentReader_ = new UTCReader(filePath);
+            Initialize(true);
+            documentReader_ = new UTCSectionReader(filePath);
         }
 
         public DocumentSectionLoader(byte[] textData) {
-            Initialize();
-            documentReader_ = new UTCReader(textData);
+            Initialize(true);
+            documentReader_ = new UTCSectionReader(textData);
         }
 
-        public override IRTextSummary LoadDocument() {
-            return documentReader_.GenerateSummary();
+        public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
+            return documentReader_.GenerateSummary(progressHandler);
         }
 
         public override byte[] GetDocumentText() {
@@ -95,16 +113,17 @@ namespace Client {
                 Trace.TraceInformation(
                     $"Section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
 
-                if (sectionCache_.TryGetValue(section, out var result)) {
+                if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var result)) {
                     Trace.TraceInformation($"Section loader {ObjectTracker.Track(this)}: found in cache");
                     return result;
                 }
 
+                InitializeParser();
                 string text = GetSectionText(section);
                 var function = sectionParser_.ParseSection(section, text);
                 result = new ParsedSection(section, text, function);
 
-                if (function != null) {
+                if (cacheEnabled_ && function != null) {
                     sectionCache_.Add(section, result);
                 }
 
@@ -112,6 +131,7 @@ namespace Client {
                     result.ParsingErrors = errorHandler_.ParsingErrors;
                 }
 
+                FreeParser();
                 return result;
             }
         }
@@ -149,15 +169,17 @@ namespace Client {
     }
 
     public class DebugSectionLoader : SectionLoader {
-        private Dictionary<IRTextSection, string> sectionTextMap_;
+        private Dictionary<IRTextSection, CompressedString> sectionTextMap_;
         private IRTextSummary summary_;
+        private IRTextSection lastSection_;
+        private string lastSectionText_;
 
         public DebugSectionLoader() {
-            Initialize();
-            sectionTextMap_ = new Dictionary<IRTextSection, string>();
+            Initialize(false);
+            sectionTextMap_ = new Dictionary<IRTextSection, CompressedString>();
         }
 
-        public override IRTextSummary LoadDocument() {
+        public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
             if (summary_ == null) {
                 summary_ = new IRTextSummary();
             }
@@ -171,7 +193,11 @@ namespace Client {
         }
 
         public void AddSection(IRTextSection section, string text) {
-            sectionTextMap_.Add(section, text);
+            //? TODO: Compress on another thread
+            Trace.TraceInformation($"Adding section {section.Name}, length {text.Length}");
+            sectionTextMap_[section] = new CompressedString(text);
+            lastSection_ = section;
+            lastSectionText_ = text;
         }
 
         public override ParsedSection LoadSection(IRTextSection section) {
@@ -179,18 +205,19 @@ namespace Client {
                 Trace.TraceInformation(
                     $"Debug section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
 
-                if (sectionCache_.TryGetValue(section, out var result)) {
+                if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var result)) {
                     Trace.TraceInformation(
                         $"Debug section loader {ObjectTracker.Track(this)}: found in cache");
 
                     return result;
                 }
 
+                InitializeParser();
                 string text = GetSectionText(section);
                 var function = sectionParser_.ParseSection(section, text);
                 result = new ParsedSection(section, text, function);
 
-                if (function != null) {
+                if (cacheEnabled_ && function != null) {
                     sectionCache_.Add(section, result);
                 }
 
@@ -198,12 +225,17 @@ namespace Client {
                     result.ParsingErrors = errorHandler_.ParsingErrors;
                 }
 
+                FreeParser();
                 return result;
             }
         }
 
         public override string GetSectionText(IRTextSection section) {
-            return sectionTextMap_[section];
+            if(section == lastSection_) {
+                return lastSectionText_;
+            }
+
+            return sectionTextMap_[section].ToString();
         }
 
         public override string LoadSectionPassOutput(IRPassOutput output) {

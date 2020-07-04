@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public interface ISSAValue {
         int DefinitionId { get; set; }
         OperandIR DefinitionOperand { get; }
