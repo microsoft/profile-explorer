@@ -6,11 +6,11 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
-using CoreLib;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.IR;
 using Microsoft.Win32;
 
-namespace Client {
+namespace IRExplorer {
     /// <summary>
     ///     Interaction logic for SectionPanel.xaml
     /// </summary>

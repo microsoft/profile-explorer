@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit;
 
-namespace Client.Utilities {
+namespace IRExplorer.Utilities {
     public static class DocumentUtils {
         public static IRElement FindElement(int offset, List<IRElement> list) {
             if (list == null) {

@@ -2,7 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Client.Scripting {
+namespace IRExplorer.Scripting {
     public class Script {
         private static ManualResetEvent warmUpCompletedEvent_;
 

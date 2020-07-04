@@ -2,16 +2,12 @@
 // Licensed under the MIT License.
 
 using System.Windows.Media;
-using CoreLib.GraphViz;
+using IRExplorerCore.GraphViz;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract(SkipConstructor = true)]
     public class ExpressionGraphSettings : GraphSettings {
-        static ExpressionGraphSettings() {
-           // StateSerializer.RegisterDerivedClass<ExpressionGraphSettings, GraphSettings>();
-        }
-
         public ExpressionGraphSettings() {
             Reset();
         }

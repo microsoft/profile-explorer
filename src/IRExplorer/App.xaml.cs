@@ -8,7 +8,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace Client {
+namespace IRExplorer {
     public class SyntaxThemeInfo {
         public SyntaxThemeInfo(string name, string path) {
             Name = name;
@@ -29,9 +29,13 @@ namespace Client {
         private static readonly string TraceFile = "IRExplorer.trace";
         private static readonly string SyntaxHighlightingFile = @"utc.xshd";
         private static readonly string RemarkDefinitionFile = @"{0}-remark-settings.json";
+        private static readonly string SectionDefinitionFile = @"{0}-section-settings.json";
         private static readonly string InternalIRSyntaxHighlightingFile = @"ir.xshd";
+        private static readonly string InternalExtensionFile = @"IRExplorerExtension.vsix";
         private static readonly string ThemeFileDirectory = @"themes";
         private static readonly string ThemeFileExtension = @"*.xshd";
+        private static readonly string AzureStorageToken = @"?sv=2019-10-10&ss=bfqt&srt=o&sp=rlacupx&se=2023-03-01T14:12:02Z&st=2020-07-02T05:12:02Z&spr=https,http&sig=VEd7d8WhShT20oknDmfe04wTFniOFVpvohax9xMx%2FOg%3D";
+        public static readonly string AutoUpdateInfo = @"http://irexplorerstorage.file.core.windows.net/irexplorer-app/update.xml?sv=2019-10-10&ss=bfqt&srt=o&sp=rlacupx&se=2023-03-01T14:12:02Z&st=2020-07-02T05:12:02Z&spr=https,http&sig=VEd7d8WhShT20oknDmfe04wTFniOFVpvohax9xMx%2FOg%3D";
 
         private static bool CreateSettingsDirectory() {
             try {
@@ -64,6 +68,11 @@ namespace Client {
             return Path.Combine(path, TraceFile);
         }
 
+        public static string GetExtensionFilePath() {
+            string appDir = Utils.GetApplicationDirectory();
+            return Path.Combine(appDir, InternalExtensionFile);
+        }
+
         public static string GetSyntaxHighlightingFilePath() {
             string customFile = Settings.DocumentSettings.SyntaxHighlightingFilePath;
 
@@ -84,25 +93,43 @@ namespace Client {
             return Path.Combine(appDir, InternalIRSyntaxHighlightingFile);
         }
 
-        public static string GetRemarksDefinitionFilePath(string compilerIRName)
-        {
+        public static string GetRemarksDefinitionFilePath(string compilerIRName) {
             string customFile = GetUserRemarksDefinitionFilePath(compilerIRName);
 
-            if (File.Exists(customFile))
-            {
+            if (File.Exists(customFile)) {
                 return customFile;
             }
 
             var internalFile = GetInternalRemarksDefinitionFilePath(compilerIRName);
 
-            if (File.Exists(internalFile) && CreateSettingsDirectory())
-            {
-                try
-                {
+            if (File.Exists(internalFile) && CreateSettingsDirectory()) {
+                try {
                     File.Copy(internalFile, customFile);
                 }
-                catch(Exception ex)
-                {
+                catch (Exception ex) {
+                    return null;
+                }
+
+                return customFile;
+            }
+
+            return null;
+        }
+
+        public static string GetSectionsDefinitionFilePath(string compilerIRName) {
+            string customFile = GetUserSectionsDefinitionFilePath(compilerIRName);
+
+            if (File.Exists(customFile)) {
+                return customFile;
+            }
+
+            var internalFile = GetInternalSectionsDefinitionFilePath(compilerIRName);
+
+            if (File.Exists(internalFile) && CreateSettingsDirectory()) {
+                try {
+                    File.Copy(internalFile, customFile);
+                }
+                catch (Exception ex) {
                     return null;
                 }
 
@@ -122,6 +149,17 @@ namespace Client {
         {
             string appDir = Utils.GetApplicationDirectory();
             return Path.Combine(appDir, string.Format(RemarkDefinitionFile, compilerIRName));
+        }
+
+
+        public static string GetUserSectionsDefinitionFilePath(string compilerIRName) {
+            string appDir = GetSettingsDirectoryPath();
+            return Path.Combine(appDir, string.Format(SectionDefinitionFile, compilerIRName));
+        }
+
+        public static string GetInternalSectionsDefinitionFilePath(string compilerIRName) {
+            string appDir = Utils.GetApplicationDirectory();
+            return Path.Combine(appDir, string.Format(SectionDefinitionFile, compilerIRName));
         }
 
         public static List<SyntaxThemeInfo> GetSyntaxHighlightingThemes() {
@@ -150,8 +188,12 @@ namespace Client {
                 Settings = StateSerializer.Deserialize<ApplicationSettings>(data);
 
                 // Do some basic sanity checks in case the settings file is incompatible.
-                if(Settings.RecentFiles == null || Settings.RecentComparedFiles == null) {
-                    return false;
+                if(Settings.RecentFiles == null) {
+                    Settings.RecentFiles = new List<string>();
+                }
+
+                if (Settings.RecentComparedFiles == null) {
+                    Settings.RecentComparedFiles = new List<Tuple<string, string>>();
                 }
 
                 return true;
@@ -172,6 +214,24 @@ namespace Client {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to save app settings: {ex}");
+            }
+        }
+
+        public static void LaunchSettingsFileEditor(string settingsPath) {
+            if (settingsPath == null) {
+                MessageBox.Show($"Failed to setup settings file at\n{settingsPath}", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try {
+                var psi = new ProcessStartInfo(settingsPath) {
+                    UseShellExecute = true
+                };
+
+                Process.Start(psi);
+            }
+            catch (Exception ex) {
+                MessageBox.Show($"Failed to open settings file\n{ex.Message}", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

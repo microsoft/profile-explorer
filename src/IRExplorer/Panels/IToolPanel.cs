@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System;
-using CoreLib;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     public enum ToolPanelKind {
         Section,
         References,
@@ -18,6 +18,7 @@ namespace Client {
         ExpressionGraph,
         PassOutput,
         SearchResults,
+        Remarks,
         Scripting,
         Developer,
         Other

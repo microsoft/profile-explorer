@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public interface IRVisitor {
         void Visit(IRElement value);
         void Visit(OperandIR value);

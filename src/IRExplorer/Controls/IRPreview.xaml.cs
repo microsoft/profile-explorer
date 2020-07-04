@@ -4,9 +4,9 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     /// <summary>
     ///     Interaction logic for IRPreview.xaml
     /// </summary>

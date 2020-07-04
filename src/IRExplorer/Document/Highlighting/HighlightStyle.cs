@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract]
     public sealed class HighlightingStyle {
         public HighlightingStyle() { }

@@ -1,10 +1,10 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Client.Scripting;
-using CoreLib.IR;
+using IRExplorer.Scripting;
+using IRExplorerCore.IR;
 
-namespace Client.Query {
+namespace IRExplorer.Query {
     public class IRElementDragDropSelection {
         public IRElement Element { get; set; }
     }

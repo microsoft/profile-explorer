@@ -4,9 +4,9 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     public class IRPreviewToolTip : ToolTip {
         private IRDocument document_;
         private IRElement element_;

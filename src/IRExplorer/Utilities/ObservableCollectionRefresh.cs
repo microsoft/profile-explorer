@@ -4,8 +4,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
+using System.Windows.Data;
 
-namespace Client {
+namespace IRExplorer {
     public class ObservableCollectionRefresh<T> : ObservableCollection<T> {
         public ObservableCollectionRefresh() { }
 
@@ -21,6 +23,10 @@ namespace Client {
             }
 
             Refresh();
+        }
+
+        public ICollectionView GetFilterView() {
+            return CollectionViewSource.GetDefaultView(this);
         }
 
         protected override void InsertItem(int index, T item) {

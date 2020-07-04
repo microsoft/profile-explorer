@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using CoreLib;
+using IRExplorerCore;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract]
     public class LoadedDocumentState {
         [ProtoMember(2)]

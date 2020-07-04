@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace Client {
+namespace IRExplorer {
     public sealed class RemarkHighlighter : IBackgroundRenderer {
         //? TODO: Change to Set to have faster Remove (search panel)
         private List<HighlightedSegmentGroup> groups_;

@@ -4,7 +4,7 @@
 using System;
 using System.Windows.Media;
 
-namespace Client {
+namespace IRExplorer {
     class ColorUtils {
         public static Color IncreaseSaturation(Color color, float saturationAdjustment = 2f) {
             rgbToHsl(color, out float h, out float s, out float l);

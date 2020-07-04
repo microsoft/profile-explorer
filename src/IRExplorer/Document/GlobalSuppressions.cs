@@ -11,7 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 [assembly:
     SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "<Pending>",
                     Scope = "member",
-                    Target = "~M:Client.MainWindow.GetDefaultPanelName(Client.ToolPanelKind)~System.String")]
+                    Target = "~M:IRExplorer.MainWindow.GetDefaultPanelName(Client.ToolPanelKind)~System.String")]
 [assembly:
     SuppressMessage("Design", "CA1062:Validate arguments of public methods", Justification = "<Pending>",
                     Scope = "member")]
@@ -19,8 +19,8 @@ using System.Diagnostics.CodeAnalysis;
     SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>",
                     Scope = "member",
                     Target =
-                        "~M:Client.MainWindow.DebugService_OnIRUpdated(System.Object,UpdateIRRequest)~System.Threading.Tasks.Task")]
+                        "~M:IRExplorer.MainWindow.DebugService_OnIRUpdated(System.Object,UpdateIRRequest)~System.Threading.Tasks.Task")]
 [assembly:
     SuppressMessage("Usage", "VSTHRD101:Avoid unsupported async delegates", Justification = "<Pending>",
                     Scope = "member",
-                    Target = "~M:Client.MainWindow.DebugService_OnIRUpdated(System.Object,UpdateIRRequest)")]
+                    Target = "~M:IRExplorer.MainWindow.DebugService_OnIRUpdated(System.Object,UpdateIRRequest)")]

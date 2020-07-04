@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public enum OperandKind {
         Variable,
         Temporary,

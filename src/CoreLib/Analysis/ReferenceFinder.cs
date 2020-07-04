@@ -3,7 +3,7 @@
 
 using System;
 using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
 //? TODO: Reference finding for symbols withou SSA can use the reachability graph
 //? to trim down the set of potential definitions. Useful in the text viewer for highlighting and goto def.
@@ -12,7 +12,7 @@ using CoreLib.IR;
 //?    useful especially for registers
 //?    can be done in parallel too
 
-namespace CoreLib.Analysis {
+namespace IRExplorerCore.Analysis {
     public enum ReferenceKind {
         Load,
         Store,

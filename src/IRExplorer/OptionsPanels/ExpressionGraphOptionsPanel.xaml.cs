@@ -1,25 +1,20 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using IRExplorer.OptionsPanels;
 using System;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Client.Options {
-    public partial class ExpressionGraphOptionsPanel : UserControl {
+namespace IRExplorer.OptionsPanels {
+    public partial class ExpressionGraphOptionsPanel : OptionsPanelBase {
+        public const double DefaultHeight = 500;
+        public const double MinimumHeight = 300;
+        public const double DefaultWidth = 320;
+        public const double MinimumWidth = 320;
+
         public ExpressionGraphOptionsPanel() {
             InitializeComponent();
-        }
-
-        public event EventHandler PanelClosed;
-        public event EventHandler PanelReset;
-
-        private void CloseButton_Click(object sender, RoutedEventArgs e) {
-            PanelClosed?.Invoke(this, new EventArgs());
-        }
-
-        private void ResetButton_Click(object sender, RoutedEventArgs e) {
-            PanelReset?.Invoke(this, new EventArgs());
         }
     }
 }

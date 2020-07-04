@@ -12,7 +12,7 @@ using System.Xml;
 using System.Xml.Serialization;
 
 // Code based on https://engy.us/blog/2010/03/08/saving-window-size-and-location-in-wpf-and-winforms/
-namespace Client {
+namespace IRExplorer {
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
     public struct RECT {

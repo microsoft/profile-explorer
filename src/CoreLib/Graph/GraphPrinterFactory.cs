@@ -2,11 +2,11 @@
 // Licensed under the MIT License.
 
 using System;
-using CoreLib.Analysis;
-using CoreLib.GraphViz;
-using CoreLib.IR;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
 
-namespace CoreLib.Graph {
+namespace IRExplorerCore.Graph {
     public enum GraphKind {
         FlowGraph,
         DominatorTree,

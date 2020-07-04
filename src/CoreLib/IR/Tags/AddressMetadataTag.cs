@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CoreLib.IR.Tags {
+namespace IRExplorerCore.IR.Tags {
     public class AddressMetadataTag : ITag {
         public AddressMetadataTag(Dictionary<long, IRElement> map) {
             AddressToElementMap = map;

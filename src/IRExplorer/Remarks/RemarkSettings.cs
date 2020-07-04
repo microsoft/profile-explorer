@@ -1,12 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using CoreLib;
+using IRExplorerCore;
 using ProtoBuf;
 using System;
 using System.Collections.Generic;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract(SkipConstructor = true)]
     public class RemarkSettings : SettingsBase {
         public RemarkSettings() {

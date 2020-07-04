@@ -5,7 +5,7 @@ using System;
 using System.Diagnostics;
 using System.Threading;
 
-namespace CoreLib {
+namespace IRExplorerCore {
     public class CancelableTaskInfo : IDisposable {
         private bool canceled = false;
         private CancellationToken cancelToken_;

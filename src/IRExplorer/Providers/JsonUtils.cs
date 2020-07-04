@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows.Media;
 
-namespace Client {
+namespace IRExplorer {
     public class JsonColorConverter : JsonConverter<Color> {
         public override Color Read(ref Utf8JsonReader reader, Type typeToConvert,
                                    JsonSerializerOptions options) {

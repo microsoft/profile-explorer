@@ -9,10 +9,10 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using Client.Document;
-using CoreLib;
+using IRExplorer.Document;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     public static class SearchResultsCommand {
         public static readonly RoutedUICommand JumpToNext =
             new RoutedUICommand("Untitled", "JumpToNext", typeof(SearchResultsPanel));
@@ -101,7 +101,7 @@ namespace Client {
                     return true;
                 }
 
-                if (CompilerInfo.StyleProvider.IsMarkedSection(Section, out var markedName)) {
+                if (CompilerInfo.SectionStyleProvider.IsMarkedSection(Section, out var markedName)) {
                     isMarked_ = true;
                     textColor_ = ColorBrushes.GetBrush(markedName.TextColor);
                 }

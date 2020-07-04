@@ -3,12 +3,12 @@
 
 using System.Windows.Media;
 using Accessibility;
-using CoreLib.Graph;
-using CoreLib.GraphViz;
-using CoreLib.IR;
-using CoreLib.UTC;
+using IRExplorerCore.Graph;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
+using IRExplorerCore.UTC;
 
-namespace Client {
+namespace IRExplorer {
     public class ExpressionGraphStyleProvider : IGraphStyleProvider {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;

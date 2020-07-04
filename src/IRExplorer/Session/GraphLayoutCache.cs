@@ -3,21 +3,21 @@
 
 using System.Collections.Generic;
 using System.Diagnostics;
-using CoreLib;
-using CoreLib.Graph;
-using CoreLib.GraphViz;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.Graph;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     public class GraphLayoutCache {
         private GraphKind graphKind_;
-        private Dictionary<IRTextSection, byte[]> graphLayout_;
-        private Dictionary<string, byte[]> shapeGraphLayout_;
+        private Dictionary<IRTextSection, CompressedString> graphLayout_;
+        private Dictionary<byte[], CompressedString> shapeGraphLayout_;
 
         public GraphLayoutCache(GraphKind graphKind) {
             graphKind_ = graphKind;
-            shapeGraphLayout_ = new Dictionary<string, byte[]>();
-            graphLayout_ = new Dictionary<IRTextSection, byte[]>();
+            shapeGraphLayout_ = new Dictionary<byte[], CompressedString>();
+            graphLayout_ = new Dictionary<IRTextSection, CompressedString>();
         }
 
         public LayoutGraph GenerateGraph<T, U>(T element, IRTextSection section, CancelableTaskInfo task,
@@ -30,7 +30,7 @@ namespace Client {
 
                 if (useCache && graphLayout_.TryGetValue(section, out var graphData)) {
                     Trace.TraceInformation($"Graph cache: Loading cached section graph for {section}");
-                    graphText = CompressionUtils.DecompressString(graphData);
+                    graphText = graphData.ToString();
                     task.Completed();
                 }
                 else {
@@ -38,9 +38,13 @@ namespace Client {
                     // the resulting graph will be identical even though the function is not.
                     string inputText = printer.PrintGraph();
 
-                    if (shapeGraphLayout_.TryGetValue(inputText, out var shapeGraphData)) {
+                    // The input text is looked up using a SHA256 hash that basically makes each
+                    // input unique, use just 32 bytes of memory and faster to look up.
+                    var inputTextHash = CompressionUtils.CreateSHA256(inputText);
+
+                    if (shapeGraphLayout_.TryGetValue(inputTextHash, out var shapeGraphData)) {
                         Trace.TraceInformation($"Graph cache: Loading cached graph layout for {section}");
-                        graphText = CompressionUtils.DecompressString(shapeGraphData);
+                        graphText = shapeGraphData.ToString();
                         graphLayout_.Add(section, shapeGraphData);
                         task.Completed();
                     }
@@ -55,9 +59,10 @@ namespace Client {
 
                         // Cache the text only if there wasn't a failure for some reason.
                         if (useCache && !string.IsNullOrEmpty(graphText)) {
-                            var compressedGraphText = CompressionUtils.CompressString(graphText);
-                            graphLayout_.Add(section, compressedGraphText);
-                            shapeGraphLayout_.Add(inputText, compressedGraphText);
+                            //? TODO: Compression should be done as a Task to reduce latency
+                            var compressedGraphText = new CompressedString(graphText);
+                            graphLayout_[section] = compressedGraphText;
+                            shapeGraphLayout_[inputTextHash] = compressedGraphText;
                         }
                     }
                 }
@@ -69,8 +74,7 @@ namespace Client {
             var layoutGraph = graphReader.ReadGraph();
 
             if (layoutGraph != null) {
-                layoutGraph.BlockNameMap = blockNodeMap;
-                layoutGraph.BlockNodeGroupsMap = blockNodeGroupsMap;
+                layoutGraph.ElementNodeGroupsMap = blockNodeGroupsMap;
             }
 
             return layoutGraph;
@@ -78,16 +82,6 @@ namespace Client {
 
         public void ClearCache() {
             graphLayout_.Clear();
-        }
-
-        public struct CachedGraphLayout {
-            public string Text;
-            public Dictionary<string, IRElement> BlockNameMap;
-
-            public CachedGraphLayout(string text, Dictionary<string, IRElement> blockNameMap) {
-                Text = text;
-                BlockNameMap = blockNameMap;
-            }
         }
     }
 }

@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using CoreLib.IR;
-using CoreLib.Lexer;
+using IRExplorerCore.IR;
+using IRExplorerCore.Lexer;
 
-namespace CoreLib {
+namespace IRExplorerCore {
     public class IRParsingError {
         public IRParsingError(TextLocation location, string error) {
             Location = location;

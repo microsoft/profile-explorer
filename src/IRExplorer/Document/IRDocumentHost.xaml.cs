@@ -13,17 +13,19 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using Client.Document;
-using CoreLib;
-using CoreLib.IR;
+using IRExplorer.Document;
+using IRExplorerCore;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProtoBuf;
 using ComboBox = System.Windows.Controls.ComboBox;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using UserControl = System.Windows.Controls.UserControl;
+using IRExplorer.OptionsPanels;
+using IRExplorer.OptionsPanels;
 
-namespace Client {
+namespace IRExplorer {
     public static class DocumentHostCommand {
         public static readonly RoutedUICommand ShowSearch =
             new RoutedUICommand("Untitled", "ShowSearch", typeof(IRDocumentHost));
@@ -89,13 +91,6 @@ namespace Client {
             TextView.ElementUnselected += TextView_ElementUnselected;
             TextView.PropertyChanged += TextView_PropertyChanged;
             TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
-            OptionsPanel.PanelClosed += OptionsPanel_PanelClosed;
-            OptionsPanel.PanelReset += OptionsPanel_PanelReset;
-            OptionsPanel.SettingsChanged += OptionsPanel_SettingsChanged;
-
-            RemarkOptionsPanel.PanelClosed += RemarkOptionsPanel_PanelClosed;
-            RemarkOptionsPanel.PanelReset += RemarkOptionsPanel_PanelReset;
-            RemarkOptionsPanel.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
 
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -308,9 +303,7 @@ namespace Client {
 
             // Due to various DPI settings, setting the Window coordinates needs
             // some adjustment of the values based on the monitor.
-            var workingArea = Screen.PrimaryScreen.WorkingArea;
-            var transform = PresentationSource.FromVisual(this).CompositionTarget.TransformFromDevice;
-            var corner = transform.Transform(new Point(remarkPanelLocation_.X, remarkPanelLocation_.Y));
+            Point corner = Utils.CoordinatesToScreen(remarkPanelLocation_, this);
             remarkPanel_.Initialize(corner.X, corner.Y);
         }
 
@@ -330,14 +323,14 @@ namespace Client {
             remarkPanelVisible_ = false;
         }
 
-        private void OptionsPanel_SettingsChanged(object sender, bool syntaxFileChanged) {
+        private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
             if (optionsPanelVisible_) {
-                var newSettings = (DocumentSettings)OptionsPanel.DataContext;
+                var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
 
                 if (newSettings != null) {
-                    LoadNewSettings(newSettings, syntaxFileChanged, false);
-                    OptionsPanel.DataContext = null;
-                    OptionsPanel.DataContext = newSettings.Clone();
+                    LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
+                    optionsPanelWindow_.Settings = null;
+                    optionsPanelWindow_.Settings = newSettings.Clone();
                 }
             }
         }
@@ -356,17 +349,16 @@ namespace Client {
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
             var newOptions = new DocumentSettings();
-            newOptions.Reset();
             LoadNewSettings(newOptions, true, false);
-            OptionsPanel.DataContext = null;
-            OptionsPanel.DataContext = newOptions;
+            optionsPanelWindow_.Settings = null;
+            optionsPanelWindow_.Settings = newOptions;
         }
 
-        private void OptionsPanel_PanelClosed(object sender, bool syntaxFileChanged) {
-            CloseOptionsPanel(syntaxFileChanged);
+        private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
+            CloseOptionsPanel(optionsPanel_.SyntaxFileChanged);
         }
 
-        private void ReloadSettings() {
+        public void ReloadSettings() {
             TextView.Settings = settings_;
         }
 
@@ -418,11 +410,19 @@ namespace Client {
             HideRemarkPanel();
             HideActionPanel();
             SaveSectionState(section);
-            HideActionPanel();
-            HideRemarkPanel();
 
             if (!switchingActiveDocument) {
                 RemoveRemarks();
+            }
+
+            // Clear references to IR objects that would keep the previous function alive.
+            hoveredElement_ = null;
+            remarkElement_ = null;
+            selectedBlock_ = null;
+
+            if (switchingActiveDocument) {
+                BlockSelector.SelectedItem = null;
+                BlockSelector.ItemsSource = null;
             }
         }
 
@@ -458,6 +458,7 @@ namespace Client {
             duringSwitchSearchResults_ = true;
             var openArgs = new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent);
             await Session.SwitchDocumentSection(openArgs, TextView);
+
             duringSwitchSearchResults_ = false;
             searchResult_ = searchResults;
             searchInfo.CurrentResult = 1;
@@ -498,28 +499,20 @@ namespace Client {
 
         private async Task AddRemarks() {
             var remarkProvider = Session.CompilerInfo.RemarkProvider as UTCRemarkProvider;
-            var time = Stopwatch.StartNew();
-            var allTime = Stopwatch.StartNew();
-
             var task = Task.Run(() => {
+
                 var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
                                                              remarkSettings_.StopAtSectionBoundaries);
-                var document = Session.SessionState.FindDocument(Section);
+                var document = Session.SessionState.FindLoadedDocument(Section);
                 return remarkProvider.ExtractAllRemarks(sections, Function, document);
             });
 
             var remarks = await task;
             remarkList_ = remarks;
 
-            time.Stop();
-
             //? TODO: Async
             AddRemarkTags(remarks);
             await UpdateDocumentRemarks(remarks);
-
-            allTime.Stop();
-            Trace.TraceWarning(
-                $"Load Duration {time.ElapsedMilliseconds}, all {allTime.ElapsedMilliseconds}");
         }
 
         private (List<Remark>, List<RemarkLineGroup>) FilterDocumentRemarks(List<Remark> remarks) {
@@ -671,12 +664,21 @@ namespace Client {
             //? TODO: Make remarks work with diff mode!
             //?  - document text must be obtained from the session manager
             RemoveRemarks();
+            AddRemarks();
             TextView.EnterDiffMode();
         }
 
         public void ExitDiffMode() {
             TextView.ExitDiffMode();
+            HideOptionalPanels();
+            RemoveRemarks();
             AddRemarks();
+        }
+
+        private void HideOptionalPanels() {
+            HideSearchPanel();
+            HideRemarkPanel();
+            HideActionPanel();
         }
 
         private void TextView_BlockSelected(object sender, IRElementEventArgs e) {
@@ -800,6 +802,7 @@ namespace Client {
             var searchInfo = new SearchInfo();
             searchInfo.SearchedText = symbolName;
             searchInfo.SearchAll = true;
+            searchInfo.SearchAllEnabled = Session.IsInDiffMode;
             ShowSearchPanel(searchInfo);
         }
 
@@ -845,8 +848,20 @@ namespace Client {
                 return;
             }
 
-            OptionsPanel.DataContext = settings_.Clone();
-            OptionsPanel.Visibility = Visibility.Visible;
+            var width = Math.Max(DocumentOptionsPanel.MinimumWidth,
+                    Math.Min(TextView.ActualWidth, DocumentOptionsPanel.DefaultWidth));
+            var height = Math.Max(DocumentOptionsPanel.MinimumHeight,
+                    Math.Min(TextView.ActualHeight, DocumentOptionsPanel.DefaultHeight));
+            var position = TextView.PointToScreen(new Point(TextView.ActualWidth - width, 0));
+
+            optionsPanel_ = new DocumentOptionsPanel();
+            optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, this);
+
+            optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
+            optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
+            optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
+            optionsPanelWindow_.Settings = settings_.Clone();
+            optionsPanelWindow_.Show();
             optionsPanelVisible_ = true;
         }
 
@@ -855,23 +870,42 @@ namespace Client {
                 return;
             }
 
-            OptionsPanel.Visibility = Visibility.Collapsed;
-            var newSettings = (DocumentSettings)OptionsPanel.DataContext;
-            OptionsPanel.DataContext = null;
-            optionsPanelVisible_ = false;
+            optionsPanelWindow_.Close();
+            optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
+            optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
+            optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
+
+            var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
             LoadNewSettings(newSettings, syntaxFileChanged, true);
+
+            optionsPanel_ = null;
+            optionsPanelWindow_ = null;
+            optionsPanelVisible_ = false;
         }
+
+        private OptionsPanelHostWindow remarkOptionsPanelWindow_;
+
+        private OptionsPanelHostWindow optionsPanelWindow_;
+        private DocumentOptionsPanel optionsPanel_;
 
         private void ShowRemarkOptionsPanel() {
             if (remarkOptionsPanelVisible_) {
                 return;
             }
 
-            RemarkOptionsPanel.CompilerInfo = Session.CompilerInfo;
-            RemarkOptionsPanel.DataContext = null;
-            RemarkOptionsPanel.DataContext = remarkSettings_.Clone();
-            RemarkOptionsPanel.Initialize();
-            RemarkOptionsPanel.Visibility = Visibility.Visible;
+            var width = Math.Max(RemarkOptionsPanel.MinimumWidth,
+                    Math.Min(TextView.ActualWidth, RemarkOptionsPanel.DefaultWidth));
+            var height = Math.Max(RemarkOptionsPanel.MinimumHeight,
+                    Math.Min(TextView.ActualHeight, RemarkOptionsPanel.DefaultHeight));
+            var position = TextView.PointToScreen(new Point(RemarkOptionsPanel.LeftMargin, 0));
+
+            remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(Session.CompilerInfo),
+                                                                   position, width, height, this);
+            remarkOptionsPanelWindow_.PanelClosed += RemarkOptionsPanel_PanelClosed;
+            remarkOptionsPanelWindow_.PanelReset += RemarkOptionsPanel_PanelReset;
+            remarkOptionsPanelWindow_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
+            remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
+            remarkOptionsPanelWindow_.Show();
             remarkOptionsPanelVisible_ = true;
         }
 
@@ -880,11 +914,16 @@ namespace Client {
                 return;
             }
 
-            var newSettings = (RemarkSettings)RemarkOptionsPanel.DataContext;
-            RemarkOptionsPanel.DataContext = null;
-            RemarkOptionsPanel.Visibility = Visibility.Collapsed;
-            remarkOptionsPanelVisible_ = false;
+            remarkOptionsPanelWindow_.Close();
+            remarkOptionsPanelWindow_.PanelClosed -= RemarkOptionsPanel_PanelClosed;
+            remarkOptionsPanelWindow_.PanelReset -= RemarkOptionsPanel_PanelReset;
+            remarkOptionsPanelWindow_.SettingsChanged -= RemarkOptionsPanel_SettingsChanged;
+
+            var newSettings = (RemarkSettings)remarkOptionsPanelWindow_.Settings;
             await HandleNewRemarkSettings(newSettings, true);
+
+            remarkOptionsPanelWindow_ = null;
+            remarkOptionsPanelVisible_ = false;
         }
 
         private async Task HandleNewRemarkSettings(RemarkSettings newSettings, bool commit) {
@@ -915,17 +954,20 @@ namespace Client {
 
         private async void RemarkOptionsPanel_SettingsChanged(object sender, EventArgs e) {
             if (remarkOptionsPanelVisible_) {
-                var newSettings = (RemarkSettings)RemarkOptionsPanel.DataContext;
-                await HandleNewRemarkSettings(newSettings, false);
-                RemarkOptionsPanel.DataContext = null;
-                RemarkOptionsPanel.DataContext = remarkSettings_.Clone();
+                var newSettings = (RemarkSettings)remarkOptionsPanelWindow_.Settings;
+
+                if (newSettings != null) {
+                    await HandleNewRemarkSettings(newSettings, false);
+                    remarkOptionsPanelWindow_.Settings = null;
+                    remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
+                }
             }
         }
 
         private async void RemarkOptionsPanel_PanelReset(object sender, EventArgs e) {
             await HandleNewRemarkSettings(new RemarkSettings(), true);
-            RemarkOptionsPanel.DataContext = null;
-            RemarkOptionsPanel.DataContext = remarkSettings_.Clone();
+            remarkOptionsPanelWindow_.Settings = null;
+            remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
         }
 
         private async void RemarkOptionsPanel_PanelClosed(object sender, EventArgs e) {

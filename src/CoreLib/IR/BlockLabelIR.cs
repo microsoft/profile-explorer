@@ -3,7 +3,7 @@
 
 using System;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public sealed class BlockLabelIR : TupleIR {
         public BlockLabelIR(IRElementId elementId, ReadOnlyMemory<char> name,
                             BlockIR parent = null) : base(elementId, TupleKind.Label, parent) {

@@ -13,13 +13,13 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 
-namespace Client {
+namespace IRExplorer {
     static class Utils {
         private static readonly char[] NewLineChars = {'\r', '\n'};
 
@@ -64,6 +64,11 @@ namespace Client {
             }
 
             return foundChild;
+        }
+
+        public static Point CoordinatesToScreen(Point point, UIElement control) {
+            var transform = PresentationSource.FromVisual(control).CompositionTarget.TransformFromDevice;
+            return transform.Transform(point);
         }
 
         public static void PatchComboBoxStyle(ComboBox control) {

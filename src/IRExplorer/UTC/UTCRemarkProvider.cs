@@ -7,12 +7,12 @@ using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.IR;
-using CoreLib.UTC;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
+using IRExplorerCore.UTC;
 
-namespace Client {
+namespace IRExplorer {
     public class UTCRemarkParser {
         public static string ExtractVN(IRElement element) {
             var tag = element.GetTag<RemarkTag>();
@@ -42,6 +42,8 @@ namespace Client {
         private RemarkCategory defaultCategory_;
 
         public UTCRemarkProvider() {
+            categories_ = new List<RemarkCategory>();
+            boundaries_ = new List<RemarkSectionBoundary>();
             contextStack_ = new Stack<RemarkContext>();
             LoadSettings();
         }

@@ -1,33 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CoreLib.Lexer;
+using IRExplorerCore.Lexer;
 
 namespace IRExplorerExtension {
     class DebuggerExpression {
         private static List<Token> TokenizeString(string value) {
-            Logger.Log($">>>> TokenizeString length {value.Length}: {value}");
             var lexer = new Lexer(value);
             var tokens = new List<Token>();
             int tokenCount = 0;
 
             while (true) {
                 var token = lexer.NextToken();
-                Logger.Log($"    at token {tokenCount}: {token.Kind}");
-
-                if (tokenCount++ > 200) {
-                    break;
-                }
 
                 if (token.IsLineEnd() || token.IsEOF()) {
-                    Logger.Log("    found line end");
                     break;
                 }
 
                 tokens.Add(token);
             }
 
-            Logger.Log("    done tokenizing");
             return tokens;
         }
 
@@ -112,18 +104,12 @@ namespace IRExplorerExtension {
         }
 
         public static string Create(TextLineInfo lineInfo) {
-            Logger.Log(">>> DebuggerExpression: start");
             var tokens = TokenizeString(lineInfo.LineText);
-            Logger.Log($">>> DebuggerExpression: tokenized {tokens.Count}");
             int targetToken = FindTargetToken(lineInfo, tokens);
-            Logger.Log($">>> DebuggerExpression: found target {targetToken}");
 
             if (targetToken != -1 && tokens[targetToken].IsIdentifier()) {
-                Logger.Log(">>> DebuggerExpression: start expanding");
                 (int left, int right) = ExpandTargetExpression(targetToken, tokens);
-                Logger.Log($">>> DebuggerExpression: expanded to {left}, {right}");
                 string result = GetExpressionString(left, right, tokens);
-                Logger.Log($">>> DebuggerExpression: done {result}");
                 return result;
             }
 

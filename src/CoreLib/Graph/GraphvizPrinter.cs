@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace CoreLib.GraphViz {
+namespace IRExplorerCore.GraphViz {
     public class GraphVizPrinter {
         private int subgraphIndex_;
 
@@ -78,7 +78,7 @@ namespace CoreLib.GraphViz {
         }
 
         public string PrintGraph() {
-            var builder = new StringBuilder();
+            var builder = new StringBuilder(1024*16);
             builder.AppendLine("digraph {");
             builder.AppendLine(GetExtraSettings());
             PrintGraph(builder);
@@ -111,7 +111,6 @@ namespace CoreLib.GraphViz {
             try {
                 inputFilePath = Path.GetTempFileName();
                 File.WriteAllText(inputFilePath, inputText);
-                Debug.WriteLine($"Printed to {inputFilePath}");
             }
             catch (Exception ex) {
                 Trace.TraceError(
@@ -121,7 +120,7 @@ namespace CoreLib.GraphViz {
                 return null;
             }
 
-            var outputText = new StringBuilder(8192);
+            var outputText = new StringBuilder(1024*32);
 
             var psi = new ProcessStartInfo("dot.exe") {
                 Arguments = $"-Tplain \"{inputFilePath}\"",
@@ -158,6 +157,15 @@ namespace CoreLib.GraphViz {
                 } while (!process.HasExited);
 
                 process.CancelOutputRead();
+
+                if(process.ExitCode != 0) {
+                    // dot failed somehow, treat it as an error.
+                    Trace.TraceError(
+                        $"Graphviz task {ObjectTracker.Track(task)}: GraphViz failed with error code: {process.ExitCode}");
+
+                    task.Completed();
+                    return null;
+                }
             }
             catch (Exception ex) {
                 Trace.TraceError(
@@ -168,6 +176,7 @@ namespace CoreLib.GraphViz {
             }
 
 #if !DEBUG
+            // Clean up temporary files.
             try {
                 File.Delete(inputFilePath);
             }

@@ -4,7 +4,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace CoreLib.Lexer {
+namespace IRExplorerCore.Lexer {
     public sealed class CharSource {
         public static readonly char EOF = '\0';
         public static readonly char NewLine = '\n';

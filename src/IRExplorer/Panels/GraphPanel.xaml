@@ -1,11 +1,11 @@
 ﻿<local:ToolPanelControl
-    x:Class="Client.GraphPanel"
+    x:Class="IRExplorer.GraphPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:Client"
+    xmlns:local="clr-namespace:IRExplorer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:options="clr-namespace:Client.Options"
+    xmlns:options="clr-namespace:IRExplorer.OptionsPanels"
     d:DesignHeight="450"
     d:DesignWidth="500"
     Focusable="True"
@@ -74,6 +74,7 @@
         </Grid.RowDefinitions>
 
         <Grid
+            x:Name="ToolbarHost"
             Grid.Row="0"
             HorizontalAlignment="Stretch"
             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
@@ -185,112 +186,8 @@
             Background="#EFECE2"
             HorizontalScrollBarVisibility="Auto"
             VerticalScrollBarVisibility="Auto">
-            <local:GraphViewer x:Name="GraphViewer">
-                <local:GraphViewer.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem
-                            Focusable="False"
-                            Header="Mark Block"
-                            IsHitTestVisible="False" />
-                        <MenuItem>
-                            <MenuItem.Header>
-                                <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkBlock" />
-                            </MenuItem.Header>
-                        </MenuItem>
-                        <Separator />
-                        <MenuItem Header="Mark Predecessors">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPredecessors" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <MenuItem Header="Mark Successors">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkSuccessors" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <MenuItem Header="Mark Node Group" ToolTip="Mark block and all its predecessors and succesors">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkGroup" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <Separator />
-
-                        <MenuItem Header="Mark Loop">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoop" CommandTarget="{Binding ElementName=GraphHost}" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-
-                        <MenuItem Header="Mark Loop Nest">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkLoopNest" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <Separator />
-
-                        <MenuItem Header="Query">
-                            <MenuItem
-                                Command="local:GraphCommand.SelectQueryBlock1"
-                                CommandTarget="{Binding ElementName=GraphHost}"
-                                Header="Select Block A"
-                                InputGestureText="Click + Ctrl/Alt + A/1" />
-
-                            <MenuItem
-                                Command="local:GraphCommand.SelectQueryBlock2"
-                                CommandTarget="{Binding ElementName=GraphHost}"
-                                Header="Select Block B"
-                                InputGestureText="Click + Ctrl/Alt + B/2" />
-
-                        </MenuItem>
-
-                        <MenuItem Header="Clear">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource RemoveIcon}" />
-                            </MenuItem.Icon>
-                            <MenuItem
-                                Command="local:GraphCommand.ClearMarked"
-                                CommandTarget="{Binding ElementName=GraphHost}"
-                                Header="Selected Marker" />
-                            <MenuItem
-                                Command="local:GraphCommand.ClearAllMarked"
-                                CommandTarget="{Binding ElementName=GraphHost}"
-                                Header="All Markers" />
-                        </MenuItem>
-                    </ContextMenu>
-                </local:GraphViewer.ContextMenu>
-            </local:GraphViewer>
+            <local:GraphViewer x:Name="GraphViewer" ContextMenu="{StaticResource GraphContextMenu}" />
         </local:ScrollViewerClickable>
-
-        <Grid Grid.Row="1" Panel.ZIndex="2">
-            <options:GraphOptionsPanel
-                x:Name="OptionsPanel"
-                Width="320"
-                Height="Auto"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Visibility="Collapsed" />
-            <options:ExpressionGraphOptionsPanel
-                x:Name="ExpressionOptionsPanel"
-                Width="320"
-                Height="Auto"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Visibility="Collapsed" />
-        </Grid>
-
 
         <Grid
             x:Name="LongOperationView"

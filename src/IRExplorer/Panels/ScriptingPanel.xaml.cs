@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using Client.Scripting;
+using IRExplorer.Scripting;
 using CSScriptLib;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
@@ -19,7 +19,7 @@ using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Host.Mef;
 using Microsoft.CodeAnalysis.Text;
 
-namespace Client {
+namespace IRExplorer {
     public static class ScriptingCommand {
         public static readonly RoutedUICommand ExecuteScript =
             new RoutedUICommand("Untitled", "ExecuteScript", typeof(BookmarksPanel));

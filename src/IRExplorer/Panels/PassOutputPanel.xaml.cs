@@ -7,11 +7,11 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using Client.Document;
-using CoreLib;
+using IRExplorer.Document;
+using IRExplorerCore;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract]
     public class PassOutputPanelState {
         [ProtoMember(1)]
@@ -210,7 +210,9 @@ namespace Client {
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
             SaveState(section, document);
             SearchPanelVisible = false;
-            TextView.Text = "";
+            initialText_ = null;
+            searchResults_ = null;
+            TextView.UnloadDocument();
         }
 
         public override void OnSessionSave() {

@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using Client.Scripting;
-using CoreLib.Analysis;
-using CoreLib.IR;
+using IRExplorer.Scripting;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
-namespace Client.Query {
+namespace IRExplorer.Query {
     /// <summary>
     ///     Interaction logic for QueryPanelPreview.xaml
     /// </summary>

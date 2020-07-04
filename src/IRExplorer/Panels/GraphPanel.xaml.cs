@@ -9,14 +9,16 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.GraphViz;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Rendering;
 using ProtoBuf;
+using IRExplorer.OptionsPanels;
+using IRExplorer.OptionsPanels;
 
-namespace Client {
+namespace IRExplorer {
     // ScrollViewer that ignores click events.
     public class ScrollViewerClickable : ScrollViewer {
         protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e) { }
@@ -103,10 +105,6 @@ namespace Client {
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
             hover.MouseHoverStopped += Hover_MouseHoverStopped;
-            OptionsPanel.PanelClosed += OptionsPanel_PanelClosed;
-            OptionsPanel.PanelReset += OptionsPanel_PanelReset;
-            ExpressionOptionsPanel.PanelClosed += OptionsPanel_PanelClosed;
-            ExpressionOptionsPanel.PanelReset += OptionsPanel_PanelReset;
 
             //? TODO: No context menu for expr graph yet, don't show CFG one.
             if (PanelKind == ToolPanelKind.ExpressionGraph) {
@@ -129,15 +127,8 @@ namespace Client {
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
             Settings.Reset();
-
-            if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                ExpressionOptionsPanel.DataContext = null;
-                ExpressionOptionsPanel.DataContext = Settings.Clone();
-            }
-            else {
-                OptionsPanel.DataContext = null;
-                OptionsPanel.DataContext = Settings.Clone();
-            }
+            graphOptionsPanel_.Settings= null;
+            graphOptionsPanel_.Settings = Settings.Clone();
         }
 
         private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
@@ -252,6 +243,7 @@ namespace Client {
         }
 
         public void InitializeFromDocument(IRDocument doc) {
+            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: initialize with doc {ObjectTracker.Track(doc)}");
             document_ = doc;
         }
 
@@ -717,20 +709,38 @@ namespace Client {
             queryPanelVisible_ = false;
         }
 
+        private OptionsPanelHostWindow graphOptionsPanel_;
+
         //? TODO: Should be a virtual overriden in the expr panel
         private void ShowOptionsPanel() {
+            if(optionsPanelVisible_) {
+                return;
+            }
+
             if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                ExpressionOptionsPanel.DataContext = Settings.Clone();
-                ExpressionOptionsPanel.Visibility = Visibility.Visible;
-                ExpressionOptionsPanel.Focus();
-                optionsPanelVisible_ = true;
+                var width = Math.Max(ExpressionGraphOptionsPanel.MinimumWidth, 
+                    Math.Min(GraphHost.ActualWidth, ExpressionGraphOptionsPanel.DefaultWidth));
+                var height = Math.Max(ExpressionGraphOptionsPanel.MinimumHeight,
+                    Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
+                var position = GraphHost.PointToScreen(new Point(GraphHost.ActualWidth - width, 0));
+                graphOptionsPanel_ = new OptionsPanelHostWindow(new ExpressionGraphOptionsPanel(),
+                                                                  position, width, height, this);
             }
             else {
-                OptionsPanel.DataContext = Settings.Clone();
-                OptionsPanel.Visibility = Visibility.Visible;
-                OptionsPanel.Focus();
-                optionsPanelVisible_ = true;
+                var width = Math.Max(GraphOptionsPanel.MinimumWidth,
+                    Math.Min(GraphHost.ActualWidth, GraphOptionsPanel.DefaultWidth));
+                var height = Math.Max(GraphOptionsPanel.MinimumHeight,
+                    Math.Min(GraphHost.ActualHeight, GraphOptionsPanel.DefaultHeight));
+                var position = GraphHost.PointToScreen(new Point(GraphHost.ActualWidth - width, 0));
+                graphOptionsPanel_ = new OptionsPanelHostWindow(new GraphOptionsPanel(),
+                                                                  position, width, height, this);
             }
+
+            graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
+            graphOptionsPanel_.PanelReset += OptionsPanel_PanelReset;
+            graphOptionsPanel_.Settings = Settings.Clone();
+            graphOptionsPanel_.Show();
+            optionsPanelVisible_ = true;
         }
 
         private void CloseOptionsPanel() {
@@ -738,11 +748,12 @@ namespace Client {
                 return;
             }
 
+            graphOptionsPanel_.Close();
+            graphOptionsPanel_.PanelClosed -= OptionsPanel_PanelClosed;
+            graphOptionsPanel_.PanelReset -= OptionsPanel_PanelReset;
+
             if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                var newSettings = (ExpressionGraphSettings) ExpressionOptionsPanel.DataContext;
-                ExpressionOptionsPanel.Visibility = Visibility.Collapsed;
-                ExpressionOptionsPanel.DataContext = null;
-                optionsPanelVisible_ = false;
+                var newSettings = (ExpressionGraphSettings)graphOptionsPanel_.Settings;
 
                 if (newSettings.HasChanges(Settings)) {
                     App.Settings.ExpressionGraphSettings = newSettings;
@@ -751,10 +762,7 @@ namespace Client {
                 }
             }
             else {
-                var newSettings = (FlowGraphSettings) OptionsPanel.DataContext;
-                OptionsPanel.Visibility = Visibility.Collapsed;
-                OptionsPanel.DataContext = null;
-                optionsPanelVisible_ = false;
+                var newSettings = (FlowGraphSettings)graphOptionsPanel_.Settings;
 
                 if (newSettings.HasChanges(Settings)) {
                     App.Settings.FlowGraphSettings = newSettings;
@@ -762,6 +770,9 @@ namespace Client {
                     ReloadSettings();
                 }
             }
+
+            graphOptionsPanel_ = null;
+            optionsPanelVisible_ = false;
         }
 
         private void SetupCommands() {
@@ -949,12 +960,20 @@ namespace Client {
             HideQueryPanel();
             Utils.DisableControl(GraphHost);
             restoredState_ = false;
+
             var state = new GraphPanelState();
             state.ZoomLevel = GraphViewer.ZoomLevel;
             state.HorizontalOffset = GraphHost.HorizontalOffset;
             state.VerticalOffset = GraphHost.VerticalOffset;
             var data = StateSerializer.Serialize(state, document.Function);
             Session.SavePanelState(data, this, section);
+
+            // Clear references to IR objects that would keep the previous function alive.
+            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: unloaded doc {ObjectTracker.Track(document_)}"); 
+            document_ = null;
+            section_ = null;
+            graph_ = null;
+            hoveredNode_ = null;
         }
 
         public override void OnElementSelected(IRElementEventArgs e) {
@@ -999,12 +1018,14 @@ namespace Client {
 
             // Rebuild the graph, otherwise the visual nodes
             // point to the same instance.
-            var graphReader = new GraphvizReader(sourceGraphPanel.graph_.GraphKind,
-                                                 sourceGraphPanel.graph_.SourceText,
-                                                 sourceGraphPanel.graph_.BlockNameMap);
+            //? TODO: This is not efficient regarding memory, SourceText and BlockNameMap
+            //? waste a lot of space for large graphs
+            //var graphReader = new GraphvizReader(sourceGraphPanel.graph_.GraphKind,
+            //                                     sourceGraphPanel.graph_.SourceText,
+            //                                     sourceGraphPanel.graph_.BlockNameMap);
 
-            var newGraph = graphReader.ReadGraph();
-            DisplayGraph(newGraph);
+            //var newGraph = graphReader.ReadGraph();
+            //DisplayGraph(newGraph);
         }
 
         #endregion

@@ -4,12 +4,13 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
-using CoreLib.GraphViz;
-using CoreLib.IR;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     public sealed class GraphNode {
         private const double DefaultTextSize = 0.225;
 
@@ -94,7 +95,7 @@ namespace Client {
         public DrawingVisual Render() {
             visual_ = new DrawingVisual();
 
-            if (graph_.BlockNodeGroupsMap != null) {
+            if (graph_.ElementNodeGroupsMap != null) {
                 DrawNodeBoundingBoxes();
             }
 
@@ -109,7 +110,7 @@ namespace Client {
         private void DrawNodeBoundingBoxes() {
             var pen = Pens.GetPen(Colors.Gray, DefaultEdgeThickness);
 
-            foreach (var group in graph_.BlockNodeGroupsMap) {
+            foreach (var group in graph_.ElementNodeGroupsMap) {
                 var boundingBox = ComputeBoundingBox(group.Value);
                 boundingBox.Inflate(GroupBoundingBoxMargin, GroupBoundingBoxMargin);
                 var groupVisual = new DrawingVisual();
@@ -122,7 +123,7 @@ namespace Client {
                                                  CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                                                  defaultNodeFont_, textSize, Brushes.DimGray,
                                                  VisualTreeHelper.GetDpi(groupVisual).PixelsPerDip);
-
+                    //? TODO: Text placement can overlap with other elements
                     dc.DrawText(
                         text,
                         new Point(boundingBox.Right + GroupBoundingBoxTextMargin,
@@ -140,7 +141,7 @@ namespace Client {
             double yMax = double.MinValue;
 
             foreach (var element in nodeElements) {
-                var node = graph_.BlockNodeMap[element];
+                var node = graph_.ElementNodeMap[element];
                 xMin = Math.Min(xMin, node.CenterX - node.Width / 2);
                 yMin = Math.Min(yMin, node.CenterY - node.Height / 2);
                 xMax = Math.Max(xMax, node.CenterX + node.Width / 2);
@@ -166,6 +167,10 @@ namespace Client {
             var textColor = graphStyle_.GetDefaultTextColor();
 
             foreach (var node in graph_.Nodes) {
+                if(node == null) {
+                    continue; //? TODO: Investigate
+                }
+
                 var nodeVisual = new DrawingVisual();
 
                 var graphNode = new GraphNode {
@@ -208,8 +213,7 @@ namespace Client {
             // If there are many in-edges, to avoid terrible performance due to WPF edge drawing
             // use polylines instead. Performance is still not good, but the graph becomes usable.
             bool usePolyLine = graph_.Nodes.Find(node => node.InEdges != null &&
-                                                         node.InEdges.Count > PolylineEdgeThreshold) !=
-                               null;
+                                                         node.InEdges.Count > PolylineEdgeThreshold) != null;
 
             foreach (var edge in graph_.Edges) {
                 var points = edge.LinePoints;
@@ -227,9 +231,9 @@ namespace Client {
 
                 //? TODO: Avoid making copies at all
                 sc.BeginFigure(ToPoint(points[0]), false, false);
-                var tempPoints = new Point[points.Count - 1];
+                var tempPoints = new Point[points.Length - 1];
 
-                for (int i = 1; i < points.Count; i++) {
+                for (int i = 1; i < points.Length; i++) {
                     tempPoints[i - 1] = ToPoint(points[i]);
                 }
 

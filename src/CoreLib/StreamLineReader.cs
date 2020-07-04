@@ -5,7 +5,7 @@ using System;
 using System.IO;
 using System.Text;
 
-namespace CoreLib {
+namespace IRExplorerCore {
     public class StreamLineReader : IDisposable {
         private const int BufferLength = 8192;
         private byte[] buffer_ = new byte[BufferLength];

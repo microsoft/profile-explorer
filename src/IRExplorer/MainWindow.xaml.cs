@@ -17,21 +17,22 @@ using System.Windows.Media;
 using System.Windows.Threading;
 using AutoUpdaterDotNET;
 using AvalonDock.Layout;
-using Client.DebugServer;
-using Client.Document;
-using Client.Query;
-using CoreLib;
-using CoreLib.Analysis;
-using CoreLib.Graph;
-using CoreLib.GraphViz;
-using CoreLib.IR;
-using CoreLib.IR.Tags;
-using CoreLib.UTC;
+using IRExplorer.DebugServer;
+using IRExplorer.Document;
+using IRExplorer.Query;
+using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.Graph;
+using IRExplorerCore.GraphViz;
+using IRExplorerCore.IR;
+using IRExplorerCore.IR.Tags;
+using IRExplorerCore.UTC;
 using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
 using Microsoft.Win32;
+using IRExplorer.OptionsPanels;
 
-namespace Client {
+namespace IRExplorer {
     public static class AppCommand {
         public static readonly RoutedUICommand FullScreen =
             new RoutedUICommand("Untitled", "FullScreen", typeof(Window));
@@ -62,7 +63,6 @@ namespace Client {
     public partial class MainWindow : Window, ISessionManager {
         private const char RemovedDiffLineChar = ' ';
         private const char AddedDiffLineChar = ' ';
-        private static readonly string AUTO_UPDATE_LOCATION = @"\\ir-explorer\app\update.xml";
         private static readonly string DOCUMENTATION_LOCATION = @"file://ir-explorer/docs/index.html";
 
         private static readonly char[] IgnoredDiffLetters = {
@@ -99,12 +99,12 @@ namespace Client {
 
         public MainWindow() {
             App.WindowShowTime = DateTime.UtcNow;
+            InitializeComponent();
 
             panelHostSet_ = new Dictionary<ToolPanelKind, List<PanelHostInfo>>();
             compilerInfo_ = new UTCCompilerInfoProvider();
             changedDocuments_ = new HashSet<string>();
 
-            InitializeComponent();
             SetupMainWindow();
             SetupGraphLayoutCache();
 
@@ -117,7 +117,7 @@ namespace Client {
         public SessionStateManager SessionState => sessionState_;
 
         public IRTextSummary GetDocumentSummary(IRTextSection section) {
-            return sessionState_.FindDocument(section).Summary;
+            return sessionState_.FindLoadedDocument(section).Summary;
         }
 
         public void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations) {
@@ -125,7 +125,7 @@ namespace Client {
         }
 
         public async Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section) {
-            var docInfo = sessionState_.FindDocument(section);
+            var docInfo = sessionState_.FindLoadedDocument(section);
             return await Task.Run(() => docInfo.Loader.LoadSectionPassOutput(output));
         }
 
@@ -166,11 +166,11 @@ namespace Client {
 
         //? Replace with CurrentDocument(Panel), where a bound panel overrides FindActiveDocument
 
-        public IRDocument CurrentDocument => FindActiveDocument()?.TextView;
+        public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
 
         public IRTextSection CurrentDocumentSection {
             get {
-                var activeDocument = FindActiveDocument();
+                var activeDocument = FindActiveDocumentHost();
                 return activeDocument?.Section;
             }
         }
@@ -178,7 +178,7 @@ namespace Client {
         public List<IRDocument> OpenDocuments {
             get {
                 var list = new List<IRDocument>();
-                sessionState_.DocumentHosts.ForEach(doc => list.Add(doc.Document.TextView));
+                sessionState_.DocumentHosts.ForEach(doc => list.Add(doc.DocumentHost.TextView));
                 return list;
             }
         }
@@ -194,7 +194,7 @@ namespace Client {
                 return FindDocumentHost(panel.BoundDocument);
             }
 
-            return FindActiveDocument();
+            return FindActiveDocumentHost();
         }
 
         public void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section) {
@@ -234,10 +234,10 @@ namespace Client {
         public void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args) {
             foreach (var doc in sessionState_.DocumentHosts) {
                 var menuItem = new BindMenuItem {
-                    Header = GetSectionName(doc.Document.Section),
-                    ToolTip = doc.Document.Section.ParentFunction.Name,
-                    Tag = doc.Document.TextView,
-                    IsChecked = panel.BoundDocument == doc.Document.TextView
+                    Header = GetSectionName(doc.DocumentHost.Section),
+                    ToolTip = doc.DocumentHost.Section.ParentFunction.Name,
+                    Tag = doc.DocumentHost.TextView,
+                    IsChecked = panel.BoundDocument == doc.DocumentHost.TextView
                 };
 
                 args.MenuItems.Add(menuItem);
@@ -282,16 +282,41 @@ namespace Client {
             return false;
         }
 
+        public bool IsInDiffMode => sessionState_.DiffState.IsEnabled;
+
+        public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument document = null) {
+            if (sessionState_.DiffState.IsEnabled && document != null) {
+                IRDocument diffDocument = null;
+
+                if (document == sessionState_.DiffState.LeftDocument.TextView) {
+                    diffDocument = sessionState_.DiffState.LeftDocument.TextView;
+                }
+                else if (document == sessionState_.DiffState.RightDocument.TextView) {
+                    diffDocument = sessionState_.DiffState.RightDocument.TextView;
+                }
+
+                if (diffDocument != null) {
+                    return Task.FromResult(diffDocument.Text);
+                }
+            }
+
+            var docInfo = sessionState_.FindLoadedDocument(section);
+            return Task.Run(() => docInfo.Loader.GetSectionText(section));
+        }
+
+
         public async Task<SectionSearchResult> SearchSectionAsync(
             SearchInfo searchInfo, IRTextSection section, IRDocument document) {
-            var docInfo = sessionState_.FindDocument(section);
+            var docInfo = sessionState_.FindLoadedDocument(section);
             var searcher = new SectionTextSearcher(docInfo.Loader);
 
             if (searchInfo.SearchAll) {
-                var sections = section.ParentFunction.Sections;
+                if(sessionState_.DiffState.IsEnabled) {
+                    return new SectionSearchResult(section);
+                }
 
-                var result =
-                    await searcher.SearchAsync(searchInfo.SearchedText, searchInfo.SearchKind, sections);
+                var sections = section.ParentFunction.Sections;
+                var result = await searcher.SearchAsync(searchInfo.SearchedText, searchInfo.SearchKind, sections);
 
                 var panelInfo = FindTargetPanel(document, ToolPanelKind.SearchResults);
                 var searchPanel = panelInfo.Panel as SearchResultsPanel;
@@ -316,17 +341,37 @@ namespace Client {
 
         public void ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
             foreach (var docHostInfo in sessionState_.DocumentHosts) {
-                if (docHostInfo.Document.TextView != document) {
-                    docHostInfo.Document.Settings = newSettings;
+                if (docHostInfo.DocumentHost.TextView != document) {
+                    docHostInfo.DocumentHost.Settings = newSettings;
                 }
             }
         }
 
         public void ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document) {
             foreach (var docHostInfo in sessionState_.DocumentHosts) {
-                if (docHostInfo.Document.TextView != document) {
-                    docHostInfo.Document.RemarkSettings = newSettings;
+                if (docHostInfo.DocumentHost.TextView != document) {
+                    docHostInfo.DocumentHost.RemarkSettings = newSettings;
                 }
+            }
+        }
+
+        public async Task ReloadDiffSettings(DiffSettings newSettings, bool hasHandlingChanges) {
+            if(!IsInDiffMode) {
+                return;
+            }
+
+            if (hasHandlingChanges) {
+                // Diffs must be recomputed.
+                var leftDocument = sessionState_.DiffState.LeftDocument;
+                var rightDocument = sessionState_.DiffState.RightDocument;
+
+                await ExitDocumentDiffState();
+                await EnterDocumentDiffState(leftDocument, rightDocument);
+            }
+            else {
+                // Only diff style must be updated.
+                sessionState_.DiffState.LeftDocument.ReloadSettings();
+                sessionState_.DiffState.RightDocument.ReloadSettings();
             }
         }
 
@@ -454,7 +499,7 @@ namespace Client {
             var time = now - App.AppStartTime;
             DevMenuStartupTime.Header = $"Startup time: {time.TotalMilliseconds} ms";
 
-            DelayedAction.StartNew(TimeSpan.FromSeconds(10), () => {
+            DelayedAction.StartNew(TimeSpan.FromSeconds(30), () => {
                 Dispatcher.BeginInvoke(() =>
                     CheckForUpdate()
                 );
@@ -463,7 +508,7 @@ namespace Client {
 
         private static void CheckForUpdate() {
             try {
-                AutoUpdater.Start(AUTO_UPDATE_LOCATION);
+                AutoUpdater.Start(App.AutoUpdateInfo);
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed update check: {ex}");
@@ -496,7 +541,7 @@ namespace Client {
         }
 
         private void CloseDocument(DocumentHostInfo docHostInfo) {
-            ResetDocumentEvents(docHostInfo.Document);
+            ResetDocumentEvents(docHostInfo.DocumentHost);
             docHostInfo.HostParent.Children.Remove(docHostInfo.Host);
         }
 
@@ -505,7 +550,10 @@ namespace Client {
             sessionState_.DocumentChanged += DocumentState_DocumentChangedEvent;
             sessionState_.ChangeDocumentWatcherState(App.Settings.AutoReloadDocument);
             ClearGraphLayoutCache();
-            AddRecentFile(filePath);
+
+            if (sessionKind != SessionKind.DebugSession) {
+                AddRecentFile(filePath);
+            }
         }
 
         private async void DocumentState_DocumentChangedEvent(object sender, EventArgs e) {
@@ -559,6 +607,7 @@ namespace Client {
         private void StartApplicationUpdateTimer() {
             AutoUpdater.RunUpdateAsAdmin = true;
             AutoUpdater.ShowRemindLaterButton = false;
+
             AutoUpdater.CheckForUpdateEvent += AutoUpdaterOnCheckForUpdateEvent;
             updateTimer_ = new DispatcherTimer {Interval = TimeSpan.FromMinutes(10)};
             updateTimer_.Tick += delegate { CheckForUpdate(); };
@@ -593,7 +642,7 @@ namespace Client {
                 try {
                     long fileSize = new FileInfo(sessionState_.Info.FilePath).Length;
 
-                    if (fileSize > UTCReader.MAX_PRELOADED_FILE_SIZE) {
+                    if (fileSize > UTCSectionReader.MAX_PRELOADED_FILE_SIZE) {
                         Trace.TraceWarning(
                             $"Disabling auto-saving for large file: {sessionState_.Info.FilePath}");
 
@@ -626,7 +675,7 @@ namespace Client {
             try {
                 EndSession();
                 UpdateUIBeforeLoadDocument(filePath);
-                var result = await Task.Run(() => LoadDocument(filePath));
+                var result = await Task.Run(() => LoadDocument(filePath, UpdateIRDocumentLoadProgress));
 
                 if (result != null) {
                     SetupOpenedIRDocument(SessionKind.Default, filePath, result);
@@ -641,10 +690,48 @@ namespace Client {
             return false;
         }
 
+        private void UpdateIRDocumentLoadProgress(IRSectionReader reader, SectionReaderProgressInfo info) {
+            if (info.TotalBytes == 0) {
+                return;
+            }
+
+            Dispatcher.BeginInvoke(() => {
+                bool firstTimeShowPanel = false;
+
+                if (!documentLoadProgressVisible_) {
+                    // Progress panel not displayed yet, show it only after a bit of time
+                    // passes since most files are small and load instantly.
+                    var timeDiff = DateTime.UtcNow - documentLoadStartTime_;
+
+                    if (timeDiff.TotalMilliseconds < 500) {
+                        return;
+                    }
+
+                    firstTimeShowPanel = true;
+                }
+
+                double percentage = Math.Ceiling(100 * ((double)info.BytesProcessed / (double)info.TotalBytes));
+               
+                // If the progress panel is about to be displayed, but most of the file
+                // as been processed already, there's no point in showing it anymore.
+                if(firstTimeShowPanel) {
+                    if (percentage < 50) {
+                        return;
+                    }
+
+                    documentLoadProgressVisible_ = true;
+                    DocumentLoadProgressPanel.Visibility = Visibility.Visible;
+                }
+                
+                DocumentLoadProgressBar.Value = percentage;
+            });
+        }
+
         private void SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
             mainDocument_ = result;
             StartSession(filePath, sessionKind);
             sessionState_.NewLoadedDocument(result);
+
             UpdateUIAfterLoadDocument();
             SetupSectionPanel();
             NotifyPanelsOfSessionStart();
@@ -653,7 +740,7 @@ namespace Client {
 
         private async Task<bool> OpenDiffIRDocument(string filePath) {
             try {
-                var result = await Task.Run(() => LoadDocument(filePath));
+                var result = await Task.Run(() => LoadDocument(filePath, UpdateIRDocumentLoadProgress));
 
                 if (result != null) {
                     SetupOpenedDiffIRDocument(filePath, result);
@@ -687,7 +774,7 @@ namespace Client {
                 bool failed = false;
 
                 foreach (var docState in state.Documents) {
-                    var result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath));
+                    var result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath, UpdateIRDocumentLoadProgress));
 
                     if (result != null) {
                         sessionState_.NewLoadedDocument(result);
@@ -719,14 +806,15 @@ namespace Client {
 
         private void UpdateUIBeforeReadSession(string documentTitle) {
             Title = $"IR Explorer - Reading {documentTitle}";
-            Utils.DisableControl(DockManager, 0.75);
+            Utils.DisableControl(DockManager, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
         }
 
         private void UpdateUIBeforeLoadDocument(string documentTitle) {
             Title = $"IR Explorer - Loading {documentTitle}";
-            Utils.DisableControl(DockManager, 0.75);
+            Utils.DisableControl(DockManager, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
+            documentLoadStartTime_ = DateTime.UtcNow;
         }
 
         private void UpdateUIAfterLoadDocument() {
@@ -737,6 +825,11 @@ namespace Client {
             }
             else {
                 Title = "IR Explorer - Failed to load file";
+            }
+
+            if (documentLoadProgressVisible_) {
+                DocumentLoadProgressPanel.Visibility = Visibility.Collapsed;
+                documentLoadProgressVisible_ = false;
             }
         }
 
@@ -755,11 +848,11 @@ namespace Client {
             Utils.EnableControl(DockManager);
         }
 
-        private LoadedDocument LoadDocument(string path) {
+        private LoadedDocument LoadDocument(string path, ProgressInfoHandler progressHandler) {
             try {
                 var result = new LoadedDocument(path);
                 result.Loader = new DocumentSectionLoader(path);
-                result.Summary = result.Loader.LoadDocument();
+                result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
             catch (Exception ex) {
@@ -768,11 +861,11 @@ namespace Client {
             }
         }
 
-        private LoadedDocument LoadDocument(byte[] data, string path) {
+        private LoadedDocument LoadDocument(byte[] data, string path, ProgressInfoHandler progressHandler) {
             try {
                 var result = new LoadedDocument(path);
                 result.Loader = new DocumentSectionLoader(data);
-                result.Summary = result.Loader.LoadDocument();
+                result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
             catch (Exception ex) {
@@ -826,8 +919,8 @@ namespace Client {
         }
 
         private IRDocumentHost FindDocumentWithSection(IRTextSection section) {
-            var result = sessionState_.DocumentHosts.Find(item => item.Document.Section == section);
-            return result?.Document;
+            var result = sessionState_.DocumentHosts.Find(item => item.DocumentHost.Section == section);
+            return result?.DocumentHost;
         }
 
         private async void SectionPanel_EnterDiffMode(object sender, DiffModeEventArgs e) {
@@ -996,7 +1089,7 @@ namespace Client {
                 $"Mirror action from {ObjectTracker.Track(sourceDocument)} on element {element}");
 
             foreach (var docInfo in sessionState_.DocumentHosts) {
-                var otherDocument = docInfo.Document.TextView;
+                var otherDocument = docInfo.DocumentHost.TextView;
 
                 // Skip if same section or from another function.
                 if (otherDocument == sourceDocument ||
@@ -1056,7 +1149,7 @@ namespace Client {
         }
 
         private void NotifyDocumentsOfSessionSave() {
-            sessionState_.DocumentHosts.ForEach(document => { document.Document.OnSessionSave(); });
+            sessionState_.DocumentHosts.ForEach(document => { document.DocumentHost.OnSessionSave(); });
         }
 
         private void NotifyPanelsOfSectionLoad(IRTextSection section, IRDocumentHost document,
@@ -1131,7 +1224,6 @@ namespace Client {
             BookmarkStatus.Text = "";
             BookmarkStatus.ToolTip = "";
             DiffStatusText.Text = "";
-            DiffStatusText.ToolTip = "";
             OptionalStatusText.Text = "";
             OptionalStatusText.ToolTip = "";
         }
@@ -1149,10 +1241,10 @@ namespace Client {
                 (args.OpenKind == OpenSectionKind.ReplaceCurrent ||
                  args.OpenKind == OpenSectionKind.ReplaceLeft ||
                  args.OpenKind == OpenSectionKind.ReplaceRight)) {
-                document = FindSameSummaryDocument(args.Section);
+                document = FindSameSummaryDocumentHost(args.Section);
 
                 if (document == null && args.OpenKind == OpenSectionKind.ReplaceCurrent) {
-                    document = FindActiveDocument();
+                    document = FindActiveDocumentHost();
                 }
             }
 
@@ -1161,7 +1253,7 @@ namespace Client {
                  (args.OpenKind == OpenSectionKind.NewTab ||
                   args.OpenKind == OpenSectionKind.NewTabDockLeft ||
                   args.OpenKind == OpenSectionKind.NewTabDockRight))) {
-                document = AddNewDocument(args.OpenKind).Document;
+                document = AddNewDocument(args.OpenKind).DocumentHost;
             }
 
             // In diff mode, reload both left/right sections and redo the diffs.
@@ -1308,6 +1400,7 @@ namespace Client {
             NotifyPanelsOfSectionLoad(section, document, true);
             SetupDocumentEvents(document);
             document.LoadSection(result);
+
             UpdateUIAfterSectionLoad(section, document, delayedAction);
             return result;
         }
@@ -1425,7 +1518,7 @@ namespace Client {
                 return FindDocumentHost(panel.BoundDocument);
             }
 
-            return FindActiveDocument();
+            return FindActiveDocumentHost();
         }
 
         private void GraphViewer_GraphNodeSelected(object sender, IRElementEventArgs e) {
@@ -1435,7 +1528,7 @@ namespace Client {
         }
 
         private async Task<ParsedSection> LoadSectionText(IRTextSection section) {
-            var docInfo = sessionState_.FindDocument(section);
+            var docInfo = sessionState_.FindLoadedDocument(section);
             var parsedSection = docInfo.Loader.LoadSection(section);
 
             if (parsedSection.Function != null) {
@@ -1603,8 +1696,8 @@ namespace Client {
             try {
                 EndSession();
                 UpdateUIBeforeLoadDocument($"Loading {baseFilePath}, {diffFilePath}");
-                var baseTask = Task.Run(() => LoadDocument(baseFilePath));
-                var diffTask = Task.Run(() => LoadDocument(diffFilePath));
+                var baseTask = Task.Run(() => LoadDocument(baseFilePath, UpdateIRDocumentLoadProgress));
+                var diffTask = Task.Run(() => LoadDocument(diffFilePath, UpdateIRDocumentLoadProgress));
                 Task.WaitAll(baseTask, diffTask);
 
                 if (baseTask.Result != null && diffTask.Result != null) {
@@ -1629,7 +1722,7 @@ namespace Client {
                 var closedDocuments = new List<DocumentHostInfo>();
 
                 foreach (var docHostInfo in sessionState_.DocumentHosts) {
-                    var summary = docHostInfo.Document.Section.ParentFunction.ParentSummary;
+                    var summary = docHostInfo.DocumentHost.Section.ParentFunction.ParentSummary;
 
                     if (summary == diffDocument_.Summary) {
                         CloseDocument(docHostInfo);
@@ -1709,7 +1802,7 @@ namespace Client {
         }
 
         private async void ReloadDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (sessionState_ != null && !sessionState_.Info.IsFileSession) {
+            if (sessionState_ != null && !sessionState_.Info.IsFileSession && !sessionState_.Info.IsDebugSession) {
                 await ReloadDocument(sessionState_.Info.FilePath);
             }
         }
@@ -1858,7 +1951,8 @@ namespace Client {
             var documentHost = new DocumentHostInfo(document, host);
             documentHost.HostParent = activeDocumentPanel_;
             sessionState_.DocumentHosts.Add(documentHost);
-            SetActiveDocument(documentHost);
+
+            SetActiveDocumentHost(documentHost);
             host.IsActiveChanged += DocumentHost_IsActiveChanged;
             host.Closed += DocumentHost_Closed;
             host.IsSelected = true;
@@ -1877,7 +1971,7 @@ namespace Client {
             }
 
             var docHostInfo = FindDocumentHostPair(docHost);
-            var document = docHostInfo.Document;
+            var document = docHostInfo.DocumentHost;
 
             // If the document is part of the active diff mode,
             // exit diff mode before removing it.
@@ -1886,16 +1980,16 @@ namespace Client {
             }
 
             NotifyOfSectionUnload(document, true);
-            UnbindPanels(docHostInfo.Document);
+            UnbindPanels(docHostInfo.DocumentHost);
             RenameAllPanels();
-            ResetDocumentEvents(docHostInfo.Document);
+            ResetDocumentEvents(docHostInfo.DocumentHost);
             sessionState_.DocumentHosts.Remove(docHostInfo);
 
             if (sessionState_.DocumentHosts.Count > 0) {
                 var newActivePanel = sessionState_.DocumentHosts[0];
                 activeDocumentPanel_ = newActivePanel.HostParent;
                 newActivePanel.IsActiveDocument = true;
-                NotifyPanelsOfSectionLoad(newActivePanel.Document.Section, newActivePanel.Document, false);
+                NotifyPanelsOfSectionLoad(newActivePanel.DocumentHost.Section, newActivePanel.DocumentHost, false);
             }
             else {
                 activeDocumentPanel_ = null;
@@ -1922,7 +2016,7 @@ namespace Client {
             }
 
             if (docHost.IsSelected) {
-                var activeDocument = FindActiveDocument();
+                var activeDocument = FindActiveDocumentHost();
 
                 if (activeDocument == document) {
                     return; // Already active one.
@@ -1933,10 +2027,10 @@ namespace Client {
                 }
 
                 var hostDocPair = FindDocumentHostPair(document);
-                SetActiveDocument(hostDocPair);
+                SetActiveDocumentHost(hostDocPair);
 
                 if (document.Section != null) {
-                    var docInfo = sessionState_.FindDocument(document.Section);
+                    var docInfo = sessionState_.FindLoadedDocument(document.Section);
                     SectionPanel.MainSummary = docInfo.Summary;
                     SectionPanel.SelectSection(document.Section, false);
                     NotifyPanelsOfSectionLoad(document.Section, document, false);
@@ -1945,7 +2039,7 @@ namespace Client {
         }
 
         private DocumentHostInfo FindDocumentHostPair(IRDocumentHost document) {
-            return sessionState_.DocumentHosts.Find(item => item.Document == document);
+            return sessionState_.DocumentHosts.Find(item => item.DocumentHost == document);
         }
 
         private DocumentHostInfo FindDocumentHostPair(LayoutDocument host) {
@@ -1953,42 +2047,42 @@ namespace Client {
         }
 
         private IRDocumentHost FindDocumentHost(IRDocument document) {
-            return sessionState_.DocumentHosts.Find(item => item.Document.TextView == document).Document;
+            return sessionState_.DocumentHosts.Find(item => item.DocumentHost.TextView == document).DocumentHost;
         }
 
-        private IRDocumentHost FindSameSummaryDocument(IRTextSection section) {
+        private IRDocumentHost FindSameSummaryDocumentHost(IRTextSection section) {
             var summary = section.ParentFunction.ParentSummary;
 
             var results = sessionState_.DocumentHosts.FindAll(
-                item => item.Document.Section != null &&
-                        item.Document.Section.ParentFunction.ParentSummary ==
+                item => item.DocumentHost.Section != null &&
+                        item.DocumentHost.Section.ParentFunction.ParentSummary ==
                         summary);
 
             // Try to pick the active document out of the list.
             foreach (var result in results) {
                 if (result.IsActiveDocument) {
-                    return result.Document;
+                    return result.DocumentHost;
                 }
             }
 
             if (results.Count > 0) {
-                return results[0].Document;
+                return results[0].DocumentHost;
             }
 
             return null;
         }
 
-        private IRDocumentHost FindActiveDocument() {
+        private IRDocumentHost FindActiveDocumentHost() {
             var result = sessionState_.DocumentHosts.Find(item => item.IsActiveDocument);
-            return result?.Document;
+            return result?.DocumentHost;
         }
 
         private IRDocument FindActiveDocumentView() {
             var result = sessionState_.DocumentHosts.Find(item => item.IsActiveDocument);
-            return result?.Document?.TextView;
+            return result?.DocumentHost?.TextView;
         }
 
-        private void SetActiveDocument(DocumentHostInfo docHost) {
+        private void SetActiveDocumentHost(DocumentHostInfo docHost) {
             foreach (var item in sessionState_.DocumentHosts) {
                 item.IsActiveDocument = false;
             }
@@ -2107,7 +2201,9 @@ namespace Client {
                 ToolPanelKind.PassOutput        => "Pass Output",
                 ToolPanelKind.SearchResults     => "Search Results",
                 ToolPanelKind.Scripting         => "Scripting",
-                _                               => ""
+                ToolPanelKind.Remarks           => "Remarks",
+
+                _ => ""
             };
         }
 
@@ -2154,6 +2250,7 @@ namespace Client {
                 ToolPanelKind.FlowGraph     => new GraphPanel(),
                 ToolPanelKind.SearchResults => new SearchResultsPanel(),
                 ToolPanelKind.Scripting     => new ScriptingPanel(),
+                ToolPanelKind.Remarks       => new RemarksPanel(),
                 _                           => null
             };
         }
@@ -2317,7 +2414,7 @@ namespace Client {
         }
 
         private string GetDocumentDescription(IRTextSection section) {
-            var docInfo = sessionState_.FindDocument(section);
+            var docInfo = sessionState_.FindLoadedDocument(section);
             return $"{section.ParentFunction.Name.Trim()} ({docInfo.FileName})";
         }
 
@@ -2348,7 +2445,7 @@ namespace Client {
         }
 
         private async Task<bool> EnterDocumentDiffState(IRDocumentHost leftDocument,
-                                                        IRDocumentHost rightDocument) {
+                                                         IRDocumentHost rightDocument) {
             if (sessionState_ == null) {
                 // No session started yet.
             }
@@ -2372,11 +2469,13 @@ namespace Client {
             }
 
             // CreateDefaultSideBySidePanels();
+            DiffControlsPanel.Visibility = Visibility.Visible;
+            DiffModeButton.IsChecked = true;
             return true;
         }
 
         private bool PickLeftRightDocuments(out IRDocumentHost leftDocument,
-                                            out IRDocumentHost rightDocument) {
+                                             out IRDocumentHost rightDocument) {
             if (sessionState_.DocumentHosts.Count < 2) {
                 leftDocument = rightDocument = null;
                 return false;
@@ -2384,8 +2483,8 @@ namespace Client {
 
             // If one of the sections is already open, pick the associated document.
             // Otherwise, pick the last two created ones.
-            leftDocument = sessionState_.DocumentHosts[^2].Document;
-            rightDocument = sessionState_.DocumentHosts[^1].Document;
+            leftDocument = sessionState_.DocumentHosts[^2].DocumentHost;
+            rightDocument = sessionState_.DocumentHosts[^1].DocumentHost;
             return true;
         }
 
@@ -2417,6 +2516,7 @@ namespace Client {
 
             ignoreDiffModeButtonEvent_ = true;
             DiffModeButton.IsChecked = false;
+            DiffControlsPanel.Visibility = Visibility.Collapsed;
             ignoreDiffModeButtonEvent_ = false;
             sessionState_.DiffState.EndModeChange();
             Trace.TraceInformation("Diff mode: Exited");
@@ -2470,6 +2570,8 @@ namespace Client {
             sessionState_.DiffState.IsEnabled = true;
             var leftDocument = diffState.LeftDocument.TextView;
             var rightDocument = diffState.RightDocument.TextView;
+
+            //? TODO: Probably faster to use the file directly to get the text (GetSectionText).
             await DiffDocuments(leftDocument, rightDocument, leftDocument.Text, rightDocument.Text);
         }
 
@@ -2490,6 +2592,8 @@ namespace Client {
             var rightDiffResult = await rightMarkTask;
             sessionState_.DiffState.LeftSection = newLeftSection ?? sessionState_.DiffState.LeftSection;
             sessionState_.DiffState.RightSection = newRightSection ?? sessionState_.DiffState.RightSection;
+            sessionState_.DiffState.LeftDiffResults = leftDiffResult;
+            sessionState_.DiffState.RightDiffResults = rightDiffResult;
 
             // The UI-thread dependent work.
             UpdateDiffedFunction(leftDocument, leftDiffResult, sessionState_.DiffState.LeftSection);
@@ -2553,6 +2657,10 @@ namespace Client {
         }
 
         private bool IsSignifficantDiff(DiffPiece piece, DiffPiece otherPiece = null) {
+            if(!App.Settings.DiffSettings.FilterInsignificantDiffs) {
+                return true;
+            }
+
             if (piece.Text == null) {
                 return false;
             }
@@ -2570,6 +2678,10 @@ namespace Client {
         }
 
         private DiffKind EstimateModificationType(DiffPiece before, DiffPiece after) {
+            if (!App.Settings.DiffSettings.IdentifyMinorDiffs) {
+                return DiffKind.Modification;
+            }
+
             //? TODO: This should query an IR-level interface
             bool isTemporary(string text, out int number) {
                 int prefixLength = 0;
@@ -2627,209 +2739,225 @@ namespace Client {
 
                     switch (line.Type) {
                         case ChangeType.Unchanged: {
-                            break; // Ignore.
-                        }
+                                break; // Ignore.
+                            }
                         case ChangeType.Inserted: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            int offset;
+                                int actualLine = line.Position.Value + lineAdjustment;
+                                int offset;
 
-                            if (actualLine >= document.LineCount) {
-                                offset = document.TextLength;
-                            }
-                            else {
-                                offset = document.GetOffset(actualLine, 0);
-                            }
-
-                            document.Insert(offset, line.Text + Environment.NewLine);
-
-                            result.DiffSegments.Add(
-                                new DiffTextSegment(DiffKind.Insertion, offset, line.Text.Length));
-
-                            diffStats.LinesAdded++;
-                            break;
-                        }
-                        case ChangeType.Deleted: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            var docLine = document.GetLineByNumber(Math.Min(document.LineCount, actualLine));
-
-                            result.DiffSegments.Add(
-                                new DiffTextSegment(DiffKind.Deletion, docLine.Offset,
-                                                    docLine.Length));
-
-                            diffStats.LinesDeleted++;
-                            break;
-                        }
-                        case ChangeType.Imaginary: {
-                            int actualLine = i + 1;
-
-                            if (isRightDoc) {
-                                if (actualLine <= document.LineCount) {
-                                    var docLine = document.GetLineByNumber(actualLine);
-                                    int offset = docLine.Offset;
-                                    int length = docLine.Length;
-                                    document.Replace(offset, length, new string(RemovedDiffLineChar, length));
-
-                                    result.DiffSegments.Add(
-                                        new DiffTextSegment(DiffKind.Placeholder, offset, length));
+                                if (actualLine >= document.LineCount) {
+                                    offset = document.TextLength;
                                 }
-                            }
-                            else {
-                                int offset = actualLine <= document.LineCount
-                                    ? document.GetOffset(actualLine, 0)
-                                    : document.TextLength;
+                                else {
+                                    offset = document.GetOffset(actualLine, 0);
+                                }
 
-                                string imaginaryText =
-                                    new string(AddedDiffLineChar, otherDiff.Lines[i].Text.Length);
-
-                                document.Insert(offset, imaginaryText + Environment.NewLine);
+                                document.Insert(offset, line.Text + Environment.NewLine);
 
                                 result.DiffSegments.Add(
-                                    new DiffTextSegment(DiffKind.Placeholder, offset,
-                                                        imaginaryText.Length));
+                                    new DiffTextSegment(DiffKind.Insertion, offset, line.Text.Length));
+
+                                diffStats.LinesAdded++;
+                                break;
                             }
+                        case ChangeType.Deleted: {
+                                int actualLine = line.Position.Value + lineAdjustment;
+                                var docLine = document.GetLineByNumber(Math.Min(document.LineCount, actualLine));
 
-                            lineAdjustment++;
-                            break;
-                        }
-                        case ChangeType.Modified: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            int lineChanges = 0;
-                            int lineLength = 0;
-                            bool wholeLineReplaced = false;
+                                result.DiffSegments.Add(
+                                    new DiffTextSegment(DiffKind.Deletion, docLine.Offset,
+                                                        docLine.Length));
 
-                            if (actualLine < document.LineCount) {
-                                var docLine = document.GetLineByNumber(actualLine);
-                                document.Replace(docLine.Offset, docLine.Length, line.Text);
-                                wholeLineReplaced = true;
-                                lineLength = docLine.Length;
+                                diffStats.LinesDeleted++;
+                                break;
                             }
+                        case ChangeType.Imaginary: {
+                                int actualLine = i + 1;
 
-                            modifiedSegments.Clear();
-                            int column = 0;
+                                if (isRightDoc) {
+                                    if (actualLine <= document.LineCount) {
+                                        var docLine = document.GetLineByNumber(actualLine);
+                                        int offset = docLine.Offset;
+                                        int length = docLine.Length;
+                                        document.Replace(offset, length, new string(RemovedDiffLineChar, length));
 
-                            foreach (var piece in line.SubPieces) {
-                                switch (piece.Type) {
-                                    case ChangeType.Inserted: {
-                                        Debug.Assert(isRightDoc);
-
-                                        int offset = actualLine >= document.LineCount
-                                            ? document.TextLength
-                                            : document.GetOffset(actualLine, 0) + column;
-
-                                        if (offset >= document.TextLength) {
-                                            if (!wholeLineReplaced) {
-                                                document.Insert(document.TextLength, piece.Text);
-                                            }
-
-                                            if (IsSignifficantDiff(piece)) {
-                                                modifiedSegments.Add(
-                                                    new DiffTextSegment(
-                                                        DiffKind.Modification, offset, piece.Text.Length));
-                                            }
-                                        }
-                                        else {
-                                            var diffKind = DiffKind.Insertion;
-                                            var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece);
-
-                                            if (otherPiece != null && otherPiece.Type == ChangeType.Deleted) {
-                                                if (!wholeLineReplaced) {
-                                                    document.Replace(
-                                                        offset, otherPiece.Text.Length, piece.Text);
-                                                }
-
-                                                diffKind = EstimateModificationType(otherPiece, piece);
-                                            }
-                                            else {
-                                                if (!wholeLineReplaced) {
-                                                    document.Insert(offset, piece.Text);
-                                                }
-                                            }
-
-                                            if (IsSignifficantDiff(piece)) {
-                                                modifiedSegments.Add(
-                                                    new DiffTextSegment(diffKind, offset, piece.Text.Length));
-                                            }
-                                        }
-
-                                        break;
-                                    }
-                                    case ChangeType.Deleted: {
-                                        Debug.Assert(!isRightDoc);
-                                        int offset = document.GetOffset(actualLine, 0) + column;
-
-                                        if (offset >= document.TextLength) {
-                                            offset = document.TextLength;
-                                        }
-
-                                        var diffKind = DiffKind.Deletion;
-                                        var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece);
-
-                                        if (otherPiece != null && otherPiece.Type == ChangeType.Inserted) {
-                                            diffKind = EstimateModificationType(otherPiece, piece);
-                                        }
-
-                                        if (IsSignifficantDiff(piece)) {
-                                            modifiedSegments.Add(
-                                                new DiffTextSegment(diffKind, offset, piece.Text.Length));
-                                        }
-
-                                        break;
-                                    }
-                                    case ChangeType.Modified: {
-                                        break;
-                                    }
-                                    case ChangeType.Imaginary: {
-                                        if (isRightDoc) {
-                                            lineChanges++;
-                                            column++;
-                                        }
-
-                                        break;
-                                    }
-                                    case ChangeType.Unchanged: {
-                                        int offset = document.GetOffset(actualLine, 0) + column;
-
-                                        if (!wholeLineReplaced) {
-                                            document.Replace(offset, piece.Text.Length, piece.Text);
-                                        }
-
-                                        break;
-                                    }
-                                    default: throw new ArgumentOutOfRangeException();
-                                }
-
-                                if (piece.Text != null) {
-                                    column += piece.Text.Length;
-
-                                    if (piece.Type != ChangeType.Unchanged) {
-                                        lineChanges += piece.Text.Length;
+                                        result.DiffSegments.Add(
+                                            new DiffTextSegment(DiffKind.Placeholder, offset, length));
                                     }
                                 }
-                            }
+                                else {
+                                    int offset = actualLine <= document.LineCount
+                                        ? document.GetOffset(actualLine, 0)
+                                        : document.TextLength;
 
-                            // If 75%+ of the line changed, mark the entire line,
-                            // otherwise mark each sub-piece.
-                            if (lineChanges * 4 >= lineLength * 3) {
-                                if (actualLine < document.LineCount) {
-                                    var docLine = document.GetLineByNumber(actualLine);
+                                    string imaginaryText =
+                                        new string(AddedDiffLineChar, otherDiff.Lines[i].Text.Length);
+
+                                    document.Insert(offset, imaginaryText + Environment.NewLine);
 
                                     result.DiffSegments.Add(
-                                        new DiffTextSegment(
-                                            DiffKind.Modification, docLine.Offset, docLine.Length));
+                                        new DiffTextSegment(DiffKind.Placeholder, offset,
+                                                            imaginaryText.Length));
                                 }
+
+                                lineAdjustment++;
+                                break;
                             }
-                            else {
-                                foreach (var segment in modifiedSegments) {
-                                    result.DiffSegments.Add(segment);
+                        case ChangeType.Modified: {
+                                int actualLine = line.Position.Value + lineAdjustment;
+                                int lineChanges = 0;
+                                int lineLength = 0;
+                                bool wholeLineReplaced = false;
+
+                                if (actualLine < document.LineCount) {
+                                    var docLine = document.GetLineByNumber(actualLine);
+                                    document.Replace(docLine.Offset, docLine.Length, line.Text);
+                                    wholeLineReplaced = true;
+                                    lineLength = docLine.Length;
                                 }
-                            }
 
-                            if (isRightDoc) {
-                                diffStats.LinesModified++;
-                            }
+                                modifiedSegments.Clear();
+                                int column = 0;
 
-                            break;
-                        }
+                                foreach (var piece in line.SubPieces) {
+                                    switch (piece.Type) {
+                                        case ChangeType.Inserted: {
+                                                Debug.Assert(isRightDoc);
+
+                                                int offset = actualLine >= document.LineCount
+                                                    ? document.TextLength
+                                                    : document.GetOffset(actualLine, 0) + column;
+
+                                                if (offset >= document.TextLength) {
+                                                    if (!wholeLineReplaced) {
+                                                        document.Insert(document.TextLength, piece.Text);
+                                                    }
+
+                                                    if (IsSignifficantDiff(piece)) {
+                                                        modifiedSegments.Add(
+                                                            new DiffTextSegment(
+                                                                DiffKind.Modification, offset, piece.Text.Length));
+                                                    }
+                                                }
+                                                else {
+                                                    var diffKind = DiffKind.Insertion;
+                                                    var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece);
+
+                                                    if (otherPiece != null && otherPiece.Type == ChangeType.Deleted) {
+                                                        if (!wholeLineReplaced) {
+                                                            document.Replace(
+                                                                offset, otherPiece.Text.Length, piece.Text);
+                                                        }
+
+                                                        diffKind = EstimateModificationType(otherPiece, piece);
+                                                    }
+                                                    else {
+                                                        if (!wholeLineReplaced) {
+                                                            document.Insert(offset, piece.Text);
+                                                        }
+                                                    }
+
+                                                    if (IsSignifficantDiff(piece)) {
+                                                        modifiedSegments.Add(
+                                                            new DiffTextSegment(diffKind, offset, piece.Text.Length));
+                                                    }
+                                                }
+
+                                                break;
+                                            }
+                                        case ChangeType.Deleted: {
+                                                Debug.Assert(!isRightDoc);
+                                                int offset = document.GetOffset(actualLine, 0) + column;
+
+                                                if (offset >= document.TextLength) {
+                                                    offset = document.TextLength;
+                                                }
+
+                                                var diffKind = DiffKind.Deletion;
+                                                var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece);
+
+                                                if (otherPiece != null && otherPiece.Type == ChangeType.Inserted) {
+                                                    diffKind = EstimateModificationType(otherPiece, piece);
+                                                }
+
+                                                if (IsSignifficantDiff(piece)) {
+                                                    modifiedSegments.Add(
+                                                        new DiffTextSegment(diffKind, offset, piece.Text.Length));
+                                                }
+
+                                                break;
+                                            }
+                                        case ChangeType.Modified: {
+                                                break;
+                                            }
+                                        case ChangeType.Imaginary: {
+                                                //if (isRightDoc) {
+                                                lineChanges++;
+                                                //column++;
+                                                //}
+
+                                                break;
+                                            }
+                                        case ChangeType.Unchanged: {
+                                                int offset = document.GetOffset(actualLine, 0) + column;
+
+                                                if (!wholeLineReplaced) {
+                                                    document.Replace(offset, piece.Text.Length, piece.Text);
+                                                }
+
+                                                break;
+                                            }
+                                        default: throw new ArgumentOutOfRangeException();
+                                    }
+
+                                    if (piece.Text != null) {
+                                        column += piece.Text.Length;
+
+                                        if (piece.Type != ChangeType.Unchanged) {
+                                            lineChanges += piece.Text.Length;
+                                        }
+                                    }
+                                }
+
+                                // If most of the line changed, mark the entire line,
+                                // otherwise mark each sub-piece.
+                                bool handled = false;
+
+                                if (App.Settings.DiffSettings.ManyDiffsMarkWholeLine) {
+                                    double percentChanged = 0;
+
+                                    if (lineLength > 0) {
+                                        percentChanged = ((double)lineChanges / (double)lineLength) * 100;
+                                    }
+
+                                    if (percentChanged > App.Settings.DiffSettings.ManyDiffsModificationPercentage) {
+                                        if (actualLine < document.LineCount) {
+                                            var docLine = document.GetLineByNumber(actualLine);
+                                            var changeKind = DiffKind.Modification;
+
+                                            // If even more of the line changed, consider it an insertion/deletion.
+                                            if (percentChanged > App.Settings.DiffSettings.ManyDiffsInsertionPercentage) {
+                                                changeKind = isRightDoc ? DiffKind.Insertion : DiffKind.Deletion;
+                                            }
+
+                                            result.DiffSegments.Add(new DiffTextSegment(changeKind, docLine.Offset, docLine.Length));
+                                            handled = true;
+                                        }
+                                    }
+                                }
+
+                                if (!handled) {
+                                    foreach (var segment in modifiedSegments) {
+                                        result.DiffSegments.Add(segment);
+                                    }
+                                }
+
+                                if (isRightDoc) {
+                                    diffStats.LinesModified++;
+                                }
+
+                                break;
+                            }
                         default: throw new ArgumentOutOfRangeException();
                     }
                 }
@@ -3088,9 +3216,11 @@ namespace Client {
                 debugService_.OnHasActiveBreakpoint += DebugService_OnHasActiveBreakpoint;
                 debugService_.OnClearTemporaryHighlighting += DebugService__OnClearTemporaryHighlighting;
                 debugService_.OnUpdateCurrentStackFrame += DebugService__OnUpdateCurrentStackFrame;
+
                 DebugServer.DebugService.StartServer(debugService_);
                 Trace.TraceInformation("Grpc server started, waiting for client...");
                 SetOptionalStatus("Waiting for client...");
+                DiffPreviousSectionCheckbox.Visibility = Visibility.Visible;
             }
             catch (Exception ex) {
                 Trace.TraceError("Failed to start Grpc server: {0}", $"{ex.Message}\n{ex.StackTrace}");
@@ -3103,12 +3233,9 @@ namespace Client {
         }
 
         private void DebugService__OnClearTemporaryHighlighting(object sender, ClearHighlightingRequest e) {
-            Dispatcher.BeginInvoke(() => {
-                var activeDoc = FindActiveDocument();
-
-                if (activeDoc == null) {
-                    return;
-                }
+            Dispatcher.BeginInvoke(async () => {
+                var activeDoc = await GetDebugSessionDocument();
+                if (activeDoc == null) return;
 
                 var action = new DocumentAction(DocumentActionKind.ClearTemporaryMarkers);
                 activeDoc.TextView.ExecuteDocumentAction(action);
@@ -3123,13 +3250,9 @@ namespace Client {
             }
 
             if (addressTag_.AddressToElementMap.TryGetValue(e.Request.ElementAddress, out var element)) {
-                Dispatcher.Invoke(() => {
-                    var activeDoc = FindActiveDocument();
-
-                    if (activeDoc == null) {
-                        return;
-                    }
-
+                Dispatcher.Invoke(async () => {
+                    var activeDoc = await GetDebugSessionDocument();
+                    if (activeDoc == null) return;
                     e.Response = activeDoc.TextView.BookmarkManager.FindBookmark(element) != null;
                 });
             }
@@ -3156,12 +3279,9 @@ namespace Client {
             }
 
             if (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element)) {
-                Dispatcher.BeginInvoke(() => {
-                    var activeDoc = FindActiveDocument();
-
-                    if (activeDoc == null) {
-                        return;
-                    }
+                Dispatcher.BeginInvoke(async () => {
+                    var activeDoc = await GetDebugSessionDocument();
+                    if (activeDoc == null) return;
 
                     AppendNotesTag(element, e.Label);
                     var style = new PairHighlightingStyle();
@@ -3193,12 +3313,9 @@ namespace Client {
                 return;
             }
 
-            Dispatcher.BeginInvoke(() => {
-                var activeDoc = FindActiveDocument();
-
-                if (activeDoc == null) {
-                    return;
-                }
+            Dispatcher.BeginInvoke(async () => {
+                var activeDoc = await GetDebugSessionDocument();
+                if (activeDoc == null) return;
 
                 var elementIteratorId = new ElementIteratorId(e.ElementId, e.ElementKind);
 
@@ -3263,13 +3380,8 @@ namespace Client {
             }
 
             if (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element)) {
-                Dispatcher.BeginInvoke(() => {
-                    var activeDoc = FindActiveDocument();
-
-                    if (activeDoc == null) {
-                        return;
-                    }
-
+                Dispatcher.BeginInvoke(async () => {
+                    var activeDoc = await GetDebugSessionDocument();
                     var notesTag = AppendNotesTag(element, e.Label);
 
                     if (e.Highlighting == HighlightingType.Temporary) {
@@ -3277,9 +3389,7 @@ namespace Client {
                     }
                     else {
                         if (debugCurrentStackFrame_ != null) {
-                            var style =
-                                HighlightingStyles.StyleSet.ForIndex(debugCurrentStackFrame_.LineNumber);
-
+                            var style = HighlightingStyles.StyleSet.ForIndex(debugCurrentStackFrame_.LineNumber);
                             activeDoc.TextView.MarkElement(element, style);
                         }
                         else {
@@ -3292,6 +3402,43 @@ namespace Client {
             }
         }
 
+        private async Task<IRDocumentHost> GetDebugSessionDocument() {
+            // Find the document with the last version of the IR loaded.
+            // If there is none, use the current active document.
+            var result = FindDebugSessionDocument();
+
+            if (result != null) {
+                return result;
+            }
+
+            var activeDoc = FindActiveDocumentHost();
+
+            if (activeDoc != null) {
+                return activeDoc;
+            }
+
+            return await ReopenDebugSessionDocument();
+        }
+
+        private IRDocumentHost FindDebugSessionDocument() {
+            var result = sessionState_.DocumentHosts.Find(item => item.DocumentHost.Section == previousDebugSection_);
+
+            if (result != null) {
+                return result.DocumentHost;
+            }
+
+            return null;
+        }
+
+        private async Task<IRDocumentHost> ReopenDebugSessionDocument() {
+            if(previousDebugSection_ == null) {
+                return null;
+            }
+
+            return await SwitchDocumentSection(
+                    new OpenSectionEventArgs(previousDebugSection_, OpenSectionKind.ReplaceCurrent));
+        }
+
         private string ExtractFunctionName(string text) {
             int startIndex = 0;
 
@@ -3302,7 +3449,7 @@ namespace Client {
                     string line = text.Substring(startIndex, index);
 
                     if (line.StartsWith("ENTRY")) {
-                        return UTCReader.ExtractFunctionName(line);
+                        return UTCSectionReader.ExtractFunctionName(line);
                     }
 
                     startIndex = index + 1;
@@ -3324,6 +3471,11 @@ namespace Client {
                 string funcName = ExtractFunctionName(e.Text);
                 funcName ??= "Debugged function";
 
+                if(previousDebugSection_ != null) {
+                    Task.Run(() => previousDebugSection_.CompressLineMetadata());
+                    previousDebugSection_.CompressLineMetadata();
+                }
+
                 if (debugFunction_ == null || funcName != debugFunction_.Name) {
                     debugFunction_ = new IRTextFunction(funcName);
                     previousDebugSection_ = null;
@@ -3344,6 +3496,7 @@ namespace Client {
 
                 string filteredText = ExtractLineMetadata(section, e.Text);
 
+                //? TODO: Is this still needed?
                 try {
                     if (previousDebugSection_ != null &&
                         debugSections_.GetSectionText(previousDebugSection_) == filteredText) {
@@ -3357,14 +3510,36 @@ namespace Client {
                 debugFunction_.Sections.Add(section);
                 debugSections_.AddSection(section, filteredText);
                 debugSummary_.AddSection(section);
+
                 SectionPanel.MainSummary = null;
                 SectionPanel.MainSummary = debugSummary_;
                 SectionPanel.SelectSection(section);
+
+                //? TODO: After switch, try to restore same position in doc
+                //? Markes, bookmarks, notes, etc should be copied over
+                var document = FindDebugSessionDocument();
+                double horizontalOffset = 0;
+                double verticalOffset = 0;
+
+                if (previousDebugSection_ != null && document != null) {
+                    horizontalOffset = document.TextView.HorizontalOffset;
+                    verticalOffset = document.TextView.VerticalOffset;
+                }
+
+                await SwitchDocumentSection(new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent), document);
+
+                //? TODO: Diff only if enabled
+                if(previousDebugSection_ != null && document != null) {
+                    if (DiffPreviousSectionCheckbox.IsChecked.HasValue &&
+                        DiffPreviousSectionCheckbox.IsChecked.Value) {
+                        await DiffSingleDocumentSections(document, section, previousDebugSection_);
+                        document.TextView.ScrollToHorizontalOffset(horizontalOffset);
+                        document.TextView.ScrollToVerticalOffset(verticalOffset);
+                    }
+                }
+
                 previousDebugSection_ = section;
                 debugSectionId_++;
-
-                await SwitchDocumentSection(
-                    new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent));
             });
         }
 
@@ -3396,12 +3571,16 @@ namespace Client {
             await Dispatcher.BeginInvoke(() => {
                 SetOptionalStatus($"Client connected, process {e.ProcessId}");
                 EndSession();
+
+                FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
                 var result = new LoadedDocument("Debug session");
                 debugSections_ = new DebugSectionLoader();
-                debugSummary_ = debugSections_.LoadDocument();
+                debugSummary_ = debugSections_.LoadDocument(null);
                 result.Loader = debugSections_;
                 result.Summary = debugSummary_;
+
                 SetupOpenedIRDocument(SessionKind.DebugSession, "Debug session", result);
+                
                 debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
                 debugProcessId_ = e.ProcessId;
                 debugSectionId_ = 0;
@@ -3457,19 +3636,6 @@ namespace Client {
             }
         }
 
-        private class DiffMarkingResult {
-            public TextDocument DiffDocument;
-            internal FunctionIR DiffFunction;
-            public List<DiffTextSegment> DiffSegments;
-            public string DiffText;
-            public bool FunctionReparsingRequired;
-
-            public DiffMarkingResult(TextDocument diffDocument) {
-                DiffDocument = diffDocument;
-                DiffSegments = new List<DiffTextSegment>(4096);
-            }
-        }
-
         private struct ElementIteratorId {
             public int ElementId;
             public IRElementKind ElementKind;
@@ -3488,6 +3654,264 @@ namespace Client {
             public override int GetHashCode() {
                 return HashCode.Combine(ElementId, ElementKind);
             }
+        }
+
+        private async void PreviousDiffButton_Click(object sender, RoutedEventArgs e) {
+            if (!sessionState_.DiffState.IsEnabled) {
+                return;
+            }
+
+            var leftSection = sessionState_.DiffState.LeftSection;
+            var rightSection = sessionState_.DiffState.RightSection;
+
+            int leftIndex = leftSection.Number - 1;
+            int rightIndex = rightSection.Number - 1;
+
+            if (leftIndex > 0 && rightIndex > 0) {
+                var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex - 1];
+                var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
+                await SwitchDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
+
+                var prevRightSection = rightSection.ParentFunction.Sections[rightIndex - 1];
+                var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
+                await SwitchDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
+            }
+        }
+
+        private async void NextDiffButton_Click(object sender, RoutedEventArgs e) {
+            if (!sessionState_.DiffState.IsEnabled) {
+                return;
+            }
+
+            var leftSection = sessionState_.DiffState.LeftSection;
+            var rightSection = sessionState_.DiffState.RightSection;
+
+            int leftIndex = leftSection.Number - 1;
+            int rightIndex = rightSection.Number - 1;
+
+            if (leftIndex < leftSection.ParentFunction.SectionCount - 1 &&
+                rightIndex < rightSection.ParentFunction.SectionCount - 1) {
+                var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex + 1];
+                var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
+                await SwitchDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
+
+                var prevRightSection = rightSection.ParentFunction.Sections[rightIndex + 1];
+                var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
+                await SwitchDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
+            }
+        }
+
+        private bool diffOptionsVisible_;
+
+        private async void DiffSettingsButton_Click(object sender, RoutedEventArgs e) {
+            if(diffOptionsVisible_) {
+                await CloseDiffOptionsPanel();
+            }
+            else {
+                ShowDiffOptionsPanel();
+            }
+        }
+
+        private async void DiffOptionsPanel_PanelClosed(object sender, EventArgs e) {
+            await CloseDiffOptionsPanel();
+        }
+
+        OptionsPanelHostWindow diffOptionsPanel_;
+        private DateTime documentLoadStartTime_;
+        private bool documentLoadProgressVisible_;
+
+        private void ShowDiffOptionsPanel() {
+            if (diffOptionsVisible_) {
+                return;
+            }
+
+            var position = MainGrid.PointToScreen(new Point(238, MainMenu.ActualHeight + 1));
+            diffOptionsPanel_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, 300, 465, this);
+            diffOptionsPanel_.PanelClosed += DiffOptionsPanel_PanelClosed;
+            diffOptionsPanel_.PanelReset += DiffOptionsPanel_PanelReset;
+            diffOptionsPanel_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
+            diffOptionsPanel_.Settings = (DiffSettings)App.Settings.DiffSettings.Clone();
+            diffOptionsPanel_.Show();
+            diffOptionsVisible_ = true;
+        }
+
+        private async Task CloseDiffOptionsPanel() {
+            if (!diffOptionsVisible_) {
+                return;
+            }
+
+            diffOptionsPanel_.Close();
+            diffOptionsPanel_.PanelClosed -= DiffOptionsPanel_PanelClosed;
+            diffOptionsPanel_.PanelReset -= DiffOptionsPanel_PanelReset;
+            diffOptionsPanel_.SettingsChanged -= DiffOptionsPanel_SettingsChanged;
+
+            var newSettings = (DiffSettings)diffOptionsPanel_.Settings;
+            await HandleNewDiffSettings(newSettings, true);
+
+            diffOptionsPanel_ = null;
+            diffOptionsVisible_ = false;
+        }
+
+        private async Task HandleNewDiffSettings(DiffSettings newSettings, bool commit) {
+            if (newSettings.HasChanges(App.Settings.DiffSettings)) {
+                bool hasHandlingChanges = App.Settings.DiffSettings.HasDiffHandlingChanges(newSettings);
+                App.Settings.DiffSettings = newSettings;
+                await ReloadDiffSettings(newSettings, hasHandlingChanges);
+
+                if (commit) {
+                    App.SaveApplicationSettings();
+                }
+            }
+        }
+
+        private async void DiffOptionsPanel_PanelReset(object sender, EventArgs e) {
+            var newSettings = new DiffSettings();
+            diffOptionsPanel_.Settings = null;
+            diffOptionsPanel_.Settings = newSettings;
+            await HandleNewDiffSettings(newSettings, true);
+        }
+
+        private async void DiffOptionsPanel_SettingsChanged(object sender, EventArgs e) {
+            var newSettings = (DiffSettings)diffOptionsPanel_.Settings;
+
+            if (newSettings != null) {
+                await HandleNewDiffSettings(newSettings, false);
+                diffOptionsPanel_.Settings = null;
+                diffOptionsPanel_.Settings = newSettings.Clone();
+            }
+        }
+
+        private async Task DiffSingleDocumentSections(IRDocumentHost doc, IRTextSection section, IRTextSection prevSection) {
+            var prevText = sessionState_.FindLoadedDocument(prevSection).Loader.GetSectionText(prevSection);
+            var currentText = sessionState_.FindLoadedDocument(section).Loader.GetSectionText(section);
+
+            var diff = await Task.Run(() => DocumentDiff.ComputeDiffs(prevText, currentText));
+
+            var diffStats = new DiffStatistics();
+            var diffResult = await MarkDiffs(prevText, diff.NewText, diff.OldText, doc.TextView, true, diffStats);
+            await UpdateDiffedFunction(doc.TextView, diffResult, section);
+            DiffStatusText.Text = diffStats.ToString();
+        }
+
+        private void PreviousSegmentDiffButton_Click(object sender, RoutedEventArgs e) {
+            if (!sessionState_.DiffState.IsEnabled) {
+                return;
+            }
+
+            //? TODO: Diff segments from left/right must be combined and sorted by offset
+            //? TODO: This is almost identical to the next case
+            var diffResults = sessionState_.DiffState.RightDiffResults;
+            var document = sessionState_.DiffState.RightDocument;
+
+            if (diffResults.DiffSegments.Count > 0) {
+                int offset = document.TextView.CaretOffset;
+                int index = diffResults.CurrentSegmentIndex;
+                var currentSegment = diffResults.DiffSegments[index];
+                int currentLine = document.TextView.Document.GetLineByOffset(offset).LineNumber;
+                bool found = false;;
+
+                //? TODO: Should use binary search
+                while (index >= 0) {
+                    var candidate = diffResults.DiffSegments[index];
+
+                    if (candidate.StartOffset < offset) {
+                        int line = document.TextView.Document.GetLineByOffset(candidate.StartOffset).LineNumber;
+
+                        if (line < currentLine) {
+                            // Skip groups of segments of the same type following one after another in the text
+                            // after the first one in the group has been selected.
+                            if (candidate.Kind == currentSegment.Kind && line == currentLine - 1) {
+                                currentLine = line;
+                                currentSegment = candidate;
+                                index--;
+                                continue;
+                            }
+
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    index--;
+                }
+
+                if (found) {
+                    JumpToDiffSegmentAtIndex(index, diffResults, document);
+                }
+            }
+        }
+
+        private void NextDiffSegmentButton_Click(object sender, RoutedEventArgs e) {
+            if (!sessionState_.DiffState.IsEnabled) {
+                return;
+            }
+
+            // TODO: Diff segments from left/right must be combined and sorted by offset
+            // TODO: When next/prev segment is needed, start from the current carret offset
+            var diffResults = sessionState_.DiffState.RightDiffResults;
+            var document = sessionState_.DiffState.RightDocument;
+
+            if (diffResults.DiffSegments.Count > 0) {
+                int offset = document.TextView.CaretOffset;
+                int index = diffResults.CurrentSegmentIndex;
+                var currentSegment = diffResults.DiffSegments[index];
+                int currentLine = document.TextView.Document.GetLineByOffset(offset).LineNumber;
+                bool found = false;;
+
+                //? TODO: Should use binary search
+                while (index < diffResults.DiffSegments.Count) {
+                    var candidate = diffResults.DiffSegments[index];
+
+                    if (candidate.StartOffset > offset) {
+                        int line = document.TextView.Document.GetLineByOffset(candidate.StartOffset).LineNumber;
+
+                        if (line > currentLine) {
+                            // Skip groups of segments of the same type following one after another in the text
+                            // after the first one in the group has been selected.
+                            if (candidate.Kind == currentSegment.Kind && line == currentLine + 1) {
+                                currentLine = line;
+                                currentSegment = candidate;
+                                index++;
+                                continue;
+                            }
+
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    index++;
+                }
+
+                if (found) {
+                    JumpToDiffSegmentAtIndex(index, diffResults, document);
+                }
+            }
+        }
+
+        private void JumpToDiffSegmentAtIndex(int index, DiffMarkingResult diffResults, IRDocumentHost document) {
+            var nextDiff = diffResults.DiffSegments[index];
+            document.TextView.BringTextOffsetIntoView(nextDiff.StartOffset);
+            document.TextView.SetCaretAtOffset(nextDiff.StartOffset);
+            diffResults.CurrentSegmentIndex = index;
+        }
+
+        private void MenuItem_Click_9(object sender, RoutedEventArgs e) {
+            try {
+                var path = App.GetExtensionFilePath();
+                var psi = new ProcessStartInfo(path) {
+                    UseShellExecute = true
+                };
+
+                Process.Start(psi);
+            }
+            catch (Exception ex) {
+                MessageBox.Show($"Failed to open extension file\n{ex.Message}", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void AlwaysOnTopMenuClicked(object sender, RoutedEventArgs e) {
+            Topmost = AlwaysOnTopCheckbox.IsChecked;
         }
     }
 }

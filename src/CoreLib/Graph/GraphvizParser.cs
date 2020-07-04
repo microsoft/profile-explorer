@@ -4,83 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using CoreLib.Graph;
-using CoreLib.IR;
-using CoreLib.Lexer;
+using IRExplorerCore.Graph;
+using IRExplorerCore.IR;
+using IRExplorerCore.Lexer;
 
-namespace CoreLib.GraphViz {
-    public sealed class Node {
-        public ReadOnlyMemory<char> Name { get; set; }
-        public ReadOnlyMemory<char> Label { get; set; }
-        public ReadOnlyMemory<char> Style { get; set; }
-        public ReadOnlyMemory<char> Shape { get; set; }
-        public ReadOnlyMemory<char> BackgroundColor { get; set; }
-        public ReadOnlyMemory<char> BorderColor { get; set; }
-        public double CenterX { get; set; }
-        public double CenterY { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-
-        public IRElement Element { get; set; }
-        public List<Edge> InEdges { get; set; }
-        public List<Edge> OutEdges { get; set; }
-        public object Tag { get; set; }
-    }
-
-    public sealed class Edge {
-        public enum EdgeKind {
-            Default,
-            Dotted,
-            Dashed
-        }
-
-        public Edge() {
-            LinePoints = new List<Tuple<double, double>>();
-        }
-
-        public Node NodeFrom { get; set; }
-        public Node NodeTo { get; set; }
-
-        public ReadOnlyMemory<char> NodeNameFrom { get; set; }
-        public ReadOnlyMemory<char> NodeNameTo { get; set; }
-        public ReadOnlyMemory<char> Label { get; set; }
-        public double LabelX { get; set; }
-        public double LabelY { get; set; }
-        public List<Tuple<double, double>> LinePoints { get; set; }
-        public EdgeKind Style { get; set; }
-        public ReadOnlyMemory<char> Color { get; set; }
-
-        public static EdgeKind GetEdgeStyle(ReadOnlyMemory<char> style) {
-            if (style.Span.Equals("dotted", StringComparison.Ordinal)) {
-                return EdgeKind.Dotted;
-            }
-            else if (style.Span.Equals("dashed", StringComparison.Ordinal)) {
-                return EdgeKind.Dashed;
-            }
-
-            return EdgeKind.Default;
-        }
-    }
-
-    public sealed class LayoutGraph {
-        public LayoutGraph(GraphKind kind) {
-            GraphKind = kind;
-            Nodes = new List<Node>();
-            Edges = new List<Edge>();
-            BlockNodeMap = new Dictionary<IRElement, Node>();
-        }
-
-        public GraphKind GraphKind { get; set; }
-        public List<Node> Nodes { get; set; }
-        public List<Edge> Edges { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-        public Dictionary<IRElement, Node> BlockNodeMap { get; set; }
-        public Dictionary<string, IRElement> BlockNameMap { get; set; }
-        public Dictionary<IRElement, List<IRElement>> BlockNodeGroupsMap { get; set; }
-        public string SourceText { get; set; }
-    }
-
+namespace IRExplorerCore.GraphViz {
     public sealed class GraphvizReader {
         private static Dictionary<string, Keyword> keywordMap_ =
             new Dictionary<string, Keyword> {
@@ -244,9 +172,7 @@ namespace CoreLib.GraphViz {
         }
 
         public LayoutGraph ReadGraph() {
-            graph_ = new LayoutGraph(graphKind_) {
-                SourceText = sourceText_
-            };
+            graph_ = new LayoutGraph(graphKind_);
 
             if (!ExpectAndSkipKeyword(Keyword.Graph)) {
                 return null;
@@ -265,12 +191,22 @@ namespace CoreLib.GraphViz {
                 SkipToLineStart();
 
                 while (ExpectAndSkipKeyword(Keyword.Node)) {
-                    graph_.Nodes.Add(ReadNode());
+                    var node = ReadNode();
+
+                    if (node != null) {
+                        graph_.Nodes.Add(node);
+                    }
+
                     SkipToLineStart();
                 }
 
                 while (ExpectAndSkipKeyword(Keyword.Edge)) {
-                    graph_.Edges.Add(ReadEdge());
+                    var edge = ReadEdge();
+
+                    if (edge != null) {
+                        graph_.Edges.Add(edge);
+                    }
+
                     SkipToLineStart();
                 }
 
@@ -293,7 +229,8 @@ namespace CoreLib.GraphViz {
                 return null;
             }
 
-            node.Name = name;
+            //? TODO: These commented-out values are currently not used anywhere.
+            //node.Name = name;
             node.CenterX = x;
             node.CenterY = y;
             node.Width = width;
@@ -308,19 +245,20 @@ namespace CoreLib.GraphViz {
                 return null;
             }
 
-            node.Label = label;
-            node.Style = style;
-            node.Shape = shape;
-            node.BorderColor = borderColor;
-            node.BackgroundColor = backgroundColor;
+            node.Label = label.ToString();
+            //node.Style = style;
+            //node.Shape = shape;
+            //node.BorderColor = borderColor;
+            //node.BackgroundColor = backgroundColor;
 
             // Associate with IR objects.
             if (blockNameMap_.TryGetValue(name.ToString(), out var block)) {
                 node.Element = block;
-                graph_.BlockNodeMap.Add(block, node);
+                graph_.ElementNodeMap.Add(block, node);
             }
             else {
-                Debug.Assert(false, "Could not find block");
+                //Debug.Assert(false, "Could not find block");
+                Debug.WriteLine("Failed 3");
             }
 
             return node;
@@ -335,8 +273,9 @@ namespace CoreLib.GraphViz {
                 return null;
             }
 
-            edge.NodeNameFrom = fromNode;
-            edge.NodeNameTo = toNode;
+            //edge.NodeNameFrom = fromNode;
+            //edge.NodeNameTo = toNode;
+            edge.LinePoints = new Tuple<double, double>[pointCont];
 
             for (int i = 0; i < pointCont; i++) {
                 if (!ReadPoint(out double x, out double y)) {
@@ -344,7 +283,7 @@ namespace CoreLib.GraphViz {
                     return null;
                 }
 
-                edge.LinePoints.Add(new Tuple<double, double>(x, y));
+                edge.LinePoints[i] = new Tuple<double, double>(x, y);
             }
 
             ReadOnlyMemory<char> label = default;
@@ -364,7 +303,7 @@ namespace CoreLib.GraphViz {
                 return null;
             }
 
-            edge.Label = label;
+            //edge.Label = label;
             edge.LabelX = labelX;
             edge.LabelY = labelY;
             edge.Style = Edge.GetEdgeStyle(style);
@@ -372,23 +311,25 @@ namespace CoreLib.GraphViz {
 
             // Associate with IR objects.
             if (blockNameMap_.TryGetValue(fromNode.ToString(), out var fromBlock)) {
-                var node = graph_.BlockNodeMap[fromBlock];
+                var node = graph_.ElementNodeMap[fromBlock];
                 edge.NodeFrom = node;
                 node.OutEdges ??= new List<Edge>();
                 node.OutEdges.Add(edge);
             }
             else {
                 //Debug.Assert(false, "Could not find from block");
+                Debug.WriteLine("Failed 6");
             }
 
             if (blockNameMap_.TryGetValue(toNode.ToString(), out var toBlock)) {
-                var node = graph_.BlockNodeMap[toBlock];
+                var node = graph_.ElementNodeMap[toBlock];
                 edge.NodeTo = node;
                 node.InEdges ??= new List<Edge>();
                 node.InEdges.Add(edge);
             }
             else {
                 //Debug.Assert(false, "Could not find to block");
+                Debug.WriteLine("Failed 7");
             }
 
             return edge;

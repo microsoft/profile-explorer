@@ -6,7 +6,7 @@ using System.ComponentModel;
 using System.Windows.Media;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract(SkipConstructor = true)]
     public class DocumentSettings : SettingsBase, INotifyPropertyChanged {
         public DocumentSettings() {

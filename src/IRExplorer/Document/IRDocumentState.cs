@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     [ProtoContract]
     public class IRDocumentState {
         [ProtoMember(5)]

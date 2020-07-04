@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace CoreLib {
+namespace IRExplorerCore {
     public class IRTextSummary {
         private Dictionary<string, IRTextFunction> functionMap_;
 
@@ -128,10 +128,19 @@ namespace CoreLib {
         public string Name { get; set; }
         public int BlockCount { get; set; }
         public IRTextFunction ParentFunction { get; set; }
-        public Dictionary<int, string> LineMetadata { get; set; }
-
         public int LineCount => Output.EndLine - Output.StartLine + 1;
 
+        private CompressedObject<Dictionary<int, string>> lineMetadata_;
+
+        public Dictionary<int, string> LineMetadata {
+            get => lineMetadata_?.GetValue();
+            set => lineMetadata_ = new CompressedObject<Dictionary<int, string>>(value);
+        }
+
+
+        //? TODO: Metadata is large and multiplies N times with multiple versions of the same function,
+        //? while most lines are likely identical. Find a way to share identical lines, or at least
+        //? have one big string that can be compressed.
         public void AddLineMetadata(int lineNumber, string metadata) {
             LineMetadata ??= new Dictionary<int, string>();
             LineMetadata[lineNumber] = metadata;
@@ -144,6 +153,12 @@ namespace CoreLib {
             }
 
             return null;
+        }
+
+        public void CompressLineMetadata() {
+            if(lineMetadata_ != null) {
+                lineMetadata_.Compress();
+            }
         }
 
         public override bool Equals(object obj) {
@@ -161,8 +176,20 @@ namespace CoreLib {
         }
     }
 
+    public class SectionReaderProgressInfo {
+        public SectionReaderProgressInfo(long bytesProcessed, long totalBytes) {
+            BytesProcessed = bytesProcessed;
+            TotalBytes = totalBytes;
+        }
+
+        public long BytesProcessed { get;set; }
+        public long TotalBytes { get; set; }
+    }
+
+    public delegate void ProgressInfoHandler(IRSectionReader reader, SectionReaderProgressInfo info);
+
     public interface IRSectionReader {
-        IRTextSummary GenerateSummary();
+        IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler);
         string GetSectionText(IRTextSection section);
         string GetPassOutputText(IRPassOutput output);
     }

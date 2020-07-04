@@ -1,8 +1,8 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Data;
-using Client.Scripting;
+using IRExplorer.Scripting;
 
-namespace Client.Query {
+namespace IRExplorer.Query {
     public partial class QueryView : UserControl {
         private ElementQueryInfo query_;
 

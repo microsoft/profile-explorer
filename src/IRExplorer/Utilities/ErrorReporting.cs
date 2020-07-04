@@ -8,15 +8,17 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
-using CoreLib.UTC;
+using IRExplorerCore.UTC;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Extensibility;
 
-namespace Client {
+namespace IRExplorer {
     public static class ErrorReporting {
         private static TelemetryClient telemetry_;
 
         public static string CreateMiniDump() {
+            return "";
+
             var time = DateTime.Now;
             string fileName = $"CompilerStudio-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.dmp";
 
@@ -79,7 +81,7 @@ namespace Client {
                     builder.AppendLine(
                         $"IR for section {document.Section.Name} in func. {document.Section.ParentFunction.Name}");
 
-                    builder.AppendLine(UTCReader.SECTION_START);
+                    builder.AppendLine(UTCSectionReader.SECTION_START);
                     builder.AppendLine(document.Text);
                     builder.AppendLine();
                 }
@@ -139,9 +141,9 @@ namespace Client {
                     telemetry_.Flush();
                 }
 
+                var minidumpPath = CreateMiniDump();
                 var stackTracePath = CreateStackTraceDump(stackTrace);
                 var sectionPath = CreateSectionDump();
-                var minidumpPath = CreateMiniDump();
 
                 if (showUIPrompt) {
                     MessageBox.Show(

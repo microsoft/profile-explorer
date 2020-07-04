@@ -6,10 +6,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AvalonDock.Layout;
-using CoreLib;
+using IRExplorerCore;
+using IRExplorerCore.IR;
+using ICSharpCode.AvalonEdit.Document;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     public enum SessionKind {
         Default = 0,
         FileSession = 1,
@@ -83,15 +85,30 @@ namespace Client {
 
     public class DocumentHostInfo {
         public DocumentHostInfo(IRDocumentHost document, LayoutDocument host) {
-            Document = document;
+            DocumentHost = document;
             Host = host;
         }
 
-        public IRDocumentHost Document { get; set; }
-        public IRDocument DocumentView => Document.TextView;
+        public IRDocumentHost DocumentHost { get; set; }
+        public IRDocument DocumentView => DocumentHost.TextView;
         public LayoutDocument Host { get; set; }
         public LayoutDocumentPane HostParent { get; set; }
         public bool IsActiveDocument { get; set; }
+    }
+
+
+    public class DiffMarkingResult {
+        public TextDocument DiffDocument;
+        internal FunctionIR DiffFunction;
+        public List<DiffTextSegment> DiffSegments;
+        public string DiffText;
+        public bool FunctionReparsingRequired;
+        public int CurrentSegmentIndex;
+
+        public DiffMarkingResult(TextDocument diffDocument) {
+            DiffDocument = diffDocument;
+            DiffSegments = new List<DiffTextSegment>();
+        }
     }
 
     public class DiffModeInfo {
@@ -107,6 +124,8 @@ namespace Client {
         public IRTextSection LeftSection { get; set; }
         public IRTextSection RightSection { get; set; }
         public IRDocumentHost IgnoreNextScrollEventDocument { get; set; }
+        public DiffMarkingResult LeftDiffResults { get; set; }
+        public DiffMarkingResult RightDiffResults { get; set; }
 
         public void StartModeChange() {
             DiffModeChangeCompleted.WaitOne();
@@ -159,6 +178,7 @@ namespace Client {
             DocumentHosts = new List<DocumentHostInfo>();
             DiffState = new DiffModeInfo();
             SessionStartTime = DateTime.UtcNow;
+            IsAutoSaveEnabled = sessionKind != SessionKind.DebugSession;
         }
 
         public SessionInfo Info { get; set; }
@@ -187,17 +207,17 @@ namespace Client {
             diffDocument_.Dispose();
         }
 
-        public LoadedDocument FindDocument(IRTextSection section) {
+        public LoadedDocument FindLoadedDocument(IRTextSection section) {
             var summary = section.ParentFunction.ParentSummary;
             return documents_.Find(item => item.Summary == summary);
         }
 
-        public LoadedDocument FindDocument(IRTextFunction func) {
+        public LoadedDocument FindLoadedDocument(IRTextFunction func) {
             var summary = func.ParentSummary;
             return documents_.Find(item => item.Summary == summary);
         }
 
-        public LoadedDocument FindDocument(IRTextSummary summary) {
+        public LoadedDocument FindLoadedDocument(IRTextSummary summary) {
             return documents_.Find(item => item.Summary == summary);
         }
 
@@ -207,7 +227,7 @@ namespace Client {
                 return;
             }
 
-            var docInfo = FindDocument(section);
+            var docInfo = FindLoadedDocument(section);
             docInfo.SavePanelState(stateObject, panel, section);
         }
 
@@ -216,17 +236,17 @@ namespace Client {
                 return globalPanelStates_.TryGetValue(panel.PanelKind, out var value) ? value : null;
             }
 
-            var docInfo = FindDocument(section);
+            var docInfo = FindLoadedDocument(section);
             return docInfo.LoadPanelState(panel, section);
         }
 
         public void SaveDocumentState(object stateObject, IRTextSection section) {
-            var docInfo = FindDocument(section);
+            var docInfo = FindLoadedDocument(section);
             docInfo.SaveSectionState(stateObject, section);
         }
 
         public object LoadDocumentState(IRTextSection section) {
-            var docInfo = FindDocument(section);
+            var docInfo = FindLoadedDocument(section);
             return docInfo.LoadSectionState(section);
         }
 
@@ -244,7 +264,7 @@ namespace Client {
             }
 
             foreach (var docHost in DocumentHosts) {
-                state.OpenSections.Add(docHost.Document.Section.Id);
+                state.OpenSections.Add(docHost.DocumentHost.Section.Id);
             }
 
             return Task.Run(() => {
@@ -280,6 +300,7 @@ namespace Client {
             }
 
             documents_.Clear();
+            IsAutoSaveEnabled = false;
         }
 
         public void RegisterCancelableTask(CancelableTaskInfo task) {

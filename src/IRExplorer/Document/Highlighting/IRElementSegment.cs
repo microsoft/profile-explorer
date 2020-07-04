@@ -3,10 +3,10 @@
 
 using System;
 using System.Windows.Media;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 
-namespace Client {
+namespace IRExplorer {
     public class IRSegment : TextSegment {
         public IRSegment(IRElement element) {
             Element = element;

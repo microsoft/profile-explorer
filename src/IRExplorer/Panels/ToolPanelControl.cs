@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System.Windows.Controls;
-using CoreLib;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     public class ToolPanelControl : UserControl, IToolPanel {
         public virtual ToolPanelKind PanelKind => ToolPanelKind.Other;
         public virtual HandledEventKind HandledEvents => HandledEventKind.None;

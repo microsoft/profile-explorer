@@ -4,10 +4,10 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
-using CoreLib;
-using CoreLib.IR;
+using IRExplorerCore;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     [Flags]
     public enum RemarkKind {
         Default,

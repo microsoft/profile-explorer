@@ -7,13 +7,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace Client.Document {
+namespace IRExplorer.Document {
     public class SearchInfo : INotifyPropertyChanged {
         private int currentResult_;
         private TextSearchKind kind_;
-
         private int resultCount_;
-
+        private bool searchAllEnabled_;
         private bool searchAll_;
         private string text_;
 
@@ -80,10 +79,20 @@ namespace Client.Document {
         }
 
         public bool SearchAll {
-            get => searchAll_;
+            get => searchAll_ && searchAllEnabled_;
             set {
                 if (value != searchAll_) {
                     searchAll_ = value;
+                    OnPropertyChange("SearchAll");
+                }
+            }
+        }
+
+        public bool SearchAllEnabled {
+            get => searchAllEnabled_;
+            set {
+                if (value != searchAllEnabled_) {
+                    searchAllEnabled_ = value;
                     OnPropertyChange("SearchAll");
                 }
             }

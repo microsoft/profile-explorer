@@ -119,14 +119,14 @@ namespace IRExplorerExtension {
                 return;
             }
 
-            Logger.Log($"> OnMouseUp, {e.PressedMouseButton}, {e.PressedModifierKeys}");
-            Logger.Log($"    text {e.LineNumber}:{e.LineColumn}: {e.LineText}");
+            //Logger.Log($"> OnMouseUp, {e.PressedMouseButton}, {e.PressedModifierKeys}");
+            //Logger.Log($"    text {e.LineNumber}:{e.LineColumn}: {e.LineText}");
             bool handled = false;
 
             if (e.HasTextInfo) {
-                Logger.Log(">> Create debugger expression");
+                //Logger.Log(">> Create debugger expression");
                 string expression = DebuggerExpression.Create(e);
-                Logger.Log($">> Debugger expression: {expression}");
+                //Logger.Log($">> Debugger expression: {expression}");
 
                 if (e.PressedMouseButton == MouseButton.Left) {
                     if (e.PressedModifierKeys.HasFlag(ModifierKeys.Alt)) {
@@ -154,11 +154,11 @@ namespace IRExplorerExtension {
 
             if (!handled) {
                 // Deselect temporary highlighting.
-                Logger.Log("> OnMouseUp: not handled");
+                //Logger.Log("> OnMouseUp: not handled");
                 ClientInstance.ClearTemporaryHighlighting();
             }
             else {
-                Logger.Log("> OnMouseUp: handled");
+                //Logger.Log("> OnMouseUp: handled");
             }
 
             e.Handled = handled;
@@ -170,8 +170,6 @@ namespace IRExplorerExtension {
                 Logger.Log("IR Explorer not enabled");
                 return;
             }
-
-            // https://stackoverflow.com/questions/13457948/how-to-display-waiting-popup-from-visual-studio-extension
 
             if (!DebuggerInstance.IsDebuggingUTC) {
                 Logger.Log("Not debugging UTC");
@@ -186,7 +184,7 @@ namespace IRExplorerExtension {
                 case dbgEventReason.dbgEventReasonStep: {
                     //var textLine = GetCurrentTextLine();
                     //Debug.WriteLine("Current line: " + textLine);
-                    //ClientInstance.UpdateCurrentStackFrame();
+                    ClientInstance.UpdateCurrentStackFrame();
                     ClientInstance.UpdateIR();
 
                     // Tokenize and try to extract vars

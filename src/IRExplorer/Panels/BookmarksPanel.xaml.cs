@@ -5,9 +5,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using CoreLib;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     public static class BookmarkCommand {
         public static readonly RoutedUICommand JumpToBookmark =
             new RoutedUICommand("Untitled", "JumpToBookmark", typeof(BookmarksPanel));

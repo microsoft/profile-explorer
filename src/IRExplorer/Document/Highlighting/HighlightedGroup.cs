@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace Client {
+namespace IRExplorer {
     public sealed class HighlightedGroup {
         public HighlightedGroup(HighlightingStyle style) {
             Elements = new List<IRElement>();

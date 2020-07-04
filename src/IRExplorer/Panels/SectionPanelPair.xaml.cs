@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
-using CoreLib;
+using IRExplorerCore;
 
-namespace Client {
+namespace IRExplorer {
     /// <summary>
     ///     Interaction logic for SectionPanelPair.xaml
     /// </summary>
@@ -252,8 +252,8 @@ namespace Client {
         public event EventHandler<OpenSectionEventArgs> OpenSection;
         public event EventHandler<DiffModeEventArgs> EnterDiffMode;
 
-        private (List<IRTextSectionExtension>, List<IRTextSectionExtension>) ComputeSectionNameListDiff(
-            List<IRTextSectionExtension> baseList, List<IRTextSectionExtension> diffList) {
+        private (List<IRTextSectionEx>, List<IRTextSectionEx>) ComputeSectionNameListDiff(
+            List<IRTextSectionEx> baseList, List<IRTextSectionEx> diffList) {
             var m = new int[baseList.Count + 1, diffList.Count + 1];
             int x;
             int y;
@@ -272,8 +272,9 @@ namespace Client {
                 }
             }
 
-            var newBaseList = new List<IRTextSectionExtension>(baseList.Count);
-            var newDiffList = new List<IRTextSectionExtension>(diffList.Count);
+            int index = 0;
+            var newBaseList = new List<IRTextSectionEx>(baseList.Count);
+            var newDiffList = new List<IRTextSectionEx>(diffList.Count);
             x = baseList.Count;
             y = diffList.Count;
 
@@ -297,10 +298,10 @@ namespace Client {
                     var diffSection = diffList[y - 1];
 
                     newDiffList.Add(
-                        new IRTextSectionExtension(diffSection.Section, DiffKind.Insertion,
-                                                   diffSection.Name));
+                        new IRTextSectionEx(diffSection.Section, DiffKind.Insertion,
+                                                   diffSection.Name, index++));
 
-                    newBaseList.Add(new IRTextSectionExtension(null, DiffKind.Placeholder, ""));
+                    newBaseList.Add(new IRTextSectionEx(null, DiffKind.Placeholder, "", index++));
                     y--;
                 }
                 else if (x > 0 && (y == 0 || m[x, y - 1] < m[x - 1, y])) {
@@ -308,9 +309,9 @@ namespace Client {
                     var baseSection = baseList[x - 1];
 
                     newBaseList.Add(
-                        new IRTextSectionExtension(baseSection.Section, DiffKind.Deletion, baseSection.Name));
+                        new IRTextSectionEx(baseSection.Section, DiffKind.Deletion, baseSection.Name, index++));
 
-                    newDiffList.Add(new IRTextSectionExtension(null, DiffKind.Placeholder, ""));
+                    newDiffList.Add(new IRTextSectionEx(null, DiffKind.Placeholder, "", index++));
                     x--;
                 }
             }
@@ -321,7 +322,7 @@ namespace Client {
         }
 
         private async Task<List<HasDiffResult>> ComputeSectionIRDiffs(
-            List<IRTextSectionExtension> baseSections, List<IRTextSectionExtension> diffSections) {
+            List<IRTextSectionEx> baseSections, List<IRTextSectionEx> diffSections) {
             var comparedSections = new List<Tuple<IRTextSection, IRTextSection>>();
 
             for (int i = 0; i < baseSections.Count; i++) {
@@ -333,8 +334,8 @@ namespace Client {
             }
 
             //? TODO: Pass the LoadedDocument to the panel, not Summary.
-            var baseLoader = Session.SessionState.FindDocument(MainPanel.Summary).Loader;
-            var diffLoader = Session.SessionState.FindDocument(DiffPanel.Summary).Loader;
+            var baseLoader = Session.SessionState.FindLoadedDocument(MainPanel.Summary).Loader;
+            var diffLoader = Session.SessionState.FindLoadedDocument(DiffPanel.Summary).Loader;
             var results = await DocumentDiff.ComputeSectionDiffs(comparedSections, baseLoader, diffLoader);
             return results;
         }

@@ -5,11 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
-using CoreLib.IR;
-using CoreLib.IR.Tags;
-using CoreLib.Lexer;
+using IRExplorerCore.IR;
+using IRExplorerCore.IR.Tags;
+using IRExplorerCore.Lexer;
 
-namespace CoreLib.UTC {
+namespace IRExplorerCore.UTC {
     enum Keyword {
         None,
         Entry,
@@ -237,8 +237,6 @@ namespace CoreLib.UTC {
             var function = ParseFunction();
 
             if (function != null) {
-                function.BuildElementIdMap();
-
                 if (elementAddressMap_.Count > 0) {
                     function.AddTag(new AddressMetadataTag(elementAddressMap_));
                 }

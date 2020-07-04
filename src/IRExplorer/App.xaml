@@ -1,8 +1,8 @@
 ﻿<Application
-    x:Class="Client.App"
+    x:Class="IRExplorer.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="clr-namespace:Client"
+    xmlns:local="clr-namespace:IRExplorer"
     xmlns:theme="clr-namespace:Microsoft.Windows.Themes;assembly=PresentationFramework.Aero2"
     StartupUri="MainWindow.xaml">
     <Application.Resources>

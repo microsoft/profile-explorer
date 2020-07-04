@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace CoreLib.IR {
+namespace IRExplorerCore.IR {
     public enum InstructionKind {
         Unary,
         Binary,
@@ -23,8 +23,8 @@ namespace CoreLib.IR {
         public InstructionIR(IRElementId elementId, InstructionKind kind, BlockIR parent) :
             base(elementId, TupleKind.Instruction, parent) {
             Kind = kind;
-            Sources = new List<OperandIR>();
-            Destinations = new List<OperandIR>();
+            Sources = new List<OperandIR>(1); // Usually 1 destination.
+            Destinations = new List<OperandIR>(2); // Usually at most 2 sources.
         }
 
         public new InstructionKind Kind { get; set; }

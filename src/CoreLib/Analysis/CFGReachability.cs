@@ -4,9 +4,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using CoreLib.IR;
+using IRExplorerCore.IR;
 
-namespace CoreLib.Analysis {
+namespace IRExplorerCore.Analysis {
     public class CFGReachability {
         private FunctionIR function_;
         private int maxBlockNumber_;

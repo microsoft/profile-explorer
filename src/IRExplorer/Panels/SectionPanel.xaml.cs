@@ -5,16 +5,19 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using CoreLib;
+using IRExplorer.OptionsPanels;
+using IRExplorerCore;
 using ProtoBuf;
 
-namespace Client {
+namespace IRExplorer {
     public static class Command {
         public static readonly RoutedUICommand ClearTextbox =
             new RoutedUICommand("Clear text", "ClearTextbox", typeof(SectionPanel));
@@ -72,26 +75,56 @@ namespace Client {
         public OpenSectionEventArgs Right { get; set; }
     }
 
-    public class IRTextSectionExtension : INotifyPropertyChanged {
+    public class IRTextSectionEx : INotifyPropertyChanged {
         private bool isSelected_;
-
         private bool isTagged_;
-
         private DiffKind sectionDiffKind_;
 
-        public IRTextSectionExtension(IRTextSection section) {
+        public IRTextSectionEx(IRTextSection section, int index) {
             Section = section;
             SectionDiffKind = DiffKind.None;
+            Index = index;
         }
 
-        public IRTextSectionExtension(IRTextSection section, DiffKind diffKind, string name) {
+        public IRTextSectionEx(IRTextSection section, DiffKind diffKind, string name, int index) {
             Section = section;
             SectionDiffKind = diffKind;
             Name = name;
+            Index = index;
         }
 
+        public int Index { get; set;}
         public IRTextSection Section { get; set; }
-        public string Name { get; set; }
+
+        private Thickness borderThickness_;
+        public Thickness BorderThickness {
+            get => borderThickness_;
+            set {
+                borderThickness_ = value;
+                OnPropertyChange(nameof(BorderThickness));
+            }
+        }
+
+        public bool HasBeforeBorder => BorderThickness.Top != 0;
+        public bool HasAfterBorder => BorderThickness.Bottom != 0;
+
+        private Brush borderBrush_;
+        public Brush BorderBrush {
+            get => borderBrush_;
+            set {
+                borderBrush_ = value;
+                OnPropertyChange(nameof(BorderBrush));
+            }
+        }
+
+        private string name_;
+        public string Name {
+            get => name_;
+            set {
+                name_ = value;
+                OnPropertyChange(nameof(Name));
+            }
+        }
 
         public DiffKind SectionDiffKind {
             get => sectionDiffKind_;
@@ -120,7 +153,15 @@ namespace Client {
             }
         }
 
-        public bool IsMarked { get; set; }
+        private bool isMarked_;
+        public bool IsMarked {
+            get => isMarked_;
+            set {
+                isMarked_ = value;
+                OnPropertyChange(nameof(IsMarked));
+            }
+        }
+
         public bool IsInsertionDiff => SectionDiffKind == DiffKind.Insertion;
         public bool IsDeletionDiff => SectionDiffKind == DiffKind.Deletion;
         public bool IsPlaceholderDiff => SectionDiffKind == DiffKind.Placeholder;
@@ -168,32 +209,42 @@ namespace Client {
         public static readonly DependencyProperty HideToolbarsProperty =
             DependencyProperty.Register("HideToolbars", typeof(bool), typeof(SectionPanel),
                                         new PropertyMetadata(false, OnHideToolbarsPropertyChanged));
-        private HashSet<IRTextSectionExtension> annotatedSections_;
+        private HashSet<IRTextSectionEx> annotatedSections_;
         private IRTextFunction currentFunction_;
 
         private string documentTitle_;
-
         private bool isDiffModeEnabled_;
-
         private bool isFunctionListVisible_;
         private SortAdorner listViewSortAdorner;
-
         private GridViewColumnHeader listViewSortCol;
         private IRTextSummary otherSummary_;
         private bool sectionExtensionComputed_;
-        private Dictionary<IRTextSection, IRTextSectionExtension> sectionExtMap_;
-        private List<IRTextSectionExtension> sections_;
+        private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
+        private List<IRTextSectionEx> sections_;
 
         private ScrollViewer sectionsScrollViewer_;
         private IRTextSummary summary_;
 
+        public Brush NewSectionBrush { get; set; }
+        public Brush MissingSectionBrush { get; set; }
+        public Brush ChangedSectionBrush { get; set; }
+
         public SectionPanel() {
             InitializeComponent();
-            sections_ = new List<IRTextSectionExtension>();
-            sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionExtension>();
-            annotatedSections_ = new HashSet<IRTextSectionExtension>();
+            sections_ = new List<IRTextSectionEx>();
+            sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
+            annotatedSections_ = new HashSet<IRTextSectionEx>();
             IsFunctionListVisible = true;
             MainGrid.DataContext = this;
+
+            sectionSettings_ = App.Settings.SectionSettings;
+            UpdateSectionsStyle();
+        }
+
+        private void UpdateSectionsStyle() {
+            NewSectionBrush = ColorBrushes.GetBrush(sectionSettings_.NewSectionColor);
+            MissingSectionBrush = ColorBrushes.GetBrush(sectionSettings_.NewSectionColor);
+            ChangedSectionBrush = ColorBrushes.GetBrush(sectionSettings_.NewSectionColor);
         }
 
         public bool BottomSectionToolbar {
@@ -301,6 +352,10 @@ namespace Client {
                 source.SectionGrid.RowDefinitions[1].Height = new GridLength(row0Value, row0Type);
                 Grid.SetRow(source.SectionList, 0);
                 Grid.SetRow(source.SectionToolbarGrid, 1);
+
+                // Hide the settings button.
+                source.FixedToolbar.Visibility = Visibility.Collapsed;
+                source.SectionToolbarGrid.ColumnDefinitions[1].Width = new GridLength(0);
             }
         }
 
@@ -313,7 +368,7 @@ namespace Client {
                 source.FunctionPart.Visibility = Visibility.Visible;
             }
             else {
-                //source.FixedToolbar.Visibility = Visibility.Collapsed;
+                //? TODO: Can be moved to XAML, similar to RemarkPanel.xaml
                 source.MainGrid.ColumnDefinitions[0].Width = new GridLength(0, GridUnitType.Pixel);
                 source.MainGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Pixel);
                 source.MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
@@ -332,6 +387,10 @@ namespace Client {
         }
 
         public void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations) {
+            if(!sectionSettings_.MarkAnnotatedSections) {
+                return;
+            }
+
             if (!sectionExtMap_.ContainsKey(section)) {
                 return;
             }
@@ -426,8 +485,10 @@ namespace Client {
             annotatedSections_.Clear();
 
             foreach (var func in summary_.Functions) {
+                int index = 0;
+
                 foreach (var section in func.Sections) {
-                    var sectionEx = new IRTextSectionExtension(section);
+                    var sectionEx = new IRTextSectionEx(section, index++);
                     sectionExtMap_[section] = sectionEx;
                 }
             }
@@ -435,8 +496,8 @@ namespace Client {
             sectionExtensionComputed_ = true;
         }
 
-        private void UpdateSectionListBindings(IRTextFunction function) {
-            if (function == currentFunction_) {
+        private void UpdateSectionListBindings(IRTextFunction function, bool force = false) {
+            if (function == currentFunction_ && !force) {
                 return;
             }
 
@@ -452,34 +513,90 @@ namespace Client {
             FunctionSwitched?.Invoke(this, currentFunction_);
         }
 
-        public List<IRTextSectionExtension> CreateSectionsExtension() {
+        public List<IRTextSectionEx> CreateSectionsExtension() {
             SetupSectionExtension();
-            var sections = new List<IRTextSectionExtension>();
+            var sections = new List<IRTextSectionEx>();
 
             if (currentFunction_ == null) {
                 return sections;
             }
 
-            currentFunction_.Sections.ForEach(section => {
+            foreach (var section in currentFunction_.Sections) {
                 var sectionEx = sectionExtMap_[section];
+                sectionEx = new IRTextSectionEx(section, sectionEx.Index);
+                sectionExtMap_[section] = sectionEx;
                 sectionEx.Name = CompilerInfo.NameProvider.GetSectionName(section);
 
-                if (CompilerInfo.StyleProvider.IsMarkedSection(section, out var markedName)) {
-                    sectionEx.IsMarked = true;
-                    sectionEx.TextColor = ColorBrushes.GetBrush(markedName.TextColor);
+                if (CompilerInfo.SectionStyleProvider.IsMarkedSection(section, out var markedName)) {
+                    if (sectionSettings_.ColorizeSectionNames) {
+                        sectionEx.IsMarked = true;
+                        sectionEx.TextColor = ColorBrushes.GetBrush(markedName.TextColor);
+                    }
+                    else {
+                        sectionEx.IsMarked = false;
+                    }
+
+                    if (sectionSettings_.ShowSectionSeparators) {
+                        ApplySectionBorder(sectionEx, markedName, sections);
+                    }
+                    else sectionEx.BorderThickness = new Thickness();
+
+                    if (sectionSettings_.UseNameIndentation &&
+                        markedName.IndentationLevel > 0) {
+                        //Debug.WriteLine($"Use ident {markedName.IndentationLevel}, {sectionEx.Name}");
+                        ApplySectionNameIndentation(sectionEx, markedName);
+                    }
+                    else {
+                        //Debug.WriteLine($"No ident {sectionEx.Name}");
+                    }
+                }
+                else {
+                    sectionEx.IsMarked = false;
+                    sectionEx.BorderThickness = new Thickness();
                 }
 
                 sectionEx.SectionDiffKind = DiffKind.None;
                 sections.Add(sectionEx);
-            });
+            }
 
             return sections;
         }
 
+        private void ApplySectionBorder(IRTextSectionEx sectionEx, MarkedSectionName markedName,
+                                        List<IRTextSectionEx> sections) {
+            // Don't show the border for the first and last sections in the list,
+            // and if there is a before-border following an after-border.
+            bool useBeforeBorder = sectionEx.Index > 0 && !sections[sectionEx.Index - 1].HasAfterBorder;
+            bool useAfterBorder = sectionEx.Index < (currentFunction_.Sections.Count - 1);
+
+            sectionEx.BorderThickness = new Thickness(0, useBeforeBorder ? markedName.BeforeSeparatorWeight : 0,
+                                                      0, useAfterBorder ? markedName.AfterSeparatorWeight : 0);
+            sectionEx.BorderBrush = ColorBrushes.GetBrush(markedName.SeparatorColor);
+        }
+
+        private void ApplySectionNameIndentation(IRTextSectionEx sectionEx, MarkedSectionName markedName) {
+            int level = markedName.IndentationLevel;
+            var builder = new StringBuilder(sectionEx.Name.Length + level * sectionSettings_.IndentationAmount);
+
+            while(level > 0) {
+                builder.Append(' ', sectionSettings_.IndentationAmount);
+                level--;
+            }
+
+            builder.Append(sectionEx.Name);
+            sectionEx.Name = builder.ToString();
+        }
+
         private void UpdateSectionListView() {
-            var functionFilter = new ListCollectionView(sections_);
-            functionFilter.Filter = FilterSectionList;
-            SectionList.ItemsSource = functionFilter;
+#if false
+            var sectionFilter = new ListCollectionView(sections_);
+            sectionFilter.Filter = FilterSectionList;
+            SectionList.ItemsSource = sectionFilter;
+#else
+            var c = new ObservableCollectionRefresh<IRTextSectionEx>();
+            SectionList.ItemsSource = c;
+            c.AddRange(sections_);
+#endif
 
             if (SectionList.Items.Count > 0) {
                 SectionList.SelectedItem = SectionList.Items[0];
@@ -505,7 +622,7 @@ namespace Client {
         }
 
         private bool FilterSectionList(object value) {
-            var section = (IRTextSectionExtension) value;
+            var section = (IRTextSectionEx) value;
 
             if (section.IsSelected) {
                 return true;
@@ -533,7 +650,7 @@ namespace Client {
                 return;
             }
 
-            if (e.Parameter is IRTextSectionExtension section) {
+            if (e.Parameter is IRTextSectionEx section) {
                 OpenSectionExecute(section, OpenSectionKind.ReplaceCurrent);
             }
         }
@@ -544,7 +661,7 @@ namespace Client {
                 return;
             }
 
-            var section = e.Parameter as IRTextSectionExtension;
+            var section = e.Parameter as IRTextSectionEx;
 
             if (section != null) {
                 OpenSectionExecute(section, OpenSectionKind.NewTab);
@@ -552,21 +669,21 @@ namespace Client {
         }
 
         private void OpenLeftExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (e.Parameter is IRTextSectionExtension section) {
+            if (e.Parameter is IRTextSectionEx section) {
                 OpenSectionExecute(section, OpenSectionKind.NewTabDockLeft);
             }
         }
 
         private void OpenRightExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (e.Parameter is IRTextSectionExtension section) {
+            if (e.Parameter is IRTextSectionEx section) {
                 OpenSectionExecute(section, OpenSectionKind.NewTabDockRight);
             }
         }
 
         private void OpenSideBySideExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (SectionList.SelectedItems.Count == 2) {
-                var leftSection = SectionList.SelectedItems[0] as IRTextSectionExtension;
-                var rightSection = SectionList.SelectedItems[1] as IRTextSectionExtension;
+                var leftSection = SectionList.SelectedItems[0] as IRTextSectionEx;
+                var rightSection = SectionList.SelectedItems[1] as IRTextSectionEx;
                 OpenSectionExecute(leftSection, OpenSectionKind.NewTabDockLeft);
                 OpenSectionExecute(rightSection, OpenSectionKind.NewTabDockRight);
             }
@@ -583,8 +700,8 @@ namespace Client {
         }
 
         private void DiffSideBySideExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var leftSectionEx = SectionList.SelectedItems[0] as IRTextSectionExtension;
-            var rightSectionEx = SectionList.SelectedItems[1] as IRTextSectionExtension;
+            var leftSectionEx = SectionList.SelectedItems[0] as IRTextSectionEx;
+            var rightSectionEx = SectionList.SelectedItems[1] as IRTextSectionEx;
 
             var args = new DiffModeEventArgs {
                 Left = new OpenSectionEventArgs(leftSectionEx.Section, OpenSectionKind.NewTabDockLeft),
@@ -595,7 +712,7 @@ namespace Client {
         }
 
         private void DiffWithOtherDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var sectionEx = SectionList.SelectedItems[0] as IRTextSectionExtension;
+            var sectionEx = SectionList.SelectedItems[0] as IRTextSectionEx;
 
             var args = new DiffModeEventArgs {
                 IsWithOtherDocument = true,
@@ -606,7 +723,7 @@ namespace Client {
         }
 
         private void ToggleTagExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var section = e.Parameter as IRTextSectionExtension;
+            var section = e.Parameter as IRTextSectionEx;
 
             if (section != null) {
                 section.IsTagged = !section.IsTagged;
@@ -623,7 +740,7 @@ namespace Client {
                 return;
             }
 
-            ((ListCollectionView) SectionList.ItemsSource).Refresh();
+            //((ICollectionView) SectionList.ItemsSource).Refresh();
         }
 
         private void RefreshFunctionList() {
@@ -631,7 +748,7 @@ namespace Client {
                 return;
             }
 
-            ((ListCollectionView) FunctionList.ItemsSource).Refresh();
+            ((ICollectionView) FunctionList.ItemsSource).Refresh();
         }
 
         private void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
@@ -653,7 +770,7 @@ namespace Client {
         }
 
         private void SectionDoubleClick(object sender, MouseButtonEventArgs e) {
-            var section = ((ListViewItem) sender).Content as IRTextSectionExtension;
+            var section = ((ListViewItem) sender).Content as IRTextSectionEx;
 
             bool inNewTab = (Keyboard.Modifiers & ModifierKeys.Control) != 0 ||
                             (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
@@ -661,7 +778,7 @@ namespace Client {
             OpenSectionExecute(section, inNewTab ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent);
         }
 
-        private void OpenSectionExecute(IRTextSectionExtension value, OpenSectionKind kind,
+        private void OpenSectionExecute(IRTextSectionEx value, OpenSectionKind kind,
                                         IRDocumentHost targetDocument = null) {
             if (OpenSection != null && value.Section != null) {
                 MarkCurrentSection(value);
@@ -677,7 +794,7 @@ namespace Client {
             SwitchToSection(1);
         }
 
-        private void MarkCurrentSection(IRTextSectionExtension section) {
+        private void MarkCurrentSection(IRTextSectionEx section) {
             foreach (var item in sections_) {
                 item.IsSelected = false;
             }
@@ -709,7 +826,7 @@ namespace Client {
             return false;
         }
 
-        public void SwitchToSection(IRTextSectionExtension section, IRDocumentHost targetDocument = null) {
+        public void SwitchToSection(IRTextSectionEx section, IRDocumentHost targetDocument = null) {
             SectionList.SelectedItem = section;
             SectionList.ScrollIntoView(SectionList.SelectedItem);
             OpenSectionExecute(section, OpenSectionKind.ReplaceCurrent, targetDocument);
@@ -804,8 +921,8 @@ namespace Client {
             }
 
             public int Compare(object x, object y) {
-                var sectionX = x as IRTextSectionExtension;
-                var sectionY = y as IRTextSectionExtension;
+                var sectionX = x as IRTextSectionEx;
+                var sectionY = y as IRTextSectionEx;
 
                 switch (sortingField_) {
                     case FieldKind.Number: {
@@ -860,12 +977,12 @@ namespace Client {
             }
         }
 
-        #region IToolPanel
+#region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.Section;
         public override bool SavesStateToFile => true;
 
-        public List<IRTextSectionExtension> Sections {
+        public List<IRTextSectionEx> Sections {
             get => sections_;
             set {
                 if (sections_ != value) {
@@ -882,7 +999,7 @@ namespace Client {
             }
         }
 
-        public IRTextSectionExtension GetSectionExtension(IRTextSection section) {
+        public IRTextSectionEx GetSectionExtension(IRTextSection section) {
             return sectionExtMap_[section];
         }
 
@@ -930,6 +1047,93 @@ namespace Client {
             Session.SavePanelState(data, this, null);
         }
 
-        #endregion
+#endregion
+
+        private OptionsPanelHostWindow optionsPanelWindow_;
+        private bool optionsPanelVisible_;
+        private SectionSettings sectionSettings_;
+
+        private void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
+            if(optionsPanelVisible_) {
+                CloseOptionsPanel();
+            }
+            else {
+                ShowOptionsPanel();
+            }
+        }
+
+        private void ShowOptionsPanel() {
+            if (optionsPanelVisible_) {
+                return;
+            }
+
+            var width = Math.Max(SectionOptionsPanel.MinimumWidth,
+                    Math.Min(SectionList.ActualWidth, SectionOptionsPanel.DefaultWidth));
+            var height = Math.Max(SectionOptionsPanel.MinimumHeight,
+                    Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
+            var position = SectionList.PointToScreen(new Point(SectionList.ActualWidth - width, 0));
+
+            optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(CompilerInfo),
+                                                             position, width, height, this);
+            optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
+            optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
+            optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
+            optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
+            optionsPanelWindow_.Show();
+            optionsPanelVisible_ = true;
+        }
+
+        private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
+            var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
+            HandleNewDiffSettings(newSettings, false);
+            optionsPanelWindow_.Settings = null;
+            optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
+        }
+
+        private void OptionsPanel_PanelReset(object sender, EventArgs e) {
+            HandleNewDiffSettings(new SectionSettings(), true);
+
+            //? TODO: Setting to null should be part of OptionsPanelBase and remove it in all places
+            optionsPanelWindow_.Settings = null;
+            optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
+        }
+
+        private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
+            CloseOptionsPanel();
+        }
+
+        private void CloseOptionsPanel() {
+            if (!optionsPanelVisible_) {
+                return;
+            }
+
+            optionsPanelWindow_.Close();
+            optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
+            optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
+            optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
+
+            var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
+            HandleNewDiffSettings(newSettings, true);
+
+            optionsPanelWindow_ = null;
+            optionsPanelVisible_ = false;
+        }
+
+        private void HandleNewDiffSettings(SectionSettings newSettings, bool commit) {
+            if (commit) {
+                App.Settings.SectionSettings = newSettings;
+                App.SaveApplicationSettings();
+            }
+
+            if (newSettings.Equals(sectionSettings_)) {
+                return;
+            }
+
+            App.Settings.SectionSettings = newSettings;
+            sectionSettings_ = newSettings;
+            UpdateSectionsStyle();
+            UpdateSectionListBindings(currentFunction_, true);
+            RefreshSectionList();
+        }
     }
 }

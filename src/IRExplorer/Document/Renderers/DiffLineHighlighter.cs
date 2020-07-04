@@ -9,7 +9,7 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 
-namespace Client {
+namespace IRExplorer {
     public enum DiffKind {
         None,
         Insertion,
@@ -57,15 +57,14 @@ namespace Client {
         public DiffLineHighlighter() {
             segments_ = new TextSegmentCollection<DiffTextSegment>();
             placeholderPen_ = null;
-            deletionPen_ = Pens.GetBoldPen("#B33232");
-            insertionPen_ = Pens.GetPen("#7FA72E");
-            modificationPen_ = Pens.GetPen("#ff6f00");
-            minorModificationPen_ = Pens.GetPen("#8F8F8F");
-            placeholderBrush_ = Utils.BrushFromString("#DFDFDF");
-            insertionBrush_ = Utils.BrushFromString("#c5e1a5");
-            deletionBrush_ = Utils.BrushFromString("#FFD6D9");
-            modificationBrush_ = Utils.BrushFromString("#FFF6D9");
-            minorModificationBrush_ = Utils.BrushFromString("#E1E1E1");
+            deletionPen_ = Pens.GetPen(App.Settings.DiffSettings.DeletionBorderColor);
+            insertionPen_ = Pens.GetPen(App.Settings.DiffSettings.InsertionBorderColor);
+            modificationPen_ = Pens.GetPen(App.Settings.DiffSettings.ModificationBorderColor);
+            minorModificationPen_ = Pens.GetPen(App.Settings.DiffSettings.MinorModificationBorderColor);
+            insertionBrush_ = ColorBrushes.GetBrush(App.Settings.DiffSettings.InsertionColor);
+            deletionBrush_ = ColorBrushes.GetBrush(App.Settings.DiffSettings.DeletionColor);
+            modificationBrush_ = ColorBrushes.GetBrush(App.Settings.DiffSettings.ModificationColor);
+            minorModificationBrush_ = ColorBrushes.GetBrush(App.Settings.DiffSettings.MinorModificationColor);
         }
 
         public int Version { get; set; }
@@ -162,7 +161,9 @@ namespace Client {
             geometry.Freeze();
             var drawing = new GeometryDrawing();
             drawing.Geometry = geometry;
-            drawing.Pen = new Pen(Brushes.DarkGray, 0.5);
+
+            var penBrush = ColorBrushes.GetBrush(App.Settings.DiffSettings.PlaceholderBorderColor);
+            drawing.Pen = new Pen(penBrush, 0.5);
             drawing.Freeze();
             var brush = new DrawingBrush();
             brush.Drawing = drawing;

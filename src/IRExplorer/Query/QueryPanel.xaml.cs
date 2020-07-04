@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Controls;
 using System.Windows.Data;
-using Client.Scripting;
+using IRExplorer.Scripting;
 
-namespace Client.Query {
+namespace IRExplorer.Query {
     // This is mostly a workaround for an issue with how WPF updates the DataTemplates
     // used for the input/output values - the binding doesn't know an output value changed,
     // so this basically forces an update of the entire query panel.
