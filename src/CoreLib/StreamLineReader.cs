@@ -57,7 +57,7 @@ namespace IRExplorerCore {
                 }
 
                 for (int max = index_ + bytesRead_; index_ < max;) {
-                    char ch = (char) buffer_[index_];
+                    char ch = (char)buffer_[index_];
                     bytesRead_--;
                     index_++;
                     currentPosition_++;

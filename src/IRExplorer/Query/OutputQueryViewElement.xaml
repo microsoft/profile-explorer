@@ -31,9 +31,7 @@
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding Path=IsBool}" Value="True" />
-                        <Condition
-                            Binding="{Binding Path=Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BoolObjectConverter}}"
-                            Value="True" />
+                        <Condition Binding="{Binding Path=Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BoolObjectConverter}}" Value="True" />
                     </MultiDataTrigger.Conditions>
                     <Setter Property="ContentTemplate">
                         <Setter.Value>
@@ -51,9 +49,7 @@
                 <MultiDataTrigger>
                     <MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding Path=IsBool}" Value="True" />
-                        <Condition
-                            Binding="{Binding Path=Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BoolObjectConverter}}"
-                            Value="False" />
+                        <Condition Binding="{Binding Path=Value, Mode=OneWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource BoolObjectConverter}}" Value="False" />
                     </MultiDataTrigger.Conditions>
                     <Setter Property="ContentTemplate">
                         <Setter.Value>

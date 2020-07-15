@@ -22,7 +22,7 @@ namespace IRExplorer.Query {
                 var data = new DataObject(typeof(IRElementDragDropSelection), selection);
 
                 if (DragDrop.DoDragDrop(element, data, DragDropEffects.All) == DragDropEffects.All) {
-                    ((QueryValue) element.DataContext).Value = selection.Element;
+                    ((QueryValue)element.DataContext).Value = selection.Element;
                 }
             }
         }

@@ -5,21 +5,26 @@ VisualStudioVersion = 16.0.29318.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTester", "ConsoleTester\ConsoleTester.csproj", "{8FA8BEAA-F47C-4B1B-B95F-E0A0DBE3AA79}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreLib", "CoreLib\CoreLib.csproj", "{74EA0CBC-6A4A-455F-B978-D8F4E361E19A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCore", "CoreLib\IRExplorerCore.csproj", "{74EA0CBC-6A4A-455F-B978-D8F4E361E19A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreLibUnitTests", "CoreLibUnitTests\CoreLibUnitTests.csproj", "{CB6DD82B-FF3A-4BA9-BEDE-7B73B84204FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCoreTests", "CoreLibUnitTests\IRExplorerCoreTests.csproj", "{CB6DD82B-FF3A-4BA9-BEDE-7B73B84204FF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorer", "IRExplorer\IRExplorer.csproj", "{23169CA2-2157-4978-A8AF-CF360540F467}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientUITests", "ClientUITests\ClientUITests.csproj", "{A853A439-AD83-48F8-B924-B7EE3910E721}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcClientServerLib", "ClientServer\GrpcClientServerLib.csproj", "{8C2331F3-4722-434C-98C2-46582E562279}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcLib", "ClientServer\GrpcLib.csproj", "{8C2331F3-4722-434C-98C2-46582E562279}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IRExplorerExtension", "VSExtension\IRExplorerExtension.csproj", "{DF5E31FD-A162-4053-B7C6-50C196CF60E3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrpcCppLib", "GrpcCppLib\GrpcCppLib.vcxproj", "{5AE1030C-3AF8-48A6-8028-7A2B3E60ECAF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FeatureLib", "FeatureLib\FeatureLib.csproj", "{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FeatureLib", "FeatureLib\FeatureLib.csproj", "{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5D1BAD1A-BD7D-4D05-8B87-1D5C84E704E6}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

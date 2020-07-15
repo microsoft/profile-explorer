@@ -9,16 +9,11 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
     <local:ToolPanelControl.CommandBindings>
-        <CommandBinding Command="local:BookmarkCommand.JumpToBookmark"
-                        Executed="JumpToBookmarkExecuted" />
-        <CommandBinding Command="local:BookmarkCommand.RemoveBookmark"
-                        Executed="RemoveBookmarkExecuted" />
-        <CommandBinding Command="local:BookmarkCommand.RemoveAllBookmarks"
-                        Executed="RemoveAllBookmarksExecuted" />
-        <CommandBinding Command="local:BookmarkCommand.MarkBookmark"
-                        Executed="MarkBookmarkExecuted" />
-        <CommandBinding Command="local:BookmarkCommand.UnmarkBookmark"
-                        Executed="UnmarkBookmarkExecuted" />
+        <CommandBinding Command="local:BookmarkCommand.JumpToBookmark" Executed="JumpToBookmarkExecuted" />
+        <CommandBinding Command="local:BookmarkCommand.RemoveBookmark" Executed="RemoveBookmarkExecuted" />
+        <CommandBinding Command="local:BookmarkCommand.RemoveAllBookmarks" Executed="RemoveAllBookmarksExecuted" />
+        <CommandBinding Command="local:BookmarkCommand.MarkBookmark" Executed="MarkBookmarkExecuted" />
+        <CommandBinding Command="local:BookmarkCommand.UnmarkBookmark" Executed="UnmarkBookmarkExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <Grid>
@@ -64,8 +59,7 @@
                         ToolTip="Jump to previous bookmark (Shift+F2)">
                         <Image Source="{StaticResource UpArrowIcon}" />
                     </Button>
-                    <Button Command="local:DocumentCommand.NextBookmark"
-                            ToolTip="Jump to next bookmark (F2)">
+                    <Button Command="local:DocumentCommand.NextBookmark" ToolTip="Jump to next bookmark (F2)">
                         <Image Source="{StaticResource DownArrowIcon}" />
                     </Button>
                     <Separator />
@@ -87,8 +81,7 @@
                     </Button>
                     <Separator />
 
-                    <Menu VerticalAlignment="Center"
-                          Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                    <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                         <MenuItem
                             Margin="0,0,0,0"
                             Padding="0,2,2,2"
@@ -204,12 +197,10 @@
                 </GridView>
             </ListView.View>
             <ListView.ItemContainerStyle>
-                <Style BasedOn="{StaticResource FlatListViewItem}"
-                       TargetType="{x:Type ListViewItem}">
+                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                     <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
                     <EventSetter Event="MouseEnter" Handler="ListViewItem_MouseEnter" />
-                    <Setter Property="Background"
-                            Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
 
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">
@@ -268,8 +259,7 @@
                         IsHitTestVisible="False" />
                     <MenuItem>
                         <MenuItem.Header>
-                            <local:ColorSelector
-                                ColorSelectedCommand="local:BookmarkCommand.MarkBookmark" />
+                            <local:ColorSelector ColorSelectedCommand="local:BookmarkCommand.MarkBookmark" />
                         </MenuItem.Header>
                     </MenuItem>
                     <MenuItem Command="local:BookmarkCommand.UnmarkBookmark" Header="Clear Marker" />

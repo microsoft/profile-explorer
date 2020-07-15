@@ -76,11 +76,11 @@ namespace IRExplorer {
         }
 
         public static T Deserialize<T>(object data, FunctionIR function) where T : class {
-            return Deserialize<T>((byte[]) data, function);
+            return Deserialize<T>((byte[])data, function);
         }
 
         public static T Deserialize<T>(object data) where T : class {
-            return Deserialize<T>((byte[]) data);
+            return Deserialize<T>((byte[])data);
         }
 
         public static List<ElementGroupState> SaveElementGroupState(List<HighlightedSegmentGroup> groups) {

@@ -1,1 +1,1 @@
-﻿namespace IRExplorer.Utilities {}
+﻿namespace IRExplorer.Utilities { }

@@ -2,9 +2,9 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
+using IRExplorerCore.IR;
 
 namespace IRExplorer {
     //? TODO: Introduce interface

@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Shell;
 using Task = System.Threading.Tasks.Task;
 
 namespace IRExplorerExtension {
-    class CommandBase {
+    internal class CommandBase {
         //? TODO: Use timeout everywhere
         private DTE2 dte_;
         private bool initialized_;
@@ -39,7 +39,7 @@ namespace IRExplorerExtension {
             }
 
             try {
-                var textDocument = (TextDocument) dte_.ActiveDocument.Object("TextDocument");
+                var textDocument = (TextDocument)dte_.ActiveDocument.Object("TextDocument");
                 var selection = textDocument.Selection;
 
                 if (selection != null) {

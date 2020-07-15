@@ -1,0 +1,95 @@
+﻿<UserControl
+    x:Class="IRExplorer.Panels.StartPagePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:IRExplorer.Panels"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <Border
+        Padding="10,10,10,10"
+        Background="#BFD9EFFF"
+        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        BorderThickness="2,2,2,2">
+        <StackPanel Orientation="Vertical">
+            <DockPanel>
+                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                    <Image
+                        Width="32"
+                        Height="32"
+                        Source="{StaticResource LogoImage}" />
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="20"
+                        FontWeight="Normal"
+                        Text="IR Explorer" />
+
+                </StackPanel>
+                <StackPanel>
+                    <TextBlock
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Cursor="Hand"
+                        DockPanel.Dock="Right"
+                        FontSize="14"
+                        MouseDown="TextBlock_MouseDown_1"
+                        Text="Documentation">
+                        <TextBlock.TextDecorations>
+                            <TextDecoration />
+                        </TextBlock.TextDecorations>
+                    </TextBlock>
+                    <TextBlock
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Cursor="Hand"
+                        DockPanel.Dock="Right"
+                        FontSize="14"
+                        MouseDown="TextBlock_MouseDown"
+                        Text="Visual Studio extension">
+                        <TextBlock.TextDecorations>
+                            <TextDecoration />
+                        </TextBlock.TextDecorations>
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+            <Separator Margin="0,8,0,8" />
+            <TextBlock
+                FontSize="14"
+                FontWeight="Normal"
+                Text="Recent files" />
+            <ListBox
+                Name="RecentFilesListBox"
+                Margin="0,8,0,0"
+                Background="#D8F0F0F0"
+                FontSize="14"
+                KeyDown="RecentFilesListBox_KeyDown"
+                MouseDoubleClick="RecentFilesListBox_MouseDoubleClick" />
+            <TextBlock
+                Margin="0,16,0,0"
+                FontSize="14"
+                FontWeight="Normal"
+                Text="Recent compared base/diff files" />
+            <ListBox
+                Name="RecentDiffFilesListBox"
+                Margin="0,8,0,0"
+                Background="#D8F0F0F0"
+                FontSize="14"
+                KeyDown="RecentDiffFilesListBox_KeyDown"
+                MouseDoubleClick="RecentDiffFilesListBox_MouseDoubleClick">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical">
+                            <TextBlock FontSize="14" Text="{Binding Item1}" />
+                            <Separator />
+                            <TextBlock FontSize="14" Text="{Binding Item2}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </StackPanel>
+
+    </Border>
+</UserControl>

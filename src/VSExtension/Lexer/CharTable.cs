@@ -48,27 +48,27 @@ namespace IRExplorerCore.Lexer {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsDigit(char value) {
-            return (CHAR_TYPE[(byte) value] & CHAR_DIGIT) != 0;
+            return (CHAR_TYPE[(byte)value] & CHAR_DIGIT) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsWhitespace(char value) {
-            return (CHAR_TYPE[(byte) value] & CHAR_WHITESPACE) != 0;
+            return (CHAR_TYPE[(byte)value] & CHAR_WHITESPACE) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsLetter(char value) {
-            return (CHAR_TYPE[(byte) value] & CHAR_LETTER) != 0;
+            return (CHAR_TYPE[(byte)value] & CHAR_LETTER) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNumberChar(char value) {
-            return (CHAR_TYPE[(byte) value] & CHAR_NUMBER) != 0;
+            return (CHAR_TYPE[(byte)value] & CHAR_NUMBER) != 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsIdentifierChar(char value) {
-            return (CHAR_TYPE[(byte) value] & CHAR_IDENTIFIER) != 0;
+            return (CHAR_TYPE[(byte)value] & CHAR_IDENTIFIER) != 0;
         }
     }
 }

@@ -8,7 +8,7 @@ namespace IRExplorerExtension {
     /// <summary>
     /// Command handler
     /// </summary>
-    sealed class MarkElementCommand : CommandBase {
+    internal sealed class MarkElementCommand : CommandBase {
         /// <summary>
         /// Command ID.
         /// </summary>

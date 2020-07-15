@@ -66,7 +66,7 @@ namespace IRExplorer {
         }
 
         public static byte to255(float v) {
-            return (byte) Math.Min(255, 256 * v);
+            return (byte)Math.Min(255, 256 * v);
         }
 
         public static float hueToRgb(float p, float q, float t) {

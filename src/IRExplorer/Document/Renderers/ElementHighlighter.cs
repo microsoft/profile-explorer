@@ -4,8 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Windows.Media;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorer {
@@ -158,8 +158,7 @@ namespace IRExplorer {
             geoBuilder.CornerRadius = 0;
 
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
-                foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment))
-                {
+                foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                     var actualRect = Utils.SnapToPixels(rect, -1, 0, 2, 0);
                     geoBuilder.AddRectangle(textView, actualRect);
                 }

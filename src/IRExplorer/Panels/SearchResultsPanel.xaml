@@ -9,16 +9,11 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
     <local:ToolPanelControl.CommandBindings>
-        <CommandBinding Command="local:SearchResultsCommand.JumpToSelected"
-                        Executed="JumpToSelectedExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToNext"
-                        Executed="JumpToNextExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToPrevious"
-                        Executed="JumpToPreviousExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToNextSection"
-                        Executed="JumpToNextSectionExecuted" />
-        <CommandBinding Command="local:SearchResultsCommand.JumpToPreviousSection"
-                        Executed="JumpToPreviousSectionExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.JumpToSelected" Executed="JumpToSelectedExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.JumpToNext" Executed="JumpToNextExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.JumpToPrevious" Executed="JumpToPreviousExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.JumpToNextSection" Executed="JumpToNextSectionExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.JumpToPreviousSection" Executed="JumpToPreviousSectionExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <Grid>
@@ -76,9 +71,10 @@
                         <Image Source="{StaticResource UpArrowIcon}" />
                     </Button>
 
-                    <Button ToolTip="Jump to next result (F3)"
-                            Command="local:SearchResultsCommand.JumpToNext"
-                            CommandTarget="{Binding ElementName=ResultList}">
+                    <Button
+                        Command="local:SearchResultsCommand.JumpToNext"
+                        CommandTarget="{Binding ElementName=ResultList}"
+                        ToolTip="Jump to next result (F3)">
                         <Image Source="{StaticResource DownArrowIcon}" />
                     </Button>
 
@@ -162,10 +158,8 @@
                 </GridView>
             </ListView.View>
             <ListView.ItemContainerStyle>
-                <Style BasedOn="{StaticResource FlatListViewItem}"
-                       TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background"
-                            Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
                     <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
 
                     <Style.Triggers>

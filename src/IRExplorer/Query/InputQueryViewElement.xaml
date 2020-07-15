@@ -50,9 +50,7 @@
                     <Setter Property="ContentTemplate">
                         <Setter.Value>
                             <DataTemplate>
-                                <CheckBox
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                    IsChecked="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <CheckBox Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" IsChecked="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </DataTemplate>
                         </Setter.Value>
                     </Setter>

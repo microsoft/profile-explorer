@@ -63,11 +63,11 @@ namespace IRExplorerCore.IR {
 
             switch (tuple.Kind) {
                 case TupleKind.Instruction: {
-                    PrintInstruction((InstructionIR) tuple);
+                    PrintInstruction((InstructionIR)tuple);
                     break;
                 }
                 case TupleKind.Label: {
-                    builder_.Append($"  label {((BlockLabelIR) tuple).Name}:");
+                    builder_.Append($"  label {((BlockLabelIR)tuple).Name}:");
                     break;
                 }
                 case TupleKind.Exception: {
@@ -132,7 +132,8 @@ namespace IRExplorerCore.IR {
         }
 
         private void PrintOperand(OperandIR op, bool printKind = false) {
-            string result = op.Kind switch {
+            string result = op.Kind switch
+            {
                 OperandKind.Variable => printKind
                     ? $"var {op.NameValue}.{op.Type}"
                     : $"{op.NameValue}.{op.Type}",
@@ -155,7 +156,7 @@ namespace IRExplorerCore.IR {
                     ? string.Format("label &{0}.{1}", op.NameValue)
                     : $"&{op.NameValue}",
                 OperandKind.Other => "other",
-                _                 => ""
+                _ => ""
             };
 
             var ssaTag = op.GetTag<ISSAValue>();

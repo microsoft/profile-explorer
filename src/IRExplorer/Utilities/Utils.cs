@@ -7,21 +7,22 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Xml;
-using IRExplorerCore.Analysis;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 
 namespace IRExplorer {
     static class Utils {
-        private static readonly char[] NewLineChars = {'\r', '\n'};
+        private static readonly char[] NewLineChars = { '\r', '\n' };
 
         public static T FindChild<T>(DependencyObject parent, string childName = null)
             where T : DependencyObject {
@@ -52,13 +53,59 @@ namespace IRExplorer {
                     // If the child's name is set for search
                     if (child is FrameworkElement frameworkElement && frameworkElement.Name == childName) {
                         // if the child's name is of the request name
-                        foundChild = (T) child;
+                        foundChild = (T)child;
                         break;
                     }
                 }
                 else {
                     // child element found.
-                    foundChild = (T) child;
+                    foundChild = (T)child;
+                    break;
+                }
+            }
+
+            return foundChild;
+        }
+
+
+        public static T FindChildLogical<T>(DependencyObject parent, string childName = null)
+            where T : DependencyObject {
+            // Confirm parent and childName are valid. 
+            if (parent == null) {
+                return null;
+            }
+
+            T foundChild = null;
+            foreach (object rawChild in LogicalTreeHelper.GetChildren(parent)) {
+                var child = rawChild as DependencyObject;
+
+                if (child == null) {
+                    continue;
+                }
+
+                // If the child is not of the request child type child
+                var childType = child as T;
+
+                if (childType == null) {
+                    // recursively drill down the tree
+                    foundChild = FindChildLogical<T>(child, childName);
+
+                    // If the child is found, break so we do not overwrite the found child. 
+                    if (foundChild != null) {
+                        break;
+                    }
+                }
+                else if (!string.IsNullOrEmpty(childName)) {
+                    // If the child's name is set for search
+                    if (child is FrameworkElement frameworkElement && frameworkElement.Name == childName) {
+                        // if the child's name is of the request name
+                        foundChild = (T)child;
+                        break;
+                    }
+                }
+                else {
+                    // child element found.
+                    foundChild = (T)child;
                     break;
                 }
             }
@@ -149,9 +196,9 @@ namespace IRExplorer {
         }
 
         public static Color ChangeColorLuminisity(Color color, double adjustment) {
-            return Color.FromArgb(color.A, (byte) Math.Clamp(color.R * adjustment, 0, 255),
-                                  (byte) Math.Clamp(color.G * adjustment, 0, 255),
-                                  (byte) Math.Clamp(color.B * adjustment, 0, 255));
+            return Color.FromArgb(color.A, (byte)Math.Clamp(color.R * adjustment, 0, 255),
+                                  (byte)Math.Clamp(color.G * adjustment, 0, 255),
+                                  (byte)Math.Clamp(color.B * adjustment, 0, 255));
         }
 
         public static int EstimateBrightness(Color color) {
@@ -162,7 +209,7 @@ namespace IRExplorer {
         }
 
         public static Color ColorFromString(string color) {
-            return (Color) ColorConverter.ConvertFromString(color);
+            return (Color)ColorConverter.ConvertFromString(color);
         }
 
         public static Brush BrushFromString(string color) {
@@ -201,7 +248,8 @@ namespace IRExplorer {
 
         public static string MakeElementDescription(IRElement element) {
             switch (element) {
-                case BlockIR block: return MakeBlockDescription(block);
+                case BlockIR block:
+                    return MakeBlockDescription(block);
                 case InstructionIR instr: {
                     var builder = new StringBuilder();
                     bool needsComma = false;
@@ -247,7 +295,8 @@ namespace IRExplorer {
 
                     return text;
                 }
-                default: return element.ToString();
+                default:
+                    return element.ToString();
             }
         }
 
@@ -567,7 +616,7 @@ namespace IRExplorer {
             var list = new List<Tuple<K2, V>>(dict.Count);
 
             foreach (var item in dict) {
-                list.Add(new Tuple<K2, V>((K2) item.Key, item.Value));
+                list.Add(new Tuple<K2, V>((K2)item.Key, item.Value));
             }
 
             return list;
@@ -590,7 +639,7 @@ namespace IRExplorer {
 
             foreach (var item in list) {
                 if (item.Item1 != null) {
-                    dict.Add((K2) item.Item1, item.Item2);
+                    dict.Add((K2)item.Item1, item.Item2);
                 }
             }
 
@@ -615,16 +664,21 @@ namespace IRExplorer {
         }
 
         public static bool AreEqual<TKey, TValue>(Dictionary<TKey, TValue> first, Dictionary<TKey, TValue> second) {
-            if (first == second) return true;
-            if ((first == null) || (second == null)) return false;
-            if (first.Count != second.Count) return false;
+            if (first == second)
+                return true;
+            if ((first == null) || (second == null))
+                return false;
+            if (first.Count != second.Count)
+                return false;
 
             var valueComparer = EqualityComparer<TValue>.Default;
 
             foreach (var kvp in first) {
                 TValue value2;
-                if (!second.TryGetValue(kvp.Key, out value2)) return false;
-                if (!valueComparer.Equals(kvp.Value, value2)) return false;
+                if (!second.TryGetValue(kvp.Key, out value2))
+                    return false;
+                if (!valueComparer.Equals(kvp.Value, value2))
+                    return false;
             }
 
             return true;
@@ -656,13 +710,17 @@ namespace IRExplorer {
         }
 
         public static IHighlightingDefinition LoadSyntaxHighlightingFile(string filePath) {
+            if (string.IsNullOrEmpty(filePath)) {
+                return null; // File couldn't be loaded.
+            }
+
             try {
                 using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
                 using var reader = new XmlTextReader(stream);
                 return HighlightingLoader.Load(reader, HighlightingManager.Instance);
             }
             catch (Exception ex) {
-                // MessageBox.Show($"Failed to load syntax file {filePath}");
+                Trace.TraceError($"Failed to load syntax file {filePath}: {ex}");
             }
 
             return null;
@@ -694,27 +752,23 @@ namespace IRExplorer {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Point SnapToPixels(Point point)
-        {
+        public static Point SnapToPixels(Point point) {
             return new Point(Math.Round(point.X), Math.Round(point.Y));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Rect SnapToPixels(Rect rect)
-        {
+        public static Rect SnapToPixels(Rect rect) {
             return new Rect(Math.Round(rect.X), Math.Round(rect.Y), Math.Round(rect.Width), Math.Round(rect.Height));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Rect SnapToPixels(Rect rect, double adjustX, double adjustY, double adjustWidth, double adjustHeight)
-        {
-            return new Rect(Math.Round(rect.X + adjustX), Math.Round(rect.Y + adjustY), 
+        public static Rect SnapToPixels(Rect rect, double adjustX, double adjustY, double adjustWidth, double adjustHeight) {
+            return new Rect(Math.Round(rect.X + adjustX), Math.Round(rect.Y + adjustY),
                 Math.Round(rect.Width + adjustWidth), Math.Round(rect.Height + adjustHeight));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Rect SnapToPixelsRect(double x, double y, double width, double height)
-        {
+        public static Rect SnapToPixelsRect(double x, double y, double width, double height) {
             return new Rect(Math.Round(x), Math.Round(y), Math.Round(width), Math.Round(height));
         }
 
@@ -724,6 +778,16 @@ namespace IRExplorer {
             public bool IsShift;
             public bool IsControl;
             public bool IsAlt;
+        }
+
+        public static void WaitForDebugger() {
+            while (!Debugger.IsAttached) {
+                Thread.Sleep(1000);
+                Trace.TraceWarning(".");
+                Trace.Flush();
+            }
+
+            Debugger.Break();
         }
     }
 }

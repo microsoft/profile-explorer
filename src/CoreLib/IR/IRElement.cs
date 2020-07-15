@@ -26,7 +26,7 @@ namespace IRExplorerCore.IR {
         }
 
         public IRElementId NewBlock(int blockId) {
-            return NewBlock((ushort) blockId);
+            return NewBlock((ushort)blockId);
         }
 
         public IRElementId NextTuple() {
@@ -46,14 +46,14 @@ namespace IRExplorerCore.IR {
 
         public static IRElementId FromLong(ulong value) {
             return new IRElementId {
-                OperandId = (ushort) ((value & 0xFFFF) >> 0),
-                TupleId = (uint) ((value & 0xFFFFFFFF0000) >> 32),
-                BlockId = (ushort) ((value & 0xFFFF000000000000) >> 48)
+                OperandId = (ushort)((value & 0xFFFF) >> 0),
+                TupleId = (uint)((value & 0xFFFFFFFF0000) >> 32),
+                BlockId = (ushort)((value & 0xFFFF000000000000) >> 48)
             };
         }
 
         public ulong ToLong() {
-            return ((ulong) BlockId << 48) | ((ulong) TupleId << 32) | OperandId;
+            return ((ulong)BlockId << 48) | ((ulong)TupleId << 32) | OperandId;
         }
     }
 
@@ -86,7 +86,7 @@ namespace IRExplorerCore.IR {
                     return this as TupleIR;
                 }
                 else if (this is OperandIR) {
-                    return ((OperandIR) this).Parent;
+                    return ((OperandIR)this).Parent;
                 }
 
                 return null;
@@ -99,7 +99,7 @@ namespace IRExplorerCore.IR {
                     return this as InstructionIR;
                 }
                 else if (this is OperandIR) {
-                    return ((OperandIR) this).Parent as InstructionIR;
+                    return ((OperandIR)this).Parent as InstructionIR;
                 }
 
                 return null;

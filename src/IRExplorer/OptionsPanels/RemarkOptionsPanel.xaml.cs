@@ -1,19 +1,8 @@
-﻿using IRExplorer.OptionsPanels;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace IRExplorer.OptionsPanels {
     /// <summary>
@@ -24,11 +13,10 @@ namespace IRExplorer.OptionsPanels {
         public const double MinimumHeight = 300;
         public const double DefaultWidth = 350;
         public const double MinimumWidth = 350;
-        public const double LeftMargin = 166;
+        public const double LeftMargin = 200;
 
-        public RemarkOptionsPanel(ICompilerInfoProvider compilerInfo) {
+        public RemarkOptionsPanel() {
             InitializeComponent();
-            compilerInfo_ = compilerInfo;
             PreviewMouseUp += RemarkOptionsPanel_PreviewMouseUp;
             PreviewKeyUp += RemarkOptionsPanel_PreviewKeyUp;
 
@@ -42,7 +30,6 @@ namespace IRExplorer.OptionsPanels {
 
         private List<CheckBox> kindCheckboxes_;
         private List<CheckBox> categoryCheckboxes_;
-        private ICompilerInfoProvider compilerInfo_;
 
         private void SetCheckboxesState(List<CheckBox> list, bool state) {
             list.ForEach((item) => item.IsChecked = state);
@@ -65,7 +52,7 @@ namespace IRExplorer.OptionsPanels {
             categoryCheckboxes_ = new List<CheckBox>();
 
             bool initialLoad = !remarkSettings.HasCategoryFilters;
-            var categories = compilerInfo_.RemarkProvider.LoadRemarkCategories();
+            var categories = App.Session.CompilerInfo.RemarkProvider.LoadRemarkCategories();
 
             if (categories == null) {
                 MessageBox.Show("Failed to load remark settings file,\ncheck JSON for any syntax errors!", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -135,7 +122,7 @@ namespace IRExplorer.OptionsPanels {
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e) {
-            var settingsPath = App.GetRemarksDefinitionFilePath("utc");
+            var settingsPath = App.GetRemarksDefinitionFilePath(App.Session.CompilerInfo.CompilerIRName);
             App.LaunchSettingsFileEditor(settingsPath);
         }
 

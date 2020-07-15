@@ -97,7 +97,7 @@ namespace IRExplorer {
             TextView.InitializeFromDocument(document);
 
             if (Session.LoadPanelState(this, section) is DefinitionPanelState savedState) {
-                OnElementSelected(new IRElementEventArgs {Element = savedState.DefinedOperand});
+                OnElementSelected(new IRElementEventArgs { Element = savedState.DefinedOperand });
                 TextView.SetCaretAtOffset(savedState.CaretOffset);
                 TextView.ScrollToHorizontalOffset(savedState.HorizontalOffset);
                 TextView.ScrollToVerticalOffset(savedState.VerticalOffset);
@@ -119,10 +119,20 @@ namespace IRExplorer {
                 savedState.CaretOffset = TextView.CaretOffset;
                 savedState.HasPinnedContent = HasPinnedContent;
                 Session.SavePanelState(savedState, this, section);
-                definedOperand_ = null;
-                SymbolName.Text = "";
+                ResetDefinedOperand();
             }
 
+            TextView.UnloadDocument();
+        }
+
+        private void ResetDefinedOperand() {
+            definedOperand_ = null;
+            SymbolName.Text = "";
+        }
+
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            ResetDefinedOperand();
             TextView.UnloadDocument();
         }
 

@@ -3,8 +3,8 @@
 
 using System;
 using System.Windows.Media;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
+using IRExplorerCore.IR;
 
 namespace IRExplorer {
     public class IRSegment : TextSegment {
@@ -28,10 +28,9 @@ namespace IRExplorer {
         Marked
     }
 
-    public sealed class IRSegmentGroup
-    {
+    public sealed class IRSegmentGroup {
         public TextSegmentCollection<IRSegment> Segments { get; set; }
-        public  void Add(IRElement element) {
+        public void Add(IRElement element) {
             Segments.Add(new IRSegment(element));
         }
     }

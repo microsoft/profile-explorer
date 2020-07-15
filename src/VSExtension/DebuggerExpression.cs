@@ -4,7 +4,7 @@ using System.Text;
 using IRExplorerCore.Lexer;
 
 namespace IRExplorerExtension {
-    class DebuggerExpression {
+    internal class DebuggerExpression {
         private static List<Token> TokenizeString(string value) {
             var lexer = new Lexer(value);
             var tokens = new List<Token>();

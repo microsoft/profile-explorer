@@ -119,9 +119,12 @@ namespace IRExplorerCore.Lexer {
                 }
 
                 switch (letter) {
-                    case '\t': break; // Tab.
-                    case '\v': break; // Vertical tab.
-                    case '\f': break; // Form feed.
+                    case '\t':
+                        break; // Tab.
+                    case '\v':
+                        break; // Vertical tab.
+                    case '\f':
+                        break; // Form feed.
                     case '\n': {
                         line_++;
                         lineStart_ = source_.Position + 1;

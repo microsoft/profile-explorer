@@ -58,7 +58,7 @@ namespace IRExplorer {
 
         public async Task<SectionSearchResult> SearchSectionAsync(
             string searchedText, TextSearchKind searchKind, IRTextSection section) {
-            var input = new List<IRTextSection> {section};
+            var input = new List<IRTextSection> { section };
             var resultList = await SearchAsync(searchedText, searchKind, input);
 
             if (resultList.Count > 0) {

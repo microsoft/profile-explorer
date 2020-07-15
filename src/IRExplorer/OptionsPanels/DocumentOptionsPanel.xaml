@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorer.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
+    xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     d:DesignHeight="600"
     d:DesignWidth="400"
     mc:Ignorable="d">
@@ -21,7 +21,7 @@
                     <ColumnDefinition Width="70" />
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
-                <toolkit:ColorPicker
+                <xctk:ColorPicker
                     Grid.Column="0"
                     Width="64"
                     HorizontalAlignment="Left"
@@ -49,46 +49,28 @@
                     VerticalAlignment="Center"
                     Text="IR syntax" />
                 <ComboBox
+                    Name="IRSyntaxCombobox"
                     Width="180"
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
-                    SelectedIndex="0">
-                    <ComboBoxItem Content="UTC IR" />
-                    <ComboBoxItem Content="UTC post-lower IR (x86/x64)" />
-                    <ComboBoxItem Content="UTC post-lower IR (ARM64)" />
-                    <ComboBoxItem Content="None" />
-                </ComboBox>
-
-
-                <Button
-                    x:Name="SyntaxStyleButton"
-                    Width="20"
-                    Height="20"
-                    Margin="4,0,0,0"
-                    HorizontalAlignment="Right"
-                    Click="SyntaxStyleButton_Click"
-                    DockPanel.Dock="Right"
-                    ToolTip="Use custom syntax highlighting style">
-                    <Image Source="{StaticResource StyleIcon}" />
-                    <Button.ContextMenu>
-                        <ContextMenu x:Name="SyntaxStyleContextMenu">
-                            <MenuItem Header="Default" />
-                        </ContextMenu>
-                    </Button.ContextMenu>
-                </Button>
+                    DisplayMemberPath="Name"
+                    SelectedIndex="0" />
 
                 <ToggleButton
                     x:Name="SyntaxEditButton"
                     Width="20"
                     Height="20"
-                    Margin="2,0,0,0"
+                    Margin="4,0,0,0"
                     HorizontalAlignment="Right"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    BorderBrush="{x:Null}"
                     Click="SyntaxEditButton_Click"
                     DockPanel.Dock="Right"
-                    ToolTip="Use custom document colors style">
-                    <Image Source="{StaticResource EditIcon}" />
+                    ToolTip="Edit colors used by selected IR syntax highlighting">
+                    <Image Source="{StaticResource ThemeIcon}" />
 
                 </ToggleButton>
+
 
                 <Button
                     x:Name="OpenSyntaxStyleButton"
@@ -96,24 +78,26 @@
                     Height="20"
                     Margin="2,0,0,0"
                     HorizontalAlignment="Right"
-                    Click="SyntaxStyleButton_Click"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    BorderBrush="{x:Null}"
+                    Click="OpenSyntaxStyleButton_Click"
                     DockPanel.Dock="Right"
-                    IsEnabled="False"
-                    ToolTip="Open sytax highlighting style file">
+                    ToolTip="Open the directory with the IR sytax highlighting files">
                     <Image Source="{StaticResource FolderIcon}" />
                 </Button>
 
                 <Button
-                    x:Name="SavenSyntaxStyleButton"
+                    x:Name="ReloadSyntaxStyleButton"
                     Width="20"
                     Height="20"
                     Margin="2,0,0,0"
                     HorizontalAlignment="Right"
-                    Click="SyntaxStyleButton_Click"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    BorderBrush="{x:Null}"
+                    Click="ReloadSyntaxStyleButton_Click"
                     DockPanel.Dock="Right"
-                    IsEnabled="False"
-                    ToolTip="Export sytax highlighting style file">
-                    <Image Source="{StaticResource SourceIcon}" />
+                    ToolTip="Reload all IR sytax highlighting files">
+                    <Image Source="{StaticResource ReloadIcon}" />
                 </Button>
 
             </StackPanel>
@@ -127,10 +111,41 @@
                 BorderThickness="1,1,1,1"
                 Visibility="Collapsed">
                 <StackPanel Orientation="Vertical">
-                    <TextBlock
-                        Margin="0,0,0,4"
-                        FontWeight="DemiBold"
-                        Text="Syntax Highlighting Colors" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock
+                            Margin="0,0,0,4"
+                            FontWeight="DemiBold"
+                            Text="Syntax Highlighting Colors" />
+                        <Button
+                            x:Name="ResetSyntaxStyleButton"
+                            Width="20"
+                            Height="20"
+                            Margin="8,0,0,0"
+                            Padding="0,2,0,-1"
+                            HorizontalAlignment="Right"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            BorderBrush="{x:Null}"
+                            Click="ResetSyntaxStyleButton_Click"
+                            DockPanel.Dock="Right"
+                            ToolTip="Reset the syntax highlighting file to initial state">
+                            <Image Source="{StaticResource UndoIcon}" />
+                        </Button>
+
+                        <Button
+                            x:Name="EditSyntaxFileButton"
+                            Width="20"
+                            Height="20"
+                            Margin="2,0,0,0"
+                            HorizontalAlignment="Right"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            BorderBrush="{x:Null}"
+                            Click="EditSyntaxFileButton_Click"
+                            DockPanel.Dock="Right"
+                            ToolTip="Edit the syntax highlighting file in external text editor">
+                            <Image Source="{StaticResource EditIcon}" />
+                        </Button>
+
+                    </StackPanel>
                     <ItemsControl x:Name="SyntaxHighlightingColorPickers" ItemTemplate="{StaticResource ColorPickerItemList}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -159,7 +174,7 @@
                     Width="50"
                     VerticalAlignment="Center"
                     Text="Font size" />
-                <toolkit:DoubleUpDown
+                <xctk:DoubleUpDown
                     Margin="4,0,0,0"
                     Maximum="36.0"
                     Minimum="5.0"
@@ -227,6 +242,8 @@
                     Width="20"
                     Height="20"
                     HorizontalAlignment="Right"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    BorderBrush="{x:Null}"
                     Click="StyleButton_Click"
                     DockPanel.Dock="Right"
                     ToolTip="Use custom document colors style">
@@ -245,7 +262,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -268,7 +285,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -289,7 +306,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -310,7 +327,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -332,7 +349,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -360,7 +377,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -382,7 +399,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -403,7 +420,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -424,7 +441,7 @@
                         <ColumnDefinition Width="70" />
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
+                    <xctk:ColorPicker
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"

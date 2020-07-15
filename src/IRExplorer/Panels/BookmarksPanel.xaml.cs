@@ -42,7 +42,7 @@ namespace IRExplorer {
         }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e) {
-            var bookmark = ((TextBox) sender).DataContext as Bookmark;
+            var bookmark = ((TextBox)sender).DataContext as Bookmark;
             document_.BookmarkInfoChanged(bookmark);
         }
 
@@ -76,17 +76,17 @@ namespace IRExplorer {
         }
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e) {
-            var bookmark = ((CheckBox) sender).DataContext as Bookmark;
+            var bookmark = ((CheckBox)sender).DataContext as Bookmark;
             document_.BookmarkInfoChanged(bookmark);
         }
 
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e) {
-            var bookmark = ((CheckBox) sender).DataContext as Bookmark;
+            var bookmark = ((CheckBox)sender).DataContext as Bookmark;
             document_.BookmarkInfoChanged(bookmark);
         }
 
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            var bookmark = ((ListViewItem) sender).DataContext as Bookmark;
+            var bookmark = ((ListViewItem)sender).DataContext as Bookmark;
             document_.JumpToBookmark(bookmark);
             bookmarks_.Refresh();
         }
@@ -156,6 +156,11 @@ namespace IRExplorer {
                 BookmarkList.Focus();
                 focusedOnce_ = true;
             }
+        }
+
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            ResetBookmarks();
         }
 
         #endregion

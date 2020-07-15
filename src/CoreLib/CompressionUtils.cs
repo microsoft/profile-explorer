@@ -2,13 +2,11 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading;
 
 namespace IRExplorerCore {
     public static class CompressionUtils {
@@ -113,7 +111,7 @@ namespace IRExplorerCore {
         }
     }
 
-    public class CompressedObject<T> where T:class {
+    public class CompressedObject<T> where T : class {
         private byte[] data_;
         private T value_;
         private object lockObject_;
@@ -127,7 +125,7 @@ namespace IRExplorerCore {
 
         public void Compress() {
             lock (lockObject_) {
-                if(value_ == null) {
+                if (value_ == null) {
                     return; // Compressed already.
                 }
 

@@ -4,8 +4,28 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace IRExplorerCore {
+    public static class WaitHandleExtensions {
+        public static Task AsTask(this WaitHandle handle) {
+            return AsTask(handle, Timeout.InfiniteTimeSpan);
+        }
+
+        public static Task AsTask(this WaitHandle handle, TimeSpan timeout) {
+            var tcs = new TaskCompletionSource<object>();
+            var registration = ThreadPool.RegisterWaitForSingleObject(handle, (state, timedOut) => {
+                var localTcs = (TaskCompletionSource<object>)state;
+                if (timedOut)
+                    localTcs.TrySetCanceled();
+                else
+                    localTcs.TrySetResult(null);
+            }, tcs, timeout, executeOnlyOnce: true);
+            tcs.Task.ContinueWith((_, state) => ((RegisteredWaitHandle)state).Unregister(null), registration, TaskScheduler.Default);
+            return tcs.Task;
+        }
+    }
+
     public class CancelableTaskInfo : IDisposable {
         private bool canceled = false;
         private CancellationToken cancelToken_;
@@ -42,9 +62,23 @@ namespace IRExplorerCore {
             TaskCompletedEvent.WaitOne();
         }
 
+        public async Task WaitToCompleteAsync() {
+            //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
+            //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
+            Debug.Assert(!disposed_);
+            await TaskCompletedEvent.AsTask();
+        }
+
         public void WaitToComplete(TimeSpan timeout) {
             Debug.Assert(!disposed_);
             TaskCompletedEvent.WaitOne(timeout);
+        }
+
+        public async Task WaitToCompleteAsync(TimeSpan timeout) {
+            //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
+            //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
+            Debug.Assert(!disposed_);
+            await TaskCompletedEvent.AsTask(timeout);
         }
 
         public void Completed() {
@@ -58,7 +92,6 @@ namespace IRExplorerCore {
             //Debug.WriteLine($"+ Cancel task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
             Debug.Assert(!disposed_);
-            Debug.Assert(!IsCanceled);
             tokenSource_.Cancel();
         }
 

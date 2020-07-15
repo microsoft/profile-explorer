@@ -43,11 +43,11 @@ namespace IRExplorerCore.IR {
         public bool IsReturn => Kind == InstructionKind.Return;
 
         public T OpcodeAs<T>() where T : Enum {
-            return (T) Opcode;
+            return (T)Opcode;
         }
 
         public bool OpcodeIs<T>(T value) where T : Enum {
-            return Opcode != null && ((T) Opcode).Equals(value);
+            return Opcode != null && ((T)Opcode).Equals(value);
         }
 
         public override void Accept(IRVisitor visitor) {

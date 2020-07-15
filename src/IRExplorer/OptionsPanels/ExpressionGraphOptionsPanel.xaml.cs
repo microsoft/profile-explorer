@@ -1,11 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using IRExplorer.OptionsPanels;
-using System;
-using System.Windows;
-using System.Windows.Controls;
-
 namespace IRExplorer.OptionsPanels {
     public partial class ExpressionGraphOptionsPanel : OptionsPanelBase {
         public const double DefaultHeight = 500;

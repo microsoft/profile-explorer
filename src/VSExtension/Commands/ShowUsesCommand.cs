@@ -7,7 +7,7 @@ namespace IRExplorerExtension {
     /// <summary>
     /// Command handler
     /// </summary>
-    sealed class ShowUsesCommand : CommandBase {
+    internal sealed class ShowUsesCommand : CommandBase {
         /// <summary>
         /// Command ID.
         /// </summary>

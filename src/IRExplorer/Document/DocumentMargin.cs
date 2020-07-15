@@ -3,17 +3,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using IRExplorer.Utilities;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorer.Utilities;
+using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorer {
@@ -106,7 +103,7 @@ namespace IRExplorer {
         private static readonly HighlightingStyle nearbyBookmarkStyle_ =
             new HighlightingStyle(Colors.LightBlue, Pens.GetPen(Colors.Silver));
         private SolidColorBrush backgroundBrush_;
-        
+
         private HashSet<IRElement> blockElements_;
         private List<HighlightedSegmentGroup> blockGroups_;
 
@@ -578,7 +575,7 @@ namespace IRExplorer {
             // Draw bookmarks in two steps, first the unselected ones, then the selected ones.
             // This is done so that the borders of the selected ones are not drawn over by other 
             // segments with a different border color.
-            double lineHeight =  Math.Ceiling(TextView.DefaultLineHeight);
+            double lineHeight = Math.Ceiling(TextView.DefaultLineHeight);
             var segments = bookmarkSegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart);
 
             foreach (var segment in segments) {
@@ -636,12 +633,10 @@ namespace IRExplorer {
                         int index = 0;
                         int leaderIndex = 0;
 
-                        foreach (var remark in remarkGroup.Remarks)
-                        {
+                        foreach (var remark in remarkGroup.Remarks) {
                             var fontWeight = FontWeights.Normal;
 
-                            if (remark == remarkGroup.LeaderRemark)
-                            {
+                            if (remark == remarkGroup.LeaderRemark) {
                                 leaderIndex = index;
                                 fontWeight = FontWeights.DemiBold;
                             }
@@ -657,18 +652,18 @@ namespace IRExplorer {
 
                         foreach (var remark in remarkGroup.Remarks) {
                             var remarkColor = remark.Category.MarkColor == Colors.Black ||
-                                              remark.Category.MarkColor == Colors.Transparent 
-                                              ? backgroundBrush_.Color 
+                                              remark.Category.MarkColor == Colors.Transparent
+                                              ? backgroundBrush_.Color
                                               : remark.Category.MarkColor;
                             var remarkBrush = ColorBrushes.GetBrush(remarkColor);
                             var text = textSegments[index];
                             double offsetY = y + (index - leaderIndex) * lineHeight;
-                            
+
                             var remarkBounds = Utils.SnapToPixelsRect(0, offsetY - 1, maxTextWidth + baseWidth + 2 * ButtonTextPadding, lineHeight);
                             drawingContext.DrawRectangle(remarkBrush, style.Border, remarkBounds);
                             drawingContext.DrawText(text, new Point(baseWidth + ButtonTextPadding, offsetY - 1));
 
-                            if(index == leaderIndex) {
+                            if (index == leaderIndex) {
                                 bounds = remarkBounds;
                             }
 
@@ -724,7 +719,7 @@ namespace IRExplorer {
                         return null;
                     }
 
-                    var remarkGroup = (RemarkLineGroup) segment.Tag;
+                    var remarkGroup = (RemarkLineGroup)segment.Tag;
                     var remark = remarkGroup.LeaderRemark;
 
                     if (remark.Category.MarkIconIndex >= 0 &&
@@ -734,7 +729,8 @@ namespace IRExplorer {
 
                     return null;
                 }
-                default: throw new InvalidOperationException("Unknown segment kind!");
+                default:
+                    throw new InvalidOperationException("Unknown segment kind!");
             }
         }
 
@@ -762,7 +758,7 @@ namespace IRExplorer {
             // Clear current segments and add back just the bookmarks.
             bookmarkSegments_.Clear();
 
-            foreach(var segment in bookmarkList) {
+            foreach (var segment in bookmarkList) {
                 bookmarkSegments_.Add(segment);
             }
         }

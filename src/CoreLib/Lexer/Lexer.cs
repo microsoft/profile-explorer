@@ -73,6 +73,12 @@ namespace IRExplorerCore.Lexer {
                 source_.GoBack(2);
                 NextChar();
             }
+            else if (previous == 'x' || previous == 'X') {
+                // .x from 123.x should not be part of a number either,
+                // since the x does not denote a hex number.
+                source_.GoBack(3);
+                NextChar();
+            }
 
             int length = source_.Position - startPosition - 1;
             return MakeDataToken(TokenKind.Number, startPosition, length);
@@ -118,9 +124,12 @@ namespace IRExplorerCore.Lexer {
                 }
 
                 switch (letter) {
-                    case '\t': break; // Tab.
-                    case '\v': break; // Vertical tab.
-                    case '\f': break; // Form feed.
+                    case '\t':
+                        break; // Tab.
+                    case '\v':
+                        break; // Vertical tab.
+                    case '\f':
+                        break; // Form feed.
                     case '\n': {
                         line_++;
                         lineStart_ = source_.Position + 1;

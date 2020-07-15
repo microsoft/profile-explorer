@@ -7,7 +7,7 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 
 namespace IRExplorerExtension {
-    static class ClientInstance {
+    internal static class ClientInstance {
         private static readonly string DefaultIRExplorerPath =
             @"C:\Program Files (x86)\IR Explorer\irexplorer.exe";
 
@@ -61,8 +61,7 @@ namespace IRExplorerExtension {
         public static async Task<bool> WaitForDebugServer(DateTime timeout) {
             try {
                 if (serverChannel_.State != ChannelState.Ready) {
-                    bool result =
-                        await serverChannel_.TryWaitForStateChangedAsync(
+                    bool result = await serverChannel_.TryWaitForStateChangedAsync(
                             serverChannel_.State, timeout);
 
                     return (result && serverChannel_.State == ChannelState.Ready) ||

@@ -119,7 +119,7 @@ namespace IRExplorer {
         public void ForEachDiffSegment(Action<DiffTextSegment, Color> action) {
             foreach (var segment in segments_) {
                 var pen = GetSegmentColor(segment, false);
-                var color = pen != null ? ((SolidColorBrush) pen).Color : Colors.Transparent;
+                var color = pen != null ? ((SolidColorBrush)pen).Color : Colors.Transparent;
                 action(segment, color);
             }
         }
@@ -181,13 +181,17 @@ namespace IRExplorer {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Brush GetSegmentColor(DiffTextSegment segment, bool fromDrawing = true) {
             switch (segment.Kind) {
-                case DiffKind.Deletion:  return deletionBrush_;
-                case DiffKind.Insertion: return insertionBrush_;
+                case DiffKind.Deletion:
+                    return deletionBrush_;
+                case DiffKind.Insertion:
+                    return insertionBrush_;
                 case DiffKind.Placeholder: {
                     return fromDrawing ? placeholderTileBrush_ : placeholderBrush_;
                 }
-                case DiffKind.Modification:      return modificationBrush_;
-                case DiffKind.MinorModification: return minorModificationBrush_;
+                case DiffKind.Modification:
+                    return modificationBrush_;
+                case DiffKind.MinorModification:
+                    return minorModificationBrush_;
             }
 
             return Brushes.Transparent;
@@ -195,13 +199,14 @@ namespace IRExplorer {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Pen GetSegmentPen(DiffTextSegment segment) {
-            return segment.Kind switch {
-                DiffKind.Deletion          => deletionPen_,
-                DiffKind.Insertion         => insertionPen_,
-                DiffKind.Modification      => modificationPen_,
+            return segment.Kind switch
+            {
+                DiffKind.Deletion => deletionPen_,
+                DiffKind.Insertion => insertionPen_,
+                DiffKind.Modification => modificationPen_,
                 DiffKind.MinorModification => minorModificationPen_,
-                DiffKind.Placeholder       => placeholderPen_,
-                _                          => null
+                DiffKind.Placeholder => placeholderPen_,
+                _ => null
             };
         }
 

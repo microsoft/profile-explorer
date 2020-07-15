@@ -9,11 +9,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using IRExplorer.Scripting;
 using CSScriptLib;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
+using IRExplorer.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Host.Mef;
@@ -27,8 +27,9 @@ namespace IRExplorer {
 
     public partial class ScriptingPanel : ToolPanelControl {
         private static readonly string InitialScript = string.Join(Environment.NewLine,
-                                                                   "using Core;", "using Core.IR;",
-                                                                   "using Core.UTC;", "using Client;",
+                                                                   "using IRExplorerCore;", "using IRExplorerCore.IR;",
+                                                                   "using IRExplorerCore.Analysis;", "using IRExplorerCore.Scripting;",
+                                                                   "using IRExplorerCore.UTC;", "using IRExplorer;",
                                                                    "using System.Windows.Media;",
                                                                    "\n// func: IR function on which the script executes",
                                                                    "// session: provides script interaction with Compiler Studio (text output, marking, etc.)",
@@ -43,31 +44,42 @@ namespace IRExplorer {
             TextView.TextArea.TextEntered += TextArea_TextEntered;
         }
 
-        private void SetupAutocomplete() {
-            var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
-            var workspace = new AdhocWorkspace(host);
-            var assemblyRefs = new List<PortableExecutableReference>();
-
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
-                try {
-                    assemblyRefs.Add(MetadataReference.CreateFromFile(assembly.Location));
-                }
-                catch (Exception ex) {
-                    return;
-                }
+        private bool SetupAutocomplete() {
+            if (roslynDocument != null) {
+                return true;
             }
 
-            var projectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(),
-                                                 "Script", "Script", LanguageNames.CSharp)
-                                         .WithMetadataReferences(assemblyRefs);
+            try {
+                var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
+                var workspace = new AdhocWorkspace(host);
+                var assemblyRefs = new List<PortableExecutableReference>();
 
-            var project = workspace.AddProject(projectInfo);
-            roslynDocument = workspace.AddDocument(project.Id, "DummyFile.cs", SourceText.From(""));
+                foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                    try {
+                        assemblyRefs.Add(MetadataReference.CreateFromFile(assembly.Location));
+                    }
+                    catch (Exception ex) {
+                        Trace.TraceWarning($"Failed to setup scripting auto-complete for assembly {assembly.Location}: {ex.Message}");
+                    }
+                }
+
+                var projectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(),
+                                                     "Script", "Script", LanguageNames.CSharp)
+                                             .WithMetadataReferences(assemblyRefs);
+
+                var project = workspace.AddProject(projectInfo);
+                roslynDocument = workspace.AddDocument(project.Id, "DummyFile.cs", SourceText.From(""));
+                return true;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to setup scripting auto-complete {ex.Message}");
+                return false;
+            }
         }
 
         private async void TextArea_TextEntered(object sender, TextCompositionEventArgs e) {
-            if (roslynDocument == null) {
-                SetupAutocomplete();
+            if (!SetupAutocomplete()) {
+                return;
             }
 
             // https://stackoverflow.com/questions/39422126/whats-the-right-way-to-update-roslyns-document-while-typing
@@ -291,12 +303,12 @@ Adding assembly System.Linq.Expressions, Version=4.2.2.0, Culture=neutral, Publi
                     //? TODO: Preload icons in static constructor
                     switch (Kind) {
                         case AutocompleteEntryKind.Field: {
-                            return (ImageSource) Application.Current.Resources["TagIcon"];
+                            return (ImageSource)Application.Current.Resources["TagIcon"];
                         }
                         case AutocompleteEntryKind.Method:
-                            return (ImageSource) Application.Current.Resources["RightArrowIcon"];
+                            return (ImageSource)Application.Current.Resources["RightArrowIcon"];
                         case AutocompleteEntryKind.Property:
-                            return (ImageSource) Application.Current.Resources["TagIcon"];
+                            return (ImageSource)Application.Current.Resources["TagIcon"];
                         default: {
                             return null;
                         }

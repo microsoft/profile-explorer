@@ -1,13 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit;
+using IRExplorerCore.IR;
 
 namespace IRExplorer.Utilities {
     public static class DocumentUtils {
@@ -74,8 +73,7 @@ namespace IRExplorer.Utilities {
                                                   typeface, emSize.Value, foreground, null,
                                                   TextOptions.GetTextFormattingMode(element),
                                                   VisualTreeHelper.GetDpi(element).PixelsPerDip);
-            if (fontWeight.HasValue)
-            {
+            if (fontWeight.HasValue) {
                 formattedText.SetFontWeight(fontWeight.Value);
             }
 

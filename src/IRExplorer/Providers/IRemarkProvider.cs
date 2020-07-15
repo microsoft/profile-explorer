@@ -1,9 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Collections.Generic;
-using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 
@@ -24,6 +22,8 @@ namespace IRExplorer {
         bool LoadSettings();
         List<RemarkCategory> LoadRemarkCategories();
         List<RemarkSectionBoundary> LoadRemarkSectionBoundaries();
+
+        //? TODO: Should use a CancelableTaskInfo to support fast canceling when section switches
         public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section);
         public OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
     }

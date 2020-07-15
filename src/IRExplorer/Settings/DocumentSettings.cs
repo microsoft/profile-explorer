@@ -55,7 +55,8 @@ namespace IRExplorer {
 
         [ProtoMember(21)] public Color BorderColor { get; set; }
 
-        [ProtoMember(22)] public string SyntaxHighlightingFilePath { get; set; }
+        [ProtoMember(23)] public string SyntaxHighlightingName { get; set; }
+
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -72,7 +73,6 @@ namespace IRExplorer {
             ShowInfoOnHoverWithModifier = true;
             ShowPreviewPopup = true;
             ShowPreviewPopupWithModifier = false;
-            SyntaxHighlightingFilePath = "";
             BackgroundColor = Utils.ColorFromString("#FFFAFA");
             AlternateBackgroundColor = Utils.ColorFromString("#f5f5f5");
             TextColor = Colors.Black;
@@ -82,6 +82,7 @@ namespace IRExplorer {
             DefinitionValueColor = Utils.ColorFromString("#F2E67C");
             UseValueColor = Utils.ColorFromString("#95DBAD");
             BorderColor = Colors.Black;
+            SyntaxHighlightingName = "UTC IR";
         }
 
         public override SettingsBase Clone() {
@@ -112,7 +113,7 @@ namespace IRExplorer {
                    DefinitionValueColor.Equals(settings.DefinitionValueColor) &&
                    UseValueColor.Equals(settings.UseValueColor) &&
                    BorderColor.Equals(settings.BorderColor) &&
-                   SyntaxHighlightingFilePath == settings.SyntaxHighlightingFilePath;
+                   SyntaxHighlightingName == settings.SyntaxHighlightingName;
         }
     }
 }

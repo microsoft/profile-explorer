@@ -91,7 +91,7 @@ namespace IRExplorer {
             return path;
         }
 
-        private static bool InitializeTelemetry() {
+        public static bool InitializeTelemetry() {
             if (telemetry_ != null) {
                 return true;
             }
@@ -113,6 +113,15 @@ namespace IRExplorer {
             }
 
             return telemetry_ != null;
+        }
+
+        public static void CreateTelemetryEvent(string name) {
+            if (telemetry_ == null) {
+                return;
+            }
+
+            telemetry_.TrackEvent(name);
+            telemetry_.Flush();
         }
 
         public static void
@@ -141,16 +150,16 @@ namespace IRExplorer {
                     telemetry_.Flush();
                 }
 
-                var minidumpPath = CreateMiniDump();
+                ///var minidumpPath = CreateMiniDump();
                 var stackTracePath = CreateStackTraceDump(stackTrace);
                 var sectionPath = CreateSectionDump();
 
                 if (showUIPrompt) {
                     MessageBox.Show(
-                        $"Crash information written to:\n{sectionPath}\n{stackTracePath}\n{minidumpPath}",
+                        $"Crash information written to:\n{sectionPath}\n{stackTracePath}",
                         "Compiler Studio Crash", MessageBoxButton.OK, MessageBoxImage.Information);
 
-                    OpenExplorerAtFile(minidumpPath);
+                    OpenExplorerAtFile(stackTracePath);
 
                     // Show auto-saved backup info.
                     string autosavePath = Utils.GetAutoSaveFilePath();

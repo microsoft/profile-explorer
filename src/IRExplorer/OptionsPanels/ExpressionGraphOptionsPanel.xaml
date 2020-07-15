@@ -16,15 +16,18 @@
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Print variable names"
-                IsChecked="{Binding Path=PrintVariableNames, Mode=TwoWay}" />
+                IsChecked="{Binding Path=PrintVariableNames, Mode=TwoWay}"
+                ToolTip="Print the destination variable name for each instruction" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Print variable SSA numbers"
-                IsChecked="{Binding Path=PrintSSANumbers, Mode=TwoWay}" />
+                Content="Print variable SSA definition numbers"
+                IsChecked="{Binding Path=PrintSSANumbers, Mode=TwoWay}"
+                ToolTip="Print the SSA definition numbers for instructions and other operands" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Skip copy instructions"
-                IsChecked="{Binding Path=SkipCopyInstructions, Mode=TwoWay}" />
+                Content="Skip over copy instructions"
+                IsChecked="{Binding Path=SkipCopyInstructions, Mode=TwoWay}"
+                ToolTip="Don't include in the graph instructions that only copy values" />
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Group instructions by basic block"
@@ -32,7 +35,8 @@
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Print expression bottom-up"
-                IsChecked="{Binding Path=PrintBottomUp, Mode=TwoWay}" />
+                IsChecked="{Binding Path=PrintBottomUp, Mode=TwoWay}"
+                ToolTip="Print the expression inverted, with the start point placed up and the leaf operands placed down" />
             <TextBlock Margin="0,6,0,2" Text="Maximum expression depth" />
             <StackPanel
                 Margin="0,0,0,4"

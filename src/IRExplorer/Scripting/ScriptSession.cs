@@ -77,9 +77,20 @@ namespace IRExplorer.Scripting {
         public class AnalysisInfo {
             private DominatorAlgorithm domAlgorithm_;
             private FunctionIR function_;
+            private ReferenceFinder referenceFinder_;
 
             public AnalysisInfo(FunctionIR function) {
                 function_ = function;
+            }
+
+            public ReferenceFinder References {
+                get {
+                    if (referenceFinder_ == null) {
+                        referenceFinder_ = new ReferenceFinder(function_);
+                    }
+
+                    return referenceFinder_;
+                }
             }
 
             public DominatorAlgorithm DominatorTree {

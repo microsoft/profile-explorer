@@ -13,6 +13,9 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Folding;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorer.Document;
 using IRExplorer.Query;
 using IRExplorer.Utilities;
@@ -20,9 +23,6 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
-using ICSharpCode.AvalonEdit;
-using ICSharpCode.AvalonEdit.Folding;
-using ICSharpCode.AvalonEdit.Rendering;
 
 namespace IRExplorer {
     public enum DocumentActionKind {
@@ -327,6 +327,8 @@ namespace IRExplorer {
             UpdateHighlighting();
         }
 
+        private SyntaxFileInfo syntaxFileOverride_;
+
         private void ReloadSettings() {
             Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
             Foreground = ColorBrushes.GetBrush(settings_.TextColor);
@@ -334,9 +336,9 @@ namespace IRExplorer {
             FontSize = settings_.FontSize;
             SetupRenderers();
             SetupStyles();
-            SetupBlockFolding(true);
+            SetupBlockFolding();
             SetupEvents();
-            SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
+            SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath(syntaxFileOverride_));
             UpdateHighlighting();
         }
 
@@ -646,11 +648,12 @@ namespace IRExplorer {
         }
 
         private ElementHighlighter GetHighlighter(HighlighingType type) {
-            return type switch {
-                HighlighingType.Hovered  => hoverHighlighter_,
+            return type switch
+            {
+                HighlighingType.Hovered => hoverHighlighter_,
                 HighlighingType.Selected => selectedHighlighter_,
-                HighlighingType.Marked   => markedHighlighter_,
-                _                        => throw new Exception("Unknown type")
+                HighlighingType.Marked => markedHighlighter_,
+                _ => throw new Exception("Unknown type")
             };
         }
 
@@ -747,7 +750,7 @@ namespace IRExplorer {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(this)}: Load saved section {parsedSection}");
 
-            selectedElements_ = savedState.selectedElements_?.ToHashSet(item => (IRElement) item) ??
+            selectedElements_ = savedState.selectedElements_?.ToHashSet(item => (IRElement)item) ??
                                 new HashSet<IRElement>();
 
             bookmarks_.LoadState(savedState.bookmarks_, Function);
@@ -797,7 +800,7 @@ namespace IRExplorer {
 
         public void MarkBlock(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
             Trace.TraceInformation(
-                $"Document {ObjectTracker.Track(this)}: Mark block {((BlockIR) element).Number}");
+                $"Document {ObjectTracker.Track(this)}: Mark block {((BlockIR)element).Number}");
 
             var group = new HighlightedGroup(element, style);
             margin_.AddBlock(group);
@@ -1521,7 +1524,8 @@ namespace IRExplorer {
 
         private PairHighlightingStyle GetReferenceStyle(Reference reference) {
             //? TODO: Make single instance styles
-            return reference.Kind switch {
+            return reference.Kind switch
+            {
                 ReferenceKind.Address => new PairHighlightingStyle {
                     ChildStyle = new HighlightingStyle("#FF9090", Pens.GetBoldPen(Colors.DarkRed)),
                     ParentStyle = new HighlightingStyle("#FFC9C9")
@@ -2389,14 +2393,14 @@ namespace IRExplorer {
             });
 
             // Sort so that searching for elements can be speed up.
-            markerMargingElements_.Sort((a, b) => (int) (a.Visual.Top - b.Visual.Top));
+            markerMargingElements_.Sort((a, b) => (int)(a.Visual.Top - b.Visual.Top));
             SaveHighlighterVersion(highlighterVersion_);
             RenderMarkerBar();
         }
 
         private void PopulateMarkerBarForBookmark(Bookmark bookmark, int startY, double width, double height,
                                                   double dotWidth, double dotHeight) {
-            double y = (double) bookmark.Element.TextLocation.Line / LineCount * height;
+            double y = (double)bookmark.Element.TextLocation.Line / LineCount * height;
             var elementVisual = new Rect(width / 3, startY + y, dotWidth, dotHeight);
             var style = bookmark.Style;
 
@@ -2420,7 +2424,7 @@ namespace IRExplorer {
         private void PopulateMarkerBarForHighlighter(ElementHighlighter highlighter, int startY, double width,
                                                      double height, double dotSize) {
             highlighter.ForEachStyledElement((element, style) => {
-                double y = (double) element.TextLocation.Line / LineCount * height;
+                double y = (double)element.TextLocation.Line / LineCount * height;
                 var b = style.BackColor as SolidColorBrush;
                 var color = ColorUtils.IncreaseSaturation(b.Color);
                 var elementVisual = new Rect(0, startY + y, width, dotSize);
@@ -2444,8 +2448,8 @@ namespace IRExplorer {
                     int startLine = Document.GetLineByOffset(segment.StartOffset).LineNumber;
                     int endLine = Document.GetLineByOffset(segment.EndOffset).LineNumber;
                     int lineSpan = endLine - startLine + 1;
-                    double y = Math.Floor((double) startLine / LineCount * height);
-                    double lineHeight = Math.Ceiling(Math.Max(1, (double) lineSpan / LineCount * height));
+                    double y = Math.Floor((double)startLine / LineCount * height);
+                    double lineHeight = Math.Ceiling(Math.Max(1, (double)lineSpan / LineCount * height));
                     var elementVisual = new Rect(0, startY + y, width / 3, lineHeight);
                     var barStyle = new HighlightingStyle(color);
 
@@ -2500,8 +2504,8 @@ namespace IRExplorer {
         private void PopulateDiffLines(int lastLine, int lineSpan, int startY, double width, double height,
                                        Color color) {
             int startLine = lastLine - lineSpan;
-            double y = Math.Floor((double) startLine / LineCount * height);
-            double lineHeight = Math.Ceiling(Math.Max(1, (double) lineSpan / LineCount * height));
+            double y = Math.Floor((double)startLine / LineCount * height);
+            double lineHeight = Math.Ceiling(Math.Max(1, (double)lineSpan / LineCount * height));
             color = ColorUtils.IncreaseSaturation(color, 1.5f);
             var elementVisual = new Rect(2 * width / 3, startY + y, width / 3, lineHeight);
             var barStyle = new HighlightingStyle(color);
@@ -2521,7 +2525,7 @@ namespace IRExplorer {
         }
 
         private void RaiseBlockSelectedEvent(IRElement element) {
-            BlockSelected?.Invoke(this, new IRElementEventArgs {Element = element, Document = this});
+            BlockSelected?.Invoke(this, new IRElementEventArgs { Element = element, Document = this });
         }
 
         private void RaiseBookmarkAddedEvent(Bookmark bookmark) {
@@ -2636,8 +2640,8 @@ namespace IRExplorer {
 
             var dpi = VisualTreeHelper.GetDpi(markerMargin_);
 
-            var bitmap = new RenderTargetBitmap((int) markerMargin_.ActualWidth,
-                                                (int) markerMargin_.ActualHeight, 96, 96,
+            var bitmap = new RenderTargetBitmap((int)markerMargin_.ActualWidth,
+                                                (int)markerMargin_.ActualHeight, 96, 96,
                                                 PixelFormats.Default);
 
             bitmap.Render(drawingVisual);
@@ -2774,7 +2778,7 @@ namespace IRExplorer {
             }
         }
 
-        public void SetupBlockFolding(bool forceInstall = false) {
+        public void SetupBlockFolding() {
             if (!settings_.ShowBlockFolding) {
                 UninstallBlockFolding();
                 return;
@@ -2783,15 +2787,10 @@ namespace IRExplorer {
                 return;
             }
 
-            if (forceInstall) {
-                UninstallBlockFolding();
-            }
-
-            if (folding_ == null) {
-                folding_ = FoldingManager.Install(TextArea);
-                var foldingStrategy = new UTCFoldingStrategy(function_);
-                foldingStrategy.UpdateFoldings(folding_, Document);
-            }
+            UninstallBlockFolding();
+            folding_ = FoldingManager.Install(TextArea);
+            var foldingStrategy = new UTCFoldingStrategy(function_);
+            foldingStrategy.UpdateFoldings(folding_, Document);
         }
 
         private void SetupProperties() {
@@ -2855,14 +2854,14 @@ namespace IRExplorer {
                 TextArea.LeftMargins.Add(margin_);
             }
 
-            if(remarkHighlighter_ != null) {
+            if (remarkHighlighter_ != null) {
                 TextArea.TextView.BackgroundRenderers.Remove(remarkHighlighter_);
             }
 
             remarkHighlighter_ = new RemarkHighlighter(HighlighingType.Marked);
             TextArea.TextView.BackgroundRenderers.Add(remarkHighlighter_);
 
-            if(overlayRenderer_ != null) {
+            if (overlayRenderer_ != null) {
                 TextArea.TextView.BackgroundRenderers.Remove(overlayRenderer_);
             }
 
@@ -2871,12 +2870,12 @@ namespace IRExplorer {
             TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
 
             if (DiffModeEnabled) {
-                if(diffHighlighter_ != null) {
+                if (diffHighlighter_ != null) {
                     diffHighlighter_.Clear();
                     TextArea.TextView.BackgroundRenderers.Remove(diffHighlighter_);
                 }
 
-                if(diffSegments_ != null) {
+                if (diffSegments_ != null) {
                     diffHighlighter_ = new DiffLineHighlighter();
                     TextArea.TextView.BackgroundRenderers.Add(diffHighlighter_);
 
@@ -3095,7 +3094,6 @@ namespace IRExplorer {
                 return;
             }
 
-            Focus();
             HideTemporaryUI();
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);

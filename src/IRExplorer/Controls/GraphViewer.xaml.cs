@@ -223,7 +223,7 @@ namespace IRExplorer {
         }
 
         public void Mark(BlockIR block, Color selectedColor, bool useBoldBorder = true) {
-            var node = (GraphNode) graph_.ElementNodeMap[block].Tag;
+            var node = (GraphNode)graph_.ElementNodeMap[block].Tag;
             MarkNode(node, selectedColor);
         }
 
@@ -423,7 +423,8 @@ namespace IRExplorer {
         }
 
         private Dictionary<GraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
-            return type switch {
+            return type switch
+            {
                 HighlighingType.Hovered => hoverNodes_,
                 HighlighingType.Selected => selectedNodes_,
                 HighlighingType.Marked => markedNodes_,
@@ -544,7 +545,7 @@ namespace IRExplorer {
         }
 
         public void FitToSize(Size size) {
-            if(graphVisual_ == null) {
+            if (graphVisual_ == null) {
                 return; // In case the graph fails to load.
             }
 

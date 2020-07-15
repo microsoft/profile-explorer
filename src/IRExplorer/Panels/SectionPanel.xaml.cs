@@ -5,7 +5,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -53,7 +52,8 @@ namespace IRExplorer {
         ReplaceRight,
         NewTab,
         NewTabDockLeft,
-        NewTabDockRight
+        NewTabDockRight,
+        UndockedWindow
     }
 
     public class OpenSectionEventArgs : EventArgs {
@@ -93,7 +93,7 @@ namespace IRExplorer {
             Index = index;
         }
 
-        public int Index { get; set;}
+        public int Index { get; set; }
         public IRTextSection Section { get; set; }
 
         private Thickness borderThickness_;
@@ -167,6 +167,10 @@ namespace IRExplorer {
         public bool IsPlaceholderDiff => SectionDiffKind == DiffKind.Placeholder;
         public bool HasDiffs => SectionDiffKind == DiffKind.Modification;
 
+        public Brush NewSectionBrush => ColorBrushes.GetBrush(App.Settings.SectionSettings.NewSectionColor);
+        public Brush MissingSectionBrush => ColorBrushes.GetBrush(App.Settings.SectionSettings.MissingSectionColor);
+        public Brush ChangedSectionBrush => ColorBrushes.GetBrush(App.Settings.SectionSettings.ChangedSectionColor);
+
         public Brush TextColor { get; set; }
         public Brush BackColor { get; set; }
 
@@ -225,10 +229,6 @@ namespace IRExplorer {
         private ScrollViewer sectionsScrollViewer_;
         private IRTextSummary summary_;
 
-        public Brush NewSectionBrush { get; set; }
-        public Brush MissingSectionBrush { get; set; }
-        public Brush ChangedSectionBrush { get; set; }
-
         public SectionPanel() {
             InitializeComponent();
             sections_ = new List<IRTextSectionEx>();
@@ -236,29 +236,21 @@ namespace IRExplorer {
             annotatedSections_ = new HashSet<IRTextSectionEx>();
             IsFunctionListVisible = true;
             MainGrid.DataContext = this;
-
             sectionSettings_ = App.Settings.SectionSettings;
-            UpdateSectionsStyle();
-        }
-
-        private void UpdateSectionsStyle() {
-            NewSectionBrush = ColorBrushes.GetBrush(sectionSettings_.NewSectionColor);
-            MissingSectionBrush = ColorBrushes.GetBrush(sectionSettings_.NewSectionColor);
-            ChangedSectionBrush = ColorBrushes.GetBrush(sectionSettings_.NewSectionColor);
         }
 
         public bool BottomSectionToolbar {
-            get => (bool) GetValue(BottomSectionToolbarProperty);
+            get => (bool)GetValue(BottomSectionToolbarProperty);
             set => SetValue(BottomSectionToolbarProperty, value);
         }
 
         public bool FunctionPartVisible {
-            get => (bool) GetValue(FunctionPartVisibleProperty);
+            get => (bool)GetValue(FunctionPartVisibleProperty);
             set => SetValue(FunctionPartVisibleProperty, value);
         }
 
         public bool HideToolbars {
-            get => (bool) GetValue(HideToolbarsProperty);
+            get => (bool)GetValue(HideToolbarsProperty);
             set => SetValue(HideToolbarsProperty, value);
         }
 
@@ -337,7 +329,7 @@ namespace IRExplorer {
         private static void OnBottomSectionToolbarPropertyChanged(
             DependencyObject d, DependencyPropertyChangedEventArgs e) {
             var source = d as SectionPanel;
-            bool placeBottom = (bool) e.NewValue;
+            bool placeBottom = (bool)e.NewValue;
 
             if (placeBottom) {
                 source.FunctionPartVisible = false;
@@ -362,7 +354,7 @@ namespace IRExplorer {
         private static void OnFunctionPartVisiblePropertyChanged(DependencyObject d,
                                                                  DependencyPropertyChangedEventArgs e) {
             var source = d as SectionPanel;
-            bool visible = (bool) e.NewValue;
+            bool visible = (bool)e.NewValue;
 
             if (visible) {
                 source.FunctionPart.Visibility = Visibility.Visible;
@@ -378,7 +370,7 @@ namespace IRExplorer {
         private static void OnHideToolbarsPropertyChanged(DependencyObject d,
                                                           DependencyPropertyChangedEventArgs e) {
             var source = d as SectionPanel;
-            bool hide = (bool) e.NewValue;
+            bool hide = (bool)e.NewValue;
 
             if (hide) {
                 source.SectionToolbarGrid.Visibility = Visibility.Collapsed;
@@ -387,7 +379,7 @@ namespace IRExplorer {
         }
 
         public void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations) {
-            if(!sectionSettings_.MarkAnnotatedSections) {
+            if (!sectionSettings_.MarkAnnotatedSections) {
                 return;
             }
 
@@ -539,7 +531,8 @@ namespace IRExplorer {
                     if (sectionSettings_.ShowSectionSeparators) {
                         ApplySectionBorder(sectionEx, markedName, sections);
                     }
-                    else sectionEx.BorderThickness = new Thickness();
+                    else
+                        sectionEx.BorderThickness = new Thickness();
 
                     if (sectionSettings_.UseNameIndentation &&
                         markedName.IndentationLevel > 0) {
@@ -578,7 +571,7 @@ namespace IRExplorer {
             int level = markedName.IndentationLevel;
             var builder = new StringBuilder(sectionEx.Name.Length + level * sectionSettings_.IndentationAmount);
 
-            while(level > 0) {
+            while (level > 0) {
                 builder.Append(' ', sectionSettings_.IndentationAmount);
                 level--;
             }
@@ -588,7 +581,7 @@ namespace IRExplorer {
         }
 
         private void UpdateSectionListView() {
-#if false
+#if true
             var sectionFilter = new ListCollectionView(sections_);
             sectionFilter.Filter = FilterSectionList;
             SectionList.ItemsSource = sectionFilter;
@@ -607,7 +600,7 @@ namespace IRExplorer {
         }
 
         private bool FilterFunctionList(object value) {
-            var function = (IRTextFunction) value;
+            var function = (IRTextFunction)value;
 
             // In two-document diff mode, show only functions
             // that are common in the two summaries.
@@ -622,7 +615,7 @@ namespace IRExplorer {
         }
 
         private bool FilterSectionList(object value) {
-            var section = (IRTextSectionEx) value;
+            var section = (IRTextSectionEx)value;
 
             if (section.IsSelected) {
                 return true;
@@ -641,7 +634,7 @@ namespace IRExplorer {
         }
 
         private void ExecuteClearTextbox(object sender, ExecutedRoutedEventArgs e) {
-            ((TextBox) e.Parameter).Text = string.Empty;
+            ((TextBox)e.Parameter).Text = string.Empty;
         }
 
         private void OpenExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -740,7 +733,7 @@ namespace IRExplorer {
                 return;
             }
 
-            //((ICollectionView) SectionList.ItemsSource).Refresh();
+            ((ListCollectionView)SectionList.ItemsSource).Refresh();
         }
 
         private void RefreshFunctionList() {
@@ -748,12 +741,12 @@ namespace IRExplorer {
                 return;
             }
 
-            ((ICollectionView) FunctionList.ItemsSource).Refresh();
+            ((ListCollectionView)FunctionList.ItemsSource).Refresh();
         }
 
         private void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (e.AddedItems.Count == 1) {
-                UpdateSectionListBindings((IRTextFunction) e.AddedItems[0]);
+                UpdateSectionListBindings((IRTextFunction)e.AddedItems[0]);
             }
         }
 
@@ -770,7 +763,7 @@ namespace IRExplorer {
         }
 
         private void SectionDoubleClick(object sender, MouseButtonEventArgs e) {
-            var section = ((ListViewItem) sender).Content as IRTextSectionEx;
+            var section = ((ListViewItem)sender).Content as IRTextSectionEx;
 
             bool inNewTab = (Keyboard.Modifiers & ModifierKeys.Control) != 0 ||
                             (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
@@ -837,11 +830,11 @@ namespace IRExplorer {
         }
 
         private void FilterTagged_Checked(object sender, RoutedEventArgs e) {
-            ((ListCollectionView) SectionList.ItemsSource).Refresh();
+            ((ListCollectionView)SectionList.ItemsSource).Refresh();
         }
 
         private void FilterTagged_Unchecked(object sender, RoutedEventArgs e) {
-            ((ListCollectionView) SectionList.ItemsSource).Refresh();
+            ((ListCollectionView)SectionList.ItemsSource).Refresh();
         }
 
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) {
@@ -937,7 +930,8 @@ namespace IRExplorer {
                         int result = sectionY.BlockCount - sectionX.BlockCount;
                         return direction_ == ListSortDirection.Ascending ? -result : result;
                     }
-                    default: throw new ArgumentOutOfRangeException();
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
 
                 return 0;
@@ -977,7 +971,7 @@ namespace IRExplorer {
             }
         }
 
-#region IToolPanel
+        #region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.Section;
         public override bool SavesStateToFile => true;
@@ -1040,21 +1034,21 @@ namespace IRExplorer {
             state.AnnotatedSections = annotatedSections_.ToList(item => item.Section.Id);
 
             state.SelectedFunctionNumber = FunctionList.SelectedItem != null
-                ? ((IRTextFunction) FunctionList.SelectedItem).Number
+                ? ((IRTextFunction)FunctionList.SelectedItem).Number
                 : 0;
 
             var data = StateSerializer.Serialize(state);
             Session.SavePanelState(data, this, null);
         }
 
-#endregion
+        #endregion
 
         private OptionsPanelHostWindow optionsPanelWindow_;
         private bool optionsPanelVisible_;
         private SectionSettings sectionSettings_;
 
         private void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
-            if(optionsPanelVisible_) {
+            if (optionsPanelVisible_) {
                 CloseOptionsPanel();
             }
             else {
@@ -1063,7 +1057,7 @@ namespace IRExplorer {
         }
 
         private void ShowOptionsPanel() {
-            if (optionsPanelVisible_) {
+            if (optionsPanelVisible_ || currentFunction_ == null) {
                 return;
             }
 
@@ -1079,7 +1073,7 @@ namespace IRExplorer {
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
             optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
-            optionsPanelWindow_.Show();
+            optionsPanelWindow_.IsOpen = true;
             optionsPanelVisible_ = true;
         }
 
@@ -1107,7 +1101,7 @@ namespace IRExplorer {
                 return;
             }
 
-            optionsPanelWindow_.Close();
+            optionsPanelWindow_.IsOpen = false;
             optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
@@ -1131,7 +1125,6 @@ namespace IRExplorer {
 
             App.Settings.SectionSettings = newSettings;
             sectionSettings_ = newSettings;
-            UpdateSectionsStyle();
             UpdateSectionListBindings(currentFunction_, true);
             RefreshSectionList();
         }

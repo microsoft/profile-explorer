@@ -15,12 +15,14 @@ namespace IRExplorer.OptionsPanels {
     }
 
     public class OptionsPanelBase : UserControl, IOptionsPanel {
+        private bool initialized_;
+
         public event EventHandler PanelClosed;
         public event EventHandler PanelReset;
         public event EventHandler SettingsChanged;
 
         public virtual void Initialize() {
-
+            initialized_ = true;
         }
 
         public void RaisePanelClosed(EventArgs e) {
@@ -39,9 +41,21 @@ namespace IRExplorer.OptionsPanels {
         public virtual void PanelResetting() { }
         public virtual void PanelResetted() { }
 
+        public virtual void OnSettingsChanged(object newSettings) {
+
+        }
+
         public object Settings {
             get => DataContext;
-            set => DataContext = value; //? TODO: Should first set to null and remove all Settings = null
+            set {
+                if (DataContext != value) {
+                    DataContext = value; //? TODO: Should first set to null and remove all Settings = null
+
+                    if (value != null && initialized_) {
+                        OnSettingsChanged(value);
+                    }
+                }
+            }
         }
     }
 }

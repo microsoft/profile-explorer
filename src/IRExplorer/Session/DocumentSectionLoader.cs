@@ -231,7 +231,7 @@ namespace IRExplorer {
         }
 
         public override string GetSectionText(IRTextSection section) {
-            if(section == lastSection_) {
+            if (section == lastSection_) {
                 return lastSectionText_;
             }
 

@@ -156,7 +156,7 @@ namespace IRExplorerCore {
         }
 
         public void CompressLineMetadata() {
-            if(lineMetadata_ != null) {
+            if (lineMetadata_ != null) {
                 lineMetadata_.Compress();
             }
         }
@@ -182,7 +182,7 @@ namespace IRExplorerCore {
             TotalBytes = totalBytes;
         }
 
-        public long BytesProcessed { get;set; }
+        public long BytesProcessed { get; set; }
         public long TotalBytes { get; set; }
     }
 

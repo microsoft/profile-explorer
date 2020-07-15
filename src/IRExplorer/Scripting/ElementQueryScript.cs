@@ -77,12 +77,13 @@ namespace IRExplorer.Scripting {
         public bool IsOutput => !Kind.HasFlag(QueryValueKind.Input);
 
         public static object GetDefaultValue(QueryValueKind kind) {
-            return kind switch {
-                QueryValueKind.Bool    => false,
+            return kind switch
+            {
+                QueryValueKind.Bool => false,
                 QueryValueKind.Element => null,
-                QueryValueKind.Number  => 0,
-                QueryValueKind.String  => "",
-                _                      => null
+                QueryValueKind.Number => 0,
+                QueryValueKind.String => "",
+                _ => null
             };
         }
 
@@ -133,7 +134,7 @@ namespace IRExplorer.Scripting {
                         throw new InvalidOperationException($"Input value not set: {name}");
                     }
 
-                    return (T) value.Value;
+                    return (T)value.Value;
                 }
             }
 
