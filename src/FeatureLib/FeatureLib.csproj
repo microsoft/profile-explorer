@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CoreLib\CoreLib.csproj" />
+    <ProjectReference Include="..\CoreLib\IRExplorerCore.csproj" />
   </ItemGroup>
 
 </Project>

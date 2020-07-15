@@ -51,5 +51,8 @@ namespace IRExplorer {
 
         void ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document);
         void ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document);
+
+        void RegisterDetachedRemarkPanel(RemarkPreviewPanel panel);
+        void UnregisterDetachedRemarkPanel(RemarkPreviewPanel panel);
     }
 }

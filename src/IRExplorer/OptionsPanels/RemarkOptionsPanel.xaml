@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorer.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     d:DesignHeight="480"
     d:DesignWidth="330"
     mc:Ignorable="d">
@@ -29,20 +30,20 @@
                     IsChecked="{Binding Path=ShowPreviousSections}" />
 
                 <StackPanel Margin="0,2,0,2" Orientation="Horizontal">
-                    <TextBlock Margin="32,0,0,2" Text="History depth" />
-                    <Slider
-                        Width="100"
-                        Margin="8,0,0,0"
-                        HorizontalAlignment="Left"
-                        AutoToolTipPlacement="None"
-                        Foreground="{DynamicResource DisabledForegroundBrush}"
+                    <TextBlock
+                        Margin="32,0,4,2"
+                        VerticalAlignment="Center"
+                        Text="History depth" />
+                    <xctk:IntegerUpDown
+                        Margin="0,0,8,0"
                         IsEnabled="{Binding ElementName=PreviousSectionsCheckbox, Path=IsChecked}"
                         Maximum="16"
                         Minimum="1"
-                        TickPlacement="BottomRight"
+                        ParsingNumberStyle="Number"
+                        ShowButtonSpinner="True"
+                        ToolTip="Number of whitespace letters to use for each level of indentation"
                         Value="{Binding Path=SectionHistoryDepth, Mode=TwoWay}" />
-                    <TextBlock Margin="8,0,0,0" Text="{Binding Path=SectionHistoryDepth}" />
-                    <TextBlock Margin="4,0,0,0" Text="sections" />
+                    <TextBlock VerticalAlignment="Center" Text="sections" />
                 </StackPanel>
                 <CheckBox
                     Margin="32,0,0,2"

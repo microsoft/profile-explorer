@@ -4,26 +4,23 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorer.Document;
+using IRExplorer.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using ICSharpCode.AvalonEdit.Rendering;
 using ProtoBuf;
 using ComboBox = System.Windows.Controls.ComboBox;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using UserControl = System.Windows.Controls.UserControl;
-using IRExplorer.OptionsPanels;
-using IRExplorer.OptionsPanels;
 
 namespace IRExplorer {
     public static class DocumentHostCommand {
@@ -54,8 +51,12 @@ namespace IRExplorer {
     }
 
     public partial class IRDocumentHost : UserControl {
-        private const double ActionPanelInitialOpacity = 0.75;
-        private readonly double AnimationDuration = 0.1;
+        private const double ActionPanelInitialOpacity = 0.5;
+        private const int ActionPanelHeight = 20;
+        private const double ActionPanelHideTimeout = 0.5;
+        private const double AnimationDuration = 0.1;
+        private const int ActionPanelOffset = 15;
+
         private bool actionPanelHovered_;
         private bool actionPanelFromClick_;
         private bool actionPanelVisible_;
@@ -66,7 +67,7 @@ namespace IRExplorer {
         private bool remarkOptionsPanelVisible_;
         private IRElement remarkElement_;
         private RemarkSettings remarkSettings_;
-        private RemarkPanel remarkPanel_;
+        private RemarkPreviewPanel remarkPanel_;
         private Point remarkPanelLocation_;
 
         private bool remarkPanelVisible_;
@@ -135,16 +136,19 @@ namespace IRExplorer {
         public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
 
         private void IRDocumentHost_Unloaded(object sender, RoutedEventArgs e) {
-            remarkPanel_?.Close();
+            if (remarkPanelVisible_) {
+                remarkPanel_.IsOpen = false;
+            }
         }
 
         private void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+            HideRemarkPanel();
+
             var point = e.GetPosition(TextView.TextArea.TextView);
             var element = TextView.GetElementAt(point);
 
             if (element == null) {
-                HideActionPanel();
-                HideRemarkPanel();
+                HideActionPanel(true);
             }
             else if (element != hoveredElement_ && !actionPanelHovered_) {
                 ShowActionPanel(element, true);
@@ -185,11 +189,17 @@ namespace IRExplorer {
                 return;
             }
 
+            //? TODO: If other panels are opened over the document, don't consider their area.
+
             var element = TextView.GetElementAt(point);
 
             if (element != null) {
-                ShowActionPanel(element);
-                hoveredElement_ = element;
+                // If the panel is already showing for this element, ignore the action
+                // so that it doesn't move around after the mouse cursor.
+                if (element != hoveredElement_) {
+                    ShowActionPanel(element);
+                    hoveredElement_ = element;
+                }
             }
             else {
                 HideActionPanel();
@@ -198,7 +208,7 @@ namespace IRExplorer {
         }
 
         private void TextView_ElementUnselected(object sender, IRElementEventArgs e) {
-            HideActionPanel();
+            HideActionPanel(true);
             HideRemarkPanel();
         }
 
@@ -235,8 +245,16 @@ namespace IRExplorer {
             var visualLine = TextView.TextArea.TextView.GetVisualLine(remarkElement_.TextLocation.Line + 1);
 
             if (visualLine != null) {
+                // If there is an ongoing hiding operation, cancel it since it would
+                // likely hide the action panel being set up here.
+                if (delayedHideActionPanel_ != null) {
+                    delayedHideActionPanel_.Cancel();
+                    delayedHideActionPanel_ = null;
+                }
+
                 var linePos = visualLine.GetVisualPosition(0, VisualYPosition.LineBottom);
-                double x = Mouse.GetPosition(this).X + ActionPanel.ActualWidth / 8;
+                var t = Mouse.GetPosition(this);
+                double x = Mouse.GetPosition(this).X + ActionPanelOffset;
                 double y = linePos.Y + DocumentToolbar.ActualHeight -
                            1 - TextView.TextArea.TextView.ScrollOffset.Y;
 
@@ -252,24 +270,36 @@ namespace IRExplorer {
 
                 actionPanelFromClick_ = fromClickEvent;
                 actionPanelVisible_ = true;
-                remarkPanelLocation_ = PointToScreen(new Point(x, y + 20));
-
-                if (remarkPanelVisible_) {
-                    // Panel already visible, update element.
-                    InitializeRemarkPanel(remarkElement_);
-                }
+                remarkPanelLocation_ = PointToScreen(new Point(x, y + ActionPanelHeight));
             }
         }
 
-        private void HideActionPanel() {
-            if (!actionPanelVisible_) {
+        private void HideActionPanel(bool force = false) {
+            // Ignore if panel not visible or in process of being hidden.
+            if (!actionPanelVisible_ || delayedHideActionPanel_ != null) {
                 return;
             }
 
+            if (force) {
+                HideActionPanelImpl();
+                return;
+            }
+
+            delayedHideActionPanel_ = DelayedAction.StartNew(TimeSpan.FromSeconds(ActionPanelHideTimeout), () => {
+                if (remarkPanelVisible_ || ActionPanel.IsMouseOver) {
+                    return;
+                }
+
+                HideActionPanelImpl();
+            });
+        }
+
+        private void HideActionPanelImpl() {
             var animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(AnimationDuration));
             animation.Completed += (s, e) => { ActionPanel.Visibility = Visibility.Collapsed; };
             ActionPanel.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
             actionPanelVisible_ = false;
+            delayedHideActionPanel_ = null;
         }
 
         private void ShowRemarkPanel() {
@@ -277,16 +307,40 @@ namespace IRExplorer {
                 return;
             }
 
-            remarkPanel_ = new RemarkPanel();
+            remarkPanel_ = new RemarkPreviewPanel();
+            remarkPanel_.PanelClosed += RemarkPanel__PanelClosed;
+            remarkPanel_.PanelDetached += RemarkPanel__PanelDetached;
             remarkPanel_.RemarkContextChanged += RemarkPanel__RemarkContextChanged;
             remarkPanel_.Opacity = 0.0;
-            remarkPanel_.Show();
+            remarkPanel_.IsOpen = true;
 
             var animation = new DoubleAnimation(1.0, TimeSpan.FromSeconds(AnimationDuration));
             remarkPanel_.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
             remarkPanelVisible_ = true;
 
             InitializeRemarkPanel(remarkElement_);
+        }
+
+
+        private void RemarkPanel__PanelDetached(object sender, EventArgs e) {
+            // Keep the remark panel floating over the document.
+            Session.RegisterDetachedRemarkPanel(remarkPanel_);
+
+            HideActionPanel();
+            remarkPanelVisible_ = false;
+            remarkPanel_ = null;
+        }
+
+        private void RemarkPanel__PanelClosed(object sender, EventArgs e) {
+            // If it's one of the detached panels, unregister it.
+            var panel = (RemarkPreviewPanel)sender;
+
+            if (panel.IsPanelDetached) {
+                Session.UnregisterDetachedRemarkPanel(panel);
+                return;
+            }
+
+            HideRemarkPanel();
         }
 
         private void RemarkPanel__RemarkContextChanged(object sender, RemarkContext e) {
@@ -315,7 +369,10 @@ namespace IRExplorer {
             var animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(AnimationDuration));
 
             animation.Completed += (s, e) => {
-                remarkPanel_.Close();
+                remarkPanel_.IsOpen = false;
+                remarkPanel_.PanelClosed -= RemarkPanel__PanelClosed;
+                remarkPanel_.PanelDetached -= RemarkPanel__PanelDetached;
+                remarkPanel_.RemarkContextChanged -= RemarkPanel__RemarkContextChanged;
                 remarkPanel_ = null;
             };
 
@@ -610,12 +667,12 @@ namespace IRExplorer {
                 _ => false
             };
 
-            if(!kindResult) {
+            if (!kindResult) {
                 return false;
             }
 
-            if(remark.Category.HasTitle && remarkSettings.HasCategoryFilters) {
-                if(remarkSettings.CategoryFilter.TryGetValue(remark.Category.Title, out bool isCategoryEnabled)) {
+            if (remark.Category.HasTitle && remarkSettings.HasCategoryFilters) {
+                if (remarkSettings.CategoryFilter.TryGetValue(remark.Category.Title, out bool isCategoryEnabled)) {
                     return isCategoryEnabled;
                 }
             }
@@ -624,7 +681,7 @@ namespace IRExplorer {
         }
 
         public bool IsAcceptedContextRemark(Remark remark, IRTextSection section, RemarkSettings remarkSettings) {
-            if(!IsAcceptedRemark(remark, section, remarkSettings)) {
+            if (!IsAcceptedRemark(remark, section, remarkSettings)) {
                 return false;
             }
 
@@ -802,7 +859,7 @@ namespace IRExplorer {
             var searchInfo = new SearchInfo();
             searchInfo.SearchedText = symbolName;
             searchInfo.SearchAll = true;
-            searchInfo.SearchAllEnabled = Session.IsInDiffMode;
+            searchInfo.SearchAllEnabled = !Session.IsInDiffMode;
             ShowSearchPanel(searchInfo);
         }
 
@@ -861,7 +918,7 @@ namespace IRExplorer {
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
             optionsPanelWindow_.Settings = settings_.Clone();
-            optionsPanelWindow_.Show();
+            optionsPanelWindow_.IsOpen = true;
             optionsPanelVisible_ = true;
         }
 
@@ -870,7 +927,8 @@ namespace IRExplorer {
                 return;
             }
 
-            optionsPanelWindow_.Close();
+            optionsPanelWindow_.IsOpen = false;
+            ;
             optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
@@ -887,6 +945,7 @@ namespace IRExplorer {
 
         private OptionsPanelHostWindow optionsPanelWindow_;
         private DocumentOptionsPanel optionsPanel_;
+        private DelayedAction delayedHideActionPanel_;
 
         private void ShowRemarkOptionsPanel() {
             if (remarkOptionsPanelVisible_) {
@@ -899,13 +958,13 @@ namespace IRExplorer {
                     Math.Min(TextView.ActualHeight, RemarkOptionsPanel.DefaultHeight));
             var position = TextView.PointToScreen(new Point(RemarkOptionsPanel.LeftMargin, 0));
 
-            remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(Session.CompilerInfo),
+            remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(),
                                                                    position, width, height, this);
             remarkOptionsPanelWindow_.PanelClosed += RemarkOptionsPanel_PanelClosed;
             remarkOptionsPanelWindow_.PanelReset += RemarkOptionsPanel_PanelReset;
             remarkOptionsPanelWindow_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
             remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
-            remarkOptionsPanelWindow_.Show();
+            remarkOptionsPanelWindow_.IsOpen = true;
             remarkOptionsPanelVisible_ = true;
         }
 
@@ -914,7 +973,8 @@ namespace IRExplorer {
                 return;
             }
 
-            remarkOptionsPanelWindow_.Close();
+            remarkOptionsPanelWindow_.IsOpen = false;
+            ;
             remarkOptionsPanelWindow_.PanelClosed -= RemarkOptionsPanel_PanelClosed;
             remarkOptionsPanelWindow_.PanelReset -= RemarkOptionsPanel_PanelReset;
             remarkOptionsPanelWindow_.SettingsChanged -= RemarkOptionsPanel_SettingsChanged;
@@ -980,14 +1040,6 @@ namespace IRExplorer {
             ScrollChanged?.Invoke(this, e);
         }
 
-        private void RemarkPanelButton_Checked(object sender, RoutedEventArgs e) {
-            ShowRemarkPanel();
-        }
-
-        private void RemarkPanelButton_Unchecked(object sender, RoutedEventArgs e) {
-            HideRemarkPanel();
-        }
-
         private void ActionPanel_MouseEnter(object sender, MouseEventArgs e) {
             var animation = new DoubleAnimation(1, TimeSpan.FromSeconds(AnimationDuration));
             ActionPanel.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
@@ -995,13 +1047,6 @@ namespace IRExplorer {
         }
 
         private void ActionPanel_MouseLeave(object sender, MouseEventArgs e) {
-            if (!remarkPanelVisible_) {
-                var animation =
-                    new DoubleAnimation(ActionPanelInitialOpacity, TimeSpan.FromSeconds(AnimationDuration));
-
-                ActionPanel.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
-            }
-
             actionPanelHovered_ = false;
         }
 
@@ -1012,6 +1057,17 @@ namespace IRExplorer {
             else {
                 ShowRemarkOptionsPanel();
             }
+        }
+
+        private void ActionPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+            if (remarkPanelVisible_) {
+                HideRemarkPanel();
+            }
+            else {
+                ShowRemarkPanel();
+            }
+
+            e.Handled = true;
         }
     }
 }

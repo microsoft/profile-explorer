@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorerCore.IR;
 
 namespace IRExplorer {
     public sealed class BlockBackgroundHighlighter : IBackgroundRenderer {

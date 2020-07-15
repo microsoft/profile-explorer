@@ -49,7 +49,7 @@ namespace IRExplorer {
         }
 
         public string SettingsFilePath => App.GetRemarksDefinitionFilePath("utc");
-        
+
         public bool SaveSettings() {
             return false;
         }
@@ -114,7 +114,7 @@ namespace IRExplorer {
             var currentContext = GetCurrentContext();
             var context = new RemarkContext(name, currentContext);
 
-            if(currentContext != null) {
+            if (currentContext != null) {
                 currentContext.Children.Add(context);
             }
             else {
@@ -126,12 +126,12 @@ namespace IRExplorer {
         }
 
         private void EndCurrentContext() {
-            if(contextStack_.Count > 0) {
+            if (contextStack_.Count > 0) {
                 contextStack_.Pop();
             }
         }
 
-        private void ExtractInstructionRemarks(string text, string[] lines, FunctionIR function, 
+        private void ExtractInstructionRemarks(string text, string[] lines, FunctionIR function,
                                                IRTextSection section, List<Remark> remarks) {
             var (fakeTuple, fakeBlock) = CreateFakeIRElements();
 
@@ -290,8 +290,8 @@ namespace IRExplorer {
                 var section = function.Sections[i];
                 list.Add(section);
 
-                if(stopAtSectionBoundaries && boundaries_.Count > 0) {
-                    if (boundaries_.Find((boundary) => 
+                if (stopAtSectionBoundaries && boundaries_.Count > 0) {
+                    if (boundaries_.Find((boundary) =>
                             TextSearcher.Contains(section.Name, boundary.SearchedText, boundary.SearchKind)) != null) {
                         break; // Stop once section boundary reached.
                     }
@@ -321,18 +321,18 @@ namespace IRExplorer {
                     finally {
                         concurrencySemaphore.Release();
                     }
-                });   
+                });
             }
 
             Task.WhenAll(tasks).Wait();
-            
+
             // Combine all remarks into a single list.
             var remarks = new List<Remark>();
 
             for (int i = 0; i < sections.Count; i++) {
                 remarks.AddRange(tasks[i].Result);
             }
-            
+
             return remarks;
         }
 

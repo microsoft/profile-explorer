@@ -25,7 +25,7 @@ namespace IRExplorer {
         }
 
         public Tuple<IRDocument, IRElement, string> ListElement {
-            get => (Tuple<IRDocument, IRElement, string>) GetValue(ListElementProperty);
+            get => (Tuple<IRDocument, IRElement, string>)GetValue(ListElementProperty);
             set {
                 SetValue(ListElementProperty, value);
 
@@ -69,8 +69,8 @@ namespace IRExplorer {
 
         public static void OnElementChanged(DependencyObject sender,
                                             DependencyPropertyChangedEventArgs eventArgs) {
-            var control = (IRPreview) sender;
-            control.ListElement = (Tuple<IRDocument, IRElement, string>) eventArgs.NewValue;
+            var control = (IRPreview)sender;
+            control.ListElement = (Tuple<IRDocument, IRElement, string>)eventArgs.NewValue;
         }
 
         public void InitializeFromDocument(IRDocument document) {

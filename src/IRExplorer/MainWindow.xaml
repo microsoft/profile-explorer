@@ -7,6 +7,7 @@
     xmlns:local="clr-namespace:IRExplorer"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:options="clr-namespace:IRExplorer.OptionsPanels"
+    xmlns:panels="clr-namespace:IRExplorer.Panels"
     Title="IR Explorer"
     Width="1000"
     Height="600"
@@ -337,6 +338,18 @@
             Command="local:AppCommand.CloseDiffDocument"
             PreviewCanExecute="CloseDiffDocumentCanExecute"
             PreviewExecuted="CloseDiffDocumentExecuted" />
+
+        <CommandBinding
+            CanExecute="CommandBinding_PreviewCanExecute"
+            Command="local:AppCommand.ToggleDiffMode"
+            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewExecuted="ToggleDiffModeExecuted" />
+
+        <CommandBinding
+            CanExecute="CommandBinding_PreviewCanExecute"
+            Command="local:AppCommand.SwapDiffDocuments"
+            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewExecuted="SwapDiffDocumentsExecuted" />
     </Window.CommandBindings>
 
     <Window.InputBindings>
@@ -370,16 +383,18 @@
             Command="local:AppCommand.SaveAsDocument"
             Modifiers="Ctrl+Shift" />
 
-        <KeyBinding Key="F5" Command="local:AppCommand.ReloadDocument" />
+        <KeyBinding Key="F6" Command="local:AppCommand.ReloadDocument" />
         <KeyBinding
-            Key="F5"
+            Key="F6"
             Command="local:AppCommand.AutoReloadDocument"
             Modifiers="Ctrl" />
-        <KeyBinding Key="F9" Command="local:AppCommand.OpenBaseDiffDocuments" />
+        <KeyBinding Key="F12" Command="local:AppCommand.OpenBaseDiffDocuments" />
         <KeyBinding
-            Key="F9"
+            Key="F12"
             Command="local:AppCommand.OpenDiffDocument"
             Modifiers="Ctrl" />
+        <KeyBinding Key="F9" Command="local:AppCommand.ToggleDiffMode" />
+        <KeyBinding Key="F10" Command="local:AppCommand.SwapDiffDocuments" />
     </Window.InputBindings>
 
     <Grid x:Name="MainGrid">
@@ -426,8 +441,8 @@
                         </MenuItem>
                         <Separator />
 
-                        <MenuItem Command="local:AppCommand.OpenBaseDiffDocuments" Header="_Compare Base/Diff Files (F9)" />
-                        <MenuItem Command="local:AppCommand.OpenDiffDocument" Header="Open _Diff File (Ctrl+F9)" />
+                        <MenuItem Command="local:AppCommand.OpenBaseDiffDocuments" Header="_Compare Base/Diff Files (F12)" />
+                        <MenuItem Command="local:AppCommand.OpenDiffDocument" Header="Open _Diff File (Ctrl+F12)" />
                         <MenuItem Command="local:AppCommand.CloseDiffDocument" Header="Close Diff File" />
                         <Separator />
 
@@ -551,7 +566,7 @@
                             FontSize="11"
                             FontWeight="DemiBold"
                             ToolTip="Show window on top of all other windows (F12)"
-                            Unchecked="OnTopButton_Unchecked">
+                            Unchecked="DiffModeButton_Unchecked">
                             <StackPanel Orientation="Horizontal">
                                 <Image
                                     Width="16"
@@ -569,15 +584,39 @@
                                     Text="Diff Mode" />
                             </StackPanel>
                         </ToggleButton>
-
+                       
                         <StackPanel
                             x:Name="DiffControlsPanel"
                             Orientation="Horizontal"
                             Visibility="Collapsed">
+                            <Line
+                            Margin="0,0,2,0"
+                            Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            Y1="0"
+                            Y2="17" />
+                            <Button
+                                x:Name="DiffSwapButton"
+                                Width="16"
+                                Padding="0,0,0,0"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                BorderBrush="{x:Null}"
+                                Click="DiffSwapButton_Click"
+                                ToolTip="Swap left/right diff documents">
+                                <Image
+                                    Width="14"
+                                    Height="14"
+                                    VerticalAlignment="Center"
+                                    SnapsToDevicePixels="True"
+                                    Source="{StaticResource SwitchIcon}"
+                                    UseLayoutRounding="True" />
+                            </Button>
                             <Button
                                 x:Name="DiffSettingsButton"
                                 Width="16"
+                                Padding="0,0,0,0"
                                 VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 Click="DiffSettingsButton_Click"
                                 ToolTip="Show diff settings panel">
@@ -593,13 +632,14 @@
                             <Line
                                 Margin="2,0,2,0"
                                 Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                Y1="1"
-                                Y2="16" />
+                                Y1="0"
+                                Y2="17" />
 
                             <Button
                                 x:Name="PreviousDiffButton"
                                 Width="16"
                                 VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 Click="PreviousDiffButton_Click"
                                 ToolTip="Go backward by one section in both the left and right side">
@@ -617,6 +657,7 @@
                                 x:Name="NextDiffButton"
                                 Width="16"
                                 VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 Click="NextDiffButton_Click"
                                 ToolTip="Go forward by one section in both the left and right side">
@@ -632,8 +673,8 @@
                             <Line
                                 Margin="2,0,2,0"
                                 Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                Y1="1"
-                                Y2="16" />
+                                Y1="0"
+                                Y2="17" />
 
 
 
@@ -641,6 +682,7 @@
                                 x:Name="PreviousSegmentDiffButton"
                                 Width="16"
                                 VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 Click="PreviousSegmentDiffButton_Click"
                                 ToolTip="Go to previous difference">
@@ -658,6 +700,7 @@
                                 x:Name="NextDiffSegmentButton"
                                 Width="16"
                                 VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 Click="NextDiffSegmentButton_Click"
                                 ToolTip="Go to next difference">
@@ -674,8 +717,8 @@
                             <Line
                                 Margin="2,0,2,0"
                                 Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                Y1="1"
-                                Y2="16" />
+                                Y1="0"
+                                Y2="17" />
 
                             <TextBlock
                                 x:Name="DiffStatusText"
@@ -690,6 +733,17 @@
 
             </Grid>
         </Border>
+
+        <panels:StartPagePanel
+            x:Name="StartPage"
+            Grid.Row="1"
+            Width="500"
+            MinWidth="200"
+            MinHeight="100"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top"
+            Panel.ZIndex="2"
+            Visibility="Hidden" />
 
         <avalonDock:DockingManager
             x:Name="DockManager"
@@ -894,15 +948,6 @@
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable
-                                    x:Name="RemarksPanelHost"
-                                    Title="Remarks"
-                                    ContentId="RemarksPanelHost"
-                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <local:ReferencesPanel x:Name="RemarksPanel" />
-                                </avalonDock:LayoutAnchorable>
-
-                                <avalonDock:LayoutAnchorable
                                     x:Name="SearchPanelHost"
                                     Title="Search Results"
                                     ContentId="SearchResults"
@@ -911,14 +956,14 @@
                                     <local:SearchResultsPanel x:Name="SearchPanel" />
                                 </avalonDock:LayoutAnchorable>
 
+
                                 <avalonDock:LayoutAnchorable
-                                    Title="Expression"
-                                    ContentId="Expression"
+                                    x:Name="RemarksPanelHost"
+                                    Title="Remarks"
+                                    ContentId="RemarksPanelHost"
                                     IsActiveChanged="LayoutAnchorable_IsActiveChanged"
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <Grid>
-                                        <Button Content="Placeholder" />
-                                    </Grid>
+                                    <local:ReferencesPanel x:Name="RemarksPanel" />
                                 </avalonDock:LayoutAnchorable>
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
@@ -1102,7 +1147,7 @@
                 x:Name="DiffPreviousSectionCheckbox"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 Content="Diff with previous"
-                IsChecked="True"
+                IsChecked="False"
                 Visibility="Collapsed" />
 
 

@@ -72,7 +72,8 @@ namespace IRExplorer {
         public List<IRElement> OutputElements { get; set; }
         public RemarkContext Context;
 
-        public int Priority => Kind switch {
+        public int Priority => Kind switch
+        {
             RemarkKind.Default => 2,
             RemarkKind.Verbose => 3,
             RemarkKind.Trace => 4,

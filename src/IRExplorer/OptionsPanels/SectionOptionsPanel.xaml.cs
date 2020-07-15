@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace IRExplorer.OptionsPanels {
     public partial class SectionOptionsPanel : OptionsPanelBase {
-        public const double DefaultHeight = 260;
-        public const double MinimumHeight = 230;
+        public const double DefaultHeight = 280;
+        public const double MinimumHeight = 280;
         public const double DefaultWidth = 350;
         public const double MinimumWidth = 350;
 

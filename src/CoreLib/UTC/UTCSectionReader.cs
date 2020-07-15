@@ -14,7 +14,7 @@ namespace IRExplorerCore.UTC {
         private const string SEPARATOR_STYLE2 =
             "***********************************************************";
         public static readonly string SECTION_START = "*********************";
-        private static readonly char[] WHITESPACE_CHARS = {' ', '\t'};
+        private static readonly char[] WHITESPACE_CHARS = { ' ', '\t' };
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
         public static readonly long MAX_PRELOADED_FILE_SIZE = 500 * 1024 * 1024;
@@ -104,7 +104,7 @@ namespace IRExplorerCore.UTC {
             lock (this) {
                 dataStream_.Seek(0, SeekOrigin.Begin);
                 using var binaryReader = new BinaryReader(dataStream_, Encoding.Default, true);
-                return binaryReader.ReadBytes((int) dataStream_.Length);
+                return binaryReader.ReadBytes((int)dataStream_.Length);
             }
         }
 
@@ -128,7 +128,7 @@ namespace IRExplorerCore.UTC {
                 previousSection = section;
                 (section, functionName) = FindNextSection();
 
-                if(progressHandler != null) {
+                if (progressHandler != null) {
                     var info = new SectionReaderProgressInfo(TextOffset(), dataStreamSize_);
                     progressHandler(this, info);
                 }
@@ -146,7 +146,7 @@ namespace IRExplorerCore.UTC {
                 return textFunc;
             }
 
-            textFunc = new IRTextFunction(name) {Number = summary_.Functions.Count};
+            textFunc = new IRTextFunction(name) { Number = summary_.Functions.Count };
             summary_.AddFunction(textFunc);
             functionMap_.Add(name, textFunc);
             return textFunc;
@@ -176,7 +176,7 @@ namespace IRExplorerCore.UTC {
         private string ReadPassOutputText(StreamReader reader, IRPassOutput output,
                                           bool isOptionalOutput) {
             long size = output.DataEndOffset - output.DataStartOffset + 1;
-            var builder = new StringBuilder((int) size);
+            var builder = new StringBuilder((int)size);
             reader.BaseStream.Position = output.DataStartOffset;
             reader.DiscardBufferedData();
 
@@ -413,26 +413,26 @@ namespace IRExplorerCore.UTC {
                         BindingFlags.GetField;
 
             // The current buffer of decoded characters
-            var charBuffer = (char[]) reader
+            var charBuffer = (char[])reader
                                       .GetType()
                                       .InvokeMember("_charBuffer", flags, null, reader, null);
 
             // The index of the next char to be read from charBuffer
             int charPos =
-                (int) reader.GetType().InvokeMember("_charPos", flags, null, reader, null);
+                (int)reader.GetType().InvokeMember("_charPos", flags, null, reader, null);
 
             // The number of decoded chars presently used in charBuffer
             int charLen =
-                (int) reader.GetType().InvokeMember("_charLen", flags, null, reader, null);
+                (int)reader.GetType().InvokeMember("_charLen", flags, null, reader, null);
 
             // The current buffer of read bytes (byteBuffer.Length = 1024; this is critical).
-            var byteBuffer = (byte[]) reader
+            var byteBuffer = (byte[])reader
                                       .GetType()
                                       .InvokeMember("_byteBuffer", flags, null, reader, null);
 
             // The number of bytes read while advancing reader.BaseStream.Position to (re)fill charBuffer
             int byteLen =
-                (int) reader.GetType().InvokeMember("_byteLen", flags, null, reader, null);
+                (int)reader.GetType().InvokeMember("_byteLen", flags, null, reader, null);
 
             // The number of bytes the remaining chars use in the original encoding.
             int numBytesLeft =
@@ -449,7 +449,7 @@ namespace IRExplorerCore.UTC {
                     ) // if the byte is "10xx xxxx", it's a continuation-byte
                     {
                         byteCountMask |=
-                            (byte) (1 <<
+                            (byte)(1 <<
                                     ++numFragments
                             ); // count bytes & build the "complete char" mask
                     }
@@ -458,7 +458,7 @@ namespace IRExplorerCore.UTC {
                     ) // if the byte is "11xx xxxx", it starts a multi-byte char.
                     {
                         byteCountMask |=
-                            (byte) (1 <<
+                            (byte)(1 <<
                                     ++numFragments
                             ); // count bytes & build the "complete char" mask
                     }

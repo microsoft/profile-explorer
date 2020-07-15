@@ -42,6 +42,8 @@ namespace IRExplorerCore.Analysis {
             //? TODO using single walk
         }
 
+
+        //? TODO: Should be moved to the SimilarValueFinder
         public IRElement FindEquivalentValue(IRElement element, bool onlySSA = false) {
             //? TODO: Handle t100 -> tv100 changes in UTC IR
             //? by querying an IR-level interface for "equivalent symbols"
@@ -194,7 +196,7 @@ namespace IRExplorerCore.Analysis {
                 var ssaDef = GetSSADefinition(op);
 
                 if (ssaDef != null) {
-                    var list = new List<Reference> {new Reference(ssaDef, ReferenceKind.SSA)};
+                    var list = new List<Reference> { new Reference(ssaDef, ReferenceKind.SSA) };
                     FindSSAUses(op, list);
                     return list;
                 }

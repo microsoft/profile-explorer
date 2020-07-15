@@ -189,7 +189,7 @@ namespace IRExplorerCore.UTC {
         };
 
         private static readonly TokenKind[] SkipToTypeTokens = {
-            TokenKind.Dot, TokenKind.Comma,
+            TokenKind.Dot, TokenKind.Comma, TokenKind.Colon,
             TokenKind.OpenParen, TokenKind.CloseParen,
             TokenKind.Less, TokenKind.CloseSquare,
             TokenKind.Equal, TokenKind.Plus,
@@ -1069,7 +1069,7 @@ namespace IRExplorerCore.UTC {
             }
 
             //? TODO: Parse switch properly
-            if ((UTCOpcode) instr.Opcode == UTCOpcode.OPSWITCH) {
+            if ((UTCOpcode)instr.Opcode == UTCOpcode.OPSWITCH) {
                 SkipToNextBlock();
                 return instr;
             }
@@ -1248,6 +1248,13 @@ namespace IRExplorerCore.UTC {
             }
 
             SkipOperandFlags();
+
+            // A hash var can follow an indirection, ignore it.
+            if (TokenIs(TokenKind.OpenParen)) {
+                SkipAfterToken(TokenKind.CloseParen);
+                SkipOperandFlags();
+            }
+
             var type = TryParseType();
             var operand = new OperandIR(nextElementId_, OperandKind.Indirection, type, parent);
             operand.Value = baseOp;
@@ -1475,8 +1482,15 @@ namespace IRExplorerCore.UTC {
                         SetTextRange(operand, startToken);
                     }
                 }
-                else if (TokenIs(TokenKind.Plus)) {
+                else if (TokenIs(TokenKind.Plus)) { // +offset
                     //? TODO: Save symbol offset as tag
+                    SkipToken();
+
+                    if (IsNumber()) {
+                        SkipToken();
+                    }
+                }
+                else if (TokenIs(TokenKind.Colon)) { // :equivNumber
                     SkipToken();
 
                     if (IsNumber()) {

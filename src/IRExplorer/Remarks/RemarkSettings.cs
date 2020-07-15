@@ -1,10 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using IRExplorerCore;
-using ProtoBuf;
-using System;
 using System.Collections.Generic;
+using ProtoBuf;
 
 namespace IRExplorer {
     [ProtoContract(SkipConstructor = true)]
@@ -13,8 +11,7 @@ namespace IRExplorer {
             Reset();
         }
 
-        public override void Reset()
-        {
+        public override void Reset() {
             ShowRemarks = true;
             ShowPreviousSections = true;
             StopAtSectionBoundaries = true;

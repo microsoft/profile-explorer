@@ -426,14 +426,14 @@
                                 <Setter Property="Foreground" Value="{Binding Path=MissingSectionBrush}" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
-                                <Setter Property="BorderThickness" Value="0.5" />
+                                <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>
 
                             <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
                                 <Setter Property="Foreground" Value="{Binding Path=NewSectionBrush}" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
-                                <Setter Property="BorderThickness" Value="0.5" />
+                                <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>
 
                             <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">

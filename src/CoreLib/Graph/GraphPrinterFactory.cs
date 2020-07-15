@@ -31,7 +31,8 @@ namespace IRExplorerCore.Graph {
                                                         DominatorAlgorithmOptions
                                                             .PostDominators);
                     }
-                    default: throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+                    default:
+                        throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
                 }
             }
             else if (typeof(T) == typeof(IRElement)) {

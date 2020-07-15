@@ -57,7 +57,7 @@ namespace IRExplorer {
                                      ExceptionInfo exceptionInfo = ExceptionInfo.None) {
             var currentProcess = Process.GetCurrentProcess();
             var currentProcessHandle = currentProcess.Handle;
-            uint currentProcessId = (uint) currentProcess.Id;
+            uint currentProcessId = (uint)currentProcess.Id;
             MiniDumpExceptionInformation exInfo;
             exInfo.ThreadId = GetCurrentThreadId();
             exInfo.ClientPointers = false;
@@ -68,11 +68,11 @@ namespace IRExplorer {
             }
 
             if (exInfo.ExceptionPointers == IntPtr.Zero) {
-                return MiniDumpWriteDump(currentProcessHandle, currentProcessId, fileHandle, (uint) options,
+                return MiniDumpWriteDump(currentProcessHandle, currentProcessId, fileHandle, (uint)options,
                                          IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
             }
             else {
-                return MiniDumpWriteDump(currentProcessHandle, currentProcessId, fileHandle, (uint) options,
+                return MiniDumpWriteDump(currentProcessHandle, currentProcessId, fileHandle, (uint)options,
                                          ref exInfo, IntPtr.Zero, IntPtr.Zero);
             }
         }

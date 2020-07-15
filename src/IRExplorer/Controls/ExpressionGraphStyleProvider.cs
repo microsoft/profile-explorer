@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System.Windows.Media;
-using Accessibility;
 using IRExplorerCore.Graph;
 using IRExplorerCore.GraphViz;
 using IRExplorerCore.IR;
@@ -55,13 +54,13 @@ namespace IRExplorer {
 
             binaryNodeStyle_ = new HighlightingStyle(options.BinaryInstructionNodeColor,
                                                      Pens.GetPen(options.NodeBorderColor, 0.035));
-            
+
             callNodeStyle_ = new HighlightingStyle(options.CallInstructionNodeColor,
                                                      Pens.GetPen(options.NodeBorderColor, 0.035));
-            
+
             loadNodeStyle_ = new HighlightingStyle(options.LoadStoreInstructionNodeColor,
                                                    Pens.GetPen(options.NodeBorderColor, 0.035));
-            
+
             binaryNodeStyle_ = new HighlightingStyle(options.BinaryInstructionNodeColor,
                                                      Pens.GetPen(options.NodeBorderColor, 0.035));
 
@@ -99,7 +98,8 @@ namespace IRExplorer {
             var element = node.Element;
 
             switch (element) {
-                case null: return defaultNodeStyle_;
+                case null:
+                    return defaultNodeStyle_;
                 case OperandIR op: {
                     switch (op.Kind) {
                         case OperandKind.Variable:
@@ -142,7 +142,7 @@ namespace IRExplorer {
                     else if (instr.IsBinary) {
                         return binaryNodeStyle_;
                     }
-                    
+
                     break;
                 }
             }

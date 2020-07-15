@@ -13,11 +13,11 @@ using IRExplorerCore.GraphViz;
 using IRExplorerCore.UTC;
 
 namespace CompilerStudio {
-    class Program {
-        private static readonly Object LockObject = new Object();
+    internal class Program {
+        private static readonly object LockObject = new object();
 
-        static void Main(string[] args) {
-            var filePath = args[0];
+        private static void Main(string[] args) {
+            string filePath = args[0];
 
             Trace.Listeners.Add(new TextWriterTraceListener(@"C:\test\trace.log"));
             Trace.AutoFlush = true;
@@ -42,11 +42,12 @@ namespace CompilerStudio {
 
                     var tasks = new List<Process>();
 
-                    foreach (var file in files) {
+                    foreach (string file in files) {
                         Console.WriteLine($"Starting new tester for {file}");
-                        var psi = new ProcessStartInfo("ConsoleTester.exe", file);
-                        psi.UseShellExecute = false;
-                        psi.WindowStyle = ProcessWindowStyle.Minimized;
+                        var psi = new ProcessStartInfo("ConsoleTester.exe", file) {
+                            UseShellExecute = false,
+                            WindowStyle = ProcessWindowStyle.Minimized
+                        };
 
                         tasks.Add(Process.Start(psi));
                     }
@@ -110,8 +111,8 @@ namespace CompilerStudio {
                                          var function = sectionParser.ParseSection(section, text);
 
                                          if (function != null) {
-                                             CFGPrinter p = new CFGPrinter(function);
-                                             var s = p.PrintGraph();
+                                             var p = new CFGPrinter(function);
+                                             string s = p.PrintGraph();
                                              File.WriteAllText(Guid.NewGuid().ToString() + ".in", s);
 
 
@@ -151,8 +152,8 @@ namespace CompilerStudio {
                                              try {
                                                  lock (LockObject) {
                                                      failed = Interlocked.Increment(ref failed);
-                                                     var savePath = Path.GetDirectoryName(filePath);
-                                                     var fileName = Path.GetFileNameWithoutExtension(filePath);
+                                                     string savePath = Path.GetDirectoryName(filePath);
+                                                     string fileName = Path.GetFileNameWithoutExtension(filePath);
                                                      savePath = Path.Combine(savePath, fileName);
 
                                                      if (!Directory.Exists(savePath)) {

@@ -2,7 +2,7 @@
 using System.Text;
 
 namespace IRExplorerExtension {
-    static class NativeMethods {
+    internal static class NativeMethods {
         private const int MAX_PATH = 260;
 
         public static string GetFullPathFromWindows(string exeName) {
@@ -11,7 +11,7 @@ namespace IRExplorerExtension {
         }
 
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, SetLastError = false)]
-        private static extern bool PathFindOnPath([In] [Out] StringBuilder pszFile,
+        private static extern bool PathFindOnPath([In][Out] StringBuilder pszFile,
                                                   [In] string[] ppszOtherDirs);
     }
 }

@@ -1,22 +1,20 @@
-﻿<Window
+﻿<Popup
     x:Class="IRExplorer.OptionsPanels.OptionsPanelHostWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorer.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="OptionsPanelHostWindow"
     Width="500"
     Height="450"
-    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-    ResizeMode="NoResize"
-    ShowInTaskbar="False"
     SnapsToDevicePixels="True"
+    StaysOpen="False"
     UseLayoutRounding="True"
-    WindowStyle="None"
     mc:Ignorable="d">
-    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="2,1,0,2">
-
+    <Border
+        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        BorderThickness="2,1,2,2">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />
@@ -57,4 +55,4 @@
             </Grid>
         </Grid>
     </Border>
-</Window>
+</Popup>

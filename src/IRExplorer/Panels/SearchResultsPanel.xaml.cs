@@ -154,7 +154,7 @@ namespace IRExplorer {
         }
 
         private async void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            var searchResult = ((ListViewItem) sender).DataContext as SearchResultInfo;
+            var searchResult = ((ListViewItem)sender).DataContext as SearchResultInfo;
             await JumpToSearchResult(searchResult);
         }
 
@@ -245,10 +245,7 @@ namespace IRExplorer {
         public override ToolPanelKind PanelKind => ToolPanelKind.SearchResults;
 
         public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
-            //InitializeForDocument(document);
-            //bookmarks_ = new ObservableCollectionRefresh<Bookmark>();
-            //BookmarkList.ItemsSource = bookmarks_;
-            //IsPanelEnabled = document_ != null;
+
         }
 
         public override void OnActivatePanel() { }
@@ -271,13 +268,24 @@ namespace IRExplorer {
                 }
             }
 
+            UpdateResultList(searchInfo.SearchedText, searchResults_);
+        }
+
+
+        private void UpdateResultList(string searchedText, List<SearchResultInfo> searchResults) {
+            searchResults_ = searchResults;
             ResultList.ItemsSource = new ListCollectionView(searchResults_);
             ResultNumberText.Text = searchResults_.Count.ToString();
-            SearchedText.Text = searchInfo.SearchedText;
+            SearchedText.Text = searchedText;
 
             if (ResultList.Items.Count > 0) {
                 ResultList.ScrollIntoView(ResultList.Items[0]);
             }
+        }
+
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            UpdateResultList("", new List<SearchResultInfo>());
         }
 
         #endregion

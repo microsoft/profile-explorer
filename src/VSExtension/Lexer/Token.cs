@@ -115,7 +115,7 @@ namespace IRExplorerCore.Lexer {
         // Returns true if the token represents an operator.
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsOperator() {
-            return (int) Kind >= (int) TokenKind.Plus && (int) Kind <= (int) TokenKind.Div;
+            return (int)Kind >= (int)TokenKind.Plus && (int)Kind <= (int)TokenKind.Div;
         }
 
         public override string ToString() {

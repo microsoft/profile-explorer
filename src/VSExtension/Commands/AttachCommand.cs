@@ -12,7 +12,7 @@ namespace IRExplorerExtension {
     /// <summary>
     /// Command handler
     /// </summary>
-    sealed class AttachCommand : CommandBase {
+    internal sealed class AttachCommand : CommandBase {
         /// <summary>
         /// Command ID.
         /// </summary>

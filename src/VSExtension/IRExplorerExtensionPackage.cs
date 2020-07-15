@@ -33,6 +33,7 @@ namespace IRExplorerExtension {
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(PackageGuidString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideToolWindow(typeof(IRExplorerExtension.Windows.ExpressionToolWindow))]
 
     //[ProvideAutoLoad(UIContextGuids80.SolutionExists)]
     public sealed class IRExplorerExtensionPackage : AsyncPackage {
@@ -48,7 +49,7 @@ namespace IRExplorerExtension {
         private DTE2 dte_;
 
         public static void SetStatusBar(string text, bool animated = false) {
-            object icon = (short) Constants.SBAI_General;
+            object icon = (short)Constants.SBAI_General;
             statusBar_.Animation(animated ? 1 : 0, ref icon);
             statusBar_.SetText(text);
         }
@@ -84,6 +85,8 @@ namespace IRExplorerExtension {
             await ShowExpressionGraphCommand.InitializeAsync(this);
             await EnableCommand.InitializeAsync(this);
             await UpdateIRCommand.InitializeAsync(this);
+
+            await IRExplorerExtension.Windows.ExpressionToolWindowCommand.InitializeAsync(this);
 
             // https://stackoverflow.com/questions/22570121/debuggerevents-onenterbreakmode-is-not-triggered-in-the-visual-studio-extension
             dte_ = await GetServiceAsync(typeof(DTE)) as DTE2;
@@ -252,7 +255,7 @@ namespace IRExplorerExtension {
                 return "";
             }
 
-            var textDocument = (TextDocument) dte_.ActiveDocument.Object("TextDocument");
+            var textDocument = (TextDocument)dte_.ActiveDocument.Object("TextDocument");
             var selection = textDocument.Selection;
             var activePoint = selection.ActivePoint;
             int lineOffset = activePoint.LineCharOffset - 1;

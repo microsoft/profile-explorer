@@ -39,7 +39,7 @@ namespace IRExplorerCore.Analysis {
                 if (cacheEnabled_) {
                     Interlocked.Exchange(ref dominators_, result);
                 }
-                
+
                 return result;
             }
 
@@ -127,7 +127,7 @@ namespace IRExplorerCore.Analysis {
                 }
 
                 cache = new FunctionAnalysisCache(function);
-                
+
                 if (cacheEnabled_) {
                     functionCacheMap_[function] = cache;
                 }

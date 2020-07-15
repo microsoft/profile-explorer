@@ -199,12 +199,9 @@
                 </GridView>
             </ListView.View>
             <ListView.ItemContainerStyle>
-                <Style BasedOn="{StaticResource FlatListViewItem}"
-                       TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background"
-                            Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
-                    <EventSetter Event="Control.MouseDoubleClick"
-                                 Handler="ListViewItem_MouseDoubleClick" />
+                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                    <EventSetter Event="Control.MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
                     <EventSetter Event="UIElement.MouseEnter" Handler="ListViewItem_MouseEnter" />
 
                     <Style.Triggers>
@@ -244,19 +241,16 @@
                         IsHitTestVisible="False" />
                     <MenuItem>
                         <MenuItem.Header>
-                            <local:ColorSelector
-                                ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
+                            <local:ColorSelector ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
                         </MenuItem.Header>
                     </MenuItem>
-                    <MenuItem Command="local:ReferenceCommand.UnmarkReference"
-                              Header="Clear Marker" />
+                    <MenuItem Command="local:ReferenceCommand.UnmarkReference" Header="Clear Marker" />
                     <Separator />
 
                     <MenuItem Header="Mark Visible References">
                         <MenuItem>
                             <MenuItem.Header>
-                                <local:ColorSelector
-                                    ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
+                                <local:ColorSelector ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
                             </MenuItem.Header>
                         </MenuItem>
                     </MenuItem>
@@ -275,14 +269,10 @@
     </Grid>
 
     <local:ToolPanelControl.CommandBindings>
-        <CommandBinding Command="local:ReferenceCommand.JumpToReference"
-                        Executed="JumpToReferenceExecuted" />
-        <CommandBinding Command="local:ReferenceCommand.CopyToClipboard"
-                        Executed="CopyToClipboardExecuted" />
-        <CommandBinding Command="local:ReferenceCommand.MarkReference"
-                        Executed="MarkReferenceExecuted" />
-        <CommandBinding Command="local:ReferenceCommand.UnmarkReference"
-                        Executed="UnmarkReferenceExecuted" />
+        <CommandBinding Command="local:ReferenceCommand.JumpToReference" Executed="JumpToReferenceExecuted" />
+        <CommandBinding Command="local:ReferenceCommand.CopyToClipboard" Executed="CopyToClipboardExecuted" />
+        <CommandBinding Command="local:ReferenceCommand.MarkReference" Executed="MarkReferenceExecuted" />
+        <CommandBinding Command="local:ReferenceCommand.UnmarkReference" Executed="UnmarkReferenceExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
 

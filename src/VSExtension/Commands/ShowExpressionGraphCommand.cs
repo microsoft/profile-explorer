@@ -8,7 +8,7 @@ namespace IRExplorerExtension {
     /// <summary>
     /// Command handler
     /// </summary>
-    sealed class ShowExpressionGraphCommand : CommandBase {
+    internal sealed class ShowExpressionGraphCommand : CommandBase {
         /// <summary>
         /// Command ID.
         /// </summary>

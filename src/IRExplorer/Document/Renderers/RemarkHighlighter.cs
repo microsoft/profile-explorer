@@ -3,10 +3,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Windows;
 using System.Windows.Media;
-using IRExplorerCore.IR;
 using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorerCore.IR;
 
 namespace IRExplorer {
     public sealed class RemarkHighlighter : IBackgroundRenderer {
@@ -50,7 +49,8 @@ namespace IRExplorer {
             if (useTransparentRemarkBackground_) {
                 var alpha = (byte)(255.0 * ((double)remarkBackgroundOpacity_ / 100.0));
                 brush = ColorBrushes.GetBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
-            } else {
+            }
+            else {
                 brush = ColorBrushes.GetBrush(color);
             }
 

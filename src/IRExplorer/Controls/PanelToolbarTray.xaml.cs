@@ -44,12 +44,12 @@ namespace IRExplorer {
         }
 
         public bool HasPinButton {
-            get => (bool) GetValue(HasPinButtonProperty);
+            get => (bool)GetValue(HasPinButtonProperty);
             set => SetValue(HasPinButtonProperty, value);
         }
 
         public bool HasDuplicateButton {
-            get => (bool) GetValue(HasDuplicateButtonProperty);
+            get => (bool)GetValue(HasDuplicateButtonProperty);
             set => SetValue(HasDuplicateButtonProperty, value);
         }
 
@@ -67,28 +67,28 @@ namespace IRExplorer {
         private static void OnHasPinButtonPropertyChanged(DependencyObject d,
                                                           DependencyPropertyChangedEventArgs e) {
             var source = d as PanelToolbarTray;
-            bool visible = (bool) e.NewValue;
+            bool visible = (bool)e.NewValue;
             source.PinButton.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private static void OnHasDuplicateButtonPropertyChanged(DependencyObject d,
                                                                 DependencyPropertyChangedEventArgs e) {
             var source = d as PanelToolbarTray;
-            bool visible = (bool) e.NewValue;
+            bool visible = (bool)e.NewValue;
             source.DuplicateButton.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private static void OnHasPinButtonChanged(DependencyObject sender,
                                                   DependencyPropertyChangedEventArgs e) {
             if (sender is PanelToolbarTray control) {
-                bool visible = (bool) e.NewValue;
+                bool visible = (bool)e.NewValue;
             }
         }
 
         private static void OnHasDuplicateButtonChanged(DependencyObject sender,
                                                         DependencyPropertyChangedEventArgs e) {
             if (sender is PanelToolbarTray control) {
-                bool visible = (bool) e.NewValue;
+                bool visible = (bool)e.NewValue;
                 control.DuplicateButton.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
             }
         }
@@ -98,11 +98,11 @@ namespace IRExplorer {
         }
 
         private void PinButton_Checked(object sender, RoutedEventArgs e) {
-            PinnedChanged?.Invoke(this, new PinEventArgs {IsPinned = true});
+            PinnedChanged?.Invoke(this, new PinEventArgs { IsPinned = true });
         }
 
         private void PinButton_Unchecked(object sender, RoutedEventArgs e) {
-            PinnedChanged?.Invoke(this, new PinEventArgs {IsPinned = false});
+            PinnedChanged?.Invoke(this, new PinEventArgs { IsPinned = false });
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e) {
@@ -110,21 +110,21 @@ namespace IRExplorer {
         }
 
         private void DuplicateMenu_Click(object sender, RoutedEventArgs e) {
-            DuplicateClicked?.Invoke(this, new DuplicateEventArgs {Kind = DuplicatePanelKind.SameSet});
+            DuplicateClicked?.Invoke(this, new DuplicateEventArgs { Kind = DuplicatePanelKind.SameSet });
         }
 
         private void DuplicateLeftMenu_Click(object sender, RoutedEventArgs e) {
             DuplicateClicked?.Invoke(
-                this, new DuplicateEventArgs {Kind = DuplicatePanelKind.NewSetDockedLeft});
+                this, new DuplicateEventArgs { Kind = DuplicatePanelKind.NewSetDockedLeft });
         }
 
         private void DuplicateRightMenu_Click(object sender, RoutedEventArgs e) {
             DuplicateClicked?.Invoke(
-                this, new DuplicateEventArgs {Kind = DuplicatePanelKind.NewSetDockedRight});
+                this, new DuplicateEventArgs { Kind = DuplicatePanelKind.NewSetDockedRight });
         }
 
         private void DuplicateFloatingMenu_Click(object sender, RoutedEventArgs e) {
-            DuplicateClicked?.Invoke(this, new DuplicateEventArgs {Kind = DuplicatePanelKind.Floating});
+            DuplicateClicked?.Invoke(this, new DuplicateEventArgs { Kind = DuplicatePanelKind.Floating });
         }
 
         private void MenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
@@ -133,7 +133,7 @@ namespace IRExplorer {
                 BindMenuOpen(this, args);
 
                 foreach (var item in BindMenu.Items) {
-                    ((MenuItem) item).Click -= BindMenuItem_Click;
+                    ((MenuItem)item).Click -= BindMenuItem_Click;
                 }
 
                 BindMenu.Items.Clear();

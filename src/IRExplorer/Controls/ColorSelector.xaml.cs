@@ -4,6 +4,7 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 
@@ -44,22 +45,25 @@ namespace IRExplorer {
         }
 
         public ICommand ColorSelectedCommand {
-            get => (ICommand) GetValue(ColorSelectedCommandProperty);
+            get => (ICommand)GetValue(ColorSelectedCommandProperty);
 
             set => SetValue(ColorSelectedCommandProperty, value);
         }
 
         public IInputElement CommandTarget {
-            get => (IInputElement) GetValue(CommandTargetProperty);
+            get => (IInputElement)GetValue(CommandTargetProperty);
             set => SetValue(CommandTargetProperty, value);
         }
+
+        public event EventHandler<ColorEventArgs> ColorSelected;
 
         private void ColorSelector_Loaded(object sender, RoutedEventArgs e) {
             Focus();
         }
 
         private void ColorSelector_PreviewKeyDown(object sender, KeyEventArgs e) {
-            int index = e.Key switch {
+            int index = e.Key switch
+            {
                 Key.D0 => 0,
                 Key.D1 => 1,
                 Key.D2 => 2,
@@ -70,7 +74,7 @@ namespace IRExplorer {
                 Key.D7 => 7,
                 Key.D8 => 8,
                 Key.D9 => 9,
-                _      => -1
+                _ => -1
             };
 
             if (index != -1) {
@@ -89,7 +93,7 @@ namespace IRExplorer {
         }
 
         private void RaiseSelectedColorEvent(Color color) {
-            if (ColorSelectedCommand == null) {
+            if (ColorSelectedCommand == null && ColorSelected == null) {
                 return;
             }
 
@@ -99,10 +103,17 @@ namespace IRExplorer {
                 parentHost.Focus();
             }
 
-            if (ColorSelectedCommand.CanExecute(null)) {
-                ColorSelectedCommand.Execute(new ColorEventArgs {
-                    SelectedColor = color
-                });
+            var args = new ColorEventArgs {
+                SelectedColor = color
+            };
+
+            if (ColorSelectedCommand != null) {
+                if (ColorSelectedCommand.CanExecute(args)) {
+                    ColorSelectedCommand.Execute(args);
+                }
+            }
+            else {
+                ColorSelected?.Invoke(this, args);
             }
         }
 
@@ -127,6 +138,10 @@ namespace IRExplorer {
             while (logicalRoot != null) {
                 if (logicalRoot is ContextMenu menu) {
                     menu.IsOpen = false;
+                    break;
+                }
+                else if (logicalRoot is Popup popup) {
+                    popup.IsOpen = false;
                     break;
                 }
 

@@ -58,7 +58,7 @@ namespace IRExplorerExtension {
         }
 
         public static void Initialize(Debugger debugger) {
-            debugger_ = (Debugger5) debugger;
+            debugger_ = (Debugger5)debugger;
         }
 
         private static Expression GetExpression(string text) {
@@ -173,12 +173,12 @@ namespace IRExplorerExtension {
 
         public static StackFrame GetCurrentStackFrame() {
             try {
-                var stackFrame = (StackFrame2) debugger_.CurrentStackFrame;
+                var stackFrame = (StackFrame2)debugger_.CurrentStackFrame;
 
                 return new StackFrame {
                     File = stackFrame.FileName,
                     Function = stackFrame.FunctionName,
-                    LineNumber = (int) stackFrame.LineNumber
+                    LineNumber = (int)stackFrame.LineNumber
                 };
             }
             catch (Exception ex) {

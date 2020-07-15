@@ -43,14 +43,25 @@
             </StackPanel>
 
             <CheckBox
+                Name="IndentationCheckbox"
                 Margin="0,0,0,2"
                 Content="Use indentation level for section names"
                 IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
                 ToolTip="Show section names indentend based on the parent/child relationship" />
-
-
+            <StackPanel Margin="20,2,0,2" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="Indentation amount" />
+                <xctk:IntegerUpDown
+                    Margin="4,0,0,0"
+                    IsEnabled="{Binding ElementName=IndentationCheckbox, Path=IsChecked}"
+                    Maximum="16"
+                    Minimum="1"
+                    ParsingNumberStyle="Number"
+                    ShowButtonSpinner="True"
+                    ToolTip="Number of whitespace letters to use for each level of indentation"
+                    Value="{Binding Path=IndentationAmount, Mode=TwoWay}" />
+            </StackPanel>
             <CheckBox
-                Margin="0,0,0,2"
+                Margin="0,2,0,2"
                 Content="Show section group separators"
                 IsChecked="{Binding ShowSectionSeparators, Mode=TwoWay}"
                 ToolTip="Show before/after section separator lines for groups of sections" />

@@ -100,7 +100,8 @@ namespace IRExplorerCore.IR {
         }
 
         public static TypeIR GetInt(int size) {
-            return size switch {
+            return size switch
+            {
                 1 => signedIntTypes_[0],
                 2 => signedIntTypes_[1],
                 4 => signedIntTypes_[2],
@@ -136,7 +137,8 @@ namespace IRExplorerCore.IR {
         }
 
         public static TypeIR GetUInt(int size) {
-            return size switch {
+            return size switch
+            {
                 1 => unsignedIntTypes_[0],
                 2 => unsignedIntTypes_[1],
                 4 => unsignedIntTypes_[2],
@@ -179,15 +181,24 @@ namespace IRExplorerCore.IR {
                         return $"int{Size * 8}";
                     }
                 }
-                case TypeKind.Float:     return $"float{Size * 8}";
-                case TypeKind.Vector:    return $"vector{Size * 8}";
-                case TypeKind.Multibyte: return $"mb{Size}";
-                case TypeKind.Array:     return "<TODO:array>";
-                case TypeKind.Struct:    return "<TODO:array>";
-                case TypeKind.Pointer:   return "<TODO:array>";
-                case TypeKind.Void:      return "void";
-                case TypeKind.Bool:      return "bool";
-                case TypeKind.Unknown:   return "unknown";
+                case TypeKind.Float:
+                    return $"float{Size * 8}";
+                case TypeKind.Vector:
+                    return $"vector{Size * 8}";
+                case TypeKind.Multibyte:
+                    return $"mb{Size}";
+                case TypeKind.Array:
+                    return "<TODO:array>";
+                case TypeKind.Struct:
+                    return "<TODO:array>";
+                case TypeKind.Pointer:
+                    return "<TODO:array>";
+                case TypeKind.Void:
+                    return "void";
+                case TypeKind.Bool:
+                    return "bool";
+                case TypeKind.Unknown:
+                    return "unknown";
             }
 
             return "<unexpected>";

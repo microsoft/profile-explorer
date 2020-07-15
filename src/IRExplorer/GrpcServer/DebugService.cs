@@ -40,8 +40,8 @@ namespace IRExplorer.DebugServer {
             };
 
             serverInstance_ = new Server(options) {
-                Services = {global::DebugService.BindService(instance)},
-                Ports = {new ServerPort("localhost", Port, ServerCredentials.Insecure)}
+                Services = { global::DebugService.BindService(instance) },
+                Ports = { new ServerPort("localhost", Port, ServerCredentials.Insecure) }
             };
 
             serverInstance_.Start();
@@ -54,11 +54,11 @@ namespace IRExplorer.DebugServer {
 
         private StartSessionResult HandleNewSession(StartSessionRequest request) {
             OnStartSession?.Invoke(this, request);
-            return new StartSessionResult {SessionId = 1};
+            return new StartSessionResult { SessionId = 1 };
         }
 
         private Result GetSuccessResult() {
-            return new Result {Success = true};
+            return new Result { Success = true };
         }
 
         public override Task<StartSessionResult> StartSession(StartSessionRequest request,

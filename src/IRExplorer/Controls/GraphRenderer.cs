@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore.GraphViz;
@@ -84,9 +83,10 @@ namespace IRExplorer {
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
 
-            graphStyle_ = options switch {
+            graphStyle_ = options switch
+            {
                 FlowGraphSettings settings => new FlowGraphStyleProvider(graph.GraphKind, settings),
-                ExpressionGraphSettings settings => 
+                ExpressionGraphSettings settings =>
                     new ExpressionGraphStyleProvider(graph.GraphKind, settings, compilerInfo),
                 _ => throw new InvalidOperationException("Unknown graph settings type!")
             };
@@ -119,7 +119,7 @@ namespace IRExplorer {
                     dc.DrawRectangle(Brushes.Transparent, pen, boundingBox);
                     double textSize = 0.25;
 
-                    var text = new FormattedText($"B{((BlockIR) group.Key).Number}",
+                    var text = new FormattedText($"B{((BlockIR)group.Key).Number}",
                                                  CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                                                  defaultNodeFont_, textSize, Brushes.DimGray,
                                                  VisualTreeHelper.GetDpi(groupVisual).PixelsPerDip);
@@ -167,7 +167,7 @@ namespace IRExplorer {
             var textColor = graphStyle_.GetDefaultTextColor();
 
             foreach (var node in graph_.Nodes) {
-                if(node == null) {
+                if (node == null) {
                     continue; //? TODO: Investigate
                 }
 
@@ -219,14 +219,15 @@ namespace IRExplorer {
                 var points = edge.LinePoints;
                 var edgeType = graphStyle_.GetEdgeKind(edge);
 
-                var sc = edgeType switch {
-                    GraphEdgeKind.Default                => defaultSC,
-                    GraphEdgeKind.Branch                 => branchSC,
-                    GraphEdgeKind.Loop                   => loopSC,
-                    GraphEdgeKind.Return                 => returnSC,
-                    GraphEdgeKind.ImmediateDominator     => immDomSC,
+                var sc = edgeType switch
+                {
+                    GraphEdgeKind.Default => defaultSC,
+                    GraphEdgeKind.Branch => branchSC,
+                    GraphEdgeKind.Loop => loopSC,
+                    GraphEdgeKind.Return => returnSC,
+                    GraphEdgeKind.ImmediateDominator => immDomSC,
                     GraphEdgeKind.ImmediatePostDominator => immDomSC,
-                    _                                    => defaultSC
+                    _ => defaultSC
                 };
 
                 //? TODO: Avoid making copies at all

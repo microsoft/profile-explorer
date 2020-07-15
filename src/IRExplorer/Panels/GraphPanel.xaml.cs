@@ -9,14 +9,13 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorer.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.GraphViz;
 using IRExplorerCore.IR;
-using ICSharpCode.AvalonEdit.Rendering;
 using ProtoBuf;
-using IRExplorer.OptionsPanels;
-using IRExplorer.OptionsPanels;
 
 namespace IRExplorer {
     // ScrollViewer that ignores click events.
@@ -127,7 +126,7 @@ namespace IRExplorer {
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
             Settings.Reset();
-            graphOptionsPanel_.Settings= null;
+            graphOptionsPanel_.Settings = null;
             graphOptionsPanel_.Settings = Settings.Clone();
         }
 
@@ -617,7 +616,9 @@ namespace IRExplorer {
             if (node.NodeInfo.Element is BlockIR block) {
                 previewer.PreviewedElement = block;
                 nodeToolTip_.DataContext = new BlockTooltipInfo(block);
-                int lines = Math.Max(1, Math.Min(block.Tuples.Count + 1, 20));
+
+                // 5 lines are needed to not truncate the block info labels.
+                int lines = Math.Max(5, Math.Min(block.Tuples.Count + 1, 20));
                 nodeToolTip_.Height = previewer.ResizeForLines(lines);
                 previewer.UpdateView(false);
             }
@@ -713,12 +714,12 @@ namespace IRExplorer {
 
         //? TODO: Should be a virtual overriden in the expr panel
         private void ShowOptionsPanel() {
-            if(optionsPanelVisible_) {
+            if (optionsPanelVisible_) {
                 return;
             }
 
             if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                var width = Math.Max(ExpressionGraphOptionsPanel.MinimumWidth, 
+                var width = Math.Max(ExpressionGraphOptionsPanel.MinimumWidth,
                     Math.Min(GraphHost.ActualWidth, ExpressionGraphOptionsPanel.DefaultWidth));
                 var height = Math.Max(ExpressionGraphOptionsPanel.MinimumHeight,
                     Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
@@ -739,7 +740,8 @@ namespace IRExplorer {
             graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
             graphOptionsPanel_.PanelReset += OptionsPanel_PanelReset;
             graphOptionsPanel_.Settings = Settings.Clone();
-            graphOptionsPanel_.Show();
+            graphOptionsPanel_.IsOpen = true;
+            ;
             optionsPanelVisible_ = true;
         }
 
@@ -748,7 +750,7 @@ namespace IRExplorer {
                 return;
             }
 
-            graphOptionsPanel_.Close();
+            graphOptionsPanel_.IsOpen = false;
             graphOptionsPanel_.PanelClosed -= OptionsPanel_PanelClosed;
             graphOptionsPanel_.PanelReset -= OptionsPanel_PanelReset;
 
@@ -890,7 +892,7 @@ namespace IRExplorer {
         public GraphSettings Settings =>
             PanelKind == ToolPanelKind.ExpressionGraph
                 ? App.Settings.ExpressionGraphSettings
-                : (GraphSettings) App.Settings.FlowGraphSettings;
+                : (GraphSettings)App.Settings.FlowGraphSettings;
 
         public override void OnRegisterPanel() {
             IsPanelEnabled = false;
@@ -969,7 +971,7 @@ namespace IRExplorer {
             Session.SavePanelState(data, this, section);
 
             // Clear references to IR objects that would keep the previous function alive.
-            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: unloaded doc {ObjectTracker.Track(document_)}"); 
+            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: unloaded doc {ObjectTracker.Track(document_)}");
             document_ = null;
             section_ = null;
             graph_ = null;

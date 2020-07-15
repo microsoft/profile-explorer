@@ -7,7 +7,7 @@ namespace IRExplorerExtension {
     /// <summary>
     /// Command handler
     /// </summary>
-    sealed class UpdateIRCommand : CommandBase {
+    internal sealed class UpdateIRCommand : CommandBase {
         /// <summary>
         /// Command ID.
         /// </summary>

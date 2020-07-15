@@ -1,12 +1,10 @@
-﻿using System;
-using System.Globalization;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorer.Utilities;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
-using ICSharpCode.AvalonEdit.Rendering;
 
 namespace IRExplorer.Document {
     public class VisualHost : UIElement {
@@ -103,7 +101,7 @@ namespace IRExplorer.Document {
         }
 
         public void Add(Visual drawingVisual) {
-            Children.Add(new VisualHost {Visual = drawingVisual});
+            Children.Add(new VisualHost { Visual = drawingVisual });
         }
 
         public void Add(UIElement element) {

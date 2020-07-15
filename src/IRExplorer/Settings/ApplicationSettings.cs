@@ -25,25 +25,25 @@ namespace IRExplorer {
 
         [ProtoMember(2)]
         public bool AutoReloadDocument;
-        
+
         [ProtoMember(3)]
         public string MainWindowPlacement;
-        
+
         [ProtoMember(4)]
         public int ThemeIndex;
-        
+
         [ProtoMember(5)]
         public List<Tuple<string, string>> RecentComparedFiles;
-        
+
         [ProtoMember(6)]
         public DocumentSettings DocumentSettings;
-        
+
         [ProtoMember(7)]
         public FlowGraphSettings FlowGraphSettings;
-        
+
         [ProtoMember(8)]
         public ExpressionGraphSettings ExpressionGraphSettings;
-        
+
         [ProtoMember(9)]
         public RemarkSettings RemarkSettings;
 
@@ -80,6 +80,11 @@ namespace IRExplorer {
             RemarkSettings ??= new RemarkSettings();
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
+
+            //? REMOVE
+            /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {
+            //DocumentSettings.SyntaxHighlightingName = "UTC IR";
+            //}
         }
 
         public void AddRecentFile(string path) {

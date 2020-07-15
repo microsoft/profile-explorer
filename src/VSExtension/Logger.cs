@@ -76,11 +76,11 @@ namespace IRExplorerExtension {
                 telemetry_ = new TelemetryClient(configuration);
                 telemetry_.Context.Session.Id = Guid.NewGuid().ToString();
 
-                var userId =
+                byte[] userId =
                     Encoding.UTF8.GetBytes(Environment.UserName + Environment.MachineName);
 
                 using (var crypto = new MD5CryptoServiceProvider()) {
-                    var hash = crypto.ComputeHash(userId);
+                    byte[] hash = crypto.ComputeHash(userId);
                     telemetry_.Context.User.Id = Convert.ToBase64String(hash);
                 }
             }
@@ -118,7 +118,7 @@ namespace IRExplorerExtension {
             if (panel_ != null) {
                 try {
                     var output =
-                        (IVsOutputWindow) provider_.GetService(typeof(SVsOutputWindow));
+                        (IVsOutputWindow)provider_.GetService(typeof(SVsOutputWindow));
 
                     output.DeletePane(ref panelId_);
                     panel_ = null;
@@ -139,7 +139,7 @@ namespace IRExplorerExtension {
                     panelId_ = Guid.NewGuid();
 
                     var output =
-                        (IVsOutputWindow) provider_.GetService(typeof(SVsOutputWindow));
+                        (IVsOutputWindow)provider_.GetService(typeof(SVsOutputWindow));
 
                     output.CreatePane(ref panelId_, name_, 1, 1);
                     output.GetPane(ref panelId_, out panel_);

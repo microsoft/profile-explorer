@@ -76,7 +76,7 @@ namespace IRExplorer {
 
             try {
                 using (var memoryStream = new MemoryStream(xmlBytes)) {
-                    placement = (WINDOWPLACEMENT) serializer.Deserialize(memoryStream);
+                    placement = (WINDOWPLACEMENT)serializer.Deserialize(memoryStream);
                 }
 
                 placement.length = Marshal.SizeOf(typeof(WINDOWPLACEMENT));

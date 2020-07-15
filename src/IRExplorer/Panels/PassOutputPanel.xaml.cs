@@ -108,10 +108,11 @@ namespace IRExplorer {
             var item = e.AddedItems[0] as ComboBoxItem;
             string kindString = item.Tag as string;
 
-            showAfterOutput_ = kindString switch {
+            showAfterOutput_ = kindString switch
+            {
                 "Before" => false,
-                "After"  => true,
-                _        => showAfterOutput_
+                "After" => true,
+                _ => showAfterOutput_
             };
 
             await SwitchText(Session.CurrentDocumentSection, Session.CurrentDocument);
@@ -209,6 +210,10 @@ namespace IRExplorer {
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
             SaveState(section, document);
+            ResetOutputPanel();
+        }
+
+        private void ResetOutputPanel() {
             SearchPanelVisible = false;
             initialText_ = null;
             searchResults_ = null;
@@ -228,6 +233,11 @@ namespace IRExplorer {
             state.ShowAfterOutput = showAfterOutput_;
             var data = StateSerializer.Serialize(state, document.Function);
             Session.SavePanelState(data, this, section);
+        }
+
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            ResetOutputPanel();
         }
 
         #endregion

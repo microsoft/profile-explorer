@@ -55,7 +55,7 @@ namespace IRExplorerCore.IR {
             get {
                 Debug.Assert(Kind == OperandKind.IntConstant);
                 Debug.Assert(Value is long);
-                return (long) Value;
+                return (long)Value;
             }
         }
 
@@ -63,7 +63,7 @@ namespace IRExplorerCore.IR {
             get {
                 Debug.Assert(Kind == OperandKind.FloatConstant);
                 Debug.Assert(Value is double);
-                return (double) Value;
+                return (double)Value;
             }
         }
 
@@ -86,7 +86,7 @@ namespace IRExplorerCore.IR {
                     return BlockLabelValue.Name;
                 }
 
-                return (ReadOnlyMemory<char>) Value;
+                return (ReadOnlyMemory<char>)Value;
             }
         }
 
@@ -94,7 +94,7 @@ namespace IRExplorerCore.IR {
             get {
                 Debug.Assert(Kind == OperandKind.Indirection);
                 Debug.Assert(Value is OperandIR);
-                return (OperandIR) Value;
+                return (OperandIR)Value;
             }
         }
 
@@ -102,7 +102,7 @@ namespace IRExplorerCore.IR {
             get {
                 Debug.Assert(Kind == OperandKind.LabelAddress);
                 Debug.Assert(Value is BlockLabelIR);
-                return (BlockLabelIR) Value;
+                return (BlockLabelIR)Value;
             }
         }
 
@@ -137,16 +137,17 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            string result = Kind switch {
-                OperandKind.Variable      => $"var {Value}.{Type}",
-                OperandKind.Temporary     => $"temp {Value}.{Type}",
-                OperandKind.IntConstant   => $"intconst {Value}.{Type}",
+            string result = Kind switch
+            {
+                OperandKind.Variable => $"var {Value}.{Type}",
+                OperandKind.Temporary => $"temp {Value}.{Type}",
+                OperandKind.IntConstant => $"intconst {Value}.{Type}",
                 OperandKind.FloatConstant => $"floatconst {Value}.{Type}",
-                OperandKind.Indirection   => $"indir {Value}.{Type}",
-                OperandKind.Address       => $"address {Value}.{Type}",
-                OperandKind.LabelAddress  => $"label {Value}.{Type}",
-                OperandKind.Other         => "other",
-                _                         => "<unexpected>"
+                OperandKind.Indirection => $"indir {Value}.{Type}",
+                OperandKind.Address => $"address {Value}.{Type}",
+                OperandKind.LabelAddress => $"label {Value}.{Type}",
+                OperandKind.Other => "other",
+                _ => "<unexpected>"
             };
 
             var ssaTag = GetTag<ISSAValue>();

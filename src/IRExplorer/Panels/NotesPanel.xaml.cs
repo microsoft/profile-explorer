@@ -42,7 +42,7 @@ namespace IRExplorer {
         private async void TextSearch_TextChanged(object sender, TextChangedEventArgs e) { }
 
         private void ExecuteClearTextSearch(object sender, ExecutedRoutedEventArgs e) {
-            ((TextBox) e.Parameter).Text = string.Empty;
+            ((TextBox)e.Parameter).Text = string.Empty;
         }
 
         private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
@@ -54,10 +54,11 @@ namespace IRExplorer {
             string kindString = item.Tag as string;
             OnSessionSave();
 
-            showSectionText_ = kindString switch {
+            showSectionText_ = kindString switch
+            {
                 "Document" => false,
-                "Section"  => true,
-                _          => showSectionText_
+                "Section" => true,
+                _ => showSectionText_
             };
 
             await SwitchText(Session.CurrentDocumentSection, Session.CurrentDocument);
@@ -142,6 +143,12 @@ namespace IRExplorer {
             state.ShowSectionNotes = showSectionText_;
             var data = StateSerializer.Serialize(state, document.Function);
             Session.SavePanelState(data, this, section);
+        }
+
+
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            TextView.UnloadDocument();
         }
 
         #endregion

@@ -103,7 +103,7 @@ namespace IRExplorerCore.Analysis {
                 return true;
             }
 
-            if(BuildQueryCache(treeStartBlock_)) { 
+            if (BuildQueryCache(treeStartBlock_)) {
                 var pair = new Tuple<BlockIR, BlockIR>(block, dominatedBlock);
                 return dominanceCache_.Contains(pair);
             }
@@ -283,7 +283,7 @@ namespace IRExplorerCore.Analysis {
         }
 
         private bool BuildQueryCache(BlockIR startBlock) {
-            if(dominanceCache_ != null) {
+            if (dominanceCache_ != null) {
                 return true;
             }
 

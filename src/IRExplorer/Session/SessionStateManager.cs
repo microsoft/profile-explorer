@@ -6,9 +6,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AvalonDock.Layout;
+using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using ICSharpCode.AvalonEdit.Document;
 using ProtoBuf;
 
 namespace IRExplorer {

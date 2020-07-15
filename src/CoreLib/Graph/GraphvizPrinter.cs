@@ -78,7 +78,7 @@ namespace IRExplorerCore.GraphViz {
         }
 
         public string PrintGraph() {
-            var builder = new StringBuilder(1024*16);
+            var builder = new StringBuilder(1024 * 16);
             builder.AppendLine("digraph {");
             builder.AppendLine(GetExtraSettings());
             PrintGraph(builder);
@@ -120,7 +120,7 @@ namespace IRExplorerCore.GraphViz {
                 return null;
             }
 
-            var outputText = new StringBuilder(1024*32);
+            var outputText = new StringBuilder(1024 * 32);
 
             var psi = new ProcessStartInfo("dot.exe") {
                 Arguments = $"-Tplain \"{inputFilePath}\"",
@@ -133,7 +133,7 @@ namespace IRExplorerCore.GraphViz {
             //? TODO: Put path between " to support whitespace in the path.
 
             try {
-                var process = new Process {StartInfo = psi, EnableRaisingEvents = true};
+                var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
                 process.OutputDataReceived += (sender, e) => {
                     outputText.AppendLine(e.Data);
@@ -158,7 +158,7 @@ namespace IRExplorerCore.GraphViz {
 
                 process.CancelOutputRead();
 
-                if(process.ExitCode != 0) {
+                if (process.ExitCode != 0) {
                     // dot failed somehow, treat it as an error.
                     Trace.TraceError(
                         $"Graphviz task {ObjectTracker.Track(task)}: GraphViz failed with error code: {process.ExitCode}");

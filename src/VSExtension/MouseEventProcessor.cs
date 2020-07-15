@@ -37,7 +37,7 @@ namespace IRExplorerExtension {
     [ContentType("code")]
     [TextViewRole(PredefinedTextViewRoles.Document)]
     [Order(Before = "VisualStudioMouseProcessor")]
-    class MouseProcessorProvider : IMouseProcessorProvider {
+    internal class MouseProcessorProvider : IMouseProcessorProvider {
         private IVsEditorAdaptersFactoryService editorAdapters_;
 
         [ImportingConstructor]
@@ -52,7 +52,7 @@ namespace IRExplorerExtension {
         }
     }
 
-    class MouseEventProcessor : MouseProcessorBase {
+    internal class MouseEventProcessor : MouseProcessorBase {
         public enum ScrollBarConstants {
             SB_HORZ,
             SB_VERT,
@@ -126,7 +126,7 @@ namespace IRExplorerExtension {
         private static void GetScrollInfo(IVsTextView view, ScrollBarConstants bar,
                                           out int minUnit, out int maxUnit,
                                           out int visibleLineCount, out int firstVisibleUnit) {
-            view.GetScrollInfo((int) bar, out minUnit, out maxUnit, out visibleLineCount,
+            view.GetScrollInfo((int)bar, out minUnit, out maxUnit, out visibleLineCount,
                                out firstVisibleUnit);
         }
     }

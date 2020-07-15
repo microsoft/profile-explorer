@@ -49,12 +49,13 @@ namespace IRExplorer {
 
         public string Kind {
             get {
-                return Info.Kind switch {
+                return Info.Kind switch
+                {
                     ReferenceKind.Address => "Address",
-                    ReferenceKind.Load    => "Load",
-                    ReferenceKind.Store   => "Store",
-                    ReferenceKind.SSA     => "SSA use",
-                    _                     => ""
+                    ReferenceKind.Load => "Load",
+                    ReferenceKind.Store => "Store",
+                    ReferenceKind.SSA => "SSA use",
+                    _ => ""
                 };
             }
         }
@@ -275,7 +276,8 @@ namespace IRExplorer {
                     case ReferenceKind.SSA:
                         referenceSummary_.SSACount++;
                         break;
-                    default: throw new ArgumentOutOfRangeException();
+                    default:
+                        throw new ArgumentOutOfRangeException();
                 }
             }
 
@@ -328,12 +330,13 @@ namespace IRExplorer {
             else {
                 filterEnabled_ = true;
 
-                filterKind_ = kindString switch {
-                    "SSA"     => ReferenceKind.SSA,
-                    "Load"    => ReferenceKind.Load,
-                    "Store"   => ReferenceKind.Store,
+                filterKind_ = kindString switch
+                {
+                    "SSA" => ReferenceKind.SSA,
+                    "Load" => ReferenceKind.Load,
+                    "Store" => ReferenceKind.Store,
                     "Address" => ReferenceKind.Address,
-                    _         => filterKind_
+                    _ => filterKind_
                 };
             }
 
@@ -347,7 +350,7 @@ namespace IRExplorer {
 
         private void MarkReferenceExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (ReferenceList.SelectedItem is ReferenceInfo refInfo) {
-                var color = ((ColorEventArgs) e.Parameter).SelectedColor;
+                var color = ((ColorEventArgs)e.Parameter).SelectedColor;
                 document_.MarkElement(refInfo.Info.Element, color);
             }
         }
@@ -381,7 +384,7 @@ namespace IRExplorer {
         }
 
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            var refInfo = ((ListViewItem) sender).DataContext as ReferenceInfo;
+            var refInfo = ((ListViewItem)sender).DataContext as ReferenceInfo;
             JumpToReference(refInfo);
         }
 

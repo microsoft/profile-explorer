@@ -7,12 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit;
 using IRExplorer.Document;
 using IRExplorer.Utilities;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
-using ICSharpCode.AvalonEdit;
 
 // TODO: Clicking on scroll bar not working if there is an IR element under it,
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
@@ -61,6 +61,8 @@ namespace IRExplorer {
         private IRTextSection section_;
         private int selectedElementRefIndex_;
         private List<Reference> selectedElementRefs_;
+        private bool syntaxHighlightingLoaded_;
+        private CancelableTaskInfo updateHighlightingTask_;
 
         public LightIRDocument() {
             elements_ = new List<IRElement>();
@@ -73,7 +75,6 @@ namespace IRExplorer {
             TextArea.TextView.BackgroundRenderers.Add(elementMarker_);
             TextArea.TextView.BackgroundRenderers.Add(searchResultMarker_);
             TextArea.TextView.BackgroundRenderers.Add(hoverElementMarker_);
-            SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
             TextChanged += TextView_TextChanged;
             PreviewMouseLeftButtonDown += TextView_PreviewMouseLeftButtonDown;
             PreviewMouseHover += TextView_PreviewMouseHover;
@@ -205,7 +206,6 @@ namespace IRExplorer {
 
                     Session.CurrentDocument.HighlightElement(currentRefElement.Element,
                                                              HighlighingType.Hovered);
-
                     e.Handled = true;
                     return;
                 }
@@ -219,7 +219,7 @@ namespace IRExplorer {
             Text = "";
             section_ = null;
             function_ = null;
-            initialText_ = null;;
+            initialText_ = null;
         }
 
         private async void TextView_TextChanged(object sender, EventArgs e) {
@@ -227,6 +227,11 @@ namespace IRExplorer {
         }
 
         public async Task SwitchText(string text, FunctionIR function, IRTextSection section) {
+            if (!syntaxHighlightingLoaded_) {
+                SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath(null));
+                syntaxHighlightingLoaded_ = true;
+            }
+
             initialText_ = text;
             function_ = function;
             section_ = section;
@@ -236,30 +241,49 @@ namespace IRExplorer {
             await UpdateElementHighlighting();
         }
 
-        private (TupleIR, BlockIR) CreateFakeIRElements() {
-            var func = new FunctionIR();
-            var block = new BlockIR(IRElementId.FromLong(0), 0, func);
-            var tuple = new TupleIR(IRElementId.FromLong(1), TupleKind.Other, block);
-            return (tuple, block);
-        }
-
         private async Task UpdateElementHighlighting() {
+            // If there is another task running, cancel it and wait for it to complete
+            // before starting a new task, this can happen when quickly changing sections.
+            CancelableTaskInfo currentUpdateTask = null;
+
+            lock (this) {
+                if (updateHighlightingTask_ != null) {
+                    updateHighlightingTask_.Cancel();
+                    currentUpdateTask = updateHighlightingTask_;
+                }
+            }
+
+            if (currentUpdateTask != null) {
+                await currentUpdateTask.WaitToCompleteAsync();
+            }
+
             elementMarker_.Clear();
             hoverElementMarker_.Clear();
             searchResultMarker_.Clear();
             string currentText = Text;
 
-            if (function_ == null || string.IsNullOrEmpty(currentText)) {
-                // No function set yet or switching sections.
+            // When unloading a document, no point to start a new task.
+            if (currentText.Length == 0) {
                 UpdateHighlighting();
                 return;
             }
 
             var defElements = new HighlightedGroup(elementStyle_);
+            updateHighlightingTask_ = new CancelableTaskInfo();
 
             await Task.Run(() => {
                 lock (this) {
-                    elements_ = ExtractTextOperands(currentText, function_);
+                    if (updateHighlightingTask_.IsCanceled) {
+                        updateHighlightingTask_.Completed();
+                        return;
+                    }
+
+                    if (function_ == null || string.IsNullOrEmpty(currentText)) {
+                        // No function set yet or switching sections.
+                        return;
+                    }
+
+                    elements_ = ExtractTextOperands(currentText, function_, updateHighlightingTask_);
 
                     foreach (var element in elements_) {
                         defElements.Add(element);
@@ -267,17 +291,26 @@ namespace IRExplorer {
                 }
             });
 
-            if (!defElements.IsEmpty()) {
-                elementMarker_.Add(defElements);
-            }
-
+            elementMarker_.Add(defElements);
             UpdateHighlighting();
+
+            lock (this) {
+                if (updateHighlightingTask_ != null) {
+                    updateHighlightingTask_.Dispose();
+                    updateHighlightingTask_ = null;
+                }
+            }
         }
 
-        private List<IRElement> ExtractTextOperands(string text, FunctionIR function) {
+        private List<IRElement> ExtractTextOperands(string text, FunctionIR function, CancelableTaskInfo cancelableTask) {
             var elements = new List<IRElement>();
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
             var remarks = remarkProvider.ExtractRemarks(text, function, section_);
+
+            if (cancelableTask.IsCanceled) {
+                cancelableTask.Completed();
+                return elements;
+            }
 
             foreach (var remark in remarks) {
                 foreach (var element in remark.OutputElements) {
@@ -285,6 +318,7 @@ namespace IRExplorer {
                 }
             }
 
+            cancelableTask.Completed();
             return elements;
         }
 
@@ -318,8 +352,7 @@ namespace IRExplorer {
                 Text = initialText_;
 
                 var searchResults =
-                    await Task.Run(
-                        () => TextSearcher.AllIndexesOf(initialText_, info.SearchedText, 0, info.SearchKind));
+                    await Task.Run(() => TextSearcher.AllIndexesOf(initialText_, info.SearchedText, 0, info.SearchKind));
 
                 HighlightSearchResults(searchResults);
                 return searchResults;

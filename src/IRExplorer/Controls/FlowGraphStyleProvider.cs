@@ -96,10 +96,11 @@ namespace IRExplorer {
         public HighlightingStyle GetNodeStyle(Node node) {
             var element = node.Element;
 
-            return element switch {
-                null          => defaultNodeStyle_,
+            return element switch
+            {
+                null => defaultNodeStyle_,
                 BlockIR block => GetBlockNodeStyle(block),
-                _             => defaultNodeStyle_
+                _ => defaultNodeStyle_
             };
         }
 
@@ -112,7 +113,7 @@ namespace IRExplorer {
                 return GraphEdgeKind.ImmediateDominator;
             }
 
-            if(graphKind_ == GraphKind.FlowGraph) { 
+            if (graphKind_ == GraphKind.FlowGraph) {
                 var fromBlock = edge.NodeFrom?.Element as BlockIR;
                 var toBlock = edge.NodeTo?.Element as BlockIR;
 

@@ -41,7 +41,7 @@ namespace IRExplorer {
         [ProtoMember(14)] public int MaxExpressionDepth { get; set; }
 
         [ProtoMember(15)] public bool SkipCopyInstructions { get; set; }
-        
+
         [ProtoMember(16)] public Color LoadStoreInstructionNodeColor { get; set; }
 
         [ProtoMember(17)] public Color CallInstructionNodeColor { get; set; }

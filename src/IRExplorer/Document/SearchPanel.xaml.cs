@@ -93,7 +93,7 @@ namespace IRExplorer.Document {
             set {
                 if (value != searchAllEnabled_) {
                     searchAllEnabled_ = value;
-                    OnPropertyChange("SearchAll");
+                    OnPropertyChange("SearchAllEnabled");
                 }
             }
         }
@@ -224,7 +224,7 @@ namespace IRExplorer.Document {
         }
 
         private void TextSearch_Loaded(object sender, RoutedEventArgs e) {
-            Keyboard.Focus((TextBox) sender);
+            Keyboard.Focus((TextBox)sender);
         }
     }
 }

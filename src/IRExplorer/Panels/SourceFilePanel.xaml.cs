@@ -97,6 +97,10 @@ namespace IRExplorer {
         public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            ResetSelectedLine();
+        }
+
+        private void ResetSelectedLine() {
             selectedLine_ = -1;
             element_ = null;
         }
@@ -120,6 +124,13 @@ namespace IRExplorer {
                     TextView.ScrollToLine(tag.Line);
                 }
             }
+        }
+
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            ResetSelectedLine();
+            TextView.Text = "";
+            fileLoaded_ = false;
         }
 
         #endregion
