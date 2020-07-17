@@ -1,6 +1,8 @@
-﻿//? TODO: Interface for cleaning up noisy diffs and compiler-specific stuff like EstimateModificationType
+﻿using DiffPlex.DiffBuilder.Model;
 
 namespace IRExplorer.Diff {
-    interface IDiffOutputFilter {
+    public interface IDiffOutputFilter {
+        char[] IgnoredDiffLetters { get; }
+        DiffKind EstimateModificationType(DiffPiece before, DiffPiece after);
     }
 }

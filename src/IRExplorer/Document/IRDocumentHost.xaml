@@ -239,31 +239,49 @@
 
                         <Separator />
 
-                        <Button
-                            Padding="0,2,2,2"
-                            Click="MenuItem_Click_1"
-                            OverridesDefaultStyle="True"
-                            ToolTip="Select which output remarks should be displayed">
-                            <StackPanel Margin="0,1,0,0" Orientation="Horizontal">
+                        <ToggleButton
+                            Height="20"
+                            Margin="0,0,2,0"
+                            Padding="0,0,0,0"
+                            ToolTip="Enable/disable showing of remarks">
+                            <StackPanel Margin="0,0,2,0" Orientation="Horizontal">
                                 <Image
                                     Width="16"
                                     Height="16"
                                     Source="{StaticResource RemarkIcon}" />
-                                <TextBlock Margin="2,0,0,0" Text="Remarks" />
+                                <TextBlock Text="Remarks" />
                             </StackPanel>
-                        </Button>
 
-                        <ToggleButton
-                            Command="local:DocumentCommand.NextBookmark"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            ToolTip="Include remarks from previous sections">
-                            <Image Source="{StaticResource ClipboardIcon}" />
                         </ToggleButton>
                         <ToggleButton
+                            Width="20"
+                            Height="20"
+                            Margin="0,0,1,0"
+                            Padding="0,0,0,0"
                             Command="local:DocumentCommand.NextBookmark"
                             CommandTarget="{Binding ElementName=TextView}"
-                            ToolTip="Show verbose/trace remarks">
-                            <Image Source="{StaticResource ClipboardIcon}" />
+                            ToolTip="Show only optimization remarks">
+                            <Image Source="{StaticResource ZapIcon}" />
+                        </ToggleButton>
+                        <ToggleButton
+                            Width="20"
+                            Height="20"
+                            Margin="0,0,2,0"
+                            Padding="0,0,0,0"
+                            Command="local:DocumentCommand.NextBookmark"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            ToolTip="Show remarks from previous sections">
+                            <Image Source="{StaticResource TasklistIcon}" />
+                        </ToggleButton>
+                        <ToggleButton
+                            Width="20"
+                            Height="20"
+                            Padding="0,0,0,0"
+                            Click="MenuItem_Click_1"
+                            Command="local:DocumentCommand.NextBookmark"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            ToolTip="Show remarks options panel">
+                            <Image Source="{StaticResource ConfigIcon}" />
                         </ToggleButton>
 
                         <Separator />
@@ -619,7 +637,7 @@
         <Grid Panel.ZIndex="99">
             <doc:SearchPanel
                 x:Name="SearchPanel"
-                Width="450"
+                Width="500"
                 Height="28"
                 Margin="0,28,0,0"
                 HorizontalAlignment="Right"

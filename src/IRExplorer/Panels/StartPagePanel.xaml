@@ -56,10 +56,21 @@
                 </StackPanel>
             </DockPanel>
             <Separator Margin="0,8,0,8" />
-            <TextBlock
-                FontSize="14"
-                FontWeight="Normal"
-                Text="Recent files" />
+            <DockPanel>
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="Normal"
+                    Text="Recent files" />
+                <Button
+                    x:Name="OpenFileButton"
+                    Height="24"
+                    Padding="4,1,4,1"
+                    HorizontalAlignment="Right"
+                    Click="OpenFileButton_Click"
+                    Content="Open File"
+                    DockPanel.Dock="Right"
+                    TabIndex="5" />
+            </DockPanel>
             <ListBox
                 Name="RecentFilesListBox"
                 Margin="0,8,0,0"
@@ -67,11 +78,24 @@
                 FontSize="14"
                 KeyDown="RecentFilesListBox_KeyDown"
                 MouseDoubleClick="RecentFilesListBox_MouseDoubleClick" />
-            <TextBlock
-                Margin="0,16,0,0"
-                FontSize="14"
-                FontWeight="Normal"
-                Text="Recent compared base/diff files" />
+
+
+            <DockPanel Margin="0,16,0,0" LastChildFill="False">
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="Normal"
+                    Text="Recent compared base/diff files" />
+                <Button
+                    x:Name="OpenBaseDiffFilesButton"
+                    Height="24"
+                    Padding="4,1,4,1"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Top"
+                    Click="OpenBaseDiffFilesButton_Click"
+                    Content="Compare Base/Diff Files"
+                    DockPanel.Dock="Right"
+                    TabIndex="5" />
+            </DockPanel>
             <ListBox
                 Name="RecentDiffFilesListBox"
                 Margin="0,8,0,0"
@@ -89,6 +113,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+
         </StackPanel>
 
     </Border>

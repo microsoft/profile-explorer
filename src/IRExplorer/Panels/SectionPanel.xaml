@@ -179,14 +179,30 @@
                     Margin="0,2,2,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
-                    Background="{x:Null}"
-                    BorderBrush="{x:Null}"
                     IsChecked="{Binding IsFunctionListVisible, Mode=TwoWay}"
                     ToolTip="Show/hide the function list">
                     <Image
                         Width="16"
                         Height="16"
                         Source="{StaticResource ListIcon}" />
+                    <ToggleButton.Style>
+                        <Style TargetType="{x:Type ToggleButton}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ToggleButton.Style>
                 </ToggleButton>
             </Grid>
         </Grid>
@@ -553,6 +569,34 @@
                                     Width="16"
                                     Height="16"
                                     Source="{StaticResource TagIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem
+                            Command="local:Command.ToggleTag"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Copy Section Text"
+                            InputGestureText="Ctrl+C">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource ClipboardIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
+                        <MenuItem
+                            Command="local:Command.ToggleTag"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Export Section Text"
+                            InputGestureText="Ctrl+E">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource JumpIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
                     </ContextMenu>

@@ -15,6 +15,8 @@ namespace IRExplorer.Panels {
 
         public event EventHandler<string> OpenRecentDocument;
         public event EventHandler<Tuple<string, string>> OpenRecentDiffDocuments;
+        public event EventHandler OpenFile;
+        public event EventHandler CompareFiles;
 
         public void ReloadFileList() {
             RecentFilesListBox.ItemsSource = new ListCollectionView(App.Settings.RecentFiles);
@@ -66,6 +68,14 @@ namespace IRExplorer.Panels {
 
         private void TextBlock_MouseDown_1(object sender, MouseButtonEventArgs e) {
             App.OpenDocumentation();
+        }
+
+        private void OpenFileButton_Click(object sender, RoutedEventArgs e) {
+            OpenFile?.Invoke(this, null);
+        }
+
+        private void OpenBaseDiffFilesButton_Click(object sender, RoutedEventArgs e) {
+            CompareFiles?.Invoke(this, null);
         }
     }
 }

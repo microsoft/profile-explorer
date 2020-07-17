@@ -53,6 +53,9 @@ namespace IRExplorer {
         [ProtoMember(11)]
         public SectionSettings SectionSettings;
 
+        [ProtoMember(12)]
+        public List<string> RecentTextSearches;
+
         public ApplicationSettings() {
             Reset();
         }
@@ -73,6 +76,7 @@ namespace IRExplorer {
         [ProtoAfterDeserialization]
         private void InitializeReferenceMembers() {
             RecentFiles ??= new List<string>();
+            RecentTextSearches ??= new List<string>();
             RecentComparedFiles ??= new List<Tuple<string, string>>();
             DocumentSettings ??= new DocumentSettings();
             FlowGraphSettings ??= new FlowGraphSettings();
@@ -101,6 +105,24 @@ namespace IRExplorer {
 
         public void ClearRecentFiles() {
             RecentFiles.Clear();
+        }
+
+        public void AddRecentTextSearch(string text) {
+            //? TODO: Use some weights (number of times used) to sort the list
+            //? and make it less likely to evict some often-used term
+            // Keep at most N recent files, and move this one on the top of the list.
+            if (RecentTextSearches.Contains(text)) {
+                RecentTextSearches.Remove(text);
+            }
+            else if (RecentTextSearches.Count >= 20) {
+                RecentTextSearches.RemoveAt(RecentTextSearches.Count - 1);
+            }
+
+            RecentTextSearches.Insert(0, text);
+        }
+
+        public void ClearRecentTextSearches() {
+            RecentTextSearches.Clear();
         }
 
         public void AddRecentComparedFiles(string basePath, string diffPath) {

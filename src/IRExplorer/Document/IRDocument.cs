@@ -2894,6 +2894,7 @@ namespace IRExplorer {
 
         public void StartDiffSegmentAdding() {
             diffHighlighter_.Clear();
+            ClearAllMarkers();
 
             // Disable the caret event because it triggers redrawing of
             // the right marker bar, which besides being slow, causes a

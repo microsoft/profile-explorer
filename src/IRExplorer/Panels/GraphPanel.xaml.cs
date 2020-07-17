@@ -939,6 +939,11 @@ namespace IRExplorer {
         }
 
         private void LoadSavedState() {
+            //? TODO: This can happen for the expression graph, which does not support switching.
+            if(document_ == null) {
+                return;
+            }
+
             var data = Session.LoadPanelState(this, document_.Section) as byte[];
             var state = StateSerializer.Deserialize<GraphPanelState>(data, document_.Function);
 

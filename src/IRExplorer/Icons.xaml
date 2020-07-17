@@ -532,6 +532,30 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="WindowIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H14 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F0 M14,16z M0,0z M5,3L6,3 6,4 5,4 5,3z M3,3L4,3 4,4 3,4 3,3z M1,3L2,3 2,4 1,4 1,3z M13,13L1,13 1,5 13,5 13,13z M13,4L7,4 7,3 13,3 13,4z M14,3C14,2.45,13.55,2,13,2L1,2C0.45,2,0,2.45,0,3L0,13C0,13.55,0.45,14,1,14L13,14C13.55,14,14,13.55,14,13L14,3z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="ConfigIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F0 M16,16z M0,0z M4,7L3,7 3,2 4,2 4,7z M3,14L4,14 4,11 3,11 3,14z M8,14L9,14 9,8 8,8 8,14z M13,14L14,14 14,12 13,12 13,14z M14,2L13,2 13,8 14,8 14,2z M9,2L8,2 8,4 9,4 9,2z M5,8L2,8C1.45,8 1,8.45 1,9 1,9.55 1.45,10 2,10L5,10C5.55,10 6,9.55 6,9 6,8.45 5.55,8 5,8z M10,5L7,5C6.45,5 6,5.45 6,6 6,6.55 6.45,7 7,7L10,7C10.55,7 11,6.55 11,6 11,5.45 10.55,5 10,5z M15,9L12,9C11.45,9 11,9.45 11,10 11,10.55 11.45,11 12,11L15,11C15.55,11 16,10.55 16,10 16,9.45 15.55,9 15,9z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="ExternalDiffIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V1792 H1792 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F1 M1792,1792z M0,0z M224,1536L832,1536 832,384 192,384 192,1504Q192,1517 201.5,1526.5 211,1536 224,1536z M1600,1504L1600,384 960,384 960,1536 1568,1536Q1581,1536 1590.5,1526.5 1600,1517 1600,1504z M1728,288L1728,1504Q1728,1570 1681,1617 1634,1664 1568,1664L224,1664Q158,1664 111,1617 64,1570 64,1504L64,288Q64,222 111,175 158,128 224,128L1568,128Q1634,128 1681,175 1728,222 1728,288z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <DrawingImage x:Key="LogoImage">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">

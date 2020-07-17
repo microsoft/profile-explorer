@@ -170,6 +170,57 @@
                 </Style>
             </ListView.ItemContainerStyle>
 
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem
+                        Command="local:Command.Open"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=ResultList}"
+                        Header="Open Section"
+                        InputGestureText="Return" />
+                    <MenuItem
+                        Command="local:Command.OpenInNewTab"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=ResultList}"
+                        Header="Open Section in New Tab"
+                        InputGestureText="Shift+Return">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource OpenExternalIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+
+                    <MenuItem
+                        Command="local:Command.OpenLeft"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=ResultList}"
+                        Header="Open Section in Left Tab"
+                        InputGestureText="Ctrl+Left">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource DockLeftIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                    <MenuItem
+                        Command="local:Command.OpenRight"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=ResultList}"
+                        Header="Open Section in Right Tab"
+                        InputGestureText="Ctrl+Right">
+                        <MenuItem.Icon>
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource DockRightIcon}" />
+                        </MenuItem.Icon>
+                    </MenuItem>
+                </ContextMenu>
+            </ListView.ContextMenu>
+
             <ListView.InputBindings>
                 <KeyBinding
                     Key="Return"

@@ -160,9 +160,8 @@ namespace IRExplorer {
 
         private async Task JumpToSearchResult(SearchResultInfo resultInfo) {
             var documentHost = Session.FindAssociatedDocumentHost(this);
-            var document = documentHost.TextView;
 
-            if (document.Section != resultInfo.Section) {
+            if (!documentHost.HasSameSearchResultSection(resultInfo.Section)) {
                 var searchResults = searchResultsMap_[resultInfo.Section];
                 await documentHost.SwitchSearchResultsAsync(searchResults, resultInfo.Section, searchInfo_);
             }
