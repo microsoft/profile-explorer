@@ -584,16 +584,16 @@
                                     Text="Diff Mode" />
                             </StackPanel>
                         </ToggleButton>
-                       
+
                         <StackPanel
                             x:Name="DiffControlsPanel"
                             Orientation="Horizontal"
                             Visibility="Collapsed">
                             <Line
-                            Margin="0,0,2,0"
-                            Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            Y1="0"
-                            Y2="17" />
+                                Margin="0,0,2,0"
+                                Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                Y1="0"
+                                Y2="17" />
                             <Button
                                 x:Name="DiffSwapButton"
                                 Width="16"
@@ -611,6 +611,7 @@
                                     Source="{StaticResource SwitchIcon}"
                                     UseLayoutRounding="True" />
                             </Button>
+
                             <Button
                                 x:Name="DiffSettingsButton"
                                 Width="16"
@@ -720,6 +721,29 @@
                                 Y1="0"
                                 Y2="17" />
 
+                            <Button
+                                x:Name="ExternalDiffButton"
+                                Width="16"
+                                Height="17"
+                                Padding="0,0,0,0"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                BorderBrush="{x:Null}"
+                                Click="ExternalDiffButton_Click"
+                                ToolTip="Open sections in external diff application">
+                                <Image
+                                    Width="14"
+                                    Height="14"
+                                    VerticalAlignment="Center"
+                                    SnapsToDevicePixels="True"
+                                    Source="{StaticResource ExternalDiffIcon}"
+                                    UseLayoutRounding="True" />
+                            </Button>
+                            <Line
+                                Margin="2,0,2,0"
+                                Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                Y1="0"
+                                Y2="17" />
                             <TextBlock
                                 x:Name="DiffStatusText"
                                 Margin="4,0,4,0"
@@ -1090,14 +1114,35 @@
                 Command="local:AppCommand.FullScreen"
                 FontSize="11"
                 ToolTip="Enter/exit full screen mode (F11)">
-                <StackPanel Orientation="Horizontal">
-                    <Image VerticalAlignment="Center" Source="{StaticResource OpenExternalIcon}" />
-                    <TextBlock
-                        Margin="4,0,0,0"
+                <StackPanel
+                    Margin="0,0,1,0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <Image
+                        Width="14"
+                        Height="14"
                         VerticalAlignment="Center"
+                        Source="{StaticResource OpenExternalIcon}" />
+                    <TextBlock
+                        Height="12"
+                        Margin="2,0,0,0"
+                        VerticalAlignment="Top"
                         FontSize="11"
                         Text="Full Screen" />
                 </StackPanel>
+            </ToggleButton>
+
+            <ToggleButton
+                x:Name="AlwaysOnTopButton"
+                Width="18"
+                Height="18"
+                VerticalAlignment="Center"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                Click="AlwaysOnTopButton_Click"
+                FontSize="11"
+                ToolTip="Toggle always on top">
+                <Image VerticalAlignment="Center" Source="{StaticResource PinIcon}" />
+
             </ToggleButton>
 
             <Separator />

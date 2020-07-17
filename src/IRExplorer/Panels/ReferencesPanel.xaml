@@ -263,7 +263,7 @@
                 <KeyBinding
                     Key="Enter"
                     Command="local:ReferenceCommand.JumpToReference"
-                    CommandParameter="{Binding SelectedItem, ElementName=BookmarkList}" />
+                    CommandParameter="{Binding SelectedItem, ElementName=ReferenceList}" />
             </ListView.InputBindings>
         </ListView>
     </Grid>

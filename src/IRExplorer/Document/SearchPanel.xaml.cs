@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -155,6 +156,14 @@ namespace IRExplorer.Document {
             Keyboard.Focus(TextSearch);
         }
 
+        public void Hide() {
+            var text = TextSearch.Text;
+
+            if (text.Trim().Length > 0) {
+                App.Settings.AddRecentTextSearch(text);
+            }
+        }
+
         public void Reset(SearchInfo initialInfo = null, bool searchAll = false) {
             if (searchInfo_ != null) {
                 searchInfo_.PropertyChanged -= SearchInfo__PropertyChanged;
@@ -224,7 +233,14 @@ namespace IRExplorer.Document {
         }
 
         private void TextSearch_Loaded(object sender, RoutedEventArgs e) {
-            Keyboard.Focus((TextBox)sender);
+            Keyboard.Focus((AutoCompleteBox)sender);
+        }
+
+        private void TextSearch_Populating(object sender, PopulatingEventArgs e) {
+            var box = (AutoCompleteBox)sender;
+            box.ItemsSource = null;
+            box.ItemsSource = App.Settings.RecentTextSearches;
+            box.PopulateComplete();
         }
     }
 }

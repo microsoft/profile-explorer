@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?> 
+
+<!-- Syntax definition for LLVM IR -->
+<SyntaxDefinition name="LLVM IR" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+    <Color name="String" foreground="Black" />
+	<Color name="Digits" foreground="Blue" />
+	<Color name="Comment" foreground="Silver" />
+	<Color name="Keywords" foreground="DarkBlue" fontWeight="bold"/>
+	<Color name="Opcodes" foreground="Crimson" fontWeight="bold"/>
+	<Color name="TransferOpcodes" foreground="DarkGreen" fontWeight="bold"/>
+	<Color name="CallOpcodes" foreground="DarkOrchid" fontWeight="bold" />
+    <Color name="PointerType" foreground="DarkMagenta" fontWeight="bold" />
+    <Color name="StructType" foreground="DarkMagenta" fontWeight="bold" />
+	<Color name="Type" foreground="Maroon" />
+	<Color name="Attributes" foreground="DarkGreen" fontWeight="bold" />
+	<Color name="Annotation" foreground="Silver" />
+	<Color name="Variable" foreground="CadetBlue" fontWeight="bold" />
+	<Color name="CallTarget" foreground="DarkGreen" fontWeight="bold" />
+    <RuleSet ignoreCase="false">
+		<Span color="Comment" begin=";" />
+        <Span color="String">
+            <Begin>"</Begin>
+            <End>"</End>
+            <RuleSet>
+                <!-- nested span for escape sequences -->
+                <Span begin="\\" end="." />
+            </RuleSet>
+        </Span>
+        
+        <Keywords color="Keywords">
+            <Word>define</Word>
+            <Word>global</Word>
+			<Word>declare</Word>
+        </Keywords>
+		
+		<Keywords color="Opcodes">
+            <Word>load</Word>
+            <Word>store</Word>
+            <Word>alloca</Word>
+            <Word>icmp</Word>
+            <Word>select</Word>
+            <Word>bitcast</Word>
+            <Word>add</Word>
+            <Word>sub</Word>
+            <Word>mul</Word>
+            <Word>sdiv</Word>
+            <Word>udiv</Word>
+            <Word>fdiv</Word>
+            <Word>urem</Word>
+            <Word>srem</Word>
+            <Word>frem</Word>
+            <Word>fneg</Word>
+            <Word>shl</Word>
+            <Word>lshr</Word>
+            <Word>ashr</Word>
+            <Word>and</Word>
+            <Word>or</Word>
+            <Word>xor</Word>
+            <Word>phi</Word>
+            <Word>trunc</Word>
+            <Word>zext</Word>
+            <Word>sext</Word>
+            <Word>fcmp</Word>
+            <Word>extractelement</Word>
+            <Word>insertelement</Word>
+            <Word>shufflevector</Word>
+            <Word>extractvalue</Word>
+            <Word>insertvalue</Word>
+            <Word>getelementptr</Word>
+            <Word>inttoptr</Word>
+            <Word>sitofp</Word>
+            <Word>uitofp</Word>
+            <Word>fptosi</Word>
+            <Word>fptoui</Word>
+            <Word>fpext</Word>
+            <Word>fptrunc</Word>
+            <Word>fmul</Word>
+            <Word>fadd</Word>
+            <Word>fsub</Word>
+        </Keywords>
+        
+		<Keywords color="TransferOpcodes">
+			<Word>br</Word>
+			<Word>indirectbr</Word>
+			<Word>callbr</Word>
+			<Word>switch</Word>
+			<Word>ret</Word>
+			<Word>label</Word>
+			<Word>resume</Word>
+			<Word>catchret</Word>
+			<Word>cleanupret</Word>
+			<Word>unreachable</Word>
+        </Keywords>
+		
+		<Keywords color="CallOpcodes">
+            <Word>call</Word>
+            <Word>invoke</Word>
+            <Word>va_arg</Word>
+        </Keywords>
+		
+		<Keywords color="Type">
+            <Word>type</Word>
+            <Word>i1</Word>
+            <Word>i8</Word>
+            <Word>i16</Word>
+			<Word>i32</Word>
+			<Word>i64</Word>
+			<Word>float</Word>
+			<Word>double</Word>
+			<Word>void</Word>
+			<Word>undef</Word>
+        </Keywords>
+        
+		<Span color="PointerType">
+            <Begin>\[</Begin>
+            <End>\]</End>
+		</Span>
+		
+		<Span color="StructPointer">
+            <Begin>\{</Begin>
+            <End>\}</End>
+		</Span>
+		
+		<Keywords color="Attributes">
+            <Word>nsw</Word>
+            <Word>nuw</Word>
+			<Word>volatile</Word>
+			<Word>align</Word>
+			<Word>tail</Word>
+			<Word>zeroinitializer</Word>
+			<Word>byval</Word>
+			<Word>zeroext</Word>
+			<Word>signext</Word>
+			<Word>inreg</Word>
+			<Word>sret</Word>
+			<Word>noalias</Word>
+			<Word>nocapture</Word>
+			<Word>nonnull</Word>
+			<Word>alwaysinline</Word>
+			<Word>noinline</Word>
+			<Word>noreturn</Word>
+			<Word>nounwind</Word>
+			<Word>optnone</Word>
+			<Word>optsize</Word>
+			<Word>readnone</Word>
+			<Word>readonly</Word>
+			<Word>writeonly</Word>
+			<Word>argmemonly</Word>
+			<Word>external</Word>
+			<Word>internal</Word>
+			<Word>linkonce</Word>
+			<Word>weak</Word>
+			<Word>private</Word>
+			<Word>dllimport</Word>
+			<Word>dllexport</Word>
+			<Word>atomic</Word>
+        </Keywords>
+		
+		<Rule color="Variable">%\w+(.\w+)*</Rule>
+		<Rule color="CallTarget">@\w+(.\w+)*</Rule>
+			
+        <Rule color="Digits">\b0[xX][0-9a-fA-F]+|(\b(?&lt;!\$)\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
+   </RuleSet>
+</SyntaxDefinition>

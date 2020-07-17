@@ -5,9 +5,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorer.Document"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:toolkit="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
     x:Name="SearchPanelControl"
     d:DesignHeight="28"
-    d:DesignWidth="400"
+    d:DesignWidth="500"
     mc:Ignorable="d">
 
     <UserControl.CommandBindings>
@@ -46,23 +47,26 @@
                     Loaded="ToolBar_Loaded">
 
                     <Image Source="{StaticResource SearchIcon}" ToolTip="Filter text based on a string" />
-                    <TextBox
+                    <toolkit:AutoCompleteBox
                         Name="TextSearch"
-                        Width="150"
+                        Width="220"
                         Margin="4,0,0,0"
                         HorizontalAlignment="Center"
                         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        FilterMode="StartsWithOrdinal"
+                        IsTextCompletionEnabled="True"
                         Loaded="TextSearch_Loaded"
+                        Populating="TextSearch_Populating"
                         TabIndex="4"
                         Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
-                        <TextBox.InputBindings>
+                        <toolkit:AutoCompleteBox.InputBindings>
                             <KeyBinding
                                 Key="Escape"
                                 Command="local:SearchCommand.ClearText"
                                 CommandTarget="{Binding ElementName=SearchPanelControl}" />
-                        </TextBox.InputBindings>
-                    </TextBox>
+                        </toolkit:AutoCompleteBox.InputBindings>
+                    </toolkit:AutoCompleteBox>
 
                     <Button
                         Command="local:SearchCommand.ClearText"
@@ -98,6 +102,8 @@
                         ToolTip="Use Regular Expressions">
                         <TextBlock FontWeight="ExtraBlack" Text=".*" />
                     </ToggleButton>
+                    <Separator />
+
 
                     <ToggleButton
                         x:Name="SearchAllButton"

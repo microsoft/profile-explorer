@@ -273,7 +273,8 @@ namespace IRExplorer {
 
             await Task.Run(() => {
                 lock (this) {
-                    if (updateHighlightingTask_.IsCanceled) {
+                    if(updateHighlightingTask_.IsCanceled) {
+                        // Task got canceled in the meantime.
                         updateHighlightingTask_.Completed();
                         return;
                     }
@@ -293,13 +294,6 @@ namespace IRExplorer {
 
             elementMarker_.Add(defElements);
             UpdateHighlighting();
-
-            lock (this) {
-                if (updateHighlightingTask_ != null) {
-                    updateHighlightingTask_.Dispose();
-                    updateHighlightingTask_ = null;
-                }
-            }
         }
 
         private List<IRElement> ExtractTextOperands(string text, FunctionIR function, CancelableTaskInfo cancelableTask) {

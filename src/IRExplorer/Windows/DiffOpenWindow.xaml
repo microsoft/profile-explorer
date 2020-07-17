@@ -88,6 +88,7 @@
             Orientation="Horizontal">
             <Button
                 x:Name="RecentButton"
+                Height="24"
                 Padding="4,1,4,1"
                 Click="RecentButton_Click"
                 Content="Recent Files"
@@ -107,6 +108,7 @@
             Orientation="Horizontal">
             <Button
                 x:Name="CancelButton"
+                Height="24"
                 Margin="0,0,4,0"
                 Padding="4,1,4,1"
                 Click="CancelButton_Click"
@@ -114,6 +116,7 @@
                 TabIndex="4" />
             <Button
                 x:Name="UpdateButton"
+                Height="24"
                 Padding="4,1,4,1"
                 Background="#FFFCF4CC"
                 Click="UpdateButton_Click"

@@ -31,7 +31,9 @@ using IRExplorerCore.GraphViz;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.UTC;
+using IRExplorer.Diff;
 using Microsoft.Win32;
+using IRExplorer.UTC;
 
 namespace IRExplorer {
     public static class AppCommand {
@@ -64,12 +66,6 @@ namespace IRExplorer {
     }
 
     public partial class MainWindow : Window, ISessionManager {
-        private const char RemovedDiffLineChar = ' ';
-        private const char AddedDiffLineChar = ' ';
-
-        private static readonly char[] IgnoredDiffLetters = {
-            '(', ')', ',', '.', ';', ':', '|', '{', '}', '!'
-        };
         private LayoutDocumentPane activeDocumentPanel_;
         private AddressMetadataTag addressTag_;
         private bool appIsActivated_;
@@ -990,7 +986,17 @@ namespace IRExplorer {
         private void SetupStartPagePanel() {
             StartPage.OpenRecentDocument += StartPage_OpenRecentDocument;
             StartPage.OpenRecentDiffDocuments += StartPage_OpenRecentDiffDocuments;
+            StartPage.OpenFile += StartPage_OpenFile;
+            StartPage.CompareFiles += StartPage_CompareFiles;
             UpdateStartPagePanelPosition();
+        }
+
+        private async void StartPage_CompareFiles(object sender, EventArgs e) {
+            await OpenBaseDiffDocuments();
+        }
+
+        private async void StartPage_OpenFile(object sender, EventArgs e) {
+            await OpenDocument();
         }
 
         private async void StartPage_OpenRecentDiffDocuments(object sender, Tuple<string, string> e) {
@@ -1761,6 +1767,10 @@ namespace IRExplorer {
         }
 
         private async void OpenDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await OpenDocument();
+        }
+
+        private async Task OpenDocument() {
             string filePath = ShowOpenFileDialog();
 
             if (filePath != null) {
@@ -1782,6 +1792,10 @@ namespace IRExplorer {
         }
 
         private async void OpenBaseDiffDocumentsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await OpenBaseDiffDocuments();
+        }
+
+        private async Task OpenBaseDiffDocuments() {
             var openWindow = new DiffOpenWindow();
             openWindow.Owner = this;
             var result = openWindow.ShowDialog();
@@ -2726,13 +2740,17 @@ namespace IRExplorer {
                                          string rightText, IRTextSection newLeftSection = null,
                                          IRTextSection newRightSection = null) {
             var diff = await Task.Run(() => DocumentDiff.ComputeDiffs(leftText, rightText));
-            var diffStats = new DiffStatistics();
+            var leftDiffStats = new DiffStatistics();
+            var rightDiffStats = new DiffStatistics();
+            var diffFilter = new UTCDiffOutputFilter();
+            var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings);
+            var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings);
 
-            var leftMarkTask = MarkDiffs(leftText, diff.OldText, diff.NewText, leftDocument,
-                                         false, diffStats);
+            var leftMarkTask = leftDiffUpdater.MarkDiffs(leftText, diff.OldText, diff.NewText, leftDocument,
+                                                         false, leftDiffStats);
 
-            var rightMarkTask = MarkDiffs(leftText, diff.NewText, diff.OldText, rightDocument,
-                                          true, diffStats);
+            var rightMarkTask = rightDiffUpdater.MarkDiffs(leftText, diff.NewText, diff.OldText, rightDocument,
+                                                           true, rightDiffStats);
 
             Task.WaitAll(leftMarkTask, rightMarkTask);
             var leftDiffResult = await leftMarkTask;
@@ -2756,36 +2774,20 @@ namespace IRExplorer {
                 rightDocument.BringTextOffsetIntoView(firstDiff.StartOffset);
             }
 
-            DiffStatusText.Text = diffStats.ToString();
+            UpdateDiffStatus(rightDiffStats);
         }
 
-        private void ReparseDiffedFunction(DiffMarkingResult diffResult, IRTextSection originalSection) {
-            try {
-                var errorHandler = new UTCParsingErrorHandler();
-                var sectionParser = new UTCSectionParser(errorHandler);
+        private void UpdateDiffStatus(DiffStatistics stats) {
+            string text = "";
 
-                diffResult.DiffFunction = sectionParser.ParseSection(originalSection, diffResult.DiffText);
-
-                if (diffResult.DiffFunction != null) {
-                    AnalyzeLoadedFunction(diffResult.DiffFunction);
-                }
-                else {
-                    Trace.TraceWarning("Failed re-parsing diffed section\n");
-                }
-
-                if (errorHandler.HadParsingErrors) {
-                    Trace.TraceWarning("Errors while re-parsing diffed section:\n");
-
-                    if (errorHandler.ParsingErrors != null) {
-                        foreach (var error in errorHandler.ParsingErrors) {
-                            Trace.TraceWarning($"  - {error}");
-                        }
-                    }
-                }
+            if (stats.LinesAdded == 0 && stats.LinesDeleted == 0 && stats.LinesModified == 0) {
+                text = "0 diffs";
             }
-            catch (Exception ex) {
-                Trace.TraceError($"Crashed while re-parsing diffed section: {ex}");
+            else {
+                text = $"A {stats.LinesAdded}, D {stats.LinesDeleted}, M {stats.LinesModified}";
             }
+
+            DiffStatusText.Text = text;
         }
 
         private async Task UpdateDiffedFunction(IRDocument document, DiffMarkingResult diffResult,
@@ -2804,322 +2806,6 @@ namespace IRExplorer {
             MarkDiffsComplete(document, diffResult);
         }
 
-        private bool IsSignifficantDiff(DiffPiece piece, DiffPiece otherPiece = null) {
-            if (!App.Settings.DiffSettings.FilterInsignificantDiffs) {
-                return true;
-            }
-
-            if (piece.Text == null) {
-                return false;
-            }
-
-            bool signifficant = false;
-
-            foreach (char letter in piece.Text) {
-                if (!char.IsWhiteSpace(letter) && Array.IndexOf(IgnoredDiffLetters, letter) == -1) {
-                    signifficant = true;
-                    break;
-                }
-            }
-
-            return signifficant;
-        }
-
-        private DiffKind EstimateModificationType(DiffPiece before, DiffPiece after) {
-            if (!App.Settings.DiffSettings.IdentifyMinorDiffs) {
-                return DiffKind.Modification;
-            }
-
-            //? TODO: This should query an IR-level interface
-            bool isTemporary(string text, out int number) {
-                int prefixLength = 0;
-                var name = text.AsSpan();
-                number = 0;
-
-                if (name.StartsWith("tv".AsSpan()) || name.StartsWith("hv".AsSpan())) {
-                    prefixLength = 2;
-                }
-                else if (name.StartsWith("t".AsSpan())) {
-                    prefixLength = 1;
-                }
-                else {
-                    return false;
-                }
-
-                var remainingName = name.Slice(prefixLength);
-
-                foreach (char letter in remainingName) {
-                    if (!char.IsDigit(letter)) {
-                        return false;
-                    }
-                }
-
-                return int.TryParse(remainingName, out number);
-            }
-
-            if (isTemporary(before.Text, out int beforeNumber) &&
-                isTemporary(after.Text, out int afterNumber) &&
-                beforeNumber == afterNumber) {
-                return DiffKind.MinorModification;
-            }
-
-            return DiffKind.Modification;
-        }
-
-        private Task<DiffMarkingResult> MarkDiffs(string text, DiffPaneModel diff, DiffPaneModel otherDiff,
-                                                  IRDocument textEditor, bool isRightDoc,
-                                                  DiffStatistics diffStats) {
-            textEditor.ExecuteDocumentAction(new DocumentAction(DocumentActionKind.ClearAllMarkers));
-            textEditor.StartDiffSegmentAdding();
-            textEditor.TextArea.IsEnabled = false;
-            var section = textEditor.Section;
-
-            return Task.Run(() => {
-                // Create a new text document and associate it with the task worker.
-                var document = new TextDocument(new StringTextSource(text));
-                document.SetOwnerThread(Thread.CurrentThread);
-                var result = new DiffMarkingResult(document);
-                var modifiedSegments = new List<DiffTextSegment>(64);
-                int lineCount = diff.Lines.Count;
-                int lineAdjustment = 0;
-
-                for (int i = 0; i < lineCount; i++) {
-                    var line = diff.Lines[i];
-
-                    switch (line.Type) {
-                        case ChangeType.Unchanged: {
-                            break; // Ignore.
-                        }
-                        case ChangeType.Inserted: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            int offset;
-
-                            if (actualLine >= document.LineCount) {
-                                offset = document.TextLength;
-                            }
-                            else {
-                                offset = document.GetOffset(actualLine, 0);
-                            }
-
-                            document.Insert(offset, line.Text + Environment.NewLine);
-
-                            result.DiffSegments.Add(
-                                new DiffTextSegment(DiffKind.Insertion, offset, line.Text.Length));
-
-                            diffStats.LinesAdded++;
-                            break;
-                        }
-                        case ChangeType.Deleted: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            var docLine = document.GetLineByNumber(Math.Min(document.LineCount, actualLine));
-
-                            result.DiffSegments.Add(
-                                new DiffTextSegment(DiffKind.Deletion, docLine.Offset,
-                                                    docLine.Length));
-
-                            diffStats.LinesDeleted++;
-                            break;
-                        }
-                        case ChangeType.Imaginary: {
-                            int actualLine = i + 1;
-
-                            if (isRightDoc) {
-                                if (actualLine <= document.LineCount) {
-                                    var docLine = document.GetLineByNumber(actualLine);
-                                    int offset = docLine.Offset;
-                                    int length = docLine.Length;
-                                    document.Replace(offset, length, new string(RemovedDiffLineChar, length));
-
-                                    result.DiffSegments.Add(
-                                        new DiffTextSegment(DiffKind.Placeholder, offset, length));
-                                }
-                            }
-                            else {
-                                int offset = actualLine <= document.LineCount
-                                    ? document.GetOffset(actualLine, 0)
-                                    : document.TextLength;
-
-                                string imaginaryText =
-                                    new string(AddedDiffLineChar, otherDiff.Lines[i].Text.Length);
-
-                                document.Insert(offset, imaginaryText + Environment.NewLine);
-
-                                result.DiffSegments.Add(
-                                    new DiffTextSegment(DiffKind.Placeholder, offset,
-                                                        imaginaryText.Length));
-                            }
-
-                            lineAdjustment++;
-                            break;
-                        }
-                        case ChangeType.Modified: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            int lineChanges = 0;
-                            int lineLength = 0;
-                            bool wholeLineReplaced = false;
-
-                            if (actualLine < document.LineCount) {
-                                var docLine = document.GetLineByNumber(actualLine);
-                                document.Replace(docLine.Offset, docLine.Length, line.Text);
-                                wholeLineReplaced = true;
-                                lineLength = docLine.Length;
-                            }
-
-                            modifiedSegments.Clear();
-                            int column = 0;
-
-                            foreach (var piece in line.SubPieces) {
-                                switch (piece.Type) {
-                                    case ChangeType.Inserted: {
-                                        Debug.Assert(isRightDoc);
-
-                                        int offset = actualLine >= document.LineCount
-                                            ? document.TextLength
-                                            : document.GetOffset(actualLine, 0) + column;
-
-                                        if (offset >= document.TextLength) {
-                                            if (!wholeLineReplaced) {
-                                                document.Insert(document.TextLength, piece.Text);
-                                            }
-
-                                            if (IsSignifficantDiff(piece)) {
-                                                modifiedSegments.Add(
-                                                    new DiffTextSegment(
-                                                        DiffKind.Modification, offset, piece.Text.Length));
-                                            }
-                                        }
-                                        else {
-                                            var diffKind = DiffKind.Insertion;
-                                            var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece);
-
-                                            if (otherPiece != null && otherPiece.Type == ChangeType.Deleted) {
-                                                if (!wholeLineReplaced) {
-                                                    document.Replace(
-                                                        offset, otherPiece.Text.Length, piece.Text);
-                                                }
-
-                                                diffKind = EstimateModificationType(otherPiece, piece);
-                                            }
-                                            else {
-                                                if (!wholeLineReplaced) {
-                                                    document.Insert(offset, piece.Text);
-                                                }
-                                            }
-
-                                            if (IsSignifficantDiff(piece)) {
-                                                modifiedSegments.Add(
-                                                    new DiffTextSegment(diffKind, offset, piece.Text.Length));
-                                            }
-                                        }
-
-                                        break;
-                                    }
-                                    case ChangeType.Deleted: {
-                                        Debug.Assert(!isRightDoc);
-                                        int offset = document.GetOffset(actualLine, 0) + column;
-
-                                        if (offset >= document.TextLength) {
-                                            offset = document.TextLength;
-                                        }
-
-                                        var diffKind = DiffKind.Deletion;
-                                        var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece);
-
-                                        if (otherPiece != null && otherPiece.Type == ChangeType.Inserted) {
-                                            diffKind = EstimateModificationType(otherPiece, piece);
-                                        }
-
-                                        if (IsSignifficantDiff(piece)) {
-                                            modifiedSegments.Add(
-                                                new DiffTextSegment(diffKind, offset, piece.Text.Length));
-                                        }
-
-                                        break;
-                                    }
-                                    case ChangeType.Modified: {
-                                        break;
-                                    }
-                                    case ChangeType.Imaginary: {
-                                        //if (isRightDoc) {
-                                        lineChanges++;
-                                        //column++;
-                                        //}
-
-                                        break;
-                                    }
-                                    case ChangeType.Unchanged: {
-                                        int offset = document.GetOffset(actualLine, 0) + column;
-
-                                        if (!wholeLineReplaced) {
-                                            document.Replace(offset, piece.Text.Length, piece.Text);
-                                        }
-
-                                        break;
-                                    }
-                                    default:
-                                        throw new ArgumentOutOfRangeException();
-                                }
-
-                                if (piece.Text != null) {
-                                    column += piece.Text.Length;
-
-                                    if (piece.Type != ChangeType.Unchanged) {
-                                        lineChanges += piece.Text.Length;
-                                    }
-                                }
-                            }
-
-                            // If most of the line changed, mark the entire line,
-                            // otherwise mark each sub-piece.
-                            bool handled = false;
-
-                            if (App.Settings.DiffSettings.ManyDiffsMarkWholeLine) {
-                                double percentChanged = 0;
-
-                                if (lineLength > 0) {
-                                    percentChanged = ((double)lineChanges / (double)lineLength) * 100;
-                                }
-
-                                if (percentChanged > App.Settings.DiffSettings.ManyDiffsModificationPercentage) {
-                                    if (actualLine < document.LineCount) {
-                                        var docLine = document.GetLineByNumber(actualLine);
-                                        var changeKind = DiffKind.Modification;
-
-                                        // If even more of the line changed, consider it an insertion/deletion.
-                                        if (percentChanged > App.Settings.DiffSettings.ManyDiffsInsertionPercentage) {
-                                            changeKind = isRightDoc ? DiffKind.Insertion : DiffKind.Deletion;
-                                        }
-
-                                        result.DiffSegments.Add(new DiffTextSegment(changeKind, docLine.Offset, docLine.Length));
-                                        handled = true;
-                                    }
-                                }
-                            }
-
-                            if (!handled) {
-                                foreach (var segment in modifiedSegments) {
-                                    result.DiffSegments.Add(segment);
-                                }
-                            }
-
-                            if (isRightDoc) {
-                                diffStats.LinesModified++;
-                            }
-
-                            break;
-                        }
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                }
-
-                result.DiffText = document.Text;
-                document.SetOwnerThread(null);
-                ReparseDiffedFunction(result, section);
-                return result;
-            });
-        }
-
         private void UpdateDiffDocument(IRDocument textEditor, DiffMarkingResult diffResult) {
             diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
             textEditor.UninstallBlockFolding();
@@ -3130,19 +2816,6 @@ namespace IRExplorer {
         private void MarkDiffsComplete(IRDocument textEditor, DiffMarkingResult diffResult) {
             textEditor.AddDiffTextSegments(diffResult.DiffSegments);
             textEditor.SetupBlockFolding();
-        }
-
-        private DiffPiece FindPieceInOtherDocument(DiffPaneModel otherDiff, int i, DiffPiece piece) {
-            if (i < otherDiff.Lines.Count) {
-                var otherLine = otherDiff.Lines[i];
-
-                if (piece.Position.Value < otherLine.SubPieces.Count) {
-                    return otherLine.SubPieces.Find(item => item.Position.HasValue &&
-                                                            item.Position.Value == piece.Position.Value);
-                }
-            }
-
-            return null;
         }
 
         private async void DiffModeButton_Unchecked(object sender, RoutedEventArgs e) {
@@ -3779,20 +3452,7 @@ namespace IRExplorer {
             }
         }
 
-        private class DiffStatistics {
-            public int LinesAdded;
-            public int LinesDeleted;
-            public int LinesModified;
-
-            public override string ToString() {
-                if (LinesAdded == 0 && LinesDeleted == 0 && LinesModified == 0) {
-                    return "0 diffs";
-                }
-
-                return $"A {LinesAdded}, D {LinesDeleted}, M {LinesModified}";
-            }
-        }
-
+        
         private struct ElementIteratorId {
             public int ElementId;
             public IRElementKind ElementKind;
@@ -3947,7 +3607,9 @@ namespace IRExplorer {
             var diff = await Task.Run(() => DocumentDiff.ComputeDiffs(prevText, currentText));
 
             var diffStats = new DiffStatistics();
-            var diffResult = await MarkDiffs(prevText, diff.NewText, diff.OldText, doc.TextView, true, diffStats);
+            var diffFilter = new UTCDiffOutputFilter();
+            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings);
+            var diffResult = await diffUpdater.MarkDiffs(prevText, diff.NewText, diff.OldText, doc.TextView, true, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();
         }
@@ -4066,7 +3728,18 @@ namespace IRExplorer {
         }
 
         private void AlwaysOnTopMenuClicked(object sender, RoutedEventArgs e) {
-            Topmost = AlwaysOnTopCheckbox.IsChecked;
+            SetAlwaysOnTop(AlwaysOnTopCheckbox.IsChecked);
+        }
+
+
+        private void AlwaysOnTopButton_Click(object sender, RoutedEventArgs e) {
+            SetAlwaysOnTop(AlwaysOnTopButton.IsChecked.HasValue && AlwaysOnTopButton.IsChecked.Value);
+        }
+
+        private void SetAlwaysOnTop(bool state) {
+            Topmost = state;
+            AlwaysOnTopCheckbox.IsChecked = state;
+            AlwaysOnTopButton.IsChecked = state;
         }
 
         public void RegisterDetachedRemarkPanel(RemarkPreviewPanel panel) {
@@ -4102,5 +3775,6 @@ namespace IRExplorer {
             await EnterDocumentDiffState(leftDocHost, rightDocHost);
             DiffSwapButton.IsEnabled = true;
         }
+
     }
 }

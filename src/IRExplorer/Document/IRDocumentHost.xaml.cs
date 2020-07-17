@@ -512,16 +512,27 @@ namespace IRExplorer {
 
         public async Task SwitchSearchResultsAsync(SectionSearchResult searchResults, IRTextSection section,
                                                    SearchInfo searchInfo) {
+            // Ensure the right section is being displayed.
             duringSwitchSearchResults_ = true;
             var openArgs = new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent);
             await Session.SwitchDocumentSection(openArgs, TextView);
-
             duringSwitchSearchResults_ = false;
+
+            // Show the search panel and mark all results on the document.
             searchResult_ = searchResults;
             searchInfo.CurrentResult = 1;
             searchInfo.ResultCount = searchResults.Results.Count;
-            TextView.MarkSearchResults(searchResults.Results, Colors.Khaki);
             ShowSearchPanel(searchInfo);
+            TextView.MarkSearchResults(searchResults.Results, Colors.Khaki);
+        }
+
+        public bool HasSameSearchResultSection(IRTextSection section) {
+            if(Section != section) {
+                return false;
+            }
+
+            // Force the search panel to be displayed in case it was closed.
+            return searchPanelVisible_;
         }
 
         public void JumpToSearchResult(TextSearchResult result, int index) {
@@ -799,7 +810,15 @@ namespace IRExplorer {
         private void ShowSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (SearchButton.IsChecked.HasValue && SearchButton.IsChecked.Value) {
                 if (!searchPanelVisible_) {
-                    ShowSearchPanel();
+                    var info = new SearchInfo();
+
+                    // Use selected text as initial search input.
+                    if (TextView.SelectionLength > 1) {
+                        info.SearchedText = TextView.SelectedText;
+                        info.IsCaseInsensitive = true;
+                    }
+
+                    ShowSearchPanel(info);
                 }
             }
             else {
@@ -813,12 +832,15 @@ namespace IRExplorer {
             }
 
             searchPanelVisible_ = false;
+            SearchPanel.Hide();
             SearchPanel.Reset();
             SearchPanel.Visibility = Visibility.Collapsed;
             SearchButton.IsChecked = false;
         }
 
-        private void ShowSearchPanel(SearchInfo searchInfo = null, bool searchAll = false) {
+        private void ShowSearchPanel(SearchInfo searchInfo, bool searchAll = false) {
+            searchInfo.SearchAllEnabled = !Session.IsInDiffMode;
+
             searchPanelVisible_ = true;
             SearchPanel.Visibility = Visibility.Visible;
             SearchPanel.Show(searchInfo, searchAll);
@@ -859,7 +881,6 @@ namespace IRExplorer {
             var searchInfo = new SearchInfo();
             searchInfo.SearchedText = symbolName;
             searchInfo.SearchAll = true;
-            searchInfo.SearchAllEnabled = !Session.IsInDiffMode;
             ShowSearchPanel(searchInfo);
         }
 
