@@ -81,7 +81,6 @@ namespace IRExplorer {
                     builder.AppendLine(
                         $"IR for section {document.Section.Name} in func. {document.Section.ParentFunction.Name}");
 
-                    builder.AppendLine(UTCSectionReader.SECTION_START);
                     builder.AppendLine(document.Text);
                     builder.AppendLine();
                 }

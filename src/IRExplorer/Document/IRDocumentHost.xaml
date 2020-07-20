@@ -271,7 +271,7 @@
                             Command="local:DocumentCommand.NextBookmark"
                             CommandTarget="{Binding ElementName=TextView}"
                             ToolTip="Show remarks from previous sections">
-                            <Image Source="{StaticResource TasklistIcon}" />
+                            <Image Source="{StaticResource HistoryIcon}" />
                         </ToggleButton>
                         <ToggleButton
                             Width="20"

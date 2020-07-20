@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
@@ -29,12 +30,12 @@ namespace IRExplorer {
     }
 
     public abstract class SectionLoader {
-        protected UTCParsingErrorHandler errorHandler_;
         protected Dictionary<IRTextSection, ParsedSection> sectionCache_;
-        protected UTCSectionParser sectionParser_;
+        protected ICompilerIRInfo irInfo_;
         protected bool cacheEnabled_;
 
-        protected void Initialize(bool cacheEnabled) {
+        protected void Initialize(ICompilerIRInfo irInfo, bool cacheEnabled) {
+            irInfo_ = irInfo;
             cacheEnabled_ = cacheEnabled;
 
             if (cacheEnabled) {
@@ -42,19 +43,14 @@ namespace IRExplorer {
             }
         }
 
-        protected void InitializeParser() {
-            errorHandler_ = new UTCParsingErrorHandler();
-            sectionParser_ = new UTCSectionParser(errorHandler_);
-        }
-
-        protected void FreeParser() {
-            // Allow memory to be freed, for large functions can be fairly significant.
-            errorHandler_ = null;
-            sectionParser_ = null;
+        protected (IRSectionParser, IRParsingErrorHandler) InitializeParser() {
+            var errorHandler = irInfo_.CreateParsingErrorHandler();
+            return (irInfo_.CreateSectionParser(errorHandler), errorHandler);
         }
 
         public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
-        public abstract byte[] GetDocumentText();
+        public abstract string GetDocumentText();
+        public abstract byte[] GetDocumentTextBytes();
         public abstract ParsedSection LoadSection(IRTextSection section);
         public abstract string GetSectionText(IRTextSection section);
         public abstract string LoadSectionPassOutput(IRPassOutput output);
@@ -84,56 +80,72 @@ namespace IRExplorer {
     }
 
     public class DocumentSectionLoader : SectionLoader, IDisposable {
-        private UTCSectionReader documentReader_;
+        private IRSectionReader documentReader_;
 
-        public DocumentSectionLoader() {
-            Initialize(true);
+        public DocumentSectionLoader(ICompilerIRInfo irInfo) {
+            Initialize(irInfo, true);
         }
 
-        public DocumentSectionLoader(string filePath) {
-            Initialize(true);
-            documentReader_ = new UTCSectionReader(filePath);
+        public DocumentSectionLoader(string filePath, ICompilerIRInfo irInfo) {
+            Initialize(irInfo, true);
+            documentReader_ = irInfo.CreateSectionReader(filePath);
         }
 
-        public DocumentSectionLoader(byte[] textData) {
-            Initialize(true);
-            documentReader_ = new UTCSectionReader(textData);
+        public DocumentSectionLoader(byte[] textData, ICompilerIRInfo irInfo) {
+            Initialize(irInfo, true);
+            documentReader_ = irInfo_.CreateSectionReader(textData);
         }
 
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
             return documentReader_.GenerateSummary(progressHandler);
         }
 
-        public override byte[] GetDocumentText() {
+        public override string GetDocumentText() {
+            var data = documentReader_.GetDocumentTextData();
+            return Encoding.UTF8.GetString(data);
+        }
+
+        public override byte[] GetDocumentTextBytes() {
             return documentReader_.GetDocumentTextData();
         }
 
         public override ParsedSection LoadSection(IRTextSection section) {
+            Trace.TraceInformation(
+                $"Section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
+
             lock (this) {
-                Trace.TraceInformation(
-                    $"Section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
-
-                if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var result)) {
+                if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var cachedResult)) {
                     Trace.TraceInformation($"Section loader {ObjectTracker.Track(this)}: found in cache");
-                    return result;
+                    return cachedResult;
                 }
+            }
 
-                InitializeParser();
-                string text = GetSectionText(section);
-                var function = sectionParser_.ParseSection(section, text);
-                result = new ParsedSection(section, text, function);
+            string text = GetSectionText(section);
 
+            //? TODO: Workaround for not having an LLVM parser
+            var (sectionParser, errorHandler) = InitializeParser();
+            FunctionIR function;
+
+            if (sectionParser == null) {
+                function = new FunctionIR();
+            }
+            else {
+                function = sectionParser.ParseSection(section, text);
+            }
+
+            var result = new ParsedSection(section, text, function);
+
+            lock(this) { 
                 if (cacheEnabled_ && function != null) {
                     sectionCache_.Add(section, result);
                 }
-
-                if (errorHandler_.HadParsingErrors) {
-                    result.ParsingErrors = errorHandler_.ParsingErrors;
-                }
-
-                FreeParser();
-                return result;
             }
+
+            if (errorHandler.HadParsingErrors) {
+                result.ParsingErrors = errorHandler.ParsingErrors;
+            }
+
+            return result;
         }
 
         public override string GetSectionText(IRTextSection section) {
@@ -174,8 +186,8 @@ namespace IRExplorer {
         private IRTextSection lastSection_;
         private string lastSectionText_;
 
-        public DebugSectionLoader() {
-            Initialize(false);
+        public DebugSectionLoader(ICompilerIRInfo irInfo) {
+            Initialize(irInfo, cacheEnabled: false);
             sectionTextMap_ = new Dictionary<IRTextSection, CompressedString>();
         }
 
@@ -187,9 +199,27 @@ namespace IRExplorer {
             return summary_;
         }
 
-        public override byte[] GetDocumentText() {
-            //? TODO: Merge all sections
-            return null;
+        public override string GetDocumentText() {
+            var builder = new StringBuilder();
+            var list = new List<Tuple<IRTextSection, CompressedString>>();
+
+            foreach(var pair in sectionTextMap_) {
+                list.Add(new Tuple<IRTextSection, CompressedString>(pair.Key, pair.Value));
+            }
+
+            list.Sort((a, b) => a.Item1.Number.CompareTo(b.Item1.Number));
+
+            foreach(var pair in list) {
+                builder.AppendLine(pair.Item1.Name); // Section name.
+                builder.AppendLine(pair.Item2.ToString()); // Section text.
+                builder.AppendLine();
+            }
+
+            return builder.ToString();
+        }
+
+        public override byte[] GetDocumentTextBytes() {
+            return Encoding.UTF8.GetBytes(GetDocumentText());
         }
 
         public void AddSection(IRTextSection section, string text) {
@@ -212,20 +242,19 @@ namespace IRExplorer {
                     return result;
                 }
 
-                InitializeParser();
+                var (sectionParser, errorHandler) = InitializeParser();
                 string text = GetSectionText(section);
-                var function = sectionParser_.ParseSection(section, text);
+                var function = sectionParser.ParseSection(section, text);
                 result = new ParsedSection(section, text, function);
 
                 if (cacheEnabled_ && function != null) {
                     sectionCache_.Add(section, result);
                 }
 
-                if (errorHandler_.HadParsingErrors) {
-                    result.ParsingErrors = errorHandler_.ParsingErrors;
+                if (errorHandler.HadParsingErrors) {
+                    result.ParsingErrors = errorHandler.ParsingErrors;
                 }
 
-                FreeParser();
                 return result;
             }
         }

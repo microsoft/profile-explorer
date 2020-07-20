@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -746,7 +747,7 @@ namespace IRExplorer {
             return false;
         }
 
-        public void LoadSavedSection(ParsedSection parsedSection, IRDocumentState savedState) {
+        public async Task LoadSavedSection(ParsedSection parsedSection, IRDocumentState savedState) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(this)}: Load saved section {parsedSection}");
 
@@ -760,13 +761,13 @@ namespace IRExplorer {
             margin_.LoadState(savedState.margin_);
             bookmarks_.Bookmarks.ForEach(item => RaiseBookmarkAddedEvent(item));
             SetCaretAtOffset(savedState.caretOffset_);
-            LateLoadSectionSetup(parsedSection);
+            await LateLoadSectionSetup(parsedSection);
         }
 
-        public void LoadSection(ParsedSection parsedSection) {
+        public async Task LoadSection(ParsedSection parsedSection) {
             Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load section {parsedSection}");
             SetCaretAtOffset(0);
-            LateLoadSectionSetup(parsedSection);
+            await LateLoadSectionSetup(parsedSection);
         }
 
         //? TODO: This is a more efficient way of marking the loop blocks
@@ -1366,7 +1367,9 @@ namespace IRExplorer {
             section_ = parsedSection.Section;
             function_ = parsedSection.Function;
             ignoreNextCaretEvent_ = true;
+
             Document.Text = parsedSection.Text;
+            
             bookmarks_.Clear();
             hoverHighlighter_.Clear();
             selectedHighlighter_.Clear();
@@ -1375,7 +1378,6 @@ namespace IRExplorer {
             diffHighlighter_?.Clear();
             remarkHighlighter_.Clear();
             margin_.Reset();
-            ComputeElementLists();
         }
 
         private bool EditBookmarkText(Bookmark bookmark, Key key) {
@@ -1448,6 +1450,11 @@ namespace IRExplorer {
         }
 
         private IRElement FindElementAtOffset(int offset) {
+            // Exit if the element lists are still being computed.
+            if(duringSectionLoading_) {
+                return null;
+            }
+
             IRElement element;
 
             if (DocumentUtils.FindElement(offset, operandElements_, out element) ||
@@ -2082,15 +2089,19 @@ namespace IRExplorer {
             JumpToBookmark(bookmarks_.JumpToLastBookmark());
         }
 
-        private void LateLoadSectionSetup(ParsedSection parsedSection) {
+        private async Task LateLoadSectionSetup(ParsedSection parsedSection) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
 
+            // Compute the element lists on another thread, for large functions
+            // it can be slow would block showing of any text before it's done.
+            await Task.Run(() => ComputeElementLists());
+
             // Folding uses the basic block boundaries.
+            actionUndoStack_.Clear();
             SetupBlockHighlighter();
             SetupBlockFolding();
             MarkLoopBlocks();
-            actionUndoStack_.Clear();
             CreateRightMarkerMargin();
             UpdateHighlighting();
             NotifyPropertyChanged("Blocks");
@@ -2106,6 +2117,7 @@ namespace IRExplorer {
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private void ComputeElementLists() {
             blockElements_ = new List<IRElement>(function_.Blocks.Count);
             tupleElements_ = new List<IRElement>(blockElements_.Count * 4);
@@ -2142,14 +2154,13 @@ namespace IRExplorer {
             automationPrevElement_ = null;
         }
 
-        public void LoadDiffedFunction(FunctionIR newFunction, IRTextSection newSection) {
+        public async Task LoadDiffedFunction(FunctionIR newFunction, IRTextSection newSection) {
             function_ = newFunction;
             section_ = newSection;
 
             // Block folding is tied to the document, which may have been replaced.
             SetupBlockFolding();
-            ComputeElementLists();
-            LateLoadSectionSetup(null);
+            await LateLoadSectionSetup(null);
         }
 
         private void Margin__BookmarkChanged(object sender, Bookmark bookmark) {
@@ -2789,7 +2800,7 @@ namespace IRExplorer {
 
             UninstallBlockFolding();
             folding_ = FoldingManager.Install(TextArea);
-            var foldingStrategy = new UTCFoldingStrategy(function_);
+            var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(function_);
             foldingStrategy.UpdateFoldings(folding_, Document);
         }
 

@@ -31,6 +31,9 @@
         <CommandBinding Command="local:Command.NextSection" Executed="NextSectionExecuted" />
         <CommandBinding Command="local:Command.FocusSearch" Executed="FocusSearchExecuted" />
         <CommandBinding Command="local:Command.ShowFunctions" Executed="ShowFunctionsExecuted" />
+        <CommandBinding Command="local:Command.CopySectionText" Executed="CopySectionTextExecuted" />
+        <CommandBinding Command="local:Command.SaveSectionText" Executed="SaveSectionTextExecuted" />
+        <CommandBinding Command="local:Command.SaveAllSectionText" Executed="SaveAllSectionTextExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <local:ToolPanelControl.Resources>
@@ -571,13 +574,14 @@
                                     Source="{StaticResource TagIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
+                        <Separator />
 
                         <MenuItem
-                            Command="local:Command.ToggleTag"
+                            Command="local:Command.CopySectionText"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                             CommandTarget="{Binding ElementName=SectionList}"
-                            Header="Copy Section Text"
-                            InputGestureText="Ctrl+C">
+                            Header="Copy Section"
+                            ToolTip="Copy the section text (IR) to the clipboard">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -587,11 +591,11 @@
                         </MenuItem>
 
                         <MenuItem
-                            Command="local:Command.ToggleTag"
+                            Command="local:Command.SaveSectionText"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                             CommandTarget="{Binding ElementName=SectionList}"
-                            Header="Export Section Text"
-                            InputGestureText="Ctrl+E">
+                            Header="Save Section"
+                            ToolTip="Save the section text (IR) to a file">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -599,6 +603,21 @@
                                     Source="{StaticResource JumpIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
+
+                        <MenuItem
+                            Command="local:Command.SaveAllSectionText"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Save All Sections"
+                            ToolTip="Save the text (IR) of all sections for the current function to a file">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource JumpIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+
                     </ContextMenu>
                 </ListView.ContextMenu>
                 <ListView.InputBindings>

@@ -62,16 +62,28 @@ namespace IRExplorer {
         private static bool CreateSettingsDirectory() {
             try {
                 string path = GetSettingsDirectoryPath();
-
-                if (!Directory.Exists(path)) {
-                    Directory.CreateDirectory(path);
-                }
+                CreateDirectories(path);
 
                 CreateSyntaxFilesDirectory("UTC");
+                CreateSyntaxFilesDirectory("LLVM");
                 return true;
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to create settings directory: {ex}");
+                return false;
+            }
+        }
+
+        private static bool CreateDirectories(string path) {
+            try {
+                if (!Directory.Exists(path)) {
+                    Directory.CreateDirectory(path);
+                }
+
+                return true;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to create directories for {path}: {ex}");
                 return false;
             }
         }
@@ -283,7 +295,7 @@ namespace IRExplorer {
         private static bool CreateSyntaxFilesDirectory(string compilerIRName) {
             try {
                 var syntaxFilesDir = GetCompilerSettingsDirectoryPath(compilerIRName);
-                CreateDirectoriesForFile(syntaxFilesDir);
+                CreateDirectories(syntaxFilesDir);
                 var files = GetSyntaxHighlightingFiles(compilerIRName, true);
 
                 foreach (var file in files) {
@@ -314,7 +326,7 @@ namespace IRExplorer {
 
             // By default use the syntax file from the document settings.
             var result = GetSyntaxHighlightingFileInfo(Settings.DocumentSettings.SyntaxHighlightingName,
-                                                       Session.CompilerInfo.CompilerIRName);
+                                                           Session.CompilerInfo.CompilerIRName);
             return result?.Path;
         }
 

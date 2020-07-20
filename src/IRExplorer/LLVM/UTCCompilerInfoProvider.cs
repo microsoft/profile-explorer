@@ -6,22 +6,23 @@ using IRExplorer.UTC;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
+using IRExplorerCore.LLVM;
 
-namespace IRExplorer.UTC {
-    public class UTCCompilerInfoProvider : ICompilerInfoProvider {
-        private UTCCompilerIRInfo ir_;
+namespace IRExplorer.LLVM {
+    public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
+        private LLVMCompilerIRInfo ir_;
         private UTCNameProvider names_;
         private UTCRemarkProvider remarks_;
         private UTCSectionStyleProvider styles_;
 
-        public UTCCompilerInfoProvider() {
-            ir_ = new UTCCompilerIRInfo();
+        public LLVMCompilerInfoProvider() {
+            ir_ = new LLVMCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
             remarks_ = new UTCRemarkProvider();
         }
 
-        public string CompilerIRName => "UTC";
+        public string CompilerIRName => "LLVM";
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;
         public ISectionStyleProvider SectionStyleProvider => styles_;

@@ -23,9 +23,12 @@ namespace IRExplorer {
         List<RemarkCategory> LoadRemarkCategories();
         List<RemarkSectionBoundary> LoadRemarkSectionBoundaries();
 
+        List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries);
+        List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document);
+            
         //? TODO: Should use a CancelableTaskInfo to support fast canceling when section switches
-        public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section);
-        public OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
+        List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section);
+        OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
     }
 
     class RemarksDefinitionSerializer {

@@ -1,8 +1,25 @@
-﻿using IRExplorerCore.Analysis;
+﻿using System.Diagnostics;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.UTC {
     public class UTCCompilerIRInfo : ICompilerIRInfo {
+        public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders) {
+            return new UTCSectionReader(filePath, expectSectionHeaders);
+        }
+
+        public IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders) {
+            return new UTCSectionReader(textData, expectSectionHeaders);
+        }
+
+        public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
+            return new UTCSectionParser((ParsingErrorHandler)errorHandler);
+        }
+
+        public IRParsingErrorHandler CreateParsingErrorHandler() {
+            return new ParsingErrorHandler();
+        }
+
         public bool IsCopyInstruction(InstructionIR instr) {
             return SkipCopyInstruction(instr) != null;
         }

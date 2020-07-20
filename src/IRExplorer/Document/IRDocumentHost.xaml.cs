@@ -469,7 +469,8 @@ namespace IRExplorer {
             SaveSectionState(section);
 
             if (!switchingActiveDocument) {
-                RemoveRemarks();
+                //? TODO: Make UnloadSection async
+                RemoveRemarks().Wait();
             }
 
             // Clear references to IR objects that would keep the previous function alive.
@@ -483,9 +484,9 @@ namespace IRExplorer {
             }
         }
 
-        private void RemoveRemarks() {
+        private async Task RemoveRemarks() {
             remarkList_ = null;
-            UpdateDocumentRemarks(remarkList_);
+            await UpdateDocumentRemarks(remarkList_);
         }
 
         private void SaveSectionState(IRTextSection section) {
@@ -548,38 +549,41 @@ namespace IRExplorer {
             TextView.EarlyLoadSectionSetup(parsedSection);
         }
 
-        public async void LoadSection(ParsedSection parsedSection) {
+        public async Task LoadSection(ParsedSection parsedSection) {
             var data = Session.LoadDocumentState(parsedSection.Section);
 
             if (data != null) {
                 var state = StateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
-                TextView.LoadSavedSection(parsedSection, state.DocumentState);
+                await TextView.LoadSavedSection(parsedSection, state.DocumentState);
                 TextView.ScrollToHorizontalOffset(state.HorizontalOffset);
                 TextView.ScrollToVerticalOffset(state.VerticalOffset);
             }
             else {
                 TextView.ScrollToVerticalOffset(0);
-                TextView.LoadSection(parsedSection);
+                await TextView.LoadSection(parsedSection);
             }
 
-            await AddRemarks();
+            await ReloadRemarks();
         }
 
-        private async Task AddRemarks() {
-            var remarkProvider = Session.CompilerInfo.RemarkProvider as UTCRemarkProvider;
-            var task = Task.Run(() => {
+        private async Task ReloadRemarks() {
+            await RemoveRemarks();
+            var remarks = await FindRemarks();
+            await AddRemarks(remarks);
+        }
 
+        private Task<List<Remark>> FindRemarks() {
+            var remarkProvider = Session.CompilerInfo.RemarkProvider;
+            return Task.Run(() => {
                 var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
                                                              remarkSettings_.StopAtSectionBoundaries);
                 var document = Session.SessionState.FindLoadedDocument(Section);
                 return remarkProvider.ExtractAllRemarks(sections, Function, document);
             });
+        }
 
-            var remarks = await task;
-            remarkList_ = remarks;
-
-            //? TODO: Async
-            AddRemarkTags(remarks);
+        private async Task AddRemarks(List<Remark> remarks) {
+            await AddRemarkTags(remarks);
             await UpdateDocumentRemarks(remarks);
         }
 
@@ -713,34 +717,32 @@ namespace IRExplorer {
             });
         }
 
-        private void AddRemarkTags(List<Remark> remarks) {
-            RemoveRemarkTags();
+        private Task AddRemarkTags(List<Remark> remarks) {
+            return Task.Run(() => {
+                RemoveRemarkTags();
 
-            foreach (var remark in remarks) {
-                foreach (var element in remark.ReferencedElements) {
-                    var remarkTag = element.GetOrAddTag<RemarkTag>();
-                    remarkTag.Remarks.Add(remark);
+                foreach (var remark in remarks) {
+                    foreach (var element in remark.ReferencedElements) {
+                        var remarkTag = element.GetOrAddTag<RemarkTag>();
+                        remarkTag.Remarks.Add(remark);
+                    }
                 }
-            }
+            });
         }
 
-        public void EnterDiffMode() {
+        public async Task EnterDiffMode() {
             if (Section != null) {
                 SaveSectionState(Section);
             }
 
-            //? TODO: Make remarks work with diff mode!
-            //?  - document text must be obtained from the session manager
-            RemoveRemarks();
-            AddRemarks();
+            await ReloadRemarks();
             TextView.EnterDiffMode();
         }
 
-        public void ExitDiffMode() {
+        public async Task ExitDiffMode() {
             TextView.ExitDiffMode();
             HideOptionalPanels();
-            RemoveRemarks();
-            AddRemarks();
+            await ReloadRemarks();
         }
 
         private void HideOptionalPanels() {
@@ -1018,7 +1020,7 @@ namespace IRExplorer {
                 return;
             }
 
-            //? TODO: If history depth changes, remarks must be recomputed!
+            // If only the remark filters changed, don't recompute the list of remarks.
             bool rebuildRemarkList = newSettings.ShowPreviousSections &&
                                     (newSettings.StopAtSectionBoundaries != remarkSettings_.StopAtSectionBoundaries ||
                                      newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth);
@@ -1026,7 +1028,7 @@ namespace IRExplorer {
             remarkSettings_ = newSettings;
 
             if (rebuildRemarkList) {
-                await AddRemarks();
+                await ReloadRemarks();
             }
             else {
                 await UpdateDocumentRemarks(remarkList_);

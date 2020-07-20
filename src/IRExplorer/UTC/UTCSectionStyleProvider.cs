@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using IRExplorerCore;
 
-namespace IRExplorer {
+namespace IRExplorer.UTC {
     public class UTCSectionStyleProvider : ISectionStyleProvider {
         private List<MarkedSectionName> sectionNameMarkers_;
 

@@ -106,7 +106,7 @@ namespace IRExplorer {
         public LoadedDocumentState SerializeDocument() {
             var state = new LoadedDocumentState();
             state.FilePath = FilePath;
-            state.DocumentText = Loader.GetDocumentText();
+            state.DocumentText = Loader.GetDocumentTextBytes();
 
             foreach (var sectionState in SectionStates) {
                 state.SectionStates.Add(new Tuple<ulong, byte[]>(sectionState.Key.Id,

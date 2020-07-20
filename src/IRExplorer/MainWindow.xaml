@@ -530,7 +530,16 @@
 
                         <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
                         <MenuItem Click="MenuItem_Click_6" Header="Settings" />
-
+                        <MenuItem Header="Compiler IR">
+                            <MenuItem
+                                Name="UTCMenuItem"
+                                Click="UTCMenuItem_Click"
+                                Header="UTC" />
+                            <MenuItem
+                                Name="LLVMMenuItem"
+                                Click="LLVMMenuItem_Click"
+                                Header="LLVM" />
+                        </MenuItem>
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Click="MenuItem_Click_4" Header="Documentation" />
@@ -1009,7 +1018,6 @@
             <StatusBarItem
                 x:Name="IRTypeLabel"
                 VerticalAlignment="Center"
-                Content="UTC IR"
                 FontSize="11" />
             <Separator />
 

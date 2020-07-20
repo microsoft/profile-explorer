@@ -57,6 +57,26 @@ namespace IRExplorerCore.IR {
             }
         }
 
+        private IEnumerable<IRElement> IterateAllElements() {
+            foreach (var block in Blocks) {
+                yield return block;
+
+                foreach (var tuple in block.Tuples) {
+                    yield return tuple;
+
+                    if (tuple is InstructionIR instr) {
+                        foreach (var op in instr.Destinations) {
+                            yield return op;
+                        }
+
+                        foreach (var op in instr.Sources) {
+                            yield return op;
+                        }
+                    }
+                }
+            }
+        }
+
         public void ForEachTuple(Func<TupleIR, bool> action) {
             foreach (var block in Blocks) {
                 foreach (var tuple in block.Tuples) {
@@ -80,9 +100,7 @@ namespace IRExplorerCore.IR {
         }
 
         public void ForEachElement(Func<IRElement, bool> action) {
-            BuildElementIdMap();
-
-            foreach (var element in elementMap_.Values) {
+            foreach (var element in IterateAllElements()) {
                 if (!action(element)) {
                     return;
                 }

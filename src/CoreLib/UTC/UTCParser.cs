@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Text;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Lexer;
@@ -47,10 +46,10 @@ namespace IRExplorerCore.UTC {
     // string -> keyword
 
     public sealed class UTCSectionParser : IRSectionParser {
-        private UTCParsingErrorHandler errorHandler_;
+        private ParsingErrorHandler errorHandler_;
         private UTCParser parser_;
 
-        public UTCSectionParser(UTCParsingErrorHandler errorHandler = null) {
+        public UTCSectionParser(ParsingErrorHandler errorHandler = null) {
             if (errorHandler != null) {
                 errorHandler_ = errorHandler;
                 errorHandler_.Parser = this;
@@ -80,38 +79,6 @@ namespace IRExplorerCore.UTC {
 
         public void SkipToNextBlock() {
             throw new NotImplementedException();
-        }
-    }
-
-    public sealed class UTCParsingErrorHandler : IRParsingErrorHandler {
-        public UTCParsingErrorHandler() {
-            ParsingErrors = new List<IRParsingError>();
-        }
-
-        public bool ThrowOnError { get; set; }
-        public IRSectionParser Parser { get; set; }
-        public bool HadParsingErrors { get; set; }
-        public List<IRParsingError> ParsingErrors { get; set; }
-
-        public bool HandleError(TextLocation location, TokenKind expectedToken,
-                                Token actualToken, string message = "") {
-            var builder = new StringBuilder();
-
-            if (!string.IsNullOrEmpty(message)) {
-                builder.AppendLine(message);
-            }
-
-            builder.AppendLine($"Location: {location}");
-            builder.AppendLine($"Expected token: {expectedToken}");
-            builder.Append($"Actual token: {actualToken}");
-
-            if (ThrowOnError) {
-                throw new InvalidOperationException($"UTC IR parsing error:\n{builder}");
-            }
-
-            ParsingErrors.Add(new IRParsingError(location, builder.ToString()));
-            HadParsingErrors = true;
-            return true; // Always continue parsing.
         }
     }
 
@@ -206,7 +173,7 @@ namespace IRExplorerCore.UTC {
         private Token current_;
         private Dictionary<long, IRElement> elementAddressMap_;
 
-        private UTCParsingErrorHandler errorHandler_;
+        private ParsingErrorHandler errorHandler_;
         private Dictionary<string, BlockLabelIR> labelMap_;
         private Lexer.Lexer lexer_;
         private Dictionary<int, string> lineMetadataMap_;
@@ -215,7 +182,7 @@ namespace IRExplorerCore.UTC {
         private Token previous_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
 
-        public UTCParser(string text, UTCParsingErrorHandler errorHandler,
+        public UTCParser(string text, ParsingErrorHandler errorHandler,
                          Dictionary<int, string> lineMetadata) {
             nextElementId_ = IRElementId.FromLong(0);
             errorHandler_ = errorHandler;

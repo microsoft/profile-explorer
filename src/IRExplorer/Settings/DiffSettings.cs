@@ -23,6 +23,8 @@ namespace IRExplorer {
         [ProtoMember(12)] public Color MinorModificationColor { get; set; }
         [ProtoMember(13)] public Color MinorModificationBorderColor { get; set; }
         [ProtoMember(15)] public Color PlaceholderBorderColor { get; set; }
+        [ProtoMember(16)] public string ExternalDiffAppPath { get; set; }
+        [ProtoMember(17)] public string ExternalDiffAppArgs { get; set; }
 
         public override void Reset() {
             IdentifyMinorDiffs = true;
@@ -70,7 +72,9 @@ namespace IRExplorer {
                    DeletionBorderColor.Equals(settings.DeletionBorderColor) &&
                    MinorModificationColor.Equals(settings.MinorModificationColor) &&
                    MinorModificationBorderColor.Equals(settings.MinorModificationBorderColor) &&
-                   PlaceholderBorderColor.Equals(settings.PlaceholderBorderColor);
+                   PlaceholderBorderColor.Equals(settings.PlaceholderBorderColor) &&
+                   ExternalDiffAppPath == settings.ExternalDiffAppPath &&
+                   ExternalDiffAppArgs == settings.ExternalDiffAppArgs;
         }
     }
 }

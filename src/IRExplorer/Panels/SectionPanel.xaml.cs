@@ -15,6 +15,8 @@ using System.Windows.Media;
 using IRExplorer.OptionsPanels;
 using IRExplorerCore;
 using ProtoBuf;
+using Microsoft.Win32;
+using System.IO;
 
 namespace IRExplorer {
     public static class Command {
@@ -44,6 +46,12 @@ namespace IRExplorer {
             new RoutedUICommand("Untitled", "FocusSearch", typeof(SectionPanel));
         public static readonly RoutedUICommand ShowFunctions =
             new RoutedUICommand("Untitled", "ShowFunctions", typeof(SectionPanel));
+        public static readonly RoutedUICommand CopySectionText =
+            new RoutedUICommand("Untitled", "CopySectionText", typeof(SectionPanel));
+        public static readonly RoutedUICommand SaveSectionText =
+            new RoutedUICommand("Untitled", "SaveSectionText", typeof(SectionPanel));
+        public static readonly RoutedUICommand SaveAllSectionText =
+            new RoutedUICommand("Untitled", "SaveAllSectionText", typeof(SectionPanel));
     }
 
     public enum OpenSectionKind {
@@ -465,6 +473,9 @@ namespace IRExplorer {
 
             if (summary_.Functions.Count == 0) {
                 SectionList.ItemsSource = null;
+            }
+            else if (summary_.Functions.Count == 1) {
+                SelectFunction(summary_.Functions[0]);
             }
         }
 
@@ -1127,6 +1138,61 @@ namespace IRExplorer {
             sectionSettings_ = newSettings;
             UpdateSectionListBindings(currentFunction_, true);
             RefreshSectionList();
+        }
+
+        private async void CopySectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (e.Parameter is IRTextSectionEx section) {
+                var text = await Session.GetSectionTextAsync(section.Section);
+                Clipboard.SetText(text);
+            }
+        }
+
+        private async void SaveSectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (e.Parameter is IRTextSectionEx section) {
+                var fileDialog = new SaveFileDialog {
+                    DefaultExt = "*.txt|All Files|*.*",
+                    Filter = "IR text|*.txt"
+                };
+
+                var result = fileDialog.ShowDialog();
+
+                if (result.HasValue && result.Value) {
+                    var path = fileDialog.FileName;
+
+                    try {
+                        var text = await Session.GetSectionTextAsync(section.Section);
+                        await File.WriteAllTextAsync(path, text);
+                    }
+                    catch(Exception ex) {
+                        MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer", 
+                                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    }
+                }
+            }
+        }
+
+        private async void SaveAllSectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (e.Parameter is IRTextSectionEx section) {
+                var fileDialog = new SaveFileDialog {
+                    DefaultExt = "*.txt|All Files|*.*",
+                    Filter = "IR text|*.txt"
+                };
+
+                var result = fileDialog.ShowDialog();
+
+                if (result.HasValue && result.Value) {
+                    var path = fileDialog.FileName;
+
+                    try {
+                        var text = await Session.GetDocumentTextAsync(section.Section);
+                        await File.WriteAllTextAsync(path, text);
+                    }
+                    catch (Exception ex) {
+                        MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
+                                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    }
+                }
+            }
         }
     }
 }

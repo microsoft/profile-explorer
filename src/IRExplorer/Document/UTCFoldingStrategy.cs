@@ -7,8 +7,12 @@ using ICSharpCode.AvalonEdit.Folding;
 using IRExplorerCore.IR;
 
 namespace IRExplorer {
-    //? TODO: Introduce interface
-    public sealed class UTCFoldingStrategy {
+    public interface IRFoldingStrategy {
+        FunctionIR Function { get; set; }
+        public void UpdateFoldings(FoldingManager manager, TextDocument document);
+    }
+
+    public sealed class UTCFoldingStrategy : IRFoldingStrategy {
         public UTCFoldingStrategy(FunctionIR function) {
             Function = function;
         }
@@ -20,12 +24,12 @@ namespace IRExplorer {
             manager.UpdateFoldings(newFoldings, firstErrorOffset);
         }
 
-        public IEnumerable<NewFolding> CreateNewFoldings(TextDocument document, out int firstErrorOffset) {
+        private IEnumerable<NewFolding> CreateNewFoldings(TextDocument document, out int firstErrorOffset) {
             firstErrorOffset = -1;
             return CreateNewFoldings(document);
         }
 
-        public IEnumerable<NewFolding> CreateNewFoldings(ITextSource document) {
+        private IEnumerable<NewFolding> CreateNewFoldings(ITextSource document) {
             var newFoldings = new List<NewFolding>(Function.Blocks.Count);
             BlockIR lastBlock = null;
             int lastOffset = 0;

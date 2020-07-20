@@ -78,12 +78,20 @@ namespace IRExplorerCore.GraphViz {
         }
 
         public string PrintGraph() {
-            var builder = new StringBuilder(1024 * 16);
-            builder.AppendLine("digraph {");
-            builder.AppendLine(GetExtraSettings());
-            PrintGraph(builder);
-            builder.AppendLine("}");
-            return builder.ToString();
+            // With extremely large graphs, the application can run out of memory,
+            // better show a error message than crashing it.
+            try {
+                var builder = new StringBuilder(1024 * 16);
+                builder.AppendLine("digraph {");
+                builder.AppendLine(GetExtraSettings());
+                PrintGraph(builder);
+                builder.AppendLine("}");
+                return builder.ToString();
+            }
+            catch(Exception ex) {
+                Trace.TraceError($"Failed to generate Graphviz input: {ex.Message}");
+                return null;
+            }
         }
 
         protected virtual void PrintGraph(StringBuilder builder) { }

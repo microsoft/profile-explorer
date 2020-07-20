@@ -192,5 +192,7 @@ namespace IRExplorerCore {
         IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler);
         string GetSectionText(IRTextSection section);
         string GetPassOutputText(IRPassOutput output);
+        public byte[] GetDocumentTextData();
+        void Dispose();
     }
 }
