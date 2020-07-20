@@ -34,6 +34,7 @@ using IRExplorerCore.UTC;
 using IRExplorer.Diff;
 using Microsoft.Win32;
 using IRExplorer.UTC;
+using IRExplorer.LLVM;
 
 namespace IRExplorer {
     public static class AppCommand {
@@ -317,14 +318,14 @@ namespace IRExplorer {
 
         public bool IsInDiffMode => sessionState_.DiffState.IsEnabled;
 
-        public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument document = null) {
-            if (sessionState_.DiffState.IsEnabled && document != null) {
+        public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
+            if (sessionState_.DiffState.IsEnabled && targetDiffDocument != null) {
                 IRDocument diffDocument = null;
 
-                if (document == sessionState_.DiffState.LeftDocument.TextView) {
+                if (targetDiffDocument == sessionState_.DiffState.LeftDocument.TextView) {
                     diffDocument = sessionState_.DiffState.LeftDocument.TextView;
                 }
-                else if (document == sessionState_.DiffState.RightDocument.TextView) {
+                else if (targetDiffDocument == sessionState_.DiffState.RightDocument.TextView) {
                     diffDocument = sessionState_.DiffState.RightDocument.TextView;
                 }
 
@@ -337,6 +338,10 @@ namespace IRExplorer {
             return Task.Run(() => docInfo.Loader.GetSectionText(section));
         }
 
+        public Task<string> GetDocumentTextAsync(IRTextSection section) {
+            var docInfo = sessionState_.FindLoadedDocument(section);
+            return Task.Run(() => docInfo.Loader.GetDocumentText());
+        }
 
         public async Task<SectionSearchResult> SearchSectionAsync(
             SearchInfo searchInfo, IRTextSection section, IRDocument document) {
@@ -446,6 +451,7 @@ namespace IRExplorer {
             PopulateRecentFilesMenu();
             ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
             DiffModeButton.IsEnabled = false;
+            IRTypeLabel.Content = compilerInfo_.CompilerIRName;
         }
 
         protected override void OnSourceInitialized(EventArgs e) {
@@ -698,7 +704,7 @@ namespace IRExplorer {
                 try {
                     long fileSize = new FileInfo(sessionState_.Info.FilePath).Length;
 
-                    if (fileSize > UTCSectionReader.MAX_PRELOADED_FILE_SIZE) {
+                    if (fileSize > SectionReaderBase.MAX_PRELOADED_FILE_SIZE) {
                         Trace.TraceWarning(
                             $"Disabling auto-saving for large file: {sessionState_.Info.FilePath}");
 
@@ -922,7 +928,7 @@ namespace IRExplorer {
         private LoadedDocument LoadDocument(string path, ProgressInfoHandler progressHandler) {
             try {
                 var result = new LoadedDocument(path);
-                result.Loader = new DocumentSectionLoader(path);
+                result.Loader = new DocumentSectionLoader(path, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
@@ -935,7 +941,7 @@ namespace IRExplorer {
         private LoadedDocument LoadDocument(byte[] data, string path, ProgressInfoHandler progressHandler) {
             try {
                 var result = new LoadedDocument(path);
-                result.Loader = new DocumentSectionLoader(data);
+                result.Loader = new DocumentSectionLoader(data, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
@@ -1400,8 +1406,9 @@ namespace IRExplorer {
             IRTextSection newLeftSection = null;
             IRTextSection newRightSection = null;
 
+            //? TODO: Refactor branches use a common method
             if (document == sessionState_.DiffState.LeftDocument) {
-                var result1 = await Task.Run(() => LoadSectionText(section));
+                var result1 = await Task.Run(() => LoadAndParseSection(section));
                 leftText = result1.Text;
                 newLeftSection = section;
 
@@ -1409,7 +1416,7 @@ namespace IRExplorer {
                     var diffSection = FindDiffDocumentSection(section, diffDocument_);
 
                     if (diffSection != null) {
-                        var result2 = await Task.Run(() => LoadSectionText(diffSection));
+                        var result2 = await Task.Run(() => LoadAndParseSection(diffSection));
                         rightText = result2.Text;
                         newRightSection = diffSection;
                     }
@@ -1420,13 +1427,13 @@ namespace IRExplorer {
                 }
                 else {
                     var result2 =
-                        await Task.Run(() => LoadSectionText(sessionState_.DiffState.RightDocument.Section));
+                        await Task.Run(() => LoadAndParseSection(sessionState_.DiffState.RightDocument.Section));
 
                     rightText = result2.Text;
                 }
             }
             else if (document == sessionState_.DiffState.RightDocument) {
-                var result1 = await Task.Run(() => LoadSectionText(section));
+                var result1 = await Task.Run(() => LoadAndParseSection(section));
                 rightText = result1.Text;
                 newRightSection = section;
 
@@ -1434,7 +1441,7 @@ namespace IRExplorer {
                     var diffSection = FindDiffDocumentSection(section, mainDocument_);
 
                     if (diffSection != null) {
-                        var result2 = await Task.Run(() => LoadSectionText(diffSection));
+                        var result2 = await Task.Run(() => LoadAndParseSection(diffSection));
                         leftText = result2.Text;
                         newLeftSection = diffSection;
                     }
@@ -1445,7 +1452,7 @@ namespace IRExplorer {
                 }
                 else {
                     var result2 =
-                        await Task.Run(() => LoadSectionText(sessionState_.DiffState.LeftDocument.Section));
+                        await Task.Run(() => LoadAndParseSection(sessionState_.DiffState.LeftDocument.Section));
 
                     leftText = result2.Text;
                 }
@@ -1493,7 +1500,7 @@ namespace IRExplorer {
             ResetDocumentEvents(document);
             ResetStatusBar();
             var delayedAction = UpdateUIBeforeSectionLoad(section, document);
-            var result = await Task.Run(() => LoadSectionText(section));
+            var result = await Task.Run(() => LoadAndParseSection(section));
 
             if (result.Function == null) {
                 //? TODO: Handle load function failure better
@@ -1644,7 +1651,7 @@ namespace IRExplorer {
             document.TextView.HighlightElement(e.Element, HighlighingType.Hovered);
         }
 
-        private async Task<ParsedSection> LoadSectionText(IRTextSection section) {
+        private async Task<ParsedSection> LoadAndParseSection(IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
             var parsedSection = docInfo.Loader.LoadSection(section);
 
@@ -1883,7 +1890,7 @@ namespace IRExplorer {
         private string ShowOpenFileDialog() {
             var fileDialog = new OpenFileDialog {
                 DefaultExt = "*.*",
-                Filter = "Log Files|*.txt;*.log;*.ir;*.irx|IR Explorer Session Files|*.irx|All Files|*.*"
+                Filter = "IR Files|*.txt;*.log;*.ir;*.irx|IR Explorer Session Files|*.irx|All Files|*.*"
             };
 
             var result = fileDialog.ShowDialog();
@@ -1919,8 +1926,8 @@ namespace IRExplorer {
             bool loaded = await SaveSessionDocument(filePath);
 
             if (!loaded) {
-                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer", MessageBoxButton.OK,
-                                MessageBoxImage.Exclamation);
+                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer", 
+                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
 
@@ -1933,8 +1940,8 @@ namespace IRExplorer {
             bool loaded = await SaveSessionDocument(filePath);
 
             if (!loaded) {
-                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer", MessageBoxButton.OK,
-                                MessageBoxImage.Exclamation);
+                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer", 
+                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
 
@@ -2726,14 +2733,15 @@ namespace IRExplorer {
         }
 
         private async Task DiffCurrentDocuments(DiffModeInfo diffState) {
-            diffState.LeftDocument.EnterDiffMode();
-            diffState.RightDocument.EnterDiffMode();
+            await diffState.LeftDocument.EnterDiffMode();
+            await diffState.RightDocument.EnterDiffMode();
             sessionState_.DiffState.IsEnabled = true;
             var leftDocument = diffState.LeftDocument.TextView;
             var rightDocument = diffState.RightDocument.TextView;
 
-            //? TODO: Probably faster to use the file directly to get the text (GetSectionText).
-            await DiffDocuments(leftDocument, rightDocument, leftDocument.Text, rightDocument.Text);
+            var leftText = await GetSectionTextAsync(leftDocument.Section);
+            var rightText = await GetSectionTextAsync(rightDocument.Section);
+            await DiffDocuments(leftDocument, rightDocument, leftText, rightText);
         }
 
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, string leftText,
@@ -2742,9 +2750,9 @@ namespace IRExplorer {
             var diff = await Task.Run(() => DocumentDiff.ComputeDiffs(leftText, rightText));
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
-            var diffFilter = new UTCDiffOutputFilter();
-            var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings);
-            var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings);
+            var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+            var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_.IR);
+            var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_.IR);
 
             var leftMarkTask = leftDiffUpdater.MarkDiffs(leftText, diff.OldText, diff.NewText, leftDocument,
                                                          false, leftDiffStats);
@@ -2961,12 +2969,13 @@ namespace IRExplorer {
             NotifyPanelsOfSessionStart();
 
             //? TODO: Reload sections left open.
-            //foreach (var sectionId in state.OpenSections) {
-            //    var section = DocumentSummary.GetSectionWithId(sectionId);
-            //    var args = new OpenSectionEventArgs(section, OpenSectionKind.NewTabDockRight);
-            //    await SwitchDocumentSection(args);
-            //    SectionPanel.SelectSection(section);
-            //}
+            ///foreach (var sectionId in state.OpenSections) {
+            ///    var section = DocumentSummary.GetSectionWithId(sectionId);
+            ///    var args = new OpenSectionEventArgs(section, OpenSectionKind.NewTabDockRight);
+            ///    await SwitchDocumentSection(args);
+            ///    SectionPanel.SelectSection(section);
+            ///}
+
             StartAutoSaveTimer();
         }
 
@@ -3279,7 +3288,7 @@ namespace IRExplorer {
                     string line = text.Substring(startIndex, index);
 
                     if (line.StartsWith("ENTRY")) {
-                        return UTCSectionReader.ExtractFunctionName(line);
+                        //? return UTCSectionReader.ExtractFunctionName(line);
                     }
 
                     startIndex = index + 1;
@@ -3404,7 +3413,7 @@ namespace IRExplorer {
 
                 FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
                 var result = new LoadedDocument("Debug session");
-                debugSections_ = new DebugSectionLoader();
+                debugSections_ = new DebugSectionLoader(compilerInfo_.IR);
                 debugSummary_ = debugSections_.LoadDocument(null);
                 result.Loader = debugSections_;
                 result.Summary = debugSummary_;
@@ -3543,14 +3552,17 @@ namespace IRExplorer {
                 return;
             }
 
+            var width = Math.Max(DiffOptionsPanel.MinimumWidth,
+                    Math.Min(MainGrid.ActualWidth, DiffOptionsPanel.DefaultWidth));
+            var height = Math.Max(DiffOptionsPanel.MinimumHeight,
+                    Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
             var position = MainGrid.PointToScreen(new Point(238, MainMenu.ActualHeight + 1));
-            diffOptionsPanel_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, 300, 465, this);
+            diffOptionsPanel_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, this);
             diffOptionsPanel_.PanelClosed += DiffOptionsPanel_PanelClosed;
             diffOptionsPanel_.PanelReset += DiffOptionsPanel_PanelReset;
             diffOptionsPanel_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
             diffOptionsPanel_.Settings = (DiffSettings)App.Settings.DiffSettings.Clone();
             diffOptionsPanel_.IsOpen = true;
-            ;
             diffOptionsVisible_ = true;
         }
 
@@ -3607,8 +3619,8 @@ namespace IRExplorer {
             var diff = await Task.Run(() => DocumentDiff.ComputeDiffs(prevText, currentText));
 
             var diffStats = new DiffStatistics();
-            var diffFilter = new UTCDiffOutputFilter();
-            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings);
+            var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_.IR);
             var diffResult = await diffUpdater.MarkDiffs(prevText, diff.NewText, diff.OldText, doc.TextView, true, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();
@@ -3776,5 +3788,51 @@ namespace IRExplorer {
             DiffSwapButton.IsEnabled = true;
         }
 
+        private async void ExternalDiffButton_Click(object sender, RoutedEventArgs e) {
+            var appPath = App.Settings.DiffSettings.ExternalDiffAppPath;
+
+            if(!string.IsNullOrEmpty(appPath) && File.Exists(appPath)) {
+                var leftText = await GetSectionTextAsync(sessionState_.DiffState.LeftSection);
+                var rightText = await GetSectionTextAsync(sessionState_.DiffState.RightSection);
+
+                try {
+                    var fileName = Path.GetTempFileName();
+                    var leftFile = $"{fileName}{sessionState_.DiffState.LeftSection.Name.Replace(' ', '_')}.txt";
+                    var rightFile = $"{fileName}{sessionState_.DiffState.RightSection.Name.Replace(' ', '_')}.txt";
+
+                    await File.WriteAllTextAsync(leftFile, leftText);
+                    await File.WriteAllTextAsync(rightFile, rightText);
+
+                    var appArgs = App.Settings.DiffSettings.ExternalDiffAppArgs;
+                    appArgs = appArgs.Replace("$LEFT", $"\"{leftFile}\"");
+                    appArgs = appArgs.Replace("$RIGHT", $"\"{rightFile}\"");
+
+                    var psi = new ProcessStartInfo(appPath) {
+                        UseShellExecute = true,
+                        Arguments = appArgs
+                    };
+
+                    Process.Start(psi);
+                }
+                catch(Exception ex) {
+                    MessageBox.Show($"Failed to start external diff application: {ex.Message}", "IR Explorer",
+                                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                }
+            }
+        }
+
+        private void SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
+            EndSession();
+            compilerInfo_ = compilerInfo;
+            SetupMainWindow();
+        }
+
+        private void LLVMMenuItem_Click(object sender, RoutedEventArgs e) {
+            SwitchCompilerTarget(new LLVMCompilerInfoProvider());
+        }
+
+        private void UTCMenuItem_Click(object sender, RoutedEventArgs e) {
+            SwitchCompilerTarget(new UTCCompilerInfoProvider());
+        }
     }
 }

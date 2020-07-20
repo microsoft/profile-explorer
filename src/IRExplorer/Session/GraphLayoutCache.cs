@@ -38,6 +38,11 @@ namespace IRExplorer {
                     // the resulting graph will be identical even though the function is not.
                     string inputText = printer.PrintGraph();
 
+                    if (string.IsNullOrEmpty(inputText)) {
+                        // Printing the graph failed for some reason, like running out of memory.
+                        return null;
+                    }
+
                     // The input text is looked up using a SHA256 hash that basically makes each
                     // input unique, use just 32 bytes of memory and faster to look up.
                     var inputTextHash = CompressionUtils.CreateSHA256(inputText);

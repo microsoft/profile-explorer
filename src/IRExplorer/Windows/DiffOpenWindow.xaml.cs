@@ -18,40 +18,6 @@ namespace IRExplorer {
         public string BaseFilePath { get; set; }
         public string DiffFilePath { get; set; }
 
-        private void AutoCompleteBox_Populating(object sender, PopulatingEventArgs e) {
-            PopulateFileSystemAutocompleteBox(sender as AutoCompleteBox);
-        }
-
-        private void PopulateFileSystemAutocompleteBox(AutoCompleteBox box) {
-            string text = box.Text;
-
-            try {
-                string dirname = Path.GetDirectoryName(text);
-
-                if (dirname != null && Directory.Exists(dirname)) {
-                    var files = Directory.GetFiles(dirname, "*.*", SearchOption.TopDirectoryOnly);
-                    var dirs = Directory.GetDirectories(dirname, "*.*", SearchOption.TopDirectoryOnly);
-                    var candidates = new List<string>(files.Length + dirs.Length);
-
-                    foreach (string f in dirs) {
-                        candidates.Add(f);
-                    }
-
-                    foreach (string f in files) {
-                        candidates.Add(f);
-                    }
-
-                    box.ItemsSource = candidates;
-                    box.PopulateComplete();
-                    return;
-                }
-            }
-            catch { }
-
-            box.ItemsSource = null;
-            box.PopulateComplete();
-        }
-
         private void UpdateButton_Click(object sender, RoutedEventArgs e) {
             BaseFilePath = BaseAutocompleteBox.Text.Trim();
             DiffFilePath = DiffAutocompleteBox.Text.Trim();

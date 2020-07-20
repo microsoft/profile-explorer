@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using IRExplorerCore;
 
-namespace IRExplorer {
+namespace IRExplorer.UTC {
     public enum FilteredSectionNameKind {
         TrimPrefix,
         TrimSuffix,

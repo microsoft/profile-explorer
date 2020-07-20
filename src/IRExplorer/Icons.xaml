@@ -556,6 +556,14 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="HistoryIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H13 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F0 M13,16z M0,0z M6,7L8,7 8,8 6,8 6,10 5,10 5,8 3,8 3,7 5,7 5,5 6,5 6,7z M3,13L8,13 8,12 3,12 3,13z M7.5,2L11,5.5 11,15C11,15.55,10.55,16,10,16L1,16C0.45,16,0,15.55,0,15L0,3C0,2.45,0.45,2,1,2L7.5,2z M10,6L7,3 1,3 1,15 10,15 10,6z M8.5,0L3,0 3,1 8,1 12,5 12,13 13,13 13,4.5 8.5,0z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <DrawingImage x:Key="LogoImage">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">

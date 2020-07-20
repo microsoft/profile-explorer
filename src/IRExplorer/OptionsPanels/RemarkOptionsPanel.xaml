@@ -11,7 +11,7 @@
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="148" />
+            <RowDefinition Height="142" />
             <RowDefinition Height="*" />
             <RowDefinition Height="145" />
         </Grid.RowDefinitions>

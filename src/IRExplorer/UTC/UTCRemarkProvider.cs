@@ -12,7 +12,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
 
-namespace IRExplorer {
+namespace IRExplorer.UTC {
     public class UTCRemarkParser {
         public static string ExtractVN(IRElement element) {
             var tag = element.GetTag<RemarkTag>();

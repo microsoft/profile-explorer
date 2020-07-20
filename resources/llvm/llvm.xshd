@@ -2,19 +2,20 @@
 
 <!-- Syntax definition for LLVM IR -->
 <SyntaxDefinition name="LLVM IR" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
-    <Color name="String" foreground="Black" />
+    <Color name="String" foreground="DarkOrange" />
 	<Color name="Digits" foreground="Blue" />
 	<Color name="Comment" foreground="Silver" />
 	<Color name="Keywords" foreground="DarkBlue" fontWeight="bold"/>
 	<Color name="Opcodes" foreground="Crimson" fontWeight="bold"/>
 	<Color name="TransferOpcodes" foreground="DarkGreen" fontWeight="bold"/>
 	<Color name="CallOpcodes" foreground="DarkOrchid" fontWeight="bold" />
+    <Color name="ArrayType" foreground="DarkMagenta" fontWeight="bold" />
     <Color name="PointerType" foreground="DarkMagenta" fontWeight="bold" />
     <Color name="StructType" foreground="DarkMagenta" fontWeight="bold" />
 	<Color name="Type" foreground="Maroon" />
 	<Color name="Attributes" foreground="DarkGreen" fontWeight="bold" />
 	<Color name="Annotation" foreground="Silver" />
-	<Color name="Variable" foreground="CadetBlue" fontWeight="bold" />
+	<Color name="Variable" foreground="Black" fontWeight="bold" />
 	<Color name="CallTarget" foreground="DarkGreen" fontWeight="bold" />
     <RuleSet ignoreCase="false">
 		<Span color="Comment" begin=";" />
@@ -111,12 +112,12 @@
 			<Word>undef</Word>
         </Keywords>
         
-		<Span color="PointerType">
+		<Span color="ArrayType">
             <Begin>\[</Begin>
             <End>\]</End>
 		</Span>
 		
-		<Span color="StructPointer">
+		<Span color="StructType">
             <Begin>\{</Begin>
             <End>\}</End>
 		</Span>
@@ -154,11 +155,19 @@
 			<Word>dllimport</Word>
 			<Word>dllexport</Word>
 			<Word>atomic</Word>
+			<Word>metadata</Word>
+			<Word>inbounds</Word>
         </Keywords>
 		
 		<Rule color="Variable">%\w+(.\w+)*</Rule>
-		<Rule color="CallTarget">@\w+(.\w+)*</Rule>
-			
+		<Rule color="CallTarget">@\w+(.\w+)*</Rule>	
+		<Rule color="Annotation">!\w+([a-z]|[A-Z]|[0-9]|\(|\))*</Rule>
+		
         <Rule color="Digits">\b0[xX][0-9a-fA-F]+|(\b(?&lt;!\$)\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
+        
+        <Keywords color="Attributes">
+            <Word>true</Word>
+            <Word>false</Word>
+        </Keywords> 
    </RuleSet>
 </SyntaxDefinition>

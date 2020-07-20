@@ -27,13 +27,15 @@ namespace IRExplorer.Diff {
         private const char RemovedDiffLineChar = ' ';
         private const char AddedDiffLineChar = ' ';
 
+        private ICompilerIRInfo irInfo_;
         private DiffSettings settings_;
         private IDiffOutputFilter diffFilter_;
         private char[] ignoredDiffLetters_;
 
-        public DocumentDiffUpdater(IDiffOutputFilter diffFilter, DiffSettings settings) {
+        public DocumentDiffUpdater(IDiffOutputFilter diffFilter, DiffSettings settings, ICompilerIRInfo irInfo) {
             diffFilter_ = diffFilter;
             settings_ = settings;
+            irInfo_ = irInfo;
             ignoredDiffLetters_ = diffFilter_.IgnoredDiffLetters;
         }
 
@@ -335,8 +337,8 @@ namespace IRExplorer.Diff {
 
         private void ReparseDiffedFunction(DiffMarkingResult diffResult, IRTextSection originalSection) {
             try {
-                var errorHandler = new UTCParsingErrorHandler();
-                var sectionParser = new UTCSectionParser(errorHandler);
+                var errorHandler = irInfo_.CreateParsingErrorHandler();
+                var sectionParser = irInfo_.CreateSectionParser(errorHandler);
 
                 diffResult.DiffFunction = sectionParser.ParseSection(originalSection, diffResult.DiffText);
 

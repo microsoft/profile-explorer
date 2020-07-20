@@ -42,7 +42,8 @@ namespace IRExplorer {
         void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations);
 
         Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section);
-        Task<string> GetSectionTextAsync(IRTextSection section, IRDocument document = null);
+        Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null);
+        Task<string> GetDocumentTextAsync(IRTextSection section);
 
         Task SwitchGraphsAsync(GraphPanel flowGraphPanel, IRTextSection section, IRDocument document);
 

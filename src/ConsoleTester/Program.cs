@@ -70,7 +70,7 @@ namespace CompilerStudio {
 
             Console.WriteLine("Loading file");
 
-            UTCSectionReader reader;
+            SectionReaderBase reader;
             IRTextSummary summary;
             int failed = 0;
 
@@ -97,7 +97,7 @@ namespace CompilerStudio {
                                      string text = null;
                                      string failureType = "crash";
 
-                                     var errorHandler = new UTCParsingErrorHandler();
+                                     var errorHandler = new ParsingErrorHandler();
                                      //errorHandler.ThrowOnError = true;
 
                                      try {
