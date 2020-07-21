@@ -91,6 +91,8 @@ namespace IRExplorerCore {
             return false;
         }
 
+        // Main function for reading the text source and producing a sumarry
+        // with all functions and their sections.
         public IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler) {
             var summary = GenerateSummaryImpl(progressHandler);
 

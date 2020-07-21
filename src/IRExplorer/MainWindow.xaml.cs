@@ -1651,22 +1651,16 @@ namespace IRExplorer {
             document.TextView.HighlightElement(e.Element, HighlighingType.Hovered);
         }
 
-        private async Task<ParsedSection> LoadAndParseSection(IRTextSection section) {
+        private ParsedSection LoadAndParseSection(IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
             var parsedSection = docInfo.Loader.LoadSection(section);
 
             if (parsedSection.Function != null) {
-                AnalyzeLoadedFunction(parsedSection.Function);
+                compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function);
+                addressTag_ = parsedSection.Function.GetTag<AddressMetadataTag>();
             }
 
             return parsedSection;
-        }
-
-        private void AnalyzeLoadedFunction(FunctionIR function) {
-            var loopGraph = new LoopGraph(function);
-            loopGraph.FindLoops();
-
-            addressTag_ = function.GetTag<AddressMetadataTag>();
         }
 
         private async Task<LayoutGraph> ComputeFlowGraph(FunctionIR function, IRTextSection section,
@@ -2751,8 +2745,8 @@ namespace IRExplorer {
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
-            var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_.IR);
-            var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_.IR);
+            var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
+            var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
             var leftMarkTask = leftDiffUpdater.MarkDiffs(leftText, diff.OldText, diff.NewText, leftDocument,
                                                          false, leftDiffStats);
@@ -3620,7 +3614,7 @@ namespace IRExplorer {
 
             var diffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
-            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_.IR);
+            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
             var diffResult = await diffUpdater.MarkDiffs(prevText, diff.NewText, diff.OldText, doc.TextView, true, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();

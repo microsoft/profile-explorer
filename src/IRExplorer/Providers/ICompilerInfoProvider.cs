@@ -14,6 +14,7 @@ namespace IRExplorer {
         ISectionStyleProvider SectionStyleProvider { get; }
         IRRemarkProvider RemarkProvider { get; }
 
+        bool AnalyzeLoadedFunction(FunctionIR function);
         IRFoldingStrategy CreateFoldingStrategy(FunctionIR function);
         IDiffOutputFilter CreateDiffOutputFilter();
     }

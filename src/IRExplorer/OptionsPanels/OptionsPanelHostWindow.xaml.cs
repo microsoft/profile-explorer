@@ -3,6 +3,9 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 
+//? TODO: Popup is on top of any other window, even message boxes and file open dialogs
+//? https://chriscavanagh.wordpress.com/2008/08/13/non-topmost-wpf-popup/
+
 namespace IRExplorer.OptionsPanels {
     public partial class OptionsPanelHostWindow : Popup, IOptionsPanel {
         private bool closed_;
@@ -21,6 +24,7 @@ namespace IRExplorer.OptionsPanels {
             optionsPanel_.PanelClosed += SettingsPanel_PanelClosed;
             optionsPanel_.PanelReset += SettingsPanel_PanelReset;
             optionsPanel_.SettingsChanged += SettingsPanel_SettingsChanged;
+            optionsPanel_.StayOpenChanged += OptionsPanel_StayOpenChanged;
             PanelHost.Content = panel;
         }
 
@@ -59,6 +63,10 @@ namespace IRExplorer.OptionsPanels {
             PanelClosed?.Invoke(this, e);
         }
 
+        private void OptionsPanel_StayOpenChanged(object sender, bool staysOpen) {
+            StaysOpen = staysOpen;
+        }
+
         public object Settings {
             get => optionsPanel_.Settings;
             set => optionsPanel_.Settings = value;
@@ -67,6 +75,7 @@ namespace IRExplorer.OptionsPanels {
         public event EventHandler PanelClosed;
         public event EventHandler PanelReset;
         public event EventHandler SettingsChanged;
+        public event EventHandler<bool> StayOpenChanged;
 
         public void PanelClosing() { }
         public void PanelResetting() { }
@@ -74,14 +83,14 @@ namespace IRExplorer.OptionsPanels {
 
         private void ResetButton_Click(object sender, RoutedEventArgs e) {
             //? TODO: Message box shows under panel!
-            //StaysOpen = true; // Prevent popup from closing while showing message box.
+            StaysOpen = true; // Prevent popup from closing while showing message box.
 
-            //if (MessageBox.Show("Do you want to reset all settings?", "IR Explorer",
-            //    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {
-            //    return;
-            //}
+            if (MessageBox.Show("Do you want to reset all settings?", "IR Explorer",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {
+                return;
+            }
 
-            //StaysOpen = false;
+            StaysOpen = false;
             optionsPanel_.PanelResetting();
             PanelReset?.Invoke(this, e);
             optionsPanel_.PanelResetted();
