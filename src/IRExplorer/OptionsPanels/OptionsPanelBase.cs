@@ -6,6 +6,7 @@ namespace IRExplorer.OptionsPanels {
         event EventHandler PanelClosed;
         event EventHandler PanelReset;
         event EventHandler SettingsChanged;
+        event EventHandler<bool> StayOpenChanged;
 
         void Initialize();
         void PanelClosing();
@@ -20,6 +21,7 @@ namespace IRExplorer.OptionsPanels {
         public event EventHandler PanelClosed;
         public event EventHandler PanelReset;
         public event EventHandler SettingsChanged;
+        public event EventHandler<bool> StayOpenChanged;
 
         public virtual void Initialize() {
             initialized_ = true;
@@ -35,6 +37,10 @@ namespace IRExplorer.OptionsPanels {
 
         public void RaiseSettingsChanged(EventArgs e) {
             SettingsChanged?.Invoke(this, e);
+        }
+
+        public void RaiseStayOpenChanged(bool staysOpen) {
+            StayOpenChanged?.Invoke(this, staysOpen);
         }
 
         public virtual void PanelClosing() { }

@@ -50,6 +50,88 @@ namespace IRExplorer {
         public bool HasAnnotations => DocumentState.HasAnnotations;
     }
 
+    class RemarksButtonState : INotifyPropertyChanged {
+        private RemarkSettings remarkSettings_;
+        private RemarkSettings previousSettings_;
+
+        public RemarksButtonState(RemarkSettings settings) {
+            remarkSettings_ = settings;
+        }
+
+        public RemarkSettings Settings {
+            get {
+                return remarkSettings_;
+            }
+            set {
+                remarkSettings_ = value;
+                NotifyPropertyChanged(nameof(ShowRemarks));
+                NotifyPropertyChanged(nameof(ShowPreviousSections));
+                NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
+            }
+        }
+
+        public bool ShowRemarks {
+            get {
+                return remarkSettings_.ShowRemarks;
+            }
+            set {
+                if (value != remarkSettings_.ShowRemarks) {
+                    remarkSettings_.ShowRemarks = value;
+                    NotifyPropertyChanged(nameof(ShowRemarks));
+                }
+            }
+        }
+
+        public bool ShowPreviousSections {
+            get {
+                return remarkSettings_.ShowPreviousSections;
+            }
+            set {
+                if (value != remarkSettings_.ShowPreviousSections) {
+                    remarkSettings_.ShowPreviousSections = value;
+                    NotifyPropertyChanged(nameof(ShowPreviousSections));
+                }
+            }
+        }
+
+        public bool ShowOnlyOptimizationRemarks {
+            get {
+                return remarkSettings_.Optimization &&
+                        !remarkSettings_.Analysis &&
+                        !remarkSettings_.Default &&
+                        !remarkSettings_.Verbose &&
+                        !remarkSettings_.Trace;
+            }
+            set {
+                if(value) {
+                    previousSettings_ = (RemarkSettings)remarkSettings_.Clone();
+                    remarkSettings_.Optimization = true;
+                    remarkSettings_.Analysis = false;
+                    remarkSettings_.Default = false;
+                    remarkSettings_.Verbose = false;
+                    remarkSettings_.Trace = false;
+                    NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
+                }
+                else {
+                    if(previousSettings_ != null) {
+                        remarkSettings_.Optimization = previousSettings_.Optimization;
+                        remarkSettings_.Analysis = previousSettings_.Analysis;
+                        remarkSettings_.Default = previousSettings_.Default;
+                        remarkSettings_.Verbose = previousSettings_.Verbose;
+                        remarkSettings_.Trace = previousSettings_.Trace;
+                        NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
+                    }
+                }
+            }
+        }
+
+        public void NotifyPropertyChanged(string propertyName) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+    }
+
     public partial class IRDocumentHost : UserControl {
         private const double ActionPanelInitialOpacity = 0.5;
         private const int ActionPanelHeight = 20;
@@ -77,6 +159,7 @@ namespace IRExplorer {
         private ISessionManager session_;
         private DocumentSettings settings_;
         private List<Remark> remarkList_;
+        private RemarksButtonState remarksButtonState_;
 
         public IRDocumentHost(ISessionManager session) {
             InitializeComponent();
@@ -102,9 +185,18 @@ namespace IRExplorer {
 
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
+            
             remarkSettings_ = App.Settings.RemarkSettings;
+            remarksButtonState_ = new RemarksButtonState(remarkSettings_);
+            remarksButtonState_.PropertyChanged += RemarksButtonState__PropertyChanged;
+            DocumentToolbar.DataContext = remarksButtonState_;
         }
 
+        private async void RemarksButtonState__PropertyChanged(object sender, PropertyChangedEventArgs e) {
+            if(!remarkPanelVisible_) {
+                await HandleNewRemarkSettings(remarksButtonState_.Settings, true);
+            }
+        }
 
         public ISessionManager Session {
             get => session_;
@@ -997,7 +1089,6 @@ namespace IRExplorer {
             }
 
             remarkOptionsPanelWindow_.IsOpen = false;
-            ;
             remarkOptionsPanelWindow_.PanelClosed -= RemarkOptionsPanel_PanelClosed;
             remarkOptionsPanelWindow_.PanelReset -= RemarkOptionsPanel_PanelReset;
             remarkOptionsPanelWindow_.SettingsChanged -= RemarkOptionsPanel_SettingsChanged;
@@ -1026,6 +1117,7 @@ namespace IRExplorer {
                                      newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth);
             App.Settings.RemarkSettings = newSettings;
             remarkSettings_ = newSettings;
+            remarksButtonState_.Settings = newSettings;
 
             if (rebuildRemarkList) {
                 await ReloadRemarks();

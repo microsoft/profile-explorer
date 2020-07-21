@@ -29,6 +29,12 @@ namespace IRExplorer.OptionsPanels {
         }
 
         private void DiffOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
+            if (ExternalAppPathButton.IsMouseDirectlyOver ||
+                ExternalAppPathTextbox.IsKeyboardFocusWithin ||
+                ExternalAppArgsTextbox.IsKeyboardFocusWithin) {
+                return;
+            }
+
             NotifySettingsChanged();
         }
 
@@ -39,6 +45,9 @@ namespace IRExplorer.OptionsPanels {
         }
 
         private void ExternalAppPathButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+            // Don't let the panel close when the file dialog is displayed.
+            RaiseStayOpenChanged(true);
+
             var fileDialog = new OpenFileDialog {
                 DefaultExt = "*.exe",
                 Filter = "Executables|*.exe"
@@ -49,6 +58,8 @@ namespace IRExplorer.OptionsPanels {
             if (result.HasValue && result.Value) {
                 ExternalAppPathTextbox.Text = fileDialog.FileName;
             }
+
+            RaiseStayOpenChanged(false);
         }
     }
 }
