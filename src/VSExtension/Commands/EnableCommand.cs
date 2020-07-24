@@ -89,7 +89,7 @@ namespace IRExplorerExtension {
         /// <param name="sender">Event sender.</param>
         /// <param name="e">Event args.</param>
         /// 
-        private async void Execute(object sender, EventArgs e) {
+        private void Execute(object sender, EventArgs e) {
             ClientInstance.ToggleEnabled();
         }
     }

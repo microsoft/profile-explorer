@@ -80,7 +80,7 @@ namespace IRExplorerExtension {
         private async void Execute(object sender, EventArgs e) {
             string variable = await GetCaretDebugExpression();
 
-            if (variable != null && SetupDebugSession()) {
+            if (variable != null && await SetupDebugSession()) {
                 long elementAddress = DebuggerInstance.ReadElementAddress(variable);
                 Logger.Log($"Mark references for {elementAddress:x}: {variable}");
 

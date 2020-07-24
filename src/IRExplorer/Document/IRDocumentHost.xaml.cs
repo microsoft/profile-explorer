@@ -440,9 +440,9 @@ namespace IRExplorer {
             HideRemarkPanel();
         }
 
-        private void RemarkPanel__RemarkContextChanged(object sender, RemarkContext e) {
+        private async void RemarkPanel__RemarkContextChanged(object sender, RemarkContext e) {
             activeRemarkContext_ = e;
-            UpdateDocumentRemarks(remarkList_);
+            await UpdateDocumentRemarks(remarkList_);
         }
 
         private void InitializeRemarkPanel(IRElement element) {
