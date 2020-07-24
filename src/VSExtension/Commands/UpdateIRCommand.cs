@@ -78,7 +78,7 @@ namespace IRExplorerExtension {
         /// <param name="e">Event args.</param>
         /// 
         private async void Execute(object sender, EventArgs e) {
-            if (SetupDebugSession()) {
+            if (await SetupDebugSession()) {
                 Logger.Log("Manual update function IR");
                 ClientInstance.UpdateIR();
             }

@@ -121,7 +121,7 @@ namespace IRExplorerExtension {
                     Logger.Log("Debugger already attached, setting up IR Explorer session...");
 
                     if (DebuggerInstance.IsDebuggingUTC &&
-                        ClientInstance.SetupDebugSession()) {
+                        await ClientInstance.SetupDebugSession()) {
                         ClientInstance.UpdateIR();
                     }
 

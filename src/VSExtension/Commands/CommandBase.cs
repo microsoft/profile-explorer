@@ -19,16 +19,14 @@ namespace IRExplorerExtension {
 
         private async Task Initialize() {
             if (!initialized_) {
-                dte_ =
-                    await package_.GetServiceAsync(typeof(DTE)).ConfigureAwait(false) as DTE2;
-
+                dte_ = await package_.GetServiceAsync(typeof(DTE)).ConfigureAwait(false) as DTE2;
                 initialized_ = true;
             }
         }
 
-        public bool SetupDebugSession() {
-            Initialize().Wait();
-            return ClientInstance.SetupDebugSession();
+        public async Task<bool> SetupDebugSession() {
+            await Initialize();
+            return await ClientInstance.SetupDebugSession();
         }
 
         public async Task<string> GetCaretDebugExpression() {

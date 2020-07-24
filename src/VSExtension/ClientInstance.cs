@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Grpc.Core;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Task = System.Threading.Tasks.Task;
 
 namespace IRExplorerExtension {
     internal static class ClientInstance {
@@ -112,7 +113,7 @@ namespace IRExplorerExtension {
             }
         }
 
-        public static void Shutdown(bool forced = false) {
+        public static async Task Shutdown(bool forced = false) {
             Logger.Log($"Shutdown force = {forced}");
 
             try {
@@ -123,7 +124,7 @@ namespace IRExplorerExtension {
             }
 
             try {
-                serverChannel_?.ShutdownAsync().Wait();
+                await serverChannel_?.ShutdownAsync();
             }
             catch (Exception ex) {
                 //Logger.LogException(ex, "ClientInstance exception");
@@ -142,7 +143,7 @@ namespace IRExplorerExtension {
             int retryCount = 0;
 
             while (retry && retryCount < 2) {
-                if (!SetupDebugSession()) {
+                if (!await SetupDebugSession()) {
                     return false;
                 }
 
@@ -159,7 +160,7 @@ namespace IRExplorerExtension {
                         case StatusCode.Unavailable:
                         case StatusCode.DeadlineExceeded:
                         case StatusCode.Aborted: {
-                            Shutdown();
+                            await Shutdown();
                             retry = true;
                             retryCount++;
                             break;
@@ -172,7 +173,7 @@ namespace IRExplorerExtension {
                 }
             }
 
-            Shutdown(true);
+            await Shutdown(true);
             return false;
         }
 
@@ -224,7 +225,7 @@ namespace IRExplorerExtension {
             return File.Exists(DefaultIRExplorerPath) ? DefaultIRExplorerPath : null;
         }
 
-        private static bool StartIRExplorer() {
+        private static async Task<bool> StartIRExplorerAsync() {
             if (IsServerStarted()) {
                 return true;
             }
@@ -249,7 +250,8 @@ namespace IRExplorerExtension {
 
                 var psi = new ProcessStartInfo(irxPath, irxArgs);
                 var process = Process.Start(psi);
-                bool result = process != null && process.WaitForInputIdle(30000);
+                bool result = process != null && 
+                              await System.Threading.Tasks.Task.Run(() => process.WaitForInputIdle(30000));
 
                 if (result) {
                     Logger.Log("Started IR Explorer instance");
@@ -273,7 +275,7 @@ namespace IRExplorerExtension {
             }
         }
 
-        public static bool SetupDebugSession() {
+        public static async Task<bool> SetupDebugSession() {
             if (debugSesssionInitialized_) {
                 return true;
             }
@@ -287,7 +289,7 @@ namespace IRExplorerExtension {
                 //var function = stackFrame.FunctionName;
                 //var lineNumber = stackFrame.LineNumber;
                 //var file = stackFrame.FileName;
-                if (!StartIRExplorer()) {
+                if (!await StartIRExplorerAsync()) {
                     return false;
                 }
 
@@ -295,7 +297,7 @@ namespace IRExplorerExtension {
                     GetDebugClient(DebuggerInstance.ProcessName, DebuggerInstance.ProcessId);
 
                 if (client == null) {
-                    Shutdown(true);
+                    await Shutdown(true);
                     return false;
                 }
 

@@ -85,7 +85,7 @@ namespace IRExplorerExtension {
 
         public async Task<bool> Execute(string expression, bool temporary) {
             if (expression != null) {
-                if (!SetupDebugSession()) {
+                if (!await SetupDebugSession()) {
                     return false;
                 }
 

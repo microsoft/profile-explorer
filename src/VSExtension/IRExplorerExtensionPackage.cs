@@ -223,15 +223,15 @@ namespace IRExplorerExtension {
                 return;
             }
 
-            ClientInstance.Shutdown();
+            JoinableTaskFactory.Run(() => ClientInstance.Shutdown());
         }
 
-        private void DebuggerEvents_OnEnterDesignMode(dbgEventReason Reason) {
+        private async void DebuggerEvents_OnEnterDesignMode(dbgEventReason Reason) {
             if (!ClientInstance.IsConnected) {
                 return;
             }
 
-            ClientInstance.Shutdown();
+            await ClientInstance.Shutdown();
         }
 
         private void DebuggerEvents__OnEnterRunMode(dbgEventReason reason) {
