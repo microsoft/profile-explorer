@@ -194,9 +194,7 @@ namespace IRExplorer.UTC {
 
                             instr.TextLocation = location; // Set actual location in output text.
 
-                            var remark =
-                                new Remark(FindRemarkKind(line), section, line.Trim(), remarkLocation);
-
+                            var remark = new Remark(FindRemarkKind(line), section, line.Trim(), remarkLocation);
                             remark.ReferencedElements.Add(similarInstr);
                             remark.OutputElements.Add(instr);
                             remarks.Add(remark);

@@ -20,7 +20,7 @@ namespace IRExplorer {
             return "";
 
             var time = DateTime.Now;
-            string fileName = $"CompilerStudio-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.dmp";
+            string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.dmp";
 
             string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                                        fileName);
@@ -40,7 +40,7 @@ namespace IRExplorer {
 
         public static string CreateStackTraceDump(string stackTrace) {
             var time = DateTime.Now;
-            string fileName = $"CompilerStudio-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.trace";
+            string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.trace";
 
             string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                                        fileName);
@@ -51,7 +51,7 @@ namespace IRExplorer {
 
         public static string CreateSectionDump() {
             var time = DateTime.Now;
-            string fileName = $"CompilerStudio-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.ir";
+            string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.ir";
 
             string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                                        fileName);
@@ -128,7 +128,7 @@ namespace IRExplorer {
             string message = $"Unhandled exception:\n{exception}";
 
             if (showUIPrompt) {
-                MessageBox.Show(message, "Compiler Studio Crash", MessageBoxButton.OK, MessageBoxImage.Error,
+                MessageBox.Show(message, "IR Explorer Crash", MessageBoxButton.OK, MessageBoxImage.Error,
                                 MessageBoxResult.OK, MessageBoxOptions.None);
             }
 
@@ -156,7 +156,7 @@ namespace IRExplorer {
                 if (showUIPrompt) {
                     MessageBox.Show(
                         $"Crash information written to:\n{sectionPath}\n{stackTracePath}",
-                        "Compiler Studio Crash", MessageBoxButton.OK, MessageBoxImage.Information);
+                        "IR Explorer Crash", MessageBoxButton.OK, MessageBoxImage.Information);
 
                     OpenExplorerAtFile(stackTracePath);
 
@@ -165,7 +165,7 @@ namespace IRExplorer {
 
                     if (File.Exists(autosavePath)) {
                         MessageBox.Show($"Current session auto-saved to: {autosavePath}",
-                                        "Compiler Studio Crash", MessageBoxButton.OK,
+                                        "IR Explorer Crash", MessageBoxButton.OK,
                                         MessageBoxImage.Information);
 
                         OpenExplorerAtFile(autosavePath);

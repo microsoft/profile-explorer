@@ -14,6 +14,9 @@
         <CommandBinding Command="local:SearchResultsCommand.JumpToPrevious" Executed="JumpToPreviousExecuted" />
         <CommandBinding Command="local:SearchResultsCommand.JumpToNextSection" Executed="JumpToNextSectionExecuted" />
         <CommandBinding Command="local:SearchResultsCommand.JumpToPreviousSection" Executed="JumpToPreviousSectionExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.OpenInNewTab" Executed="OpenInNewTabExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.OpenLeft" Executed="OpenLeftExecuted" />
+        <CommandBinding Command="local:SearchResultsCommand.OpenRight" Executed="OpenRightExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <Grid>
@@ -173,13 +176,7 @@
             <ListView.ContextMenu>
                 <ContextMenu>
                     <MenuItem
-                        Command="local:Command.Open"
-                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                        CommandTarget="{Binding ElementName=ResultList}"
-                        Header="Open Section"
-                        InputGestureText="Return" />
-                    <MenuItem
-                        Command="local:Command.OpenInNewTab"
+                        Command="local:SearchResultsCommand.OpenInNewTab"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=ResultList}"
                         Header="Open Section in New Tab"
@@ -193,7 +190,7 @@
                     </MenuItem>
 
                     <MenuItem
-                        Command="local:Command.OpenLeft"
+                        Command="local:SearchResultsCommand.OpenLeft"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=ResultList}"
                         Header="Open Section in Left Tab"
@@ -206,7 +203,7 @@
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
-                        Command="local:Command.OpenRight"
+                        Command="local:SearchResultsCommand.OpenRight"
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=ResultList}"
                         Header="Open Section in Right Tab"
@@ -227,6 +224,12 @@
                     Command="local:SearchResultsCommand.JumpToSelected"
                     CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
                     CommandTarget="{Binding ElementName=ResultList}" />
+                <KeyBinding
+                    Key="Return"
+                    Command="local:SearchResultsCommand.OpenInNewTab"
+                    CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+                    CommandTarget="{Binding ElementName=ResultList}"
+                    Modifiers="Shift" />
             </ListView.InputBindings>
         </ListView>
     </Grid>
@@ -251,5 +254,16 @@
             Command="local:SearchResultsCommand.JumpToPreviousSection"
             CommandTarget="{Binding ElementName=ResultList}"
             Modifiers="Ctrl+Shift" />
+
+        <KeyBinding
+            Key="Left"
+            Command="local:SearchResultsCommand.OpenLeft"
+            CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="Right"
+            Command="local:SearchResultsCommand.OpenRight"
+            CommandParameter="{Binding ElementName=ResultList, Path=SelectedItem}"
+            Modifiers="Ctrl" />
     </local:ToolPanelControl.InputBindings>
 </local:ToolPanelControl>

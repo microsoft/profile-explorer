@@ -295,6 +295,11 @@ namespace IRExplorer {
         private static bool CreateSyntaxFilesDirectory(string compilerIRName) {
             try {
                 var syntaxFilesDir = GetCompilerSettingsDirectoryPath(compilerIRName);
+
+                if(Directory.Exists(syntaxFilesDir)) {
+                    return true;
+                }
+
                 CreateDirectories(syntaxFilesDir);
                 var files = GetSyntaxHighlightingFiles(compilerIRName, true);
 

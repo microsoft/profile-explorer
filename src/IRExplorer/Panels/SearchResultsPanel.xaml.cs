@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
@@ -24,18 +25,22 @@ namespace IRExplorer {
             new RoutedUICommand("Untitled", "JumpToPreviousSection", typeof(SearchResultsPanel));
         public static readonly RoutedUICommand JumpToSelected =
             new RoutedUICommand("Untitled", "JumpToSelected", typeof(SearchResultsPanel));
+        public static readonly RoutedUICommand OpenInNewTab =
+            new RoutedUICommand("Open section in new tab", "OpenInNewTab", typeof(SearchResultsPanel));
+        public static readonly RoutedUICommand OpenLeft =
+            new RoutedUICommand("Open section in new tab", "OpenLeft", typeof(SearchResultsPanel));
+        public static readonly RoutedUICommand OpenRight =
+            new RoutedUICommand("Open section in new tab", "OpenRight", typeof(SearchResultsPanel));
     }
 
     public class SearchResultInfo {
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
-
+        
         private bool isMarked_;
-
         private TextBlock preview_;
+        private Brush textColor_;
 
         public TextSearchResult Result;
-
-        private Brush textColor_;
 
         public SearchResultInfo(int index, TextSearchResult result, IRTextSection section, string sectionText,
                                 ICompilerInfoProvider compilerInfo) {
@@ -145,6 +150,8 @@ namespace IRExplorer {
         private List<SearchResultInfo> searchResults_;
         private Dictionary<IRTextSection, SectionSearchResult> searchResultsMap_;
 
+        public event EventHandler<OpenSectionEventArgs> OpenSection;
+
         public SearchResultsPanel() {
             InitializeComponent();
         }
@@ -236,6 +243,33 @@ namespace IRExplorer {
                         break;
                     }
                 }
+            }
+        }
+
+        private async void OpenInNewTabExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var result = e.Parameter as SearchResultInfo;
+
+            if (result != null) {
+                OpenSection?.Invoke(this, new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTab));
+                await JumpToSearchResult(result);
+            }
+        }
+
+        private async void OpenLeftExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var result = e.Parameter as SearchResultInfo;
+
+            if (result != null) {
+                OpenSection?.Invoke(this, new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockLeft));
+                await JumpToSearchResult(result);
+            }
+        }
+
+        private async void OpenRightExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var result = e.Parameter as SearchResultInfo;
+
+            if (result != null) {
+                OpenSection?.Invoke(this, new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockRight));
+                await JumpToSearchResult(result);
             }
         }
 
