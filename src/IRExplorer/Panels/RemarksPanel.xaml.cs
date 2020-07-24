@@ -39,7 +39,7 @@ namespace IRExplorer {
             Utils.PatchToolbarStyle(sender as ToolBar);
         }
 
-        private async void TextSearch_TextChanged(object sender, TextChangedEventArgs e) { }
+        private void TextSearch_TextChanged(object sender, TextChangedEventArgs e) { }
 
         private void ExecuteClearTextSearch(object sender, ExecutedRoutedEventArgs e) {
             ((TextBox)e.Parameter).Text = string.Empty;
