@@ -228,7 +228,7 @@ namespace IRExplorer {
 
         public async Task SwitchText(string text, FunctionIR function, IRTextSection section) {
             if (!syntaxHighlightingLoaded_) {
-                SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath(null));
+                SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
                 syntaxHighlightingLoaded_ = true;
             }
 

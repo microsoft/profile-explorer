@@ -13,12 +13,6 @@ namespace IRExplorerCore.Analysis {
         Crossing
     }
 
-    public struct CFGEdge {
-        private BlockIR FromBlock;
-        private BlockIR ToBlock;
-        private CFGEdgeKind Kind;
-    }
-
     public class CFGBlockOrdering {
         private FunctionIR function_;
         private List<BlockIR> postorderList_;

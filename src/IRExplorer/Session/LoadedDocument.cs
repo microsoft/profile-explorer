@@ -47,7 +47,7 @@ namespace IRExplorer {
                 try {
                     return Path.GetFileName(FilePath);
                 }
-                catch (Exception ex) {
+                catch (Exception) {
                     return "";
                 }
             }

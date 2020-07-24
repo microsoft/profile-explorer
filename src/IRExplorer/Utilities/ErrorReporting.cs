@@ -18,24 +18,25 @@ namespace IRExplorer {
 
         public static string CreateMiniDump() {
             return "";
+#if false
+            var time = DateTime.Now;
+            string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.dmp";
 
-            //var time = DateTime.Now;
-            //string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.dmp";
+            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                                       fileName);
 
-            //string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-            //                           fileName);
+            using var stream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.Write);
 
-            //using var stream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.Write);
+            Minidump.WriteDump(stream.SafeFileHandle,
+                               Minidump.Option.WithFullAuxiliaryState |
+                               Minidump.Option.WithFullMemory |
+                               Minidump.Option.WithFullMemoryInfo |
+                               Minidump.Option.WithHandleData |
+                               Minidump.Option.WithThreadInfo |
+                               Minidump.Option.WithProcessThreadData);
 
-            //Minidump.WriteDump(stream.SafeFileHandle,
-            //                   Minidump.Option.WithFullAuxiliaryState |
-            //                   Minidump.Option.WithFullMemory |
-            //                   Minidump.Option.WithFullMemoryInfo |
-            //                   Minidump.Option.WithHandleData |
-            //                   Minidump.Option.WithThreadInfo |
-            //                   Minidump.Option.WithProcessThreadData);
-
-            //return path;
+            return path;
+#endif
         }
 
         public static string CreateStackTraceDump(string stackTrace) {

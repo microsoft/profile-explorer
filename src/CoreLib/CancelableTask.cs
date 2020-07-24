@@ -27,10 +27,8 @@ namespace IRExplorerCore {
     }
 
     public class CancelableTaskInfo : IDisposable {
-        private bool canceled = false;
         private CancellationToken cancelToken_;
 
-        private bool competed = false;
         private bool disposed_;
         public ManualResetEvent TaskCompletedEvent;
         private CancellationTokenSource tokenSource_;
