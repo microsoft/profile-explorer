@@ -96,12 +96,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Xceed.Wpf.AvalonDock.Themes.VS2013">
-      <HintPath>..\Xceed.Wpf.AvalonDock.Themes.VS2013.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <Resource Include="refresh.png" />
   </ItemGroup>
 
