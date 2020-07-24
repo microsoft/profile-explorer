@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -55,7 +56,7 @@ namespace IRExplorer {
         private RemarkSettings previousSettings_;
 
         public RemarksButtonState(RemarkSettings settings) {
-            remarkSettings_ = settings;
+            remarkSettings_ = (RemarkSettings)settings.Clone();
         }
 
         public RemarkSettings Settings {
@@ -63,10 +64,13 @@ namespace IRExplorer {
                 return remarkSettings_;
             }
             set {
-                remarkSettings_ = value;
-                NotifyPropertyChanged(nameof(ShowRemarks));
-                NotifyPropertyChanged(nameof(ShowPreviousSections));
-                NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
+                if (!value.Equals(remarkSettings_)) {
+                    NotifyPropertyChanged(nameof(ShowRemarks));
+                    NotifyPropertyChanged(nameof(ShowPreviousSections));
+                    NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
+                }
+
+                remarkSettings_ = (RemarkSettings)value.Clone();
             }
         }
 
@@ -84,7 +88,7 @@ namespace IRExplorer {
 
         public bool ShowPreviousSections {
             get {
-                return remarkSettings_.ShowPreviousSections;
+                return ShowRemarks && remarkSettings_.ShowPreviousSections;
             }
             set {
                 if (value != remarkSettings_.ShowPreviousSections) {
@@ -96,7 +100,8 @@ namespace IRExplorer {
 
         public bool ShowOnlyOptimizationRemarks {
             get {
-                return remarkSettings_.Optimization &&
+                return ShowRemarks &&
+                        remarkSettings_.Optimization &&
                         !remarkSettings_.Analysis &&
                         !remarkSettings_.Default &&
                         !remarkSettings_.Verbose &&
@@ -188,13 +193,13 @@ namespace IRExplorer {
             
             remarkSettings_ = App.Settings.RemarkSettings;
             remarksButtonState_ = new RemarksButtonState(remarkSettings_);
-            remarksButtonState_.PropertyChanged += RemarksButtonState__PropertyChanged;
+            remarksButtonState_.PropertyChanged += RemarksButtonState_PropertyChanged;
             DocumentToolbar.DataContext = remarksButtonState_;
         }
 
-        private async void RemarksButtonState__PropertyChanged(object sender, PropertyChangedEventArgs e) {
+        private async void RemarksButtonState_PropertyChanged(object sender, PropertyChangedEventArgs e) {
             if(!remarkPanelVisible_) {
-                await HandleNewRemarkSettings(remarksButtonState_.Settings, true);
+                await HandleNewRemarkSettings(remarksButtonState_.Settings, false);
             }
         }
 
@@ -660,8 +665,8 @@ namespace IRExplorer {
 
         private async Task ReloadRemarks() {
             await RemoveRemarks();
-            var remarks = await FindRemarks();
-            await AddRemarks(remarks);
+            remarkList_ = await FindRemarks();
+            await AddRemarks(remarkList_);
         }
 
         private Task<List<Remark>> FindRemarks() {
@@ -827,14 +832,12 @@ namespace IRExplorer {
                 SaveSectionState(Section);
             }
 
-            await ReloadRemarks();
             TextView.EnterDiffMode();
         }
 
         public async Task ExitDiffMode() {
             TextView.ExitDiffMode();
             HideOptionalPanels();
-            await ReloadRemarks();
         }
 
         private void HideOptionalPanels() {
@@ -1111,18 +1114,25 @@ namespace IRExplorer {
                 return;
             }
 
+            await ApplyRemarkSettings(newSettings);
+        }
+
+        private async Task ApplyRemarkSettings(RemarkSettings newSettings) {
             // If only the remark filters changed, don't recompute the list of remarks.
-            bool rebuildRemarkList = newSettings.ShowPreviousSections &&
+            bool rebuildRemarkList = remarkList_ == null ||
+                                    (newSettings.ShowPreviousSections &&
                                     (newSettings.StopAtSectionBoundaries != remarkSettings_.StopAtSectionBoundaries ||
-                                     newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth);
+                                     newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth));
             App.Settings.RemarkSettings = newSettings;
             remarkSettings_ = newSettings;
             remarksButtonState_.Settings = newSettings;
 
             if (rebuildRemarkList) {
+                Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Find and load remarks");
                 await ReloadRemarks();
             }
             else {
+                Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load remarks");
                 await UpdateDocumentRemarks(remarkList_);
             }
         }
@@ -1183,6 +1193,11 @@ namespace IRExplorer {
             }
 
             e.Handled = true;
+        }
+
+        public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
+            await TextView.LoadDiffedFunction(diffResult, newSection);
+            await ReloadRemarks();
         }
     }
 }

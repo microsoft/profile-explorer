@@ -12,9 +12,9 @@ namespace IRExplorerCore {
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
         public static readonly long MAX_PRELOADED_FILE_SIZE = 500 * 1024 * 1024;
-        private static readonly int MAX_LINE_LENGTH = 200;
-        private StreamReader dataReader_;
+        private static readonly int MAX_LINE_LENGTH = 1000;
 
+        private StreamReader dataReader_;
         private Stream dataStream_;
         private long dataStreamSize_;
         private bool expectSectionHeaders_;
@@ -91,7 +91,7 @@ namespace IRExplorerCore {
             return false;
         }
 
-        // Main function for reading the text source and producing a sumarry
+        // Main function for reading the text source and producing a summary
         // with all functions and their sections.
         public IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler) {
             var summary = GenerateSummaryImpl(progressHandler);

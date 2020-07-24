@@ -1031,7 +1031,7 @@ namespace IRExplorer {
 
         public bool SelectFunction(IRTextFunction function) {
             if (function == currentFunction_) {
-                return false;
+                return true;
             }
 
             FunctionList.SelectedItem = function;

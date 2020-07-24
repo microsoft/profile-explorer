@@ -449,11 +449,11 @@
                         <MenuItem
                             Command="local:AppCommand.ReloadDocument"
                             Header="_Reload File"
-                            InputGestureText="F5" />
+                            InputGestureText="F6" />
                         <MenuItem
                             Command="local:AppCommand.AutoReloadDocument"
                             Header="Auto-Reload File on Change"
-                            InputGestureText="Ctrl+F5"
+                            InputGestureText="Ctrl+F6"
                             IsCheckable="True"
                             IsChecked="True" />
                         <Separator />
@@ -529,7 +529,6 @@
                         <Separator />
 
                         <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
-                        <MenuItem Click="MenuItem_Click_6" Header="Settings" />
                         <MenuItem Header="Compiler IR">
                             <MenuItem
                                 Name="UTCMenuItem"
@@ -540,6 +539,7 @@
                                 Click="LLVMMenuItem_Click"
                                 Header="LLVM" />
                         </MenuItem>
+                        <MenuItem Click="MenuItem_Click_6" Header="Settings" />
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Click="MenuItem_Click_4" Header="Documentation" />
@@ -981,12 +981,12 @@
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable
-                                    x:Name="SearchPanelHost"
+                                    x:Name="SearchResultsPanelHost"
                                     Title="Search Results"
                                     ContentId="SearchResults"
                                     IsActiveChanged="LayoutAnchorable_IsActiveChanged"
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <local:SearchResultsPanel x:Name="SearchPanel" />
+                                    <local:SearchResultsPanel x:Name="SearchResultsPanel" />
                                 </avalonDock:LayoutAnchorable>
 
 

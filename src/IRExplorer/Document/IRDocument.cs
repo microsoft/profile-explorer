@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -1726,19 +1727,25 @@ namespace IRExplorer {
                     // First look for an SSA definition and its uses,
                     // if not found  highlight every load of the same symbol.
                     var useList = FindSSAUses(op);
+                    bool handled = false;
 
                     if (useList.Count == 0) {
                         useList = new ReferenceFinder(function_).FindAllLoads(op);
                     }
 
                     if (useList != null && useList.Count > 0) {
-                        HighlightSSAUsers(op, useList, highlighter, ssaUserStyle_,
-                                          action);
+                        HighlightSSAUsers(op, useList, highlighter, ssaUserStyle_, action);
+                        handled = true;
+                    }
 
-                        return true;
+                    // If the operand is an indirection, also try to mark 
+                    // the definition of the base address value below.
+                    if(!op.IsIndirection) {
+                        return handled;
                     }
                 }
-                else if (settings_.HighlightSourceDefinition) {
+                
+                if (settings_.HighlightSourceDefinition) {
                     if (op.IsLabelAddress) {
                         return HighlightBlockLabel(op, highlighter, ssaUserStyle_, action);
                     }
@@ -2154,13 +2161,21 @@ namespace IRExplorer {
             automationPrevElement_ = null;
         }
 
-        public async Task LoadDiffedFunction(FunctionIR newFunction, IRTextSection newSection) {
-            function_ = newFunction;
+        public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
+            // Take ownership of the text document
+            diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
+            Document = diffResult.DiffDocument;
+            function_ = diffResult.DiffFunction;
             section_ = newSection;
 
             // Block folding is tied to the document, which may have been replaced.
+            UninstallBlockFolding();
             SetupBlockFolding();
+            TextArea.IsEnabled = true;
             await LateLoadSectionSetup(null);
+
+            AddDiffTextSegments(diffResult.DiffSegments);
+            SetupBlockFolding();
         }
 
         private void Margin__BookmarkChanged(object sender, Bookmark bookmark) {
@@ -2906,6 +2921,7 @@ namespace IRExplorer {
         public void StartDiffSegmentAdding() {
             diffHighlighter_.Clear();
             ClearAllMarkers();
+            TextArea.IsEnabled = false;
 
             // Disable the caret event because it triggers redrawing of
             // the right marker bar, which besides being slow, causes a

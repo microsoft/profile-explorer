@@ -338,6 +338,11 @@ namespace IRExplorer {
             return Task.Run(() => docInfo.Loader.GetSectionText(section));
         }
 
+        public Task<string> GetRawSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
+            var docInfo = sessionState_.FindLoadedDocument(section);
+            return Task.Run(() => docInfo.Loader.GetSectionText(section));
+        }
+
         public Task<string> GetDocumentTextAsync(IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
             return Task.Run(() => docInfo.Loader.GetDocumentText());
@@ -419,10 +424,15 @@ namespace IRExplorer {
 
         private async void MainWindow_Activated(object sender, EventArgs e) {
             appIsActivated_ = true;
+            var handledDocuments = new List<string>();
 
             foreach (string changedDoc in changedDocuments_) {
-                if (ShowDocumentReloadQuery(changedDoc)) {
-                    await ReloadDocument(changedDoc);
+                if (!handledDocuments.Contains(changedDoc)) {
+                    if (ShowDocumentReloadQuery(changedDoc)) {
+                        await ReloadDocument(changedDoc);
+                    }
+
+                    handledDocuments.Add(changedDoc);
                 }
             }
 
@@ -954,6 +964,8 @@ namespace IRExplorer {
         private async void Window_Loaded(object sender, RoutedEventArgs e) {
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
+            SearchResultsPanel.OpenSection += SectionPanel_OpenSection;
+
             RegisterDefaultToolPanels();
             ResetStatusBar();
 
@@ -984,6 +996,10 @@ namespace IRExplorer {
 
             if (sessionState_ == null) {
                 Utils.DisableControl(DockManager, 0.75);
+            }
+            else {
+                // Hide the start page if a file was loaded on start.
+                HideStartPage();
             }
 
             StartApplicationUpdateTimer();
@@ -1077,7 +1093,7 @@ namespace IRExplorer {
             RegisterPanel(ReferencesPanel, ReferencesPanelHost);
             RegisterPanel(NotesPanel, NotesPanelHost);
             RegisterPanel(PassOutputPanel, PassOutputHost);
-            RegisterPanel(SearchPanel, SearchPanelHost);
+            RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
             RegisterPanel(ScriptingPanel, ScriptingPanelHost);
             RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
             RenameAllPanels();
@@ -1388,6 +1404,7 @@ namespace IRExplorer {
                 await GenerateGraphs(args.Section, document.TextView);
             }
             else {
+                // Used in diff mode to have the UI update faster.
                 GenerateGraphs(args.Section, document.TextView, false);
             }
 
@@ -2660,9 +2677,9 @@ namespace IRExplorer {
                 var rightArgs =
                     new OpenSectionEventArgs(rightDocument.Section, OpenSectionKind.ReplaceCurrent);
 
-                await SwitchDocumentSection(leftArgs, leftDocument);
+                await SwitchDocumentSection(leftArgs, leftDocument, false);
                 leftDocument.ExitDiffMode();
-                await SwitchDocumentSection(rightArgs, rightDocument);
+                await SwitchDocumentSection(rightArgs, rightDocument, false);
                 rightDocument.ExitDiffMode();
             }
 
@@ -2794,30 +2811,14 @@ namespace IRExplorer {
 
         private async Task UpdateDiffedFunction(IRDocument document, DiffMarkingResult diffResult,
                                                 IRTextSection newSection) {
-            UpdateDiffDocument(document, diffResult);
             var documentHost = FindDocumentHost(document);
             NotifyPanelsOfSectionUnload(document.Section, documentHost, true);
 
-            if (diffResult.DiffFunction == null) {
-                throw new InvalidOperationException();
-            }
-
-            document.LoadDiffedFunction(diffResult.DiffFunction, newSection);
-            await GenerateGraphs(newSection, document, false);
+            // Load new text and function after diffing.
+            await documentHost.LoadDiffedFunction(diffResult, newSection);
             NotifyPanelsOfSectionLoad(document.Section, documentHost, true);
-            MarkDiffsComplete(document, diffResult);
-        }
 
-        private void UpdateDiffDocument(IRDocument textEditor, DiffMarkingResult diffResult) {
-            diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
-            textEditor.UninstallBlockFolding();
-            textEditor.Document = diffResult.DiffDocument;
-            textEditor.TextArea.IsEnabled = true;
-        }
-
-        private void MarkDiffsComplete(IRDocument textEditor, DiffMarkingResult diffResult) {
-            textEditor.AddDiffTextSegments(diffResult.DiffSegments);
-            textEditor.SetupBlockFolding();
+            await GenerateGraphs(newSection, document, false);
         }
 
         private async void DiffModeButton_Unchecked(object sender, RoutedEventArgs e) {
@@ -3786,13 +3787,13 @@ namespace IRExplorer {
             var appPath = App.Settings.DiffSettings.ExternalDiffAppPath;
 
             if(!string.IsNullOrEmpty(appPath) && File.Exists(appPath)) {
-                var leftText = await GetSectionTextAsync(sessionState_.DiffState.LeftSection);
-                var rightText = await GetSectionTextAsync(sessionState_.DiffState.RightSection);
+                var leftText = await GetRawSectionTextAsync(sessionState_.DiffState.LeftSection);
+                var rightText = await GetRawSectionTextAsync(sessionState_.DiffState.RightSection);
 
                 try {
                     var fileName = Path.GetTempFileName();
-                    var leftFile = $"{fileName}{sessionState_.DiffState.LeftSection.Name.Replace(' ', '_')}.txt";
-                    var rightFile = $"{fileName}{sessionState_.DiffState.RightSection.Name.Replace(' ', '_')}.txt";
+                    var leftFile = $"{fileName}_1_{sessionState_.DiffState.LeftSection.Name.Replace(' ', '_')}.txt";
+                    var rightFile = $"{fileName}_2_{sessionState_.DiffState.RightSection.Name.Replace(' ', '_')}.txt";
 
                     await File.WriteAllTextAsync(leftFile, leftText);
                     await File.WriteAllTextAsync(rightFile, rightText);
