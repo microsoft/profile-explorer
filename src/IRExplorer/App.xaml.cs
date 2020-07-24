@@ -324,15 +324,19 @@ namespace IRExplorer {
             return files.Find(item => item.Name == name);
         }
 
-        public static string GetSyntaxHighlightingFilePath(SyntaxFileInfo syntaxFile) {
-            if (syntaxFile != null && File.Exists(syntaxFile.Path)) {
-                return syntaxFile.Path;
-            }
-
+        public static string GetSyntaxHighlightingFilePath() {
             // By default use the syntax file from the document settings.
             var result = GetSyntaxHighlightingFileInfo(Settings.DocumentSettings.SyntaxHighlightingName,
                                                            Session.CompilerInfo.CompilerIRName);
             return result?.Path;
+
+        }
+
+        public static string GetSyntaxHighlightingFilePath(SyntaxFileInfo syntaxFile) {
+            if (syntaxFile != null && File.Exists(syntaxFile.Path)) {
+                return syntaxFile.Path;
+            }
+            return GetSyntaxHighlightingFilePath();
         }
 
         public static string GetSyntaxHighlightingFilePath(string name, string compilerIRName) {
@@ -507,7 +511,7 @@ namespace IRExplorer {
                 psi.UseShellExecute = true;
                 Process.Start(psi);
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 MessageBox.Show($"Failed to open documentation page,\nmake sure the VPN connection is active", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

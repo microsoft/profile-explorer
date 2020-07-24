@@ -49,7 +49,6 @@ namespace IRExplorer {
         private Pen minorModificationPen_;
         private Brush modificationBrush_;
         private Pen modificationPen_;
-        private Brush placeholderBrush_;
         private Pen placeholderPen_;
         private DrawingBrush placeholderTileBrush_;
         private TextSegmentCollection<DiffTextSegment> segments_;
@@ -186,7 +185,7 @@ namespace IRExplorer {
                 case DiffKind.Insertion:
                     return insertionBrush_;
                 case DiffKind.Placeholder: {
-                    return fromDrawing ? placeholderTileBrush_ : placeholderBrush_;
+                    return fromDrawing ? placeholderTileBrush_ : null;
                 }
                 case DiffKind.Modification:
                     return modificationBrush_;

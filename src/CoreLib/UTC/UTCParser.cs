@@ -599,7 +599,7 @@ namespace IRExplorerCore.UTC {
                     try {
                         address = Convert.ToInt64(TokenStringData().ToString(), 16);
                     }
-                    catch (Exception ex) {
+                    catch (Exception) {
                         return false;
                     }
                 }

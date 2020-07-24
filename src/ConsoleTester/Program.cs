@@ -87,7 +87,6 @@ namespace CompilerStudio {
             }
 
             var sw = Stopwatch.StartNew();
-            int index = 0;
 
             Parallel.ForEach(summary.Functions,
                              new ParallelOptions { MaxDegreeOfParallelism = 1 },
@@ -139,8 +138,8 @@ namespace CompilerStudio {
                                              failureType = "null";
                                          }
                                      }
-                                     catch (Exception ex) {
-                                         Console.WriteLine($"=> Exception at {func.Name}:{section.Name}");
+                                     catch (Exception) {
+                                         Console.WriteLine($"=> Exception at {func.Name}:{section.Name}.");
                                          sectionFailed = true;
                                          failureType = "crash";
                                      }

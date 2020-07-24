@@ -18,7 +18,7 @@ namespace IRExplorer.OptionsPanels {
             try {
                 return new FontFamily((string)value);
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 return null;
             }
         }

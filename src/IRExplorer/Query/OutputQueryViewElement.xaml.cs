@@ -10,7 +10,7 @@ namespace IRExplorer.Query {
             try {
                 return (bool)value;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 return null;
             }
         }
@@ -25,7 +25,7 @@ namespace IRExplorer.Query {
             try {
                 return !(value is IRElement element) ? null : Utils.MakeElementDescription(element);
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 return null;
             }
         }

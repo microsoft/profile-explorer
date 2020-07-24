@@ -48,7 +48,7 @@ namespace IRExplorer {
                     Browser.Navigate(updateInfo_.ChangelogURL);
                 }
             }
-            catch (Exception ex) { }
+            catch (Exception) { }
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e) {

@@ -323,13 +323,10 @@ namespace IRExplorer {
         public event EventHandler<IRHighlightingEventArgs> ElementHighlighting;
         public event EventHandler<IRElementEventArgs> ElementSelected;
         public event EventHandler<IRElementEventArgs> ElementUnselected;
-        public event EventHandler<double> VerticalScrollChanged;
 
         public void BookmarkInfoChanged(Bookmark bookmark) {
             UpdateHighlighting();
         }
-
-        private SyntaxFileInfo syntaxFileOverride_;
 
         private void ReloadSettings() {
             Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
@@ -340,7 +337,7 @@ namespace IRExplorer {
             SetupStyles();
             SetupBlockFolding();
             SetupEvents();
-            SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath(syntaxFileOverride_));
+            SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
             UpdateHighlighting();
         }
 

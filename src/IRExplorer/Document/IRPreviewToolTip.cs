@@ -10,7 +10,6 @@ namespace IRExplorer {
     public class IRPreviewToolTip : ToolTip {
         private IRDocument document_;
         private IRElement element_;
-        private string headerText_;
 
         public IRPreviewToolTip(double width, double height, IRDocument document, IRElement element,
                                 string style = "IRPreviewTooltip") {
@@ -37,12 +36,7 @@ namespace IRExplorer {
             previewer.InitializeFromDocument(document_);
             previewer.PreviewedElement = element_;
 
-            if (!string.IsNullOrEmpty(headerText_)) {
-                previewer.HeaderText = headerText_;
-            }
-            else {
-                previewer.HeaderText = $"Block {Utils.MakeBlockDescription(element_.ParentBlock)}";
-            }
+            previewer.HeaderText = $"Block {Utils.MakeBlockDescription(element_.ParentBlock)}";
 
             Height = previewer.ResizeForLines(5);
             previewer.UpdateView();

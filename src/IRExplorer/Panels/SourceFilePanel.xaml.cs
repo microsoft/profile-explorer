@@ -78,7 +78,7 @@ namespace IRExplorer {
                 PathTextbox.Text = path;
                 fileLoaded_ = true;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 TextView.Text = "Failed to load source file!";
             }
         }

@@ -705,7 +705,7 @@ namespace IRExplorer {
                     File.Delete(filePath);
                 }
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 Trace.TraceError("Failed to delete autosave file");
             }
 
@@ -942,7 +942,7 @@ namespace IRExplorer {
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 Trace.TraceError("$Failed to load document {path}");
                 return null;
             }
@@ -955,7 +955,7 @@ namespace IRExplorer {
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
-            catch (Exception ex) {
+            catch (Exception) {
                 Trace.TraceError("$Failed to load in-memory document");
                 return null;
             }
