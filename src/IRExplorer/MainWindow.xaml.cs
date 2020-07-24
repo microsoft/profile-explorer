@@ -1537,7 +1537,7 @@ namespace IRExplorer {
             document.LoadSectionMinimal(result);
             NotifyPanelsOfSectionLoad(section, document, true);
             SetupDocumentEvents(document);
-            document.LoadSection(result);
+            await document.LoadSection(result);
 
             UpdateUIAfterSectionLoad(section, document, delayedAction);
             return result;
@@ -1588,7 +1588,7 @@ namespace IRExplorer {
             }
         }
 
-        private Func<FunctionIR, IRTextSection, CancelableTaskInfo, Task<LayoutGraph>> GetComputeGraphAction(
+        private Func<FunctionIR, IRTextSection, CancelableTaskInfo, LayoutGraph> GetComputeGraphAction(
             GraphKind graphKind) {
             return graphKind switch
             {
@@ -1599,7 +1599,7 @@ namespace IRExplorer {
             };
         }
 
-        private Func<FunctionIR, IRTextSection, CancelableTaskInfo, Task<LayoutGraph>> GetComputeGraphAction(
+        private Func<FunctionIR, IRTextSection, CancelableTaskInfo, LayoutGraph> GetComputeGraphAction(
             ToolPanelKind graphKind) {
             return graphKind switch
             {
@@ -1611,8 +1611,7 @@ namespace IRExplorer {
         }
 
         public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
-                                            Func<FunctionIR, IRTextSection, CancelableTaskInfo,
-                                                Task<LayoutGraph>> computeGraphAction) {
+                                            Func<FunctionIR, IRTextSection, CancelableTaskInfo, LayoutGraph> computeGraphAction) {
             //? TODO: When the section is changed quickly and there are long-running tasks,
             //? the CFG panel can get out of sync - the doc. tries to highlight a block
             //? for another CFG if the loading of the prev. CFG completes between loading the text
@@ -1680,19 +1679,19 @@ namespace IRExplorer {
             return parsedSection;
         }
 
-        private async Task<LayoutGraph> ComputeFlowGraph(FunctionIR function, IRTextSection section,
+        private LayoutGraph ComputeFlowGraph(FunctionIR function, IRTextSection section,
                                                          CancelableTaskInfo loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.FlowGraph);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
-        private async Task<LayoutGraph> ComputeDominatorTree(FunctionIR function, IRTextSection section,
+        private LayoutGraph ComputeDominatorTree(FunctionIR function, IRTextSection section,
                                                              CancelableTaskInfo loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.DominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
-        private async Task<LayoutGraph> ComputePostDominatorTree(FunctionIR function, IRTextSection section,
+        private LayoutGraph ComputePostDominatorTree(FunctionIR function, IRTextSection section,
                                                                  CancelableTaskInfo loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.PostDominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
@@ -1853,7 +1852,7 @@ namespace IRExplorer {
                 UpdateUIBeforeLoadDocument($"Loading {baseFilePath}, {diffFilePath}");
                 var baseTask = Task.Run(() => LoadDocument(baseFilePath, UpdateIRDocumentLoadProgress));
                 var diffTask = Task.Run(() => LoadDocument(diffFilePath, UpdateIRDocumentLoadProgress));
-                Task.WaitAll(baseTask, diffTask);
+                await Task.WhenAll(baseTask, diffTask);
 
                 if (baseTask.Result != null && diffTask.Result != null) {
                     SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
@@ -1962,7 +1961,7 @@ namespace IRExplorer {
             }
         }
 
-        private async void AutoReloadDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private void AutoReloadDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (sessionState_ != null) {
                 App.Settings.AutoReloadDocument = (e.OriginalSource as MenuItem).IsChecked;
                 sessionState_.ChangeDocumentWatcherState(App.Settings.AutoReloadDocument);
@@ -2678,9 +2677,9 @@ namespace IRExplorer {
                     new OpenSectionEventArgs(rightDocument.Section, OpenSectionKind.ReplaceCurrent);
 
                 await SwitchDocumentSection(leftArgs, leftDocument, false);
-                leftDocument.ExitDiffMode();
+                await leftDocument.ExitDiffMode();
                 await SwitchDocumentSection(rightArgs, rightDocument, false);
-                rightDocument.ExitDiffMode();
+                await rightDocument.ExitDiffMode();
             }
 
             if (disableControls) {
@@ -2780,8 +2779,8 @@ namespace IRExplorer {
             sessionState_.DiffState.RightDiffResults = rightDiffResult;
 
             // The UI-thread dependent work.
-            UpdateDiffedFunction(leftDocument, leftDiffResult, sessionState_.DiffState.LeftSection);
-            UpdateDiffedFunction(rightDocument, rightDiffResult, sessionState_.DiffState.RightSection);
+            await UpdateDiffedFunction(leftDocument, leftDiffResult, sessionState_.DiffState.LeftSection);
+            await UpdateDiffedFunction(rightDocument, rightDiffResult, sessionState_.DiffState.RightSection);
 
             // Scroll to the first diff.
             if (leftDiffResult.DiffSegments.Count > 0) {
@@ -2933,7 +2932,7 @@ namespace IRExplorer {
             return false;
         }
 
-        private async void InitializeFromLoadedSession(SessionState state) {
+        private void InitializeFromLoadedSession(SessionState state) {
             sessionState_.Info.Notes = state.Info.Notes;
             int index = 0;
 

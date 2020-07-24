@@ -237,7 +237,7 @@ namespace IRExplorer.OptionsPanels {
             return docStyles;
         }
 
-        private async void SyntaxEditButton_Click(object sender, RoutedEventArgs e) {
+        private void SyntaxEditButton_Click(object sender, RoutedEventArgs e) {
             if (!syntaxEditPanelVisible_) {
                 ShowSyntaxEditPanel(null);
             }

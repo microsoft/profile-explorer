@@ -944,8 +944,6 @@ namespace IRExplorer {
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-
-                return 0;
             }
         }
 
