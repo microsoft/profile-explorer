@@ -49,8 +49,8 @@ namespace IRExplorer.OptionsPanels {
             PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
         }
 
-        public override void Initialize() {
-            base.Initialize();
+        public override void Initialize(FrameworkElement parent) {
+            base.Initialize(parent);
             settings_ = (DocumentSettings)Settings;
             ReloadSyntaxHighlightingList();
         }
@@ -319,12 +319,12 @@ namespace IRExplorer.OptionsPanels {
 
         private void ResetSyntaxStyleButton_Click(object sender, RoutedEventArgs e) {
             // Try to restore the internal syntax file.
-            //? TODO: Message box shows under panel!
+            using var centerForm = new DialogCenteringHelper(Parent);
 
-            //if (MessageBox.Show("Do you want to reset syntax highlighting style?", "IR Explorer",
-            //    MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {
-            //    return;
-            //}
+            if (MessageBox.Show("Do you want to reset syntax highlighting style?", "IR Explorer",
+                MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {
+                return;
+            }
 
             var path = App.GetInternalSyntaxHighlightingFilePath(selectedSyntaxFile_.Name, App.Session.CompilerInfo.CompilerIRName);
 

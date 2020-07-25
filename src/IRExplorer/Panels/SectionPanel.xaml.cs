@@ -944,6 +944,8 @@ namespace IRExplorer {
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
+                return 0;
             }
         }
 
@@ -1161,8 +1163,9 @@ namespace IRExplorer {
                         var text = await Session.GetSectionTextAsync(section.Section);
                         await File.WriteAllTextAsync(path, text);
                     }
-                    catch(Exception ex) {
-                        MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer", 
+                    catch (Exception ex) {
+                        using var centerForm = new DialogCenteringHelper(this);
+                        MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
                                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
                     }
                 }
@@ -1186,6 +1189,7 @@ namespace IRExplorer {
                         await File.WriteAllTextAsync(path, text);
                     }
                     catch (Exception ex) {
+                        using var centerForm = new DialogCenteringHelper(this);
                         MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
                                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
                     }

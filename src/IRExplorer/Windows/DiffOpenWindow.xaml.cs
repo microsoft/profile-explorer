@@ -35,6 +35,7 @@ namespace IRExplorer {
 
         private bool ValidateFilePath(string path, AutoCompleteBox box, string fileType) {
             if (!File.Exists(path)) {
+                using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show($"Could not find {fileType} file {path}", "Compiler Studio",
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
 

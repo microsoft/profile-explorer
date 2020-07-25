@@ -525,6 +525,8 @@ namespace IRExplorer {
             }
 
             if (sessionState_.Info.IsFileSession) {
+                using var centerForm = new DialogCenteringHelper(this);
+
                 if (MessageBox.Show("Save session changes before closing?", "IR Explorer",
                                     MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No,
                                     MessageBoxOptions.DefaultDesktopOnly) ==
@@ -537,6 +539,8 @@ namespace IRExplorer {
                 NotifyDocumentsOfSessionSave();
 
                 if (SectionPanel.HasAnnotatedSections) {
+                    using var centerForm = new DialogCenteringHelper(this);
+
                     if (MessageBox.Show("Save file changes as a new session before closing?", "IR Explorer",
                                         MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No,
                                         MessageBoxOptions.DefaultDesktopOnly) ==
@@ -549,7 +553,10 @@ namespace IRExplorer {
 
         private void MainWindow_ContentRendered(object sender, EventArgs e) {
             SetupStartPagePanel();
-            ShowStartPage();
+
+            if (sessionState_ == null) {
+                ShowStartPage();
+            }
 
             //? TODO: DEV ONLY
             var now = DateTime.UtcNow;
@@ -640,6 +647,7 @@ namespace IRExplorer {
         }
 
         private bool ShowDocumentReloadQuery(string filePath) {
+            using var centerForm = new DialogCenteringHelper(this);
             return MessageBox.Show(
                        $"File {filePath} changed by an external application?\nDo you want to reload?",
                        "IR Explorer", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No,
@@ -659,6 +667,7 @@ namespace IRExplorer {
             bool loaded = await OpenIRDocument(filePath);
 
             if (!loaded) {
+                using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show($"Failed to reload file {filePath}", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Exclamation);
             }
@@ -1010,7 +1019,31 @@ namespace IRExplorer {
             StartPage.OpenRecentDiffDocuments += StartPage_OpenRecentDiffDocuments;
             StartPage.OpenFile += StartPage_OpenFile;
             StartPage.CompareFiles += StartPage_CompareFiles;
+            StartPage.ClearRecentDocuments += StartPage_ClearRecentDocuments;
+            StartPage.ClearRecentDiffDocuments += StartPage_ClearRecentDiffDocuments;
             UpdateStartPagePanelPosition();
+        }
+
+        private void StartPage_ClearRecentDiffDocuments(object sender, EventArgs e) {
+            using var centerForm = new DialogCenteringHelper(this);
+
+            if (MessageBox.Show("Clear the list of recent compared documents?", "IR Explorer",
+                                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes) {
+                App.Settings.ClearRecentComparedFiles();
+                App.SaveApplicationSettings();
+                StartPage.ReloadFileList();
+            }
+        }
+
+        private void StartPage_ClearRecentDocuments(object sender, EventArgs e) {
+            using var centerForm = new DialogCenteringHelper(this);
+
+            if (MessageBox.Show("Clear the list of recent documents?", "IR Explorer",
+                                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes) {
+                App.Settings.ClearRecentFiles();
+                App.SaveApplicationSettings();
+                StartPage.ReloadFileList();
+            }
         }
 
         private async void StartPage_CompareFiles(object sender, EventArgs e) {
@@ -1033,8 +1066,10 @@ namespace IRExplorer {
             var documentHost = Utils.FindChildLogical<LayoutDocumentPaneGroupControl>(this);
 
             if (documentHost != null) {
+                var height = Math.Max(StartPage.MinHeight, documentHost.ActualHeight * 0.9);
                 var left = (documentHost.ActualWidth / 2) - (StartPage.ActualWidth / 2);
-                var top = (documentHost.ActualHeight / 2) - (StartPage.ActualHeight / 2);
+                var top = (documentHost.ActualHeight / 2) - (height / 2);
+                StartPage.Height = height;
                 StartPage.Margin = new Thickness(left, top, 0, 0);
             }
         }
@@ -1778,6 +1813,7 @@ namespace IRExplorer {
             }
 
             if (!loaded) {
+                using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show($"Failed to load file {filePath}", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Exclamation);
             }
@@ -1802,6 +1838,7 @@ namespace IRExplorer {
                 bool loaded = await OpenDiffIRDocument(filePath);
 
                 if (!loaded) {
+                    using var centerForm = new DialogCenteringHelper(this);
                     MessageBox.Show($"Failed to load diff file {filePath}", "IR Explorer",
                                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
@@ -1826,6 +1863,7 @@ namespace IRExplorer {
             bool loaded = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
 
             if (!loaded) {
+                using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show("Failed to load base/diff files", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Exclamation);
             }
@@ -1917,6 +1955,7 @@ namespace IRExplorer {
 
             if (filePath != null) {
                 if (!Utils.StartNewApplicationInstance(filePath)) {
+                    using var centerForm = new DialogCenteringHelper(this);
                     MessageBox.Show("Failed to start new IR Explorer instance", "IR Explorer",
                                     MessageBoxButton.OK, MessageBoxImage.Error);
                 }
@@ -1936,7 +1975,8 @@ namespace IRExplorer {
             bool loaded = await SaveSessionDocument(filePath);
 
             if (!loaded) {
-                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer", 
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer",
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
@@ -1950,7 +1990,8 @@ namespace IRExplorer {
             bool loaded = await SaveSessionDocument(filePath);
 
             if (!loaded) {
-                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer", 
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show($"Failed to save session file {filePath}", "IR Explorer",
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
@@ -3337,6 +3378,7 @@ namespace IRExplorer {
                     }
                 }
                 catch (Exception ex) {
+                    using var centerForm = new DialogCenteringHelper(this);
                     MessageBox.Show($"Unexpected RPC failure: {ex.Message}\n {ex.StackTrace}");
                 }
 
@@ -3785,7 +3827,7 @@ namespace IRExplorer {
         private async void ExternalDiffButton_Click(object sender, RoutedEventArgs e) {
             var appPath = App.Settings.DiffSettings.ExternalDiffAppPath;
 
-            if(!string.IsNullOrEmpty(appPath) && File.Exists(appPath)) {
+            if (!string.IsNullOrEmpty(appPath) && File.Exists(appPath)) {
                 var leftText = await GetRawSectionTextAsync(sessionState_.DiffState.LeftSection);
                 var rightText = await GetRawSectionTextAsync(sessionState_.DiffState.RightSection);
 
@@ -3808,7 +3850,8 @@ namespace IRExplorer {
 
                     Process.Start(psi);
                 }
-                catch(Exception ex) {
+                catch (Exception ex) {
+                    using var centerForm = new DialogCenteringHelper(this);
                     MessageBox.Show($"Failed to start external diff application: {ex.Message}", "IR Explorer",
                                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
