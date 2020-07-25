@@ -5,9 +5,9 @@ VisualStudioVersion = 16.0.29318.188
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTester", "ConsoleTester\ConsoleTester.csproj", "{8FA8BEAA-F47C-4B1B-B95F-E0A0DBE3AA79}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCore", "CoreLib\IRExplorerCore.csproj", "{74EA0CBC-6A4A-455F-B978-D8F4E361E19A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCore", "IRExplorerCore\IRExplorerCore.csproj", "{74EA0CBC-6A4A-455F-B978-D8F4E361E19A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCoreTests", "CoreLibUnitTests\IRExplorerCoreTests.csproj", "{CB6DD82B-FF3A-4BA9-BEDE-7B73B84204FF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCoreTests", "IRExplorerCoreUnitTests\IRExplorerCoreTests.csproj", "{CB6DD82B-FF3A-4BA9-BEDE-7B73B84204FF}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorer", "IRExplorer\IRExplorer.csproj", "{23169CA2-2157-4978-A8AF-CF360540F467}"
 EndProject
@@ -18,8 +18,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IRExplorerExtension", "VSExtension\IRExplorerExtension.csproj", "{DF5E31FD-A162-4053-B7C6-50C196CF60E3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GrpcCppLib", "GrpcCppLib\GrpcCppLib.vcxproj", "{5AE1030C-3AF8-48A6-8028-7A2B3E60ECAF}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FeatureLib", "FeatureLib\FeatureLib.csproj", "{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{5D1BAD1A-BD7D-4D05-8B87-1D5C84E704E6}"
 	ProjectSection(SolutionItems) = preProject
@@ -180,24 +178,6 @@ Global
 		{5AE1030C-3AF8-48A6-8028-7A2B3E60ECAF}.ReleaseStaticLib|x64.Build.0 = ReleaseStaticLib|x64
 		{5AE1030C-3AF8-48A6-8028-7A2B3E60ECAF}.ReleaseStaticLib|x86.ActiveCfg = ReleaseStaticLib|Win32
 		{5AE1030C-3AF8-48A6-8028-7A2B3E60ECAF}.ReleaseStaticLib|x86.Build.0 = ReleaseStaticLib|Win32
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Debug|x64.Build.0 = Debug|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Debug|x86.Build.0 = Debug|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Release|x64.ActiveCfg = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Release|x64.Build.0 = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Release|x86.ActiveCfg = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.Release|x86.Build.0 = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.ReleaseStaticLib|Any CPU.ActiveCfg = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.ReleaseStaticLib|Any CPU.Build.0 = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.ReleaseStaticLib|x64.ActiveCfg = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.ReleaseStaticLib|x64.Build.0 = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.ReleaseStaticLib|x86.ActiveCfg = Release|Any CPU
-		{DB93C3EC-5696-44F1-8DD8-DB3878F8E2C5}.ReleaseStaticLib|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
