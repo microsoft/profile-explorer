@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CoreLib\IRExplorerCore.csproj" />
+    <ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
   </ItemGroup>
 
 </Project>
