@@ -1,4 +1,7 @@
-﻿using DiffPlex.DiffBuilder.Model;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.UTC;

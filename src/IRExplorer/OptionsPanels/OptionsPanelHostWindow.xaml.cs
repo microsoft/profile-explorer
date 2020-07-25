@@ -1,10 +1,10 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-
-//? TODO: Popup is on top of any other window, even message boxes and file open dialogs
-//? https://chriscavanagh.wordpress.com/2008/08/13/non-topmost-wpf-popup/
 
 namespace IRExplorer.OptionsPanels {
     public partial class OptionsPanelHostWindow : Popup, IOptionsPanel {
@@ -30,7 +30,7 @@ namespace IRExplorer.OptionsPanels {
 
         protected override void OnOpened(EventArgs e) {
             base.OnOpened(e);
-            optionsPanel_.Initialize();
+            optionsPanel_.Initialize(this);
         }
 
         protected override void OnClosed(EventArgs e) {
@@ -46,7 +46,7 @@ namespace IRExplorer.OptionsPanels {
             }
         }
 
-        public void Initialize() {
+        public void Initialize(FrameworkElement parent) {
 
         }
 
@@ -82,8 +82,8 @@ namespace IRExplorer.OptionsPanels {
         public void PanelResetted() { }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e) {
-            //? TODO: Message box shows under panel!
             StaysOpen = true; // Prevent popup from closing while showing message box.
+            using var centerForm = new DialogCenteringHelper(this);
 
             if (MessageBox.Show("Do you want to reset all settings?", "IR Explorer",
                 MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {

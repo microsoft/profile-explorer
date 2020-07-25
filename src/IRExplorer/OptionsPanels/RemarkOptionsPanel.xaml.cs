@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -43,7 +46,8 @@ namespace IRExplorer.OptionsPanels {
             NotifySettingsChanged();
         }
 
-        public override void Initialize() {
+        public override void Initialize(FrameworkElement parent) {
+            base.Initialize(parent);
             PopulateCategoryList();
         }
 
@@ -55,6 +59,7 @@ namespace IRExplorer.OptionsPanels {
             var categories = App.Session.CompilerInfo.RemarkProvider.LoadRemarkCategories();
 
             if (categories == null) {
+                using var centerForm = new DialogCenteringHelper(Parent);
                 MessageBox.Show("Failed to load remark settings file,\ncheck JSON for any syntax errors!", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }

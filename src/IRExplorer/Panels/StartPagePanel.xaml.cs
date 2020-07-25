@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -17,6 +20,8 @@ namespace IRExplorer.Panels {
         public event EventHandler<Tuple<string, string>> OpenRecentDiffDocuments;
         public event EventHandler OpenFile;
         public event EventHandler CompareFiles;
+        public event EventHandler ClearRecentDocuments;
+        public event EventHandler ClearRecentDiffDocuments;
 
         public void ReloadFileList() {
             RecentFilesListBox.ItemsSource = new ListCollectionView(App.Settings.RecentFiles);
@@ -76,6 +81,14 @@ namespace IRExplorer.Panels {
 
         private void OpenBaseDiffFilesButton_Click(object sender, RoutedEventArgs e) {
             CompareFiles?.Invoke(this, null);
+        }
+
+        private void ClearButton_Click(object sender, RoutedEventArgs e) {
+            ClearRecentDocuments?.Invoke(this, null);
+        }
+
+        private void ClearDiffButton_Click(object sender, RoutedEventArgs e) {
+            ClearRecentDiffDocuments?.Invoke(this, null);
         }
     }
 }

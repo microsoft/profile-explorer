@@ -1,4 +1,8 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Windows;
 using System.Windows.Controls;
 
 namespace IRExplorer.OptionsPanels {
@@ -8,7 +12,7 @@ namespace IRExplorer.OptionsPanels {
         event EventHandler SettingsChanged;
         event EventHandler<bool> StayOpenChanged;
 
-        void Initialize();
+        void Initialize(FrameworkElement parent);
         void PanelClosing();
         void PanelResetting();
         void PanelResetted();
@@ -18,12 +22,14 @@ namespace IRExplorer.OptionsPanels {
     public class OptionsPanelBase : UserControl, IOptionsPanel {
         private bool initialized_;
 
+        public FrameworkElement Parent { get; set; }
         public event EventHandler PanelClosed;
         public event EventHandler PanelReset;
         public event EventHandler SettingsChanged;
         public event EventHandler<bool> StayOpenChanged;
 
-        public virtual void Initialize() {
+        public virtual void Initialize(FrameworkElement parent) {
+            Parent = parent;
             initialized_ = true;
         }
 

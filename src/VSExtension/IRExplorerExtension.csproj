@@ -88,6 +88,7 @@
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
+    <None Include="VSExtension.licenseheader" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
