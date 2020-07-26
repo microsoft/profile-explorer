@@ -71,7 +71,7 @@ namespace IRExplorer {
         private AddressMetadataTag addressTag_;
         private bool appIsActivated_;
         private DispatcherTimer autoSaveTimer_;
-        private HashSet<string> changedDocuments_;
+        private Dictionary<string, DateTime> changedDocuments_;
         private ICompilerInfoProvider compilerInfo_;
 
         private Dictionary<ElementIteratorId, IRElement> debugCurrentIteratorElement_;
@@ -97,6 +97,7 @@ namespace IRExplorer {
         private DispatcherTimer updateTimer_;
         private List<RemarkPreviewPanel> detachedRemarkPanels_;
         private Point previousWindowPosition_;
+        private DateTime lastDocumentLoadTime_;
 
         public MainWindow() {
             App.WindowShowTime = DateTime.UtcNow;
@@ -105,7 +106,7 @@ namespace IRExplorer {
             App.Session = this;
             panelHostSet_ = new Dictionary<ToolPanelKind, List<PanelHostInfo>>();
             compilerInfo_ = new UTCCompilerInfoProvider();
-            changedDocuments_ = new HashSet<string>();
+            changedDocuments_ = new Dictionary<string, DateTime>();
             detachedRemarkPanels_ = new List<RemarkPreviewPanel>();
 
             SetupMainWindow();
@@ -424,15 +425,14 @@ namespace IRExplorer {
 
         private async void MainWindow_Activated(object sender, EventArgs e) {
             appIsActivated_ = true;
-            var handledDocuments = new List<string>();
 
-            foreach (string changedDoc in changedDocuments_) {
-                if (!handledDocuments.Contains(changedDoc)) {
-                    if (ShowDocumentReloadQuery(changedDoc)) {
-                        await ReloadDocument(changedDoc);
-                    }
+            foreach (var pair in changedDocuments_) {
+                if(pair.Value < lastDocumentLoadTime_) {
+                    continue; // Event happened before the last document reload, ignore.
+                }
 
-                    handledDocuments.Add(changedDoc);
+                if (ShowDocumentReloadQuery(pair.Key)) {
+                    await ReloadDocument(pair.Key);
                 }
             }
 
@@ -631,10 +631,15 @@ namespace IRExplorer {
 
         private async void DocumentState_DocumentChangedEvent(object sender, EventArgs e) {
             var loadedDoc = (LoadedDocument)sender;
+            var eventTime = DateTime.UtcNow;
 
             if (appIsActivated_) {
                 // The event doesn't run on the main thread, redirect.
                 await Dispatcher.BeginInvoke(async () => {
+                    if (eventTime < lastDocumentLoadTime_) {
+                        return; // Event happened before the last document reload, ignore.
+                    }
+
                     if (ShowDocumentReloadQuery(loadedDoc.FilePath)) {
                         await ReloadDocument(loadedDoc.FilePath);
                     }
@@ -642,7 +647,7 @@ namespace IRExplorer {
             }
             else {
                 // Queue for later, when the application gets focus back.
-                changedDocuments_.Add(loadedDoc.FilePath);
+                changedDocuments_[loadedDoc.FilePath] = eventTime;
             }
         }
 
@@ -902,6 +907,7 @@ namespace IRExplorer {
             Mouse.OverrideCursor = Cursors.Wait;
             documentLoadStartTime_ = DateTime.UtcNow;
             loadingDocuments_ = true;
+            lastDocumentLoadTime_ = DateTime.UtcNow;
         }
 
         private void UpdateUIAfterLoadDocument() {
