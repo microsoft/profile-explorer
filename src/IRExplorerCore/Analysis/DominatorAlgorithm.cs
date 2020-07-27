@@ -109,13 +109,22 @@ namespace IRExplorerCore.Analysis {
             }
 
             // Fall back to a search through the immdom array.
-            int immDom = immDoms_[GetBlockId(dominatedBlock)];
+            int blockId = GetBlockId(dominatedBlock);
+
+            if (blockId == -1) {
+                return false; // Unreachable block.
+            }
+
+            int immDom = immDoms_[blockId];
 
             while (immDom != -1) {
                 var immDomBlock = postorderNumberBlockMap_[immDom];
 
                 if (immDomBlock == block) {
                     return true;
+                }
+                else if (immDomBlock == treeStartBlock_) {
+                    return false;
                 }
 
                 immDom = immDoms_[immDom];
