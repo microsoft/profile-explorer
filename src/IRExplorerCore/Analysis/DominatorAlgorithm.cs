@@ -30,9 +30,9 @@ namespace IRExplorerCore.Analysis {
         private Dictionary<BlockIR, int> blockIdMap_;
         private CFGBlockOrdering blockOrdering_;
         private HashSet<Tuple<BlockIR, BlockIR>> dominanceCache_;
-        private FunctionIR function_;
+        private readonly FunctionIR function_;
         private List<int> immDoms_;
-        private DominatorAlgorithmOptions options_;
+        private readonly DominatorAlgorithmOptions options_;
         private List<BlockIR> postorderList_;
         private Dictionary<int, BlockIR> postorderNumberBlockMap_;
         private BlockIR treeStartBlock_;
@@ -74,10 +74,10 @@ namespace IRExplorerCore.Analysis {
             }
 
             if (usePostDominators) {
-                ComputePostDominators();
+                Compute(block => block.Successors);
             }
             else {
-                ComputeDominators();
+                Compute(block => block.Predecessors);
             }
 
             if (options.HasFlag(DominatorAlgorithmOptions.BuildDominatorTree)) {
@@ -133,14 +133,14 @@ namespace IRExplorerCore.Analysis {
             return false;
         }
 
-        private void ComputeDominators() {
+        private void Compute(Func<BlockIR, List<BlockIR>> NextBlocks) {
             bool changed = true;
 
             while (changed) {
                 changed = false;
 
                 // Iterate over the block list. Note that we don't start with the last node
-                // because we want to skip over the start (entry) block.
+                // because we want to skip over the entry or exit block.
                 for (int i = postorderList_.Count - 2; i >= 0; i--) {
                     // We need to choose the first predecessor that was processed.
                     // Then we intersect its dominator set with the sets of all
@@ -148,36 +148,12 @@ namespace IRExplorerCore.Analysis {
                     int newIdomId = -1;
                     var block = postorderList_[i];
 
-                    foreach (var predBlock in block.Predecessors) {
-                        UpdateImmediateDominator(predBlock, ref newIdomId);
+                    foreach (var nextBlock in NextBlocks(block)) {
+                        UpdateImmediateDominator(nextBlock, ref newIdomId);
                     }
 
                     // If the new immediate dominator is not the same as the last one
                     // save it and mark that a change has been made.
-                    if (immDoms_[i] != newIdomId) {
-                        immDoms_[i] = newIdomId;
-                        changed = true;
-                    }
-                }
-            }
-        }
-
-        private void ComputePostDominators() {
-            // Similar to the dominators algorithm, but with blocks
-            // being iterated bottom-up and intersecting successor blocks instead.
-            bool changed = true;
-
-            while (changed) {
-                changed = false;
-
-                for (int i = postorderList_.Count - 2; i >= 0; i--) {
-                    int newIdomId = -1;
-                    var block = postorderList_[i];
-
-                    foreach (var successorBlock in block.Successors) {
-                        UpdateImmediateDominator(successorBlock, ref newIdomId);
-                    }
-
                     if (immDoms_[i] != newIdomId) {
                         immDoms_[i] = newIdomId;
                         changed = true;
@@ -249,7 +225,6 @@ namespace IRExplorerCore.Analysis {
             if (block == null) {
                 return -1; // Invalid CFG.
             }
-
             if (blockIdMap_.TryGetValue(block, out int id)) {
                 return id;
             }
