@@ -225,11 +225,11 @@ namespace IRExplorer {
         }
 
         public Task MarkSelectedNodeDominanceFrontierAsync(HighlightingStyle style) {
-            return MarkNodeDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style));
+            return MarkNodeDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetDominanceFrontierAsync());
         }
 
         public Task MarkSelectedNodePostDominanceFrontierAsync(HighlightingStyle style) {
-            return MarkNodePostDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style));
+            return MarkNodeDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetPostDominanceFrontierAsync());
         }
 
         public void MarkSelectedNodeLoop(HighlightingStyle style) {
@@ -309,28 +309,14 @@ namespace IRExplorer {
             }
         }
 
-        public async Task MarkNodeDominanceFrontierAsync(GraphNode node, HighlightingStyle style) {
+        private async Task MarkNodeDominanceFrontierAsync(GraphNode node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominanceFrontier>> getDominanceFrontier) {
             if (node == null) {
                 return;
             }
 
             var block = (BlockIR)node.NodeInfo.Element;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
-            var dominanceFrontierAlgorithm = await cache.GetDominanceFrontierAsync().ConfigureAwait(true);
-
-            foreach (var frontierBlock in dominanceFrontierAlgorithm.FrontierOf(block)) {
-                MarkNode(GetBlockNode(frontierBlock), style);
-            }
-        }
-
-        public async Task MarkNodePostDominanceFrontierAsync(GraphNode node, HighlightingStyle style) {
-            if (node == null) {
-                return;
-            }
-
-            var block = (BlockIR)node.NodeInfo.Element;
-            var cache = FunctionAnalysisCache.Get(block.ParentFunction);
-            var dominanceFrontierAlgorithm = await cache.GetPostDominanceFrontierAsync().ConfigureAwait(true);
+            var dominanceFrontierAlgorithm = await getDominanceFrontier(cache).ConfigureAwait(true);
 
             foreach (var frontierBlock in dominanceFrontierAlgorithm.FrontierOf(block)) {
                 MarkNode(GetBlockNode(frontierBlock), style);
