@@ -228,6 +228,10 @@ namespace IRExplorer {
             return MarkNodeDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style));
         }
 
+        public Task MarkSelectedNodePostDominanceFrontierAsync(HighlightingStyle style) {
+            return MarkNodePostDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style));
+        }
+
         public void MarkSelectedNodeLoop(HighlightingStyle style) {
             MarkNodeLoop(GetSelectedNode(), GetNodeStyle(style));
         }
@@ -313,6 +317,20 @@ namespace IRExplorer {
             var block = (BlockIR)node.NodeInfo.Element;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominanceFrontierAlgorithm = await cache.GetDominanceFrontierAsync().ConfigureAwait(true);
+
+            foreach (var frontierBlock in dominanceFrontierAlgorithm.FrontierOf(block)) {
+                MarkNode(GetBlockNode(frontierBlock), style);
+            }
+        }
+
+        public async Task MarkNodePostDominanceFrontierAsync(GraphNode node, HighlightingStyle style) {
+            if (node == null) {
+                return;
+            }
+
+            var block = (BlockIR)node.NodeInfo.Element;
+            var cache = FunctionAnalysisCache.Get(block.ParentFunction);
+            var dominanceFrontierAlgorithm = await cache.GetPostDominanceFrontierAsync().ConfigureAwait(true);
 
             foreach (var frontierBlock in dominanceFrontierAlgorithm.FrontierOf(block)) {
                 MarkNode(GetBlockNode(frontierBlock), style);
