@@ -28,13 +28,6 @@ namespace IRExplorer {
         Marked
     }
 
-    public sealed class IRSegmentGroup {
-        public TextSegmentCollection<IRSegment> Segments { get; set; }
-        public void Add(IRElement element) {
-            Segments.Add(new IRSegment(element));
-        }
-    }
-
     public sealed class HighlightedSegmentGroup {
         public HighlightedSegmentGroup(HighlightedGroup group, bool saveToFile = true) {
             Group = group;
