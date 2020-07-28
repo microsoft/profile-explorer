@@ -505,7 +505,6 @@ namespace IRExplorerCore.UTC {
             while (!IsEOF()) {
                 if (IsKeyword(Keyword.Exit)) {
                     SkipToLineStart();
-                    ExpectAndSkipKeyword(Keyword.Block);
                     break; // End of function reached.
                 }
 
@@ -1147,6 +1146,10 @@ namespace IRExplorerCore.UTC {
                         return null;
                     }
 
+                    // A type can also follow a PAS.
+                    TryParseType();
+
+                    //? TODO: PAS info could be saved here as a tag.
                     operand = new OperandIR(nextElementId_, OperandKind.Other,
                                             TypeIR.GetUnknown(), parent);
                 }
@@ -1222,20 +1225,51 @@ namespace IRExplorerCore.UTC {
                 SkipOperandFlags();
             }
 
-            var type = TryParseType();
-            var operand = new OperandIR(nextElementId_, OperandKind.Indirection, type, parent);
+            var operand = new OperandIR(nextElementId_, OperandKind.Indirection, TypeIR.GetUnknown(), parent);
             operand.Value = baseOp;
             SetTextRange(operand, startToken);
 
-            if (TokenIs(TokenKind.OpenParen)) {
-                SkipAfterToken(TokenKind.CloseParen); // Ignore optional lexical hash var.
-            }
+            // Parse type and other attributes.
+            // This is a subset of the cases handled in ParseVariableOperand.
+            bool foundType = false;
 
-            if (TokenIs(TokenKind.Less)) {
-                SkipAfterToken(TokenKind.Greater); // Ignore optional SSA def. number.
+            while (!IsLineEnd() && !IsEqual() && !IsHash()) {
+                SkipToType();
+
+                if (IsDot()) { // .type
+                    foundType = ParseTypeOrAlignment(startToken, operand, foundType);
+                }
+                else if (IsLess()) { // <*SSA>
+                    SkipAfterToken(TokenKind.Greater); // Ignore optional SSA def. number.
+                }
+                else if (TokenIs(TokenKind.OpenParen)) {
+                    SkipAfterToken(TokenKind.CloseParen); // Ignore lexical hash var.
+                }
+                else {
+                    break;
+                }
             }
 
             return operand;
+        }
+
+        private bool ParseTypeOrAlignment(Token startToken, OperandIR operand, bool foundType) {
+            SkipToken(); // Skip over .
+
+            if (!foundType) {
+                operand.Type = ParseType();
+                SetTextRange(operand, startToken);
+                return true;
+            }
+            else {
+                // Alignment appears as aN, such as a64.
+                if (IsAlignmentInfo()) {
+                    SkipToken();
+                    SetTextRange(operand, startToken);
+                }
+            }
+
+            return false;
         }
 
         private OperandIR ParseNumber(TupleIR parent) {
@@ -1419,7 +1453,7 @@ namespace IRExplorerCore.UTC {
             // Skip to the optional type, or to the end of the operand.
             bool foundType = false;
 
-            while (!IsLineEnd() && !IsHash()) {
+            while (!IsLineEnd() && !IsEqual() && !IsHash()) {
                 if (isIndirBaseOp && TokenIs(TokenKind.CloseSquare)) {
                     break; // Found end of [indir].
                 }
@@ -1427,19 +1461,7 @@ namespace IRExplorerCore.UTC {
                 SkipToType();
 
                 if (IsDot()) { // .type
-                    SkipToken();
-
-                    if (!foundType) {
-                        operand.Type = ParseType();
-                        SetTextRange(operand, startToken);
-                        foundType = true;
-                    }
-                    else {
-                        // Alignment appears as aN, like a64.
-                        if (IsAlignmentInfo()) {
-                            SkipToken();
-                        }
-                    }
+                    foundType = ParseTypeOrAlignment(startToken, operand, foundType);
                 }
                 else if (IsLess()) { // <*SSA>
                     var ssaDefTag = ParseSSADefNumber(parent);
