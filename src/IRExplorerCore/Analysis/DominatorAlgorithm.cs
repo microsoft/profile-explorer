@@ -36,14 +36,21 @@ namespace IRExplorerCore.Analysis {
         private List<BlockIR> postorderList_;
         private Dictionary<int, BlockIR> postorderNumberBlockMap_;
         private BlockIR treeStartBlock_;
+        private readonly Func<BlockIR, List<BlockIR>> nextBlocks_;
         private DominatorTreeNode treeRootNode_;
 
         public DominatorAlgorithm(FunctionIR function, DominatorAlgorithmOptions options) {
             function_ = function;
             options_ = options;
             bool usePostDominators = options.HasFlag(DominatorAlgorithmOptions.PostDominators);
-            treeStartBlock_ = usePostDominators ? function.ExitBlock : function.EntryBlock;
-            int blockCount = function.Blocks.Count;
+            if (usePostDominators) {
+                nextBlocks_ = block => block.Successors;
+                treeStartBlock_ = function.ExitBlock;
+            }
+            else {
+                nextBlocks_ = block => block.Predecessors;
+                treeStartBlock_ = function.EntryBlock;
+            }
 
             // Build a list of the blocks  in postorder.
             blockOrdering_ = new CFGBlockOrdering(function);
@@ -55,6 +62,7 @@ namespace IRExplorerCore.Analysis {
             }
 
             // Build map of block to its ID in the immDom array.
+            int blockCount = function.Blocks.Count;
             blockIdMap_ = new Dictionary<BlockIR, int>(blockCount);
 
             for (int i = 0; i < postorderList_.Count; i++) {
@@ -73,12 +81,7 @@ namespace IRExplorerCore.Analysis {
                 return; // CFG is invalid.
             }
 
-            if (usePostDominators) {
-                Compute(block => block.Successors);
-            }
-            else {
-                Compute(block => block.Predecessors);
-            }
+            Compute();
 
             if (options.HasFlag(DominatorAlgorithmOptions.BuildDominatorTree)) {
                 BuildTree(treeStartBlock_);
@@ -133,7 +136,11 @@ namespace IRExplorerCore.Analysis {
             return false;
         }
 
-        private void Compute(Func<BlockIR, List<BlockIR>> NextBlocks) {
+        public List<BlockIR> NextBlocks(BlockIR block) {
+            return nextBlocks_(block);
+        }
+
+        private void Compute() {
             bool changed = true;
 
             while (changed) {
