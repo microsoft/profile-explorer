@@ -222,6 +222,13 @@
                 </MenuItem.Header>
             </MenuItem>
         </MenuItem>
+        <MenuItem Header="Mark Post-Dominators" ToolTip="Mark all the blocks that post-dominate it">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkPostDominators" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
         <Separator />
 
         <MenuItem Header="Mark Loop">

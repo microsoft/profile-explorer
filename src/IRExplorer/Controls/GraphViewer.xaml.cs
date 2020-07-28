@@ -219,6 +219,10 @@ namespace IRExplorer {
             MarkNodeDominators(GetSelectedNode(), GetNodeStyle(style));
         }
 
+        public void MarkSelectedNodePostDominators(HighlightingStyle style) {
+            MarkNodePostDominators(GetSelectedNode(), GetNodeStyle(style));
+        }
+
         public void MarkSelectedNodeLoop(HighlightingStyle style) {
             MarkNodeLoop(GetSelectedNode(), GetNodeStyle(style));
         }
@@ -276,6 +280,20 @@ namespace IRExplorer {
             var block = (BlockIR)node.NodeInfo.Element;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominatorAlgorithm = cache.GetDominators();
+
+            foreach (var dominator in dominatorAlgorithm.GetDominators(block)) {
+                MarkNode(GetBlockNode(dominator), style);
+            }
+        }
+
+        public void MarkNodePostDominators(GraphNode node, HighlightingStyle style) {
+            if (node == null) {
+                return;
+            }
+
+            var block = (BlockIR)node.NodeInfo.Element;
+            var cache = FunctionAnalysisCache.Get(block.ParentFunction);
+            var dominatorAlgorithm = cache.GetPostDominators();
 
             foreach (var dominator in dominatorAlgorithm.GetDominators(block)) {
                 MarkNode(GetBlockNode(dominator), style);

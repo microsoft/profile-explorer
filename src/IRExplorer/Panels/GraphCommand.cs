@@ -26,6 +26,7 @@ namespace IRExplorer {
         public static readonly RoutedCommand MarkLoopNest =
             new RoutedCommand("MarkLoopNest", typeof(GraphPanel));
         public static readonly RoutedCommand MarkDominators = new RoutedCommand("MarkDominators", typeof(GraphPanel));
+        public static readonly RoutedCommand MarkPostDominators = new RoutedCommand("MarkPostDominators", typeof(GraphPanel));
 
         public static readonly RoutedCommand ClearMarked =
             new RoutedCommand("ClearMarked", typeof(GraphPanel));
