@@ -577,6 +577,11 @@ namespace IRExplorer {
             await GraphViewer.MarkSelectedNodePostDominatorsAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
         }
 
+        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
+        private async void MarkDominanceFrontierExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await GraphViewer.MarkSelectedNodeDominanceFrontierAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
+        }
+
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
                 if (hoveredNode_.NodeInfo.Element is BlockIR block) {
@@ -794,6 +799,7 @@ namespace IRExplorer {
             AddCommand(GraphCommand.MarkSuccessors, MarkSuccessorsExecuted);
             AddCommand(GraphCommand.MarkDominators, MarkDominatorsExecuted);
             AddCommand(GraphCommand.MarkPostDominators, MarkPostDominatorsExecuted);
+            AddCommand(GraphCommand.MarkDominanceFrontier, MarkDominanceFrontierExecuted);
             AddCommand(GraphCommand.MarkGroup, MarkGroupExecuted);
             AddCommand(GraphCommand.MarkLoop, MarkLoopExecuted);
             AddCommand(GraphCommand.MarkLoopNest, MarkLoopNestExecuted);
