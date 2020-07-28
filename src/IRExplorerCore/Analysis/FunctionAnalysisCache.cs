@@ -18,8 +18,14 @@ namespace IRExplorerCore.Analysis {
         private volatile DominatorAlgorithm dominators_;
         private volatile DominatorAlgorithm postDominators_;
         private volatile CFGReachability reachability_;
+        private volatile DominanceFrontier dominanceFrontier_;
 
         static FunctionAnalysisCache() {
+            functionCacheMap_ = new Dictionary<FunctionIR, FunctionAnalysisCache>();
+            cacheEnabled_ = true;
+        }
+
+        public static void TestReset() {
             functionCacheMap_ = new Dictionary<FunctionIR, FunctionAnalysisCache>();
             cacheEnabled_ = true;
         }
@@ -58,6 +64,25 @@ namespace IRExplorerCore.Analysis {
             }
 
             return postDominators_;
+        }
+
+        public async Task<DominanceFrontier> GetDominanceFrontierAsync() {
+            if (dominanceFrontier_ == null) {
+                var result = await ComputeDominanceFrontierAsync().ConfigureAwait(false);
+
+                if (cacheEnabled_) {
+                    Interlocked.Exchange(ref dominanceFrontier_, result);
+                }
+
+                return result;
+            }
+
+            return dominanceFrontier_;
+        }
+
+        private async Task<DominanceFrontier> ComputeDominanceFrontierAsync() {
+            var dominatorAlgorithm = await GetDominatorsAsync().ConfigureAwait(false);
+            return new DominanceFrontier(function_, dominatorAlgorithm);
         }
 
         public async Task<CFGReachability> GetReachabilityAsync() {

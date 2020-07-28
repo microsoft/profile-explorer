@@ -229,6 +229,13 @@
                 </MenuItem.Header>
             </MenuItem>
         </MenuItem>
+        <MenuItem Header="Mark Dominance Frontier" ToolTip="Mark all the blocks in its dominance frontier">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominanceFrontier" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
         <Separator />
 
         <MenuItem Header="Mark Loop">
