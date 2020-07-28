@@ -217,11 +217,11 @@ namespace IRExplorer {
         }
 
         public Task MarkSelectedNodeDominatorsAsync(HighlightingStyle style) {
-            return MarkNodeDominatorsAsync(GetSelectedNode(), GetNodeStyle(style));
+            return MarkNodeDominatorsAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetDominatorsAsync());
         }
 
         public Task MarkSelectedNodePostDominatorsAsync(HighlightingStyle style) {
-            return MarkNodePostDominatorsAsync(GetSelectedNode(), GetNodeStyle(style));
+            return MarkNodeDominatorsAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetPostDominatorsAsync());
         }
 
         public Task MarkSelectedNodeDominanceFrontierAsync(HighlightingStyle style) {
@@ -281,28 +281,14 @@ namespace IRExplorer {
             }
         }
 
-        public async Task MarkNodeDominatorsAsync(GraphNode node, HighlightingStyle style) {
+        private async Task MarkNodeDominatorsAsync(GraphNode node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominatorAlgorithm>> getDominators) {
             if (node == null) {
                 return;
             }
 
             var block = (BlockIR)node.NodeInfo.Element;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
-            var dominatorAlgorithm = await cache.GetDominatorsAsync().ConfigureAwait(true);
-
-            foreach (var dominator in dominatorAlgorithm.GetDominators(block)) {
-                MarkNode(GetBlockNode(dominator), style);
-            }
-        }
-
-        public async Task MarkNodePostDominatorsAsync(GraphNode node, HighlightingStyle style) {
-            if (node == null) {
-                return;
-            }
-
-            var block = (BlockIR)node.NodeInfo.Element;
-            var cache = FunctionAnalysisCache.Get(block.ParentFunction);
-            var dominatorAlgorithm = await cache.GetPostDominatorsAsync().ConfigureAwait(true);
+            var dominatorAlgorithm = await getDominators(cache).ConfigureAwait(true);
 
             foreach (var dominator in dominatorAlgorithm.GetDominators(block)) {
                 MarkNode(GetBlockNode(dominator), style);
