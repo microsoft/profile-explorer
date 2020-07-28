@@ -135,9 +135,9 @@ namespace IRExplorer {
 
             var result = new ParsedSection(section, text, function);
 
-            lock(this) { 
+            lock (this) {
                 if (cacheEnabled_ && function != null) {
-                    sectionCache_.Add(section, result);
+                    sectionCache_[section] = result;
                 }
             }
 
@@ -203,13 +203,13 @@ namespace IRExplorer {
             var builder = new StringBuilder();
             var list = new List<Tuple<IRTextSection, CompressedString>>();
 
-            foreach(var pair in sectionTextMap_) {
+            foreach (var pair in sectionTextMap_) {
                 list.Add(new Tuple<IRTextSection, CompressedString>(pair.Key, pair.Value));
             }
 
             list.Sort((a, b) => a.Item1.Number.CompareTo(b.Item1.Number));
 
-            foreach(var pair in list) {
+            foreach (var pair in list) {
                 builder.AppendLine(pair.Item1.Name); // Section name.
                 builder.AppendLine(pair.Item2.ToString()); // Section text.
                 builder.AppendLine();
@@ -248,7 +248,7 @@ namespace IRExplorer {
                 result = new ParsedSection(section, text, function);
 
                 if (cacheEnabled_ && function != null) {
-                    sectionCache_.Add(section, result);
+                    sectionCache_[section] = result;
                 }
 
                 if (errorHandler.HadParsingErrors) {

@@ -9,7 +9,7 @@ namespace IRExplorerCore.LLVM {
         private const string SectionStartLine = "*** IR Dump ";
         private const string SectionEndLine = "***";
 
-        public LLVMSectionReader(string filePath, bool expectSectionHeaders = true) : 
+        public LLVMSectionReader(string filePath, bool expectSectionHeaders = true) :
             base(filePath, expectSectionHeaders) { }
 
         public LLVMSectionReader(byte[] textData, bool expectSectionHeaders = true) :
@@ -26,7 +26,7 @@ namespace IRExplorerCore.LLVM {
 
         protected override bool IsBlockStart(string line) {
             //? TODO: Blocks seem to always start with N:
-            return false;;
+            return false;
         }
 
         protected override bool IsFunctionEnd(string line) {
@@ -35,7 +35,7 @@ namespace IRExplorerCore.LLVM {
 
         protected override string ExtractSectionName(string line) {
             int start = line.IndexOf(SectionStartLine);
-            
+
             if (start == -1) {
                 return "";
             }
@@ -43,7 +43,7 @@ namespace IRExplorerCore.LLVM {
             int end = line.LastIndexOf(SectionEndLine);
             int length = end - start - SectionStartLine.Length;
 
-            if(length > 0) {
+            if (length > 0) {
                 return line.Substring(start + SectionStartLine.Length, length).Trim();
             }
 
@@ -54,7 +54,7 @@ namespace IRExplorerCore.LLVM {
             // Function names start with @ and end before the ( starting the parameter list.
             int start = line.IndexOf('@');
 
-            if(start == -1) {
+            if (start == -1) {
                 return "";
             }
 
