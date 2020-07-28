@@ -566,6 +566,10 @@ namespace IRExplorer {
             GraphViewer.MarkSelectedNodeSuccessors(GetSelectedColorStyle(e));
         }
 
+        private void MarkDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            GraphViewer.MarkSelectedNodeDominators(GetSelectedColorStyle(e));
+        }
+
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
                 if (hoveredNode_.NodeInfo.Element is BlockIR block) {
@@ -781,6 +785,7 @@ namespace IRExplorer {
             AddCommand(GraphCommand.MarkBlock, MarkBlockExecuted);
             AddCommand(GraphCommand.MarkPredecessors, MarkPredecessorsExecuted);
             AddCommand(GraphCommand.MarkSuccessors, MarkSuccessorsExecuted);
+            AddCommand(GraphCommand.MarkDominators, MarkDominatorsExecuted);
             AddCommand(GraphCommand.MarkGroup, MarkGroupExecuted);
             AddCommand(GraphCommand.MarkLoop, MarkLoopExecuted);
             AddCommand(GraphCommand.MarkLoopNest, MarkLoopNestExecuted);

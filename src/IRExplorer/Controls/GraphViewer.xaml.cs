@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.GraphViz;
 using IRExplorerCore.IR;
 
@@ -214,6 +215,10 @@ namespace IRExplorer {
             MarkNodeSuccessors(GetSelectedNode(), GetNodeStyle(style));
         }
 
+        public void MarkSelectedNodeDominators(HighlightingStyle style) {
+            MarkNodeDominators(GetSelectedNode(), GetNodeStyle(style));
+        }
+
         public void MarkSelectedNodeLoop(HighlightingStyle style) {
             MarkNodeLoop(GetSelectedNode(), GetNodeStyle(style));
         }
@@ -260,6 +265,20 @@ namespace IRExplorer {
                     var toNode = edge.NodeTo?.Tag as GraphNode;
                     MarkNode(toNode, style);
                 }
+            }
+        }
+
+        public void MarkNodeDominators(GraphNode node, HighlightingStyle style) {
+            if (node == null) {
+                return;
+            }
+
+            var block = (BlockIR)node.NodeInfo.Element;
+            var cache = FunctionAnalysisCache.Get(block.ParentFunction);
+            var dominatorAlgorithm = cache.GetDominators();
+
+            foreach (var dominator in dominatorAlgorithm.GetDominators(block)) {
+                MarkNode(GetBlockNode(dominator), style);
             }
         }
 
