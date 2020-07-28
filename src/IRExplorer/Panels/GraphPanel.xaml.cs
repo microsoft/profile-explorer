@@ -781,7 +781,6 @@ namespace IRExplorer {
             AddCommand(GraphCommand.MarkBlock, MarkBlockExecuted);
             AddCommand(GraphCommand.MarkPredecessors, MarkPredecessorsExecuted);
             AddCommand(GraphCommand.MarkSuccessors, MarkSuccessorsExecuted);
-            AddCommand(GraphCommand.MarkPredecessors, MarkPredecessorsExecuted);
             AddCommand(GraphCommand.MarkGroup, MarkGroupExecuted);
             AddCommand(GraphCommand.MarkLoop, MarkLoopExecuted);
             AddCommand(GraphCommand.MarkLoopNest, MarkLoopNestExecuted);
