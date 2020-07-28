@@ -56,5 +56,30 @@ namespace IRExplorerCoreTests {
                 new List<BlockIR> { DiamondFunction.BlockByNumber(4) },
                 dominanceFrontier.FrontierOf(DiamondFunction.BlockByNumber(2)).ToList());
         }
+
+        [TestMethod]
+        public async Task GetPostDominanceFrontierAsyncReturnsSameInstanceWhenCaching() {
+            var cache = FunctionAnalysisCache.Get(SimpleFunction);
+            var expected = await cache.GetPostDominanceFrontierAsync();
+            Assert.AreSame(expected, await cache.GetPostDominanceFrontierAsync());
+        }
+
+        [TestMethod]
+        public async Task GetPostDominanceFrontierAsyncReturnsDifferentInstanceWhenNotCaching() {
+            FunctionAnalysisCache.DisableCache();
+            var cache = FunctionAnalysisCache.Get(SimpleFunction);
+            Assert.AreNotSame(
+                await cache.GetPostDominanceFrontierAsync(),
+                await cache.GetPostDominanceFrontierAsync());
+        }
+
+        [TestMethod]
+        public async Task GetPostDominanceFrontierReturnsCorrectInstance() {
+            var cache = FunctionAnalysisCache.Get(DiamondFunction);
+            var dominanceFrontier = await cache.GetPostDominanceFrontierAsync();
+            CollectionAssert.AreEquivalent(
+                new List<BlockIR> { DiamondFunction.BlockByNumber(1) },
+                dominanceFrontier.FrontierOf(DiamondFunction.BlockByNumber(2)).ToList());
+        }
     }
 }
