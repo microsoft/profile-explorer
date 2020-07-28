@@ -101,6 +101,16 @@ namespace IRExplorerCore.Analysis {
             return immDom != -1 ? postorderNumberBlockMap_[immDom] : null;
         }
 
+        public IEnumerable<BlockIR> GetDominators(BlockIR block) {
+            while (block != treeStartBlock_) {
+                block = GetImmediateDominator(block);
+                if (block == null) {
+                    yield break;
+                }
+                yield return block;
+            }
+        }
+
         public bool Dominates(BlockIR block, BlockIR dominatedBlock) {
             if (block == dominatedBlock) {
                 return true;
