@@ -215,6 +215,15 @@
         </MenuItem>
         <Separator />
 
+        <MenuItem Header="Mark Dominators" ToolTip="Mark all the blocks that dominate it">
+            <MenuItem>
+                <MenuItem.Header>
+                    <local:ColorSelector ColorSelectedCommand="local:GraphCommand.MarkDominators" />
+                </MenuItem.Header>
+            </MenuItem>
+        </MenuItem>
+        <Separator />
+
         <MenuItem Header="Mark Loop">
             <MenuItem>
                 <MenuItem.Header>
