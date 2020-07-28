@@ -53,7 +53,11 @@ namespace IRExplorerCore.IR {
         }
 
         public ulong ToLong() {
-            return ((ulong)BlockId << 48) | ((ulong)TupleId << 32) | OperandId;
+            return ToLong(blockId: BlockId, tupleId: TupleId, operandId: OperandId);
+        }
+
+        public static ulong ToLong(ushort blockId = 0, uint tupleId = 0, ushort operandId = 0) {
+            return ((ulong)blockId << 48) | ((ulong)tupleId << 32) | operandId;
         }
     }
 

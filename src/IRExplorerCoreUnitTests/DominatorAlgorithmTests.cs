@@ -1,4 +1,7 @@
-﻿using IRExplorerCore.Analysis;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using IRExplorerCore.Analysis;
 using IRExplorerCore.UTC;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -34,8 +37,8 @@ BLOCK";
         public void FallbackAlgorithmTerminatesForDominators() {
             var function = new UTCParser(functionText, null, null).Parse();
             var dominatorAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.Dominators);
-            Assert.IsTrue(dominatorAlgorithm.Dominates(function.Blocks[1], function.Blocks[3]));
-            Assert.IsFalse(dominatorAlgorithm.Dominates(function.Blocks[3], function.Blocks[1]));
+            Assert.IsTrue(dominatorAlgorithm.Dominates(function.BlockByNumber(1), function.BlockByNumber(3)));
+            Assert.IsFalse(dominatorAlgorithm.Dominates(function.BlockByNumber(3), function.BlockByNumber(1)));
         }
 
         [TestMethod]
@@ -43,11 +46,11 @@ BLOCK";
             var function = new UTCParser(fixedFunctionText, null, null).Parse();
             var fallbackAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.Dominators);
             var cachedAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.Dominators | DominatorAlgorithmOptions.BuildQueryCache);
-            for (int i = 0; i < 5; ++i) {
-                for (int j = 0; j < 5; ++j) {
+            for (ushort i = 0; i < 5; ++i) {
+                for (ushort j = 0; j < 5; ++j) {
                     Assert.AreEqual(
-                        fallbackAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]),
-                        cachedAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]));
+                        fallbackAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)),
+                        cachedAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)));
                 }
             }
         }
@@ -57,11 +60,11 @@ BLOCK";
             var function = new UTCParser(functionText, null, null).Parse();
             var fallbackAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.Dominators);
             var cachedAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.Dominators | DominatorAlgorithmOptions.BuildQueryCache);
-            for (int i = 0; i < 5; ++i) {
-                for (int j = 0; j < 5; ++j) {
+            for (ushort i = 0; i < 5; ++i) {
+                for (ushort j = 0; j < 5; ++j) {
                     Assert.AreEqual(
-                        fallbackAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]),
-                        cachedAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]));
+                        fallbackAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)),
+                        cachedAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)));
                 }
             }
         }
@@ -70,8 +73,8 @@ BLOCK";
         public void FallbackAlgorithmTerminatesForPostDominators() {
             var function = new UTCParser(functionText, null, null).Parse();
             var dominatorAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.PostDominators);
-            Assert.IsFalse(dominatorAlgorithm.Dominates(function.Blocks[1], function.Blocks[3]));
-            Assert.IsTrue(dominatorAlgorithm.Dominates(function.Blocks[3], function.Blocks[1]));
+            Assert.IsFalse(dominatorAlgorithm.Dominates(function.BlockByNumber(1), function.BlockByNumber(3)));
+            Assert.IsTrue(dominatorAlgorithm.Dominates(function.BlockByNumber(3), function.BlockByNumber(1)));
         }
 
 
@@ -80,11 +83,11 @@ BLOCK";
             var function = new UTCParser(fixedFunctionText, null, null).Parse();
             var fallbackAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.PostDominators);
             var cachedAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.PostDominators | DominatorAlgorithmOptions.BuildQueryCache);
-            for (int i = 0; i < 5; ++i) {
-                for (int j = 0; j < 5; ++j) {
+            for (ushort i = 0; i < 5; ++i) {
+                for (ushort j = 0; j < 5; ++j) {
                     Assert.AreEqual(
-                        fallbackAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]),
-                        cachedAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]));
+                        fallbackAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)),
+                        cachedAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)));
                 }
             }
         }
@@ -94,11 +97,11 @@ BLOCK";
             var function = new UTCParser(functionText, null, null).Parse();
             var fallbackAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.PostDominators);
             var cachedAlgorithm = new DominatorAlgorithm(function, DominatorAlgorithmOptions.PostDominators | DominatorAlgorithmOptions.BuildQueryCache);
-            for (int i = 0; i < 5; ++i) {
-                for (int j = 0; j < 5; ++j) {
+            for (ushort i = 0; i < 5; ++i) {
+                for (ushort j = 0; j < 5; ++j) {
                     Assert.AreEqual(
-                        fallbackAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]),
-                        cachedAlgorithm.Dominates(function.Blocks[i], function.Blocks[j]));
+                        fallbackAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)),
+                        cachedAlgorithm.Dominates(function.BlockByNumber(i), function.BlockByNumber(j)));
                 }
             }
         }
