@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -566,12 +567,14 @@ namespace IRExplorer {
             GraphViewer.MarkSelectedNodeSuccessors(GetSelectedColorStyle(e));
         }
 
-        private void MarkDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
-            GraphViewer.MarkSelectedNodeDominators(GetSelectedColorStyle(e));
+        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
+        private async void MarkDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await GraphViewer.MarkSelectedNodeDominatorsAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
         }
 
-        private void MarkPostDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
-            GraphViewer.MarkSelectedNodePostDominators(GetSelectedColorStyle(e));
+        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
+        private async void MarkPostDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await GraphViewer.MarkSelectedNodePostDominatorsAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
         }
 
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
