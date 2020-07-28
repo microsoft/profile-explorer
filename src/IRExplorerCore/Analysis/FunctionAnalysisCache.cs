@@ -28,7 +28,7 @@ namespace IRExplorerCore.Analysis {
             cacheEnabled_ = false;
         }
 
-        public FunctionAnalysisCache(FunctionIR function) {
+        private FunctionAnalysisCache(FunctionIR function) {
             function_ = function;
         }
 
