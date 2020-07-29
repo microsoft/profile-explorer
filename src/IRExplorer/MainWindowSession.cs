@@ -221,6 +221,7 @@ namespace IRExplorer {
             mainDocument_ = null;
             diffDocument_ = null;
 
+            FunctionAnalysisCache.ResetCache();
             DiffModeButton.IsEnabled = false;
 
             if (showStartPage) {
