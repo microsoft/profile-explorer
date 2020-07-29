@@ -674,7 +674,7 @@ namespace IRExplorer {
 
             if (queryInfo_.Block1 != null && queryInfo_.Block2 != null) {
                 var cache = FunctionAnalysisCache.Get(document_.Function);
-                await cache.CacheAllAsync();
+                await cache.CacheAll();
 
                 queryInfo_.Dominates =
                     (await cache.GetDominatorsAsync()).Dominates(queryInfo_.Block1, queryInfo_.Block2);
@@ -940,7 +940,7 @@ namespace IRExplorer {
 
         private void LoadSavedState() {
             //? TODO: This can happen for the expression graph, which does not support switching.
-            if(document_ == null) {
+            if (document_ == null) {
                 return;
             }
 

@@ -100,18 +100,15 @@ namespace IRExplorerCore.Analysis {
             return Task.Run(() => new CFGReachability(function_));
         }
 
-        public async void CacheAll() {
+        public async Task CacheAll() {
             var domTask = ComputeDominators();
             var postDomTask = ComputePostDominators();
             var reachTask = ComputeReachability();
-            Task.WaitAll(domTask, postDomTask, reachTask);
+            await Task.WhenAll(domTask, postDomTask, reachTask);
+
             Interlocked.Exchange(ref dominators_, await domTask);
             Interlocked.Exchange(ref postDominators_, await postDomTask);
             Interlocked.Exchange(ref reachability_, await reachTask);
-        }
-
-        public async Task CacheAllAsync() {
-            await Task.Run(() => CacheAll());
         }
 
         public void InvalidateAll() {
@@ -139,6 +136,12 @@ namespace IRExplorerCore.Analysis {
         public static bool Remove(FunctionIR function) {
             lock (lockObject_) {
                 return functionCacheMap_.Remove(function);
+            }
+        }
+
+        public static void ResetCache() {
+            lock (lockObject_) {
+                functionCacheMap_.Clear();
             }
         }
     }
