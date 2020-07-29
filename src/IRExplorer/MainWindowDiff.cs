@@ -268,15 +268,19 @@ namespace IRExplorer {
         }
 
         private async Task DiffCurrentDocuments(DiffModeInfo diffState) {
-            await diffState.LeftDocument.EnterDiffMode();
-            await diffState.RightDocument.EnterDiffMode();
-            sessionState_.DiffState.IsEnabled = true;
+            await EnableDocumentDiffState(diffState);
             var leftDocument = diffState.LeftDocument.TextView;
             var rightDocument = diffState.RightDocument.TextView;
 
             var leftText = await GetSectionTextAsync(leftDocument.Section);
             var rightText = await GetSectionTextAsync(rightDocument.Section);
             await DiffDocuments(leftDocument, rightDocument, leftText, rightText);
+        }
+
+        private async Task EnableDocumentDiffState(DiffModeInfo diffState) {
+            await diffState.LeftDocument.EnterDiffMode();
+            await diffState.RightDocument.EnterDiffMode();
+            sessionState_.DiffState.IsEnabled = true;
         }
 
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, string leftText,
@@ -327,56 +331,21 @@ namespace IRExplorer {
             IRTextSection newLeftSection = null;
             IRTextSection newRightSection = null;
 
-            //? TODO: Refactor branches use a common method
             if (document == sessionState_.DiffState.LeftDocument) {
-                var result1 = await Task.Run(() => LoadAndParseSection(section));
-                leftText = result1.Text;
+                var result = await Task.Run(() => LoadAndParseSection(section));
+                leftText = result.Text;
                 newLeftSection = section;
 
-                if (diffDocument_ != null) {
-                    var diffSection = FindDiffDocumentSection(section, diffDocument_);
-
-                    if (diffSection != null) {
-                        var result2 = await Task.Run(() => LoadAndParseSection(diffSection));
-                        rightText = result2.Text;
-                        newRightSection = diffSection;
-                    }
-                    else {
-                        rightText = $"Diff document does not have section {section.Name}";
-                        return;
-                    }
-                }
-                else {
-                    var result2 =
-                        await Task.Run(() => LoadAndParseSection(sessionState_.DiffState.RightDocument.Section));
-
-                    rightText = result2.Text;
-                }
+                (rightText, newRightSection) = 
+                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.RightDocument.Section, diffDocument_);
             }
             else if (document == sessionState_.DiffState.RightDocument) {
-                var result1 = await Task.Run(() => LoadAndParseSection(section));
-                rightText = result1.Text;
+                var result = await Task.Run(() => LoadAndParseSection(section));
+                rightText = result.Text;
                 newRightSection = section;
 
-                if (diffDocument_ != null) {
-                    var diffSection = FindDiffDocumentSection(section, mainDocument_);
-
-                    if (diffSection != null) {
-                        var result2 = await Task.Run(() => LoadAndParseSection(diffSection));
-                        leftText = result2.Text;
-                        newLeftSection = diffSection;
-                    }
-                    else {
-                        leftText = $"Diff document does not have section {section.Name}";
-                        return;
-                    }
-                }
-                else {
-                    var result2 =
-                        await Task.Run(() => LoadAndParseSection(sessionState_.DiffState.LeftDocument.Section));
-
-                    leftText = result2.Text;
-                }
+                (leftText, newLeftSection) =
+                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.LeftDocument.Section, mainDocument_);
             }
             else {
                 // Document is not part of the diff set.
@@ -391,9 +360,33 @@ namespace IRExplorer {
                 UpdateUIAfterSectionLoad(newRightSection, sessionState_.DiffState.RightDocument);
             }
 
+            await EnableDocumentDiffState(sessionState_.DiffState);
             await DiffDocuments(sessionState_.DiffState.LeftDocument.TextView,
                                 sessionState_.DiffState.RightDocument.TextView, leftText, rightText,
                                 newLeftSection, newRightSection);
+        }
+
+        private async Task<Tuple<string, IRTextSection>> 
+            SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
+                                          LoadedDocument otherDocument) {
+            if (diffDocument_ != null) {
+                // When two documents are compared, try to pick 
+                // the other section from that other document.
+                var diffSection = FindDiffDocumentSection(section, otherDocument);
+
+                if (diffSection != null) {
+                    var result = await Task.Run(() => LoadAndParseSection(diffSection));
+                    return new Tuple<string, IRTextSection>(result.Text, diffSection);
+                }
+                else {
+                    return new Tuple<string, IRTextSection>($"Diff document does not have section {section.Name}", null);
+                }
+            }
+            else {
+                // Load the text of the other section, but don't reload anything else.
+                var result = await Task.Run(() => LoadAndParseSection(otherSection));
+                return new Tuple<string, IRTextSection>(result.Text, null);
+            }
         }
 
         private IRTextSection FindDiffDocumentSection(IRTextSection section, LoadedDocument diffDoc) {
