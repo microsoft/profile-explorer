@@ -267,14 +267,20 @@ namespace IRExplorerCore.Analysis {
                                      (element, kind) => kind == ReferenceKind.Load);
         }
 
-        public List<Reference> FindSSAUses(IRElement element) {
+        public static List<Reference> FindSSAUses(OperandIR  op) {
+            var list = new List<Reference>();
+            FindSSAUses(op, list);
+            return list;
+        }
+
+        public static List<Reference> FindSSAUses(InstructionIR instr) {
             var list = new List<Reference>();
 
-            if (!(element is OperandIR op)) {
+            if(instr.Destinations.Count == 0) {
                 return list;
             }
 
-            FindSSAUses(op, list);
+            FindSSAUses(instr.Destinations[0], list);
             return list;
         }
 
@@ -340,6 +346,7 @@ namespace IRExplorerCore.Analysis {
         }
 
         private static IEnumerable<IRElement> EnumerateSSAUses(OperandIR op) {
+            // If it's a definition operand, enumerate the SSA uses.
             var ssaDefTag = op.GetTag<SSADefinitionTag>();
 
             if (ssaDefTag != null) {
@@ -348,6 +355,7 @@ namespace IRExplorerCore.Analysis {
                 }
             }
 
+            // For source operands, go to the linked definition SSA tag.
             var ssaDefUseTag = op.GetTag<SSAUseTag>();
 
             if (ssaDefUseTag != null) {
