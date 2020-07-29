@@ -238,8 +238,7 @@ namespace IRExplorer {
                 return new List<Reference>();
             }
 
-            var refFinder = new ReferenceFinder(document_.Function);
-            var operandRefs = refFinder.FindSSAUses(element);
+            var operandRefs = ReferenceFinder.FindSSAUses(operand);
             UpdateReferenceListView(operand, operandRefs);
 
             // Select the SSA uses filter.

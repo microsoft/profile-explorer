@@ -27,70 +27,6 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorer {
-    public enum DocumentActionKind {
-        SelectElement,
-        MarkElement,
-        MarkBlock,
-        GoToDefinition,
-        ShowReferences,
-        MarkReferences,
-        ShowUses,
-        MarkUses,
-        MarkExpression,
-        ClearMarker,
-        ClearAllMarkers,
-        ClearBlockMarkers,
-        ClearInstructionMarkers,
-        ClearTemporaryMarkers,
-        UndoAction,
-        VerticalScroll,
-        ShowExpressionGraph
-    }
-
-    public class MarkActionData {
-        public bool IsTemporary { get; set; }
-        public PairHighlightingStyle Style { get; set; }
-    }
-
-    public class DocumentAction {
-        public DocumentAction(DocumentActionKind actionKind, IRElement element = null,
-                              object optionalData = null) {
-            ActionKind = actionKind;
-            Element = element;
-            OptionalData = optionalData;
-        }
-
-        public DocumentActionKind ActionKind { get; set; }
-        public IRElement Element { get; set; }
-        public object OptionalData { get; set; }
-
-        public DocumentAction WithNewElement(IRElement newElement) {
-            return new DocumentAction(ActionKind, newElement, OptionalData);
-        }
-
-        public override string ToString() {
-            return $"action: {ActionKind}, element: {Element}";
-        }
-    }
-
-    public class ReversibleDocumentAction {
-        public ReversibleDocumentAction(DocumentAction action, Action<DocumentAction> undoAction) {
-            Action = action;
-            UndoAction = undoAction;
-        }
-
-        private DocumentAction Action { get; set; }
-        public Action<DocumentAction> UndoAction { get; set; }
-
-        public void Undo() {
-            UndoAction?.Invoke(Action);
-        }
-
-        public override string ToString() {
-            return Action.ToString();
-        }
-    }
-
     public enum BringIntoViewStyle {
         Default,
         FirstLine
@@ -201,8 +137,6 @@ namespace IRExplorer {
         private List<IRElement> tupleElements_;
 
         public IRDocument() {
-            // this.ContextMenu = Application.Current.FindResource("IRDocumentMenu") as ContextMenu;
-
             // Setup element tracking data structures.
             selectedElements_ = new HashSet<IRElement>();
             bookmarks_ = new BookmarkManager();
@@ -563,9 +497,6 @@ namespace IRExplorer {
             }
 
             ScrollToLine(line);
-
-            //var y = TextArea.TextView.GetVisualTopByDocumentLine(line);
-            //ScrollToVerticalOffset(y);
         }
 
         public void BringElementIntoView(IRElement op,
@@ -1335,13 +1266,15 @@ namespace IRExplorer {
 
         private void CreateRightMarkerMargin() {
             if (markerMargin_ != null) {
-                return;
+                return; // Margin already set up.
             }
 
-            var a = Utils.FindChild<ScrollViewer>(this);
+            // Find the right scrollbar and place the canvas under it,
+            // then make it semi-transparent so that the canvas is visible.
+            var scrollViewer = Utils.FindChild<ScrollViewer>(this);
 
-            if (a != null) {
-                docVerticalScrollbar_ = Utils.FindChild<ScrollBar>(a);
+            if (scrollViewer != null) {
+                docVerticalScrollbar_ = Utils.FindChild<ScrollBar>(scrollViewer);
 
                 if (docVerticalScrollbar_ != null) {
                     docVerticalScrollbar_.Opacity = 0.6;
@@ -1379,6 +1312,8 @@ namespace IRExplorer {
         }
 
         private bool EditBookmarkText(Bookmark bookmark, Key key) {
+            // Because a TextBox is not used for the bookmarks,
+            // editing the optionala text must be handled manually.
             var keyInfo = Utils.KeyToChar(key);
 
             if (keyInfo.IsLetter) {
@@ -1595,6 +1530,7 @@ namespace IRExplorer {
         }
 
         private IRElement SkipAllCopies(IRElement op) {
+            //? TODO: This should be in some IR utility class.
             var defInstr = op.ParentInstruction;
 
             while (defInstr != null) {
@@ -1632,6 +1568,7 @@ namespace IRExplorer {
                     }
                 }
 
+                // Try to find a definition for the source operand.
                 var defOp = ReferenceFinder.GetSSADefinition(op);
 
                 if (defOp != null) {
@@ -1651,7 +1588,8 @@ namespace IRExplorer {
                     return true;
                 }
                 else {
-                    // Try to use reference info find an unique definition.
+                    // Try to use reference info to find an unique definition.
+                    //? TODO: Definition set can be refined using reaching defs DFA.
                     defOp = new ReferenceFinder(function_).FindDefinition(element);
 
                     if (defOp != null) {
@@ -1662,7 +1600,7 @@ namespace IRExplorer {
                 }
             }
             else if (element is InstructionIR instr) {
-                // For single-source instructions, go to its definition.
+                // For single-source instructions, go to the source definition.
                 if (instr.Sources.Count == 1) {
                     GoToElementDefinition(instr.Sources[0]);
                 }
@@ -1714,44 +1652,100 @@ namespace IRExplorer {
 
         private bool HandleOperandElement(ElementHighlighter highlighter, bool markExpression,
                                           HighlightingEventAction action, OperandIR op) {
-            if (markExpression) {
-                HighlightSSAExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
-                return true;
+            if (op.Role == OperandRole.Source) {
+                if (markExpression) {
+                    // Mark an entire SSA def-use expression DAG.
+                    HighlightSSAExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
+                    return true;
+                }
+
+                // Further handling of sources is done below.
             }
-            else {
-                if ((op.Role == OperandRole.Destination || op.Role == OperandRole.Parameter) &&
-                    settings_.HighlightDestinationUses) {
-                    // First look for an SSA definition and its uses,
-                    // if not found  highlight every load of the same symbol.
-                    var useList = FindSSAUses(op);
-                    bool handled = false;
+            else if ((op.Role == OperandRole.Destination || op.Role == OperandRole.Parameter) &&
+                     settings_.HighlightDestinationUses) {
+                // First look for an SSA definition and its uses,
+                // if not found  highlight every load of the same symbol.
+                var useList = ReferenceFinder.FindSSAUses(op);
+                bool handled = false;
 
-                    if (useList.Count == 0) {
-                        useList = new ReferenceFinder(function_).FindAllLoads(op);
-                    }
-
-                    if (useList != null && useList.Count > 0) {
-                        HighlightSSAUsers(op, useList, highlighter, ssaUserStyle_, action);
-                        handled = true;
-                    }
-
-                    // If the operand is an indirection, also try to mark 
-                    // the definition of the base address value below.
-                    if(!op.IsIndirection) {
-                        return handled;
-                    }
+                if (useList.Count == 0) {
+                    //? TODO: Could use block reachability to trim the set of loads marked
+                    useList = new ReferenceFinder(function_).FindAllLoads(op);
                 }
-                
-                if (settings_.HighlightSourceDefinition) {
-                    if (op.IsLabelAddress) {
-                        return HighlightBlockLabel(op, highlighter, ssaUserStyle_, action);
-                    }
-
-                    return HighlightSSADefinition(op, highlighter, ssaDefinitionStyle_, action);
+                else if(markExpression) {
+                    // Collect the transitive set of users, marking instructions
+                    // that depend on the value of this destination operand.
+                    ExpandIteratedUseList(useList);
                 }
+
+                if (useList != null && useList.Count > 0) {
+                    HighlightSSAUsers(op, useList, highlighter, ssaUserStyle_, action);
+                    handled = true;
+                }
+
+                // If the operand is an indirection, also try to mark 
+                // the definition of the base address value below.
+                if(!op.IsIndirection) {
+                    return handled;
+                }
+            }
+
+            if (settings_.HighlightSourceDefinition) {
+                if (op.IsLabelAddress) {
+                    return HighlightBlockLabel(op, highlighter, ssaUserStyle_, action);
+                }
+
+                return HighlightSSADefinition(op, highlighter, ssaDefinitionStyle_, action);
             }
 
             return false;
+        }
+
+        private void ExpandIteratedUseList(List<Reference> useList) {
+            var handledElements = new HashSet<IRElement>();
+
+            foreach(var use in useList) {
+                handledElements.Add(use.Element);
+            }
+
+            ExpandIteratedUseList(useList, handledElements, 0);
+        }
+
+        private void ExpandIteratedUseList(List<Reference> useList,
+                                           HashSet<IRElement> handledElements, int level) {
+            //? TODO: Max level should be configurable
+            if (level > 8) {
+                return;
+            }
+
+            var newUseLists = new List<List<Reference>>();
+
+            foreach (var use in useList) {
+                if(use.Element is OperandIR op) {
+                    var useInstr = op.ParentInstruction;
+
+                    if(useInstr != null) {
+                        foreach (var iteratedUse in ReferenceFinder.FindSSAUses(useInstr)) {
+                            if(!handledElements.Add(iteratedUse.Element)) {
+                                continue; /// Use already visited during recursion.
+                            }
+
+                            // Recursively iterate over and collect uses
+                            var iteratedUseList = new List<Reference>();
+                            iteratedUseList.Add(iteratedUse);
+
+                            ExpandIteratedUseList(iteratedUseList, handledElements, level + 1);
+                            newUseLists.Add(iteratedUseList);
+                        }
+                    }
+                }
+            }
+
+            // Merge the children lists into the input list.
+            // This is fairly inefficient, but not an issue with the max. level used.
+            foreach(var list in newUseLists) {
+                useList.AddRange(list);
+            }
         }
 
         private void HandleOtherElement(IRElement element, ElementHighlighter highlighter,
@@ -1888,6 +1882,7 @@ namespace IRExplorer {
                                             HighlightingStyleCollection instrStyle) {
             int styleIndex;
             var locationTag = element.GetTag<SourceLocationTag>();
+            var handledElements = new HashSet<IRElement>();
 
             if (locationTag != null) {
                 styleIndex = locationTag.Line % style.Styles.Count;
@@ -1896,23 +1891,27 @@ namespace IRExplorer {
                 styleIndex = new Random().Next(style.Styles.Count - 1);
             }
 
-            HighlightSSAExpression(element, element, highlighter, style,
-                                   instrStyle, styleIndex, 0);
+            HighlightSSAExpression(element, element, handledElements,
+                                   highlighter, style, instrStyle, styleIndex, 0);
         }
 
-        private void HighlightSSAExpression(IRElement element, IRElement parent,
+        private void HighlightSSAExpression(IRElement element, IRElement parent, HashSet<IRElement> handledElements,
                                             ElementHighlighter highlighter, HighlightingStyleCollection style,
                                             HighlightingStyleCollection instrStyle, int styleIndex,
                                             int level) {
+            if(!handledElements.Add(element)) {
+                return; // Element already handled during recursion.
+            }
+
             switch (element) {
                 case OperandIR op: {
                     if (parent != null) {
-                        //? TODO: Add option for "rainbow" style
-                        //highlighter.Add(new HighlightedGroup(op, expressionOperandStyle_.ForIndex(parent.TextLocation.Line)));
+                        //? TODO: Add option to mark each level with a brighter color.
                         highlighter.Add(new HighlightedGroup(op, style.ForIndex(styleIndex)));
                     }
 
-                    if (level >= 4) {
+                    //? TODO: Max level should be configurable
+                    if (level >= 6) {
                         return;
                     }
 
@@ -1920,7 +1919,7 @@ namespace IRExplorer {
 
                     if (defTag != null) {
                         if (defTag.Parent is OperandIR defOp) {
-                            HighlightSSAExpression(defOp.Parent, parent, highlighter, style,
+                            HighlightSSAExpression(defOp.Parent, parent, handledElements, highlighter, style,
                                                    instrStyle, styleIndex, level);
                         }
                     }
@@ -1928,7 +1927,7 @@ namespace IRExplorer {
                         var sourceDefOp = ReferenceFinder.GetSSADefinition(op);
 
                         if (sourceDefOp != null) {
-                            HighlightSSAExpression(sourceDefOp, parent, highlighter, style,
+                            HighlightSSAExpression(sourceDefOp, parent, handledElements, highlighter, style,
                                                    instrStyle, styleIndex, level);
                         }
                     }
@@ -1936,7 +1935,6 @@ namespace IRExplorer {
                     break;
                 }
                 case InstructionIR instr: {
-                    //highlighter.Add(new HighlightedGroup(instr, expressionStyle_.ForIndex(parent.TextLocation.Line)));
                     highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
 
                     if (level >= 4) {
@@ -1944,13 +1942,13 @@ namespace IRExplorer {
                     }
 
                     foreach (var sourceOp in instr.Sources) {
-                        HighlightSSAExpression(sourceOp, instr, highlighter, style,
+                        HighlightSSAExpression(sourceOp, instr, handledElements, highlighter, style,
                                                instrStyle, styleIndex, level + 1);
                     }
 
                     if (level > 0) {
                         foreach (var destOp in instr.Destinations) {
-                            HighlightSSAExpression(destOp, parent, highlighter, style,
+                            HighlightSSAExpression(destOp, parent, handledElements, highlighter, style,
                                                    instrStyle, styleIndex, level + 1);
                         }
                     }
@@ -1958,11 +1956,6 @@ namespace IRExplorer {
                     break;
                 }
             }
-        }
-
-        private List<Reference> FindSSAUses(OperandIR op) {
-            var refFinder = new ReferenceFinder(function_);
-            return refFinder.FindSSAUses(op);
         }
 
         private void HighlightSSAUsers(OperandIR op, List<Reference> useList, ElementHighlighter highlighter,
@@ -2121,7 +2114,6 @@ namespace IRExplorer {
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveOptimization)]
         private void ComputeElementLists() {
             blockElements_ = new List<IRElement>(function_.Blocks.Count);
             tupleElements_ = new List<IRElement>(blockElements_.Count * 4);
@@ -2311,7 +2303,7 @@ namespace IRExplorer {
 
         private void MarkUses(OperandIR defOp, PairHighlightingStyle style) {
             ClearTemporaryHighlighting();
-            var useList = FindSSAUses(defOp);
+            var useList = ReferenceFinder.FindSSAUses(defOp);
 
             HighlightSSAUsers(defOp, useList, markedHighlighter_, style,
                               HighlightingEventAction.AppendHighlighting);
@@ -2371,6 +2363,7 @@ namespace IRExplorer {
             info.NeedsRedrawing = true;
         }
 
+        //? TODO: Extract all right margin code into own class
         private void PopulateMarkerBar() {
             // Try again to create the margin bar, the scrollbar may not have
             // been visible when the document view was loaded.
@@ -2428,8 +2421,8 @@ namespace IRExplorer {
             var style = bookmark.Style;
 
             if (bookmark.Style != null) {
-                var b = style.BackColor as SolidColorBrush;
-                var color = ColorUtils.IncreaseSaturation(b.Color);
+                var brush = style.BackColor as SolidColorBrush;
+                var color = ColorUtils.IncreaseSaturation(brush.Color);
                 style = new HighlightingStyle(color);
             }
             else {
@@ -2448,8 +2441,8 @@ namespace IRExplorer {
                                                      double height, double dotSize) {
             highlighter.ForEachStyledElement((element, style) => {
                 double y = (double)element.TextLocation.Line / LineCount * height;
-                var b = style.BackColor as SolidColorBrush;
-                var color = ColorUtils.IncreaseSaturation(b.Color);
+                var brush = style.BackColor as SolidColorBrush;
+                var color = ColorUtils.IncreaseSaturation(brush.Color);
                 var elementVisual = new Rect(0, startY + y, width, dotSize);
                 var barStyle = new HighlightingStyle(color);
 
@@ -2464,8 +2457,8 @@ namespace IRExplorer {
 
         private void PopulateMarkerBarForBlocks(int startY, double width, double height) {
             foreach (var blockGroup in margin_.BlockGroups) {
-                var b = blockGroup.Group.Style.BackColor as SolidColorBrush;
-                var color = ColorUtils.IncreaseSaturation(b.Color, 1.5f);
+                var brush = blockGroup.Group.Style.BackColor as SolidColorBrush;
+                var color = ColorUtils.IncreaseSaturation(brush.Color, 1.5f);
 
                 foreach (var segment in blockGroup.Segments) {
                     int startLine = Document.GetLineByOffset(segment.StartOffset).LineNumber;
@@ -2661,12 +2654,11 @@ namespace IRExplorer {
                 }
             }
 
-            var dpi = VisualTreeHelper.GetDpi(markerMargin_);
-
+            // Create a bitmap with an area matching the margin,
+            // render the visual over it and use it instead since it is more efficient to draw.
             var bitmap = new RenderTargetBitmap((int)markerMargin_.ActualWidth,
                                                 (int)markerMargin_.ActualHeight, 96, 96,
                                                 PixelFormats.Default);
-
             bitmap.Render(drawingVisual);
             bitmap.Freeze();
             Image image = null;
@@ -2676,7 +2668,7 @@ namespace IRExplorer {
 
                 if (image != null) {
                     var prevBitmap = image.Source as RenderTargetBitmap;
-                    prevBitmap.Clear();
+                    prevBitmap.Clear(); // Required to prevent GDI leaks.
                 }
             }
 
