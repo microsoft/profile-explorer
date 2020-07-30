@@ -41,7 +41,8 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                     BorderThickness="1,1,1,1"
                     Click="ResetButton_Click"
-                    Content="Reset" />
+                    Content="Reset"
+                    Visibility="{Binding Path=ShowResetButton, Converter={StaticResource BoolToVisibility}}" />
                 <Button
                     x:Name="CloseButton"
                     Grid.Column="2"
