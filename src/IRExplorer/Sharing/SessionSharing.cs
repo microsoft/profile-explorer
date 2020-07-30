@@ -1,0 +1,93 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Azure.Storage.Blobs;
+using IRExplorerCore;
+
+namespace IRExplorer {
+    public class SharedSessionInfo {
+        public string ContainerName { get; set; }
+        public string BlobName { get;set; }
+        public int BlobSize { get; set; }
+        public byte[] EncryptionKey { get; set; }
+    }
+
+    public class SessionSharing {
+        private const string DefaultLocation = "https://irexplorer.blob.core.windows.net";
+
+        private string connectionString_;
+
+        public SessionSharing(string connectionString) {
+            connectionString_ = connectionString;
+        }
+
+        public async Task<SharedSessionInfo> UploadSession(string sessionFilePath, string containerName) {
+            var result = new SharedSessionInfo() {
+                ContainerName = containerName,
+                BlobName = Guid.NewGuid().ToString("N"),
+                EncryptionKey = EncryptionUtils.CreateNewKey()
+            };
+
+            var data = await File.ReadAllBytesAsync(sessionFilePath);
+            var encryptedData = await Task.Run(() => EncryptionUtils.Encrypt(data, result.EncryptionKey));
+            result.BlobSize = encryptedData.Length;
+
+            var blobClient = CreateBlobClient(result.BlobName, containerName);
+            await blobClient.UploadAsync(new MemoryStream(encryptedData));
+            return result;
+        }
+
+        public async Task<string> DownloadSession(SharedSessionInfo sessionInfo) {
+            var downloadFilePath = Path.GetTempFileName();
+            var blobClient = CreateBlobClient(sessionInfo.BlobName, sessionInfo.ContainerName);
+            var download = await blobClient.DownloadAsync();
+
+            using (FileStream downloadFileStream = File.OpenWrite(downloadFilePath)) {
+                await download.Value.Content.CopyToAsync(downloadFileStream);
+            }
+
+            var data = await File.ReadAllBytesAsync(downloadFilePath);
+            var decryptedData = EncryptionUtils.Decrypt(data, sessionInfo.EncryptionKey);
+            await File.WriteAllBytesAsync(downloadFilePath, decryptedData);
+            return downloadFilePath;
+        }
+
+        public string ToSharingLink(SharedSessionInfo sessionInfo) {
+            var keyString = Convert.ToBase64String(sessionInfo.EncryptionKey);
+            return $"{DefaultLocation}/{sessionInfo.ContainerName}/{sessionInfo.BlobName}?key={keyString}";
+        }
+
+        public SharedSessionInfo FromSharingLink(string link) {
+            var parts = link.Trim().Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            if(parts.Length != 3) {
+                return null;
+            }
+
+            var containerName = parts[1];
+            var keyIndex = parts[2].IndexOf("?key=");
+            
+            if(keyIndex == -1) {
+                return null;
+            }
+
+            var key = parts[2].Substring(keyIndex + "?key=".Length);
+            var blobName = parts[2].Substring(0, keyIndex);
+
+            return new SharedSessionInfo() {
+                ContainerName = containerName,
+                BlobName = blobName,
+                EncryptionKey = Convert.FromBase64String(key)
+            };
+        }
+
+        private BlobClient CreateBlobClient(string fileName, string containerName) {
+            BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString_);
+            BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            return containerClient.GetBlobClient(fileName);
+        }
+    }
+}

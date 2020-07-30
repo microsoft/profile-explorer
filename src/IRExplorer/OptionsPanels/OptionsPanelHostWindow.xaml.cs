@@ -11,8 +11,16 @@ namespace IRExplorer.OptionsPanels {
         private bool closed_;
         private IOptionsPanel optionsPanel_;
 
-        public OptionsPanelHostWindow(UserControl panel, Point position, double width, double height, UIElement referenceElement) {
+        public bool ShowResetButton { get; set; }
+
+        public OptionsPanelHostWindow(UserControl panel, Point position,
+                                      double width, double height, 
+                                      UIElement referenceElement,
+                                      bool showResetButton = true) {
             InitializeComponent();
+
+            ShowResetButton = showResetButton;
+            DataContext = this;
 
             var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
             HorizontalOffset = screenPosition.X;

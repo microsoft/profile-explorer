@@ -14,7 +14,7 @@ using IRExplorerCore;
 
 namespace IRExplorer {
     public partial class MainWindow : Window, ISessionManager {
-        OptionsPanelHostWindow diffOptionsPanel_;
+        OptionsPanelHostWindow sharingPanelHost_;
         private DateTime documentLoadStartTime_;
         private bool documentLoadProgressVisible_;
         private bool loadingDocuments_;
@@ -453,12 +453,12 @@ namespace IRExplorer {
             var height = Math.Max(DiffOptionsPanel.MinimumHeight,
                     Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
             var position = MainGrid.PointToScreen(new Point(238, MainMenu.ActualHeight + 1));
-            diffOptionsPanel_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, this);
-            diffOptionsPanel_.PanelClosed += DiffOptionsPanel_PanelClosed;
-            diffOptionsPanel_.PanelReset += DiffOptionsPanel_PanelReset;
-            diffOptionsPanel_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
-            diffOptionsPanel_.Settings = (DiffSettings)App.Settings.DiffSettings.Clone();
-            diffOptionsPanel_.IsOpen = true;
+            sharingPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, this);
+            sharingPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
+            sharingPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;
+            sharingPanelHost_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
+            sharingPanelHost_.Settings = (DiffSettings)App.Settings.DiffSettings.Clone();
+            sharingPanelHost_.IsOpen = true;
             diffOptionsVisible_ = true;
         }
 
@@ -467,15 +467,15 @@ namespace IRExplorer {
                 return;
             }
 
-            diffOptionsPanel_.IsOpen = false;
-            diffOptionsPanel_.PanelClosed -= DiffOptionsPanel_PanelClosed;
-            diffOptionsPanel_.PanelReset -= DiffOptionsPanel_PanelReset;
-            diffOptionsPanel_.SettingsChanged -= DiffOptionsPanel_SettingsChanged;
+            sharingPanelHost_.IsOpen = false;
+            sharingPanelHost_.PanelClosed -= DiffOptionsPanel_PanelClosed;
+            sharingPanelHost_.PanelReset -= DiffOptionsPanel_PanelReset;
+            sharingPanelHost_.SettingsChanged -= DiffOptionsPanel_SettingsChanged;
 
-            var newSettings = (DiffSettings)diffOptionsPanel_.Settings;
+            var newSettings = (DiffSettings)sharingPanelHost_.Settings;
             await HandleNewDiffSettings(newSettings, true);
 
-            diffOptionsPanel_ = null;
+            sharingPanelHost_ = null;
             diffOptionsVisible_ = false;
         }
 
@@ -493,18 +493,18 @@ namespace IRExplorer {
 
         private async void DiffOptionsPanel_PanelReset(object sender, EventArgs e) {
             var newSettings = new DiffSettings();
-            diffOptionsPanel_.Settings = null;
-            diffOptionsPanel_.Settings = newSettings;
+            sharingPanelHost_.Settings = null;
+            sharingPanelHost_.Settings = newSettings;
             await HandleNewDiffSettings(newSettings, true);
         }
 
         private async void DiffOptionsPanel_SettingsChanged(object sender, EventArgs e) {
-            var newSettings = (DiffSettings)diffOptionsPanel_.Settings;
+            var newSettings = (DiffSettings)sharingPanelHost_.Settings;
 
             if (newSettings != null) {
                 await HandleNewDiffSettings(newSettings, false);
-                diffOptionsPanel_.Settings = null;
-                diffOptionsPanel_.Settings = newSettings.Clone();
+                sharingPanelHost_.Settings = null;
+                sharingPanelHost_.Settings = newSettings.Clone();
             }
         }
 
