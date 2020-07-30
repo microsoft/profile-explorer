@@ -299,7 +299,7 @@ namespace IRExplorer {
             var rightMarkTask = rightDiffUpdater.MarkDiffs(leftText, diff.NewText, diff.OldText, rightDocument,
                                                            true, rightDiffStats);
 
-            Task.WaitAll(leftMarkTask, rightMarkTask);
+            await Task.WhenAll(leftMarkTask, rightMarkTask);
             var leftDiffResult = await leftMarkTask;
             var rightDiffResult = await rightMarkTask;
             sessionState_.DiffState.LeftSection = newLeftSection ?? sessionState_.DiffState.LeftSection;
