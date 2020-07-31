@@ -4,7 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DesignHeight="70"
+    d:DesignHeight="100"
     d:DesignWidth="400"
     StaysOpen="False"
     mc:Ignorable="d">
@@ -14,12 +14,30 @@
         BorderThickness="2,1,2,2">
         <StackPanel Margin="4,4,4,4" Orientation="Vertical">
             <TextBlock Text="Sharing link" />
-            <TextBox
-                x:Name="SharingLinkTextBox"
-                Margin="0,4,0,0"
-                TabIndex="1"
-                Text="{Binding SharingLink}" />
-            <DockPanel Margin="0,8,0,0">
+            <Grid>
+                <TextBox
+                    x:Name="SharingLinkTextBox"
+                    Height="20"
+                    Margin="0,4,0,0"
+                    TabIndex="1"
+                    Text="{Binding SharingLink}" />
+                <TextBlock
+                    Margin="4,6,0,0"
+                    Foreground="DimGray"
+                    IsHitTestVisible="False"
+                    Text="Paste sharing link here"
+                    Visibility="{Binding ElementName=SharingLinkTextBox, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+            </Grid>
+
+            <ProgressBar
+                Name="SharingProgressBar"
+                Height="4"
+                VerticalAlignment="Center"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                IsIndeterminate="True"
+                Visibility="Hidden" />
+            <DockPanel Margin="0,4,0,0">
                 <Button
                     x:Name="ShareButton"
                     Width="90"

@@ -12,10 +12,10 @@ namespace IRExplorer {
         private const string DefaultConnectionString = @"<SECRET>";
         private const string DefaultContainerName = "share";
 
-        public const double DefaultHeight = 82;
-        public const double MinimumHeight = 82;
+        public const double DefaultHeight = 90;
+        public const double MinimumHeight = 90;
         public const double DefaultWidth = 400;
-        public const double MinimumWidth = 100;
+        public const double MinimumWidth = 200;
 
         public SessionSharingPanel(Point position, double width, double height,
                                    UIElement referenceElement, ISessionManager session) {
@@ -33,8 +33,12 @@ namespace IRExplorer {
         public string SharingLink { get; set; }
 
         private async void ShareButton_Click(object sender, RoutedEventArgs e) {
+            SharingProgressBar.Visibility = Visibility.Visible;
+
             var sharingLink = await UploadSessionFile();
             DisplaySharingLink(sharingLink);
+
+            SharingProgressBar.Visibility = Visibility.Hidden;
         }
 
         private async Task<string> UploadSessionFile() {
@@ -49,7 +53,9 @@ namespace IRExplorer {
                 }
             }
             catch (Exception ex) {
-
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show($"Failed to upload session file: {ex.Message}", "IR Explorer",
+                                  MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
 
             return null;
@@ -68,6 +74,8 @@ namespace IRExplorer {
         }
 
         private async void OpenButton_Click(object sender, RoutedEventArgs e) {
+            SharingProgressBar.Visibility = Visibility.Visible;
+
             var sharingLink = SharingLinkTextBox.Text;
             var filePath = await DownloadSessionFile(sharingLink);
 
@@ -87,7 +95,8 @@ namespace IRExplorer {
                 }
             }
             catch (Exception ex) {
-
+                MessageBox.Show($"Failed to download and open session file: {ex.Message}", "IR Explorer",
+                                  MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
 
             return null;
