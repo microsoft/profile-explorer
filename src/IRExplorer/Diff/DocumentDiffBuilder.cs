@@ -12,6 +12,11 @@ using IRExplorerCore;
 using IRExplorer.Diff;
 
 namespace IRExplorer {
+    public enum DiffImplementationKind {
+        Internal,
+        External
+    }
+
     public class HasDiffResult {
         public HasDiffResult(IRTextSection leftSection, IRTextSection rightSection, SideBySideDiffModel model,
                              bool hasDiffs) {
@@ -27,24 +32,42 @@ namespace IRExplorer {
         public bool HasDiffs { get; set; }
     }
 
-    public static class DocumentDiff {
+    public class DocumentDiffBuilder {
         private static readonly char[] IgnoredDiffLetters = {
             '(', ')', ',', '.', ';', ':', '|', '{', '}', '!', ' ', '\t', '\r', '\n'
         };
 
-        public static SideBySideDiffModel ComputeDiffs(string leftText, string rightText) {
-            //? TODO: Check first if text is identical
+        private DiffSettings settings_;
 
-            if (BeyondCompareDiffBuilder.HasBeyondCompare()) {
-                return BeyondCompareDiffBuilder.ComputeDiffs(leftText, rightText);
+        public DocumentDiffBuilder(DiffSettings settings) {
+            settings_ = settings;
+        }
+
+        public SideBySideDiffModel ComputeDiffs(string leftText, string rightText) {
+            if (settings_.DiffImplementation == DiffImplementationKind.External) {
+                if (!string.IsNullOrEmpty(settings_.ExternalDiffAppPath)) {
+                    var result = BeyondCompareDiffBuilder.ComputeDiffs(leftText, rightText, settings_.ExternalDiffAppPath);
+
+                    if (result != null) {
+                        return result;
+                    }
+                }
+
+                // Fall back to the internal diff engine if the external one failed.
             }
 
+            return ComputeInternalDiffs(leftText, rightText);
+        }
+
+        public SideBySideDiffModel ComputeInternalDiffs(string leftText, string rightText) {
+            //? TODO: Check first if text is identical
+            //? - Could use a per-section hash
             var diffBuilder = new SideBySideDiffBuilder(new Differ(), IgnoredDiffLetters);
             var diff = diffBuilder.BuildDiffModel(leftText, rightText);
             return diff;
         }
 
-        public static bool HasDiffs(SideBySideDiffModel diffModel) {
+        public bool HasDiffs(SideBySideDiffModel diffModel) {
             foreach (var line in diffModel.OldText.Lines) {
                 if (line.Type != ChangeType.Unchanged && line.Type != ChangeType.Imaginary) {
                     return true;
@@ -54,7 +77,7 @@ namespace IRExplorer {
             return false;
         }
 
-        public static async Task<List<HasDiffResult>> ComputeSectionDiffs(
+        public async Task<List<HasDiffResult>> ComputeSectionDiffs(
             List<Tuple<IRTextSection, IRTextSection>> comparedSections, SectionLoader leftDocLoader,
             SectionLoader rightDocLoader) {
             int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
@@ -72,7 +95,7 @@ namespace IRExplorer {
             return results;
         }
 
-        private static async Task ComputeSectionDiffsImpl(
+        private async Task ComputeSectionDiffsImpl(
             List<Tuple<IRTextSection, IRTextSection>> comparedSections, SectionLoader leftDocLoader,
             SectionLoader rightDocLoader, Task<HasDiffResult>[] tasks, int maxConcurrency) {
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
@@ -87,7 +110,7 @@ namespace IRExplorer {
                     try {
                         string leftText = leftDocLoader.LoadSectionText(leftSection, false);
                         string rightText = rightDocLoader.LoadSectionText(rightSection, false);
-                        var diffs = ComputeDiffs(leftText, rightText);
+                        var diffs = ComputeInternalDiffs(leftText, rightText);
                         bool hasDiffs = HasDiffs(diffs);
                         return new HasDiffResult(leftSection, rightSection, diffs, hasDiffs);
                     }

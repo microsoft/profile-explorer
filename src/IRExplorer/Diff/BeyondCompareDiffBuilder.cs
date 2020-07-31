@@ -11,25 +11,63 @@ using System.Threading.Tasks;
 
 namespace IRExplorer.Diff {
     class BeyondCompareDiffBuilder {
-        private static string BeyondComparePath = @"C:\tools\beyondcompare\BCompare.exe";
+        private const string BeyondCompareDirectory = @"Beyond Compare 4";
+        private const string BeyondCompareExecutable = @"BCompare.exe";
 
-        public static bool HasBeyondCompare() {
-            return File.Exists(BeyondComparePath);
+        public static string FindBeyondCompareExecutable() {
+            // Look for BC in Program Files.
+            var path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                                      BeyondCompareDirectory, BeyondCompareExecutable);
+            if (File.Exists(path)) {
+                return path;
+            }
+
+            // If not found, look on PATH.
+            path = NativeMethods.GetFullPathFromWindows(BeyondCompareExecutable);
+            return path ?? "";
         }
 
-        public static SideBySideDiffModel ComputeDiffs(string leftText, string rightText) {
-            string reportPath = GenerateReport(leftText, rightText);
+        public static bool HasBeyondCompareExecutable() {
+            return !string.IsNullOrEmpty(FindBeyondCompareExecutable());
+        }
+
+        public static SideBySideDiffModel ComputeDiffs(string leftText, string rightText, string beyondComparePath) {
+            string reportPath = GenerateReport(leftText, rightText, beyondComparePath);
+
+            if (string.IsNullOrEmpty(reportPath)) {
+                return null; // Failed to get Beyond Compare results.
+            }
+
             SideBySideDiffModel diff = GenerateDiffsFromReport(reportPath);
-            File.Delete(reportPath);
+
+            try {
+                File.Delete(reportPath);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"BeyondCompareDiffBuilder: Failed to delete report file: {ex.Message}");
+            }
+
             return diff;
         }
 
-        private static string GenerateReport(string leftText, string rightText) {
-            string leftPath = Path.GetTempFileName();
-            string rightPath = Path.GetTempFileName();
-            string scriptPath = Path.GetTempFileName();
-            string reportPath = Path.GetTempFileName();
+        private static string GenerateReport(string leftText, string rightText, string beyondComparePath) {
+            string leftPath;
+            string rightPath;
+            string scriptPath;
+            string reportPath;
 
+            try {
+                leftPath = Path.GetTempFileName();
+                rightPath = Path.GetTempFileName();
+                scriptPath = Path.GetTempFileName();
+                reportPath = Path.GetTempFileName();
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"BeyondCompareDiffBuilder: Failed to get temp file names: {ex.Message}");
+                return null;
+            }
+
+            // Write the text to compare on multiple threads.
             var task1 = Task.Run(() => File.WriteAllText(leftPath, leftText));
             var task2 = Task.Run(() => File.WriteAllText(rightPath, rightText));
             var task3 = Task.Run(() => {
@@ -41,13 +79,27 @@ namespace IRExplorer.Diff {
 
             Task.WaitAll(task1, task2, task3);
 
-            var psi = new ProcessStartInfo(BeyondComparePath, string.Format("@{0} /silent", scriptPath));
-            var process = Process.Start(psi);
-            process.WaitForExit();
+            // Start Beyond Compare.
+            try {
+                var psi = new ProcessStartInfo(beyondComparePath, string.Format("@{0} /silent", scriptPath));
+                var process = Process.Start(psi);
+                process.WaitForExit();
+            }
+            catch (Exception ex) {
+                Trace.TraceError(
+                        $"BeyondCompareDiffBuilder: Failed to start bcompare.exe: {beyondComparePath}");
+                return null;
+            }
 
-            File.Delete(leftPath);
-            File.Delete(leftPath);
-            File.Delete(scriptPath);
+            // Clean up temporary files.
+            try {
+                File.Delete(leftPath);
+                File.Delete(leftPath);
+                File.Delete(scriptPath);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"BeyondCompareDiffBuilder: Failed to delete temp files: {ex.Message}");
+            }
 
             return reportPath;
         }

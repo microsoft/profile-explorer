@@ -336,8 +336,9 @@ namespace IRExplorer {
             //? TODO: Pass the LoadedDocument to the panel, not Summary.
             var baseLoader = Session.SessionState.FindLoadedDocument(MainPanel.Summary).Loader;
             var diffLoader = Session.SessionState.FindLoadedDocument(DiffPanel.Summary).Loader;
-            var results = await DocumentDiff.ComputeSectionDiffs(comparedSections, baseLoader, diffLoader);
-            return results;
+
+            var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
+            return await diffBuilder.ComputeSectionDiffs(comparedSections, baseLoader, diffLoader);
         }
 
         public override void OnSessionStart() {

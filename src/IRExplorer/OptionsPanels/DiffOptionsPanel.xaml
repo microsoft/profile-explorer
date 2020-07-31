@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorer.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:settings="clr-namespace:IRExplorer"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     d:DesignHeight="520"
     d:DesignWidth="300 "
@@ -269,41 +270,46 @@
 
             <Separator Margin="0,6,0,4" />
 
-            <TextBlock FontWeight="DemiBold" Text="External Diff Application" />
+            <TextBlock FontWeight="DemiBold" Text="Default Diff Implementation" />
             <StackPanel Margin="0,4,0,0" Orientation="Vertical">
+                <RadioButton Content="Internal" IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static settings:DiffImplementationKind.Internal}}" />
+                <RadioButton
+                    x:Name="ExternalDiffRadioButton"
+                    Margin="0,2,0,2"
+                    Content="Beyond Compare"
+                    IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static settings:DiffImplementationKind.External}}" />
                 <DockPanel Margin="0,2,0,2" LastChildFill="True">
                     <TextBlock
-                        Width="59"
+                        Margin="20,0,0,0"
                         VerticalAlignment="Center"
                         Text="Path" />
                     <Grid DockPanel.Dock="Right">
                         <controls:FileSystemTextBox
                             x:Name="ExternalAppPathTextbox"
                             Height="20"
-                            Margin="8,0,22,0"
+                            Margin="8,0,62,0"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            IsEnabled="{Binding ElementName=ExternalDiffRadioButton, Path=IsChecked}"
                             Text="{Binding ExternalDiffAppPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <Button
                             Name="ExternalAppPathButton"
                             Width="20"
+                            Height="20"
+                            Margin="0,0,41,0"
                             HorizontalAlignment="Right"
                             Click="ExternalAppPathButton_Click"
-                            Content="..." />
+                            Content="..."
+                            ToolTip="Browse to select the location of the Beyond Compare executable" />
+                        <Button
+                            Name="DefaultAppPathButton"
+                            Width="40"
+                            Height="20"
+                            HorizontalAlignment="Right"
+                            Click="DefaultAppPathButton_Click"
+                            Content="Detect"
+                            ToolTip="Auto-detect the location of the Beyond Compare executable" />
                     </Grid>
                 </DockPanel>
-                <DockPanel Margin="0,2,0,2" LastChildFill="True">
-                    <TextBlock
-                        Width="59"
-                        VerticalAlignment="Center"
-                        Text="Arguments" />
-                    <TextBox
-                        Name="ExternalAppArgsTextbox"
-                        Height="20"
-                        Margin="8,0,0,0"
-                        DockPanel.Dock="Right"
-                        Text="{Binding ExternalDiffAppArgs, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                </DockPanel>
-                <TextBlock HorizontalAlignment="Right" Text="Available variables: $LEFT, $RIGHT" />
             </StackPanel>
         </StackPanel>
     </Grid>

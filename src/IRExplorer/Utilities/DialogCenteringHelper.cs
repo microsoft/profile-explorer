@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Controls.Primitives;
+using System.Windows.Controls;
+using IRExplorer.OptionsPanels;
 
 namespace IRExplorer {
     // Code based on answer from https://stackoverflow.com/a/15369563
@@ -17,23 +19,33 @@ namespace IRExplorer {
         private HookProc hookProc_;
         private IntPtr hHook_;
         private bool isPopup_;
+        private Popup popup_;
 
         public DialogCenteringHelper(FrameworkElement owner) {
+            Initialize(owner);
+        }
+
+        private void Initialize(FrameworkElement owner) {
             if (owner is Window window) {
                 ownerHandle_ = new WindowInteropHelper(window).Handle;
-                Initialize();
+                InitializeImpl();
             }
             else if (owner is Popup popup) {
                 ownerHandle_ = ((HwndSource)PresentationSource.FromVisual(popup.Child)).Handle;
                 isPopup_ = true;
-                Initialize();
+                popup_ = popup;
+                popup_.StaysOpen = true; // Prevent popup from closing while showing message box.
+                InitializeImpl();
+            }
+            else if (owner is OptionsPanelBase optionsPanel) {
+                Initialize(optionsPanel.Parent);
             }
             else {
                 throw new InvalidOperationException("Unexpected owner control!");
             }
         }
 
-        private void Initialize() {
+        private void InitializeImpl() {
             hookProc_ = DialogHookProc;
             hHook_ = SetWindowsHookEx(WH_CALLWNDPROCRET, hookProc_, IntPtr.Zero, GetCurrentThreadId());
         }
@@ -59,6 +71,10 @@ namespace IRExplorer {
         }
 
         public void Dispose() {
+            if (isPopup_) {
+                popup_.StaysOpen = false;
+            }
+
             UnhookWindowsHookEx(hHook_);
         }
 

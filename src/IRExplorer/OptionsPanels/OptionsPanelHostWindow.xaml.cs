@@ -90,7 +90,6 @@ namespace IRExplorer.OptionsPanels {
         public void PanelResetted() { }
 
         private void ResetButton_Click(object sender, RoutedEventArgs e) {
-            StaysOpen = true; // Prevent popup from closing while showing message box.
             using var centerForm = new DialogCenteringHelper(this);
 
             if (MessageBox.Show("Do you want to reset all settings?", "IR Explorer",
@@ -98,7 +97,6 @@ namespace IRExplorer.OptionsPanels {
                 return;
             }
 
-            StaysOpen = false;
             optionsPanel_.PanelResetting();
             PanelReset?.Invoke(this, e);
             optionsPanel_.PanelResetted();
