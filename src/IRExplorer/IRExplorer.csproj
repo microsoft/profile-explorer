@@ -88,6 +88,7 @@
         <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
         <PackageReference Include="protobuf-net" Version="3.0.29" />
         <PackageReference Include="System.IO" Version="4.3.0" />
+        <PackageReference Include="HtmlAgilityPack" Version="1.11.24" />
     </ItemGroup>
 
     <ItemGroup>

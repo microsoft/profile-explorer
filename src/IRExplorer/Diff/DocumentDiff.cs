@@ -9,6 +9,7 @@ using DiffPlex;
 using DiffPlex.DiffBuilder;
 using DiffPlex.DiffBuilder.Model;
 using IRExplorerCore;
+using IRExplorer.Diff;
 
 namespace IRExplorer {
     public class HasDiffResult {
@@ -33,6 +34,11 @@ namespace IRExplorer {
 
         public static SideBySideDiffModel ComputeDiffs(string leftText, string rightText) {
             //? TODO: Check first if text is identical
+
+            if (BeyondCompareDiffBuilder.HasBeyondCompare()) {
+                return BeyondCompareDiffBuilder.ComputeDiffs(leftText, rightText);
+            }
+
             var diffBuilder = new SideBySideDiffBuilder(new Differ(), IgnoredDiffLetters);
             var diff = diffBuilder.BuildDiffModel(leftText, rightText);
             return diff;
