@@ -6,6 +6,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="70"
     d:DesignWidth="400"
+    StaysOpen="False"
     mc:Ignorable="d">
     <Border
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"

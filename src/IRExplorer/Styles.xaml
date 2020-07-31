@@ -4,6 +4,7 @@
     xmlns:local="clr-namespace:IRExplorer">
 
     <BooleanToVisibilityConverter x:Key="BoolToVisibility" />
+    <local:EnumBooleanConverter x:Key="EnumToBool" />
 
     <Style x:Key="HoverUnderlineStyle" TargetType="TextBlock">
         <Style.Triggers>

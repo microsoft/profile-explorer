@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
 using System;
 using System.Windows.Input;
+using IRExplorer.Diff;
+using System.Windows;
 
 namespace IRExplorer.OptionsPanels {
     /// <summary>
@@ -20,8 +22,7 @@ namespace IRExplorer.OptionsPanels {
         }
 
         private void DiffOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-            if (ExternalAppPathTextbox.IsKeyboardFocusWithin ||
-                ExternalAppArgsTextbox.IsKeyboardFocusWithin) {
+            if (ExternalAppPathTextbox.IsKeyboardFocusWithin) {
                 return;
             }
 
@@ -30,8 +31,7 @@ namespace IRExplorer.OptionsPanels {
 
         private void DiffOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
             if (ExternalAppPathButton.IsMouseDirectlyOver ||
-                ExternalAppPathTextbox.IsKeyboardFocusWithin ||
-                ExternalAppArgsTextbox.IsKeyboardFocusWithin) {
+                ExternalAppPathTextbox.IsKeyboardFocusWithin) {
                 return;
             }
 
@@ -45,12 +45,11 @@ namespace IRExplorer.OptionsPanels {
         }
 
         private void ExternalAppPathButton_Click(object sender, System.Windows.RoutedEventArgs e) {
-            // Don't let the panel close when the file dialog is displayed.
-            RaiseStayOpenChanged(true);
+            using var centerForm = new DialogCenteringHelper(this);
 
             var fileDialog = new OpenFileDialog {
-                DefaultExt = "*.exe",
-                Filter = "Executables|*.exe"
+                DefaultExt = "bcompare.exe",
+                Filter = "BC executables|bcompare.exe"
             };
 
             var result = fileDialog.ShowDialog();
@@ -58,8 +57,19 @@ namespace IRExplorer.OptionsPanels {
             if (result.HasValue && result.Value) {
                 ExternalAppPathTextbox.Text = fileDialog.FileName;
             }
+        }
 
-            RaiseStayOpenChanged(false);
+        private void DefaultAppPathButton_Click(object sender, System.Windows.RoutedEventArgs e) {
+            var path = BeyondCompareDiffBuilder.FindBeyondCompareExecutable();
+
+            if (!string.IsNullOrEmpty(path)) {
+                ExternalAppPathTextbox.Text = path;
+            }
+            else {
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show($"Could not find Beyond Compare executable", "IR Explorer",
+                                  MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            }
         }
     }
 }

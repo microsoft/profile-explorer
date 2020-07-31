@@ -1,4 +1,6 @@
-﻿using System.Windows.Media;
+﻿using System.ComponentModel;
+using System.Windows.Media;
+using IRExplorer.Diff;
 using ProtoBuf;
 
 namespace IRExplorer {
@@ -24,7 +26,8 @@ namespace IRExplorer {
         [ProtoMember(13)] public Color MinorModificationBorderColor { get; set; }
         [ProtoMember(15)] public Color PlaceholderBorderColor { get; set; }
         [ProtoMember(16)] public string ExternalDiffAppPath { get; set; }
-        [ProtoMember(17)] public string ExternalDiffAppArgs { get; set; }
+        [ProtoMember(18), DefaultValue(DiffImplementationKind.Internal)]
+        public DiffImplementationKind DiffImplementation { get; set; }
 
         public override void Reset() {
             IdentifyMinorDiffs = true;
@@ -32,6 +35,7 @@ namespace IRExplorer {
             ManyDiffsMarkWholeLine = true;
             ManyDiffsModificationPercentage = 60;
             ManyDiffsInsertionPercentage = 75;
+            DiffImplementation = DiffImplementationKind.Internal;
 
             DeletionBorderColor = Utils.ColorFromString("#B33232");
             InsertionBorderColor = Utils.ColorFromString("#7FA72E");
@@ -51,10 +55,11 @@ namespace IRExplorer {
 
         public bool HasDiffHandlingChanges(DiffSettings other) {
             return other.IdentifyMinorDiffs != IdentifyMinorDiffs ||
-                other.FilterInsignificantDiffs != FilterInsignificantDiffs ||
-                other.ManyDiffsMarkWholeLine != ManyDiffsMarkWholeLine ||
-                other.ManyDiffsInsertionPercentage != ManyDiffsInsertionPercentage ||
-                other.ManyDiffsModificationPercentage != ManyDiffsModificationPercentage;
+                   other.FilterInsignificantDiffs != FilterInsignificantDiffs ||
+                   other.ManyDiffsMarkWholeLine != ManyDiffsMarkWholeLine ||
+                   other.ManyDiffsInsertionPercentage != ManyDiffsInsertionPercentage ||
+                   other.ManyDiffsModificationPercentage != ManyDiffsModificationPercentage ||
+                   other.DiffImplementation != DiffImplementation;
         }
 
         public override bool Equals(object obj) {
@@ -74,7 +79,7 @@ namespace IRExplorer {
                    MinorModificationBorderColor.Equals(settings.MinorModificationBorderColor) &&
                    PlaceholderBorderColor.Equals(settings.PlaceholderBorderColor) &&
                    ExternalDiffAppPath == settings.ExternalDiffAppPath &&
-                   ExternalDiffAppArgs == settings.ExternalDiffAppArgs;
+                   DiffImplementation == settings.DiffImplementation;
         }
     }
 }

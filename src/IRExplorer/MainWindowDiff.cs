@@ -286,7 +286,9 @@ namespace IRExplorer {
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, string leftText,
                                          string rightText, IRTextSection newLeftSection = null,
                                          IRTextSection newRightSection = null) {
-            var diff = await Task.Run(() => DocumentDiff.ComputeDiffs(leftText, rightText));
+            var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
+            var diff = await Task.Run(() => diffBuilder.ComputeDiffs(leftText, rightText));
+
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
@@ -302,6 +304,7 @@ namespace IRExplorer {
             await Task.WhenAll(leftMarkTask, rightMarkTask);
             var leftDiffResult = await leftMarkTask;
             var rightDiffResult = await rightMarkTask;
+
             sessionState_.DiffState.LeftSection = newLeftSection ?? sessionState_.DiffState.LeftSection;
             sessionState_.DiffState.RightSection = newRightSection ?? sessionState_.DiffState.RightSection;
             sessionState_.DiffState.LeftDiffResults = leftDiffResult;
@@ -336,7 +339,7 @@ namespace IRExplorer {
                 leftText = result.Text;
                 newLeftSection = section;
 
-                (rightText, newRightSection) = 
+                (rightText, newRightSection) =
                     await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.RightDocument.Section, diffDocument_);
             }
             else if (document == sessionState_.DiffState.RightDocument) {
@@ -366,7 +369,7 @@ namespace IRExplorer {
                                 newLeftSection, newRightSection);
         }
 
-        private async Task<Tuple<string, IRTextSection>> 
+        private async Task<Tuple<string, IRTextSection>>
             SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
                                           LoadedDocument otherDocument) {
             if (diffDocument_ != null) {
@@ -525,7 +528,8 @@ namespace IRExplorer {
             var prevText = sessionState_.FindLoadedDocument(prevSection).Loader.GetSectionText(prevSection);
             var currentText = sessionState_.FindLoadedDocument(section).Loader.GetSectionText(section);
 
-            var diff = await Task.Run(() => DocumentDiff.ComputeDiffs(prevText, currentText));
+            var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
+            var diff = await Task.Run(() => diffBuilder.ComputeDiffs(prevText, currentText));
 
             var diffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
@@ -658,39 +662,11 @@ namespace IRExplorer {
         }
 
         private async void ExternalDiffButton_Click(object sender, RoutedEventArgs e) {
-            var appPath = App.Settings.DiffSettings.ExternalDiffAppPath;
-
-            if (!string.IsNullOrEmpty(appPath) && File.Exists(appPath)) {
-                var leftText = await GetRawSectionTextAsync(sessionState_.DiffState.LeftSection);
-                var rightText = await GetRawSectionTextAsync(sessionState_.DiffState.RightSection);
-
-                try {
-                    var fileName = Path.GetTempFileName();
-                    var leftFile = $"{fileName}_1_{sessionState_.DiffState.LeftSection.Name.Replace(' ', '_')}.txt";
-                    var rightFile = $"{fileName}_2_{sessionState_.DiffState.RightSection.Name.Replace(' ', '_')}.txt";
-
-                    await File.WriteAllTextAsync(leftFile, leftText);
-                    await File.WriteAllTextAsync(rightFile, rightText);
-
-                    var appArgs = App.Settings.DiffSettings.ExternalDiffAppArgs;
-                    appArgs = appArgs.Replace("$LEFT", $"\"{leftFile}\"");
-                    appArgs = appArgs.Replace("$RIGHT", $"\"{rightFile}\"");
-
-                    var psi = new ProcessStartInfo(appPath) {
-                        UseShellExecute = true,
-                        Arguments = appArgs
-                    };
-
-                    Process.Start(psi);
-                }
-                catch (Exception ex) {
-                    using var centerForm = new DialogCenteringHelper(this);
-                    MessageBox.Show($"Failed to start external diff application: {ex.Message}", "IR Explorer",
-                                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                }
-            }
+            var newSettings = (DiffSettings)App.Settings.DiffSettings.Clone();
+            newSettings.DiffImplementation = newSettings.DiffImplementation == DiffImplementationKind.Internal ?
+                                             DiffImplementationKind.External : DiffImplementationKind.Internal;
+            await HandleNewDiffSettings(newSettings, false);
         }
-
 
         private async void PreviousDiffButton_Click(object sender, RoutedEventArgs e) {
             if (!sessionState_.DiffState.IsEnabled) {

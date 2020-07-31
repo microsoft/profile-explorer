@@ -742,7 +742,7 @@
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
                                     Click="ExternalDiffButton_Click"
-                                    ToolTip="Open sections in external diff application">
+                                    ToolTip="Switch between internal and external diff implementation">
                                     <Image
                                         Width="14"
                                         Height="14"
