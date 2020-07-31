@@ -11,10 +11,8 @@ namespace IRExplorer.OptionsPanels {
         private bool closed_;
         private IOptionsPanel optionsPanel_;
 
-        public bool ShowResetButton { get; set; }
-
         public OptionsPanelHostWindow(UserControl panel, Point position,
-                                      double width, double height, 
+                                      double width, double height,
                                       UIElement referenceElement,
                                       bool showResetButton = true) {
             InitializeComponent();
@@ -35,6 +33,8 @@ namespace IRExplorer.OptionsPanels {
             optionsPanel_.StayOpenChanged += OptionsPanel_StayOpenChanged;
             PanelHost.Content = panel;
         }
+
+        public bool ShowResetButton { get; set; }
 
         protected override void OnOpened(EventArgs e) {
             base.OnOpened(e);

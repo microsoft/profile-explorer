@@ -10,7 +10,7 @@ using IRExplorerCore;
 namespace IRExplorer {
     public class SharedSessionInfo {
         public string ContainerName { get; set; }
-        public string BlobName { get;set; }
+        public string BlobName { get; set; }
         public int BlobSize { get; set; }
         public byte[] EncryptionKey { get; set; }
     }
@@ -56,26 +56,27 @@ namespace IRExplorer {
         }
 
         public string ToSharingLink(SharedSessionInfo sessionInfo) {
-            var keyString = Convert.ToBase64String(sessionInfo.EncryptionKey);
+            // Base64 uses /, which is an issue for URLs.
+            var keyString = Convert.ToBase64String(sessionInfo.EncryptionKey).Replace('/', '_');
             return $"{DefaultLocation}/{sessionInfo.ContainerName}/{sessionInfo.BlobName}?key={keyString}";
         }
 
         public SharedSessionInfo FromSharingLink(string link) {
             var parts = link.Trim().Split('/', StringSplitOptions.RemoveEmptyEntries);
 
-            if(parts.Length != 3) {
+            if (parts.Length != 4) {
                 return null;
             }
 
-            var containerName = parts[1];
-            var keyIndex = parts[2].IndexOf("?key=");
-            
-            if(keyIndex == -1) {
+            var containerName = parts[2];
+            var keyIndex = parts[3].IndexOf("?key=");
+
+            if (keyIndex == -1) {
                 return null;
             }
 
-            var key = parts[2].Substring(keyIndex + "?key=".Length);
-            var blobName = parts[2].Substring(0, keyIndex);
+            var key = parts[3].Substring(keyIndex + "?key=".Length).Replace('_', '/');
+            var blobName = parts[3].Substring(0, keyIndex);
 
             return new SharedSessionInfo() {
                 ContainerName = containerName,

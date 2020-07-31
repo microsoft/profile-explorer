@@ -55,5 +55,8 @@ namespace IRExplorer {
 
         void RegisterDetachedRemarkPanel(RemarkPreviewPanel panel);
         void UnregisterDetachedRemarkPanel(RemarkPreviewPanel panel);
+
+        Task<bool> SaveSessionDocument(string filePath);
+        Task<bool> OpenSessionDocument(string filePath);
     }
 }

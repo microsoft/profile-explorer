@@ -73,7 +73,7 @@ namespace IRExplorer {
             }
         }
 
-        private async Task<bool> OpenSessionDocument(string filePath) {
+        public async Task<bool> OpenSessionDocument(string filePath) {
             try {
                 EndSession();
                 UpdateUIBeforeReadSession(filePath);
@@ -140,7 +140,7 @@ namespace IRExplorer {
             StartAutoSaveTimer();
         }
 
-        private async Task<bool> SaveSessionDocument(string filePath) {
+        public async Task<bool> SaveSessionDocument(string filePath) {
             try {
                 NotifyPanelsOfSessionSave();
                 NotifyDocumentsOfSessionSave();

@@ -35,7 +35,6 @@ using IRExplorer.Diff;
 using Microsoft.Win32;
 using IRExplorer.UTC;
 using IRExplorer.LLVM;
-using IRExplorer.Sharing;
 
 namespace IRExplorer {
     public static class AppCommand {
@@ -781,30 +780,13 @@ namespace IRExplorer {
         }
 
         private async void ShareButton_Click(object sender, RoutedEventArgs e) {
-            try {
-                var filePath = Path.GetTempFileName();
-
-                if (await SaveSessionDocument(filePath)) {
-                    const string DefaultConnectionString = @"<SECRET>";
-                    const string DefaultContainerName = "share";
-                    var sharing = new SessionSharing(DefaultConnectionString);
-                    var result = await sharing.UploadSession(filePath, DefaultContainerName);
-                    var sharingLink = sharing.ToSharingLink(result);
-
-                    var width = Math.Max(SessionSharingPanel.MinimumWidth,
-                    Math.Min(MainGrid.ActualWidth, SessionSharingPanel.DefaultWidth));
-                    var height = Math.Max(SessionSharingPanel.MinimumHeight,
-                            Math.Min(MainGrid.ActualHeight, SessionSharingPanel.DefaultHeight));
-                    var position = MainGrid.PointToScreen(new Point(236, MainMenu.ActualHeight + 1));
-                    var sharingPanel = new SessionSharingPanel(sharingLink);
-                    sharingPanelHost_ = new OptionsPanelHostWindow(sharingPanel, position,
-                                                                   width, height, this, false);
-                    sharingPanelHost_.IsOpen = true;
-                }
-            }
-            catch (Exception ex) {
-
-            }
+            var width = Math.Max(SessionSharingPanel.MinimumWidth,
+                                  Math.Min(MainGrid.ActualWidth, SessionSharingPanel.DefaultWidth));
+            var height = Math.Max(SessionSharingPanel.MinimumHeight,
+                                   Math.Min(MainGrid.ActualHeight, SessionSharingPanel.DefaultHeight));
+            var position = MainGrid.PointToScreen(new Point(236, MainMenu.ActualHeight + 1));
+            var sharingPanel = new SessionSharingPanel(position, width, height, this, this);
+            sharingPanel.IsOpen = true;
         }
     }
 }
