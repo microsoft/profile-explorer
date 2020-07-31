@@ -31,7 +31,13 @@ namespace IRExplorer {
                 InitializeImpl();
             }
             else if (owner is Popup popup) {
-                ownerHandle_ = ((HwndSource)PresentationSource.FromVisual(popup.Child)).Handle;
+                var source = PresentationSource.FromVisual(popup.Child);
+
+                if (source == null) {
+                    return; // Most likely popup closed in the meantime.
+                }
+
+                ownerHandle_ = ((HwndSource)source).Handle;
                 isPopup_ = true;
                 popup_ = popup;
                 popup_.StaysOpen = true; // Prevent popup from closing while showing message box.
