@@ -777,7 +777,6 @@
                             x:Name="ShareButton"
                             Padding="2,1,2,1"
                             VerticalAlignment="Center"
-                            Background="#FFC2E4FA"
                             BorderBrush="{x:Null}"
                             Click="ShareButton_Click"
                             FontSize="11"
