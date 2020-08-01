@@ -33,10 +33,12 @@ namespace IRExplorer {
         protected Dictionary<IRTextSection, ParsedSection> sectionCache_;
         protected ICompilerIRInfo irInfo_;
         protected bool cacheEnabled_;
+        protected object lockObject_;
 
         protected void Initialize(ICompilerIRInfo irInfo, bool cacheEnabled) {
             irInfo_ = irInfo;
             cacheEnabled_ = cacheEnabled;
+            lockObject_ = new object();
 
             if (cacheEnabled) {
                 sectionCache_ = new Dictionary<IRTextSection, ParsedSection>();
@@ -60,22 +62,21 @@ namespace IRExplorer {
                 return null;
             }
 
-            lock (this) {
+            lock (lockObject_) {
                 return sectionCache_.TryGetValue(section, out var result) ? result : null;
             }
         }
 
         public string LoadSectionText(IRTextSection section, bool useCache = true) {
             if (useCache && cacheEnabled_) {
-                lock (this) {
-                    return sectionCache_.TryGetValue(section, out var result)
-                        ? result.Text
-                        : GetSectionText(section);
+                lock (lockObject_) {
+                    if (sectionCache_.TryGetValue(section, out var result)) {
+                        return result.Text;
+                    }
                 }
             }
-            else {
-                return GetSectionText(section);
-            }
+
+            return GetSectionText(section);
         }
     }
 
@@ -113,7 +114,7 @@ namespace IRExplorer {
             Trace.TraceInformation(
                 $"Section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
 
-            lock (this) {
+            lock (lockObject_) {
                 if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var cachedResult)) {
                     Trace.TraceInformation($"Section loader {ObjectTracker.Track(this)}: found in cache");
                     return cachedResult;
@@ -135,7 +136,7 @@ namespace IRExplorer {
 
             var result = new ParsedSection(section, text, function);
 
-            lock (this) {
+            lock (lockObject_) {
                 if (cacheEnabled_ && function != null) {
                     sectionCache_[section] = result;
                 }
@@ -231,7 +232,7 @@ namespace IRExplorer {
         }
 
         public override ParsedSection LoadSection(IRTextSection section) {
-            lock (this) {
+            lock (lockObject_) {
                 Trace.TraceInformation(
                     $"Debug section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
 
