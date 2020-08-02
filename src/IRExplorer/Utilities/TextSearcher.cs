@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using IRExplorerCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -57,6 +58,7 @@ namespace IRExplorer {
         private static Regex CreateRegex(string pattern, TextSearchKind searchKind) {
             try {
                 //? TODO: Regex should also honor the IgnoreCase/WholeWord flags
+                //? TODO: Check if compiled regex is faster (should be...)
                 var options = RegexOptions.None;
 
                 if (searchKind.HasFlag(TextSearchKind.CaseInsensitive)) {
@@ -72,8 +74,8 @@ namespace IRExplorer {
         }
 
         private static (int, int) IndexOf(string text, string searchedText, int startOffset = 0,
-                                          TextSearchKind searchKind = TextSearchKind.Default,
-                                          Regex regex = null) {
+                                           TextSearchKind searchKind = TextSearchKind.Default,
+                                           Regex regex = null) {
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchedText)) {
                 return (-1, 0);
             }
@@ -122,9 +124,9 @@ namespace IRExplorer {
         }
 
         public static List<TextSearchResult> AllIndexesOf(string text, string searchedText,
-                                                          int startOffset = 0,
-                                                          TextSearchKind searchKind =
-                                                              TextSearchKind.Default) {
+                                                            int startOffset = 0,
+                                                            TextSearchKind searchKind = TextSearchKind.Default,
+                                                            CancelableTaskInfo cancelableTask = null) {
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchedText)) {
                 return new List<TextSearchResult>();
             }
@@ -134,16 +136,17 @@ namespace IRExplorer {
                 : null;
 
             var offsetList = new List<TextSearchResult>();
-
-            (int offset, int length) = IndexOf(text, searchedText, startOffset, searchKind,
-                                               regex);
+            (int offset, int length) = IndexOf(text, searchedText, startOffset, searchKind, regex);
 
             while (offset != -1 && offset < text.Length) {
                 offsetList.Add(new TextSearchResult(offset, length));
                 offset += length;
 
-                (offset, length) = IndexOf(text, searchedText, offset, searchKind,
-                                           regex);
+                if (cancelableTask != null && cancelableTask.IsCanceled) {
+                    break;
+                }
+
+                (offset, length) = IndexOf(text, searchedText, offset, searchKind, regex);
             }
 
             return offsetList;
@@ -151,9 +154,7 @@ namespace IRExplorer {
 
         public static bool Contains(string text, string searchedText,
                                     TextSearchKind searchKind = TextSearchKind.Default) {
-            (int offset, int length) = IndexOf(text, searchedText, 0, searchKind,
-                                               null);
-
+            (int offset, _) = IndexOf(text, searchedText, 0, searchKind, null);
             return offset != -1;
         }
     }
