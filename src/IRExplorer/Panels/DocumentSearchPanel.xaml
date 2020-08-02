@@ -4,6 +4,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:doc="clr-namespace:IRExplorer.Document"
+    xmlns:irexplorer="clr-namespace:IRExplorer"
     xmlns:local="clr-namespace:IRExplorer.Panels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="450"
@@ -13,66 +14,49 @@
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         BorderThickness="2,1,2,2">
-        <StackPanel Orientation="Vertical">
-            <doc:SearchPanel x:Name="SearchPanel" Height="28" />
-            <StackPanel Margin="4,4,4,4" Orientation="Horizontal">
-                <CheckBox Content="Search entire document" />
-                <CheckBox Margin="8,0,0,0" Content="Include pass output" />
-            </StackPanel>
-            <Separator />
-            <StackPanel Margin="4,4,4,4" Orientation="Horizontal">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Functions" />
-                    <TextBlock
-                        Width="50"
-                        Margin="4,0,0,0"
-                        Text="{Binding FunctionCount}" />
+        <DockPanel LastChildFill="True">
+            <StackPanel DockPanel.Dock="Top" Orientation="Vertical">
+                <doc:SearchPanel x:Name="SearchPanel" Height="28" />
+                <StackPanel Margin="4,4,4,4" Orientation="Horizontal">
+                    <CheckBox Content="Search entire document" />
+                    <CheckBox Margin="8,0,0,0" Content="Include pass output" />
                 </StackPanel>
-                <StackPanel Margin="16,0,0,0" Orientation="Horizontal">
-                    <TextBlock Text="Sections" />
-                    <TextBlock
-                        Width="50"
-                        Margin="4,0,0,0"
-                        Text="{Binding SectionCount}" />
-                </StackPanel>
-                <StackPanel Margin="16,0,0,0" Orientation="Horizontal">
-                    <TextBlock Text="Results" />
-                    <TextBlock
-                        Width="50"
-                        Margin="4,0,0,0"
-                        Text="{Binding InstanceCount}" />
+                <Separator />
+                <StackPanel Margin="4,4,4,4" Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Functions" />
+                        <TextBlock
+                            Width="50"
+                            Margin="4,0,0,0"
+                            Text="{Binding FunctionCount}" />
+                    </StackPanel>
+                    <StackPanel Margin="16,0,0,0" Orientation="Horizontal">
+                        <TextBlock Text="Sections" />
+                        <TextBlock
+                            Width="50"
+                            Margin="4,0,0,0"
+                            Text="{Binding SectionCount}" />
+                    </StackPanel>
+                    <StackPanel Margin="16,0,0,0" Orientation="Horizontal">
+                        <TextBlock Text="Total Results" />
+                        <TextBlock
+                            Width="50"
+                            Margin="4,0,0,0"
+                            Text="{Binding InstanceCount}" />
+                    </StackPanel>
+                    <StackPanel Margin="4,0,0,0" Orientation="Horizontal">
+                        <TextBlock Text="Duration" />
+                        <TextBlock
+                            Width="50"
+                            Margin="4,0,0,0"
+                            Text="{Binding Duration}" />
+                    </StackPanel>
                 </StackPanel>
 
-            </StackPanel>
-            <ListView
-                Height="200"
-                Margin="4,4,4,4"
-                ItemsSource="{Binding SectionList}"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn
-                            Width="500"
-                            DisplayMemberBinding="{Binding .}"
-                            Header="Sections">
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-            </ListView>
-            <StackPanel Margin="4,0,0,0" Orientation="Horizontal">
-                <TextBlock Text="Duration" />
-                <TextBlock
-                    Width="50"
-                    Margin="4,0,0,0"
-                    Text="{Binding Duration}" />
-            </StackPanel>
-        </StackPanel>
+                <Separator />
 
+            </StackPanel>
+            <irexplorer:SearchResultsPanel x:Name="ResultsPanel" DockPanel.Dock="Bottom" />
+        </DockPanel>
     </Border>
 </UserControl>

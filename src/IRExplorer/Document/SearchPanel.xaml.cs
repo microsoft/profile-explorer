@@ -15,12 +15,12 @@ namespace IRExplorer.Document {
         private int resultCount_;
         private bool searchAllEnabled_;
         private bool searchAll_;
-        private string text_;
+        private string searchedText_;
         private bool showSearchAllButton_;
         private bool showNavigationSection_;
 
         public SearchInfo() {
-            text_ = string.Empty;
+            searchedText_ = string.Empty;
             kind_ = TextSearchKind.Default;
             showSearchAllButton_ = true;
             showNavigationSection_ = true;
@@ -32,10 +32,10 @@ namespace IRExplorer.Document {
         }
 
         public string SearchedText {
-            get => text_;
+            get => searchedText_;
             set {
-                if (value != text_) {
-                    text_ = value;
+                if (value != searchedText_) {
+                    searchedText_ = value;
                     OnPropertyChange(nameof(SearchedText));
                 }
             }
@@ -108,7 +108,6 @@ namespace IRExplorer.Document {
             set {
                 if (resultCount_ != value) {
                     resultCount_ = value;
-                    OnPropertyChange(nameof(ResultCount));
                     OnPropertyChange(nameof(ResultText));
                 }
             }
@@ -119,7 +118,6 @@ namespace IRExplorer.Document {
             set {
                 if (currentResult_ != value) {
                     currentResult_ = value;
-                    OnPropertyChange(nameof(CurrentResult));
                     OnPropertyChange(nameof(ResultText));
                 }
             }

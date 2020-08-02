@@ -152,7 +152,17 @@ namespace IRExplorer {
         }
 
         public async Task SwitchDocumentSection(OpenSectionEventArgs args, IRDocument document) {
-            await SwitchDocumentSection(args, FindDocumentHost(document));
+            var documentHost = FindDocumentHost(document);
+
+            if (documentHost != null) {
+                // Use the existing editor to show the section.
+                await SwitchDocumentSection(args, documentHost);
+            }
+            else {
+                // Open a new editor to show the section.
+                await SwitchDocumentSection(args);
+            }
+
             SectionPanel.SelectSection(args.Section, false);
         }
 
@@ -792,10 +802,10 @@ namespace IRExplorer {
 
         private void FindButton_Click(object sender, RoutedEventArgs e) {
             var w = new Window();
-            var sp = new DocumentSearchPanel(sessionState_.Documents[0]);
+            var sp = new DocumentSearchPanel(this, sessionState_.Documents[0]);
             w.Content = sp;
-            w.Height = 400;
-            w.Width = 600;
+            w.Height = 500;
+            w.Width = 800;
             w.ResizeMode = ResizeMode.NoResize;
             w.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             w.WindowStyle = WindowStyle.None;

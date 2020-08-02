@@ -165,15 +165,21 @@ namespace IRExplorer {
             await JumpToSearchResult(searchResult);
         }
 
-        private async Task JumpToSearchResult(SearchResultInfo resultInfo) {
+        private async Task JumpToSearchResult(SearchResultInfo result) {
             var documentHost = Session.FindAssociatedDocumentHost(this);
 
-            if (!documentHost.HasSameSearchResultSection(resultInfo.Section)) {
-                var searchResults = searchResultsMap_[resultInfo.Section];
-                await documentHost.SwitchSearchResultsAsync(searchResults, resultInfo.Section, searchInfo_);
+            if (documentHost == null) {
+                // DOcument may have been closed in the meantime.
+                OpenSection?.Invoke(this, new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockLeft));
+                documentHost = Session.FindAssociatedDocumentHost(this);
             }
 
-            documentHost.JumpToSearchResult(resultInfo.Result, resultInfo.Index - 1);
+            if (!documentHost.HasSameSearchResultSection(result.Section)) {
+                var searchResults = searchResultsMap_[result.Section];
+                await documentHost.SwitchSearchResultsAsync(searchResults, result.Section, searchInfo_);
+            }
+
+            documentHost.JumpToSearchResult(result.Result, result.Index - 1);
         }
 
         private async Task JumpToSelectedSearchResult() {
@@ -305,7 +311,6 @@ namespace IRExplorer {
 
             UpdateResultList(searchInfo.SearchedText, searchResults_);
         }
-
 
         private void UpdateResultList(string searchedText, List<SearchResultInfo> searchResults) {
             searchResults_ = searchResults;
