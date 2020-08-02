@@ -938,10 +938,10 @@ namespace IRExplorer {
         private void ShowSearchPanel(SearchInfo searchInfo, bool searchAll = false) {
             searchInfo.SearchAllEnabled = !Session.IsInDiffMode;
 
-            searchPanelVisible_ = true;
             SearchPanel.Visibility = Visibility.Visible;
             SearchPanel.Show(searchInfo, searchAll);
             SearchButton.IsChecked = true;
+            searchPanelVisible_ = true;
         }
 
         private void ShowSectionListExecuted(object sender, ExecutedRoutedEventArgs e) {

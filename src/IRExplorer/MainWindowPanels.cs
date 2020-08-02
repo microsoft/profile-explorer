@@ -272,6 +272,10 @@ namespace IRExplorer {
         }
 
         private IRDocumentHost FindDocumentHost(IRDocument document) {
+            if(document == null) {
+                return null;
+            }
+
             return sessionState_.DocumentHosts.Find(item => item.DocumentHost.TextView == document).DocumentHost;
         }
 

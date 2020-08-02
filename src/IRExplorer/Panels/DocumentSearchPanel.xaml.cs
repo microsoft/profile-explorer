@@ -29,14 +29,21 @@ namespace IRExplorer.Panels {
             public ListCollectionView SectionList { get; set; }
         }
 
+        private ISessionManager session_;
         private LoadedDocument document_;
         private CancelableTaskInfo searchTask_;
         private SearchInfo searchInfo_;
 
-        public DocumentSearchPanel(LoadedDocument document) {
+        public DocumentSearchPanel(ISessionManager session, LoadedDocument document) {
             InitializeComponent();
+            session_ = session;
             document_ = document;
             SetupSearchPanel();
+            SetupResultsPanel();
+        }
+
+        private void SetupResultsPanel() {
+            ResultsPanel.OpenSection += ResultsPanel_OpenSection;
         }
 
         private void SetupSearchPanel() {
@@ -49,6 +56,10 @@ namespace IRExplorer.Panels {
             SearchPanel.Show(searchInfo_);
         }
 
+        private async void ResultsPanel_OpenSection(object sender, OpenSectionEventArgs e) {
+            await session_.SwitchDocumentSection(e, null);
+        }
+
         private async void SearchPanel_SearchChanged(object sender, SearchInfo e) {
             var searchedText = e.SearchedText;
 
@@ -56,16 +67,20 @@ namespace IRExplorer.Panels {
                 return;
             }
 
+            var searchTask = new CancelableTaskInfo();
+
             lock (this) {
                 if (searchTask_ != null) {
                     searchTask_.Cancel();
                 }
+
+                searchTask_ = searchTask;
             }
 
             var docInfo = document_;
             var searcherOptions = new SectionTextSearcherOptions() {
                 SearchBeforeOutput = true,
-                KeepSectionText = false,
+                ///KeepSectionText = false,
                 UseRawSectionText = true
             };
 
@@ -78,12 +93,7 @@ namespace IRExplorer.Panels {
                 list.AddRange(func.Sections);
             }
 
-            var searchTask = new CancelableTaskInfo();
-
-            lock (this) {
-                searchTask_ = searchTask;
-            }
-
+            
             var results = await searcher.SearchAsync(searchedText, TextSearchKind.Default, list, searchTask_);
 
             if (searchTask.IsCanceled) {
@@ -94,7 +104,7 @@ namespace IRExplorer.Panels {
             int functions = 0;
             int instances = 0;
             var sectionList = new List<string>();
-
+            
             foreach (var result in results) {
                 if (result.Results.Count > 0) {
                     sectionList.Add(result.Section.Name);
@@ -112,15 +122,16 @@ namespace IRExplorer.Panels {
                 Duration = start.ElapsedMilliseconds
             };
 
+            ResultsPanel.Session = session_;
+            ResultsPanel.UpdateSearchResults(results, new SearchInfo());
+
             searchTask.Completed();
 
             lock (this) {
-                searchTask_ = null;
+                if (searchTask_ == searchTask) {
+                    searchTask_ = null;
+                }
             }
-        }
-
-        private async void SearchTextBox_TextChanged(object sender, TextChangedEventArgs e) {
-
         }
 
         private void Button_Click(object sender, RoutedEventArgs e) {
