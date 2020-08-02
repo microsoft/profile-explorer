@@ -55,7 +55,9 @@ namespace IRExplorer {
         public abstract byte[] GetDocumentTextBytes();
         public abstract ParsedSection LoadSection(IRTextSection section);
         public abstract string GetSectionText(IRTextSection section);
-        public abstract string LoadSectionPassOutput(IRPassOutput output);
+        public abstract string GetSectionPassOutput(IRPassOutput output);
+        public abstract string GetRawSectionText(IRTextSection section);
+        public abstract string GetRawSectionPassOutput(IRPassOutput output);
 
         public ParsedSection TryGetLoadedSection(IRTextSection section) {
             if (!cacheEnabled_) {
@@ -67,7 +69,7 @@ namespace IRExplorer {
             }
         }
 
-        public string LoadSectionText(IRTextSection section, bool useCache = true) {
+        public string GetSectionText(IRTextSection section, bool useCache = true) {
             if (useCache && cacheEnabled_) {
                 lock (lockObject_) {
                     if (sectionCache_.TryGetValue(section, out var result)) {
@@ -77,6 +79,10 @@ namespace IRExplorer {
             }
 
             return GetSectionText(section);
+        }
+
+        public string GetRawSectionText(IRTextSection section, bool useCache = true) {
+            return GetRawSectionText(section);
         }
     }
 
@@ -153,8 +159,16 @@ namespace IRExplorer {
             return documentReader_.GetSectionText(section);
         }
 
-        public override string LoadSectionPassOutput(IRPassOutput output) {
+        public override string GetSectionPassOutput(IRPassOutput output) {
             return documentReader_.GetPassOutputText(output);
+        }
+
+        public override string GetRawSectionText(IRTextSection section) {
+            return documentReader_.GetRawSectionText(section);
+        }
+
+        public override string GetRawSectionPassOutput(IRPassOutput output) {
+            return documentReader_.GetRawPassOutputText(output);
         }
 
         #region IDisposable Support
@@ -268,7 +282,15 @@ namespace IRExplorer {
             return sectionTextMap_[section].ToString();
         }
 
-        public override string LoadSectionPassOutput(IRPassOutput output) {
+        public override string GetSectionPassOutput(IRPassOutput output) {
+            return "";
+        }
+
+        public override string GetRawSectionText(IRTextSection section) {
+            return GetSectionText(section);
+        }
+
+        public override string GetRawSectionPassOutput(IRPassOutput output) {
             return "";
         }
     }

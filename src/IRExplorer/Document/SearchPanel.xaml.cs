@@ -16,10 +16,14 @@ namespace IRExplorer.Document {
         private bool searchAllEnabled_;
         private bool searchAll_;
         private string text_;
+        private bool showSearchAllButton_;
+        private bool showNavigationSection_;
 
         public SearchInfo() {
             text_ = string.Empty;
             kind_ = TextSearchKind.Default;
+            showSearchAllButton_ = true;
+            showNavigationSection_ = true;
         }
 
         public TextSearchKind SearchKind {
@@ -32,7 +36,7 @@ namespace IRExplorer.Document {
             set {
                 if (value != text_) {
                     text_ = value;
-                    OnPropertyChange("SearchedText");
+                    OnPropertyChange(nameof(SearchedText));
                 }
             }
         }
@@ -47,7 +51,7 @@ namespace IRExplorer.Document {
                     kind_ &= ~TextSearchKind.CaseInsensitive;
                 }
 
-                OnPropertyChange("IsCaseInsensitive");
+                OnPropertyChange(nameof(IsCaseInsensitive));
             }
         }
 
@@ -61,7 +65,7 @@ namespace IRExplorer.Document {
                     kind_ &= ~TextSearchKind.WholeWord;
                 }
 
-                OnPropertyChange("IsWholeWord");
+                OnPropertyChange(nameof(IsWholeWord));
             }
         }
 
@@ -75,7 +79,7 @@ namespace IRExplorer.Document {
                     kind_ &= ~TextSearchKind.Regex;
                 }
 
-                OnPropertyChange("IsRegex");
+                OnPropertyChange(nameof(IsRegex));
             }
         }
 
@@ -84,7 +88,7 @@ namespace IRExplorer.Document {
             set {
                 if (value != searchAll_) {
                     searchAll_ = value;
-                    OnPropertyChange("SearchAll");
+                    OnPropertyChange(nameof(SearchAll));
                 }
             }
         }
@@ -94,7 +98,7 @@ namespace IRExplorer.Document {
             set {
                 if (value != searchAllEnabled_) {
                     searchAllEnabled_ = value;
-                    OnPropertyChange("SearchAllEnabled");
+                    OnPropertyChange(nameof(SearchAllEnabled));
                 }
             }
         }
@@ -104,7 +108,8 @@ namespace IRExplorer.Document {
             set {
                 if (resultCount_ != value) {
                     resultCount_ = value;
-                    OnPropertyChange("ResultText");
+                    OnPropertyChange(nameof(ResultCount));
+                    OnPropertyChange(nameof(ResultText));
                 }
             }
         }
@@ -114,12 +119,33 @@ namespace IRExplorer.Document {
             set {
                 if (currentResult_ != value) {
                     currentResult_ = value;
-                    OnPropertyChange("ResultText");
+                    OnPropertyChange(nameof(CurrentResult));
+                    OnPropertyChange(nameof(ResultText));
                 }
             }
         }
 
         public string ResultText => $"{(resultCount_ > 0 ? currentResult_ + 1 : 0)} / {resultCount_}";
+
+        public bool ShowSearchAllButton {
+            get => showSearchAllButton_;
+            set {
+                if (value != showSearchAllButton_) {
+                    showSearchAllButton_ = value;
+                    OnPropertyChange(nameof(ShowSearchAllButton));
+                }
+            }
+        }
+
+        public bool ShowShowNavigationnSection {
+            get => showNavigationSection_;
+            set {
+                if (value != showNavigationSection_) {
+                    showNavigationSection_ = value;
+                    OnPropertyChange(nameof(ShowShowNavigationnSection));
+                }
+            }
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 

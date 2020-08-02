@@ -30,11 +30,11 @@ namespace IRExplorerCore {
         private CancellationToken cancelToken_;
 
         private bool disposed_;
-        public ManualResetEvent TaskCompletedEvent;
+        private ManualResetEvent taskCompletedEvent_;
         private CancellationTokenSource tokenSource_;
 
         public CancelableTaskInfo() {
-            TaskCompletedEvent = new ManualResetEvent(false);
+            taskCompletedEvent_ = new ManualResetEvent(false);
             tokenSource_ = new CancellationTokenSource();
             cancelToken_ = tokenSource_.Token;
 
@@ -57,33 +57,33 @@ namespace IRExplorerCore {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
             Debug.Assert(!disposed_);
-            TaskCompletedEvent.WaitOne();
+            taskCompletedEvent_.WaitOne();
         }
 
         public async Task WaitToCompleteAsync() {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
             Debug.Assert(!disposed_);
-            await TaskCompletedEvent.AsTask();
+            await taskCompletedEvent_.AsTask();
         }
 
         public void WaitToComplete(TimeSpan timeout) {
             Debug.Assert(!disposed_);
-            TaskCompletedEvent.WaitOne(timeout);
+            taskCompletedEvent_.WaitOne(timeout);
         }
 
         public async Task WaitToCompleteAsync(TimeSpan timeout) {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
             Debug.Assert(!disposed_);
-            await TaskCompletedEvent.AsTask(timeout);
+            await taskCompletedEvent_.AsTask(timeout);
         }
 
         public void Completed() {
             //Debug.WriteLine($"+ Complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
             Debug.Assert(!disposed_);
-            TaskCompletedEvent.Set();
+            taskCompletedEvent_.Set();
         }
 
         public void Cancel() {
@@ -96,7 +96,7 @@ namespace IRExplorerCore {
         protected virtual void Dispose(bool disposing) {
             if (!disposed_) {
                 tokenSource_.Dispose();
-                TaskCompletedEvent.Dispose();
+                taskCompletedEvent_.Dispose();
                 disposed_ = true;
             }
         }

@@ -35,6 +35,7 @@ using IRExplorer.Diff;
 using Microsoft.Win32;
 using IRExplorer.UTC;
 using IRExplorer.LLVM;
+using IRExplorer.Panels;
 
 namespace IRExplorer {
     public static class AppCommand {
@@ -147,7 +148,7 @@ namespace IRExplorer {
 
         public async Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
-            return await Task.Run(() => docInfo.Loader.LoadSectionPassOutput(output));
+            return await Task.Run(() => docInfo.Loader.GetSectionPassOutput(output));
         }
 
         public async Task SwitchDocumentSection(OpenSectionEventArgs args, IRDocument document) {
@@ -787,6 +788,20 @@ namespace IRExplorer {
             var position = MainGrid.PointToScreen(new Point(236, MainMenu.ActualHeight + 1));
             var sharingPanel = new SessionSharingPanel(position, width, height, this, this);
             sharingPanel.IsOpen = true;
+        }
+
+        private void FindButton_Click(object sender, RoutedEventArgs e) {
+            var w = new Window();
+            var sp = new DocumentSearchPanel(sessionState_.Documents[0]);
+            w.Content = sp;
+            w.Height = 400;
+            w.Width = 600;
+            w.ResizeMode = ResizeMode.NoResize;
+            w.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+            w.WindowStyle = WindowStyle.None;
+            w.Owner = this;
+
+            w.ShowDialog();
         }
     }
 }
