@@ -102,7 +102,7 @@
                         ToolTip="Use Regular Expressions">
                         <TextBlock FontWeight="ExtraBlack" Text=".*" />
                     </ToggleButton>
-                    <Separator />
+                    <Separator Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibility}}" />
 
 
                     <ToggleButton
@@ -110,17 +110,19 @@
                         IsChecked="{Binding Path=SearchAll, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         IsEnabled="{Binding Path=SearchAllEnabled, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         TabIndex="5"
-                        ToolTip="Search across all sections in the function">
+                        ToolTip="Search across all sections in the function"
+                        Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource SearchListIcon}" />
                     </ToggleButton>
-                    <Separator />
+                    <Separator Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
 
                     <Button
                         x:Name="PreviousButton"
                         Command="local:SearchCommand.PreviousResult"
                         CommandTarget="{Binding ElementName=SearchPanelControl}"
                         TabIndex="5"
-                        ToolTip="Jump to previous search result (Shift+F3)">
+                        ToolTip="Jump to previous search result (Shift+F3)"
+                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource UpArrowIcon}" />
                     </Button>
 
@@ -129,7 +131,8 @@
                         Command="local:SearchCommand.NextResult"
                         CommandTarget="{Binding ElementName=SearchPanelControl}"
                         TabIndex="5"
-                        ToolTip="Jump to next search result (F3)">
+                        ToolTip="Jump to next search result (F3)"
+                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource DownArrowIcon}" />
                     </Button>
 
@@ -137,14 +140,16 @@
                         Margin="8,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Text="Results:" />
+                        Text="Results:"
+                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
 
 
                     <TextBlock
                         Margin="4,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Text="{Binding Path=ResultText, UpdateSourceTrigger=PropertyChanged}" />
+                        Text="{Binding Path=ResultText, UpdateSourceTrigger=PropertyChanged}"
+                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
                 </ToolBar>
             </ToolBarTray>
         </Grid>

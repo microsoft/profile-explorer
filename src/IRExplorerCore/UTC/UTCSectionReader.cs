@@ -13,7 +13,7 @@ namespace IRExplorerCore.UTC {
             "***********************************************************"
         };
 
-        public UTCSectionReader(string filePath, bool expectSectionHeaders = true) : 
+        public UTCSectionReader(string filePath, bool expectSectionHeaders = true) :
             base(filePath, expectSectionHeaders) { }
 
         public UTCSectionReader(byte[] textData, bool expectSectionHeaders = true) :
@@ -61,6 +61,7 @@ namespace IRExplorerCore.UTC {
             if (!string.IsNullOrEmpty(line) && char.IsDigit(line[0])) {
                 for (int i = 1; i < line.Length; i++) {
                     if (line[i] == '>') {
+                        MarkPreprocessedLine(i);
                         return line.Substring(i + 1);
                     }
                     else if (!char.IsDigit(line[i])) {

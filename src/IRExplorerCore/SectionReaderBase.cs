@@ -11,7 +11,7 @@ namespace IRExplorerCore {
     public abstract class SectionReaderBase : IRSectionReader {
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
-        public static readonly long MAX_PRELOADED_FILE_SIZE = 500 * 1024 * 1024;
+        public static readonly long MAX_PRELOADED_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
         private static readonly int MAX_LINE_LENGTH = 1000;
 
         private StreamReader dataReader_;
@@ -27,6 +27,7 @@ namespace IRExplorerCore {
         private MemoryStream preloadedDataStream_;
         private int prevLineCount_;
         private string[] prevLines_;
+        private bool hasPreprocessedLines_;
         private IRTextSummary summary_;
 
         public SectionReaderBase(string filePath, bool expectSectionHeaders = true) {
@@ -91,6 +92,10 @@ namespace IRExplorerCore {
             return false;
         }
 
+        protected void MarkPreprocessedLine(int line) {
+            hasPreprocessedLines_ = true;
+        }
+
         // Main function for reading the text source and producing a summary
         // with all functions and their sections.
         public IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler) {
@@ -120,6 +125,19 @@ namespace IRExplorerCore {
             return GetPassOutputText(output, true);
         }
 
+        public string GetRawSectionText(IRTextSection section) {
+            if (section.Output == null) {
+                throw new NullReferenceException();
+            }
+
+            return GetRawPassOutputText(section.Output, false);
+        }
+
+        public string GetRawPassOutputText(IRPassOutput output) {
+            return GetRawPassOutputText(output, true);
+        }
+
+
         private void Initialize() {
             dataReader_ = new StreamReader(dataStream_, Encoding.UTF8,
                                            true, STREAM_BUFFER_SIZE);
@@ -139,6 +157,7 @@ namespace IRExplorerCore {
 
         private IRTextSummary GenerateSummaryImpl(ProgressInfoHandler progressHandler) {
             IRTextSection previousSection = null;
+            hasPreprocessedLines_ = false;
             (var section, string functionName) = FindNextSection();
 
             while (section != null) {
@@ -182,6 +201,10 @@ namespace IRExplorerCore {
         }
 
         private string GetPassOutputText(IRPassOutput output, bool isOptionalOutput) {
+            if (!output.HasPreprocessedLines) {
+                return GetRawPassOutputText(output, isOptionalOutput);
+            }
+
             if (output == null) {
                 return "";
             }
@@ -190,9 +213,8 @@ namespace IRExplorerCore {
             // to allow parallel loading of text.
             if (preloadedData_ != null) {
                 var reader = new MemoryStream(preloadedData_, true);
-
-                var streamReader = new StreamReader(reader, Encoding.UTF8,
-                                                    true, STREAM_BUFFER_SIZE);
+                using var streamReader = new StreamReader(reader, Encoding.UTF8,
+                                                          true, STREAM_BUFFER_SIZE);
 
                 return ReadPassOutputText(streamReader, output, isOptionalOutput);
             }
@@ -202,10 +224,27 @@ namespace IRExplorerCore {
             }
         }
 
+        private string GetRawPassOutputText(IRPassOutput output, bool isOptionalOutput) {
+            if (output == null) {
+                return "";
+            }
+
+            if (preloadedData_ != null) {
+                // For some use cases, such as text search on the whole document,
+                // it is much faster to use the unfiltered text and avoid reading
+                // the text line by line to form the final string.
+                var span = preloadedData_.AsSpan((int)output.DataStartOffset, (int)output.Size);
+                return Encoding.UTF8.GetString(span);
+            }
+
+            lock (this) {
+                return ReadPassOutputText(dataReader_, output, isOptionalOutput);
+            }
+        }
+
         private string ReadPassOutputText(StreamReader reader, IRPassOutput output,
                                           bool isOptionalOutput) {
-            long size = output.DataEndOffset - output.DataStartOffset + 1;
-            var builder = new StringBuilder((int)size);
+            var builder = new StringBuilder((int)output.Size);
             reader.BaseStream.Position = output.DataStartOffset;
             reader.DiscardBufferedData();
 
@@ -244,6 +283,7 @@ namespace IRExplorerCore {
 
         private IRPassOutput GetAdditionalOutput() {
             if (optionalOutput_ != null && optionalOutputNeeded_) {
+                optionalOutput_.HasPreprocessedLines = hasPreprocessedLines_;
                 return optionalOutput_;
             }
 
@@ -252,6 +292,7 @@ namespace IRExplorerCore {
 
         private void ResetAdditionalOutput() {
             optionalOutput_ = null;
+            hasPreprocessedLines_ = false;
         }
 
         private (IRTextSection, string) FindNextSection() {
@@ -300,7 +341,7 @@ namespace IRExplorerCore {
                     if (line == null) {
                         break;
                     }
-                    
+
                     if (IsFunctionStart(line)) {
                         // Extract function name.
                         if (string.IsNullOrEmpty(funcName)) {
@@ -330,7 +371,9 @@ namespace IRExplorerCore {
                 }
 
                 var output = new IRPassOutput(startOffset, endOffset,
-                                              sectionStartLine, sectionEndLine);
+                                              sectionStartLine, sectionEndLine) {
+                    HasPreprocessedLines = hasPreprocessedLines_
+                };
 
                 var section = new IRTextSection(null, 0, 0, sectionName, output, blockCount);
                 return (section, funcName);

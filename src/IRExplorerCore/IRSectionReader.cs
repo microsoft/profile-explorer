@@ -7,10 +7,10 @@ using System.Collections.Generic;
 namespace IRExplorerCore {
     public class IRTextSummary {
         private Dictionary<string, IRTextFunction> functionMap_;
-
-        public List<IRTextFunction> Functions;
         private ulong nextSectionId_;
         private Dictionary<ulong, IRTextSection> sectionMap_;
+
+        public List<IRTextFunction> Functions { get; set; }
 
         public IRTextSummary() {
             Functions = new List<IRTextFunction>();
@@ -42,20 +42,25 @@ namespace IRExplorerCore {
         public IRTextFunction FindFunction(IRTextFunction function) {
             return functionMap_.TryGetValue(function.Name, out var result) ? result : null;
         }
+
+        //? TODO: Compute for each section the SHA256 signature
+        //? to speed up diffs and other tasks that would check the text for equality.
+        public void ComputeSectionSignatures() {
+
+        }
     }
 
     public class IRTextFunction {
-        public List<IRTextSection> Sections;
+        public List<IRTextSection> Sections { get; set; }
+        public int Number { get; set; }
+        public string Name { get; set; }
+        public IRTextSummary ParentSummary { get; set; }
+        public int SectionCount => Sections != null ? Sections.Count : 0;
 
         public IRTextFunction(string name) {
             Name = name;
             Sections = new List<IRTextSection>();
         }
-
-        public int Number { get; set; }
-        public string Name { get; set; }
-        public IRTextSummary ParentSummary { get; set; }
-        public int SectionCount => Sections != null ? Sections.Count : 0;
 
         public int MaxBlockCount {
             get {
@@ -90,8 +95,11 @@ namespace IRExplorerCore {
 
         public long DataStartOffset { get; set; }
         public long DataEndOffset { get; set; }
+        public long Size => DataEndOffset - DataStartOffset + 1;
         public int StartLine { get; set; }
         public int EndLine { get; set; }
+        public byte[] Signature { get; set; } // SHA256 signature of the text.
+        public bool HasPreprocessedLines { get; set; }
 
         public override bool Equals(object obj) {
             return obj is IRPassOutput output &&
@@ -107,9 +115,7 @@ namespace IRExplorerCore {
     }
 
     public class IRTextSection {
-        public IRPassOutput Output;
-        public IRPassOutput OutputAfter;
-        public IRPassOutput OutputBefore;
+        private CompressedObject<Dictionary<int, string>> lineMetadata_;
 
         public IRTextSection() { }
 
@@ -129,14 +135,14 @@ namespace IRExplorerCore {
         public int BlockCount { get; set; }
         public IRTextFunction ParentFunction { get; set; }
         public int LineCount => Output.EndLine - Output.StartLine + 1;
-
-        private CompressedObject<Dictionary<int, string>> lineMetadata_;
+        public IRPassOutput Output { get; set; }
+        public IRPassOutput OutputAfter { get; set; }
+        public IRPassOutput OutputBefore { get; set; }
 
         public Dictionary<int, string> LineMetadata {
             get => lineMetadata_?.GetValue();
             set => lineMetadata_ = new CompressedObject<Dictionary<int, string>>(value);
         }
-
 
         //? TODO: Metadata is large and multiplies N times with multiple versions of the same function,
         //? while most lines are likely identical. Find a way to share identical lines, or at least
@@ -192,6 +198,8 @@ namespace IRExplorerCore {
         IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler);
         string GetSectionText(IRTextSection section);
         string GetPassOutputText(IRPassOutput output);
+        string GetRawSectionText(IRTextSection section);
+        string GetRawPassOutputText(IRPassOutput output);
         public byte[] GetDocumentTextData();
         void Dispose();
     }

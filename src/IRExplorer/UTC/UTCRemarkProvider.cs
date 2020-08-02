@@ -313,7 +313,7 @@ namespace IRExplorer.UTC {
 
                 tasks[index++] = Task.Run(() => {
                     try {
-                        string sectionText = document.Loader.LoadSectionPassOutput(section.OutputBefore);
+                        string sectionText = document.Loader.GetSectionPassOutput(section.OutputBefore);
                         return ExtractRemarks(sectionText, function, section);
                     }
                     finally {
