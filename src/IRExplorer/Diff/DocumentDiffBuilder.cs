@@ -89,7 +89,7 @@ namespace IRExplorer {
             var results = new List<HasDiffResult>(tasks.Length);
 
             foreach (var task in tasks) {
-                results.Add(task.Result);
+                results.Add(await task);
             }
 
             return results;
@@ -108,8 +108,8 @@ namespace IRExplorer {
 
                 tasks[index++] = Task.Run(() => {
                     try {
-                        string leftText = leftDocLoader.LoadSectionText(leftSection, false);
-                        string rightText = rightDocLoader.LoadSectionText(rightSection, false);
+                        string leftText = leftDocLoader.GetSectionText(leftSection, false);
+                        string rightText = rightDocLoader.GetSectionText(rightSection, false);
                         var diffs = ComputeInternalDiffs(leftText, rightText);
                         bool hasDiffs = HasDiffs(diffs);
                         return new HasDiffResult(leftSection, rightSection, diffs, hasDiffs);

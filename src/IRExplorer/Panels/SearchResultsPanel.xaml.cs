@@ -35,7 +35,7 @@ namespace IRExplorer {
 
     public class SearchResultInfo {
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
-        
+
         private bool isMarked_;
         private TextBlock preview_;
         private Brush textColor_;
@@ -189,6 +189,7 @@ namespace IRExplorer {
         private async void JumpToNextExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (ResultList.SelectedIndex < ResultList.Items.Count - 1) {
                 ResultList.SelectedIndex++;
+                ResultList.ScrollIntoView(ResultList.SelectedItem);
                 await JumpToSelectedSearchResult();
                 e.Handled = true;
             }
@@ -197,6 +198,7 @@ namespace IRExplorer {
         private async void JumpToPreviousExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (ResultList.SelectedIndex > 0) {
                 ResultList.SelectedIndex--;
+                ResultList.ScrollIntoView(ResultList.SelectedItem);
                 await JumpToSelectedSearchResult();
                 e.Handled = true;
             }

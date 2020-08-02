@@ -9,10 +9,11 @@
     StaysOpen="False"
     mc:Ignorable="d">
     <Border
+        Padding="4"
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         BorderThickness="2,1,2,2">
-        <StackPanel Margin="4,4,4,4" Orientation="Vertical">
+        <StackPanel Orientation="Vertical">
             <TextBlock Text="Sharing link" />
             <Grid>
                 <TextBox

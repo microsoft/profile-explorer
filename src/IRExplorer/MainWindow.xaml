@@ -777,7 +777,7 @@
                             Padding="2,1,2,1"
                             VerticalAlignment="Center"
                             BorderBrush="{x:Null}"
-                            Click="ShareButton_Click"
+                            Click="FindButton_Click"
                             FontSize="11"
                             FontWeight="DemiBold"
                             ToolTip="Search the entire document">
