@@ -23,17 +23,19 @@ namespace IRExplorer.Panels {
     /// </summary>
     public partial class DocumentSearchPanel : Popup {
         class DocumentSearchInfo {
+            public bool SearchAllFunctions { get; set; }
+            public bool SearchPassOutput { get; set; }
             public int FunctionCount { get; set; }
             public int SectionCount { get; set; }
             public int InstanceCount { get; set; }
             public long Duration { get; set; }
-            public ListCollectionView SectionList { get; set; }
         }
 
         private ISessionManager session_;
         private LoadedDocument document_;
         private CancelableTaskInfo searchTask_;
         private SearchInfo searchInfo_;
+        private DocumentSearchInfo data_;
 
         public DocumentSearchPanel(Point position, double width, double height,
                                    UIElement referenceElement, ISessionManager session, LoadedDocument document) {
@@ -45,6 +47,12 @@ namespace IRExplorer.Panels {
             Width = width;
             Height = height;
 
+            data_ = new DocumentSearchInfo() {
+                SearchAllFunctions = true,
+                SearchPassOutput = true
+            };
+
+            DataContext = data_;
             session_ = session;
             document_ = document;
             SetupSearchPanel();
@@ -77,6 +85,8 @@ namespace IRExplorer.Panels {
                 return;
             }
 
+            // Create a task that can be used later to cancel the search
+            // if another letter is being pressed.
             var searchTask = new CancelableTaskInfo();
 
             lock (this) {
@@ -89,8 +99,8 @@ namespace IRExplorer.Panels {
 
             var docInfo = document_;
             var searcherOptions = new SectionTextSearcherOptions() {
-                SearchBeforeOutput = true,
-                ///KeepSectionText = false,
+                SearchBeforeOutput = data_.SearchPassOutput,
+                KeepSectionText = false,
                 UseRawSectionText = true
             };
 
@@ -103,8 +113,8 @@ namespace IRExplorer.Panels {
                 list.AddRange(func.Sections);
             }
 
-
-            var results = await searcher.SearchAsync(searchedText, TextSearchKind.Default, list, searchTask_);
+            // Start the search on another thread.,
+            var results = await searcher.SearchAsync(searchedText, searchInfo_.SearchKind, list, searchTask_);
 
             if (searchTask.IsCanceled) {
                 return;
@@ -123,14 +133,6 @@ namespace IRExplorer.Panels {
 
                 instances += result.Results.Count;
             }
-
-            DataContext = new DocumentSearchInfo() {
-                FunctionCount = functions,
-                SectionCount = sections,
-                InstanceCount = instances,
-                SectionList = new ListCollectionView(sectionList),
-                Duration = start.ElapsedMilliseconds
-            };
 
             ResultsPanel.Session = session_;
             ResultsPanel.UpdateSearchResults(results, new SearchInfo());

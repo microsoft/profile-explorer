@@ -26,13 +26,15 @@
                         <StackPanel Margin="4,4,4,4" Orientation="Horizontal">
                             <CheckBox
                                 VerticalAlignment="Center"
-                                Content="Search entire document"
-                                IsChecked="True" />
+                                Content="Search all functions"
+                                IsChecked="{Binding Path=SearchAllFunctions}"
+                                ToolTip="Search over all functions part of the opened document" />
                             <CheckBox
                                 Margin="8,0,0,0"
                                 VerticalAlignment="Center"
                                 Content="Include pass output"
-                                IsChecked="True" />
+                                IsChecked="{Binding Path=SearchPassOutput}"
+                                ToolTip="Search over the additional text associated with sections" />
                         </StackPanel>
                     </Border>
                 </DockPanel>

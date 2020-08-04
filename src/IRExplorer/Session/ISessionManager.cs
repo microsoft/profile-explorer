@@ -23,6 +23,10 @@ namespace IRExplorer {
         ICompilerInfoProvider CompilerInfo { get; }
         SessionStateManager SessionState { get; }
         bool IsInDiffMode { get; }
+        bool IsInTwoDocumentsDiffMode { get; }
+
+        IRTextSummary MainDocumentSummary { get; }
+        IRTextSummary DiffDocumentSummary { get; }
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
         IRDocument FindAssociatedDocument(IToolPanel panel);

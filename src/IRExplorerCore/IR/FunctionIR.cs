@@ -7,6 +7,8 @@ using System.Collections.Generic;
 namespace IRExplorerCore.IR {
     public sealed class FunctionIR : IRElement {
         private Dictionary<ulong, IRElement> elementMap_;
+        private int instructionCount_;
+        private int tupleCount_;
 
         public FunctionIR() : base(IRElementId.NewFunctionId()) {
             ReturnType = TypeIR.GetUnknown();
@@ -104,6 +106,32 @@ namespace IRExplorerCore.IR {
                 if (!action(element)) {
                     return;
                 }
+            }
+        }
+
+        public int InstructionCount {
+            get {
+                if (instructionCount_ == 0) {
+                    ForEachInstruction((instr) => {
+                        instructionCount_++;
+                        return true;
+                    });
+                }
+
+                return instructionCount_;
+            }
+        }
+
+        public int TupleCount {
+            get {
+                if (tupleCount_ == 0) {
+                    ForEachTuple((tuple) => {
+                        tupleCount_++;
+                        return true;
+                    });
+                }
+
+                return tupleCount_;
             }
         }
 
