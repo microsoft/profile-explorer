@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace IRExplorer.Document {
     public class SearchInfo : INotifyPropertyChanged {
@@ -18,6 +19,7 @@ namespace IRExplorer.Document {
         private string searchedText_;
         private bool showSearchAllButton_;
         private bool showNavigationSection_;
+        private Color borderColor_;
 
         public SearchInfo() {
             searchedText_ = string.Empty;
@@ -135,12 +137,12 @@ namespace IRExplorer.Document {
             }
         }
 
-        public bool ShowShowNavigationnSection {
+        public bool ShowNavigationnSection {
             get => showNavigationSection_;
             set {
                 if (value != showNavigationSection_) {
                     showNavigationSection_ = value;
-                    OnPropertyChange(nameof(ShowShowNavigationnSection));
+                    OnPropertyChange(nameof(ShowNavigationnSection));
                 }
             }
         }

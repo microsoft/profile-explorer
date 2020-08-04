@@ -108,7 +108,7 @@ namespace IRExplorer {
                         !remarkSettings_.Trace;
             }
             set {
-                if(value) {
+                if (value) {
                     previousSettings_ = (RemarkSettings)remarkSettings_.Clone();
                     remarkSettings_.Optimization = true;
                     remarkSettings_.Analysis = false;
@@ -118,7 +118,7 @@ namespace IRExplorer {
                     NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
                 }
                 else {
-                    if(previousSettings_ != null) {
+                    if (previousSettings_ != null) {
                         remarkSettings_.Optimization = previousSettings_.Optimization;
                         remarkSettings_.Analysis = previousSettings_.Analysis;
                         remarkSettings_.Default = previousSettings_.Default;
@@ -190,7 +190,7 @@ namespace IRExplorer {
 
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
-            
+
             remarkSettings_ = App.Settings.RemarkSettings;
             remarksButtonState_ = new RemarksButtonState(remarkSettings_);
             remarksButtonState_.PropertyChanged += RemarksButtonState_PropertyChanged;
@@ -198,7 +198,7 @@ namespace IRExplorer {
         }
 
         private async void RemarksButtonState_PropertyChanged(object sender, PropertyChangedEventArgs e) {
-            if(!remarkPanelVisible_) {
+            if (!remarkPanelVisible_) {
                 await HandleNewRemarkSettings(remarksButtonState_.Settings, false);
             }
         }
@@ -625,7 +625,7 @@ namespace IRExplorer {
         }
 
         public bool HasSameSearchResultSection(IRTextSection section) {
-            if(Section != section) {
+            if (Section != section) {
                 return false;
             }
 
@@ -635,7 +635,7 @@ namespace IRExplorer {
 
         public void JumpToSearchResult(TextSearchResult result, int index) {
             if (index >= SearchPanel.SearchInfo.ResultCount) {
-                throw new InvalidOperationException("Invalid search result index");
+                return;
             }
 
             SearchPanel.SearchInfo.CurrentResult = index;

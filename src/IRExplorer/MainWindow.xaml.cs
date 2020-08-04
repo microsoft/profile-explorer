@@ -146,11 +146,6 @@ namespace IRExplorer {
             SectionPanel.SetSectionAnnotationState(section, hasAnnotations);
         }
 
-        public async Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section) {
-            var docInfo = sessionState_.FindLoadedDocument(section);
-            return await Task.Run(() => docInfo.Loader.GetSectionPassOutput(output));
-        }
-
         public async Task SwitchDocumentSection(OpenSectionEventArgs args, IRDocument document) {
             var documentHost = FindDocumentHost(document);
 
@@ -614,41 +609,41 @@ namespace IRExplorer {
         private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
             switch (((MenuItem)sender).Tag) {
                 case "Section": {
-                    SectionPanelHost.IsVisible = true;
-                    break;
-                }
+                        SectionPanelHost.IsVisible = true;
+                        break;
+                    }
                 case "Definition": {
-                    DefinitionPanelHost.IsVisible = true;
-                    break;
-                }
+                        DefinitionPanelHost.IsVisible = true;
+                        break;
+                    }
                 case "References": {
-                    ReferencesPanelHost.IsVisible = true;
-                    break;
-                }
+                        ReferencesPanelHost.IsVisible = true;
+                        break;
+                    }
                 case "Bookmarks": {
-                    BookmarksPanelHost.IsVisible = true;
-                    break;
-                }
+                        BookmarksPanelHost.IsVisible = true;
+                        break;
+                    }
                 case "SourceFile": {
-                    SourceFilePanelHost.IsVisible = true;
-                    break;
-                }
+                        SourceFilePanelHost.IsVisible = true;
+                        break;
+                    }
                 case "FlowGraph": {
-                    FlowGraphPanelHost.IsVisible = true;
-                    break;
-                }
+                        FlowGraphPanelHost.IsVisible = true;
+                        break;
+                    }
                 case "DominatorTree": {
-                    DominatorTreePanelHost.IsVisible = true;
-                    break;
-                }
+                        DominatorTreePanelHost.IsVisible = true;
+                        break;
+                    }
                 case "PostDominatorTree": {
-                    PostDominatorTreePanelHost.IsVisible = true;
-                    break;
-                }
+                        PostDominatorTreePanelHost.IsVisible = true;
+                        break;
+                    }
                 case "ExpressionGraph": {
-                    ExpressionGraphPanelHost.IsVisible = true;
-                    break;
-                }
+                        ExpressionGraphPanelHost.IsVisible = true;
+                        break;
+                    }
             }
         }
 
@@ -801,17 +796,9 @@ namespace IRExplorer {
         }
 
         private void FindButton_Click(object sender, RoutedEventArgs e) {
-            var w = new Window();
-            var sp = new DocumentSearchPanel(this, sessionState_.Documents[0]);
-            w.Content = sp;
-            w.Height = 500;
-            w.Width = 800;
-            w.ResizeMode = ResizeMode.NoResize;
-            w.WindowStartupLocation = WindowStartupLocation.CenterOwner;
-            w.WindowStyle = WindowStyle.None;
-            w.Owner = this;
-
-            w.ShowDialog();
+            var position = MainGrid.PointToScreen(new Point(236, MainMenu.ActualHeight + 1));
+            var sp = new DocumentSearchPanel(position, 800, 500, this, this, sessionState_.Documents[0]);
+            sp.IsOpen = true;
         }
     }
 }
