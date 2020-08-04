@@ -202,6 +202,7 @@ namespace IRExplorerCore {
 
         private string GetPassOutputText(IRPassOutput output, bool isOptionalOutput) {
             if (!output.HasPreprocessedLines) {
+                // Fast path that avoids reding text line by line.
                 return GetRawPassOutputText(output, isOptionalOutput);
             }
 

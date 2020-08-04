@@ -1084,6 +1084,13 @@ namespace IRExplorer {
             return Task.Run(() => docInfo.Loader.GetSectionText(section));
         }
 
+
+        public Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section) {
+            var docInfo = sessionState_.FindLoadedDocument(section);
+            return Task.Run(() => docInfo.Loader.GetSectionPassOutput(output));
+        }
+
+
         public Task<string> GetDocumentTextAsync(IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
             return Task.Run(() => docInfo.Loader.GetDocumentText());

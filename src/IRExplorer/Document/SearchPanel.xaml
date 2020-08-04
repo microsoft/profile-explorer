@@ -114,7 +114,7 @@
                         Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource SearchListIcon}" />
                     </ToggleButton>
-                    <Separator Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
+                    <Separator Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
 
                     <Button
                         x:Name="PreviousButton"
@@ -122,7 +122,7 @@
                         CommandTarget="{Binding ElementName=SearchPanelControl}"
                         TabIndex="5"
                         ToolTip="Jump to previous search result (Shift+F3)"
-                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource UpArrowIcon}" />
                     </Button>
 
@@ -132,7 +132,7 @@
                         CommandTarget="{Binding ElementName=SearchPanelControl}"
                         TabIndex="5"
                         ToolTip="Jump to next search result (F3)"
-                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource DownArrowIcon}" />
                     </Button>
 
@@ -141,7 +141,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="Results:"
-                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
 
 
                     <TextBlock
@@ -149,7 +149,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="{Binding Path=ResultText, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{Binding ShowShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
                 </ToolBar>
             </ToolBarTray>
         </Grid>

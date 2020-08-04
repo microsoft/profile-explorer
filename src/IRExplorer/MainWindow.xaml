@@ -766,30 +766,7 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
-                    <Border
-                        Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        BorderThickness="0,0,1,0">
-                        <Button
-                            x:Name="FindButton"
-                            Padding="2,1,2,1"
-                            VerticalAlignment="Center"
-                            BorderBrush="{x:Null}"
-                            Click="FindButton_Click"
-                            FontSize="11"
-                            FontWeight="DemiBold"
-                            ToolTip="Search the entire document">
-                            <Image
-                                Width="14"
-                                Height="14"
-                                VerticalAlignment="Center"
-                                SnapsToDevicePixels="True"
-                                Source="{StaticResource SearchIcon}"
-                                UseLayoutRounding="True" />
-                        </Button>
-                    </Border>
+
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"
@@ -823,7 +800,30 @@
                             </StackPanel>
                         </Button>
                     </Border>
-
+                    <Border
+                        Grid.Column="1"
+                        HorizontalAlignment="Left"
+                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderThickness="0,0,1,0">
+                        <Button
+                            x:Name="FindButton"
+                            Padding="2,1,2,1"
+                            VerticalAlignment="Center"
+                            BorderBrush="{x:Null}"
+                            Click="FindButton_Click"
+                            FontSize="11"
+                            FontWeight="DemiBold"
+                            ToolTip="Search the entire document">
+                            <Image
+                                Width="14"
+                                Height="14"
+                                VerticalAlignment="Center"
+                                SnapsToDevicePixels="True"
+                                Source="{StaticResource SearchIcon}"
+                                UseLayoutRounding="True" />
+                        </Button>
+                    </Border>
                 </StackPanel>
             </Grid>
         </Border>

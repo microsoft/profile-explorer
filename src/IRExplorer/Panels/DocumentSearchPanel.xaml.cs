@@ -15,12 +15,13 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using IRExplorer.Document;
+using System.Windows.Controls.Primitives;
 
 namespace IRExplorer.Panels {
     /// <summary>
     /// Interaction logic for SearchPanel.xaml
     /// </summary>
-    public partial class DocumentSearchPanel : UserControl {
+    public partial class DocumentSearchPanel : Popup {
         class DocumentSearchInfo {
             public int FunctionCount { get; set; }
             public int SectionCount { get; set; }
@@ -34,8 +35,16 @@ namespace IRExplorer.Panels {
         private CancelableTaskInfo searchTask_;
         private SearchInfo searchInfo_;
 
-        public DocumentSearchPanel(ISessionManager session, LoadedDocument document) {
+        public DocumentSearchPanel(Point position, double width, double height,
+                                   UIElement referenceElement, ISessionManager session, LoadedDocument document) {
             InitializeComponent();
+
+            var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
+            HorizontalOffset = screenPosition.X;
+            VerticalOffset = screenPosition.Y;
+            Width = width;
+            Height = height;
+
             session_ = session;
             document_ = document;
             SetupSearchPanel();
@@ -49,7 +58,7 @@ namespace IRExplorer.Panels {
         private void SetupSearchPanel() {
             searchInfo_ = new SearchInfo() {
                 ShowSearchAllButton = false,
-                ShowShowNavigationnSection = false
+                ShowNavigationnSection = false
             };
 
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -64,6 +73,7 @@ namespace IRExplorer.Panels {
             var searchedText = e.SearchedText;
 
             if (searchedText.Length < 2) {
+                ResultsPanel.ClearSearchResults();
                 return;
             }
 
@@ -93,7 +103,7 @@ namespace IRExplorer.Panels {
                 list.AddRange(func.Sections);
             }
 
-            
+
             var results = await searcher.SearchAsync(searchedText, TextSearchKind.Default, list, searchTask_);
 
             if (searchTask.IsCanceled) {
@@ -104,7 +114,7 @@ namespace IRExplorer.Panels {
             int functions = 0;
             int instances = 0;
             var sectionList = new List<string>();
-            
+
             foreach (var result in results) {
                 if (result.Results.Count > 0) {
                     sectionList.Add(result.Section.Name);

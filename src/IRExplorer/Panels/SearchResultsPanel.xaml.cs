@@ -34,27 +34,36 @@ namespace IRExplorer {
     }
 
     public class SearchResultInfo {
-        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
+        public enum SearchResultKind {
+            SectionResult,
+            BeforeOutputResult,
+            AfterOutputResult
+        }
 
+        public delegate string SectionTextDelegate(SearchResultKind resultKind, IRTextSection section);
+
+        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
         private bool isMarked_;
         private TextBlock preview_;
         private Brush textColor_;
+        private SectionTextDelegate getSectionText_;
 
-        public TextSearchResult Result;
-
-        public SearchResultInfo(int index, TextSearchResult result, IRTextSection section, string sectionText,
-                                ICompilerInfoProvider compilerInfo) {
+        public SearchResultInfo(SearchResultKind resultkind, int index, TextSearchResult result,
+                                IRTextSection section, ISessionManager session,
+                                SectionTextDelegate getSectionText) {
+            ResultKind = resultkind;
             Index = index;
             Result = result;
             Section = section;
-            SectionText = sectionText;
-            CompilerInfo = compilerInfo;
+            Session = session;
+            getSectionText_ = getSectionText;
         }
 
+        public SearchResultKind ResultKind { get; set; }
         public int Index { get; set; }
+        public TextSearchResult Result { get; set; }
         public IRTextSection Section { get; set; }
-        public string SectionText { get; set; }
-        public ICompilerInfoProvider CompilerInfo { get; set; }
+        public ISessionManager Session { get; set; }
 
         public TextBlock Preview {
             get {
@@ -66,15 +75,18 @@ namespace IRExplorer {
                 preview_.FontFamily = PreviewFont;
                 preview_.Foreground = Brushes.Black;
                 preview_.Margin = new Thickness(0, 2, 0, 0);
-                (int startOffset, int endOffset) = ExtractTextLine();
+
+                // Load text on-demand and extract the line with the result.
+                var sectionText = getSectionText_(ResultKind, Section);
+                (int startOffset, int endOffset) = ExtractTextLine(sectionText);
 
                 // Append text before search result.
                 if (startOffset < Result.Offset) {
-                    preview_.Inlines.Add(SectionText.Substring(startOffset, Result.Offset - startOffset));
+                    preview_.Inlines.Add(sectionText.Substring(startOffset, Result.Offset - startOffset));
                 }
 
                 // Append search result.
-                preview_.Inlines.Add(new Run(SectionText.Substring(Result.Offset, Result.Length)) {
+                preview_.Inlines.Add(new Run(sectionText.Substring(Result.Offset, Result.Length)) {
                     FontWeight = FontWeights.Bold,
                     Background = Brushes.Khaki
                 });
@@ -83,8 +95,7 @@ namespace IRExplorer {
                 int afterResultOffset = Result.Offset + Result.Length;
 
                 if (endOffset > afterResultOffset) {
-                    preview_.Inlines.Add(
-                        SectionText.Substring(afterResultOffset, endOffset - afterResultOffset));
+                    preview_.Inlines.Add(sectionText.Substring(afterResultOffset, endOffset - afterResultOffset));
                 }
 
                 return preview_;
@@ -93,7 +104,7 @@ namespace IRExplorer {
 
         public string SectionName {
             get {
-                string name = CompilerInfo.NameProvider.GetSectionName(Section);
+                string name = Session.CompilerInfo.NameProvider.GetSectionName(Section);
                 return $"({Section.Number}) {name}";
             }
         }
@@ -106,7 +117,7 @@ namespace IRExplorer {
                     return true;
                 }
 
-                if (CompilerInfo.SectionStyleProvider.IsMarkedSection(Section, out var markedName)) {
+                if (Session.CompilerInfo.SectionStyleProvider.IsMarkedSection(Section, out var markedName)) {
                     isMarked_ = true;
                     textColor_ = ColorBrushes.GetBrush(markedName.TextColor);
                 }
@@ -119,12 +130,13 @@ namespace IRExplorer {
             return value == '\n' || value == '\r';
         }
 
-        private (int, int) ExtractTextLine() {
+        private (int, int) ExtractTextLine(string sectionText) {
+            // Extract the whole line containing the search result.
             int startOffset = Result.Offset;
             int endOffset = Result.Offset + Result.Length;
 
             while (startOffset > 0) {
-                if (IsNewLine(SectionText[startOffset])) {
+                if (IsNewLine(sectionText[startOffset])) {
                     startOffset++; // Don't include the newline itself.
                     break;
                 }
@@ -132,8 +144,8 @@ namespace IRExplorer {
                 startOffset--;
             }
 
-            while (endOffset < SectionText.Length) {
-                if (IsNewLine(SectionText[endOffset])) {
+            while (endOffset < sectionText.Length) {
+                if (IsNewLine(sectionText[endOffset])) {
                     endOffset--;
                     break;
                 }
@@ -149,6 +161,10 @@ namespace IRExplorer {
         private SearchInfo searchInfo_;
         private List<SearchResultInfo> searchResults_;
         private Dictionary<IRTextSection, SectionSearchResult> searchResultsMap_;
+        private IRTextSection previousSection_;
+        private string previousSectionText_;
+        private string previousSectionBeforeOutput_;
+        private string previousSectionAfterOutput_;
 
         public event EventHandler<OpenSectionEventArgs> OpenSection;
 
@@ -165,12 +181,24 @@ namespace IRExplorer {
             await JumpToSearchResult(searchResult);
         }
 
+        bool switching;
+
         private async Task JumpToSearchResult(SearchResultInfo result) {
+            //? TODO: If the document is in the middle of switching a section
+            //? from the previous jump, this must wait for it to complete, otherwise
+            //? the document text can get out of sync and assert.
+            if (switching) {
+                throw new Exception("Switching...");
+
+            }
+
+            switching = true;
             var documentHost = Session.FindAssociatedDocumentHost(this);
 
             if (documentHost == null) {
                 // DOcument may have been closed in the meantime.
-                OpenSection?.Invoke(this, new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockLeft));
+                var args = new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockLeft);
+                await Session.SwitchDocumentSection(args, args.TargetDocument?.TextView);
                 documentHost = Session.FindAssociatedDocumentHost(this);
             }
 
@@ -180,6 +208,7 @@ namespace IRExplorer {
             }
 
             documentHost.JumpToSearchResult(result.Result, result.Index - 1);
+            switching = false;
         }
 
         private async Task JumpToSelectedSearchResult() {
@@ -285,11 +314,10 @@ namespace IRExplorer {
 
         public override ToolPanelKind PanelKind => ToolPanelKind.SearchResults;
 
-        public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
-
+        public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            base.OnDocumentSectionUnloaded(section, document);
+            ResetSectionTextCache();
         }
-
-        public override void OnActivatePanel() { }
 
         public void UpdateSearchResults(List<SectionSearchResult> results, SearchInfo searchInfo) {
             searchResults_ = new List<SearchResultInfo>(8192);
@@ -302,14 +330,88 @@ namespace IRExplorer {
                 int index = 1;
 
                 foreach (var result in sectionResult.Results) {
-                    var resultInfo = new SearchResultInfo(index++, result, sectionResult.Section, sectionText,
-                                                          Session.CompilerInfo);
+                    AddSearchResult(sectionResult, index, result,
+                                    SearchResultInfo.SearchResultKind.SectionResult);
+                    index++;
+                }
 
-                    searchResults_.Add(resultInfo);
+                if (sectionResult.BeforeOutputResults != null) {
+                    foreach (var result in sectionResult.BeforeOutputResults) {
+                        AddSearchResult(sectionResult, index, result,
+                                        SearchResultInfo.SearchResultKind.BeforeOutputResult);
+                        index++;
+                    }
+                }
+
+                if (sectionResult.AfterOutputResults != null) {
+                    foreach (var result in sectionResult.AfterOutputResults) {
+                        AddSearchResult(sectionResult, index, result,
+                                        SearchResultInfo.SearchResultKind.AfterOutputResult);
+                        index++;
+                    }
                 }
             }
 
             UpdateResultList(searchInfo.SearchedText, searchResults_);
+            ResetSectionTextCache();
+        }
+
+        private void AddSearchResult(SectionSearchResult sectionResult, int index, TextSearchResult result,
+                                     SearchResultInfo.SearchResultKind resultKind) {
+            var resultInfo = new SearchResultInfo(resultKind, index++, result,
+                                                  sectionResult.Section, Session, GetSectionText);
+            searchResults_.Add(resultInfo);
+        }
+
+        private string GetSectionText(SearchResultInfo.SearchResultKind resultKind, IRTextSection section) {
+            switch (resultKind) {
+                case SearchResultInfo.SearchResultKind.SectionResult: {
+                        if (previousSection_ == section &&
+                            previousSectionText_ != null) {
+                            return previousSectionText_;
+                        }
+
+                        var text = Session.GetSectionTextAsync(section).Result;
+                        previousSection_ = section;
+                        previousSectionText_ = text;
+                        return text;
+                    }
+                case SearchResultInfo.SearchResultKind.BeforeOutputResult: {
+                        if (previousSection_ == section &&
+                            previousSectionBeforeOutput_ != null) {
+                            return previousSectionBeforeOutput_;
+                        }
+
+                        var text = Session.GetSectionPassOutputAsync(section.OutputBefore, section).Result;
+                        previousSection_ = section;
+                        previousSectionBeforeOutput_ = text;
+                        return text;
+                    }
+                case SearchResultInfo.SearchResultKind.AfterOutputResult: {
+                        if (previousSection_ == section &&
+                            previousSectionAfterOutput_ != null) {
+                            return previousSectionAfterOutput_;
+                        }
+
+                        var text = Session.GetSectionPassOutputAsync(section.OutputAfter, section).Result;
+                        previousSection_ = section;
+                        previousSectionAfterOutput_ = text;
+                        return text;
+                    }
+            }
+
+            return string.Empty;
+        }
+
+        private void ResetSectionTextCache() {
+            previousSection_ = null;
+            previousSectionText_ = null;
+            previousSectionBeforeOutput_ = null;
+            previousSectionAfterOutput_ = null;
+        }
+
+        public void ClearSearchResults() {
+            UpdateResultList("", new List<SearchResultInfo>());
         }
 
         private void UpdateResultList(string searchedText, List<SearchResultInfo> searchResults) {
@@ -325,7 +427,7 @@ namespace IRExplorer {
 
         public override void OnSessionEnd() {
             base.OnSessionEnd();
-            UpdateResultList("", new List<SearchResultInfo>());
+            ClearSearchResults();
         }
 
         #endregion
