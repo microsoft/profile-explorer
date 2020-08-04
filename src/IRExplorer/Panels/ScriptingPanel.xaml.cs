@@ -28,8 +28,9 @@ namespace IRExplorer {
     public partial class ScriptingPanel : ToolPanelControl {
         private static readonly string InitialScript = string.Join(Environment.NewLine,
                                                                    "using IRExplorerCore;", "using IRExplorerCore.IR;",
-                                                                   "using IRExplorerCore.Analysis;", "using IRExplorerCore.Scripting;",
+                                                                   "using IRExplorerCore.Analysis;",
                                                                    "using IRExplorerCore.UTC;", "using IRExplorer;",
+                                                                   "using IRExplorer.Scripting;",
                                                                    "using System.Windows.Media;",
                                                                    "\n// func: IR function on which the script executes",
                                                                    "// session: provides script interaction with Compiler Studio (text output, marking, etc.)",
@@ -59,14 +60,16 @@ namespace IRExplorer {
                         assemblyRefs.Add(MetadataReference.CreateFromFile(assembly.Location));
                     }
                     catch (Exception ex) {
-                        Trace.TraceWarning($"Failed to setup scripting auto-complete for assembly {assembly.Location}: {ex.Message}");
+                        // Dynamic assemblies don't have a valid location.
+                        if (!assembly.IsDynamic) {
+                            Trace.TraceWarning($"Failed to setup scripting auto-complete for assembly {assembly.Location}: {ex.Message}");
+                        }
                     }
                 }
 
                 var projectInfo = ProjectInfo.Create(ProjectId.CreateNewId(), VersionStamp.Create(),
                                                      "Script", "Script", LanguageNames.CSharp)
                                              .WithMetadataReferences(assemblyRefs);
-
                 var project = workspace.AddProject(projectInfo);
                 roslynDocument = workspace.AddDocument(project.Id, "DummyFile.cs", SourceText.From(""));
                 return true;
@@ -249,7 +252,7 @@ Adding assembly System.Linq.Expressions, Version=4.2.2.0, Culture=neutral, Publi
             }
 
             string userScript = TextView.Text.Trim();
-            var scriptSession = new ScriptSession(document);
+            var scriptSession = new ScriptSession(document, Session);
 
             try {
                 var sw = Stopwatch.StartNew();
@@ -303,15 +306,15 @@ Adding assembly System.Linq.Expressions, Version=4.2.2.0, Culture=neutral, Publi
                     //? TODO: Preload icons in static constructor
                     switch (Kind) {
                         case AutocompleteEntryKind.Field: {
-                            return (ImageSource)Application.Current.Resources["TagIcon"];
-                        }
+                                return (ImageSource)Application.Current.Resources["TagIcon"];
+                            }
                         case AutocompleteEntryKind.Method:
                             return (ImageSource)Application.Current.Resources["RightArrowIcon"];
                         case AutocompleteEntryKind.Property:
                             return (ImageSource)Application.Current.Resources["TagIcon"];
                         default: {
-                            return null;
-                        }
+                                return null;
+                            }
                     }
                 }
             }

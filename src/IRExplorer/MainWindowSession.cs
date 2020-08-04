@@ -29,6 +29,11 @@ namespace IRExplorer {
         public ICompilerInfoProvider CompilerInfo => compilerInfo_;
         public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
 
+
+        public bool IsInTwoDocumentsDiffMode => diffDocument_ != null;
+        public IRTextSummary MainDocumentSummary => mainDocument_?.Summary;
+        public IRTextSummary DiffDocumentSummary => diffDocument_?.Summary;
+
         public IRTextSection CurrentDocumentSection {
             get {
                 var activeDocument = FindActiveDocumentHost();
