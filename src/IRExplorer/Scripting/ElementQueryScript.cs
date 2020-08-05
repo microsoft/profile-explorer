@@ -298,6 +298,10 @@ namespace IRExplorer.Scripting {
     // runs the script and populates the output values
 
     public class ElementQueryScript : Script, IElementQuery {
+        public ElementQueryScript(string code) : base(code) {
+
+        }
+
         public ElementQueryInfo Query { get; set; }
 
         public ElementQueryInfo GetDefinition() {

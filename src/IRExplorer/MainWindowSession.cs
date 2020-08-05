@@ -29,7 +29,7 @@ namespace IRExplorer {
         public ICompilerInfoProvider CompilerInfo => compilerInfo_;
         public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
 
-
+        public bool SilentMode { get; set; }
         public bool IsInTwoDocumentsDiffMode => diffDocument_ != null;
         public IRTextSummary MainDocumentSummary => mainDocument_?.Summary;
         public IRTextSummary DiffDocumentSummary => diffDocument_?.Summary;
@@ -896,6 +896,10 @@ namespace IRExplorer {
         }
 
         private bool ShowDocumentReloadQuery(string filePath) {
+            if(SilentMode) {
+                return false;
+            }
+
             using var centerForm = new DialogCenteringHelper(this);
             return MessageBox.Show(
                        $"File {filePath} changed by an external application?\nDo you want to reload?",

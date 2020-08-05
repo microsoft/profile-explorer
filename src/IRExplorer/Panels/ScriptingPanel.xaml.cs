@@ -36,9 +36,8 @@ namespace IRExplorer {
                                                                    "using System.Windows.Media;",
                                                                    "\n",
                                                                    "public class Script {",
-                                                                   "    // func: IR function on which the script executes",
                                                                    "    // s: provides script interaction with Compiler Studio (text output, marking, etc.)",
-                                                                   "    public bool Execute(FunctionIR func, ScriptSession s) {",
+                                                                   "    public bool Execute(ScriptSession s) {",
                                                                    "        // Write C#-based script here.",
                                                                    "        return true;",
                                                                    "    }",
@@ -50,6 +49,8 @@ namespace IRExplorer {
         public ScriptingPanel() {
             InitializeComponent();
             TextView.TextArea.TextEntered += TextArea_TextEntered;
+
+            //? TODO: Initialize the scripting engine and Roslyn in the background
         }
 
         private bool SetupAutocomplete() {
@@ -135,25 +136,29 @@ namespace IRExplorer {
 
         private async void ExecuteScriptExecuted(object sender, ExecutedRoutedEventArgs e) {
             var document = Session.FindAssociatedDocument(this);
-
-            if (document == null) {
-                return;
-            }
-
-            string userScript = TextView.Text.Trim();
+            string userCode = TextView.Text.Trim();
             var scriptSession = new ScriptSession(document, Session);
+            var script = new Script(userCode);
 
             try {
                 var sw = Stopwatch.StartNew();
-                CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
-                dynamic script = await Task.Run(() => CSScript.Evaluator.LoadCode(userScript));
-                await Task.Run(() => script.Execute(document.Function, scriptSession));
+                string outputText = "";
+                bool result = await script.ExecuteAsync(scriptSession);
                 sw.Stop();
 
-                string outputText = string.Join(Environment.NewLine,
-                                                $"Script completed in {sw.ElapsedMilliseconds} ms",
-                                                "----------------------------------------\n",
-                                                $"{scriptSession.OutputText}");
+                if (!result) {
+                    if (script.ScriptException != null) {
+                        outputText += $"Failed to run script: {script.ScriptException}";
+                    }
+                }
+                else {
+                    //? TODO: Long-running scripts need a way to update text before this
+                    outputText = string.Join(Environment.NewLine,
+                                             $"Script result: {script.ScriptResult}",
+                                             $"Script completed in {sw.ElapsedMilliseconds} ms",
+                                             "----------------------------------------\n",
+                                             $"{scriptSession.OutputText}");
+                }
 
                 OutputTextView.Text = outputText;
 

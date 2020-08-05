@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
@@ -22,44 +23,25 @@ namespace IRExplorer.Scripting {
             session_ = session;
             builder_ = new StringBuilder();
             markedElements_ = new List<Tuple<IRElement, Color>>();
-            analysis_ = new AnalysisInfo(document.Function);
+
+            if (document != null) {
+                analysis_ = new AnalysisInfo(document.Function);
+            }
         }
 
         public bool IsCanceled => task_.IsCanceled;
 
+        public bool SilentMode { get; set; }
         public string OutputText => builder_.ToString();
         public List<Tuple<IRElement, Color>> MarkedElements => markedElements_;
         public AnalysisInfo Analysis => analysis_;
+        public FunctionIR CurrentFunction => document_?.Function;
 
         public string IRName => session_.CompilerInfo.CompilerIRName;
         public ICompilerIRInfo IR => session_.CompilerInfo.IR;
         public bool IsInTwoDocumentsDiffMode => session_.IsInTwoDocumentsDiffMode;
         public IRTextSummary MainDocument => session_.MainDocumentSummary;
         public IRTextSummary DiffDocument => session_.DiffDocumentSummary;
-
-        public IRTextFunction FindFunction(string name, IRTextSummary summary = null) {
-            if (summary == null) {
-                summary = MainDocument;
-            }
-
-            return summary.Functions.Find((func) => func.Name == name);
-        }
-
-        public List<IRTextFunction> FindAllFunction(string nameSubstring, IRTextSummary summary = null) {
-            if (summary == null) {
-                summary = MainDocument;
-            }
-
-            return summary.Functions.FindAll((func) => func.Name.Contains(nameSubstring));
-        }
-
-        public IRTextSection FindSection(string name, IRTextFunction func) {
-            return func.Sections.Find((section) => section.Name == name);
-        }
-
-        public List<IRTextSection> FindAllSections(string nameSubstring, IRTextFunction func) {
-            return func.Sections.FindAll((section) => section.Name.Contains(nameSubstring));
-        }
 
         public FunctionIR ParseSection(IRTextSection section) {
             var errorHandler = IR.CreateParsingErrorHandler();
@@ -101,27 +83,54 @@ namespace IRExplorer.Scripting {
 
         public void Message(string format, params object[] args) {
             string text = string.Format(format, args);
-            //? TODO: using var centerForm = new DialogCenteringHelper(this);
 
-            MessageBox.Show(text, "Compiler Studio - Script message", MessageBoxButton.OK,
+            if(SilentMode) {
+                WriteLine($"[silent] {text}");
+                return;
+            }
+
+            //? TODO: using var centerForm = new DialogCenteringHelper(this);
+            MessageBox.Show(text, "IR Explorer - Script message", MessageBoxButton.OK,
                             MessageBoxImage.Information);
         }
 
         public bool QuestionMessage(string format, params object[] args) {
             string text = string.Format(format, args);
-            //using var centerForm = new DialogCenteringHelper(this);
 
-            return MessageBox.Show(text, "Compiler Studio - Script message", MessageBoxButton.YesNo,
+            if (SilentMode) {
+                WriteLine($"[silent question] {text}");
+                return false;
+            }
+
+            //using var centerForm = new DialogCenteringHelper(this);
+            return MessageBox.Show(text, "IR Explorer - Script message", MessageBoxButton.YesNo,
                                    MessageBoxImage.Question) ==
                    MessageBoxResult.Yes;
         }
 
         public void ErrorMessage(string format, params object[] args) {
             string text = string.Format(format, args);
+
+            if (SilentMode) {
+                WriteLine($"[silent error] {text}");
+                return;
+            }
+
             //using var centerForm = new DialogCenteringHelper(this);
 
-            MessageBox.Show(text, "Compiler Studio - Script message", MessageBoxButton.OK,
+            MessageBox.Show(text, "IR Explorer - Script message", MessageBoxButton.OK,
                             MessageBoxImage.Error);
+        }
+
+        public bool SaveOutput(string filePath) {
+            try {
+                File.WriteAllText(filePath, builder_.ToString());
+                return true;
+            }
+            catch(Exception ex) {
+                WriteLine($"Failed to save output to file {filePath}: {ex.Message}");
+                return false;
+            }
         }
 
         public class AnalysisInfo {

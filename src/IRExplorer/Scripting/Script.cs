@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using CSScriptLib;
 
 namespace IRExplorer.Scripting {
     public class Script {
@@ -12,7 +15,23 @@ namespace IRExplorer.Scripting {
 
         public string Name { get; set; }
         public string Code { get; set; }
+        public bool ScriptResult { get; set; }
         public Exception ScriptException { get; set; }
+
+        public Script(string code, string name = "") {
+            Name = name;
+            Code = code;
+        }
+
+        public static Script LoadFromFile(string filePath, string name = "") {
+            try {
+                return new Script(File.ReadAllText(filePath), name);
+            }
+            catch(Exception ex) {
+                Trace.TraceError($"Failed to load script from file {filePath}: {ex.Message}");
+                return null;;
+            }
+        }
 
         public static void WarmUp() {
             warmUpCompletedEvent_.Reset();
@@ -25,6 +44,9 @@ namespace IRExplorer.Scripting {
 
         public virtual bool Execute(ScriptSession session) {
             try {
+                CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
+                dynamic script = CSScript.Evaluator.LoadCode(Code);
+                ScriptResult = script.Execute(session);
                 return true;
             }
             catch (Exception ex) {
