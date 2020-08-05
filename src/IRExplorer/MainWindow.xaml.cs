@@ -36,6 +36,7 @@ using Microsoft.Win32;
 using IRExplorer.UTC;
 using IRExplorer.LLVM;
 using IRExplorer.Panels;
+using IRExplorer.Scripting;
 
 namespace IRExplorer {
     public static class AppCommand {
@@ -384,6 +385,7 @@ namespace IRExplorer {
             RegisterDefaultToolPanels();
             ResetStatusBar();
 
+            //? TODO: This needs a proper arg parsing lib
             var args = Environment.GetCommandLineArgs();
 
             if (args.Length >= 3) {
@@ -392,6 +394,34 @@ namespace IRExplorer {
 
                 if (File.Exists(baseFilePath) && File.Exists(diffFilePath)) {
                     await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
+                }
+
+                if(args.Length >= 5 && IsInTwoDocumentsDiffMode) {
+                    if(args[3].EndsWith("script")) {
+                        SilentMode = true;
+                        string scriptPath = args[4];
+                        var script = Script.LoadFromFile(scriptPath);
+
+                        if(script == null) {
+                            MessageBox.Show($"Failed {scriptPath}");    
+                            MessageBox.Show(string.Join(Environment.NewLine, args));
+                        }
+
+                        var session = new ScriptSession(null, this) {
+                            SilentMode = true
+                        };
+
+                        if(script.Execute(session) && script.ScriptResult) {
+                            if (args.Length >= 7) {
+                                if (args[5].EndsWith("out")) {
+                                    string scriptOutPath = args[6];
+                                    session.SaveOutput(scriptOutPath);
+                                }
+                            }
+                        }
+
+                        this.Close();
+                    }
                 }
             }
             else if (args.Length == 2) {

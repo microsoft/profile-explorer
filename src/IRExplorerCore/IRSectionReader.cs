@@ -39,6 +39,10 @@ namespace IRExplorerCore {
             return functionMap_.TryGetValue(name, out var result) ? result : null;
         }
 
+        public List<IRTextFunction> FindAllFunctions(string nameSubstring) {
+            return Functions.FindAll((func) => func.Name.Contains(nameSubstring, StringComparison.Ordinal));
+        }
+
         public IRTextFunction FindFunction(IRTextFunction function) {
             return functionMap_.TryGetValue(function.Name, out var result) ? result : null;
         }
@@ -81,6 +85,10 @@ namespace IRExplorerCore {
 
         public IRTextSection FindSection(string name) {
             return Sections.Find(item => item.Name == name);
+        }
+
+        public List<IRTextSection> FindAllSections(string nameSubstring) {
+            return Sections.FindAll((section) => section.Name.Contains(nameSubstring));
         }
     }
 
