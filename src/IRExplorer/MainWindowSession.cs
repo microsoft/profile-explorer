@@ -289,15 +289,16 @@ namespace IRExplorer {
                 // If the progress panel is about to be displayed, but most of the file
                 // as been processed already, there's no point in showing it anymore.
                 if (firstTimeShowPanel) {
-                    if (percentage < 50) {
+                    if (percentage > 50) {
                         return;
                     }
 
                     ShowProgressBar();
                 }
 
+                percentage = Math.Max(percentage, DocumentLoadProgressBar.Value);
                 DocumentLoadProgressBar.Value = percentage;
-            });
+            }, DispatcherPriority.Render);
         }
 
         private void SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {

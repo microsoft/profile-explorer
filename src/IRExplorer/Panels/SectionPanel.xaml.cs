@@ -527,8 +527,10 @@ namespace IRExplorer {
             foreach (var section in currentFunction_.Sections) {
                 var sectionEx = sectionExtMap_[section];
                 sectionEx = new IRTextSectionEx(section, sectionEx.Index);
-                sectionExtMap_[section] = sectionEx;
                 sectionEx.Name = CompilerInfo.NameProvider.GetSectionName(section);
+
+                sectionExtMap_[section] = sectionEx;
+                sections.Add(sectionEx);
 
                 if (CompilerInfo.SectionStyleProvider.IsMarkedSection(section, out var markedName)) {
                     if (sectionSettings_.ColorizeSectionNames) {
@@ -560,7 +562,6 @@ namespace IRExplorer {
                 }
 
                 sectionEx.SectionDiffKind = DiffKind.None;
-                sections.Add(sectionEx);
             }
 
             return sections;

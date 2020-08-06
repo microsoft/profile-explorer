@@ -301,7 +301,7 @@ namespace IRExplorer.UTC {
         }
 
         public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function,
-                                                  LoadedDocument document) {
+                                              LoadedDocument document) {
             int maxConcurrency = Math.Min(sections.Count, Math.Min(8, Environment.ProcessorCount));
             var tasks = new Task<List<Remark>>[sections.Count];
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
@@ -322,7 +322,7 @@ namespace IRExplorer.UTC {
                 });
             }
 
-            Task.WhenAll(tasks).Wait();
+            Task.WaitAll(tasks);
 
             // Combine all remarks into a single list.
             var remarks = new List<Remark>();
