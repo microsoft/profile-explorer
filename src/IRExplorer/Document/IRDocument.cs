@@ -196,20 +196,20 @@ namespace IRExplorer {
                         case DocumentActionKind.SelectElement:
                         case DocumentActionKind.ShowReferences:
                         case DocumentActionKind.GoToDefinition: {
-                            ExecuteDocumentAction(new DocumentAction(action, automationPrevElement_));
+                                ExecuteDocumentAction(new DocumentAction(action, automationPrevElement_));
 
-                            if (action == DocumentActionKind.SelectElement) {
-                                BringElementIntoView(automationPrevElement_);
+                                if (action == DocumentActionKind.SelectElement) {
+                                    BringElementIntoView(automationPrevElement_);
+                                }
+
+                                break;
                             }
-
-                            break;
-                        }
                         case DocumentActionKind.MarkElement: {
-                            ExecuteDocumentAction(new DocumentAction(action, automationPrevElement_,
-                                                                     PickPairMarkerStyle()));
+                                ExecuteDocumentAction(new DocumentAction(action, automationPrevElement_,
+                                                                         PickPairMarkerStyle()));
 
-                            break;
-                        }
+                                break;
+                            }
                     }
 
                     return true;
@@ -289,37 +289,37 @@ namespace IRExplorer {
 
             switch (actionKind) {
                 case DocumentActionKind.MarkElement: {
-                    action = new ReversibleDocumentAction(
-                        new DocumentAction(actionKind, element, optionalData),
-                        action => ClearMarkedElement(action.Element));
+                        action = new ReversibleDocumentAction(
+                            new DocumentAction(actionKind, element, optionalData),
+                            action => ClearMarkedElement(action.Element));
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.MarkUses:
                 case DocumentActionKind.MarkReferences: {
-                    action = new ReversibleDocumentAction(
-                        new DocumentAction(actionKind, element, optionalData), action => {
-                            ClearMarkedElement(action.Element);
-                            ClearMarkedElement(action.Element.ParentTuple);
-                            var refList = action.OptionalData as List<Reference>;
+                        action = new ReversibleDocumentAction(
+                            new DocumentAction(actionKind, element, optionalData), action => {
+                                ClearMarkedElement(action.Element);
+                                ClearMarkedElement(action.Element.ParentTuple);
+                                var refList = action.OptionalData as List<Reference>;
 
-                            foreach (var reference in refList) {
-                                ClearMarkedElement(reference.Element);
-                                ClearMarkedElement(reference.Element.ParentTuple);
-                            }
+                                foreach (var reference in refList) {
+                                    ClearMarkedElement(reference.Element);
+                                    ClearMarkedElement(reference.Element.ParentTuple);
+                                }
 
-                            SelectAndActivateElement(action.Element);
-                        });
+                                SelectAndActivateElement(action.Element);
+                            });
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.GoToDefinition: {
-                    action = new ReversibleDocumentAction(
-                        new DocumentAction(actionKind, element, optionalData),
-                        action => { SelectAndActivateElement(action.Element); });
+                        action = new ReversibleDocumentAction(
+                            new DocumentAction(actionKind, element, optionalData),
+                            action => { SelectAndActivateElement(action.Element); });
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             if (action != null) {
@@ -349,138 +349,138 @@ namespace IRExplorer {
 
             switch (action.ActionKind) {
                 case DocumentActionKind.SelectElement: {
-                    if (action.Element != null) {
-                        SelectElement(action.Element);
-                    }
+                        if (action.Element != null) {
+                            SelectElement(action.Element);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.MarkElement: {
-                    if (action.Element != null) {
-                        MarkElement(action.Element, action.OptionalData as PairHighlightingStyle);
+                        if (action.Element != null) {
+                            MarkElement(action.Element, action.OptionalData as PairHighlightingStyle);
+                        }
+
+                        break;
                     }
-
-                    break;
-                }
                 case DocumentActionKind.MarkExpression: {
-                    if (action.Element != null) {
-                        var highlighter = action.OptionalData is MarkActionData data && data.IsTemporary
-                            ? selectedHighlighter_
-                            : markedHighlighter_;
+                        if (action.Element != null) {
+                            var highlighter = action.OptionalData is MarkActionData data && data.IsTemporary
+                                ? selectedHighlighter_
+                                : markedHighlighter_;
 
-                        if (action.Element is InstructionIR instr) {
-                            if (instr.Destinations.Count > 0) {
-                                HandleElement(instr.Destinations[0], highlighter, true);
+                            if (action.Element is InstructionIR instr) {
+                                if (instr.Destinations.Count > 0) {
+                                    HandleElement(instr.Destinations[0], highlighter, true);
+                                }
+                            }
+                            else {
+                                HandleElement(action.Element, highlighter, true);
                             }
                         }
-                        else {
-                            HandleElement(action.Element, highlighter, true);
-                        }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.ShowExpressionGraph: {
-                    if (action.Element != null) {
-                        ShowExpressionGraph(action.Element);
-                    }
+                        if (action.Element != null) {
+                            ShowExpressionGraph(action.Element);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.MarkBlock: {
-                    if (action.Element != null) {
-                        MarkBlock(action.Element, action.OptionalData as HighlightingStyle);
-                    }
+                        if (action.Element != null) {
+                            MarkBlock(action.Element, action.OptionalData as HighlightingStyle);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.GoToDefinition: {
-                    if (action.Element != null) {
-                        GoToElementDefinition(action.Element);
-                    }
+                        if (action.Element != null) {
+                            GoToElementDefinition(action.Element);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.ShowReferences: {
-                    if (action.Element is OperandIR op) {
-                        ShowReferences(op);
-                    }
-                    else if (action.Element is InstructionIR instr) {
-                        // For an instruction, look for the references of the dest. operand.
-                        if (instr.Destinations.Count > 0) {
-                            ShowReferences(instr.Destinations[0]);
+                        if (action.Element is OperandIR op) {
+                            ShowReferences(op);
                         }
-                    }
+                        else if (action.Element is InstructionIR instr) {
+                            // For an instruction, look for the references of the dest. operand.
+                            if (instr.Destinations.Count > 0) {
+                                ShowReferences(instr.Destinations[0]);
+                            }
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.MarkReferences: {
-                    if (action.Element is OperandIR op) {
-                        MarkReferences(op);
-                    }
-                    else if (action.Element is InstructionIR instr) {
-                        // For an instruction, look for the references of the dest. operand.
-                        if (instr.Destinations.Count > 0) {
-                            MarkReferences(instr.Destinations[0]);
+                        if (action.Element is OperandIR op) {
+                            MarkReferences(op);
                         }
-                    }
+                        else if (action.Element is InstructionIR instr) {
+                            // For an instruction, look for the references of the dest. operand.
+                            if (instr.Destinations.Count > 0) {
+                                MarkReferences(instr.Destinations[0]);
+                            }
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.ShowUses: {
-                    if (action.Element is OperandIR op) {
-                        ShowUses(op);
-                    }
-                    else if (action.Element is InstructionIR instr) {
-                        // For an instruction, look for the uses of the dest. operand.
-                        if (instr.Destinations.Count > 0) {
-                            ShowUses(instr.Destinations[0]);
+                        if (action.Element is OperandIR op) {
+                            ShowUses(op);
                         }
-                    }
+                        else if (action.Element is InstructionIR instr) {
+                            // For an instruction, look for the uses of the dest. operand.
+                            if (instr.Destinations.Count > 0) {
+                                ShowUses(instr.Destinations[0]);
+                            }
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.MarkUses: {
-                    if (action.Element is OperandIR op) {
-                        MarkUses(op, action.OptionalData as PairHighlightingStyle);
-                    }
-                    else if (action.Element is InstructionIR instr) {
-                        // For an instruction, look for the uses of the dest. operand.
-                        if (instr.Destinations.Count > 0) {
-                            MarkUses(instr.Destinations[0], action.OptionalData as PairHighlightingStyle);
+                        if (action.Element is OperandIR op) {
+                            MarkUses(op, action.OptionalData as PairHighlightingStyle);
                         }
-                    }
+                        else if (action.Element is InstructionIR instr) {
+                            // For an instruction, look for the uses of the dest. operand.
+                            if (instr.Destinations.Count > 0) {
+                                MarkUses(instr.Destinations[0], action.OptionalData as PairHighlightingStyle);
+                            }
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.ClearMarker: {
-                    if (action.Element != null) {
-                        ClearMarkedElement(action.Element);
-                    }
+                        if (action.Element != null) {
+                            ClearMarkedElement(action.Element);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case DocumentActionKind.ClearAllMarkers: {
-                    ClearAllMarkers();
-                    break;
-                }
+                        ClearAllMarkers();
+                        break;
+                    }
                 case DocumentActionKind.ClearBlockMarkers: {
-                    ClearBlockMarkers();
-                    break;
-                }
+                        ClearBlockMarkers();
+                        break;
+                    }
                 case DocumentActionKind.ClearInstructionMarkers: {
-                    ClearInstructionMarkers();
-                    break;
-                }
+                        ClearInstructionMarkers();
+                        break;
+                    }
                 case DocumentActionKind.ClearTemporaryMarkers: {
-                    ClearTemporaryHighlighting();
-                    UpdateHighlighting();
-                    break;
-                }
+                        ClearTemporaryHighlighting();
+                        UpdateHighlighting();
+                        break;
+                    }
                 case DocumentActionKind.UndoAction: {
-                    UndoReversibleAction();
-                    break;
-                }
+                        UndoReversibleAction();
+                        break;
+                    }
             }
 
             UpdateHighlighting();
@@ -939,147 +939,147 @@ namespace IRExplorer {
 
             switch (e.Key) {
                 case Key.Return: {
-                    if (Utils.IsShiftModifierActive()) {
-                        PeekDefinitionExecuted(this, null);
-                    }
-                    else if (Utils.IsControlModifierActive()) {
-                        GoToDefinitionSkipCopiesExecuted(this, null);
-                    }
-                    else {
-                        GoToDefinitionExecuted(this, null);
-                    }
+                        if (Utils.IsShiftModifierActive()) {
+                            PeekDefinitionExecuted(this, null);
+                        }
+                        else if (Utils.IsControlModifierActive()) {
+                            GoToDefinitionSkipCopiesExecuted(this, null);
+                        }
+                        else {
+                            GoToDefinitionExecuted(this, null);
+                        }
 
-                    e.Handled = true;
-                    break;
-                }
+                        e.Handled = true;
+                        break;
+                    }
                 case Key.Escape: {
-                    HideTooltip();
-                    e.Handled = true;
-                    break;
-                }
+                        HideTooltip();
+                        e.Handled = true;
+                        break;
+                    }
                 case Key.M: {
-                    if (Utils.IsControlModifierActive()) {
-                        if (Utils.IsShiftModifierActive()) {
-                            MarkBlockExecuted(this, null);
+                        if (Utils.IsControlModifierActive()) {
+                            if (Utils.IsShiftModifierActive()) {
+                                MarkBlockExecuted(this, null);
+                            }
+                            else {
+                                MarkExecuted(this, null);
+                            }
                         }
-                        else {
-                            MarkExecuted(this, null);
-                        }
-                    }
 
-                    e.Handled = true;
-                    break;
-                }
+                        e.Handled = true;
+                        break;
+                    }
                 case Key.D: {
-                    if (Utils.IsControlModifierActive()) {
-                        if (Utils.IsShiftModifierActive()) {
-                            MarkDefinitionBlockExecuted(this, null);
+                        if (Utils.IsControlModifierActive()) {
+                            if (Utils.IsShiftModifierActive()) {
+                                MarkDefinitionBlockExecuted(this, null);
+                            }
+                            else {
+                                MarkDefinitionExecuted(this, null);
+                            }
                         }
-                        else {
-                            MarkDefinitionExecuted(this, null);
-                        }
-                    }
 
-                    e.Handled = true;
-                    break;
-                }
+                        e.Handled = true;
+                        break;
+                    }
                 case Key.U: {
-                    if (Utils.IsControlModifierActive()) {
-                        if (Utils.IsShiftModifierActive()) {
-                            MarkUsesExecuted(this, null);
+                        if (Utils.IsControlModifierActive()) {
+                            if (Utils.IsShiftModifierActive()) {
+                                MarkUsesExecuted(this, null);
+                            }
+                            else {
+                                ShowUsesExecuted(this, null);
+                            }
                         }
-                        else {
-                            ShowUsesExecuted(this, null);
-                        }
-                    }
 
-                    e.Handled = true;
-                    break;
-                }
+                        e.Handled = true;
+                        break;
+                    }
                 case Key.Delete: {
-                    if (Utils.IsControlModifierActive()) {
-                        if (Utils.IsShiftModifierActive()) {
-                            ClearAllMarkersExecuted(this, null);
+                        if (Utils.IsControlModifierActive()) {
+                            if (Utils.IsShiftModifierActive()) {
+                                ClearAllMarkersExecuted(this, null);
+                            }
+                            else {
+                                ClearMarkerExecuted(this, null);
+                            }
                         }
-                        else {
-                            ClearMarkerExecuted(this, null);
-                        }
-                    }
 
-                    e.Handled = true;
-                    break;
-                }
+                        e.Handled = true;
+                        break;
+                    }
                 case Key.B: {
-                    if (Utils.IsControlModifierActive()) {
-                        if (Utils.IsShiftModifierActive()) {
-                            RemoveBookmarkExecuted(this, null);
+                        if (Utils.IsControlModifierActive()) {
+                            if (Utils.IsShiftModifierActive()) {
+                                RemoveBookmarkExecuted(this, null);
+                            }
+                            else {
+                                AddBookmarkExecuted(this, null);
+                            }
                         }
-                        else {
-                            AddBookmarkExecuted(this, null);
-                        }
-                    }
 
-                    e.Handled = true;
-                    break;
-                }
+                        e.Handled = true;
+                        break;
+                    }
                 case Key.R: {
-                    if (Utils.IsControlModifierActive()) {
+                        if (Utils.IsControlModifierActive()) {
+                            if (Utils.IsShiftModifierActive()) {
+                                MarkReferencesExecuted(this, null);
+                            }
+                            else {
+                                ShowReferencesExecuted(this, null);
+                            }
+                        }
+
+                        e.Handled = true;
+                        break;
+                    }
+                case Key.F2: {
                         if (Utils.IsShiftModifierActive()) {
-                            MarkReferencesExecuted(this, null);
+                            PreviousBookmarkExecuted(this, null);
                         }
                         else {
-                            ShowReferencesExecuted(this, null);
+                            NextBookmarkExecuted(this, null);
                         }
-                    }
 
-                    e.Handled = true;
-                    break;
-                }
-                case Key.F2: {
-                    if (Utils.IsShiftModifierActive()) {
-                        PreviousBookmarkExecuted(this, null);
+                        e.Handled = true;
+                        break;
                     }
-                    else {
-                        NextBookmarkExecuted(this, null);
-                    }
-
-                    e.Handled = true;
-                    break;
-                }
                 case Key.Down: {
-                    if (Utils.IsControlModifierActive()) {
-                        GoToNextBlock();
-                        e.Handled = true;
-                    }
-
-                    break;
-                }
-                case Key.Up: {
-                    if (Utils.IsControlModifierActive()) {
-                        GoToPreviousBlock();
-                        e.Handled = true;
-                    }
-
-                    break;
-                }
-                case Key.Z: {
-                    if (Utils.IsControlModifierActive()) {
-                        UndoReversibleAction();
-
-                        if (Utils.IsAltModifierActive()) {
-                            MirrorAction(DocumentActionKind.UndoAction, null);
+                        if (Utils.IsControlModifierActive()) {
+                            GoToNextBlock();
+                            e.Handled = true;
                         }
 
-                        e.Handled = true;
+                        break;
                     }
+                case Key.Up: {
+                        if (Utils.IsControlModifierActive()) {
+                            GoToPreviousBlock();
+                            e.Handled = true;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
+                case Key.Z: {
+                        if (Utils.IsControlModifierActive()) {
+                            UndoReversibleAction();
+
+                            if (Utils.IsAltModifierActive()) {
+                                MirrorAction(DocumentActionKind.UndoAction, null);
+                            }
+
+                            e.Handled = true;
+                        }
+
+                        break;
+                    }
                 case Key.E: {
-                    ShowExpressionGraphExecuted(this, null);
-                    e.Handled = true;
-                    break;
-                }
+                        ShowExpressionGraphExecuted(this, null);
+                        e.Handled = true;
+                        break;
+                    }
             }
 
             base.OnPreviewKeyDown(e);
@@ -1300,7 +1300,7 @@ namespace IRExplorer {
             ignoreNextCaretEvent_ = true;
 
             Document.Text = parsedSection.Text;
-            
+
             bookmarks_.Clear();
             hoverHighlighter_.Clear();
             selectedHighlighter_.Clear();
@@ -1384,7 +1384,7 @@ namespace IRExplorer {
 
         private IRElement FindElementAtOffset(int offset) {
             // Exit if the element lists are still being computed.
-            if(duringSectionLoading_) {
+            if (duringSectionLoading_) {
                 return null;
             }
 
@@ -1672,7 +1672,7 @@ namespace IRExplorer {
                     //? TODO: Could use block reachability to trim the set of loads marked
                     useList = new ReferenceFinder(function_).FindAllLoads(op);
                 }
-                else if(markExpression) {
+                else if (markExpression) {
                     // Collect the transitive set of users, marking instructions
                     // that depend on the value of this destination operand.
                     ExpandIteratedUseList(useList);
@@ -1685,7 +1685,7 @@ namespace IRExplorer {
 
                 // If the operand is an indirection, also try to mark 
                 // the definition of the base address value below.
-                if(!op.IsIndirection) {
+                if (!op.IsIndirection) {
                     return handled;
                 }
             }
@@ -1704,7 +1704,7 @@ namespace IRExplorer {
         private void ExpandIteratedUseList(List<Reference> useList) {
             var handledElements = new HashSet<IRElement>();
 
-            foreach(var use in useList) {
+            foreach (var use in useList) {
                 handledElements.Add(use.Element);
             }
 
@@ -1721,12 +1721,12 @@ namespace IRExplorer {
             var newUseLists = new List<List<Reference>>();
 
             foreach (var use in useList) {
-                if(use.Element is OperandIR op) {
+                if (use.Element is OperandIR op) {
                     var useInstr = op.ParentInstruction;
 
-                    if(useInstr != null) {
+                    if (useInstr != null) {
                         foreach (var iteratedUse in ReferenceFinder.FindSSAUses(useInstr)) {
-                            if(!handledElements.Add(iteratedUse.Element)) {
+                            if (!handledElements.Add(iteratedUse.Element)) {
                                 continue; /// Use already visited during recursion.
                             }
 
@@ -1743,7 +1743,7 @@ namespace IRExplorer {
 
             // Merge the children lists into the input list.
             // This is fairly inefficient, but not an issue with the max. level used.
-            foreach(var list in newUseLists) {
+            foreach (var list in newUseLists) {
                 useList.AddRange(list);
             }
         }
@@ -1899,62 +1899,62 @@ namespace IRExplorer {
                                             ElementHighlighter highlighter, HighlightingStyleCollection style,
                                             HighlightingStyleCollection instrStyle, int styleIndex,
                                             int level) {
-            if(!handledElements.Add(element)) {
+            if (!handledElements.Add(element)) {
                 return; // Element already handled during recursion.
             }
 
             switch (element) {
                 case OperandIR op: {
-                    if (parent != null) {
-                        //? TODO: Add option to mark each level with a brighter color.
-                        highlighter.Add(new HighlightedGroup(op, style.ForIndex(styleIndex)));
-                    }
-
-                    //? TODO: Max level should be configurable
-                    if (level >= 6) {
-                        return;
-                    }
-
-                    var defTag = op.GetTag<SSADefinitionTag>();
-
-                    if (defTag != null) {
-                        if (defTag.Parent is OperandIR defOp) {
-                            HighlightSSAExpression(defOp.Parent, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level);
+                        if (parent != null) {
+                            //? TODO: Add option to mark each level with a brighter color.
+                            highlighter.Add(new HighlightedGroup(op, style.ForIndex(styleIndex)));
                         }
-                    }
-                    else {
-                        var sourceDefOp = ReferenceFinder.GetSSADefinition(op);
 
-                        if (sourceDefOp != null) {
-                            HighlightSSAExpression(sourceDefOp, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level);
+                        //? TODO: Max level should be configurable
+                        if (level >= 6) {
+                            return;
                         }
-                    }
 
-                    break;
-                }
+                        var defTag = op.GetTag<SSADefinitionTag>();
+
+                        if (defTag != null) {
+                            if (defTag.Parent is OperandIR defOp) {
+                                HighlightSSAExpression(defOp.Parent, parent, handledElements, highlighter, style,
+                                                       instrStyle, styleIndex, level);
+                            }
+                        }
+                        else {
+                            var sourceDefOp = ReferenceFinder.GetSSADefinition(op);
+
+                            if (sourceDefOp != null) {
+                                HighlightSSAExpression(sourceDefOp, parent, handledElements, highlighter, style,
+                                                       instrStyle, styleIndex, level);
+                            }
+                        }
+
+                        break;
+                    }
                 case InstructionIR instr: {
-                    highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
+                        highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
 
-                    if (level >= 4) {
-                        return;
-                    }
+                        if (level >= 4) {
+                            return;
+                        }
 
-                    foreach (var sourceOp in instr.Sources) {
-                        HighlightSSAExpression(sourceOp, instr, handledElements, highlighter, style,
-                                               instrStyle, styleIndex, level + 1);
-                    }
-
-                    if (level > 0) {
-                        foreach (var destOp in instr.Destinations) {
-                            HighlightSSAExpression(destOp, parent, handledElements, highlighter, style,
+                        foreach (var sourceOp in instr.Sources) {
+                            HighlightSSAExpression(sourceOp, instr, handledElements, highlighter, style,
                                                    instrStyle, styleIndex, level + 1);
                         }
-                    }
 
-                    break;
-                }
+                        if (level > 0) {
+                            foreach (var destOp in instr.Destinations) {
+                                HighlightSSAExpression(destOp, parent, handledElements, highlighter, style,
+                                                       instrStyle, styleIndex, level + 1);
+                            }
+                        }
+
+                        break;
+                    }
             }
         }
 
@@ -2891,8 +2891,17 @@ namespace IRExplorer {
                 }
 
                 if (diffSegments_ != null) {
+                    // Insert below the marker renderer so that marked,
+                    // selected and hovered elements get the usual highlighting.
                     diffHighlighter_ = new DiffLineHighlighter();
-                    TextArea.TextView.BackgroundRenderers.Add(diffHighlighter_);
+                    int index = TextArea.TextView.BackgroundRenderers.IndexOf(markedHighlighter_);
+
+                    if (index != -1) {
+                        TextArea.TextView.BackgroundRenderers.Insert(index, diffHighlighter_);
+                    }
+                    else {
+                        TextArea.TextView.BackgroundRenderers.Add(diffHighlighter_);
+                    }
 
                     StartDiffSegmentAdding();
                     AddDiffTextSegments(diffSegments_);
@@ -3114,6 +3123,7 @@ namespace IRExplorer {
             HideTemporaryUI();
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
+            e.Handled = true;
         }
 
         public void EnterDiffMode() {
