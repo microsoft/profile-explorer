@@ -191,7 +191,7 @@ namespace IRExplorer {
 
         public event EventHandler DocumentChanged;
 
-        public void NewLoadedDocument(LoadedDocument docInfo) {
+        public void RegisterLoadedDocument(LoadedDocument docInfo) {
             documents_.Add(docInfo);
 
             if (!Info.IsFileSession && !Info.IsDebugSession) {

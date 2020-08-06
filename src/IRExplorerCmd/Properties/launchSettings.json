@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "IRExplorerCmd": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\base\\benchf_matinv4.log D:\\diff\\benchf_matinv4.log -script C:\\test\\irx-compare.cs -out D:\\out\\x.log"
+    }
+  }
+}
