@@ -551,6 +551,7 @@
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                             CommandTarget="{Binding ElementName=SectionList}"
                             Header="Compare with Other Document"
+                            InputGestureText="Ctrl+Return"
                             ToolTip="Compare section with same one from the other document">
                             <MenuItem.Icon>
                                 <Image
@@ -669,5 +670,15 @@
             Command="local:Command.OpenRight"
             CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
             Modifiers="Ctrl" />
+        <KeyBinding
+            Key="Return"
+            Command="local:Command.DiffWithOtherDocument"
+            CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="Return"
+            Command="local:Command.DiffSideBySide"
+            CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
+            Modifiers="Shift" />
     </local:ToolPanelControl.InputBindings>
 </local:ToolPanelControl>
