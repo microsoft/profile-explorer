@@ -622,8 +622,9 @@ namespace IRExplorer {
                 }
             }
 
-            string text = FunctionFilter.Text.Trim().ToLower();
-            return text.Length <= 0 || function.Name.ToLower().Contains(text);
+            //? TODO: ToLower() should be an option.
+            string text = FunctionFilter.Text.Trim();
+            return text.Length <= 0 || function.Name.Contains(text);
         }
 
         private bool FilterSectionList(object value) {
@@ -931,17 +932,17 @@ namespace IRExplorer {
 
                 switch (sortingField_) {
                     case FieldKind.Number: {
-                        int result = sectionY.Number - sectionX.Number;
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
+                            int result = sectionY.Number - sectionX.Number;
+                            return direction_ == ListSortDirection.Ascending ? -result : result;
+                        }
                     case FieldKind.Name: {
-                        int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
+                            int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
+                            return direction_ == ListSortDirection.Ascending ? -result : result;
+                        }
                     case FieldKind.Blocks: {
-                        int result = sectionY.BlockCount - sectionX.BlockCount;
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
+                            int result = sectionY.BlockCount - sectionX.BlockCount;
+                            return direction_ == ListSortDirection.Ascending ? -result : result;
+                        }
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -1010,6 +1011,7 @@ namespace IRExplorer {
         }
 
         public override void OnSessionStart() {
+            base.OnSessionStart();
             var data = Session.LoadPanelState(this, null);
 
             if (data != null) {
@@ -1030,6 +1032,11 @@ namespace IRExplorer {
             }
         }
 
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            FunctionFilter.Text = "";
+        }
+
         public bool SelectFunction(IRTextFunction function) {
             if (function == currentFunction_) {
                 return true;
@@ -1042,12 +1049,12 @@ namespace IRExplorer {
         }
 
         public override void OnSessionSave() {
+            base.OnSessionStart();
             var state = new SectionPanelState();
             state.AnnotatedSections = annotatedSections_.ToList(item => item.Section.Id);
 
             state.SelectedFunctionNumber = FunctionList.SelectedItem != null
-                ? ((IRTextFunction)FunctionList.SelectedItem).Number
-                : 0;
+                ? ((IRTextFunction)FunctionList.SelectedItem).Number : 0;
 
             var data = StateSerializer.Serialize(state);
             Session.SavePanelState(data, this, null);

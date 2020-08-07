@@ -37,6 +37,7 @@ namespace IRExplorer.Scripting {
         public AnalysisInfo Analysis => analysis_;
         public FunctionIR CurrentFunction => document_?.Function;
 
+        public string SessionName { get; set; }
         public string IRName => session_.CompilerInfo.CompilerIRName;
         public ICompilerIRInfo IR => session_.CompilerInfo.IR;
         public bool IsInTwoDocumentsDiffMode => session_.IsInTwoDocumentsDiffMode;
@@ -84,7 +85,7 @@ namespace IRExplorer.Scripting {
         public void Message(string format, params object[] args) {
             string text = string.Format(format, args);
 
-            if(SilentMode) {
+            if (SilentMode) {
                 WriteLine($"[silent] {text}");
                 return;
             }
@@ -127,7 +128,7 @@ namespace IRExplorer.Scripting {
                 File.WriteAllText(filePath, builder_.ToString());
                 return true;
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 WriteLine($"Failed to save output to file {filePath}: {ex.Message}");
                 return false;
             }

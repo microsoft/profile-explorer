@@ -396,22 +396,23 @@ namespace IRExplorer {
                     await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
                 }
 
-                if(args.Length >= 5 && IsInTwoDocumentsDiffMode) {
-                    if(args[3].EndsWith("script")) {
+                if (args.Length >= 5 && IsInTwoDocumentsDiffMode) {
+                    if (args[3].EndsWith("script")) {
                         SilentMode = true;
                         string scriptPath = args[4];
                         var script = Script.LoadFromFile(scriptPath);
 
-                        if(script == null) {
-                            MessageBox.Show($"Failed {scriptPath}");    
+                        if (script == null) {
+                            MessageBox.Show($"Failed {scriptPath}");
                             MessageBox.Show(string.Join(Environment.NewLine, args));
                         }
 
                         var session = new ScriptSession(null, this) {
-                            SilentMode = true
+                            SilentMode = true,
+                            SessionName = Path.GetFileNameWithoutExtension(baseFilePath)
                         };
 
-                        if(script.Execute(session) && script.ScriptResult) {
+                        if (script.Execute(session) && script.ScriptResult) {
                             if (args.Length >= 7) {
                                 if (args[5].EndsWith("out")) {
                                     string scriptOutPath = args[6];

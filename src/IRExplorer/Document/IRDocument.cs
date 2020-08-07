@@ -370,11 +370,13 @@ namespace IRExplorer {
 
                             if (action.Element is InstructionIR instr) {
                                 if (instr.Destinations.Count > 0) {
-                                    HandleElement(instr.Destinations[0], highlighter, true);
+                                    HandleElement(instr.Destinations[0], highlighter,
+                                                  markExpression: true, markReferences: false);
                                 }
                             }
                             else {
-                                HandleElement(action.Element, highlighter, true);
+                                HandleElement(action.Element, highlighter,
+                                              markExpression: true, markReferences: false);
                             }
                         }
 
@@ -416,12 +418,12 @@ namespace IRExplorer {
                     }
                 case DocumentActionKind.MarkReferences: {
                         if (action.Element is OperandIR op) {
-                            MarkReferences(op);
+                            MarkReferences(op, markedHighlighter_);
                         }
                         else if (action.Element is InstructionIR instr) {
                             // For an instruction, look for the references of the dest. operand.
                             if (instr.Destinations.Count > 0) {
-                                MarkReferences(instr.Destinations[0]);
+                                MarkReferences(instr.Destinations[0], markedHighlighter_);
                             }
                         }
 
@@ -894,7 +896,8 @@ namespace IRExplorer {
                 }
 
                 bool markExpression = fromUICommand && Utils.IsControlModifierActive();
-                HandleElement(element, selectedHighlighter_, markExpression);
+                bool markReferences = fromUICommand && Utils.IsShiftModifierActive();
+                HandleElement(element, selectedHighlighter_, markExpression, markReferences);
                 AddSelectedElement(element, raiseEvent);
 
                 if (fromUICommand) {
@@ -1497,7 +1500,25 @@ namespace IRExplorer {
             var selectedOp = GetSelectedElement();
 
             if (selectedOp is OperandIR op) {
-                return ReferenceFinder.GetSSADefinition(op) as OperandIR;
+                var defOp = ReferenceFinder.GetSSADefinition(op) as OperandIR;
+
+                if (defOp != null) {
+                    return defOp;
+                }
+
+                // For an indirection, look for the base value.
+                if (op.IsIndirection) {
+                    op = op.IndirectionBaseValue;
+                }
+
+                //? TODO: Could use block reachability to trim the set of stores marked
+                //? Reachability can be integrated directly into ReferenceFinder,
+                //? refs.FindAllReachableStores(op, block)
+                var storeList = new ReferenceFinder(function_).FindAllStores(op);
+
+                if (storeList.Count == 1) {
+                    return storeList[0].Element as OperandIR;
+                }
             }
 
             return null;
@@ -1609,12 +1630,14 @@ namespace IRExplorer {
             return false;
         }
 
-        private void HandleElement(IRElement element, ElementHighlighter highlighter, bool markExpression) {
+        private void HandleElement(IRElement element, ElementHighlighter highlighter,
+                                   bool markExpression, bool markReferences) {
             var action = HighlightingEventAction.ReplaceHighlighting;
             bool highlighted = false;
 
             if (element is OperandIR op) {
-                highlighted = HandleOperandElement(highlighter, markExpression, action, op);
+                highlighted = HandleOperandElement(op, highlighter, markExpression,
+                                                   markReferences, action);
             }
             else if (element is InstructionIR instr) {
                 highlighted = HandleInstructionElement(instr, highlighter, ref action);
@@ -1642,7 +1665,7 @@ namespace IRExplorer {
                     HighlightBlockLabel(sourceOp, highlighter, ssaUserStyle_, action);
                 }
                 else {
-                    HighlightSSADefinition(sourceOp, highlighter, ssaDefinitionStyle_, action,
+                    HighlightDefinition(sourceOp, highlighter, ssaDefinitionStyle_, action,
                                            false);
                 }
             }
@@ -1650,8 +1673,9 @@ namespace IRExplorer {
             return true;
         }
 
-        private bool HandleOperandElement(ElementHighlighter highlighter, bool markExpression,
-                                          HighlightingEventAction action, OperandIR op) {
+        private bool HandleOperandElement(OperandIR op, ElementHighlighter highlighter,
+                                          bool markExpression, bool markReferences,
+                                          HighlightingEventAction action) {
             if (op.Role == OperandRole.Source) {
                 if (markExpression) {
                     // Mark an entire SSA def-use expression DAG.
@@ -1679,7 +1703,7 @@ namespace IRExplorer {
                 }
 
                 if (useList != null && useList.Count > 0) {
-                    HighlightSSAUsers(op, useList, highlighter, ssaUserStyle_, action);
+                    HighlightUsers(op, useList, highlighter, ssaUserStyle_, action);
                     handled = true;
                 }
 
@@ -1695,7 +1719,12 @@ namespace IRExplorer {
                     return HighlightBlockLabel(op, highlighter, ssaUserStyle_, action);
                 }
 
-                return HighlightSSADefinition(op, highlighter, ssaDefinitionStyle_, action);
+                if (markReferences) {
+                    MarkReferences(op, highlighter);
+                    return true;
+                }
+
+                return HighlightDefinition(op, highlighter, ssaDefinitionStyle_, action);
             }
 
             return false;
@@ -1834,9 +1863,9 @@ namespace IRExplorer {
             BringElementIntoView(element);
         }
 
-        private bool HighlightSSADefinition(OperandIR op, ElementHighlighter highlighter,
-                                            PairHighlightingStyle style, HighlightingEventAction action,
-                                            bool highlightDefInstr = true) {
+        private bool HighlightDefinition(OperandIR op, ElementHighlighter highlighter,
+                                         PairHighlightingStyle style, HighlightingEventAction action,
+                                         bool highlightDefInstr = true) {
             // First look for an SSA definition, if not found 
             // highlight every store to the same symbol.
             var defList = new List<IRElement>();
@@ -1846,6 +1875,12 @@ namespace IRExplorer {
                 defList.Add(defElement);
             }
             else {
+                // For an indirection, look for the base value.
+                if (op.IsIndirection) {
+                    op = op.IndirectionBaseValue;
+                }
+
+                //? TODO: Could use block reachability to trim the set of stores marked
                 var storeList = new ReferenceFinder(function_).FindAllStores(op);
                 defList = storeList.ConvertAll(storeRef => storeRef.Element);
             }
@@ -1958,7 +1993,7 @@ namespace IRExplorer {
             }
         }
 
-        private void HighlightSSAUsers(OperandIR op, List<Reference> useList, ElementHighlighter highlighter,
+        private void HighlightUsers(OperandIR op, List<Reference> useList, ElementHighlighter highlighter,
                                        PairHighlightingStyle style, HighlightingEventAction action) {
             var instrGroup = new HighlightedGroup(style.ParentStyle);
             var useGroup = new HighlightedGroup(style.ChildStyle);
@@ -2015,7 +2050,9 @@ namespace IRExplorer {
 
                     if (highlightElement) {
                         hoverHighlighter_.Clear();
-                        HandleElement(element, hoverHighlighter_, Utils.IsControlModifierActive());
+                        HandleElement(element, hoverHighlighter_,
+                                      markExpression: Utils.IsControlModifierActive(),
+                                      markReferences: Utils.IsShiftModifierActive());
                         UpdateHighlighting();
                         return;
                     }
@@ -2253,14 +2290,18 @@ namespace IRExplorer {
             var selectedOp = GetSelectedElement();
 
             if (selectedOp is OperandIR op) {
-                MarkReferences(op);
+                MarkReferences(op, markedHighlighter_);
                 MirrorAction(DocumentActionKind.MarkReferences, selectedOp);
             }
 
             UpdateHighlighting();
         }
 
-        private void MarkReferences(OperandIR op) {
+        private void MarkReferences(OperandIR op, ElementHighlighter highlighter) {
+            if (op.IsIndirection) {
+                op = op.IndirectionBaseValue;
+            }
+
             var refFinder = new ReferenceFinder(function_);
             var operandRefs = refFinder.FindAllReferences(op);
             var markedInstrs = new HashSet<InstructionIR>();
@@ -2277,18 +2318,21 @@ namespace IRExplorer {
                 var instr = operandRef.Element.ParentInstruction;
 
                 if (instr != null && !markedInstrs.Contains(instr)) {
-                    HighlightInstruction(instr, markedHighlighter_, style);
+                    HighlightInstruction(instr, highlighter, style);
                     markedInstrs.Add(instr);
                 }
 
-                var group = HighlightOperand(operandRef.Element, markedHighlighter_, style);
+                var group = HighlightOperand(operandRef.Element, highlighter, style);
 
                 RaiseElementHighlightingEvent(operandRef.Element, group, HighlighingType.Marked,
                                               HighlightingEventAction.AppendHighlighting);
             }
 
-            Session.FindAllReferences(op, this);
-            RecordReversibleAction(DocumentActionKind.MarkReferences, op, operandRefs);
+            if (highlighter == markedHighlighter_) {
+                // Show references in panel.
+                Session.FindAllReferences(op, this);
+                RecordReversibleAction(DocumentActionKind.MarkReferences, op, operandRefs);
+            }
         }
 
         private void MarkUsesExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -2305,7 +2349,7 @@ namespace IRExplorer {
             ClearTemporaryHighlighting();
             var useList = ReferenceFinder.FindSSAUses(defOp);
 
-            HighlightSSAUsers(defOp, useList, markedHighlighter_, style,
+            HighlightUsers(defOp, useList, markedHighlighter_, style,
                               HighlightingEventAction.AppendHighlighting);
 
             UpdateHighlighting();
@@ -3111,7 +3155,8 @@ namespace IRExplorer {
             var position = e.GetPosition(TextArea.TextView);
 
             // Ignore click outside the text view, such as the right marker bar.
-            if (position.X > TextArea.TextView.ActualWidth) {
+            if (position.X >= TextArea.TextView.ActualWidth ||
+                position.Y >= TextArea.TextView.ActualHeight) {
                 return;
             }
 
@@ -3123,7 +3168,7 @@ namespace IRExplorer {
             HideTemporaryUI();
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
-            e.Handled = true;
+            e.Handled = element != null;
         }
 
         public void EnterDiffMode() {

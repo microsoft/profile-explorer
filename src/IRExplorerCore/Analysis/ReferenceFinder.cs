@@ -207,7 +207,7 @@ namespace IRExplorerCore.Analysis {
 
         public List<Reference> FindAllReferences(IRElement element, bool includeSSAUses = true,
                                                  Func<IRElement, ReferenceKind, bool>
-                                                     filterAction = null) {
+                                                 filterAction = null) {
             var list = new List<Reference>();
 
             if (!(element is OperandIR op)) {
@@ -267,7 +267,7 @@ namespace IRExplorerCore.Analysis {
                                      (element, kind) => kind == ReferenceKind.Load);
         }
 
-        public static List<Reference> FindSSAUses(OperandIR  op) {
+        public static List<Reference> FindSSAUses(OperandIR op) {
             var list = new List<Reference>();
             FindSSAUses(op, list);
             return list;
@@ -276,7 +276,7 @@ namespace IRExplorerCore.Analysis {
         public static List<Reference> FindSSAUses(InstructionIR instr) {
             var list = new List<Reference>();
 
-            if(instr.Destinations.Count == 0) {
+            if (instr.Destinations.Count == 0) {
                 return list;
             }
 
