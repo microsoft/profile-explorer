@@ -304,7 +304,7 @@ namespace IRExplorer {
         private void SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
             mainDocument_ = result;
             StartSession(filePath, sessionKind);
-            sessionState_.NewLoadedDocument(result);
+            sessionState_.RegisterLoadedDocument(result);
 
             UpdateUIAfterLoadDocument();
             SetupSectionPanel();
@@ -331,7 +331,7 @@ namespace IRExplorer {
 
         private void SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
             diffDocument_ = result;
-            sessionState_.NewLoadedDocument(result);
+            sessionState_.RegisterLoadedDocument(result);
             UpdateUIAfterLoadDocument();
             ShowSectionPanelDiffs(result);
         }
@@ -372,7 +372,7 @@ namespace IRExplorer {
                     var result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath, UpdateIRDocumentLoadProgress));
 
                     if (result != null) {
-                        sessionState_.NewLoadedDocument(result);
+                        sessionState_.RegisterLoadedDocument(result);
 
                         if (mainDocument_ == null) {
                             mainDocument_ = result;
