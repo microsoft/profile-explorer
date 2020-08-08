@@ -393,7 +393,7 @@ namespace IRExplorer {
         }
 
         private IRTextSection FindDiffDocumentSection(IRTextSection section, LoadedDocument diffDoc) {
-            SectionPanel.SelectSectionFunction(section);
+            SectionPanel.SelectFunction(section.ParentFunction);
             return SectionPanel.FindDiffDocumentSection(section);
         }
 

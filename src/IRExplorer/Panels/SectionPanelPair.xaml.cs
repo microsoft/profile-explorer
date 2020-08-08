@@ -201,9 +201,13 @@ namespace IRExplorer {
             SelectSectionPanel(section).SelectSection(section, focus);
         }
 
-        public void SelectSectionFunction(IRTextSection section) {
-            MainPanel.SelectFunction(section.ParentFunction);
-            DiffPanel.SelectFunction(section.ParentFunction);
+        public void SelectFunction(IRTextFunction function) {
+            MainPanel.SelectFunction(function);
+            DiffPanel.SelectFunction(function);
+        }
+
+        public void DiffSelectedSection() {
+            MainPanel.DiffSelectedSection();
         }
 
         public void SwitchToSection(IRTextSection section, IRDocumentHost targetDocument = null) {

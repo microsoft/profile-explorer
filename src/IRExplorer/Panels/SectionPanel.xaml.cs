@@ -728,6 +728,19 @@ namespace IRExplorer {
             EnterDiffMode?.Invoke(this, args);
         }
 
+        public void DiffSelectedSection() {
+            if (SectionList.SelectedItem != null) {
+                var sectionEx = SectionList.SelectedItem as IRTextSectionEx;
+
+                var args = new DiffModeEventArgs {
+                    IsWithOtherDocument = true,
+                    Left = new OpenSectionEventArgs(sectionEx.Section, OpenSectionKind.NewTabDockLeft)
+                };
+
+                EnterDiffMode?.Invoke(this, args);
+            }
+        }
+
         private void ToggleTagExecuted(object sender, ExecutedRoutedEventArgs e) {
             var section = e.Parameter as IRTextSectionEx;
 
@@ -1030,11 +1043,10 @@ namespace IRExplorer {
                     BringIntoViewSelectedListItem(FunctionList, false);
                 }
             }
-        }
 
-        public override void OnSessionEnd() {
-            base.OnSessionEnd();
+            // Reset search filters.
             FunctionFilter.Text = "";
+            SectionFilter.Text = "";
         }
 
         public bool SelectFunction(IRTextFunction function) {
