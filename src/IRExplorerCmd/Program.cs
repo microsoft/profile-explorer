@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using IRExplorer;
+using IRExplorerUI;
 using IRExplorerCore.UTC;
-using IRExplorer.Scripting;
+using IRExplorerUI.Scripting;
 
 namespace IRExplorerCmd {
     class Program {

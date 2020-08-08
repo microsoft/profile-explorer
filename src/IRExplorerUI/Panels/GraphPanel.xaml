@@ -1,0 +1,377 @@
+﻿<local:ToolPanelControl
+    x:Class="IRExplorerUI.GraphPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:IRExplorerUI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:options="clr-namespace:IRExplorerUI.OptionsPanels"
+    d:DesignHeight="450"
+    d:DesignWidth="500"
+    Focusable="True"
+    IsTabStop="True"
+    mc:Ignorable="d">
+    <local:ToolPanelControl.CommandBindings>
+        <CommandBinding Command="local:GraphCommand.GraphFitWidth" Executed="ExecuteGraphFitWidth" />
+        <CommandBinding Command="local:GraphCommand.GraphResetWidth" Executed="ExecuteGraphResetWidth" />
+        <CommandBinding Command="local:GraphCommand.GraphFitAll" Executed="ExecuteGraphFitAll" />
+        <CommandBinding Command="local:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
+        <CommandBinding Command="local:GraphCommand.GraphZoomOut" Executed="ExecuteGraphZoomOut" />
+    </local:ToolPanelControl.CommandBindings>
+
+    <local:ToolPanelControl.InputBindings>
+        <KeyBinding
+            Key="W"
+            Command="local:GraphCommand.GraphFitWidth"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="R"
+            Command="local:GraphCommand.GraphResetWidth"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="A"
+            Command="local:GraphCommand.GraphFitAll"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="M"
+            Command="local:GraphCommand.MarkBlock"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="M"
+            Command="local:GraphCommand.MarkGroup"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Shift+Ctrl" />
+        <KeyBinding
+            Key="P"
+            Command="local:GraphCommand.MarkPredecessors"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="S"
+            Command="local:GraphCommand.MarkSuccessors"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="L"
+            Command="local:GraphCommand.MarkLoop"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="L"
+            Command="local:GraphCommand.MarkLoopNest"
+            CommandTarget="{Binding ElementName=GraphHost}"
+            Modifiers="Shift+Ctrl" />
+    </local:ToolPanelControl.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="28" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid
+            x:Name="ToolbarHost"
+            Grid.Row="0"
+            HorizontalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="75" />
+            </Grid.ColumnDefinitions>
+            <ToolBarTray
+                Grid.Column="0"
+                Height="28"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                DockPanel.Dock="Left"
+                IsLocked="True">
+                <ToolBar
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Loaded="ToolBar_Loaded">
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="Zoom" />
+                    <Button
+                        Margin="4,0,0,0"
+                        Command="local:GraphCommand.GraphZoomOut"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom Out (Ctrol+_">
+                        <Image Source="{StaticResource MinusIcon}" />
+                    </Button>
+                    <Button
+                        Command="local:GraphCommand.GraphZoomIn"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom In (Ctrl+=)">
+                        <Image Source="{StaticResource PlusIcon}" />
+                    </Button>
+                    <Separator />
+                    <Button
+                        Margin="4,0,0,0"
+                        Command="local:GraphCommand.GraphFitWidth"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource OpenExternalIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Fit Width" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        Command="local:GraphCommand.GraphFitAll"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom the view to show the entire graph (Ctrl+A)">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource FitAllIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Fit All" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        Command="local:GraphCommand.GraphResetWidth"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource ResetWidthIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Reset" />
+                        </StackPanel>
+                    </Button>
+                    <Separator />
+                    <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <MenuItem
+                            Padding="0,2,2,2"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            Header="Clear"
+                            OverridesDefaultStyle="True">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource RemoveIcon}" />
+                            </MenuItem.Icon>
+                            <MenuItem
+                                Command="local:GraphCommand.ClearMarked"
+                                CommandTarget="{Binding ElementName=GraphHost}"
+                                Header="Selected Marker" />
+                            <MenuItem
+                                Command="local:GraphCommand.ClearAllMarked"
+                                CommandTarget="{Binding ElementName=GraphHost}"
+                                Header="All Markers" />
+                        </MenuItem>
+                    </Menu>
+                    <Grid />
+                </ToolBar>
+            </ToolBarTray>
+
+            <local:PanelToolbarTray
+                Grid.Column="1"
+                MinWidth="75"
+                MaxWidth="75"
+                DockPanel.Dock="Right"
+                DuplicateClicked="PanelToolbarTray_DuplicateClicked"
+                PinnedChanged="PanelToolbarTray_PinnedChanged"
+                SettingsClicked="PanelToolbarTray_SettingsClicked" />
+        </Grid>
+
+        <local:ScrollViewerClickable
+            x:Name="GraphHost"
+            Grid.Row="1"
+            Background="#EFECE2"
+            HorizontalScrollBarVisibility="Auto"
+            VerticalScrollBarVisibility="Auto">
+            <local:GraphViewer x:Name="GraphViewer" ContextMenu="{StaticResource GraphContextMenu}" />
+        </local:ScrollViewerClickable>
+
+        <Grid
+            x:Name="LongOperationView"
+            Grid.Row="1"
+            Panel.ZIndex="1"
+            Visibility="Collapsed">
+            <Border
+                Width="150"
+                Height="50"
+                Background="#FFB4D9FF"
+                BorderBrush="DarkGray"
+                BorderThickness="1"
+                CornerRadius="4">
+                <StackPanel Orientation="Vertical">
+                    <TextBlock
+                        Margin="0,4,0,4"
+                        HorizontalAlignment="Center"
+                        Text="Generating graph" />
+                    <Button
+                        x:Name="CancelButton"
+                        Padding="4,1,4,1"
+                        HorizontalAlignment="Center"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Click="CancelButton_Click"
+                        Content="Cancel" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid
+            x:Name="QueryPanel"
+            Grid.Row="1"
+            Width="200"
+            Height="172"
+            Margin="5,0,0,5"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Bottom"
+            Panel.ZIndex="3"
+            Background="LightGray"
+            MouseEnter="QueryPanel_MouseEnter"
+            MouseLeave="QueryPanel_MouseLeave"
+            Opacity="0.5"
+            Visibility="Collapsed">
+            <Border BorderBrush="DarkGray" BorderThickness="1,1,1,1">
+                <Grid>
+                    <StackPanel Orientation="Vertical">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="20" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="20" />
+                                <RowDefinition Height="20" />
+                            </Grid.RowDefinitions>
+
+                            <Grid
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Grid.ColumnSpan="2"
+                                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
+                                <TextBlock
+                                    Margin="4,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontWeight="Bold"
+                                    Text="Query Results" />
+                            </Grid>
+
+                            <StackPanel
+                                Grid.Row="1"
+                                Grid.Column="0"
+                                Margin="4,0,4,0"
+                                Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Text="Block A:" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontWeight="DemiBold"
+                                    Text="{Binding Block1Name}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+
+                            <Button
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                Command="local:GraphCommand.CloseQueryPanel"
+                                CommandTarget="{Binding ElementName=GraphHost}"
+                                ToolTip="Close query panel">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource CloseIcon}" />
+                            </Button>
+
+                            <Button
+                                Grid.Row="2"
+                                Grid.Column="1"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                Command="local:GraphCommand.SwapQueryBlocks"
+                                CommandTarget="{Binding ElementName=GraphHost}"
+                                ToolTip="Swap blocks">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource DiffIcon}" />
+                            </Button>
+
+                            <StackPanel
+                                Grid.Row="2"
+                                Grid.Column="0"
+                                Margin="4,0,4,0"
+                                Orientation="Horizontal">
+                                <TextBlock VerticalAlignment="Center" Text="Block B:" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    FontWeight="DemiBold"
+                                    Text="{Binding Block2Name}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Separator />
+                        <CheckBox
+                            Margin="4,0,0,0"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            Content="A dominates B"
+                            IsChecked="{Binding Dominates}"
+                            IsHitTestVisible="False" />
+                        <Separator />
+                        <CheckBox
+                            Margin="4,0,0,0"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            Content="A post-dominates B"
+                            IsChecked="{Binding PostDominates}"
+                            IsHitTestVisible="False" />
+
+                        <Separator />
+
+                        <StackPanel Orientation="Horizontal">
+                            <CheckBox
+                                Margin="4,0,0,0"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Content="A reaches B"
+                                IsChecked="{Binding Reaches}"
+                                IsHitTestVisible="False" />
+                            <Button
+                                Margin="16,0,0,0"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                Command="local:GraphCommand.ShowReachablePath"
+                                CommandTarget="{Binding ElementName=GraphHost}"
+                                ToolTip="Mark path connecting blocks A and B">
+                                <Image
+                                    Width="12"
+                                    Height="12"
+                                    Source="{StaticResource PeekDefinitionIcon}" />
+                            </Button>
+                        </StackPanel>
+                        <Separator />
+                        <CheckBox
+                            Margin="4,0,0,0"
+                            Content="A control-dependent on B"
+                            Foreground="{DynamicResource DisabledForegroundBrush}"
+                            IsChecked="{Binding ControlDependent}"
+                            IsEnabled="False"
+                            IsHitTestVisible="False" />
+                        <Separator />
+                        <CheckBox
+                            Margin="4,0,0,0"
+                            Content="A on dom. frontier of B"
+                            Foreground="{DynamicResource DisabledForegroundBrush}"
+                            IsChecked="{Binding OnDomFrontier}"
+                            IsEnabled="False"
+                            IsHitTestVisible="False" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</local:ToolPanelControl>
