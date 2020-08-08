@@ -423,6 +423,26 @@ namespace IRExplorer {
 
                         this.Close();
                     }
+                    else if (args[3].EndsWith("func")) {
+                        var funcName = args[4];
+                        var func = mainDocument_.Summary.FindFunction(funcName);
+
+                        if (func != null) {
+                            SectionPanel.SelectFunction(func);
+
+                            if (args.Length >= 7) {
+                                if (args[5].EndsWith("section")) {
+                                    var sectionName = args[6];
+                                    var section = func.FindSection(sectionName);
+
+                                    if (section != null) {
+                                        SectionPanel.SelectSection(section);
+                                        SectionPanel.DiffSelectedSection();
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             else if (args.Length == 2) {
