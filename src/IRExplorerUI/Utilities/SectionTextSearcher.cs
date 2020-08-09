@@ -55,7 +55,7 @@ namespace IRExplorerUI {
         public async Task<List<SectionSearchResult>> SearchAsync(string searchedText,
                                                                  TextSearchKind searchKind,
                                                                  List<IRTextSection> sections,
-                                                                 CancelableTaskInfo cancelableTask = null) {
+                                                                 CancelableTask cancelableTask = null) {
             var resultList = new List<SectionSearchResult>(sections.Count);
 
             if (string.IsNullOrEmpty(searchedText)) {
@@ -116,7 +116,7 @@ namespace IRExplorerUI {
         }
 
         public SectionSearchResult SearchSection(string searchedText, TextSearchKind searchKind,
-                                                 IRTextSection section, CancelableTaskInfo cancelableTask) {
+                                                 IRTextSection section, CancelableTask cancelableTask) {
             string text = options_.UseRawSectionText ?
                             sectionLoader_.GetRawSectionText(section) :
                             sectionLoader_.GetSectionText(section);
@@ -124,7 +124,7 @@ namespace IRExplorerUI {
         }
 
         public SectionSearchResult SearchSection(string text, string searchedText, TextSearchKind searchKind,
-                                                 IRTextSection section, CancelableTaskInfo cancelableTask = null) {
+                                                 IRTextSection section, CancelableTask cancelableTask = null) {
             var result = new SectionSearchResult(section) {
                 SectionText = options_.KeepSectionText ? text : null,
                 Results = TextSearcher.AllIndexesOf(text, searchedText, 0, searchKind, cancelableTask)
@@ -160,7 +160,7 @@ namespace IRExplorerUI {
         public async Task<SectionSearchResult> SearchSectionWithTextAsync(string text, string searchedText,
                                                                           TextSearchKind searchKind,
                                                                           IRTextSection section,
-                                                                          CancelableTaskInfo cancelableTask = null) {
+                                                                          CancelableTask cancelableTask = null) {
             var result = await Task.Run(() => TextSearcher.AllIndexesOf(text, searchedText, 0, searchKind, cancelableTask));
 
             return new SectionSearchResult(section) {

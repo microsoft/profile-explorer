@@ -126,7 +126,7 @@ namespace IRExplorerUI {
         public static List<TextSearchResult> AllIndexesOf(string text, string searchedText,
                                                             int startOffset = 0,
                                                             TextSearchKind searchKind = TextSearchKind.Default,
-                                                            CancelableTaskInfo cancelableTask = null) {
+                                                            CancelableTask cancelableTask = null) {
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchedText)) {
                 return new List<TextSearchResult>();
             }

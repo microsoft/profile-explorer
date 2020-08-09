@@ -20,7 +20,7 @@ namespace IRExplorerUI {
             graphLayout_ = new Dictionary<IRTextSection, CompressedString>();
         }
 
-        public LayoutGraph GenerateGraph<T, U>(T element, IRTextSection section, CancelableTaskInfo task,
+        public LayoutGraph GenerateGraph<T, U>(T element, IRTextSection section, CancelableTask task,
                                                U options = null) where T : class where U : class {
             var printer = GraphPrinterFactory.CreateInstance(graphKind_, element, options);
             string graphText;

@@ -525,7 +525,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private Func<FunctionIR, IRTextSection, CancelableTaskInfo, LayoutGraph> GetComputeGraphAction(
+        private Func<FunctionIR, IRTextSection, CancelableTask, LayoutGraph> GetComputeGraphAction(
             GraphKind graphKind) {
             return graphKind switch
             {
@@ -536,7 +536,7 @@ namespace IRExplorerUI {
             };
         }
 
-        private Func<FunctionIR, IRTextSection, CancelableTaskInfo, LayoutGraph> GetComputeGraphAction(
+        private Func<FunctionIR, IRTextSection, CancelableTask, LayoutGraph> GetComputeGraphAction(
             ToolPanelKind graphKind) {
             return graphKind switch
             {
@@ -548,7 +548,7 @@ namespace IRExplorerUI {
         }
 
         public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
-                                            Func<FunctionIR, IRTextSection, CancelableTaskInfo, LayoutGraph> computeGraphAction) {
+                                            Func<FunctionIR, IRTextSection, CancelableTask, LayoutGraph> computeGraphAction) {
             //? TODO: When the section is changed quickly and there are long-running tasks,
             //? the CFG panel can get out of sync - the doc. tries to highlight a block
             //? for another CFG if the loading of the prev. CFG completes between loading the text
@@ -594,19 +594,19 @@ namespace IRExplorerUI {
         }
 
         private LayoutGraph ComputeFlowGraph(FunctionIR function, IRTextSection section,
-                                                         CancelableTaskInfo loadTask) {
+                                                         CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.FlowGraph);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
         private LayoutGraph ComputeDominatorTree(FunctionIR function, IRTextSection section,
-                                                             CancelableTaskInfo loadTask) {
+                                                             CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.DominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
         private LayoutGraph ComputePostDominatorTree(FunctionIR function, IRTextSection section,
-                                                                 CancelableTaskInfo loadTask) {
+                                                                 CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.PostDominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }

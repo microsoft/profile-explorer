@@ -78,7 +78,7 @@ namespace IRExplorerUI {
         private GraphNode hoveredNode_;
 
         private bool ignoreNextHover_;
-        private CancelableTaskInfo loadTask_;
+        private CancelableTask loadTask_;
         private ToolTip nodeToolTip_;
         private bool optionsPanelVisible_;
 
@@ -246,13 +246,13 @@ namespace IRExplorerUI {
             document_ = doc;
         }
 
-        private CancelableTaskInfo CreateGraphLoadTask() {
+        private CancelableTask CreateGraphLoadTask() {
             lock (this) {
                 if (loadTask_ != null) {
                     CancelGraphLoadTask();
                 }
 
-                loadTask_ = new CancelableTaskInfo();
+                loadTask_ = new CancelableTask();
                 return loadTask_;
             }
         }
@@ -265,7 +265,7 @@ namespace IRExplorerUI {
             loadTask_ = null;
         }
 
-        private void CompleteGraphLoadTask(CancelableTaskInfo task) {
+        private void CompleteGraphLoadTask(CancelableTask task) {
             lock (this) {
                 if (task != loadTask_) {
                     return; // A canceled task.
@@ -280,7 +280,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public CancelableTaskInfo OnGenerateGraphStart(IRTextSection section) {
+        public CancelableTask OnGenerateGraphStart(IRTextSection section) {
             section_ = section;
             Utils.DisableControl(GraphViewer);
             var animation = new DoubleAnimation(0.25, TimeSpan.FromSeconds(0.5));
@@ -294,7 +294,7 @@ namespace IRExplorerUI {
             return CreateGraphLoadTask();
         }
 
-        public void OnGenerateGraphDone(CancelableTaskInfo task, bool failed = false) {
+        public void OnGenerateGraphDone(CancelableTask task, bool failed = false) {
             if (!failed) {
                 Utils.EnableControl(GraphViewer);
                 GraphHost.ScrollToHorizontalOffset(0);

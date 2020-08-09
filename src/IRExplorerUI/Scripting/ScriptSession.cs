@@ -14,11 +14,11 @@ namespace IRExplorerUI.Scripting {
         private StringBuilder builder_;
         private IRDocument document_;
         private List<Tuple<IRElement, Color>> markedElements_;
-        private CancelableTaskInfo task_;
+        private CancelableTask task_;
         private ISessionManager session_;
 
         public ScriptSession(IRDocument document, ISessionManager session) {
-            task_ = new CancelableTaskInfo();
+            task_ = new CancelableTask();
             document_ = document;
             session_ = session;
             builder_ = new StringBuilder();

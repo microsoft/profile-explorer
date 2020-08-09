@@ -62,7 +62,7 @@ namespace IRExplorerUI {
         private int selectedElementRefIndex_;
         private List<Reference> selectedElementRefs_;
         private bool syntaxHighlightingLoaded_;
-        private CancelableTaskInfo updateHighlightingTask_;
+        private CancelableTask updateHighlightingTask_;
 
         public LightIRDocument() {
             elements_ = new List<IRElement>();
@@ -244,7 +244,7 @@ namespace IRExplorerUI {
         private async Task UpdateElementHighlighting() {
             // If there is another task running, cancel it and wait for it to complete
             // before starting a new task, this can happen when quickly changing sections.
-            CancelableTaskInfo currentUpdateTask = null;
+            CancelableTask currentUpdateTask = null;
 
             lock (this) {
                 if (updateHighlightingTask_ != null) {
@@ -269,7 +269,7 @@ namespace IRExplorerUI {
             }
 
             var defElements = new HighlightedGroup(elementStyle_);
-            updateHighlightingTask_ = new CancelableTaskInfo();
+            updateHighlightingTask_ = new CancelableTask();
 
             await Task.Run(() => {
                 lock (this) {
@@ -296,7 +296,7 @@ namespace IRExplorerUI {
             UpdateHighlighting();
         }
 
-        private List<IRElement> ExtractTextOperands(string text, FunctionIR function, CancelableTaskInfo cancelableTask) {
+        private List<IRElement> ExtractTextOperands(string text, FunctionIR function, CancelableTask cancelableTask) {
             var elements = new List<IRElement>();
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
             var remarks = remarkProvider.ExtractRemarks(text, function, section_);
