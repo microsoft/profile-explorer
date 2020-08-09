@@ -26,14 +26,14 @@ namespace IRExplorerCore {
         }
     }
 
-    public class CancelableTaskInfo : IDisposable {
+    public class CancelableTask : IDisposable {
         private CancellationToken cancelToken_;
 
         private bool disposed_;
         private ManualResetEvent taskCompletedEvent_;
         private CancellationTokenSource tokenSource_;
 
-        public CancelableTaskInfo() {
+        public CancelableTask() {
             taskCompletedEvent_ = new ManualResetEvent(false);
             tokenSource_ = new CancellationTokenSource();
             cancelToken_ = tokenSource_.Token;
@@ -49,7 +49,7 @@ namespace IRExplorerCore {
             GC.SuppressFinalize(this);
         }
 
-        ~CancelableTaskInfo() {
+        ~CancelableTask() {
             Dispose(false);
         }
 

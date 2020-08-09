@@ -33,7 +33,7 @@ namespace IRExplorerUI.Panels {
 
         private ISessionManager session_;
         private LoadedDocument document_;
-        private CancelableTaskInfo searchTask_;
+        private CancelableTask searchTask_;
         private SearchInfo searchInfo_;
         private DocumentSearchInfo data_;
 
@@ -85,9 +85,19 @@ namespace IRExplorerUI.Panels {
                 return;
             }
 
+            var results = await UpdateSearchPanel(searchedText);
+
+            if (results != null) {
+                // Update UI if search was not cancelled.
+                ResultsPanel.Session = session_;
+                ResultsPanel.UpdateSearchResults(results, new SearchInfo());
+            }
+        }
+
+        private async Task<List<SectionSearchResult>> UpdateSearchPanel(string searchedText) {
             // Create a task that can be used later to cancel the search
             // if another letter is being pressed.
-            var searchTask = new CancelableTaskInfo();
+            var searchTask = new CancelableTask();
 
             lock (this) {
                 if (searchTask_ != null) {
@@ -100,13 +110,11 @@ namespace IRExplorerUI.Panels {
             var docInfo = document_;
             var searcherOptions = new SectionTextSearcherOptions() {
                 SearchBeforeOutput = data_.SearchPassOutput,
-                KeepSectionText = false,
-                UseRawSectionText = true
+                KeepSectionText = false, // Reduces memory usage for large files.
+                UseRawSectionText = true // Speeds up reading large sections.
             };
 
             var searcher = new SectionTextSearcher(docInfo.Loader, searcherOptions);
-            var start = Stopwatch.StartNew();
-
             var list = new List<IRTextSection>();
 
             foreach (var func in docInfo.Summary.Functions) {
@@ -117,25 +125,21 @@ namespace IRExplorerUI.Panels {
             var results = await searcher.SearchAsync(searchedText, searchInfo_.SearchKind, list, searchTask_);
 
             if (searchTask.IsCanceled) {
-                return;
+                return null;
             }
 
-            int sections = 0;
-            int functions = 0;
-            int instances = 0;
-            var sectionList = new List<string>();
+            //int sections = 0;
+            //int instances = 0;
+            //var sectionList = new List<string>();
 
-            foreach (var result in results) {
-                if (result.Results.Count > 0) {
-                    sectionList.Add(result.Section.Name);
-                    sections++;
-                }
+            //foreach (var result in results) {
+            //    if (result.Results.Count > 0) {
+            //        sectionList.Add(result.Section.Name);
+            //        sections++;
+            //    }
 
-                instances += result.Results.Count;
-            }
-
-            ResultsPanel.Session = session_;
-            ResultsPanel.UpdateSearchResults(results, new SearchInfo());
+            //    instances += result.Results.Count;
+            //}
 
             searchTask.Completed();
 
@@ -144,6 +148,8 @@ namespace IRExplorerUI.Panels {
                     searchTask_ = null;
                 }
             }
+
+            return results;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e) {

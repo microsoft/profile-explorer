@@ -21,8 +21,7 @@ namespace IRExplorerCore.GraphViz {
                                      labelPrefix, label);
             }
             else {
-                builder.AppendFormat("{0}[shape=rectangle, label=\"{1}\"];\n", nodeName,
-                                     label);
+                builder.AppendFormat("{0}[shape=rectangle, label=\"{1}\"];\n", nodeName, label);
             }
 
             return nodeName;
@@ -88,7 +87,7 @@ namespace IRExplorerCore.GraphViz {
                 builder.AppendLine("}");
                 return builder.ToString();
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 Trace.TraceError($"Failed to generate Graphviz input: {ex.Message}");
                 return null;
             }
@@ -108,11 +107,11 @@ namespace IRExplorerCore.GraphViz {
             throw new NotImplementedException();
         }
 
-        public string CreateGraph(CancelableTaskInfo task) {
+        public string CreateGraph(CancelableTask task) {
             return CreateGraph(PrintGraph(), task);
         }
 
-        public string CreateGraph(string inputText, CancelableTaskInfo task) {
+        public string CreateGraph(string inputText, CancelableTask task) {
             Trace.TraceInformation($"Graphviz task {ObjectTracker.Track(task)}: Start");
             string inputFilePath;
 

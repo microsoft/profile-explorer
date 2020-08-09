@@ -166,7 +166,7 @@ namespace IRExplorerUI {
         // {IR section ID -> list [{panel ID, state}]}
         private List<LoadedDocument> documents_;
         private Dictionary<ToolPanelKind, object> globalPanelStates_;
-        private List<CancelableTaskInfo> pendingTasks_;
+        private List<CancelableTask> pendingTasks_;
         private bool watchDocumentChanges_;
 
         public SessionStateManager(string filePath, SessionKind sessionKind) {
@@ -174,7 +174,7 @@ namespace IRExplorerUI {
             Info.Notes = "";
             documents_ = new List<LoadedDocument>();
             globalPanelStates_ = new Dictionary<ToolPanelKind, object>();
-            pendingTasks_ = new List<CancelableTaskInfo>();
+            pendingTasks_ = new List<CancelableTask>();
             DocumentHosts = new List<DocumentHostInfo>();
             DiffState = new DiffModeInfo();
             SessionStartTime = DateTime.UtcNow;
@@ -283,7 +283,7 @@ namespace IRExplorerUI {
         }
 
         public void EndSession() {
-            List<CancelableTaskInfo> tasks;
+            List<CancelableTask> tasks;
 
             lock (this) {
                 tasks = pendingTasks_.CloneList();
@@ -303,13 +303,13 @@ namespace IRExplorerUI {
             IsAutoSaveEnabled = false;
         }
 
-        public void RegisterCancelableTask(CancelableTaskInfo task) {
+        public void RegisterCancelableTask(CancelableTask task) {
             lock (this) {
                 pendingTasks_.Add(task);
             }
         }
 
-        public void UnregisterCancelableTask(CancelableTaskInfo task) {
+        public void UnregisterCancelableTask(CancelableTask task) {
             lock (this) {
                 pendingTasks_.Remove(task);
             }

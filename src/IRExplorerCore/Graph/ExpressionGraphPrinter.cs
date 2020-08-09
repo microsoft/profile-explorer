@@ -121,9 +121,7 @@ namespace IRExplorerCore.GraphViz {
         }
 
         private void AddNodeToGroup(Tuple<IRElement, IRElement, string> node, TupleIR tuple,
-                                    Dictionary<BlockIR,
-                                            List<Tuple<IRElement, IRElement, string>>>
-                                        blockGroups) {
+                                    Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>> blockGroups) {
             var block = tuple.ParentBlock;
 
             if (!blockGroups.TryGetValue(block, out var group)) {
@@ -149,10 +147,8 @@ namespace IRExplorerCore.GraphViz {
             double verticalMargin = 0.055;
             double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.03), 1.0);
 
-            string elementName =
-                CreateNodeWithMargins(element.Id, label, builder_, horizontalMargin,
-                                      verticalMargin);
-
+            string elementName = CreateNodeWithMargins(element.Id, label, builder_,
+                                                       horizontalMargin, verticalMargin);
             ElementNameMap[elementName] = element;
         }
 
@@ -275,7 +271,7 @@ namespace IRExplorerCore.GraphViz {
                 var ssaNumber = ReferenceFinder.GetSSADefinitionId(op);
 
                 if (ssaNumber.HasValue) {
-                    return $"{label}<{ssaNumber.Value.ToString()}>";
+                    return $"{label}<{ssaNumber.Value.ToString(CultureInfo.InvariantCulture)}>";
                 }
             }
 
@@ -304,7 +300,7 @@ namespace IRExplorerCore.GraphViz {
                 var ssaTag = destOp.GetTag<SSADefinitionTag>();
 
                 if (ssaTag != null && options_.PrintSSANumbers) {
-                    ssaNumber = ssaTag.DefinitionId.ToString();
+                    ssaNumber = ssaTag.DefinitionId.ToString(CultureInfo.InvariantCulture);
                 }
 
                 if (!string.IsNullOrEmpty(variableName)) {
