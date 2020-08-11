@@ -4,8 +4,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Input;
-using System.Windows.Interop;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -43,55 +41,6 @@ namespace IRExplorerUI.Document {
             ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.2));
     }
 
-    public class DraggablePopup : Popup {
-        [System.Runtime.InteropServices.DllImport("User32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr handle);
-
-        public DraggablePopup() {
-            MouseDown += (sender, e) => {
-                if (ShouldStartDragging()) {
-                    Thumb.RaiseEvent(e);
-                }
-            };
-
-            Thumb.DragDelta += (sender, e) => {
-                HorizontalOffset += e.HorizontalChange;
-                VerticalOffset += e.VerticalChange;
-            };
-        }
-
-        public Thumb Thumb { get; private set; } = new Thumb {
-            Width = 0,
-            Height = 0,
-        };
-
-        public virtual bool ShouldStartDragging() {
-            return true;
-        }
-
-        public IntPtr PopupHandle => ((HwndSource)PresentationSource.FromVisual(Child)).Handle;
-
-        public void BringToFront() {
-            SetForegroundWindow(PopupHandle);
-        }
-
-        protected override void OnPreviewMouseDown(MouseButtonEventArgs e) {
-            base.OnPreviewMouseDown(e);
-            BringToFront();
-        }
-
-        protected override void OnInitialized(EventArgs e) {
-            base.OnInitialized(e);
-
-            RemoveLogicalChild(Child);
-            var surrogateChild = new Grid();
-            surrogateChild.Children.Add(Thumb);
-            surrogateChild.Children.Add(Child);
-            AddLogicalChild(surrogateChild);
-            Child = surrogateChild;
-        }
-    }
-
     public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged {
         private const double RemarkListTop = 48;
         private const double RemarkPreviewWidth = 600;
@@ -104,8 +53,6 @@ namespace IRExplorerUI.Document {
         private IRElement element_;
         private RemarkSettings remarkFilter_;
         private bool showPreview_;
-        private bool panelDetached_;
-        private bool duringMinimize_;
         private Popup colorPopup_;
 
         public RemarkPreviewPanel() {
@@ -149,25 +96,8 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        public bool IsPanelDetached => panelDetached_;
-
-        public event EventHandler PanelDetached;
-        public event EventHandler PanelClosed;
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<RemarkContext> RemarkContextChanged;
-
-        protected override void OnClosed(EventArgs e) {
-            base.OnClosed(e);
-
-            // When the application is minimized, the panel should be just hidden,
-            // not completely closed.
-            if (duringMinimize_) {
-                duringMinimize_ = false;
-                return;
-            }
-
-            PanelClosed?.Invoke(this, e);
-        }
 
         private void UpdateRemarkList() {
             RemarkList.ItemsSource = null;
@@ -182,9 +112,7 @@ namespace IRExplorerUI.Document {
                         string sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
                         sectionName = $"({remark.Section.Number}) {sectionName}";
 
-                        var remarkEx =
-                            new RemarkEx(remark, sectionName, remark.Section == Section);
-
+                        var remarkEx = new RemarkEx(remark, sectionName, remark.Section == Section);
                         list.Add(remarkEx);
 
                         // Find first remark in current section.
@@ -209,7 +137,6 @@ namespace IRExplorerUI.Document {
 
         private void UpdateSize() {
             Width = RemarkPreviewWidth;
-
             Height = RemarkListTop +
                      RemarkListItemHeight *
                      Math.Clamp(RemarkList.Items.Count, MinRemarkListItems, MaxRemarkListItems);
@@ -226,9 +153,7 @@ namespace IRExplorerUI.Document {
 
             var itemEx = e.AddedItems[0] as RemarkEx;
             var item = itemEx.Remark;
-
-            string outputText =
-                await Session.GetSectionPassOutputAsync(item.Section.OutputBefore, item.Section);
+            string outputText = await Session.GetSectionPassOutputAsync(item.Section.OutputBefore, item.Section);
 
             TextView.Text = outputText;
             TextView.ScrollToLine(item.RemarkLocation.Line);
@@ -348,13 +273,19 @@ namespace IRExplorerUI.Document {
         }
 
         private void PopupPanelButton_Click(object sender, RoutedEventArgs e) {
-            panelDetached_ = true;
-            PanelDetached?.Invoke(this, null);
+            DetachPanel();
+        }
+
+        private void DetachPanel() {
+            if (IsDetached) {
+                return;
+            }
+
+            DetachPopup();
             PopupPanelButton.Visibility = Visibility.Collapsed;
             ColorButton.Visibility = Visibility.Visible;
             ClosePanelButton.Visibility = Visibility.Visible;
             SetPanelAccentColor(GenerateRandomPastelColor());
-
         }
 
         private void ClosePanelButton_Click(object sender, RoutedEventArgs e) {
@@ -367,20 +298,13 @@ namespace IRExplorerUI.Document {
 
         public override bool ShouldStartDragging() {
             HideColorSelector();
-            return panelDetached_;
-        }
 
-        public void Minimize() {
-            duringMinimize_ = true;
-            IsOpen = false;
-        }
+            if (ToolbarPanel.IsMouseOver) {
+                DetachPanel();
+                return true;
+            }
 
-        public void Restore() {
-            IsOpen = true;
-        }
-
-        public void Close() {
-            IsOpen = false;
+            return false;
         }
     }
 }

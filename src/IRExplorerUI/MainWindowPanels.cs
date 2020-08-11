@@ -80,6 +80,10 @@ namespace IRExplorerUI {
                 panel.OnSessionEnd();
                 panel.BoundDocument = null;
             });
+
+            // Hide other panels that are not dockable.
+            CloseDocumentSearchPanel();
+            CloseDetachedPanels();
         }
 
         private void NotifyPanelsOfSessionSave() {
@@ -157,19 +161,19 @@ namespace IRExplorerUI {
                 case ToolPanelKind.FlowGraph:
                 case ToolPanelKind.DominatorTree:
                 case ToolPanelKind.PostDominatorTree: {
-                    var flowGraphPanel = panelHost.Panel as GraphPanel;
-                    flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
-                    flowGraphPanel.GraphViewer.BlockMarked += GraphViewer_BlockMarked;
-                    flowGraphPanel.GraphViewer.BlockUnmarked += GraphViewer_BlockUnmarked;
-                    flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
-                    break;
-                }
+                        var flowGraphPanel = panelHost.Panel as GraphPanel;
+                        flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
+                        flowGraphPanel.GraphViewer.BlockMarked += GraphViewer_BlockMarked;
+                        flowGraphPanel.GraphViewer.BlockUnmarked += GraphViewer_BlockUnmarked;
+                        flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
+                        break;
+                    }
                 case ToolPanelKind.ExpressionGraph: {
-                    var flowGraphPanel = panelHost.Panel as GraphPanel;
-                    flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
-                    flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
-                    break;
-                }
+                        var flowGraphPanel = panelHost.Panel as GraphPanel;
+                        flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
+                        flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
+                        break;
+                    }
             }
         }
 
@@ -180,13 +184,13 @@ namespace IRExplorerUI {
                 case ToolPanelKind.FlowGraph:
                 case ToolPanelKind.DominatorTree:
                 case ToolPanelKind.PostDominatorTree: {
-                    var flowGraphPanel = panelHost.Panel as GraphPanel;
-                    flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
-                    flowGraphPanel.GraphViewer.BlockMarked -= GraphViewer_BlockMarked;
-                    flowGraphPanel.GraphViewer.BlockUnmarked -= GraphViewer_BlockUnmarked;
-                    flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
-                    break;
-                }
+                        var flowGraphPanel = panelHost.Panel as GraphPanel;
+                        flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
+                        flowGraphPanel.GraphViewer.BlockMarked -= GraphViewer_BlockMarked;
+                        flowGraphPanel.GraphViewer.BlockUnmarked -= GraphViewer_BlockUnmarked;
+                        flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
+                        break;
+                    }
             }
         }
 
@@ -272,7 +276,7 @@ namespace IRExplorerUI {
         }
 
         private IRDocumentHost FindDocumentHost(IRDocument document) {
-            if(document == null) {
+            if (document == null) {
                 return null;
             }
 
@@ -507,45 +511,45 @@ namespace IRExplorerUI {
 
             switch (duplicateKind) {
                 case DuplicatePanelKind.Floating: {
-                    panelHost.Host.Float();
-                    break;
-                }
+                        panelHost.Host.Float();
+                        break;
+                    }
                 case DuplicatePanelKind.NewSetDockedLeft: {
-                    var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
+                        var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
-                    if (baseGroup == null) {
+                        if (baseGroup == null) {
+                            break;
+                        }
+
+                        baseGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
+                        attached = true;
                         break;
                     }
-
-                    baseGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
-                    attached = true;
-                    break;
-                }
                 case DuplicatePanelKind.NewSetDockedRight: {
-                    var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
+                        var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
-                    if (baseGroup == null) {
+                        if (baseGroup == null) {
+                            break;
+                        }
+
+                        baseGroup.Children.Add(new LayoutAnchorablePane(panelHost.Host));
+                        attached = true;
                         break;
                     }
-
-                    baseGroup.Children.Add(new LayoutAnchorablePane(panelHost.Host));
-                    attached = true;
-                    break;
-                }
                 case DuplicatePanelKind.SameSet: {
-                    // Insert the new panel on the right of the cloned one.
-                    var basePanelHost = FindPanelHost(basePanel);
-                    var baseLayoutPane = baseHost.FindParent<LayoutAnchorablePane>();
+                        // Insert the new panel on the right of the cloned one.
+                        var basePanelHost = FindPanelHost(basePanel);
+                        var baseLayoutPane = baseHost.FindParent<LayoutAnchorablePane>();
 
-                    if (baseLayoutPane == null) {
+                        if (baseLayoutPane == null) {
+                            break;
+                        }
+
+                        int basePaneIndex = baseLayoutPane.Children.IndexOf(basePanelHost.Host);
+                        baseLayoutPane.Children.Insert(basePaneIndex + 1, panelHost.Host);
+                        attached = true;
                         break;
                     }
-
-                    int basePaneIndex = baseLayoutPane.Children.IndexOf(basePanelHost.Host);
-                    baseLayoutPane.Children.Insert(basePaneIndex + 1, panelHost.Host);
-                    attached = true;
-                    break;
-                }
                 default:
                     throw new ArgumentOutOfRangeException(nameof(duplicateKind), duplicateKind, null);
             }
@@ -692,28 +696,28 @@ namespace IRExplorerUI {
             switch (kind) {
                 case OpenSectionKind.ReplaceCurrent:
                 case OpenSectionKind.NewTab: {
-                    if (activeDocumentPanel_ == null) {
-                        activeDocumentPanel_ = new LayoutDocumentPane(host);
-                        DocumentPanelGroup.Children.Add(activeDocumentPanel_);
-                    }
-                    else {
-                        activeDocumentPanel_.Children.Add(host);
-                    }
+                        if (activeDocumentPanel_ == null) {
+                            activeDocumentPanel_ = new LayoutDocumentPane(host);
+                            DocumentPanelGroup.Children.Add(activeDocumentPanel_);
+                        }
+                        else {
+                            activeDocumentPanel_.Children.Add(host);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case OpenSectionKind.NewTabDockLeft:
                 case OpenSectionKind.ReplaceLeft: {
-                    activeDocumentPanel_ = new LayoutDocumentPane(host);
-                    DocumentPanelGroup.Children.Insert(0, activeDocumentPanel_);
-                    break;
-                }
+                        activeDocumentPanel_ = new LayoutDocumentPane(host);
+                        DocumentPanelGroup.Children.Insert(0, activeDocumentPanel_);
+                        break;
+                    }
                 case OpenSectionKind.NewTabDockRight:
                 case OpenSectionKind.ReplaceRight: {
-                    activeDocumentPanel_ = new LayoutDocumentPane(host);
-                    DocumentPanelGroup.Children.Add(activeDocumentPanel_);
-                    break;
-                }
+                        activeDocumentPanel_ = new LayoutDocumentPane(host);
+                        DocumentPanelGroup.Children.Add(activeDocumentPanel_);
+                        break;
+                    }
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
             }
@@ -804,14 +808,14 @@ namespace IRExplorerUI {
             SectionPanel.OnSessionStart();
         }
 
-        public void RegisterDetachedRemarkPanel(RemarkPreviewPanel panel) {
-            Debug.Assert(!detachedRemarkPanels_.Contains(panel));
-            detachedRemarkPanels_.Add(panel);
+        public void RegisterDetachedPanel(DraggablePopup panel) {
+            Debug.Assert(!detachedPanels_.Contains(panel));
+            detachedPanels_.Add(panel);
         }
 
-        public void UnregisterDetachedRemarkPanel(RemarkPreviewPanel panel) {
-            Debug.Assert(detachedRemarkPanels_.Contains(panel));
-            detachedRemarkPanels_.Remove(panel);
+        public void UnregisterDetachedPanel(DraggablePopup panel) {
+            Debug.Assert(detachedPanels_.Contains(panel));
+            detachedPanels_.Remove(panel);
         }
     }
 }

@@ -57,8 +57,8 @@ namespace IRExplorerUI {
         void ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document);
         void ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document);
 
-        void RegisterDetachedRemarkPanel(RemarkPreviewPanel panel);
-        void UnregisterDetachedRemarkPanel(RemarkPreviewPanel panel);
+        void RegisterDetachedPanel(DraggablePopup panel);
+        void UnregisterDetachedPanel(DraggablePopup panel);
 
         Task<bool> SaveSessionDocument(string filePath);
         Task<bool> OpenSessionDocument(string filePath);
