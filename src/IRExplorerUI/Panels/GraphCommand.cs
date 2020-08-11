@@ -25,6 +25,10 @@ namespace IRExplorerUI {
         public static readonly RoutedCommand MarkLoop = new RoutedCommand("MarkLoop", typeof(GraphPanel));
         public static readonly RoutedCommand MarkLoopNest =
             new RoutedCommand("MarkLoopNest", typeof(GraphPanel));
+        public static readonly RoutedCommand MarkDominators = new RoutedCommand("MarkDominators", typeof(GraphPanel));
+        public static readonly RoutedCommand MarkPostDominators = new RoutedCommand("MarkPostDominators", typeof(GraphPanel));
+        public static readonly RoutedCommand MarkDominanceFrontier = new RoutedCommand("MarkDominanceFrontier", typeof(GraphPanel));
+        public static readonly RoutedCommand MarkPostDominanceFrontier = new RoutedCommand("MarkPostDominanceFrontier", typeof(GraphPanel));
 
         public static readonly RoutedCommand ClearMarked =
             new RoutedCommand("ClearMarked", typeof(GraphPanel));
