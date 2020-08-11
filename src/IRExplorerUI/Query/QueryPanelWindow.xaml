@@ -9,7 +9,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Width="300"
     Height="300"
-    AllowsTransparency="True"
+    SnapsToDevicePixels="True"
     UseLayoutRounding="True"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">

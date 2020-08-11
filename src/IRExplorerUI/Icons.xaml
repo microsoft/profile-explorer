@@ -564,6 +564,26 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="CrosshairIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V474.27 H474.27 V0 H0 Z">
+                <DrawingGroup Opacity="1">
+                    <DrawingGroup Opacity="1">
+                        <GeometryDrawing Brush="#FF010002" Geometry="F1 M474.27,474.27z M0,0z M237.135,474.27C368.103,474.27 474.27,368.103 474.27,237.135 474.27,106.167 368.103,0 237.135,0 106.167,0 0,106.167 0,237.135 0,368.103 106.167,474.27 237.135,474.27z M60.639,200.556C75.197,130.212,130.87,74.742,201.32,60.485L201.32,126.042 274.477,126.042 274.477,60.81C344.204,75.563,399.177,130.724,413.638,200.556L347.471,200.556 347.471,273.713 413.638,273.713C399.185,343.546,344.204,398.706,274.477,413.459L274.477,348.227 201.32,348.227 201.32,413.784C130.87,399.518,75.197,344.057,60.639,273.712L126.806,273.712 126.806,200.555 60.639,200.555z" />
+                        <GeometryDrawing Brush="#FF010002">
+                            <GeometryDrawing.Geometry>
+                                <EllipseGeometry
+                                    Center="239.842,237.135"
+                                    RadiusX="18.964"
+                                    RadiusY="18.964" />
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingGroup>
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <DrawingImage x:Key="LogoImage">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">

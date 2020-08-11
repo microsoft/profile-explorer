@@ -10,11 +10,15 @@ namespace IRExplorerUI.Query.Builtin {
                                                    "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);
             query.Data.AddOutput("User Count", QueryValueKind.Number);
-
-            //query.Data.AddOutput("Definition", QueryValueKind.Element);
-            //query.Data.AddOutput("Definition Block", QueryValueKind.Element);
-            //query.Data.AddOutput("Definition Dominates", QueryValueKind.Bool);
             return query;
+        }
+
+        private ISessionManager session_;
+        public ISessionManager Session => session_;
+
+        public bool Initialize(ISessionManager session) {
+            session_ = session;
+            return true;
         }
 
         public bool Execute(QueryData data) {

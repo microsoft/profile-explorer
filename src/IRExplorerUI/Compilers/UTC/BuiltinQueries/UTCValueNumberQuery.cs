@@ -17,6 +17,14 @@ namespace IRExplorerUI.Compilers.UTC {
             return query;
         }
 
+        private ISessionManager session_;
+        public ISessionManager Session => session_;
+
+        public bool Initialize(ISessionManager session) {
+            session_ = session;
+            return true;
+        }
+
         public bool Execute(QueryData data) {
             data.ResetResults();
             var element = data.GetInput<IRElement>("Operand");
