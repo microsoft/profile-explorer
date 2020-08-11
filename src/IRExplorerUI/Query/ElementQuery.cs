@@ -6,6 +6,8 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Query {
     public interface IElementQuery {
+        public ISessionManager Session { get; }
+        public bool Initialize(ISessionManager session);
         public bool Execute(QueryData data);
     }
 
@@ -29,21 +31,20 @@ namespace IRExplorerUI.Query {
         public string Description { get; set; }
         public QueryData Data { get; set; }
 
-        public IElementQuery QueryInstance {
-            get {
-                if (queryInstance_ == null) {
-                    queryInstance_ = (IElementQuery)Activator.CreateInstance(queryType_);
-                }
-
-                return queryInstance_;
+        public bool CreateQueryInstance(ISessionManager session) {
+            if (queryInstance_ == null) {
+                queryInstance_ = (IElementQuery)Activator.CreateInstance(queryType_);
+                return queryInstance_.Initialize(session);
             }
+
+            return true;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void InputValueChanged(object sender, EventArgs e) {
             if (AreAllInputValuesSet()) {
-                QueryInstance.Execute(Data);
+                queryInstance_.Execute(Data);
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Data)));
             }
         }

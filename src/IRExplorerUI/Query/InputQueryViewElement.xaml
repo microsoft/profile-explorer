@@ -31,7 +31,7 @@
         <Style x:Key="InOutTextStyle" TargetType="{x:Type Image}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsInput}" Value="True">
-                    <Setter Property="Source" Value="{StaticResource TagIcon}" />
+                    <Setter Property="Source" Value="{StaticResource CrosshairIcon}" />
 
                 </DataTrigger>
 

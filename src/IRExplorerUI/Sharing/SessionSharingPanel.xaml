@@ -6,7 +6,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="100"
     d:DesignWidth="400"
+    SnapsToDevicePixels="True"
     StaysOpen="False"
+    UseLayoutRounding="True"
     mc:Ignorable="d">
     <Border
         Padding="4"

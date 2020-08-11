@@ -17,6 +17,13 @@ namespace IRExplorerUI.Scripting {
         }
 
         public ElementQueryDefinition Query { get; set; }
+        private ISessionManager session_;
+        public ISessionManager Session => session_;
+
+        public bool Initialize(ISessionManager session) {
+            session_ = session;
+            return true;
+        }
 
         public ElementQueryDefinition GetDefinition() {
             throw new NotImplementedException();

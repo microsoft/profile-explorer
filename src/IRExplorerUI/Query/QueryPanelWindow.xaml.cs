@@ -21,6 +21,8 @@ namespace IRExplorerUI.Query {
 
             foreach (var query in queries) {
                 QPanel.AddQuery(query);
+                //? TODO: should be done only if a query is used
+                query.CreateQueryInstance(session);
             }
         }
 
