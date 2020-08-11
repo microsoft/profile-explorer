@@ -1,30 +1,29 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using IRExplorerUI.Diff;
-using IRExplorerUI.Query;
-using IRExplorerUI.Query.Builtin;
-using IRExplorerCore;
-using IRExplorerCore.Analysis;
-using IRExplorerCore.IR;
-using IRExplorerCore.UTC;
 using System.Collections.Generic;
+using IRExplorerUI.Diff;
+using IRExplorerUI.UTC;
+using IRExplorerUI.Query;
+using IRExplorerCore;
+using IRExplorerCore.IR;
+using IRExplorerCore.LLVM;
 
-namespace IRExplorerUI.UTC {
-    public class UTCCompilerInfoProvider : ICompilerInfoProvider {
-        private UTCCompilerIRInfo ir_;
+namespace IRExplorerUI.Compilers.LLVM {
+    public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
+        private LLVMCompilerIRInfo ir_;
         private UTCNameProvider names_;
         private UTCRemarkProvider remarks_;
         private UTCSectionStyleProvider styles_;
 
-        public UTCCompilerInfoProvider() {
-            ir_ = new UTCCompilerIRInfo();
+        public LLVMCompilerInfoProvider() {
+            ir_ = new LLVMCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
             remarks_ = new UTCRemarkProvider();
         }
 
-        public string CompilerIRName => "UTC";
+        public string CompilerIRName => "LLVM";
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;
         public ISectionStyleProvider SectionStyleProvider => styles_;
@@ -38,15 +37,11 @@ namespace IRExplorerUI.UTC {
             return new UTCDiffOutputFilter();
         }
 
-        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() {
-            InstructionSSAInfoQuery.GetDefinition(),
-            OperandSSAInfoQuery.GetDefinition(),
-            ValueNumberQuery.GetDefinition()
-        };
+        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() { };
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
-            var loopGraph = new LoopGraph(function);
-            loopGraph.FindLoops();
+            //? TODO: var loopGraph = new LoopGraph(function);
+            //loopGraph.FindLoops();
             return true;
         }
     }

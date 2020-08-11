@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
-using IRExplorerUI.Scripting;
+using IRExplorerUI.Query;
 using IRExplorerUI.UTC;
 using IRExplorerCore.IR;
 
-namespace IRExplorerUI.Query.Builtin {
-    public class ValueNumberQuery : IElementQuery {
+namespace IRExplorerUI.Compilers.UTC {
+    public class UTCValueNumberQuery : IElementQuery {
         public static ElementQueryDefinition GetDefinition() {
-            var query = new ElementQueryDefinition(typeof(ValueNumberQuery), "Value Numbers",
+            var query = new ElementQueryDefinition(typeof(UTCValueNumberQuery), "Value Numbers",
                                                    "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);
             query.Data.AddInput("Mark same value number", QueryValueKind.Bool);

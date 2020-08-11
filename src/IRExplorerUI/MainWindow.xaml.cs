@@ -33,10 +33,10 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerCore.UTC;
 using IRExplorerUI.Diff;
 using Microsoft.Win32;
-using IRExplorerUI.UTC;
-using IRExplorerUI.LLVM;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Scripting;
+using IRExplorerUI.Compilers.UTC;
+using IRExplorerUI.Compilers.LLVM;
 
 namespace IRExplorerUI {
     public static class AppCommand {
