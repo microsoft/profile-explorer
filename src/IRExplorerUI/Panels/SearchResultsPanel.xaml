@@ -96,19 +96,26 @@
                     <TextBlock
                         Margin="32,0,0,0"
                         VerticalAlignment="Center"
-                        Text="Searched text:" />
+                        Text="Searched text:"
+                        Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibility}}" />
                     <TextBlock
                         x:Name="SearchedText"
-                        Margin="8,0,0,0"
+                        Margin="4,0,0,0"
                         VerticalAlignment="Center"
                         FontWeight="DemiBold"
-                        Text="" />
+                        Text=""
+                        Visibility="{Binding HideSearchedText, Converter={StaticResource InvertedBoolToVisibility}}" />
+                    <TextBlock
+                        Margin="32,0,0,0"
+                        VerticalAlignment="Center"
+                        Text="{Binding OptionalText}" />
                 </ToolBar>
             </ToolBarTray>
             <local:PanelToolbarTray
                 Grid.Column="1"
                 HasDuplicateButton="False"
-                HasPinButton="False" />
+                HasPinButton="False"
+                Visibility="{Binding HideToolbarTray, Converter={StaticResource InvertedBoolToVisibility}}" />
         </Grid>
 
         <ListView

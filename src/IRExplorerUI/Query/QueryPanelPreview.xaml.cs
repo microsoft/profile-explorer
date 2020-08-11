@@ -5,15 +5,16 @@ using IRExplorerUI.Scripting;
 using IRExplorerUI.UTC;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Query {
     /// <summary>
     ///     Interaction logic for QueryPanelPreview.xaml
     /// </summary>
-    public partial class QueryPanelPreview : Window {
+    public partial class QueryPanelPreview : DraggablePopup {
         public QueryPanelPreview() {
             InitializeComponent();
-            var builtinQuery = new BuiltinElementQuery();
+            PanelResizeGrip.ResizedControl = this;
 
             //var query = new ElementQueryInfo(builtinQuery, "Test query", "Some description");
             //query.Data.AddInput("First", QueryValueKind.Element);

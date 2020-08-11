@@ -18,8 +18,8 @@ namespace IRExplorerCmd {
             IR = irInfo;
         }
 
-        public string CompilerIRName { get; set;}
-        public ICompilerIRInfo IR {get;set;}
+        public string CompilerIRName { get; set; }
+        public ICompilerIRInfo IR { get; set; }
 
         public INameProvider NameProvider => throw new NotImplementedException();
         public ISectionStyleProvider SectionStyleProvider => throw new NotImplementedException();
@@ -136,7 +136,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public void RegisterDetachedRemarkPanel(RemarkPreviewPanel panel) {
+        public void RegisterDetachedPanel(DraggablePopup panel) {
             throw new NotImplementedException();
         }
 
@@ -184,7 +184,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public void UnregisterDetachedRemarkPanel(RemarkPreviewPanel panel) {
+        public void UnregisterDetachedPanel(DraggablePopup panel) {
             throw new NotImplementedException();
         }
     }

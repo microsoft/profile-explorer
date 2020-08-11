@@ -66,6 +66,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "CloseDiffDocument", typeof(Window));
         public static readonly RoutedUICommand SwapDiffDocuments =
             new RoutedUICommand("Untitled", "SwapDiffDocuments", typeof(Window));
+        public static readonly RoutedUICommand ShowDocumentSearch =
+            new RoutedUICommand("Untitled", "ShowDocumentSearch", typeof(Window));
     }
 
     public partial class MainWindow : Window, ISessionManager {
@@ -86,7 +88,7 @@ namespace IRExplorerUI {
         private SessionStateManager sessionState_;
         private bool sideBySidePanelsCreated_;
         private DispatcherTimer updateTimer_;
-        private List<RemarkPreviewPanel> detachedRemarkPanels_;
+        private List<DraggablePopup> detachedPanels_;
         private Point previousWindowPosition_;
         private DateTime lastDocumentLoadTime_;
 
@@ -98,7 +100,7 @@ namespace IRExplorerUI {
             panelHostSet_ = new Dictionary<ToolPanelKind, List<PanelHostInfo>>();
             compilerInfo_ = new UTCCompilerInfoProvider();
             changedDocuments_ = new Dictionary<string, DateTime>();
-            detachedRemarkPanels_ = new List<RemarkPreviewPanel>();
+            detachedPanels_ = new List<DraggablePopup>();
 
             SetupMainWindow();
             SetupGraphLayoutCache();
@@ -115,26 +117,32 @@ namespace IRExplorerUI {
 
         private void MainWindow_StateChanged(object sender, EventArgs e) {
             if (WindowState == WindowState.Minimized) {
-                detachedRemarkPanels_.ForEach(panel => panel.Minimize());
+                detachedPanels_.ForEach(panel => panel.Minimize());
             }
             else if (WindowState == WindowState.Normal) {
-                detachedRemarkPanels_.ForEach(panel => panel.Restore());
+                detachedPanels_.ForEach(panel => panel.Restore());
             }
         }
 
         private void MainWindow_LocationChanged(object sender, EventArgs e) {
             var currentWindowPosition = new Point(Left, Top);
 
-            if (detachedRemarkPanels_.Count > 0) {
+            if (detachedPanels_.Count > 0) {
                 var diff = currentWindowPosition - previousWindowPosition_;
 
-                detachedRemarkPanels_.ForEach(panel => {
+                detachedPanels_.ForEach(panel => {
                     panel.HorizontalOffset += diff.X;
                     panel.VerticalOffset += diff.Y;
                 });
             }
 
             previousWindowPosition_ = currentWindowPosition;
+        }
+
+        private void CloseDetachedPanels() {
+            // Close all remark preview panels.
+            detachedPanels_.ForEach(panel => panel.Close());
+            detachedPanels_.Clear();
         }
 
         public SessionStateManager SessionState => sessionState_;
@@ -259,10 +267,7 @@ namespace IRExplorerUI {
         }
 
         private void MainWindow_Closing(object sender, CancelEventArgs e) {
-            // Close all remark preview panels.
-            detachedRemarkPanels_.ForEach(panel => panel.Close());
-            detachedRemarkPanels_ = null;
-
+            // Save settings, including the window state.
             App.Settings.MainWindowPlacement = WindowPlacement.GetPlacement(this);
             App.Settings.ThemeIndex = ThemeCombobox.SelectedIndex;
             App.SaveApplicationSettings();
@@ -296,6 +301,8 @@ namespace IRExplorerUI {
                     }
                 }
             }
+
+            EndSession();
         }
 
         private void MainWindow_ContentRendered(object sender, EventArgs e) {
@@ -580,6 +587,10 @@ namespace IRExplorerUI {
             e.Handled = true;
         }
 
+        private void ShowDocumentSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
+            ShowDocumentSearchPanel();
+        }
+
         private void CommandBinding_PreviewCanExecute(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = true;
             e.Handled = true;
@@ -738,7 +749,8 @@ namespace IRExplorerUI {
 
         private void MenuItem_Click_7(object sender, RoutedEventArgs e) {
             var x = new QueryPanelPreview();
-            x.Show();
+            x.IsOpen = true;
+            x.StaysOpen = true;
         }
 
         private void SetOptionalStatus(string text, string tooltip = "") {
@@ -847,9 +859,52 @@ namespace IRExplorerUI {
         }
 
         private void FindButton_Click(object sender, RoutedEventArgs e) {
+            ShowDocumentSearchPanel();
+        }
+
+        private bool documentSearchVisible_;
+        private DocumentSearchPanel documentSearchPanel_;
+
+        private void ShowDocumentSearchPanel() {
+            if (documentSearchVisible_) {
+                return;
+            }
+
+            if (sessionState_ == null) {
+                // No session started yet.
+                return;
+            }
+
             var position = MainGrid.PointToScreen(new Point(236, MainMenu.ActualHeight + 1));
-            var sp = new DocumentSearchPanel(position, 800, 500, this, this, sessionState_.Documents[0]);
-            sp.IsOpen = true;
+            documentSearchPanel_ = new DocumentSearchPanel(position, 800, 500, this, this, sessionState_.Documents[0]);
+            documentSearchPanel_.PopupClosed += DocumentSearchPanel__PopupClosed;
+            documentSearchPanel_.PopupDetached += DocumentSearchPanel__PopupDetached;
+            documentSearchPanel_.IsOpen = true;
+            documentSearchVisible_ = true;
+        }
+
+        private void DocumentSearchPanel__PopupDetached(object sender, EventArgs e) {
+            RegisterDetachedPanel(documentSearchPanel_);
+        }
+
+        private void DocumentSearchPanel__PopupClosed(object sender, EventArgs e) {
+            CloseDocumentSearchPanel();
+        }
+
+        private void CloseDocumentSearchPanel() {
+            if (!documentSearchVisible_) {
+                return;
+            }
+
+            if (documentSearchPanel_.IsDetached) {
+                UnregisterDetachedPanel(documentSearchPanel_);
+            }
+
+            documentSearchPanel_.IsOpen = false;
+            documentSearchPanel_.PopupClosed -= DocumentSearchPanel__PopupClosed;
+            documentSearchPanel_.PopupDetached -= DocumentSearchPanel__PopupDetached;
+            documentSearchPanel_ = null;
+            documentSearchVisible_ = false;
         }
     }
 }

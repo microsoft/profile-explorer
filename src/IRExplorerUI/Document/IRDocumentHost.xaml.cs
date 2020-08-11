@@ -405,8 +405,8 @@ namespace IRExplorerUI {
             }
 
             remarkPanel_ = new RemarkPreviewPanel();
-            remarkPanel_.PanelClosed += RemarkPanel__PanelClosed;
-            remarkPanel_.PanelDetached += RemarkPanel__PanelDetached;
+            remarkPanel_.PopupClosed += RemarkPanel__PanelClosed;
+            remarkPanel_.PopupDetached += RemarkPanel__PanelDetached;
             remarkPanel_.RemarkContextChanged += RemarkPanel__RemarkContextChanged;
             remarkPanel_.Opacity = 0.0;
             remarkPanel_.IsOpen = true;
@@ -421,7 +421,7 @@ namespace IRExplorerUI {
 
         private void RemarkPanel__PanelDetached(object sender, EventArgs e) {
             // Keep the remark panel floating over the document.
-            Session.RegisterDetachedRemarkPanel(remarkPanel_);
+            Session.RegisterDetachedPanel(remarkPanel_);
 
             HideActionPanel();
             remarkPanelVisible_ = false;
@@ -432,8 +432,8 @@ namespace IRExplorerUI {
             // If it's one of the detached panels, unregister it.
             var panel = (RemarkPreviewPanel)sender;
 
-            if (panel.IsPanelDetached) {
-                Session.UnregisterDetachedRemarkPanel(panel);
+            if (panel.IsDetached) {
+                Session.UnregisterDetachedPanel(panel);
                 return;
             }
 
@@ -467,8 +467,8 @@ namespace IRExplorerUI {
 
             animation.Completed += (s, e) => {
                 remarkPanel_.IsOpen = false;
-                remarkPanel_.PanelClosed -= RemarkPanel__PanelClosed;
-                remarkPanel_.PanelDetached -= RemarkPanel__PanelDetached;
+                remarkPanel_.PopupClosed -= RemarkPanel__PanelClosed;
+                remarkPanel_.PopupDetached -= RemarkPanel__PanelDetached;
                 remarkPanel_.RemarkContextChanged -= RemarkPanel__RemarkContextChanged;
                 remarkPanel_ = null;
             };

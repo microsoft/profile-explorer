@@ -16,19 +16,38 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using IRExplorerUI.Document;
 using System.Windows.Controls.Primitives;
+using System.ComponentModel;
 
 namespace IRExplorerUI.Panels {
     /// <summary>
     /// Interaction logic for SearchPanel.xaml
     /// </summary>
-    public partial class DocumentSearchPanel : Popup {
-        class DocumentSearchInfo {
+    public partial class DocumentSearchPanel : DraggablePopup {
+        class DocumentSearchInfo : INotifyPropertyChanged {
+            private bool panelDetached_;
+
             public bool SearchAllFunctions { get; set; }
             public bool SearchPassOutput { get; set; }
             public int FunctionCount { get; set; }
             public int SectionCount { get; set; }
             public int InstanceCount { get; set; }
             public long Duration { get; set; }
+
+            public bool IsPanelDetached {
+                get => panelDetached_;
+                set {
+                    if (panelDetached_ != value) {
+                        panelDetached_ = value;
+                        NotifyPropertyChanged(nameof(IsPanelDetached));
+                    }
+                }
+            }
+
+            public event PropertyChangedEventHandler PropertyChanged;
+
+            public void NotifyPropertyChanged(string propertyName) {
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            }
         }
 
         private ISessionManager session_;
@@ -40,6 +59,7 @@ namespace IRExplorerUI.Panels {
         public DocumentSearchPanel(Point position, double width, double height,
                                    UIElement referenceElement, ISessionManager session, LoadedDocument document) {
             InitializeComponent();
+            PanelResizeGrip.ResizedControl = this;
 
             var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
             HorizontalOffset = screenPosition.X;
@@ -60,6 +80,8 @@ namespace IRExplorerUI.Panels {
         }
 
         private void SetupResultsPanel() {
+            ResultsPanel.HideToolbarTray = true;
+            ResultsPanel.HideSearchedText = true;
             ResultsPanel.OpenSection += ResultsPanel_OpenSection;
         }
 
@@ -82,6 +104,7 @@ namespace IRExplorerUI.Panels {
 
             if (searchedText.Length < 2) {
                 ResultsPanel.ClearSearchResults();
+                ResultsPanel.OptionalText = "";
                 return;
             }
 
@@ -91,6 +114,19 @@ namespace IRExplorerUI.Panels {
                 // Update UI if search was not cancelled.
                 ResultsPanel.Session = session_;
                 ResultsPanel.UpdateSearchResults(results, new SearchInfo());
+
+                // Update result details.
+                var functions = new HashSet<IRTextFunction>();
+                int sectionCount = 0;
+
+                foreach (var result in results) {
+                    if (result.Results.Count > 0) {
+                        sectionCount++;
+                        functions.Add(result.Section.ParentFunction);
+                    }
+                }
+
+                ResultsPanel.OptionalText = $"Functions: {functions.Count}        Sections: {sectionCount}";
             }
         }
 
@@ -128,19 +164,6 @@ namespace IRExplorerUI.Panels {
                 return null;
             }
 
-            //int sections = 0;
-            //int instances = 0;
-            //var sectionList = new List<string>();
-
-            //foreach (var result in results) {
-            //    if (result.Results.Count > 0) {
-            //        sectionList.Add(result.Section.Name);
-            //        sections++;
-            //    }
-
-            //    instances += result.Results.Count;
-            //}
-
             searchTask.Completed();
 
             lock (this) {
@@ -172,5 +195,31 @@ namespace IRExplorerUI.Panels {
             MessageBox.Show($"Done in {start.ElapsedMilliseconds}");
         }
 
+        private void DetachPanel() {
+            if (IsDetached) {
+                return;
+            }
+
+            DetachPopup();
+            StaysOpen = true;
+            data_.IsPanelDetached = true;
+        }
+
+        public override bool ShouldStartDragging() {
+            if (SearchPanelHost.IsMouseOver) {
+                DetachPanel();
+                return true;
+            }
+
+            return false;
+        }
+
+        private void PinPanelButton_Click(object sender, RoutedEventArgs e) {
+            DetachPanel();
+        }
+
+        private void ClosePanelButton_Click(object sender, RoutedEventArgs e) {
+            ClosePopup();
+        }
     }
 }

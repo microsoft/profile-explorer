@@ -12,6 +12,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerUI.Document;
 using IRExplorerCore;
+using System.ComponentModel;
 
 namespace IRExplorerUI {
     public static class SearchResultsCommand {
@@ -157,7 +158,7 @@ namespace IRExplorerUI {
         }
     }
 
-    public partial class SearchResultsPanel : ToolPanelControl {
+    public partial class SearchResultsPanel : ToolPanelControl, INotifyPropertyChanged {
         private SearchInfo searchInfo_;
         private List<SearchResultInfo> searchResults_;
         private Dictionary<IRTextSection, SectionSearchResult> searchResultsMap_;
@@ -165,11 +166,46 @@ namespace IRExplorerUI {
         private string previousSectionText_;
         private string previousSectionBeforeOutput_;
         private string previousSectionAfterOutput_;
+        private bool hideToolbarTray_;
+        private bool hideSearchedText_;
+        private string optionalText_;
 
         public event EventHandler<OpenSectionEventArgs> OpenSection;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public SearchResultsPanel() {
             InitializeComponent();
+            DataContext = this;
+        }
+
+        public bool HideToolbarTray {
+            get => hideToolbarTray_;
+            set {
+                if (hideToolbarTray_ != value) {
+                    hideToolbarTray_ = value;
+                    NotifyPropertyChanged(nameof(HideToolbarTray));
+                }
+            }
+        }
+
+        public bool HideSearchedText {
+            get => hideSearchedText_;
+            set {
+                if (hideSearchedText_ != value) {
+                    hideSearchedText_ = value;
+                    NotifyPropertyChanged(nameof(HideSearchedText));
+                }
+            }
+        }
+
+        public string OptionalText {
+            get => optionalText_;
+            set {
+                if (optionalText_ != value) {
+                    optionalText_ = value;
+                    NotifyPropertyChanged(nameof(OptionalText));
+                }
+            }
         }
 
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -308,6 +344,10 @@ namespace IRExplorerUI {
                 OpenSection?.Invoke(this, new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockRight));
                 await JumpToSearchResult(result);
             }
+        }
+
+        public void NotifyPropertyChanged(string propertyName) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #region IToolPanel
