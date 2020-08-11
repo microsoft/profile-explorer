@@ -4,9 +4,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.GraphViz;
 using IRExplorerCore.IR;
 
@@ -214,6 +216,22 @@ namespace IRExplorerUI {
             MarkNodeSuccessors(GetSelectedNode(), GetNodeStyle(style));
         }
 
+        public Task MarkSelectedNodeDominatorsAsync(HighlightingStyle style) {
+            return MarkNodeDominatorsAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetDominatorsAsync());
+        }
+
+        public Task MarkSelectedNodePostDominatorsAsync(HighlightingStyle style) {
+            return MarkNodeDominatorsAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetPostDominatorsAsync());
+        }
+
+        public Task MarkSelectedNodeDominanceFrontierAsync(HighlightingStyle style) {
+            return MarkNodeDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetDominanceFrontierAsync());
+        }
+
+        public Task MarkSelectedNodePostDominanceFrontierAsync(HighlightingStyle style) {
+            return MarkNodeDominanceFrontierAsync(GetSelectedNode(), GetNodeStyle(style), cache => cache.GetPostDominanceFrontierAsync());
+        }
+
         public void MarkSelectedNodeLoop(HighlightingStyle style) {
             MarkNodeLoop(GetSelectedNode(), GetNodeStyle(style));
         }
@@ -260,6 +278,34 @@ namespace IRExplorerUI {
                     var toNode = edge.NodeTo?.Tag as GraphNode;
                     MarkNode(toNode, style);
                 }
+            }
+        }
+
+        private async Task MarkNodeDominatorsAsync(GraphNode node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominatorAlgorithm>> getDominators) {
+            if (node == null) {
+                return;
+            }
+
+            var block = (BlockIR)node.NodeInfo.Element;
+            var cache = FunctionAnalysisCache.Get(block.ParentFunction);
+            var dominatorAlgorithm = await getDominators(cache).ConfigureAwait(true);
+
+            foreach (var dominator in dominatorAlgorithm.GetDominators(block)) {
+                MarkNode(GetBlockNode(dominator), style);
+            }
+        }
+
+        private async Task MarkNodeDominanceFrontierAsync(GraphNode node, HighlightingStyle style, Func<FunctionAnalysisCache, Task<DominanceFrontier>> getDominanceFrontier) {
+            if (node == null) {
+                return;
+            }
+
+            var block = (BlockIR)node.NodeInfo.Element;
+            var cache = FunctionAnalysisCache.Get(block.ParentFunction);
+            var dominanceFrontierAlgorithm = await getDominanceFrontier(cache).ConfigureAwait(true);
+
+            foreach (var frontierBlock in dominanceFrontierAlgorithm.FrontierOf(block)) {
+                MarkNode(GetBlockNode(frontierBlock), style);
             }
         }
 

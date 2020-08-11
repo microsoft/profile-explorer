@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -566,6 +567,26 @@ namespace IRExplorerUI {
             GraphViewer.MarkSelectedNodeSuccessors(GetSelectedColorStyle(e));
         }
 
+        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
+        private async void MarkDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await GraphViewer.MarkSelectedNodeDominatorsAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
+        }
+
+        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
+        private async void MarkPostDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await GraphViewer.MarkSelectedNodePostDominatorsAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
+        }
+
+        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
+        private async void MarkDominanceFrontierExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await GraphViewer.MarkSelectedNodeDominanceFrontierAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
+        }
+
+        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
+        private async void MarkPostDominanceFrontierExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await GraphViewer.MarkSelectedNodePostDominanceFrontierAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
+        }
+
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
                 if (hoveredNode_.NodeInfo.Element is BlockIR block) {
@@ -781,7 +802,10 @@ namespace IRExplorerUI {
             AddCommand(GraphCommand.MarkBlock, MarkBlockExecuted);
             AddCommand(GraphCommand.MarkPredecessors, MarkPredecessorsExecuted);
             AddCommand(GraphCommand.MarkSuccessors, MarkSuccessorsExecuted);
-            AddCommand(GraphCommand.MarkPredecessors, MarkPredecessorsExecuted);
+            AddCommand(GraphCommand.MarkDominators, MarkDominatorsExecuted);
+            AddCommand(GraphCommand.MarkPostDominators, MarkPostDominatorsExecuted);
+            AddCommand(GraphCommand.MarkDominanceFrontier, MarkDominanceFrontierExecuted);
+            AddCommand(GraphCommand.MarkPostDominanceFrontier, MarkPostDominanceFrontierExecuted);
             AddCommand(GraphCommand.MarkGroup, MarkGroupExecuted);
             AddCommand(GraphCommand.MarkLoop, MarkLoopExecuted);
             AddCommand(GraphCommand.MarkLoopNest, MarkLoopNestExecuted);
