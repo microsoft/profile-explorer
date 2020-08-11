@@ -19,7 +19,7 @@
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsWarning}" Value="False">
-                    <Setter Property="Background" Value="#DAE3E7" />
+                    <Setter Property="Background" Value="#FFFCE7" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -96,21 +96,9 @@
                                     <Image
                                         Width="16"
                                         Height="16"
-                                        Margin="4,0,4,0"
                                         VerticalAlignment="Top"
                                         DockPanel.Dock="Left"
                                         Style="{StaticResource InOutTextStyle}" />
-
-                                    <TextBlock
-                                        Margin="2,0,0,0"
-                                        HorizontalAlignment="Stretch"
-                                        DockPanel.Dock="Right"
-                                        FontWeight="DemiBold"
-                                        Style="{StaticResource HoverUnderlineStyle}"
-                                        Text="{Binding Path=Value, Converter={StaticResource ElementObjectConverter}}"
-                                        TextAlignment="Right"
-                                        TextTrimming="CharacterEllipsis"
-                                        ToolTip="{Binding Path=Value, Converter={StaticResource ElementObjectConverter}}" />
                                 </DockPanel>
                             </DataTemplate>
                         </Setter.Value>
@@ -119,20 +107,61 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="ElementQueryValueStyle" TargetType="{x:Type ContentControl}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=IsElement}" Value="True">
+                    <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <TextBlock
+                                    Margin="2,0,0,0"
+                                    HorizontalAlignment="Stretch"
+                                    DockPanel.Dock="Right"
+                                    FontWeight="DemiBold"
+                                    Foreground="DarkBlue"
+                                    Text="{Binding Path=Value, Converter={StaticResource ElementObjectConverter}}"
+                                    TextAlignment="Right"
+                                    TextTrimming="CharacterEllipsis"
+                                    ToolTip="{Binding Path=Value, Converter={StaticResource ElementObjectConverter}}" />
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+
+                <DataTrigger Binding="{Binding Path=IsElement}" Value="False">
+                    <Setter Property="ContentTemplate">
+                        <Setter.Value>
+                            <DataTemplate />
+                        </Setter.Value>
+                    </Setter>
+
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
 
-    <Border BorderBrush="LightGray" BorderThickness="0,1,0,0">
+    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,0">
         <DockPanel LastChildFill="True" Style="{StaticResource BackgroundStyle}">
+            <ContentControl
+                Margin="4,0,4,0"
+                VerticalAlignment="Center"
+                Content="{Binding .}"
+                DockPanel.Dock="Left"
+                Style="{StaticResource InputQueryValueStyle}" />
             <TextBlock
                 Margin="4,0,4,0"
                 VerticalAlignment="Center"
                 Text="{Binding Name}"
                 ToolTip="{Binding Description}" />
+
             <Image
                 Width="16"
                 Height="16"
                 Margin="4,0,4,0"
+                HorizontalAlignment="Right"
                 VerticalAlignment="Center"
+                DockPanel.Dock="Right"
                 Source="{StaticResource WarningIcon}"
                 ToolTip="{Binding WarningMessage}"
                 Visibility="{Binding IsWarning, Converter={StaticResource BoolToVisibility}}" />
@@ -142,7 +171,7 @@
                 VerticalAlignment="Center"
                 Content="{Binding .}"
                 DockPanel.Dock="Right"
-                Style="{StaticResource InputQueryValueStyle}" />
+                Style="{StaticResource ElementQueryValueStyle}" />
         </DockPanel>
     </Border>
 </UserControl>

@@ -59,13 +59,8 @@ namespace IRExplorerUI.Panels {
         public DocumentSearchPanel(Point position, double width, double height,
                                    UIElement referenceElement, ISessionManager session, LoadedDocument document) {
             InitializeComponent();
+            Initialize(position, width, height, referenceElement);
             PanelResizeGrip.ResizedControl = this;
-
-            var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
-            HorizontalOffset = screenPosition.X;
-            VerticalOffset = screenPosition.Y;
-            Width = width;
-            Height = height;
 
             data_ = new DocumentSearchInfo() {
                 SearchAllFunctions = true,

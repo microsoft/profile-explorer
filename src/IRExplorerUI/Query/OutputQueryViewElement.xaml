@@ -17,11 +17,11 @@
         <Style x:Key="BackgroundStyle" TargetType="{x:Type DockPanel}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsWarning}" Value="True">
-                    <Setter Property="Background" Value="#FAD5D2" />
+                    <Setter Property="Background" Value="#FFD2CE" />
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsWarning}" Value="False">
-                    <Setter Property="Background" Value="Gainsboro" />
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -37,10 +37,10 @@
                         <Setter.Value>
                             <DataTemplate>
                                 <CheckBox
-                                    Background="#CAF4C3"
+                                    Background="#C3FFB8"
                                     IsChecked="True"
                                     IsHitTestVisible="False"
-                                    ToolTip="True query result" />
+                                    ToolTip="Positive query result" />
                             </DataTemplate>
                         </Setter.Value>
                     </Setter>
@@ -58,7 +58,7 @@
                                     Background="LightGray"
                                     IsChecked="False"
                                     IsHitTestVisible="False"
-                                    ToolTip="False query result" />
+                                    ToolTip="Negative query result" />
                             </DataTemplate>
                         </Setter.Value>
                     </Setter>

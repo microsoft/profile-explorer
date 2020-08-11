@@ -4,13 +4,13 @@ using IRExplorerUI.Scripting;
 
 namespace IRExplorerUI.Query {
     public partial class QueryView : UserControl {
-        private ElementQueryInfo query_;
+        private ElementQueryDefinition query_;
 
         public QueryView() {
             InitializeComponent();
         }
 
-        public ElementQueryInfo Query {
+        public ElementQueryDefinition Query {
             get => query_;
             set {
                 if (value != query_) {

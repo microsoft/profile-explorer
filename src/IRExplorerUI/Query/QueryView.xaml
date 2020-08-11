@@ -19,7 +19,7 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Border BorderBrush="Gray" BorderThickness="0,1,0,1">
+    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,1">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -34,7 +34,7 @@
                 Grid.Row="0"
                 Grid.Column="0"
                 Grid.ColumnSpan="2"
-                Background="LightGray">
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                 <TextBlock
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"

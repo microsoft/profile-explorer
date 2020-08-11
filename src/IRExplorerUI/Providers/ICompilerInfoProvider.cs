@@ -4,6 +4,8 @@
 using IRExplorerUI.Diff;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using System.Collections.Generic;
+using IRExplorerUI.Query;
 
 namespace IRExplorerUI {
     public interface ICompilerInfoProvider {
@@ -13,6 +15,7 @@ namespace IRExplorerUI {
         INameProvider NameProvider { get; }
         ISectionStyleProvider SectionStyleProvider { get; }
         IRRemarkProvider RemarkProvider { get; }
+        List<ElementQueryDefinition> BuiltinQueries { get; }
 
         bool AnalyzeLoadedFunction(FunctionIR function);
         IRFoldingStrategy CreateFoldingStrategy(FunctionIR function);

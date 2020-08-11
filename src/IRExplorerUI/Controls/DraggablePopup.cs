@@ -34,6 +34,25 @@ namespace IRExplorerUI.Document {
             Height = 0,
         };
 
+        public void UpdatePosition(Point position, UIElement referenceElement) {
+            // Due to various DPI settings, setting the Window coordinates needs
+            // some adjustment of the values based on the monitor.
+            var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
+            HorizontalOffset = screenPosition.X;
+            VerticalOffset = screenPosition.Y;
+        }
+
+        public void UpdateSize(double width, double height) {
+            Width = width;
+            Height = height;
+        }
+
+        public void Initialize(Point position, double width, double height,
+                               UIElement referenceElement) {
+            UpdatePosition(position, referenceElement);
+            UpdateSize(width, height);
+        }
+
         public virtual bool ShouldStartDragging() {
             return true;
         }
