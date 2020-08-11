@@ -9,7 +9,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.LLVM;
 
-namespace IRExplorerUI.LLVM {
+namespace IRExplorerUI.Compilers.LLVM {
     public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
         private LLVMCompilerIRInfo ir_;
         private UTCNameProvider names_;
