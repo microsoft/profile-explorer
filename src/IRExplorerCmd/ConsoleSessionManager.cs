@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using IRExplorerUI;
 using IRExplorerUI.Diff;
+using IRExplorerUI.Query;
 using IRExplorerUI.Document;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
@@ -36,6 +37,8 @@ namespace IRExplorerCmd {
         public IRFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             throw new NotImplementedException();
         }
+
+        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() { };
     }
 
     public class ConsoleSessionManager : ISessionManager {

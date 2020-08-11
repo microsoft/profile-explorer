@@ -16,7 +16,7 @@
         </DataTemplate>
     </UserControl.Resources>
 
-    <Border BorderBrush="Gray" BorderThickness="1,1,1,1">
+    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,1,1,1">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -32,7 +32,7 @@
                 Grid.Row="0"
                 Grid.Column="0"
                 Grid.ColumnSpan="3"
-                Background="LightSteelBlue">
+                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
                 <TextBlock
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
@@ -73,8 +73,7 @@
                 VirtualizingStackPanel.IsVirtualizing="True"
                 VirtualizingStackPanel.VirtualizationMode="Recycling">
 
-                <ItemsControl x:Name="QueryViewList"
-                              ItemTemplate="{StaticResource ListElementTemplate}">
+                <ItemsControl x:Name="QueryViewList" ItemTemplate="{StaticResource ListElementTemplate}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <VirtualizingStackPanel Orientation="Vertical" />

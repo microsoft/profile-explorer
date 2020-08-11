@@ -136,14 +136,15 @@ namespace IRExplorerUI.Document {
         }
 
         private void UpdateSize() {
-            Width = RemarkPreviewWidth;
-            Height = RemarkListTop +
-                     RemarkListItemHeight *
-                     Math.Clamp(RemarkList.Items.Count, MinRemarkListItems, MaxRemarkListItems);
+            var width = RemarkPreviewWidth;
+            var height = RemarkListTop + RemarkListItemHeight *
+                         Math.Clamp(RemarkList.Items.Count, MinRemarkListItems, MaxRemarkListItems);
 
             if (ShowPreview) {
-                Height += RemarkPreviewHeight;
+                height += RemarkPreviewHeight;
             }
+
+            UpdateSize(width, height);
         }
 
         private async void RemarkList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
@@ -166,9 +167,8 @@ namespace IRExplorerUI.Document {
             UpdateRemarkList();
         }
 
-        public void Initialize(double x, double y) {
-            HorizontalOffset = x;
-            VerticalOffset = y;
+        public void Initialize(Point position, UIElement referenceElement) {
+            UpdatePosition(position, referenceElement);
             RemarkList.UnselectAll();
             SectionLabel.Content = "";
             ShowPreview = false;

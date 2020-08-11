@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using IRExplorerUI.Diff;
 using IRExplorerUI.UTC;
+using IRExplorerUI.Query;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using IRExplorerCore.UTC;
 using IRExplorerCore.LLVM;
 
 namespace IRExplorerUI.LLVM {
@@ -35,6 +36,8 @@ namespace IRExplorerUI.LLVM {
         public IDiffOutputFilter CreateDiffOutputFilter() {
             return new UTCDiffOutputFilter();
         }
+
+        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() { };
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
             //? TODO: var loopGraph = new LoopGraph(function);

@@ -287,7 +287,10 @@
                         <Separator />
 
                         <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
-                        <MenuItem Header="Compiler IR">
+                        <Separator />
+
+                        <MenuItem Click="MenuItem_Click_7" Header="IR Query" />
+                        <MenuItem Header="IR Kind">
                             <MenuItem
                                 Name="UTCMenuItem"
                                 Click="UTCMenuItem_Click"
@@ -297,6 +300,8 @@
                                 Click="LLVMMenuItem_Click"
                                 Header="LLVM" />
                         </MenuItem>
+                        <Separator />
+
                         <MenuItem Click="MenuItem_Click_6" Header="Settings" />
                     </MenuItem>
                     <MenuItem Header="Help">
@@ -311,7 +316,6 @@
                                 IsEnabled="False" />
                             <MenuItem Click="MenuItem_Click_2" Header="Create debug files" />
                             <MenuItem Click="MenuItem_Click" Header="Crash application" />
-                            <MenuItem Click="MenuItem_Click_7" Header="Query" />
                             <MenuItem Click="MenuItem_Click_8" Header="Start Grpc Server" />
                         </MenuItem>
                     </MenuItem>

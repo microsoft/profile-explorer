@@ -451,11 +451,7 @@ namespace IRExplorerUI {
             remarkPanel_.Section = Section;
             remarkPanel_.RemarkFilter = remarkSettings_;
             remarkPanel_.Element = element;
-
-            // Due to various DPI settings, setting the Window coordinates needs
-            // some adjustment of the values based on the monitor.
-            Point corner = Utils.CoordinatesToScreen(remarkPanelLocation_, this);
-            remarkPanel_.Initialize(corner.X, corner.Y);
+            remarkPanel_.Initialize(remarkPanelLocation_, this);
         }
 
         private void HideRemarkPanel() {

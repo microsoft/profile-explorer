@@ -2,11 +2,13 @@
 // Licensed under the MIT License.
 
 using IRExplorerUI.Diff;
-using IRExplorerUI.UTC;
+using IRExplorerUI.Query;
+using IRExplorerUI.Query.Builtin;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
+using System.Collections.Generic;
 
 namespace IRExplorerUI.UTC {
     public class UTCCompilerInfoProvider : ICompilerInfoProvider {
@@ -35,6 +37,12 @@ namespace IRExplorerUI.UTC {
         public IDiffOutputFilter CreateDiffOutputFilter() {
             return new UTCDiffOutputFilter();
         }
+
+        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() {
+            InstructionSSAInfoQuery.GetDefinition(),
+            OperandSSAInfoQuery.GetDefinition(),
+            ValueNumberQuery.GetDefinition()
+        };
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
             var loopGraph = new LoopGraph(function);

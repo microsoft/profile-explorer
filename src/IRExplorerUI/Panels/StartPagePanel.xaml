@@ -65,7 +65,8 @@
                 <StackPanel VerticalAlignment="Top" Orientation="Vertical">
                     <DockPanel>
                         <TextBlock
-                            FontSize="16"
+                            VerticalAlignment="Center"
+                            FontSize="14"
                             FontWeight="Normal"
                             Text="Recent files" />
 
@@ -98,13 +99,14 @@
                         Name="RecentFilesListBox"
                         Margin="0,8,0,0"
                         Background="#D8F0F0F0"
-                        FontSize="14"
+                        FontSize="12"
                         KeyDown="RecentFilesListBox_KeyDown"
                         MouseDoubleClick="RecentFilesListBox_MouseDoubleClick" />
 
                     <DockPanel Margin="0,16,0,0" LastChildFill="False">
                         <TextBlock
-                            FontSize="16"
+                            VerticalAlignment="Center"
+                            FontSize="14"
                             FontWeight="Normal"
                             Text="Recent compared base/diff files" />
                         <StackPanel
@@ -142,9 +144,9 @@
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Vertical">
-                                    <TextBlock FontSize="14" Text="{Binding Item1}" />
+                                    <TextBlock FontSize="12" Text="{Binding Item1}" />
                                     <Separator />
-                                    <TextBlock FontSize="14" Text="{Binding Item2}" />
+                                    <TextBlock FontSize="12" Text="{Binding Item2}" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>

@@ -748,7 +748,16 @@ namespace IRExplorerUI {
         }
 
         private void MenuItem_Click_7(object sender, RoutedEventArgs e) {
-            var x = new QueryPanelPreview();
+            var documentHost = Utils.FindChildLogical<LayoutDocumentPaneGroupControl>(this);
+            var position = new Point();
+
+            if (documentHost != null) {
+                var left = documentHost.ActualWidth - QueryPanelWindow.DefaultWidth - 32;
+                var top = documentHost.ActualHeight - QueryPanelWindow.DefaultHeight - 32;
+                position = documentHost.PointToScreen(new Point(left, top));
+            }
+
+            var x = new QueryPanelWindow(position, QueryPanelWindow.DefaultWidth, QueryPanelWindow.DefaultHeight, documentHost, this);
             x.IsOpen = true;
             x.StaysOpen = true;
         }

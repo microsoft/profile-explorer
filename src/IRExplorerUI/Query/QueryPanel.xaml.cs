@@ -10,15 +10,15 @@ namespace IRExplorerUI.Query {
     // used for the input/output values - the binding doesn't know an output value changed,
     // so this basically forces an update of the entire query panel.
     public class ElementQueryInfoView : INotifyPropertyChanged {
-        private ElementQueryInfo view_;
+        private ElementQueryDefinition view_;
 
-        public ElementQueryInfoView(ElementQueryInfo value) {
+        public ElementQueryInfoView(ElementQueryDefinition value) {
             View = value;
             InputValues = new ObservableCollectionRefresh<QueryValue>(value.Data.InputValues);
             OutputValues = new ObservableCollectionRefresh<QueryValue>(value.Data.OutputValues);
         }
 
-        public ElementQueryInfo View {
+        public ElementQueryDefinition View {
             get => view_;
             set {
                 if (view_ != value) {
@@ -74,7 +74,7 @@ namespace IRExplorerUI.Query {
             }
         }
 
-        public void AddQuery(ElementQueryInfo query) {
+        public void AddQuery(ElementQueryDefinition query) {
             var queryView = new ElementQueryInfoView(query);
             activeQueries_.Add(queryView);
             QueryViewList.ItemsSource = new CollectionView(activeQueries_);
