@@ -11,17 +11,16 @@ namespace IRExplorerUI.Compilers.UTC {
             var query = new ElementQueryDefinition(typeof(UTCValueNumberQuery), "Value Numbers",
                                                    "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("Mark same value number", QueryValueKind.Bool);
+            query.Data.AddInput("Temporary marking", QueryValueKind.Bool);
             query.Data.AddOutput("Value number", QueryValueKind.String);
             query.Data.AddOutput("Same value number", QueryValueKind.Number);
             return query;
         }
 
-        private ISessionManager session_;
-        public ISessionManager Session => session_;
+        public ISessionManager Session { get; private set; }
 
         public bool Initialize(ISessionManager session) {
-            session_ = session;
+            Session = session;
             return true;
         }
 
@@ -49,14 +48,18 @@ namespace IRExplorerUI.Compilers.UTC {
             });
 
             data.SetOutput("Value number", vn);
-            data.SetOutput("Same value number", sameVNInstrs.Count);
-            var session = Application.Current.MainWindow as ISessionManager;
-            var document = session.CurrentDocument;
+            data.SetOutput("Instrs. with same value number", sameVNInstrs.Count);
+            data.ClearButtons();
 
-            if (markSameVN) {
-                foreach (var instr in sameVNInstrs) {
-                    document.MarkElement(instr, Colors.YellowGreen);
-                }
+            if (sameVNInstrs.Count > 0) {
+                data.AddButton("Mark same value number instrs.", (sender, data) => {
+                    //? TODO: Check for document/function still being the same
+                    var document = Session.CurrentDocument;
+
+                    foreach (var instr in sameVNInstrs) {
+                        document.MarkElement(instr, Colors.YellowGreen);
+                    }
+                });
             }
 
             return true;

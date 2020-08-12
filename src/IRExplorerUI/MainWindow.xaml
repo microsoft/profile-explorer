@@ -546,9 +546,9 @@
                             ToolTip="Create/open shared session link">
                             <StackPanel Orientation="Horizontal">
                                 <Image
-                                    Width="16"
-                                    Height="16"
-                                    Margin="0,1,0,0"
+                                    Width="15"
+                                    Height="15"
+                                    Margin="0,0,0,0"
                                     VerticalAlignment="Center"
                                     SnapsToDevicePixels="True"
                                     Source="{StaticResource UploadIcon}"
@@ -578,8 +578,9 @@
                             FontWeight="DemiBold"
                             ToolTip="Search the entire document">
                             <Image
-                                Width="14"
-                                Height="14"
+                                Width="13"
+                                Height="13"
+                                HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 SnapsToDevicePixels="True"
                                 Source="{StaticResource SearchIcon}"

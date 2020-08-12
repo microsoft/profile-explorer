@@ -16,6 +16,7 @@ namespace IRExplorerUI.Query {
             View = value;
             InputValues = new ObservableCollectionRefresh<QueryValue>(value.Data.InputValues);
             OutputValues = new ObservableCollectionRefresh<QueryValue>(value.Data.OutputValues);
+            Buttons = new ObservableCollectionRefresh<QueryButton>(value.Data.Buttons);
         }
 
         public ElementQueryDefinition View {
@@ -35,14 +36,18 @@ namespace IRExplorerUI.Query {
 
         public ObservableCollectionRefresh<QueryValue> InputValues { get; set; }
         public ObservableCollectionRefresh<QueryValue> OutputValues { get; set; }
+        public ObservableCollectionRefresh<QueryButton> Buttons { get; set; }
+        public bool HasButtons => Buttons.Count > 0;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void ViewPropertyChanged(object sender, PropertyChangedEventArgs e) {
             InputValues.Clear();
             OutputValues.Clear();
+            Buttons.Clear();
             InputValues.AddRange(View.Data.InputValues);
             OutputValues.AddRange(View.Data.OutputValues);
+            Buttons.AddRange(View.Data.Buttons);
             OnPropertyChange("View");
         }
 
