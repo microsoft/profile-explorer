@@ -17,6 +17,10 @@
         <DataTemplate x:Key="OutputListTemplate">
             <local:OutputQueryViewElement />
         </DataTemplate>
+
+        <DataTemplate x:Key="ButtonListTemplate">
+            <local:ButtonQueryViewElement />
+        </DataTemplate>
     </UserControl.Resources>
 
     <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,1">
@@ -61,6 +65,7 @@
 
                 <ItemsControl
                     x:Name="InputElementList"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     ItemTemplate="{StaticResource InputListTemplate}"
                     ItemsSource="{Binding InputValues}">
                     <ItemsControl.ItemsPanel>
@@ -70,9 +75,9 @@
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
 
-
                 <ItemsControl
                     x:Name="OutputElementList"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     ItemTemplate="{StaticResource OutputListTemplate}"
                     ItemsSource="{Binding OutputValues}">
                     <ItemsControl.ItemsPanel>
@@ -82,6 +87,18 @@
                     </ItemsControl.ItemsPanel>
                 </ItemsControl>
 
+                <ItemsControl
+                    x:Name="ButtonList"
+                    Padding="0,2,0,2"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                    ItemTemplate="{StaticResource ButtonListTemplate}"
+                    ItemsSource="{Binding Buttons}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
             </StackPanel>
         </Grid>
     </Border>

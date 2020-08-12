@@ -108,7 +108,7 @@ namespace IRExplorerUI {
                         !remarkSettings_.Trace;
             }
             set {
-                if (value) {
+                if (value && !ShowOnlyOptimizationRemarks) {
                     previousSettings_ = (RemarkSettings)remarkSettings_.Clone();
                     remarkSettings_.Optimization = true;
                     remarkSettings_.Analysis = false;
@@ -118,7 +118,7 @@ namespace IRExplorerUI {
                     NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
                 }
                 else {
-                    if (previousSettings_ != null) {
+                    if (previousSettings_ != null && ShowOnlyOptimizationRemarks) {
                         remarkSettings_.Optimization = previousSettings_.Optimization;
                         remarkSettings_.Analysis = previousSettings_.Analysis;
                         remarkSettings_.Default = previousSettings_.Default;

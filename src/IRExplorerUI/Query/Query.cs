@@ -25,18 +25,22 @@ namespace IRExplorerUI.Query {
         private object value_;
         private string warningMessage_;
 
-        public QueryValue(string name, QueryValueKind kind, string description = null) {
+        public QueryValue(int id, string name, QueryValueKind kind, string description = null) {
+            Id = id;
             Name = name;
             Kind = kind;
             Description = description;
         }
 
-        public QueryValue(string name, object value, QueryValueKind kind, string description = null) {
+        public QueryValue(int id, string name, object value, QueryValueKind kind, string description = null) {
+            Id = id;
             Name = name;
             Kind = kind;
             Value = value;
             Description = description;
         }
+
+        public int Id { get; set; }
 
         public QueryValueKind Kind {
             get => kind_;
@@ -98,24 +102,72 @@ namespace IRExplorerUI.Query {
         }
     }
 
+    public class QueryButton : BindableObject {
+        private string text_;
+        private string description_;
+        private bool hasBoldText_;
+        private bool hasDemiBoldText_;
+        private bool isEnabled_;
+
+        public QueryButton(string text, EventHandler<object> action = null, object data = null) {
+            Text = text;
+            Action = action;
+            Data = data;
+            IsEnabled = true;
+        }
+
+        public string Text {
+            get => text_;
+            set => SetAndNotify(ref text_, value);
+        }
+
+        public string Description {
+            get => description_;
+            set => SetAndNotify(ref description_, value);
+        }
+
+        public bool HasBoldText {
+            get => hasBoldText_;
+            set => SetAndNotify(ref hasBoldText_, value);
+        }
+
+        public bool HasDemiBoldText {
+            get => hasDemiBoldText_;
+            set => SetAndNotify(ref hasDemiBoldText_, value);
+        }
+
+        public bool IsEnabled {
+            get => isEnabled_ && Action != null;
+            set => SetAndNotify(ref isEnabled_, value);
+        }
+
+        public EventHandler<object> Action { get; set; }
+        public object Data { get; set; }
+    }
+
     public class QueryData : INotifyPropertyChanged {
+        private int nextId_;
+
         public QueryData() {
             InputValues = new List<QueryValue>();
             OutputValues = new List<QueryValue>();
+            Buttons = new List<QueryButton>();
         }
 
         public List<QueryValue> InputValues { get; set; }
         public List<QueryValue> OutputValues { get; set; }
+        public List<QueryButton> Buttons { get; set; }
         public bool HasInputValuesSwitchButton { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler ValueChanged;
 
-        public void AddInput(QueryValue value) {
+        public int AddInput(QueryValue value) {
             value.Kind |= QueryValueKind.Input;
             value.PropertyChanged += InputValueChanged;
             InputValues.Add(value);
             OnPropertyChange(nameof(InputValues));
+            return value.Id;
         }
 
         private void InputValueChanged(object sender, PropertyChangedEventArgs e) {
@@ -127,9 +179,24 @@ namespace IRExplorerUI.Query {
             }
         }
 
-        public void AddInput(string name, QueryValueKind kind, string description = null) {
-            AddInput(new QueryValue(name, QueryValue.GetDefaultValue(kind), kind | QueryValueKind.Input,
-                                    description));
+        private int GetNextId() {
+            return nextId_++;
+        }
+
+        public QueryButton AddButton(string name, EventHandler<object> action = null, object data = null) {
+            var button = new QueryButton(name, action, data);
+            Buttons.Add(button);
+            OnPropertyChange(nameof(Buttons));
+            return button;
+        }
+
+        public void ClearButtons() {
+            Buttons.Clear();
+            OnPropertyChange(nameof(Buttons));
+        }
+
+        public int AddInput(string name, QueryValueKind kind, string description = null) {
+            return AddInput(new QueryValue(GetNextId(), name, QueryValue.GetDefaultValue(kind), kind, description));
         }
 
         public T GetInput<T>(string name) {
@@ -146,6 +213,20 @@ namespace IRExplorerUI.Query {
             throw new InvalidOperationException($"Input value not found: {name}");
         }
 
+        public T GetInput<T>(int id) {
+            foreach (var value in InputValues) {
+                if (value.Id == id) {
+                    if (value.Value == null) {
+                        throw new InvalidOperationException($"Input value not set: {id}, {value.Name}");
+                    }
+
+                    return (T)value.Value;
+                }
+            }
+
+            throw new InvalidOperationException($"Input value not found: {id}");
+        }
+
         public void AddOutput(string name, QueryValueKind kind, string description = null) {
             SetOutput(name, QueryValue.GetDefaultValue(kind), kind, description);
         }
@@ -158,7 +239,7 @@ namespace IRExplorerUI.Query {
                 existingValue.Value = value;
             }
             else {
-                var outputValue = new QueryValue(name, value, kind, description);
+                var outputValue = new QueryValue(GetNextId(), name, value, kind, description);
                 outputValue.PropertyChanged += OutputValueChanged;
                 OutputValues.Add(outputValue);
                 OnPropertyChange(nameof(OutputValues));
@@ -234,7 +315,7 @@ namespace IRExplorerUI.Query {
                 OnPropertyChange(nameof(OutputValues));
             }
             else {
-                var outputValue = new QueryValue(name, null, QueryValueKind.Other);
+                var outputValue = new QueryValue(GetNextId(), name, null, QueryValueKind.Other);
                 outputValue.PropertyChanged += OutputValueChanged;
                 OutputValues.Add(outputValue);
                 OnPropertyChange(nameof(OutputValues));

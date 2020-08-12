@@ -32,11 +32,10 @@
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsInput}" Value="True">
                     <Setter Property="Source" Value="{StaticResource CrosshairIcon}" />
-
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsInput}" Value="False">
-                    <Setter Property="Source" Value="{StaticResource LeftArrowIcon}" />
+                    <Setter Property="Source" Value="{x:Null}" />
                 </DataTrigger>
             </Style.Triggers>
 
@@ -50,7 +49,10 @@
                     <Setter Property="ContentTemplate">
                         <Setter.Value>
                             <DataTemplate>
-                                <CheckBox Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" IsChecked="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <CheckBox
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    IsChecked="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </DataTemplate>
                         </Setter.Value>
                     </Setter>
@@ -62,6 +64,8 @@
                             <DataTemplate>
                                 <TextBox
                                     Width="75"
+                                    VerticalAlignment="Center"
+                                    VerticalContentAlignment="Center"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     IsEnabled="{Binding Path=IsInput}"
                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
@@ -78,6 +82,8 @@
                             <DataTemplate>
                                 <TextBox
                                     Width="75"
+                                    VerticalAlignment="Center"
+                                    VerticalContentAlignment="Center"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     IsEnabled="{Binding Path=IsInput}"
                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
@@ -92,7 +98,10 @@
                     <Setter Property="ContentTemplate">
                         <Setter.Value>
                             <DataTemplate>
-                                <DockPanel HorizontalAlignment="Stretch" LastChildFill="True">
+                                <DockPanel
+                                    HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Center"
+                                    LastChildFill="True">
                                     <Image
                                         Width="16"
                                         Height="16"
@@ -117,6 +126,7 @@
                                 <TextBlock
                                     Margin="2,0,0,0"
                                     HorizontalAlignment="Stretch"
+                                    VerticalAlignment="Center"
                                     DockPanel.Dock="Right"
                                     FontWeight="DemiBold"
                                     Foreground="DarkBlue"

@@ -43,6 +43,7 @@ namespace IRExplorerUI.Compilers.UTC {
             InstructionSSAInfoQuery.GetDefinition(),
             OperandSSAInfoQuery.GetDefinition(),
             UTCValueNumberQuery.GetDefinition(),
+            UTCBuiltinInterferenceActions.GetDefinition(),
             UTCBuiltinInterferenceQuery.GetDefinition()
         };
 
