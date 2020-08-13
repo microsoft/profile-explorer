@@ -66,7 +66,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStaticLib|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
@@ -106,7 +106,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStaticLib|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>c:\tools\vcpkg\buildtrees\protobuf\x86-windows-rel\;C:\tools\vcpkg\installed\x86-windows\include\;$(IncludePath)</IncludePath>
+    <IncludePath>C:\tools\vcpkg\installed\x64-windows\include\google\protobuf;C:\tools\vcpkg\installed\x86-windows\include\;$(IncludePath)</IncludePath>
     <LibraryPath>C:\tools\vcpkg\installed\x86-windows\debug\lib;$(LibraryPath)</LibraryPath>
     <TargetName>irexplorer</TargetName>
   </PropertyGroup>
@@ -120,8 +120,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStaticLib|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\tools\vcpkg\installed\x86-windows\include\;c:\tools\vcpkg\buildtrees\protobuf\x86-windows-rel\;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\tools\vcpkg\installed\x86-windows\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\tools\vcpkg\installed\x64-windows\include\absl;C:\tools\vcpkg\installed\x64-windows\include\google\protobuf;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\tools\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -234,7 +234,12 @@
       <ConformanceMode>true</ConformanceMode>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <SupportJustMyCode>true</SupportJustMyCode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>Default</LanguageStandard>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <AdditionalOptions>-D_WIN32_WINNT=0x600 /Ob3 %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -244,9 +249,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\..\..\..\tools\vcpkg\buildtrees\protobuf\x86-windows-rel\irexplorer\DebugService.grpc.pb.cc" />
-    <ClCompile Include="..\..\..\..\..\..\tools\vcpkg\buildtrees\protobuf\x86-windows-rel\irexplorer\DebugService.pb.cc" />
+    <ClCompile Include="DebugService.grpc.pb.cc" />
+    <ClCompile Include="DebugService.pb.cc" />
     <ClCompile Include="IRExplorerClient.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DebugService.grpc.pb.h" />
+    <ClInclude Include="DebugService.pb.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
