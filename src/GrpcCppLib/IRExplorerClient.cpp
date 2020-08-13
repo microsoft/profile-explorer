@@ -3,8 +3,8 @@
 #define _SILENCE_ALL_CXX17_DEPRECATION_WARNINGS 1
 
 #pragma warning(disable: 4251 4508 4988)
-#include "irexplorer/DebugService.grpc.pb.h"
-#include "irexplorer/DebugService.pb.h"
+#include "DebugService.grpc.pb.h"
+#include "DebugService.pb.h"
 #include <grpc/grpc.h>
 #include <grpcpp/channel.h>
 #include <grpcpp/client_context.h>
