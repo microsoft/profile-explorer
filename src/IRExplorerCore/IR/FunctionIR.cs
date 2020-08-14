@@ -59,42 +59,22 @@ namespace IRExplorerCore.IR {
             }
         }
 
-        private IEnumerable<IRElement> IterateAllElements() {
-            foreach (var block in Blocks) {
-                yield return block;
+        private IEnumerable<IRElement> AllElements {
+            get {
+                foreach (var block in Blocks) {
+                    yield return block;
 
-                foreach (var tuple in block.Tuples) {
-                    yield return tuple;
+                    foreach (var tuple in block.Tuples) {
+                        yield return tuple;
 
-                    if (tuple is InstructionIR instr) {
-                        foreach (var op in instr.Destinations) {
-                            yield return op;
-                        }
+                        if (tuple is InstructionIR instr) {
+                            foreach (var op in instr.Destinations) {
+                                yield return op;
+                            }
 
-                        foreach (var op in instr.Sources) {
-                            yield return op;
-                        }
-                    }
-                }
-            }
-        }
-
-        public void ForEachTuple(Func<TupleIR, bool> action) {
-            foreach (var block in Blocks) {
-                foreach (var tuple in block.Tuples) {
-                    if (!action(tuple)) {
-                        return;
-                    }
-                }
-            }
-        }
-
-        public void ForEachInstruction(Func<InstructionIR, bool> action) {
-            foreach (var block in Blocks) {
-                foreach (var tuple in block.Tuples) {
-                    if (tuple is InstructionIR instr) {
-                        if (!action(instr)) {
-                            return;
+                            foreach (var op in instr.Sources) {
+                                yield return op;
+                            }
                         }
                     }
                 }
@@ -102,8 +82,47 @@ namespace IRExplorerCore.IR {
         }
 
         public void ForEachElement(Func<IRElement, bool> action) {
-            foreach (var element in IterateAllElements()) {
+            foreach (var element in AllElements) {
                 if (!action(element)) {
+                    return;
+                }
+            }
+        }
+
+        public IEnumerable<TupleIR> AllTuples {
+            get {
+                foreach (var block in Blocks) {
+                    foreach (var tuple in block.Tuples) {
+                        yield return tuple;
+                    }
+                }
+            }
+        }
+
+        public void ForEachTuple(Func<TupleIR, bool> action) {
+            foreach (var tuple in AllTuples) {
+                if (!action(tuple)) {
+                    return;
+                }
+            }
+        }
+
+        public IEnumerable<InstructionIR> AllInstructions {
+            get {
+                foreach (var block in Blocks) {
+                    foreach (var tuple in block.Tuples) {
+                        if (tuple is InstructionIR instr) {
+                            yield return instr;
+                        }
+                    }
+                }
+
+            }
+        }
+    
+        public void ForEachInstruction(Func<InstructionIR, bool> action) {
+            foreach (var instr in AllInstructions) {
+                if (!action(instr)) {
                     return;
                 }
             }

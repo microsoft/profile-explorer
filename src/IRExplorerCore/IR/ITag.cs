@@ -4,6 +4,6 @@
 namespace IRExplorerCore.IR {
     public interface ITag {
         string Name { get; }
-        IRElement Parent { get; set; }
+        IRElement Owner { get; set; }
     }
 }

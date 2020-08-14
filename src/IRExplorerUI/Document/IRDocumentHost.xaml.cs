@@ -1252,8 +1252,34 @@ namespace IRExplorerUI {
             var defaultItems = SaveDefaultMenuItems(ScriptMenuItem);
             ScriptMenuItem.Items.Clear();
 
+            var actions = Session.CompilerInfo.BuiltinScripts;
+
+            foreach(var action in actions) {
+                var item = new MenuItem() {
+                    Header = action.Name,
+                    ToolTip = action.Description,
+                    Tag = action
+                };
+
+                item.Click += ActionMenuItem_Click;
+                ScriptMenuItem.Items.Add(item);
+            }
 
             RestoreDefaultMenuItems(ScriptMenuItem, defaultItems);
+        }
+
+        private async void ActionMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
+            var menuItem = (MenuItem)sender;
+            var action = (DocumentActionDefinition)menuItem.Tag;
+
+            var instance = action.CreateInstance(Session);
+
+            if(instance != null) {
+                await instance.Execute(Function, TextView);
+            }
+            else {
+                //? TODO: Error handling, message box
+            }
         }
     }
 }

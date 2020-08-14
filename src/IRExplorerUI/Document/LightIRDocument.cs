@@ -25,7 +25,7 @@ namespace IRExplorerUI {
 
         public List<Remark> Remarks { get; }
         public string Name => "Output lines tag";
-        public IRElement Parent { get; set; }
+        public IRElement Owner { get; set; }
 
         public override string ToString() {
             var builder = new StringBuilder();

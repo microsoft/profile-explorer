@@ -18,7 +18,7 @@ namespace IRExplorerCore.IR.Tags {
         public string Title { get; set; }
         public List<string> Notes { get; set; }
         public string Name => "Notes";
-        public IRElement Parent { get; set; }
+        public IRElement Owner { get; set; }
 
         public override bool Equals(object obj) {
             return obj is NotesTag tag &&

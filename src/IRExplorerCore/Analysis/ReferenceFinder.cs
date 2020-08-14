@@ -319,7 +319,7 @@ namespace IRExplorerCore.Analysis {
 
         public static IRElement GetSSADefinition(OperandIR op) {
             var tag = GetSSADefinitionTag(op);
-            return tag != null ? tag.Parent : null;
+            return tag != null ? tag.Owner : null;
         }
 
         public static int? GetSSADefinitionId(OperandIR op) {
@@ -338,7 +338,7 @@ namespace IRExplorerCore.Analysis {
 
             if (ssaDefTag != null) {
                 if (ssaDefTag.HasSingleUser) {
-                    return ssaDefTag.Users[0].Parent;
+                    return ssaDefTag.Users[0].Owner;
                 }
             }
 
@@ -351,7 +351,7 @@ namespace IRExplorerCore.Analysis {
 
             if (ssaDefTag != null) {
                 foreach (var use in ssaDefTag.Users) {
-                    yield return use.Parent;
+                    yield return use.Owner;
                 }
             }
 
@@ -360,7 +360,7 @@ namespace IRExplorerCore.Analysis {
 
             if (ssaDefUseTag != null) {
                 foreach (var use in ssaDefUseTag.Definition.Users) {
-                    yield return use.Parent;
+                    yield return use.Owner;
                 }
             }
         }

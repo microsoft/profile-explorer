@@ -1533,14 +1533,14 @@ namespace IRExplorerCore.UTC {
                 var ssaDefTag = GetOrCreateSSADefinition(defNumber);
 
                 if (isDefinition) {
-                    ssaDefTag.Parent = parent;
+                    ssaDefTag.Owner = parent;
                     tag = ssaDefTag;
                 }
                 else {
                     // Create a use-def link for the source,
                     // and add it as an user of the definition.
                     var ssaUDLinkTag = new SSAUseTag(defNumber, ssaDefTag);
-                    ssaUDLinkTag.Parent = parent;
+                    ssaUDLinkTag.Owner = parent;
                     ssaDefTag.Users.Add(ssaUDLinkTag);
                     tag = ssaUDLinkTag;
                 }
