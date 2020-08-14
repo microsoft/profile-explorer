@@ -6,15 +6,25 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="100"
     d:DesignWidth="400"
+    AllowsTransparency="True"
     SnapsToDevicePixels="True"
     StaysOpen="False"
     UseLayoutRounding="True"
     mc:Ignorable="d">
     <Border
+        Margin="0,0,6,6"
         Padding="4"
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="2,1,2,2">
+        BorderThickness="1,1,1,1">
+        <Border.Effect>
+            <DropShadowEffect
+                BlurRadius="5"
+                Direction="315"
+                RenderingBias="Performance"
+                ShadowDepth="2"
+                Color="#FF929292" />
+        </Border.Effect>
         <StackPanel Orientation="Vertical">
             <TextBlock Text="Sharing link" />
             <Grid>

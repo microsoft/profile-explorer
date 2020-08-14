@@ -16,9 +16,11 @@ namespace IRExplorerUI.OptionsPanels {
                                       UIElement referenceElement,
                                       bool showResetButton = true) {
             InitializeComponent();
-
             ShowResetButton = showResetButton;
             DataContext = this;
+
+            // Offset to account for drop shadow marging.
+            position.Offset(6, 0);
 
             var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
             HorizontalOffset = screenPosition.X;

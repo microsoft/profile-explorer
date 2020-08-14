@@ -7,14 +7,24 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Width="500"
     Height="450"
+    AllowsTransparency="True"
     SnapsToDevicePixels="True"
     StaysOpen="False"
     UseLayoutRounding="True"
     mc:Ignorable="d">
     <Border
+        Margin="0,0,6,6"
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="2,1,2,2">
+        BorderThickness="1,1,1,1">
+        <Border.Effect>
+            <DropShadowEffect
+                BlurRadius="5"
+                Direction="315"
+                RenderingBias="Performance"
+                ShadowDepth="2"
+                Color="#FF929292" />
+        </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="*" />

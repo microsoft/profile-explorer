@@ -1199,6 +1199,7 @@ namespace IRExplorerUI {
 
         private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
             var defaultItems = SaveDefaultMenuItems(QueryMenuItem);
+            QueryMenuItem.Items.Clear();
 
             // Append the available queries.
             var queries = Session.CompilerInfo.BuiltinQueries;
@@ -1234,7 +1235,6 @@ namespace IRExplorerUI {
                 }
             }
 
-            QueryMenuItem.Items.Clear();
             return defaultItems;
         }
 
@@ -1250,7 +1250,7 @@ namespace IRExplorerUI {
 
         private void ScriptMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
             var defaultItems = SaveDefaultMenuItems(ScriptMenuItem);
-
+            ScriptMenuItem.Items.Clear();
 
 
             RestoreDefaultMenuItems(ScriptMenuItem, defaultItems);
