@@ -17,6 +17,7 @@ using System.Windows.Shapes;
 using IRExplorerUI.Document;
 using System.Windows.Controls.Primitives;
 using System.ComponentModel;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.Panels {
     /// <summary>

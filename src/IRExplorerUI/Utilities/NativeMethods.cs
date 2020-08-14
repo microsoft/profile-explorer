@@ -18,7 +18,10 @@ namespace IRExplorerUI {
         }
 
         [DllImport("shlwapi.dll", CharSet = CharSet.Unicode, SetLastError = false)]
-        private static extern bool PathFindOnPath([In][Out] StringBuilder pszFile,
+        public static extern bool PathFindOnPath([In][Out] StringBuilder pszFile,
                                                   [In] string[] ppszOtherDirs);
+
+        [DllImport("User32.dll")]
+        public static extern bool SetForegroundWindow(IntPtr handle);
     }
 }

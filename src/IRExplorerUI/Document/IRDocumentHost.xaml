@@ -294,6 +294,7 @@
                                     <Image
                                         Width="16"
                                         Height="16"
+                                        Margin="-2,0,-2,0"
                                         Source="{StaticResource RemoveIcon}" />
                                 </MenuItem.Icon>
                                 <MenuItem
@@ -316,6 +317,48 @@
                                     Header="All Instruction Markers" />
                             </MenuItem>
                         </Menu>
+                        <Separator />
+
+                        <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                            <MenuItem
+                                x:Name="ScriptMenuItem"
+                                Width="20"
+                                Padding="0,0,0,0"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                OverridesDefaultStyle="True"
+                                SubmenuOpened="ScriptMenuItem_SubmenuOpened">
+                                <MenuItem.Icon>
+                                    <Image
+                                        Height="20"
+                                        Margin="-2,0,-6,0"
+                                        HorizontalAlignment="Center"
+                                        Source="{StaticResource SourceIcon}" />
+                                </MenuItem.Icon>
+                                <Separator />
+                                <MenuItem Header="Configure Document Scripts" />
+                            </MenuItem>
+                            <MenuItem
+                                x:Name="QueryMenuItem"
+                                Width="20"
+                                Padding="0,0,0,0"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                OverridesDefaultStyle="True"
+                                SubmenuOpened="QueryMenuItem_SubmenuOpened">
+                                <MenuItem.Icon>
+                                    <Image
+                                        Height="20"
+                                        Margin="-3,0,-5,0"
+                                        HorizontalAlignment="Center"
+                                        Source="{StaticResource QueryIcon}" />
+                                </MenuItem.Icon>
+                                <Separator />
+                                <MenuItem Header="Show Query Panel" />
+                                <MenuItem Header="Close All Query Panels" />
+                            </MenuItem>
+                        </Menu>
+
                         <Separator />
 
                         <ToggleButton

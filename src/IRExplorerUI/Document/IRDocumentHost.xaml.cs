@@ -22,6 +22,7 @@ using ComboBox = System.Windows.Controls.ComboBox;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using UserControl = System.Windows.Controls.UserControl;
+using IRExplorerUI.Query;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -1194,6 +1195,65 @@ namespace IRExplorerUI {
         public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
             await TextView.LoadDiffedFunction(diffResult, newSection);
             await ReloadRemarks();
+        }
+
+        private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+            var defaultItems = SaveDefaultMenuItems(QueryMenuItem);
+
+            // Append the available queries.
+            var queries = Session.CompilerInfo.BuiltinQueries;
+
+            foreach (var query in queries) {
+                var item = new MenuItem() {
+                    Header = query.Name,
+                    ToolTip = query.Description,
+                    Tag = query
+                };
+
+                item.Click += QueryMenuItem_Click;
+                QueryMenuItem.Items.Add(item);
+            }
+
+            // Add back the default menu items.
+            RestoreDefaultMenuItems(QueryMenuItem, defaultItems);
+        }
+
+        private List<object> SaveDefaultMenuItems(MenuItem menu) {
+            // Save the menu items that are always present, they are either
+            // separators or menu items without an object tag.
+            var defaultItems = new List<object>();
+
+            foreach (var item in menu.Items) {
+                if (item is MenuItem menuItem) {
+                    if (menuItem.Tag == null) {
+                        defaultItems.Add(item);
+                    }
+                }
+                else if (item is Separator) {
+                    defaultItems.Add(item);
+                }
+            }
+
+            QueryMenuItem.Items.Clear();
+            return defaultItems;
+        }
+
+        private void RestoreDefaultMenuItems(MenuItem menu, List<object> defaultItems) {
+            defaultItems.ForEach(item => menu.Items.Add(item));
+        }
+
+        private void QueryMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
+            var menuItem = (MenuItem)sender;
+            var query = (ElementQueryDefinition)menuItem.Tag;
+            Session.LoadDocumentQuery(query, TextView);
+        }
+
+        private void ScriptMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+            var defaultItems = SaveDefaultMenuItems(ScriptMenuItem);
+
+
+
+            RestoreDefaultMenuItems(ScriptMenuItem, defaultItems);
         }
     }
 }
