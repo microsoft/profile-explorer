@@ -11,6 +11,6 @@ namespace IRExplorerCore.IR.Tags {
 
         public Dictionary<long, IRElement> AddressToElementMap { get; set; }
         public string Name => "Address metadata";
-        public IRElement Parent { get; set; }
+        public IRElement Owner { get; set; }
     }
 }

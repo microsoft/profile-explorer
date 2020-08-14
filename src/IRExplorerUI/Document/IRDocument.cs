@@ -1953,7 +1953,7 @@ namespace IRExplorerUI {
                         var defTag = op.GetTag<SSADefinitionTag>();
 
                         if (defTag != null) {
-                            if (defTag.Parent is OperandIR defOp) {
+                            if (defTag.Owner is OperandIR defOp) {
                                 HighlightSSAExpression(defOp.Parent, parent, handledElements, highlighter, style,
                                                        instrStyle, styleIndex, level);
                             }

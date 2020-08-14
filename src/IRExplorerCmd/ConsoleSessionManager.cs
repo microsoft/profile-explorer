@@ -40,6 +40,7 @@ namespace IRExplorerCmd {
         }
 
         public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() { };
+        public List<DocumentActionDefinition> BuiltinScripts => throw new NotImplementedException();
     }
 
     public class ConsoleSessionManager : ISessionManager {

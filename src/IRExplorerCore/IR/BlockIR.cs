@@ -60,6 +60,15 @@ namespace IRExplorerCore.IR {
 
         public TupleIR FirstTuple => IsEmpty ? null : Tuples[0];
         public TupleIR LastTuple => IsEmpty ? null : Tuples[^1];
+        public bool HasLabel => Label != null;
+
+        public IEnumerable<TupleIR> TuplesBack {
+            get {
+                for (int i = Tuples.Count - 1; i >= 0; i--) {
+                    yield return Tuples[i];
+                }
+            }
+        }
 
         public InstructionIR FirstInstruction {
             get {
@@ -93,6 +102,28 @@ namespace IRExplorerCore.IR {
             }
         }
 
+        public IEnumerable<InstructionIR> Instructions {
+            get {
+                foreach(var tuple in Tuples) {
+                    if (tuple is InstructionIR instr) {
+                        yield return instr;
+                        ;
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<InstructionIR> InstructionsBack {
+            get {
+                for (int i = Tuples.Count - 1; i >= 0; i--) {
+                    if (Tuples[i] is InstructionIR instr) {
+                        yield return instr;
+                        ;
+                    }
+                }
+            }
+        }
+
         public InstructionIR TransferInstruction {
             get {
                 var instr = LastInstruction;
@@ -122,8 +153,6 @@ namespace IRExplorerCore.IR {
                 return null;
             }
         }
-
-        public bool HasLabel => Label != null;
 
         public override void Accept(IRVisitor visitor) {
             visitor.Visit(this);

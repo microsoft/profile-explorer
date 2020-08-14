@@ -6,6 +6,8 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using System.Collections.Generic;
 using IRExplorerUI.Query;
+using System.Threading.Tasks;
+using System;
 
 namespace IRExplorerUI {
     public interface ICompilerInfoProvider {
@@ -16,6 +18,7 @@ namespace IRExplorerUI {
         ISectionStyleProvider SectionStyleProvider { get; }
         IRRemarkProvider RemarkProvider { get; }
         List<ElementQueryDefinition> BuiltinQueries { get; }
+        List<DocumentActionDefinition> BuiltinScripts { get; }
 
         bool AnalyzeLoadedFunction(FunctionIR function);
         IRFoldingStrategy CreateFoldingStrategy(FunctionIR function);

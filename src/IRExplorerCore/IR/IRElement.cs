@@ -141,7 +141,7 @@ namespace IRExplorerCore.IR {
 
         public void AddTag(ITag tag) {
             Tags ??= new List<ITag>();
-            tag.Parent = this;
+            tag.Owner = this;
             Tags.Add(tag);
         }
 

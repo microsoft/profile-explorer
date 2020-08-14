@@ -23,14 +23,15 @@ namespace IRExplorerCore.IR {
         public SSADefinitionTag Definition { get; set; }
         public int DefinitionId { get; set; }
 
-        public OperandIR DefinitionOperand => Definition?.Parent as OperandIR;
-        public TupleIR DefinitionTuple => Definition?.Parent.ParentTuple;
+        public OperandIR DefinitionOperand => Definition?.Owner as OperandIR;
+        public TupleIR DefinitionTuple => Definition?.Owner.ParentTuple;
 
         public InstructionIR DefinitionInstruction =>
-            Definition?.Parent.ParentTuple as InstructionIR;
+            Definition?.Owner.ParentTuple as InstructionIR;
 
         public string Name => "SSA use-definition link";
-        public IRElement Parent { get; set; }
+        public IRElement Owner { get; set; } // Source operand.
+        public InstructionIR OwnerInstruction => Owner.ParentInstruction;
 
         public override bool Equals(object obj) {
             return obj is SSAUseTag tag && DefinitionId == tag.DefinitionId;
@@ -41,7 +42,7 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            return $"SSA UD-link: {DefinitionId}, {Definition.Parent}";
+            return $"SSA UD-link: {DefinitionId}, {Definition.Owner}";
         }
     }
 
@@ -56,11 +57,11 @@ namespace IRExplorerCore.IR {
         public bool HasUsers => Users.Count > 0;
         public bool HasSingleUser => Users.Count == 1;
         public int DefinitionId { get; set; }
-        public OperandIR DefinitionOperand => Parent as OperandIR;
-        public TupleIR DefinitionTuple => Parent.ParentTuple;
-        public InstructionIR DefinitionInstruction => Parent.ParentTuple as InstructionIR;
+        public OperandIR DefinitionOperand => Owner as OperandIR;
+        public TupleIR DefinitionTuple => Owner.ParentTuple;
+        public InstructionIR DefinitionInstruction => Owner.ParentTuple as InstructionIR;
         public string Name => "SSA definition";
-        public IRElement Parent { get; set; }
+        public IRElement Owner { get; set; } // Destination operand.
 
         public override bool Equals(object obj) {
             return obj is SSADefinitionTag tag && DefinitionId == tag.DefinitionId;
@@ -73,18 +74,18 @@ namespace IRExplorerCore.IR {
         public override string ToString() {
             var builder = new StringBuilder();
             builder.AppendLine($"SSA definition: {DefinitionId}");
-            builder.AppendLine($"  - parent: {Parent}");
+            builder.AppendLine($"  - parent: {Owner}");
             builder.AppendLine($"  - users: {Users.Count}");
 
             foreach (var user in Users) {
-                builder.AppendLine($"    - {user.Parent}");
+                builder.AppendLine($"    - {user.Owner}");
 
-                if (user.Parent is TupleIR tuple) {
+                if (user.Owner is TupleIR tuple) {
                     string tupleString = tuple.ToString();
                     tupleString = tupleString.Replace("\n", "\n        ");
                     builder.AppendLine($"      {tupleString}");
                 }
-                else if (user.Parent is OperandIR operand) {
+                else if (user.Owner is OperandIR operand) {
                     string tupleString = operand.Parent.ToString();
                     tupleString = tupleString.Replace("\n", "\n        ");
                     builder.AppendLine($"      {tupleString}");
