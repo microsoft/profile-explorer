@@ -16,7 +16,6 @@ using System.Windows.Threading;
 using AvalonDock.Layout;
 using IRExplorerUI.DebugServer;
 using IRExplorerUI.Diff;
-using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
@@ -24,6 +23,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.GraphViz;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISessionManager {

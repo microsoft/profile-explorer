@@ -103,7 +103,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="0,1,0,0">
+    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" BorderThickness="0,1,0,0">
         <DockPanel LastChildFill="True" Style="{StaticResource BackgroundStyle}">
             <TextBlock
                 Margin="4,0,4,0"

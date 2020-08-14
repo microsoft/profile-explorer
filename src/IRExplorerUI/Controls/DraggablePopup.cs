@@ -5,11 +5,8 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Interop;
 
-namespace IRExplorerUI.Document {
+namespace IRExplorerUI.Controls {
     public class DraggablePopup : Popup {
-        [System.Runtime.InteropServices.DllImport("User32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr handle);
-
         private bool duringMinimize_;
         private bool isDetached_;
 
@@ -71,7 +68,7 @@ namespace IRExplorerUI.Document {
         public bool IsDetached => isDetached_;
 
         public void BringToFront() {
-            SetForegroundWindow(PopupHandle);
+            NativeMethods.SetForegroundWindow(PopupHandle);
         }
 
         public void Minimize() {

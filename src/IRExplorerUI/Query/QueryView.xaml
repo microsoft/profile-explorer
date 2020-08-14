@@ -47,10 +47,12 @@
                     ToolTip="{Binding View.Description}" />
             </Grid>
             <Button
+                x:Name="CloseButton"
                 Grid.Row="0"
                 Grid.Column="1"
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
+                Click="CloseButton_Click"
                 ToolTip="Close query panel">
                 <Image
                     Width="16"
@@ -89,7 +91,7 @@
 
                 <ItemsControl
                     x:Name="ButtonList"
-                    Padding="0,2,0,2"
+                    Padding="2,0,2,0"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     ItemTemplate="{StaticResource ButtonListTemplate}"
                     ItemsSource="{Binding Buttons}">

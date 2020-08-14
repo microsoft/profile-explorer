@@ -7,6 +7,7 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.Document {
     public class RemarkEx {

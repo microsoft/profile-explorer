@@ -11,6 +11,7 @@ using IRExplorerUI.Document;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerCmd {
     public class ConsoleCompilerInfoProvider : ICompilerInfoProvider {
@@ -188,6 +189,10 @@ namespace IRExplorerCmd {
         }
 
         public void UnregisterDetachedPanel(DraggablePopup panel) {
+            throw new NotImplementedException();
+        }
+
+        public void LoadDocumentQuery(ElementQueryDefinition query, IRDocument document) {
             throw new NotImplementedException();
         }
     }

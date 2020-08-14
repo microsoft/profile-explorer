@@ -584,6 +584,14 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="QueryIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H14 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F0 M14,16z M0,0z M11.5,8L8.8,5.4 6.6,8.5 5.5,1.6 2.38,8 0,8 0,10 3.6,10 4.5,8.2 5.4,13.6 9,8.5 10.6,10 14,10 14,8 11.5,8z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <DrawingImage x:Key="LogoImage">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">

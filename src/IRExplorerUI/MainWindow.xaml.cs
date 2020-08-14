@@ -21,7 +21,6 @@ using AvalonDock.Layout;
 using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerUI.DebugServer;
-using IRExplorerUI.Document;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerUI.Query;
 using IRExplorerCore;
@@ -37,6 +36,7 @@ using IRExplorerUI.Panels;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Compilers.UTC;
 using IRExplorerUI.Compilers.LLVM;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -748,18 +748,38 @@ namespace IRExplorerUI {
         }
 
         private void MenuItem_Click_7(object sender, RoutedEventArgs e) {
+            CreateQueryPanel();
+        }
+
+        private QueryPanel CreateQueryPanel() {
             var documentHost = Utils.FindChildLogical<LayoutDocumentPaneGroupControl>(this);
             var position = new Point();
 
             if (documentHost != null) {
-                var left = documentHost.ActualWidth - QueryPanelWindow.DefaultWidth - 32;
-                var top = documentHost.ActualHeight - QueryPanelWindow.DefaultHeight - 32;
+                var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
+                var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
                 position = documentHost.PointToScreen(new Point(left, top));
             }
 
-            var x = new QueryPanelWindow(position, QueryPanelWindow.DefaultWidth, QueryPanelWindow.DefaultHeight, documentHost, this);
-            x.IsOpen = true;
-            x.StaysOpen = true;
+            var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, this);
+            queryPanel.PopupClosed += QueryPanel_Closed;
+            queryPanel.IsOpen = true;
+            queryPanel.StaysOpen = true;
+            RegisterDetachedPanel(queryPanel);
+            return queryPanel;
+        }
+
+        private void QueryPanel_Closed(object sender, EventArgs e) {
+            var queryPanel = (QueryPanel)sender;
+            queryPanel.PopupClosed -= QueryPanel_Closed;
+            queryPanel.IsOpen = false;
+            UnregisterDetachedPanel(queryPanel);
+        }
+
+        public void LoadDocumentQuery(ElementQueryDefinition query, IRDocument document) {
+            //? TODO: Show the panel over the associated document
+            var queryPanel = CreateQueryPanel();
+            queryPanel.AddQuery(query);
         }
 
         private void SetOptionalStatus(string text, string tooltip = "") {
