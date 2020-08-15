@@ -108,7 +108,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -130,7 +130,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -152,7 +152,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=NodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -173,7 +173,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=NodeBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -194,7 +194,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=EdgeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -215,7 +215,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=UnaryInstructionNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -237,7 +237,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=BinaryInstructionNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -259,7 +259,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=CopyInstructionNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -281,7 +281,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=LoadStoreInstructionNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -304,7 +304,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=CallInstructionNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -327,7 +327,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=OperandNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -349,7 +349,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=NumberOperandNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -371,7 +371,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=IndirectionOperandNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -393,7 +393,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=AddressOperandNodeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -415,7 +415,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=LoopPhiBackedgeColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />

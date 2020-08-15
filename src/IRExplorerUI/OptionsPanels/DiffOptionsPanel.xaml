@@ -83,7 +83,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding InsertionColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -105,7 +105,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding InsertionBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -127,7 +127,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding DeletionColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -148,7 +148,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding DeletionBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -169,7 +169,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding ModificationColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -190,7 +190,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding ModificationBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -213,7 +213,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding MinorModificationColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -234,7 +234,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding MinorModificationBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -256,7 +256,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding PlaceholderBorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -299,6 +299,7 @@
                             HorizontalAlignment="Right"
                             Click="ExternalAppPathButton_Click"
                             Content="..."
+                            IsEnabled="{Binding ElementName=ExternalDiffRadioButton, Path=IsChecked}"
                             ToolTip="Browse to select the location of the Beyond Compare executable" />
                         <Button
                             Name="DefaultAppPathButton"
@@ -307,6 +308,7 @@
                             HorizontalAlignment="Right"
                             Click="DefaultAppPathButton_Click"
                             Content="Detect"
+                            IsEnabled="{Binding ElementName=ExternalDiffRadioButton, Path=IsChecked}"
                             ToolTip="Auto-detect the location of the Beyond Compare executable" />
                     </Grid>
                 </DockPanel>

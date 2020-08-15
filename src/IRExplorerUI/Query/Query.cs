@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Reflection;
 using System.Windows;
+using System.Windows.Media;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Query {
@@ -13,7 +15,8 @@ namespace IRExplorerUI.Query {
         String = 1 << 2,
         Element = 1 << 3,
         List = 1 << 7,
-        Input = 1 << 8
+        Color = 1 << 8,
+        Input = 1 << 16
     }
 
     // Needs a notification event so that the query is redone on change
@@ -72,11 +75,14 @@ namespace IRExplorerUI.Query {
             set => SetAndNotify(ref value_, value);
         }
 
+        public object Tag { get; set; }
+
         public bool IsBool => Kind.HasFlag(QueryValueKind.Bool);
         public bool IsNumber => Kind.HasFlag(QueryValueKind.Number);
         public bool IsString => Kind.HasFlag(QueryValueKind.Number);
         public bool IsElement => Kind.HasFlag(QueryValueKind.Element);
         public bool IsList => Kind.HasFlag(QueryValueKind.List);
+        public bool IsColor => Kind.HasFlag(QueryValueKind.Color);
         public bool IsInput => Kind.HasFlag(QueryValueKind.Input);
         public bool IsOutput => !Kind.HasFlag(QueryValueKind.Input);
 
@@ -87,6 +93,7 @@ namespace IRExplorerUI.Query {
                 QueryValueKind.Element => null,
                 QueryValueKind.Number => 0,
                 QueryValueKind.String => "",
+                QueryValueKind.Color => Colors.White,
                 _ => null
             };
         }
@@ -162,12 +169,12 @@ namespace IRExplorerUI.Query {
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler ValueChanged;
 
-        public int AddInput(QueryValue value) {
+        public QueryValue AddInput(QueryValue value) {
             value.Kind |= QueryValueKind.Input;
             value.PropertyChanged += InputValueChanged;
             InputValues.Add(value);
             OnPropertyChange(nameof(InputValues));
-            return value.Id;
+            return value;
         }
 
         private void InputValueChanged(object sender, PropertyChangedEventArgs e) {
@@ -195,8 +202,96 @@ namespace IRExplorerUI.Query {
             OnPropertyChange(nameof(Buttons));
         }
 
-        public int AddInput(string name, QueryValueKind kind, string description = null) {
+        public void AddInputs<T>(T inputObject) where T : class, new() {
+            // Use reflection to add the corresponding input value
+            // for each of the properties.
+            var inputType = typeof(TaskOptions);
+
+            foreach (var property in inputType.GetProperties()) {
+                if (!property.CanRead || !property.CanWrite) {
+                    continue;
+                }
+
+                // Extract name and description from attributes.
+                string name = "";
+                string description = "";
+                var attributes = property.GetCustomAttributes(true);
+
+                foreach (var attr in attributes) {
+                    if (attr is DisplayNameAttribute nameAttr) {
+                        name = nameAttr.DisplayName;
+                    }
+                    if (attr is DescriptionAttribute descrAttr) {
+                        description = descrAttr.Description;
+                    }
+                }
+
+                // Determine the value type.
+                var valueType = property.PropertyType;
+                var valueKind = QueryValueKind.Other;
+
+                switch (valueType) {
+                    case var _ when valueType == typeof(bool): {
+                            valueKind = QueryValueKind.Bool;
+                            break;
+                        }
+                    case var _ when valueType == typeof(int): {
+                            valueKind = QueryValueKind.Number;
+                            break;
+                        }
+                    case var _ when valueType == typeof(string): {
+                            valueKind = QueryValueKind.String;
+                            break;
+                        }
+                    case var _ when valueType == typeof(Color): {
+                            valueKind = QueryValueKind.Color;
+                            break;
+                        }
+
+                }
+
+                if (valueKind == QueryValueKind.Other) {
+                    continue;
+                }
+
+                // Use current property value.
+                var value = property.GetValue(inputObject);
+                var queryValue = AddInput(name, valueKind, value, description);
+                queryValue.Tag = property;
+            }
+        }
+
+        public T ExtractInputs<T>() where T : class, new() {
+            var options = new T();
+            var inputType = typeof(T);
+
+            foreach (var inputValue in InputValues) {
+                // Consider input values mapped to properties of T.
+                if (inputValue.Tag is PropertyInfo propertyTag &&
+                    inputType.GetProperty(propertyTag.Name) != null) {
+                    // For numbers, try to convert to int.
+                    if (inputValue.Kind == QueryValueKind.Number) {
+                        if (!int.TryParse(inputValue.Value as string, out int result)) {
+                            return null;
+                        }
+
+                        propertyTag.SetValue(options, result);
+                        continue;
+                    }
+
+                    propertyTag.SetValue(options, inputValue.Value);
+                }
+            }
+
+            return options;
+        }
+
+        public QueryValue AddInput(string name, QueryValueKind kind, string description = null) {
             return AddInput(new QueryValue(GetNextId(), name, QueryValue.GetDefaultValue(kind), kind, description));
+        }
+
+        public QueryValue AddInput(string name, QueryValueKind kind, object initialValue, string description = null) {
+            return AddInput(new QueryValue(GetNextId(), name, initialValue, kind, description));
         }
 
         public T GetInput<T>(string name) {

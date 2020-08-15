@@ -251,17 +251,6 @@
                                     Source="{StaticResource RemarkIcon}" />
                                 <TextBlock Text="Remarks" />
                             </StackPanel>
-
-                        </ToggleButton>
-                        <ToggleButton
-                            Width="20"
-                            Height="20"
-                            Margin="0,0,1,0"
-                            Padding="0,0,0,0"
-                            IsChecked="{Binding Path=ShowOnlyOptimizationRemarks, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                            IsEnabled="{Binding Path=ShowRemarks}"
-                            ToolTip="Show only optimization remarks">
-                            <Image Source="{StaticResource ZapIcon}" />
                         </ToggleButton>
                         <ToggleButton
                             Width="20"
