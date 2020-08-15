@@ -12,6 +12,7 @@ namespace IRExplorerUI.Compilers.UTC {
                                                    "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool);
+            query.Data.AddInput("Marking color", QueryValueKind.Color);
             query.Data.AddOutput("Value number", QueryValueKind.String);
             query.Data.AddOutput("Same value number", QueryValueKind.Number);
             return query;

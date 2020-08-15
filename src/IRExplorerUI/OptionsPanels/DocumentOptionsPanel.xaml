@@ -27,7 +27,7 @@
                     HorizontalAlignment="Left"
                     VerticalAlignment="Center"
                     AvailableColorsSortingMode="HueSaturationBrightness"
-                    BorderBrush="Gray"
+                    BorderBrush="#707070"
                     SelectedColor="{Binding Path=Value, Mode=TwoWay}"
                     ShowDropDownButton="True"
                     UsingAlphaChannel="False" />
@@ -107,7 +107,7 @@
                 Height="Auto"
                 Margin="0,4,0,4"
                 Padding="4,4,4,4"
-                BorderBrush="Gray"
+                BorderBrush="#707070"
                 BorderThickness="1,1,1,1"
                 Visibility="Collapsed">
                 <StackPanel Orientation="Vertical">
@@ -268,7 +268,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         IsManipulationEnabled="True"
                         SelectedColor="{Binding Path=BackgroundColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
@@ -291,7 +291,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=AlternateBackgroundColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -312,7 +312,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=TextColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -333,7 +333,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=BlockSeparatorColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -355,7 +355,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=MarginBackgroundColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -383,7 +383,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=SelectedValueColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -405,7 +405,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=DefinitionValueColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -426,7 +426,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=UseValueColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />
@@ -447,7 +447,7 @@
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
                         AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="Gray"
+                        BorderBrush="#707070"
                         SelectedColor="{Binding Path=BorderColor, Mode=TwoWay}"
                         ShowDropDownButton="True"
                         UsingAlphaChannel="False" />

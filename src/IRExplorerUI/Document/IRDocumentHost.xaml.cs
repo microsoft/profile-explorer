@@ -68,7 +68,6 @@ namespace IRExplorerUI {
                 if (!value.Equals(remarkSettings_)) {
                     NotifyPropertyChanged(nameof(ShowRemarks));
                     NotifyPropertyChanged(nameof(ShowPreviousSections));
-                    NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
                 }
 
                 remarkSettings_ = (RemarkSettings)value.Clone();
@@ -95,38 +94,6 @@ namespace IRExplorerUI {
                 if (value != remarkSettings_.ShowPreviousSections) {
                     remarkSettings_.ShowPreviousSections = value;
                     NotifyPropertyChanged(nameof(ShowPreviousSections));
-                }
-            }
-        }
-
-        public bool ShowOnlyOptimizationRemarks {
-            get {
-                return ShowRemarks &&
-                        remarkSettings_.Optimization &&
-                        !remarkSettings_.Analysis &&
-                        !remarkSettings_.Default &&
-                        !remarkSettings_.Verbose &&
-                        !remarkSettings_.Trace;
-            }
-            set {
-                if (value && !ShowOnlyOptimizationRemarks) {
-                    previousSettings_ = (RemarkSettings)remarkSettings_.Clone();
-                    remarkSettings_.Optimization = true;
-                    remarkSettings_.Analysis = false;
-                    remarkSettings_.Default = false;
-                    remarkSettings_.Verbose = false;
-                    remarkSettings_.Trace = false;
-                    NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
-                }
-                else {
-                    if (previousSettings_ != null && ShowOnlyOptimizationRemarks) {
-                        remarkSettings_.Optimization = previousSettings_.Optimization;
-                        remarkSettings_.Analysis = previousSettings_.Analysis;
-                        remarkSettings_.Default = previousSettings_.Default;
-                        remarkSettings_.Verbose = previousSettings_.Verbose;
-                        remarkSettings_.Trace = previousSettings_.Trace;
-                        NotifyPropertyChanged(nameof(ShowOnlyOptimizationRemarks));
-                    }
                 }
             }
         }
@@ -1254,7 +1221,7 @@ namespace IRExplorerUI {
 
             var actions = Session.CompilerInfo.BuiltinScripts;
 
-            foreach(var action in actions) {
+            foreach (var action in actions) {
                 var item = new MenuItem() {
                     Header = action.Name,
                     ToolTip = action.Description,
@@ -1270,16 +1237,60 @@ namespace IRExplorerUI {
 
         private async void ActionMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
             var menuItem = (MenuItem)sender;
-            var action = (DocumentActionDefinition)menuItem.Tag;
+            var task = (DocumentTaskDefinition)menuItem.Tag;
 
-            var instance = action.CreateInstance(Session);
-
-            if(instance != null) {
-                await instance.Execute(Function, TextView);
-            }
-            else {
+            if (!await ExecuteDocumentTask(task)) {
                 //? TODO: Error handling, message box
             }
+        }
+
+        class DummyQuery : IElementQuery {
+            public ISessionManager Session { get; }
+
+            public bool Initialize(ISessionManager session) {
+                return true;
+            }
+
+            public bool Execute(QueryData data) {
+                return true;
+            }
+        }
+
+        private async Task<bool> ExecuteDocumentTask(DocumentTaskDefinition task) {
+            var instance = task.CreateInstance(Session);
+
+            if (instance != null) {
+                var options = new TaskOptions() {
+                    One = true
+                };
+                var optionsData = task.CreateOptionsPanel(options);
+                var dummyQuery = new ElementQueryDefinition(typeof(DummyQuery), task.Name, task.Description);
+                dummyQuery.Data = optionsData;
+
+                optionsData.AddButton("Save", (sender, value) => {
+                    var options2 = task.ExtractOptions<TaskOptions>(optionsData);
+                    MessageBox.Show($"{options2.One}");
+                });
+
+                var documentHost = this;
+                var position = new Point();
+
+                if (documentHost != null) {
+                    var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
+                    var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
+                    position = documentHost.PointToScreen(new Point(left, top));
+                }
+
+                var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, Session);
+                queryPanel.AddQuery(dummyQuery);
+                queryPanel.IsOpen = true;
+                queryPanel.StaysOpen = true;
+
+                using var cancelableTask = new CancelableTask();
+                return await instance.Execute(Function, TextView, cancelableTask);
+            }
+
+            return false;
         }
     }
 }

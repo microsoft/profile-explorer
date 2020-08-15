@@ -49,8 +49,8 @@ namespace IRExplorerUI.Compilers.UTC {
             UTCBuiltinInterferenceQuery.GetDefinition()
         };
 
-        public List<DocumentActionDefinition> BuiltinScripts => new List<DocumentActionDefinition>() {
-            BuiltinDocumentAction.GetDefinition("Unused instructions", "Smth", MarkUnusedInstructions)
+        public List<DocumentTaskDefinition> BuiltinScripts => new List<DocumentTaskDefinition>() {
+            BuiltinDocumentTask.GetDefinition("Unused instructions", "Smth", MarkUnusedInstructions)
         };
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
@@ -76,16 +76,17 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         private bool IsUnusedInstruction(SSADefinitionTag ssaDefTag, HashSet<InstructionIR> unusedInstrs) {
-            if(ssaDefTag == null) {
+            if (ssaDefTag == null) {
                 return false;
             }
 
-            if(!ssaDefTag.HasUsers) {
-                return true;;
+            if (!ssaDefTag.HasUsers) {
+                return true;
+                ;
             }
 
-            foreach(var user in ssaDefTag.Users) {
-                if(!unusedInstrs.Contains(user.OwnerInstruction)) {
+            foreach (var user in ssaDefTag.Users) {
+                if (!unusedInstrs.Contains(user.OwnerInstruction)) {
                     return false;
                 }
             }
@@ -99,7 +100,7 @@ namespace IRExplorerUI.Compilers.UTC {
             var walker = new CFGBlockOrdering(function);
 
             walker.PostorderWalk((block, index) => {
-                foreach(var instr in block.InstructionsBack) {
+                foreach (var instr in block.InstructionsBack) {
                     if (IsUnusedInstruction(GetSSADefinitionTag(instr), unusedInstr)) {
                         document.Dispatcher.BeginInvoke((Action)(() => {
                             document.MarkElement(instr, Colors.Pink);

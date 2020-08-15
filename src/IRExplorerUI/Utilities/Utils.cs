@@ -251,11 +251,28 @@ namespace IRExplorerUI {
                 case BlockIR block:
                     return MakeBlockDescription(block);
                 case InstructionIR instr: {
-                    var builder = new StringBuilder();
-                    bool needsComma = false;
+                        var builder = new StringBuilder();
+                        bool needsComma = false;
 
-                    if (instr.Destinations.Count > 0) {
-                        foreach (var destOp in instr.Destinations) {
+                        if (instr.Destinations.Count > 0) {
+                            foreach (var destOp in instr.Destinations) {
+                                if (needsComma) {
+                                    builder.Append(", ");
+                                }
+                                else {
+                                    needsComma = true;
+                                }
+
+                                builder.Append(MakeElementDescription(destOp));
+                            }
+
+                            builder.Append(" = ");
+                        }
+
+                        builder.Append($"{instr.OpcodeText} ");
+                        needsComma = false;
+
+                        foreach (var sourceOp in instr.Sources) {
                             if (needsComma) {
                                 builder.Append(", ");
                             }
@@ -263,38 +280,42 @@ namespace IRExplorerUI {
                                 needsComma = true;
                             }
 
-                            builder.Append(MakeElementDescription(destOp));
+                            builder.Append(MakeElementDescription(sourceOp));
                         }
 
-                        builder.Append(" = ");
+                        return builder.ToString();
                     }
-
-                    builder.Append($"{instr.OpcodeText} ");
-                    needsComma = false;
-
-                    foreach (var sourceOp in instr.Sources) {
-                        if (needsComma) {
-                            builder.Append(", ");
-                        }
-                        else {
-                            needsComma = true;
-                        }
-
-                        builder.Append(MakeElementDescription(sourceOp));
-                    }
-
-                    return builder.ToString();
-                }
                 case OperandIR op: {
-                    string text = ReferenceFinder.GetSymbolName(op);
-                    var ssaTag = op.GetTag<ISSAValue>();
+                        string text = ReferenceFinder.GetSymbolName(op);
 
-                    if (ssaTag != null) {
-                        text += $"<{ssaTag.DefinitionId}>";
+                        switch (op.Kind) {
+                            case OperandKind.Address:
+                            case OperandKind.LabelAddress: {
+                                    text = $"&{text}";
+                                    break;
+                                }
+                            case OperandKind.Indirection: {
+                                    text = $"[{MakeElementDescription(op.IndirectionBaseValue)}]";
+                                    break;
+                                }
+                            case OperandKind.IntConstant: {
+                                    text = op.IntValue.ToString();
+                                    break;
+                                }
+                            case OperandKind.FloatConstant: {
+                                    text = op.FloatValue.ToString();
+                                    break;
+                                }
+                        }
+
+                        var ssaTag = op.GetTag<ISSAValue>();
+
+                        if (ssaTag != null) {
+                            text += $"<{ssaTag.DefinitionId}>";
+                        }
+
+                        return text;
                     }
-
-                    return text;
-                }
                 default:
                     return element.ToString();
             }
@@ -502,10 +523,10 @@ namespace IRExplorerUI {
                     info.Letter = '*';
                     break;
                 default: {
-                    info.IsLetter = false;
-                    info.Letter = '\x00';
-                    break;
-                }
+                        info.IsLetter = false;
+                        info.Letter = '\x00';
+                        break;
+                    }
             }
 
             return info;
