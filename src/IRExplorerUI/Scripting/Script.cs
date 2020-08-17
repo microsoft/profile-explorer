@@ -16,11 +16,8 @@ namespace IRExplorerUI.Scripting {
                         "using IRExplorerCore.Analysis;",
                         "using IRExplorerCore.UTC;", "using IRExplorerUI;",
                         "using IRExplorerUI.Scripting;",
-                        "\n",
                         "public class Script {",
-                        "    // s: provides script interaction with Compiler Studio (text output, marking, etc.)",
                         "    public bool Execute(ScriptSession s) {",
-                        "        // Write C#-based script here.",
                         "        return true;",
                         "    }",
                         "}");
@@ -49,7 +46,6 @@ namespace IRExplorerUI.Scripting {
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load script from file {filePath}: {ex.Message}");
                 return null;
-                ;
             }
         }
 

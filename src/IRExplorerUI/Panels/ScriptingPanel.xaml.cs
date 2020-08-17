@@ -6,26 +6,18 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
-using CSScriptLib;
 using ICSharpCode.AvalonEdit.CodeCompletion;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using IRExplorerCore.IR;
-using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
-using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.Recommendations;
-using Microsoft.CodeAnalysis.Text;
 
 namespace IRExplorerUI {
     public static class ScriptingCommand {
@@ -50,13 +42,15 @@ namespace IRExplorerUI {
         }
 
         public void PreselectItem(string text) {
-            CompletionList.IsFiltering = false;
+            CompletionList.IsFiltering = false; // Disable filtering to still show complete list.
             CompletionList.SelectItem(text);
             CompletionList.ScrollIntoView(CompletionList.SelectedItem);
         }
     }
 
     public partial class ScriptingPanel : ToolPanelControl {
+        private const int SyntaxErrorHighlightingDelay = 1;
+
         private static readonly string InitialScript =
             string.Join(Environment.NewLine,
                         "using System;",
@@ -68,12 +62,13 @@ namespace IRExplorerUI {
                         "using IRExplorerUI.Scripting;",
                         "\n",
                         "public class Script {",
-                        "    // s: provides script interaction with Compiler Studio (text output, marking, etc.)",
+                        "    // s: provides script interaction with IR Explorer (text output, marking, etc.)",
                         "    public bool Execute(ScriptSession s) {",
                         "        // Write C#-based script here.",
                         "        return true;",
                         "    }",
                         "}");
+
         private CompletionWindowEx completionWindow_;
         private int currentAutocompleteHash_;
         private ScriptAutoComplete autoComplete_;
@@ -92,7 +87,6 @@ namespace IRExplorerUI {
             TextView.MouseHover += TextView_MouseHover;
             TextView.MouseHoverStopped += TextView_MouseHoverStopped;
             TextView.TextArea.TextView.BackgroundRenderers.Add(errorHighlighter_);
-
         }
 
         private void TextView_MouseHoverStopped(object sender, MouseEventArgs e) {
@@ -108,15 +102,14 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var pos = TextView.TextArea.TextView.GetPositionFloor(e.GetPosition(TextView.TextArea.TextView) + TextView.TextArea.TextView.ScrollOffset);
-
-            if (!pos.HasValue) {
+            var position = TextView.TextArea.TextView.GetPositionFloor(e.GetPosition(TextView.TextArea.TextView) +
+                                                                       TextView.TextArea.TextView.ScrollOffset);
+            if (!position.HasValue) {
                 return;
             }
 
-            TextLocation logicalPosition = pos.Value.Location;
+            TextLocation logicalPosition = position.Value.Location;
             int offset = TextView.Document.GetOffset(logicalPosition);
-
 
             foreach (var error in errorDiagnostics_) {
                 if (offset >= error.Location.SourceSpan.Start &&
@@ -128,8 +121,10 @@ namespace IRExplorerUI {
                         Text = error.ToString(),
                         TextWrapping = TextWrapping.Wrap
                     };
+
                     errorTooltip_.IsOpen = true;
                     e.Handled = true;
+                    break;
                 }
             }
         }
@@ -142,6 +137,8 @@ namespace IRExplorerUI {
 
         private async void TextArea_KeyUp(object sender, KeyEventArgs e) {
             if (e.Key == Key.Back || e.Key == Key.Delete) {
+                ClearSyntaxErrorHighlighting();
+
                 e.Handled = true;
                 await HandleTextChange(TextView.Text, "");
             }
@@ -158,7 +155,7 @@ namespace IRExplorerUI {
             var results = await autoComplete_.GetSuggestionsAsync(text, position, changedText);
 
             if (results.Count == 0) {
-                HideCompletitionWindow();
+                HideAutocompleteBox();
             }
 
             // If it's the same list as before, keep  the current autocomplete box.
@@ -169,8 +166,12 @@ namespace IRExplorerUI {
             }
 
             currentAutocompleteHash_ = hash;
+            ShowAutocompleteBox(results, word);
+        }
 
-            // Create a new autocomplete box.
+        private void ShowAutocompleteBox(List<AutocompleteEntry> results, string word) {
+            // Reuse the existing auto-complete box if still visible, removes UI flickering
+            // that happens if a new box is always created to replace the old one.
             bool newWindow = false;
 
             if (completionWindow_ == null) {
@@ -225,10 +226,12 @@ namespace IRExplorerUI {
         }
 
         private async void TextArea_TextEntered(object sender, TextCompositionEventArgs e) {
+            ClearSyntaxErrorHighlighting();
+
             e.Handled = true;
             var text = TextView.Text;
             var changedText = e.Text;
-            await HandleTextChange(text, changedText);
+            await HandleTextChange(text, changedText).ConfigureAwait(false);
 
             if (changedText == ".") {
                 return;
@@ -243,16 +246,17 @@ namespace IRExplorerUI {
             var action = new DelayedAction();
             errorHighlightingAction_ = action;
 
-            action.Start(TimeSpan.FromSeconds(1), async () => {
+            action.Start(TimeSpan.FromSeconds(SyntaxErrorHighlightingDelay), async () => {
                 var errors = await autoComplete_.GetSourceErrorsAsync(text);
                 errorDiagnostics_ = errors;
 
                 Dispatcher.BeginInvoke((Action)(() => {
-                    errorHighlighter_.Clear();
+                    ClearSyntaxErrorHighlighting();
                     var group = new HighlightedGroup(new HighlightingStyle(Colors.Red, 0.1, Pens.GetPen(Colors.Red)));
 
                     foreach (var error in errors) {
                         if (error.Location.SourceSpan.Length > 0) {
+                            //? TODO: Have a highlighter that doesn't need making dummy IR elements...
                             var element = CreateDummyElement(error.Location.SourceSpan.Start, error.Location.SourceSpan.Length);
                             group.Add(element);
                         }
@@ -262,6 +266,11 @@ namespace IRExplorerUI {
                     TextView.TextArea.TextView.Redraw();
                 }));
             });
+        }
+
+        private void ClearSyntaxErrorHighlighting() {
+            errorHighlighter_.Clear();
+            TextView.TextArea.TextView.Redraw();
         }
 
         private IRElement CreateDummyElement(int offset, int length) {
@@ -280,7 +289,7 @@ namespace IRExplorerUI {
             return hash;
         }
 
-        private void HideCompletitionWindow() {
+        private void HideAutocompleteBox() {
             if (completionWindow_ != null) {
                 completionWindow_.Close();
                 completionWindow_ = null;
