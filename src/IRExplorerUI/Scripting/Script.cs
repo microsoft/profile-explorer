@@ -7,16 +7,35 @@ using CSScriptLib;
 
 namespace IRExplorerUI.Scripting {
     public class Script {
-        private static ManualResetEvent warmUpCompletedEvent_;
-
-        static Script() {
-            warmUpCompletedEvent_ = new ManualResetEvent(true);
-        }
+        private static readonly string WarmUpScript =
+            string.Join(Environment.NewLine,
+                        "using System;",
+                        "using System.Collections.Generic;",
+                        "using System.Windows.Media;",
+                        "using IRExplorerCore;", "using IRExplorerCore.IR;",
+                        "using IRExplorerCore.Analysis;",
+                        "using IRExplorerCore.UTC;", "using IRExplorerUI;",
+                        "using IRExplorerUI.Scripting;",
+                        "\n",
+                        "public class Script {",
+                        "    // s: provides script interaction with Compiler Studio (text output, marking, etc.)",
+                        "    public bool Execute(ScriptSession s) {",
+                        "        // Write C#-based script here.",
+                        "        return true;",
+                        "    }",
+                        "}");
+        private static object lockObject_;
+        private static long initialized_;
 
         public string Name { get; set; }
         public string Code { get; set; }
         public bool ScriptResult { get; set; }
         public Exception ScriptException { get; set; }
+
+        static Script() {
+            initialized_ = 0;
+            lockObject_ = new object();
+        }
 
         public Script(string code, string name = "") {
             Name = name;
@@ -27,22 +46,35 @@ namespace IRExplorerUI.Scripting {
             try {
                 return new Script(File.ReadAllText(filePath), name);
             }
-            catch(Exception ex) {
+            catch (Exception ex) {
                 Trace.TraceError($"Failed to load script from file {filePath}: {ex.Message}");
-                return null;;
+                return null;
+                ;
             }
         }
 
-        public static void WarmUp() {
-            warmUpCompletedEvent_.Reset();
+        public static bool WarmUp() {
+            if (Interlocked.Read(ref initialized_) != 0) {
+                return true;
+            }
 
-            //? TODO: Run dummy script to initialize engine
-            //? Needs to  use the Core.* and Client.* namespaces to load all dependencies
-            // Task.Run(() => );
-            warmUpCompletedEvent_.Set();
+            lock (lockObject_) {
+                if (Interlocked.Read(ref initialized_) != 0) {
+                    return true;
+                }
+
+                var script = new Script(WarmUpScript);
+                bool result = script.Execute(null, fromWarmUp: true);
+                Interlocked.Exchange(ref initialized_, 1);
+                return result;
+            }
         }
 
-        public virtual bool Execute(ScriptSession session) {
+        private bool Execute(ScriptSession session, bool fromWarmUp) {
+            if (!fromWarmUp && !WarmUp()) {
+                return false;
+            }
+
             try {
                 CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
                 dynamic script = CSScript.Evaluator.LoadCode(Code);
@@ -55,19 +87,21 @@ namespace IRExplorerUI.Scripting {
             }
         }
 
+        public bool Execute(ScriptSession session) {
+            return Execute(session, fromWarmUp: false);
+        }
+
         public Task<bool> ExecuteAsync(ScriptSession session) {
-            warmUpCompletedEvent_.WaitOne();
             return Task.Run(() => Execute(session));
         }
 
         public async Task<bool> ExecuteAsync(ScriptSession session, TimeSpan timeout) {
             var task = ExecuteAsync(session);
 
-            if (await Task.WhenAny(task, Task.Delay(timeout)) == task) {
-                return await task;
+            if (await Task.WhenAny(task, Task.Delay(timeout)).ConfigureAwait(false) == task) {
+                return await task.ConfigureAwait(false);
             }
 
-            //? TODO: Kill running script somehow
             session.Cancel();
             ScriptException = new TimeoutException("Script timed out");
             return false;
