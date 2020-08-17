@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -13,10 +12,8 @@ using ICSharpCode.AvalonEdit.Editing;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Completion;
 using Microsoft.CodeAnalysis.Host.Mef;
-using Microsoft.CodeAnalysis.Recommendations;
 using Microsoft.CodeAnalysis.Text;
 using System.Reflection;
-using System.Collections.Immutable;
 
 namespace IRExplorerUI.Scripting {
     public enum AutocompleteEntryKind {
@@ -29,7 +26,8 @@ namespace IRExplorerUI.Scripting {
     }
 
     public class AutocompleteEntry : ICompletionData {
-        public AutocompleteEntry(AutocompleteEntryKind kind, bool isPreferred, string text, CompletionItem completionItem) {
+        public AutocompleteEntry(AutocompleteEntryKind kind, bool isPreferred, string text,
+                                 CompletionItem completionItem) {
             Kind = kind;
             IsPreferred = isPreferred;
             Text = text;
@@ -120,7 +118,8 @@ namespace IRExplorerUI.Scripting {
             return diagnostics;
         }
 
-        public async Task<List<AutocompleteEntry>> GetSuggestionsAsync(string text, int position, string changedText = "") {
+        public async Task<List<AutocompleteEntry>>
+        GetSuggestionsAsync(string text, int position, string changedText = "") {
             var suggestionList = new List<AutocompleteEntry>();
 
             if (!IsAutocompleteTrigger(text, position - 1)) {
@@ -141,7 +140,8 @@ namespace IRExplorerUI.Scripting {
             var sourceText = SourceText.From(text);
             var document = roslynDocument_.WithText(sourceText);
             var completionService = CompletionService.GetService(document);
-            var results = await completionService.GetCompletionsAsync(document, position).ConfigureAwait(false);
+            var results = await completionService.
+                GetCompletionsAsync(document, position).ConfigureAwait(false);
 
             if (results == null) {
                 return suggestionList;
@@ -152,8 +152,8 @@ namespace IRExplorerUI.Scripting {
                 foreach (var item in results.Items) {
                     if (item.Tags.Contains("Public")) {
                         bool preselect = preselect = item.Rules.MatchPriority == MatchPriority.Preselect;
-                        suggestionList.Add(new AutocompleteEntry(AutocompleteEntryKind.Symbol, preselect,
-                                                                 item.DisplayText, item));
+                        suggestionList.Add(new AutocompleteEntry(AutocompleteEntryKind.Symbol,
+                                                                 preselect, item.DisplayText, item));
                     }
                 }
 
@@ -165,7 +165,8 @@ namespace IRExplorerUI.Scripting {
 
                 if (!IsValidWord(word) || word.Length < 2) {
                     // When using backspace, keep showing the autocomplete box for a single letter.
-                    if (!(word.Length == 1 && char.IsLetter(word[0]) && string.IsNullOrEmpty(changedText))) {
+                    if (!(word.Length == 1 && char.IsLetter(word[0]) &&
+                        string.IsNullOrEmpty(changedText))) {
                         return suggestionList;
                     }
                 }
@@ -180,10 +181,9 @@ namespace IRExplorerUI.Scripting {
                     string completionText = displayText;
 
                     if (displayText.IsValidCompletionFor(word)) {
-                        if (item.UseDisplayTextAsCompletionText()) {
-                            completionText = item.DisplayText;
-                        }
-                        else if (displayText.StartsWith(word, StringComparison.OrdinalIgnoreCase)) {
+                        if (!item.UseDisplayTextAsCompletionText() &&
+                             displayText.StartsWith(word, StringComparison.OrdinalIgnoreCase)) {
+                            // Check for complete and prefix match of the current word.
                             substringMatchItems++;
 
                             if (displayText == word) {
@@ -191,7 +191,8 @@ namespace IRExplorerUI.Scripting {
                             }
                         }
 
-                        suggestionList.Add(new AutocompleteEntry(AutocompleteEntryKind.Symbol, preselect, completionText, item));
+                        suggestionList.Add(new AutocompleteEntry(AutocompleteEntryKind.Symbol,
+                                                                 preselect, completionText, item));
                     }
                 }
 
@@ -199,11 +200,10 @@ namespace IRExplorerUI.Scripting {
                     return suggestionList;
                 }
 
-                // If there's an exact match and no other items starting with the word,
-                // return it as the only exact result.
+                // If there's an exact match and no other items having it as a prefix,
+                // don't return any suggestions.
                 if (exactMatchItem != null && substringMatchItems == 1) {
                     suggestionList.Clear();
-                    suggestionList.Add(new AutocompleteEntry(AutocompleteEntryKind.Symbol, true, word, exactMatchItem));
                     return suggestionList;
                 }
 
@@ -221,15 +221,18 @@ namespace IRExplorerUI.Scripting {
                 // IR Explorer API entries are placed  closer to the front.
                 sortedData = sortedData.OrderByDescending(c => c.IsPreferred).
                              ThenByDescending(c => c.Text.StartsWithExactCase(word)).
-                             ThenByDescending(c => c.DescriptionText.Contains("IRExplorer", StringComparison.Ordinal));
+                             ThenByDescending(c => c.DescriptionText.Contains("IRExplorer",
+                                                                              StringComparison.Ordinal));
                 return sortedData.ToList();
             }
         }
 
-        private async Task AddDescription(IEnumerable<AutocompleteEntry> sortedData, CompletionService completionService,
+        private async Task AddDescription(IEnumerable<AutocompleteEntry> sortedData,
+                                          CompletionService completionService,
                                           Microsoft.CodeAnalysis.Document document) {
             foreach (var item in sortedData) {
-                var description = await completionService.GetDescriptionAsync(document, item.CompletionItem).ConfigureAwait(false);
+                var description = await completionService.
+                    GetDescriptionAsync(document, item.CompletionItem).ConfigureAwait(false);
                 var descriptionText = description != null ? description.Text : "";
                 item.Description = descriptionText;
                 item.DescriptionText = descriptionText;
@@ -264,6 +267,8 @@ namespace IRExplorerUI.Scripting {
             }
 
             try {
+                // Load the binaries currently referenced by IR Explorer,
+                // this will include the entire API and all .NET Core libraries.
                 var host = MefHostServices.Create(MefHostServices.DefaultAssemblies);
                 var workspace = new AdhocWorkspace(host);
                 var assemblyRefs = new List<PortableExecutableReference>();
@@ -273,7 +278,7 @@ namespace IRExplorerUI.Scripting {
                         assemblyRefs.Add(MetadataReference.CreateFromFile(assembly.Location));
                     }
                     catch (Exception ex) {
-                        // Dynamic assemblies don't have a valid location.
+                        // Dynamic assemblies don't have a valid location, ignore.
                         if (!assembly.IsDynamic) {
                             Trace.TraceWarning($"Failed to setup scripting auto-complete for assembly {assembly.Location}: {ex.Message}");
                         }
@@ -352,13 +357,14 @@ namespace IRExplorerUI.Scripting {
         }
     }
 
-    public static class StringExtensions {
+    static class StringExtensions {
         private const string NamedParameterCompletionProvider = "Microsoft.CodeAnalysis.CSharp.Completion.Providers.NamedParameterCompletionProvider";
         private const string OverrideCompletionProvider = "Microsoft.CodeAnalysis.CSharp.Completion.Providers.OverrideCompletionProvider";
         private static readonly PropertyInfo getProviderName_;
 
         static StringExtensions() {
-            getProviderName_ = typeof(CompletionItem).GetProperty("ProviderName", BindingFlags.NonPublic | BindingFlags.Instance);
+            getProviderName_ = typeof(CompletionItem).GetProperty("ProviderName", BindingFlags.NonPublic |
+                                                                                  BindingFlags.Instance);
         }
 
         public static bool UseDisplayTextAsCompletionText(this CompletionItem completionItem) {
@@ -379,15 +385,17 @@ namespace IRExplorerUI.Scripting {
         }
 
         public static bool IsCamelCaseMatch(this string completion, string partial) {
-            return new string(completion.Where(c => c >= 'A' && c <= 'Z').ToArray()).StartsWith(partial, StringComparison.OrdinalIgnoreCase);
+            return new string(completion.Where(c => c >= 'A' && c <= 'Z').ToArray()).
+                              StartsWith(partial, StringComparison.OrdinalIgnoreCase);
         }
 
         public static bool IsSubsequenceMatch(this string completion, string partial) {
-            if (partial == string.Empty) {
+            if (string.IsNullOrEmpty(partial)) {
                 return true;
             }
 
-            if (partial.Length > 1 && completion.IndexOf(partial, StringComparison.InvariantCultureIgnoreCase) >= 0) {
+            if (partial.Length > 1 &&
+                completion.IndexOf(partial, StringComparison.InvariantCultureIgnoreCase) >= 0) {
                 return true;
             }
 
@@ -411,7 +419,7 @@ namespace IRExplorerUI.Scripting {
             int length1 = source.Length;
             int length2 = target.Length;
 
-            // Return trivial case - difference in string lengths exceeds threshhold
+            // Return trivial case - difference in string lengths exceeds threshold.
             if (Math.Abs(length1 - length2) > threshold) { return int.MaxValue; }
 
             // Ensure arrays [i] / length1 use shorter length 
