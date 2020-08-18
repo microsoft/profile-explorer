@@ -73,8 +73,8 @@ namespace IRExplorerUI {
                 }
             }
 
-            var blockNodeMap = printer.CreateBlockNodeMap();
-            var blockNodeGroupsMap = printer.CreateBlockNodeGroupsMap();
+            var blockNodeMap = printer.CreateNodeDataMap();
+            var blockNodeGroupsMap = printer.CreateNodeDataGroupsMap();
             var graphReader = new GraphvizReader(graphKind_, graphText, blockNodeMap);
             var layoutGraph = graphReader.ReadGraph();
 

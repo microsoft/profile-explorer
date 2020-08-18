@@ -39,20 +39,29 @@ namespace IRExplorerCore.Analysis {
         }
     }
 
+    public enum CallGraphNodeKind {
+        Internal,
+        External
+    }
+
     public class CallGraphNode : TaggedObject {
         public string FunctionName { get; set; }
         public int Number { get;set; }
+        public CallGraphNodeKind Kind { get; set; }
         public List<CallSite> Callers { get; set; }
         public List<CallSite> Callees { get; set; }
 
-        public CallGraphNode(string funcName, int number) {
+        public CallGraphNode(string funcName, int number, CallGraphNodeKind kind) {
             FunctionName = funcName;
             Number = number;
+            Kind = kind;
         }
 
         public bool HasCallers => Callers != null && Callers.Count > 0;
         public bool HasCallees => Callees != null && Callees.Count > 0;
         public bool IsLeafFunction => !HasCallees;
+        public bool IsInternal => Kind == CallGraphNodeKind.Internal;
+        public bool IsExternal => Kind == CallGraphNodeKind.External;
 
         public void AddCallee(CallSite callsite) {
             Callees ??= new List<CallSite>();
@@ -216,7 +225,8 @@ namespace IRExplorerCore.Analysis {
                     return externalNode;
                 }
 
-                externalNode = new CallGraphNode(funcName, GetNextCallNodeId());
+                externalNode = new CallGraphNode(funcName, GetNextCallNodeId(),
+                                                 CallGraphNodeKind.External);
                 externalFuncToNodeMap_[funcName] = externalNode;
                 nodes_.Add(externalNode);
                 return externalNode;
@@ -226,7 +236,8 @@ namespace IRExplorerCore.Analysis {
                 return node;
             }
 
-            node = new CallGraphNode(funcName, GetNextCallNodeId());
+            node = new CallGraphNode(funcName, GetNextCallNodeId(),
+                                     CallGraphNodeKind.Internal);
             funcToNodeMap_[func] = node;
             nodes_.Add(node);
             return node;

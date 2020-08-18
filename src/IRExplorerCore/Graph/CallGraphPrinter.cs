@@ -18,11 +18,11 @@ nslimit=2;
         ";
 
         private CallGraph callGraph_;
-        private Dictionary<CallGraphNode, uint> nodeToId_;
+        private Dictionary<string, object> nodeNameMap_;
 
         public CallGraphPrinter(CallGraph callGraph) {
             callGraph_ = callGraph;
-            nodeToId_ = new Dictionary<CallGraphNode, uint>();
+            nodeNameMap_ = new Dictionary<string, object>();
         }
 
         private int EstimateEdgeCount() {
@@ -70,21 +70,42 @@ nslimit=2;
         }
 
         private void CreateNode(CallGraphNode node, StringBuilder builder) {
-            double verticalMargin = 0.055;
+            //? TODO: Control through options
+            double verticalMargin = 0.075;
             string label = node.FunctionName;
 
             if(label.Length > 20) {
                 label = $"{label.Substring(0, 18)}...";
             }
 
+            // Increase node weight so that text fits completely.
             double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.04), 1.0);
 
-            CreateNodeWithMargins((ulong)node.Number, label, builder,
-                                   horizontalMargin, verticalMargin);
+            var nodeName = CreateNodeWithMargins((ulong)node.Number, label, builder,
+                                                 horizontalMargin, verticalMargin);
+            nodeNameMap_[nodeName] = node;
         }
 
         private void CreateEdge(CallGraphNode node1, CallGraphNode node2, StringBuilder builder) {
-            base.CreateEdge((ulong)node1.Number, (ulong)node2.Number, builder);
+            CreateEdge((ulong)node1.Number, (ulong)node2.Number, builder);
+        }
+
+        public override Dictionary<string, object> CreateNodeDataMap() {
+            if (nodeNameMap_.Count > 0) {
+                return nodeNameMap_;
+            }
+
+            var map = new Dictionary<string, object>();
+
+            foreach (var node in callGraph_.FunctionNodes) {
+                map[GetNodeName((ulong)node.Number)] = node;
+            }
+
+            return map;
+        }
+
+        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
+            return null;
         }
     }
 }

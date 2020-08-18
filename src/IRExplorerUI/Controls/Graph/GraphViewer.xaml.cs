@@ -121,7 +121,7 @@ namespace IRExplorerUI {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                SelectElement(graphNode.NodeInfo.Element);
+                SelectElement(graphNode.NodeInfo.ElementData);
             }
 
             e.Handled = graphNode != null;
@@ -191,15 +191,15 @@ namespace IRExplorerUI {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                if (graphNode.NodeInfo.Element == null) {
+                if (graphNode.NodeInfo.ElementData == null) {
                     return;
                 }
 
-                SelectElement(graphNode.NodeInfo.Element);
+                SelectElement(graphNode.NodeInfo.ElementData);
                 e.Handled = true;
 
                 BlockSelected?.Invoke(this, new IRElementEventArgs {
-                    Element = graphNode.NodeInfo.Element
+                    Element = graphNode.NodeInfo.ElementData
                 });
             }
         }
@@ -258,7 +258,7 @@ namespace IRExplorerUI {
             HighlightNode(node, style, HighlighingType.Marked);
 
             BlockMarked?.Invoke(this, new IRElementMarkedEventArgs {
-                Element = node.NodeInfo.Element,
+                Element = node.NodeInfo.ElementData,
                 Style = style
             });
         }
@@ -286,7 +286,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var block = (BlockIR)node.NodeInfo.Element;
+            var block = (BlockIR)node.NodeInfo.ElementData;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominatorAlgorithm = await getDominators(cache).ConfigureAwait(true);
 
@@ -300,7 +300,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var block = (BlockIR)node.NodeInfo.Element;
+            var block = (BlockIR)node.NodeInfo.ElementData;
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominanceFrontierAlgorithm = await getDominanceFrontier(cache).ConfigureAwait(true);
 
@@ -310,7 +310,7 @@ namespace IRExplorerUI {
         }
 
         public void MarkNodeLoop(GraphNode node, HighlightingStyle style) {
-            var loopTag = node?.NodeInfo.Element.GetTag<LoopBlockTag>();
+            var loopTag = node?.NodeInfo.ElementData.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -322,7 +322,7 @@ namespace IRExplorerUI {
         }
 
         public void MarkNodeLoopNest(GraphNode node, HighlightingStyle style) {
-            var loopTag = node?.NodeInfo.Element.GetTag<LoopBlockTag>();
+            var loopTag = node?.NodeInfo.ElementData.GetTag<LoopBlockTag>();
 
             if (loopTag == null) {
                 return;
@@ -510,7 +510,7 @@ namespace IRExplorerUI {
                 RestoreNodeStyle(node);
 
                 BlockUnmarked?.Invoke(this, new IRElementMarkedEventArgs {
-                    Element = node.NodeInfo.Element
+                    Element = node.NodeInfo.ElementData
                 });
             }
         }
@@ -519,7 +519,7 @@ namespace IRExplorerUI {
             if (BlockUnmarked != null) {
                 foreach (var node in markedNodes_.Keys) {
                     BlockUnmarked(this, new IRElementMarkedEventArgs {
-                        Element = node.NodeInfo.Element
+                        Element = node.NodeInfo.ElementData
                     });
                 }
             }

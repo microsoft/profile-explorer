@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.GraphViz;
 
 namespace IRExplorerUI {
@@ -11,10 +12,12 @@ namespace IRExplorerUI {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
 
-        private HighlightingStyle branchBlockStyle_;
         private Pen branchEdgeStyle_;
         private Brush defaultNodeBackground_;
         private HighlightingStyle defaultNodeStyle_;
+        private HighlightingStyle leafNodeStyle_;
+        private HighlightingStyle entryNodeStyle_;
+        private HighlightingStyle externalNodeStyle_;
         private Brush defaultTextColor_;
         private Pen edgeStyle_;
 
@@ -22,8 +25,13 @@ namespace IRExplorerUI {
             defaultTextColor_ = ColorBrushes.GetBrush(Colors.Black);
             defaultNodeBackground_ = ColorBrushes.GetBrush(Colors.Gainsboro);
             defaultNodeStyle_ = new HighlightingStyle(defaultNodeBackground_,
-                                                      Pens.GetPen(Colors.Gray,
-                                                                  DefaultEdgeThickness));
+                                                      Pens.GetPen(Colors.DimGray, DefaultEdgeThickness));
+            leafNodeStyle_ = new HighlightingStyle(ColorBrushes.GetBrush(Colors.LightBlue),
+                                                      Pens.GetPen(Colors.DimGray, DefaultEdgeThickness));
+            entryNodeStyle_ = new HighlightingStyle(ColorBrushes.GetBrush(Colors.LightGreen),
+                                                      Pens.GetPen(Colors.DimGray, BoldEdgeThickness));
+            externalNodeStyle_ = new HighlightingStyle(ColorBrushes.GetBrush(Colors.Moccasin),
+                                                      Pens.GetPen(Colors.DimGray, DefaultEdgeThickness));
             edgeStyle_ = Pens.GetPen(Colors.DarkBlue, DefaultEdgeThickness);
         }
 
@@ -48,6 +56,18 @@ namespace IRExplorerUI {
         }
 
         public HighlightingStyle GetNodeStyle(Node node) {
+            var callNode = (CallGraphNode)node.Data;
+
+            if(callNode.IsExternal) {
+                return externalNodeStyle_;
+            }
+            else if(!callNode.HasCallers) {
+                return entryNodeStyle_;
+            }
+            else if(!callNode.HasCallees) {
+                return leafNodeStyle_;
+            }
+            
             return defaultNodeStyle_;
         }
 
