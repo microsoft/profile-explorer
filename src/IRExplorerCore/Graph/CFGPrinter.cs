@@ -21,13 +21,12 @@ nslimit=2;
         ";
 
         private FunctionIR function_;
+        private Dictionary<string, object> blockNameMap_;
 
         public CFGPrinter(FunctionIR function) {
             function_ = function;
-            BlockNameMap = new Dictionary<string, object>();
+            blockNameMap_ = new Dictionary<string, object>();
         }
-
-        public Dictionary<string, object> BlockNameMap { get; set; }
 
         protected override string GetExtraSettings() {
             int count = function_.Blocks.Count;
@@ -40,19 +39,17 @@ nslimit=2;
         }
 
         private void CreateNode(BlockIR block, StringBuilder builder) {
-            string blockName =
-                base.CreateNode(block.Id, block.Number.ToString(), builder, "B");
-
-            BlockNameMap[blockName] = block;
+            string blockName = CreateNode(block.Id, block.Number.ToString(), builder, "B");
+            blockNameMap_[blockName] = block;
         }
 
         private void CreateEdge(BlockIR block1, BlockIR block2, StringBuilder builder) {
-            base.CreateEdge(block1.Id, block2.Id, builder);
+            CreateEdge(block1.Id, block2.Id, builder);
         }
 
         private void CreateEdgeWithStyle(BlockIR block1, BlockIR block2,
                                          StringBuilder builder) {
-            base.CreateEdgeWithStyle(block1.Id, block2.Id, "dotted", builder);
+            CreateEdgeWithStyle(block1.Id, block2.Id, "dotted", builder);
         }
 
         protected override void PrintGraph(StringBuilder builder) {
@@ -97,9 +94,9 @@ nslimit=2;
             return builder.ToString();
         }
 
-        public override Dictionary<string, object> CreateBlockNodeMap() {
-            if (BlockNameMap.Count > 0) {
-                return BlockNameMap;
+        public override Dictionary<string, object> CreateNodeDataMap() {
+            if (blockNameMap_.Count > 0) {
+                return blockNameMap_;
             }
 
             var map = new Dictionary<string, object>();
@@ -111,7 +108,7 @@ nslimit=2;
             return map;
         }
 
-        public override Dictionary<object, List<object>> CreateBlockNodeGroupsMap() {
+        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
             return null;
         }
     }

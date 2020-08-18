@@ -664,7 +664,15 @@ namespace IRExplorerUI {
             //throw new InvalidOperationException("Crash Handler test assert");
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
             var cg = new CallGraph(MainDocumentSummary, loadedDoc.Loader, CompilerInfo.IR);
-            cg.Execute("Tuples after Reader (-db7 == DB_INITIAL)");
+
+
+            var active = FindActiveDocumentView(); ;
+            if (active != null) {
+                cg.Execute(active.Section.ParentFunction, "Tuples after Reader (-db7 == DB_INITIAL)");
+            }
+            else {
+                cg.Execute("Tuples after Reader (-db7 == DB_INITIAL)");
+            } 
 
             var printer = new CallGraphPrinter(cg);
             var result = printer.PrintGraph();
@@ -679,7 +687,7 @@ namespace IRExplorerUI {
             window.Width = 1000;
             window.Height = 900;
 
-            var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, new Dictionary<string, object>());
+            var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, printer.CreateNodeDataMap());
             var layoutGraph = graphReader.ReadGraph();
             panel.DisplayGraph(layoutGraph);
             window.Show();

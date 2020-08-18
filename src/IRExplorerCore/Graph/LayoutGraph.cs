@@ -22,7 +22,8 @@ namespace IRExplorerCore.GraphViz {
         public double Height { get; set; }
 
         public object Data { get; set; }
-        public IRElement Element => (IRElement)Data;
+        public bool DataIsElement => Data is IRElement;
+        public IRElement ElementData => Data as IRElement;
         public List<Edge> InEdges { get; set; }
         public List<Edge> OutEdges { get; set; }
         public object Tag { get; set; }

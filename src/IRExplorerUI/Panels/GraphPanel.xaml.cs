@@ -529,7 +529,7 @@ namespace IRExplorerUI {
 
             var node = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
-            if (node?.NodeInfo.Element != null) {
+            if (node?.NodeInfo.ElementData != null) {
                 ShowTooltipForNode(node);
                 hoveredNode_ = node;
             }
@@ -589,7 +589,7 @@ namespace IRExplorerUI {
 
         private void SelectQueryBlock1Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                if (hoveredNode_.NodeInfo.Element is BlockIR block) {
+                if (hoveredNode_.NodeInfo.ElementData is BlockIR block) {
                     SetQueryBlock1(block);
                 }
             }
@@ -597,7 +597,7 @@ namespace IRExplorerUI {
 
         private void SelectQueryBlock2Executed(object sender, ExecutedRoutedEventArgs e) {
             if (hoveredNode_ != null) {
-                if (hoveredNode_.NodeInfo.Element is BlockIR block) {
+                if (hoveredNode_.NodeInfo.ElementData is BlockIR block) {
                     SetQueryBlock2(block);
                 }
             }
@@ -634,7 +634,7 @@ namespace IRExplorerUI {
             var previewer = Utils.FindChild<IRPreview>(nodeToolTip_, "IRPreviewer");
             previewer.InitializeFromDocument(document_);
 
-            if (node.NodeInfo.Element is BlockIR block) {
+            if (node.NodeInfo.ElementData is BlockIR block) {
                 previewer.PreviewedElement = block;
                 nodeToolTip_.DataContext = new BlockTooltipInfo(block);
 
@@ -644,7 +644,7 @@ namespace IRExplorerUI {
                 previewer.UpdateView(false);
             }
             else {
-                var element = node.NodeInfo.Element;
+                var element = node.NodeInfo.ElementData;
                 previewer.PreviewedElement = element;
                 nodeToolTip_.DataContext = new IRPreviewToolTip(600, 100, document_, element);
                 int lines = Math.Max(1, Math.Min(element.ParentBlock.Tuples.Count + 1, 20));
