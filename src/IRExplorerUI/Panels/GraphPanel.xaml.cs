@@ -61,7 +61,7 @@ namespace IRExplorerUI {
     public partial class GraphPanel : ToolPanelControl {
         private static readonly double FastPanOffset = 80;
         private static readonly double FastZoomFactor = 4;
-        private static readonly double MaxZoomLevel = 1.0;
+        private static readonly double MaxZoomLevel = 2.0;
         private static readonly double MinZoomLevel = 0.05;
         private static readonly double PanOffset = 20;
         private static readonly double ZoomAdjustment = 0.05;

@@ -51,6 +51,14 @@ namespace IRExplorerCore.UTC {
             return instr.OpcodeIs(UTCOpcode.OPCALL);
         }
 
+        public OperandIR GetCallTarget(InstructionIR instr) {
+            if(!instr.OpcodeIs(UTCOpcode.OPCALL)) {
+                return null;
+            }
+
+            return instr.Sources.Count > 0 ? instr.Sources[0] : null;
+        }
+
         public bool IsIntrinsicCallInstruction(InstructionIR instr) {
             return instr.OpcodeIs(UTCOpcode.OPINTRINSIC);
         }

@@ -37,10 +37,10 @@ namespace IRExplorerUI {
     }
 
     public class SectionTextSearcher {
-        private SectionLoader sectionLoader_;
+        private IRTextSectionLoader sectionLoader_;
         private SectionTextSearcherOptions options_;
 
-        public SectionTextSearcher(SectionLoader sectionLoader, SectionTextSearcherOptions options = null) {
+        public SectionTextSearcher(IRTextSectionLoader sectionLoader, SectionTextSearcherOptions options = null) {
             sectionLoader_ = sectionLoader;
 
             if (options != null) {

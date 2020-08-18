@@ -8,7 +8,8 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerCore.GraphViz {
     public sealed class Node {
-        //public ReadOnlyMemory<char> Name { get; set; }
+        //? Commented properties are currently not used.
+        public ReadOnlyMemory<char> Name { get; set; }
         //public ReadOnlyMemory<char> Label { get; set; }
         public string Label { get; set; }
         //public ReadOnlyMemory<char> Style { get; set; }

@@ -9,16 +9,12 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerCore.GraphViz {
     public sealed class CFGPrinter : GraphVizPrinter {
-        private const string LargeGraphSettings = @"
-splines=polyline;
-maxiter=8;
-        ";
-
         private const int LargeGraphThresholdMin = 500;
         private const int LargeGraphThresholdMax = 1000;
-
+        private const string LargeGraphSettings = @"
+maxiter=8;
+        ";
         private static readonly string HugeGraphSettings = @"
-splines=polyline;
 maxiter=4;
 mclimit=2;
 nslimit=2;

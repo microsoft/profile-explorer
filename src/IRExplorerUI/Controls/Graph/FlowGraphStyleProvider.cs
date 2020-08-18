@@ -12,6 +12,7 @@ namespace IRExplorerUI {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
         private const double DashedEdgeThickness = 0.035;
+
         private HighlightingStyle branchBlockStyle_;
         private Pen branchEdgeStyle_;
         private Brush defaultNodeBackground_;

@@ -38,7 +38,7 @@ namespace IRExplorerUI {
         }
 
         public string FilePath { get; set; }
-        public SectionLoader Loader { get; set; }
+        public IRTextSectionLoader Loader { get; set; }
         public IRTextSummary Summary { get; set; }
         public bool IsDebugDocument { get; set; }
 

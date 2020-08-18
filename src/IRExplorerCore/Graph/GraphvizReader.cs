@@ -17,7 +17,9 @@ namespace IRExplorerCore.GraphViz {
                 {"edge", Keyword.Edge},
                 {"stop", Keyword.Stop}
             };
-        private Dictionary<string, IRElement> blockNameMap_;
+
+        private Dictionary<string, Node> nodeMap_;
+        private Dictionary<string, IRElement> elementNameMap_;
         private Token current_;
         private LayoutGraph graph_;
 
@@ -26,10 +28,12 @@ namespace IRExplorerCore.GraphViz {
         private string sourceText_;
 
         public GraphvizReader(GraphKind kind, string text,
-                              Dictionary<string, IRElement> blockNameMap) {
+                              Dictionary<string, IRElement> elementNameMap) {
             graphKind_ = kind;
-            blockNameMap_ = blockNameMap;
+            elementNameMap_ = elementNameMap;
             sourceText_ = text;
+
+            nodeMap_ = new Dictionary<string, Node>();
             lexer_ = new Lexer.Lexer(text);
             current_ = lexer_.NextToken();
         }
@@ -109,8 +113,8 @@ namespace IRExplorerCore.GraphViz {
                 return true;
             }
 
-            // The Graphviz output doesn't seem to quite integers at least,
-            // which also includes negative values.
+            // The Graphviz output doesn't seem to quote integers,
+            // which also include negative values.
             if (IsToken(TokenKind.Minus)) {
                 SkipToken();
             }
@@ -230,7 +234,7 @@ namespace IRExplorerCore.GraphViz {
             }
 
             //? TODO: These commented-out values are currently not used anywhere.
-            //node.Name = name;
+            node.Name = name;
             node.CenterX = x;
             node.CenterY = y;
             node.Width = width;
@@ -251,8 +255,10 @@ namespace IRExplorerCore.GraphViz {
             //node.BorderColor = borderColor;
             //node.BackgroundColor = backgroundColor;
 
+            nodeMap_[name.ToString()] = node;
+
             // Associate with IR objects.
-            if (blockNameMap_.TryGetValue(name.ToString(), out var block)) {
+            if (elementNameMap_.TryGetValue(name.ToString(), out var block)) {
                 node.Element = block;
                 graph_.ElementNodeMap.Add(block, node);
             }
@@ -310,26 +316,38 @@ namespace IRExplorerCore.GraphViz {
             edge.Color = color;
 
             // Associate with IR objects.
-            if (blockNameMap_.TryGetValue(fromNode.ToString(), out var fromBlock)) {
+            if (elementNameMap_.TryGetValue(fromNode.ToString(), out var fromBlock)) {
                 var node = graph_.ElementNodeMap[fromBlock];
                 edge.NodeFrom = node;
                 node.OutEdges ??= new List<Edge>();
                 node.OutEdges.Add(edge);
             }
             else {
-                //Debug.Assert(false, "Could not find from block");
-                Debug.WriteLine("Failed 6");
+                if (nodeMap_.TryGetValue(fromNode.ToString(), out var node)) {
+                    edge.NodeFrom = node;
+                    node.OutEdges ??= new List<Edge>();
+                    node.OutEdges.Add(edge);
+                }
+                else {
+                    Debug.WriteLine("Failed 6");
+                }
             }
 
-            if (blockNameMap_.TryGetValue(toNode.ToString(), out var toBlock)) {
+            if (elementNameMap_.TryGetValue(toNode.ToString(), out var toBlock)) {
                 var node = graph_.ElementNodeMap[toBlock];
                 edge.NodeTo = node;
                 node.InEdges ??= new List<Edge>();
                 node.InEdges.Add(edge);
             }
             else {
-                //Debug.Assert(false, "Could not find to block");
-                Debug.WriteLine("Failed 7");
+                if (nodeMap_.TryGetValue(toNode.ToString(), out var node)) {
+                    edge.NodeTo = node;
+                    node.InEdges ??= new List<Edge>();
+                    node.InEdges.Add(edge);
+                }
+                else {
+                    Debug.WriteLine("Failed 6");
+                }
             }
 
             return edge;

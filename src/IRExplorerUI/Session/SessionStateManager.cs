@@ -250,7 +250,7 @@ namespace IRExplorerUI {
             return docInfo.LoadSectionState(section);
         }
 
-        public Task<byte[]> SerializeSession(SectionLoader docLoader) {
+        public Task<byte[]> SerializeSession(IRTextSectionLoader docLoader) {
             var state = new SessionState();
             state.Info = Info;
 

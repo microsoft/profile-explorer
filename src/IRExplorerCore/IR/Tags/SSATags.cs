@@ -24,14 +24,13 @@ namespace IRExplorerCore.IR {
         public int DefinitionId { get; set; }
 
         public OperandIR DefinitionOperand => Definition?.Owner as OperandIR;
-        public TupleIR DefinitionTuple => Definition?.Owner.ParentTuple;
-
-        public InstructionIR DefinitionInstruction =>
-            Definition?.Owner.ParentTuple as InstructionIR;
+        public TupleIR DefinitionTuple => DefinitionOperand.ParentTuple;
+        public InstructionIR DefinitionInstruction => DefinitionTuple as InstructionIR;
 
         public string Name => "SSA use-definition link";
-        public IRElement Owner { get; set; } // Source operand.
-        public InstructionIR OwnerInstruction => Owner.ParentInstruction;
+        public TaggedObject Owner { get; set; } // Source operand.
+        public IRElement OwnerElement => (IRElement)Owner;
+        public InstructionIR OwnerInstruction => OwnerElement.ParentInstruction;
 
         public override bool Equals(object obj) {
             return obj is SSAUseTag tag && DefinitionId == tag.DefinitionId;
@@ -58,10 +57,11 @@ namespace IRExplorerCore.IR {
         public bool HasSingleUser => Users.Count == 1;
         public int DefinitionId { get; set; }
         public OperandIR DefinitionOperand => Owner as OperandIR;
-        public TupleIR DefinitionTuple => Owner.ParentTuple;
-        public InstructionIR DefinitionInstruction => Owner.ParentTuple as InstructionIR;
+        public TupleIR DefinitionTuple => ((IRElement)Owner).ParentTuple;
+        public InstructionIR DefinitionInstruction => ((IRElement)Owner).ParentTuple as InstructionIR;
         public string Name => "SSA definition";
-        public IRElement Owner { get; set; } // Destination operand.
+        public TaggedObject Owner { get; set; } // Destination operand.
+        public IRElement OwnerElement => (IRElement)Owner;
 
         public override bool Equals(object obj) {
             return obj is SSADefinitionTag tag && DefinitionId == tag.DefinitionId;

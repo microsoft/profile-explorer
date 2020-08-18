@@ -78,8 +78,8 @@ namespace IRExplorerUI {
         }
 
         public async Task<List<HasDiffResult>> ComputeSectionDiffs(
-            List<Tuple<IRTextSection, IRTextSection>> comparedSections, SectionLoader leftDocLoader,
-            SectionLoader rightDocLoader) {
+            List<Tuple<IRTextSection, IRTextSection>> comparedSections, IRTextSectionLoader leftDocLoader,
+            IRTextSectionLoader rightDocLoader) {
             int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
             var tasks = new Task<HasDiffResult>[comparedSections.Count];
 
@@ -96,8 +96,8 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeSectionDiffsImpl(
-            List<Tuple<IRTextSection, IRTextSection>> comparedSections, SectionLoader leftDocLoader,
-            SectionLoader rightDocLoader, Task<HasDiffResult>[] tasks, int maxConcurrency) {
+            List<Tuple<IRTextSection, IRTextSection>> comparedSections, IRTextSectionLoader leftDocLoader,
+            IRTextSectionLoader rightDocLoader, Task<HasDiffResult>[] tasks, int maxConcurrency) {
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
             int index = 0;
 

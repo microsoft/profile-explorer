@@ -606,11 +606,11 @@ namespace IRExplorerUI {
             TextView.JumpToSearchResult(result, Colors.LightSkyBlue);
         }
 
-        public void LoadSectionMinimal(ParsedSection parsedSection) {
+        public void LoadSectionMinimal(ParsedIRTextSection parsedSection) {
             TextView.EarlyLoadSectionSetup(parsedSection);
         }
 
-        public async Task LoadSection(ParsedSection parsedSection) {
+        public async Task LoadSection(ParsedIRTextSection parsedSection) {
             var data = Session.LoadDocumentState(parsedSection.Section);
 
             if (data != null) {
