@@ -95,7 +95,7 @@ namespace IRExplorerUI {
         }
 
         public HighlightingStyle GetNodeStyle(Node node) {
-            var element = node.Element;
+            var element = node.ElementData;
 
             switch (element) {
                 case null:
@@ -156,11 +156,11 @@ namespace IRExplorerUI {
             }
 
             // Mark edges of PHIs with values incoming from loops.
-            var sourceInstr = edge.NodeTo.Element.ParentInstruction;
+            var sourceInstr = edge.NodeTo.ElementData.ParentInstruction;
 
             if (sourceInstr != null && sourceInstr.OpcodeIs(UTCOpcode.OPPHI)) {
                 var sourceBlock = sourceInstr.ParentBlock;
-                var destBlock = edge.NodeFrom.Element.ParentBlock;
+                var destBlock = edge.NodeFrom.ElementData.ParentBlock;
 
                 if (destBlock != null) {
                     if (destBlock.Number >= sourceBlock.Number) {
