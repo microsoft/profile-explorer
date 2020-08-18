@@ -11,24 +11,21 @@ namespace IRExplorerCore.GraphViz {
     class DominatorTreePrinter : GraphVizPrinter {
         private FunctionIR function_;
         private DominatorAlgorithmOptions options_;
+        private Dictionary<string, object> blockNameMap_;
 
         public DominatorTreePrinter(FunctionIR function, DominatorAlgorithmOptions options) {
             function_ = function;
             options_ = options;
-            BlockNameMap = new Dictionary<string, object>();
+            blockNameMap_ = new Dictionary<string, object>();
         }
 
-        private Dictionary<string, object> BlockNameMap { get; set; }
-
         private void CreateNode(BlockIR block, StringBuilder builder) {
-            string blockName =
-                base.CreateNode(block.Id, block.Number.ToString(), builder, "B");
-
-            BlockNameMap[blockName] = block;
+            string blockName = CreateNode(block.Id, block.Number.ToString(), builder, "B");
+            blockNameMap_[blockName] = block;
         }
 
         private void CreateEdge(BlockIR block1, BlockIR block2, StringBuilder builder) {
-            base.CreateEdge(block1.Id, block2.Id, builder);
+            CreateEdge(block1.Id, block2.Id, builder);
         }
 
         protected override void PrintGraph(StringBuilder builder) {
@@ -55,9 +52,9 @@ namespace IRExplorerCore.GraphViz {
             }
         }
 
-        public override Dictionary<string, object> CreateBlockNodeMap() {
-            if (BlockNameMap.Count > 0) {
-                return BlockNameMap;
+        public override Dictionary<string, object> CreateNodeDataMap() {
+            if (blockNameMap_.Count > 0) {
+                return blockNameMap_;
             }
 
             var map = new Dictionary<string, object>();
@@ -69,7 +66,7 @@ namespace IRExplorerCore.GraphViz {
             return map;
         }
 
-        public override Dictionary<object, List<object>> CreateBlockNodeGroupsMap() {
+        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
             return null;
         }
     }

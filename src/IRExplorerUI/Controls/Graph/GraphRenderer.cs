@@ -36,7 +36,7 @@ namespace IRExplorerUI {
             dc.PushGuidelineSet(guidelines);
             dc.DrawRectangle(Style.BackColor, Style.Border, region);
 
-            var text = new FormattedText(NodeInfo.Label.ToString(), CultureInfo.InvariantCulture,
+            var text = new FormattedText(NodeInfo.Label, CultureInfo.InvariantCulture,
                                          FlowDirection.LeftToRight, TextFont, DefaultTextSize, TextColor,
                                          VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
 

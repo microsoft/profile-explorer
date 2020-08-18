@@ -95,7 +95,7 @@ namespace IRExplorerUI {
         }
 
         public HighlightingStyle GetNodeStyle(Node node) {
-            var element = node.Element;
+            var element = node.ElementData;
 
             return element switch
             {
@@ -115,8 +115,8 @@ namespace IRExplorerUI {
             }
 
             if (graphKind_ == GraphKind.FlowGraph) {
-                var fromBlock = edge.NodeFrom?.Element as BlockIR;
-                var toBlock = edge.NodeTo?.Element as BlockIR;
+                var fromBlock = edge.NodeFrom?.ElementData as BlockIR;
+                var toBlock = edge.NodeTo?.ElementData as BlockIR;
 
                 if (fromBlock != null && toBlock != null) {
                     if (toBlock.Number <= fromBlock.Number) {

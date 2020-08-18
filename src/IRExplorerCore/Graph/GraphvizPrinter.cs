@@ -99,11 +99,11 @@ namespace IRExplorerCore.GraphViz {
             return "";
         }
 
-        public virtual Dictionary<string, object> CreateBlockNodeMap() {
+        public virtual Dictionary<string, object> CreateNodeDataMap() {
             throw new NotImplementedException();
         }
 
-        public virtual Dictionary<object, List<object>> CreateBlockNodeGroupsMap() {
+        public virtual Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
             throw new NotImplementedException();
         }
 

@@ -28,6 +28,8 @@ namespace IRExplorerCore.GraphViz {
         private IRElement rootElement_;
         private IRElement startElement_;
         private Dictionary<IRElement, IRElement> visitedElements_;
+        private Dictionary<string, object> elementNameMap_;
+        private Dictionary<object, List<object>> blockNodeGroupsMap_;
 
         public ExpressionGraphPrinter(IRElement startElement,
                                       ExpressionGraphPrinterOptions options) {
@@ -36,20 +38,15 @@ namespace IRExplorerCore.GraphViz {
             visitedElements_ = new Dictionary<IRElement, IRElement>();
             nodes_ = new List<Tuple<IRElement, IRElement, string>>();
             edges_ = new List<Tuple<IRElement, IRElement>>();
-            ElementNameMap = new Dictionary<string, object>();
-            BlockNodeGroupsMap = new Dictionary<object, List<object>>();
+            elementNameMap_ = new Dictionary<string, object>();
+            blockNodeGroupsMap_ = new Dictionary<object, List<object>>();
         }
 
-        public Dictionary<string, object> ElementNameMap { get; set; }
-        public Dictionary<object, List<object>> BlockNodeGroupsMap { get; set; }
-
         private void CreateNode(IRElement element, IRElement parent, string label) {
-            //Debug.WriteLine($"+ Node {element}"); 
             nodes_.Add(new Tuple<IRElement, IRElement, string>(element, parent, label));
         }
 
         private void CreateEdge(IRElement element1, IRElement element2) {
-            //Debug.WriteLine($"Edge {element1} => {element2}");
             edges_.Add(new Tuple<IRElement, IRElement>(element1, element2));
         }
 
@@ -135,9 +132,9 @@ namespace IRExplorerCore.GraphViz {
         private void AddElementToGroupMap(IRElement element, TupleIR tuple) {
             var block = tuple.ParentBlock;
 
-            if (!BlockNodeGroupsMap.TryGetValue(block, out var group)) {
+            if (!blockNodeGroupsMap_.TryGetValue(block, out var group)) {
                 group = new List<object>();
-                BlockNodeGroupsMap.Add(block, group);
+                blockNodeGroupsMap_.Add(block, group);
             }
 
             group.Add(element);
@@ -149,12 +146,12 @@ namespace IRExplorerCore.GraphViz {
 
             string elementName = CreateNodeWithMargins(element.Id, label, builder_,
                                                        horizontalMargin, verticalMargin);
-            ElementNameMap[elementName] = element;
+            elementNameMap_[elementName] = element;
         }
 
         private void PrintEdges() {
             foreach (var (element1, element2) in edges_) {
-                base.CreateEdge(element1.Id, element2.Id, builder_);
+                CreateEdge(element1.Id, element2.Id, builder_);
             }
         }
 
@@ -319,12 +316,12 @@ namespace IRExplorerCore.GraphViz {
             return label;
         }
 
-        public override Dictionary<string, object> CreateBlockNodeMap() {
-            return ElementNameMap;
+        public override Dictionary<string, object> CreateNodeDataMap() {
+            return elementNameMap_;
         }
 
-        public override Dictionary<object, List<object>> CreateBlockNodeGroupsMap() {
-            return BlockNodeGroupsMap;
+        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
+            return blockNodeGroupsMap_;
         }
     }
 }
