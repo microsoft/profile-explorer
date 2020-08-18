@@ -9,8 +9,7 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
     <local:ToolPanelControl.CommandBindings>
-        <CommandBinding Command="local:ScriptingCommand.ExecuteScript"
-                        Executed="ExecuteScriptExecuted" />
+        <CommandBinding Command="local:ScriptingCommand.ExecuteScript" Executed="ExecuteScriptExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <Grid>
@@ -51,10 +50,9 @@
             <local:PanelToolbarTray Grid.Column="1" HasPinButton="False" />
         </Grid>
 
-        <Grid Grid.Row="2"
-              Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+        <Grid Grid.Row="2" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <Grid.RowDefinitions>
-                <RowDefinition Height="2*" />
+                <RowDefinition Height="3*" />
                 <RowDefinition Height="2" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
@@ -75,62 +73,15 @@
                 VerticalAlignment="Stretch"
                 ResizeBehavior="PreviousAndNext" />
 
-            <TabControl
+            <avalonEdit:TextEditor
+                xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+                x:Name="OutputTextView"
                 Grid.Row="2"
-                Background="{x:Null}"
-                BorderBrush="{x:Null}"
-                TabStripPlacement="Bottom">
-                <TabItem Header="Scripts">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="28" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-
-                        <ToolBarTray
-                            Grid.Row="0"
-                            Height="28"
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Top"
-                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                            IsLocked="True">
-                            <ToolBar
-                                HorizontalAlignment="Stretch"
-                                VerticalAlignment="Top"
-                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                Loaded="ToolBar_Loaded">
-                                <Button ToolTip="Execute script (Ctrl+Return)">
-                                    <Image Source="{StaticResource SourceIcon}" />
-                                </Button>
-                                <Button ToolTip="Execute script (Ctrl+Return)">
-                                    <Image Source="{StaticResource EditIcon}" />
-                                </Button>
-                                <Button ToolTip="Execute script (Ctrl+Return)">
-                                    <Image Source="{StaticResource RemoveIcon}" />
-                                </Button>
-                                <Separator />
-                                <Button Content="Export" ToolTip="Execute script (Ctrl+Return)" />
-                                <Separator />
-
-                                <Button Content="Import" ToolTip="Execute script (Ctrl+Return)" />
-
-                            </ToolBar>
-                        </ToolBarTray>
-
-                        <ListView Grid.Row="1" />
-                    </Grid>
-                </TabItem>
-                <TabItem Header="Output">
-                    <avalonEdit:TextEditor
-                        xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
-                        x:Name="OutputTextView"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                        FontFamily="Consolas"
-                        FontSize="12"
-                        HorizontalScrollBarVisibility="Auto"
-                        VerticalScrollBarVisibility="Auto" />
-                </TabItem>
-            </TabControl>
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                FontFamily="Consolas"
+                FontSize="12"
+                HorizontalScrollBarVisibility="Auto"
+                VerticalScrollBarVisibility="Auto" />
         </Grid>
     </Grid>
 </local:ToolPanelControl>

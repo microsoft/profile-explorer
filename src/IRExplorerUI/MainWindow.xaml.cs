@@ -820,26 +820,6 @@ namespace IRExplorerUI {
         }
 
 
-        private struct ElementIteratorId {
-            public int ElementId;
-            public IRElementKind ElementKind;
-
-            public ElementIteratorId(int elementId, IRElementKind elementKind) {
-                ElementId = elementId;
-                ElementKind = elementKind;
-            }
-
-            public override bool Equals(object obj) {
-                return obj is ElementIteratorId id &&
-                       ElementId == id.ElementId &&
-                       ElementKind == id.ElementKind;
-            }
-
-            public override int GetHashCode() {
-                return HashCode.Combine(ElementId, ElementKind);
-            }
-        }
-
         private void MenuItem_Click_9(object sender, RoutedEventArgs e) {
             InstallExtension();
         }

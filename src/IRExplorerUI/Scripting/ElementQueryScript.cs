@@ -34,9 +34,9 @@ namespace IRExplorerUI.Scripting {
             return true;
         }
 
-        public override bool Execute(ScriptSession session) {
-            return base.Execute(session);
-        }
+        //public override bool Execute(ScriptSession session) {
+        //    return base.Execute(session);
+        //}
     }
 
 
