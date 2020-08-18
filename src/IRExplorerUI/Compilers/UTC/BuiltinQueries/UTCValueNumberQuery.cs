@@ -7,8 +7,8 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Compilers.UTC {
     public class UTCValueNumberQuery : IElementQuery {
-        public static ElementQueryDefinition GetDefinition() {
-            var query = new ElementQueryDefinition(typeof(UTCValueNumberQuery), "Value Numbers",
+        public static QueryDefinition GetDefinition() {
+            var query = new QueryDefinition(typeof(UTCValueNumberQuery), "Value Numbers",
                                                    "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool);

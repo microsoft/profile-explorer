@@ -39,7 +39,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() { };
+        public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
         public List<DocumentTaskDefinition> BuiltinScripts => throw new NotImplementedException();
     }
 
@@ -193,7 +193,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public void LoadDocumentQuery(ElementQueryDefinition query, IRDocument document) {
+        public void LoadDocumentQuery(QueryDefinition query, IRDocument document) {
             throw new NotImplementedException();
         }
     }

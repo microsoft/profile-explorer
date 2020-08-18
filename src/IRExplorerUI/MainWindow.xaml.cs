@@ -776,7 +776,7 @@ namespace IRExplorerUI {
             UnregisterDetachedPanel(queryPanel);
         }
 
-        public void LoadDocumentQuery(ElementQueryDefinition query, IRDocument document) {
+        public void LoadDocumentQuery(QueryDefinition query, IRDocument document) {
             //? TODO: Show the panel over the associated document
             var queryPanel = CreateQueryPanel();
             queryPanel.AddQuery(query);

@@ -4,8 +4,8 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Query.Builtin {
     public class OperandSSAInfoQuery : IElementQuery {
-        public static ElementQueryDefinition GetDefinition() {
-            var query = new ElementQueryDefinition(typeof(OperandSSAInfoQuery),
+        public static QueryDefinition GetDefinition() {
+            var query = new QueryDefinition(typeof(OperandSSAInfoQuery),
                                                    "Operand SSA details",
                                                    "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);

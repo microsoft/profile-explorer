@@ -6,7 +6,7 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Query {
     public class BuiltinElementQuery : IElementQuery {
-        public ElementQueryDefinition GetDefinition() {
+        public QueryDefinition GetDefinition() {
             throw new NotImplementedException();
         }
 

@@ -11,18 +11,26 @@ namespace IRExplorerUI.Query {
         public bool Execute(QueryData data);
     }
 
-    public class ElementQueryDefinition : INotifyPropertyChanged {
+    public interface IFunctionQuery {
+        public ISessionManager Session { get; }
+        public bool HasOptionsPanel { get;}
+        public bool ShowOptionsPanelOnExecute { get; }
+        public bool Initialize(ISessionManager session);
+        public bool Execute(QueryData data);
+    }
+
+    public class QueryDefinition : INotifyPropertyChanged {
         private Type queryType_;
         private IElementQuery queryInstance_;
 
-        public ElementQueryDefinition(Type queryType) {
+        public QueryDefinition(Type queryType) {
             Data = new QueryData();
             Data.ValueChanged += InputValueChanged;
             Data.PropertyChanged += DataPropertyChanged;
             queryType_ = queryType;
         }
 
-        public ElementQueryDefinition(Type queryType, string name, string description) : this(queryType) {
+        public QueryDefinition(Type queryType, string name, string description) : this(queryType) {
             Name = name;
             Description = description;
         }

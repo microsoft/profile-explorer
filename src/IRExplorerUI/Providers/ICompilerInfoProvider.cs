@@ -17,7 +17,7 @@ namespace IRExplorerUI {
         INameProvider NameProvider { get; }
         ISectionStyleProvider SectionStyleProvider { get; }
         IRRemarkProvider RemarkProvider { get; }
-        List<ElementQueryDefinition> BuiltinQueries { get; }
+        List<QueryDefinition> BuiltinQueries { get; }
         List<DocumentTaskDefinition> BuiltinScripts { get; }
 
         bool AnalyzeLoadedFunction(FunctionIR function);

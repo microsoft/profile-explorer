@@ -12,16 +12,16 @@ namespace IRExplorerUI.Query {
     // used for the input/output values - the binding doesn't know an output value changed,
     // so this basically forces an update of the entire query panel.
     public class ElementQueryInfoView : INotifyPropertyChanged {
-        private ElementQueryDefinition view_;
+        private QueryDefinition view_;
 
-        public ElementQueryInfoView(ElementQueryDefinition value) {
+        public ElementQueryInfoView(QueryDefinition value) {
             View = value;
             InputValues = new ObservableCollectionRefresh<QueryValue>(value.Data.InputValues);
             OutputValues = new ObservableCollectionRefresh<QueryValue>(value.Data.OutputValues);
             Buttons = new ObservableCollectionRefresh<QueryButton>(value.Data.Buttons);
         }
 
-        public ElementQueryDefinition View {
+        public QueryDefinition View {
             get => view_;
             set {
                 if (view_ != value) {
@@ -70,8 +70,8 @@ namespace IRExplorerUI.Query {
         public const double MinimumWidth = 100;
 
         private List<ElementQueryInfoView> activeQueries_;
-        private List<ElementQueryDefinition> registeredQueries_;
-        private List<ElementQueryDefinition> registeredUserQueries_;
+        private List<QueryDefinition> registeredQueries_;
+        private List<QueryDefinition> registeredUserQueries_;
 
         public QueryPanel(Point position, double width, double height,
                           UIElement referenceElement, ISessionManager session) {
@@ -80,8 +80,8 @@ namespace IRExplorerUI.Query {
             PanelResizeGrip.ResizedControl = this;
             Session = session;
 
-            registeredQueries_ = new List<ElementQueryDefinition>();
-            registeredUserQueries_ = new List<ElementQueryDefinition>();
+            registeredQueries_ = new List<QueryDefinition>();
+            registeredUserQueries_ = new List<QueryDefinition>();
             activeQueries_ = new List<ElementQueryInfoView>();
 
             // Populate with the available queries.
@@ -96,7 +96,7 @@ namespace IRExplorerUI.Query {
 
         public ISessionManager Session { get; set; }
 
-        public void RegisterQuery(ElementQueryDefinition query, bool isBuiltin) {
+        public void RegisterQuery(QueryDefinition query, bool isBuiltin) {
             if (isBuiltin) {
                 registeredQueries_.Add(query);
             }
@@ -105,7 +105,7 @@ namespace IRExplorerUI.Query {
             }
         }
 
-        public void AddQuery(ElementQueryDefinition query) {
+        public void AddQuery(QueryDefinition query) {
             var queryView = new ElementQueryInfoView(query);
             query.CreateQueryInstance(Session);
             queryView.Closed += QueryView_Closed;
@@ -140,7 +140,7 @@ namespace IRExplorerUI.Query {
             }
         }
 
-        private MenuItem CreateContextMenuItem(ElementQueryDefinition query) {
+        private MenuItem CreateContextMenuItem(QueryDefinition query) {
             var item = new MenuItem() {
                 Header = query.Name,
                 ToolTip = query.Description,
@@ -153,7 +153,7 @@ namespace IRExplorerUI.Query {
 
         private void ContextMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
             var menuItem = (MenuItem)sender;
-            AddQuery((ElementQueryDefinition)menuItem.Tag);
+            AddQuery((QueryDefinition)menuItem.Tag);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) {

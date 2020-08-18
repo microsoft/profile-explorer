@@ -37,7 +37,7 @@ namespace IRExplorerUI.Compilers.LLVM {
             return new UTCDiffOutputFilter();
         }
 
-        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() { };
+        public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
         public List<DocumentTaskDefinition> BuiltinScripts => new List<DocumentTaskDefinition>() { };
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
