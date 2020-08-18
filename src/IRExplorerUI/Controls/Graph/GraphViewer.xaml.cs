@@ -241,7 +241,7 @@ namespace IRExplorerUI {
         }
 
         public void Mark(BlockIR block, Color selectedColor, bool useBoldBorder = true) {
-            var node = (GraphNode)graph_.ElementNodeMap[block].Tag;
+            var node = (GraphNode)graph_.DataNodeMap[block].Tag;
             MarkNode(node, selectedColor);
         }
 
@@ -382,7 +382,7 @@ namespace IRExplorerUI {
         }
 
         private GraphNode GetBlockNode(BlockIR block) {
-            return graph_.ElementNodeMap.TryGetValue(block, out var node) ? node.Tag as GraphNode : null;
+            return graph_.DataNodeMap.TryGetValue(block, out var node) ? node.Tag as GraphNode : null;
         }
 
         private double TransformPoint(double value) {
@@ -406,7 +406,7 @@ namespace IRExplorerUI {
             var block = element_?.ParentBlock;
 
             if (block != null) {
-                if (graph_.ElementNodeMap.TryGetValue(block, out var node)) {
+                if (graph_.DataNodeMap.TryGetValue(block, out var node)) {
                     var graphNode = node.Tag as GraphNode;
 
                     HighlightConnectedNodes(graphNode, selectedNodes_,
@@ -440,8 +440,8 @@ namespace IRExplorerUI {
             foreach (var element in info.Group.Elements) {
                 var block = element.ParentBlock;
 
-                if (block != null && graph_.ElementNodeMap.ContainsKey(block)) {
-                    var node = graph_.ElementNodeMap[block];
+                if (block != null && graph_.DataNodeMap.ContainsKey(block)) {
+                    var node = graph_.DataNodeMap[block];
                     var graphNode = node.Tag as GraphNode;
 
                     // If it's a block not being marked, highlight

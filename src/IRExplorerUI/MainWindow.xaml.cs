@@ -679,7 +679,7 @@ namespace IRExplorerUI {
             window.Width = 1000;
             window.Height = 900;
 
-            var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, new Dictionary<string, IRElement>());
+            var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, new Dictionary<string, object>());
             var layoutGraph = graphReader.ReadGraph();
             panel.DisplayGraph(layoutGraph);
             window.Show();

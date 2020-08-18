@@ -24,10 +24,10 @@ nslimit=2;
 
         public CFGPrinter(FunctionIR function) {
             function_ = function;
-            BlockNameMap = new Dictionary<string, IRElement>();
+            BlockNameMap = new Dictionary<string, object>();
         }
 
-        public Dictionary<string, IRElement> BlockNameMap { get; set; }
+        public Dictionary<string, object> BlockNameMap { get; set; }
 
         protected override string GetExtraSettings() {
             int count = function_.Blocks.Count;
@@ -97,12 +97,12 @@ nslimit=2;
             return builder.ToString();
         }
 
-        public override Dictionary<string, IRElement> CreateBlockNodeMap() {
+        public override Dictionary<string, object> CreateBlockNodeMap() {
             if (BlockNameMap.Count > 0) {
                 return BlockNameMap;
             }
 
-            var map = new Dictionary<string, IRElement>();
+            var map = new Dictionary<string, object>();
 
             foreach (var block in function_.Blocks) {
                 map[GetNodeName(block.Id)] = block;
@@ -111,7 +111,7 @@ nslimit=2;
             return map;
         }
 
-        public override Dictionary<IRElement, List<IRElement>> CreateBlockNodeGroupsMap() {
+        public override Dictionary<object, List<object>> CreateBlockNodeGroupsMap() {
             return null;
         }
     }

@@ -19,7 +19,7 @@ namespace IRExplorerCore.GraphViz {
             };
 
         private Dictionary<string, Node> nodeMap_;
-        private Dictionary<string, IRElement> elementNameMap_;
+        private Dictionary<string, object> dataNameMap_;
         private Token current_;
         private LayoutGraph graph_;
 
@@ -28,9 +28,9 @@ namespace IRExplorerCore.GraphViz {
         private string sourceText_;
 
         public GraphvizReader(GraphKind kind, string text,
-                              Dictionary<string, IRElement> elementNameMap) {
+                              Dictionary<string, object> dataNameMap) {
             graphKind_ = kind;
-            elementNameMap_ = elementNameMap;
+            dataNameMap_ = dataNameMap;
             sourceText_ = text;
 
             nodeMap_ = new Dictionary<string, Node>();
@@ -258,9 +258,9 @@ namespace IRExplorerCore.GraphViz {
             nodeMap_[name.ToString()] = node;
 
             // Associate with IR objects.
-            if (elementNameMap_.TryGetValue(name.ToString(), out var block)) {
-                node.Element = block;
-                graph_.ElementNodeMap.Add(block, node);
+            if (dataNameMap_.TryGetValue(name.ToString(), out var data)) {
+                node.Data = data;
+                graph_.DataNodeMap.Add(data, node);
             }
             else {
                 //Debug.Assert(false, "Could not find block");
@@ -316,8 +316,8 @@ namespace IRExplorerCore.GraphViz {
             edge.Color = color;
 
             // Associate with IR objects.
-            if (elementNameMap_.TryGetValue(fromNode.ToString(), out var fromBlock)) {
-                var node = graph_.ElementNodeMap[fromBlock];
+            if (dataNameMap_.TryGetValue(fromNode.ToString(), out var fromBlock)) {
+                var node = graph_.DataNodeMap[fromBlock];
                 edge.NodeFrom = node;
                 node.OutEdges ??= new List<Edge>();
                 node.OutEdges.Add(edge);
@@ -333,8 +333,8 @@ namespace IRExplorerCore.GraphViz {
                 }
             }
 
-            if (elementNameMap_.TryGetValue(toNode.ToString(), out var toBlock)) {
-                var node = graph_.ElementNodeMap[toBlock];
+            if (dataNameMap_.TryGetValue(toNode.ToString(), out var toBlock)) {
+                var node = graph_.DataNodeMap[toBlock];
                 edge.NodeTo = node;
                 node.InEdges ??= new List<Edge>();
                 node.InEdges.Add(edge);
