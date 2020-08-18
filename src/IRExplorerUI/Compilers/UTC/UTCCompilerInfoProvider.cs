@@ -41,7 +41,7 @@ namespace IRExplorerUI.Compilers.UTC {
             return new UTCDiffOutputFilter();
         }
 
-        public List<ElementQueryDefinition> BuiltinQueries => new List<ElementQueryDefinition>() {
+        public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() {
             InstructionSSAInfoQuery.GetDefinition(),
             OperandSSAInfoQuery.GetDefinition(),
             UTCValueNumberQuery.GetDefinition(),

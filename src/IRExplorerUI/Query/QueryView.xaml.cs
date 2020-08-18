@@ -5,7 +5,7 @@ using IRExplorerUI.Scripting;
 
 namespace IRExplorerUI.Query {
     public partial class QueryView : UserControl {
-        private ElementQueryDefinition query_;
+        private QueryDefinition query_;
 
         public QueryView() {
             InitializeComponent();
@@ -22,7 +22,7 @@ namespace IRExplorerUI.Query {
             }
         }
 
-        public ElementQueryDefinition Query {
+        public QueryDefinition Query {
             get => query_;
             set {
                 if (value != query_) {

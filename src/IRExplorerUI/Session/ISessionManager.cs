@@ -61,7 +61,7 @@ namespace IRExplorerUI {
 
         void RegisterDetachedPanel(DraggablePopup panel);
         void UnregisterDetachedPanel(DraggablePopup panel);
-        void LoadDocumentQuery(ElementQueryDefinition query, IRDocument document);
+        void LoadDocumentQuery(QueryDefinition query, IRDocument document);
 
         Task<bool> SaveSessionDocument(string filePath);
         Task<bool> OpenSessionDocument(string filePath);

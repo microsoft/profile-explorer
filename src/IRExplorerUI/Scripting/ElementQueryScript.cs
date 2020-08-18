@@ -16,7 +16,7 @@ namespace IRExplorerUI.Scripting {
 
         }
 
-        public ElementQueryDefinition Query { get; set; }
+        public QueryDefinition Query { get; set; }
         private ISessionManager session_;
         public ISessionManager Session => session_;
 
@@ -25,7 +25,7 @@ namespace IRExplorerUI.Scripting {
             return true;
         }
 
-        public ElementQueryDefinition GetDefinition() {
+        public QueryDefinition GetDefinition() {
             throw new NotImplementedException();
         }
 

@@ -1211,7 +1211,7 @@ namespace IRExplorerUI {
 
         private void QueryMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
             var menuItem = (MenuItem)sender;
-            var query = (ElementQueryDefinition)menuItem.Tag;
+            var query = (QueryDefinition)menuItem.Tag;
             Session.LoadDocumentQuery(query, TextView);
         }
 
@@ -1264,7 +1264,7 @@ namespace IRExplorerUI {
                     One = true
                 };
                 var optionsData = task.CreateOptionsPanel(options);
-                var dummyQuery = new ElementQueryDefinition(typeof(DummyQuery), task.Name, task.Description);
+                var dummyQuery = new QueryDefinition(typeof(DummyQuery), task.Name, task.Description);
                 dummyQuery.Data = optionsData;
 
                 optionsData.AddButton("Save", (sender, value) => {

@@ -10,8 +10,8 @@ using System.Windows;
 
 namespace IRExplorerUI.Compilers.UTC {
     class UTCBuiltinInterferenceActions : IElementQuery {
-        public static ElementQueryDefinition GetDefinition() {
-            var query = new ElementQueryDefinition(typeof(UTCBuiltinInterferenceActions),
+        public static QueryDefinition GetDefinition() {
+            var query = new QueryDefinition(typeof(UTCBuiltinInterferenceActions),
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
@@ -53,8 +53,8 @@ namespace IRExplorerUI.Compilers.UTC {
     }
 
     class UTCBuiltinInterferenceQuery : IElementQuery {
-        public static ElementQueryDefinition GetDefinition() {
-            var query = new ElementQueryDefinition(typeof(UTCBuiltinInterferenceQuery),
+        public static QueryDefinition GetDefinition() {
+            var query = new QueryDefinition(typeof(UTCBuiltinInterferenceQuery),
                                                    "Alias query",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand 1", QueryValueKind.Element);
