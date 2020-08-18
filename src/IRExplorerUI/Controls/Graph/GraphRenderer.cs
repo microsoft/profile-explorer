@@ -102,7 +102,7 @@ namespace IRExplorerUI {
         public DrawingVisual Render() {
             visual_ = new DrawingVisual();
 
-            if (graph_.ElementNodeGroupsMap != null) {
+            if (graph_.DataNodeGroupsMap != null) {
                 DrawNodeBoundingBoxes();
             }
 
@@ -117,7 +117,7 @@ namespace IRExplorerUI {
         private void DrawNodeBoundingBoxes() {
             var pen = Pens.GetPen(Colors.Gray, DefaultEdgeThickness);
 
-            foreach (var group in graph_.ElementNodeGroupsMap) {
+            foreach (var group in graph_.DataNodeGroupsMap) {
                 var boundingBox = ComputeBoundingBox(group.Value);
                 boundingBox.Inflate(GroupBoundingBoxMargin, GroupBoundingBoxMargin);
                 var groupVisual = new DrawingVisual();
@@ -141,14 +141,14 @@ namespace IRExplorerUI {
             }
         }
 
-        private Rect ComputeBoundingBox(List<IRElement> nodeElements) {
+        private Rect ComputeBoundingBox(List<object> nodeElements) {
             double xMin = double.MaxValue;
             double yMin = double.MaxValue;
             double xMax = double.MinValue;
             double yMax = double.MinValue;
 
             foreach (var element in nodeElements) {
-                var node = graph_.ElementNodeMap[element];
+                var node = graph_.DataNodeMap[element];
                 xMin = Math.Min(xMin, node.CenterX - node.Width / 2);
                 yMin = Math.Min(yMin, node.CenterY - node.Height / 2);
                 xMax = Math.Max(xMax, node.CenterX + node.Width / 2);

@@ -79,7 +79,7 @@ namespace IRExplorerUI {
             var layoutGraph = graphReader.ReadGraph();
 
             if (layoutGraph != null) {
-                layoutGraph.ElementNodeGroupsMap = blockNodeGroupsMap;
+                layoutGraph.DataNodeGroupsMap = blockNodeGroupsMap;
             }
 
             return layoutGraph;

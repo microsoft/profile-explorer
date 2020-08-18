@@ -21,7 +21,8 @@ namespace IRExplorerCore.GraphViz {
         public double Width { get; set; }
         public double Height { get; set; }
 
-        public IRElement Element { get; set; }
+        public object Data { get; set; }
+        public IRElement Element => (IRElement)Data;
         public List<Edge> InEdges { get; set; }
         public List<Edge> OutEdges { get; set; }
         public object Tag { get; set; }
@@ -63,7 +64,7 @@ namespace IRExplorerCore.GraphViz {
             GraphKind = kind;
             Nodes = new List<Node>();
             Edges = new List<Edge>();
-            ElementNodeMap = new Dictionary<IRElement, Node>();
+            DataNodeMap = new Dictionary<object, Node>();
         }
 
         public GraphKind GraphKind { get; set; }
@@ -73,7 +74,7 @@ namespace IRExplorerCore.GraphViz {
         public double Height { get; set; }
 
         //? TODO: Move below out so it's easy to discard them and free memory for large graphs
-        public Dictionary<IRElement, Node> ElementNodeMap { get; set; }
-        public Dictionary<IRElement, List<IRElement>> ElementNodeGroupsMap { get; set; }
+        public Dictionary<object, Node> DataNodeMap { get; set; }
+        public Dictionary<object, List<object>> DataNodeGroupsMap { get; set; }
     }
 }

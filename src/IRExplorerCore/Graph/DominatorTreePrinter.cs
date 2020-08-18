@@ -15,10 +15,10 @@ namespace IRExplorerCore.GraphViz {
         public DominatorTreePrinter(FunctionIR function, DominatorAlgorithmOptions options) {
             function_ = function;
             options_ = options;
-            BlockNameMap = new Dictionary<string, IRElement>();
+            BlockNameMap = new Dictionary<string, object>();
         }
 
-        private Dictionary<string, IRElement> BlockNameMap { get; set; }
+        private Dictionary<string, object> BlockNameMap { get; set; }
 
         private void CreateNode(BlockIR block, StringBuilder builder) {
             string blockName =
@@ -55,12 +55,12 @@ namespace IRExplorerCore.GraphViz {
             }
         }
 
-        public override Dictionary<string, IRElement> CreateBlockNodeMap() {
+        public override Dictionary<string, object> CreateBlockNodeMap() {
             if (BlockNameMap.Count > 0) {
                 return BlockNameMap;
             }
 
-            var map = new Dictionary<string, IRElement>();
+            var map = new Dictionary<string, object>();
 
             foreach (var block in function_.Blocks) {
                 map[GetNodeName(block.Id)] = block;
@@ -69,7 +69,7 @@ namespace IRExplorerCore.GraphViz {
             return map;
         }
 
-        public override Dictionary<IRElement, List<IRElement>> CreateBlockNodeGroupsMap() {
+        public override Dictionary<object, List<object>> CreateBlockNodeGroupsMap() {
             return null;
         }
     }

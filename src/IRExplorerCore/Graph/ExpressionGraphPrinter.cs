@@ -36,12 +36,12 @@ namespace IRExplorerCore.GraphViz {
             visitedElements_ = new Dictionary<IRElement, IRElement>();
             nodes_ = new List<Tuple<IRElement, IRElement, string>>();
             edges_ = new List<Tuple<IRElement, IRElement>>();
-            ElementNameMap = new Dictionary<string, IRElement>();
-            BlockNodeGroupsMap = new Dictionary<IRElement, List<IRElement>>();
+            ElementNameMap = new Dictionary<string, object>();
+            BlockNodeGroupsMap = new Dictionary<object, List<object>>();
         }
 
-        public Dictionary<string, IRElement> ElementNameMap { get; set; }
-        public Dictionary<IRElement, List<IRElement>> BlockNodeGroupsMap { get; set; }
+        public Dictionary<string, object> ElementNameMap { get; set; }
+        public Dictionary<object, List<object>> BlockNodeGroupsMap { get; set; }
 
         private void CreateNode(IRElement element, IRElement parent, string label) {
             //Debug.WriteLine($"+ Node {element}"); 
@@ -136,7 +136,7 @@ namespace IRExplorerCore.GraphViz {
             var block = tuple.ParentBlock;
 
             if (!BlockNodeGroupsMap.TryGetValue(block, out var group)) {
-                group = new List<IRElement>();
+                group = new List<object>();
                 BlockNodeGroupsMap.Add(block, group);
             }
 
@@ -319,11 +319,11 @@ namespace IRExplorerCore.GraphViz {
             return label;
         }
 
-        public override Dictionary<string, IRElement> CreateBlockNodeMap() {
+        public override Dictionary<string, object> CreateBlockNodeMap() {
             return ElementNameMap;
         }
 
-        public override Dictionary<IRElement, List<IRElement>> CreateBlockNodeGroupsMap() {
+        public override Dictionary<object, List<object>> CreateBlockNodeGroupsMap() {
             return BlockNodeGroupsMap;
         }
     }
