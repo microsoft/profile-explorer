@@ -19,6 +19,26 @@ using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISessionManager {
+        private struct ElementIteratorId {
+            public int ElementId;
+            public IRElementKind ElementKind;
+
+            public ElementIteratorId(int elementId, IRElementKind elementKind) {
+                ElementId = elementId;
+                ElementKind = elementKind;
+            }
+
+            public override bool Equals(object obj) {
+                return obj is ElementIteratorId id &&
+                       ElementId == id.ElementId &&
+                       ElementKind == id.ElementKind;
+            }
+
+            public override int GetHashCode() {
+                return HashCode.Combine(ElementId, ElementKind);
+            }
+        }
+
         private DebugServer.DebugService debugService_;
         private Dictionary<ElementIteratorId, IRElement> debugCurrentIteratorElement_;
         private StackFrame debugCurrentStackFrame_;
