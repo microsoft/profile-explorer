@@ -11,7 +11,8 @@ namespace IRExplorerCore.Graph {
         FlowGraph,
         DominatorTree,
         PostDominatorTree,
-        ExpressionGraph
+        ExpressionGraph,
+        CallGraph
     }
 
     public static class GraphPrinterFactory {
@@ -28,8 +29,7 @@ namespace IRExplorerCore.Graph {
                     }
                     case GraphKind.PostDominatorTree: {
                         return new DominatorTreePrinter(element as FunctionIR,
-                                                        DominatorAlgorithmOptions
-                                                            .PostDominators);
+                                                        DominatorAlgorithmOptions.PostDominators);
                     }
                     default:
                         throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
@@ -39,8 +39,14 @@ namespace IRExplorerCore.Graph {
                 switch (kind) {
                     case GraphKind.ExpressionGraph: {
                         return new ExpressionGraphPrinter(element as IRElement,
-                                                          options as
-                                                              ExpressionGraphPrinterOptions);
+                                                          options as ExpressionGraphPrinterOptions);
+                    }
+                }
+            }
+            else if (typeof(T) == typeof(IRTextSummary)) {
+                switch (kind) {
+                    case GraphKind.CallGraph: {
+                        return new CallGraphPrinter(element as CallGraph);
                     }
                 }
             }

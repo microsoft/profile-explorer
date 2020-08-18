@@ -39,6 +39,10 @@ namespace IRExplorerCore.LLVM {
             return false;
         }
 
+        public OperandIR GetCallTarget(InstructionIR instr) {
+            return null;
+        }
+
         public bool IsIntrinsicCallInstruction(InstructionIR instr) {
             return false;
         }

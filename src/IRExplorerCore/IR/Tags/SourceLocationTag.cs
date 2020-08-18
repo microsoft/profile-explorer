@@ -13,7 +13,7 @@ namespace IRExplorerCore.IR {
         public int Line { get; set; }
         public int Column { get; set; }
         public string Name => "Source location";
-        public IRElement Owner { get; set; }
+        public TaggedObject Owner { get; set; }
 
         public override bool Equals(object obj) {
             return obj is SourceLocationTag tag && Line == tag.Line && Column == tag.Column;

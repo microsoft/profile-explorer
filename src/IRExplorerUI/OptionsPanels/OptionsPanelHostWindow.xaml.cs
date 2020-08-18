@@ -5,9 +5,10 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.OptionsPanels {
-    public partial class OptionsPanelHostWindow : Popup, IOptionsPanel {
+    public partial class OptionsPanelHostWindow : DraggablePopup, IOptionsPanel {
         private bool closed_;
         private IOptionsPanel optionsPanel_;
 
@@ -16,17 +17,14 @@ namespace IRExplorerUI.OptionsPanels {
                                       UIElement referenceElement,
                                       bool showResetButton = true) {
             InitializeComponent();
+            
+            // Offset to account for drop shadow margin.
+            position.Offset(6, 0);
+            Initialize(position, width, height, referenceElement);
+
+            PanelResizeGrip.ResizedControl = this;
             ShowResetButton = showResetButton;
             DataContext = this;
-
-            // Offset to account for drop shadow marging.
-            position.Offset(6, 0);
-
-            var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
-            HorizontalOffset = screenPosition.X;
-            VerticalOffset = screenPosition.Y;
-            Width = width;
-            Height = height;
 
             optionsPanel_ = (IOptionsPanel)panel;
             optionsPanel_.PanelClosed += SettingsPanel_PanelClosed;

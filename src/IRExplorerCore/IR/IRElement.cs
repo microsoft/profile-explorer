@@ -61,7 +61,7 @@ namespace IRExplorerCore.IR {
         }
     }
 
-    public class IRElement {
+    public class IRElement : TaggedObject {
         public IRElement(IRElementId elementId) {
             Id = elementId;
             TextLocation = default;
@@ -78,7 +78,6 @@ namespace IRExplorerCore.IR {
         public ulong Id { get; set; }
         public TextLocation TextLocation { get; set; }
         public int TextLength { get; set; }
-        public List<ITag> Tags { get; set; }
 
         public ulong BlockId => IRElementId.FromLong(Id).BlockId;
         public ulong TupleId => IRElementId.FromLong(Id).TupleId;
@@ -139,43 +138,7 @@ namespace IRExplorerCore.IR {
             return source.AsMemory(TextLocation.Offset, TextLength);
         }
 
-        public void AddTag(ITag tag) {
-            Tags ??= new List<ITag>();
-            tag.Owner = this;
-            Tags.Add(tag);
-        }
-
-        public T GetTag<T>() where T : class {
-            if (Tags != null) {
-                foreach (var tag in Tags) {
-                    if (tag is T value) {
-                        return value;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        public T GetOrAddTag<T>() where T : class, new() {
-            var result = GetTag<T>();
-
-            if (result != null) {
-                return result;
-            }
-
-            var tag = new T();
-            AddTag(tag as ITag);
-            return tag;
-        }
-
-        public bool RemoveTag<T>() where T : class {
-            if (Tags != null) {
-                return Tags.RemoveAll(tag => tag is T) > 0;
-            }
-
-            return false;
-        }
+        
 
         public virtual void Accept(IRVisitor visitor) {
             visitor.Visit(this);

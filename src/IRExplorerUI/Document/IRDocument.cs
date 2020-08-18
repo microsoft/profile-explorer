@@ -678,7 +678,7 @@ namespace IRExplorerUI {
             return false;
         }
 
-        public async Task LoadSavedSection(ParsedSection parsedSection, IRDocumentState savedState) {
+        public async Task LoadSavedSection(ParsedIRTextSection parsedSection, IRDocumentState savedState) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(this)}: Load saved section {parsedSection}");
 
@@ -695,7 +695,7 @@ namespace IRExplorerUI {
             await LateLoadSectionSetup(parsedSection);
         }
 
-        public async Task LoadSection(ParsedSection parsedSection) {
+        public async Task LoadSection(ParsedIRTextSection parsedSection) {
             Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load section {parsedSection}");
             SetCaretAtOffset(0);
             await LateLoadSectionSetup(parsedSection);
@@ -1295,7 +1295,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public void EarlyLoadSectionSetup(ParsedSection parsedSection) {
+        public void EarlyLoadSectionSetup(ParsedIRTextSection parsedSection) {
             Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Start setup for {parsedSection}");
             duringSectionLoading_ = true;
             section_ = parsedSection.Section;
@@ -2123,7 +2123,7 @@ namespace IRExplorerUI {
             JumpToBookmark(bookmarks_.JumpToLastBookmark());
         }
 
-        private async Task LateLoadSectionSetup(ParsedSection parsedSection) {
+        private async Task LateLoadSectionSetup(ParsedIRTextSection parsedSection) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
 

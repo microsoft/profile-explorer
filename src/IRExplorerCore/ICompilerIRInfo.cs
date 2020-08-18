@@ -17,5 +17,6 @@ namespace IRExplorerCore {
         bool IsIntrinsicCallInstruction(InstructionIR instr);
         bool IsPhiInstruction(InstructionIR instr);
         IRElement SkipCopyInstruction(InstructionIR instr);
+        OperandIR GetCallTarget(InstructionIR instr);
     }
 }

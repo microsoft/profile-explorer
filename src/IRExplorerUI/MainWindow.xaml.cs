@@ -661,7 +661,28 @@ namespace IRExplorerUI {
         }
 
         private async void MenuItem_Click(object sender, RoutedEventArgs e) {
-            throw new InvalidOperationException("Crash Handler test assert");
+            //throw new InvalidOperationException("Crash Handler test assert");
+            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
+            var cg = new CallGraph(MainDocumentSummary, loadedDoc.Loader, CompilerInfo.IR);
+            cg.Execute("Tuples after Reader (-db7 == DB_INITIAL)");
+
+            var printer = new CallGraphPrinter(cg);
+            var result = printer.PrintGraph();
+            var graphText = printer.CreateGraph(result, new CancelableTask());
+
+            var panel = new GraphPanel();
+            panel.Session = this;
+            panel.OnRegisterPanel();
+
+            var window = new Window();
+            window.Content = panel;
+            window.Width = 1000;
+            window.Height = 900;
+
+            var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, new Dictionary<string, IRElement>());
+            var layoutGraph = graphReader.ReadGraph();
+            panel.DisplayGraph(layoutGraph);
+            window.Show();
         }
 
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {

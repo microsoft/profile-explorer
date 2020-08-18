@@ -13,6 +13,6 @@ namespace IRExplorerCore.IR {
         public Loop Loop { get; set; }
         public int NestingLevel { get; set; }
         public string Name => "Loop block";
-        public IRElement Owner { get; set; }
+        public TaggedObject Owner { get; set; }
     }
 }

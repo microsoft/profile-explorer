@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using IRExplorerCore.Graph;
 using IRExplorerCore.GraphViz;
 using IRExplorerCore.IR;
 
@@ -83,9 +84,15 @@ namespace IRExplorerUI {
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
 
+            if(graph.GraphKind == GraphKind.CallGraph) {
+                graphStyle_ = new CallGraphStyleProvider();
+                return;
+            }
+
             graphStyle_ = options switch
             {
-                FlowGraphSettings settings => new FlowGraphStyleProvider(graph.GraphKind, settings),
+                FlowGraphSettings settings => 
+                    new FlowGraphStyleProvider(graph.GraphKind, settings),
                 ExpressionGraphSettings settings =>
                     new ExpressionGraphStyleProvider(graph.GraphKind, settings, compilerInfo),
                 _ => throw new InvalidOperationException("Unknown graph settings type!")
@@ -123,11 +130,11 @@ namespace IRExplorerUI {
                                                  CultureInfo.InvariantCulture, FlowDirection.LeftToRight,
                                                  defaultNodeFont_, textSize, Brushes.DimGray,
                                                  VisualTreeHelper.GetDpi(groupVisual).PixelsPerDip);
-                    //? TODO: Text placement can overlap with other elements
-                    dc.DrawText(
-                        text,
-                        new Point(boundingBox.Right + GroupBoundingBoxTextMargin,
-                                  boundingBox.Top + GroupBoundingBoxTextMargin));
+                    //? TODO: Text placement can overlap with other elements,
+                    //? try each corner of the bounding box to find one that's free
+                    //? (it's a greedy approach, but would work in most cases).
+                    dc.DrawText(text, new Point(boundingBox.Right + GroupBoundingBoxTextMargin,
+                                                boundingBox.Top + GroupBoundingBoxTextMargin));
                 }
 
                 visual_.Children.Add(groupVisual);

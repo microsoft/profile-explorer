@@ -446,7 +446,7 @@ namespace IRExplorerUI {
             return document;
         }
 
-        private async Task<ParsedSection> SwitchSection(IRTextSection section, IRDocumentHost document) {
+        private async Task<ParsedIRTextSection> SwitchSection(IRTextSection section, IRDocumentHost document) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(document)}: Switch to section ({section.Number}) {section.Name}");
 
@@ -480,7 +480,7 @@ namespace IRExplorerUI {
             return result;
         }
 
-        private string FormatParsingErrors(ParsedSection result, string message) {
+        private string FormatParsingErrors(ParsedIRTextSection result, string message) {
             if (!result.HadParsingErrors) {
                 return "";
             }
@@ -575,7 +575,7 @@ namespace IRExplorerUI {
             document.TextView.HighlightElement(e.Element, HighlighingType.Hovered);
         }
 
-        private ParsedSection LoadAndParseSection(IRTextSection section) {
+        private ParsedIRTextSection LoadAndParseSection(IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
             var parsedSection = docInfo.Loader.LoadSection(section);
 
