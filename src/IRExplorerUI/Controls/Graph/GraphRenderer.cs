@@ -13,8 +13,10 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI {
     public sealed class GraphNode {
         private const double DefaultTextSize = 0.225;
+        private const double DefaultLabelTextSize = 0.190;
 
         public Node NodeInfo { get; set; }
+        public GraphSettings Settings{ get; set; }
         public DrawingVisual Visual { get; set; }
         public HighlightingStyle Style { get; set; }
         public Typeface TextFont { get; set; }
@@ -40,8 +42,26 @@ namespace IRExplorerUI {
                                          FlowDirection.LeftToRight, TextFont, DefaultTextSize, TextColor,
                                          VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
 
-            dc.DrawText(
-                text, new Point(NodeInfo.CenterX - text.Width / 2, NodeInfo.CenterY - text.Height / 2));
+            dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,  
+                                        NodeInfo.CenterY - text.Height / 2));
+
+            // Display the label under the node if there is a tag.
+            var graphTag = NodeInfo.Data?.GetTag<GraphNodeTag>();
+
+            if(graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
+                var labelText = new FormattedText(graphTag.Label, CultureInfo.InvariantCulture,
+                                                  FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, TextColor,
+                                                  VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
+                var textBackground = ColorBrushes.GetBrush(Settings.BackgroundColor);
+                dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
+                                                 region.Bottom + labelText.Height / 4,
+                                                 labelText.Width, labelText.Height));
+            
+                //? TODO: Use LabelPlacement
+                //? TODO: Use LabelFontColor if set
+                dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
+                                                 region.Bottom + labelText.Height / 4));
+            }
         }
     }
 
@@ -74,29 +94,29 @@ namespace IRExplorerUI {
         private Graph graph_;
         private IGraphStyleProvider graphStyle_;
 
-        private GraphSettings options_;
+        private GraphSettings settings_;
         private DrawingVisual visual_;
 
-        public GraphRenderer(Graph graph, GraphSettings options,
+        public GraphRenderer(Graph graph, GraphSettings settings,
                              ICompilerInfoProvider compilerInfo) {
-            options_ = options;
+            settings_ = settings;
             graph_ = graph;
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
 
-            //? TODO: Integrate properly with settings
-            if (graph.Kind == GraphKind.CallGraph) {
-                graphStyle_ = new CallGraphStyleProvider();
-                return;
-            }
-
-            graphStyle_ = options switch
+            graphStyle_ = graph.Kind switch
             {
-                FlowGraphSettings settings =>
-                    new FlowGraphStyleProvider(graph, settings),
-                ExpressionGraphSettings settings =>
-                    new ExpressionGraphStyleProvider(graph_, settings, compilerInfo),
-                _ => throw new InvalidOperationException("Unknown graph settings type!")
+                GraphKind.FlowGraph => 
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.DominatorTree =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.PostDominatorTree =>
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                GraphKind.ExpressionGraph =>
+                    new ExpressionGraphStyleProvider(graph_, (ExpressionGraphSettings)settings, compilerInfo),
+                GraphKind.CallGraph =>
+                    new CallGraphStyleProvider(graph),
+                _ => throw new InvalidOperationException("Unknown graph kind!")
             };
         }
 
@@ -179,14 +199,11 @@ namespace IRExplorerUI {
                     continue; //? TODO: Investigate
                 }
 
-                //if (node.Width == 0 || node.Height == 0) {
-                //    continue; // Ignore invisible nodes.
-                //}
-
                 var nodeVisual = new DrawingVisual();
 
                 var graphNode = new GraphNode {
                     NodeInfo = node,
+                    Settings = settings_,
                     Visual = nodeVisual,
                     TextFont = defaultNodeFont_,
                     TextColor = textColor,
@@ -298,18 +315,17 @@ namespace IRExplorerUI {
         }
 
         private Vector FindArrowOrientation(Point[] tempPoints, out Point start) {
-            start = tempPoints[^1];
-            var v = start - tempPoints[^2];
+            for(int i = tempPoints.Length - 1; i > 0; i--) { 
+                start = tempPoints[i];
+                var v = start - tempPoints[i - 1];
 
-            if (v.LengthSquared == 0) {
-                if (tempPoints.Length >= 3) {
-                    start = tempPoints[^2];
-                    v = start - tempPoints[^3];
+                if (v.LengthSquared != 0) {
+                    v.Normalize();
+                    return v;
                 }
             }
 
-            v.Normalize();
-            return v;
+            return new Vector(0, 0);
         }
     }
 }

@@ -28,7 +28,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <local:IRPreview x:Name="IRPreviewer" Background="Silver" />
+                    <local:IRPreviewTooltip x:Name="IRPreviewer" Background="Silver" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -45,7 +45,7 @@
                             <ColumnDefinition Width="120" />
                         </Grid.ColumnDefinitions>
 
-                        <local:IRPreview
+                        <local:IRPreviewTooltip
                             x:Name="IRPreviewer"
                             Grid.Column="0"
                             Background="Silver" />
@@ -141,7 +141,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
                     <Grid>
-                        <local:IRPreview
+                        <local:IRPreviewTooltip
                             x:Name="IRPreviewer"
                             Grid.Column="0"
                             Background="Silver" />

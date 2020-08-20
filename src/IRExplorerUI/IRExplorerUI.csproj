@@ -105,7 +105,7 @@
 		<Compile Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml.cs">
 			<SubType>Code</SubType>
 		</Compile>
-		<Compile Update="OptionsPanels\GraphOptionsPanel.xaml.cs">
+		<Compile Update="OptionsPanels\FlowGraphOptionsPanel.xaml.cs">
 			<SubType>Code</SubType>
 		</Compile>
 		<Compile Update="Panels\RemarksPanel.xaml.cs">
@@ -168,7 +168,7 @@
 		<Page Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml">
 			<SubType>Designer</SubType>
 		</Page>
-		<Page Update="OptionsPanels\GraphOptionsPanel.xaml">
+		<Page Update="OptionsPanels\FlowGraphOptionsPanel.xaml">
 			<SubType>Designer</SubType>
 		</Page>
 		<Page Update="Panels\RemarksPanel.xaml">

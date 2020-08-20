@@ -21,7 +21,7 @@ namespace IRExplorerCore.Graph {
         public double Width { get; set; }
         public double Height { get; set; }
 
-        public object Data { get; set; }
+        public TaggedObject Data { get; set; }
         public bool DataIsElement => Data is IRElement;
         public IRElement ElementData => Data as IRElement;
         public List<Edge> InEdges { get; set; }
@@ -77,6 +77,7 @@ namespace IRExplorerCore.Graph {
         }
 
         public GraphKind Kind { get; set; }
+        public object GraphOptions { get; set; }
         public List<Node> Nodes { get; set; }
         public List<Edge> Edges { get; set; }
         public double Width { get; set; }

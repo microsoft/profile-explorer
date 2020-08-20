@@ -50,7 +50,7 @@
                     Grid.Row="0"
                     HorizontalScrollBarVisibility="Disabled"
                     VerticalScrollBarVisibility="Auto">
-                    <options:GraphOptionsPanel
+                    <options:FlowGraphOptionsPanel
                         x:Name="GraphOptionsPanel"
                         Width="Auto"
                         Height="Auto"

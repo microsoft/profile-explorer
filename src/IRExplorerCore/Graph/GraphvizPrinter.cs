@@ -76,10 +76,6 @@ namespace IRExplorerCore.Graph {
             builder.AppendFormat("{0} -> {1};\n", id1, id2);
         }
 
-        protected void CreateEdge(int id1, string id2, StringBuilder builder) {
-            CreateEdge((ulong)id1, id2, builder);
-        }
-
         protected void CreateEdge(ulong id1, string id2, StringBuilder builder) {
             builder.AppendFormat("n{0} -> {1};\n", id1, id2);
         }

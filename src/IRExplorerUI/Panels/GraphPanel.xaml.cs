@@ -631,7 +631,7 @@ namespace IRExplorerUI {
 
         private void NodeToolTip__Loaded(object sender, RoutedEventArgs e) {
             var node = nodeToolTip_.Tag as GraphNode;
-            var previewer = Utils.FindChild<IRPreview>(nodeToolTip_, "IRPreviewer");
+            var previewer = Utils.FindChild<IRPreviewTooltip>(nodeToolTip_, "IRPreviewer");
             previewer.InitializeFromDocument(document_);
 
             if (node.NodeInfo.ElementData is BlockIR block) {
@@ -749,12 +749,12 @@ namespace IRExplorerUI {
                                                                   position, width, height, this);
             }
             else {
-                var width = Math.Max(GraphOptionsPanel.MinimumWidth,
-                    Math.Min(GraphHost.ActualWidth, GraphOptionsPanel.DefaultWidth));
-                var height = Math.Max(GraphOptionsPanel.MinimumHeight,
-                    Math.Min(GraphHost.ActualHeight, GraphOptionsPanel.DefaultHeight));
+                var width = Math.Max(FlowGraphOptionsPanel.MinimumWidth,
+                    Math.Min(GraphHost.ActualWidth, FlowGraphOptionsPanel.DefaultWidth));
+                var height = Math.Max(FlowGraphOptionsPanel.MinimumHeight,
+                    Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
                 var position = GraphHost.PointToScreen(new Point(GraphHost.ActualWidth - width, 0));
-                graphOptionsPanel_ = new OptionsPanelHostWindow(new GraphOptionsPanel(),
+                graphOptionsPanel_ = new OptionsPanelHostWindow(new FlowGraphOptionsPanel(),
                                                                   position, width, height, this);
             }
 

@@ -32,7 +32,7 @@ namespace IRExplorerUI {
         }
 
         private void IRPreviewToolTip_Loaded(object sender, RoutedEventArgs e) {
-            var previewer = Utils.FindChild<IRPreview>(this, "IRPreviewer");
+            var previewer = Utils.FindChild<IRPreviewTooltip>(this, "IRPreviewer");
             previewer.InitializeFromDocument(document_);
             previewer.PreviewedElement = element_;
 

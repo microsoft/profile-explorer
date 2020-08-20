@@ -676,8 +676,11 @@ namespace IRExplorerUI {
             }
 
             var options = new CallGraphPrinterOptions() {
-
+                ////UseSingleIncomingEdge = true,
+                //UseStraightLines = true,
+                UseExternalNode = true
             };
+
             var printer = new CallGraphPrinter(cg, options);
             var result = printer.PrintGraph();
             var graphText = printer.CreateGraph(result, new CancelableTask());
@@ -693,6 +696,7 @@ namespace IRExplorerUI {
 
             var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, printer.CreateNodeDataMap());
             var layoutGraph = graphReader.ReadGraph();
+            layoutGraph.GraphOptions = options;
             panel.DisplayGraph(layoutGraph);
             window.Show();
         }
@@ -701,23 +705,25 @@ namespace IRExplorerUI {
             int instrs = e.Function.InstructionCount;
 
             if (instrs == 0) {
-                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(0, 10));
+                e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap2(0, 10));
             }
             else if (instrs <= 2) {
-                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(2, 10));
+                e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap2(2, 10));
             }
             else if (instrs <= 5) {
-                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(4, 10));
+                e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap2(4, 10));
             }
             else if (instrs <= 10) {
-                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(5, 10));
+                e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap2(5, 10));
             }
             else if (instrs <= 20) {
-                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(6, 10));
+                e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap2(6, 10));
             }
             else {
-                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(8, 10));
+                e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap2(8, 10));
             }
+
+            e.FunctionNode.GetTag<GraphNodeTag>().Label = $"{instrs} instrs";
         }
 
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {

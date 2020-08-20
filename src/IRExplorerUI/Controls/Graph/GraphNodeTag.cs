@@ -8,6 +8,13 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
     public class GraphNodeTag : ITag {
+        public enum LabelPlacementKind {
+            Top,
+            Bottom,
+            Left,
+            Right
+        }
+
         public static readonly Color[] HeatmapColors = new Color[] {
             Utils.ColorFromString("#63BE7B"),
             Utils.ColorFromString("#85C77D"),
@@ -39,30 +46,41 @@ namespace IRExplorerUI {
 
         public Color? BackgroundColor { get; set; }
         public Color? BorderColor { get; set; }
-        public Color? FontColor { get; set; }
         public double BorderThickness { get; set; }
+        public string Label { get; set; }
+        public LabelPlacementKind LabelPlacement { get; set; }
+        public Color? LabelFontColor { get; set; }
 
-        public static GraphNodeTag HeatMap(long value, long maxValue) {
+        public static GraphNodeTag MakeLabel(string label, Color? fontColor = null,
+                                             LabelPlacementKind position = LabelPlacementKind.Bottom) {
+            return new GraphNodeTag() {
+                Label = label,
+                LabelFontColor = fontColor,
+                LabelPlacement = position
+            };
+        }
+
+        public static GraphNodeTag MakeHeatMap(long value, long maxValue) {
             return new GraphNodeTag() {
                 BackgroundColor = GetHeatmapColor(value, maxValue)
             };
         }
 
-        public static GraphNodeTag HeatMap2(long value, long maxValue) {
+        public static GraphNodeTag MakeHeatMap2(long value, long maxValue) {
             return new GraphNodeTag() {
                 BackgroundColor = GetHeatmapColor2(value, maxValue)
             };
         }
 
         public static Color GetHeatmapColor(long value, long maxValue) {
-            return GetScaledColor(value, maxValue, HeatmapColors);
+            return GetScaleColor(value, maxValue, HeatmapColors);
         }
 
         public static Color GetHeatmapColor2(long value, long maxValue) {
-            return GetScaledColor(value, maxValue, HeatmapColors2);
+            return GetScaleColor(value, maxValue, HeatmapColors2);
         }
 
-        public static Color GetScaledColor(long value, long maxValue, Color[] palette) {
+        public static Color GetScaleColor(long value, long maxValue, Color[] palette) {
             int index = (int)Math.Round(((double)value * (palette.Length - 1)) / (double)maxValue);
             return palette[index];
         }
