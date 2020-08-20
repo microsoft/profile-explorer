@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.UTC;
 
 namespace CompilerStudio {
@@ -110,7 +110,7 @@ namespace CompilerStudio {
                                          var function = sectionParser.ParseSection(section, text);
 
                                          if (function != null) {
-                                             var p = new CFGPrinter(function);
+                                             var p = new FlowGraphPrinter(function);
                                              string s = p.PrintGraph();
                                              File.WriteAllText(Guid.NewGuid().ToString() + ".in", s);
 

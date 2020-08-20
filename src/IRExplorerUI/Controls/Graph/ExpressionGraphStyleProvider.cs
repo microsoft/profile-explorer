@@ -3,7 +3,7 @@
 
 using System.Windows.Media;
 using IRExplorerCore.Graph;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
 
@@ -24,17 +24,17 @@ namespace IRExplorerUI {
         private HighlightingStyle operandNodeStyle_;
 
         private ICompilerInfoProvider compilerInfo_;
-        private GraphKind graphKind_;
+        private Graph graph_;
         private ExpressionGraphSettings options_;
         private HighlightingStyle phiNodeStyle_;
         private HighlightingStyle loadNodeStyle_;
         private HighlightingStyle callNodeStyle_;
         private HighlightingStyle unaryNodeStyle_;
 
-        public ExpressionGraphStyleProvider(GraphKind kind, ExpressionGraphSettings options,
+        public ExpressionGraphStyleProvider(Graph graph, ExpressionGraphSettings options,
                                             ICompilerInfoProvider compilerInfo) {
             compilerInfo_ = compilerInfo;
-            graphKind_ = kind;
+            graph_ = graph;
             options_ = options;
             defaultTextColor_ = ColorBrushes.GetBrush(options.TextColor);
             defaultNodeBackground_ = ColorBrushes.GetBrush(options.NodeColor);
@@ -101,50 +101,50 @@ namespace IRExplorerUI {
                 case null:
                     return defaultNodeStyle_;
                 case OperandIR op: {
-                    switch (op.Kind) {
-                        case OperandKind.Variable:
-                        case OperandKind.Temporary: {
-                            return operandNodeStyle_;
+                        switch (op.Kind) {
+                            case OperandKind.Variable:
+                            case OperandKind.Temporary: {
+                                    return operandNodeStyle_;
+                                }
+                            case OperandKind.IntConstant:
+                            case OperandKind.FloatConstant: {
+                                    return numberOperandNodeStyle_;
+                                }
+                            case OperandKind.Indirection: {
+                                    return indirectOperandNodeStyle_;
+                                }
+                            case OperandKind.Address:
+                            case OperandKind.LabelAddress: {
+                                    return addressOperandNodeStyle_;
+                                }
                         }
-                        case OperandKind.IntConstant:
-                        case OperandKind.FloatConstant: {
-                            return numberOperandNodeStyle_;
-                        }
-                        case OperandKind.Indirection: {
-                            return indirectOperandNodeStyle_;
-                        }
-                        case OperandKind.Address:
-                        case OperandKind.LabelAddress: {
-                            return addressOperandNodeStyle_;
-                        }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
                 case InstructionIR instr: {
-                    if (compilerInfo_.IR.IsCopyInstruction(instr)) {
-                        return copyNodeStyle_;
-                    }
-                    else if (compilerInfo_.IR.IsPhiInstruction(instr)) {
-                        return phiNodeStyle_;
-                    }
-                    else if (compilerInfo_.IR.IsLoadInstruction(instr) ||
-                             compilerInfo_.IR.IsStoreInstruction(instr)) {
-                        return loadNodeStyle_;
-                    }
-                    else if (compilerInfo_.IR.IsCallInstruction(instr) ||
-                             compilerInfo_.IR.IsIntrinsicCallInstruction(instr)) {
-                        return callNodeStyle_;
-                    }
-                    else if (instr.IsUnary) {
-                        return unaryNodeStyle_;
-                    }
-                    else if (instr.IsBinary) {
-                        return binaryNodeStyle_;
-                    }
+                        if (compilerInfo_.IR.IsCopyInstruction(instr)) {
+                            return copyNodeStyle_;
+                        }
+                        else if (compilerInfo_.IR.IsPhiInstruction(instr)) {
+                            return phiNodeStyle_;
+                        }
+                        else if (compilerInfo_.IR.IsLoadInstruction(instr) ||
+                                 compilerInfo_.IR.IsStoreInstruction(instr)) {
+                            return loadNodeStyle_;
+                        }
+                        else if (compilerInfo_.IR.IsCallInstruction(instr) ||
+                                 compilerInfo_.IR.IsIntrinsicCallInstruction(instr)) {
+                            return callNodeStyle_;
+                        }
+                        else if (instr.IsUnary) {
+                            return unaryNodeStyle_;
+                        }
+                        else if (instr.IsBinary) {
+                            return binaryNodeStyle_;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             return defaultNodeStyle_;
@@ -182,6 +182,10 @@ namespace IRExplorerUI {
 
         public bool ShouldRenderEdges(GraphEdgeKind kind) {
             return true;
+        }
+
+        public bool ShouldUsePolylines() {
+            return false;
         }
     }
 }

@@ -4,11 +4,12 @@
 using System.Collections.Generic;
 using System.Windows.Media;
 using IRExplorerCore.Graph;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
     public class FlowGraphStyleProvider : IGraphStyleProvider {
+        private const int PolylineEdgeThreshold = 100;
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
         private const double DashedEdgeThickness = 0.035;
@@ -25,14 +26,14 @@ namespace IRExplorerUI {
         private List<HighlightingStyle> loopBlockStyles_;
         private Pen loopEdgeStyle_;
 
-        private GraphKind graphKind_;
+        private Graph graph_;
         private FlowGraphSettings options_;
         private HighlightingStyle returnBlockStyle_;
         private Pen returnEdgeStyle_;
         private HighlightingStyle switchBlockStyle_;
 
-        public FlowGraphStyleProvider(GraphKind kind, FlowGraphSettings options) {
-            graphKind_ = kind;
+        public FlowGraphStyleProvider(Graph graph, FlowGraphSettings options) {
+            graph_ = graph;
             options_ = options;
             defaultTextColor_ = ColorBrushes.GetBrush(options.TextColor);
             defaultNodeBackground_ = ColorBrushes.GetBrush(options.NodeColor);
@@ -114,7 +115,7 @@ namespace IRExplorerUI {
                 return GraphEdgeKind.ImmediateDominator;
             }
 
-            if (graphKind_ == GraphKind.FlowGraph) {
+            if (graph_.Kind == GraphKind.FlowGraph) {
                 var fromBlock = edge.NodeFrom?.ElementData as BlockIR;
                 var toBlock = edge.NodeTo?.ElementData as BlockIR;
 
@@ -141,18 +142,18 @@ namespace IRExplorerUI {
         public Pen GetEdgeStyle(GraphEdgeKind kind) {
             switch (kind) {
                 case GraphEdgeKind.Loop: {
-                    return loopEdgeStyle_;
-                }
+                        return loopEdgeStyle_;
+                    }
                 case GraphEdgeKind.Branch: {
-                    return branchEdgeStyle_;
-                }
+                        return branchEdgeStyle_;
+                    }
                 case GraphEdgeKind.Return: {
-                    return returnEdgeStyle_;
-                }
+                        return returnEdgeStyle_;
+                    }
                 case GraphEdgeKind.ImmediateDominator:
                 case GraphEdgeKind.ImmediatePostDominator: {
-                    return immDomEdgeStyle_;
-                }
+                        return immDomEdgeStyle_;
+                    }
             }
 
             return edgeStyle_;
@@ -197,6 +198,11 @@ namespace IRExplorerUI {
             }
 
             return defaultNodeStyle_;
+        }
+
+        public bool ShouldUsePolylines() {
+            return graph_.Nodes.Find(node => node.InEdges != null &&
+                                     node.InEdges.Count > PolylineEdgeThreshold) != null;
         }
     }
 }

@@ -5,14 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using IRExplorerCore.Analysis;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerUI {
     public class CallGraphStyleProvider : IGraphStyleProvider {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
 
-        private Pen branchEdgeStyle_;
         private Brush defaultNodeBackground_;
         private HighlightingStyle defaultNodeStyle_;
         private HighlightingStyle leafNodeStyle_;
@@ -58,21 +57,39 @@ namespace IRExplorerUI {
         public HighlightingStyle GetNodeStyle(Node node) {
             var callNode = (CallGraphNode)node.Data;
 
-            if(callNode.IsExternal) {
+            if (callNode == null) {
+                return defaultNodeStyle_;
+            }
+
+            // Check for a tag that overrides the style.
+            var graphTag = callNode.GetTag<GraphNodeTag>();
+
+            if (graphTag != null) {
+                var background = graphTag.BackgroundColor ?? Colors.Gainsboro;
+                var borderColor = graphTag.BorderColor ?? Colors.DimGray;
+                var borderThickness = graphTag.BorderThickness != 0 ? graphTag.BorderThickness : DefaultEdgeThickness;
+                return new HighlightingStyle(background, Pens.GetPen(borderColor, borderThickness));
+            }
+
+            if (callNode.IsExternal) {
                 return externalNodeStyle_;
             }
-            else if(!callNode.HasCallers) {
+            else if (!callNode.HasCallers) {
                 return entryNodeStyle_;
             }
-            else if(!callNode.HasCallees) {
+            else if (!callNode.HasCallees) {
                 return leafNodeStyle_;
             }
-            
+
             return defaultNodeStyle_;
         }
 
         public bool ShouldRenderEdges(GraphEdgeKind kind) {
             return true;
+        }
+
+        public bool ShouldUsePolylines() {
+            return false;
         }
     }
 }

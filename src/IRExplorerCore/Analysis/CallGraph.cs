@@ -6,7 +6,7 @@ using IRExplorerCore.IR;
 namespace IRExplorerCore.Analysis {
     public class CallSite : TaggedObject {
         public ulong CallInstructionId { get; set; }
-        public CallGraphNode Target{ get; set; }
+        public CallGraphNode Target { get; set; }
         public CallGraphNode Parent { get; set; }
 
         public CallSite(ulong callInstrId, CallGraphNode target, CallGraphNode parent) {
@@ -46,7 +46,7 @@ namespace IRExplorerCore.Analysis {
 
     public class CallGraphNode : TaggedObject {
         public string FunctionName { get; set; }
-        public int Number { get;set; }
+        public int Number { get; set; }
         public CallGraphNodeKind Kind { get; set; }
         public List<CallSite> Callers { get; set; }
         public List<CallSite> Callees { get; set; }
@@ -110,6 +110,26 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
+        public int UniqueCallerCount {
+            get {
+                int count = 0;
+                foreach (var node in UniqueCallers) {
+                    count++;
+                }
+                return count;
+            }
+        }
+
+        public int UniqueCalleeCount {
+            get {
+                int count = 0;
+                foreach (var node in UniqueCallees) {
+                    count++;
+                }
+                return count;
+            }
+        }
+
         public static bool operator ==(CallGraphNode left, CallGraphNode right) {
             return EqualityComparer<CallGraphNode>.Default.Equals(left, right);
         }
@@ -117,6 +137,16 @@ namespace IRExplorerCore.Analysis {
         public static bool operator !=(CallGraphNode left, CallGraphNode right) {
             return !(left == right);
         }
+    }
+
+    public class CallGraphEventArgs : EventArgs {
+        public CallGraphEventArgs(FunctionIR function, CallGraphNode functionNode) {
+            Function = function;
+            FunctionNode = functionNode;
+        }
+
+        public FunctionIR Function { get; set; }
+        public CallGraphNode FunctionNode { get; set; }
     }
 
     public class CallGraph {
@@ -133,6 +163,8 @@ namespace IRExplorerCore.Analysis {
         public List<CallGraphNode> EntryFunctionNodes => entryNodes_;
         public List<CallGraphNode> FunctionNodes => nodes_;
 
+        public event EventHandler<CallGraphEventArgs> CallGraphNodeCreated;
+
         public CallGraph(IRTextSummary summary, IRTextSectionLoader loader, ICompilerIRInfo irInfo) {
             summary_ = summary;
             loader_ = loader;
@@ -145,8 +177,8 @@ namespace IRExplorerCore.Analysis {
         }
 
         public void Execute(string sectionName) {
-            foreach(var func in summary_.Functions) {
-                if(visitedFuncts_.Contains(func)) {
+            foreach (var func in summary_.Functions) {
+                if (visitedFuncts_.Contains(func)) {
                     continue;
                 }
 
@@ -154,8 +186,8 @@ namespace IRExplorerCore.Analysis {
             }
 
             // Find entry functions.
-            foreach(var node in nodes_) {
-                if(!node.HasCallees) {
+            foreach (var node in nodes_) {
+                if (!node.HasCallees) {
                     entryNodes_.Add(node);
                 }
             }
@@ -181,8 +213,15 @@ namespace IRExplorerCore.Analysis {
 
                 var funcIR = LoadSection(func, sectionName);
 
-                if(funcIR == null) {
+                if (funcIR == null) {
                     continue; // Failed to parse function, ignore.
+                }
+
+                // Notify client about the node being created and function IR being available,
+                // can be used to add extra annotation tags on the node without having
+                // to reparse the functions later.
+                if (CallGraphNodeCreated != null) {
+                    CallGraphNodeCreated(this, new CallGraphEventArgs(funcIR, funcNode));
                 }
 
                 foreach (var instr in funcIR.AllInstructions) {
@@ -219,9 +258,9 @@ namespace IRExplorerCore.Analysis {
         private CallGraphNode GetOrCreateNode(string funcName) {
             var func = summary_.FindFunction(funcName);
 
-            if(func == null) {
+            if (func == null) {
                 // Consider that it's an external function without definition.
-                if(externalFuncToNodeMap_.TryGetValue(funcName, out var externalNode)) {
+                if (externalFuncToNodeMap_.TryGetValue(funcName, out var externalNode)) {
                     return externalNode;
                 }
 
@@ -232,7 +271,7 @@ namespace IRExplorerCore.Analysis {
                 return externalNode;
             }
 
-            if(funcToNodeMap_.TryGetValue(func, out var node)) {
+            if (funcToNodeMap_.TryGetValue(func, out var node)) {
                 return node;
             }
 
@@ -250,7 +289,7 @@ namespace IRExplorerCore.Analysis {
         private FunctionIR LoadSection(IRTextFunction func, string sectionName) {
             var section = func.FindSection(sectionName);
 
-            if(section == null) {
+            if (section == null) {
                 return null;
             }
 

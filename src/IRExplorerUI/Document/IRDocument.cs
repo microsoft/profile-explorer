@@ -25,6 +25,7 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerUI {
     public enum BringIntoViewStyle {
@@ -2260,7 +2261,8 @@ namespace IRExplorerUI {
         }
 
         private void MarkLoopBlocks() {
-            var graphStyle = new FlowGraphStyleProvider(GraphKind.FlowGraph, App.Settings.FlowGraphSettings);
+            var dummyGraph = new Graph(GraphKind.FlowGraph);
+            var graphStyle = new FlowGraphStyleProvider(dummyGraph, App.Settings.FlowGraphSettings);
             var loopGroups = new Dictionary<HighlightingStyle, HighlightedGroup>();
 
             foreach (var block in function_.Blocks) {

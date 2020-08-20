@@ -26,7 +26,7 @@ using IRExplorerUI.Query;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.UTC;
@@ -664,17 +664,21 @@ namespace IRExplorerUI {
             //throw new InvalidOperationException("Crash Handler test assert");
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
             var cg = new CallGraph(MainDocumentSummary, loadedDoc.Loader, CompilerInfo.IR);
+            cg.CallGraphNodeCreated += Cg_CallGraphNodeCreated;
 
+            var active = FindActiveDocumentView();
 
-            var active = FindActiveDocumentView(); ;
             if (active != null) {
                 cg.Execute(active.Section.ParentFunction, "Tuples after Reader (-db7 == DB_INITIAL)");
             }
             else {
                 cg.Execute("Tuples after Reader (-db7 == DB_INITIAL)");
-            } 
+            }
 
-            var printer = new CallGraphPrinter(cg);
+            var options = new CallGraphPrinterOptions() {
+
+            };
+            var printer = new CallGraphPrinter(cg, options);
             var result = printer.PrintGraph();
             var graphText = printer.CreateGraph(result, new CancelableTask());
 
@@ -691,6 +695,29 @@ namespace IRExplorerUI {
             var layoutGraph = graphReader.ReadGraph();
             panel.DisplayGraph(layoutGraph);
             window.Show();
+        }
+
+        private void Cg_CallGraphNodeCreated(object sender, CallGraphEventArgs e) {
+            int instrs = e.Function.InstructionCount;
+
+            if (instrs == 0) {
+                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(0, 10));
+            }
+            else if (instrs <= 2) {
+                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(2, 10));
+            }
+            else if (instrs <= 5) {
+                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(4, 10));
+            }
+            else if (instrs <= 10) {
+                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(5, 10));
+            }
+            else if (instrs <= 20) {
+                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(6, 10));
+            }
+            else {
+                e.FunctionNode.AddTag(GraphNodeTag.HeatMap2(8, 10));
+            }
         }
 
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {

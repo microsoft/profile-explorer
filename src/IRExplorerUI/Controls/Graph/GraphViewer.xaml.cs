@@ -9,7 +9,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore.Analysis;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
@@ -24,7 +24,7 @@ namespace IRExplorerUI {
         private readonly double ScaleFactor = 50;
 
         private IRElement element_;
-        private LayoutGraph graph_;
+        private Graph graph_;
         private GraphRenderer graphRenderer_;
         private DrawingVisual graphVisual_;
         private GraphNode hoveredNode_;
@@ -61,7 +61,7 @@ namespace IRExplorerUI {
             SetupEvents();
         }
 
-        public LayoutGraph Graph => graph_;
+        public Graph Graph => graph_;
         public bool IsGraphLoaded => graphVisual_ != null;
         public IRElement SelectedElement => element_;
 
@@ -549,13 +549,13 @@ namespace IRExplorerUI {
             return graphVisual_;
         }
 
-        public void ShowGraph(LayoutGraph graph, ICompilerInfoProvider sessionCompilerInfo) {
+        public void ShowGraph(Graph graph, ICompilerInfoProvider sessionCompilerInfo) {
             compilerInfo_ = sessionCompilerInfo;
             ReloadGraph(graph);
             GraphLoaded?.Invoke(this, new EventArgs());
         }
 
-        private void ReloadGraph(LayoutGraph graph) {
+        private void ReloadGraph(Graph graph) {
             HideGraph();
             graph_ = graph;
             graphRenderer_ = new GraphRenderer(graph_, settings_, compilerInfo_);

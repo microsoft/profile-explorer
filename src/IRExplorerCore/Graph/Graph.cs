@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
-namespace IRExplorerCore.GraphViz {
+namespace IRExplorerCore.Graph {
     public sealed class Node {
         //? Commented properties are currently not used.
         public ReadOnlyMemory<char> Name { get; set; }
@@ -60,22 +60,30 @@ namespace IRExplorerCore.GraphViz {
         }
     }
 
-    public sealed class LayoutGraph {
-        public LayoutGraph(GraphKind kind) {
-            GraphKind = kind;
+    public enum GraphKind {
+        FlowGraph,
+        DominatorTree,
+        PostDominatorTree,
+        ExpressionGraph,
+        CallGraph
+    }
+
+    public sealed class Graph {
+        public Graph(GraphKind kind) {
+            Kind = kind;
             Nodes = new List<Node>();
             Edges = new List<Edge>();
-            DataNodeMap = new Dictionary<object, Node>();
+            DataNodeMap = new Dictionary<TaggedObject, Node>();
         }
 
-        public GraphKind GraphKind { get; set; }
+        public GraphKind Kind { get; set; }
         public List<Node> Nodes { get; set; }
         public List<Edge> Edges { get; set; }
         public double Width { get; set; }
         public double Height { get; set; }
 
         //? TODO: Move below out so it's easy to discard them and free memory for large graphs
-        public Dictionary<object, Node> DataNodeMap { get; set; }
-        public Dictionary<object, List<object>> DataNodeGroupsMap { get; set; }
+        public Dictionary<TaggedObject, Node> DataNodeMap { get; set; }
+        public Dictionary<TaggedObject, List<TaggedObject>> DataNodeGroupsMap { get; set; }
     }
 }

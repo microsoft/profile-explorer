@@ -8,7 +8,7 @@ using System.Text;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
-namespace IRExplorerCore.GraphViz {
+namespace IRExplorerCore.Graph {
     public class ExpressionGraphPrinterOptions {
         public bool PrintVariableNames { get; set; }
         public bool PrintSSANumbers { get; set; }
@@ -28,8 +28,8 @@ namespace IRExplorerCore.GraphViz {
         private IRElement rootElement_;
         private IRElement startElement_;
         private Dictionary<IRElement, IRElement> visitedElements_;
-        private Dictionary<string, object> elementNameMap_;
-        private Dictionary<object, List<object>> blockNodeGroupsMap_;
+        private Dictionary<string, TaggedObject> elementNameMap_;
+        private Dictionary<TaggedObject, List<TaggedObject>> blockNodeGroupsMap_;
 
         public ExpressionGraphPrinter(IRElement startElement,
                                       ExpressionGraphPrinterOptions options) {
@@ -38,8 +38,8 @@ namespace IRExplorerCore.GraphViz {
             visitedElements_ = new Dictionary<IRElement, IRElement>();
             nodes_ = new List<Tuple<IRElement, IRElement, string>>();
             edges_ = new List<Tuple<IRElement, IRElement>>();
-            elementNameMap_ = new Dictionary<string, object>();
-            blockNodeGroupsMap_ = new Dictionary<object, List<object>>();
+            elementNameMap_ = new Dictionary<string, TaggedObject>();
+            blockNodeGroupsMap_ = new Dictionary<TaggedObject, List<TaggedObject>>();
         }
 
         private void CreateNode(IRElement element, IRElement parent, string label) {
@@ -133,7 +133,7 @@ namespace IRExplorerCore.GraphViz {
             var block = tuple.ParentBlock;
 
             if (!blockNodeGroupsMap_.TryGetValue(block, out var group)) {
-                group = new List<object>();
+                group = new List<TaggedObject>();
                 blockNodeGroupsMap_.Add(block, group);
             }
 
@@ -316,11 +316,11 @@ namespace IRExplorerCore.GraphViz {
             return label;
         }
 
-        public override Dictionary<string, object> CreateNodeDataMap() {
+        public override Dictionary<string, TaggedObject> CreateNodeDataMap() {
             return elementNameMap_;
         }
 
-        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
+        public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
             return blockNodeGroupsMap_;
         }
     }

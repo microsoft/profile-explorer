@@ -7,8 +7,8 @@ using System.Text;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
-namespace IRExplorerCore.GraphViz {
-    public sealed class CFGPrinter : GraphVizPrinter {
+namespace IRExplorerCore.Graph {
+    public sealed class FlowGraphPrinter : GraphVizPrinter {
         private const int LargeGraphThresholdMin = 500;
         private const int LargeGraphThresholdMax = 1000;
         private const string LargeGraphSettings = @"
@@ -21,11 +21,11 @@ nslimit=2;
         ";
 
         private FunctionIR function_;
-        private Dictionary<string, object> blockNameMap_;
+        private Dictionary<string, TaggedObject> blockNameMap_;
 
-        public CFGPrinter(FunctionIR function) {
+        public FlowGraphPrinter(FunctionIR function) {
             function_ = function;
-            blockNameMap_ = new Dictionary<string, object>();
+            blockNameMap_ = new Dictionary<string, TaggedObject>();
         }
 
         protected override string GetExtraSettings() {
@@ -94,12 +94,12 @@ nslimit=2;
             return builder.ToString();
         }
 
-        public override Dictionary<string, object> CreateNodeDataMap() {
+        public override Dictionary<string, TaggedObject> CreateNodeDataMap() {
             if (blockNameMap_.Count > 0) {
                 return blockNameMap_;
             }
 
-            var map = new Dictionary<string, object>();
+            var map = new Dictionary<string, TaggedObject>();
 
             foreach (var block in function_.Blocks) {
                 map[GetNodeName(block.Id)] = block;
@@ -108,7 +108,7 @@ nslimit=2;
             return map;
         }
 
-        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
+        public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
             return null;
         }
     }

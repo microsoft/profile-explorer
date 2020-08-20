@@ -19,7 +19,7 @@ using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using Microsoft.Win32;
@@ -525,7 +525,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private Func<FunctionIR, IRTextSection, CancelableTask, LayoutGraph> GetComputeGraphAction(
+        private Func<FunctionIR, IRTextSection, CancelableTask, Graph> GetComputeGraphAction(
             GraphKind graphKind) {
             return graphKind switch
             {
@@ -536,7 +536,7 @@ namespace IRExplorerUI {
             };
         }
 
-        private Func<FunctionIR, IRTextSection, CancelableTask, LayoutGraph> GetComputeGraphAction(
+        private Func<FunctionIR, IRTextSection, CancelableTask, Graph> GetComputeGraphAction(
             ToolPanelKind graphKind) {
             return graphKind switch
             {
@@ -548,7 +548,7 @@ namespace IRExplorerUI {
         }
 
         public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
-                                            Func<FunctionIR, IRTextSection, CancelableTask, LayoutGraph> computeGraphAction) {
+                                            Func<FunctionIR, IRTextSection, CancelableTask, Graph> computeGraphAction) {
             //? TODO: When the section is changed quickly and there are long-running tasks,
             //? the CFG panel can get out of sync - the doc. tries to highlight a block
             //? for another CFG if the loading of the prev. CFG completes between loading the text
@@ -593,19 +593,19 @@ namespace IRExplorerUI {
             }
         }
 
-        private LayoutGraph ComputeFlowGraph(FunctionIR function, IRTextSection section,
+        private Graph ComputeFlowGraph(FunctionIR function, IRTextSection section,
                                                          CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.FlowGraph);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
-        private LayoutGraph ComputeDominatorTree(FunctionIR function, IRTextSection section,
+        private Graph ComputeDominatorTree(FunctionIR function, IRTextSection section,
                                                              CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.DominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
-        private LayoutGraph ComputePostDominatorTree(FunctionIR function, IRTextSection section,
+        private Graph ComputePostDominatorTree(FunctionIR function, IRTextSection section,
                                                                  CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.PostDominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
@@ -897,7 +897,7 @@ namespace IRExplorerUI {
         }
 
         private bool ShowDocumentReloadQuery(string filePath) {
-            if(SilentMode) {
+            if (SilentMode) {
                 return false;
             }
 

@@ -7,16 +7,16 @@ using System.Text;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
-namespace IRExplorerCore.GraphViz {
+namespace IRExplorerCore.Graph {
     class DominatorTreePrinter : GraphVizPrinter {
         private FunctionIR function_;
         private DominatorAlgorithmOptions options_;
-        private Dictionary<string, object> blockNameMap_;
+        private Dictionary<string, TaggedObject> blockNameMap_;
 
         public DominatorTreePrinter(FunctionIR function, DominatorAlgorithmOptions options) {
             function_ = function;
             options_ = options;
-            blockNameMap_ = new Dictionary<string, object>();
+            blockNameMap_ = new Dictionary<string, TaggedObject>();
         }
 
         private void CreateNode(BlockIR block, StringBuilder builder) {
@@ -52,12 +52,12 @@ namespace IRExplorerCore.GraphViz {
             }
         }
 
-        public override Dictionary<string, object> CreateNodeDataMap() {
+        public override Dictionary<string, TaggedObject> CreateNodeDataMap() {
             if (blockNameMap_.Count > 0) {
                 return blockNameMap_;
             }
 
-            var map = new Dictionary<string, object>();
+            var map = new Dictionary<string, TaggedObject>();
 
             foreach (var block in function_.Blocks) {
                 map[GetNodeName(block.Id)] = block;
@@ -66,7 +66,7 @@ namespace IRExplorerCore.GraphViz {
             return map;
         }
 
-        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
+        public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
             return null;
         }
     }
