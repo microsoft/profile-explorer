@@ -39,29 +39,33 @@ namespace IRExplorerCore.Analysis {
         }
     }
 
-    public enum CallGraphNodeKind {
-        Internal,
-        External
+    [Flags]
+    public enum CallGraphNodeFlags {
+        None = 0,
+        Internal = 1 << 0,
+        External = 1 << 1,
+        AddressTaken = 1 << 2
     }
 
     public class CallGraphNode : TaggedObject {
         public string FunctionName { get; set; }
         public int Number { get; set; }
-        public CallGraphNodeKind Kind { get; set; }
         public List<CallSite> Callers { get; set; }
         public List<CallSite> Callees { get; set; }
+        public CallGraphNodeFlags Flags { get;set; }
 
-        public CallGraphNode(string funcName, int number, CallGraphNodeKind kind) {
+        public CallGraphNode(string funcName, int number, CallGraphNodeFlags flags) {
             FunctionName = funcName;
             Number = number;
-            Kind = kind;
+            Flags = flags;
         }
 
         public bool HasCallers => Callers != null && Callers.Count > 0;
         public bool HasCallees => Callees != null && Callees.Count > 0;
         public bool IsLeafFunction => !HasCallees;
-        public bool IsInternal => Kind == CallGraphNodeKind.Internal;
-        public bool IsExternal => Kind == CallGraphNodeKind.External;
+        public bool IsInternal => Flags.HasFlag(CallGraphNodeFlags.Internal);
+        public bool IsExternal => Flags.HasFlag(CallGraphNodeFlags.External);
+        public bool IsAddressTaken => Flags.HasFlag(CallGraphNodeFlags.AddressTaken);
 
         public void AddCallee(CallSite callsite) {
             Callees ??= new List<CallSite>();
@@ -75,11 +79,12 @@ namespace IRExplorerCore.Analysis {
 
         public override bool Equals(object obj) {
             return obj is CallGraphNode node &&
+                   Number == node.Number &&
                    FunctionName == node.FunctionName;
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(FunctionName);
+            return HashCode.Combine(Number);
         }
 
         public IEnumerable<CallGraphNode> UniqueCallers {
@@ -265,7 +270,7 @@ namespace IRExplorerCore.Analysis {
                 }
 
                 externalNode = new CallGraphNode(funcName, GetNextCallNodeId(),
-                                                 CallGraphNodeKind.External);
+                                                 CallGraphNodeFlags.External);
                 externalFuncToNodeMap_[funcName] = externalNode;
                 nodes_.Add(externalNode);
                 return externalNode;
@@ -276,7 +281,7 @@ namespace IRExplorerCore.Analysis {
             }
 
             node = new CallGraphNode(funcName, GetNextCallNodeId(),
-                                     CallGraphNodeKind.Internal);
+                                     CallGraphNodeFlags.Internal);
             funcToNodeMap_[func] = node;
             nodes_.Add(node);
             return node;

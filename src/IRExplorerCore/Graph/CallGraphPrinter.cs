@@ -6,37 +6,45 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Graph {
     public class CallGraphPrinterOptions {
+        public bool UseExternalNode { get; set; }
         public bool UseStraightLines { get; set; }
+        public bool UseSingleIncomingEdge { get; set; }
         public bool TruncateLongNames { get; set; }
         public int NameLengthLimit { get; set; }
         public double VerticalDistanceFactor { get; set; }
     }
 
     public class CallGraphPrinter : GraphVizPrinter {
-        private const int LargeGraphThresholdMin = 1000;
-        private const int LargeGraphThresholdMax = 5000;
+        private const int ExternalNodeId = -1;
+        private const int LargeGraphThresholdMin = 500;
+        private const int LargeGraphThresholdMax = 1000;
 
         private const string StraightLinesSettings = @"
 splines = ortho;
 concentrate = true;
             ";
         private const string LargeGraphSettings = @"
-maxiter=8;
+maxiter=4;
         ";
         private static readonly string HugeGraphSettings = @"
-maxiter=4;
-mclimit=2;
-nslimit=2;
+maxiter=1;
+mclimit=1;
+nslimit=1;
         ";
 
         private CallGraphPrinterOptions options_;
         private CallGraph callGraph_;
         private Dictionary<string, TaggedObject> nodeNameMap_;
+        private HashSet<CallGraphNode> incomingEdgeNodes_;
 
         public CallGraphPrinter(CallGraph callGraph, CallGraphPrinterOptions options) {
             callGraph_ = callGraph;
             options_ = options;
             nodeNameMap_ = new Dictionary<string, TaggedObject>();
+
+            if(options_.UseSingleIncomingEdge) {
+                incomingEdgeNodes_ = new HashSet<CallGraphNode>();
+            }
         }
 
         private int EstimateEdgeCount() {
@@ -59,7 +67,7 @@ nslimit=2;
             // Increase the vertical distance between nodes the more there are
             // to make the graph somewhat easier to read.
             int nodeCount = callGraph_.FunctionNodes.Count;
-            double verticalDistance = Math.Min(8, 1.15 * Math.Log10(nodeCount));
+            double verticalDistance = Math.Min(8, 0.8 * Math.Log10(nodeCount));
             text = $"{text}\nranksep ={verticalDistance};\n";
 
             int edgeCount = EstimateEdgeCount();
@@ -78,6 +86,10 @@ nslimit=2;
         }
 
         protected override void PrintGraph(StringBuilder builder) {
+            if(options_.UseExternalNode) {
+                CreateNode(ExternalNodeId, "EXTERNAL", builder);
+            }
+
             foreach (var node in callGraph_.FunctionNodes) {
                 CreateNode(node, builder);
             }
@@ -86,12 +98,16 @@ nslimit=2;
                 foreach (var calleeNode in node.UniqueCallees) {
                     CreateEdge(node, calleeNode, builder);
                 }
+
+                if(options_.UseExternalNode && !node.HasCallers) {
+                    CreateEdge(ExternalNodeId, node.Number, builder);
+                }
             }
         }
 
         private void CreateNode(CallGraphNode node, StringBuilder builder) {
             //? TODO: Control through options
-            double verticalMargin = 0.075;
+            double verticalMargin = 0.1;
             string label = node.FunctionName;
 
             if (label.Length > 20) {
@@ -101,13 +117,19 @@ nslimit=2;
             // Increase node weight so that text fits completely.
             double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.04), 1.0);
 
-            var nodeName = CreateNodeWithMargins((ulong)node.Number, label, builder,
+            var nodeName = CreateNodeWithMargins(node.Number, label, builder,
                                                  horizontalMargin, verticalMargin);
             nodeNameMap_[nodeName] = node;
         }
 
         private void CreateEdge(CallGraphNode node1, CallGraphNode node2, StringBuilder builder) {
-            CreateEdge((ulong)node1.Number, (ulong)node2.Number, builder);
+            if(options_.UseSingleIncomingEdge) {
+                if(!incomingEdgeNodes_.Add(node2)) {
+                    return; // Node already has an edge.
+                }
+            }
+
+            CreateEdge(node1.Number, node2.Number, builder);
         }
 
         public override Dictionary<string, TaggedObject> CreateNodeDataMap() {

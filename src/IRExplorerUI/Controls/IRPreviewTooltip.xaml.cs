@@ -10,9 +10,9 @@ namespace IRExplorerUI {
     /// <summary>
     ///     Interaction logic for IRPreview.xaml
     /// </summary>
-    public partial class IRPreview : UserControl {
+    public partial class IRPreviewTooltip : UserControl {
         public static readonly DependencyProperty ListElementProperty = DependencyProperty.Register(
-            "ListElement", typeof(Tuple<IRDocument, IRElement, string>), typeof(IRPreview),
+            "ListElement", typeof(Tuple<IRDocument, IRElement, string>), typeof(IRPreviewTooltip),
             new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender,
                                           OnElementChanged));
 
@@ -20,7 +20,7 @@ namespace IRExplorerUI {
 
         private bool isDocumentOnly_;
 
-        public IRPreview() {
+        public IRPreviewTooltip() {
             InitializeComponent();
         }
 
@@ -69,7 +69,7 @@ namespace IRExplorerUI {
 
         public static void OnElementChanged(DependencyObject sender,
                                             DependencyPropertyChangedEventArgs eventArgs) {
-            var control = (IRPreview)sender;
+            var control = (IRPreviewTooltip)sender;
             control.ListElement = (Tuple<IRDocument, IRElement, string>)eventArgs.NewValue;
         }
 

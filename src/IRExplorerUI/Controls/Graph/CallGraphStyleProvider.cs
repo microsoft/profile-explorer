@@ -12,6 +12,7 @@ namespace IRExplorerUI {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
 
+        private Graph graph_;
         private Brush defaultNodeBackground_;
         private HighlightingStyle defaultNodeStyle_;
         private HighlightingStyle leafNodeStyle_;
@@ -20,7 +21,8 @@ namespace IRExplorerUI {
         private Brush defaultTextColor_;
         private Pen edgeStyle_;
 
-        public CallGraphStyleProvider() {
+        public CallGraphStyleProvider(Graph graph) {
+            graph_ = graph;
             defaultTextColor_ = ColorBrushes.GetBrush(Colors.Black);
             defaultNodeBackground_ = ColorBrushes.GetBrush(Colors.Gainsboro);
             defaultNodeStyle_ = new HighlightingStyle(defaultNodeBackground_,
@@ -89,7 +91,7 @@ namespace IRExplorerUI {
         }
 
         public bool ShouldUsePolylines() {
-            return false;
+            return ((CallGraphPrinterOptions)graph_.GraphOptions).UseStraightLines;
         }
     }
 }

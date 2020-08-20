@@ -35,7 +35,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public IRFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
+        public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             throw new NotImplementedException();
         }
 

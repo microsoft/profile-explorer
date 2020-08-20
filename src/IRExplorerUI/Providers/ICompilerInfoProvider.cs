@@ -21,7 +21,7 @@ namespace IRExplorerUI {
         List<DocumentTaskDefinition> BuiltinScripts { get; }
 
         bool AnalyzeLoadedFunction(FunctionIR function);
-        IRFoldingStrategy CreateFoldingStrategy(FunctionIR function);
+        IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
         IDiffOutputFilter CreateDiffOutputFilter();
     }
 }

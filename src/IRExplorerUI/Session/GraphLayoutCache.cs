@@ -21,7 +21,7 @@ namespace IRExplorerUI {
         }
 
         public Graph GenerateGraph<T, U>(T element, IRTextSection section, CancelableTask task,
-                                               U options = null) where T : class where U : class {
+                                         U options = null) where T : class where U : class {
             var printer = GraphPrinterFactory.CreateInstance(graphKind_, element, options);
             string graphText;
 
@@ -79,6 +79,7 @@ namespace IRExplorerUI {
             var layoutGraph = graphReader.ReadGraph();
 
             if (layoutGraph != null) {
+                layoutGraph.GraphOptions = options;
                 layoutGraph.DataNodeGroupsMap = blockNodeGroupsMap;
             }
 

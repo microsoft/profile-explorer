@@ -29,8 +29,8 @@ namespace IRExplorerUI.Compilers.LLVM {
         public ISectionStyleProvider SectionStyleProvider => styles_;
         public IRRemarkProvider RemarkProvider => remarks_;
 
-        public IRFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
-            return new UTCFoldingStrategy(function);
+        public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
+            return new BaseBlockFoldingStrategy(function);
         }
 
         public IDiffOutputFilter CreateDiffOutputFilter() {

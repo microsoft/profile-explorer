@@ -7,13 +7,13 @@ using ICSharpCode.AvalonEdit.Folding;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
-    public interface IRFoldingStrategy {
+    public interface IBlockFoldingStrategy {
         FunctionIR Function { get; set; }
         public void UpdateFoldings(FoldingManager manager, TextDocument document);
     }
 
-    public sealed class UTCFoldingStrategy : IRFoldingStrategy {
-        public UTCFoldingStrategy(FunctionIR function) {
+    public sealed class BaseBlockFoldingStrategy : IBlockFoldingStrategy {
+        public BaseBlockFoldingStrategy(FunctionIR function) {
             Function = function;
         }
 
