@@ -8,12 +8,18 @@ using System.IO;
 using System.Text;
 using IRExplorerCore.IR;
 
-namespace IRExplorerCore.GraphViz {
+namespace IRExplorerCore.Graph {
     public class GraphVizPrinter {
         private int subgraphIndex_;
+        private int nextInvisibleId_;
+
+        protected string CreateNode(int id, string label, StringBuilder builder,
+                                    string labelPrefix = null) {
+            return CreateNode((ulong)id, label, builder, labelPrefix);
+        }
 
         protected string CreateNode(ulong id, string label, StringBuilder builder,
-                                    string labelPrefix = null) {
+                                string labelPrefix = null) {
             string nodeName = $"n{id}";
 
             if (!string.IsNullOrEmpty(labelPrefix)) {
@@ -25,6 +31,12 @@ namespace IRExplorerCore.GraphViz {
             }
 
             return nodeName;
+        }
+
+        protected string CreateNodeWithMargins(int id, string label, StringBuilder builder,
+                                               double horizontalMargin, double verticalMargin,
+                                               string labelPrefix = null) {
+            return CreateNodeWithMargins((ulong)id, label, builder, horizontalMargin, verticalMargin, labelPrefix);
         }
 
         protected string CreateNodeWithMargins(ulong id, string label, StringBuilder builder,
@@ -46,8 +58,34 @@ namespace IRExplorerCore.GraphViz {
             return nodeName;
         }
 
+        protected string CreateInvisibleNode(StringBuilder builder) {
+            string nodeName = $"inv{nextInvisibleId_++}";
+            builder.AppendFormat($"{nodeName}[shape=point,width=0,height=0];\n");
+            return nodeName;
+        }
+
         protected string GetNodeName(ulong id) {
             return $"n{id}";
+        }
+
+        protected string GetNodeName(int id) {
+            return $"n{id}";
+        }
+
+        protected void CreateEdge(string id1, string id2, StringBuilder builder) {
+            builder.AppendFormat("{0} -> {1};\n", id1, id2);
+        }
+
+        protected void CreateEdge(int id1, string id2, StringBuilder builder) {
+            CreateEdge((ulong)id1, id2, builder);
+        }
+
+        protected void CreateEdge(ulong id1, string id2, StringBuilder builder) {
+            builder.AppendFormat("n{0} -> {1};\n", id1, id2);
+        }
+
+        protected void CreateEdge(int id1, int id2, StringBuilder builder) {
+            CreateEdge((ulong)id1, (ulong)id2, builder);
         }
 
         protected void CreateEdge(ulong id1, ulong id2, StringBuilder builder) {
@@ -59,7 +97,10 @@ namespace IRExplorerCore.GraphViz {
             builder.AppendFormat("n{0} -> n{1} {2};\n", id1, id2, attribute);
         }
 
-        // [constraint=false]
+        protected void CreateEdgeWithStyle(int id1, int id2, string style,
+                                           StringBuilder builder) {
+            CreateEdgeWithStyle((ulong)id1, (ulong)id2, style, builder);
+        }
 
         protected void CreateEdgeWithStyle(ulong id1, ulong id2, string style,
                                            StringBuilder builder) {
@@ -99,11 +140,11 @@ namespace IRExplorerCore.GraphViz {
             return "";
         }
 
-        public virtual Dictionary<string, object> CreateNodeDataMap() {
+        public virtual Dictionary<string, TaggedObject> CreateNodeDataMap() {
             throw new NotImplementedException();
         }
 
-        public virtual Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
+        public virtual Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
             throw new NotImplementedException();
         }
 

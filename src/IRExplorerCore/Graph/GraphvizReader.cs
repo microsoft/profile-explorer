@@ -8,7 +8,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.Lexer;
 
-namespace IRExplorerCore.GraphViz {
+namespace IRExplorerCore.Graph {
     public sealed class GraphvizReader {
         private static Dictionary<string, Keyword> keywordMap_ =
             new Dictionary<string, Keyword> {
@@ -19,16 +19,16 @@ namespace IRExplorerCore.GraphViz {
             };
 
         private Dictionary<string, Node> nodeMap_;
-        private Dictionary<string, object> dataNameMap_;
+        private Dictionary<string, TaggedObject> dataNameMap_;
         private Token current_;
-        private LayoutGraph graph_;
+        private Graph graph_;
 
         private GraphKind graphKind_;
         private Lexer.Lexer lexer_;
         private string sourceText_;
 
         public GraphvizReader(GraphKind kind, string text,
-                              Dictionary<string, object> dataNameMap) {
+                              Dictionary<string, TaggedObject> dataNameMap) {
             graphKind_ = kind;
             dataNameMap_ = dataNameMap;
             sourceText_ = text;
@@ -175,8 +175,8 @@ namespace IRExplorerCore.GraphViz {
             SkipToken();
         }
 
-        public LayoutGraph ReadGraph() {
-            graph_ = new LayoutGraph(graphKind_);
+        public Graph ReadGraph() {
+            graph_ = new Graph(graphKind_);
 
             if (!ExpectAndSkipKeyword(Keyword.Graph)) {
                 return null;

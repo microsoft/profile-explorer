@@ -14,7 +14,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using ProtoBuf;
 
@@ -75,7 +75,7 @@ namespace IRExplorerUI {
         private bool dragging_;
         private Point draggingStart_;
         private Point draggingViewStart_;
-        private LayoutGraph graph_;
+        private Graph graph_;
         private GraphNode hoveredNode_;
 
         private bool ignoreNextHover_;
@@ -188,7 +188,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public void DisplayGraph(LayoutGraph graph) {
+        public void DisplayGraph(Graph graph) {
             graph_ = graph;
             GraphViewer.ShowGraph(graph, Session.CompilerInfo);
             FitGraphIntoView();

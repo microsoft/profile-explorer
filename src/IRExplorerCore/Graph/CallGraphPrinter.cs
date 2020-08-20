@@ -4,10 +4,22 @@ using System.Text;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
-namespace IRExplorerCore.GraphViz {
+namespace IRExplorerCore.Graph {
+    public class CallGraphPrinterOptions {
+        public bool UseStraightLines { get; set; }
+        public bool TruncateLongNames { get; set; }
+        public int NameLengthLimit { get; set; }
+        public double VerticalDistanceFactor { get; set; }
+    }
+
     public class CallGraphPrinter : GraphVizPrinter {
         private const int LargeGraphThresholdMin = 1000;
         private const int LargeGraphThresholdMax = 5000;
+
+        private const string StraightLinesSettings = @"
+splines = ortho;
+concentrate = true;
+            ";
         private const string LargeGraphSettings = @"
 maxiter=8;
         ";
@@ -17,18 +29,20 @@ mclimit=2;
 nslimit=2;
         ";
 
+        private CallGraphPrinterOptions options_;
         private CallGraph callGraph_;
-        private Dictionary<string, object> nodeNameMap_;
+        private Dictionary<string, TaggedObject> nodeNameMap_;
 
-        public CallGraphPrinter(CallGraph callGraph) {
+        public CallGraphPrinter(CallGraph callGraph, CallGraphPrinterOptions options) {
             callGraph_ = callGraph;
-            nodeNameMap_ = new Dictionary<string, object>();
+            options_ = options;
+            nodeNameMap_ = new Dictionary<string, TaggedObject>();
         }
 
         private int EstimateEdgeCount() {
             int total = 0;
 
-            foreach(var node in callGraph_.FunctionNodes) {
+            foreach (var node in callGraph_.FunctionNodes) {
                 total += node.HasCallees ? node.Callees.Count : 0;
             }
 
@@ -36,11 +50,17 @@ nslimit=2;
         }
 
         protected override string GetExtraSettings() {
+            var text = "";
+
+            if (options_.UseStraightLines) {
+                text = StraightLinesSettings;
+            }
+
             // Increase the vertical distance between nodes the more there are
             // to make the graph somewhat easier to read.
             int nodeCount = callGraph_.FunctionNodes.Count;
             double verticalDistance = Math.Min(8, 1.15 * Math.Log10(nodeCount));
-            var text = $"ranksep={verticalDistance};\n";
+            text = $"{text}\nranksep ={verticalDistance};\n";
 
             int edgeCount = EstimateEdgeCount();
             int elements = Math.Max(edgeCount, nodeCount);
@@ -58,12 +78,12 @@ nslimit=2;
         }
 
         protected override void PrintGraph(StringBuilder builder) {
-            foreach(var node in callGraph_.FunctionNodes) {
+            foreach (var node in callGraph_.FunctionNodes) {
                 CreateNode(node, builder);
             }
 
             foreach (var node in callGraph_.FunctionNodes) {
-                foreach(var calleeNode in node.UniqueCallees) {
+                foreach (var calleeNode in node.UniqueCallees) {
                     CreateEdge(node, calleeNode, builder);
                 }
             }
@@ -74,7 +94,7 @@ nslimit=2;
             double verticalMargin = 0.075;
             string label = node.FunctionName;
 
-            if(label.Length > 20) {
+            if (label.Length > 20) {
                 label = $"{label.Substring(0, 18)}...";
             }
 
@@ -90,12 +110,12 @@ nslimit=2;
             CreateEdge((ulong)node1.Number, (ulong)node2.Number, builder);
         }
 
-        public override Dictionary<string, object> CreateNodeDataMap() {
+        public override Dictionary<string, TaggedObject> CreateNodeDataMap() {
             if (nodeNameMap_.Count > 0) {
                 return nodeNameMap_;
             }
 
-            var map = new Dictionary<string, object>();
+            var map = new Dictionary<string, TaggedObject>();
 
             foreach (var node in callGraph_.FunctionNodes) {
                 map[GetNodeName((ulong)node.Number)] = node;
@@ -104,7 +124,7 @@ nslimit=2;
             return map;
         }
 
-        public override Dictionary<object, List<object>> CreateNodeDataGroupsMap() {
+        public override Dictionary<TaggedObject, List<TaggedObject>> CreateNodeDataGroupsMap() {
             return null;
         }
     }

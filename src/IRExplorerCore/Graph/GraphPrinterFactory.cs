@@ -3,25 +3,17 @@
 
 using System;
 using IRExplorerCore.Analysis;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Graph {
-    public enum GraphKind {
-        FlowGraph,
-        DominatorTree,
-        PostDominatorTree,
-        ExpressionGraph,
-        CallGraph
-    }
-
     public static class GraphPrinterFactory {
         public static GraphVizPrinter CreateInstance<T, U>(
             GraphKind kind, T element, U options) where T : class where U : class {
             if (typeof(T) == typeof(FunctionIR)) {
                 switch (kind) {
                     case GraphKind.FlowGraph: {
-                        return new CFGPrinter(element as FunctionIR);
+                        return new FlowGraphPrinter(element as FunctionIR);
                     }
                     case GraphKind.DominatorTree: {
                         return new DominatorTreePrinter(element as FunctionIR,
@@ -46,7 +38,8 @@ namespace IRExplorerCore.Graph {
             else if (typeof(T) == typeof(IRTextSummary)) {
                 switch (kind) {
                     case GraphKind.CallGraph: {
-                        return new CallGraphPrinter(element as CallGraph);
+                        return new CallGraphPrinter(element as CallGraph,
+                                                    options as CallGraphPrinterOptions);
                     }
                 }
             }

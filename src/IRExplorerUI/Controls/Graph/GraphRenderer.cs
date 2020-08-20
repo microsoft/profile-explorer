@@ -7,7 +7,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore.Graph;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
@@ -62,39 +62,40 @@ namespace IRExplorerUI {
         Pen GetEdgeStyle(GraphEdgeKind kind);
         GraphEdgeKind GetEdgeKind(Edge edge);
         bool ShouldRenderEdges(GraphEdgeKind kind);
+        bool ShouldUsePolylines();
     }
 
     public sealed class GraphRenderer {
         private const double DefaultEdgeThickness = 0.025;
         private const double GroupBoundingBoxMargin = 0.20;
         private const double GroupBoundingBoxTextMargin = 0.10;
-        private const int PolylineEdgeThreshold = 100;
         private Typeface defaultNodeFont_;
         private Typeface edgeFont_;
-        private LayoutGraph graph_;
+        private Graph graph_;
         private IGraphStyleProvider graphStyle_;
 
         private GraphSettings options_;
         private DrawingVisual visual_;
 
-        public GraphRenderer(LayoutGraph graph, GraphSettings options,
+        public GraphRenderer(Graph graph, GraphSettings options,
                              ICompilerInfoProvider compilerInfo) {
             options_ = options;
             graph_ = graph;
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
 
-            if(graph.GraphKind == GraphKind.CallGraph) {
+            //? TODO: Integrate properly with settings
+            if (graph.Kind == GraphKind.CallGraph) {
                 graphStyle_ = new CallGraphStyleProvider();
                 return;
             }
 
             graphStyle_ = options switch
             {
-                FlowGraphSettings settings => 
-                    new FlowGraphStyleProvider(graph.GraphKind, settings),
+                FlowGraphSettings settings =>
+                    new FlowGraphStyleProvider(graph, settings),
                 ExpressionGraphSettings settings =>
-                    new ExpressionGraphStyleProvider(graph.GraphKind, settings, compilerInfo),
+                    new ExpressionGraphStyleProvider(graph_, settings, compilerInfo),
                 _ => throw new InvalidOperationException("Unknown graph settings type!")
             };
         }
@@ -141,7 +142,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private Rect ComputeBoundingBox(List<object> nodeElements) {
+        private Rect ComputeBoundingBox(List<TaggedObject> nodeElements) {
             double xMin = double.MaxValue;
             double yMin = double.MaxValue;
             double xMax = double.MinValue;
@@ -177,6 +178,10 @@ namespace IRExplorerUI {
                 if (node == null) {
                     continue; //? TODO: Investigate
                 }
+
+                //if (node.Width == 0 || node.Height == 0) {
+                //    continue; // Ignore invisible nodes.
+                //}
 
                 var nodeVisual = new DrawingVisual();
 
@@ -219,8 +224,7 @@ namespace IRExplorerUI {
 
             // If there are many in-edges, to avoid terrible performance due to WPF edge drawing
             // use polylines instead. Performance is still not good, but the graph becomes usable.
-            bool usePolyLine = graph_.Nodes.Find(node => node.InEdges != null &&
-                                                         node.InEdges.Count > PolylineEdgeThreshold) != null;
+            bool usePolyLine = graphStyle_.ShouldUsePolylines();
 
             foreach (var edge in graph_.Edges) {
                 var points = edge.LinePoints;
@@ -252,16 +256,9 @@ namespace IRExplorerUI {
                     sc.PolyBezierTo(tempPoints, true, false);
                 }
 
-                // Draw arrow head with a slope matching the line.
-                var start = tempPoints[^1];
-                var v = start - tempPoints[^2];
-                v.Normalize();
-                sc.BeginFigure(start + v * 0.1, true, true);
-                double t = v.X;
-                v.X = v.Y;
-                v.Y = -t; // Rotate 90
-                sc.LineTo(start + v * 0.075, true, true);
-                sc.LineTo(start + v * -0.075, true, true);
+                // Draw arrow head with a slope matching the line,
+                // but only if the target node is visible.
+                DrawEdgeArrow(edge, tempPoints, sc);
             }
 
             defaultSC.Close();
@@ -284,6 +281,35 @@ namespace IRExplorerUI {
             }
 
             dc.Close();
+        }
+
+        private void DrawEdgeArrow(Edge edge, Point[] tempPoints, StreamGeometryContext sc) {
+            // Draw arrow head with a slope matching the line,
+            // this uses the last two points to find the angle.
+            Point start;
+            Vector v = FindArrowOrientation(tempPoints, out start);
+
+            sc.BeginFigure(start + v * 0.1, true, true);
+            double t = v.X;
+            v.X = v.Y;
+            v.Y = -t; // Rotate 90
+            sc.LineTo(start + v * 0.075, true, true);
+            sc.LineTo(start + v * -0.075, true, true);
+        }
+
+        private Vector FindArrowOrientation(Point[] tempPoints, out Point start) {
+            start = tempPoints[^1];
+            var v = start - tempPoints[^2];
+
+            if (v.LengthSquared == 0) {
+                if (tempPoints.Length >= 3) {
+                    start = tempPoints[^2];
+                    v = start - tempPoints[^3];
+                }
+            }
+
+            v.Normalize();
+            return v;
         }
     }
 }

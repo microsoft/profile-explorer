@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Windows.Media;
-using IRExplorerCore.GraphViz;
+using IRExplorerCore.Graph;
 using ProtoBuf;
 
 namespace IRExplorerUI {
