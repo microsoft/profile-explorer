@@ -14,7 +14,7 @@ using IRExplorerCore;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISessionManager {
-        OptionsPanelHostWindow sharingPanelHost_;
+        OptionsPanelHostWindow diffOptionsPanelHost_;
         private DateTime documentLoadStartTime_;
         private bool documentLoadProgressVisible_;
         private bool loadingDocuments_;
@@ -292,14 +292,16 @@ namespace IRExplorerUI {
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+            diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
+
             var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
             var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
-            var leftMarkTask = leftDiffUpdater.MarkDiffs(leftText, diff.OldText, diff.NewText, leftDocument,
-                                                         false, leftDiffStats);
+            var leftMarkTask = leftDiffUpdater.MarkDiffs(leftText, rightText, diff.OldText, diff.NewText,
+                                                         leftDocument, false, leftDiffStats);
 
-            var rightMarkTask = rightDiffUpdater.MarkDiffs(leftText, diff.NewText, diff.OldText, rightDocument,
-                                                           true, rightDiffStats);
+            var rightMarkTask = rightDiffUpdater.MarkDiffs(leftText, rightText, diff.NewText, diff.OldText,
+                                                           rightDocument, true, rightDiffStats);
 
             await Task.WhenAll(leftMarkTask, rightMarkTask);
             var leftDiffResult = await leftMarkTask;
@@ -456,12 +458,12 @@ namespace IRExplorerUI {
             var height = Math.Max(DiffOptionsPanel.MinimumHeight,
                     Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
             var position = MainGrid.PointToScreen(new Point(238, MainMenu.ActualHeight + 1));
-            sharingPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, this);
-            sharingPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
-            sharingPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;
-            sharingPanelHost_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
-            sharingPanelHost_.Settings = (DiffSettings)App.Settings.DiffSettings.Clone();
-            sharingPanelHost_.IsOpen = true;
+            diffOptionsPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, this);
+            diffOptionsPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
+            diffOptionsPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;
+            diffOptionsPanelHost_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
+            diffOptionsPanelHost_.Settings = (DiffSettings)App.Settings.DiffSettings.Clone();
+            diffOptionsPanelHost_.IsOpen = true;
             diffOptionsVisible_ = true;
         }
 
@@ -470,15 +472,15 @@ namespace IRExplorerUI {
                 return;
             }
 
-            sharingPanelHost_.IsOpen = false;
-            sharingPanelHost_.PanelClosed -= DiffOptionsPanel_PanelClosed;
-            sharingPanelHost_.PanelReset -= DiffOptionsPanel_PanelReset;
-            sharingPanelHost_.SettingsChanged -= DiffOptionsPanel_SettingsChanged;
+            diffOptionsPanelHost_.IsOpen = false;
+            diffOptionsPanelHost_.PanelClosed -= DiffOptionsPanel_PanelClosed;
+            diffOptionsPanelHost_.PanelReset -= DiffOptionsPanel_PanelReset;
+            diffOptionsPanelHost_.SettingsChanged -= DiffOptionsPanel_SettingsChanged;
 
-            var newSettings = (DiffSettings)sharingPanelHost_.Settings;
+            var newSettings = (DiffSettings)diffOptionsPanelHost_.Settings;
             await HandleNewDiffSettings(newSettings, true);
 
-            sharingPanelHost_ = null;
+            diffOptionsPanelHost_ = null;
             diffOptionsVisible_ = false;
         }
 
@@ -496,18 +498,22 @@ namespace IRExplorerUI {
 
         private async void DiffOptionsPanel_PanelReset(object sender, EventArgs e) {
             var newSettings = new DiffSettings();
-            sharingPanelHost_.Settings = null;
-            sharingPanelHost_.Settings = newSettings;
+            diffOptionsPanelHost_.Settings = null;
+            diffOptionsPanelHost_.Settings = newSettings;
             await HandleNewDiffSettings(newSettings, true);
         }
 
         private async void DiffOptionsPanel_SettingsChanged(object sender, EventArgs e) {
-            var newSettings = (DiffSettings)sharingPanelHost_.Settings;
+            var newSettings = (DiffSettings)diffOptionsPanelHost_.Settings;
 
             if (newSettings != null) {
                 await HandleNewDiffSettings(newSettings, false);
-                sharingPanelHost_.Settings = null;
-                sharingPanelHost_.Settings = newSettings.Clone();
+
+                // It's possible that the options panel closes before the async method returns.
+                if (diffOptionsPanelHost_ != null) {
+                    diffOptionsPanelHost_.Settings = null;
+                    diffOptionsPanelHost_.Settings = newSettings.Clone();
+                }
             }
         }
 
@@ -534,7 +540,8 @@ namespace IRExplorerUI {
             var diffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
-            var diffResult = await diffUpdater.MarkDiffs(prevText, diff.NewText, diff.OldText, doc.TextView, true, diffStats);
+            var diffResult = await diffUpdater.MarkDiffs(prevText, currentText, diff.NewText, diff.OldText,
+                                                         doc.TextView, true, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();
         }

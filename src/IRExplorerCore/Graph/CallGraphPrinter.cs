@@ -25,9 +25,11 @@ concentrate = true;
             ";
         private const string LargeGraphSettings = @"
 maxiter=4;
+mclimit=2;
+nslimit=2;
         ";
         private static readonly string HugeGraphSettings = @"
-maxiter=1;
+maxiter=2;
 mclimit=1;
 nslimit=1;
         ";
@@ -42,7 +44,7 @@ nslimit=1;
             options_ = options;
             nodeNameMap_ = new Dictionary<string, TaggedObject>();
 
-            if(options_.UseSingleIncomingEdge) {
+            if (options_.UseSingleIncomingEdge) {
                 incomingEdgeNodes_ = new HashSet<CallGraphNode>();
             }
         }
@@ -67,7 +69,7 @@ nslimit=1;
             // Increase the vertical distance between nodes the more there are
             // to make the graph somewhat easier to read.
             int nodeCount = callGraph_.FunctionNodes.Count;
-            double verticalDistance = Math.Min(8, 0.8 * Math.Log10(nodeCount));
+            double verticalDistance = Math.Min(8, 0.8 * Math.Log(nodeCount));
             text = $"{text}\nranksep ={verticalDistance};\n";
 
             int edgeCount = EstimateEdgeCount();
@@ -86,7 +88,7 @@ nslimit=1;
         }
 
         protected override void PrintGraph(StringBuilder builder) {
-            if(options_.UseExternalNode) {
+            if (options_.UseExternalNode) {
                 CreateNode(ExternalNodeId, "EXTERNAL", builder);
             }
 
@@ -99,7 +101,7 @@ nslimit=1;
                     CreateEdge(node, calleeNode, builder);
                 }
 
-                if(options_.UseExternalNode && !node.HasCallers) {
+                if (options_.UseExternalNode && !node.HasCallers) {
                     CreateEdge(ExternalNodeId, node.Number, builder);
                 }
             }
@@ -123,8 +125,8 @@ nslimit=1;
         }
 
         private void CreateEdge(CallGraphNode node1, CallGraphNode node2, StringBuilder builder) {
-            if(options_.UseSingleIncomingEdge) {
-                if(!incomingEdgeNodes_.Add(node2)) {
+            if (options_.UseSingleIncomingEdge) {
+                if (!incomingEdgeNodes_.Add(node2)) {
                     return; // Node already has an edge.
                 }
             }

@@ -274,7 +274,7 @@ namespace IRExplorerCore {
                 optionalOutputNeeded_ = false;
             }
 
-            optionalOutput_.DataEndOffset = TextOffset();
+            optionalOutput_.DataEndOffset = TextOffset() - 1;
             optionalOutput_.EndLine = lineIndex_;
 
             if (!string.IsNullOrWhiteSpace(line)) {

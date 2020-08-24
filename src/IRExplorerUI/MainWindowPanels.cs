@@ -27,7 +27,6 @@ using IRExplorerUI.Controls;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISessionManager {
-
         private void RegisterDefaultToolPanels() {
             RegisterPanel(SectionPanel, SectionPanelHost);
             RegisterPanel(FlowGraphPanel, FlowGraphPanelHost);
@@ -45,9 +44,6 @@ namespace IRExplorerUI {
             RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
             RenameAllPanels();
         }
-
-
-
 
         private void NotifyPanelsOfElementEvent(HandledEventKind eventKind, IRDocument document,
                                                 Action<IToolPanel> action) {
@@ -174,6 +170,10 @@ namespace IRExplorerUI {
                         flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
                         break;
                     }
+                case ToolPanelKind.CallGraph: {
+                        //? TODO: Handle event
+                        break;
+                    }
             }
         }
 
@@ -189,6 +189,16 @@ namespace IRExplorerUI {
                         flowGraphPanel.GraphViewer.BlockMarked -= GraphViewer_BlockMarked;
                         flowGraphPanel.GraphViewer.BlockUnmarked -= GraphViewer_BlockUnmarked;
                         flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
+                        break;
+                    }
+                case ToolPanelKind.ExpressionGraph: {
+                        var flowGraphPanel = panelHost.Panel as GraphPanel;
+                        flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
+                        flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
+                        break;
+                    }
+                case ToolPanelKind.CallGraph: {
+                        //? TODO: Handle event
                         break;
                     }
             }
@@ -435,6 +445,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.DominatorTree => "Dominator Tree",
                 ToolPanelKind.PostDominatorTree => "Post-Dominator Tree",
                 ToolPanelKind.ExpressionGraph => "Expression Graph",
+                ToolPanelKind.CallGraph => "Call Graph",
                 ToolPanelKind.Developer => "Developer",
                 ToolPanelKind.Notes => "Notes",
                 ToolPanelKind.References => "References",
@@ -444,7 +455,6 @@ namespace IRExplorerUI {
                 ToolPanelKind.SearchResults => "Search Results",
                 ToolPanelKind.Scripting => "Scripting",
                 ToolPanelKind.Remarks => "Remarks",
-
                 _ => ""
             };
         }
@@ -491,6 +501,10 @@ namespace IRExplorerUI {
                 ToolPanelKind.Notes => new NotesPanel(),
                 ToolPanelKind.PassOutput => new PassOutputPanel(),
                 ToolPanelKind.FlowGraph => new GraphPanel(),
+                ToolPanelKind.DominatorTree => new GraphPanel(),
+                ToolPanelKind.PostDominatorTree => new GraphPanel(),
+                ToolPanelKind.CallGraph => new CallGraphPanel(),
+                ToolPanelKind.ExpressionGraph => new ExpressionGraphPanel(),
                 ToolPanelKind.SearchResults => new SearchResultsPanel(),
                 ToolPanelKind.Scripting => new ScriptingPanel(),
                 ToolPanelKind.Remarks => new RemarksPanel(),
@@ -502,19 +516,26 @@ namespace IRExplorerUI {
             return CreateNewPanel(kind) as T;
         }
 
-        private PanelHostInfo DisplayNewPanel(IToolPanel newPanel, IToolPanel basePanel,
+        private PanelHostInfo DisplayNewPanel(IToolPanel newPanel, IToolPanel relativePanel,
                                               DuplicatePanelKind duplicateKind) {
             var panelHost = AddNewPanel(newPanel);
-            panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
-            var baseHost = FindPanelHost(basePanel).Host;
             bool attached = false;
 
             switch (duplicateKind) {
                 case DuplicatePanelKind.Floating: {
-                        panelHost.Host.Float();
+                        panelHost.Host.FloatingWidth = 800;
+                        panelHost.Host.FloatingHeight = 600;
+
+                        var x = DockManager.CreateFloatingWindow(panelHost.Host, false);
+                        panelHost.Host.Show();
+                        panelHost.Host.IsActive = true;
+                        attached = true;
                         break;
                     }
                 case DuplicatePanelKind.NewSetDockedLeft: {
+                        panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
+
+                        var baseHost = FindPanelHost(relativePanel).Host;
                         var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
                         if (baseGroup == null) {
@@ -526,6 +547,9 @@ namespace IRExplorerUI {
                         break;
                     }
                 case DuplicatePanelKind.NewSetDockedRight: {
+                        panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
+
+                        var baseHost = FindPanelHost(relativePanel).Host;
                         var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
                         if (baseGroup == null) {
@@ -538,15 +562,17 @@ namespace IRExplorerUI {
                     }
                 case DuplicatePanelKind.SameSet: {
                         // Insert the new panel on the right of the cloned one.
-                        var basePanelHost = FindPanelHost(basePanel);
-                        var baseLayoutPane = baseHost.FindParent<LayoutAnchorablePane>();
+                        panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
 
-                        if (baseLayoutPane == null) {
+                        var relativePanelHost = FindPanelHost(relativePanel);
+                        var relativeLayoutPane = relativePanelHost.Host.FindParent<LayoutAnchorablePane>();
+
+                        if (relativeLayoutPane == null) {
                             break;
                         }
 
-                        int basePaneIndex = baseLayoutPane.Children.IndexOf(basePanelHost.Host);
-                        baseLayoutPane.Children.Insert(basePaneIndex + 1, panelHost.Host);
+                        int basePaneIndex = relativeLayoutPane.Children.IndexOf(relativePanelHost.Host);
+                        relativeLayoutPane.Children.Insert(basePaneIndex + 1, panelHost.Host);
                         attached = true;
                         break;
                     }
@@ -694,8 +720,7 @@ namespace IRExplorerUI {
             };
 
             switch (kind) {
-                case OpenSectionKind.ReplaceCurrent:
-                case OpenSectionKind.NewTab: {
+                case OpenSectionKind.ReplaceCurrent: {
                         if (activeDocumentPanel_ == null) {
                             activeDocumentPanel_ = new LayoutDocumentPane(host);
                             DocumentPanelGroup.Children.Add(activeDocumentPanel_);
@@ -704,6 +729,10 @@ namespace IRExplorerUI {
                             activeDocumentPanel_.Children.Add(host);
                         }
 
+                        break;
+                    }
+                case OpenSectionKind.NewTab: {
+                        activeDocumentPanel_.Children.Add(host);
                         break;
                     }
                 case OpenSectionKind.NewTabDockLeft:

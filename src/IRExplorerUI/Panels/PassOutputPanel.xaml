@@ -109,7 +109,7 @@
         <Grid Grid.Row="1" Panel.ZIndex="100">
             <doc:SearchPanel
                 x:Name="SearchPanel"
-                Width="450"
+                Width="500"
                 Height="28"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Top"
