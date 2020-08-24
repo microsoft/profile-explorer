@@ -8,8 +8,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:settings="clr-namespace:IRExplorerUI"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-    d:DesignHeight="520"
-    d:DesignWidth="300 "
+    d:DesignHeight="560"
+    d:DesignWidth="320 "
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
         <StackPanel Margin="4,4,4,4">
@@ -18,6 +18,16 @@
                 Margin="0,4,0,2"
                 Content="Mark minor IR changes differently"
                 IsChecked="{Binding IdentifyMinorDiffs, Mode=TwoWay}"
+                ToolTip="Identifies minor changes in the IR, such as different types of temporary variables" />
+            <CheckBox
+                Margin="20,4,0,2"
+                Content="Consider changes in temporary variable names"
+                IsChecked="{Binding FilterTempVariableNames, Mode=TwoWay}"
+                ToolTip="Identifies minor changes in the IR, such as different types of temporary variables" />
+            <CheckBox
+                Margin="20,4,0,2"
+                Content="Consider changes in SSA definition numbers"
+                IsChecked="{Binding FilterSSADefNumbers, Mode=TwoWay}"
                 ToolTip="Identifies minor changes in the IR, such as different types of temporary variables" />
             <CheckBox
                 Margin="0,2,0,2"

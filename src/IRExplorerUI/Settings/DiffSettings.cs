@@ -29,9 +29,14 @@ namespace IRExplorerUI {
         [ProtoMember(18), DefaultValue(DiffImplementationKind.Internal)]
         public DiffImplementationKind DiffImplementation { get; set; }
 
+        [ProtoMember(19)] public bool FilterTempVariableNames { get; set; }
+        [ProtoMember(20)] public bool FilterSSADefNumbers { get; set; }
+
         public override void Reset() {
             IdentifyMinorDiffs = true;
             FilterInsignificantDiffs = true;
+            FilterTempVariableNames = true;
+            FilterSSADefNumbers = true;
             ManyDiffsMarkWholeLine = true;
             ManyDiffsModificationPercentage = 60;
             ManyDiffsInsertionPercentage = 75;
@@ -56,6 +61,8 @@ namespace IRExplorerUI {
         public bool HasDiffHandlingChanges(DiffSettings other) {
             return other.IdentifyMinorDiffs != IdentifyMinorDiffs ||
                    other.FilterInsignificantDiffs != FilterInsignificantDiffs ||
+                   other.FilterTempVariableNames != FilterTempVariableNames ||
+                   other.FilterSSADefNumbers != FilterSSADefNumbers ||
                    other.ManyDiffsMarkWholeLine != ManyDiffsMarkWholeLine ||
                    other.ManyDiffsInsertionPercentage != ManyDiffsInsertionPercentage ||
                    other.ManyDiffsModificationPercentage != ManyDiffsModificationPercentage ||
@@ -66,6 +73,8 @@ namespace IRExplorerUI {
             return obj is DiffSettings settings &&
                    IdentifyMinorDiffs == settings.IdentifyMinorDiffs &&
                    FilterInsignificantDiffs == settings.FilterInsignificantDiffs &&
+                   FilterTempVariableNames == settings.FilterTempVariableNames &&
+                   FilterSSADefNumbers == settings.FilterSSADefNumbers &&
                    ManyDiffsMarkWholeLine == settings.ManyDiffsMarkWholeLine &&
                    ManyDiffsModificationPercentage == settings.ManyDiffsModificationPercentage &&
                    ManyDiffsInsertionPercentage == settings.ManyDiffsInsertionPercentage &&

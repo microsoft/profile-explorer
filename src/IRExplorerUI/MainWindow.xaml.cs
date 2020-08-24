@@ -626,30 +626,30 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var rightGraphPanel = FindActivePanel<GraphPanel>(ToolPanelKind.FlowGraph);
-            var leftGraphPanel = CreateNewPanel<GraphPanel>(ToolPanelKind.FlowGraph);
-            var panelHost = AddNewPanel(leftGraphPanel);
-            panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Most);
-            LeftPanelGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
-            leftGraphPanel.Width = LeftPanelGroup.DockWidth.Value;
-            panelHost.Host.IsVisible = true;
-            leftGraphPanel.BoundDocument = leftDocument.TextView;
-            rightGraphPanel.BoundDocument = rightDocument.TextView;
-            leftGraphPanel.InitializeFromDocument(leftDocument.TextView);
-            rightGraphPanel.InitializeFromDocument(rightDocument.TextView);
-            await GenerateGraphs(leftDocument.Section, leftDocument.TextView);
-            await GenerateGraphs(rightDocument.Section, rightDocument.TextView);
-            var rightRefPanel = FindActivePanel<ReferencesPanel>(ToolPanelKind.References);
-            var leftRefPanel = CreateNewPanel<ReferencesPanel>(ToolPanelKind.References);
-            DisplayNewPanel(leftRefPanel, rightRefPanel, DuplicatePanelKind.NewSetDockedLeft);
-            leftRefPanel.BoundDocument = leftDocument.TextView;
-            rightRefPanel.BoundDocument = rightDocument.TextView;
-            leftRefPanel.InitializeFromDocument(leftDocument.TextView);
-            rightRefPanel.InitializeFromDocument(rightDocument.TextView);
-            FindPanelHost(rightRefPanel).Host.IsSelected = true;
-            FindPanelHost(leftRefPanel).Host.IsSelected = true;
-            RenameAllPanels();
-            sideBySidePanelsCreated_ = true;
+            //var rightGraphPanel = FindActivePanel<GraphPanel>(ToolPanelKind.FlowGraph);
+            //var leftGraphPanel = CreateNewPanel<GraphPanel>(ToolPanelKind.FlowGraph);
+            //var panelHost = AddNewPanel(leftGraphPanel);
+            //panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Most);
+            //LeftPanelGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
+            //leftGraphPanel.Width = LeftPanelGroup.DockWidth.Value;
+            //panelHost.Host.IsVisible = true;
+            //leftGraphPanel.BoundDocument = leftDocument.TextView;
+            //rightGraphPanel.BoundDocument = rightDocument.TextView;
+            //leftGraphPanel.InitializeFromDocument(leftDocument.TextView);
+            //rightGraphPanel.InitializeFromDocument(rightDocument.TextView);
+            //await GenerateGraphs(leftDocument.Section, leftDocument.TextView);
+            //await GenerateGraphs(rightDocument.Section, rightDocument.TextView);
+            //var rightRefPanel = FindActivePanel<ReferencesPanel>(ToolPanelKind.References);
+            //var leftRefPanel = CreateNewPanel<ReferencesPanel>(ToolPanelKind.References);
+            //DisplayNewPanel(leftRefPanel, rightRefPanel, DuplicatePanelKind.NewSetDockedLeft);
+            //leftRefPanel.BoundDocument = leftDocument.TextView;
+            //rightRefPanel.BoundDocument = rightDocument.TextView;
+            //leftRefPanel.InitializeFromDocument(leftDocument.TextView);
+            //rightRefPanel.InitializeFromDocument(rightDocument.TextView);
+            //FindPanelHost(rightRefPanel).Host.IsSelected = true;
+            //FindPanelHost(leftRefPanel).Host.IsSelected = true;
+            //RenameAllPanels();
+            //sideBySidePanelsCreated_ = true;
         }
 
         private void OptionalStatusText_MouseDown(object sender, MouseButtonEventArgs e) {

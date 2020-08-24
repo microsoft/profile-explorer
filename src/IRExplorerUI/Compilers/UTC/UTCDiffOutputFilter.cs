@@ -27,10 +27,10 @@ namespace IRExplorerUI.UTC {
         }
 
         public DiffKind EstimateModificationType(DiffPiece before, DiffPiece after, int beforeOffset, int afterOffset,
-                                                 string beforeDocumentText, string afterDocumentText) {
-            string beforeText = ExpandDiff(before.Text, beforeOffset, beforeDocumentText,
+                                                 string beforeLineText, string afterLineText) {
+            string beforeText = ExpandDiff(before.Text, beforeOffset, beforeLineText,
                                            out int beforeLeftStopIndex, out int beforeRightStopIndex);
-            string afterText = ExpandDiff(after.Text, afterOffset, afterDocumentText,
+            string afterText = ExpandDiff(after.Text, afterOffset, afterLineText,
                                           out int afterLeftStopIndex, out int afterRightStopIndex);
 
             if (IsTemporaryVariable(beforeText, out int beforeNumber) &&
@@ -39,19 +39,22 @@ namespace IRExplorerUI.UTC {
                 if (beforeNumber == afterNumber) {
                     return DiffKind.MinorModification;
                 }
-                else
+                else if (settings_.FilterTempVariableNames) {
                     return DiffKind.MinorModification;
+                }
             }
-            else if (IsSSANumber(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeDocumentText) &&
-                     IsSSANumber(afterText, afterLeftStopIndex, afterRightStopIndex, afterDocumentText)) {
+            else if (IsSSANumber(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeLineText) &&
+                     IsSSANumber(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
+                if (settings_.FilterSSADefNumbers) {
+                    return DiffKind.MinorModification;
+                }
+            }
+            else if (IsEquivSymbolNumber(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeLineText) &&
+                     IsEquivSymbolNumber(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
                 return DiffKind.MinorModification;
             }
-            else if (IsEquivSymbolNumber(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeDocumentText) &&
-                     IsEquivSymbolNumber(afterText, afterLeftStopIndex, afterRightStopIndex, afterDocumentText)) {
-                return DiffKind.MinorModification;
-            }
-            else if (IsEHRegionAnnotation(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeDocumentText) &&
-                     IsEHRegionAnnotation(afterText, afterLeftStopIndex, afterRightStopIndex, afterDocumentText)) {
+            else if (IsEHRegionAnnotation(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeLineText) &&
+                     IsEHRegionAnnotation(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
                 return DiffKind.MinorModification;
             }
             //? TODO: Doesn't always mark line numbers, and for calls it can mark
@@ -64,7 +67,7 @@ namespace IRExplorerUI.UTC {
             return DiffKind.Modification;
         }
 
-        public AdjustedDiffPiece AdjustChange(DiffPiece change, int offset,
+        public AdjustedDiffPiece AdjustChange(DiffPiece change, int documentOffset,
                                               int lineOffset, string lineText) {
             string text = ExpandDiff(change.Text, lineOffset, lineText,
                                      out int leftStopIndex, out int rightStopIndex);
@@ -72,7 +75,7 @@ namespace IRExplorerUI.UTC {
             if (IsTemporaryVariable(text, out var _) ||
                 UTCOpcodes.IsOpcode(text)) {
                 // Enlarge diff marking to cover entire variable/opcode.
-                int lineStartOffset = offset - lineOffset;
+                int lineStartOffset = documentOffset - lineOffset;
                 return new AdjustedDiffPiece(lineStartOffset + leftStopIndex, text.Length);
             }
             else if (IsSSANumber(text, leftStopIndex, rightStopIndex, lineText)) {
@@ -85,11 +88,11 @@ namespace IRExplorerUI.UTC {
                     rightStopIndex++;
                 }
 
-                int lineStartOffset = offset - lineOffset;
+                int lineStartOffset = documentOffset - lineOffset;
                 return new AdjustedDiffPiece(lineStartOffset + leftStopIndex, rightStopIndex - leftStopIndex + 1);
             }
 
-            return new AdjustedDiffPiece(offset, change.Text.Length);
+            return new AdjustedDiffPiece(documentOffset, change.Text.Length);
         }
 
         private bool IsTemporaryVariable(string text, out int tempNumber) {
@@ -128,10 +131,6 @@ namespace IRExplorerUI.UTC {
         }
 
         private bool IsSSANumber(string text, int leftStopIndex, int rightStopIndex, string lineText) {
-            if (rightStopIndex < 0 || rightStopIndex >= lineText.Length) {
-                text = text;
-            }
-
             bool hasSSANumberStart = lineText[leftStopIndex] == '<' ||
                                      lineText[leftStopIndex] == '*' ||
                                      char.IsDigit(lineText[leftStopIndex]);
@@ -195,28 +194,28 @@ namespace IRExplorerUI.UTC {
             return true;
         }
 
-        private string ExpandDiff(string diffText, int offset, string text,
+        private string ExpandDiff(string diffText, int lineOffset, string lineText,
                                   out int leftStopIndex, out int rightStopIndex) {
             if (diffText.Length == 0 ||
-                offset + diffText.Length >= text.Length) {
+                lineOffset + diffText.Length >= lineText.Length) {
                 leftStopIndex = rightStopIndex = 0;
                 return diffText;
             }
 
             // Expand left/right as long no end marker letters are found.
-            int left = offset;
-            int right = offset + diffText.Length - 1;
+            int left = lineOffset;
+            int right = lineOffset + diffText.Length - 1;
 
             while (left > 0) {
-                if (Array.IndexOf(ExpansionStopLetters, text[left - 1]) != -1) {
+                if (Array.IndexOf(ExpansionStopLetters, lineText[left - 1]) != -1) {
                     break;
                 }
 
                 left--;
             }
 
-            while (right < text.Length - 1) {
-                if (Array.IndexOf(ExpansionStopLetters, text[right + 1]) != -1) {
+            while (right < lineText.Length - 1) {
+                if (Array.IndexOf(ExpansionStopLetters, lineText[right + 1]) != -1) {
                     break;
                 }
 
@@ -225,7 +224,7 @@ namespace IRExplorerUI.UTC {
 
             leftStopIndex = left;
             rightStopIndex = right;
-            return text.Substring(left, right - left + 1);
+            return lineText.Substring(left, right - left + 1);
         }
     }
 }
