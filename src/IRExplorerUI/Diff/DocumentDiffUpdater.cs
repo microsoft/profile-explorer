@@ -145,6 +145,33 @@ namespace IRExplorerUI.Diff {
                                 modifiedSegments.Clear();
                                 int column = 0;
                                 int otherColumn = 0;
+                                int adj = 0;
+
+                                var pieces = line.SubPieces;
+                                var otherPieces = otherDiff.Lines[i].SubPieces;
+
+                                //? TODO: This is a hack to get the two piece lists aligned
+                                //? for Beyond Compare in case there is a word inserted at the line start
+                                //? like in "r t100" vs "  t100" - the BC diff builder should match DiffPlex
+                                //? and insert a dummy whitespace diff corresponding to "r" instead two whitespaces in "  t100"
+                                if (pieces[0].Type != otherPieces[0].Type) {
+                                    if (isRightDoc) {
+                                        if (otherPieces.Count > 1 &&
+                                            otherPieces[1].Type == pieces[0].Type &&
+                                            pieces[0].Text.EndsWith(otherPieces[1].Text)) {
+                                            otherColumn += otherPieces[0].Text.Length;
+                                            adj = 1;
+                                        }
+                                    }
+                                    else {
+                                        if (pieces.Count > 1 &&
+                                                otherPieces[0].Type == pieces[1].Type &&
+                                                otherPieces[0].Text.EndsWith(pieces[1].Text)) {
+                                            adj = -1;
+                                        }
+                                    }
+                                }
+
 
                                 foreach (var piece in line.SubPieces) {
                                     switch (piece.Type) {
@@ -166,7 +193,7 @@ namespace IRExplorerUI.Diff {
                                                 }
                                                 else {
                                                     var diffKind = DiffKind.Insertion;
-                                                    var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece, 0);
+                                                    var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece, adj);
 
                                                     if (otherPiece != null && otherPiece.Type == ChangeType.Deleted) {
                                                         if (!wholeLineReplaced) {
@@ -208,7 +235,7 @@ namespace IRExplorerUI.Diff {
                                                 }
 
                                                 var diffKind = DiffKind.Deletion;
-                                                var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece, 0);
+                                                var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece, adj);
 
                                                 if (otherPiece != null && otherPiece.Type == ChangeType.Inserted) {
                                                     if (wholeLineReplaced) {
