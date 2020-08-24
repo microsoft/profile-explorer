@@ -6,6 +6,7 @@ using HtmlAgilityPack;
 using System.Net;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Text;
 
 #pragma warning disable CA1305, CA1307
 
@@ -161,7 +162,6 @@ namespace IRExplorerUI.Diff {
 
             // The html body contains a table with one row per line.
             foreach (HtmlNode row in table.Descendants("tr")) {
-
                 // We expect to see 3 columns. Old, diff type, New.
                 var columns = row.Descendants("td");
                 HtmlNode oldNode;
@@ -236,6 +236,7 @@ namespace IRExplorerUI.Diff {
 
         private static DiffPiece DiffPieceFromModifiedNode(HtmlNode node, ChangeType type, ChangeType childChangeType, int position) {
             DiffPiece diffs = new DiffPiece("", type, position);
+            var builder = new StringBuilder(100);
 
             int pieceNumber = 0;
             foreach (HtmlNode child in node.ChildNodes) {
@@ -246,10 +247,23 @@ namespace IRExplorerUI.Diff {
                     : childChangeType;
 
                 DiffPiece subPiece = DiffPieceFromHtmlText(child, childType, ++pieceNumber);
+
+                // Sometimes consecutive entries of the same type (deletion for ex)
+                // appear and those can be combined into a single change.
+                if (diffs.SubPieces.Count > 0) {
+                    var prevPiece = diffs.SubPieces[^1];
+
+                    if (prevPiece.Type == subPiece.Type) {
+                        prevPiece.Text += subPiece.Text;
+                        continue;
+                    }
+                }
+
                 diffs.SubPieces.Add(subPiece);
-                diffs.Text += subPiece.Text;
+                builder.Append(subPiece.Text);
             }
 
+            diffs.Text = builder.ToString();
             return diffs;
         }
 

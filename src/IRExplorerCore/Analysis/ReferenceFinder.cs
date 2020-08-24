@@ -62,7 +62,7 @@ namespace IRExplorerCore.Analysis {
                 var foundDefOp = FindOperandWithSSADefinitionID(defId.Value);
 
                 // If found, also check that the symbol name is the same.
-                if (foundDefOp != null && IsSameOperand(op, foundDefOp)) {
+                if (foundDefOp != null && IsSameSymbolOperand(op, foundDefOp)) {
                     if (foundDefOp.Role == OperandRole.Destination) {
                         return foundDefOp;
                     }
@@ -83,7 +83,7 @@ namespace IRExplorerCore.Analysis {
 
             // For non-SSA values, search the entire function 
             // for a symbol with the same name and type.
-            //? TODO: inefficient, use a symbol table indexed by name
+            //? TODO: inefficient, use a symbol table indexed by name (PrecomputeAllReferences)
             return onlySSA ? null : FindBestMatchingOperand(EnumerateAllOperands(), op);
         }
 
@@ -101,7 +101,7 @@ namespace IRExplorerCore.Analysis {
                     continue;
                 }
 
-                if (checkSymbol && !IsSameOperand(useOp, op)) {
+                if (checkSymbol && !IsSameSymbolOperand(useOp, op)) {
                     continue;
                 }
 
@@ -221,7 +221,7 @@ namespace IRExplorerCore.Analysis {
                     }
 
                     foreach (var destOp in instr.Destinations) {
-                        if (IsSameOperand(destOp, op)) {
+                        if (IsSameSymbolOperand(destOp, op)) {
                             if (filterAction != null) {
                                 if (!filterAction(destOp, ReferenceKind.Store)) {
                                     continue;
@@ -233,7 +233,7 @@ namespace IRExplorerCore.Analysis {
                     }
 
                     foreach (var sourceOp in instr.Sources) {
-                        if (IsSameOperand(sourceOp, op)) {
+                        if (IsSameSymbolOperand(sourceOp, op)) {
                             var refKind = sourceOp.IsAddress
                                 ? ReferenceKind.Address
                                 : ReferenceKind.Load;
@@ -365,9 +365,9 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        private bool IsSameOperand(OperandIR op, OperandIR searchedOp,
-                                   bool checkType = false) {
-            if (op.Kind != searchedOp.Kind) {
+        private bool IsSameSymbolOperand(OperandIR op, OperandIR searchedOp,
+                                         bool checkType = false) {
+            if (!AreSymbolOperandsCompatible(op, searchedOp)) {
                 return false;
             }
 
@@ -386,6 +386,20 @@ namespace IRExplorerCore.Analysis {
                 }
 
                 return true;
+            }
+
+            return false;
+        }
+
+        private bool AreSymbolOperandsCompatible(OperandIR op1, OperandIR op2) {
+            if (op1.Kind == op2.Kind) {
+                return true;
+            }
+
+            if (op1.Kind == OperandKind.Variable ||
+                op1.Kind == OperandKind.Address) {
+                return op2.Kind == OperandKind.Variable ||
+                       op2.Kind == OperandKind.Address;
             }
 
             return false;

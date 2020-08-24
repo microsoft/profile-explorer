@@ -685,20 +685,25 @@ namespace IRExplorerUI {
             var result = printer.PrintGraph();
             var graphText = printer.CreateGraph(result, new CancelableTask());
 
-            var panel = new GraphPanel();
+            var panel = new CallGraphPanel();
             panel.Session = this;
             panel.OnRegisterPanel();
 
-            var window = new Window();
-            window.Content = panel;
-            window.Width = 1000;
-            window.Height = 900;
+
+
+            //var window = new Window();
+            //window.Content = panel;
+            //window.Width = 1000;
+            //window.Height = 900;
 
             var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, printer.CreateNodeDataMap());
             var layoutGraph = graphReader.ReadGraph();
             layoutGraph.GraphOptions = options;
+
+            AddNewPanel(panel);
+            DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
             panel.DisplayGraph(layoutGraph);
-            window.Show();
+            //window.Show();
         }
 
         private void Cg_CallGraphNodeCreated(object sender, CallGraphEventArgs e) {
