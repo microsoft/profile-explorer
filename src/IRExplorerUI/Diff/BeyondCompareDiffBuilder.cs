@@ -250,14 +250,16 @@ namespace IRExplorerUI.Diff {
 
                 // Sometimes consecutive entries of the same type (deletion for ex)
                 // appear and those can be combined into a single change.
-                if (diffs.SubPieces.Count > 0) {
-                    var prevPiece = diffs.SubPieces[^1];
+                //? TODO: Check if this actually interferes with marking of minor diffs
+                //if (diffs.SubPieces.Count > 0) {
+                //    var prevPiece = diffs.SubPieces[^1];
 
-                    if (prevPiece.Type == subPiece.Type) {
-                        prevPiece.Text += subPiece.Text;
-                        continue;
-                    }
-                }
+                //    if (prevPiece.Type == subPiece.Type) {
+                //        prevPiece.Text += subPiece.Text;
+                //        builder.Append(subPiece.Text);
+                //        continue;
+                //    }
+                //}
 
                 diffs.SubPieces.Add(subPiece);
                 builder.Append(subPiece.Text);

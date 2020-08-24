@@ -50,6 +50,16 @@ namespace IRExplorerUI.UTC {
                      IsEquivSymbolNumber(afterText, afterLeftStopIndex, afterRightStopIndex, afterDocumentText)) {
                 return DiffKind.MinorModification;
             }
+            else if (IsEHRegionAnnotation(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeDocumentText) &&
+                     IsEHRegionAnnotation(afterText, afterLeftStopIndex, afterRightStopIndex, afterDocumentText)) {
+                return DiffKind.MinorModification;
+            }
+            //? TODO: Doesn't always mark line numbers, and for calls it can mark
+            //? diffs after the opcode as comments for OPCALL(#ID) ...
+            //else if (IsCommentText(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeDocumentText) ||
+            //         IsCommentText(afterText, afterLeftStopIndex, afterRightStopIndex, afterDocumentText)) {
+            //    return DiffKind.MinorModification;
+            //}
 
             return DiffKind.Modification;
         }
@@ -118,6 +128,10 @@ namespace IRExplorerUI.UTC {
         }
 
         private bool IsSSANumber(string text, int leftStopIndex, int rightStopIndex, string lineText) {
+            if (rightStopIndex < 0 || rightStopIndex >= lineText.Length) {
+                text = text;
+            }
+
             bool hasSSANumberStart = lineText[leftStopIndex] == '<' ||
                                      lineText[leftStopIndex] == '*' ||
                                      char.IsDigit(lineText[leftStopIndex]);
@@ -145,6 +159,32 @@ namespace IRExplorerUI.UTC {
             return true;
         }
 
+        private bool IsEHRegionAnnotation(string text, int leftStopIndex, int rightStopIndex, string lineText) {
+            if (leftStopIndex != 0) {
+                return false;
+            }
+
+            switch (text) {
+                case "":
+                case "r": {
+                        return true;
+                    }
+                default:
+                    break;
+            }
+
+            return false;
+        }
+
+        private bool IsCommentText(string text, int leftStopIndex, int rightStopIndex, string lineText) {
+            // Everything following # is debug info and line numbers.
+            if (lineText.LastIndexOf('#', leftStopIndex) != -1) {
+                text = text;
+            }
+            return lineText.LastIndexOf('#', leftStopIndex) != -1;
+        }
+
+
         private bool IsNumber(string text) {
             foreach (char letter in text) {
                 if (!char.IsDigit(letter)) {
@@ -157,7 +197,8 @@ namespace IRExplorerUI.UTC {
 
         private string ExpandDiff(string diffText, int offset, string text,
                                   out int leftStopIndex, out int rightStopIndex) {
-            if (offset >= text.Length) {
+            if (diffText.Length == 0 ||
+                offset + diffText.Length >= text.Length) {
                 leftStopIndex = rightStopIndex = 0;
                 return diffText;
             }
