@@ -1221,7 +1221,7 @@ namespace IRExplorerUI {
             var defaultItems = SaveDefaultMenuItems(ScriptMenuItem);
             ScriptMenuItem.Items.Clear();
 
-            var actions = Session.CompilerInfo.BuiltinScripts;
+            var actions = Session.CompilerInfo.BuiltinFunctionTasks;
 
             foreach (var action in actions) {
                 var item = new MenuItem() {
@@ -1239,7 +1239,7 @@ namespace IRExplorerUI {
 
         private async void ActionMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
             var menuItem = (MenuItem)sender;
-            var task = (DocumentTaskDefinition)menuItem.Tag;
+            var task = (FunctionTaskDefinition)menuItem.Tag;
 
             if (!await ExecuteDocumentTask(task)) {
                 //? TODO: Error handling, message box
@@ -1258,41 +1258,52 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task<bool> ExecuteDocumentTask(DocumentTaskDefinition task) {
+        private async Task<bool> ExecuteDocumentTask(FunctionTaskDefinition task) {
             var instance = task.CreateInstance(Session);
 
-            if (instance != null) {
-                var options = new TaskOptions() {
-                    One = true
-                };
-                var optionsData = task.CreateOptionsPanel(options);
-                var dummyQuery = new QueryDefinition(typeof(DummyQuery), task.Name, task.Description);
-                dummyQuery.Data = optionsData;
-
-                optionsData.AddButton("Save", (sender, value) => {
-                    var options2 = task.ExtractOptions<TaskOptions>(optionsData);
-                    MessageBox.Show($"{options2.One}");
-                });
-
-                var documentHost = this;
-                var position = new Point();
-
-                if (documentHost != null) {
-                    var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
-                    var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
-                    position = documentHost.PointToScreen(new Point(left, top));
-                }
-
-                var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, Session);
-                queryPanel.AddQuery(dummyQuery);
-                queryPanel.IsOpen = true;
-                queryPanel.StaysOpen = true;
-
-                using var cancelableTask = new CancelableTask();
-                return await instance.Execute(Function, TextView, cancelableTask);
+            if (instance == null) {
+                return await Task.FromResult(false);
             }
 
-            return false;
+            IFunctionTaskOptions options = instance.Options;
+
+            if (task.HasOptionsPanel) {
+                if (task.ShowOptionsPanelOnExecute) {
+                    var optionsData = instance.CreateOptionsPanel();
+                    var dummyQuery = new QueryDefinition(typeof(DummyQuery), task.Name, task.Description);
+                    dummyQuery.Data = optionsData;
+
+                    optionsData.AddButton("Execute", async (sender, value) => {
+                        instance.LoadPanelOptions(optionsData);
+                        var cancelableTask = new CancelableTask();
+                        await instance.Execute(Function, TextView, cancelableTask);
+                    });
+
+                    optionsData.AddButton("Reset", (sender, value) => {
+                        instance.ResetOptions();
+                        //var options2 = optionsData.ExtractInputs<TaskOptions>();
+                        //MessageBox.Show($"{options2.One}");
+                    });
+
+                    var documentHost = this;
+                    var position = new Point();
+
+                    if (documentHost != null) {
+                        var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
+                        var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
+                        position = documentHost.PointToScreen(new Point(left, top));
+                    }
+
+                    var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, Session);
+                    queryPanel.AddQuery(dummyQuery);
+                    queryPanel.IsOpen = true;
+                    queryPanel.StaysOpen = true;
+                }
+            }
+
+
+            using var cancelableTask = new CancelableTask();
+            return await instance.Execute(Function, TextView, cancelableTask);
         }
     }
 }

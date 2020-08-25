@@ -2,156 +2,10 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
-using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Query {
-    [Flags]
-    public enum QueryValueKind {
-        Other = 0,
-        Bool = 1 << 0,
-        Number = 1 << 1,
-        String = 1 << 2,
-        Element = 1 << 3,
-        List = 1 << 7,
-        Color = 1 << 8,
-        Input = 1 << 16
-    }
-
-    // Needs a notification event so that the query is redone on change
-    public class QueryValue : BindableObject {
-        private string description_;
-        private bool isWarning_;
-        private QueryValueKind kind_;
-        private string name_;
-        private object value_;
-        private string warningMessage_;
-
-        public QueryValue(int id, string name, QueryValueKind kind, string description = null) {
-            Id = id;
-            Name = name;
-            Kind = kind;
-            Description = description;
-        }
-
-        public QueryValue(int id, string name, object value, QueryValueKind kind, string description = null) {
-            Id = id;
-            Name = name;
-            Kind = kind;
-            Value = value;
-            Description = description;
-        }
-
-        public int Id { get; set; }
-
-        public QueryValueKind Kind {
-            get => kind_;
-            set => SetAndNotify(ref kind_, value);
-        }
-
-        public string Name {
-            get => name_;
-            set => SetAndNotify(ref name_, value);
-        }
-
-        public string Description {
-            get => description_;
-            set => SetAndNotify(ref description_, value);
-        }
-
-        public bool IsWarning {
-            get => isWarning_;
-            set => SetAndNotify(ref isWarning_, value);
-        }
-
-        public string WarningMessage {
-            get => warningMessage_;
-            set => SetAndNotify(ref warningMessage_, value);
-        }
-
-        public object Value {
-            get => value_;
-            set => SetAndNotify(ref value_, value);
-        }
-
-        public object Tag { get; set; }
-
-        public bool IsBool => Kind.HasFlag(QueryValueKind.Bool);
-        public bool IsNumber => Kind.HasFlag(QueryValueKind.Number);
-        public bool IsString => Kind.HasFlag(QueryValueKind.Number);
-        public bool IsElement => Kind.HasFlag(QueryValueKind.Element);
-        public bool IsList => Kind.HasFlag(QueryValueKind.List);
-        public bool IsColor => Kind.HasFlag(QueryValueKind.Color);
-        public bool IsInput => Kind.HasFlag(QueryValueKind.Input);
-        public bool IsOutput => !Kind.HasFlag(QueryValueKind.Input);
-
-        public static object GetDefaultValue(QueryValueKind kind) {
-            return kind switch
-            {
-                QueryValueKind.Bool => false,
-                QueryValueKind.Element => null,
-                QueryValueKind.Number => 0,
-                QueryValueKind.String => "",
-                QueryValueKind.Color => Colors.White,
-                _ => null
-            };
-        }
-
-        public void SetWarning(string message = null) {
-            WarningMessage = message;
-            IsWarning = true;
-        }
-
-        public void ResetValue() {
-            Value = GetDefaultValue(kind_);
-            IsWarning = false;
-        }
-    }
-
-    public class QueryButton : BindableObject {
-        private string text_;
-        private string description_;
-        private bool hasBoldText_;
-        private bool hasDemiBoldText_;
-        private bool isEnabled_;
-
-        public QueryButton(string text, EventHandler<object> action = null, object data = null) {
-            Text = text;
-            Action = action;
-            Data = data;
-            IsEnabled = true;
-        }
-
-        public string Text {
-            get => text_;
-            set => SetAndNotify(ref text_, value);
-        }
-
-        public string Description {
-            get => description_;
-            set => SetAndNotify(ref description_, value);
-        }
-
-        public bool HasBoldText {
-            get => hasBoldText_;
-            set => SetAndNotify(ref hasBoldText_, value);
-        }
-
-        public bool HasDemiBoldText {
-            get => hasDemiBoldText_;
-            set => SetAndNotify(ref hasDemiBoldText_, value);
-        }
-
-        public bool IsEnabled {
-            get => isEnabled_ && Action != null;
-            set => SetAndNotify(ref isEnabled_, value);
-        }
-
-        public EventHandler<object> Action { get; set; }
-        public object Data { get; set; }
-    }
-
     public class QueryData : INotifyPropertyChanged {
         private int nextId_;
 
@@ -202,10 +56,10 @@ namespace IRExplorerUI.Query {
             OnPropertyChange(nameof(Buttons));
         }
 
-        public void AddInputs<T>(T inputObject) where T : class, new() {
+        public void AddInputs(object inputObject) {
             // Use reflection to add the corresponding input value
             // for each of the properties.
-            var inputType = typeof(TaskOptions);
+            var inputType = inputObject.GetType();
 
             foreach (var property in inputType.GetProperties()) {
                 if (!property.CanRead || !property.CanWrite) {
@@ -247,11 +101,15 @@ namespace IRExplorerUI.Query {
                             valueKind = QueryValueKind.Color;
                             break;
                         }
-
                 }
 
                 if (valueKind == QueryValueKind.Other) {
                     continue;
+                }
+
+                // If no name was provided, use the property name.
+                if (string.IsNullOrEmpty(name)) {
+                    name = property.Name;
                 }
 
                 // Use current property value.
@@ -261,14 +119,13 @@ namespace IRExplorerUI.Query {
             }
         }
 
-        public T ExtractInputs<T>() where T : class, new() {
-            var options = new T();
-            var inputType = typeof(T);
+        public object ExtractInputs(Type outputType) {
+            var options = Activator.CreateInstance(outputType);
 
             foreach (var inputValue in InputValues) {
                 // Consider input values mapped to properties of T.
                 if (inputValue.Tag is PropertyInfo propertyTag &&
-                    inputType.GetProperty(propertyTag.Name) != null) {
+                    outputType.GetProperty(propertyTag.Name) != null) {
                     // For numbers, try to convert to int.
                     if (inputValue.Kind == QueryValueKind.Number) {
                         if (!int.TryParse(inputValue.Value as string, out int result)) {
