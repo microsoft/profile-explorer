@@ -2027,7 +2027,7 @@ namespace IRExplorerUI {
             }
 
             bool highlightElement = settings_.ShowInfoOnHover &&
-                                    (!settings_.ShowInfoOnHoverWithModifier || Utils.IsShiftModifierActive());
+                                    (!settings_.ShowInfoOnHoverWithModifier || Utils.IsKeyboardModifierActive());
 
             var position = e.GetPosition(TextArea.TextView);
             var element = FindPointedElement(position, out _);
@@ -2064,7 +2064,7 @@ namespace IRExplorerUI {
         }
 
         private void IRDocument_PreviewMouseHoverStopped(object sender, MouseEventArgs e) {
-            removeHoveredAction_ = DelayedAction.StartNew(TimeSpan.FromMilliseconds(1000), () => {
+            removeHoveredAction_ = DelayedAction.StartNew(TimeSpan.FromMilliseconds(500), () => {
                 if (removeHoveredAction_ != null) {
                     removeHoveredAction_ = null;
                     HideHoverHighlighting();
@@ -2093,7 +2093,7 @@ namespace IRExplorerUI {
 
             if (ignoreNextScrollEvent_) {
                 ignoreNextScrollEvent_ = false;
-                e.Handled = true;
+                //e.Handled = true;
             }
         }
 
@@ -3170,7 +3170,7 @@ namespace IRExplorerUI {
             HideTemporaryUI();
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
-            e.Handled = element != null;
+            // e.Handled = element != null;
         }
 
         public void EnterDiffMode() {

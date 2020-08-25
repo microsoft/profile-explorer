@@ -9,10 +9,10 @@ namespace IRExplorerUI.OptionsPanels {
     /// Interaction logic for DiffOptionsPanel.xaml
     /// </summary>
     public partial class DiffOptionsPanel : OptionsPanelBase {
-        public const double DefaultHeight = 600;
+        public const double DefaultHeight = 650;
         public const double MinimumHeight = 200;
-        public const double DefaultWidth = 340;
-        public const double MinimumWidth = 340;
+        public const double DefaultWidth = 360;
+        public const double MinimumWidth = 360;
 
         public DiffOptionsPanel() {
             InitializeComponent();
