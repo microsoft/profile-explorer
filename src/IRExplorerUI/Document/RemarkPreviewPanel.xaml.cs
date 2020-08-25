@@ -42,6 +42,45 @@ namespace IRExplorerUI.Document {
             ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.2));
     }
 
+    public class RemarkSettingsEx : BindableObject {
+        private bool hasOptimizationRemarks_;
+        private bool hasAnalysisRemarks_;
+        private bool hasDefaultRemarks_;
+        private bool hasVerboseRemarks_;
+        private bool hasTraceRemarks_;
+
+        public RemarkSettings Settings { get; set; }
+
+        public RemarkSettingsEx(RemarkSettings settings) {
+            Settings = settings;
+        }
+
+        public bool HasOptimizationRemarks {
+            get => hasOptimizationRemarks_;
+            set => SetAndNotify(ref hasOptimizationRemarks_, value);
+        }
+
+        public bool HasAnalysisRemarks {
+            get => hasAnalysisRemarks_;
+            set => SetAndNotify(ref hasAnalysisRemarks_, value);
+        }
+
+        public bool HasDefaultRemarks {
+            get => hasDefaultRemarks_;
+            set => SetAndNotify(ref hasDefaultRemarks_, value);
+        }
+
+        public bool HasVerboseRemarks {
+            get => hasVerboseRemarks_;
+            set => SetAndNotify(ref hasVerboseRemarks_, value);
+        }
+
+        public bool HasTraceRemarks {
+            get => hasTraceRemarks_;
+            set => SetAndNotify(ref hasTraceRemarks_, value);
+        }
+    }
+
     public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged {
         private const double RemarkListTop = 48;
         private const double RemarkPreviewWidth = 600;
@@ -52,7 +91,7 @@ namespace IRExplorerUI.Document {
         private const double ColorButtonLeft = 175;
 
         private IRElement element_;
-        private RemarkSettings remarkFilter_;
+        private RemarkSettingsEx remarkFilter_;
         private bool showPreview_;
         private Popup colorPopup_;
 
@@ -90,9 +129,9 @@ namespace IRExplorerUI.Document {
         public ISessionManager Session { get; set; }
 
         public RemarkSettings RemarkFilter {
-            get => remarkFilter_;
+            get => remarkFilter_.Settings;
             set {
-                remarkFilter_ = (RemarkSettings)value.Clone();
+                remarkFilter_ = new RemarkSettingsEx((RemarkSettings)value.Clone());
                 ToolbarPanel.DataContext = remarkFilter_;
             }
         }
@@ -109,7 +148,9 @@ namespace IRExplorerUI.Document {
                 RemarkEx firstSectionRemark = null;
 
                 foreach (var remark in remarkTag.Remarks) {
-                    if (IRDocumentHost.IsAcceptedRemark(remark, Section, remarkFilter_)) {
+                    AccountForRemarkKind(remark);
+
+                    if (IRDocumentHost.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
                         string sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
                         sectionName = $"({remark.Section.Number}) {sectionName}";
 
@@ -129,6 +170,31 @@ namespace IRExplorerUI.Document {
                 if (firstSectionRemark != null) {
                     RemarkList.ScrollIntoView(firstSectionRemark);
                 }
+            }
+        }
+
+        private void AccountForRemarkKind(Remark remark) {
+            switch (remark.Kind) {
+                case RemarkKind.Optimization: {
+                        remarkFilter_.HasOptimizationRemarks = true;
+                        break;
+                    }
+                case RemarkKind.Analysis: {
+                        remarkFilter_.HasAnalysisRemarks = true;
+                        break;
+                    }
+                case RemarkKind.Default: {
+                        remarkFilter_.HasDefaultRemarks = true;
+                        break;
+                    }
+                case RemarkKind.Verbose: {
+                        remarkFilter_.HasVerboseRemarks = true;
+                        break;
+                    }
+                case RemarkKind.Trace: {
+                        remarkFilter_.HasTraceRemarks = true;
+                        break;
+                    }
             }
         }
 

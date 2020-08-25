@@ -79,22 +79,14 @@ namespace IRExplorerUI.Diff {
                                 }
 
                                 document.Insert(offset, line.Text + Environment.NewLine);
-
-                                result.DiffSegments.Add(
-                                    new DiffTextSegment(DiffKind.Insertion, offset, line.Text.Length));
-
-                                diffStats.LinesAdded++;
+                                AppendInsertionChange(diffStats, result, line, offset);
                                 break;
                             }
                         case ChangeType.Deleted: {
                                 int actualLine = line.Position.Value + lineAdjustment;
                                 var docLine = document.GetLineByNumber(Math.Min(document.LineCount, actualLine));
 
-                                result.DiffSegments.Add(
-                                    new DiffTextSegment(DiffKind.Deletion, docLine.Offset,
-                                                        docLine.Length));
-
-                                diffStats.LinesDeleted++;
+                                AppendDeletionChange(diffStats, result, docLine);
                                 break;
                             }
                         case ChangeType.Imaginary: {
@@ -136,6 +128,8 @@ namespace IRExplorerUI.Diff {
                                 bool wholeLineReplaced = false;
 
                                 if (actualLine < document.LineCount) {
+                                    // Use the modified line instead; below the segments
+                                    // of the line that were changed (the sub-pieces) are marked.
                                     var docLine = document.GetLineByNumber(actualLine);
                                     document.Replace(docLine.Offset, docLine.Length, line.Text);
                                     wholeLineReplaced = true;
@@ -150,10 +144,11 @@ namespace IRExplorerUI.Diff {
                                 var pieces = line.SubPieces;
                                 var otherPieces = otherDiff.Lines[i].SubPieces;
 
-                                //? TODO: This is a hack to get the two piece lists aligned
+                                //? TODO: This is an ugly hack to get the two piece lists aligned
                                 //? for Beyond Compare in case there is a word inserted at the line start
                                 //? like in "r t100" vs "  t100" - the BC diff builder should match DiffPlex
-                                //? and insert a dummy whitespace diff corresponding to "r" instead two whitespaces in "  t100"
+                                //? and insert a dummy whitespace diff corresponding to "r" instead two whitespaces in "  t100",
+                                //? which would create the same number of diffs on both sides
                                 if (pieces[0].Type != otherPieces[0].Type) {
                                     if (isRightDoc) {
                                         if (otherPieces.Count > 1 &&
@@ -165,8 +160,8 @@ namespace IRExplorerUI.Diff {
                                     }
                                     else {
                                         if (pieces.Count > 1 &&
-                                                otherPieces[0].Type == pieces[1].Type &&
-                                                otherPieces[0].Text.EndsWith(pieces[1].Text)) {
+                                            otherPieces[0].Type == pieces[1].Type &&
+                                            otherPieces[0].Text.EndsWith(pieces[1].Text)) {
                                             adj = -1;
                                         }
                                     }
@@ -309,7 +304,7 @@ namespace IRExplorerUI.Diff {
                                                 changeKind = isRightDoc ? DiffKind.Insertion : DiffKind.Deletion;
                                             }
 
-                                            result.DiffSegments.Add(new DiffTextSegment(changeKind, docLine.Offset, docLine.Length));
+                                            AppendChange(changeKind, docLine.Offset, docLine.Length, result);
                                             handled = true;
                                         }
                                     }
@@ -317,7 +312,7 @@ namespace IRExplorerUI.Diff {
 
                                 if (!handled) {
                                     foreach (var segment in modifiedSegments) {
-                                        result.DiffSegments.Add(segment);
+                                        AppendChange(segment, result);
                                     }
                                 }
 
@@ -339,7 +334,50 @@ namespace IRExplorerUI.Diff {
             });
         }
 
-        private static void AppendModificationChange(List<DiffTextSegment> modifiedSegments, DiffKind diffKind, AdjustedDiffPiece filteredPiece) {
+        private void AppendChange(DiffKind kind, int offset, int length, DiffMarkingResult result) {
+            AppendChange(new DiffTextSegment(kind, offset, length), result);
+        }
+
+        private void AppendChange(DiffTextSegment segment, DiffMarkingResult result) {
+            bool accepted = false;
+
+            switch (segment.Kind) {
+                case DiffKind.Insertion: {
+                        accepted = settings_.ShowInsertions;
+                        break;
+                    }
+                case DiffKind.Deletion: {
+                        accepted = settings_.ShowDeletions;
+                        break;
+                    }
+                case DiffKind.Modification: {
+                        accepted = settings_.ShowModifications;
+                        break;
+                    }
+                case DiffKind.MinorModification: {
+                        accepted = settings_.ShowMinorModifications;
+                        break;
+                    }
+            }
+
+            if (accepted) {
+                result.DiffSegments.Add(segment);
+            }
+        }
+
+        private void AppendInsertionChange(DiffStatistics diffStats, DiffMarkingResult result, DiffPiece line, int offset) {
+            AppendChange(DiffKind.Insertion, offset, line.Text.Length, result);
+            diffStats.LinesAdded++;
+        }
+
+        private void AppendDeletionChange(DiffStatistics diffStats, DiffMarkingResult result, DocumentLine docLine) {
+            AppendChange(DiffKind.Deletion, docLine.Offset, docLine.Length, result);
+            diffStats.LinesDeleted++;
+        }
+
+        private void AppendModificationChange(List<DiffTextSegment> modifiedSegments, DiffKind diffKind, AdjustedDiffPiece filteredPiece) {
+            // With modifications that are expanded, it's possible to have two diffs
+            // be expanded to the same text range - in that case keep the initial segment.
             if (modifiedSegments.Count > 0) {
                 var lastSegment = modifiedSegments[^1];
                 if (lastSegment.StartOffset == filteredPiece.Offset &&

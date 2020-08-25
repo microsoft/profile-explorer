@@ -12,7 +12,8 @@
         x:Key="InvertedBoolToVisibility"
         False="Visible"
         True="Collapsed" />
-    <local:EnumBooleanConverter x:Key="EnumToBool" />
+    <utils:EnumBooleanConverter x:Key="EnumToBool" />
+    <utils:BoolToParameterConverter x:Key="BooToParameter" />
 
     <Style x:Key="HoverUnderlineStyle" TargetType="TextBlock">
         <Style.Triggers>

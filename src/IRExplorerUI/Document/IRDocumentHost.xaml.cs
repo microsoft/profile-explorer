@@ -166,7 +166,7 @@ namespace IRExplorerUI {
         }
 
         private async void RemarksButtonState_PropertyChanged(object sender, PropertyChangedEventArgs e) {
-            if (!remarkPanelVisible_) {
+            if (!remarkPanelVisible_ && !remarkOptionsPanelVisible_) {
                 await HandleNewRemarkSettings(remarksButtonState_.Settings, false);
             }
         }
@@ -203,6 +203,8 @@ namespace IRExplorerUI {
         private void IRDocumentHost_Unloaded(object sender, RoutedEventArgs e) {
             if (remarkPanelVisible_) {
                 remarkPanel_.IsOpen = false;
+                remarkPanelVisible_ = false;
+                remarkPanel_ = null;
             }
         }
 
@@ -728,7 +730,7 @@ namespace IRExplorerUI {
 
             //? TODO: Move SearchText into a state object
             if (!string.IsNullOrEmpty(remarkSettings.SearchedText)) {
-                if (!remark.RemarkText.Contains(remarkSettings.SearchedText, StringComparison.InvariantCulture)) {
+                if (!remark.RemarkText.Contains(remarkSettings.SearchedText, StringComparison.OrdinalIgnoreCase)) {
                     return false;
                 }
             }
@@ -761,7 +763,7 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            //? Filter based on context - accept any children
+            //? TODO: Filter based on context - accept any children
             if (activeRemarkContext_ != null) {
                 if (remark.Context != activeRemarkContext_) {
                     return false;

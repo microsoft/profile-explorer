@@ -26,11 +26,15 @@ namespace IRExplorerUI {
         [ProtoMember(13)] public Color MinorModificationBorderColor { get; set; }
         [ProtoMember(15)] public Color PlaceholderBorderColor { get; set; }
         [ProtoMember(16)] public string ExternalDiffAppPath { get; set; }
-        [ProtoMember(18), DefaultValue(DiffImplementationKind.Internal)]
+        [ProtoMember(17), DefaultValue(DiffImplementationKind.Internal)]
         public DiffImplementationKind DiffImplementation { get; set; }
 
-        [ProtoMember(19)] public bool FilterTempVariableNames { get; set; }
-        [ProtoMember(20)] public bool FilterSSADefNumbers { get; set; }
+        [ProtoMember(18)] public bool FilterTempVariableNames { get; set; }
+        [ProtoMember(19)] public bool FilterSSADefNumbers { get; set; }
+        [ProtoMember(20)] public bool ShowInsertions { get; set; }
+        [ProtoMember(21)] public bool ShowDeletions { get; set; }
+        [ProtoMember(22)] public bool ShowModifications { get; set; }
+        [ProtoMember(23)] public bool ShowMinorModifications { get; set; }
 
         public override void Reset() {
             IdentifyMinorDiffs = true;
@@ -41,6 +45,10 @@ namespace IRExplorerUI {
             ManyDiffsModificationPercentage = 60;
             ManyDiffsInsertionPercentage = 75;
             DiffImplementation = DiffImplementationKind.Internal;
+            ShowInsertions = true;
+            ShowDeletions = true;
+            ShowModifications = true;
+            ShowMinorModifications = true;
 
             DeletionBorderColor = Utils.ColorFromString("#B33232");
             InsertionBorderColor = Utils.ColorFromString("#7FA72E");
@@ -66,7 +74,11 @@ namespace IRExplorerUI {
                    other.ManyDiffsMarkWholeLine != ManyDiffsMarkWholeLine ||
                    other.ManyDiffsInsertionPercentage != ManyDiffsInsertionPercentage ||
                    other.ManyDiffsModificationPercentage != ManyDiffsModificationPercentage ||
-                   other.DiffImplementation != DiffImplementation;
+                   other.DiffImplementation != DiffImplementation ||
+                   other.ShowInsertions != ShowInsertions ||
+                   other.ShowDeletions != ShowDeletions ||
+                   other.ShowModifications != ShowModifications ||
+                   other.ShowMinorModifications != ShowMinorModifications;
         }
 
         public override bool Equals(object obj) {
@@ -88,7 +100,11 @@ namespace IRExplorerUI {
                    MinorModificationBorderColor.Equals(settings.MinorModificationBorderColor) &&
                    PlaceholderBorderColor.Equals(settings.PlaceholderBorderColor) &&
                    ExternalDiffAppPath == settings.ExternalDiffAppPath &&
-                   DiffImplementation == settings.DiffImplementation;
+                   DiffImplementation == settings.DiffImplementation &&
+                   ShowInsertions == settings.ShowInsertions &&
+                   ShowDeletions == settings.ShowDeletions &&
+                   ShowModifications == settings.ShowModifications &&
+                   ShowMinorModifications == settings.ShowMinorModifications;
         }
     }
 }

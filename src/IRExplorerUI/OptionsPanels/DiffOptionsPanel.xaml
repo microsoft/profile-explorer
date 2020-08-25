@@ -9,26 +9,51 @@
     xmlns:settings="clr-namespace:IRExplorerUI"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
     d:DesignHeight="560"
-    d:DesignWidth="320 "
+    d:DesignWidth="340 "
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
         <StackPanel Margin="4,4,4,4">
+            <TextBlock FontWeight="DemiBold" Text="Displayed changes" />
+            <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
+                <ToggleButton
+                    Margin="0,0,2,0"
+                    Padding="4,0,4,0"
+                    Content="Insertions"
+                    IsChecked="{Binding ShowInsertions, Mode=TwoWay}" />
+                <ToggleButton
+                    Margin="2,0,2,0"
+                    Padding="4,0,4,0"
+                    Content="Deletions"
+                    IsChecked="{Binding ShowDeletions, Mode=TwoWay}" />
+                <ToggleButton
+                    Margin="2,0,2,0"
+                    Padding="4,0,4,0"
+                    Content="Modifications"
+                    IsChecked="{Binding ShowModifications, Mode=TwoWay}" />
+                <ToggleButton
+                    Margin="2,0,2,0"
+                    Padding="4,0,4,0"
+                    Content="Minor modifications"
+                    IsChecked="{Binding ShowMinorModifications, Mode=TwoWay}" />
+            </StackPanel>
+
+            <Separator Margin="0,4,0,4" />
             <TextBlock FontWeight="DemiBold" Text="Diffs Handling" />
             <CheckBox
                 Margin="0,4,0,2"
-                Content="Mark minor IR changes differently"
+                Content="Mark minor IR modifications differently"
                 IsChecked="{Binding IdentifyMinorDiffs, Mode=TwoWay}"
-                ToolTip="Identifies minor changes in the IR, such as different types of temporary variables" />
+                ToolTip="Considers minor changes in the IR, such as different kinds of temporary variables" />
             <CheckBox
                 Margin="20,4,0,2"
                 Content="Consider changes in temporary variable names"
                 IsChecked="{Binding FilterTempVariableNames, Mode=TwoWay}"
-                ToolTip="Identifies minor changes in the IR, such as different types of temporary variables" />
+                ToolTip="Considers name changes of temporary variables as minor" />
             <CheckBox
                 Margin="20,4,0,2"
-                Content="Consider changes in SSA definition numbers"
+                Content="Consider changes in SSA variable identifiers"
                 IsChecked="{Binding FilterSSADefNumbers, Mode=TwoWay}"
-                ToolTip="Identifies minor changes in the IR, such as different types of temporary variables" />
+                ToolTip="Consiers changes of SSA variable identifiers (name/number) as minor" />
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Filter out insignificant, noisy changes"
@@ -88,6 +113,7 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <xctk:ColorPicker
+                        x:Name="InsertionColorPicker"
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
@@ -110,6 +136,7 @@
                         <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <xctk:ColorPicker
+                        x:Name="InsertionBorderColorPicker"
                         Grid.Column="0"
                         Width="64"
                         HorizontalAlignment="Left"
