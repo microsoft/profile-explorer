@@ -18,7 +18,7 @@ namespace IRExplorerUI {
         ISectionStyleProvider SectionStyleProvider { get; }
         IRRemarkProvider RemarkProvider { get; }
         List<QueryDefinition> BuiltinQueries { get; }
-        List<DocumentTaskDefinition> BuiltinScripts { get; }
+        List<FunctionTaskDefinition> BuiltinFunctionTasks { get; }
 
         bool AnalyzeLoadedFunction(FunctionIR function);
         IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);

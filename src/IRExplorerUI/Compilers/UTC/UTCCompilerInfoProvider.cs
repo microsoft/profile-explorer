@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using IRExplorerUI.UTC;
 using System.Windows.Media;
 using System;
+using System.ComponentModel;
 
 namespace IRExplorerUI.Compilers.UTC {
     public class UTCCompilerInfoProvider : ICompilerInfoProvider {
@@ -49,8 +50,29 @@ namespace IRExplorerUI.Compilers.UTC {
             UTCBuiltinInterferenceQuery.GetDefinition()
         };
 
-        public List<DocumentTaskDefinition> BuiltinScripts => new List<DocumentTaskDefinition>() {
-            BuiltinDocumentTask.GetDefinition("Unused instructions", "Smth", MarkUnusedInstructions)
+
+        class UnusedInstructionsTaskOptions : IFunctionTaskOptions {
+            [DisplayName("Consider only SSA values")]
+            [Description("Consider only instructions that have a destination operand in SSA form")]
+            public bool HandleOnlySSA { get; set; }
+
+            [DisplayName("Marker color")]
+            [Description("Color to be used for marking unused instructions")]
+            public Color MarkerColor { get; set; }
+
+            public UnusedInstructionsTaskOptions() {
+                Reset();
+            }
+
+            public void Reset() {
+                HandleOnlySSA = true;
+                MarkerColor = Colors.Pink;
+            }
+        }
+
+        public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>() {
+            BuiltinFunctionTask.GetDefinition("Unused instructions", "Some description",
+                                               MarkUnusedInstructions, typeof(UnusedInstructionsTaskOptions)).WithOptions(true, true)
         };
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
@@ -82,7 +104,6 @@ namespace IRExplorerUI.Compilers.UTC {
 
             if (!ssaDefTag.HasUsers) {
                 return true;
-                ;
             }
 
             foreach (var user in ssaDefTag.Users) {
@@ -94,8 +115,9 @@ namespace IRExplorerUI.Compilers.UTC {
             return true;
         }
 
-        private bool MarkUnusedInstructions(FunctionIR function, IRDocument document,
+        private bool MarkUnusedInstructions(FunctionIR function, IRDocument document, IFunctionTaskOptions options,
                                             ISessionManager session, CancelableTask cancelableTask) {
+            var taskOptions = options as UnusedInstructionsTaskOptions;
             var unusedInstr = new HashSet<InstructionIR>();
             var walker = new CFGBlockOrdering(function);
 
@@ -103,7 +125,7 @@ namespace IRExplorerUI.Compilers.UTC {
                 foreach (var instr in block.InstructionsBack) {
                     if (IsUnusedInstruction(GetSSADefinitionTag(instr), unusedInstr)) {
                         document.Dispatcher.BeginInvoke((Action)(() => {
-                            document.MarkElement(instr, Colors.Pink);
+                            document.MarkElement(instr, taskOptions.MarkerColor);
                         }));
 
                         unusedInstr.Add(instr);

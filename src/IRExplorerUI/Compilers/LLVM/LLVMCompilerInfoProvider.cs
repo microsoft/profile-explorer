@@ -38,7 +38,7 @@ namespace IRExplorerUI.Compilers.LLVM {
         }
 
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
-        public List<DocumentTaskDefinition> BuiltinScripts => new List<DocumentTaskDefinition>() { };
+        public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>() { };
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
             //? TODO: var loopGraph = new LoopGraph(function);

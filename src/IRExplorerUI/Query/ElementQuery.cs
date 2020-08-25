@@ -11,14 +11,6 @@ namespace IRExplorerUI.Query {
         public bool Execute(QueryData data);
     }
 
-    public interface IFunctionQuery {
-        public ISessionManager Session { get; }
-        public bool HasOptionsPanel { get;}
-        public bool ShowOptionsPanelOnExecute { get; }
-        public bool Initialize(ISessionManager session);
-        public bool Execute(QueryData data);
-    }
-
     public class QueryDefinition : INotifyPropertyChanged {
         private Type queryType_;
         private IElementQuery queryInstance_;
