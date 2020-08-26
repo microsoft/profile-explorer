@@ -63,7 +63,7 @@ namespace IRExplorerUI.Query {
         }
     }
 
-    public partial class QueryPanel : DraggablePopup {
+    public partial class QueryPanel : DraggablePopup, INotifyPropertyChanged {
         public const double DefaultHeight = 200;
         public const double MinimumHeight = 100;
         public const double DefaultWidth = 250;
@@ -72,6 +72,10 @@ namespace IRExplorerUI.Query {
         private List<ElementQueryInfoView> activeQueries_;
         private List<QueryDefinition> registeredQueries_;
         private List<QueryDefinition> registeredUserQueries_;
+        private string panelTitle_;
+        private bool showAddButton_;
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public QueryPanel(Point position, double width, double height,
                           UIElement referenceElement, ISessionManager session) {
@@ -92,9 +96,30 @@ namespace IRExplorerUI.Query {
             }
 
             UpdateContextMenu();
+            DataContext = this;
         }
 
         public ISessionManager Session { get; set; }
+
+        public string PanelTitle {
+            get => panelTitle_;
+            set {
+                if (panelTitle_ != value) {
+                    panelTitle_ = value;
+                    OnPropertyChange(nameof(PanelTitle));
+                }
+            }
+        }
+
+        public bool ShowAddButton {
+            get => showAddButton_;
+            set {
+                if (showAddButton_ != value) {
+                    showAddButton_ = value;
+                    OnPropertyChange(nameof(ShowAddButton));
+                }
+            }
+        }
 
         public void RegisterQuery(QueryDefinition query, bool isBuiltin) {
             if (isBuiltin) {
@@ -111,6 +136,21 @@ namespace IRExplorerUI.Query {
             queryView.Closed += QueryView_Closed;
             activeQueries_.Add(queryView);
             QueryViewList.ItemsSource = new CollectionView(activeQueries_);
+        }
+
+        public void RemoveQuery(QueryDefinition query) {
+            foreach (var queryView in activeQueries_) {
+                if (queryView.View == query) {
+                    queryView.Closed -= QueryView_Closed;
+                    activeQueries_.Remove(queryView);
+                    QueryViewList.ItemsSource = new CollectionView(activeQueries_);
+                    break;
+                }
+            }
+        }
+
+        public QueryDefinition GetQueryAt(int index) {
+            return activeQueries_[index].View;
         }
 
         private void QueryView_Closed(object sender, EventArgs e) {
@@ -158,6 +198,10 @@ namespace IRExplorerUI.Query {
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) {
             ClosePopup();
+        }
+
+        private void OnPropertyChange(string propertyname) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
     }
 }

@@ -1258,6 +1258,45 @@ namespace IRExplorerUI {
             }
         }
 
+        private QueryPanel CreateFunctionTaskPanel() {
+            var documentHost = this;
+            var position = new Point();
+
+            if (documentHost != null) {
+                var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
+                var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
+                position = documentHost.PointToScreen(new Point(left, top));
+            }
+
+            var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, Session);
+            Session.RegisterDetachedPanel(queryPanel);
+
+            queryPanel.PanelTitle = "Function task";
+            queryPanel.ShowAddButton = false;
+            queryPanel.PopupClosed += QueryPanel_PopupClosed;
+            queryPanel.IsOpen = true;
+            queryPanel.StaysOpen = true;
+            return queryPanel;
+        }
+
+        private void AddFunctionTaskPanelButtons(QueryPanel queryPanel, IFunctionTask taskInstance, QueryData optionsData) {
+            optionsData.AddButton("Execute", async (sender, value) => {
+                taskInstance.LoadOptionsFromValues(optionsData);
+                var cancelableTask = new CancelableTask();
+                await taskInstance.Execute(Function, TextView, cancelableTask);
+            });
+
+            optionsData.AddButton("Reset Settings", (sender, value) => {
+                taskInstance.ResetOptions();
+                var dummyQuery = queryPanel.GetQueryAt(0);
+                dummyQuery.Data = taskInstance.GetOptionsValues();
+                AddFunctionTaskPanelButtons(queryPanel, taskInstance, dummyQuery.Data);
+
+                queryPanel.RemoveQuery(dummyQuery);
+                queryPanel.AddQuery(dummyQuery);
+            });
+        }
+
         private async Task<bool> ExecuteDocumentTask(FunctionTaskDefinition task) {
             var instance = task.CreateInstance(Session);
 
@@ -1269,41 +1308,29 @@ namespace IRExplorerUI {
 
             if (task.HasOptionsPanel) {
                 if (task.ShowOptionsPanelOnExecute) {
-                    var optionsData = instance.CreateOptionsPanel();
+                    var optionsValues = instance.GetOptionsValues();
                     var dummyQuery = new QueryDefinition(typeof(DummyQuery), task.Name, task.Description);
-                    dummyQuery.Data = optionsData;
+                    dummyQuery.Data = optionsValues;
 
-                    optionsData.AddButton("Execute", async (sender, value) => {
-                        instance.LoadPanelOptions(optionsData);
-                        var cancelableTask = new CancelableTask();
-                        await instance.Execute(Function, TextView, cancelableTask);
-                    });
-
-                    optionsData.AddButton("Reset", (sender, value) => {
-                        instance.ResetOptions();
-                        //var options2 = optionsData.ExtractInputs<TaskOptions>();
-                        //MessageBox.Show($"{options2.One}");
-                    });
-
-                    var documentHost = this;
-                    var position = new Point();
-
-                    if (documentHost != null) {
-                        var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
-                        var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
-                        position = documentHost.PointToScreen(new Point(left, top));
-                    }
-
-                    var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, Session);
+                    var queryPanel = CreateFunctionTaskPanel();
+                    AddFunctionTaskPanelButtons(queryPanel, instance, optionsValues);
                     queryPanel.AddQuery(dummyQuery);
-                    queryPanel.IsOpen = true;
-                    queryPanel.StaysOpen = true;
                 }
             }
 
+            if (task.AutoExecute) {
+                using var cancelableTask = new CancelableTask();
+                return await instance.Execute(Function, TextView, cancelableTask);
+            }
 
-            using var cancelableTask = new CancelableTask();
-            return await instance.Execute(Function, TextView, cancelableTask);
+            return true;
+        }
+
+        private void QueryPanel_PopupClosed(object sender, EventArgs e) {
+            var queryPanel = (QueryPanel)sender;
+            queryPanel.PopupClosed -= QueryPanel_PopupClosed;
+            queryPanel.IsOpen = false;
+            Session.UnregisterDetachedPanel(queryPanel);
         }
     }
 }
