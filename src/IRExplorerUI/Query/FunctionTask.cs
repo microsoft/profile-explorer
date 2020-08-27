@@ -23,8 +23,8 @@ namespace IRExplorerUI.Query {
 
         void ResetOptions();
         void SaveOptions();
-        QueryData CreateOptionsPanel();
-        void LoadPanelOptions(QueryData data);
+        QueryData GetOptionsValues();
+        void LoadOptionsFromValues(QueryData data);
 
         bool Initialize(ISessionManager session, object optionalData);
         Task<bool> Execute(FunctionIR function, IRDocument document, CancelableTask cancelableTask);
@@ -76,13 +76,13 @@ namespace IRExplorerUI.Query {
             Options.Reset();
         }
 
-        public QueryData CreateOptionsPanel() {
+        public QueryData GetOptionsValues() {
             var data = new QueryData();
             data.AddInputs(Options);
             return data;
         }
 
-        public void LoadPanelOptions(QueryData data) {
+        public void LoadOptionsFromValues(QueryData data) {
             Options = (IFunctionTaskOptions)data.ExtractInputs(optionsType_);
         }
     }
@@ -110,6 +110,7 @@ namespace IRExplorerUI.Query {
 
         public string Name { get; set; }
         public string Description { get; set; }
+        public bool AutoExecute { get; set;}
         public bool HasOptionsPanel { get; set; }
         public bool ShowOptionsPanelOnExecute { get; set; }
 
@@ -128,7 +129,7 @@ namespace IRExplorerUI.Query {
                 throw new InvalidOperationException("Task doesn't have an options panel!");
             }
 
-            return CreateInstance(session).CreateOptionsPanel();
+            return CreateInstance(session).GetOptionsValues();
         }
     }
 }
