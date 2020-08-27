@@ -829,6 +829,8 @@ namespace IRExplorerUI {
             }
 
             var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, this);
+            queryPanel.PanelTitle = "Queries";
+            queryPanel.ShowAddButton = true;
             queryPanel.PopupClosed += QueryPanel_Closed;
             queryPanel.IsOpen = true;
             queryPanel.StaysOpen = true;
