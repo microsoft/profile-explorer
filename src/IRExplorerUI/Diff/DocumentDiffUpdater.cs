@@ -55,13 +55,13 @@ namespace IRExplorerUI.Diff {
                 // Create a new text document and associate it with the task worker.
                 var document = new TextDocument(new StringTextSource(text));
                 document.SetOwnerThread(Thread.CurrentThread);
+
                 var result = new DiffMarkingResult(document);
-                var modifiedSegments = new List<DiffTextSegment>(64);
                 int lineCount = diff.Lines.Count;
                 int lineAdjustment = 0;
 
-                for (int i = 0; i < lineCount; i++) {
-                    var line = diff.Lines[i];
+                for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
+                    var line = diff.Lines[lineIndex];
 
                     switch (line.Type) {
                         case ChangeType.Unchanged: {
@@ -90,9 +90,10 @@ namespace IRExplorerUI.Diff {
                                 break;
                             }
                         case ChangeType.Imaginary: {
-                                int actualLine = i + 1;
+                                int actualLine = lineIndex + 1;
 
                                 if (isRightDoc) {
+                                    // Mark the lines that have been removed on the right side.
                                     if (actualLine <= document.LineCount) {
                                         var docLine = document.GetLineByNumber(actualLine);
                                         int offset = docLine.Offset;
@@ -104,12 +105,14 @@ namespace IRExplorerUI.Diff {
                                     }
                                 }
                                 else {
+                                    // Add a placeholder in the left side to mark
+                                    // the lines inserted on the right side.
                                     int offset = actualLine <= document.LineCount
                                         ? document.GetOffset(actualLine, 0)
                                         : document.TextLength;
 
                                     string imaginaryText =
-                                        new string(AddedDiffLineChar, otherDiff.Lines[i].Text.Length);
+                                        new string(AddedDiffLineChar, otherDiff.Lines[lineIndex].Text.Length);
 
                                     document.Insert(offset, imaginaryText + Environment.NewLine);
 
@@ -122,203 +125,9 @@ namespace IRExplorerUI.Diff {
                                 break;
                             }
                         case ChangeType.Modified: {
-                                int actualLine = line.Position.Value + lineAdjustment;
-                                int lineChanges = 0;
-                                int lineLength = 0;
-                                bool wholeLineReplaced = false;
-
-                                if (actualLine < document.LineCount) {
-                                    // Use the modified line instead; below the segments
-                                    // of the line that were changed (the sub-pieces) are marked.
-                                    var docLine = document.GetLineByNumber(actualLine);
-                                    document.Replace(docLine.Offset, docLine.Length, line.Text);
-                                    wholeLineReplaced = true;
-                                    lineLength = docLine.Length;
-                                }
-
-                                modifiedSegments.Clear();
-                                int column = 0;
-                                int otherColumn = 0;
-                                int adj = 0;
-
-                                var pieces = line.SubPieces;
-                                var otherPieces = otherDiff.Lines[i].SubPieces;
-
-                                //? TODO: This is an ugly hack to get the two piece lists aligned
-                                //? for Beyond Compare in case there is a word inserted at the line start
-                                //? like in "r t100" vs "  t100" - the BC diff builder should match DiffPlex
-                                //? and insert a dummy whitespace diff corresponding to "r" instead two whitespaces in "  t100",
-                                //? which would create the same number of diffs on both sides
-                                if (pieces[0].Type != otherPieces[0].Type) {
-                                    if (isRightDoc) {
-                                        if (otherPieces.Count > 1 &&
-                                            otherPieces[1].Type == pieces[0].Type &&
-                                            pieces[0].Text.EndsWith(otherPieces[1].Text)) {
-                                            otherColumn += otherPieces[0].Text.Length;
-                                            adj = 1;
-                                        }
-                                    }
-                                    else {
-                                        if (pieces.Count > 1 &&
-                                            otherPieces[0].Type == pieces[1].Type &&
-                                            otherPieces[0].Text.EndsWith(pieces[1].Text)) {
-                                            adj = -1;
-                                        }
-                                    }
-                                }
-
-
-                                foreach (var piece in line.SubPieces) {
-                                    switch (piece.Type) {
-                                        case ChangeType.Inserted: {
-                                                Debug.Assert(isRightDoc);
-
-                                                int offset = actualLine >= document.LineCount
-                                                    ? document.TextLength
-                                                    : document.GetOffset(actualLine, 0) + column;
-
-                                                if (offset >= document.TextLength) {
-                                                    if (!wholeLineReplaced) {
-                                                        document.Insert(document.TextLength, piece.Text);
-                                                    }
-
-                                                    if (IsSignifficantDiff(piece)) {
-                                                        modifiedSegments.Add(new DiffTextSegment(DiffKind.Modification, offset, piece.Text.Length));
-                                                    }
-                                                }
-                                                else {
-                                                    var diffKind = DiffKind.Insertion;
-                                                    var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece, adj);
-
-                                                    if (otherPiece != null && otherPiece.Type == ChangeType.Deleted) {
-                                                        if (!wholeLineReplaced) {
-                                                            document.Replace(offset, otherPiece.Text.Length, piece.Text);
-                                                        }
-
-                                                        if (wholeLineReplaced) {
-                                                            var diffLine = line.Text;
-                                                            var otherDiffLine = otherDiff.Lines[i].Text;
-                                                            int otherPieceOffset = otherColumn;
-                                                            int pieceOffset = column;
-                                                            diffKind = EstimateModificationType(piece, otherPiece, pieceOffset, otherPieceOffset, diffLine, otherDiffLine);
-                                                        }
-                                                    }
-                                                    else {
-                                                        if (!wholeLineReplaced) {
-                                                            document.Insert(offset, piece.Text);
-                                                        }
-                                                    }
-
-                                                    if (otherPiece != null) {
-                                                        otherColumn += otherPiece.Text.Length;
-                                                    }
-
-                                                    if (IsSignifficantDiff(piece)) {
-                                                        var filteredPiece = diffFilter_.AdjustChange(piece, offset, column, line.Text);
-                                                        AppendModificationChange(modifiedSegments, diffKind, filteredPiece);
-                                                    }
-
-                                                }
-                                                break;
-                                            }
-                                        case ChangeType.Deleted: {
-                                                Debug.Assert(!isRightDoc);
-                                                int offset = document.GetOffset(actualLine, 0) + column;
-
-                                                if (offset >= document.TextLength) {
-                                                    offset = document.TextLength;
-                                                }
-
-                                                var diffKind = DiffKind.Deletion;
-                                                var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece, adj);
-
-                                                if (otherPiece != null && otherPiece.Type == ChangeType.Inserted) {
-                                                    if (wholeLineReplaced) {
-                                                        var diffLine = line.Text;
-                                                        var otherDiffLine = otherDiff.Lines[i].Text;
-                                                        int otherPieceOffset = otherColumn;
-                                                        int pieceOffset = column;
-                                                        diffKind = EstimateModificationType(piece, otherPiece, pieceOffset, otherPieceOffset, diffLine, otherDiffLine);
-                                                    }
-                                                }
-
-                                                if (IsSignifficantDiff(piece)) {
-                                                    var filteredPiece = diffFilter_.AdjustChange(piece, offset, column, line.Text);
-                                                    AppendModificationChange(modifiedSegments, diffKind, filteredPiece);
-                                                }
-
-                                                if (otherPiece != null) {
-                                                    otherColumn += otherPiece.Text.Length;
-                                                }
-                                                break;
-                                            }
-                                        case ChangeType.Modified:
-                                        case ChangeType.Imaginary: {
-                                                break; // Nothing to do here.
-                                            }
-                                        case ChangeType.Unchanged: {
-                                                if (!wholeLineReplaced) {
-                                                    int offset = document.GetOffset(actualLine, 0) + column;
-                                                    document.Replace(offset, piece.Text.Length, piece.Text);
-                                                }
-
-                                                var otherPiece = FindPieceInOtherDocument(otherDiff, i, piece, 0);
-
-                                                if (otherPiece != null) {
-                                                    otherColumn += piece.Text.Length;
-                                                }
-
-                                                break;
-                                            }
-                                        default:
-                                            throw new ArgumentOutOfRangeException("Unexpected change type!");
-                                    }
-
-                                    if (piece.Text != null) {
-                                        column += piece.Text.Length;
-
-                                        if (piece.Type != ChangeType.Unchanged) {
-                                            lineChanges += piece.Text.Length;
-                                        }
-                                    }
-                                }
-
-                                // If most of the line changed, mark the entire line,
-                                // otherwise mark each sub-piece.
-                                bool handled = false;
-
-                                if (settings_.ManyDiffsMarkWholeLine) {
-                                    double percentChanged = 0;
-
-                                    if (lineLength > 0) {
-                                        percentChanged = ((double)lineChanges / (double)lineLength) * 100;
-                                    }
-
-                                    if (percentChanged > settings_.ManyDiffsModificationPercentage) {
-                                        if (actualLine < document.LineCount) {
-                                            var docLine = document.GetLineByNumber(actualLine);
-                                            var changeKind = DiffKind.Modification;
-
-                                            // If even more of the line changed, consider it an insertion/deletion.
-                                            if (percentChanged > settings_.ManyDiffsInsertionPercentage) {
-                                                changeKind = isRightDoc ? DiffKind.Insertion : DiffKind.Deletion;
-                                            }
-
-                                            AppendChange(changeKind, docLine.Offset, docLine.Length, result);
-                                            handled = true;
-                                        }
-                                    }
-                                }
-
-                                if (!handled) {
-                                    foreach (var segment in modifiedSegments) {
-                                        AppendChange(segment, result);
-                                    }
-                                }
-
-                                if (isRightDoc) {
-                                    diffStats.LinesModified++;
-                                }
+                                MarkLineModificationDiffs(line, lineIndex, lineAdjustment,
+                                                          document, isRightDoc, otherDiff, 
+                                                          result, diffStats);
 
                                 break;
                             }
@@ -332,6 +141,244 @@ namespace IRExplorerUI.Diff {
                 ReparseDiffedFunction(result, section);
                 return result;
             });
+        }
+
+        private void MarkLineModificationDiffs(DiffPiece line, int lineIndex, int lineAdjustment,
+                                               TextDocument document, bool isRightDoc,
+                                               DiffPaneModel otherDiff, DiffMarkingResult result, 
+                                               DiffStatistics diffStats) {
+            int actualLine = line.Position.Value + lineAdjustment;
+            int lineChanges = 0;
+            int lineLength = 0;
+            bool wholeLineReplaced = false;
+
+            if (actualLine < document.LineCount) {
+                // Use the modified line instead; below the segments
+                // of the line that were changed (the sub-pieces) are marked.
+                var docLine = document.GetLineByNumber(actualLine);
+                document.Replace(docLine.Offset, docLine.Length, line.Text);
+                wholeLineReplaced = true;
+                lineLength = docLine.Length;
+            }
+
+            var modifiedSegments = new List<DiffTextSegment>(); //? TODO: Can use a stack-allocated array (span)
+            int column = 0;
+            int otherColumn = 0;
+
+            //? TODO: This is an ugly hack to get the two piece lists aligned
+            //? for Beyond Compare in case there is a word inserted at the line start
+            //? like in "r t100" vs "  t100" - the BC diff builder should match DiffPlex
+            //? and insert a dummy whitespace diff corresponding to "r" instead two whitespaces in "  t100",
+            //? which would create the same number of diffs on both sides
+            var pieces = line.SubPieces;
+            var otherPieces = otherDiff.Lines[lineIndex].SubPieces;
+            int pieceIndexAdjustment = 0;
+
+            if (pieces[0].Type != otherPieces[0].Type) {
+                if (isRightDoc) {
+                    if (otherPieces.Count > 1 &&
+                        otherPieces[1].Type == pieces[0].Type &&
+                        pieces[0].Text.EndsWith(otherPieces[1].Text)) {
+                        otherColumn += otherPieces[0].Text.Length;
+                        pieceIndexAdjustment = 1;
+                    }
+                }
+                else {
+                    if (pieces.Count > 1 &&
+                        otherPieces[0].Type == pieces[1].Type &&
+                        otherPieces[0].Text.EndsWith(pieces[1].Text)) {
+                        pieceIndexAdjustment = -1;
+                    }
+                }
+            }
+
+            foreach (var piece in line.SubPieces) {
+                switch (piece.Type) {
+                    case ChangeType.Inserted: {
+                        Debug.Assert(isRightDoc);
+
+                        int offset = actualLine >= document.LineCount
+                            ? document.TextLength
+                            : document.GetOffset(actualLine, 0) + column;
+
+                        if (offset >= document.TextLength) {
+                                // Text inserted at the end of the line and document.
+                            if (!wholeLineReplaced) {
+                                document.Insert(document.TextLength, piece.Text);
+                            }
+
+                            if (IsSignifficantDiff(piece)) {
+                                modifiedSegments.Add(new DiffTextSegment(DiffKind.Modification, 
+                                                                         offset, piece.Text.Length));
+                            }
+                        }
+                        else {
+                            // Check if this insertion has an equivalent deletion on the other side.
+                            // If it does, try to mark it as a modification.
+                            var diffKind = DiffKind.Insertion;
+                            var otherPiece = FindPieceInOtherDocument(otherDiff, lineIndex, piece, pieceIndexAdjustment);
+
+                            if (otherPiece != null && otherPiece.Type == ChangeType.Deleted) {
+                                if (!wholeLineReplaced) {
+                                    document.Replace(offset, otherPiece.Text.Length, piece.Text);
+                                }
+
+                                if (wholeLineReplaced) {
+                                    var diffLine = line.Text;
+                                    var otherDiffLine = otherDiff.Lines[lineIndex].Text;
+                                    int otherPieceOffset = otherColumn;
+                                    int pieceOffset = column;
+                                    diffKind = EstimateModificationType(piece, otherPiece, 
+                                                                        pieceOffset, otherPieceOffset, 
+                                                                        diffLine, otherDiffLine);
+                                }
+                            }
+                            else {
+                                // Try again to find a piece that matches the same offset.
+                                otherPiece = FindOverlappingPieceInOtherDocument(otherDiff, lineIndex, column);
+
+                                if (otherPiece != null && otherPiece.Type == ChangeType.Unchanged) {
+                                    if (!wholeLineReplaced) {
+                                        document.Replace(offset, otherPiece.Text.Length, piece.Text);
+                                    }
+
+                                    var diffLine = line.Text;
+                                    var otherDiffLine = otherDiff.Lines[lineIndex].Text;
+                                    int otherPieceOffset = column;
+                                    int pieceOffset = column;
+                                    diffKind = EstimateModificationType(piece, otherPiece, 
+                                                                        pieceOffset, otherPieceOffset, 
+                                                                        diffLine, otherDiffLine);
+                                }
+                                else if (!wholeLineReplaced) {
+                                    document.Insert(offset, piece.Text);
+                                }
+                            }
+
+                            if (otherPiece != null) {
+                                otherColumn += otherPiece.Text.Length;
+                            }
+
+                            if (IsSignifficantDiff(piece)) {
+                                var filteredPiece = diffFilter_.AdjustChange(piece, offset, column, line.Text);
+                                AppendModificationChange(modifiedSegments, diffKind, filteredPiece);
+                            }
+
+                        }
+                        break;
+                    }
+                    case ChangeType.Deleted: {
+                        Debug.Assert(!isRightDoc);
+                        int offset = document.GetOffset(actualLine, 0) + column;
+
+                        if (offset >= document.TextLength) {
+                            offset = document.TextLength;
+                        }
+
+                        // Check if this deletion has an equivalent insertion on the other side.
+                        // If it does, try to mark it as a modification.
+                        var diffKind = DiffKind.Deletion;
+                        var otherPiece = FindPieceInOtherDocument(otherDiff, lineIndex, piece, pieceIndexAdjustment);
+
+                        if (otherPiece != null && otherPiece.Type == ChangeType.Inserted) {
+                            if (wholeLineReplaced) {
+                                var diffLine = line.Text;
+                                var otherDiffLine = otherDiff.Lines[lineIndex].Text;
+                                int otherPieceOffset = otherColumn;
+                                int pieceOffset = column;
+                                diffKind = EstimateModificationType(piece, otherPiece, 
+                                                                    pieceOffset, otherPieceOffset, 
+                                                                    diffLine, otherDiffLine);
+                            }
+                        }
+                        else {
+                            otherPiece = FindOverlappingPieceInOtherDocument(otherDiff, lineIndex, column);
+
+                            if (otherPiece != null && otherPiece.Type == ChangeType.Unchanged) {
+                                var diffLine = line.Text;
+                                var otherDiffLine = otherDiff.Lines[lineIndex].Text;
+                                int otherPieceOffset = column;
+                                int pieceOffset = column;
+                                diffKind = EstimateModificationType(piece, otherPiece, 
+                                                                    pieceOffset, otherPieceOffset, 
+                                                                    diffLine, otherDiffLine);
+                            }
+                        }
+
+                        if (IsSignifficantDiff(piece)) {
+                            var filteredPiece = diffFilter_.AdjustChange(piece, offset, column, line.Text);
+                            AppendModificationChange(modifiedSegments, diffKind, filteredPiece);
+                        }
+
+                        if (otherPiece != null) {
+                            otherColumn += otherPiece.Text.Length;
+                        }
+                        break;
+                    }
+                    case ChangeType.Modified:
+                    case ChangeType.Imaginary: {
+                        break; // Nothing to do here.
+                    }
+                    case ChangeType.Unchanged: {
+                        if (!wholeLineReplaced) {
+                            int offset = document.GetOffset(actualLine, 0) + column;
+                            document.Replace(offset, piece.Text.Length, piece.Text);
+                        }
+
+                        var otherPiece = FindPieceInOtherDocument(otherDiff, lineIndex, piece, 0);
+
+                        if (otherPiece != null) {
+                            otherColumn += piece.Text.Length;
+                        }
+
+                        break;
+                    }
+                    default:
+                        throw new ArgumentOutOfRangeException("Unexpected change type!");
+                }
+
+                // Adjust the current column in the document.
+                if (piece.Text != null) {
+                    column += piece.Text.Length;
+
+                    if (piece.Type != ChangeType.Unchanged) {
+                        lineChanges += piece.Text.Length;
+                    }
+                }
+            }
+
+            // If most of the line changed, mark the entire line,
+            // otherwise mark each sub-piece.
+            if (settings_.ManyDiffsMarkWholeLine) {
+                double percentChanged = 0;
+
+                if (lineLength > 0) {
+                    percentChanged = ((double)lineChanges / (double)lineLength) * 100;
+                }
+
+                if (percentChanged > settings_.ManyDiffsModificationPercentage) {
+                    if (actualLine < document.LineCount) {
+                        var docLine = document.GetLineByNumber(actualLine);
+                        var changeKind = DiffKind.Modification;
+
+                        // If even more of the line changed, consider it an insertion/deletion.
+                        if (percentChanged > settings_.ManyDiffsInsertionPercentage) {
+                            changeKind = isRightDoc ? DiffKind.Insertion : DiffKind.Deletion;
+                        }
+
+                        AppendChange(changeKind, docLine.Offset, docLine.Length, result);
+                        return;
+                    }
+                }
+            }
+
+            foreach (var segment in modifiedSegments) {
+                AppendChange(segment, result);
+            }
+
+            if (isRightDoc) {
+                diffStats.LinesModified++;
+            }
         }
 
         private void AppendChange(DiffKind kind, int offset, int length, DiffMarkingResult result) {
@@ -396,8 +443,27 @@ namespace IRExplorerUI.Diff {
                 int position = piece.Position.Value + piecePossitionOffset;
 
                 if (position < otherLine.SubPieces.Count) {
-                    return otherLine.SubPieces.Find(item => item.Position.HasValue &&
-                                                            item.Position.Value == position);
+                    return otherLine.SubPieces[position - 1];
+                }
+            }
+
+            return null;
+        }
+
+        private DiffPiece FindOverlappingPieceInOtherDocument(DiffPaneModel otherDiff, int lineIndex, int offset) {
+            if (lineIndex < otherDiff.Lines.Count) {
+                var otherLine = otherDiff.Lines[lineIndex];
+                int otherOffset = 0;
+
+                foreach(var piece in otherLine.SubPieces) {
+                    if (!string.IsNullOrEmpty(piece.Text)) {
+                        if (otherOffset <= offset &&
+                            otherOffset + piece.Text.Length >= offset) {
+                            return piece;
+                        }
+
+                        otherOffset += otherLine.Text.Length;
+                    }
                 }
             }
 
