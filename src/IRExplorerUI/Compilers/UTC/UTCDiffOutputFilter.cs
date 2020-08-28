@@ -131,19 +131,48 @@ namespace IRExplorerUI.UTC {
         }
 
         private bool IsSSANumber(string text, int leftStopIndex, int rightStopIndex, string lineText) {
-            bool hasSSANumberStart = lineText[leftStopIndex] == '<' ||
-                                     lineText[leftStopIndex] == '*' ||
-                                     char.IsDigit(lineText[leftStopIndex]);
-            bool hasSSANumberEnd = lineText[rightStopIndex] == '>' ||
-                                   lineText[rightStopIndex] == 'l' ||
-                                   lineText[rightStopIndex] == 'r';
-            if (hasSSANumberStart && hasSSANumberEnd) {
+            bool hasSSANumberStart = IsSSANumberStart(leftStopIndex, lineText);
+            bool hasSSANumberEnd = IsSSANumberEnd(rightStopIndex, lineText);
+            bool isCandidate = hasSSANumberStart && hasSSANumberEnd;
+
+            if (!isCandidate) {
+                // Sometimes the < > letters are not part of the diff, check the
+                // previous/next letters too.
+                if (!hasSSANumberStart && leftStopIndex > 0 && 
+                    IsSSANumberStart(leftStopIndex - 1, lineText)) {
+                    leftStopIndex--;
+                    hasSSANumberStart = true;
+                }
+
+                if (!hasSSANumberEnd && rightStopIndex < lineText.Length - 1 &&
+                    IsSSANumberEnd(rightStopIndex + 1, lineText)) {
+                    rightStopIndex++;
+                    hasSSANumberEnd = true;
+                }
+
+                isCandidate = hasSSANumberStart && hasSSANumberEnd;
+            }
+
+            if (isCandidate) {
                 leftStopIndex += !char.IsDigit(lineText[leftStopIndex]) ? 1 : 0;
-                var defNumber = lineText.Substring(leftStopIndex, rightStopIndex - leftStopIndex - 1);
+                rightStopIndex -= !char.IsDigit(lineText[rightStopIndex]) ? 1 : 0;
+                var defNumber = lineText.Substring(leftStopIndex, rightStopIndex - leftStopIndex + 1);
                 return int.TryParse(defNumber, out var _);
             }
 
             return false;
+        }
+
+        private static bool IsSSANumberEnd(int rightStopIndex, string lineText) {
+            return lineText[rightStopIndex] == '>' ||
+                   lineText[rightStopIndex] == 'l' ||
+                   lineText[rightStopIndex] == 'r';
+        }
+
+        private static bool IsSSANumberStart(int leftStopIndex, string lineText) {
+            return lineText[leftStopIndex] == '<' ||
+                   lineText[leftStopIndex] == '*' ||
+                   char.IsDigit(lineText[leftStopIndex]);
         }
 
         private bool IsEquivSymbolNumber(string text, int leftStopIndex, int rightStopIndex, string lineText) {
@@ -196,15 +225,14 @@ namespace IRExplorerUI.UTC {
 
         private string ExpandDiff(string diffText, int lineOffset, string lineText,
                                   out int leftStopIndex, out int rightStopIndex) {
-            if (diffText.Length == 0 ||
-                lineOffset + diffText.Length >= lineText.Length) {
+            if (diffText.Length == 0 || lineOffset >= lineText.Length) {
                 leftStopIndex = rightStopIndex = 0;
                 return diffText;
             }
 
             // Expand left/right as long no end marker letters are found.
             int left = lineOffset;
-            int right = lineOffset + diffText.Length - 1;
+            int right = lineOffset;
 
             while (left > 0) {
                 if (Array.IndexOf(ExpansionStopLetters, lineText[left - 1]) != -1) {
