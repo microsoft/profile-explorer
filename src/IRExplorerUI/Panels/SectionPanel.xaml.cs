@@ -1216,5 +1216,11 @@ namespace IRExplorerUI {
                 }
             }
         }
+
+        private void ToolBar_SizeChanged(object sender, SizeChangedEventArgs e) {
+            //? TODO: Hacky way to resize the function search textbox in the toolbar
+            //? when the toobar gets smaller - couldn't find another way to do this in WPF..
+            FunctionFilterGrid.Width = Math.Max(1, e.NewSize.Width - 60);
+        }
     }
 }

@@ -109,7 +109,10 @@
     </Window.CommandBindings>
 
     <Window.InputBindings>
-        <KeyBinding Key="F1" Command="local:AppCommand.ShowDocumentSearch" />
+        <KeyBinding
+            Key="F3"
+            Command="local:AppCommand.ShowDocumentSearch"
+            Modifiers="Ctrl" />
 
         <KeyBinding Key="F11" Command="local:AppCommand.FullScreen" />
         <KeyBinding
@@ -339,7 +342,7 @@
                                 Checked="ToggleButton_Checked"
                                 FontSize="11"
                                 FontWeight="DemiBold"
-                                ToolTip="Show window on top of all other windows (F12)"
+                                ToolTip="Enter/exit diffing two sections (F9)"
                                 Unchecked="DiffModeButton_Unchecked">
                                 <StackPanel Orientation="Horizontal">
                                     <Image
@@ -368,24 +371,6 @@
                                     Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     Y1="0"
                                     Y2="17" />
-                                <Button
-                                    x:Name="DiffSwapButton"
-                                    Width="16"
-                                    Padding="0,0,0,0"
-                                    VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                    BorderBrush="{x:Null}"
-                                    Click="DiffSwapButton_Click"
-                                    ToolTip="Swap left/right diff documents">
-                                    <Image
-                                        Width="14"
-                                        Height="14"
-                                        VerticalAlignment="Center"
-                                        SnapsToDevicePixels="True"
-                                        Source="{StaticResource SwitchIcon}"
-                                        UseLayoutRounding="True" />
-                                </Button>
-
                                 <Button
                                     x:Name="DiffSettingsButton"
                                     Width="16"
@@ -496,23 +481,23 @@
                                     Y2="17" />
 
                                 <Button
-                                    x:Name="ExternalDiffButton"
+                                    x:Name="DiffSwapButton"
                                     Width="16"
-                                    Height="17"
                                     Padding="0,0,0,0"
                                     VerticalAlignment="Center"
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
-                                    Click="ExternalDiffButton_Click"
-                                    ToolTip="Switch between internal and external diff implementation">
+                                    Click="DiffSwapButton_Click"
+                                    ToolTip="Swap left/right diff documents">
                                     <Image
                                         Width="14"
                                         Height="14"
                                         VerticalAlignment="Center"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource ExternalDiffIcon}"
+                                        Source="{StaticResource SwitchIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
+
                                 <Line
                                     Margin="2,0,2,0"
                                     Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -576,7 +561,7 @@
                             Click="FindButton_Click"
                             FontSize="11"
                             FontWeight="DemiBold"
-                            ToolTip="Search the entire document">
+                            ToolTip="Search the entire document (Ctrl+F3)">
                             <Image
                                 Width="13"
                                 Height="13"

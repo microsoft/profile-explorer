@@ -324,8 +324,6 @@
                                         HorizontalAlignment="Center"
                                         Source="{StaticResource SourceIcon}" />
                                 </MenuItem.Icon>
-                                <Separator />
-                                <MenuItem Header="Configure Document Scripts" />
                             </MenuItem>
                             <MenuItem
                                 x:Name="QueryMenuItem"
@@ -595,49 +593,6 @@
                                     Height="16"
                                     Source="{StaticResource RemoveIcon}" />
                             </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator />
-
-                        <MenuItem Header="Query" IsEnabled="False" />
-                        <MenuItem Header="Scripts" IsEnabled="False" />
-
-                        <MenuItem Header="Block">
-                            <MenuItem Header="Show in Control Flow Graph" />
-                            <MenuItem Header="Show in Dominator Tree" IsEnabled="False" />
-                            <MenuItem Header="Show in Post-Dominator Tree" IsEnabled="False" />
-                            <MenuItem Header="Show in Loop Graph" IsEnabled="False" />
-                            <Separator />
-
-                            <MenuItem Header="Go to Block Start" IsEnabled="false" />
-                            <MenuItem Header="Go to Predecessor Block" IsEnabled="false" />
-                            <MenuItem Header="Go to Immediate Dominator Block" IsEnabled="false" />
-                            <MenuItem Header="Go to Immediate Post-Dominator Block" IsEnabled="false" />
-
-                            <MenuItem
-                                Command="local:DocumentCommand.PreviousBlock"
-                                CommandTarget="{Binding ElementName=TextView}"
-                                Header="Go to Previous Block"
-                                InputGestureText="Ctrl+Up">
-                                <MenuItem.Icon>
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Source="{StaticResource UpArrowIcon}" />
-                                </MenuItem.Icon>
-                            </MenuItem>
-
-                            <MenuItem
-                                Command="local:DocumentCommand.NextBlock"
-                                CommandTarget="{Binding ElementName=TextView}"
-                                Header="Go to Next Block"
-                                InputGestureText="Ctrl+Down">
-                                <MenuItem.Icon>
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Source="{StaticResource DownArrowIcon}" />
-                                </MenuItem.Icon>
-                            </MenuItem>
                         </MenuItem>
                     </ContextMenu>
                 </local:IRDocument.ContextMenu>
