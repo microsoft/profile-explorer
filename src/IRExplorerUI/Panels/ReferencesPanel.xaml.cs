@@ -87,7 +87,6 @@ namespace IRExplorerUI {
         private IRDocument document_;
 
         private IRElement element_;
-        private IRElement forcedElement_;
         private bool filterEnabled_;
         private ReferenceKind filterKind_;
         private bool focusedOnce_;
@@ -113,13 +112,6 @@ namespace IRExplorerUI {
                 }
 
                 if (!(value is OperandIR)) {
-                    ResetReferenceListView();
-                    return;
-                }
-
-                if (value.ParentFunction != document_.Function) {
-                    forcedElement_ = value;
-                    ResetReferenceListView();
                     return;
                 }
 
@@ -310,14 +302,11 @@ namespace IRExplorerUI {
             SymbolName.Text = "";
         }
 
-        public void InitializeFromDocument(IRDocument document, IRTextSection section) {
+        public void InitializeFromDocument(IRDocument document) {
             if (document_ != document) {
                 document_ = document;
                 Element = null;
             }
-
-            section_ = section;
-            IsPanelEnabled = document_ != null;
         }
 
         private void ComboBox_Loaded(object sender, RoutedEventArgs e) {
@@ -467,15 +456,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            InitializeFromDocument(document, section);
-
-            if (forcedElement_ != null &&
-                forcedElement_.ParentFunction == document_.Function) {
-                Element = forcedElement_;
-                forcedElement_ = null;
-                return;
-            }
-
+            InitializeFromDocument(document);
             var data = Session.LoadPanelState(this, section);
             var state = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
 
@@ -493,6 +474,9 @@ namespace IRExplorerUI {
             else {
                 ResetReferenceListView();
             }
+
+            IsPanelEnabled = document_ != null;
+            section_ = section;
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -513,7 +497,6 @@ namespace IRExplorerUI {
         public override void OnSessionEnd() {
             base.OnSessionEnd();
             ResetReferenceListView();
-            forcedElement_ = null;
         }
 
         public override void OnElementSelected(IRElementEventArgs e) {
