@@ -50,6 +50,7 @@ namespace IRExplorerUI {
         private FunctionIR function_;
         private ElementHighlighter hoverElementMarker_;
         private HighlightingStyle hoverElementStyle_;
+        private object lockObject_;
 
         private string initialText_;
         private List<Tuple<int, int>> initialTextLines_;
@@ -59,12 +60,14 @@ namespace IRExplorerUI {
         private ElementHighlighter searchResultMarker_;
         private HighlightingStyle searchResultStyle_;
         private IRTextSection section_;
+        private IRDocument associatedDocument_;
         private int selectedElementRefIndex_;
         private List<Reference> selectedElementRefs_;
         private bool syntaxHighlightingLoaded_;
         private CancelableTask updateHighlightingTask_;
 
         public LightIRDocument() {
+            lockObject_ = new object();
             elements_ = new List<IRElement>();
             elementStyle_ = new HighlightingStyle(Utils.ColorFromString("#FFFCDC"));
             hoverElementStyle_ = new HighlightingStyle(Utils.ColorFromString("#FFF487"));
@@ -89,6 +92,9 @@ namespace IRExplorerUI {
         }
 
         public ISessionManager Session { get; set; }
+        public IRTextSection Section => section_;
+        public FunctionIR Function => function_;
+        public IRDocument AssociatedDocument => associatedDocument_;
 
         public TextSearchMode SearchMode {
             get => searchMode_;
@@ -155,32 +161,42 @@ namespace IRExplorerUI {
             UpdateHighlighting();
         }
 
-        private void TextView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
-            if (Session?.CurrentDocument == null) {
-                return;
+        private IRDocument FindTargetDocument() {
+            if (associatedDocument_ != null &&
+                associatedDocument_.Section == section_) {
+                return associatedDocument_;
+            }
+            else if (Session?.CurrentDocument == null ||
+                     Session?.CurrentDocument.Section == section_) {
+                return Session.CurrentDocument;
             }
 
+            return null;
+        }
+
+        private void TextView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
             HideToolTip();
             var position = e.GetPosition(TextArea.TextView);
             var element = DocumentUtils.FindPointedElement(position, this, elements_);
 
             if (element != null) {
+                var targetDocument = FindTargetDocument();
                 ReferenceFinder refFinder = null;
                 IRElement refElement = null;
 
                 if (element is InstructionIR instr) {
-                    var similarValueFinder = new SimilarValueFinder(Session.CurrentDocument.Function);
+                    var similarValueFinder = new SimilarValueFinder(function_);
                     refElement = similarValueFinder.Find(instr);
                 }
                 else {
-                    refFinder = new ReferenceFinder(Session.CurrentDocument.Function);
+                    refFinder = new ReferenceFinder(function_);
                     refElement = refFinder.FindEquivalentValue(element);
                 }
 
                 if (refElement != null) {
                     if (refFinder == null) {
                         // Highlight an entire instruction.
-                        Session.CurrentDocument.HighlightElement(refElement, HighlighingType.Hovered);
+                        targetDocument.HighlightElement(refElement, HighlighingType.Hovered);
                         selectedElementRefs_ = null;
                         e.Handled = true;
                         return;
@@ -198,14 +214,11 @@ namespace IRExplorerUI {
                     }
 
                     if (selectedElementRefIndex_ == selectedElementRefs_.Count) {
-                        selectedElementRefIndex_ = 0;
+                        selectedElementRefIndex_ = 0; // Cycle back to first ref.
                     }
 
-                    var currentRefElement = selectedElementRefs_[selectedElementRefIndex_];
-                    selectedElementRefIndex_++;
-
-                    Session.CurrentDocument.HighlightElement(currentRefElement.Element,
-                                                             HighlighingType.Hovered);
+                    var currentRefElement = selectedElementRefs_[selectedElementRefIndex_++];
+                    targetDocument.HighlightElement(currentRefElement.Element, HighlighingType.Hovered);
                     e.Handled = true;
                     return;
                 }
@@ -226,7 +239,8 @@ namespace IRExplorerUI {
             await UpdateElementHighlighting();
         }
 
-        public async Task SwitchText(string text, FunctionIR function, IRTextSection section) {
+        public async Task SwitchText(string text, FunctionIR function, IRTextSection section,
+                                     IRDocument associatedDocument) {
             if (!syntaxHighlightingLoaded_) {
                 SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
                 syntaxHighlightingLoaded_ = true;
@@ -235,6 +249,7 @@ namespace IRExplorerUI {
             initialText_ = text;
             function_ = function;
             section_ = section;
+            associatedDocument_ = associatedDocument;
             Text = initialText_;
             IsReadOnly = false;
             EnsureInitialTextLines();
@@ -246,7 +261,7 @@ namespace IRExplorerUI {
             // before starting a new task, this can happen when quickly changing sections.
             CancelableTask currentUpdateTask = null;
 
-            lock (this) {
+            lock (lockObject_) {
                 if (updateHighlightingTask_ != null) {
                     updateHighlightingTask_.Cancel();
                     currentUpdateTask = updateHighlightingTask_;
@@ -272,8 +287,8 @@ namespace IRExplorerUI {
             updateHighlightingTask_ = new CancelableTask();
 
             await Task.Run(() => {
-                lock (this) {
-                    if(updateHighlightingTask_.IsCanceled) {
+                lock (lockObject_) {
+                    if (updateHighlightingTask_.IsCanceled) {
                         // Task got canceled in the meantime.
                         updateHighlightingTask_.Completed();
                         return;

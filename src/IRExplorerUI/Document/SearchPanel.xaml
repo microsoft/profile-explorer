@@ -15,6 +15,10 @@
         <CommandBinding Command="local:SearchCommand.NextResult" Executed="NextResultExecuted" />
         <CommandBinding Command="local:SearchCommand.PreviousResult" Executed="PreviousResultExecuted" />
         <CommandBinding Command="local:SearchCommand.ClearText" Executed="ClearTextExecuted" />
+        <CommandBinding Command="local:SearchCommand.ToggleCaseSensitive" Executed="ToggleCaseSensitiveExecuted" />
+        <CommandBinding Command="local:SearchCommand.ToggleWholeWord" Executed="ToggleWholeWordExecuted" />
+        <CommandBinding Command="local:SearchCommand.ToggleRegex" Executed="ToggleRegexExecuted" />
+        <CommandBinding Command="local:SearchCommand.ToggleSearchAll" Executed="ToggleSearchAllExecuted" />
     </UserControl.CommandBindings>
 
     <UserControl.InputBindings>
@@ -28,6 +32,30 @@
             Key="F3"
             Command="local:SearchCommand.NextResult"
             CommandTarget="{Binding ElementName=SearchPanelControl}" />
+
+        <KeyBinding
+            Key="C"
+            Command="local:SearchCommand.ToggleCaseSensitive"
+            CommandTarget="{Binding ElementName=SearchPanelControl}"
+            Modifiers="Alt" />
+
+        <KeyBinding
+            Key="W"
+            Command="local:SearchCommand.ToggleWholeWord"
+            CommandTarget="{Binding ElementName=SearchPanelControl}"
+            Modifiers="Alt" />
+
+        <KeyBinding
+            Key="R"
+            Command="local:SearchCommand.ToggleRegex"
+            CommandTarget="{Binding ElementName=SearchPanelControl}"
+            Modifiers="Alt" />
+
+        <KeyBinding
+            Key="A"
+            Command="local:SearchCommand.ToggleSearchAll"
+            CommandTarget="{Binding ElementName=SearchPanelControl}"
+            Modifiers="Alt" />
     </UserControl.InputBindings>
 
     <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,1,0,1">
@@ -84,14 +112,14 @@
                     <ToggleButton
                         IsChecked="{Binding Path=IsCaseInsensitive, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         TabIndex="5"
-                        ToolTip="Accept case mismatch">
+                        ToolTip="Accept case mismatch (Alt+C)">
                         <Image Source="{StaticResource CaseIcon}" />
                     </ToggleButton>
 
                     <ToggleButton
                         IsChecked="{Binding Path=IsWholeWord, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         TabIndex="5"
-                        ToolTip="Match whole word">
+                        ToolTip="Match whole word (Alt+W)">
                         <Image Source="{StaticResource WholeWordIcon}" />
                     </ToggleButton>
 
@@ -99,7 +127,7 @@
                         Width="16"
                         IsChecked="{Binding Path=IsRegex, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         TabIndex="5"
-                        ToolTip="Use Regular Expressions">
+                        ToolTip="Use Regular Expressions (Alt+R)">
                         <TextBlock FontWeight="ExtraBlack" Text=".*" />
                     </ToggleButton>
                     <Separator Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibility}}" />
@@ -110,7 +138,7 @@
                         IsChecked="{Binding Path=SearchAll, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         IsEnabled="{Binding Path=SearchAllEnabled, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         TabIndex="5"
-                        ToolTip="Search across all sections in the function"
+                        ToolTip="Search across all sections in the function (Alt+A)"
                         Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource SearchListIcon}" />
                     </ToggleButton>

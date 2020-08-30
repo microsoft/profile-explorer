@@ -13,14 +13,15 @@ using IRExplorerCore.IR;
 //?    can be done in parallel too
 
 namespace IRExplorerCore.Analysis {
+    [Flags]
     public enum ReferenceKind {
-        Load,
-        Store,
-        Address,
-        SSA
+        Load = 1 << 0,
+        Store = 1 << 1,
+        Address = 1 << 2,
+        SSA = 1 << 3
     }
 
-    public sealed class Reference {
+    public class Reference {
         public Reference(IRElement element, ReferenceKind kind) {
             Element = element;
             Kind = kind;

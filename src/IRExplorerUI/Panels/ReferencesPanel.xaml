@@ -35,57 +35,78 @@
                     Loaded="ToolBar_Loaded">
 
                     <TextBlock
-                        Margin="4,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="Show" />
-
-                    <ComboBox
-                        x:Name="FilterComboBox"
-                        Width="150"
-                        Margin="4,0,0,0"
-                        VerticalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    <ToggleButton
+                        MinWidth="75"
+                        Margin="8,0,0,0"
+                        Padding="4,2,4,2"
+                        HorizontalContentAlignment="Stretch"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        Loaded="ComboBox_Loaded"
-                        SelectedIndex="0"
-                        SelectionChanged="FilterComboBox_SelectionChanged">
-                        <ComboBoxItem Tag="All">
-                            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                                <TextBlock Width="100" Text="Overview" />
-                                <Separator />
-                                <TextBlock Text="" />
-                            </StackPanel>
-                        </ComboBoxItem>
-                        <ComboBoxItem Tag="SSA">
-                            <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                                <TextBlock Width="100" Text="SSA uses" />
-                                <Separator />
-                                <TextBlock Text="{Binding SSACount}" />
-                            </StackPanel>
-                        </ComboBoxItem>
-                        <ComboBoxItem Tag="Load">
+                        IsChecked="{Binding ShowLoad, Mode=TwoWay}">
+                        <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Width="100" Text="Load uses" />
-                                <TextBlock Text="{Binding LoadCount}" />
+                                <TextBlock Text="Loads" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    FontWeight="DemiBold"
+                                    Text="{Binding LoadCount}" />
                             </StackPanel>
-                        </ComboBoxItem>
-                        <ComboBoxItem Tag="Store">
+                        </ToggleButton.Content>
+                    </ToggleButton>
+                    <ToggleButton
+                        MinWidth="75"
+                        Margin="-1,0,0,0"
+                        Padding="4,2,4,2"
+                        HorizontalContentAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        IsChecked="{Binding ShowStore, Mode=TwoWay}">
+                        <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Width="100" Text="Store uses" />
-                                <TextBlock Text="{Binding StoreCount}" />
+                                <TextBlock Text="Stores" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    FontWeight="DemiBold"
+                                    Text="{Binding StoreCount}" />
                             </StackPanel>
-                        </ComboBoxItem>
-                        <ComboBoxItem Tag="Address">
+                        </ToggleButton.Content>
+                    </ToggleButton>
+                    <ToggleButton
+                        MinWidth="75"
+                        Margin="-1,0,0,0"
+                        Padding="4,2,4,2"
+                        HorizontalContentAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        IsChecked="{Binding ShowAddress, Mode=TwoWay}">
+                        <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Width="100" Text="Address uses" />
-                                <TextBlock Text="{Binding AddressCount}" />
+                                <TextBlock Text="Address" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    FontWeight="DemiBold"
+                                    Text="{Binding AddressCount}" />
                             </StackPanel>
-                        </ComboBoxItem>
-                    </ComboBox>
-
+                        </ToggleButton.Content>
+                    </ToggleButton>
+                    <ToggleButton
+                        MinWidth="75"
+                        Margin="-1,0,0,0"
+                        Padding="4,2,4,2"
+                        HorizontalContentAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        IsChecked="{Binding ShowSSA, Mode=TwoWay}">
+                        <ToggleButton.Content>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="SSA uses" />
+                                <TextBlock
+                                    Margin="8,0,0,0"
+                                    FontWeight="DemiBold"
+                                    Text="{Binding SSACount}" />
+                            </StackPanel>
+                        </ToggleButton.Content>
+                    </ToggleButton>
                     <Separator />
-
 
                     <Button
                         Margin="4,0,0,0"
@@ -95,7 +116,6 @@
                         ToolTip="Jump to reference (Return)">
                         <Image Source="{StaticResource JumpIcon}" />
                     </Button>
-
 
                     <Button
                         Command="local:ReferenceCommand.CopyToClipboard"

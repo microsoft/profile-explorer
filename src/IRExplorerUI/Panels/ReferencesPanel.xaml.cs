@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -68,13 +69,12 @@ namespace IRExplorerUI {
     public class ReferencePanelState {
         [ProtoMember(1)]
         private IRElementReference elementRef_;
-        [ProtoMember(4)]
-        public int FilterSelectedIndex;
-        [ProtoMember(3)]
-        public bool HasPinnedContent;
-
         [ProtoMember(2)]
         public bool IsFindAll;
+        [ProtoMember(3)]
+        public bool HasPinnedContent;
+        [ProtoMember(4)]
+        public ReferenceKind FilterKind;
 
         public IRElement Element {
             get => elementRef_;
@@ -82,14 +82,12 @@ namespace IRExplorerUI {
         }
     }
 
-    public partial class ReferencesPanel : ToolPanelControl {
+    public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged {
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
         private IRDocument document_;
 
         private IRElement element_;
-        private bool filterEnabled_;
         private ReferenceKind filterKind_;
-        private bool focusedOnce_;
         private bool ignoreNextElement_;
         private bool isFindAll_;
 
@@ -101,6 +99,66 @@ namespace IRExplorerUI {
 
         public ReferencesPanel() {
             InitializeComponent();
+            DataContext = this;
+        }
+
+        public ReferenceKind FilterKind {
+            get => filterKind_;
+            set {
+                if (filterKind_ != value) {
+                    filterKind_ = value;
+                    OnPropertyChange(nameof(FilterKind));
+                    OnPropertyChange(nameof(ShowLoad));
+                    OnPropertyChange(nameof(ShowStore));
+                    OnPropertyChange(nameof(ShowAddress));
+                    OnPropertyChange(nameof(ShowSSA));
+                    referenceListView_.Refresh();
+                }
+            }
+        }
+
+        public ReferenceSummary ReferenceSummary {
+            get => referenceSummary_;
+            set {
+                if (referenceSummary_ != value) {
+                    referenceSummary_ = value;
+                    OnPropertyChange(nameof(LoadCount));
+                    OnPropertyChange(nameof(StoreCount));
+                    OnPropertyChange(nameof(AddressCount));
+                    OnPropertyChange(nameof(SSACount));
+                }
+            }
+        }
+
+        public int LoadCount => referenceSummary_ != null ? referenceSummary_.LoadCount : 0;
+        public int StoreCount => referenceSummary_ != null ? referenceSummary_.StoreCount : 0;
+        public int AddressCount => referenceSummary_ != null ? referenceSummary_.AddressCount : 0;
+        public int SSACount => referenceSummary_ != null ? referenceSummary_.SSACount : 0;
+
+        public bool ShowLoad {
+            get => filterKind_.HasFlag(ReferenceKind.Load);
+            set => SetFilterFlag(ReferenceKind.Load, value);
+        }
+
+        public bool ShowStore {
+            get => filterKind_.HasFlag(ReferenceKind.Store);
+            set => SetFilterFlag(ReferenceKind.Store, value);
+        }
+
+        public bool ShowAddress {
+            get => filterKind_.HasFlag(ReferenceKind.Address);
+            set => SetFilterFlag(ReferenceKind.Address, value);
+        }
+
+        public bool ShowSSA {
+            get => filterKind_.HasFlag(ReferenceKind.SSA);
+            set => SetFilterFlag(ReferenceKind.SSA, value);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChange(string propertyname) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
 
         public IRElement Element {
@@ -122,7 +180,7 @@ namespace IRExplorerUI {
 
                     element_ = value;
 
-                    if (FindSSAUses(element_, false).Count == 0) {
+                    if (!FindSSAUses(element_, false)) {
                         FindAllReferences(element_, false);
                     }
                 }
@@ -203,55 +261,47 @@ namespace IRExplorerUI {
         }
 
         private bool FilterReferenceList(object value) {
-            if (!filterEnabled_) {
-                return true;
-            }
-
             var refInfo = value as ReferenceInfo;
-            return refInfo.Info.Kind == filterKind_;
+            return filterKind_.HasFlag(refInfo.Info.Kind);
         }
 
-        public List<Reference> FindAllReferences(IRElement element, bool pinElement = true) {
+        public bool FindAllReferences(IRElement element, bool pinElement = true) {
             if (!(element is OperandIR operand)) {
                 ResetReferenceListView();
-                return new List<Reference>();
+                return false;
             }
 
             var refFinder = new ReferenceFinder(document_.Function);
             var operandRefs = refFinder.FindAllReferences(element);
             UpdateReferenceListView(operand, operandRefs);
 
-            // Select the overview if viewing SSA uses.
-            if (FilterComboBox.SelectedIndex == 1) {
-                FilterComboBox.SelectedIndex = 0;
-            }
-
+            FilterKind = ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
             FixedToolbar.IsPinned = pinElement;
             element_ = element;
             isFindAll_ = true;
-            return operandRefs;
+            return operandRefs.Count > 0;
         }
 
-        public List<Reference> FindSSAUses(IRElement element, bool pinElement = true) {
+        public bool FindSSAUses(IRElement element, bool pinElement = true) {
             if (!(element is OperandIR operand)) {
                 ResetReferenceListView();
-                return new List<Reference>();
+                return false;
             }
 
             var operandRefs = ReferenceFinder.FindSSAUses(operand);
             UpdateReferenceListView(operand, operandRefs);
 
             // Select the SSA uses filter.
-            FilterComboBox.SelectedIndex = 1;
+            FilterKind = ReferenceKind.SSA;
             FixedToolbar.IsPinned = pinElement;
             element_ = element;
             isFindAll_ = false;
-            return operandRefs;
+            return operandRefs.Count > 0;
         }
 
         private void UpdateReferenceListView(OperandIR operand, List<Reference> operandRefs) {
             referenceList_ = new List<ReferenceInfo>(operandRefs.Count);
-            referenceSummary_ = new ReferenceSummary();
+            var summary = new ReferenceSummary();
             int index = 1;
 
             // Sort based on the ref. element text offset.
@@ -264,16 +314,16 @@ namespace IRExplorerUI {
 
                 switch (reference.Kind) {
                     case ReferenceKind.Address:
-                        referenceSummary_.AddressCount++;
+                        summary.AddressCount++;
                         break;
                     case ReferenceKind.Load:
-                        referenceSummary_.LoadCount++;
+                        summary.LoadCount++;
                         break;
                     case ReferenceKind.Store:
-                        referenceSummary_.StoreCount++;
+                        summary.StoreCount++;
                         break;
                     case ReferenceKind.SSA:
-                        referenceSummary_.SSACount++;
+                        summary.SSACount++;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
@@ -283,7 +333,7 @@ namespace IRExplorerUI {
             referenceListView_ = new ListCollectionView(referenceList_);
             referenceListView_.Filter = FilterReferenceList;
             ReferenceList.ItemsSource = referenceListView_;
-            FilterComboBox.DataContext = referenceSummary_;
+            ReferenceSummary = summary;
 
             if (operand != null) {
                 SymbolName.Text = ReferenceFinder.GetSymbolName(operand);
@@ -298,7 +348,6 @@ namespace IRExplorerUI {
             element_ = null;
             HasPinnedContent = false;
             ReferenceList.ItemsSource = null;
-            FilterComboBox.DataContext = null;
             SymbolName.Text = "";
         }
 
@@ -313,33 +362,6 @@ namespace IRExplorerUI {
             if (sender is ComboBox control) {
                 Utils.PatchComboBoxStyle(control);
             }
-        }
-
-        private void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (referenceListView_ == null) {
-                return;
-            }
-
-            var item = e.AddedItems[0] as ComboBoxItem;
-            string kindString = item.Tag as string;
-
-            if (kindString == "All") {
-                filterEnabled_ = false;
-            }
-            else {
-                filterEnabled_ = true;
-
-                filterKind_ = kindString switch
-                {
-                    "SSA" => ReferenceKind.SSA,
-                    "Load" => ReferenceKind.Load,
-                    "Store" => ReferenceKind.Store,
-                    "Address" => ReferenceKind.Address,
-                    _ => filterKind_
-                };
-            }
-
-            referenceListView_.Refresh();
         }
 
         private void JumpToReferenceExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -442,15 +464,6 @@ namespace IRExplorerUI {
             set => FixedToolbar.IsPinned = value;
         }
 
-        public override void OnActivatePanel() {
-            // Hack to prevent DropDown in toolbar to get focus 
-            // the first time the panel is made visible.
-            if (!focusedOnce_) {
-                ReferenceList.Focus();
-                focusedOnce_ = true;
-            }
-        }
-
         public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
             if (section == section_) {
                 return;
@@ -469,7 +482,7 @@ namespace IRExplorerUI {
                 }
 
                 HasPinnedContent = state.HasPinnedContent;
-                FilterComboBox.SelectedIndex = state.FilterSelectedIndex;
+                FilterKind = state.FilterKind;
             }
             else {
                 ResetReferenceListView();
@@ -488,7 +501,7 @@ namespace IRExplorerUI {
             state.IsFindAll = isFindAll_;
             state.Element = Element;
             state.HasPinnedContent = HasPinnedContent;
-            state.FilterSelectedIndex = FilterComboBox.SelectedIndex;
+            state.FilterKind = FilterKind;
             var data = StateSerializer.Serialize(state, document.Function);
             Session.SavePanelState(data, this, section);
             ResetReferenceListView();
@@ -510,5 +523,18 @@ namespace IRExplorerUI {
         }
 
         #endregion
+
+        private bool SetFilterFlag(ReferenceKind flag, bool value) {
+            if (value && !FilterKind.HasFlag(flag)) {
+                FilterKind |= flag;
+                return true;
+            }
+            else if (!value && FilterKind.HasFlag(flag)) {
+                FilterKind &= ~flag;
+                return true;
+            }
+
+            return false;
+        }
     }
 }

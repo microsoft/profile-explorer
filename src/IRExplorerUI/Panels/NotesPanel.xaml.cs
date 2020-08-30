@@ -94,19 +94,19 @@ namespace IRExplorerUI {
 
                 if (data != null) {
                     var state = StateSerializer.Deserialize<NotesPanelState>(data, document.Function);
-                    await TextView.SwitchText(state.Text, document.Function, section);
+                    await TextView.SwitchText(state.Text, document.Function, section, document);
                     showSectionText_ = state.ShowSectionNotes;
                     FilterComboBox.SelectedIndex = showSectionText_ ? 1 : 0;
                 }
                 else {
-                    await TextView.SwitchText("", document.Function, section);
+                    await TextView.SwitchText("", document.Function, section, document);
                     await TextView.SearchText(new SearchInfo());
                 }
             }
         }
 
         private async Task LoadSessionNotes() {
-            await TextView.SwitchText(Session.SessionState.Info.Notes, null, null);
+            await TextView.SwitchText(Session.SessionState.Info.Notes, null, null, null);
             await TextView.SearchText(new SearchInfo());
         }
 

@@ -2332,7 +2332,7 @@ namespace IRExplorerUI {
 
             if (highlighter == markedHighlighter_) {
                 // Show references in panel.
-                Session.FindAllReferences(op, this);
+                Session.ShowAllReferences(op, this);
                 RecordReversibleAction(DocumentActionKind.MarkReferences, op, operandRefs);
             }
         }
@@ -2355,7 +2355,7 @@ namespace IRExplorerUI {
                               HighlightingEventAction.AppendHighlighting);
 
             UpdateHighlighting();
-            Session.FindSSAUses(defOp, this);
+            Session.ShowSSAUses(defOp, this);
             RecordReversibleAction(DocumentActionKind.MarkUses, defOp, useList);
         }
 
@@ -3107,7 +3107,7 @@ namespace IRExplorerUI {
         }
 
         private void ShowReferences(OperandIR op) {
-            Session.FindAllReferences(op, this);
+            Session.ShowAllReferences(op, this);
         }
 
         private void ShowTooltip(IRElement element, bool showAlways = false) {
@@ -3150,7 +3150,7 @@ namespace IRExplorerUI {
         }
 
         private void ShowUses(OperandIR defOp) {
-            Session.FindSSAUses(defOp, this);
+            Session.ShowSSAUses(defOp, this);
         }
 
         private void TextEditor_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {

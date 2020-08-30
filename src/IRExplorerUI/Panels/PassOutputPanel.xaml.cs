@@ -10,6 +10,7 @@ using System.Windows.Input;
 using IRExplorerUI.Document;
 using IRExplorerCore;
 using ProtoBuf;
+using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
     [ProtoContract]
@@ -41,6 +42,33 @@ namespace IRExplorerUI {
             SearchPanel.NaviateToPreviousResult += SearchPanel_NaviateToPreviousResult;
             SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
         }
+
+        public bool ShowAfterOutput {
+            get => showAfterOutput_;
+            set {
+                if (showAfterOutput_ != value) {
+                    showAfterOutput_ = value;
+                    OnPropertyChange(nameof(ShowAfterOutput));
+                    OnPropertyChange(nameof(ShowBeforeOutput));
+                    SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+                }
+            }
+        }
+
+        public bool ShowBeforeOutput {
+            get => !showAfterOutput_;
+            set {
+                if (showAfterOutput_ == value) {
+                    showAfterOutput_ = !value;
+                    OnPropertyChange(nameof(ShowAfterOutput));
+                    OnPropertyChange(nameof(ShowBeforeOutput));
+                    SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+                }
+            }
+        }
+
+        public string SectionName => TextView.Section != null ?
+            Session.CompilerInfo.NameProvider.GetSectionName(TextView.Section) : "";
 
         private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
             if (searchResults_ == null) {
@@ -93,35 +121,11 @@ namespace IRExplorerUI {
         }
 
         private void ToggleOutputExecuted(object sender, ExecutedRoutedEventArgs e) {
-            FilterComboBox.SelectedIndex = FilterComboBox.SelectedIndex == 0 ? 1 : 0;
+            ShowAfterOutput = !ShowAfterOutput;
         }
 
         private void ToggleSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
             SearchPanelVisible = !SearchPanelVisible;
-        }
-
-        private async void FilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (!IsPanelEnabled || Session.CurrentDocument == null) {
-                return;
-            }
-
-            var item = e.AddedItems[0] as ComboBoxItem;
-            string kindString = item.Tag as string;
-
-            showAfterOutput_ = kindString switch
-            {
-                "Before" => false,
-                "After" => true,
-                _ => showAfterOutput_
-            };
-
-            await SwitchText(Session.CurrentDocumentSection, Session.CurrentDocument);
-        }
-
-        private void ComboBox_Loaded(object sender, RoutedEventArgs e) {
-            if (sender is ComboBox control) {
-                Utils.PatchComboBoxStyle(control);
-            }
         }
 
         #region IToolPanel
@@ -178,37 +182,59 @@ namespace IRExplorerUI {
 
         public override void OnSessionStart() {
             base.OnSessionStart();
-            TextView.Session = Session;
+        }
+
+        public override ISessionManager Session {
+            get => TextView.Session;
+            set => TextView.Session = value;
+        }
+
+        public override bool HasPinnedContent {
+            get => FixedToolbar.IsPinned;
+            set => FixedToolbar.IsPinned = value;
+        }
+
+        public override void ClonePanel(IToolPanel basePanel) {
+            var otherPanel = (PassOutputPanel)basePanel;
+            //Session = otherPanel.Session;
+            SwitchText(otherPanel.TextView.Section, otherPanel.TextView.Function, otherPanel.TextView.AssociatedDocument);
         }
 
         public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+            if (HasPinnedContent) {
+                return;
+            }
+
             var data = Session.LoadPanelState(this, section);
 
             if (data != null) {
                 var state = StateSerializer.Deserialize<PassOutputPanelState>(data, document.Function);
-                showAfterOutput_ = state.ShowAfterOutput;
-                FilterComboBox.SelectedIndex = showAfterOutput_ ? 1 : 0;
-                await SwitchText(section, document);
+                ShowAfterOutput = state.ShowAfterOutput;
+                await SwitchText(section, document.Function, document);
             }
             else {
-                await SwitchText(section, document);
+                await SwitchText(section, document.Function, document);
                 await TextView.SearchText(new SearchInfo());
             }
         }
 
-        private async Task SwitchText(IRTextSection section, IRDocument document) {
-            if (showAfterOutput_) {
+        private async Task SwitchText(IRTextSection section, FunctionIR function, IRDocument associatedDocument) {
+            if (ShowAfterOutput) {
                 initialText_ = await Session.GetSectionPassOutputAsync(section.OutputAfter, section);
             }
             else {
                 initialText_ = await Session.GetSectionPassOutputAsync(section.OutputBefore, section);
             }
 
-            await TextView.SwitchText(initialText_, document.Function, section);
+            await TextView.SwitchText(initialText_, function, section, associatedDocument);
             await SearchText();
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            if (HasPinnedContent) {
+                return;
+            }
+
             SaveState(section, document);
             ResetOutputPanel();
         }
@@ -230,7 +256,7 @@ namespace IRExplorerUI {
 
         private void SaveState(IRTextSection section, IRDocument document) {
             var state = new PassOutputPanelState();
-            state.ShowAfterOutput = showAfterOutput_;
+            state.ShowAfterOutput = ShowAfterOutput;
             var data = StateSerializer.Serialize(state, document.Function);
             Session.SavePanelState(data, this, section);
         }
@@ -241,5 +267,17 @@ namespace IRExplorerUI {
         }
 
         #endregion
+
+        private void FixedToolbar_BindMenuItemSelected(object sender, BindMenuItem e) {
+            Session.BindToDocument(this, e);
+        }
+
+        private void FixedToolbar_BindMenuOpen(object sender, BindMenuItemsArgs e) {
+            Session.PopulateBindMenu(this, e);
+        }
+
+        private void FixedToolbar_SettingsClicked(object sender, System.EventArgs e) {
+            MessageBox.Show("TODO");
+        }
     }
 }
