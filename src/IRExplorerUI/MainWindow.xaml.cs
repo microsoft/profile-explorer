@@ -176,18 +176,18 @@ namespace IRExplorerUI {
             await SwitchGraphsAsync(graphPanel, section, document, action);
         }
 
-        public List<Reference> FindAllReferences(IRElement element, IRDocument document) {
+        public void ShowAllReferences(IRElement element, IRDocument document) {
             var panelInfo = FindTargetPanel(document, ToolPanelKind.References);
             var refPanel = panelInfo.Panel as ReferencesPanel;
             panelInfo.Host.IsSelected = true;
-            return refPanel.FindAllReferences(element);
+            refPanel.FindAllReferences(element);
         }
 
-        public List<Reference> FindSSAUses(IRElement element, IRDocument document) {
+        public void ShowSSAUses(IRElement element, IRDocument document) {
             var panelInfo = FindTargetPanel(document, ToolPanelKind.References);
             var refPanel = panelInfo.Panel as ReferencesPanel;
             panelInfo.Host.IsSelected = true;
-            return refPanel.FindSSAUses(element);
+            refPanel.FindSSAUses(element);
         }
 
 

@@ -23,7 +23,7 @@ namespace IRExplorerUI.Document {
 
         public SearchInfo() {
             searchedText_ = string.Empty;
-            kind_ = TextSearchKind.Default;
+            kind_ = TextSearchKind.CaseInsensitive;
             showSearchAllButton_ = true;
             showNavigationSection_ = true;
         }
@@ -46,42 +46,27 @@ namespace IRExplorerUI.Document {
         public bool IsCaseInsensitive {
             get => kind_.HasFlag(TextSearchKind.CaseInsensitive);
             set {
-                if (value) {
-                    kind_ |= TextSearchKind.CaseInsensitive;
+                if (SetKindFlag(TextSearchKind.CaseInsensitive, value)) {
+                    OnPropertyChange(nameof(IsCaseInsensitive));
                 }
-                else {
-                    kind_ &= ~TextSearchKind.CaseInsensitive;
-                }
-
-                OnPropertyChange(nameof(IsCaseInsensitive));
             }
         }
 
         public bool IsWholeWord {
             get => kind_.HasFlag(TextSearchKind.WholeWord);
             set {
-                if (value) {
-                    kind_ |= TextSearchKind.WholeWord;
+                if (SetKindFlag(TextSearchKind.WholeWord, value)) {
+                    OnPropertyChange(nameof(IsWholeWord));
                 }
-                else {
-                    kind_ &= ~TextSearchKind.WholeWord;
-                }
-
-                OnPropertyChange(nameof(IsWholeWord));
             }
         }
 
         public bool IsRegex {
             get => kind_.HasFlag(TextSearchKind.Regex);
             set {
-                if (value) {
-                    kind_ |= TextSearchKind.Regex;
+                if (SetKindFlag(TextSearchKind.Regex, value)) {
+                    OnPropertyChange(nameof(IsRegex));
                 }
-                else {
-                    kind_ &= ~TextSearchKind.Regex;
-                }
-
-                OnPropertyChange(nameof(IsRegex));
             }
         }
 
@@ -152,6 +137,19 @@ namespace IRExplorerUI.Document {
         public void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
+
+        private bool SetKindFlag(TextSearchKind flag, bool value) {
+            if (value && !kind_.HasFlag(flag)) {
+                kind_ |= flag;
+                return true;
+            }
+            else if (!value && kind_.HasFlag(flag)) {
+                kind_ &= ~flag;
+                return true;
+            }
+
+            return false;
+        }
     }
 
     public static class SearchCommand {
@@ -161,6 +159,15 @@ namespace IRExplorerUI.Document {
             new RoutedUICommand("Untitled", "NextResult", typeof(SearchPanel));
         public static readonly RoutedUICommand ClearText =
             new RoutedUICommand("Untitled", "ClearText", typeof(SearchPanel));
+        public static readonly RoutedUICommand ToggleCaseSensitive =
+            new RoutedUICommand("Untitled", "ToggleCaseSensitive", typeof(SearchPanel));
+        public static readonly RoutedUICommand ToggleWholeWord =
+            new RoutedUICommand("Untitled", "ToggleWholeWord", typeof(SearchPanel));
+        public static readonly RoutedUICommand ToggleRegex =
+            new RoutedUICommand("Untitled", "ToggleRegex", typeof(SearchPanel));
+        public static readonly RoutedUICommand ToggleSearchAll =
+            new RoutedUICommand("Untitled", "ToggleSearchAll", typeof(SearchPanel));
+
     }
 
     public partial class SearchPanel : UserControl {
@@ -267,6 +274,22 @@ namespace IRExplorerUI.Document {
             box.ItemsSource = null;
             box.ItemsSource = App.Settings.RecentTextSearches;
             box.PopulateComplete();
+        }
+
+        private void ToggleCaseSensitiveExecuted(object sender, ExecutedRoutedEventArgs e) {
+            searchInfo_.IsCaseInsensitive = !searchInfo_.IsCaseInsensitive;
+        }
+
+        private void ToggleWholeWordExecuted(object sender, ExecutedRoutedEventArgs e) {
+            searchInfo_.IsWholeWord = !searchInfo_.IsWholeWord;
+        }
+
+        private void ToggleRegexExecuted(object sender, ExecutedRoutedEventArgs e) {
+            searchInfo_.IsRegex = !searchInfo_.IsRegex;
+        }
+
+        private void ToggleSearchAllExecuted(object sender, ExecutedRoutedEventArgs e) {
+            searchInfo_.SearchAll = !searchInfo_.SearchAll;
         }
     }
 }

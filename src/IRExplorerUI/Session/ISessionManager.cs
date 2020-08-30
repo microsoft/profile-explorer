@@ -35,8 +35,8 @@ namespace IRExplorerUI {
         IRDocumentHost FindAssociatedDocumentHost(IToolPanel panel);
         void BindToDocument(IToolPanel panel, BindMenuItem args);
         void DuplicatePanel(IToolPanel panel, DuplicatePanelKind duplicateKind);
-        List<Reference> FindAllReferences(IRElement element, IRDocument document);
-        List<Reference> FindSSAUses(IRElement element, IRDocument document);
+        void ShowAllReferences(IRElement element, IRDocument document);
+        void ShowSSAUses(IRElement element, IRDocument document);
         object LoadDocumentState(IRTextSection section);
         object LoadPanelState(IToolPanel panel, IRTextSection section);
         void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args);

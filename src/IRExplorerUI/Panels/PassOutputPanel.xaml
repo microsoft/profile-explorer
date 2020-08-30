@@ -38,25 +38,25 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
                     <TextBlock
-                        Margin="4,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
-                        Text="Show Output" />
+                        Text="Show" />
 
-                    <ComboBox
-                        x:Name="FilterComboBox"
-                        Width="120"
-                        Margin="4,0,0,0"
-                        VerticalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    <ToggleButton
+                        Width="50"
+                        Margin="8,0,0,0"
+                        Padding="4,2,4,2"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        Loaded="ComboBox_Loaded"
-                        SelectedIndex="0"
-                        SelectionChanged="FilterComboBox_SelectionChanged"
-                        ToolTip="Switch between output found before/after the section (Alt+O)">
-                        <ComboBoxItem Content="Before Section" Tag="Before" />
-                        <ComboBoxItem Content="After Section" Tag="After" />
-                    </ComboBox>
+                        Content="Before"
+                        IsChecked="{Binding ShowBeforeOutput, Mode=TwoWay}" />
+                    <ToggleButton
+                        Width="50"
+                        Margin="-1,0,0,0"
+                        Padding="4,2,4,2"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Content="After"
+                        IsChecked="{Binding ShowAfterOutput, Mode=TwoWay}" />
+
                     <Separator />
 
                     <ToggleButton
@@ -89,13 +89,27 @@
                             Height="16"
                             Source="{StaticResource TasklistIcon}" />
                     </ToggleButton>
+                    <Separator />
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Text="Section" />
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="DemiBold"
+                        Text="{Binding SectionName}" />
                 </ToolBar>
             </ToolBarTray>
 
             <local:PanelToolbarTray
+                x:Name="FixedToolbar"
+                BindMenuItemSelected="FixedToolbar_BindMenuItemSelected"
+                BindMenuOpen="FixedToolbar_BindMenuOpen"
                 DockPanel.Dock="Right"
                 DuplicateClicked="PanelToolbarTray_DuplicateClicked"
-                HasPinButton="False" />
+                HasPinButton="True"
+                SettingsClicked="FixedToolbar_SettingsClicked" />
         </DockPanel>
 
         <local:LightIRDocument
@@ -123,7 +137,7 @@
             Key="O"
             Command="local:PassOutputPanelCommand.ToggleOutput"
             CommandTarget="{Binding ElementName=TextView}"
-            Modifiers="Alt" />
+            Modifiers="Ctrl" />
         <KeyBinding
             Key="F"
             Command="local:PassOutputPanelCommand.ToggleSearch"
