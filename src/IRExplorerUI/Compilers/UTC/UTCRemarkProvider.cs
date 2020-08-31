@@ -40,12 +40,13 @@ namespace IRExplorerUI.UTC {
         private List<RemarkSectionBoundary> boundaries_;
         private Stack<RemarkContext> contextStack_;
         private RemarkCategory defaultCategory_;
+        private bool settingsLoaded_;
 
         public UTCRemarkProvider() {
             categories_ = new List<RemarkCategory>();
             boundaries_ = new List<RemarkSectionBoundary>();
             contextStack_ = new Stack<RemarkContext>();
-            LoadSettings();
+            settingsLoaded_ = LoadSettings();
         }
 
         public string SettingsFilePath => App.GetRemarksDefinitionFilePath("utc");
@@ -97,8 +98,13 @@ namespace IRExplorerUI.UTC {
 
         public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section,
                                            RemarkProviderOptions options) {
+            if (!settingsLoaded_) {
+                return new List<Remark>(); // Failed to load settings, bail out.
+            }
+
             var remarks = new List<Remark>();
-            var lines = text.Split('\r', '\n');
+            //? TODO: Could use an API that doesn't need splitting into lines again
+            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             ExtractInstructionRemarks(text, lines, function, section, remarks, options);
             return remarks;
         }
@@ -309,6 +315,10 @@ namespace IRExplorerUI.UTC {
 
         public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function,
                                               LoadedDocument document, RemarkProviderOptions options) {
+            if (!settingsLoaded_) {
+                return new List<Remark>(); // Failed to load settings, bail out.
+            }
+
             int maxConcurrency = Math.Min(sections.Count, Math.Min(8, Environment.ProcessorCount));
             var tasks = new Task<List<Remark>>[sections.Count];
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
