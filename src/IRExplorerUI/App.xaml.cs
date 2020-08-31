@@ -45,7 +45,7 @@ namespace IRExplorerUI {
         public static DateTime AppStartTime;
         public static DateTime WindowShowTime;
         public static ApplicationSettings Settings;
-        public static ISessionManager Session;
+        public static ISession Session;
 
         private const string SettingsPath = @"Microsoft\IRExplorer";
         private const string SettingsFile = "IRExplorer.settings";

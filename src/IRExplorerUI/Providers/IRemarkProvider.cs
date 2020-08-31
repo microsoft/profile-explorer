@@ -12,6 +12,20 @@ namespace IRExplorerUI {
         public object Info { get; set; }
     }
 
+    public class RemarkProviderOptions {
+        public bool FindInstructionRemarks { get; set; }
+        public bool FindOperandRemarks { get; set; }
+        public bool IgnoreOverlappingOperandRemarks { get; set; }
+
+        public RemarkProviderOptions() {
+            FindInstructionRemarks = true;
+            FindOperandRemarks = true;
+            IgnoreOverlappingOperandRemarks = false;
+        }
+
+        //? multi-threading, max cores
+    }
+
     public interface IRRemarkProvider {
         // per-section cache of remarks, don't have to re-parse all output
         // when switching sections
@@ -24,10 +38,11 @@ namespace IRExplorerUI {
         List<RemarkSectionBoundary> LoadRemarkSectionBoundaries();
 
         List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries);
-        List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document);
+        List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document,
+                                       RemarkProviderOptions options);
             
         //? TODO: Should use a CancelableTaskInfo to support fast canceling when section switches
-        List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section);
+        List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section, RemarkProviderOptions options);
         OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
     }
 

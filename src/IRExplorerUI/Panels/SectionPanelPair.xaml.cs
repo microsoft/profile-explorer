@@ -101,7 +101,7 @@ namespace IRExplorerUI {
         public override ToolPanelKind PanelKind => ToolPanelKind.Section;
         public override bool SavesStateToFile => true;
 
-        public override ISessionManager Session {
+        public override ISession Session {
             get => MainPanel.Session;
             set => MainPanel.Session = value;
         }

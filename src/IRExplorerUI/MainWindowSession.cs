@@ -25,7 +25,7 @@ using IRExplorerCore.IR.Tags;
 using Microsoft.Win32;
 
 namespace IRExplorerUI {
-    public partial class MainWindow : Window, ISessionManager {
+    public partial class MainWindow : Window, ISession {
         public ICompilerInfoProvider CompilerInfo => compilerInfo_;
         public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
 

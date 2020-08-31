@@ -51,14 +51,14 @@ namespace IRExplorerUI.Panels {
             }
         }
 
-        private ISessionManager session_;
+        private ISession session_;
         private LoadedDocument document_;
         private CancelableTask searchTask_;
         private SearchInfo searchInfo_;
         private DocumentSearchInfo data_;
 
         public DocumentSearchPanel(Point position, double width, double height,
-                                   UIElement referenceElement, ISessionManager session, LoadedDocument document) {
+                                   UIElement referenceElement, ISession session, LoadedDocument document) {
             InitializeComponent();
             Initialize(position, width, height, referenceElement);
             PanelResizeGrip.ResizedControl = this;

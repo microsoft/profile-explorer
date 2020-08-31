@@ -116,7 +116,7 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         private bool MarkUnusedInstructions(FunctionIR function, IRDocument document, IFunctionTaskOptions options,
-                                            ISessionManager session, CancelableTask cancelableTask) {
+                                            ISession session, CancelableTask cancelableTask) {
             var taskOptions = options as UnusedInstructionsTaskOptions;
             var unusedInstr = new HashSet<InstructionIR>();
             var walker = new CFGBlockOrdering(function);

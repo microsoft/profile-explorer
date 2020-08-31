@@ -19,25 +19,25 @@ namespace IRExplorerUI.Query {
 
     public interface IFunctionTask {
         IFunctionTaskOptions Options { get;}
-        ISessionManager Session { get; }
+        ISession Session { get; }
 
         void ResetOptions();
         void SaveOptions();
         QueryData GetOptionsValues();
         void LoadOptionsFromValues(QueryData data);
 
-        bool Initialize(ISessionManager session, object optionalData);
+        bool Initialize(ISession session, object optionalData);
         Task<bool> Execute(FunctionIR function, IRDocument document, CancelableTask cancelableTask);
     }
 
     public class BuiltinFunctionTask : IFunctionTask {
         public delegate bool TaskCallback(FunctionIR function, IRDocument document,
-                                          IFunctionTaskOptions options, ISessionManager session, 
+                                          IFunctionTaskOptions options, ISession session, 
                                           CancelableTask cancelableTask);
         private TaskCallback callback_;
         private Type optionsType_;
 
-        public ISessionManager Session { get; private set; }
+        public ISession Session { get; private set; }
         public IFunctionTaskOptions Options { get; private set; }
         
         public static FunctionTaskDefinition GetDefinition(string name, string description,
@@ -52,7 +52,7 @@ namespace IRExplorerUI.Query {
                                             Session, cancelableTask));
         }
 
-        public bool Initialize(ISessionManager session, object optionalData) {
+        public bool Initialize(ISession session, object optionalData) {
             Session = session;
             var data = (Tuple<TaskCallback, Type>)optionalData;
             callback_ = data.Item1;
@@ -114,7 +114,7 @@ namespace IRExplorerUI.Query {
         public bool HasOptionsPanel { get; set; }
         public bool ShowOptionsPanelOnExecute { get; set; }
 
-        public IFunctionTask CreateInstance(ISessionManager session) {
+        public IFunctionTask CreateInstance(ISession session) {
             var actionInstance = (IFunctionTask)Activator.CreateInstance(taskType_);
 
             if (!actionInstance.Initialize(session, optionalData_)) {
@@ -124,7 +124,7 @@ namespace IRExplorerUI.Query {
             return actionInstance;
         }
 
-        public QueryData CreateOptionsPanel(ISessionManager session) {
+        public QueryData CreateOptionsPanel(ISession session) {
             if (!HasOptionsPanel) {
                 throw new InvalidOperationException("Task doesn't have an options panel!");
             }

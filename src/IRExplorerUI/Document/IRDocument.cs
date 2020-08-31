@@ -162,7 +162,7 @@ namespace IRExplorerUI {
 
         public List<BlockIR> Blocks => function_.Blocks;
         public BookmarkManager BookmarkManager => bookmarks_;
-        public ISessionManager Session { get; set; }
+        public ISession Session { get; set; }
         public FunctionIR Function => function_;
         public IRTextSection Section => section_;
 

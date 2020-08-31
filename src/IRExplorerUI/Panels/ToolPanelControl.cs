@@ -9,7 +9,7 @@ namespace IRExplorerUI {
         public virtual ToolPanelKind PanelKind => ToolPanelKind.Other;
         public virtual HandledEventKind HandledEvents => HandledEventKind.None;
         public virtual IRDocument BoundDocument { get; set; }
-        public virtual ISessionManager Session { get; set; }
+        public virtual ISession Session { get; set; }
 
         public virtual bool SavesStateToFile => false;
         public virtual bool IsPanelEnabled { get; set; }

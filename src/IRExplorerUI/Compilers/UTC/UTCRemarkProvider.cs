@@ -95,10 +95,11 @@ namespace IRExplorerUI.UTC {
             return null;
         }
 
-        public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section) {
+        public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section,
+                                           RemarkProviderOptions options) {
             var remarks = new List<Remark>();
             var lines = text.Split('\r', '\n');
-            ExtractInstructionRemarks(text, lines, function, section, remarks);
+            ExtractInstructionRemarks(text, lines, function, section, remarks, options);
             return remarks;
         }
 
@@ -132,7 +133,8 @@ namespace IRExplorerUI.UTC {
         }
 
         private void ExtractInstructionRemarks(string text, string[] lines, FunctionIR function,
-                                               IRTextSection section, List<Remark> remarks) {
+                                               IRTextSection section, List<Remark> remarks,
+                                               RemarkProviderOptions options) {
             var (fakeTuple, fakeBlock) = CreateFakeIRElements();
 
             var similarValueFinder = new SimilarValueFinder(function);
@@ -211,6 +213,11 @@ namespace IRExplorerUI.UTC {
                 // Extract remarks mentioning only operands, not whole instructions.
                 //? TODO: If an operand is part of an instruction that was already matched
                 //? by a remark, don't include the operand anymore if it's the same remark text
+                if (!options.FindOperandRemarks) {
+                    lineStartOffset += line.Length + 1;
+                    continue;
+                }
+
                 var parser = new UTCParser(line, null, null);
 
                 while (!parser.IsDone()) {
@@ -301,7 +308,7 @@ namespace IRExplorerUI.UTC {
         }
 
         public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function,
-                                              LoadedDocument document) {
+                                              LoadedDocument document, RemarkProviderOptions options) {
             int maxConcurrency = Math.Min(sections.Count, Math.Min(8, Environment.ProcessorCount));
             var tasks = new Task<List<Remark>>[sections.Count];
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
@@ -314,7 +321,7 @@ namespace IRExplorerUI.UTC {
                 tasks[index++] = Task.Run(() => {
                     try {
                         string sectionText = document.Loader.GetSectionPassOutput(section.OutputBefore);
-                        return ExtractRemarks(sectionText, function, section);
+                        return ExtractRemarks(sectionText, function, section, options);
                     }
                     finally {
                         concurrencySemaphore.Release();

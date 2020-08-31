@@ -70,7 +70,7 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "ShowDocumentSearch", typeof(Window));
     }
 
-    public partial class MainWindow : Window, ISessionManager {
+    public partial class MainWindow : Window, ISession {
         private LayoutDocumentPane activeDocumentPanel_;
         private AddressMetadataTag addressTag_;
         private bool appIsActivated_;

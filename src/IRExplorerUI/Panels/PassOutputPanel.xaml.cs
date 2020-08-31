@@ -184,7 +184,7 @@ namespace IRExplorerUI {
             base.OnSessionStart();
         }
 
-        public override ISessionManager Session {
+        public override ISession Session {
             get => TextView.Session;
             set => TextView.Session = value;
         }

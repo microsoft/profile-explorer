@@ -126,7 +126,7 @@ namespace IRExplorerUI.Document {
 
         public FunctionIR Function { get; set; }
         public IRTextSection Section { get; set; }
-        public ISessionManager Session { get; set; }
+        public ISession Session { get; set; }
 
         public RemarkSettings RemarkFilter {
             get => remarkFilter_.Settings;

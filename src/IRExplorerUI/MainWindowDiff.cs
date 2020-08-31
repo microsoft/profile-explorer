@@ -13,7 +13,7 @@ using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 
 namespace IRExplorerUI {
-    public partial class MainWindow : Window, ISessionManager {
+    public partial class MainWindow : Window, ISession {
         OptionsPanelHostWindow diffOptionsPanelHost_;
         private DateTime documentLoadStartTime_;
         private bool documentLoadProgressVisible_;

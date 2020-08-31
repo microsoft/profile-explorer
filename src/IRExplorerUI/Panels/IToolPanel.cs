@@ -37,7 +37,7 @@ namespace IRExplorerUI {
         HandledEventKind HandledEvents { get; }
         bool SavesStateToFile { get; }
 
-        ISessionManager Session { get; set; }
+        ISession Session { get; set; }
         IRDocument BoundDocument { get; set; }
         bool IsPanelEnabled { get; set; }
         bool HasCommandFocus { get; set; }

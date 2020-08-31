@@ -18,7 +18,7 @@ namespace IRExplorerUI {
         public const double MinimumWidth = 200;
 
         public SessionSharingPanel(Point position, double width, double height,
-                                   UIElement referenceElement, ISessionManager session) {
+                                   UIElement referenceElement, ISession session) {
             InitializeComponent();
 
             Session = session;
@@ -29,7 +29,7 @@ namespace IRExplorerUI {
             Height = height;
         }
 
-        public ISessionManager Session { get; set; }
+        public ISession Session { get; set; }
         public string SharingLink { get; set; }
 
         private async void ShareButton_Click(object sender, RoutedEventArgs e) {
