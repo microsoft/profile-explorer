@@ -6,8 +6,8 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Query {
     public interface IElementQuery {
-        public ISessionManager Session { get; }
-        public bool Initialize(ISessionManager session);
+        public ISession Session { get; }
+        public bool Initialize(ISession session);
         public bool Execute(QueryData data);
     }
 
@@ -31,7 +31,7 @@ namespace IRExplorerUI.Query {
         public string Description { get; set; }
         public QueryData Data { get; set; }
 
-        public bool CreateQueryInstance(ISessionManager session) {
+        public bool CreateQueryInstance(ISession session) {
             if (queryInstance_ == null) {
                 queryInstance_ = (IElementQuery)Activator.CreateInstance(queryType_);
                 return queryInstance_.Initialize(session);

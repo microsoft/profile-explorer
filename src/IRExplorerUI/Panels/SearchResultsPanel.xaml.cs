@@ -50,7 +50,7 @@ namespace IRExplorerUI {
         private SectionTextDelegate getSectionText_;
 
         public SearchResultInfo(SearchResultKind resultkind, int index, TextSearchResult result,
-                                IRTextSection section, ISessionManager session,
+                                IRTextSection section, ISession session,
                                 SectionTextDelegate getSectionText) {
             ResultKind = resultkind;
             Index = index;
@@ -64,7 +64,7 @@ namespace IRExplorerUI {
         public int Index { get; set; }
         public TextSearchResult Result { get; set; }
         public IRTextSection Section { get; set; }
-        public ISessionManager Session { get; set; }
+        public ISession Session { get; set; }
 
         public TextBlock Preview {
             get {

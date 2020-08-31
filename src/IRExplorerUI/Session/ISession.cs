@@ -18,7 +18,7 @@ namespace IRExplorerUI {
         Floating
     }
 
-    public interface ISessionManager {
+    public interface ISession {
         IRDocument CurrentDocument { get; }
         IRTextSection CurrentDocumentSection { get; }
         List<IRDocument> OpenDocuments { get; }

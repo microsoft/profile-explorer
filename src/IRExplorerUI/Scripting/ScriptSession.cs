@@ -15,9 +15,9 @@ namespace IRExplorerUI.Scripting {
         private IRDocument document_;
         private List<Tuple<IRElement, Color>> markedElements_;
         private CancelableTask task_;
-        private ISessionManager session_;
+        private ISession session_;
 
-        public ScriptSession(IRDocument document, ISessionManager session) {
+        public ScriptSession(IRDocument document, ISession session) {
             task_ = new CancelableTask();
             document_ = document;
             session_ = session;

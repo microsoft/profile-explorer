@@ -18,7 +18,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI {
-    public partial class MainWindow : Window, ISessionManager {
+    public partial class MainWindow : Window, ISession {
         private struct ElementIteratorId {
             public int ElementId;
             public IRElementKind ElementKind;

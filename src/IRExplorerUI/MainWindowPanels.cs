@@ -26,7 +26,7 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Controls;
 
 namespace IRExplorerUI {
-    public partial class MainWindow : Window, ISessionManager {
+    public partial class MainWindow : Window, ISession {
         private void RegisterDefaultToolPanels() {
             RegisterPanel(SectionPanel, SectionPanelHost);
             RegisterPanel(FlowGraphPanel, FlowGraphPanelHost);

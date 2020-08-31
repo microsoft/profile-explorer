@@ -43,7 +43,7 @@ namespace IRExplorerCmd {
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => throw new NotImplementedException();
     }
 
-    public class ConsoleSessionManager : ISessionManager {
+    public class ConsoleSessionManager : ISession {
         ICompilerInfoProvider compilerInfo_;
         SessionStateManager sessionState_;
         LoadedDocument mainDocument_;
@@ -79,7 +79,6 @@ namespace IRExplorerCmd {
         public IRTextSummary DiffDocumentSummary => diffDocument_?.Summary;
 
         public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
-            Debug.Assert(targetDiffDocument == null);
             var docInfo = sessionState_.FindLoadedDocument(section);
             return Task.Run(() => docInfo.Loader.GetSectionText(section));
         }
@@ -97,7 +96,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public List<Reference> FindAllReferences(IRElement element, IRDocument document) {
+        public void ShowAllReferences(IRElement element, IRDocument document) {
             throw new NotImplementedException();
         }
 
@@ -109,7 +108,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public List<Reference> FindSSAUses(IRElement element, IRDocument document) {
+        public void ShowSSAUses(IRElement element, IRDocument document) {
             throw new NotImplementedException();
         }
 

@@ -14,10 +14,10 @@ namespace IRExplorerUI.Query.Builtin {
             return query;
         }
 
-        private ISessionManager session_;
-        public ISessionManager Session => session_;
+        private ISession session_;
+        public ISession Session => session_;
 
-        public bool Initialize(ISessionManager session) {
+        public bool Initialize(ISession session) {
             session_ = session;
             return true;
         }

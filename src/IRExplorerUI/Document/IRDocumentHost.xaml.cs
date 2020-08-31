@@ -129,12 +129,12 @@ namespace IRExplorerUI {
         private bool searchPanelVisible_;
         private SectionSearchResult searchResult_;
         private IRElement selectedBlock_;
-        private ISessionManager session_;
+        private ISession session_;
         private DocumentSettings settings_;
         private List<Remark> remarkList_;
         private RemarksButtonState remarksButtonState_;
 
-        public IRDocumentHost(ISessionManager session) {
+        public IRDocumentHost(ISession session) {
             InitializeComponent();
             ActionPanel.Visibility = Visibility.Collapsed;
             Session = session;
@@ -171,7 +171,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public ISessionManager Session {
+        public ISession Session {
             get => session_;
             set {
                 session_ = value;
@@ -641,7 +641,8 @@ namespace IRExplorerUI {
                 var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
                                                              remarkSettings_.StopAtSectionBoundaries);
                 var document = Session.SessionState.FindLoadedDocument(Section);
-                return remarkProvider.ExtractAllRemarks(sections, Function, document);
+                var options = new RemarkProviderOptions();
+                return remarkProvider.ExtractAllRemarks(sections, Function, document, options);
             });
         }
 
@@ -1247,9 +1248,9 @@ namespace IRExplorerUI {
         }
 
         class DummyQuery : IElementQuery {
-            public ISessionManager Session { get; }
+            public ISession Session { get; }
 
-            public bool Initialize(ISessionManager session) {
+            public bool Initialize(ISession session) {
                 return true;
             }
 

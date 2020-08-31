@@ -53,6 +53,7 @@ namespace IRExplorerUI {
         private object lockObject_;
 
         private string initialText_;
+        private bool initialTextChanged_;
         private List<Tuple<int, int>> initialTextLines_;
         private IRPreviewToolTip previewTooltip_;
         private IRElement prevSelectedElement_;
@@ -91,7 +92,7 @@ namespace IRExplorerUI {
             Options.EnableHyperlinks = false;
         }
 
-        public ISessionManager Session { get; set; }
+        public ISession Session { get; set; }
         public IRTextSection Section => section_;
         public FunctionIR Function => function_;
         public IRDocument AssociatedDocument => associatedDocument_;
@@ -247,11 +248,13 @@ namespace IRExplorerUI {
             }
 
             initialText_ = text;
+            initialTextChanged_ = false;
             function_ = function;
             section_ = section;
             associatedDocument_ = associatedDocument;
             Text = initialText_;
             IsReadOnly = false;
+
             EnsureInitialTextLines();
             await UpdateElementHighlighting();
         }
@@ -275,11 +278,12 @@ namespace IRExplorerUI {
             elementMarker_.Clear();
             hoverElementMarker_.Clear();
             searchResultMarker_.Clear();
-            string currentText = Text;
+            UpdateHighlighting();
 
             // When unloading a document, no point to start a new task.
+            string currentText = initialTextChanged_ ? Text : initialText_;
+
             if (currentText.Length == 0) {
-                UpdateHighlighting();
                 return;
             }
 
@@ -314,7 +318,12 @@ namespace IRExplorerUI {
         private List<IRElement> ExtractTextOperands(string text, FunctionIR function, CancelableTask cancelableTask) {
             var elements = new List<IRElement>();
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
-            var remarks = remarkProvider.ExtractRemarks(text, function, section_);
+            var options = new RemarkProviderOptions() {
+                FindOperandRemarks = false,
+                IgnoreOverlappingOperandRemarks = true
+            };
+
+            var remarks = remarkProvider.ExtractRemarks(text, function, section_, options);
 
             if (cancelableTask.IsCanceled) {
                 cancelableTask.Completed();
@@ -337,7 +346,7 @@ namespace IRExplorerUI {
 
         public async Task<List<TextSearchResult>> SearchText(SearchInfo info) {
             if (string.IsNullOrEmpty(info.SearchedText)) {
-                Text = initialText_;
+                RestoreInitialText();
                 IsReadOnly = false;
                 initialTextLines_ = null;
                 return null;
@@ -354,17 +363,25 @@ namespace IRExplorerUI {
                 EnsureInitialTextLines();
                 string searchResult = await Task.Run(() => SearchAndFilterTextLines(info));
                 Text = searchResult;
+                initialTextChanged_ = true;
                 await UpdateElementHighlighting();
                 return null;
             }
             else {
-                Text = initialText_;
+                RestoreInitialText();
 
                 var searchResults =
                     await Task.Run(() => TextSearcher.AllIndexesOf(initialText_, info.SearchedText, 0, info.SearchKind));
 
                 HighlightSearchResults(searchResults);
                 return searchResults;
+            }
+        }
+
+        private void RestoreInitialText() {
+            if (initialTextChanged_) {
+                Text = initialText_;
+                initialTextChanged_ = false;
             }
         }
 

@@ -78,7 +78,7 @@ namespace IRExplorerUI.Query {
         public event PropertyChangedEventHandler PropertyChanged;
 
         public QueryPanel(Point position, double width, double height,
-                          UIElement referenceElement, ISessionManager session) {
+                          UIElement referenceElement, ISession session) {
             InitializeComponent();
             Initialize(position, width, height, referenceElement);
             PanelResizeGrip.ResizedControl = this;
@@ -99,7 +99,7 @@ namespace IRExplorerUI.Query {
             DataContext = this;
         }
 
-        public ISessionManager Session { get; set; }
+        public ISession Session { get; set; }
 
         public string PanelTitle {
             get => panelTitle_;

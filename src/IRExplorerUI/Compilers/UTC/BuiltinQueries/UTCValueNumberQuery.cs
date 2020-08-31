@@ -18,9 +18,9 @@ namespace IRExplorerUI.Compilers.UTC {
             return query;
         }
 
-        public ISessionManager Session { get; private set; }
+        public ISession Session { get; private set; }
 
-        public bool Initialize(ISessionManager session) {
+        public bool Initialize(ISession session) {
             Session = session;
             return true;
         }
