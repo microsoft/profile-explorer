@@ -8,10 +8,38 @@
   ],
   "List": [
     {
+      "SearchedText": "GLOBOPT -- init",
+      "SearchKind": "default",
+      "TextColor": "Black",
+      "SeparatorColor": "#000690",
+      "BeforeSeparatorWeight": 2
+    },
+    {
+      "SearchedText": "GLOBOPT -- term",
+      "SearchKind": "default",
+      "TextColor": "Black",
+      "SeparatorColor": "#000690",
+      "AfterSeparatorWeight": 2
+    },
+    {
+      "SearchedText": "Tuples after Lower",
+      "SearchKind": "default",
+      "TextColor": "Black",
+      "SeparatorColor": "#1C6700",
+      "BeforeSeparatorWeight": 2
+    },
+    {
+      "SearchedText": "Tuples after Final Lower",
+      "SearchKind": "default",
+      "TextColor": "Black",
+      "SeparatorColor": "#1C6700",
+      "BeforeSeparatorWeight": 2
+    },
+    {
       "SearchedText": "Tuples before SSA Optimizer - first pass",
       "SearchKind": "default",
       "TextColor": "#0000cd",
-      "SeparatorColor": "#696969",
+      "SeparatorColor": "#686868",
       "BeforeSeparatorWeight": 2
     },
     {
