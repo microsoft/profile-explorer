@@ -15,8 +15,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
-		<ProjectReference Include="..\IRExplorerUI\IRExplorerUI.csproj" />
 		<ProjectReference Include="..\IRExplorerLib\IRExplorerLib.csproj" />
+		<ProjectReference Include="..\IRExplorerUI\IRExplorerUI.csproj" />
 	</ItemGroup>
 
 </Project>
