@@ -59,6 +59,8 @@ namespace IRExplorerUI {
         public const string AutoUpdateInfo = @"http://irexplorerstorage.file.core.windows.net/irexplorer-app/update.xml?sv=2019-10-10&ss=bfqt&srt=o&sp=rlacupx&se=2023-03-01T14:12:02Z&st=2020-07-02T05:12:02Z&spr=https,http&sig=VEd7d8WhShT20oknDmfe04wTFniOFVpvohax9xMx%2FOg%3D";
         private const string DocumentationLocation = @"file://ir-explorer/docs/index.html";
 
+        private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
+
         private static bool CreateSettingsDirectory() {
             try {
                 string path = GetSettingsDirectoryPath();
@@ -256,8 +258,6 @@ namespace IRExplorerUI {
             return "";
         }
 
-        private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
-
         public static List<SyntaxFileInfo> GetSyntaxHighlightingFiles(string compilerIRName, bool internalFiles = false) {
             if (!internalFiles && cachedSyntaxHighlightinFiles_ != null) {
                 return cachedSyntaxHighlightinFiles_;
@@ -296,7 +296,7 @@ namespace IRExplorerUI {
             try {
                 var syntaxFilesDir = GetCompilerSettingsDirectoryPath(compilerIRName);
 
-                if(Directory.Exists(syntaxFilesDir)) {
+                if (Directory.Exists(syntaxFilesDir)) {
                     return true;
                 }
 

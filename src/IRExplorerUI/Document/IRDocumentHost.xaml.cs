@@ -133,6 +133,7 @@ namespace IRExplorerUI {
         private DocumentSettings settings_;
         private List<Remark> remarkList_;
         private RemarksButtonState remarksButtonState_;
+        private RemarkContext activeRemarkContext_;
 
         public IRDocumentHost(ISession session) {
             InitializeComponent();
@@ -412,6 +413,8 @@ namespace IRExplorerUI {
 
         private async void RemarkPanel__RemarkContextChanged(object sender, RemarkContext e) {
             activeRemarkContext_ = e;
+            remarkSettings_.ShowOnlyContextRemarks = true;
+            Trace.TraceInformation($"=> Activate context {e.Name}, {e.Id}");
             await UpdateDocumentRemarks(remarkList_);
         }
 
@@ -419,9 +422,7 @@ namespace IRExplorerUI {
             remarkPanel_.Session = Session;
             remarkPanel_.Function = Function;
             remarkPanel_.Section = Section;
-            remarkPanel_.RemarkFilter = remarkSettings_;
-            remarkPanel_.Element = element;
-            remarkPanel_.Initialize(remarkPanelLocation_, this);
+            remarkPanel_.Initialize(element, remarkPanelLocation_, this, remarkSettings_, activeRemarkContext_);
         }
 
         private void HideRemarkPanel() {
@@ -712,19 +713,17 @@ namespace IRExplorerUI {
         private async Task UpdateDocumentRemarks(List<Remark> remarks) {
             if (remarks == null || !remarkSettings_.ShowRemarks ||
                 (!remarkSettings_.ShowMarginRemarks &&
-                !remarkSettings_.ShowDocumentRemarks)) {
-                TextView.RemoveRemarks();
+                 !remarkSettings_.ShowDocumentRemarks)) {
+                TextView.RemoveRemarks(); // No remarks or disabled.
                 return;
             }
 
             var (allRemarks, markerRemarksGroups) = await Task.Run(() => FilterDocumentRemarks(remarks));
-            TextView.UpdateRemarks(allRemarks, markerRemarksGroups);
+            TextView.UpdateRemarks(allRemarks, markerRemarksGroups, activeRemarkContext_ != null);
         }
 
-        private RemarkContext activeRemarkContext_;
-
         //? TODO: Create a new class to do the remark finding/filtering work
-        public static bool IsAcceptedRemark(Remark remark, IRTextSection section, RemarkSettings remarkSettings) {
+        public bool IsAcceptedRemark(Remark remark, IRTextSection section, RemarkSettings remarkSettings) {
             if (!remarkSettings.ShowPreviousSections && remark.Section != section) {
                 return false;
             }
@@ -764,14 +763,28 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            //? TODO: Filter based on context - accept any children
-            if (activeRemarkContext_ != null) {
-                if (remark.Context != activeRemarkContext_) {
-                    return false;
-                }
+            // Filter based on context, accept any context that is a child of the active context.
+            if (activeRemarkContext_ != null && remarkSettings.ShowOnlyContextRemarks) {
+                return IsActiveContextTreeRemark(remark);
             }
 
             return true;
+        }
+
+        public bool IsActiveContextTreeRemark(Remark remark) {
+            var context = remark.Context;
+
+            while (context != null) {
+                if (context == activeRemarkContext_) {
+                    Trace.TraceInformation($"=> Accept remark in context {remark.Context.Name}");
+                    Trace.TraceInformation($"      text \"{remark.RemarkText}\"");
+                    return true;
+                }
+
+                context = context.Parent;
+            }
+
+            return false;
         }
 
         private void RemoveRemarkTags() {

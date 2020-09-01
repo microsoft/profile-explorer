@@ -54,6 +54,7 @@ namespace IRExplorerUI {
         public List<Remark> Remarks { get; set; }
         public RemarkContext Parent { get; set; }
         public List<RemarkContext> Children { get; set; }
+        public int ContextTreeLevel => Parent != null ? Parent.ContextTreeLevel + 1 : 0;
 
         public override string ToString() {
             var builder = new StringBuilder();
@@ -61,7 +62,7 @@ namespace IRExplorerUI {
             builder.AppendLine($"> {Remarks.Count} remarks:");
 
             foreach (var remark in Remarks) {
-                builder.AppendLine($"  o {remark.RemarkText}".Indent(4));
+                builder.AppendLine($"  o \"{remark.RemarkText}\"".Indent(4));
             }
 
             builder.AppendLine($"> {Children.Count} children:");
@@ -107,7 +108,7 @@ namespace IRExplorerUI {
         };
 
         public override string ToString() {
-            var text = $"remark kind: {Kind}, text: {RemarkText}, section: {Section}";
+            var text = $"remark kind: {Kind}, text: \"{RemarkText}\", section: \"{Section}\"";
 
             if (Context != null) {
                 text += $"\n  {Context.ToString().Indent(2)}";
