@@ -3,9 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI {
     [Flags]
@@ -39,17 +41,37 @@ namespace IRExplorerUI {
     }
 
     public class RemarkContext {
-        public RemarkContext(string name, RemarkContext parent = null) {
+        public RemarkContext(string id, string name, RemarkContext parent = null) {
+            Id = id;
             Name = name;
             Parent = parent;
             Remarks = new List<Remark>();
             Children = new List<RemarkContext>();
         }
 
+        public string Id { get; set; }
         public string Name { get; set; }
         public List<Remark> Remarks { get; set; }
         public RemarkContext Parent { get; set; }
         public List<RemarkContext> Children { get; set; }
+
+        public override string ToString() {
+            var builder = new StringBuilder();
+            builder.AppendLine($"remark context name: {Name}, id: {Id}, has parent: {Parent != null}");
+            builder.AppendLine($"> {Remarks.Count} remarks:");
+
+            foreach (var remark in Remarks) {
+                builder.AppendLine($"  o {remark.RemarkText}".Indent(4));
+            }
+
+            builder.AppendLine($"> {Children.Count} children:");
+
+            foreach (var child in Children) {
+                builder.AppendLine($"  o {child}".Indent(4));
+            }
+
+            return builder.ToString();
+        }
     }
 
     public class Remark {
@@ -85,7 +107,13 @@ namespace IRExplorerUI {
         };
 
         public override string ToString() {
-            return $"kind: {Kind}, text: {RemarkText}, section: {Section}";
+            var text = $"remark kind: {Kind}, text: {RemarkText}, section: {Section}";
+
+            if (Context != null) {
+                text += $"\n  {Context.ToString().Indent(2)}";
+            }
+
+            return text;
         }
     }
 }

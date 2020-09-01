@@ -13,6 +13,7 @@ using IRExplorerUI.Utilities;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerCore.Utilities;
 
 // TODO: Clicking on scroll bar not working if there is an IR element under it,
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
@@ -24,14 +25,15 @@ namespace IRExplorerUI {
         }
 
         public List<Remark> Remarks { get; }
-        public string Name => "Output lines tag";
+        public string Name => "Remark tag";
         public TaggedObject Owner { get; set; }
 
         public override string ToString() {
             var builder = new StringBuilder();
+            builder.AppendLine($"remarks count: {Remarks.Count}");
 
             foreach (var remark in Remarks) {
-                builder.AppendLine(remark.ToString());
+                builder.Append($"  o {remark}".Indent(4));
             }
 
             return builder.ToString();
@@ -283,7 +285,7 @@ namespace IRExplorerUI {
             // When unloading a document, no point to start a new task.
             string currentText = initialTextChanged_ ? Text : initialText_;
 
-            if (currentText.Length == 0) {
+            if (string.IsNullOrEmpty(currentText)) {
                 return;
             }
 

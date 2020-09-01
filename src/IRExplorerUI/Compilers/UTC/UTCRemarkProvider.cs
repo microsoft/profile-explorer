@@ -117,9 +117,9 @@ namespace IRExplorerUI.UTC {
             return contextStack_.Count > 0 ? contextStack_.Peek() : null;
         }
 
-        private RemarkContext StartNewContext(string name, string id) {
+        private RemarkContext StartNewContext(string id, string name) {
             var currentContext = GetCurrentContext();
-            var context = new RemarkContext(name, currentContext);
+            var context = new RemarkContext(id, name, currentContext);
 
             if (currentContext != null) {
                 currentContext.Children.Add(context);
@@ -292,10 +292,6 @@ namespace IRExplorerUI.UTC {
             }
 
             var function = currentSection.ParentFunction;
-
-            //? Example for SSAOpt sections
-            //?  - consider only other SSaopt sections
-            //?  - if in second pass, stop at section that separates first/second
 
             for (int i = currentSection.Number - 1, count = 0; i >= 0 && count < maxDepth; i--, count++) {
                 var section = function.Sections[i];

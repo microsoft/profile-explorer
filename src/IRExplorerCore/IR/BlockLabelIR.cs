@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using IRExplorerCore.Utilities;
 using System;
 
 namespace IRExplorerCore.IR {
@@ -28,7 +29,7 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            return $"  > label name: {Name}\n";
+            return $"label name: {Name}";
         }
     }
 }

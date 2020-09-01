@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using IRExplorerCore.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -81,20 +82,18 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            var result = new StringBuilder();
-
-            result.AppendFormat("  > instr kind: {0}, {1} ({2}), (id: {3})\n", Kind,
-                                OpcodeText, Opcode, Id);
+            var builder = new StringBuilder();
+            builder.AppendLine($"instr kind: {Kind}, opcode: {OpcodeText} ({Opcode}), id: {Id}");
 
             for (int i = 0; i < Destinations.Count; i++) {
-                result.AppendFormat("    - dest {0}: {1}\n", i, Destinations[i]);
+                builder.AppendLine($"o dest {i}: {Destinations[i]}".Indent(2));
             }
 
             for (int i = 0; i < Sources.Count; i++) {
-                result.AppendFormat("    - source {0}: {1}\n", i, Sources[i]);
+                builder.AppendLine($"o src {i}: {Sources[i]}".Indent(2));
             }
 
-            return result.ToString();
+            return builder.ToString();
         }
     }
 }

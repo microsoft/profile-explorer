@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI {
     /// <summary>
@@ -67,10 +68,10 @@ namespace IRExplorerUI {
             builder.AppendLine(e.Element.ToString());
 
             if (e.Element.Tags != null) {
-                builder.AppendLine("Tags:");
+                builder.AppendLine($"{e.Element.Tags.Count} tags:");
 
                 foreach (var tag in e.Element.Tags) {
-                    builder.Append(tag);
+                    builder.AppendLine($"  - {tag.ToString().Indent(4)}");
                 }
             }
 
