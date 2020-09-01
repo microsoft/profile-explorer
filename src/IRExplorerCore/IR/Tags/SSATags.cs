@@ -41,7 +41,7 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            return $"SSA UD-link: {DefinitionId}, {Definition.Owner}";
+            return $"SSA UD-link: {DefinitionId}";
         }
     }
 
@@ -74,22 +74,11 @@ namespace IRExplorerCore.IR {
         public override string ToString() {
             var builder = new StringBuilder();
             builder.AppendLine($"SSA definition: {DefinitionId}");
-            builder.AppendLine($"  - parent: {Owner}");
+            builder.AppendLine($"  - parent: {((IRElement)Owner).Id}");
             builder.AppendLine($"  - users: {Users.Count}");
 
             foreach (var user in Users) {
-                builder.AppendLine($"    - {user.Owner}");
-
-                if (user.Owner is TupleIR tuple) {
-                    string tupleString = tuple.ToString();
-                    tupleString = tupleString.Replace("\n", "\n        ");
-                    builder.AppendLine($"      {tupleString}");
-                }
-                else if (user.Owner is OperandIR operand) {
-                    string tupleString = operand.Parent.ToString();
-                    tupleString = tupleString.Replace("\n", "\n        ");
-                    builder.AppendLine($"      {tupleString}");
-                }
+                builder.AppendLine($"    - {((IRElement)user.Owner).Id}");
             }
 
             return builder.ToString();

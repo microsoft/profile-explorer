@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using IRExplorerCore.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -156,7 +157,7 @@ namespace IRExplorerCore.IR {
                 result += $"<{ssaTag.DefinitionId}>";
             }
 
-            return $"{result} (id: {Id})";
+            return $"{result}, id: {Id}";
         }
     }
 }

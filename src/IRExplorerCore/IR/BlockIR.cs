@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using IRExplorerCore.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -104,7 +105,7 @@ namespace IRExplorerCore.IR {
 
         public IEnumerable<InstructionIR> Instructions {
             get {
-                foreach(var tuple in Tuples) {
+                foreach (var tuple in Tuples) {
                     if (tuple is InstructionIR instr) {
                         yield return instr;
                         ;
@@ -160,32 +161,32 @@ namespace IRExplorerCore.IR {
 
         public override string ToString() {
             var result = new StringBuilder();
-            result.AppendFormat("+ block number: {0} (id: {1})\n", Number, Id);
+            result.AppendLine($"block number: {Number},  id: {Id}");
 
             if (Predecessors.Count > 0) {
-                result.Append("  o preds: ");
+                result.AppendLine("o preds: ".Indent(2));
 
                 foreach (var block in Predecessors) {
-                    result.AppendFormat("{0} ", block.Number);
+                    result.Append($"{block.Number} ");
                 }
 
                 result.AppendLine();
             }
 
             if (Successors.Count > 0) {
-                result.Append("  o succs: ");
+                result.AppendLine("o succs: ".Indent(2));
 
                 foreach (var block in Successors) {
-                    result.AppendFormat("{0} ", block.Number);
+                    result.Append($"{block.Number} ");
                 }
 
                 result.AppendLine();
             }
 
-            result.AppendFormat("  o tuples: {0}\n", Tuples.Count);
+            result.AppendLine($"o tuples: {Tuples.Count}".Indent(2));
 
             foreach (var tuple in Tuples) {
-                result.AppendFormat("{0}\n", tuple);
+                result.AppendLine($"{tuple}".Indent(2));
             }
 
             return result.ToString();

@@ -24,7 +24,7 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            return $"Source location: {Line};{Column}";
+            return $"source location: {Line};{Column}";
         }
     }
 }
