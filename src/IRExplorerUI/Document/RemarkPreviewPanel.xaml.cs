@@ -20,6 +20,7 @@ namespace IRExplorerUI.Document {
         public Remark Remark { get; set; }
         public bool InCurrentSection { get; set; }
         public string SectionName { get; set; }
+        public int ContextTreeLevel { get; set; }
 
         public bool IsOptimization => Remark.Kind == RemarkKind.Optimization;
         public bool IsAnalysis => Remark.Kind == RemarkKind.Analysis;
@@ -30,6 +31,12 @@ namespace IRExplorerUI.Document {
             get {
                 if (!string.IsNullOrEmpty(Remark.Category.Title)) {
                     return $"{Remark.Section.Number} | {Remark.RemarkText}";
+                }
+
+                if (ContextTreeLevel > 0) {
+                    var space = new string('-', ContextTreeLevel * 2);
+                    var contextName = Remark.Context?.Name ?? "";
+                    return $"{space}{contextName} | {Remark.Section.Number} | {Remark.RemarkText}";
                 }
 
                 return $"{Remark.Section.Number} | {Remark.RemarkText}";
@@ -90,6 +97,8 @@ namespace IRExplorerUI.Document {
         private const double MinRemarkListItems = 3;
         private const double ColorButtonLeft = 175;
 
+        private IRDocumentHost parentDocument_;
+        private RemarkContext activeRemarkContext_;
         private IRElement element_;
         private RemarkSettingsEx remarkFilter_;
         private bool showPreview_;
@@ -128,14 +137,6 @@ namespace IRExplorerUI.Document {
         public IRTextSection Section { get; set; }
         public ISession Session { get; set; }
 
-        public RemarkSettings RemarkFilter {
-            get => remarkFilter_.Settings;
-            set {
-                remarkFilter_ = new RemarkSettingsEx((RemarkSettings)value.Clone());
-                ToolbarPanel.DataContext = remarkFilter_;
-            }
-        }
-
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<RemarkContext> RemarkContextChanged;
 
@@ -147,19 +148,41 @@ namespace IRExplorerUI.Document {
                 var list = new List<RemarkEx>();
                 RemarkEx firstSectionRemark = null;
 
-                foreach (var remark in remarkTag.Remarks) {
-                    AccountForRemarkKind(remark);
+                if (remarkFilter_.Settings.ShowOnlyContextRemarks) {
+                    var worklist = new Queue<RemarkContext>();
+                    worklist.Enqueue(activeRemarkContext_);
 
-                    if (IRDocumentHost.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
-                        string sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
-                        sectionName = $"({remark.Section.Number}) {sectionName}";
+                    while (worklist.Count > 0) {
+                        var context = worklist.Dequeue();
 
-                        var remarkEx = new RemarkEx(remark, sectionName, remark.Section == Section);
-                        list.Add(remarkEx);
+                        foreach (var remark in context.Remarks) {
+                            if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
+                                var remarkEx = AppendAcceptedRemark(list, remark);
+                                remarkEx.ContextTreeLevel = context.ContextTreeLevel - activeRemarkContext_.ContextTreeLevel;
 
-                        // Find first remark in current section.
-                        if (remark.Section == Section && firstSectionRemark == null) {
-                            firstSectionRemark = remarkEx;
+                                // Find first remark in current section.
+                                if (remark.Section == Section && firstSectionRemark == null) {
+                                    firstSectionRemark = remarkEx;
+                                }
+                            }
+                        }
+
+                        foreach (var child in context.Children) {
+                            worklist.Enqueue(child);
+                        }
+                    }
+                }
+                else {
+                    foreach (var remark in remarkTag.Remarks) {
+                        AccountForRemarkKind(remark);
+
+                        if (parentDocument_.IsAcceptedContextRemark(remark, Section, remarkFilter_.Settings)) {
+                            var remarkEx = AppendAcceptedRemark(list, remark);
+
+                            // Find first remark in current section.
+                            if (remark.Section == Section && firstSectionRemark == null) {
+                                firstSectionRemark = remarkEx;
+                            }
                         }
                     }
                 }
@@ -171,6 +194,14 @@ namespace IRExplorerUI.Document {
                     RemarkList.ScrollIntoView(firstSectionRemark);
                 }
             }
+        }
+
+        private RemarkEx AppendAcceptedRemark(List<RemarkEx> list, Remark remark) {
+            string sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
+            sectionName = $"({remark.Section.Number}) {sectionName}";
+            var remarkEx = new RemarkEx(remark, sectionName, remark.Section == Section);
+            list.Add(remarkEx);
+            return remarkEx;
         }
 
         private void AccountForRemarkKind(Remark remark) {
@@ -203,10 +234,10 @@ namespace IRExplorerUI.Document {
         }
 
         private void UpdateSize() {
-            var width = RemarkPreviewWidth;
-            var height = RemarkListTop + RemarkListItemHeight *
-                         Math.Clamp(RemarkList.Items.Count, MinRemarkListItems, MaxRemarkListItems);
-
+            var width = Math.Max(RemarkPreviewWidth, ActualWidth);
+            var height = Math.Max(RemarkListTop + RemarkListItemHeight *
+                                  Math.Clamp(RemarkList.Items.Count, MinRemarkListItems, MaxRemarkListItems),
+                                  ActualHeight);
             if (ShowPreview) {
                 height += RemarkPreviewHeight;
             }
@@ -234,12 +265,23 @@ namespace IRExplorerUI.Document {
             UpdateRemarkList();
         }
 
-        public void Initialize(Point position, UIElement referenceElement) {
-            UpdatePosition(position, referenceElement);
+        public void Initialize(IRElement element, Point position, IRDocumentHost parent,
+                               RemarkSettings filter, RemarkContext activeRemarkContext = null) {
+            parentDocument_ = parent;
+            activeRemarkContext_ = activeRemarkContext;
+
+            filter = (RemarkSettings)filter.Clone();
+            filter.ShowOnlyContextRemarks = activeRemarkContext_ != null;
+            remarkFilter_ = new RemarkSettingsEx(filter);
+            ToolbarPanel.DataContext = remarkFilter_;
+
+            UpdatePosition(position, parent);
             RemarkList.UnselectAll();
             SectionLabel.Content = "";
             ShowPreview = false;
             UpdateSize();
+
+            Element = element;
         }
 
         private void RemarkList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {

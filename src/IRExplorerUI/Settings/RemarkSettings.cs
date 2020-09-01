@@ -91,8 +91,10 @@ namespace IRExplorerUI {
         [ProtoMember(19)]
         public bool ShowPreviousAnalysisRemarks { get; set; }
 
-        public string SearchedText { get; set; }
+        [ProtoMember(20)]
+        public bool ShowOnlyContextRemarks { get; set; }
 
+        public string SearchedText { get; set; }
         public bool HasCategoryFilters => CategoryFilter != null && CategoryFilter.Count > 0;
 
         public override SettingsBase Clone() {
@@ -115,6 +117,7 @@ namespace IRExplorerUI {
                    UseRemarkBackground == state.UseRemarkBackground &&
                    UseTransparentRemarkBackground == state.UseTransparentRemarkBackground &&
                    RemarkBackgroundOpacity == state.RemarkBackgroundOpacity &&
+                   ShowOnlyContextRemarks == state.ShowOnlyContextRemarks &&
                    Default == state.Default &&
                    Verbose == state.Verbose &&
                    Trace == state.Trace &&

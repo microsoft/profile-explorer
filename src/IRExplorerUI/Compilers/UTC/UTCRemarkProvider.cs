@@ -104,7 +104,7 @@ namespace IRExplorerUI.UTC {
 
             var remarks = new List<Remark>();
             //? TODO: Could use an API that doesn't need splitting into lines again
-            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var lines = text.Split('\r', '\n');
             ExtractInstructionRemarks(text, lines, function, section, remarks, options);
             return remarks;
         }

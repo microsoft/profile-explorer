@@ -19,7 +19,7 @@ namespace IRExplorerUI {
             return hslToRgb(h, s, l);
         }
 
-        public static void rgbToHsl(Color color, out float h, out float s, out float l) {
+        private static void rgbToHsl(Color color, out float h, out float s, out float l) {
             float r = color.R / 255f;
             float g = color.G / 255f;
             float b = color.B / 255f;
@@ -48,7 +48,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public static Color hslToRgb(float h, float s, float l) {
+        private static Color hslToRgb(float h, float s, float l) {
             float r, g, b;
 
             if (Math.Abs(s) < double.Epsilon) {
@@ -65,11 +65,11 @@ namespace IRExplorerUI {
             return Color.FromRgb(to255(r), to255(g), to255(b));
         }
 
-        public static byte to255(float v) {
+        private static byte to255(float v) {
             return (byte)Math.Min(255, 256 * v);
         }
 
-        public static float hueToRgb(float p, float q, float t) {
+        private static float hueToRgb(float p, float q, float t) {
             if (t < 0f) {
                 t += 1f;
             }

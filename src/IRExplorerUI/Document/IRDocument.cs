@@ -2983,39 +2983,46 @@ namespace IRExplorerUI {
             Dispatcher.Invoke(() => UpdateHighlighting(), DispatcherPriority.Render);
         }
 
-        private HighlightingStyle GetRemarkLineStyle(Remark remark) {
+        private HighlightingStyle GetRemarkLineStyle(Remark remark, bool hasContextFilter) {
             //? TODO: Caching
+            if (hasContextFilter) {
+                var backColor = ColorUtils.AdjustLight(remark.Category.TextMarkBorderColor, 1.80f);
+                return new HighlightingStyle(backColor, Pens.GetPen(remark.Category.TextMarkBorderColor,
+                                                                    remark.Category.TextMarkBorderWeight * 2));
+            }
+
             return new HighlightingStyle(remark.Category.MarkColor,
                                          Pens.GetPen(remark.Category.TextMarkBorderColor,
                                                      remark.Category.TextMarkBorderWeight));
         }
 
-        private HighlightingStyle GetRemarkBookmarkStyle(Remark remark) {
+        private HighlightingStyle GetRemarkBookmarkStyle(Remark remark, bool hasContextFilter) {
             //? TODO: Caching
             return new HighlightingStyle(remark.Category.MarkColor);
         }
 
-        public void AddRemarks(List<Remark> allRemarks, List<RemarkLineGroup> markerRemarksGroups) {
+        public void AddRemarks(List<Remark> allRemarks, List<RemarkLineGroup> markerRemarksGroups,
+                               bool hasContextFilter) {
             if (markerRemarksGroups != null) {
-                AddMarginRemarks(markerRemarksGroups);
+                AddMarginRemarks(markerRemarksGroups, hasContextFilter);
             }
 
             if (allRemarks != null) {
-                AddDocumentRemarks(allRemarks);
+                AddDocumentRemarks(allRemarks, hasContextFilter);
             }
 
             UpdateMargin();
             UpdateHighlighting();
         }
 
-        private void AddMarginRemarks(List<RemarkLineGroup> markerRemarksGroups) {
+        private void AddMarginRemarks(List<RemarkLineGroup> markerRemarksGroups, bool hasContextFilter) {
             foreach (var remarkGroup in markerRemarksGroups) {
                 bool groupHandled = false;
 
                 foreach (var remark in remarkGroup.Remarks) {
                     foreach (var element in remark.ReferencedElements) {
                         if (remark.Category.AddLeftMarginMark && !groupHandled) {
-                            var style = GetRemarkBookmarkStyle(remarkGroup.LeaderRemark);
+                            var style = GetRemarkBookmarkStyle(remarkGroup.LeaderRemark, hasContextFilter);
                             var bookmark = new Bookmark(0, element, remarkGroup.LeaderRemark.RemarkText, style);
                             margin_.AddRemarkBookmark(bookmark, remarkGroup);
                             groupHandled = true;
@@ -3030,7 +3037,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void AddDocumentRemarks(List<Remark> allRemarks) {
+        private void AddDocumentRemarks(List<Remark> allRemarks, bool hasContextFilter) {
             var markedElements = new HashSet<Tuple<IRElement, RemarkKind>>(allRemarks.Count);
 
             foreach (var remark in allRemarks) {
@@ -3040,7 +3047,7 @@ namespace IRExplorerUI {
                         var elementKindPair = new Tuple<IRElement, RemarkKind>(element, remark.Kind);
 
                         if (!markedElements.Contains(elementKindPair)) {
-                            var style = GetRemarkLineStyle(remark);
+                            var style = GetRemarkLineStyle(remark, hasContextFilter);
                             var group = new HighlightedGroup(element, style);
                             remarkHighlighter_.Add(group);
                             markedElements.Add(elementKindPair);
@@ -3057,9 +3064,10 @@ namespace IRExplorerUI {
             UpdateHighlighting();
         }
 
-        public void UpdateRemarks(List<Remark> allRemarks, List<RemarkLineGroup> markerRemarksGroups) {
+        public void UpdateRemarks(List<Remark> allRemarks, List<RemarkLineGroup> markerRemarksGroups,
+                                  bool hasContextFilter) {
             RemoveRemarks();
-            AddRemarks(allRemarks, markerRemarksGroups);
+            AddRemarks(allRemarks, markerRemarksGroups, hasContextFilter);
         }
 
         private void ShowDefinitionPreview(IRElement element) {
