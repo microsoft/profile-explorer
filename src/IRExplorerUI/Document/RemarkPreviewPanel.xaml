@@ -436,7 +436,13 @@
                             VerticalScrollBarVisibility="Auto" />
                     </TabItem>
                     <TabItem Header="Context Tree">
-                        <ListView
+                        <TreeView
+                            x:Name="ContextRemarkTree"
+                            Grid.Row="1"
+                            BorderBrush="{x:Null}"
+                            BorderThickness="0,0,0,0" />
+
+                        <!--<ListView
                             x:Name="ContextRemarkList"
                             Grid.Row="1"
                             BorderBrush="{x:Null}"
@@ -476,7 +482,7 @@
 
                                 </Style>
                             </ListView.ItemContainerStyle>
-                        </ListView>
+                        </ListView>-->
                     </TabItem>
                 </TabControl>
 
