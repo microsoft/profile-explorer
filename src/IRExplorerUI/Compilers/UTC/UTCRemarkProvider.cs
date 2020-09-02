@@ -33,19 +33,65 @@ namespace IRExplorerUI.UTC {
         }
     }
 
-    // irx:remark parent_id, indent_level?
-
     public class UTCRemarkProvider : IRRemarkProvider {
+        private class RemarkContextState {
+            private Stack<RemarkContext> contextStack_;
+            private List<RemarkContext> rootContexts_;
+
+            public List<RemarkContext> RootContexts => rootContexts_;
+
+            public RemarkContextState() {
+                contextStack_ = new Stack<RemarkContext>();
+                rootContexts_ = new List<RemarkContext>();
+            }
+
+            public void AttachToCurrentContext(Remark remark) {
+                var context = GetCurrentContext();
+
+                if (context != null) {
+                    context.Remarks.Add(remark);
+                    remark.Context = context;
+                }
+
+            }
+
+            public RemarkContext GetCurrentContext() {
+                return contextStack_.Count > 0 ? contextStack_.Peek() : null;
+            }
+
+            public RemarkContext StartNewContext(string id, string name) {
+                var currentContext = GetCurrentContext();
+                var context = new RemarkContext(id, name, currentContext);
+
+                if (currentContext != null) {
+                    currentContext.Children.Add(context);
+                }
+                else {
+                    rootContexts_.Add(context);
+                }
+
+                contextStack_.Push(context);
+                return context;
+            }
+
+            public void EndCurrentContext() {
+                if (contextStack_.Count > 0) {
+                    contextStack_.Pop();
+                }
+            }
+        }
+
+        private const string MetadataStartString = "/// irx:";
+        private const string RemarkContextStartString = "context_start";
+        private const string RemarkContextEndString = "context_end";
         private List<RemarkCategory> categories_;
         private List<RemarkSectionBoundary> boundaries_;
-        private Stack<RemarkContext> contextStack_;
         private RemarkCategory defaultCategory_;
         private bool settingsLoaded_;
 
         public UTCRemarkProvider() {
             categories_ = new List<RemarkCategory>();
             boundaries_ = new List<RemarkSectionBoundary>();
-            contextStack_ = new Stack<RemarkContext>();
             settingsLoaded_ = LoadSettings();
         }
 
@@ -102,10 +148,20 @@ namespace IRExplorerUI.UTC {
                 return new List<Remark>(); // Failed to load settings, bail out.
             }
 
-            var remarks = new List<Remark>();
             //? TODO: Could use an API that doesn't need splitting into lines again
+            var remarks = new List<Remark>();
             var lines = text.Split('\r', '\n');
-            ExtractInstructionRemarks(text, lines, function, section, remarks, options);
+
+            // The RemarkContextState allows multiple threads to use the provider
+            // by not having any global state visible to all threads.
+            var state = new RemarkContextState();
+            ExtractInstructionRemarks(text, lines, function, section, remarks, options, state);
+
+            //foreach (var context in state.RootContexts) {
+            //    Trace.TraceInformation("\n------------------------------------------------------");
+            //    Trace.TraceInformation("\n" + context.ToString());
+            //}
+
             return remarks;
         }
 
@@ -113,34 +169,12 @@ namespace IRExplorerUI.UTC {
             return null;
         }
 
-        private RemarkContext GetCurrentContext() {
-            return contextStack_.Count > 0 ? contextStack_.Peek() : null;
-        }
 
-        private RemarkContext StartNewContext(string id, string name) {
-            var currentContext = GetCurrentContext();
-            var context = new RemarkContext(id, name, currentContext);
-
-            if (currentContext != null) {
-                currentContext.Children.Add(context);
-            }
-            else {
-                //? TODO: Add to list of top-level contexts
-            }
-
-            contextStack_.Push(context);
-            return context;
-        }
-
-        private void EndCurrentContext() {
-            if (contextStack_.Count > 0) {
-                contextStack_.Pop();
-            }
-        }
 
         private void ExtractInstructionRemarks(string text, string[] lines, FunctionIR function,
                                                IRTextSection section, List<Remark> remarks,
-                                               RemarkProviderOptions options) {
+                                               RemarkProviderOptions options,
+                                               RemarkContextState state) {
             var (fakeTuple, fakeBlock) = CreateFakeIRElements();
 
             var similarValueFinder = new SimilarValueFinder(function);
@@ -160,8 +194,8 @@ namespace IRExplorerUI.UTC {
                     continue;
                 }
 
-                if (line.StartsWith("/// irx:")) {
-                    if (HandleMetadata(line)) {
+                if (line.StartsWith(MetadataStartString, StringComparison.Ordinal)) {
+                    if (HandleMetadata(line, state)) {
                         lineStartOffset += line.Length + 1;
                         continue;
                     }
@@ -206,7 +240,7 @@ namespace IRExplorerUI.UTC {
                             remark.ReferencedElements.Add(similarInstr);
                             remark.OutputElements.Add(instr);
                             remarks.Add(remark);
-                            AttachToCurrentContext(remark);
+                            state.AttachToCurrentContext(remark);
 
                             index += instr.TextLength;
                             continue;
@@ -257,26 +291,17 @@ namespace IRExplorerUI.UTC {
             }
         }
 
-        private void AttachToCurrentContext(Remark remark) {
-            var context = GetCurrentContext();
 
-            if (context != null) {
-                context.Remarks.Add(remark);
-                remark.Context = context;
-            }
-
-        }
-
-        private bool HandleMetadata(string line) {
+        private bool HandleMetadata(string line, RemarkContextState state) {
             var tokens = line.Split(new char[] { ' ', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (tokens.Length >= 2) {
-                if (tokens[2] == "context_start" && tokens.Length >= 5) {
-                    StartNewContext(tokens[3], tokens[4]);
+                if (tokens[2] == RemarkContextStartString && tokens.Length >= 5) {
+                    state.StartNewContext(tokens[3], tokens[4]);
                     return true;
                 }
-                else if (tokens[2] == "context_end") {
-                    EndCurrentContext();
+                else if (tokens[2] == RemarkContextEndString) {
+                    state.EndCurrentContext();
                     return true;
                 }
             }

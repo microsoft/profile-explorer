@@ -423,15 +423,64 @@
                     </DockPanel>
                 </Border>
 
-                <client:LightIRDocument
-                    x:Name="TextView"
-                    Background="OldLace"
-                    DockPanel.Dock="Bottom"
-                    FontFamily="Consolas"
-                    FontSize="12"
-                    HorizontalScrollBarVisibility="Hidden"
-                    ShowLineNumbers="True"
-                    VerticalScrollBarVisibility="Auto" />
+                <TabControl TabStripPlacement="Bottom">
+                    <TabItem Header="Output Text">
+                        <client:LightIRDocument
+                            x:Name="TextView"
+                            Background="OldLace"
+                            DockPanel.Dock="Bottom"
+                            FontFamily="Consolas"
+                            FontSize="12"
+                            HorizontalScrollBarVisibility="Hidden"
+                            ShowLineNumbers="True"
+                            VerticalScrollBarVisibility="Auto" />
+                    </TabItem>
+                    <TabItem Header="Context Tree">
+                        <ListView
+                            x:Name="ContextRemarkList"
+                            Grid.Row="1"
+                            BorderBrush="{x:Null}"
+                            BorderThickness="0,0,0,0"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn DisplayMemberBinding="{Binding Text}" />
+                                </GridView>
+                            </ListView.View>
+
+                            <ListView.Resources>
+                                <Style TargetType="GridViewColumnHeader">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </Style>
+                            </ListView.Resources>
+                            <ListView.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                                    <Style.Setters>
+                                        <Setter Property="Foreground" Value="Black" />
+                                        <Setter Property="FontFamily" Value="Consolas" />
+                                        <Setter Property="FontSize" Value="12" />
+                                    </Style.Setters>
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=InCurrentSection}" Value="True">
+                                            <Setter Property="FontWeight" Value="ExtraBold" />
+                                        </DataTrigger>
+
+                                        <DataTrigger Binding="{Binding Path=HasCustomBackground}" Value="True">
+                                            <Setter Property="Background" Value="{Binding Path=Background}" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                    </TabItem>
+                </TabControl>
+
+
             </DockPanel>
         </Grid>
     </Border>
