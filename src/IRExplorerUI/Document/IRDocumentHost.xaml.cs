@@ -636,9 +636,9 @@ namespace IRExplorerUI {
             await AddRemarks(remarkList_);
         }
 
-        private Task<List<Remark>> FindRemarks() {
+        private async Task<List<Remark>> FindRemarks() {
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
-            return Task.Run(() => {
+            return await Task.Run(() => {
                 var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
                                                              remarkSettings_.StopAtSectionBoundaries);
                 var document = Session.SessionState.FindLoadedDocument(Section);

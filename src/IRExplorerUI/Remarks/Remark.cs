@@ -12,6 +12,7 @@ using IRExplorerCore.Utilities;
 namespace IRExplorerUI {
     [Flags]
     public enum RemarkKind {
+        None,
         Default,
         Verbose,
         Trace,

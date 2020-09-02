@@ -40,7 +40,7 @@ namespace IRExplorerUI {
         List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries);
         List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document,
                                        RemarkProviderOptions options);
-            
+
         //? TODO: Should use a CancelableTaskInfo to support fast canceling when section switches
         List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section, RemarkProviderOptions options);
         OptimizationRemark GetOptimizationRemarkInfo(Remark remark);

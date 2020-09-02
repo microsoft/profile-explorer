@@ -15,6 +15,7 @@ namespace IRExplorerUI.Document {
             Remark = remark;
             InCurrentSection = inCurrentSection;
             SectionName = sectionName;
+            ContextTreeLevel = -1;
         }
 
         public Remark Remark { get; set; }
@@ -33,14 +34,22 @@ namespace IRExplorerUI.Document {
                     return $"{Remark.Section.Number} | {Remark.RemarkText}";
                 }
 
-                if (ContextTreeLevel > 0) {
-                    var space = new string('-', ContextTreeLevel * 2);
+                if (ContextTreeLevel >= 0) {
+                    var space = new string(' ', ContextTreeLevel * 4);
                     var contextName = Remark.Context?.Name ?? "";
-                    return $"{space}{contextName} | {Remark.Section.Number} | {Remark.RemarkText}";
+                    return $"{space}{contextName} | {FormatRemarkText()}";
                 }
 
-                return $"{Remark.Section.Number} | {Remark.RemarkText}";
+                return FormatRemarkText();
             }
+        }
+
+        private string FormatRemarkText() {
+            if (Remark.Kind == RemarkKind.None) {
+                return Remark.RemarkText;
+            }
+
+            return $"{Remark.Section.Number} | {Remark.RemarkText}";
         }
 
         public Brush Background =>
@@ -149,28 +158,7 @@ namespace IRExplorerUI.Document {
                 RemarkEx firstSectionRemark = null;
 
                 if (remarkFilter_.Settings.ShowOnlyContextRemarks) {
-                    var worklist = new Queue<RemarkContext>();
-                    worklist.Enqueue(activeRemarkContext_);
-
-                    while (worklist.Count > 0) {
-                        var context = worklist.Dequeue();
-
-                        foreach (var remark in context.Remarks) {
-                            if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
-                                var remarkEx = AppendAcceptedRemark(list, remark);
-                                remarkEx.ContextTreeLevel = context.ContextTreeLevel - activeRemarkContext_.ContextTreeLevel;
-
-                                // Find first remark in current section.
-                                if (remark.Section == Section && firstSectionRemark == null) {
-                                    firstSectionRemark = remarkEx;
-                                }
-                            }
-                        }
-
-                        foreach (var child in context.Children) {
-                            worklist.Enqueue(child);
-                        }
-                    }
+                    firstSectionRemark = CollectContextTreeRemarks(activeRemarkContext_, list);
                 }
                 else {
                     foreach (var remark in remarkTag.Remarks) {
@@ -194,6 +182,80 @@ namespace IRExplorerUI.Document {
                     RemarkList.ScrollIntoView(firstSectionRemark);
                 }
             }
+        }
+
+        private RemarkEx CollectContextTreeRemarks(RemarkContext rootContext, List<RemarkEx> list,
+                                                   string outputText = null) {
+            RemarkEx firstSectionRemark = null;
+            var worklist = new Queue<RemarkContext>();
+            worklist.Enqueue(rootContext);
+
+            while (worklist.Count > 0) {
+                var context = worklist.Dequeue();
+
+                foreach (var remark in context.Remarks) {
+                    if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
+                        var remarkEx = AppendAcceptedRemark(list, remark);
+                        remarkEx.ContextTreeLevel = context.ContextTreeLevel - rootContext.ContextTreeLevel;
+
+                        // Find first remark in current section.
+                        if (remark.Section == Section && firstSectionRemark == null) {
+                            firstSectionRemark = remarkEx;
+                        }
+                    }
+                }
+
+                foreach (var child in context.Children) {
+                    worklist.Enqueue(child);
+                }
+            }
+
+            //? TODO: Could use an API that doesn't need splitting into lines again
+            var outputTextLines = outputText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var newList = new List<RemarkEx>(list.Count);
+            RemarkEx prevRemark = null;
+
+            var outputCategory = new RemarkCategory {
+                Kind = RemarkKind.None,
+                Title = "",
+                SearchedText = "",
+                MarkColor = Colors.Gray,
+            };
+
+            var remarkProvider = Session.CompilerInfo.RemarkProvider;
+
+            for (int i = 0; i < list.Count; i++) {
+                var remark = list[i];
+
+                if (prevRemark != null) {
+                    var prevLine = prevRemark.Remark.OutputElements[0].TextLocation.Line;
+                    var line = remark.Remark.OutputElements[0].TextLocation.Line;
+
+                    // Line numbers start with 1, +2 is needed to start with the line after the prev. remark.
+                    for (int k = prevLine + 2; k <= line; k++) {
+                        var lineText = outputTextLines[k];
+
+                        //? TODO: Check could be part of the remark provider (ShouldIgnore...)
+                        //? but a cleaner approach should be having a pass output filter interface,
+                        //? with Session.GetSectionPassOutputAsync using it, plus a new
+                        //? GetRawSectionPassOutputAsync so that the remark prov. gets the metadata lines
+                        if (!lineText.StartsWith("/// irx:")) {
+                            var temp = new Remark(outputCategory, remark.Remark.Section,
+                                                  lineText, new TextLocation(0, k, 0));
+                            var tempEx = new RemarkEx(temp, remark.SectionName, false);
+                            newList.Add(tempEx);
+                        }
+                    }
+                }
+
+                newList.Add(remark);
+                prevRemark = remark;
+            }
+
+            list.Clear();
+            list.AddRange(newList);
+
+            return firstSectionRemark;
         }
 
         private RemarkEx AppendAcceptedRemark(List<RemarkEx> list, Remark remark) {
@@ -259,6 +321,23 @@ namespace IRExplorerUI.Document {
             TextView.Select(item.RemarkLocation.Offset, item.RemarkText.Length);
             SectionLabel.Content = itemEx.Description;
             ShowPreview = true;
+
+            if (item.Context != null) {
+                // Show context and children.
+                var list = new List<RemarkEx>();
+                CollectContextTreeRemarks(item.Context, list, outputText);
+                ContextRemarkList.ItemsSource = list;
+
+                if (list.Count > 0) {
+                    foreach (var contextRemark in list) {
+                        if (contextRemark.Remark == item) {
+                            ContextRemarkList.SelectedItem = contextRemark;
+                            ContextRemarkList.ScrollIntoView(contextRemark);
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e) {
