@@ -35,9 +35,8 @@ namespace IRExplorerUI.Document {
                 }
 
                 if (ContextTreeLevel >= 0) {
-                    var space = new string(' ', ContextTreeLevel * 4);
                     var contextName = Remark.Context?.Name ?? "";
-                    return $"{space}{contextName} | {FormatRemarkText()}";
+                    return $"{contextName} | {FormatRemarkText()}";
                 }
 
                 return FormatRemarkText();
@@ -184,14 +183,21 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        //? TODO: Should be async and run the collection on another thread
         private RemarkEx CollectContextTreeRemarks(RemarkContext rootContext, List<RemarkEx> list,
                                                    string outputText = null) {
+            var treeNodeMap = new Dictionary<RemarkContext, TreeViewItem>();
             RemarkEx firstSectionRemark = null;
             var worklist = new Queue<RemarkContext>();
             worklist.Enqueue(rootContext);
 
+            TreeViewItem treeRootNode = new TreeViewItem();
+            treeRootNode.Header = rootContext.Name;
+            treeNodeMap[rootContext] = treeRootNode;
+
             while (worklist.Count > 0) {
                 var context = worklist.Dequeue();
+                var treeNode = treeNodeMap[context];
 
                 foreach (var remark in context.Remarks) {
                     if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
@@ -207,6 +213,10 @@ namespace IRExplorerUI.Document {
 
                 foreach (var child in context.Children) {
                     worklist.Enqueue(child);
+                    var childTreeNode = new TreeViewItem();
+                    childTreeNode.Header = child.Name;
+                    treeNode.Items.Add(childTreeNode);
+                    treeNodeMap[child] = childTreeNode;
                 }
             }
 
@@ -222,10 +232,10 @@ namespace IRExplorerUI.Document {
                 MarkColor = Colors.Gray,
             };
 
-            var remarkProvider = Session.CompilerInfo.RemarkProvider;
 
             for (int i = 0; i < list.Count; i++) {
                 var remark = list[i];
+                var treeNode = treeNodeMap[remark.Remark.Context];
 
                 if (prevRemark != null) {
                     var prevLine = prevRemark.Remark.OutputElements[0].TextLocation.Line;
@@ -242,11 +252,14 @@ namespace IRExplorerUI.Document {
                         if (!lineText.StartsWith("/// irx:")) {
                             var temp = new Remark(outputCategory, remark.Remark.Section,
                                                   lineText, new TextLocation(0, k, 0));
-                            var tempEx = new RemarkEx(temp, remark.SectionName, false);
-                            newList.Add(tempEx);
+                            treeNode.Items.Add(temp.RemarkText);
+                            //var tempEx = new RemarkEx(temp, remark.SectionName, false);
+                            //newList.Add(tempEx);
                         }
                     }
                 }
+
+                treeNode.Items.Add(remark.Text);
 
                 newList.Add(remark);
                 prevRemark = remark;
@@ -254,6 +267,9 @@ namespace IRExplorerUI.Document {
 
             list.Clear();
             list.AddRange(newList);
+
+            ContextRemarkTree.Items.Clear();
+            ContextRemarkTree.Items.Add(treeRootNode);
 
             return firstSectionRemark;
         }
@@ -326,17 +342,17 @@ namespace IRExplorerUI.Document {
                 // Show context and children.
                 var list = new List<RemarkEx>();
                 CollectContextTreeRemarks(item.Context, list, outputText);
-                ContextRemarkList.ItemsSource = list;
+                //ContextRemarkList.ItemsSource = list;
 
-                if (list.Count > 0) {
-                    foreach (var contextRemark in list) {
-                        if (contextRemark.Remark == item) {
-                            ContextRemarkList.SelectedItem = contextRemark;
-                            ContextRemarkList.ScrollIntoView(contextRemark);
-                            break;
-                        }
-                    }
-                }
+                //if (list.Count > 0) {
+                //    foreach (var contextRemark in list) {
+                //        if (contextRemark.Remark == item) {
+                //            ContextRemarkList.SelectedItem = contextRemark;
+                //            ContextRemarkList.ScrollIntoView(contextRemark);
+                //            break;
+                //        }
+                //    }
+                //}
             }
         }
 
