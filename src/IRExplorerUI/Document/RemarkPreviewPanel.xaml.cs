@@ -99,7 +99,7 @@ namespace IRExplorerUI.Document {
     public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged {
         private const double RemarkListTop = 48;
         private const double RemarkPreviewWidth = 600;
-        private const double RemarkPreviewHeight = 200;
+        private const double RemarkPreviewHeight = 300;
         private const double RemarkListItemHeight = 20;
         private const double MaxRemarkListItems = 10;
         private const double MinRemarkListItems = 3;
@@ -147,6 +147,7 @@ namespace IRExplorerUI.Document {
 
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<RemarkContext> RemarkContextChanged;
+        public event EventHandler<Remark> RemarkChanged;
 
         private void UpdateRemarkList() {
             RemarkList.ItemsSource = null;
@@ -200,23 +201,18 @@ namespace IRExplorerUI.Document {
             Remark prevRemark = null;
 
             foreach (var remark in context.Remarks) {
-                var line = remark.OutputElements[0].TextLocation.Line;
+                var line = remark.RemarkLocation.Line;
 
                 if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
                     if (prevRemark != null) {
-                        var prevLine = prevRemark.OutputElements[0].TextLocation.Line;
-                        ExtractOutputTextInRange(line, prevLine, outputTextLines, items);
-                    }
-                    else {
-                        // Include the text before the first remark in the context.
-                        ExtractOutputTextInRange(line, context.StartLine,
-                                                 outputTextLines, items);
+                        var prevLine = prevRemark.RemarkLocation.Line;
+                        ExtractOutputTextInRange(prevLine, line, outputTextLines, items);
                     }
 
                     var tempTreeNode = new TreeViewItem() {
                         Header = remark.RemarkText,
                         Foreground = ColorBrushes.GetBrush(Colors.Black),
-                        FontWeight = FontWeights.DemiBold,
+                        FontWeight = FontWeights.Bold,
                         Tag = remark
                     };
 
@@ -229,18 +225,25 @@ namespace IRExplorerUI.Document {
             //? There are two regions to include
             //?   - from context start to first child context start - unless there is a remark before that context
             //?   - from last child context end to context end - unless there is a remark after it
-            int lastLine = context.StartLine;
+            int firstRegionStart = context.StartLine;
+            int firstRegionEnd = context.Remarks.Count > 0 ? context.Remarks[0].RemarkLocation.Line : context.EndLine;
 
-            if (context.Remarks.Count > 0) {
-                var lastRemark = context.Remarks[^1];
-                lastLine = lastRemark.OutputElements[0].TextLocation.Line + 1;
+            if (context.Children.Count > 0) {
+                firstRegionEnd = Math.Min(firstRegionEnd, context.Children[0].StartLine);
             }
 
-            foreach (var child in context.Children) {
-                lastLine = Math.Max(lastLine, child.EndLine + 1);
+            ExtractOutputTextInRange(firstRegionStart, firstRegionEnd,
+                                     outputTextLines, items);
+
+            int secondRegionStart = Math.Max(firstRegionEnd, 
+                context.Remarks.Count > 0 ? context.Remarks[^1].RemarkLocation.Line + 1 : context.StartLine);
+            int secondRegionEnd = context.EndLine;
+
+            if (context.Children.Count > 0) {
+                secondRegionStart = Math.Max(secondRegionStart, context.Children[^1].EndLine);
             }
 
-            ExtractOutputTextInRange(context.EndLine, lastLine,
+            ExtractOutputTextInRange(secondRegionStart, secondRegionEnd,
                                      outputTextLines, items);
 
             foreach (var child in context.Children) {
@@ -261,9 +264,9 @@ namespace IRExplorerUI.Document {
             return (treeNode, context.StartLine);
         }
 
-        private static void ExtractOutputTextInRange(int line, int prevLine, string[] outputTextLines, List<Tuple<TreeViewItem, int>> items) {
-            // Line numbers start with 1, +2 is needed to start with the line after the prev. remark.
-            for (int k = prevLine + 2; k <= line; k++) {
+        private static void ExtractOutputTextInRange(int prevLine, int line, string[] outputTextLines,
+                                                     List<Tuple<TreeViewItem, int>> items) {
+            for (int k = prevLine; k < line; k++) {
                 var lineText = outputTextLines[k];
 
                 //? TODO: Check could be part of the remark provider (ShouldIgnore...)
@@ -273,9 +276,9 @@ namespace IRExplorerUI.Document {
                 if (!lineText.StartsWith("/// irx:")) {
                     var lineTreeNode = new TreeViewItem() {
                         Header = lineText,
-                        Foreground = ColorBrushes.GetBrush(Colors.SlateGray),
+                        Foreground = ColorBrushes.GetBrush(Colors.DimGray),
                     };
-                    items.Add(new Tuple<TreeViewItem, int>(lineTreeNode, k + 1));
+                    items.Add(new Tuple<TreeViewItem, int>(lineTreeNode, k));
                 }
             }
         }
@@ -447,17 +450,10 @@ namespace IRExplorerUI.Document {
                 BuildContextRemarkTreeView(item.Context, outputText);
                 SelectTreeViewNode(ContextRemarkTree, item);
 
-                //ContextRemarkList.ItemsSource = list;
-
-                //if (list.Count > 0) {
-                //    foreach (var contextRemark in list) {
-                //        if (contextRemark.Remark == item) {
-                //            ContextRemarkList.SelectedItem = contextRemark;
-                //            ContextRemarkList.ScrollIntoView(contextRemark);
-                //            break;
-                //        }
-                //    }
-                //}
+                //? TODO: Setting for enabling
+                if (true) {
+                    RemarkContextChanged?.Invoke(this, item.Context);
+                }
             }
         }
 
@@ -488,8 +484,7 @@ namespace IRExplorerUI.Document {
             var itemEx = RemarkList.SelectedItem as RemarkEx;
 
             if (itemEx != null) {
-                var context = itemEx.Remark.Context;
-                RemarkContextChanged?.Invoke(this, context);
+                RemarkChanged?.Invoke(this, itemEx.Remark);
             }
         }
 
@@ -614,6 +609,14 @@ namespace IRExplorerUI.Document {
             }
 
             return false;
+        }
+
+        private void ContextRemarkTree_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {
+            var remark = (ContextRemarkTree.SelectedItem as TreeViewItem)?.Tag as Remark;
+
+            if (remark != null) {
+                RemarkChanged?.Invoke(this, remark);
+            }
         }
     }
 }

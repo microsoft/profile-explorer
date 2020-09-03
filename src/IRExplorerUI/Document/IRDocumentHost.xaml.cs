@@ -379,6 +379,7 @@ namespace IRExplorerUI {
             remarkPanel_.PopupClosed += RemarkPanel__PanelClosed;
             remarkPanel_.PopupDetached += RemarkPanel__PanelDetached;
             remarkPanel_.RemarkContextChanged += RemarkPanel__RemarkContextChanged;
+            remarkPanel_.RemarkChanged += RemarkPanel__RemarkChanged;
             remarkPanel_.Opacity = 0.0;
             remarkPanel_.IsOpen = true;
 
@@ -389,6 +390,10 @@ namespace IRExplorerUI {
             InitializeRemarkPanel(remarkElement_);
         }
 
+        private void RemarkPanel__RemarkChanged(object sender, Remark e) {
+            var element = e.ReferencedElements[0];
+            TextView.BringElementIntoView(element);
+        }
 
         private void RemarkPanel__PanelDetached(object sender, EventArgs e) {
             // Keep the remark panel floating over the document.
@@ -550,6 +555,7 @@ namespace IRExplorerUI {
 
         private async Task RemoveRemarks() {
             remarkList_ = null;
+            activeRemarkContext_ = null;
             await UpdateDocumentRemarks(remarkList_);
         }
 
