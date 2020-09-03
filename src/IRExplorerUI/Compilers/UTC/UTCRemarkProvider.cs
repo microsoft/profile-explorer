@@ -59,7 +59,7 @@ namespace IRExplorerUI.UTC {
                 return contextStack_.Count > 0 ? contextStack_.Peek() : null;
             }
 
-            public RemarkContext StartNewContext(string id, string name) {
+            public RemarkContext StartNewContext(string id, string name, int lineNumber) {
                 var currentContext = GetCurrentContext();
                 var context = new RemarkContext(id, name, currentContext);
 
@@ -70,13 +70,15 @@ namespace IRExplorerUI.UTC {
                     rootContexts_.Add(context);
                 }
 
+                context.StartLine = lineNumber;
                 contextStack_.Push(context);
                 return context;
             }
 
-            public void EndCurrentContext() {
+            public void EndCurrentContext(int lineNumber) {
                 if (contextStack_.Count > 0) {
-                    contextStack_.Pop();
+                    var context = contextStack_.Pop();
+                    context.EndLine = lineNumber;
                 }
             }
         }
@@ -157,10 +159,10 @@ namespace IRExplorerUI.UTC {
             var state = new RemarkContextState();
             ExtractInstructionRemarks(text, lines, function, section, remarks, options, state);
 
-            //foreach (var context in state.RootContexts) {
-            //    Trace.TraceInformation("\n------------------------------------------------------");
-            //    Trace.TraceInformation("\n" + context.ToString());
-            //}
+            foreach (var context in state.RootContexts) {
+                Trace.TraceInformation("\n------------------------------------------------------");
+                Trace.TraceInformation("\n" + context.ToString());
+            }
 
             return remarks;
         }
@@ -195,7 +197,7 @@ namespace IRExplorerUI.UTC {
                 }
 
                 if (line.StartsWith(MetadataStartString, StringComparison.Ordinal)) {
-                    if (HandleMetadata(line, state)) {
+                    if (HandleMetadata(line, i - emptyLines, state)) {
                         lineStartOffset += line.Length + 1;
                         continue;
                     }
@@ -292,16 +294,16 @@ namespace IRExplorerUI.UTC {
         }
 
 
-        private bool HandleMetadata(string line, RemarkContextState state) {
+        private bool HandleMetadata(string line, int lineNumber, RemarkContextState state) {
             var tokens = line.Split(new char[] { ' ', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (tokens.Length >= 2) {
                 if (tokens[2] == RemarkContextStartString && tokens.Length >= 5) {
-                    state.StartNewContext(tokens[3], tokens[4]);
+                    state.StartNewContext(tokens[3], tokens[4], lineNumber);
                     return true;
                 }
                 else if (tokens[2] == RemarkContextEndString) {
-                    state.EndCurrentContext();
+                    state.EndCurrentContext(lineNumber);
                     return true;
                 }
             }

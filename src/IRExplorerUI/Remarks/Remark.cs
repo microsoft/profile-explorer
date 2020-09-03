@@ -52,6 +52,8 @@ namespace IRExplorerUI {
 
         public string Id { get; set; }
         public string Name { get; set; }
+        public int StartLine { get; set; }
+        public int EndLine { get; set; }
         public List<Remark> Remarks { get; set; }
         public RemarkContext Parent { get; set; }
         public List<RemarkContext> Children { get; set; }
