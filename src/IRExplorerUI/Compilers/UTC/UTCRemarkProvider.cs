@@ -152,7 +152,7 @@ namespace IRExplorerUI.UTC {
 
             //? TODO: Could use an API that doesn't need splitting into lines again
             var remarks = new List<Remark>();
-            var lines = text.Split('\r', '\n');
+            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
 
             // The RemarkContextState allows multiple threads to use the provider
             // by not having any global state visible to all threads.
@@ -181,24 +181,16 @@ namespace IRExplorerUI.UTC {
 
             var similarValueFinder = new SimilarValueFinder(function);
             var refFinder = new ReferenceFinder(function);
-
             int lineStartOffset = 0;
-            int emptyLines = 0;
 
             //? TODO: For many lines, must be split in chunks and parallelized
             for (int i = 0; i < lines.Length; i++) {
                 int index = 0;
                 string line = lines[i];
 
-                if (line.Length == 0) {
-                    lineStartOffset++;
-                    emptyLines++;
-                    continue;
-                }
-
                 if (line.StartsWith(MetadataStartString, StringComparison.Ordinal)) {
-                    if (HandleMetadata(line, i - emptyLines, state)) {
-                        lineStartOffset += line.Length + 1;
+                    if (HandleMetadata(line, i, state)) {
+                        lineStartOffset += line.Length;
                         continue;
                     }
                 }
@@ -231,10 +223,10 @@ namespace IRExplorerUI.UTC {
                         var similarInstr = similarValueFinder.Find(instr);
 
                         if (similarInstr != null) {
-                            var remarkLocation = new TextLocation(lineStartOffset, i - emptyLines, 0);
+                            var remarkLocation = new TextLocation(lineStartOffset, i, 0);
 
                             var location = new TextLocation(
-                                instr.TextLocation.Offset + index + lineStartOffset, i - emptyLines, 0);
+                                instr.TextLocation.Offset + index + lineStartOffset, i, 0);
 
                             instr.TextLocation = location; // Set actual location in output text.
 
@@ -256,7 +248,7 @@ namespace IRExplorerUI.UTC {
                 //? TODO: If an operand is part of an instruction that was already matched
                 //? by a remark, don't include the operand anymore if it's the same remark text
                 if (!options.FindOperandRemarks) {
-                    lineStartOffset += line.Length + 1;
+                    lineStartOffset += line.Length;
                     continue;
                 }
 
@@ -272,10 +264,10 @@ namespace IRExplorerUI.UTC {
                             //var parentInstr = value.ParentInstruction;
 
                             if (op.TextLocation.Line < lines.Length) {
-                                var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i - emptyLines, 0);
+                                var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
                                 op.TextLocation = location; // Set actual location in output text.
 
-                                var remarkLocation = new TextLocation(lineStartOffset, i - emptyLines, 0);
+                                var remarkLocation = new TextLocation(lineStartOffset, i, 0);
                                 var remark = new Remark(FindRemarkKind(line), section, line.Trim(), remarkLocation);
 
                                 remark.ReferencedElements.Add(value);
@@ -289,7 +281,7 @@ namespace IRExplorerUI.UTC {
                     }
                 }
 
-                lineStartOffset += line.Length + 1;
+                lineStartOffset += line.Length;
             }
         }
 

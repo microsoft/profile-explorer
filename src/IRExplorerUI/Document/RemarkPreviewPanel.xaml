@@ -341,12 +341,10 @@
                 MouseDoubleClick="RemarkList_MouseDoubleClick"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                SelectionChanged="RemarkList_SelectionChanged"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
+                SelectionChanged="RemarkList_SelectionChanged">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn DisplayMemberBinding="{Binding Text}" />
+                        <GridViewColumn DisplayMemberBinding="{Binding Text}" />    
                     </GridView>
                 </ListView.View>
 
@@ -424,6 +422,27 @@
                 </Border>
 
                 <TabControl TabStripPlacement="Bottom">
+                    <TabItem Header="Context Tree">
+                        <TreeView
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling"
+                            MouseDoubleClick="ContextRemarkTree_MouseDoubleClick"
+                            x:Name="ContextRemarkTree"
+                            Grid.Row="1"
+                            BorderBrush="{x:Null}"
+                            BorderThickness="0,0,0,0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" FontFamily="Consolas">
+                            <TreeView.ItemContainerStyle>
+                                <Style TargetType="{x:Type TreeViewItem}">
+                                    <Style.Resources>
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FFB1D6F1" />
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#FFB1D6F1" />
+                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
+                                    </Style.Resources>
+                                </Style>
+                            </TreeView.ItemContainerStyle>
+                        </TreeView>
+                    </TabItem>
+
                     <TabItem Header="Output Text">
                         <client:LightIRDocument
                             x:Name="TextView"
@@ -434,55 +453,6 @@
                             HorizontalScrollBarVisibility="Hidden"
                             ShowLineNumbers="True"
                             VerticalScrollBarVisibility="Auto" />
-                    </TabItem>
-                    <TabItem Header="Context Tree">
-                        <TreeView
-                            x:Name="ContextRemarkTree"
-                            Grid.Row="1"
-                            BorderBrush="{x:Null}"
-                            BorderThickness="0,0,0,0" />
-
-                        <!--<ListView
-                            x:Name="ContextRemarkList"
-                            Grid.Row="1"
-                            BorderBrush="{x:Null}"
-                            BorderThickness="0,0,0,0"
-                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            VirtualizingStackPanel.IsVirtualizing="True"
-                            VirtualizingStackPanel.VirtualizationMode="Recycling">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn DisplayMemberBinding="{Binding Text}" />
-                                </GridView>
-                            </ListView.View>
-
-                            <ListView.Resources>
-                                <Style TargetType="GridViewColumnHeader">
-                                    <Setter Property="Visibility" Value="Collapsed" />
-                                </Style>
-                            </ListView.Resources>
-                            <ListView.ItemContainerStyle>
-                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                                    <Style.Setters>
-                                        <Setter Property="Foreground" Value="Black" />
-                                        <Setter Property="FontFamily" Value="Consolas" />
-                                        <Setter Property="FontSize" Value="12" />
-                                    </Style.Setters>
-
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Path=InCurrentSection}" Value="True">
-                                            <Setter Property="FontWeight" Value="ExtraBold" />
-                                        </DataTrigger>
-
-                                        <DataTrigger Binding="{Binding Path=HasCustomBackground}" Value="True">
-                                            <Setter Property="Background" Value="{Binding Path=Background}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                        </ListView>-->
                     </TabItem>
                 </TabControl>
 
