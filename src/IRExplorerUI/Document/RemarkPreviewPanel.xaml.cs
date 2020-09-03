@@ -183,21 +183,123 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        //? TODO: Should be async and run the collection on another thread
-        private RemarkEx CollectContextTreeRemarks(RemarkContext rootContext, List<RemarkEx> list,
-                                                   string outputText = null) {
+        private (TreeViewItem, int) BuildContextRemarkTreeView(RemarkContext context,
+                                               Dictionary<RemarkContext, TreeViewItem> treeNodeMap,
+                                               string[] outputTextLines) {
+            if (!treeNodeMap.TryGetValue(context, out var treeNode)) {
+                treeNode = new TreeViewItem() {
+                    Header = context.Name,
+                    Foreground = ColorBrushes.GetBrush(Colors.DarkBlue),
+                    FontWeight = FontWeights.Bold,
+                };
+
+                treeNodeMap[context] = treeNode;
+            }
+
+            var items = new List<Tuple<TreeViewItem, int>>();
+            Remark prevRemark = null;
+
+            foreach (var remark in context.Remarks) {
+                var line = remark.OutputElements[0].TextLocation.Line;
+
+                if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
+                    if (prevRemark != null) {
+                        var prevLine = prevRemark.OutputElements[0].TextLocation.Line;
+                        ExtractOutputTextInRange(line, prevLine, outputTextLines, items);
+                    }
+                    else {
+                        // Include the text before the first remark in the context.
+                        ExtractOutputTextInRange(line, context.StartLine,
+                                                 outputTextLines, items);
+                    }
+
+                    var tempTreeNode = new TreeViewItem() {
+                        Header = remark.RemarkText,
+                        Foreground = ColorBrushes.GetBrush(Colors.Black),
+                        FontWeight = FontWeights.DemiBold,
+                        Tag = remark
+                    };
+
+                    items.Add(new Tuple<TreeViewItem, int>(tempTreeNode, remark.RemarkLocation.Line));
+                    prevRemark = remark;
+                }
+            }
+
+            // Also include text following the last remark that is in the context.
+            //? There are two regions to include
+            //?   - from context start to first child context start - unless there is a remark before that context
+            //?   - from last child context end to context end - unless there is a remark after it
+            int lastLine = context.StartLine;
+
+            if (context.Remarks.Count > 0) {
+                var lastRemark = context.Remarks[^1];
+                lastLine = lastRemark.OutputElements[0].TextLocation.Line + 1;
+            }
+
+            foreach (var child in context.Children) {
+                lastLine = Math.Max(lastLine, child.EndLine + 1);
+            }
+
+            ExtractOutputTextInRange(context.EndLine, lastLine,
+                                     outputTextLines, items);
+
+            foreach (var child in context.Children) {
+                var (childTreeNode, childFirstLine) =
+                    BuildContextRemarkTreeView(child, treeNodeMap, outputTextLines);
+                items.Add(new Tuple<TreeViewItem, int>(childTreeNode, childFirstLine));
+
+            }
+
+            // Sort by line number, so that remarks and sub-contexts
+            // appear in the same order as in the output text.
+            items.Sort((a, b) => a.Item2 - b.Item2);
+
+            foreach (var item in items) {
+                treeNode.Items.Add(item.Item1);
+            }
+
+            return (treeNode, context.StartLine);
+        }
+
+        private static void ExtractOutputTextInRange(int line, int prevLine, string[] outputTextLines, List<Tuple<TreeViewItem, int>> items) {
+            // Line numbers start with 1, +2 is needed to start with the line after the prev. remark.
+            for (int k = prevLine + 2; k <= line; k++) {
+                var lineText = outputTextLines[k];
+
+                //? TODO: Check could be part of the remark provider (ShouldIgnore...)
+                //? but a cleaner approach should be having a pass output filter interface,
+                //? with Session.GetSectionPassOutputAsync using it, plus a new
+                //? GetRawSectionPassOutputAsync so that the remark prov. gets the metadata lines
+                if (!lineText.StartsWith("/// irx:")) {
+                    var lineTreeNode = new TreeViewItem() {
+                        Header = lineText,
+                        Foreground = ColorBrushes.GetBrush(Colors.SlateGray),
+                    };
+                    items.Add(new Tuple<TreeViewItem, int>(lineTreeNode, k + 1));
+                }
+            }
+        }
+
+        private void BuildContextRemarkTreeView(RemarkContext rootContext, string outputText = null) {
             var treeNodeMap = new Dictionary<RemarkContext, TreeViewItem>();
+
+            //? TODO: Could use an API that doesn't need splitting into lines again
+            var outputTextLines = outputText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var (rootTreeNode, _) = BuildContextRemarkTreeView(rootContext, treeNodeMap, outputTextLines);
+
+            ContextRemarkTree.Items.Clear();
+            ContextRemarkTree.Items.Add(rootTreeNode);
+            ExpandAllTreeViewNodes(ContextRemarkTree);
+        }
+
+        //? TODO: Should be async and run the collection on another thread
+        private RemarkEx CollectContextTreeRemarks(RemarkContext rootContext, List<RemarkEx> list) {
             RemarkEx firstSectionRemark = null;
             var worklist = new Queue<RemarkContext>();
             worklist.Enqueue(rootContext);
 
-            TreeViewItem treeRootNode = new TreeViewItem();
-            treeRootNode.Header = rootContext.Name;
-            treeNodeMap[rootContext] = treeRootNode;
-
             while (worklist.Count > 0) {
                 var context = worklist.Dequeue();
-                var treeNode = treeNodeMap[context];
 
                 foreach (var remark in context.Remarks) {
                     if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
@@ -210,69 +312,69 @@ namespace IRExplorerUI.Document {
                         }
                     }
                 }
-
-                foreach (var child in context.Children) {
-                    worklist.Enqueue(child);
-                    var childTreeNode = new TreeViewItem();
-                    childTreeNode.Header = child.Name;
-                    treeNode.Items.Add(childTreeNode);
-                    treeNodeMap[child] = childTreeNode;
-                }
             }
-
-            //? TODO: Could use an API that doesn't need splitting into lines again
-            var outputTextLines = outputText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            var newList = new List<RemarkEx>(list.Count);
-            RemarkEx prevRemark = null;
-
-            var outputCategory = new RemarkCategory {
-                Kind = RemarkKind.None,
-                Title = "",
-                SearchedText = "",
-                MarkColor = Colors.Gray,
-            };
-
-
-            for (int i = 0; i < list.Count; i++) {
-                var remark = list[i];
-                var treeNode = treeNodeMap[remark.Remark.Context];
-
-                if (prevRemark != null) {
-                    var prevLine = prevRemark.Remark.OutputElements[0].TextLocation.Line;
-                    var line = remark.Remark.OutputElements[0].TextLocation.Line;
-
-                    // Line numbers start with 1, +2 is needed to start with the line after the prev. remark.
-                    for (int k = prevLine + 2; k <= line; k++) {
-                        var lineText = outputTextLines[k];
-
-                        //? TODO: Check could be part of the remark provider (ShouldIgnore...)
-                        //? but a cleaner approach should be having a pass output filter interface,
-                        //? with Session.GetSectionPassOutputAsync using it, plus a new
-                        //? GetRawSectionPassOutputAsync so that the remark prov. gets the metadata lines
-                        if (!lineText.StartsWith("/// irx:")) {
-                            var temp = new Remark(outputCategory, remark.Remark.Section,
-                                                  lineText, new TextLocation(0, k, 0));
-                            treeNode.Items.Add(temp.RemarkText);
-                            //var tempEx = new RemarkEx(temp, remark.SectionName, false);
-                            //newList.Add(tempEx);
-                        }
-                    }
-                }
-
-                treeNode.Items.Add(remark.Text);
-
-                newList.Add(remark);
-                prevRemark = remark;
-            }
-
-            list.Clear();
-            list.AddRange(newList);
-
-            ContextRemarkTree.Items.Clear();
-            ContextRemarkTree.Items.Add(treeRootNode);
 
             return firstSectionRemark;
         }
+
+        private void ExpandAllTreeViewNodes(TreeViewItem rootItem) {
+            foreach (object item in rootItem.Items) {
+                TreeViewItem treeItem = item as TreeViewItem;
+
+                if (treeItem != null) {
+                    ExpandAllTreeViewNodes(treeItem);
+                    treeItem.IsExpanded = true;
+                }
+            }
+        }
+
+        private void ExpandAllTreeViewNodes(TreeView treeView) {
+            foreach (object item in treeView.Items) {
+                TreeViewItem treeItem = (TreeViewItem)item;
+
+                if (treeItem != null) {
+                    ExpandAllTreeViewNodes(treeItem);
+                    treeItem.IsExpanded = true;
+                }
+            }
+        }
+
+        private bool SelectTreeViewNode(TreeViewItem rootItem, object tag) {
+            foreach (object item in rootItem.Items) {
+                TreeViewItem treeItem = item as TreeViewItem;
+
+                if (treeItem != null) {
+                    if (treeItem.Tag == tag) {
+                        treeItem.IsSelected = true;
+                        return true;
+                    }
+
+                    if (SelectTreeViewNode(treeItem, tag)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private void SelectTreeViewNode(TreeView treeView, object tag) {
+            foreach (object item in treeView.Items) {
+                TreeViewItem treeItem = (TreeViewItem)item;
+
+                if (treeItem != null) {
+                    if (treeItem.Tag == tag) {
+                        treeItem.IsSelected = true;
+                        return;
+                    }
+
+                    if (SelectTreeViewNode(treeItem, tag)) {
+                        return;
+                    }
+                }
+            }
+        }
+
 
         private RemarkEx AppendAcceptedRemark(List<RemarkEx> list, Remark remark) {
             string sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
@@ -341,7 +443,10 @@ namespace IRExplorerUI.Document {
             if (item.Context != null) {
                 // Show context and children.
                 var list = new List<RemarkEx>();
-                CollectContextTreeRemarks(item.Context, list, outputText);
+                CollectContextTreeRemarks(item.Context, list);
+                BuildContextRemarkTreeView(item.Context, outputText);
+                SelectTreeViewNode(ContextRemarkTree, item);
+
                 //ContextRemarkList.ItemsSource = list;
 
                 //if (list.Count > 0) {
