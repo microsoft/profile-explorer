@@ -21,6 +21,7 @@
         "Title": "CSE",
         "SearchedText": "CSE of instr",
         "SearchKind": "default",
+        "ExpectInstructionIR": true,
         "AddTextMark": true,
         "TextMarkBorderColor": "#74d95f",
         "TextMarkBorderWeight": 1.5,

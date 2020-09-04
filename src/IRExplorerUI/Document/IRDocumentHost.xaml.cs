@@ -430,7 +430,7 @@ namespace IRExplorerUI {
             remarkPanel_.Initialize(element, remarkPanelLocation_, this, remarkSettings_, activeRemarkContext_);
         }
 
-        private void HideRemarkPanel() {
+        private async Task HideRemarkPanel() {
             if (!remarkPanelVisible_) {
                 return;
             }
@@ -447,6 +447,11 @@ namespace IRExplorerUI {
 
             remarkPanel_.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
             remarkPanelVisible_ = false;
+
+            if (activeRemarkContext_ != null) {
+                activeRemarkContext_ = null;
+                await UpdateDocumentRemarks(remarkList_);
+            }
         }
 
         private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {

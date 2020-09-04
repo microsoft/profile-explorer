@@ -2986,9 +2986,22 @@ namespace IRExplorerUI {
         private HighlightingStyle GetRemarkLineStyle(Remark remark, bool hasContextFilter) {
             //? TODO: Caching
             if (hasContextFilter) {
-                var backColor = ColorUtils.AdjustLight(remark.Category.TextMarkBorderColor, 1.80f);
-                return new HighlightingStyle(backColor, Pens.GetPen(remark.Category.TextMarkBorderColor,
-                                                                    remark.Category.TextMarkBorderWeight * 2));
+                if (remark.Category.AddTextMark) {
+                    // Use the style used already for the document remarks.
+                    var backColor = remark.Category.MarkColor;
+
+                    if (backColor == Colors.Black || backColor == Colors.Transparent) {
+                        backColor = ColorUtils.AdjustLight(remark.Category.TextMarkBorderColor, 1.50f);
+                    }
+
+                    return new HighlightingStyle(backColor,
+                                                 Pens.GetPen(remark.Category.TextMarkBorderColor,
+                                                             remark.Category.TextMarkBorderWeight * 2));
+                }
+                else {
+                    // No particular style, use a default one.
+                    return new HighlightingStyle(Colors.LightGray, Pens.GetPen(Colors.DimGray, 2));
+                }
             }
 
             return new HighlightingStyle(remark.Category.MarkColor,
@@ -3042,7 +3055,7 @@ namespace IRExplorerUI {
 
             foreach (var remark in allRemarks) {
                 foreach (var element in remark.ReferencedElements) {
-                    if (remark.Category.AddTextMark) {
+                    if (remark.Category.AddTextMark || hasContextFilter) {
                         // Mark each element only once with the same kind of remark.
                         var elementKindPair = new Tuple<IRElement, RemarkKind>(element, remark.Kind);
 

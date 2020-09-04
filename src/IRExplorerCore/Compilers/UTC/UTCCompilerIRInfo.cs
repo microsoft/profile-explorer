@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Diagnostics;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
@@ -52,7 +53,7 @@ namespace IRExplorerCore.UTC {
         }
 
         public OperandIR GetCallTarget(InstructionIR instr) {
-            if(!instr.OpcodeIs(UTCOpcode.OPCALL)) {
+            if (!instr.OpcodeIs(UTCOpcode.OPCALL)) {
                 return null;
             }
 
@@ -80,6 +81,32 @@ namespace IRExplorerCore.UTC {
             }
 
             return null;
+        }
+
+        public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB) {
+            return opA.IsTemporary && opB.IsTemporary &&
+                   IsTemporaryVariableName(opA.NameValue, out var opAId) &&
+                   IsTemporaryVariableName(opB.NameValue, out var opBId) &&
+                   opAId == opBId;
+        }
+
+        private static bool IsTemporaryVariableName(ReadOnlyMemory<char> name, out int tempNumber) {
+            tempNumber = 0;
+            int prefixLength = 0;
+
+            if (MemoryExtensions.StartsWith(name.Span, "tv".AsSpan()) ||
+                MemoryExtensions.StartsWith(name.Span, "hv".AsSpan())) {
+                prefixLength = 2;
+            }
+            else if (MemoryExtensions.StartsWith(name.Span, "t".AsSpan())) {
+                prefixLength = 1;
+            }
+            else {
+                return false;
+            }
+
+            var remainingName = name.Slice(prefixLength);
+            return int.TryParse(remainingName.Span, out tempNumber);
         }
     }
 }

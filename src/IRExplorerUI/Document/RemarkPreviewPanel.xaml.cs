@@ -157,7 +157,8 @@ namespace IRExplorerUI.Document {
                 var list = new List<RemarkEx>();
                 RemarkEx firstSectionRemark = null;
 
-                if (remarkFilter_.Settings.ShowOnlyContextRemarks) {
+                if (activeRemarkContext_ != null &&
+                    remarkFilter_.Settings.ShowOnlyContextRemarks) {
                     firstSectionRemark = CollectContextTreeRemarks(activeRemarkContext_, list);
                 }
                 else {
@@ -182,6 +183,8 @@ namespace IRExplorerUI.Document {
                     RemarkList.ScrollIntoView(firstSectionRemark);
                 }
             }
+
+            ContextRemarkTree.Items.Clear();
         }
 
         private (TreeViewItem, int) BuildContextRemarkTreeView(RemarkContext context,
@@ -205,7 +208,7 @@ namespace IRExplorerUI.Document {
 
                 if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
                     if (prevRemark != null) {
-                        var prevLine = prevRemark.RemarkLocation.Line;
+                        var prevLine = prevRemark.RemarkLocation.Line + 1;
                         ExtractOutputTextInRange(prevLine, line, outputTextLines, items);
                     }
 
@@ -221,10 +224,8 @@ namespace IRExplorerUI.Document {
                 }
             }
 
-            // Also include text following the last remark that is in the context.
-            //? There are two regions to include
-            //?   - from context start to first child context start - unless there is a remark before that context
-            //?   - from last child context end to context end - unless there is a remark after it
+            // Include text preceding the first remark or child context,
+            // and following the last remark or child context.
             int firstRegionStart = context.StartLine;
             int firstRegionEnd = context.Remarks.Count > 0 ? context.Remarks[0].RemarkLocation.Line : context.EndLine;
 
@@ -235,7 +236,7 @@ namespace IRExplorerUI.Document {
             ExtractOutputTextInRange(firstRegionStart, firstRegionEnd,
                                      outputTextLines, items);
 
-            int secondRegionStart = Math.Max(firstRegionEnd, 
+            int secondRegionStart = Math.Max(firstRegionEnd,
                 context.Remarks.Count > 0 ? context.Remarks[^1].RemarkLocation.Line + 1 : context.StartLine);
             int secondRegionEnd = context.EndLine;
 
@@ -246,19 +247,25 @@ namespace IRExplorerUI.Document {
             ExtractOutputTextInRange(secondRegionStart, secondRegionEnd,
                                      outputTextLines, items);
 
+            // Recursively add remarks from the child contexts.
             foreach (var child in context.Children) {
                 var (childTreeNode, childFirstLine) =
                     BuildContextRemarkTreeView(child, treeNodeMap, outputTextLines);
                 items.Add(new Tuple<TreeViewItem, int>(childTreeNode, childFirstLine));
-
             }
 
             // Sort by line number, so that remarks and sub-contexts
             // appear in the same order as in the output text.
             items.Sort((a, b) => a.Item2 - b.Item2);
+            Tuple<TreeViewItem, int> prevItem = null;
 
             foreach (var item in items) {
+                if (prevItem != null && prevItem.Item2 == item.Item2) {
+                    continue; // Ignore multiple remarks on the same line.
+                }
+
                 treeNode.Items.Add(item.Item1);
+                prevItem = item;
             }
 
             return (treeNode, context.StartLine);
@@ -368,6 +375,7 @@ namespace IRExplorerUI.Document {
                 if (treeItem != null) {
                     if (treeItem.Tag == tag) {
                         treeItem.IsSelected = true;
+                        treeItem.BringIntoView();
                         return;
                     }
 

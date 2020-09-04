@@ -33,10 +33,12 @@ namespace IRExplorerCore.Analysis {
 
     public sealed class ReferenceFinder {
         private FunctionIR function_;
+        private ICompilerIRInfo irInfo_;
         private Dictionary<int, SSADefinitionTag> ssaDefTagMap_;
 
-        public ReferenceFinder(FunctionIR function) {
+        public ReferenceFinder(FunctionIR function, ICompilerIRInfo irInfo = null) {
             function_ = function;
+            irInfo_ = irInfo;
         }
 
         public void PrecomputeAllReferences() {
@@ -70,8 +72,7 @@ namespace IRExplorerCore.Analysis {
                     else if (op.Role == OperandRole.Source) {
                         // Try to find a matching source operand by looking
                         // for an SSA use that is found in a block with the same ID.
-                        var matchingOp = FindBestMatchingOperand(EnumerateSSAUses(foundDefOp),
-                                                                 op, false);
+                        var matchingOp = FindBestMatchingOperand(EnumerateSSAUses(foundDefOp), op, false);
 
                         if (matchingOp != null) {
                             return matchingOp;
@@ -378,12 +379,14 @@ namespace IRExplorerCore.Analysis {
                 // Check if symbol names are the same.
                 if (!op.NameValue.Span.Equals(searchedOp.NameValue.Span,
                                               StringComparison.Ordinal)) {
-                    return false;
-                }
+                    // Not same symbol name, but the IR may define names
+                    // that should be considered to represent the same symbol.
+                    if (irInfo_ == null || !irInfo_.OperandsReferenceSameSymbol(op, searchedOp)) {
+                        return false;
+                    }
 
-                // Check for same type if requested.
-                if (checkType && !op.Type.Equals(searchedOp.Type)) {
-                    return false;
+                    // Check for same type if requested.
+                    return !checkType || op.Type.Equals(searchedOp.Type);
                 }
 
                 return true;

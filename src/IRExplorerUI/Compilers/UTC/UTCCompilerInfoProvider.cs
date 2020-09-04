@@ -25,7 +25,7 @@ namespace IRExplorerUI.Compilers.UTC {
             ir_ = new UTCCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
-            remarks_ = new UTCRemarkProvider();
+            remarks_ = new UTCRemarkProvider(this);
         }
 
         public string CompilerIRName => "UTC";
