@@ -86,12 +86,15 @@ namespace IRExplorerUI.UTC {
         private const string MetadataStartString = "/// irx:";
         private const string RemarkContextStartString = "context_start";
         private const string RemarkContextEndString = "context_end";
+
+        private ICompilerInfoProvider compilerInfo_;
         private List<RemarkCategory> categories_;
         private List<RemarkSectionBoundary> boundaries_;
         private RemarkCategory defaultCategory_;
         private bool settingsLoaded_;
 
-        public UTCRemarkProvider() {
+        public UTCRemarkProvider(ICompilerInfoProvider compilerInfo) {
+            compilerInfo_ = compilerInfo;
             categories_ = new List<RemarkCategory>();
             boundaries_ = new List<RemarkSectionBoundary>();
             settingsLoaded_ = LoadSettings();
@@ -158,19 +161,12 @@ namespace IRExplorerUI.UTC {
             // by not having any global state visible to all threads.
             var state = new RemarkContextState();
             ExtractInstructionRemarks(text, lines, function, section, remarks, options, state);
-
-            foreach (var context in state.RootContexts) {
-                Trace.TraceInformation("\n------------------------------------------------------");
-                Trace.TraceInformation("\n" + context.ToString());
-            }
-
             return remarks;
         }
 
         public OptimizationRemark GetOptimizationRemarkInfo(Remark remark) {
             return null;
         }
-
 
 
         private void ExtractInstructionRemarks(string text, string[] lines, FunctionIR function,
@@ -180,7 +176,11 @@ namespace IRExplorerUI.UTC {
             var (fakeTuple, fakeBlock) = CreateFakeIRElements();
 
             var similarValueFinder = new SimilarValueFinder(function);
-            var refFinder = new ReferenceFinder(function);
+            var refFinder = new ReferenceFinder(function, compilerInfo_.IR);
+
+            // The split lines don't include the endline, but considering
+            // the \r \n is needed to get the proper document offset.
+            int newLineLength = Environment.NewLine.Length;
             int lineStartOffset = 0;
 
             //? TODO: For many lines, must be split in chunks and parallelized
@@ -190,7 +190,7 @@ namespace IRExplorerUI.UTC {
 
                 if (line.StartsWith(MetadataStartString, StringComparison.Ordinal)) {
                     if (HandleMetadata(line, i, state)) {
-                        lineStartOffset += line.Length;
+                        lineStartOffset += line.Length + newLineLength;
                         continue;
                     }
                 }
@@ -230,7 +230,8 @@ namespace IRExplorerUI.UTC {
 
                             instr.TextLocation = location; // Set actual location in output text.
 
-                            var remark = new Remark(FindRemarkKind(line), section, line.Trim(), remarkLocation);
+                            var remarkKind = FindRemarkKind(line, isInstructionElement: true);
+                            var remark = new Remark(remarkKind, section, line.Trim(), remarkLocation);
                             remark.ReferencedElements.Add(similarInstr);
                             remark.OutputElements.Add(instr);
                             remarks.Add(remark);
@@ -248,9 +249,13 @@ namespace IRExplorerUI.UTC {
                 //? TODO: If an operand is part of an instruction that was already matched
                 //? by a remark, don't include the operand anymore if it's the same remark text
                 if (!options.FindOperandRemarks) {
-                    lineStartOffset += line.Length;
+                    lineStartOffset += line.Length + newLineLength;
                     continue;
                 }
+
+                //if (line.Contains("t508.i64<*495")) {
+                //    line = line;
+                //}
 
                 var parser = new UTCParser(line, null, null);
 
@@ -268,11 +273,13 @@ namespace IRExplorerUI.UTC {
                                 op.TextLocation = location; // Set actual location in output text.
 
                                 var remarkLocation = new TextLocation(lineStartOffset, i, 0);
-                                var remark = new Remark(FindRemarkKind(line), section, line.Trim(), remarkLocation);
+                                var remarkKind = FindRemarkKind(line, isInstructionElement: false);
+                                var remark = new Remark(remarkKind, section, line.Trim(), remarkLocation);
 
                                 remark.ReferencedElements.Add(value);
                                 remark.OutputElements.Add(op);
                                 remarks.Add(remark);
+                                state.AttachToCurrentContext(remark);
                             }
                         }
                     }
@@ -281,10 +288,9 @@ namespace IRExplorerUI.UTC {
                     }
                 }
 
-                lineStartOffset += line.Length;
+                lineStartOffset += line.Length + newLineLength;
             }
         }
-
 
         private bool HandleMetadata(string line, int lineNumber, RemarkContextState state) {
             var tokens = line.Split(new char[] { ' ', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
@@ -373,7 +379,7 @@ namespace IRExplorerUI.UTC {
             return (tuple, block);
         }
 
-        public RemarkCategory FindRemarkKind(string text) {
+        public RemarkCategory FindRemarkKind(string text, bool isInstructionElement) {
             if (categories_ == null) {
                 return default; // Error loading settings.
             }
@@ -381,6 +387,12 @@ namespace IRExplorerUI.UTC {
             text = text.Trim();
 
             foreach (var category in categories_) {
+                // Ignore remarks that expect an entire instruction reference
+                // if the IR is not an instruction.
+                if (category.ExpectInstructionIR && !isInstructionElement) {
+                    continue;
+                }
+
                 if (TextSearcher.Contains(text, category.SearchedText, category.SearchKind)) {
                     return category;
                 }

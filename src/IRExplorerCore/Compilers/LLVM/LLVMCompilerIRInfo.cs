@@ -54,5 +54,9 @@ namespace IRExplorerCore.LLVM {
         public IRElement SkipCopyInstruction(InstructionIR instr) {
             return null;
         }
+
+        public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB) {
+            return false;
+        }
     }
 }

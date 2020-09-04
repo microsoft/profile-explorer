@@ -18,5 +18,7 @@ namespace IRExplorerCore {
         bool IsPhiInstruction(InstructionIR instr);
         IRElement SkipCopyInstruction(InstructionIR instr);
         OperandIR GetCallTarget(InstructionIR instr);
+
+        bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB);
     }
 }

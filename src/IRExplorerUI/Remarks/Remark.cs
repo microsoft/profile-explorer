@@ -26,6 +26,7 @@ namespace IRExplorerUI {
         public RemarkKind Kind { get; set; }
         public string Title { get; set; } // VN,CE/BE/ALIAS, etc
         public bool HasTitle => !string.IsNullOrEmpty(Title);
+        public bool ExpectInstructionIR { get; set; }
         public string SearchedText { get; set; }
         public TextSearchKind SearchKind { get; set; }
         public bool AddTextMark { get; set; }

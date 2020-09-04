@@ -63,7 +63,7 @@
                             <Setter Property="Height" Value="Auto" />
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding ShowPreview}" Value="True">
-                                    <Setter Property="Height" Value="*" />
+                                    <Setter Property="Height" Value="2*" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding ShowPreview}" Value="False">
                                     <Setter Property="Height" Value="0" />
@@ -91,18 +91,16 @@
                 BorderThickness="0,0,0,1">
                 <DockPanel
                     x:Name="ToolbarPanel"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="#FFFFFBCF"
                     LastChildFill="False">
 
                     <StackPanel Orientation="Horizontal">
                         <TextBlock
                             Grid.Row="0"
-                            Margin="4,0,4,0"
+                            Margin="6,0,6,0"
                             Padding="0,0,0,1"
                             VerticalAlignment="Center"
                             Text="Filter" />
-
-
                         <ToggleButton
                             Grid.Row="0"
                             Width="20"
@@ -312,7 +310,7 @@
                             <TextBox
                                 Name="RemarkFilterTextbox"
                                 Width="150"
-                                Height="20"
+                                Height="21"
                                 Margin="4,0,0,0"
                                 HorizontalAlignment="Right"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
@@ -336,6 +334,7 @@
             <ListView
                 x:Name="RemarkList"
                 Grid.Row="1"
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 MouseDoubleClick="RemarkList_MouseDoubleClick"
@@ -344,7 +343,7 @@
                 SelectionChanged="RemarkList_SelectionChanged">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn DisplayMemberBinding="{Binding Text}" />    
+                        <GridViewColumn DisplayMemberBinding="{Binding Text}" />
                     </GridView>
                 </ListView.View>
 
@@ -424,13 +423,17 @@
                 <TabControl TabStripPlacement="Bottom">
                     <TabItem Header="Context Tree">
                         <TreeView
-                            VirtualizingStackPanel.IsVirtualizing="True"
-                            VirtualizingStackPanel.VirtualizationMode="Recycling"
-                            MouseDoubleClick="ContextRemarkTree_MouseDoubleClick"
                             x:Name="ContextRemarkTree"
                             Grid.Row="1"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                             BorderBrush="{x:Null}"
-                            BorderThickness="0,0,0,0" ScrollViewer.VerticalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollBarVisibility="Disabled" FontFamily="Consolas">
+                            BorderThickness="0,0,0,0"
+                            FontFamily="Consolas"
+                            MouseDoubleClick="ContextRemarkTree_MouseDoubleClick"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling">
                             <TreeView.ItemContainerStyle>
                                 <Style TargetType="{x:Type TreeViewItem}">
                                     <Style.Resources>
@@ -446,7 +449,7 @@
                     <TabItem Header="Output Text">
                         <client:LightIRDocument
                             x:Name="TextView"
-                            Background="OldLace"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                             DockPanel.Dock="Bottom"
                             FontFamily="Consolas"
                             FontSize="12"
