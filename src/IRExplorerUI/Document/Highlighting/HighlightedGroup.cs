@@ -30,6 +30,10 @@ namespace IRExplorerUI {
             Elements.Insert(0, element);
         }
 
+        public bool Contains(IRElement element) {
+            return Elements.Contains(element);
+        }
+
         public bool Remove(IRElement element) {
             return Elements.Remove(element);
         }

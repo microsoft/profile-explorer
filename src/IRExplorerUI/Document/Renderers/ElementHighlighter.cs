@@ -159,7 +159,7 @@ namespace IRExplorerUI {
 
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-                    var actualRect = Utils.SnapToPixels(rect, -1, 0, 2, 0);
+                    var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 0);
                     geoBuilder.AddRectangle(textView, actualRect);
                 }
             }

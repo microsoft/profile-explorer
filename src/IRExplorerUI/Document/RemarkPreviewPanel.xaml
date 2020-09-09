@@ -388,7 +388,10 @@
                     BorderBrush="DimGray"
                     BorderThickness="0,0,0,1"
                     DockPanel.Dock="Top">
-                    <DockPanel LastChildFill="True">
+                    <DockPanel
+                        x:Name="ContextToolbarPanel"
+                        Background="#FFFFFBCF"
+                        LastChildFill="True">
 
                         <StackPanel Orientation="Horizontal">
                             <Label
@@ -402,21 +405,80 @@
                                 Content="Name"
                                 FontWeight="DemiBold" />
                         </StackPanel>
-                        <Button
-                            x:Name="CollapseTextViewButton"
-                            Grid.Row="0"
-                            Width="20"
+
+                        <StackPanel
                             HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            Background="{x:Null}"
-                            BorderBrush="{x:Null}"
-                            Click="CollapseTextViewButton_Click"
-                            DockPanel.Dock="Right">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource DownArrowIcon}" />
-                        </Button>
+                            DockPanel.Dock="Right"
+                            Orientation="Horizontal">
+                            <Button
+                                Width="20"
+                                VerticalAlignment="Center"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                Click="CollapseTextViewButton_Click"
+                                ToolTip="Switch to parent remark context">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource GotoDefinitionIcon}" />
+                            </Button>
+                            <ToggleButton
+                                Width="20"
+                                VerticalAlignment="Center"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                ToolTip="Show only remarks from selected context in the document">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource EyeIcon}" />
+                            </ToggleButton>
+                            <ToggleButton
+                                Width="20"
+                                VerticalAlignment="Center"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                ToolTip="Show arrows indicating the order of remarks in the document">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource GraphIcon}" />
+                            </ToggleButton>
+                            <ToggleButton
+                                Width="20"
+                                VerticalAlignment="Center"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                ToolTip="Show separator lines between remarks">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource BlockIcon}" />
+                            </ToggleButton>
+                            <TextBlock
+                                Grid.Row="0"
+                                Margin="2,0,2,0"
+                                VerticalAlignment="Top"
+                                Text="|">
+                                <TextBlock.Foreground>
+                                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
+                                </TextBlock.Foreground>
+                            </TextBlock>
+                            <Button
+                                x:Name="CollapseTextViewButton"
+                                Width="20"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                Click="CollapseTextViewButton_Click"
+                                ToolTip="Close remark context/text output panel">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource CloseIcon}" />
+                            </Button>
+                        </StackPanel>
                     </DockPanel>
                 </Border>
 
@@ -429,21 +491,12 @@
                             BorderBrush="{x:Null}"
                             BorderThickness="0,0,0,0"
                             FontFamily="Consolas"
-                            MouseDoubleClick="ContextRemarkTree_MouseDoubleClick"
+                            ItemContainerStyle="{StaticResource RemarkTreeViewItemStyle}"
+                            MouseLeftButtonDown="ContextRemarkTree_MouseLeftButtonDown"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                             ScrollViewer.VerticalScrollBarVisibility="Auto"
                             VirtualizingStackPanel.IsVirtualizing="True"
-                            VirtualizingStackPanel.VirtualizationMode="Recycling">
-                            <TreeView.ItemContainerStyle>
-                                <Style TargetType="{x:Type TreeViewItem}">
-                                    <Style.Resources>
-                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#FFB1D6F1" />
-                                        <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#FFB1D6F1" />
-                                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black" />
-                                    </Style.Resources>
-                                </Style>
-                            </TreeView.ItemContainerStyle>
-                        </TreeView>
+                            VirtualizingStackPanel.VirtualizationMode="Recycling" />
                     </TabItem>
 
                     <TabItem Header="Output Text">

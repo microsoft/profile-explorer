@@ -391,8 +391,7 @@ namespace IRExplorerUI {
         }
 
         private void RemarkPanel__RemarkChanged(object sender, Remark e) {
-            var element = e.ReferencedElements[0];
-            TextView.BringElementIntoView(element);
+            TextView.SelectDocumentRemark(e);
         }
 
         private void RemarkPanel__PanelDetached(object sender, EventArgs e) {
@@ -416,11 +415,11 @@ namespace IRExplorerUI {
             HideRemarkPanel();
         }
 
-        private async void RemarkPanel__RemarkContextChanged(object sender, RemarkContext e) {
-            activeRemarkContext_ = e;
+        private async void RemarkPanel__RemarkContextChanged(object sender, RemarkContextChangedEventArgs e) {
+            activeRemarkContext_ = e.Context;
             remarkSettings_.ShowOnlyContextRemarks = true;
-            Trace.TraceInformation($"=> Activate context {e.Name}, {e.Id}");
-            await UpdateDocumentRemarks(remarkList_);
+            // Trace.TraceInformation($"=> Activate context {e.Name}, {e.Id}");
+            await UpdateDocumentRemarks(e.Remarks);
         }
 
         private void InitializeRemarkPanel(IRElement element) {

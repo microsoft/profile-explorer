@@ -622,9 +622,11 @@ namespace IRExplorerUI {
                 }
             }
 
-            //? TODO: ToLower() should be an option.
             string text = FunctionFilter.Text.Trim();
-            return text.Length <= 0 || function.Name.Contains(text);
+            return text.Length <= 0 ||
+                (App.Settings.SectionSettings.FunctionSearchCaseSensitive ?
+                function.Name.Contains(text, StringComparison.Ordinal) :
+                function.Name.Contains(text, StringComparison.OrdinalIgnoreCase));
         }
 
         private bool FilterSectionList(object value) {
@@ -638,8 +640,11 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            string text = SectionFilter.Text.Trim().ToLower();
-            return text.Length <= 0 || section.Name.ToLower().Contains(text);
+            string text = SectionFilter.Text.Trim();
+            return text.Length <= 0 ||
+                (App.Settings.SectionSettings.SectionSearchCaseSensitive ?
+                section.Name.Contains(text, StringComparison.Ordinal) :
+                section.Name.Contains(text, StringComparison.OrdinalIgnoreCase));
         }
 
         private void ShowFunctionsExecuted(object sender, ExecutedRoutedEventArgs e) {

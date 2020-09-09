@@ -411,13 +411,13 @@ namespace IRExplorerUI.Diff {
             }
         }
 
-        private void AppendInsertionChange(DiffStatistics diffStats, DiffMarkingResult result, 
+        private void AppendInsertionChange(DiffStatistics diffStats, DiffMarkingResult result,
                                            DiffPiece line, int offset) {
             AppendChange(DiffKind.Insertion, offset, line.Text.Length, result);
             diffStats.LinesAdded++;
         }
 
-        private void AppendDeletionChange(DiffStatistics diffStats, DiffMarkingResult result, 
+        private void AppendDeletionChange(DiffStatistics diffStats, DiffMarkingResult result,
                                           DocumentLine docLine) {
             AppendChange(DiffKind.Deletion, docLine.Offset, docLine.Length, result);
             diffStats.LinesDeleted++;
@@ -435,7 +435,7 @@ namespace IRExplorerUI.Diff {
                 }
             }
 
-            modifiedSegments.Add(new DiffTextSegment(diffKind, filteredPiece.Offset, 
+            modifiedSegments.Add(new DiffTextSegment(diffKind, filteredPiece.Offset,
                                                      filteredPiece.Length));
         }
 
@@ -445,7 +445,7 @@ namespace IRExplorerUI.Diff {
                 var otherLine = otherDiff.Lines[lineIndex];
                 int position = piece.Position.Value + piecePossitionOffset;
 
-                if (position < otherLine.SubPieces.Count) {
+                if (position > 0 && position < otherLine.SubPieces.Count) {
                     return otherLine.SubPieces[position - 1];
                 }
             }
@@ -453,7 +453,7 @@ namespace IRExplorerUI.Diff {
             return null;
         }
 
-        private DiffPiece FindOverlappingPieceInOtherDocument(DiffPaneModel otherDiff, 
+        private DiffPiece FindOverlappingPieceInOtherDocument(DiffPaneModel otherDiff,
                                                               int lineIndex, int offset) {
             if (lineIndex < otherDiff.Lines.Count) {
                 var otherLine = otherDiff.Lines[lineIndex];
@@ -507,7 +507,7 @@ namespace IRExplorerUI.Diff {
                                                         beforeDocumentText, afterDocumentText);
         }
 
-        private void ReparseDiffedFunction(DiffMarkingResult diffResult, 
+        private void ReparseDiffedFunction(DiffMarkingResult diffResult,
                                            IRTextSection originalSection) {
             try {
                 var errorHandler = compilerInfo_.IR.CreateParsingErrorHandler();

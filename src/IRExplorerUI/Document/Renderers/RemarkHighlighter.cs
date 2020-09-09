@@ -132,6 +132,18 @@ namespace IRExplorerUI {
             Version++;
         }
 
+        public void ChangeStyle(IRElement element, HighlightingStyle newStyle) {
+            for (int i = 0; i < groups_.Count; i++) {
+                if (groups_[i].Group.Contains(element)) {
+                    groups_[i].Group.Style = newStyle;
+                    break;
+                }
+
+            }
+
+            Version++;
+        }
+
         public void Clear() {
             groups_.Clear();
             Version++;
@@ -158,7 +170,7 @@ namespace IRExplorerUI {
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 // segment.Element
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-                    var actualRect = Utils.SnapToPixels(rect, -1, 0, 2, 0);
+                    var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 0);
                     geoBuilder.AddRectangle(textView, actualRect);
                 }
             }

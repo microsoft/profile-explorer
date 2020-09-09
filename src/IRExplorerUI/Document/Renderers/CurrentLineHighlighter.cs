@@ -47,8 +47,8 @@ namespace IRExplorerUI {
 
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, currentLine)) {
                 drawingContext.DrawRectangle(backgroundBrush_, borderPen_,
-                                             new Rect(rect.Location,
-                                                      new Size(textView.ActualWidth, rect.Height)));
+                                             Utils.SnapToPixels(new Rect(rect.Location,
+                                                      new Size(textView.ActualWidth, rect.Height))));
             }
         }
     }
