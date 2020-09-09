@@ -2926,6 +2926,7 @@ namespace IRExplorerUI {
                 TextArea.TextView.BackgroundRenderers.Remove(overlayRenderer_);
             }
 
+            // Create the overlay and place it on top of the text.
             overlayRenderer_ = new OverlayRenderer(markedHighlighter_);
             TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
@@ -2983,25 +2984,35 @@ namespace IRExplorerUI {
             Dispatcher.Invoke(() => UpdateHighlighting(), DispatcherPriority.Render);
         }
 
-        private HighlightingStyle GetRemarkLineStyle(Remark remark, bool hasContextFilter) {
-            //? TODO: Caching
+        private Remark selectedRemark_;
+
+        public void SelectDocumentRemark(Remark remark) {
+            var element = remark.ReferencedElements[0];
+
+            if (selectedRemark_ != null) {
+                var selectedElement = selectedRemark_.ReferencedElements[0];
+                remarkHighlighter_.ChangeStyle(selectedElement, GetRemarkLineStyle(remark, true, isSelected: false));
+            }
+
+            remarkHighlighter_.ChangeStyle(element, GetRemarkLineStyle(remark, true, isSelected: true));
+            selectedRemark_ = remark;
+            BringElementIntoView(element);
+            UpdateHighlighting();
+        }
+
+        private HighlightingStyle GetRemarkLineStyle(Remark remark, bool hasContextFilter, bool isSelected = false) {
+            //? TODO: Caching of the style
             if (hasContextFilter) {
-                if (remark.Category.AddTextMark) {
-                    // Use the style used already for the document remarks.
-                    var backColor = remark.Category.MarkColor;
+                // Use the background of the remark with the same bold pen for all kinds.
+                var backColor = remark.Category.MarkColor;
 
-                    if (backColor == Colors.Black || backColor == Colors.Transparent) {
-                        backColor = ColorUtils.AdjustLight(remark.Category.TextMarkBorderColor, 1.50f);
-                    }
+                if (backColor == Colors.Black || backColor == Colors.Transparent) {
+                    backColor = Colors.LightGray;
+                }
 
-                    return new HighlightingStyle(backColor,
-                                                 Pens.GetPen(remark.Category.TextMarkBorderColor,
-                                                             remark.Category.TextMarkBorderWeight * 2));
-                }
-                else {
-                    // No particular style, use a default one.
-                    return new HighlightingStyle(Colors.LightGray, Pens.GetPen(Colors.DimGray, 2));
-                }
+                Color borderColor = isSelected ? Colors.Blue : Colors.Black;
+                double borderWeight = Math.Max(2, remark.Category.TextMarkBorderWeight);
+                return new HighlightingStyle(backColor, Pens.GetPen(borderColor, borderWeight));
             }
 
             return new HighlightingStyle(remark.Category.MarkColor,
@@ -3034,6 +3045,7 @@ namespace IRExplorerUI {
 
                 foreach (var remark in remarkGroup.Remarks) {
                     foreach (var element in remark.ReferencedElements) {
+                        // Add a single marker for all remarks mapping to the same line (group).
                         if (remark.Category.AddLeftMarginMark && !groupHandled) {
                             var style = GetRemarkBookmarkStyle(remarkGroup.LeaderRemark, hasContextFilter);
                             var bookmark = new Bookmark(0, element, remarkGroup.LeaderRemark.RemarkText, style);
@@ -3053,6 +3065,10 @@ namespace IRExplorerUI {
         private void AddDocumentRemarks(List<Remark> allRemarks, bool hasContextFilter) {
             var markedElements = new HashSet<Tuple<IRElement, RemarkKind>>(allRemarks.Count);
 
+            if (hasContextFilter) {
+                overlayRenderer_.ClearContextRemarks();
+            }
+
             foreach (var remark in allRemarks) {
                 foreach (var element in remark.ReferencedElements) {
                     if (remark.Category.AddTextMark || hasContextFilter) {
@@ -3064,6 +3080,10 @@ namespace IRExplorerUI {
                             var group = new HighlightedGroup(element, style);
                             remarkHighlighter_.Add(group);
                             markedElements.Add(elementKindPair);
+
+                            if (hasContextFilter) {
+                                overlayRenderer_.AddContextRemark(remark);
+                            }
                         }
                     }
                 }
@@ -3071,6 +3091,7 @@ namespace IRExplorerUI {
         }
 
         public void RemoveRemarks() {
+            selectedRemark_ = null;
             margin_.RemoveRemarkBookmarks();
             remarkHighlighter_.Clear();
             UpdateMargin();

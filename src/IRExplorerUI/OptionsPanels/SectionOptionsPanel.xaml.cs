@@ -4,8 +4,8 @@ using System.Windows.Input;
 
 namespace IRExplorerUI.OptionsPanels {
     public partial class SectionOptionsPanel : OptionsPanelBase {
-        public const double DefaultHeight = 280;
-        public const double MinimumHeight = 280;
+        public const double DefaultHeight = 320;
+        public const double MinimumHeight = 200;
         public const double DefaultWidth = 350;
         public const double MinimumWidth = 350;
 

@@ -11,22 +11,7 @@ using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.Document {
     public class RemarkEx {
-        public RemarkEx(Remark remark, string sectionName, bool inCurrentSection) {
-            Remark = remark;
-            InCurrentSection = inCurrentSection;
-            SectionName = sectionName;
-            ContextTreeLevel = -1;
-        }
-
         public Remark Remark { get; set; }
-        public bool InCurrentSection { get; set; }
-        public string SectionName { get; set; }
-        public int ContextTreeLevel { get; set; }
-
-        public bool IsOptimization => Remark.Kind == RemarkKind.Optimization;
-        public bool IsAnalysis => Remark.Kind == RemarkKind.Analysis;
-        public bool HasCustomBackground => Remark.Category.MarkColor != Colors.Black;
-        public string Description => SectionName;
 
         public string Text {
             get {
@@ -34,14 +19,14 @@ namespace IRExplorerUI.Document {
                     return $"{Remark.Section.Number} | {Remark.RemarkText}";
                 }
 
-                if (ContextTreeLevel >= 0) {
-                    var contextName = Remark.Context?.Name ?? "";
-                    return $"{contextName} | {FormatRemarkText()}";
-                }
-
                 return FormatRemarkText();
             }
         }
+
+        public Brush Background =>
+            Utils.EstimateBrightness(Remark.Category.MarkColor) < 200 ?
+            ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.75)) :
+            ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.2));
 
         private string FormatRemarkText() {
             if (Remark.Kind == RemarkKind.None) {
@@ -50,11 +35,26 @@ namespace IRExplorerUI.Document {
 
             return $"{Remark.Section.Number} | {Remark.RemarkText}";
         }
+    }
 
-        public Brush Background =>
-            Utils.EstimateBrightness(Remark.Category.MarkColor) < 200 ?
-            ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.75)) :
-            ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.2));
+    public class ListRemarkEx : RemarkEx {
+        public ListRemarkEx(Remark remark, string sectionName, bool inCurrentSection) {
+            Remark = remark;
+            InCurrentSection = inCurrentSection;
+            SectionName = sectionName;
+        }
+
+        public bool InCurrentSection { get; set; }
+        public string SectionName { get; set; }
+
+        public bool IsOptimization => Remark.Kind == RemarkKind.Optimization;
+        public bool IsAnalysis => Remark.Kind == RemarkKind.Analysis;
+        public bool HasCustomBackground => Remark.Category.MarkColor != Colors.Black;
+        public string Description => SectionName;
+    }
+
+    public class ContextTreeRemarkEx : RemarkEx {
+
     }
 
     public class RemarkSettingsEx : BindableObject {
@@ -94,6 +94,16 @@ namespace IRExplorerUI.Document {
             get => hasTraceRemarks_;
             set => SetAndNotify(ref hasTraceRemarks_, value);
         }
+    }
+
+    public class RemarkContextChangedEventArgs : EventArgs {
+        public RemarkContextChangedEventArgs(RemarkContext context, List<Remark> remarks) {
+            Context = context;
+            Remarks = remarks;
+        }
+
+        public RemarkContext Context { get; set; }
+        public List<Remark> Remarks { get; set; }
     }
 
     public partial class RemarkPreviewPanel : DraggablePopup, INotifyPropertyChanged {
@@ -146,7 +156,7 @@ namespace IRExplorerUI.Document {
         public ISession Session { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
-        public event EventHandler<RemarkContext> RemarkContextChanged;
+        public event EventHandler<RemarkContextChangedEventArgs> RemarkContextChanged;
         public event EventHandler<Remark> RemarkChanged;
 
         private void UpdateRemarkList() {
@@ -154,19 +164,24 @@ namespace IRExplorerUI.Document {
             var remarkTag = element_.GetTag<RemarkTag>();
 
             if (remarkTag != null) {
-                var list = new List<RemarkEx>();
-                RemarkEx firstSectionRemark = null;
+                var list = new List<Remark>();
+                var listEx = new List<ListRemarkEx>();
+                ListRemarkEx firstSectionRemark = null;
 
                 if (activeRemarkContext_ != null &&
                     remarkFilter_.Settings.ShowOnlyContextRemarks) {
-                    firstSectionRemark = CollectContextTreeRemarks(activeRemarkContext_, list);
+                    CollectContextTreeRemarks(activeRemarkContext_, list, false);
+
+                    foreach (var remark in list) {
+                        AppendAcceptedRemark(listEx, remark);
+                    }
                 }
                 else {
                     foreach (var remark in remarkTag.Remarks) {
                         AccountForRemarkKind(remark);
 
                         if (parentDocument_.IsAcceptedContextRemark(remark, Section, remarkFilter_.Settings)) {
-                            var remarkEx = AppendAcceptedRemark(list, remark);
+                            var remarkEx = AppendAcceptedRemark(listEx, remark);
 
                             // Find first remark in current section.
                             if (remark.Section == Section && firstSectionRemark == null) {
@@ -176,7 +191,7 @@ namespace IRExplorerUI.Document {
                     }
                 }
 
-                RemarkList.ItemsSource = list;
+                RemarkList.ItemsSource = listEx;
 
                 // Scroll down to current section.
                 if (firstSectionRemark != null) {
@@ -195,6 +210,7 @@ namespace IRExplorerUI.Document {
                     Header = context.Name,
                     Foreground = ColorBrushes.GetBrush(Colors.DarkBlue),
                     FontWeight = FontWeights.Bold,
+                    ItemContainerStyle = Application.Current.FindResource("RemarkTreeViewItemStyle") as Style
                 };
 
                 treeNodeMap[context] = treeNode;
@@ -216,7 +232,8 @@ namespace IRExplorerUI.Document {
                         Header = remark.RemarkText,
                         Foreground = ColorBrushes.GetBrush(Colors.Black),
                         FontWeight = FontWeights.Bold,
-                        Tag = remark
+                        Tag = remark,
+                        ItemContainerStyle = Application.Current.FindResource("RemarkTreeViewItemStyle") as Style
                     };
 
                     items.Add(new Tuple<TreeViewItem, int>(tempTreeNode, remark.RemarkLocation.Line));
@@ -303,8 +320,9 @@ namespace IRExplorerUI.Document {
         }
 
         //? TODO: Should be async and run the collection on another thread
-        private RemarkEx CollectContextTreeRemarks(RemarkContext rootContext, List<RemarkEx> list) {
-            RemarkEx firstSectionRemark = null;
+        private Remark CollectContextTreeRemarks(RemarkContext rootContext, List<Remark> list,
+                                                 bool filterDuplicates) {
+            Remark firstSectionRemark = null;
             var worklist = new Queue<RemarkContext>();
             worklist.Enqueue(rootContext);
 
@@ -313,14 +331,27 @@ namespace IRExplorerUI.Document {
 
                 foreach (var remark in context.Remarks) {
                     if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
-                        var remarkEx = AppendAcceptedRemark(list, remark);
-                        remarkEx.ContextTreeLevel = context.ContextTreeLevel - rootContext.ContextTreeLevel;
+                        list.Add(remark);
 
                         // Find first remark in current section.
                         if (remark.Section == Section && firstSectionRemark == null) {
-                            firstSectionRemark = remarkEx;
+                            firstSectionRemark = remark;
                         }
                     }
+                }
+            }
+
+            list.Sort((a, b) => a.RemarkLocation.Line - b.RemarkLocation.Line);
+
+            if (filterDuplicates) {
+                Remark prevItem = null;
+
+                foreach (var item in list) {
+                    if (prevItem != null && prevItem.RemarkLocation.Line == item.RemarkLocation.Line) {
+                        continue; // Ignore multiple remarks on the same line.
+                    }
+
+                    prevItem = item;
                 }
             }
 
@@ -387,10 +418,10 @@ namespace IRExplorerUI.Document {
         }
 
 
-        private RemarkEx AppendAcceptedRemark(List<RemarkEx> list, Remark remark) {
+        private ListRemarkEx AppendAcceptedRemark(List<ListRemarkEx> list, Remark remark) {
             string sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
             sectionName = $"({remark.Section.Number}) {sectionName}";
-            var remarkEx = new RemarkEx(remark, sectionName, remark.Section == Section);
+            var remarkEx = new ListRemarkEx(remark, sectionName, remark.Section == Section);
             list.Add(remarkEx);
             return remarkEx;
         }
@@ -441,7 +472,7 @@ namespace IRExplorerUI.Document {
                 return;
             }
 
-            var itemEx = e.AddedItems[0] as RemarkEx;
+            var itemEx = e.AddedItems[0] as ListRemarkEx;
             var item = itemEx.Remark;
             string outputText = await Session.GetSectionPassOutputAsync(item.Section.OutputBefore, item.Section);
 
@@ -453,14 +484,14 @@ namespace IRExplorerUI.Document {
 
             if (item.Context != null) {
                 // Show context and children.
-                var list = new List<RemarkEx>();
-                CollectContextTreeRemarks(item.Context, list);
+                var list = new List<Remark>();
+                CollectContextTreeRemarks(item.Context, list, true);
                 BuildContextRemarkTreeView(item.Context, outputText);
                 SelectTreeViewNode(ContextRemarkTree, item);
 
                 //? TODO: Setting for enabling
                 if (true) {
-                    RemarkContextChanged?.Invoke(this, item.Context);
+                    RemarkContextChanged?.Invoke(this, new RemarkContextChangedEventArgs(item.Context, list));
                 }
             }
         }
@@ -489,7 +520,7 @@ namespace IRExplorerUI.Document {
         }
 
         private void RemarkList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {
-            var itemEx = RemarkList.SelectedItem as RemarkEx;
+            var itemEx = RemarkList.SelectedItem as ListRemarkEx;
 
             if (itemEx != null) {
                 RemarkChanged?.Invoke(this, itemEx.Remark);
@@ -564,6 +595,7 @@ namespace IRExplorerUI.Document {
 
         private void SetPanelAccentColor(Color color) {
             ToolbarPanel.Background = ColorBrushes.GetBrush(color);
+            ContextToolbarPanel.Background = ColorBrushes.GetBrush(color);
             PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
             PanelBorder.BorderThickness = new Thickness(2);
         }
@@ -619,7 +651,7 @@ namespace IRExplorerUI.Document {
             return false;
         }
 
-        private void ContextRemarkTree_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {
+        private void ContextRemarkTree_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) {
             var remark = (ContextRemarkTree.SelectedItem as TreeViewItem)?.Tag as Remark;
 
             if (remark != null) {

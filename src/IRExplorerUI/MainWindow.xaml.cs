@@ -414,20 +414,24 @@ namespace IRExplorerUI {
                             MessageBox.Show(string.Join(Environment.NewLine, args));
                         }
 
-                        var session = new ScriptSession(null, this) {
-                            SilentMode = true,
-                            SessionName = Path.GetFileNameWithoutExtension(baseFilePath)
-                        };
+                        string scriptOutPath = null;
 
-                        if (script.Execute(session) && script.ScriptResult) {
-                            if (args.Length >= 7) {
-                                if (args[5].EndsWith("out")) {
-                                    string scriptOutPath = args[6];
-                                    session.SaveOutput(scriptOutPath);
-                                }
+                        if (args.Length >= 7) {
+                            if (args[5].EndsWith("out")) {
+                                scriptOutPath = args[6];
                             }
                         }
+                        else {
+                        }
 
+                        //Utils.WaitForDebugger();
+
+                        var session = new ScriptSession(null, this) {
+                            SilentMode = true,
+                            SessionName = scriptOutPath
+                        };
+
+                        script.Execute(session);
                         this.Close();
                     }
                     else if (args[3].EndsWith("func")) {

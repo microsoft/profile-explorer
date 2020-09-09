@@ -55,17 +55,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.0" />
+		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.2" />
 		<PackageReference Include="AvalonEdit" Version="6.0.1" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.5.1" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
 		<PackageReference Include="CS-Script.Core" Version="1.4.0" />
 		<PackageReference Include="DiffPlex" Version="1.6.3" />
-		<PackageReference Include="Dirkster.AvalonDock" Version="4.30.0" />
+		<PackageReference Include="Dirkster.AvalonDock" Version="4.40.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.20.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.20.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.20.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.20.0" />
-		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.82" />
+		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.86" />
 		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.85" />
 		<PackageReference Include="Google.Protobuf" Version="3.13.0" />
 		<PackageReference Include="Grpc" Version="2.31.0" />
@@ -84,7 +84,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.7.9" />
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.7.54" />
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.7.56" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
 		<PackageReference Include="protobuf-net" Version="3.0.29" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
@@ -204,7 +204,7 @@
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="copy /y $(SolutionDir)..\resources\*.xshd $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)..\resources\*.xml $(TargetDir)&#xD;&#xA;mkdir -p $(TargetDir)themes&#xD;&#xA;copy /y $(SolutionDir)..\resources\themes\*.xshd $(TargetDir)themes&#xD;&#xA;mkdir -p $(TargetDir)utc&#xD;&#xA;copy /y $(SolutionDir)..\resources\utc\*.json $(TargetDir)utc&#xD;&#xA;copy /y $(SolutionDir)..\resources\utc\*.xshd $(TargetDir)utc&#xD;&#xA;mkdir -p $(TargetDir)llvm&#xD;&#xA;copy /y $(SolutionDir)..\resources\llvm\*.json $(TargetDir)llvm&#xD;&#xA;copy /y $(SolutionDir)..\resources\llvm\*.xshd $(TargetDir)llvm" />
+		<Exec Command="copy /y $(SolutionDir)..\resources\*.xshd $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)..\resources\*.xml $(TargetDir)&#xD;&#xA;mkdir -p $(TargetDir)themes&#xD;&#xA;copy /y $(SolutionDir)..\resources\themes\*.xshd $(TargetDir)themes&#xD;&#xA;mkdir -p $(TargetDir)utc&#xD;&#xA;copy /y $(SolutionDir)..\resources\utc\*.json $(TargetDir)utc&#xD;&#xA;copy /y $(SolutionDir)..\resources\utc\*.xshd $(TargetDir)utc&#xD;&#xA;mkdir -p $(TargetDir)llvm&#xD;&#xA;copy /y $(SolutionDir)..\resources\llvm\*.json $(TargetDir)llvm&#xD;&#xA;copy /y $(SolutionDir)..\resources\llvm\*.xshd $(TargetDir)llvm" />
 	</Target>
 
 </Project>

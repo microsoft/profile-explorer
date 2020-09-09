@@ -783,14 +783,19 @@ namespace IRExplorerUI {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Rect SnapToPixels(Rect rect, double adjustX, double adjustY, double adjustWidth, double adjustHeight) {
+        public static Rect SnapRectToPixels(Rect rect, double adjustX, double adjustY, double adjustWidth, double adjustHeight) {
             return new Rect(Math.Round(rect.X + adjustX), Math.Round(rect.Y + adjustY),
                 Math.Round(rect.Width + adjustWidth), Math.Round(rect.Height + adjustHeight));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Rect SnapToPixelsRect(double x, double y, double width, double height) {
+        public static Rect SnapRectToPixels(double x, double y, double width, double height) {
             return new Rect(Math.Round(x), Math.Round(y), Math.Round(width), Math.Round(height));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Point SnapPointToPixels(double x, double y) {
+            return new Point(Math.Round(x), Math.Round(y));
         }
 
         public struct KeyCharInfo {

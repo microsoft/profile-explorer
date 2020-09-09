@@ -592,6 +592,14 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
+    <DrawingImage x:Key="EyeIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">
+                <GeometryDrawing Brush="#FF000000" Geometry="F0 M16,16z M0,0z M8.06,2C3,2 0,8 0,8 0,8 3,14 8.06,14 13,14 16,8 16,8 16,8 13,2 8.06,2z M8,12C5.8,12 4,10.22 4,8 4,5.8 5.8,4 8,4 10.22,4 12,5.8 12,8 12,10.22 10.22,12 8,12z M10,8C10,9.11 9.11,10 8,10 6.89,10 6,9.11 6,8 6,6.89 6.89,6 8,6 9.11,6 10,6.89 10,8z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
     <DrawingImage x:Key="LogoImage">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">

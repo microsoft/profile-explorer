@@ -60,15 +60,8 @@ namespace IRExplorerUI {
                         MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
                         MainPanel.IsDiffModeEnabled = true;
                         DiffPanel.IsDiffModeEnabled = true;
-
-                        //MainPanel.IsFunctionListVisible = false;
                         DiffPanel.Visibility = Visibility.Visible;
                         MainPanel.OtherSummary = value;
-
-                        if (MainPanel.CurrentFunction != null) {
-                            SwitchPanelDiffFunction(MainPanel.CurrentFunction, DiffPanel);
-                        }
-
                         diffModeEnabled_ = true;
                     }
                     else if (value == null) {
@@ -115,20 +108,20 @@ namespace IRExplorerUI {
             }
         }
 
-        private void DiffPanel_FunctionSwitched(object sender, IRTextFunction func) {
+        private async void DiffPanel_FunctionSwitched(object sender, IRTextFunction func) {
             var panel = sender as SectionPanel;
             var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
 
             if (otherPanel.Summary != null && diffModeEnabled_) {
-                SwitchPanelDiffFunction(func, otherPanel);
+                await SwitchPanelDiffFunction(func, otherPanel);
             }
         }
 
-        private void SwitchPanelDiffFunction(IRTextFunction func, SectionPanel otherPanel) {
+        private async Task SwitchPanelDiffFunction(IRTextFunction func, SectionPanel otherPanel) {
             var otherFunc = otherPanel.Summary.FindFunction(func.Name);
 
             if (otherFunc != null && otherPanel.SelectFunction(otherFunc)) {
-                ComputePanelSectionDiff();
+                await ComputePanelSectionDiff();
             }
         }
 
@@ -165,7 +158,7 @@ namespace IRExplorerUI {
             OpenSection?.Invoke(sender, e);
         }
 
-        private async void ComputePanelSectionDiff() {
+        private async Task ComputePanelSectionDiff() {
             var baseExtList = MainPanel.CreateSectionsExtension();
             var diffExtList = DiffPanel.CreateSectionsExtension();
             var (baseList, diffList) = ComputeSectionNameListDiff(baseExtList, diffExtList);

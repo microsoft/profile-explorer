@@ -60,6 +60,10 @@ namespace IRExplorerUI {
             return pen;
         }
 
+        public static Pen GetTransparentPen(Color baseColor, byte alpha, double thickness = 1.0) {
+            return GetPen(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B), thickness);
+        }
+
         private static Pen CreatePen(Color color, double thickness) {
             Pen pen;
             var brush = ColorBrushes.GetBrush(color);

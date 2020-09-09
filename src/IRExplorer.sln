@@ -32,7 +32,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{A7AD
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{11DEE166-9224-42F9-92C6-A6447A90C31B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IRExplorerLib", "IRExplorerLib\IRExplorerLib.csproj", "{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerLib", "IRExplorerLib\IRExplorerLib.csproj", "{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

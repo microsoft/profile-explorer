@@ -178,6 +178,8 @@ namespace IRExplorerUI.UTC {
             var similarValueFinder = new SimilarValueFinder(function);
             var refFinder = new ReferenceFinder(function, compilerInfo_.IR);
 
+            //? TODO: Extract "block N" as a block reference
+
             // The split lines don't include the endline, but considering
             // the \r \n is needed to get the proper document offset.
             int newLineLength = Environment.NewLine.Length;

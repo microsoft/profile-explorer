@@ -26,5 +26,9 @@ namespace IRExplorerUI {
             brushes_.Add(color, brush);
             return brush;
         }
+
+        public static SolidColorBrush GetTransparentBrush(Color baseColor, byte alpha) {
+            return GetBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
+        }
     }
 }

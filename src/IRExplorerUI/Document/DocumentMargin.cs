@@ -598,7 +598,7 @@ namespace IRExplorerUI {
             foreach (var result in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, result)) {
                     drawingContext.DrawRectangle(group.BackColor, null,
-                                                 Utils.SnapToPixelsRect(renderSize.Width - MarginWidth,
+                                                 Utils.SnapRectToPixels(renderSize.Width - MarginWidth,
                                                           rect.Top, MarginWidth, rect.Height));
                 }
             }
@@ -659,7 +659,7 @@ namespace IRExplorerUI {
                             var text = textSegments[index];
                             double offsetY = y + (index - leaderIndex) * lineHeight;
 
-                            var remarkBounds = Utils.SnapToPixelsRect(0, offsetY - 1, maxTextWidth + baseWidth + 2 * ButtonTextPadding, lineHeight);
+                            var remarkBounds = Utils.SnapRectToPixels(0, offsetY - 1, maxTextWidth + baseWidth + 2 * ButtonTextPadding, lineHeight);
                             drawingContext.DrawRectangle(remarkBrush, style.Border, remarkBounds);
                             drawingContext.DrawText(text, new Point(baseWidth + ButtonTextPadding, offsetY - 1));
 
@@ -673,7 +673,7 @@ namespace IRExplorerUI {
                     else {
                         var text = DocumentUtils.CreateFormattedText(this, segment.Bookmark.Text, DefaultFont, fontSize,
                                                        Brushes.Black);
-                        bounds = Utils.SnapToPixelsRect(0, y - 1, text.Width + baseWidth + 2 * ButtonTextPadding, lineHeight);
+                        bounds = Utils.SnapRectToPixels(0, y - 1, text.Width + baseWidth + 2 * ButtonTextPadding, lineHeight);
                         drawingContext.DrawRectangle(style.BackColor, style.Border, bounds);
                         drawingContext.DrawText(text, new Point(baseWidth + ButtonTextPadding, y));
                     }
@@ -682,7 +682,7 @@ namespace IRExplorerUI {
                     double nearbyExtraWidth =
                         segment.IsNearby || segment.IsExpanded ? NearbyBookmarkExtraWidth : 0;
 
-                    bounds = Utils.SnapToPixelsRect(0, y - 1, RenderSize.Width + nearbyExtraWidth, lineHeight);
+                    bounds = Utils.SnapRectToPixels(0, y - 1, RenderSize.Width + nearbyExtraWidth, lineHeight);
                     drawingContext.DrawRectangle(style.BackColor, style.Border, bounds);
                 }
 
@@ -736,7 +736,7 @@ namespace IRExplorerUI {
 
         private Rect DrawBookmarkButton(IconDrawing icon, Rect startBounds, HighlightingStyle pinStyle,
                                         DrawingContext drawingContext, double extraLeftSpace = 0) {
-            var bounds = Utils.SnapToPixelsRect(startBounds.Left + extraLeftSpace, startBounds.Top, ButtonWidth,
+            var bounds = Utils.SnapRectToPixels(startBounds.Left + extraLeftSpace, startBounds.Top, ButtonWidth,
                                                 startBounds.Height);
             drawingContext.DrawRectangle(pinStyle.BackColor, pinStyle.Border, bounds);
 

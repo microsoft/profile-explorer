@@ -142,6 +142,7 @@ namespace IRExplorerUI {
         }
 
         private void CreatePlaceholderTiledBrush(double tileSize) {
+            // Create the brush once, freeze and reuse it everywhere.
             if (placeholderTileBrush_ != null) {
                 return;
             }
@@ -185,8 +186,8 @@ namespace IRExplorerUI {
                 case DiffKind.Insertion:
                     return insertionBrush_;
                 case DiffKind.Placeholder: {
-                    return fromDrawing ? placeholderTileBrush_ : null;
-                }
+                        return fromDrawing ? placeholderTileBrush_ : null;
+                    }
                 case DiffKind.Modification:
                     return modificationBrush_;
                 case DiffKind.MinorModification:

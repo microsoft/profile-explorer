@@ -45,7 +45,7 @@
             <CheckBox
                 Name="IndentationCheckbox"
                 Margin="0,0,0,2"
-                Content="Use indentation level for section names"
+                Content="Use indentation for nested section names"
                 IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
                 ToolTip="Show section names indentend based on the parent/child relationship" />
             <StackPanel Margin="20,2,0,2" Orientation="Horizontal">
@@ -78,7 +78,20 @@
                 IsEnabled="False"
                 ToolTip="Identify sequences of sections with no changes and group them together" />
             <Separator Margin="0,4,0,4" />
+
+            <TextBlock FontWeight="DemiBold" Text="List Filtering" />
+            <CheckBox
+                Margin="0,4,0,2"
+                Content="Use case-sensitive function name search"
+                IsChecked="{Binding FunctionSearchCaseSensitive, Mode=TwoWay}" />
+            <CheckBox
+                Margin="0,0,0,2"
+                Content="Use case-sensitive section name search"
+                IsChecked="{Binding SectionSearchCaseSensitive, Mode=TwoWay}" />
+
+            <Separator Margin="0,4,0,4" />
             <TextBlock FontWeight="DemiBold" Text="Document Diffs" />
+
 
             <Grid Margin="0,4,0,0">
                 <Grid.ColumnDefinitions>
