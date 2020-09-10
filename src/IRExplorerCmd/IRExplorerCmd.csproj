@@ -1,8 +1,8 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net5.0</TargetFramework>
+		<TargetFramework>net5.0-windows7.0</TargetFramework>
 		<StartupObject>IRExplorerCmd.Program</StartupObject>
 	</PropertyGroup>
 
@@ -16,7 +16,6 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
-		<ProjectReference Include="..\IRExplorerLib\IRExplorerLib.csproj" />
 		<ProjectReference Include="..\IRExplorerUI\IRExplorerUI.csproj" />
 	</ItemGroup>
 

@@ -20,7 +20,7 @@ namespace IRExplorerCmd {
                         Console.WriteLine($"Failed to load base document: {baseFilePath}");
                     }
 
-                    if(!session.LoadDiffDocument(diffFilePath)) {
+                    if (!session.LoadDiffDocument(diffFilePath)) {
                         Console.WriteLine($"Failed to load diff document: {diffFilePath}");
                     }
                 }
@@ -34,16 +34,24 @@ namespace IRExplorerCmd {
                             Console.WriteLine($"Failed to load script {scriptPath}");
                         }
 
+                        string scriptOutPath = "";
+
+                        if (args.Length >= 6) {
+                            if (args[4].EndsWith("out")) {
+                                scriptOutPath = args[5];
+                            }
+                        }
+
                         var scriptSession = new ScriptSession(null, session) {
-                            SilentMode = true
+                            SilentMode = true,
+                            SessionName = scriptOutPath
                         };
 
-                        if (script.Execute(scriptSession) && script.ScriptResult) {
-                            if (args.Length >= 6) {
-                                if (args[4].EndsWith("out")) {
-                                    string scriptOutPath = args[5];
-                                    scriptSession.SaveOutput(scriptOutPath);
-                                }
+                        if (script.Execute(scriptSession)) {
+                            Console.WriteLine($"Result: {script.ScriptResult}");
+
+                            if (script.ScriptException != null) {
+                                Console.WriteLine($"Exception: {script.ScriptException.Message}");
                             }
                         }
                     }
