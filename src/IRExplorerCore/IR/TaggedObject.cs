@@ -27,6 +27,10 @@ namespace IRExplorerCore.IR {
             return null;
         }
 
+        public bool HasTag<T>() where T : class {
+            return GetTag<T>() != null;
+        }
+
         public T GetOrAddTag<T>() where T : class, new() {
             var result = GetTag<T>();
 

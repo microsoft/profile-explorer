@@ -172,7 +172,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public Task SwitchDocumentSection(OpenSectionEventArgs args, IRDocument document) {
+        public Task SwitchDocumentSectionAsync(OpenSectionEventArgs args, IRDocument document) {
             throw new NotImplementedException();
         }
 

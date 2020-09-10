@@ -65,8 +65,8 @@ namespace IRExplorerUI {
             try {
                 EndSession();
                 UpdateUIBeforeLoadDocument($"Loading {baseFilePath}, {diffFilePath}");
-                var baseTask = Task.Run(() => LoadDocument(baseFilePath, UpdateIRDocumentLoadProgress));
-                var diffTask = Task.Run(() => LoadDocument(diffFilePath, UpdateIRDocumentLoadProgress));
+                var baseTask = Task.Run(() => LoadDocument(baseFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
+                var diffTask = Task.Run(() => LoadDocument(diffFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
                 await Task.WhenAll(baseTask, diffTask);
 
                 if (baseTask.Result != null && diffTask.Result != null) {
@@ -110,7 +110,7 @@ namespace IRExplorerUI {
         }
 
         private async void CloseDiffDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (diffDocument_ != null) {
+            if (!sessionState_.IsInTwoDocumentsDiffMode) {
                 await ExitDocumentDiffState();
 
                 // Close each opened section associated with this document.
@@ -119,7 +119,7 @@ namespace IRExplorerUI {
                 foreach (var docHostInfo in sessionState_.DocumentHosts) {
                     var summary = docHostInfo.DocumentHost.Section.ParentFunction.ParentSummary;
 
-                    if (summary == diffDocument_.Summary) {
+                    if (summary == sessionState_.DiffDocument.Summary) {
                         CloseDocument(docHostInfo);
                         closedDocuments.Add(docHostInfo);
                     }
@@ -129,11 +129,11 @@ namespace IRExplorerUI {
                     sessionState_.DocumentHosts.Remove(docHostInfo);
                 }
 
-                sessionState_.RemoveLoadedDocuemnt(diffDocument_);
+                sessionState_.RemoveLoadedDocuemnt(sessionState_.DiffDocument);
 
                 // Reset the section panel.
                 SectionPanel.DiffSummary = null;
-                diffDocument_ = null;
+                sessionState_.DiffDocument = null;
                 UpdateWindowTitle();
             }
         }
@@ -182,7 +182,7 @@ namespace IRExplorerUI {
             sessionState_.DiffState.LeftDocument = leftDocument;
             sessionState_.DiffState.RightDocument = rightDocument;
 
-            if (diffDocument_ != null) {
+            if (sessionState_.IsInTwoDocumentsDiffMode) {
                 // Used when diffing two different documents.
                 sessionState_.DiffState.IsEnabled = true;
                 await SwitchDiffedDocumentSection(leftDocument.Section, leftDocument, false);
@@ -232,9 +232,9 @@ namespace IRExplorerUI {
                 var rightArgs =
                     new OpenSectionEventArgs(rightDocument.Section, OpenSectionKind.ReplaceCurrent);
 
-                await SwitchDocumentSection(leftArgs, leftDocument, false);
+                await OpenDocumentSection(leftArgs, leftDocument, false);
                 await leftDocument.ExitDiffMode();
-                await SwitchDocumentSection(rightArgs, rightDocument, false);
+                await OpenDocumentSection(rightArgs, rightDocument, false);
                 await rightDocument.ExitDiffMode();
             }
 
@@ -258,8 +258,8 @@ namespace IRExplorerUI {
             Trace.TraceInformation($"Diff mode: Start with left doc. {ObjectTracker.Track(leftDocument)}, " +
                                    $"right doc. {ObjectTracker.Track(rightDocument)}");
 
-            leftDocument = await SwitchDocumentSection(e.Left, leftDocument, false);
-            rightDocument = await SwitchDocumentSection(e.Right, rightDocument, false);
+            leftDocument = await OpenDocumentSection(e.Left, leftDocument, false);
+            rightDocument = await OpenDocumentSection(e.Right, rightDocument, false);
             bool result = await EnterDocumentDiffState(leftDocument, rightDocument);
 
             UpdateDiffModeButton(result);
@@ -342,7 +342,8 @@ namespace IRExplorerUI {
                 newLeftSection = section;
 
                 (rightText, newRightSection) =
-                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.RightDocument.Section, diffDocument_);
+                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.RightDocument.Section,
+                                                        sessionState_.DiffDocument);
             }
             else if (document == sessionState_.DiffState.RightDocument) {
                 var result = await Task.Run(() => LoadAndParseSection(section));
@@ -350,7 +351,8 @@ namespace IRExplorerUI {
                 newRightSection = section;
 
                 (leftText, newLeftSection) =
-                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.LeftDocument.Section, mainDocument_);
+                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.LeftDocument.Section,
+                                                        sessionState_.MainDocument);
             }
             else {
                 // Document is not part of the diff set.
@@ -374,7 +376,7 @@ namespace IRExplorerUI {
         private async Task<Tuple<string, IRTextSection>>
             SwitchOtherDiffedDocumentSide(IRTextSection section, IRTextSection otherSection,
                                           LoadedDocument otherDocument) {
-            if (diffDocument_ != null) {
+            if (sessionState_.DiffDocument != null) {
                 // When two documents are compared, try to pick 
                 // the other section from that other document.
                 var diffSection = FindDiffDocumentSection(section, otherDocument);
@@ -662,8 +664,8 @@ namespace IRExplorerUI {
             await ExitDocumentDiffState(isSessionEnding: false, disableControls: false);
 
             // Swap the left/right documents, then re-enter diff state.
-            await SwitchDocumentSection(new OpenSectionEventArgs(rightSection, OpenSectionKind.ReplaceCurrent), leftDocHost);
-            await SwitchDocumentSection(new OpenSectionEventArgs(leftSection, OpenSectionKind.ReplaceCurrent), rightDocHost);
+            await OpenDocumentSection(new OpenSectionEventArgs(rightSection, OpenSectionKind.ReplaceCurrent), leftDocHost);
+            await OpenDocumentSection(new OpenSectionEventArgs(leftSection, OpenSectionKind.ReplaceCurrent), rightDocHost);
             await EnterDocumentDiffState(leftDocHost, rightDocHost);
             DiffSwapButton.IsEnabled = true;
         }
@@ -689,11 +691,11 @@ namespace IRExplorerUI {
             if (leftIndex > 0 && rightIndex > 0) {
                 var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex - 1];
                 var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
-                await SwitchDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
+                await OpenDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
 
                 var prevRightSection = rightSection.ParentFunction.Sections[rightIndex - 1];
                 var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
-                await SwitchDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
+                await OpenDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
             }
         }
 
@@ -712,11 +714,11 @@ namespace IRExplorerUI {
                 rightIndex < rightSection.ParentFunction.SectionCount - 1) {
                 var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex + 1];
                 var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
-                await SwitchDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
+                await OpenDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
 
                 var prevRightSection = rightSection.ParentFunction.Sections[rightIndex + 1];
                 var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
-                await SwitchDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
+                await OpenDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
             }
         }
 
@@ -728,7 +730,7 @@ namespace IRExplorerUI {
         }
 
         private void CloseDiffDocumentCanExecute(object sender, CanExecuteRoutedEventArgs e) {
-            e.CanExecute = diffDocument_ != null;
+            e.CanExecute = sessionState_ != null && sessionState_.IsInTwoDocumentsDiffMode;
             e.Handled = true;
         }
 

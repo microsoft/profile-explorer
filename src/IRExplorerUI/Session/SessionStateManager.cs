@@ -54,20 +54,41 @@ namespace IRExplorerUI {
     }
 
     [ProtoContract]
+    public class OpenSectionState {
+        [ProtoMember(1)]
+        public Guid DocumentId;
+        [ProtoMember(2)]
+        public ulong SectionId;
+
+        public OpenSectionState() { }
+
+        public OpenSectionState(Guid documentId, ulong sectionId) {
+            DocumentId = documentId;
+            SectionId = sectionId;
+        }
+    }
+
+    [ProtoContract]
     public class SessionState {
         [ProtoMember(1)]
         public List<LoadedDocumentState> Documents;
         [ProtoMember(2)]
         public List<PanelObjectPairState> GlobalPanelStates;
+        [ProtoMember(3)]
+        public List<OpenSectionState> OpenSections;
         [ProtoMember(4)]
         public SessionInfo Info;
-        [ProtoMember(3)]
-        public List<ulong> OpenSections;
+        [ProtoMember(5)]
+        public bool IsInTwoDocumentsDiffMode;
+        [ProtoMember(6)]
+        public Guid MainDocumentId;
+        [ProtoMember(7)]
+        public Guid DiffDocumentId;
 
         public SessionState() {
             Documents = new List<LoadedDocumentState>();
             GlobalPanelStates = new List<PanelObjectPairState>();
-            OpenSections = new List<ulong>();
+            OpenSections = new List<OpenSectionState>();
             Info = new SessionInfo();
         }
     }
@@ -164,12 +185,14 @@ namespace IRExplorerUI {
 
     public class SessionStateManager {
         // {IR section ID -> list [{panel ID, state}]}
+        private object lockObject_;
         private List<LoadedDocument> documents_;
         private Dictionary<ToolPanelKind, object> globalPanelStates_;
         private List<CancelableTask> pendingTasks_;
         private bool watchDocumentChanges_;
 
         public SessionStateManager(string filePath, SessionKind sessionKind) {
+            lockObject_ = new object();
             Info = new SessionInfo(filePath, sessionKind);
             Info.Notes = "";
             documents_ = new List<LoadedDocument>();
@@ -183,11 +206,15 @@ namespace IRExplorerUI {
 
         public SessionInfo Info { get; set; }
         public List<LoadedDocument> Documents => documents_;
+        public LoadedDocument MainDocument { get; set; }
+        public LoadedDocument DiffDocument { get; set; }
         public List<DocumentHostInfo> DocumentHosts { get; set; }
+
         public DiffModeInfo DiffState { get; set; }
         public bool NotifiedSessionStart { get; set; }
         public DateTime SessionStartTime { get; set; }
         public bool IsAutoSaveEnabled { get; set; }
+        public bool IsInTwoDocumentsDiffMode => DiffDocument != null;
 
         public event EventHandler DocumentChanged;
 
@@ -250,12 +277,25 @@ namespace IRExplorerUI {
             return docInfo.LoadSectionState(section);
         }
 
-        public Task<byte[]> SerializeSession(IRTextSectionLoader docLoader) {
+        public Task<byte[]> SerializeSession() {
             var state = new SessionState();
             state.Info = Info;
+            state.IsInTwoDocumentsDiffMode = IsInTwoDocumentsDiffMode;
 
             foreach (var docInfo in documents_) {
-                state.Documents.Add(docInfo.SerializeDocument());
+                var docState = docInfo.SerializeDocument();
+                state.Documents.Add(docState);
+
+                // For two-document diff mode, save the document IDs 
+                // so they are restored properly later.
+                if (IsInTwoDocumentsDiffMode) {
+                    if (docInfo == MainDocument) {
+                        state.MainDocumentId = docState.Id;
+                    }
+                    else if (docInfo == DiffDocument) {
+                        state.DiffDocumentId = docState.Id;
+                    }
+                }
             }
 
             foreach (var panelState in globalPanelStates_) {
@@ -264,7 +304,9 @@ namespace IRExplorerUI {
             }
 
             foreach (var docHost in DocumentHosts) {
-                state.OpenSections.Add(docHost.DocumentHost.Section.Id);
+                var section = docHost.DocumentHost.Section;
+                var loadedDoc = FindLoadedDocument(section);
+                state.OpenSections.Add(new OpenSectionState(loadedDoc.Id, section.Id));
             }
 
             return Task.Run(() => {
@@ -285,7 +327,7 @@ namespace IRExplorerUI {
         public void EndSession() {
             List<CancelableTask> tasks;
 
-            lock (this) {
+            lock (lockObject_) {
                 tasks = pendingTasks_.CloneList();
             }
 
@@ -304,13 +346,13 @@ namespace IRExplorerUI {
         }
 
         public void RegisterCancelableTask(CancelableTask task) {
-            lock (this) {
+            lock (lockObject_) {
                 pendingTasks_.Add(task);
             }
         }
 
         public void UnregisterCancelableTask(CancelableTask task) {
-            lock (this) {
+            lock (lockObject_) {
                 pendingTasks_.Remove(task);
             }
         }

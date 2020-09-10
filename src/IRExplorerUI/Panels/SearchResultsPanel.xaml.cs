@@ -234,7 +234,7 @@ namespace IRExplorerUI {
             if (documentHost == null) {
                 // DOcument may have been closed in the meantime.
                 var args = new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockLeft);
-                await Session.SwitchDocumentSection(args, args.TargetDocument?.TextView);
+                await Session.SwitchDocumentSectionAsync(args, args.TargetDocument?.TextView);
                 documentHost = Session.FindAssociatedDocumentHost(this);
             }
 
