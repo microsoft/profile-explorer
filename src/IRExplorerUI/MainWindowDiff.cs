@@ -20,7 +20,7 @@ namespace IRExplorerUI {
         private bool loadingDocuments_;
         private bool diffOptionsVisible_;
 
-        public bool IsInDiffMode => sessionState_.DiffState.IsEnabled;
+        public bool IsInDiffMode => sessionState_.SectionDiffState.IsEnabled;
 
         private async void OpenBaseDiffDocumentsExecuted(object sender, ExecutedRoutedEventArgs e) {
             await OpenBaseDiffDocuments();
@@ -139,9 +139,9 @@ namespace IRExplorerUI {
         }
 
         private bool IsDiffModeDocument(IRDocumentHost document) {
-            return sessionState_.DiffState.IsEnabled &&
-                   (document == sessionState_.DiffState.LeftDocument ||
-                    document == sessionState_.DiffState.RightDocument);
+            return sessionState_.SectionDiffState.IsEnabled &&
+                   (document == sessionState_.SectionDiffState.LeftDocument ||
+                    document == sessionState_.SectionDiffState.RightDocument);
         }
 
         private async Task<bool> EnterDocumentDiffState() {
@@ -150,20 +150,20 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            sessionState_.DiffState.StartModeChange();
+            sessionState_.SectionDiffState.StartModeChange();
 
-            if (sessionState_.DiffState.IsEnabled) {
-                sessionState_.DiffState.EndModeChange();
+            if (sessionState_.SectionDiffState.IsEnabled) {
+                sessionState_.SectionDiffState.EndModeChange();
                 return true;
             }
 
             if (!PickLeftRightDocuments(out var leftDocument, out var rightDocument)) {
-                sessionState_.DiffState.EndModeChange();
+                sessionState_.SectionDiffState.EndModeChange();
                 return false;
             }
 
             bool result = await EnterDocumentDiffState(leftDocument, rightDocument);
-            sessionState_.DiffState.EndModeChange();
+            sessionState_.SectionDiffState.EndModeChange();
             return result;
         }
 
@@ -175,22 +175,22 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            if (sessionState_.DiffState.IsEnabled) {
+            if (sessionState_.SectionDiffState.IsEnabled) {
                 return true;
             }
 
-            sessionState_.DiffState.LeftDocument = leftDocument;
-            sessionState_.DiffState.RightDocument = rightDocument;
+            sessionState_.SectionDiffState.LeftDocument = leftDocument;
+            sessionState_.SectionDiffState.RightDocument = rightDocument;
 
             if (sessionState_.IsInTwoDocumentsDiffMode) {
                 // Used when diffing two different documents.
-                sessionState_.DiffState.IsEnabled = true;
+                sessionState_.SectionDiffState.IsEnabled = true;
                 await SwitchDiffedDocumentSection(leftDocument.Section, leftDocument, false);
             }
             else {
-                sessionState_.DiffState.LeftSection = leftDocument.Section;
-                sessionState_.DiffState.RightSection = rightDocument.Section;
-                await DiffCurrentDocuments(sessionState_.DiffState);
+                sessionState_.SectionDiffState.LeftSection = leftDocument.Section;
+                sessionState_.SectionDiffState.RightSection = rightDocument.Section;
+                await DiffCurrentDocuments(sessionState_.SectionDiffState);
             }
 
             // CreateDefaultSideBySidePanels();
@@ -213,16 +213,16 @@ namespace IRExplorerUI {
         }
 
         private async Task ExitDocumentDiffState(bool isSessionEnding = false, bool disableControls = true) {
-            sessionState_.DiffState.StartModeChange();
+            sessionState_.SectionDiffState.StartModeChange();
 
-            if (!sessionState_.DiffState.IsEnabled) {
-                sessionState_.DiffState.EndModeChange();
+            if (!sessionState_.SectionDiffState.IsEnabled) {
+                sessionState_.SectionDiffState.EndModeChange();
                 return;
             }
 
-            var leftDocument = sessionState_.DiffState.LeftDocument;
-            var rightDocument = sessionState_.DiffState.RightDocument;
-            sessionState_.DiffState.End();
+            var leftDocument = sessionState_.SectionDiffState.LeftDocument;
+            var rightDocument = sessionState_.SectionDiffState.RightDocument;
+            sessionState_.SectionDiffState.End();
 
             if (!isSessionEnding) {
                 // Reload sections in the same documents.
@@ -242,16 +242,16 @@ namespace IRExplorerUI {
                 HideDiffsControlsPanel();
             }
 
-            sessionState_.DiffState.EndModeChange();
+            sessionState_.SectionDiffState.EndModeChange();
             Trace.TraceInformation("Diff mode: Exited");
         }
 
         private async void SectionPanel_EnterDiffMode(object sender, DiffModeEventArgs e) {
-            if (sessionState_.DiffState.IsEnabled) {
-                sessionState_.DiffState.IsEnabled = false;
+            if (sessionState_.SectionDiffState.IsEnabled) {
+                sessionState_.SectionDiffState.IsEnabled = false;
             }
 
-            sessionState_.DiffState.StartModeChange();
+            sessionState_.SectionDiffState.StartModeChange();
             var leftDocument = FindDocumentWithSection(e.Left.Section);
             var rightDocument = FindDocumentWithSection(e.Right.Section);
 
@@ -263,7 +263,7 @@ namespace IRExplorerUI {
             bool result = await EnterDocumentDiffState(leftDocument, rightDocument);
 
             UpdateDiffModeButton(result);
-            sessionState_.DiffState.EndModeChange();
+            sessionState_.SectionDiffState.EndModeChange();
             Trace.TraceInformation("Diff mode: Entered");
         }
 
@@ -280,7 +280,7 @@ namespace IRExplorerUI {
         private async Task EnableDocumentDiffState(DiffModeInfo diffState) {
             await diffState.LeftDocument.EnterDiffMode();
             await diffState.RightDocument.EnterDiffMode();
-            sessionState_.DiffState.IsEnabled = true;
+            sessionState_.SectionDiffState.IsEnabled = true;
         }
 
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, string leftText,
@@ -307,14 +307,14 @@ namespace IRExplorerUI {
             var leftDiffResult = await leftMarkTask;
             var rightDiffResult = await rightMarkTask;
 
-            sessionState_.DiffState.LeftSection = newLeftSection ?? sessionState_.DiffState.LeftSection;
-            sessionState_.DiffState.RightSection = newRightSection ?? sessionState_.DiffState.RightSection;
-            sessionState_.DiffState.LeftDiffResults = leftDiffResult;
-            sessionState_.DiffState.RightDiffResults = rightDiffResult;
+            sessionState_.SectionDiffState.LeftSection = newLeftSection ?? sessionState_.SectionDiffState.LeftSection;
+            sessionState_.SectionDiffState.RightSection = newRightSection ?? sessionState_.SectionDiffState.RightSection;
+            sessionState_.SectionDiffState.LeftDiffResults = leftDiffResult;
+            sessionState_.SectionDiffState.RightDiffResults = rightDiffResult;
 
             // The UI-thread dependent work.
-            await UpdateDiffedFunction(leftDocument, leftDiffResult, sessionState_.DiffState.LeftSection);
-            await UpdateDiffedFunction(rightDocument, rightDiffResult, sessionState_.DiffState.RightSection);
+            await UpdateDiffedFunction(leftDocument, leftDiffResult, sessionState_.SectionDiffState.LeftSection);
+            await UpdateDiffedFunction(rightDocument, rightDiffResult, sessionState_.SectionDiffState.RightSection);
 
             // Scroll to the first diff.
             if (leftDiffResult.DiffSegments.Count > 0) {
@@ -336,22 +336,22 @@ namespace IRExplorerUI {
             IRTextSection newLeftSection = null;
             IRTextSection newRightSection = null;
 
-            if (document == sessionState_.DiffState.LeftDocument) {
+            if (document == sessionState_.SectionDiffState.LeftDocument) {
                 var result = await Task.Run(() => LoadAndParseSection(section));
                 leftText = result.Text;
                 newLeftSection = section;
 
                 (rightText, newRightSection) =
-                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.RightDocument.Section,
+                    await SwitchOtherDiffedDocumentSide(section, sessionState_.SectionDiffState.RightDocument.Section,
                                                         sessionState_.DiffDocument);
             }
-            else if (document == sessionState_.DiffState.RightDocument) {
+            else if (document == sessionState_.SectionDiffState.RightDocument) {
                 var result = await Task.Run(() => LoadAndParseSection(section));
                 rightText = result.Text;
                 newRightSection = section;
 
                 (leftText, newLeftSection) =
-                    await SwitchOtherDiffedDocumentSide(section, sessionState_.DiffState.LeftDocument.Section,
+                    await SwitchOtherDiffedDocumentSide(section, sessionState_.SectionDiffState.LeftDocument.Section,
                                                         sessionState_.MainDocument);
             }
             else {
@@ -360,16 +360,16 @@ namespace IRExplorerUI {
             }
 
             if (newLeftSection != null) {
-                UpdateUIAfterSectionLoad(newLeftSection, sessionState_.DiffState.LeftDocument);
+                UpdateUIAfterSectionLoad(newLeftSection, sessionState_.SectionDiffState.LeftDocument);
             }
 
             if (newRightSection != null) {
-                UpdateUIAfterSectionLoad(newRightSection, sessionState_.DiffState.RightDocument);
+                UpdateUIAfterSectionLoad(newRightSection, sessionState_.SectionDiffState.RightDocument);
             }
 
-            await EnableDocumentDiffState(sessionState_.DiffState);
-            await DiffDocuments(sessionState_.DiffState.LeftDocument.TextView,
-                                sessionState_.DiffState.RightDocument.TextView, leftText, rightText,
+            await EnableDocumentDiffState(sessionState_.SectionDiffState);
+            await DiffDocuments(sessionState_.SectionDiffState.LeftDocument.TextView,
+                                sessionState_.SectionDiffState.RightDocument.TextView, leftText, rightText,
                                 newLeftSection, newRightSection);
         }
 
@@ -549,14 +549,14 @@ namespace IRExplorerUI {
         }
 
         private void PreviousSegmentDiffButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.DiffState.IsEnabled) {
+            if (!sessionState_.SectionDiffState.IsEnabled) {
                 return;
             }
 
             //? TODO: Diff segments from left/right must be combined and sorted by offset
             //? TODO: This is almost identical to the next case
-            var diffResults = sessionState_.DiffState.RightDiffResults;
-            var document = sessionState_.DiffState.RightDocument;
+            var diffResults = sessionState_.SectionDiffState.RightDiffResults;
+            var document = sessionState_.SectionDiffState.RightDocument;
 
             if (diffResults.DiffSegments.Count > 0) {
                 int offset = document.TextView.CaretOffset;
@@ -598,14 +598,14 @@ namespace IRExplorerUI {
         }
 
         private void NextDiffSegmentButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.DiffState.IsEnabled) {
+            if (!sessionState_.SectionDiffState.IsEnabled) {
                 return;
             }
 
             // TODO: Diff segments from left/right must be combined and sorted by offset
             // TODO: When next/prev segment is needed, start from the current carret offset
-            var diffResults = sessionState_.DiffState.RightDiffResults;
-            var document = sessionState_.DiffState.RightDocument;
+            var diffResults = sessionState_.SectionDiffState.RightDiffResults;
+            var document = sessionState_.SectionDiffState.RightDocument;
 
             if (diffResults.DiffSegments.Count > 0) {
                 int offset = document.TextView.CaretOffset;
@@ -655,8 +655,8 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var leftDocHost = sessionState_.DiffState.LeftDocument;
-            var rightDocHost = sessionState_.DiffState.RightDocument;
+            var leftDocHost = sessionState_.SectionDiffState.LeftDocument;
+            var rightDocHost = sessionState_.SectionDiffState.RightDocument;
             var leftSection = leftDocHost.Section;
             var rightSection = rightDocHost.Section;
 
@@ -678,12 +678,12 @@ namespace IRExplorerUI {
         }
 
         private async void PreviousDiffButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.DiffState.IsEnabled) {
+            if (!sessionState_.SectionDiffState.IsEnabled) {
                 return;
             }
 
-            var leftSection = sessionState_.DiffState.LeftSection;
-            var rightSection = sessionState_.DiffState.RightSection;
+            var leftSection = sessionState_.SectionDiffState.LeftSection;
+            var rightSection = sessionState_.SectionDiffState.RightSection;
 
             int leftIndex = leftSection.Number - 1;
             int rightIndex = rightSection.Number - 1;
@@ -691,21 +691,21 @@ namespace IRExplorerUI {
             if (leftIndex > 0 && rightIndex > 0) {
                 var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex - 1];
                 var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
+                await OpenDocumentSection(leftArgs, sessionState_.SectionDiffState.LeftDocument);
 
                 var prevRightSection = rightSection.ParentFunction.Sections[rightIndex - 1];
                 var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
+                await OpenDocumentSection(rightArgs, sessionState_.SectionDiffState.RightDocument);
             }
         }
 
         private async void NextDiffButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.DiffState.IsEnabled) {
+            if (!sessionState_.SectionDiffState.IsEnabled) {
                 return;
             }
 
-            var leftSection = sessionState_.DiffState.LeftSection;
-            var rightSection = sessionState_.DiffState.RightSection;
+            var leftSection = sessionState_.SectionDiffState.LeftSection;
+            var rightSection = sessionState_.SectionDiffState.RightSection;
 
             int leftIndex = leftSection.Number - 1;
             int rightIndex = rightSection.Number - 1;
@@ -714,11 +714,11 @@ namespace IRExplorerUI {
                 rightIndex < rightSection.ParentFunction.SectionCount - 1) {
                 var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex + 1];
                 var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(leftArgs, sessionState_.DiffState.LeftDocument);
+                await OpenDocumentSection(leftArgs, sessionState_.SectionDiffState.LeftDocument);
 
                 var prevRightSection = rightSection.ParentFunction.Sections[rightIndex + 1];
                 var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(rightArgs, sessionState_.DiffState.RightDocument);
+                await OpenDocumentSection(rightArgs, sessionState_.SectionDiffState.RightDocument);
             }
         }
 
@@ -742,16 +742,16 @@ namespace IRExplorerUI {
 
             if (hasHandlingChanges) {
                 // Diffs must be recomputed.
-                var leftDocument = sessionState_.DiffState.LeftDocument;
-                var rightDocument = sessionState_.DiffState.RightDocument;
+                var leftDocument = sessionState_.SectionDiffState.LeftDocument;
+                var rightDocument = sessionState_.SectionDiffState.RightDocument;
 
                 await ExitDocumentDiffState();
                 await EnterDocumentDiffState(leftDocument, rightDocument);
             }
             else {
                 // Only diff style must be updated.
-                sessionState_.DiffState.LeftDocument.ReloadSettings();
-                sessionState_.DiffState.RightDocument.ReloadSettings();
+                sessionState_.SectionDiffState.LeftDocument.ReloadSettings();
+                sessionState_.SectionDiffState.RightDocument.ReloadSettings();
             }
         }
 
