@@ -803,7 +803,7 @@ namespace IRExplorerUI {
             //? TODO: Find a way to at least temporarily save state for the two diffed docs
             //? Issue is that in diff mode a section can have a different FunctionIR depending
             //? on the other section is compared with
-            if (sessionState_.DiffState.IsEnabled) {
+            if (sessionState_.SectionDiffState.IsEnabled) {
                 return;
             }
 
@@ -811,7 +811,7 @@ namespace IRExplorerUI {
         }
 
         public object LoadPanelState(IToolPanel panel, IRTextSection section) {
-            return sessionState_.DiffState.IsEnabled ? null : sessionState_.LoadPanelState(panel, section);
+            return sessionState_.SectionDiffState.IsEnabled ? null : sessionState_.LoadPanelState(panel, section);
         }
 
         public void DuplicatePanel(IToolPanel panel, DuplicatePanelKind duplicateKind) {

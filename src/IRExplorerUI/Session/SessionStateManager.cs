@@ -84,12 +84,30 @@ namespace IRExplorerUI {
         public Guid MainDocumentId;
         [ProtoMember(7)]
         public Guid DiffDocumentId;
+        [ProtoMember(8)]
+        public DiffModeState SectionDiffState;
 
         public SessionState() {
             Documents = new List<LoadedDocumentState>();
             GlobalPanelStates = new List<PanelObjectPairState>();
             OpenSections = new List<OpenSectionState>();
             Info = new SessionInfo();
+            SectionDiffState = new DiffModeState();
+        }
+    }
+
+    [ProtoContract]
+    public class DiffModeState {
+        [ProtoMember(1)]
+        public bool IsEnabled;
+        [ProtoMember(2)]
+        public OpenSectionState LeftSection;
+        [ProtoMember(3)]
+        public OpenSectionState RightSection;
+
+        public DiffModeState() {
+            LeftSection = new OpenSectionState();
+            RightSection = new OpenSectionState();
         }
     }
 
@@ -149,6 +167,7 @@ namespace IRExplorerUI {
         public DiffMarkingResult RightDiffResults { get; set; }
 
         public void StartModeChange() {
+            // If a diff-mode change is in progress, wait until it's done.
             DiffModeChangeCompleted.WaitOne();
             DiffModeChangeCompleted.Reset();
         }
@@ -199,7 +218,7 @@ namespace IRExplorerUI {
             globalPanelStates_ = new Dictionary<ToolPanelKind, object>();
             pendingTasks_ = new List<CancelableTask>();
             DocumentHosts = new List<DocumentHostInfo>();
-            DiffState = new DiffModeInfo();
+            SectionDiffState = new DiffModeInfo();
             SessionStartTime = DateTime.UtcNow;
             IsAutoSaveEnabled = sessionKind != SessionKind.DebugSession;
         }
@@ -210,7 +229,7 @@ namespace IRExplorerUI {
         public LoadedDocument DiffDocument { get; set; }
         public List<DocumentHostInfo> DocumentHosts { get; set; }
 
-        public DiffModeInfo DiffState { get; set; }
+        public DiffModeInfo SectionDiffState { get; set; }
         public bool NotifiedSessionStart { get; set; }
         public DateTime SessionStartTime { get; set; }
         public bool IsAutoSaveEnabled { get; set; }
@@ -304,9 +323,13 @@ namespace IRExplorerUI {
             }
 
             foreach (var docHost in DocumentHosts) {
-                var section = docHost.DocumentHost.Section;
-                var loadedDoc = FindLoadedDocument(section);
-                state.OpenSections.Add(new OpenSectionState(loadedDoc.Id, section.Id));
+                state.OpenSections.Add(CreateOpenSectionState(docHost.DocumentHost.Section));
+            }
+
+            if (SectionDiffState.IsEnabled) {
+                state.SectionDiffState.IsEnabled = true;
+                state.SectionDiffState.LeftSection = CreateOpenSectionState(SectionDiffState.LeftSection);
+                state.SectionDiffState.RightSection = CreateOpenSectionState(SectionDiffState.RightSection);
             }
 
             return Task.Run(() => {
@@ -314,6 +337,11 @@ namespace IRExplorerUI {
                 var compressedData = CompressionUtils.Compress(data);
                 return compressedData;
             });
+        }
+
+        private OpenSectionState CreateOpenSectionState(IRTextSection section) {
+            var loadedDoc = FindLoadedDocument(section);
+            return new OpenSectionState(loadedDoc.Id, section.Id);
         }
 
         public static Task<SessionState> DeserializeSession(byte[] data) {

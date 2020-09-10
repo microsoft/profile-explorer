@@ -133,6 +133,7 @@ namespace IRExplorerUI {
 
             SetupSectionPanel();
             NotifyPanelsOfSessionStart();
+            var idToDocumentHostMap = new Dictionary<Guid, IRDocumentHost>();
 
             // Reload sections left open.
             foreach (var openSection in state.OpenSections) {
@@ -150,14 +151,22 @@ namespace IRExplorerUI {
                 }
 
                 var args = new OpenSectionEventArgs(section, openKind);
-                await OpenDocumentSection(args);
+                var docHost = await OpenDocumentSection(args);
+                idToDocumentHostMap[openSection.DocumentId] = docHost;
             }
 
+            // Compare the two documents.
             if (sessionState_.IsInTwoDocumentsDiffMode) {
                 ShowSectionPanelDiffs(sessionState_.DiffDocument);
             }
 
-            //? TODO: Diff mode is not restored
+            // Enter diff mode if it was active.
+            if (state.SectionDiffState.IsEnabled &&
+                state.OpenSections.Count > 1 &&
+                idToDocumentHostMap.TryGetValue(state.SectionDiffState.LeftSection.DocumentId, out var leftDocument) &&
+                idToDocumentHostMap.TryGetValue(state.SectionDiffState.RightSection.DocumentId, out var rightDocument)) {
+                await EnterDocumentDiffState(leftDocument, rightDocument);
+            }
 
             StartAutoSaveTimer();
         }
@@ -447,7 +456,7 @@ namespace IRExplorerUI {
             }
 
             // In diff mode, reload both left/right sections and redo the diffs.
-            if (sessionState_.DiffState.IsEnabled && sessionState_.DiffState.IsDiffDocument(document)) {
+            if (sessionState_.SectionDiffState.IsEnabled && sessionState_.SectionDiffState.IsDiffDocument(document)) {
                 await SwitchDiffedDocumentSection(args.Section, document);
                 return document;
             }
@@ -724,17 +733,17 @@ namespace IRExplorerUI {
 
 
         private void Document_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            if (!sessionState_.DiffState.IsEnabled || Math.Abs(e.VerticalChange) < double.Epsilon) {
+            if (!sessionState_.SectionDiffState.IsEnabled || Math.Abs(e.VerticalChange) < double.Epsilon) {
                 return;
             }
 
             var document = sender as IRDocumentHost;
 
-            if (sessionState_.DiffState.LeftDocument == document) {
-                sessionState_.DiffState.RightDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
+            if (sessionState_.SectionDiffState.LeftDocument == document) {
+                sessionState_.SectionDiffState.RightDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
             }
-            else if (sessionState_.DiffState.RightDocument == document) {
-                sessionState_.DiffState.LeftDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
+            else if (sessionState_.SectionDiffState.RightDocument == document) {
+                sessionState_.SectionDiffState.LeftDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
             }
         }
 
@@ -1089,14 +1098,14 @@ namespace IRExplorerUI {
         }
 
         public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
-            if (sessionState_.DiffState.IsEnabled && targetDiffDocument != null) {
+            if (sessionState_.SectionDiffState.IsEnabled && targetDiffDocument != null) {
                 IRDocument diffDocument = null;
 
-                if (targetDiffDocument == sessionState_.DiffState.LeftDocument.TextView) {
-                    diffDocument = sessionState_.DiffState.LeftDocument.TextView;
+                if (targetDiffDocument == sessionState_.SectionDiffState.LeftDocument.TextView) {
+                    diffDocument = sessionState_.SectionDiffState.LeftDocument.TextView;
                 }
-                else if (targetDiffDocument == sessionState_.DiffState.RightDocument.TextView) {
-                    diffDocument = sessionState_.DiffState.RightDocument.TextView;
+                else if (targetDiffDocument == sessionState_.SectionDiffState.RightDocument.TextView) {
+                    diffDocument = sessionState_.SectionDiffState.RightDocument.TextView;
                 }
 
                 if (diffDocument != null) {
@@ -1131,7 +1140,7 @@ namespace IRExplorerUI {
             var searcher = new SectionTextSearcher(docInfo.Loader);
 
             if (searchInfo.SearchAll) {
-                if (sessionState_.DiffState.IsEnabled) {
+                if (sessionState_.SectionDiffState.IsEnabled) {
                     return new SectionSearchResult(section);
                 }
 
@@ -1186,9 +1195,9 @@ namespace IRExplorerUI {
         }
 
         public void SaveDocumentState(object stateObject, IRTextSection section) {
-            if (sessionState_.DiffState.IsEnabled) {
-                if (section == sessionState_.DiffState.LeftSection ||
-                    section == sessionState_.DiffState.RightSection) {
+            if (sessionState_.SectionDiffState.IsEnabled) {
+                if (section == sessionState_.SectionDiffState.LeftSection ||
+                    section == sessionState_.SectionDiffState.RightSection) {
                     return;
                 }
             }
@@ -1197,9 +1206,9 @@ namespace IRExplorerUI {
         }
 
         public object LoadDocumentState(IRTextSection section) {
-            if (sessionState_.DiffState.IsEnabled) {
-                if (section == sessionState_.DiffState.LeftSection ||
-                    section == sessionState_.DiffState.RightSection) {
+            if (sessionState_.SectionDiffState.IsEnabled) {
+                if (section == sessionState_.SectionDiffState.LeftSection ||
+                    section == sessionState_.SectionDiffState.RightSection) {
                     return null;
                 }
             }
