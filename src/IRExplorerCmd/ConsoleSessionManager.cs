@@ -65,7 +65,7 @@ namespace IRExplorerCmd {
         }
 
         private LoadedDocument LoadDocument(string path) {
-            var result = new LoadedDocument(path);
+            var result = new LoadedDocument(path, Guid.NewGuid());
             result.Loader = new DocumentSectionLoader(path, CompilerInfo.IR);
             result.Summary = result.Loader.LoadDocument(null);
             sessionState_.RegisterLoadedDocument(result);

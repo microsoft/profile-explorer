@@ -41,6 +41,7 @@
 		<StartupObject>IRExplorerUI.App</StartupObject>
 		<RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
 		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
+		<SignAssembly>false</SignAssembly>
 	</PropertyGroup>
 
 	<ItemGroup>
