@@ -42,7 +42,7 @@ namespace IRExplorerUI {
         void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args);
         void SaveDocumentState(object stateObject, IRTextSection section);
         void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section);
-        Task SwitchDocumentSection(OpenSectionEventArgs args, IRDocument document);
+        Task SwitchDocumentSectionAsync(OpenSectionEventArgs args, IRDocument document);
         bool SwitchToPreviousSection(IRTextSection section, IRDocument document);
         bool SwitchToNextSection(IRTextSection section, IRDocument document);
         void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations);

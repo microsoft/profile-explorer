@@ -830,11 +830,11 @@ namespace IRExplorerUI {
 
         private void SetupSectionPanel() {
             SectionPanel.CompilerInfo = compilerInfo_;
-            SectionPanel.MainSummary = mainDocument_.Summary;
-            SectionPanel.MainTitle = mainDocument_.FileName;
+            SectionPanel.MainSummary = sessionState_.MainDocument.Summary;
+            SectionPanel.MainTitle = sessionState_.MainDocument.FileName;
 
-            if (diffDocument_ != null) {
-                ShowSectionPanelDiffs(diffDocument_);
+            if (sessionState_.IsInTwoDocumentsDiffMode) {
+                ShowSectionPanelDiffs(sessionState_.DiffDocument);
             }
 
             SectionPanel.OnSessionStart();

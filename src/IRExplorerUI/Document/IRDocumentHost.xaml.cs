@@ -522,7 +522,7 @@ namespace IRExplorerUI {
 
         private async void SectionPanel_OpenSection(object sender, OpenSectionEventArgs e) {
             SectionPanelHost.Visibility = Visibility.Collapsed;
-            await Session.SwitchDocumentSection(e, Session.CurrentDocument);
+            await Session.SwitchDocumentSectionAsync(e, Session.CurrentDocument);
             TextView.Focus();
         }
 
@@ -590,7 +590,7 @@ namespace IRExplorerUI {
             // Ensure the right section is being displayed.
             duringSwitchSearchResults_ = true;
             var openArgs = new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent);
-            await Session.SwitchDocumentSection(openArgs, TextView);
+            await Session.SwitchDocumentSectionAsync(openArgs, TextView);
             duringSwitchSearchResults_ = false;
 
             // Show the search panel and mark all results on the document.

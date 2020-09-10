@@ -289,7 +289,7 @@ namespace IRExplorerUI {
                 return null;
             }
 
-            return await SwitchDocumentSection(
+            return await OpenDocumentSection(
                     new OpenSectionEventArgs(previousDebugSection_, OpenSectionKind.ReplaceCurrent));
         }
 
@@ -318,7 +318,7 @@ namespace IRExplorerUI {
 
         private void DebugService_OnIRUpdated(object sender, UpdateIRRequest e) {
             Dispatcher.BeginInvoke(new Action(async () => {
-                if (mainDocument_ == null) {
+                if (sessionState_.MainDocument == null) {
                     return;
                 }
 
@@ -335,7 +335,7 @@ namespace IRExplorerUI {
                     previousDebugSection_ = null;
                     debugSectionId_ = 0;
                     debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
-                    mainDocument_.Summary.AddFunction(debugFunction_);
+                    sessionState_.MainDocument.Summary.AddFunction(debugFunction_);
                 }
 
                 string sectionName = $"Version {debugSectionId_ + 1}";
@@ -381,7 +381,7 @@ namespace IRExplorerUI {
                     verticalOffset = document.TextView.VerticalOffset;
                 }
 
-                await SwitchDocumentSection(new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent), document);
+                await OpenDocumentSection(new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent), document);
 
                 //? TODO: Diff only if enabled
                 if (previousDebugSection_ != null && document != null) {
@@ -428,7 +428,7 @@ namespace IRExplorerUI {
                 EndSession();
 
                 FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
-                var result = new LoadedDocument("Debug session");
+                var result = new LoadedDocument("Debug session", Guid.NewGuid());
                 debugSections_ = new DebugSectionLoader(compilerInfo_.IR);
                 debugSummary_ = debugSections_.LoadDocument(null);
                 result.Loader = debugSections_;

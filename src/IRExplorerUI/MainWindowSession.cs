@@ -30,9 +30,9 @@ namespace IRExplorerUI {
         public IRDocument CurrentDocument => FindActiveDocumentHost()?.TextView;
 
         public bool SilentMode { get; set; }
-        public bool IsInTwoDocumentsDiffMode => diffDocument_ != null;
-        public IRTextSummary MainDocumentSummary => mainDocument_?.Summary;
-        public IRTextSummary DiffDocumentSummary => diffDocument_?.Summary;
+        public bool IsInTwoDocumentsDiffMode => sessionState_.IsInTwoDocumentsDiffMode;
+        public IRTextSummary MainDocumentSummary => sessionState_.MainDocument?.Summary;
+        public IRTextSummary DiffDocumentSummary => sessionState_.DiffDocument?.Summary;
 
         public IRTextSection CurrentDocumentSection {
             get {
@@ -104,7 +104,7 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private void InitializeFromLoadedSession(SessionState state) {
+        private async Task InitializeFromLoadedSession(SessionState state, Dictionary<Guid, LoadedDocument> idToDocumentMap) {
             sessionState_.Info.Notes = state.Info.Notes;
             int index = 0;
 
@@ -134,13 +134,30 @@ namespace IRExplorerUI {
             SetupSectionPanel();
             NotifyPanelsOfSessionStart();
 
-            //? TODO: Reload sections left open.
-            ///foreach (var sectionId in state.OpenSections) {
-            ///    var section = DocumentSummary.GetSectionWithId(sectionId);
-            ///    var args = new OpenSectionEventArgs(section, OpenSectionKind.NewTabDockRight);
-            ///    await SwitchDocumentSection(args);
-            ///    SectionPanel.SelectSection(section);
-            ///}
+            // Reload sections left open.
+            foreach (var openSection in state.OpenSections) {
+                var loadedDoc = idToDocumentMap[openSection.DocumentId];
+                var section = loadedDoc.Summary.GetSectionWithId(openSection.SectionId);
+                var openKind = OpenSectionKind.NewTab;
+
+                if (sessionState_.IsInTwoDocumentsDiffMode) {
+                    if (loadedDoc == sessionState_.MainDocument) {
+                        openKind = OpenSectionKind.NewTabDockLeft;
+                    }
+                    else if (loadedDoc == sessionState_.DiffDocument) {
+                        openKind = OpenSectionKind.NewTabDockRight;
+                    }
+                }
+
+                var args = new OpenSectionEventArgs(section, openKind);
+                await OpenDocumentSection(args);
+            }
+
+            if (sessionState_.IsInTwoDocumentsDiffMode) {
+                ShowSectionPanelDiffs(sessionState_.DiffDocument);
+            }
+
+            //? TODO: Diff mode is not restored
 
             StartAutoSaveTimer();
         }
@@ -149,7 +166,7 @@ namespace IRExplorerUI {
             try {
                 NotifyPanelsOfSessionSave();
                 NotifyDocumentsOfSessionSave();
-                var data = await sessionState_.SerializeSession(mainDocument_.Loader).ConfigureAwait(false);
+                var data = await sessionState_.SerializeSession().ConfigureAwait(false);
 
                 if (data != null) {
                     await File.WriteAllBytesAsync(filePath, data).ConfigureAwait(false);
@@ -223,8 +240,6 @@ namespace IRExplorerUI {
             sessionState_.DocumentChanged -= DocumentState_DocumentChangedEvent;
             sessionState_.EndSession();
             sessionState_ = null;
-            mainDocument_ = null;
-            diffDocument_ = null;
 
             FunctionAnalysisCache.ResetCache();
             DiffModeButton.IsEnabled = false;
@@ -243,8 +258,8 @@ namespace IRExplorerUI {
             try {
                 EndSession();
                 UpdateUIBeforeLoadDocument(filePath);
-                var result = await Task.Run(() => LoadDocument(filePath, UpdateIRDocumentLoadProgress));
-
+                var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
+                                                               UpdateIRDocumentLoadProgress));
                 if (result != null) {
                     SetupOpenedIRDocument(SessionKind.Default, filePath, result);
                     return true;
@@ -302,9 +317,9 @@ namespace IRExplorerUI {
         }
 
         private void SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
-            mainDocument_ = result;
             StartSession(filePath, sessionKind);
             sessionState_.RegisterLoadedDocument(result);
+            sessionState_.MainDocument = result;
 
             UpdateUIAfterLoadDocument();
             SetupSectionPanel();
@@ -314,8 +329,8 @@ namespace IRExplorerUI {
 
         private async Task<bool> OpenDiffIRDocument(string filePath) {
             try {
-                var result = await Task.Run(() => LoadDocument(filePath, UpdateIRDocumentLoadProgress));
-
+                var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
+                                                               UpdateIRDocumentLoadProgress));
                 if (result != null) {
                     SetupOpenedDiffIRDocument(filePath, result);
                     return true;
@@ -330,15 +345,15 @@ namespace IRExplorerUI {
         }
 
         private void SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
-            diffDocument_ = result;
             sessionState_.RegisterLoadedDocument(result);
+            sessionState_.DiffDocument = result;
             UpdateUIAfterLoadDocument();
             ShowSectionPanelDiffs(result);
         }
 
-        private LoadedDocument LoadDocument(string path, ProgressInfoHandler progressHandler) {
+        private LoadedDocument LoadDocument(string path, Guid id, ProgressInfoHandler progressHandler) {
             try {
-                var result = new LoadedDocument(path);
+                var result = new LoadedDocument(path, id);
                 result.Loader = new DocumentSectionLoader(path, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
@@ -349,9 +364,9 @@ namespace IRExplorerUI {
             }
         }
 
-        private LoadedDocument LoadDocument(byte[] data, string path, ProgressInfoHandler progressHandler) {
+        private LoadedDocument LoadDocument(byte[] data, string path, Guid id, ProgressInfoHandler progressHandler) {
             try {
-                var result = new LoadedDocument(path);
+                var result = new LoadedDocument(path, id);
                 result.Loader = new DocumentSectionLoader(data, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
@@ -364,32 +379,36 @@ namespace IRExplorerUI {
 
         private async Task<bool> LoadSessionDocument(SessionState state) {
             try {
-                //? TODO: Proper support for multiple docs
                 StartSession(state.Info.FilePath, SessionKind.FileSession);
-                bool failed = false;
+                var idToDocumentMap = new Dictionary<Guid, LoadedDocument>();
 
                 foreach (var docState in state.Documents) {
-                    var result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath, UpdateIRDocumentLoadProgress));
+                    var result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath,
+                                                                   docState.Id, UpdateIRDocumentLoadProgress));
+                    if (result == null) {
+                        UpdateUIAfterLoadDocument();
+                        return false;
+                    }
 
-                    if (result != null) {
-                        sessionState_.RegisterLoadedDocument(result);
+                    sessionState_.RegisterLoadedDocument(result);
+                    idToDocumentMap[docState.Id] = result;
 
-                        if (mainDocument_ == null) {
-                            mainDocument_ = result;
+                    if (state.IsInTwoDocumentsDiffMode) {
+                        if (docState.Id == state.MainDocumentId) {
+                            sessionState_.MainDocument = result;
                         }
-                        else {
-                            Debug.Assert(diffDocument_ == null);
-                            diffDocument_ = result;
+                        else if (docState.Id == state.DiffDocumentId) {
+                            sessionState_.DiffDocument = result;
                         }
                     }
                     else {
-                        failed = true;
+                        sessionState_.MainDocument = result;
                     }
                 }
 
                 UpdateUIAfterLoadDocument();
-                InitializeFromLoadedSession(state);
-                return !failed;
+                await InitializeFromLoadedSession(state, idToDocumentMap);
+                return true;
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load in-memory document: {ex}");
@@ -400,10 +419,10 @@ namespace IRExplorerUI {
         }
 
         private async void SectionPanel_OpenSection(object sender, OpenSectionEventArgs args) {
-            await SwitchDocumentSection(args, args.TargetDocument);
+            await OpenDocumentSection(args, args.TargetDocument);
         }
 
-        private async Task<IRDocumentHost> SwitchDocumentSection(OpenSectionEventArgs args,
+        private async Task<IRDocumentHost> OpenDocumentSection(OpenSectionEventArgs args,
                                                                  IRDocumentHost targetDocument = null,
                                                                  bool awaitExtraTasks = true) {
             var document = targetDocument;
@@ -910,10 +929,10 @@ namespace IRExplorerUI {
         }
 
         private async Task ReloadDocument(string filePath) {
-            if (diffDocument_ != null) {
+            if (sessionState_.DiffDocument != null) {
                 // If the file is one of the diff documents, reload in diff mode.
-                if (filePath == mainDocument_.FilePath || filePath == diffDocument_.FilePath) {
-                    await OpenBaseDiffIRDocumentsImpl(mainDocument_.FilePath, diffDocument_.FilePath);
+                if (filePath == sessionState_.MainDocument.FilePath || filePath == sessionState_.DiffDocument.FilePath) {
+                    await OpenBaseDiffIRDocumentsImpl(sessionState_.MainDocument.FilePath, sessionState_.DiffDocument.FilePath);
                     return;
                 }
             }

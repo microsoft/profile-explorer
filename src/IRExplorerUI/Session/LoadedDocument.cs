@@ -10,18 +10,24 @@ using ProtoBuf;
 namespace IRExplorerUI {
     [ProtoContract]
     public class LoadedDocumentState {
-        [ProtoMember(2)]
-        public byte[] DocumentText;
         [ProtoMember(1)]
         public string FilePath;
-        [ProtoMember(4)]
-        public List<Tuple<ulong, PanelObjectPairState>> PanelStates;
+        [ProtoMember(2)]
+        public byte[] DocumentText;
         [ProtoMember(3)]
         public List<Tuple<ulong, byte[]>> SectionStates;
+        [ProtoMember(4)]
+        public List<Tuple<ulong, PanelObjectPairState>> PanelStates;
+        [ProtoMember(5)]
+        public Guid Id;
 
         public LoadedDocumentState() {
             SectionStates = new List<Tuple<ulong, byte[]>>();
             PanelStates = new List<Tuple<ulong, PanelObjectPairState>>();
+        }
+
+        public LoadedDocumentState(Guid id) : this() {
+            Id = id;
         }
     }
 
@@ -31,12 +37,14 @@ namespace IRExplorerUI {
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
 
-        public LoadedDocument(string filePath) {
+        public LoadedDocument(string filePath, Guid id) {
             FilePath = filePath;
             PanelStates = new Dictionary<IRTextSection, List<PanelObjectPair>>();
             SectionStates = new Dictionary<IRTextSection, object>();
+            Id = id;
         }
 
+        public Guid Id { get; set; }
         public string FilePath { get; set; }
         public IRTextSectionLoader Loader { get; set; }
         public IRTextSummary Summary { get; set; }
@@ -104,7 +112,7 @@ namespace IRExplorerUI {
         }
 
         public LoadedDocumentState SerializeDocument() {
-            var state = new LoadedDocumentState();
+            var state = new LoadedDocumentState(Id);
             state.FilePath = FilePath;
             state.DocumentText = Loader.GetDocumentTextBytes();
 

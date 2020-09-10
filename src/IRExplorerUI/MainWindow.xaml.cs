@@ -81,8 +81,6 @@ namespace IRExplorerUI {
 
         private Dictionary<GraphKind, GraphLayoutCache> graphLayout_;
         private bool ignoreDiffModeButtonEvent_;
-        private LoadedDocument mainDocument_;
-        private LoadedDocument diffDocument_;
         private Dictionary<ToolPanelKind, List<PanelHostInfo>> panelHostSet_;
         private IRTextSection previousDebugSection_;
         private SessionStateManager sessionState_;
@@ -155,16 +153,16 @@ namespace IRExplorerUI {
             SectionPanel.SetSectionAnnotationState(section, hasAnnotations);
         }
 
-        public async Task SwitchDocumentSection(OpenSectionEventArgs args, IRDocument document) {
+        public async Task SwitchDocumentSectionAsync(OpenSectionEventArgs args, IRDocument document) {
             var documentHost = FindDocumentHost(document);
 
             if (documentHost != null) {
                 // Use the existing editor to show the section.
-                await SwitchDocumentSection(args, documentHost);
+                await OpenDocumentSection(args, documentHost);
             }
             else {
                 // Open a new editor to show the section.
-                await SwitchDocumentSection(args);
+                await OpenDocumentSection(args);
             }
 
             SectionPanel.SelectSection(args.Section, false);
@@ -436,7 +434,7 @@ namespace IRExplorerUI {
                     }
                     else if (args[3].EndsWith("func")) {
                         var funcName = args[4];
-                        var func = mainDocument_.Summary.FindFunction(funcName);
+                        var func = sessionState_.MainDocument.Summary.FindFunction(funcName);
 
                         if (func != null) {
                             SectionPanel.SelectFunction(func);
