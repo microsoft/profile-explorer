@@ -223,30 +223,29 @@ namespace IRExplorerCore.Analysis {
                     }
 
                     foreach (var destOp in instr.Destinations) {
-                        if (IsSameSymbolOperand(destOp, op)) {
-                            if (filterAction != null) {
-                                if (!filterAction(destOp, ReferenceKind.Store)) {
-                                    continue;
-                                }
-                            }
+                        var comparedOp = destOp;
 
-                            list.Add(new Reference(destOp, ReferenceKind.Store));
+                        if (destOp.IsIndirection) {
+                            comparedOp = destOp.IndirectionBaseValue;
+                        }
+
+                        if (IsSameSymbolOperand(comparedOp, op)) {
+                            CreateReference(destOp, ReferenceKind.Store, list, filterAction);
                         }
                     }
 
                     foreach (var sourceOp in instr.Sources) {
-                        if (IsSameSymbolOperand(sourceOp, op)) {
-                            var refKind = sourceOp.IsAddress
+                        var comparedOp = sourceOp;
+
+                        if (sourceOp.IsIndirection) {
+                            comparedOp = sourceOp.IndirectionBaseValue;
+                        }
+
+                        if (IsSameSymbolOperand(comparedOp, op)) {
+                            var refKind = comparedOp.IsAddress
                                 ? ReferenceKind.Address
                                 : ReferenceKind.Load;
-
-                            if (filterAction != null) {
-                                if (!filterAction(sourceOp, refKind)) {
-                                    continue;
-                                }
-                            }
-
-                            list.Add(new Reference(sourceOp, refKind));
+                            CreateReference(sourceOp, refKind, list, filterAction);
                         }
                     }
                 }
@@ -257,6 +256,17 @@ namespace IRExplorerCore.Analysis {
             }
 
             return list;
+        }
+
+        private void CreateReference(OperandIR operand, ReferenceKind refKind, List<Reference> list,
+                                     Func<IRElement, ReferenceKind, bool> filterAction) {
+            if (filterAction != null) {
+                if (!filterAction(operand, refKind)) {
+                    return;
+                }
+            }
+
+            list.Add(new Reference(operand, refKind));
         }
 
         public List<Reference> FindAllStores(IRElement element) {

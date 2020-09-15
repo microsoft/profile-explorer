@@ -11,10 +11,9 @@ namespace IRExplorerUI.Compilers.UTC {
             var query = new QueryDefinition(typeof(UTCValueNumberQuery), "Value Numbers",
                                                    "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("Temporary marking", QueryValueKind.Bool);
+            query.Data.AddInput("Consider only dominated values", QueryValueKind.Bool);
             query.Data.AddInput("Marking color", QueryValueKind.Color);
             query.Data.AddOutput("Value number", QueryValueKind.String);
-            query.Data.AddOutput("Same value number", QueryValueKind.Number);
             return query;
         }
 
@@ -28,7 +27,6 @@ namespace IRExplorerUI.Compilers.UTC {
         public bool Execute(QueryData data) {
             data.ResetResults();
             var element = data.GetInput<IRElement>("Operand");
-            bool markSameVN = data.GetInput<bool>("Mark same value number");
             string vn = UTCRemarkParser.ExtractVN(element);
 
             if (vn == null) {

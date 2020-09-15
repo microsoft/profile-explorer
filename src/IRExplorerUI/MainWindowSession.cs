@@ -920,7 +920,10 @@ namespace IRExplorerUI {
             }
             else {
                 // Queue for later, when the application gets focus back.
-                changedDocuments_[loadedDoc.FilePath] = eventTime;
+                // A lock is needed, since the event can fire concurrently.
+                lock (lockObject_) {
+                    changedDocuments_[loadedDoc.FilePath] = eventTime;
+                }
             }
         }
 
