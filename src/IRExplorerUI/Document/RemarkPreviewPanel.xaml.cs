@@ -514,9 +514,10 @@ namespace IRExplorerUI.Document {
             RemarkList.UnselectAll();
             SectionLabel.Content = "";
             ShowPreview = false;
-            UpdateSize();
 
             Element = element;
+            UpdateSize();
+
         }
 
         private void RemarkList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {

@@ -949,6 +949,19 @@
                 </StackPanel>
             </ToggleButton>
 
+
+            <Button
+                x:Name="ScreenshotButton"
+                Width="18"
+                Height="18"
+                VerticalAlignment="Center"
+                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                Click="ScreenshotButton_Click"
+                FontSize="11"
+                ToolTip="Take screenshot of IR Explorer and save it to clipboard">
+                <Image VerticalAlignment="Center" Source="{StaticResource MonitorIcon}" />
+            </Button>
+
             <ToggleButton
                 x:Name="AlwaysOnTopButton"
                 Width="18"
@@ -959,7 +972,6 @@
                 FontSize="11"
                 ToolTip="Toggle always on top">
                 <Image VerticalAlignment="Center" Source="{StaticResource PinIcon}" />
-
             </ToggleButton>
 
             <Separator />

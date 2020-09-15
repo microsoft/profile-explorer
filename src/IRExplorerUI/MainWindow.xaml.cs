@@ -37,6 +37,7 @@ using IRExplorerUI.Scripting;
 using IRExplorerUI.Compilers.UTC;
 using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
+using System.Windows.Media.Imaging;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -89,6 +90,7 @@ namespace IRExplorerUI {
         private List<DraggablePopup> detachedPanels_;
         private Point previousWindowPosition_;
         private DateTime lastDocumentLoadTime_;
+        private object lockObject_;
 
         public MainWindow() {
             App.WindowShowTime = DateTime.UtcNow;
@@ -99,6 +101,7 @@ namespace IRExplorerUI {
             compilerInfo_ = new UTCCompilerInfoProvider();
             changedDocuments_ = new Dictionary<string, DateTime>();
             detachedPanels_ = new List<DraggablePopup>();
+            lockObject_ = new object();
 
             SetupMainWindow();
             SetupGraphLayoutCache();
@@ -196,18 +199,25 @@ namespace IRExplorerUI {
 
         private async void MainWindow_Activated(object sender, EventArgs e) {
             appIsActivated_ = true;
+            var reloadedDocuments = new List<string>();
 
-            foreach (var pair in changedDocuments_) {
-                if (pair.Value < lastDocumentLoadTime_) {
-                    continue; // Event happened before the last document reload, ignore.
+            lock (lockObject_) {
+                foreach (var pair in changedDocuments_) {
+                    if (pair.Value < lastDocumentLoadTime_) {
+                        continue; // Event happened before the last document reload, ignore.
+                    }
+
+                    reloadedDocuments.Add(pair.Key);
                 }
 
-                if (ShowDocumentReloadQuery(pair.Key)) {
-                    await ReloadDocument(pair.Key);
-                }
+                changedDocuments_.Clear();
             }
 
-            changedDocuments_.Clear();
+            foreach (var documentPath in reloadedDocuments) {
+                if (ShowDocumentReloadQuery(documentPath)) {
+                    await ReloadDocument(documentPath);
+                }
+            }
         }
 
         private void SetupMainWindow() {
@@ -396,9 +406,15 @@ namespace IRExplorerUI {
             if (args.Length >= 3) {
                 string baseFilePath = args[1];
                 string diffFilePath = args[2];
+                bool opened = false;
 
                 if (File.Exists(baseFilePath) && File.Exists(diffFilePath)) {
-                    await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
+                    opened = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
+                }
+
+                if (!opened) {
+                    MessageBox.Show($"Failed to open base/diff files {baseFilePath} and {diffFilePath}");
+                    return;
                 }
 
                 if (args.Length >= 5 && IsInTwoDocumentsDiffMode) {
@@ -912,6 +928,21 @@ namespace IRExplorerUI {
             Topmost = state;
             AlwaysOnTopCheckbox.IsChecked = state;
             AlwaysOnTopButton.IsChecked = state;
+        }
+
+        private void ScreenshotButton_Click(object sender, RoutedEventArgs e) {
+            double width = this.ActualWidth;
+            double height = this.ActualHeight;
+            var bmpCopied = new RenderTargetBitmap((int)Math.Round(width), (int)Math.Round(height), 96, 96, PixelFormats.Default);
+            var dv = new DrawingVisual();
+
+            using (DrawingContext dc = dv.RenderOpen()) {
+                VisualBrush vb = new VisualBrush(this);
+                dc.DrawRectangle(vb, null, new Rect(new Point(), new Size(width, height)));
+            }
+
+            bmpCopied.Render(dv);
+            Clipboard.SetImage(bmpCopied);
         }
 
         private void SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
