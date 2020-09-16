@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace IRExplorerCore {
@@ -17,6 +19,7 @@ namespace IRExplorerCore {
         private StreamReader dataReader_;
         private Stream dataStream_;
         private long dataStreamSize_;
+        private Encoding dataStreamEncoding_;
         private bool expectSectionHeaders_;
 
         private Dictionary<string, IRTextFunction> functionMap_;
@@ -137,10 +140,35 @@ namespace IRExplorerCore {
             return GetRawPassOutputText(output, true);
         }
 
+        private Encoding DetectUTF8Encoding(Stream stream, Encoding defaultEncoding) {
+            // Check if the stream uses UTF8, otherwise fall back
+            // to a default encoding (ASCII) which is much faster to read.
+            Encoding encoding = new UTF8Encoding(true);
+            var preamble = encoding.GetPreamble();
+
+            if (stream.Length < preamble.Length) {
+                return defaultEncoding;
+            }
+
+            var position = stream.Position;
+            Span<byte> buffer = stackalloc byte[preamble.Length];
+            stream.Read(buffer);
+
+            for (int i = 0; i < preamble.Length; i++) {
+                if (buffer[i] != preamble[i]) {
+                    encoding = defaultEncoding;
+                    break;
+                }
+            }
+
+            stream.Position = position;
+            return encoding;
+        }
 
         private void Initialize() {
-            dataReader_ = new StreamReader(dataStream_, Encoding.UTF8,
-                                           true, STREAM_BUFFER_SIZE);
+            dataStreamEncoding_ = DetectUTF8Encoding(dataStream_, Encoding.ASCII);
+            dataReader_ = new StreamReader(dataStream_, dataStreamEncoding_,
+                                           false, STREAM_BUFFER_SIZE);
 
             prevLines_ = new string[3];
             summary_ = new IRTextSummary();
@@ -150,7 +178,8 @@ namespace IRExplorerCore {
         public byte[] GetDocumentTextData() {
             lock (this) {
                 dataStream_.Seek(0, SeekOrigin.Begin);
-                using var binaryReader = new BinaryReader(dataStream_, Encoding.UTF8, true);
+                var encoding = DetectUTF8Encoding(dataStream_, Encoding.ASCII);
+                using var binaryReader = new BinaryReader(dataStream_, encoding, true);
                 return binaryReader.ReadBytes((int)dataStream_.Length);
             }
         }
@@ -214,7 +243,8 @@ namespace IRExplorerCore {
             // to allow parallel loading of text.
             if (preloadedData_ != null) {
                 var reader = new MemoryStream(preloadedData_, true);
-                using var streamReader = new StreamReader(reader, Encoding.UTF8,
+                var encoding = DetectUTF8Encoding(reader, Encoding.ASCII);
+                using var streamReader = new StreamReader(reader, encoding,
                                                           true, STREAM_BUFFER_SIZE);
 
                 return ReadPassOutputText(streamReader, output, isOptionalOutput);
@@ -235,7 +265,7 @@ namespace IRExplorerCore {
                 // it is much faster to use the unfiltered text and avoid reading
                 // the text line by line to form the final string.
                 var span = preloadedData_.AsSpan((int)output.DataStartOffset, (int)output.Size);
-                return Encoding.UTF8.GetString(span);
+                return dataStreamEncoding_.GetString(span);
             }
 
             lock (this) {
@@ -418,48 +448,62 @@ namespace IRExplorerCore {
             return TextOffset(dataReader_);
         }
 
+        class StreamReaderFields {
+            public char[] CharBuffer;
+            public int CharPos;
+            public int CharLen;
+            public byte[] ByteBuffer;
+            public int ByteLen;
+
+            private static Action<StreamReader, StreamReaderFields> callback_;
+
+            static StreamReaderFields() {
+                // Create and compile to IL an function that reads the private fields
+                // form a StreamReader and saves the values.
+                var inputParam = Expression.Parameter(typeof(StreamReader));
+                var outputParam = Expression.Parameter(typeof(StreamReaderFields));
+                var block = Expression.Block(
+                    Expression.Assign(Expression.Field(outputParam, "CharBuffer"),
+                                      Expression.Field(inputParam, "_charBuffer")),
+                    Expression.Assign(Expression.Field(outputParam, "CharPos"),
+                                      Expression.Field(inputParam, "_charPos")),
+                    Expression.Assign(Expression.Field(outputParam, "CharLen"),
+                                      Expression.Field(inputParam, "_charLen")),
+                    Expression.Assign(Expression.Field(outputParam, "ByteBuffer"),
+                                      Expression.Field(inputParam, "_byteBuffer")),
+                    Expression.Assign(Expression.Field(outputParam, "ByteLen"),
+                                      Expression.Field(inputParam, "_byteLen"))
+                );
+
+                callback_ = Expression.Lambda<Action<StreamReader, StreamReaderFields>>(block, inputParam, outputParam).Compile();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static StreamReaderFields Read(StreamReader reader) {
+                var readerFields = new StreamReaderFields();
+                callback_(reader, readerFields);
+                return readerFields;
+            }
+        }
+
         private long TextOffset(StreamReader reader) {
-            //? TODO: This is a hack needed to get the proper offset in the stream.
+            // This is a hack needed to get the proper offset in the stream, see
             // https://stackoverflow.com/questions/5404267/streamreader-and-seeking
-            var flags = BindingFlags.DeclaredOnly |
-                        BindingFlags.NonPublic |
-                        BindingFlags.Instance |
-                        BindingFlags.GetField;
-
-            // The current buffer of decoded characters
-            var charBuffer = (char[])reader
-                                      .GetType()
-                                      .InvokeMember("_charBuffer", flags, null, reader, null);
-
-            // The index of the next char to be read from charBuffer
-            int charPos =
-                (int)reader.GetType().InvokeMember("_charPos", flags, null, reader, null);
-
-            // The number of decoded chars presently used in charBuffer
-            int charLen =
-                (int)reader.GetType().InvokeMember("_charLen", flags, null, reader, null);
-
-            // The current buffer of read bytes (byteBuffer.Length = 1024; this is critical).
-            var byteBuffer = (byte[])reader
-                                      .GetType()
-                                      .InvokeMember("_byteBuffer", flags, null, reader, null);
-
-            // The number of bytes read while advancing reader.BaseStream.Position to (re)fill charBuffer
-            int byteLen =
-                (int)reader.GetType().InvokeMember("_byteLen", flags, null, reader, null);
+            // Dynamic code generation is used go have an efficient way of reading out the private fields.
+            var fields = StreamReaderFields.Read(reader);
 
             // The number of bytes the remaining chars use in the original encoding.
-            int numBytesLeft =
-                reader.CurrentEncoding.GetByteCount(charBuffer, charPos, charLen - charPos);
+            int numBytesLeft = reader.CurrentEncoding.GetByteCount(fields.CharBuffer, fields.CharPos,
+                                                                   fields.CharLen - fields.CharPos);
 
             // For variable-byte encodings, deal with partial chars at the end of the buffer
             int numFragments = 0;
 
-            if (byteLen > 0 && !reader.CurrentEncoding.IsSingleByte) {
+            if (fields.ByteLen > 0 && !reader.CurrentEncoding.IsSingleByte) {
                 if (reader.CurrentEncoding.CodePage == 65001) { // UTF-8 
                     byte byteCountMask = 0;
 
-                    while (byteBuffer[byteLen - numFragments - 1] >> 6 == 2
+                    while (fields.ByteBuffer[fields.ByteLen - numFragments - 1] >> 6 == 2
                     ) // if the byte is "10xx xxxx", it's a continuation-byte
                     {
                         byteCountMask |=
@@ -468,7 +512,7 @@ namespace IRExplorerCore {
                             ); // count bytes & build the "complete char" mask
                     }
 
-                    if (byteBuffer[byteLen - numFragments - 1] >> 6 == 3
+                    if (fields.ByteBuffer[fields.ByteLen - numFragments - 1] >> 6 == 3
                     ) // if the byte is "11xx xxxx", it starts a multi-byte char.
                     {
                         byteCountMask |=
@@ -479,19 +523,19 @@ namespace IRExplorerCore {
 
                     // see if we found as many bytes as the leading-byte says to expect
                     if (numFragments > 1 &&
-                        byteBuffer[byteLen - numFragments] >> (7 - numFragments) ==
+                        fields.ByteBuffer[fields.ByteLen - numFragments] >> (7 - numFragments) ==
                         byteCountMask) {
                         numFragments = 0; // no partial-char in the byte-buffer to account for
                     }
                 }
                 else if (reader.CurrentEncoding.CodePage == 1200) { // UTF-16LE
-                    if (byteBuffer[byteLen - 1] >= 0xd8)            // high-surrogate
+                    if (fields.ByteBuffer[fields.ByteLen - 1] >= 0xd8)            // high-surrogate
                     {
                         numFragments = 2; // account for the partial character
                     }
                 }
                 else if (reader.CurrentEncoding.CodePage == 1201) { // UTF-16BE
-                    if (byteBuffer[byteLen - 2] >= 0xd8)            // high-surrogate
+                    if (fields.ByteBuffer[fields.ByteLen - 2] >= 0xd8)            // high-surrogate
                     {
                         numFragments = 2; // account for the partial character
                     }
