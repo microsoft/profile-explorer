@@ -98,6 +98,12 @@ namespace IRExplorerUI {
 
             if (Session.LoadPanelState(this, section) is DefinitionPanelState savedState) {
                 OnElementSelected(new IRElementEventArgs { Element = savedState.DefinedOperand });
+
+                if (savedState.CaretOffset > TextView.Text.Length) {
+                    MessageBox.Show("Invalid offset in definition window text, attach debugger");
+                    Utils.WaitForDebugger();
+                }
+
                 TextView.SetCaretAtOffset(savedState.CaretOffset);
                 TextView.ScrollToHorizontalOffset(savedState.HorizontalOffset);
                 TextView.ScrollToVerticalOffset(savedState.VerticalOffset);

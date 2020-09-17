@@ -4,7 +4,7 @@
 using System;
 
 namespace IRExplorerCore.UTC {
-    public sealed class UTCSectionReader : SectionReaderBase, IDisposable {
+    public sealed class UTCSectionReader : SectionReaderBase {
         private static readonly char[] WhitespaceChars = { ' ', '\t' };
 
         private const string SectionStartLine = "*********************";

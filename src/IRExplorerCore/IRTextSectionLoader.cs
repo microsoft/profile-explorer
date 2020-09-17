@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using IRExplorerCore.IR;
 
@@ -24,7 +25,7 @@ namespace IRExplorerCore {
         }
     }
 
-    public abstract class IRTextSectionLoader {
+    public abstract class IRTextSectionLoader : IDisposable {
         protected Dictionary<IRTextSection, ParsedIRTextSection> sectionCache_;
         protected ICompilerIRInfo irInfo_;
         protected bool cacheEnabled_;
@@ -87,5 +88,21 @@ namespace IRExplorerCore {
         public void ResumeCaching() {
             cacheEnabled_ = true;
         }
+
+        #region IDisposable Support
+
+        protected bool disposed_;
+        protected abstract void Dispose(bool disposing);
+
+        ~IRTextSectionLoader() {
+            Dispose(false);
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }

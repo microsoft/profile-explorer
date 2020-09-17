@@ -202,7 +202,7 @@ namespace IRExplorerUI {
         }
     }
 
-    public class SessionStateManager {
+    public class SessionStateManager : IDisposable {
         // {IR section ID -> list [{panel ID, state}]}
         private object lockObject_;
         private List<LoadedDocument> documents_;
@@ -247,10 +247,9 @@ namespace IRExplorerUI {
             }
         }
 
-        public void RemoveLoadedDocuemnt(LoadedDocument diffDocument_) {
-            diffDocument_.ChangeDocumentWatcherState(false);
-            documents_.Remove(diffDocument_);
-            diffDocument_.Dispose();
+        public void RemoveLoadedDocuemnt(LoadedDocument document) {
+            document.ChangeDocumentWatcherState(false);
+            documents_.Remove(document);
         }
 
         public LoadedDocument FindLoadedDocument(IRTextSection section) {
@@ -389,12 +388,37 @@ namespace IRExplorerUI {
             DocumentChanged?.Invoke(sender, e);
         }
 
-        internal void ChangeDocumentWatcherState(bool enabled) {
+        public void ChangeDocumentWatcherState(bool enabled) {
             watchDocumentChanges_ = enabled;
 
             foreach (var docInfo in documents_) {
                 docInfo.ChangeDocumentWatcherState(enabled);
             }
         }
+
+        #region IDisposable Support
+
+        private bool disposed_;
+
+        protected virtual void Dispose(bool disposing) {
+            if (!disposed_) {
+                documents_.ForEach(item => item.Dispose());
+                documents_ = null;
+                MainDocument = null;
+                DiffDocument = null;
+                disposed_ = true;
+            }
+        }
+
+        ~SessionStateManager() {
+            Dispose(false);
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }

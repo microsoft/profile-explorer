@@ -14,6 +14,12 @@
 		<PlatformTarget>x64</PlatformTarget>
 	</PropertyGroup>
 
+	<PropertyGroup>
+		<ServerGarbageCollection>true</ServerGarbageCollection>
+		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+		<RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+	</PropertyGroup>
+
 	<ItemGroup>
 		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
 		<ProjectReference Include="..\IRExplorerUI\IRExplorerUI.csproj" />

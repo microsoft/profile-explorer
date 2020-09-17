@@ -66,15 +66,24 @@ namespace IRExplorerUI.Scripting {
             }
         }
 
+        private dynamic script_;
+
+        private void LoadScript() {
+            if (script_ == null) {
+                // Load and compile the script only once.
+                CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
+                script_ = CSScript.Evaluator.LoadCode(Code);
+            }
+        }
+
         private bool Execute(ScriptSession session, bool fromWarmUp) {
             if (!fromWarmUp && !WarmUp()) {
                 return false;
             }
 
             try {
-                CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
-                dynamic script = CSScript.Evaluator.LoadCode(Code);
-                ScriptResult = script.Execute(session);
+                LoadScript();
+                ScriptResult = script_.Execute(session);
                 return true;
             }
             catch (Exception ex) {

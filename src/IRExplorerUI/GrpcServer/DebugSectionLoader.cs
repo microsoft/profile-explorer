@@ -106,5 +106,11 @@ namespace IRExplorerUI {
         public override string GetRawSectionPassOutput(IRPassOutput output) {
             return "";
         }
+
+        protected override void Dispose(bool disposing) {
+            if (!disposed_) {
+                disposed_ = true;
+            }
+        }
     }
 }

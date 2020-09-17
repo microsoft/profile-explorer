@@ -43,30 +43,30 @@ namespace IRExplorerCmd {
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => throw new NotImplementedException();
     }
 
-    public class ConsoleSessionManager : ISession {
+    public class ConsoleSession : ISession, IDisposable {
         ICompilerInfoProvider compilerInfo_;
         SessionStateManager sessionState_;
         LoadedDocument mainDocument_;
         LoadedDocument diffDocument_;
 
-        public ConsoleSessionManager(ICompilerInfoProvider compilerInfo) {
+        public ConsoleSession(ICompilerInfoProvider compilerInfo) {
             compilerInfo_ = compilerInfo;
-            sessionState_ = new SessionStateManager("", SessionKind.Default);
+            sessionState_ = new SessionStateManager("", SessionKind.FileSession);
         }
 
-        public bool LoadMainDocument(string path) {
-            mainDocument_ = LoadDocument(path);
+        public bool LoadMainDocument(string path, bool useCache = true) {
+            mainDocument_ = LoadDocument(path, useCache);
             return mainDocument_ != null;
         }
 
-        public bool LoadDiffDocument(string path) {
-            diffDocument_ = LoadDocument(path);
+        public bool LoadDiffDocument(string path, bool useCache = true) {
+            diffDocument_ = LoadDocument(path, useCache);
             return diffDocument_ != null;
         }
 
-        private LoadedDocument LoadDocument(string path) {
+        private LoadedDocument LoadDocument(string path, bool useCache) {
             var result = new LoadedDocument(path, Guid.NewGuid());
-            result.Loader = new DocumentSectionLoader(path, CompilerInfo.IR);
+            result.Loader = new DocumentSectionLoader(path, CompilerInfo.IR, useCache);
             result.Summary = result.Loader.LoadDocument(null);
             sessionState_.RegisterLoadedDocument(result);
             return result;
@@ -195,5 +195,31 @@ namespace IRExplorerCmd {
         public void LoadDocumentQuery(QueryDefinition query, IRDocument document) {
             throw new NotImplementedException();
         }
+
+        #region IDisposable Support
+
+        private bool disposed_;
+
+        protected virtual void Dispose(bool disposing) {
+            if (!disposed_) {
+                mainDocument_ = null;
+                diffDocument_ = null;
+                sessionState_.EndSession();
+                sessionState_.Dispose();
+                sessionState_ = null;
+                disposed_ = true;
+            }
+        }
+
+        ~ConsoleSession() {
+            Dispose(false);
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }
