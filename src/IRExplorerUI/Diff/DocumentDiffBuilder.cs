@@ -83,6 +83,8 @@ namespace IRExplorerUI {
             int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
             var tasks = new Task<HasDiffResult>[comparedSections.Count];
 
+            leftDocLoader.SuspendCaching();
+            rightDocLoader.SuspendCaching();
             await Task.Run(() => ComputeSectionDiffsImpl(comparedSections, leftDocLoader, rightDocLoader,
                                                          tasks, maxConcurrency));
 
@@ -92,6 +94,8 @@ namespace IRExplorerUI {
                 results.Add(await task);
             }
 
+            leftDocLoader.ResumeCaching();
+            rightDocLoader.ResumeCaching();
             return results;
         }
 
