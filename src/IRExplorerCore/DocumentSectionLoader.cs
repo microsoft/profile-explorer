@@ -7,20 +7,20 @@ using System.Text;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
-    public class DocumentSectionLoader : IRTextSectionLoader, IDisposable {
+    public class DocumentSectionLoader : IRTextSectionLoader {
         private IRSectionReader documentReader_;
 
-        public DocumentSectionLoader(ICompilerIRInfo irInfo) {
-            Initialize(irInfo, true);
+        public DocumentSectionLoader(ICompilerIRInfo irInfo, bool useCache = true) {
+            Initialize(irInfo, useCache);
         }
 
-        public DocumentSectionLoader(string filePath, ICompilerIRInfo irInfo) {
-            Initialize(irInfo, true);
+        public DocumentSectionLoader(string filePath, ICompilerIRInfo irInfo, bool useCache = true) {
+            Initialize(irInfo, useCache);
             documentReader_ = irInfo.CreateSectionReader(filePath);
         }
 
-        public DocumentSectionLoader(byte[] textData, ICompilerIRInfo irInfo) {
-            Initialize(irInfo, true);
+        public DocumentSectionLoader(byte[] textData, ICompilerIRInfo irInfo, bool useCache = true) {
+            Initialize(irInfo, useCache);
             documentReader_ = irInfo_.CreateSectionReader(textData);
         }
 
@@ -92,27 +92,12 @@ namespace IRExplorerCore {
             return documentReader_.GetRawPassOutputText(output);
         }
 
-        #region IDisposable Support
-
-        private bool disposed_;
-
-        protected virtual void Dispose(bool disposing) {
+        protected override void Dispose(bool disposing) {
             if (!disposed_) {
                 documentReader_?.Dispose();
                 documentReader_ = null;
                 disposed_ = true;
             }
         }
-
-        ~DocumentSectionLoader() {
-            Dispose(false);
-        }
-
-        public void Dispose() {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        #endregion
     }
 }

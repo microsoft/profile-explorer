@@ -10,7 +10,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace IRExplorerCore {
-    public abstract class SectionReaderBase : IRSectionReader {
+    public abstract class SectionReaderBase : IRSectionReader, IDisposable {
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
         public static readonly long MAX_PRELOADED_FILE_SIZE = 512 * 1024 * 1024; // 512 MB
@@ -37,7 +37,7 @@ namespace IRExplorerCore {
             expectSectionHeaders_ = expectSectionHeaders;
             dataStreamSize_ = new FileInfo(filePath).Length;
 
-            if (dataStreamSize_ < MAX_PRELOADED_FILE_SIZE) {
+            if (false && (dataStreamSize_ < MAX_PRELOADED_FILE_SIZE)) {
                 using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read,
                                              FileShare.ReadWrite);
 
@@ -242,7 +242,7 @@ namespace IRExplorerCore {
             // If the file was preloaded in memory, create a new stream 
             // to allow parallel loading of text.
             if (preloadedData_ != null) {
-                var reader = new MemoryStream(preloadedData_, true);
+                using var reader = new MemoryStream(preloadedData_, true);
                 var encoding = DetectUTF8Encoding(reader, Encoding.ASCII);
                 using var streamReader = new StreamReader(reader, encoding,
                                                           true, STREAM_BUFFER_SIZE);
@@ -553,8 +553,11 @@ namespace IRExplorerCore {
             if (!disposed_) {
                 dataReader_?.Dispose();
                 dataStream_?.Dispose();
+                preloadedDataStream_?.Dispose();
                 dataReader_ = null;
                 dataStream_ = null;
+                preloadedDataStream_ = null;
+                preloadedData_ = null;
                 disposed_ = true;
             }
         }

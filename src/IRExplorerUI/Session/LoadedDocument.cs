@@ -32,7 +32,6 @@ namespace IRExplorerUI {
     }
 
     public class LoadedDocument : IDisposable {
-        private bool disposed_;
         private FileSystemWatcher documentWatcher_;
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
@@ -59,10 +58,6 @@ namespace IRExplorerUI {
                     return "";
                 }
             }
-        }
-
-        public void Dispose() {
-            Dispose(true);
         }
 
         public event EventHandler DocumentChanged;
@@ -149,14 +144,28 @@ namespace IRExplorerUI {
             DocumentChanged?.Invoke(this, new EventArgs());
         }
 
+        #region IDisposable Support
+
+        private bool disposed_;
+
         protected virtual void Dispose(bool disposing) {
             if (!disposed_) {
-                if (disposing) {
-                    documentWatcher_?.Dispose();
-                }
-
+                Loader.Dispose();
+                Loader = null;
+                Summary = null;
                 disposed_ = true;
             }
         }
+
+        ~LoadedDocument() {
+            Dispose(false);
+        }
+
+        public void Dispose() {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        #endregion
     }
 }
