@@ -76,7 +76,7 @@ namespace IRExplorerCore.Lexer {
             else if (previous == 'x' || previous == 'X') {
                 // .x from 123.x should not be part of a number either,
                 // since the x does not denote a hex number.
-                source_.GoBack(3);
+                source_.GoBack(2);
                 NextChar();
             }
 

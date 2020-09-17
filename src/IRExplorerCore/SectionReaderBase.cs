@@ -13,7 +13,7 @@ namespace IRExplorerCore {
     public abstract class SectionReaderBase : IRSectionReader {
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
-        public static readonly long MAX_PRELOADED_FILE_SIZE = 1024 * 1024 * 1024; // 1 GB
+        public static readonly long MAX_PRELOADED_FILE_SIZE = 512 * 1024 * 1024; // 512 MB
         private static readonly int MAX_LINE_LENGTH = 1000;
 
         private StreamReader dataReader_;

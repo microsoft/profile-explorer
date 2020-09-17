@@ -79,5 +79,13 @@ namespace IRExplorerCore {
         public string GetRawSectionText(IRTextSection section, bool useCache = true) {
             return GetRawSectionText(section);
         }
+
+        public void SuspendCaching() {
+            cacheEnabled_ = false;
+        }
+
+        public void ResumeCaching() {
+            cacheEnabled_ = true;
+        }
     }
 }
