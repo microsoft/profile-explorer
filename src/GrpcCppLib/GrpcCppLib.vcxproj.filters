@@ -18,18 +18,18 @@
     <ClCompile Include="IRExplorerClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DebugService.grpc.pb.cc">
+    <ClCompile Include="DebugService.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DebugService.pb.cc">
+    <ClCompile Include="DebugService.grpc.pb.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="DebugService.grpc.pb.h">
+    <ClInclude Include="DebugService.pb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DebugService.pb.h">
+    <ClInclude Include="DebugService.grpc.pb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

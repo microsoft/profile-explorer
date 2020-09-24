@@ -83,6 +83,27 @@ class DebugService final {
     std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::ActiveBreakpointResult>> PrepareAsyncHasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::ActiveBreakpointResult>>(PrepareAsyncHasActiveBreakpointRaw(context, request, cq));
     }
+    virtual ::grpc::Status ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::Result* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>> AsyncClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>>(AsyncClearTemporaryHighlightingRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>> PrepareAsyncClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>>(PrepareAsyncClearTemporaryHighlightingRaw(context, request, cq));
+    }
+    virtual ::grpc::Status SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::Result* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>> AsyncSetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>>(AsyncSetSessionStateRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>> PrepareAsyncSetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>>(PrepareAsyncSetSessionStateRaw(context, request, cq));
+    }
+    virtual ::grpc::Status UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::Result* response) = 0;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>> AsyncUpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>>(AsyncUpdateCurrentStackFrameRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>> PrepareAsyncUpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReaderInterface< ::Result>>(PrepareAsyncUpdateCurrentStackFrameRaw(context, request, cq));
+    }
     class experimental_async_interface {
      public:
       virtual ~experimental_async_interface() {}
@@ -170,6 +191,42 @@ class DebugService final {
       #else
       virtual void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
+      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      virtual void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
+      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
+      #else
+      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
+      #endif
     };
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
     typedef class experimental_async_interface async_interface;
@@ -193,6 +250,12 @@ class DebugService final {
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::Result>* PrepareAsyncExecuteCommandRaw(::grpc::ClientContext* context, const ::ElementCommandRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::ActiveBreakpointResult>* AsyncHasActiveBreakpointRaw(::grpc::ClientContext* context, const ::ActiveBreakpointRequest& request, ::grpc::CompletionQueue* cq) = 0;
     virtual ::grpc::ClientAsyncResponseReaderInterface< ::ActiveBreakpointResult>* PrepareAsyncHasActiveBreakpointRaw(::grpc::ClientContext* context, const ::ActiveBreakpointRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Result>* AsyncClearTemporaryHighlightingRaw(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Result>* PrepareAsyncClearTemporaryHighlightingRaw(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Result>* AsyncSetSessionStateRaw(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Result>* PrepareAsyncSetSessionStateRaw(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Result>* AsyncUpdateCurrentStackFrameRaw(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) = 0;
+    virtual ::grpc::ClientAsyncResponseReaderInterface< ::Result>* PrepareAsyncUpdateCurrentStackFrameRaw(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) = 0;
   };
   class Stub final : public StubInterface {
    public:
@@ -245,6 +308,27 @@ class DebugService final {
     }
     std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::ActiveBreakpointResult>> PrepareAsyncHasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest& request, ::grpc::CompletionQueue* cq) {
       return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::ActiveBreakpointResult>>(PrepareAsyncHasActiveBreakpointRaw(context, request, cq));
+    }
+    ::grpc::Status ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::Result* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>> AsyncClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>>(AsyncClearTemporaryHighlightingRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>> PrepareAsyncClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>>(PrepareAsyncClearTemporaryHighlightingRaw(context, request, cq));
+    }
+    ::grpc::Status SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::Result* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>> AsyncSetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>>(AsyncSetSessionStateRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>> PrepareAsyncSetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>>(PrepareAsyncSetSessionStateRaw(context, request, cq));
+    }
+    ::grpc::Status UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::Result* response) override;
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>> AsyncUpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>>(AsyncUpdateCurrentStackFrameRaw(context, request, cq));
+    }
+    std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>> PrepareAsyncUpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) {
+      return std::unique_ptr< ::grpc::ClientAsyncResponseReader< ::Result>>(PrepareAsyncUpdateCurrentStackFrameRaw(context, request, cq));
     }
     class experimental_async final :
       public StubInterface::experimental_async_interface {
@@ -333,6 +417,42 @@ class DebugService final {
       #else
       void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
+      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
+      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
+      void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
+      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
+      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
+      #else
+      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
+      #endif
      private:
       friend class Stub;
       explicit experimental_async(Stub* stub): stub_(stub) { }
@@ -358,6 +478,12 @@ class DebugService final {
     ::grpc::ClientAsyncResponseReader< ::Result>* PrepareAsyncExecuteCommandRaw(::grpc::ClientContext* context, const ::ElementCommandRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::ActiveBreakpointResult>* AsyncHasActiveBreakpointRaw(::grpc::ClientContext* context, const ::ActiveBreakpointRequest& request, ::grpc::CompletionQueue* cq) override;
     ::grpc::ClientAsyncResponseReader< ::ActiveBreakpointResult>* PrepareAsyncHasActiveBreakpointRaw(::grpc::ClientContext* context, const ::ActiveBreakpointRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::Result>* AsyncClearTemporaryHighlightingRaw(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::Result>* PrepareAsyncClearTemporaryHighlightingRaw(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::Result>* AsyncSetSessionStateRaw(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::Result>* PrepareAsyncSetSessionStateRaw(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::Result>* AsyncUpdateCurrentStackFrameRaw(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) override;
+    ::grpc::ClientAsyncResponseReader< ::Result>* PrepareAsyncUpdateCurrentStackFrameRaw(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) override;
     const ::grpc::internal::RpcMethod rpcmethod_StartSession_;
     const ::grpc::internal::RpcMethod rpcmethod_EndSession_;
     const ::grpc::internal::RpcMethod rpcmethod_UpdateIR_;
@@ -365,6 +491,9 @@ class DebugService final {
     const ::grpc::internal::RpcMethod rpcmethod_SetCurrentElement_;
     const ::grpc::internal::RpcMethod rpcmethod_ExecuteCommand_;
     const ::grpc::internal::RpcMethod rpcmethod_HasActiveBreakpoint_;
+    const ::grpc::internal::RpcMethod rpcmethod_ClearTemporaryHighlighting_;
+    const ::grpc::internal::RpcMethod rpcmethod_SetSessionState_;
+    const ::grpc::internal::RpcMethod rpcmethod_UpdateCurrentStackFrame_;
   };
   static std::unique_ptr<Stub> NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options = ::grpc::StubOptions());
 
@@ -379,6 +508,9 @@ class DebugService final {
     virtual ::grpc::Status SetCurrentElement(::grpc::ServerContext* context, const ::SetCurrentElementRequest* request, ::Result* response);
     virtual ::grpc::Status ExecuteCommand(::grpc::ServerContext* context, const ::ElementCommandRequest* request, ::Result* response);
     virtual ::grpc::Status HasActiveBreakpoint(::grpc::ServerContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response);
+    virtual ::grpc::Status ClearTemporaryHighlighting(::grpc::ServerContext* context, const ::ClearHighlightingRequest* request, ::Result* response);
+    virtual ::grpc::Status SetSessionState(::grpc::ServerContext* context, const ::SessionStateRequest* request, ::Result* response);
+    virtual ::grpc::Status UpdateCurrentStackFrame(::grpc::ServerContext* context, const ::CurrentStackFrameRequest* request, ::Result* response);
   };
   template <class BaseClass>
   class WithAsyncMethod_StartSession : public BaseClass {
@@ -520,7 +652,67 @@ class DebugService final {
       ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
-  typedef WithAsyncMethod_StartSession<WithAsyncMethod_EndSession<WithAsyncMethod_UpdateIR<WithAsyncMethod_MarkElement<WithAsyncMethod_SetCurrentElement<WithAsyncMethod_ExecuteCommand<WithAsyncMethod_HasActiveBreakpoint<Service > > > > > > > AsyncService;
+  template <class BaseClass>
+  class WithAsyncMethod_ClearTemporaryHighlighting : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_ClearTemporaryHighlighting() {
+      ::grpc::Service::MarkMethodAsync(7);
+    }
+    ~WithAsyncMethod_ClearTemporaryHighlighting() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ClearTemporaryHighlighting(::grpc::ServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestClearTemporaryHighlighting(::grpc::ServerContext* context, ::ClearHighlightingRequest* request, ::grpc::ServerAsyncResponseWriter< ::Result>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_SetSessionState : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_SetSessionState() {
+      ::grpc::Service::MarkMethodAsync(8);
+    }
+    ~WithAsyncMethod_SetSessionState() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status SetSessionState(::grpc::ServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestSetSessionState(::grpc::ServerContext* context, ::SessionStateRequest* request, ::grpc::ServerAsyncResponseWriter< ::Result>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithAsyncMethod_UpdateCurrentStackFrame : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithAsyncMethod_UpdateCurrentStackFrame() {
+      ::grpc::Service::MarkMethodAsync(9);
+    }
+    ~WithAsyncMethod_UpdateCurrentStackFrame() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateCurrentStackFrame(::grpc::ServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUpdateCurrentStackFrame(::grpc::ServerContext* context, ::CurrentStackFrameRequest* request, ::grpc::ServerAsyncResponseWriter< ::Result>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  typedef WithAsyncMethod_StartSession<WithAsyncMethod_EndSession<WithAsyncMethod_UpdateIR<WithAsyncMethod_MarkElement<WithAsyncMethod_SetCurrentElement<WithAsyncMethod_ExecuteCommand<WithAsyncMethod_HasActiveBreakpoint<WithAsyncMethod_ClearTemporaryHighlighting<WithAsyncMethod_SetSessionState<WithAsyncMethod_UpdateCurrentStackFrame<Service > > > > > > > > > > AsyncService;
   template <class BaseClass>
   class ExperimentalWithCallbackMethod_StartSession : public BaseClass {
    private:
@@ -850,11 +1042,152 @@ class DebugService final {
     #endif
       { return nullptr; }
   };
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_ClearTemporaryHighlighting : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_ClearTemporaryHighlighting() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(7,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::ClearHighlightingRequest, ::Result>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::ClearHighlightingRequest* request, ::Result* response) { return this->ClearTemporaryHighlighting(context, request, response); }));}
+    void SetMessageAllocatorFor_ClearTemporaryHighlighting(
+        ::grpc::experimental::MessageAllocator< ::ClearHighlightingRequest, ::Result>* allocator) {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(7);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(7);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::ClearHighlightingRequest, ::Result>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~ExperimentalWithCallbackMethod_ClearTemporaryHighlighting() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ClearTemporaryHighlighting(::grpc::ServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* ClearTemporaryHighlighting(
+      ::grpc::CallbackServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* ClearTemporaryHighlighting(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_SetSessionState : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_SetSessionState() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(8,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::SessionStateRequest, ::Result>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::SessionStateRequest* request, ::Result* response) { return this->SetSessionState(context, request, response); }));}
+    void SetMessageAllocatorFor_SetSessionState(
+        ::grpc::experimental::MessageAllocator< ::SessionStateRequest, ::Result>* allocator) {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(8);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(8);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::SessionStateRequest, ::Result>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~ExperimentalWithCallbackMethod_SetSessionState() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status SetSessionState(::grpc::ServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* SetSessionState(
+      ::grpc::CallbackServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* SetSessionState(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithCallbackMethod_UpdateCurrentStackFrame : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithCallbackMethod_UpdateCurrentStackFrame() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodCallback(9,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::CurrentStackFrameRequest, ::Result>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::CurrentStackFrameRequest* request, ::Result* response) { return this->UpdateCurrentStackFrame(context, request, response); }));}
+    void SetMessageAllocatorFor_UpdateCurrentStackFrame(
+        ::grpc::experimental::MessageAllocator< ::CurrentStackFrameRequest, ::Result>* allocator) {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::GetHandler(9);
+    #else
+      ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(9);
+    #endif
+      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::CurrentStackFrameRequest, ::Result>*>(handler)
+              ->SetMessageAllocator(allocator);
+    }
+    ~ExperimentalWithCallbackMethod_UpdateCurrentStackFrame() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateCurrentStackFrame(::grpc::ServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* UpdateCurrentStackFrame(
+      ::grpc::CallbackServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* UpdateCurrentStackFrame(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/)
+    #endif
+      { return nullptr; }
+  };
   #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-  typedef ExperimentalWithCallbackMethod_StartSession<ExperimentalWithCallbackMethod_EndSession<ExperimentalWithCallbackMethod_UpdateIR<ExperimentalWithCallbackMethod_MarkElement<ExperimentalWithCallbackMethod_SetCurrentElement<ExperimentalWithCallbackMethod_ExecuteCommand<ExperimentalWithCallbackMethod_HasActiveBreakpoint<Service > > > > > > > CallbackService;
+  typedef ExperimentalWithCallbackMethod_StartSession<ExperimentalWithCallbackMethod_EndSession<ExperimentalWithCallbackMethod_UpdateIR<ExperimentalWithCallbackMethod_MarkElement<ExperimentalWithCallbackMethod_SetCurrentElement<ExperimentalWithCallbackMethod_ExecuteCommand<ExperimentalWithCallbackMethod_HasActiveBreakpoint<ExperimentalWithCallbackMethod_ClearTemporaryHighlighting<ExperimentalWithCallbackMethod_SetSessionState<ExperimentalWithCallbackMethod_UpdateCurrentStackFrame<Service > > > > > > > > > > CallbackService;
   #endif
 
-  typedef ExperimentalWithCallbackMethod_StartSession<ExperimentalWithCallbackMethod_EndSession<ExperimentalWithCallbackMethod_UpdateIR<ExperimentalWithCallbackMethod_MarkElement<ExperimentalWithCallbackMethod_SetCurrentElement<ExperimentalWithCallbackMethod_ExecuteCommand<ExperimentalWithCallbackMethod_HasActiveBreakpoint<Service > > > > > > > ExperimentalCallbackService;
+  typedef ExperimentalWithCallbackMethod_StartSession<ExperimentalWithCallbackMethod_EndSession<ExperimentalWithCallbackMethod_UpdateIR<ExperimentalWithCallbackMethod_MarkElement<ExperimentalWithCallbackMethod_SetCurrentElement<ExperimentalWithCallbackMethod_ExecuteCommand<ExperimentalWithCallbackMethod_HasActiveBreakpoint<ExperimentalWithCallbackMethod_ClearTemporaryHighlighting<ExperimentalWithCallbackMethod_SetSessionState<ExperimentalWithCallbackMethod_UpdateCurrentStackFrame<Service > > > > > > > > > > ExperimentalCallbackService;
   template <class BaseClass>
   class WithGenericMethod_StartSession : public BaseClass {
    private:
@@ -970,6 +1303,57 @@ class DebugService final {
     }
     // disable synchronous version of this method
     ::grpc::Status HasActiveBreakpoint(::grpc::ServerContext* /*context*/, const ::ActiveBreakpointRequest* /*request*/, ::ActiveBreakpointResult* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_ClearTemporaryHighlighting : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_ClearTemporaryHighlighting() {
+      ::grpc::Service::MarkMethodGeneric(7);
+    }
+    ~WithGenericMethod_ClearTemporaryHighlighting() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ClearTemporaryHighlighting(::grpc::ServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_SetSessionState : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_SetSessionState() {
+      ::grpc::Service::MarkMethodGeneric(8);
+    }
+    ~WithGenericMethod_SetSessionState() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status SetSessionState(::grpc::ServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+  };
+  template <class BaseClass>
+  class WithGenericMethod_UpdateCurrentStackFrame : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithGenericMethod_UpdateCurrentStackFrame() {
+      ::grpc::Service::MarkMethodGeneric(9);
+    }
+    ~WithGenericMethod_UpdateCurrentStackFrame() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateCurrentStackFrame(::grpc::ServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/) override {
       abort();
       return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
     }
@@ -1112,6 +1496,66 @@ class DebugService final {
     }
     void RequestHasActiveBreakpoint(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
       ::grpc::Service::RequestAsyncUnary(6, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_ClearTemporaryHighlighting : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_ClearTemporaryHighlighting() {
+      ::grpc::Service::MarkMethodRaw(7);
+    }
+    ~WithRawMethod_ClearTemporaryHighlighting() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ClearTemporaryHighlighting(::grpc::ServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestClearTemporaryHighlighting(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(7, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_SetSessionState : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_SetSessionState() {
+      ::grpc::Service::MarkMethodRaw(8);
+    }
+    ~WithRawMethod_SetSessionState() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status SetSessionState(::grpc::ServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestSetSessionState(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(8, context, request, response, new_call_cq, notification_cq, tag);
+    }
+  };
+  template <class BaseClass>
+  class WithRawMethod_UpdateCurrentStackFrame : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithRawMethod_UpdateCurrentStackFrame() {
+      ::grpc::Service::MarkMethodRaw(9);
+    }
+    ~WithRawMethod_UpdateCurrentStackFrame() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateCurrentStackFrame(::grpc::ServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    void RequestUpdateCurrentStackFrame(::grpc::ServerContext* context, ::grpc::ByteBuffer* request, ::grpc::ServerAsyncResponseWriter< ::grpc::ByteBuffer>* response, ::grpc::CompletionQueue* new_call_cq, ::grpc::ServerCompletionQueue* notification_cq, void *tag) {
+      ::grpc::Service::RequestAsyncUnary(9, context, request, response, new_call_cq, notification_cq, tag);
     }
   };
   template <class BaseClass>
@@ -1381,13 +1825,134 @@ class DebugService final {
       { return nullptr; }
   };
   template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_ClearTemporaryHighlighting : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_ClearTemporaryHighlighting() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(7,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->ClearTemporaryHighlighting(context, request, response); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_ClearTemporaryHighlighting() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status ClearTemporaryHighlighting(::grpc::ServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* ClearTemporaryHighlighting(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* ClearTemporaryHighlighting(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_SetSessionState : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_SetSessionState() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(8,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->SetSessionState(context, request, response); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_SetSessionState() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status SetSessionState(::grpc::ServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* SetSessionState(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* SetSessionState(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
+  class ExperimentalWithRawCallbackMethod_UpdateCurrentStackFrame : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    ExperimentalWithRawCallbackMethod_UpdateCurrentStackFrame() {
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+      ::grpc::Service::
+    #else
+      ::grpc::Service::experimental().
+    #endif
+        MarkMethodRawCallback(9,
+          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+            [this](
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+                   ::grpc::CallbackServerContext*
+    #else
+                   ::grpc::experimental::CallbackServerContext*
+    #endif
+                     context, const ::grpc::ByteBuffer* request, ::grpc::ByteBuffer* response) { return this->UpdateCurrentStackFrame(context, request, response); }));
+    }
+    ~ExperimentalWithRawCallbackMethod_UpdateCurrentStackFrame() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable synchronous version of this method
+    ::grpc::Status UpdateCurrentStackFrame(::grpc::ServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
+    virtual ::grpc::ServerUnaryReactor* UpdateCurrentStackFrame(
+      ::grpc::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #else
+    virtual ::grpc::experimental::ServerUnaryReactor* UpdateCurrentStackFrame(
+      ::grpc::experimental::CallbackServerContext* /*context*/, const ::grpc::ByteBuffer* /*request*/, ::grpc::ByteBuffer* /*response*/)
+    #endif
+      { return nullptr; }
+  };
+  template <class BaseClass>
   class WithStreamedUnaryMethod_StartSession : public BaseClass {
    private:
     void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
    public:
     WithStreamedUnaryMethod_StartSession() {
       ::grpc::Service::MarkMethodStreamed(0,
-        new ::grpc::internal::StreamedUnaryHandler< ::StartSessionRequest, ::StartSessionResult>(std::bind(&WithStreamedUnaryMethod_StartSession<BaseClass>::StreamedStartSession, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::StartSessionRequest, ::StartSessionResult>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::StartSessionRequest, ::StartSessionResult>* streamer) {
+                       return this->StreamedStartSession(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_StartSession() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1407,7 +1972,14 @@ class DebugService final {
    public:
     WithStreamedUnaryMethod_EndSession() {
       ::grpc::Service::MarkMethodStreamed(1,
-        new ::grpc::internal::StreamedUnaryHandler< ::EndSessionRequest, ::Result>(std::bind(&WithStreamedUnaryMethod_EndSession<BaseClass>::StreamedEndSession, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::EndSessionRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::EndSessionRequest, ::Result>* streamer) {
+                       return this->StreamedEndSession(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_EndSession() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1427,7 +1999,14 @@ class DebugService final {
    public:
     WithStreamedUnaryMethod_UpdateIR() {
       ::grpc::Service::MarkMethodStreamed(2,
-        new ::grpc::internal::StreamedUnaryHandler< ::UpdateIRRequest, ::Result>(std::bind(&WithStreamedUnaryMethod_UpdateIR<BaseClass>::StreamedUpdateIR, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::UpdateIRRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::UpdateIRRequest, ::Result>* streamer) {
+                       return this->StreamedUpdateIR(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_UpdateIR() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1447,7 +2026,14 @@ class DebugService final {
    public:
     WithStreamedUnaryMethod_MarkElement() {
       ::grpc::Service::MarkMethodStreamed(3,
-        new ::grpc::internal::StreamedUnaryHandler< ::MarkElementRequest, ::Result>(std::bind(&WithStreamedUnaryMethod_MarkElement<BaseClass>::StreamedMarkElement, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::MarkElementRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::MarkElementRequest, ::Result>* streamer) {
+                       return this->StreamedMarkElement(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_MarkElement() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1467,7 +2053,14 @@ class DebugService final {
    public:
     WithStreamedUnaryMethod_SetCurrentElement() {
       ::grpc::Service::MarkMethodStreamed(4,
-        new ::grpc::internal::StreamedUnaryHandler< ::SetCurrentElementRequest, ::Result>(std::bind(&WithStreamedUnaryMethod_SetCurrentElement<BaseClass>::StreamedSetCurrentElement, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::SetCurrentElementRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::SetCurrentElementRequest, ::Result>* streamer) {
+                       return this->StreamedSetCurrentElement(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_SetCurrentElement() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1487,7 +2080,14 @@ class DebugService final {
    public:
     WithStreamedUnaryMethod_ExecuteCommand() {
       ::grpc::Service::MarkMethodStreamed(5,
-        new ::grpc::internal::StreamedUnaryHandler< ::ElementCommandRequest, ::Result>(std::bind(&WithStreamedUnaryMethod_ExecuteCommand<BaseClass>::StreamedExecuteCommand, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::ElementCommandRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::ElementCommandRequest, ::Result>* streamer) {
+                       return this->StreamedExecuteCommand(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_ExecuteCommand() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1507,7 +2107,14 @@ class DebugService final {
    public:
     WithStreamedUnaryMethod_HasActiveBreakpoint() {
       ::grpc::Service::MarkMethodStreamed(6,
-        new ::grpc::internal::StreamedUnaryHandler< ::ActiveBreakpointRequest, ::ActiveBreakpointResult>(std::bind(&WithStreamedUnaryMethod_HasActiveBreakpoint<BaseClass>::StreamedHasActiveBreakpoint, this, std::placeholders::_1, std::placeholders::_2)));
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::ActiveBreakpointRequest, ::ActiveBreakpointResult>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::ActiveBreakpointRequest, ::ActiveBreakpointResult>* streamer) {
+                       return this->StreamedHasActiveBreakpoint(context,
+                         streamer);
+                  }));
     }
     ~WithStreamedUnaryMethod_HasActiveBreakpoint() override {
       BaseClassMustBeDerivedFromService(this);
@@ -1520,9 +2127,90 @@ class DebugService final {
     // replace default version of method with streamed unary
     virtual ::grpc::Status StreamedHasActiveBreakpoint(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::ActiveBreakpointRequest,::ActiveBreakpointResult>* server_unary_streamer) = 0;
   };
-  typedef WithStreamedUnaryMethod_StartSession<WithStreamedUnaryMethod_EndSession<WithStreamedUnaryMethod_UpdateIR<WithStreamedUnaryMethod_MarkElement<WithStreamedUnaryMethod_SetCurrentElement<WithStreamedUnaryMethod_ExecuteCommand<WithStreamedUnaryMethod_HasActiveBreakpoint<Service > > > > > > > StreamedUnaryService;
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_ClearTemporaryHighlighting : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_ClearTemporaryHighlighting() {
+      ::grpc::Service::MarkMethodStreamed(7,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::ClearHighlightingRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::ClearHighlightingRequest, ::Result>* streamer) {
+                       return this->StreamedClearTemporaryHighlighting(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_ClearTemporaryHighlighting() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status ClearTemporaryHighlighting(::grpc::ServerContext* /*context*/, const ::ClearHighlightingRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedClearTemporaryHighlighting(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::ClearHighlightingRequest,::Result>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_SetSessionState : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_SetSessionState() {
+      ::grpc::Service::MarkMethodStreamed(8,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::SessionStateRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::SessionStateRequest, ::Result>* streamer) {
+                       return this->StreamedSetSessionState(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_SetSessionState() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status SetSessionState(::grpc::ServerContext* /*context*/, const ::SessionStateRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedSetSessionState(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::SessionStateRequest,::Result>* server_unary_streamer) = 0;
+  };
+  template <class BaseClass>
+  class WithStreamedUnaryMethod_UpdateCurrentStackFrame : public BaseClass {
+   private:
+    void BaseClassMustBeDerivedFromService(const Service* /*service*/) {}
+   public:
+    WithStreamedUnaryMethod_UpdateCurrentStackFrame() {
+      ::grpc::Service::MarkMethodStreamed(9,
+        new ::grpc::internal::StreamedUnaryHandler<
+          ::CurrentStackFrameRequest, ::Result>(
+            [this](::grpc_impl::ServerContext* context,
+                   ::grpc_impl::ServerUnaryStreamer<
+                     ::CurrentStackFrameRequest, ::Result>* streamer) {
+                       return this->StreamedUpdateCurrentStackFrame(context,
+                         streamer);
+                  }));
+    }
+    ~WithStreamedUnaryMethod_UpdateCurrentStackFrame() override {
+      BaseClassMustBeDerivedFromService(this);
+    }
+    // disable regular version of this method
+    ::grpc::Status UpdateCurrentStackFrame(::grpc::ServerContext* /*context*/, const ::CurrentStackFrameRequest* /*request*/, ::Result* /*response*/) override {
+      abort();
+      return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+    }
+    // replace default version of method with streamed unary
+    virtual ::grpc::Status StreamedUpdateCurrentStackFrame(::grpc::ServerContext* context, ::grpc::ServerUnaryStreamer< ::CurrentStackFrameRequest,::Result>* server_unary_streamer) = 0;
+  };
+  typedef WithStreamedUnaryMethod_StartSession<WithStreamedUnaryMethod_EndSession<WithStreamedUnaryMethod_UpdateIR<WithStreamedUnaryMethod_MarkElement<WithStreamedUnaryMethod_SetCurrentElement<WithStreamedUnaryMethod_ExecuteCommand<WithStreamedUnaryMethod_HasActiveBreakpoint<WithStreamedUnaryMethod_ClearTemporaryHighlighting<WithStreamedUnaryMethod_SetSessionState<WithStreamedUnaryMethod_UpdateCurrentStackFrame<Service > > > > > > > > > > StreamedUnaryService;
   typedef Service SplitStreamedService;
-  typedef WithStreamedUnaryMethod_StartSession<WithStreamedUnaryMethod_EndSession<WithStreamedUnaryMethod_UpdateIR<WithStreamedUnaryMethod_MarkElement<WithStreamedUnaryMethod_SetCurrentElement<WithStreamedUnaryMethod_ExecuteCommand<WithStreamedUnaryMethod_HasActiveBreakpoint<Service > > > > > > > StreamedService;
+  typedef WithStreamedUnaryMethod_StartSession<WithStreamedUnaryMethod_EndSession<WithStreamedUnaryMethod_UpdateIR<WithStreamedUnaryMethod_MarkElement<WithStreamedUnaryMethod_SetCurrentElement<WithStreamedUnaryMethod_ExecuteCommand<WithStreamedUnaryMethod_HasActiveBreakpoint<WithStreamedUnaryMethod_ClearTemporaryHighlighting<WithStreamedUnaryMethod_SetSessionState<WithStreamedUnaryMethod_UpdateCurrentStackFrame<Service > > > > > > > > > > StreamedService;
 };
 
 

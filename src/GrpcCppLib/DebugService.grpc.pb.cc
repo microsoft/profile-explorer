@@ -28,6 +28,9 @@ static const char* DebugService_method_names[] = {
   "/DebugService/SetCurrentElement",
   "/DebugService/ExecuteCommand",
   "/DebugService/HasActiveBreakpoint",
+  "/DebugService/ClearTemporaryHighlighting",
+  "/DebugService/SetSessionState",
+  "/DebugService/UpdateCurrentStackFrame",
 };
 
 std::unique_ptr< DebugService::Stub> DebugService::NewStub(const std::shared_ptr< ::grpc::ChannelInterface>& channel, const ::grpc::StubOptions& options) {
@@ -44,6 +47,9 @@ DebugService::Stub::Stub(const std::shared_ptr< ::grpc::ChannelInterface>& chann
   , rpcmethod_SetCurrentElement_(DebugService_method_names[4], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_ExecuteCommand_(DebugService_method_names[5], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   , rpcmethod_HasActiveBreakpoint_(DebugService_method_names[6], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_ClearTemporaryHighlighting_(DebugService_method_names[7], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_SetSessionState_(DebugService_method_names[8], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
+  , rpcmethod_UpdateCurrentStackFrame_(DebugService_method_names[9], ::grpc::internal::RpcMethod::NORMAL_RPC, channel)
   {}
 
 ::grpc::Status DebugService::Stub::StartSession(::grpc::ClientContext* context, const ::StartSessionRequest& request, ::StartSessionResult* response) {
@@ -242,42 +248,191 @@ void DebugService::Stub::experimental_async::HasActiveBreakpoint(::grpc::ClientC
   return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::ActiveBreakpointResult>::Create(channel_.get(), cq, rpcmethod_HasActiveBreakpoint_, context, request, false);
 }
 
+::grpc::Status DebugService::Stub::ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::Result* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_ClearTemporaryHighlighting_, context, request, response);
+}
+
+void DebugService::Stub::experimental_async::ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_ClearTemporaryHighlighting_, context, request, response, std::move(f));
+}
+
+void DebugService::Stub::experimental_async::ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_ClearTemporaryHighlighting_, context, request, response, std::move(f));
+}
+
+void DebugService::Stub::experimental_async::ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_ClearTemporaryHighlighting_, context, request, response, reactor);
+}
+
+void DebugService::Stub::experimental_async::ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_ClearTemporaryHighlighting_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::Result>* DebugService::Stub::AsyncClearTemporaryHighlightingRaw(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Result>::Create(channel_.get(), cq, rpcmethod_ClearTemporaryHighlighting_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::Result>* DebugService::Stub::PrepareAsyncClearTemporaryHighlightingRaw(::grpc::ClientContext* context, const ::ClearHighlightingRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Result>::Create(channel_.get(), cq, rpcmethod_ClearTemporaryHighlighting_, context, request, false);
+}
+
+::grpc::Status DebugService::Stub::SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::Result* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_SetSessionState_, context, request, response);
+}
+
+void DebugService::Stub::experimental_async::SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_SetSessionState_, context, request, response, std::move(f));
+}
+
+void DebugService::Stub::experimental_async::SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_SetSessionState_, context, request, response, std::move(f));
+}
+
+void DebugService::Stub::experimental_async::SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_SetSessionState_, context, request, response, reactor);
+}
+
+void DebugService::Stub::experimental_async::SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_SetSessionState_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::Result>* DebugService::Stub::AsyncSetSessionStateRaw(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Result>::Create(channel_.get(), cq, rpcmethod_SetSessionState_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::Result>* DebugService::Stub::PrepareAsyncSetSessionStateRaw(::grpc::ClientContext* context, const ::SessionStateRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Result>::Create(channel_.get(), cq, rpcmethod_SetSessionState_, context, request, false);
+}
+
+::grpc::Status DebugService::Stub::UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::Result* response) {
+  return ::grpc::internal::BlockingUnaryCall(channel_.get(), rpcmethod_UpdateCurrentStackFrame_, context, request, response);
+}
+
+void DebugService::Stub::experimental_async::UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_UpdateCurrentStackFrame_, context, request, response, std::move(f));
+}
+
+void DebugService::Stub::experimental_async::UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)> f) {
+  ::grpc_impl::internal::CallbackUnaryCall(stub_->channel_.get(), stub_->rpcmethod_UpdateCurrentStackFrame_, context, request, response, std::move(f));
+}
+
+void DebugService::Stub::experimental_async::UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_UpdateCurrentStackFrame_, context, request, response, reactor);
+}
+
+void DebugService::Stub::experimental_async::UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) {
+  ::grpc_impl::internal::ClientCallbackUnaryFactory::Create(stub_->channel_.get(), stub_->rpcmethod_UpdateCurrentStackFrame_, context, request, response, reactor);
+}
+
+::grpc::ClientAsyncResponseReader< ::Result>* DebugService::Stub::AsyncUpdateCurrentStackFrameRaw(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Result>::Create(channel_.get(), cq, rpcmethod_UpdateCurrentStackFrame_, context, request, true);
+}
+
+::grpc::ClientAsyncResponseReader< ::Result>* DebugService::Stub::PrepareAsyncUpdateCurrentStackFrameRaw(::grpc::ClientContext* context, const ::CurrentStackFrameRequest& request, ::grpc::CompletionQueue* cq) {
+  return ::grpc_impl::internal::ClientAsyncResponseReaderFactory< ::Result>::Create(channel_.get(), cq, rpcmethod_UpdateCurrentStackFrame_, context, request, false);
+}
+
 DebugService::Service::Service() {
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DebugService_method_names[0],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::StartSessionRequest, ::StartSessionResult>(
-          std::mem_fn(&DebugService::Service::StartSession), this)));
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::StartSessionRequest* req,
+             ::StartSessionResult* resp) {
+               return service->StartSession(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DebugService_method_names[1],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::EndSessionRequest, ::Result>(
-          std::mem_fn(&DebugService::Service::EndSession), this)));
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::EndSessionRequest* req,
+             ::Result* resp) {
+               return service->EndSession(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DebugService_method_names[2],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::UpdateIRRequest, ::Result>(
-          std::mem_fn(&DebugService::Service::UpdateIR), this)));
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::UpdateIRRequest* req,
+             ::Result* resp) {
+               return service->UpdateIR(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DebugService_method_names[3],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::MarkElementRequest, ::Result>(
-          std::mem_fn(&DebugService::Service::MarkElement), this)));
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::MarkElementRequest* req,
+             ::Result* resp) {
+               return service->MarkElement(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DebugService_method_names[4],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::SetCurrentElementRequest, ::Result>(
-          std::mem_fn(&DebugService::Service::SetCurrentElement), this)));
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::SetCurrentElementRequest* req,
+             ::Result* resp) {
+               return service->SetCurrentElement(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DebugService_method_names[5],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::ElementCommandRequest, ::Result>(
-          std::mem_fn(&DebugService::Service::ExecuteCommand), this)));
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::ElementCommandRequest* req,
+             ::Result* resp) {
+               return service->ExecuteCommand(ctx, req, resp);
+             }, this)));
   AddMethod(new ::grpc::internal::RpcServiceMethod(
       DebugService_method_names[6],
       ::grpc::internal::RpcMethod::NORMAL_RPC,
       new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::ActiveBreakpointRequest, ::ActiveBreakpointResult>(
-          std::mem_fn(&DebugService::Service::HasActiveBreakpoint), this)));
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::ActiveBreakpointRequest* req,
+             ::ActiveBreakpointResult* resp) {
+               return service->HasActiveBreakpoint(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DebugService_method_names[7],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::ClearHighlightingRequest, ::Result>(
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::ClearHighlightingRequest* req,
+             ::Result* resp) {
+               return service->ClearTemporaryHighlighting(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DebugService_method_names[8],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::SessionStateRequest, ::Result>(
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::SessionStateRequest* req,
+             ::Result* resp) {
+               return service->SetSessionState(ctx, req, resp);
+             }, this)));
+  AddMethod(new ::grpc::internal::RpcServiceMethod(
+      DebugService_method_names[9],
+      ::grpc::internal::RpcMethod::NORMAL_RPC,
+      new ::grpc::internal::RpcMethodHandler< DebugService::Service, ::CurrentStackFrameRequest, ::Result>(
+          [](DebugService::Service* service,
+             ::grpc_impl::ServerContext* ctx,
+             const ::CurrentStackFrameRequest* req,
+             ::Result* resp) {
+               return service->UpdateCurrentStackFrame(ctx, req, resp);
+             }, this)));
 }
 
 DebugService::Service::~Service() {
@@ -326,6 +481,27 @@ DebugService::Service::~Service() {
 }
 
 ::grpc::Status DebugService::Service::HasActiveBreakpoint(::grpc::ServerContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status DebugService::Service::ClearTemporaryHighlighting(::grpc::ServerContext* context, const ::ClearHighlightingRequest* request, ::Result* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status DebugService::Service::SetSessionState(::grpc::ServerContext* context, const ::SessionStateRequest* request, ::Result* response) {
+  (void) context;
+  (void) request;
+  (void) response;
+  return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, "");
+}
+
+::grpc::Status DebugService::Service::UpdateCurrentStackFrame(::grpc::ServerContext* context, const ::CurrentStackFrameRequest* request, ::Result* response) {
   (void) context;
   (void) request;
   (void) response;

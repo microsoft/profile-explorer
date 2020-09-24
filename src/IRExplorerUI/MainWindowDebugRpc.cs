@@ -300,7 +300,7 @@ namespace IRExplorerUI {
                 int index = text.IndexOfAny(new[] { '\r', '\n' }, startIndex);
 
                 if (index != -1) {
-                    string line = text.Substring(startIndex, index);
+                    string line = text.Substring(startIndex, index - startIndex + 1);
 
                     if (line.StartsWith("ENTRY")) {
                         //? return UTCSectionReader.ExtractFunctionName(line);
