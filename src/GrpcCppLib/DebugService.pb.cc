@@ -16,6 +16,10 @@
 #include <google/protobuf/port_def.inc>
 extern PROTOBUF_INTERNAL_EXPORT_DebugService_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_RGBColor_DebugService_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_DebugService_2eproto ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_StackFrame_DebugService_2eproto;
+class SessionStateRequestDefaultTypeInternal {
+ public:
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<SessionStateRequest> _instance;
+} _SessionStateRequest_default_instance_;
 class StartSessionRequestDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<StartSessionRequest> _instance;
@@ -32,14 +36,26 @@ class StackFrameDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<StackFrame> _instance;
 } _StackFrame_default_instance_;
+class CurrentStackFrameRequestDefaultTypeInternal {
+ public:
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<CurrentStackFrameRequest> _instance;
+} _CurrentStackFrameRequest_default_instance_;
 class UpdateIRRequestDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<UpdateIRRequest> _instance;
 } _UpdateIRRequest_default_instance_;
+class ResultDefaultTypeInternal {
+ public:
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Result> _instance;
+} _Result_default_instance_;
 class RGBColorDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<RGBColor> _instance;
 } _RGBColor_default_instance_;
+class ClearHighlightingRequestDefaultTypeInternal {
+ public:
+  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<ClearHighlightingRequest> _instance;
+} _ClearHighlightingRequest_default_instance_;
 class MarkElementRequestDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<MarkElementRequest> _instance;
@@ -48,10 +64,6 @@ class SetCurrentElementRequestDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<SetCurrentElementRequest> _instance;
 } _SetCurrentElementRequest_default_instance_;
-class ResultDefaultTypeInternal {
- public:
-  ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<Result> _instance;
-} _Result_default_instance_;
 class ElementCommandRequestDefaultTypeInternal {
  public:
   ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<ElementCommandRequest> _instance;
@@ -92,6 +104,35 @@ static void InitDefaultsscc_info_ActiveBreakpointResult_DebugService_2eproto() {
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_ActiveBreakpointResult_DebugService_2eproto =
     {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_ActiveBreakpointResult_DebugService_2eproto}, {}};
 
+static void InitDefaultsscc_info_ClearHighlightingRequest_DebugService_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_ClearHighlightingRequest_default_instance_;
+    new (ptr) ::ClearHighlightingRequest();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::ClearHighlightingRequest::InitAsDefaultInstance();
+}
+
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_ClearHighlightingRequest_DebugService_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_ClearHighlightingRequest_DebugService_2eproto}, {}};
+
+static void InitDefaultsscc_info_CurrentStackFrameRequest_DebugService_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_CurrentStackFrameRequest_default_instance_;
+    new (ptr) ::CurrentStackFrameRequest();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::CurrentStackFrameRequest::InitAsDefaultInstance();
+}
+
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_CurrentStackFrameRequest_DebugService_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_CurrentStackFrameRequest_DebugService_2eproto}, {
+      &scc_info_StackFrame_DebugService_2eproto.base,}};
+
 static void InitDefaultsscc_info_ElementCommandRequest_DebugService_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -103,8 +144,9 @@ static void InitDefaultsscc_info_ElementCommandRequest_DebugService_2eproto() {
   ::ElementCommandRequest::InitAsDefaultInstance();
 }
 
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_ElementCommandRequest_DebugService_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_ElementCommandRequest_DebugService_2eproto}, {}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_ElementCommandRequest_DebugService_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_ElementCommandRequest_DebugService_2eproto}, {
+      &scc_info_StackFrame_DebugService_2eproto.base,}};
 
 static void InitDefaultsscc_info_EndSessionRequest_DebugService_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -162,6 +204,20 @@ static void InitDefaultsscc_info_Result_DebugService_2eproto() {
 
 ::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_Result_DebugService_2eproto =
     {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_Result_DebugService_2eproto}, {}};
+
+static void InitDefaultsscc_info_SessionStateRequest_DebugService_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::_SessionStateRequest_default_instance_;
+    new (ptr) ::SessionStateRequest();
+    ::PROTOBUF_NAMESPACE_ID::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::SessionStateRequest::InitAsDefaultInstance();
+}
+
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_SessionStateRequest_DebugService_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_SessionStateRequest_DebugService_2eproto}, {}};
 
 static void InitDefaultsscc_info_SetCurrentElementRequest_DebugService_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -230,15 +286,20 @@ static void InitDefaultsscc_info_UpdateIRRequest_DebugService_2eproto() {
   ::UpdateIRRequest::InitAsDefaultInstance();
 }
 
-::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<1> scc_info_UpdateIRRequest_DebugService_2eproto =
-    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 1, 0, InitDefaultsscc_info_UpdateIRRequest_DebugService_2eproto}, {
-      &scc_info_StackFrame_DebugService_2eproto.base,}};
+::PROTOBUF_NAMESPACE_ID::internal::SCCInfo<0> scc_info_UpdateIRRequest_DebugService_2eproto =
+    {{ATOMIC_VAR_INIT(::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase::kUninitialized), 0, 0, InitDefaultsscc_info_UpdateIRRequest_DebugService_2eproto}, {}};
 
-static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_DebugService_2eproto[12];
-static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_DebugService_2eproto[3];
+static ::PROTOBUF_NAMESPACE_ID::Metadata file_level_metadata_DebugService_2eproto[15];
+static const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* file_level_enum_descriptors_DebugService_2eproto[5];
 static constexpr ::PROTOBUF_NAMESPACE_ID::ServiceDescriptor const** file_level_service_descriptors_DebugService_2eproto = nullptr;
 
 const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_DebugService_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::SessionStateRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::SessionStateRequest, state_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::StartSessionRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -270,13 +331,26 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_DebugService_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::StackFrame, function_),
   PROTOBUF_FIELD_OFFSET(::StackFrame, linenumber_),
   ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::CurrentStackFrameRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::CurrentStackFrameRequest, currentframe_),
+  ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::UpdateIRRequest, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   PROTOBUF_FIELD_OFFSET(::UpdateIRRequest, sessionid_),
   PROTOBUF_FIELD_OFFSET(::UpdateIRRequest, text_),
-  PROTOBUF_FIELD_OFFSET(::UpdateIRRequest, stackframe_),
+  ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::Result, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::Result, success_),
+  PROTOBUF_FIELD_OFFSET(::Result, errorcode_),
+  PROTOBUF_FIELD_OFFSET(::Result, errormessage_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::RGBColor, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -286,6 +360,12 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_DebugService_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::RGBColor, g_),
   PROTOBUF_FIELD_OFFSET(::RGBColor, b_),
   ~0u,  // no _has_bits_
+  PROTOBUF_FIELD_OFFSET(::ClearHighlightingRequest, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  PROTOBUF_FIELD_OFFSET(::ClearHighlightingRequest, highlighting_),
+  ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::MarkElementRequest, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -293,6 +373,7 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_DebugService_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::MarkElementRequest, elementaddress_),
   PROTOBUF_FIELD_OFFSET(::MarkElementRequest, color_),
   PROTOBUF_FIELD_OFFSET(::MarkElementRequest, label_),
+  PROTOBUF_FIELD_OFFSET(::MarkElementRequest, highlighting_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::SetCurrentElementRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -303,14 +384,6 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_DebugService_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::SetCurrentElementRequest, elementkind_),
   PROTOBUF_FIELD_OFFSET(::SetCurrentElementRequest, label_),
   ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::Result, _internal_metadata_),
-  ~0u,  // no _extensions_
-  ~0u,  // no _oneof_case_
-  ~0u,  // no _weak_field_map_
-  PROTOBUF_FIELD_OFFSET(::Result, success_),
-  PROTOBUF_FIELD_OFFSET(::Result, errorcode_),
-  PROTOBUF_FIELD_OFFSET(::Result, errormessage_),
-  ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::ElementCommandRequest, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
@@ -318,6 +391,8 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_DebugService_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::ElementCommandRequest, command_),
   PROTOBUF_FIELD_OFFSET(::ElementCommandRequest, elementaddress_),
   PROTOBUF_FIELD_OFFSET(::ElementCommandRequest, label_),
+  PROTOBUF_FIELD_OFFSET(::ElementCommandRequest, highlighting_),
+  PROTOBUF_FIELD_OFFSET(::ElementCommandRequest, stackframe_),
   ~0u,  // no _has_bits_
   PROTOBUF_FIELD_OFFSET(::ActiveBreakpointRequest, _internal_metadata_),
   ~0u,  // no _extensions_
@@ -335,89 +410,111 @@ const ::PROTOBUF_NAMESPACE_ID::uint32 TableStruct_DebugService_2eproto::offsets[
   PROTOBUF_FIELD_OFFSET(::ActiveBreakpointResult, hasbreakpoint_),
 };
 static const ::PROTOBUF_NAMESPACE_ID::internal::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::StartSessionRequest)},
-  { 8, -1, sizeof(::StartSessionResult)},
-  { 16, -1, sizeof(::EndSessionRequest)},
-  { 22, -1, sizeof(::StackFrame)},
-  { 30, -1, sizeof(::UpdateIRRequest)},
-  { 38, -1, sizeof(::RGBColor)},
-  { 46, -1, sizeof(::MarkElementRequest)},
-  { 54, -1, sizeof(::SetCurrentElementRequest)},
-  { 63, -1, sizeof(::Result)},
-  { 71, -1, sizeof(::ElementCommandRequest)},
-  { 79, -1, sizeof(::ActiveBreakpointRequest)},
-  { 85, -1, sizeof(::ActiveBreakpointResult)},
+  { 0, -1, sizeof(::SessionStateRequest)},
+  { 6, -1, sizeof(::StartSessionRequest)},
+  { 14, -1, sizeof(::StartSessionResult)},
+  { 22, -1, sizeof(::EndSessionRequest)},
+  { 28, -1, sizeof(::StackFrame)},
+  { 36, -1, sizeof(::CurrentStackFrameRequest)},
+  { 42, -1, sizeof(::UpdateIRRequest)},
+  { 49, -1, sizeof(::Result)},
+  { 57, -1, sizeof(::RGBColor)},
+  { 65, -1, sizeof(::ClearHighlightingRequest)},
+  { 71, -1, sizeof(::MarkElementRequest)},
+  { 80, -1, sizeof(::SetCurrentElementRequest)},
+  { 89, -1, sizeof(::ElementCommandRequest)},
+  { 99, -1, sizeof(::ActiveBreakpointRequest)},
+  { 105, -1, sizeof(::ActiveBreakpointResult)},
 };
 
 static ::PROTOBUF_NAMESPACE_ID::Message const * const file_default_instances[] = {
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_SessionStateRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_StartSessionRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_StartSessionResult_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_EndSessionRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_StackFrame_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_CurrentStackFrameRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_UpdateIRRequest_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_Result_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_RGBColor_default_instance_),
+  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_ClearHighlightingRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_MarkElementRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_SetCurrentElementRequest_default_instance_),
-  reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_Result_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_ElementCommandRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_ActiveBreakpointRequest_default_instance_),
   reinterpret_cast<const ::PROTOBUF_NAMESPACE_ID::Message*>(&::_ActiveBreakpointResult_default_instance_),
 };
 
 const char descriptor_table_protodef_DebugService_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
-  "\n\022DebugService.proto\"X\n\023StartSessionRequ"
-  "est\022\031\n\004kind\030\001 \001(\0162\013.ClientKind\022\021\n\tproces"
-  "sId\030\002 \001(\003\022\023\n\013processArgs\030\003 \001(\003\"P\n\022StartS"
-  "essionResult\022\021\n\terrorCode\030\001 \001(\005\022\024\n\014error"
-  "Message\030\002 \001(\t\022\021\n\tsessionId\030\003 \001(\003\"&\n\021EndS"
-  "essionRequest\022\021\n\tsessionId\030\001 \001(\003\"@\n\nStac"
-  "kFrame\022\014\n\004file\030\001 \001(\t\022\020\n\010function\030\002 \001(\t\022\022"
-  "\n\nlineNumber\030\003 \001(\005\"S\n\017UpdateIRRequest\022\021\n"
-  "\tsessionId\030\001 \001(\003\022\014\n\004text\030\002 \001(\t\022\037\n\nstackF"
-  "rame\030\003 \001(\0132\013.StackFrame\"+\n\010RGBColor\022\t\n\001R"
-  "\030\001 \001(\005\022\t\n\001G\030\002 \001(\005\022\t\n\001B\030\003 \001(\005\"U\n\022MarkElem"
-  "entRequest\022\026\n\016elementAddress\030\001 \001(\003\022\030\n\005co"
-  "lor\030\002 \001(\0132\t.RGBColor\022\r\n\005label\030\003 \001(\t\"y\n\030S"
-  "etCurrentElementRequest\022\021\n\telementId\030\001 \001"
-  "(\005\022\026\n\016elementAddress\030\002 \001(\003\022#\n\013elementKin"
-  "d\030\003 \001(\0162\016.IRElementKind\022\r\n\005label\030\004 \001(\t\"B"
-  "\n\006Result\022\017\n\007success\030\001 \001(\010\022\021\n\terrorCode\030\002"
-  " \001(\005\022\024\n\014errorMessage\030\003 \001(\t\"`\n\025ElementCom"
-  "mandRequest\022 \n\007command\030\001 \001(\0162\017.ElementCo"
-  "mmand\022\026\n\016elementAddress\030\002 \001(\003\022\r\n\005label\030\003"
-  " \001(\t\"1\n\027ActiveBreakpointRequest\022\026\n\016eleme"
-  "ntAddress\030\001 \001(\003\"i\n\026ActiveBreakpointResul"
-  "t\022\017\n\007success\030\001 \001(\010\022\021\n\terrorCode\030\002 \001(\005\022\024\n"
-  "\014errorMessage\030\003 \001(\t\022\025\n\rhasBreakpoint\030\004 \001"
-  "(\010*\'\n\nClientKind\022\014\n\010debugger\020\000\022\013\n\007runtim"
-  "e\020\001*R\n\rIRElementKind\022\017\n\013Instruction\020\000\022\013\n"
-  "\007Operand\020\001\022\t\n\005Block\020\002\022\010\n\004User\020\003\022\016\n\nUserP"
-  "arent\020\004*\260\001\n\016ElementCommand\022\022\n\016GoToDefini"
-  "tion\020\000\022\r\n\tMarkBlock\020\001\022\014\n\010ShowUses\020\002\022\014\n\010M"
-  "arkUses\020\003\022\022\n\016ShowReferences\020\004\022\022\n\016MarkRef"
-  "erences\020\005\022\022\n\016MarkExpression\020\006\022\022\n\016ShowExp"
-  "ression\020\007\022\017\n\013ClearMarker\020\0102\376\002\n\014DebugServ"
-  "ice\0229\n\014StartSession\022\024.StartSessionReques"
-  "t\032\023.StartSessionResult\022)\n\nEndSession\022\022.E"
-  "ndSessionRequest\032\007.Result\022%\n\010UpdateIR\022\020."
-  "UpdateIRRequest\032\007.Result\022+\n\013MarkElement\022"
-  "\023.MarkElementRequest\032\007.Result\0227\n\021SetCurr"
-  "entElement\022\031.SetCurrentElementRequest\032\007."
-  "Result\0221\n\016ExecuteCommand\022\026.ElementComman"
-  "dRequest\032\007.Result\022H\n\023HasActiveBreakpoint"
-  "\022\030.ActiveBreakpointRequest\032\027.ActiveBreak"
-  "pointResultb\006proto3"
+  "\n\022DebugService.proto\"3\n\023SessionStateRequ"
+  "est\022\034\n\005state\030\001 \001(\0162\r.SessionState\"X\n\023Sta"
+  "rtSessionRequest\022\031\n\004kind\030\001 \001(\0162\013.ClientK"
+  "ind\022\021\n\tprocessId\030\002 \001(\003\022\023\n\013processArgs\030\003 "
+  "\001(\003\"P\n\022StartSessionResult\022\021\n\terrorCode\030\001"
+  " \001(\005\022\024\n\014errorMessage\030\002 \001(\t\022\021\n\tsessionId\030"
+  "\003 \001(\003\"&\n\021EndSessionRequest\022\021\n\tsessionId\030"
+  "\001 \001(\003\"@\n\nStackFrame\022\014\n\004file\030\001 \001(\t\022\020\n\010fun"
+  "ction\030\002 \001(\t\022\022\n\nlineNumber\030\003 \001(\005\"=\n\030Curre"
+  "ntStackFrameRequest\022!\n\014currentFrame\030\001 \001("
+  "\0132\013.StackFrame\"2\n\017UpdateIRRequest\022\021\n\tses"
+  "sionId\030\001 \001(\003\022\014\n\004text\030\002 \001(\t\"B\n\006Result\022\017\n\007"
+  "success\030\001 \001(\010\022\021\n\terrorCode\030\002 \001(\005\022\024\n\014erro"
+  "rMessage\030\003 \001(\t\"+\n\010RGBColor\022\t\n\001R\030\001 \001(\005\022\t\n"
+  "\001G\030\002 \001(\005\022\t\n\001B\030\003 \001(\005\"C\n\030ClearHighlighting"
+  "Request\022\'\n\014highlighting\030\001 \001(\0162\021.Highligh"
+  "tingType\"~\n\022MarkElementRequest\022\026\n\016elemen"
+  "tAddress\030\001 \001(\003\022\030\n\005color\030\002 \001(\0132\t.RGBColor"
+  "\022\r\n\005label\030\003 \001(\t\022\'\n\014highlighting\030\004 \001(\0162\021."
+  "HighlightingType\"y\n\030SetCurrentElementReq"
+  "uest\022\021\n\telementId\030\001 \001(\005\022\026\n\016elementAddres"
+  "s\030\002 \001(\003\022#\n\013elementKind\030\003 \001(\0162\016.IRElement"
+  "Kind\022\r\n\005label\030\004 \001(\t\"\252\001\n\025ElementCommandRe"
+  "quest\022 \n\007command\030\001 \001(\0162\017.ElementCommand\022"
+  "\026\n\016elementAddress\030\002 \001(\003\022\r\n\005label\030\003 \001(\t\022\'"
+  "\n\014highlighting\030\004 \001(\0162\021.HighlightingType\022"
+  "\037\n\nstackFrame\030\005 \001(\0132\013.StackFrame\"1\n\027Acti"
+  "veBreakpointRequest\022\026\n\016elementAddress\030\001 "
+  "\001(\003\"i\n\026ActiveBreakpointResult\022\017\n\007success"
+  "\030\001 \001(\010\022\021\n\terrorCode\030\002 \001(\005\022\024\n\014errorMessag"
+  "e\030\003 \001(\t\022\025\n\rhasBreakpoint\030\004 \001(\010*)\n\014Sessio"
+  "nState\022\r\n\tListening\020\000\022\n\n\006Paused\020\001*\'\n\nCli"
+  "entKind\022\014\n\010debugger\020\000\022\013\n\007runtime\020\001*0\n\020Hi"
+  "ghlightingType\022\r\n\ttemporary\020\000\022\r\n\tpermane"
+  "nt\020\001*R\n\rIRElementKind\022\017\n\013Instruction\020\000\022\013"
+  "\n\007Operand\020\001\022\t\n\005Block\020\002\022\010\n\004User\020\003\022\016\n\nUser"
+  "Parent\020\004*\260\001\n\016ElementCommand\022\022\n\016GoToDefin"
+  "ition\020\000\022\r\n\tMarkBlock\020\001\022\014\n\010ShowUses\020\002\022\014\n\010"
+  "MarkUses\020\003\022\022\n\016ShowReferences\020\004\022\022\n\016MarkRe"
+  "ferences\020\005\022\022\n\016MarkExpression\020\006\022\022\n\016ShowEx"
+  "pression\020\007\022\017\n\013ClearMarker\020\0102\261\004\n\014DebugSer"
+  "vice\0229\n\014StartSession\022\024.StartSessionReque"
+  "st\032\023.StartSessionResult\022)\n\nEndSession\022\022."
+  "EndSessionRequest\032\007.Result\022%\n\010UpdateIR\022\020"
+  ".UpdateIRRequest\032\007.Result\022+\n\013MarkElement"
+  "\022\023.MarkElementRequest\032\007.Result\0227\n\021SetCur"
+  "rentElement\022\031.SetCurrentElementRequest\032\007"
+  ".Result\0221\n\016ExecuteCommand\022\026.ElementComma"
+  "ndRequest\032\007.Result\022H\n\023HasActiveBreakpoin"
+  "t\022\030.ActiveBreakpointRequest\032\027.ActiveBrea"
+  "kpointResult\022@\n\032ClearTemporaryHighlighti"
+  "ng\022\031.ClearHighlightingRequest\032\007.Result\0220"
+  "\n\017SetSessionState\022\024.SessionStateRequest\032"
+  "\007.Result\022=\n\027UpdateCurrentStackFrame\022\031.Cu"
+  "rrentStackFrameRequest\032\007.Resultb\006proto3"
   ;
 static const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable*const descriptor_table_DebugService_2eproto_deps[1] = {
 };
-static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_DebugService_2eproto_sccs[12] = {
+static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_DebugService_2eproto_sccs[15] = {
   &scc_info_ActiveBreakpointRequest_DebugService_2eproto.base,
   &scc_info_ActiveBreakpointResult_DebugService_2eproto.base,
+  &scc_info_ClearHighlightingRequest_DebugService_2eproto.base,
+  &scc_info_CurrentStackFrameRequest_DebugService_2eproto.base,
   &scc_info_ElementCommandRequest_DebugService_2eproto.base,
   &scc_info_EndSessionRequest_DebugService_2eproto.base,
   &scc_info_MarkElementRequest_DebugService_2eproto.base,
   &scc_info_RGBColor_DebugService_2eproto.base,
   &scc_info_Result_DebugService_2eproto.base,
+  &scc_info_SessionStateRequest_DebugService_2eproto.base,
   &scc_info_SetCurrentElementRequest_DebugService_2eproto.base,
   &scc_info_StackFrame_DebugService_2eproto.base,
   &scc_info_StartSessionRequest_DebugService_2eproto.base,
@@ -426,17 +523,31 @@ static ::PROTOBUF_NAMESPACE_ID::internal::SCCInfoBase*const descriptor_table_Deb
 };
 static ::PROTOBUF_NAMESPACE_ID::internal::once_flag descriptor_table_DebugService_2eproto_once;
 const ::PROTOBUF_NAMESPACE_ID::internal::DescriptorTable descriptor_table_DebugService_2eproto = {
-  false, false, descriptor_table_protodef_DebugService_2eproto, "DebugService.proto", 1659,
-  &descriptor_table_DebugService_2eproto_once, descriptor_table_DebugService_2eproto_sccs, descriptor_table_DebugService_2eproto_deps, 12, 0,
+  false, false, descriptor_table_protodef_DebugService_2eproto, "DebugService.proto", 2199,
+  &descriptor_table_DebugService_2eproto_once, descriptor_table_DebugService_2eproto_sccs, descriptor_table_DebugService_2eproto_deps, 15, 0,
   schemas, file_default_instances, TableStruct_DebugService_2eproto::offsets,
-  file_level_metadata_DebugService_2eproto, 12, file_level_enum_descriptors_DebugService_2eproto, file_level_service_descriptors_DebugService_2eproto,
+  file_level_metadata_DebugService_2eproto, 15, file_level_enum_descriptors_DebugService_2eproto, file_level_service_descriptors_DebugService_2eproto,
 };
 
 // Force running AddDescriptors() at dynamic initialization time.
 static bool dynamic_init_dummy_DebugService_2eproto = (static_cast<void>(::PROTOBUF_NAMESPACE_ID::internal::AddDescriptors(&descriptor_table_DebugService_2eproto)), true);
-const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ClientKind_descriptor() {
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* SessionState_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_DebugService_2eproto);
   return file_level_enum_descriptors_DebugService_2eproto[0];
+}
+bool SessionState_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+      return true;
+    default:
+      return false;
+  }
+}
+
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ClientKind_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_DebugService_2eproto);
+  return file_level_enum_descriptors_DebugService_2eproto[1];
 }
 bool ClientKind_IsValid(int value) {
   switch (value) {
@@ -448,9 +559,23 @@ bool ClientKind_IsValid(int value) {
   }
 }
 
+const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* HighlightingType_descriptor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_DebugService_2eproto);
+  return file_level_enum_descriptors_DebugService_2eproto[2];
+}
+bool HighlightingType_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+      return true;
+    default:
+      return false;
+  }
+}
+
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* IRElementKind_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_DebugService_2eproto);
-  return file_level_enum_descriptors_DebugService_2eproto[1];
+  return file_level_enum_descriptors_DebugService_2eproto[3];
 }
 bool IRElementKind_IsValid(int value) {
   switch (value) {
@@ -467,7 +592,7 @@ bool IRElementKind_IsValid(int value) {
 
 const ::PROTOBUF_NAMESPACE_ID::EnumDescriptor* ElementCommand_descriptor() {
   ::PROTOBUF_NAMESPACE_ID::internal::AssignDescriptors(&descriptor_table_DebugService_2eproto);
-  return file_level_enum_descriptors_DebugService_2eproto[2];
+  return file_level_enum_descriptors_DebugService_2eproto[4];
 }
 bool ElementCommand_IsValid(int value) {
   switch (value) {
@@ -484,6 +609,204 @@ bool ElementCommand_IsValid(int value) {
     default:
       return false;
   }
+}
+
+
+// ===================================================================
+
+void SessionStateRequest::InitAsDefaultInstance() {
+}
+class SessionStateRequest::_Internal {
+ public:
+};
+
+SessionStateRequest::SessionStateRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
+  SharedCtor();
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:SessionStateRequest)
+}
+SessionStateRequest::SessionStateRequest(const SessionStateRequest& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  state_ = from.state_;
+  // @@protoc_insertion_point(copy_constructor:SessionStateRequest)
+}
+
+void SessionStateRequest::SharedCtor() {
+  state_ = 0;
+}
+
+SessionStateRequest::~SessionStateRequest() {
+  // @@protoc_insertion_point(destructor:SessionStateRequest)
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+void SessionStateRequest::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
+}
+
+void SessionStateRequest::ArenaDtor(void* object) {
+  SessionStateRequest* _this = reinterpret_cast< SessionStateRequest* >(object);
+  (void)_this;
+}
+void SessionStateRequest::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void SessionStateRequest::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const SessionStateRequest& SessionStateRequest::default_instance() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_SessionStateRequest_DebugService_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void SessionStateRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:SessionStateRequest)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  state_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* SessionStateRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // .SessionState state = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_state(static_cast<::SessionState>(val));
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+
+::PROTOBUF_NAMESPACE_ID::uint8* SessionStateRequest::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:SessionStateRequest)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .SessionState state = 1;
+  if (this->state() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_state(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:SessionStateRequest)
+  return target;
+}
+
+size_t SessionStateRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:SessionStateRequest)
+  size_t total_size = 0;
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // .SessionState state = 1;
+  if (this->state() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_state());
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void SessionStateRequest::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:SessionStateRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  const SessionStateRequest* source =
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<SessionStateRequest>(
+          &from);
+  if (source == nullptr) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:SessionStateRequest)
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:SessionStateRequest)
+    MergeFrom(*source);
+  }
+}
+
+void SessionStateRequest::MergeFrom(const SessionStateRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:SessionStateRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.state() != 0) {
+    _internal_set_state(from._internal_state());
+  }
+}
+
+void SessionStateRequest::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:SessionStateRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void SessionStateRequest::CopyFrom(const SessionStateRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:SessionStateRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool SessionStateRequest::IsInitialized() const {
+  return true;
+}
+
+void SessionStateRequest::InternalSwap(SessionStateRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  swap(state_, other->state_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata SessionStateRequest::GetMetadata() const {
+  return GetMetadataStatic();
 }
 
 
@@ -1485,19 +1808,227 @@ void StackFrame::InternalSwap(StackFrame* other) {
 
 // ===================================================================
 
-void UpdateIRRequest::InitAsDefaultInstance() {
-  ::_UpdateIRRequest_default_instance_._instance.get_mutable()->stackframe_ = const_cast< ::StackFrame*>(
+void CurrentStackFrameRequest::InitAsDefaultInstance() {
+  ::_CurrentStackFrameRequest_default_instance_._instance.get_mutable()->currentframe_ = const_cast< ::StackFrame*>(
       ::StackFrame::internal_default_instance());
 }
-class UpdateIRRequest::_Internal {
+class CurrentStackFrameRequest::_Internal {
  public:
-  static const ::StackFrame& stackframe(const UpdateIRRequest* msg);
+  static const ::StackFrame& currentframe(const CurrentStackFrameRequest* msg);
 };
 
 const ::StackFrame&
-UpdateIRRequest::_Internal::stackframe(const UpdateIRRequest* msg) {
-  return *msg->stackframe_;
+CurrentStackFrameRequest::_Internal::currentframe(const CurrentStackFrameRequest* msg) {
+  return *msg->currentframe_;
 }
+CurrentStackFrameRequest::CurrentStackFrameRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
+  SharedCtor();
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:CurrentStackFrameRequest)
+}
+CurrentStackFrameRequest::CurrentStackFrameRequest(const CurrentStackFrameRequest& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  if (from._internal_has_currentframe()) {
+    currentframe_ = new ::StackFrame(*from.currentframe_);
+  } else {
+    currentframe_ = nullptr;
+  }
+  // @@protoc_insertion_point(copy_constructor:CurrentStackFrameRequest)
+}
+
+void CurrentStackFrameRequest::SharedCtor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_CurrentStackFrameRequest_DebugService_2eproto.base);
+  currentframe_ = nullptr;
+}
+
+CurrentStackFrameRequest::~CurrentStackFrameRequest() {
+  // @@protoc_insertion_point(destructor:CurrentStackFrameRequest)
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+void CurrentStackFrameRequest::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  if (this != internal_default_instance()) delete currentframe_;
+}
+
+void CurrentStackFrameRequest::ArenaDtor(void* object) {
+  CurrentStackFrameRequest* _this = reinterpret_cast< CurrentStackFrameRequest* >(object);
+  (void)_this;
+}
+void CurrentStackFrameRequest::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void CurrentStackFrameRequest::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const CurrentStackFrameRequest& CurrentStackFrameRequest::default_instance() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_CurrentStackFrameRequest_DebugService_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void CurrentStackFrameRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:CurrentStackFrameRequest)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  if (GetArena() == nullptr && currentframe_ != nullptr) {
+    delete currentframe_;
+  }
+  currentframe_ = nullptr;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* CurrentStackFrameRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // .StackFrame currentFrame = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 10)) {
+          ptr = ctx->ParseMessage(_internal_mutable_currentframe(), ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+
+::PROTOBUF_NAMESPACE_ID::uint8* CurrentStackFrameRequest::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:CurrentStackFrameRequest)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .StackFrame currentFrame = 1;
+  if (this->has_currentframe()) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(
+        1, _Internal::currentframe(this), target, stream);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:CurrentStackFrameRequest)
+  return target;
+}
+
+size_t CurrentStackFrameRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:CurrentStackFrameRequest)
+  size_t total_size = 0;
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // .StackFrame currentFrame = 1;
+  if (this->has_currentframe()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *currentframe_);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void CurrentStackFrameRequest::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:CurrentStackFrameRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  const CurrentStackFrameRequest* source =
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<CurrentStackFrameRequest>(
+          &from);
+  if (source == nullptr) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:CurrentStackFrameRequest)
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:CurrentStackFrameRequest)
+    MergeFrom(*source);
+  }
+}
+
+void CurrentStackFrameRequest::MergeFrom(const CurrentStackFrameRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:CurrentStackFrameRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.has_currentframe()) {
+    _internal_mutable_currentframe()->::StackFrame::MergeFrom(from._internal_currentframe());
+  }
+}
+
+void CurrentStackFrameRequest::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:CurrentStackFrameRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void CurrentStackFrameRequest::CopyFrom(const CurrentStackFrameRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:CurrentStackFrameRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool CurrentStackFrameRequest::IsInitialized() const {
+  return true;
+}
+
+void CurrentStackFrameRequest::InternalSwap(CurrentStackFrameRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  swap(currentframe_, other->currentframe_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata CurrentStackFrameRequest::GetMetadata() const {
+  return GetMetadataStatic();
+}
+
+
+// ===================================================================
+
+void UpdateIRRequest::InitAsDefaultInstance() {
+}
+class UpdateIRRequest::_Internal {
+ public:
+};
+
 UpdateIRRequest::UpdateIRRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
@@ -1512,11 +2043,6 @@ UpdateIRRequest::UpdateIRRequest(const UpdateIRRequest& from)
     text_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_text(),
       GetArena());
   }
-  if (from._internal_has_stackframe()) {
-    stackframe_ = new ::StackFrame(*from.stackframe_);
-  } else {
-    stackframe_ = nullptr;
-  }
   sessionid_ = from.sessionid_;
   // @@protoc_insertion_point(copy_constructor:UpdateIRRequest)
 }
@@ -1524,9 +2050,7 @@ UpdateIRRequest::UpdateIRRequest(const UpdateIRRequest& from)
 void UpdateIRRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_UpdateIRRequest_DebugService_2eproto.base);
   text_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&stackframe_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&sessionid_) -
-      reinterpret_cast<char*>(&stackframe_)) + sizeof(sessionid_));
+  sessionid_ = PROTOBUF_LONGLONG(0);
 }
 
 UpdateIRRequest::~UpdateIRRequest() {
@@ -1538,7 +2062,6 @@ UpdateIRRequest::~UpdateIRRequest() {
 void UpdateIRRequest::SharedDtor() {
   GOOGLE_DCHECK(GetArena() == nullptr);
   text_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (this != internal_default_instance()) delete stackframe_;
 }
 
 void UpdateIRRequest::ArenaDtor(void* object) {
@@ -1563,10 +2086,6 @@ void UpdateIRRequest::Clear() {
   (void) cached_has_bits;
 
   text_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  if (GetArena() == nullptr && stackframe_ != nullptr) {
-    delete stackframe_;
-  }
-  stackframe_ = nullptr;
   sessionid_ = PROTOBUF_LONGLONG(0);
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
@@ -1592,13 +2111,6 @@ const char* UpdateIRRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPAC
           auto str = _internal_mutable_text();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "UpdateIRRequest.text"));
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // .StackFrame stackFrame = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
-          ptr = ctx->ParseMessage(_internal_mutable_stackframe(), ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -1646,14 +2158,6 @@ failure:
         2, this->_internal_text(), target);
   }
 
-  // .StackFrame stackFrame = 3;
-  if (this->has_stackframe()) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
-      InternalWriteMessage(
-        3, _Internal::stackframe(this), target, stream);
-  }
-
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -1675,13 +2179,6 @@ size_t UpdateIRRequest::ByteSizeLong() const {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_text());
-  }
-
-  // .StackFrame stackFrame = 3;
-  if (this->has_stackframe()) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
-        *stackframe_);
   }
 
   // int64 sessionId = 1;
@@ -1725,9 +2222,6 @@ void UpdateIRRequest::MergeFrom(const UpdateIRRequest& from) {
   if (from.text().size() > 0) {
     _internal_set_text(from._internal_text());
   }
-  if (from.has_stackframe()) {
-    _internal_mutable_stackframe()->::StackFrame::MergeFrom(from._internal_stackframe());
-  }
   if (from.sessionid() != 0) {
     _internal_set_sessionid(from._internal_sessionid());
   }
@@ -1755,15 +2249,278 @@ void UpdateIRRequest::InternalSwap(UpdateIRRequest* other) {
   using std::swap;
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   text_.Swap(&other->text_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(UpdateIRRequest, sessionid_)
-      + sizeof(UpdateIRRequest::sessionid_)
-      - PROTOBUF_FIELD_OFFSET(UpdateIRRequest, stackframe_)>(
-          reinterpret_cast<char*>(&stackframe_),
-          reinterpret_cast<char*>(&other->stackframe_));
+  swap(sessionid_, other->sessionid_);
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata UpdateIRRequest::GetMetadata() const {
+  return GetMetadataStatic();
+}
+
+
+// ===================================================================
+
+void Result::InitAsDefaultInstance() {
+}
+class Result::_Internal {
+ public:
+};
+
+Result::Result(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
+  SharedCtor();
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:Result)
+}
+Result::Result(const Result& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  errormessage_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (!from._internal_errormessage().empty()) {
+    errormessage_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_errormessage(),
+      GetArena());
+  }
+  ::memcpy(&success_, &from.success_,
+    static_cast<size_t>(reinterpret_cast<char*>(&errorcode_) -
+    reinterpret_cast<char*>(&success_)) + sizeof(errorcode_));
+  // @@protoc_insertion_point(copy_constructor:Result)
+}
+
+void Result::SharedCtor() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Result_DebugService_2eproto.base);
+  errormessage_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  ::memset(&success_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&errorcode_) -
+      reinterpret_cast<char*>(&success_)) + sizeof(errorcode_));
+}
+
+Result::~Result() {
+  // @@protoc_insertion_point(destructor:Result)
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+void Result::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
+  errormessage_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+}
+
+void Result::ArenaDtor(void* object) {
+  Result* _this = reinterpret_cast< Result* >(object);
+  (void)_this;
+}
+void Result::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void Result::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const Result& Result::default_instance() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Result_DebugService_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void Result::Clear() {
+// @@protoc_insertion_point(message_clear_start:Result)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  errormessage_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  ::memset(&success_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&errorcode_) -
+      reinterpret_cast<char*>(&success_)) + sizeof(errorcode_));
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* Result::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // bool success = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          success_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // int32 errorCode = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
+          errorcode_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // string errorMessage = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
+          auto str = _internal_mutable_errormessage();
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
+          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "Result.errorMessage"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+
+::PROTOBUF_NAMESPACE_ID::uint8* Result::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:Result)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // bool success = 1;
+  if (this->success() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
+  }
+
+  // int32 errorCode = 2;
+  if (this->errorcode() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_errorcode(), target);
+  }
+
+  // string errorMessage = 3;
+  if (this->errormessage().size() > 0) {
+    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
+      this->_internal_errormessage().data(), static_cast<int>(this->_internal_errormessage().length()),
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
+      "Result.errorMessage");
+    target = stream->WriteStringMaybeAliased(
+        3, this->_internal_errormessage(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:Result)
+  return target;
+}
+
+size_t Result::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:Result)
+  size_t total_size = 0;
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string errorMessage = 3;
+  if (this->errormessage().size() > 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
+        this->_internal_errormessage());
+  }
+
+  // bool success = 1;
+  if (this->success() != 0) {
+    total_size += 1 + 1;
+  }
+
+  // int32 errorCode = 2;
+  if (this->errorcode() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+        this->_internal_errorcode());
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void Result::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:Result)
+  GOOGLE_DCHECK_NE(&from, this);
+  const Result* source =
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Result>(
+          &from);
+  if (source == nullptr) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:Result)
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:Result)
+    MergeFrom(*source);
+  }
+}
+
+void Result::MergeFrom(const Result& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:Result)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.errormessage().size() > 0) {
+    _internal_set_errormessage(from._internal_errormessage());
+  }
+  if (from.success() != 0) {
+    _internal_set_success(from._internal_success());
+  }
+  if (from.errorcode() != 0) {
+    _internal_set_errorcode(from._internal_errorcode());
+  }
+}
+
+void Result::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:Result)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void Result::CopyFrom(const Result& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:Result)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool Result::IsInitialized() const {
+  return true;
+}
+
+void Result::InternalSwap(Result* other) {
+  using std::swap;
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  errormessage_.Swap(&other->errormessage_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(Result, errorcode_)
+      + sizeof(Result::errorcode_)
+      - PROTOBUF_FIELD_OFFSET(Result, success_)>(
+          reinterpret_cast<char*>(&success_),
+          reinterpret_cast<char*>(&other->success_));
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata Result::GetMetadata() const {
   return GetMetadataStatic();
 }
 
@@ -2024,6 +2781,204 @@ void RGBColor::InternalSwap(RGBColor* other) {
 
 // ===================================================================
 
+void ClearHighlightingRequest::InitAsDefaultInstance() {
+}
+class ClearHighlightingRequest::_Internal {
+ public:
+};
+
+ClearHighlightingRequest::ClearHighlightingRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
+  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
+  SharedCtor();
+  RegisterArenaDtor(arena);
+  // @@protoc_insertion_point(arena_constructor:ClearHighlightingRequest)
+}
+ClearHighlightingRequest::ClearHighlightingRequest(const ClearHighlightingRequest& from)
+  : ::PROTOBUF_NAMESPACE_ID::Message() {
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  highlighting_ = from.highlighting_;
+  // @@protoc_insertion_point(copy_constructor:ClearHighlightingRequest)
+}
+
+void ClearHighlightingRequest::SharedCtor() {
+  highlighting_ = 0;
+}
+
+ClearHighlightingRequest::~ClearHighlightingRequest() {
+  // @@protoc_insertion_point(destructor:ClearHighlightingRequest)
+  SharedDtor();
+  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+void ClearHighlightingRequest::SharedDtor() {
+  GOOGLE_DCHECK(GetArena() == nullptr);
+}
+
+void ClearHighlightingRequest::ArenaDtor(void* object) {
+  ClearHighlightingRequest* _this = reinterpret_cast< ClearHighlightingRequest* >(object);
+  (void)_this;
+}
+void ClearHighlightingRequest::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
+}
+void ClearHighlightingRequest::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ClearHighlightingRequest& ClearHighlightingRequest::default_instance() {
+  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_ClearHighlightingRequest_DebugService_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void ClearHighlightingRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:ClearHighlightingRequest)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  highlighting_ = 0;
+  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
+}
+
+const char* ClearHighlightingRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
+#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
+  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
+  while (!ctx->Done(&ptr)) {
+    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
+    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
+    CHK_(ptr);
+    switch (tag >> 3) {
+      // .HighlightingType highlighting = 1;
+      case 1:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
+          ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_highlighting(static_cast<::HighlightingType>(val));
+        } else goto handle_unusual;
+        continue;
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->SetLastTag(tag);
+          goto success;
+        }
+        ptr = UnknownFieldParse(tag,
+            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
+            ptr, ctx);
+        CHK_(ptr != nullptr);
+        continue;
+      }
+    }  // switch
+  }  // while
+success:
+  return ptr;
+failure:
+  ptr = nullptr;
+  goto success;
+#undef CHK_
+}
+
+::PROTOBUF_NAMESPACE_ID::uint8* ClearHighlightingRequest::_InternalSerialize(
+    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
+  // @@protoc_insertion_point(serialize_to_array_start:ClearHighlightingRequest)
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .HighlightingType highlighting = 1;
+  if (this->highlighting() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
+      1, this->_internal_highlighting(), target);
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
+        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:ClearHighlightingRequest)
+  return target;
+}
+
+size_t ClearHighlightingRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:ClearHighlightingRequest)
+  size_t total_size = 0;
+
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // .HighlightingType highlighting = 1;
+  if (this->highlighting() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_highlighting());
+  }
+
+  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
+    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
+        _internal_metadata_, total_size, &_cached_size_);
+  }
+  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void ClearHighlightingRequest::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:ClearHighlightingRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  const ClearHighlightingRequest* source =
+      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<ClearHighlightingRequest>(
+          &from);
+  if (source == nullptr) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:ClearHighlightingRequest)
+    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:ClearHighlightingRequest)
+    MergeFrom(*source);
+  }
+}
+
+void ClearHighlightingRequest::MergeFrom(const ClearHighlightingRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:ClearHighlightingRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
+  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.highlighting() != 0) {
+    _internal_set_highlighting(from._internal_highlighting());
+  }
+}
+
+void ClearHighlightingRequest::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:ClearHighlightingRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void ClearHighlightingRequest::CopyFrom(const ClearHighlightingRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:ClearHighlightingRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ClearHighlightingRequest::IsInitialized() const {
+  return true;
+}
+
+void ClearHighlightingRequest::InternalSwap(ClearHighlightingRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
+  swap(highlighting_, other->highlighting_);
+}
+
+::PROTOBUF_NAMESPACE_ID::Metadata ClearHighlightingRequest::GetMetadata() const {
+  return GetMetadataStatic();
+}
+
+
+// ===================================================================
+
 void MarkElementRequest::InitAsDefaultInstance() {
   ::_MarkElementRequest_default_instance_._instance.get_mutable()->color_ = const_cast< ::RGBColor*>(
       ::RGBColor::internal_default_instance());
@@ -2056,7 +3011,9 @@ MarkElementRequest::MarkElementRequest(const MarkElementRequest& from)
   } else {
     color_ = nullptr;
   }
-  elementaddress_ = from.elementaddress_;
+  ::memcpy(&elementaddress_, &from.elementaddress_,
+    static_cast<size_t>(reinterpret_cast<char*>(&highlighting_) -
+    reinterpret_cast<char*>(&elementaddress_)) + sizeof(highlighting_));
   // @@protoc_insertion_point(copy_constructor:MarkElementRequest)
 }
 
@@ -2064,8 +3021,8 @@ void MarkElementRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_MarkElementRequest_DebugService_2eproto.base);
   label_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
   ::memset(&color_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&elementaddress_) -
-      reinterpret_cast<char*>(&color_)) + sizeof(elementaddress_));
+      reinterpret_cast<char*>(&highlighting_) -
+      reinterpret_cast<char*>(&color_)) + sizeof(highlighting_));
 }
 
 MarkElementRequest::~MarkElementRequest() {
@@ -2106,7 +3063,9 @@ void MarkElementRequest::Clear() {
     delete color_;
   }
   color_ = nullptr;
-  elementaddress_ = PROTOBUF_LONGLONG(0);
+  ::memset(&elementaddress_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&highlighting_) -
+      reinterpret_cast<char*>(&elementaddress_)) + sizeof(highlighting_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -2139,6 +3098,14 @@ const char* MarkElementRequest::_InternalParse(const char* ptr, ::PROTOBUF_NAMES
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "MarkElementRequest.label"));
           CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // .HighlightingType highlighting = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
+          ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_highlighting(static_cast<::HighlightingType>(val));
         } else goto handle_unusual;
         continue;
       default: {
@@ -2193,6 +3160,13 @@ failure:
         3, this->_internal_label(), target);
   }
 
+  // .HighlightingType highlighting = 4;
+  if (this->highlighting() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
+      4, this->_internal_highlighting(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -2228,6 +3202,12 @@ size_t MarkElementRequest::ByteSizeLong() const {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int64Size(
         this->_internal_elementaddress());
+  }
+
+  // .HighlightingType highlighting = 4;
+  if (this->highlighting() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_highlighting());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -2270,6 +3250,9 @@ void MarkElementRequest::MergeFrom(const MarkElementRequest& from) {
   if (from.elementaddress() != 0) {
     _internal_set_elementaddress(from._internal_elementaddress());
   }
+  if (from.highlighting() != 0) {
+    _internal_set_highlighting(from._internal_highlighting());
+  }
 }
 
 void MarkElementRequest::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
@@ -2295,8 +3278,8 @@ void MarkElementRequest::InternalSwap(MarkElementRequest* other) {
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   label_.Swap(&other->label_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(MarkElementRequest, elementaddress_)
-      + sizeof(MarkElementRequest::elementaddress_)
+      PROTOBUF_FIELD_OFFSET(MarkElementRequest, highlighting_)
+      + sizeof(MarkElementRequest::highlighting_)
       - PROTOBUF_FIELD_OFFSET(MarkElementRequest, color_)>(
           reinterpret_cast<char*>(&color_),
           reinterpret_cast<char*>(&other->color_));
@@ -2603,280 +3586,19 @@ void SetCurrentElementRequest::InternalSwap(SetCurrentElementRequest* other) {
 
 // ===================================================================
 
-void Result::InitAsDefaultInstance() {
-}
-class Result::_Internal {
- public:
-};
-
-Result::Result(::PROTOBUF_NAMESPACE_ID::Arena* arena)
-  : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
-  SharedCtor();
-  RegisterArenaDtor(arena);
-  // @@protoc_insertion_point(arena_constructor:Result)
-}
-Result::Result(const Result& from)
-  : ::PROTOBUF_NAMESPACE_ID::Message() {
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  errormessage_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  if (!from._internal_errormessage().empty()) {
-    errormessage_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_errormessage(),
-      GetArena());
-  }
-  ::memcpy(&success_, &from.success_,
-    static_cast<size_t>(reinterpret_cast<char*>(&errorcode_) -
-    reinterpret_cast<char*>(&success_)) + sizeof(errorcode_));
-  // @@protoc_insertion_point(copy_constructor:Result)
-}
-
-void Result::SharedCtor() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_Result_DebugService_2eproto.base);
-  errormessage_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&success_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&errorcode_) -
-      reinterpret_cast<char*>(&success_)) + sizeof(errorcode_));
-}
-
-Result::~Result() {
-  // @@protoc_insertion_point(destructor:Result)
-  SharedDtor();
-  _internal_metadata_.Delete<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
-}
-
-void Result::SharedDtor() {
-  GOOGLE_DCHECK(GetArena() == nullptr);
-  errormessage_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-}
-
-void Result::ArenaDtor(void* object) {
-  Result* _this = reinterpret_cast< Result* >(object);
-  (void)_this;
-}
-void Result::RegisterArenaDtor(::PROTOBUF_NAMESPACE_ID::Arena*) {
-}
-void Result::SetCachedSize(int size) const {
-  _cached_size_.Set(size);
-}
-const Result& Result::default_instance() {
-  ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&::scc_info_Result_DebugService_2eproto.base);
-  return *internal_default_instance();
-}
-
-
-void Result::Clear() {
-// @@protoc_insertion_point(message_clear_start:Result)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  errormessage_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  ::memset(&success_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&errorcode_) -
-      reinterpret_cast<char*>(&success_)) + sizeof(errorcode_));
-  _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
-}
-
-const char* Result::_InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) {
-#define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
-  ::PROTOBUF_NAMESPACE_ID::Arena* arena = GetArena(); (void)arena;
-  while (!ctx->Done(&ptr)) {
-    ::PROTOBUF_NAMESPACE_ID::uint32 tag;
-    ptr = ::PROTOBUF_NAMESPACE_ID::internal::ReadTag(ptr, &tag);
-    CHK_(ptr);
-    switch (tag >> 3) {
-      // bool success = 1;
-      case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 8)) {
-          success_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // int32 errorCode = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 16)) {
-          errorcode_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      // string errorMessage = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 26)) {
-          auto str = _internal_mutable_errormessage();
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
-          CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "Result.errorMessage"));
-          CHK_(ptr);
-        } else goto handle_unusual;
-        continue;
-      default: {
-      handle_unusual:
-        if ((tag & 7) == 4 || tag == 0) {
-          ctx->SetLastTag(tag);
-          goto success;
-        }
-        ptr = UnknownFieldParse(tag,
-            _internal_metadata_.mutable_unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(),
-            ptr, ctx);
-        CHK_(ptr != nullptr);
-        continue;
-      }
-    }  // switch
-  }  // while
-success:
-  return ptr;
-failure:
-  ptr = nullptr;
-  goto success;
-#undef CHK_
-}
-
-::PROTOBUF_NAMESPACE_ID::uint8* Result::_InternalSerialize(
-    ::PROTOBUF_NAMESPACE_ID::uint8* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
-  // @@protoc_insertion_point(serialize_to_array_start:Result)
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  // bool success = 1;
-  if (this->success() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteBoolToArray(1, this->_internal_success(), target);
-  }
-
-  // int32 errorCode = 2;
-  if (this->errorcode() != 0) {
-    target = stream->EnsureSpace(target);
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(2, this->_internal_errorcode(), target);
-  }
-
-  // string errorMessage = 3;
-  if (this->errormessage().size() > 0) {
-    ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
-      this->_internal_errormessage().data(), static_cast<int>(this->_internal_errormessage().length()),
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "Result.errorMessage");
-    target = stream->WriteStringMaybeAliased(
-        3, this->_internal_errormessage(), target);
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
-        _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
-  }
-  // @@protoc_insertion_point(serialize_to_array_end:Result)
-  return target;
-}
-
-size_t Result::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:Result)
-  size_t total_size = 0;
-
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  // Prevent compiler warnings about cached_has_bits being unused
-  (void) cached_has_bits;
-
-  // string errorMessage = 3;
-  if (this->errormessage().size() > 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-        this->_internal_errormessage());
-  }
-
-  // bool success = 1;
-  if (this->success() != 0) {
-    total_size += 1 + 1;
-  }
-
-  // int32 errorCode = 2;
-  if (this->errorcode() != 0) {
-    total_size += 1 +
-      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
-        this->_internal_errorcode());
-  }
-
-  if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
-    return ::PROTOBUF_NAMESPACE_ID::internal::ComputeUnknownFieldsSize(
-        _internal_metadata_, total_size, &_cached_size_);
-  }
-  int cached_size = ::PROTOBUF_NAMESPACE_ID::internal::ToCachedSize(total_size);
-  SetCachedSize(cached_size);
-  return total_size;
-}
-
-void Result::MergeFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_merge_from_start:Result)
-  GOOGLE_DCHECK_NE(&from, this);
-  const Result* source =
-      ::PROTOBUF_NAMESPACE_ID::DynamicCastToGenerated<Result>(
-          &from);
-  if (source == nullptr) {
-  // @@protoc_insertion_point(generalized_merge_from_cast_fail:Result)
-    ::PROTOBUF_NAMESPACE_ID::internal::ReflectionOps::Merge(from, this);
-  } else {
-  // @@protoc_insertion_point(generalized_merge_from_cast_success:Result)
-    MergeFrom(*source);
-  }
-}
-
-void Result::MergeFrom(const Result& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:Result)
-  GOOGLE_DCHECK_NE(&from, this);
-  _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
-  ::PROTOBUF_NAMESPACE_ID::uint32 cached_has_bits = 0;
-  (void) cached_has_bits;
-
-  if (from.errormessage().size() > 0) {
-    _internal_set_errormessage(from._internal_errormessage());
-  }
-  if (from.success() != 0) {
-    _internal_set_success(from._internal_success());
-  }
-  if (from.errorcode() != 0) {
-    _internal_set_errorcode(from._internal_errorcode());
-  }
-}
-
-void Result::CopyFrom(const ::PROTOBUF_NAMESPACE_ID::Message& from) {
-// @@protoc_insertion_point(generalized_copy_from_start:Result)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-void Result::CopyFrom(const Result& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:Result)
-  if (&from == this) return;
-  Clear();
-  MergeFrom(from);
-}
-
-bool Result::IsInitialized() const {
-  return true;
-}
-
-void Result::InternalSwap(Result* other) {
-  using std::swap;
-  _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
-  errormessage_.Swap(&other->errormessage_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
-  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(Result, errorcode_)
-      + sizeof(Result::errorcode_)
-      - PROTOBUF_FIELD_OFFSET(Result, success_)>(
-          reinterpret_cast<char*>(&success_),
-          reinterpret_cast<char*>(&other->success_));
-}
-
-::PROTOBUF_NAMESPACE_ID::Metadata Result::GetMetadata() const {
-  return GetMetadataStatic();
-}
-
-
-// ===================================================================
-
 void ElementCommandRequest::InitAsDefaultInstance() {
+  ::_ElementCommandRequest_default_instance_._instance.get_mutable()->stackframe_ = const_cast< ::StackFrame*>(
+      ::StackFrame::internal_default_instance());
 }
 class ElementCommandRequest::_Internal {
  public:
+  static const ::StackFrame& stackframe(const ElementCommandRequest* msg);
 };
 
+const ::StackFrame&
+ElementCommandRequest::_Internal::stackframe(const ElementCommandRequest* msg) {
+  return *msg->stackframe_;
+}
 ElementCommandRequest::ElementCommandRequest(::PROTOBUF_NAMESPACE_ID::Arena* arena)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena) {
   SharedCtor();
@@ -2891,18 +3613,23 @@ ElementCommandRequest::ElementCommandRequest(const ElementCommandRequest& from)
     label_.Set(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), from._internal_label(),
       GetArena());
   }
+  if (from._internal_has_stackframe()) {
+    stackframe_ = new ::StackFrame(*from.stackframe_);
+  } else {
+    stackframe_ = nullptr;
+  }
   ::memcpy(&elementaddress_, &from.elementaddress_,
-    static_cast<size_t>(reinterpret_cast<char*>(&command_) -
-    reinterpret_cast<char*>(&elementaddress_)) + sizeof(command_));
+    static_cast<size_t>(reinterpret_cast<char*>(&highlighting_) -
+    reinterpret_cast<char*>(&elementaddress_)) + sizeof(highlighting_));
   // @@protoc_insertion_point(copy_constructor:ElementCommandRequest)
 }
 
 void ElementCommandRequest::SharedCtor() {
   ::PROTOBUF_NAMESPACE_ID::internal::InitSCC(&scc_info_ElementCommandRequest_DebugService_2eproto.base);
   label_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
-  ::memset(&elementaddress_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&command_) -
-      reinterpret_cast<char*>(&elementaddress_)) + sizeof(command_));
+  ::memset(&stackframe_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&highlighting_) -
+      reinterpret_cast<char*>(&stackframe_)) + sizeof(highlighting_));
 }
 
 ElementCommandRequest::~ElementCommandRequest() {
@@ -2914,6 +3641,7 @@ ElementCommandRequest::~ElementCommandRequest() {
 void ElementCommandRequest::SharedDtor() {
   GOOGLE_DCHECK(GetArena() == nullptr);
   label_.DestroyNoArena(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete stackframe_;
 }
 
 void ElementCommandRequest::ArenaDtor(void* object) {
@@ -2938,9 +3666,13 @@ void ElementCommandRequest::Clear() {
   (void) cached_has_bits;
 
   label_.ClearToEmpty(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
+  if (GetArena() == nullptr && stackframe_ != nullptr) {
+    delete stackframe_;
+  }
+  stackframe_ = nullptr;
   ::memset(&elementaddress_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&command_) -
-      reinterpret_cast<char*>(&elementaddress_)) + sizeof(command_));
+      reinterpret_cast<char*>(&highlighting_) -
+      reinterpret_cast<char*>(&elementaddress_)) + sizeof(highlighting_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
@@ -2973,6 +3705,21 @@ const char* ElementCommandRequest::_InternalParse(const char* ptr, ::PROTOBUF_NA
           auto str = _internal_mutable_label();
           ptr = ::PROTOBUF_NAMESPACE_ID::internal::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(::PROTOBUF_NAMESPACE_ID::internal::VerifyUTF8(str, "ElementCommandRequest.label"));
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // .HighlightingType highlighting = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 32)) {
+          ::PROTOBUF_NAMESPACE_ID::uint64 val = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+          _internal_set_highlighting(static_cast<::HighlightingType>(val));
+        } else goto handle_unusual;
+        continue;
+      // .StackFrame stackFrame = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 42)) {
+          ptr = ctx->ParseMessage(_internal_mutable_stackframe(), ptr);
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
@@ -3027,6 +3774,21 @@ failure:
         3, this->_internal_label(), target);
   }
 
+  // .HighlightingType highlighting = 4;
+  if (this->highlighting() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteEnumToArray(
+      4, this->_internal_highlighting(), target);
+  }
+
+  // .StackFrame stackFrame = 5;
+  if (this->has_stackframe()) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::
+      InternalWriteMessage(
+        5, _Internal::stackframe(this), target, stream);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
@@ -3050,6 +3812,13 @@ size_t ElementCommandRequest::ByteSizeLong() const {
         this->_internal_label());
   }
 
+  // .StackFrame stackFrame = 5;
+  if (this->has_stackframe()) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::MessageSize(
+        *stackframe_);
+  }
+
   // int64 elementAddress = 2;
   if (this->elementaddress() != 0) {
     total_size += 1 +
@@ -3061,6 +3830,12 @@ size_t ElementCommandRequest::ByteSizeLong() const {
   if (this->command() != 0) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_command());
+  }
+
+  // .HighlightingType highlighting = 4;
+  if (this->highlighting() != 0) {
+    total_size += 1 +
+      ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::EnumSize(this->_internal_highlighting());
   }
 
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
@@ -3097,11 +3872,17 @@ void ElementCommandRequest::MergeFrom(const ElementCommandRequest& from) {
   if (from.label().size() > 0) {
     _internal_set_label(from._internal_label());
   }
+  if (from.has_stackframe()) {
+    _internal_mutable_stackframe()->::StackFrame::MergeFrom(from._internal_stackframe());
+  }
   if (from.elementaddress() != 0) {
     _internal_set_elementaddress(from._internal_elementaddress());
   }
   if (from.command() != 0) {
     _internal_set_command(from._internal_command());
+  }
+  if (from.highlighting() != 0) {
+    _internal_set_highlighting(from._internal_highlighting());
   }
 }
 
@@ -3128,11 +3909,11 @@ void ElementCommandRequest::InternalSwap(ElementCommandRequest* other) {
   _internal_metadata_.Swap<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(&other->_internal_metadata_);
   label_.Swap(&other->label_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(ElementCommandRequest, command_)
-      + sizeof(ElementCommandRequest::command_)
-      - PROTOBUF_FIELD_OFFSET(ElementCommandRequest, elementaddress_)>(
-          reinterpret_cast<char*>(&elementaddress_),
-          reinterpret_cast<char*>(&other->elementaddress_));
+      PROTOBUF_FIELD_OFFSET(ElementCommandRequest, highlighting_)
+      + sizeof(ElementCommandRequest::highlighting_)
+      - PROTOBUF_FIELD_OFFSET(ElementCommandRequest, stackframe_)>(
+          reinterpret_cast<char*>(&stackframe_),
+          reinterpret_cast<char*>(&other->stackframe_));
 }
 
 ::PROTOBUF_NAMESPACE_ID::Metadata ElementCommandRequest::GetMetadata() const {
@@ -3628,6 +4409,9 @@ void ActiveBreakpointResult::InternalSwap(ActiveBreakpointResult* other) {
 
 // @@protoc_insertion_point(namespace_scope)
 PROTOBUF_NAMESPACE_OPEN
+template<> PROTOBUF_NOINLINE ::SessionStateRequest* Arena::CreateMaybeMessage< ::SessionStateRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::SessionStateRequest >(arena);
+}
 template<> PROTOBUF_NOINLINE ::StartSessionRequest* Arena::CreateMaybeMessage< ::StartSessionRequest >(Arena* arena) {
   return Arena::CreateMessageInternal< ::StartSessionRequest >(arena);
 }
@@ -3640,20 +4424,26 @@ template<> PROTOBUF_NOINLINE ::EndSessionRequest* Arena::CreateMaybeMessage< ::E
 template<> PROTOBUF_NOINLINE ::StackFrame* Arena::CreateMaybeMessage< ::StackFrame >(Arena* arena) {
   return Arena::CreateMessageInternal< ::StackFrame >(arena);
 }
+template<> PROTOBUF_NOINLINE ::CurrentStackFrameRequest* Arena::CreateMaybeMessage< ::CurrentStackFrameRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::CurrentStackFrameRequest >(arena);
+}
 template<> PROTOBUF_NOINLINE ::UpdateIRRequest* Arena::CreateMaybeMessage< ::UpdateIRRequest >(Arena* arena) {
   return Arena::CreateMessageInternal< ::UpdateIRRequest >(arena);
 }
+template<> PROTOBUF_NOINLINE ::Result* Arena::CreateMaybeMessage< ::Result >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::Result >(arena);
+}
 template<> PROTOBUF_NOINLINE ::RGBColor* Arena::CreateMaybeMessage< ::RGBColor >(Arena* arena) {
   return Arena::CreateMessageInternal< ::RGBColor >(arena);
+}
+template<> PROTOBUF_NOINLINE ::ClearHighlightingRequest* Arena::CreateMaybeMessage< ::ClearHighlightingRequest >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::ClearHighlightingRequest >(arena);
 }
 template<> PROTOBUF_NOINLINE ::MarkElementRequest* Arena::CreateMaybeMessage< ::MarkElementRequest >(Arena* arena) {
   return Arena::CreateMessageInternal< ::MarkElementRequest >(arena);
 }
 template<> PROTOBUF_NOINLINE ::SetCurrentElementRequest* Arena::CreateMaybeMessage< ::SetCurrentElementRequest >(Arena* arena) {
   return Arena::CreateMessageInternal< ::SetCurrentElementRequest >(arena);
-}
-template<> PROTOBUF_NOINLINE ::Result* Arena::CreateMaybeMessage< ::Result >(Arena* arena) {
-  return Arena::CreateMessageInternal< ::Result >(arena);
 }
 template<> PROTOBUF_NOINLINE ::ElementCommandRequest* Arena::CreateMaybeMessage< ::ElementCommandRequest >(Arena* arena) {
   return Arena::CreateMessageInternal< ::ElementCommandRequest >(arena);
