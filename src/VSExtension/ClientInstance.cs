@@ -163,11 +163,11 @@ namespace IRExplorerExtension {
                         case StatusCode.Unavailable:
                         case StatusCode.DeadlineExceeded:
                         case StatusCode.Aborted: {
-                            await Shutdown();
-                            retry = true;
-                            retryCount++;
-                            break;
-                        }
+                                await Shutdown();
+                                retry = true;
+                                retryCount++;
+                                break;
+                            }
                     }
                 }
                 catch (Exception ex) {
@@ -180,39 +180,39 @@ namespace IRExplorerExtension {
             return false;
         }
 
-        internal static void PauseCurrentElementHandling() {
-            RunClientCommand(() => {
+        internal static async Task PauseCurrentElementHandling() {
+            await RunClientCommand(() => {
                 debugClient_.SetSessionState(new SessionStateRequest {
                     State = SessionState.Paused
                 });
-            }).Wait();
+            });
         }
 
-        internal static void ResumeCurrentElementHandling() {
-            RunClientCommand(() => {
+        internal static async Task ResumeCurrentElementHandling() {
+            await RunClientCommand(() => {
                 debugClient_.SetSessionState(new SessionStateRequest {
                     State = SessionState.Listening
                 });
-            }).Wait();
+            });
         }
 
-        public static void UpdateIR() {
-            RunClientCommand(() => { DebuggerInstance.UpdateIR(); }).Wait();
+        public static async Task UpdateIR() {
+            await RunClientCommand(() => { DebuggerInstance.UpdateIR(); });
         }
 
-        public static void UpdateCurrentStackFrame() {
-            RunClientCommand(() => {
+        public static async Task UpdateCurrentStackFrame() {
+            await RunClientCommand(() => {
                 debugClient_.UpdateCurrentStackFrame(new CurrentStackFrameRequest {
                     CurrentFrame = DebuggerInstance.GetCurrentStackFrame()
                 });
-            }).Wait();
+            });
         }
 
-        public static void ClearTemporaryHighlighting() {
-            RunClientCommand(() => debugClient_.ClearTemporaryHighlighting(
+        public static async Task ClearTemporaryHighlighting() {
+            await RunClientCommand(() => debugClient_.ClearTemporaryHighlighting(
                                  new ClearHighlightingRequest {
                                      Highlighting = HighlightingType.Temporary
-                                 })).Wait();
+                                 })); ;
         }
 
         private static string GetIRExplorerPath() {
@@ -253,7 +253,7 @@ namespace IRExplorerExtension {
 
                 var psi = new ProcessStartInfo(irxPath, irxArgs);
                 var process = Process.Start(psi);
-                bool result = process != null && 
+                bool result = process != null &&
                               await System.Threading.Tasks.Task.Run(() => process.WaitForInputIdle(30000));
 
                 if (result) {

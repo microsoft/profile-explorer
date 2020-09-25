@@ -16,6 +16,7 @@ namespace IRExplorerUI.Scripting {
         private List<Tuple<IRElement, Color>> markedElements_;
         private CancelableTask task_;
         private ISession session_;
+        private Dictionary<string, object> variables_;
 
         public ScriptSession(IRDocument document, ISession session) {
             task_ = new CancelableTask();
@@ -23,6 +24,7 @@ namespace IRExplorerUI.Scripting {
             session_ = session;
             builder_ = new StringBuilder();
             markedElements_ = new List<Tuple<IRElement, Color>>();
+            variables_ = new Dictionary<string, object>();
 
             if (document != null) {
                 analysis_ = new AnalysisInfo(document.Function);
@@ -43,6 +45,24 @@ namespace IRExplorerUI.Scripting {
         public bool IsInTwoDocumentsDiffMode => session_.IsInTwoDocumentsDiffMode;
         public IRTextSummary MainDocument => session_.MainDocumentSummary;
         public IRTextSummary DiffDocument => session_.DiffDocumentSummary;
+
+        public bool AddVariable<T>(string name, T value) where T : class {
+            return variables_.TryAdd(name, value);
+        }
+
+        public T GetVariable<T>(string name, T defaultValue = null) where T : class {
+            if (variables_.TryGetValue(name, out var value)) {
+                if (value is T valueOfT) {
+                    return valueOfT;
+                }
+            }
+
+            if (defaultValue != null) {
+                return defaultValue;
+            }
+
+            throw new InvalidOperationException($"Variable {name} not found or has unexpected type!");
+        }
 
         public FunctionIR ParseSection(IRTextSection section) {
             var errorHandler = IR.CreateParsingErrorHandler();
