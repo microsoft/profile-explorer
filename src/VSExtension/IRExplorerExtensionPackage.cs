@@ -161,7 +161,7 @@ namespace IRExplorerExtension {
             if (!handled) {
                 // Deselect temporary highlighting.
                 //Logger.Log("> OnMouseUp: not handled");
-                ClientInstance.ClearTemporaryHighlighting();
+                await ClientInstance.ClearTemporaryHighlighting();
             }
             else {
                 //Logger.Log("> OnMouseUp: handled");
@@ -188,34 +188,34 @@ namespace IRExplorerExtension {
 
             switch (Reason) {
                 case dbgEventReason.dbgEventReasonStep: {
-                    //var textLine = GetCurrentTextLine();
-                    //Debug.WriteLine("Current line: " + textLine);
-                    ClientInstance.UpdateCurrentStackFrame();
-                    ClientInstance.UpdateIR();
+                        //var textLine = GetCurrentTextLine();
+                        //Debug.WriteLine("Current line: " + textLine);
+                        JoinableTaskFactory.RunAsync(async () => await ClientInstance.UpdateCurrentStackFrame());
+                        JoinableTaskFactory.RunAsync(async () => await ClientInstance.UpdateIR());
 
-                    // Tokenize and try to extract vars
-                    // abc.xyz = def
-                    break;
-                }
+                        // Tokenize and try to extract vars
+                        // abc.xyz = def
+                        break;
+                    }
                 case dbgEventReason.dbgEventReasonBreakpoint:
                 case dbgEventReason.dbgEventReasonUserBreak: {
-                    //? This should check it's running cl/link and it's on a proper stack frame
-                    ClientInstance.UpdateCurrentStackFrame();
-                    ClientInstance.UpdateIR();
+                        //? This should check it's running cl/link and it's on a proper stack frame
+                        JoinableTaskFactory.RunAsync(async () => await ClientInstance.UpdateCurrentStackFrame());
+                        JoinableTaskFactory.RunAsync(async () => await ClientInstance.UpdateIR());
 
-                    //ExecutionAction = dbgExecutionAction.dbgExecutionActionStepOut;
-                    break;
-                }
+                        //ExecutionAction = dbgExecutionAction.dbgExecutionActionStepOut;
+                        break;
+                    }
                 case dbgEventReason.dbgEventReasonExceptionThrown: {
-                    ClientInstance.UpdateCurrentStackFrame();
-                    ClientInstance.UpdateIR();
+                        JoinableTaskFactory.RunAsync(async () => await ClientInstance.UpdateCurrentStackFrame());
+                        JoinableTaskFactory.RunAsync(async () => await ClientInstance.UpdateIR());
 
-                    //if (exceptionCount >= 2)
-                    //{
-                    //    ExecutionAction = dbgExecutionAction.dbgExecutionActionStepOut;
-                    //}
-                    break;
-                }
+                        //if (exceptionCount >= 2)
+                        //{
+                        //    ExecutionAction = dbgExecutionAction.dbgExecutionActionStepOut;
+                        //}
+                        break;
+                    }
             }
         }
 
@@ -226,7 +226,7 @@ namespace IRExplorerExtension {
                 return;
             }
 
-            JoinableTaskFactory.Run(() => ClientInstance.Shutdown());
+            JoinableTaskFactory.RunAsync(async () => await ClientInstance.Shutdown());
         }
 
         private async void DebuggerEvents_OnEnterDesignMode(dbgEventReason Reason) {
@@ -237,19 +237,19 @@ namespace IRExplorerExtension {
             await ClientInstance.Shutdown();
         }
 
-        private void DebuggerEvents__OnEnterRunMode(dbgEventReason reason) {
+        private async void DebuggerEvents__OnEnterRunMode(dbgEventReason reason) {
             if (!ClientInstance.IsConnected) {
                 return;
             }
 
             if (reason == dbgEventReason.dbgEventReasonGo) {
                 // Pause client from handling events.
-                ClientInstance.ClearTemporaryHighlighting();
-                ClientInstance.PauseCurrentElementHandling();
+                await ClientInstance.ClearTemporaryHighlighting();
+                await ClientInstance.PauseCurrentElementHandling();
             }
             else if (reason == dbgEventReason.dbgEventReasonStep) {
                 // Resume client handling events.
-                ClientInstance.ResumeCurrentElementHandling();
+                await ClientInstance.ResumeCurrentElementHandling();
             }
         }
 

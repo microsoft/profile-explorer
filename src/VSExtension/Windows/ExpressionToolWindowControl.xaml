@@ -6,17 +6,26 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
     Name="MyToolWindow"
-    d:DesignHeight="300"
-    d:DesignWidth="300"
+    d:DesignHeight="80"
+    d:DesignWidth="400"
     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
     mc:Ignorable="d">
     <Grid>
-        <Button
-            Name="button1"
-            Width="120"
-            Height="20"
-            Click="button1_Click"
-            Content="Mark IR" />
+        <StackPanel>
+            <TextBlock
+                Name="ExpressionTextbox"
+                Margin="8,8,8,4"
+                Text="Enter expression to evaluate" />
+            <TextBox Margin="8,0,8,0" />
+            <Button
+                Name="MarkButton"
+                Width="100"
+                Height="20"
+                Margin="0,8,8,0"
+                HorizontalAlignment="Right"
+                Click="button1_Click"
+                Content="Mark IR" />
+        </StackPanel>
     </Grid>
 </UserControl>

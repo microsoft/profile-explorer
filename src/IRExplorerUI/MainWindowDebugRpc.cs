@@ -318,7 +318,8 @@ namespace IRExplorerUI {
 
         private void DebugService_OnIRUpdated(object sender, UpdateIRRequest e) {
             Dispatcher.BeginInvoke(new Action(async () => {
-                if (sessionState_.MainDocument == null) {
+                if (sessionState_ == null ||
+                    sessionState_.MainDocument == null) {
                     return;
                 }
 

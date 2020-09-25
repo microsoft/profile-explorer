@@ -106,8 +106,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStaticLib|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>C:\tools\vcpkg\installed\x64-windows\include\google\protobuf;C:\tools\vcpkg\installed\x86-windows\include\;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\tools\vcpkg\installed\x86-windows\debug\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\tools\vcpkg\installed\x86-windows\include\google\protobuf;C:\tools\vcpkg\installed\x86-windows\include\;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\tools\vcpkg\installed\x86-windows-static\debug\lib;$(LibraryPath)</LibraryPath>
     <TargetName>irexplorer</TargetName>
     <OutDir>$(SolutionDir)\$(ProjectName)\$(Configuration)\</OutDir>
   </PropertyGroup>
@@ -122,7 +122,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseStaticLib|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>C:\tools\vcpkg\installed\x64-windows\include\absl;C:\tools\vcpkg\installed\x64-windows\include\google\protobuf;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\tools\vcpkg\installed\x64-windows\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath>C:\tools\vcpkg\installed\x64-windows\debug\lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)\$(ProjectName)\$(Platform)\$(Configuration)\</OutDir>
     <TargetName>irexplorer</TargetName>
   </PropertyGroup>
@@ -174,13 +174,14 @@
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <SupportJustMyCode>false</SupportJustMyCode>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <Optimization>MaxSpeed</Optimization>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>
+      <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -188,12 +189,15 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>ws2_32.lib;WSock32.Lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\tools\vcpkg\installed\x86-windows\debug\lib</AdditionalLibraryDirectories>
     </Link>
-    <ProjectReference>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-    </ProjectReference>
+    <ProjectReference />
     <Lib>
       <ExportNamedFunctions>IrxMarkElement;IrxUpdateIR;%(ExportNamedFunctions)</ExportNamedFunctions>
+      <AdditionalDependencies>
+      </AdditionalDependencies>
+      <AdditionalLibraryDirectories>
+      </AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -235,14 +239,15 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <SupportJustMyCode>true</SupportJustMyCode>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <SupportJustMyCode>false</SupportJustMyCode>
       <LanguageStandard>Default</LanguageStandard>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalOptions>-D_WIN32_WINNT=0x600 /Ob3 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <BufferSecurityCheck>false</BufferSecurityCheck>
+      <StringPooling>false</StringPooling>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

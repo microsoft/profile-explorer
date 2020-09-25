@@ -81,6 +81,11 @@ namespace IRExplorerCore {
         }
 
         public override string GetSectionPassOutput(IRPassOutput output) {
+            if (output == null) {
+                // With some documents there is no before/after text.
+                return string.Empty;
+            }
+
             return documentReader_.GetPassOutputText(output);
         }
 

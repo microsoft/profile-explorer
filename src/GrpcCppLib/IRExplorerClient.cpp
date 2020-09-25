@@ -19,7 +19,7 @@ static bool SessionStarted;
 static std::shared_ptr<grpc::Channel> ChannelInstance;
 static std::shared_ptr<DebugService::Stub> ClientInstance;
 static int64_t SessionId;
-static const int RequestTimeout = 200;
+static const int RequestTimeout = 500;
 
 static bool ConnectClient() {
     if (ClientConnected) {
