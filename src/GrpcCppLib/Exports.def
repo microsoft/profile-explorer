@@ -1,0 +1,6 @@
+LIBRARY IREXPLORER
+EXPORTS
+	IrxUpdateIR @1
+	IrxMarkElement @2
+	IrxHasActiveBreakpoint @3
+	IrxSetCurrentElement @4
