@@ -69,10 +69,10 @@
 		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.86" />
 		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.85" />
 		<PackageReference Include="Google.Protobuf" Version="3.13.0" />
-		<PackageReference Include="Grpc" Version="2.31.0" />
-		<PackageReference Include="Grpc.Core" Version="2.31.0" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.31.0" />
-		<PackageReference Include="Grpc.Tools" Version="2.31.0">
+		<PackageReference Include="Grpc" Version="2.32.0" />
+		<PackageReference Include="Grpc.Core" Version="2.32.0" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.32.0" />
+		<PackageReference Include="Grpc.Tools" Version="2.32.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -201,6 +201,9 @@
 		</Page>
 		<Page Update="Query\InputQueryViewElement.xaml">
 			<SubType>Designer</SubType>
+		</Page>
+		<Page Update="Converters.xaml">
+		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 	</ItemGroup>
 

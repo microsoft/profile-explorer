@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
 using IRExplorerCore;
@@ -99,7 +100,18 @@ namespace IRExplorerUI {
             set => MainPanel.Session = value;
         }
 
+        public async Task RefreshDocumentsDiff() {
+            await SwitchPanelDiffFunction(MainPanel.CurrentFunction, DiffPanel);
+        }
+
         private void MainPanel_SectionListScrollChanged(object sender, double offset) {
+            // When using the grid splitter to resize the left/right panels,
+            // the event gets called for some reason with a 0 offset and 
+            // the current vertical offset gets reset.
+            if (offset == 0) {
+                return;
+            }
+
             var panel = sender as SectionPanel;
             var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
 
@@ -165,9 +177,8 @@ namespace IRExplorerUI {
             MainPanel.Sections = baseList;
             DiffPanel.Sections = diffList;
 
-            //? TODO: Cache the diffs
             var results = await ComputeSectionIRDiffs(baseList, diffList);
-            HasDiffResult firstDiffResult = null;
+            DocumentDiffResult firstDiffResult = null;
 
             foreach (var result in results) {
                 if (result.HasDiffs) {
@@ -181,8 +192,8 @@ namespace IRExplorerUI {
 
             // Scroll to the first diff.
             if (firstDiffResult != null) {
-                MainPanel.SelectSection(firstDiffResult.LeftSection);
-                DiffPanel.SelectSection(firstDiffResult.RightSection);
+                MainPanel.SelectSection(firstDiffResult.LeftSection, false);
+                DiffPanel.SelectSection(firstDiffResult.RightSection false);
             }
         }
 
@@ -318,7 +329,7 @@ namespace IRExplorerUI {
             return (newBaseList, newDiffList);
         }
 
-        private async Task<List<HasDiffResult>> ComputeSectionIRDiffs(
+        private async Task<List<DocumentDiffResult>> ComputeSectionIRDiffs(
             List<IRTextSectionEx> baseSections, List<IRTextSectionEx> diffSections) {
             var comparedSections = new List<Tuple<IRTextSection, IRTextSection>>();
 

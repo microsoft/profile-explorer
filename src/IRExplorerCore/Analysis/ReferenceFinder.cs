@@ -251,6 +251,13 @@ namespace IRExplorerCore.Analysis {
                 }
             }
 
+            // Also go over the function parameters.
+            foreach (var paramOp in function_.Parameters) {
+                if (IsSameSymbolOperand(paramOp, op)) {
+                    CreateReference(paramOp, ReferenceKind.Store, list, filterAction);
+                }
+            }
+
             if (includeSSAUses) {
                 FindSSAUses(op, list);
             }

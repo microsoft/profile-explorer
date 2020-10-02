@@ -70,8 +70,8 @@ namespace IRExplorerUI {
                 await Task.WhenAll(baseTask, diffTask);
 
                 if (baseTask.Result != null && diffTask.Result != null) {
-                    SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
-                    SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
+                    await SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
+                    await SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
                     result = true;
                 }
             }
@@ -662,11 +662,7 @@ namespace IRExplorerUI {
 
             DiffSwapButton.IsEnabled = false;
             await ExitDocumentDiffState(isSessionEnding: false, disableControls: false);
-
-            // Swap the left/right documents, then re-enter diff state.
-            await OpenDocumentSection(new OpenSectionEventArgs(rightSection, OpenSectionKind.ReplaceCurrent), leftDocHost);
-            await OpenDocumentSection(new OpenSectionEventArgs(leftSection, OpenSectionKind.ReplaceCurrent), rightDocHost);
-            await EnterDocumentDiffState(leftDocHost, rightDocHost);
+            await EnterDocumentDiffState(rightDocHost, leftDocHost);
             DiffSwapButton.IsEnabled = true;
         }
 

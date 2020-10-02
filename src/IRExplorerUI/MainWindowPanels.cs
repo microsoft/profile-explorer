@@ -828,13 +828,13 @@ namespace IRExplorerUI {
             UpdateStartPagePanelPosition();
         }
 
-        private void SetupSectionPanel() {
+        private async Task SetupSectionPanel() {
             SectionPanel.CompilerInfo = compilerInfo_;
             SectionPanel.MainSummary = sessionState_.MainDocument.Summary;
             SectionPanel.MainTitle = sessionState_.MainDocument.FileName;
 
             if (sessionState_.IsInTwoDocumentsDiffMode) {
-                ShowSectionPanelDiffs(sessionState_.DiffDocument);
+                await ShowSectionPanelDiffs(sessionState_.DiffDocument);
             }
 
             SectionPanel.OnSessionStart();

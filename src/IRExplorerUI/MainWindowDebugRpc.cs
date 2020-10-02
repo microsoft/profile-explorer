@@ -424,7 +424,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            await Dispatcher.BeginInvoke(new Action(() => {
+            await Dispatcher.BeginInvoke(new Action(async () => {
                 SetOptionalStatus($"Client connected, process {e.ProcessId}");
                 EndSession();
 
@@ -435,7 +435,7 @@ namespace IRExplorerUI {
                 result.Loader = debugSections_;
                 result.Summary = debugSummary_;
 
-                SetupOpenedIRDocument(SessionKind.DebugSession, "Debug session", result);
+                await SetupOpenedIRDocument(SessionKind.DebugSession, "Debug session", result);
 
                 debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
                 debugProcessId_ = e.ProcessId;

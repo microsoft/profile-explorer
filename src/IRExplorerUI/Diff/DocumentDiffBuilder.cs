@@ -17,8 +17,8 @@ namespace IRExplorerUI {
         External
     }
 
-    public class HasDiffResult {
-        public HasDiffResult(IRTextSection leftSection, IRTextSection rightSection, SideBySideDiffModel model,
+    public class DocumentDiffResult {
+        public DocumentDiffResult(IRTextSection leftSection, IRTextSection rightSection, SideBySideDiffModel model,
                              bool hasDiffs) {
             LeftSection = leftSection;
             RightSection = rightSection;
@@ -77,18 +77,18 @@ namespace IRExplorerUI {
             return false;
         }
 
-        public async Task<List<HasDiffResult>> ComputeSectionDiffs(
+        public async Task<List<DocumentDiffResult>> ComputeSectionDiffs(
             List<Tuple<IRTextSection, IRTextSection>> comparedSections, IRTextSectionLoader leftDocLoader,
             IRTextSectionLoader rightDocLoader) {
             int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
-            var tasks = new Task<HasDiffResult>[comparedSections.Count];
+            var tasks = new Task<DocumentDiffResult>[comparedSections.Count];
 
             leftDocLoader.SuspendCaching();
             rightDocLoader.SuspendCaching();
             await Task.Run(() => ComputeSectionDiffsImpl(comparedSections, leftDocLoader, rightDocLoader,
                                                          tasks, maxConcurrency));
 
-            var results = new List<HasDiffResult>(tasks.Length);
+            var results = new List<DocumentDiffResult>(tasks.Length);
 
             foreach (var task in tasks) {
                 results.Add(await task);
@@ -101,7 +101,7 @@ namespace IRExplorerUI {
 
         private async Task ComputeSectionDiffsImpl(
             List<Tuple<IRTextSection, IRTextSection>> comparedSections, IRTextSectionLoader leftDocLoader,
-            IRTextSectionLoader rightDocLoader, Task<HasDiffResult>[] tasks, int maxConcurrency) {
+            IRTextSectionLoader rightDocLoader, Task<DocumentDiffResult>[] tasks, int maxConcurrency) {
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
             int index = 0;
 
@@ -116,7 +116,7 @@ namespace IRExplorerUI {
                         string rightText = rightDocLoader.GetSectionText(rightSection, false);
                         var diffs = ComputeInternalDiffs(leftText, rightText);
                         bool hasDiffs = HasDiffs(diffs);
-                        return new HasDiffResult(leftSection, rightSection, diffs, hasDiffs);
+                        return new DocumentDiffResult(leftSection, rightSection, diffs, hasDiffs);
                     }
                     finally {
                         concurrencySemaphore.Release();

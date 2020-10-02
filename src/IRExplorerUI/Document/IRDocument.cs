@@ -632,13 +632,13 @@ namespace IRExplorerUI {
         public void UnloadDocument() {
             section_ = null;
             function_ = null;
-            Text = "";
+            ClearSelectedElements();
             hoverHighlighter_?.Clear();
-            selectedHighlighter_?.Clear();
             markedHighlighter_?.Clear();
             diffHighlighter_?.Clear();
             bookmarks_?.Clear();
             margin_?.Reset();
+            Text = "";
         }
 
         public void InitializeFromDocument(IRDocument doc, string text = null) {

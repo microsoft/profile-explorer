@@ -11,6 +11,47 @@ using System.Text;
 
 namespace IRExplorerCore {
     public abstract class SectionReaderBase : IRSectionReader, IDisposable {
+        // Helper to quickly read a couple of private fields of a StreamReader
+        // in order to compute the proper offset in the stream.
+        class StreamReaderFields {
+            public char[] CharBuffer;
+            public int CharPos;
+            public int CharLen;
+            public byte[] ByteBuffer;
+            public int ByteLen;
+
+            private static Action<StreamReader, StreamReaderFields> callback_;
+
+            static StreamReaderFields() {
+                // Create and compile to IL an function that reads the private fields
+                // form a StreamReader and saves the values.
+                var inputParam = Expression.Parameter(typeof(StreamReader));
+                var outputParam = Expression.Parameter(typeof(StreamReaderFields));
+                var block = Expression.Block(
+                    Expression.Assign(Expression.Field(outputParam, "CharBuffer"),
+                                      Expression.Field(inputParam, "_charBuffer")),
+                    Expression.Assign(Expression.Field(outputParam, "CharPos"),
+                                      Expression.Field(inputParam, "_charPos")),
+                    Expression.Assign(Expression.Field(outputParam, "CharLen"),
+                                      Expression.Field(inputParam, "_charLen")),
+                    Expression.Assign(Expression.Field(outputParam, "ByteBuffer"),
+                                      Expression.Field(inputParam, "_byteBuffer")),
+                    Expression.Assign(Expression.Field(outputParam, "ByteLen"),
+                                      Expression.Field(inputParam, "_byteLen"))
+                );
+
+                callback_ = Expression.Lambda<Action<StreamReader, StreamReaderFields>>
+                    (block, inputParam, outputParam).Compile();
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static StreamReaderFields Read(StreamReader reader) {
+                var readerFields = new StreamReaderFields();
+                callback_(reader, readerFields);
+                return readerFields;
+            }
+        }
+
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
         public static readonly long MAX_PRELOADED_FILE_SIZE = 512 * 1024 * 1024; // 512 MB
@@ -21,6 +62,7 @@ namespace IRExplorerCore {
         private long dataStreamSize_;
         private Encoding dataStreamEncoding_;
         private bool expectSectionHeaders_;
+        private object lockObject_;
 
         private Dictionary<string, IRTextFunction> functionMap_;
         private int lineIndex_;
@@ -37,7 +79,7 @@ namespace IRExplorerCore {
             expectSectionHeaders_ = expectSectionHeaders;
             dataStreamSize_ = new FileInfo(filePath).Length;
 
-            if (false && (dataStreamSize_ < MAX_PRELOADED_FILE_SIZE)) {
+            if (dataStreamSize_ < MAX_PRELOADED_FILE_SIZE) {
                 using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read,
                                              FileShare.ReadWrite);
 
@@ -173,10 +215,11 @@ namespace IRExplorerCore {
             prevLines_ = new string[3];
             summary_ = new IRTextSummary();
             functionMap_ = new Dictionary<string, IRTextFunction>();
+            lockObject_ = new object();
         }
 
         public byte[] GetDocumentTextData() {
-            lock (this) {
+            lock (lockObject_) {
                 dataStream_.Seek(0, SeekOrigin.Begin);
                 var encoding = DetectUTF8Encoding(dataStream_, Encoding.ASCII);
                 using var binaryReader = new BinaryReader(dataStream_, encoding, true);
@@ -231,7 +274,7 @@ namespace IRExplorerCore {
 
         private string GetPassOutputText(IRPassOutput output, bool isOptionalOutput) {
             if (!output.HasPreprocessedLines) {
-                // Fast path that avoids reding text line by line.
+                // Fast path that avoids reading text line by line.
                 return GetRawPassOutputText(output, isOptionalOutput);
             }
 
@@ -250,7 +293,7 @@ namespace IRExplorerCore {
                 return ReadPassOutputText(streamReader, output, isOptionalOutput);
             }
 
-            lock (this) {
+            lock (lockObject_) {
                 return ReadPassOutputText(dataReader_, output, isOptionalOutput);
             }
         }
@@ -268,7 +311,7 @@ namespace IRExplorerCore {
                 return dataStreamEncoding_.GetString(span);
             }
 
-            lock (this) {
+            lock (lockObject_) {
                 return ReadPassOutputText(dataReader_, output, isOptionalOutput);
             }
         }
@@ -446,44 +489,6 @@ namespace IRExplorerCore {
 
         protected long TextOffset() {
             return TextOffset(dataReader_);
-        }
-
-        class StreamReaderFields {
-            public char[] CharBuffer;
-            public int CharPos;
-            public int CharLen;
-            public byte[] ByteBuffer;
-            public int ByteLen;
-
-            private static Action<StreamReader, StreamReaderFields> callback_;
-
-            static StreamReaderFields() {
-                // Create and compile to IL an function that reads the private fields
-                // form a StreamReader and saves the values.
-                var inputParam = Expression.Parameter(typeof(StreamReader));
-                var outputParam = Expression.Parameter(typeof(StreamReaderFields));
-                var block = Expression.Block(
-                    Expression.Assign(Expression.Field(outputParam, "CharBuffer"),
-                                      Expression.Field(inputParam, "_charBuffer")),
-                    Expression.Assign(Expression.Field(outputParam, "CharPos"),
-                                      Expression.Field(inputParam, "_charPos")),
-                    Expression.Assign(Expression.Field(outputParam, "CharLen"),
-                                      Expression.Field(inputParam, "_charLen")),
-                    Expression.Assign(Expression.Field(outputParam, "ByteBuffer"),
-                                      Expression.Field(inputParam, "_byteBuffer")),
-                    Expression.Assign(Expression.Field(outputParam, "ByteLen"),
-                                      Expression.Field(inputParam, "_byteLen"))
-                );
-
-                callback_ = Expression.Lambda<Action<StreamReader, StreamReaderFields>>(block, inputParam, outputParam).Compile();
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static StreamReaderFields Read(StreamReader reader) {
-                var readerFields = new StreamReaderFields();
-                callback_(reader, readerFields);
-                return readerFields;
-            }
         }
 
         private long TextOffset(StreamReader reader) {

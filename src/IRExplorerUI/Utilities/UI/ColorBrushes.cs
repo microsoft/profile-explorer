@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 
@@ -28,6 +29,11 @@ namespace IRExplorerUI {
         }
 
         public static SolidColorBrush GetTransparentBrush(Color baseColor, byte alpha) {
+            return GetBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
+        }
+
+        public static SolidColorBrush GetTransparentBrush(Color baseColor, double opacity) {
+            byte alpha = Math.Clamp((byte)(opacity * 255), (byte)0, (byte)255);
             return GetBrush(Color.FromArgb(alpha, baseColor.R, baseColor.G, baseColor.B));
         }
     }

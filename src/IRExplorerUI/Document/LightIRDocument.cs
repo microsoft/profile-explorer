@@ -180,6 +180,13 @@ namespace IRExplorerUI {
         private void TextView_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
             HideToolTip();
             var position = e.GetPosition(TextArea.TextView);
+
+            // Ignore click outside the text view.
+            if (position.X >= TextArea.TextView.ActualWidth ||
+                position.Y >= TextArea.TextView.ActualHeight) {
+                return;
+            }
+
             var element = DocumentUtils.FindPointedElement(position, this, elements_);
 
             if (element != null) {

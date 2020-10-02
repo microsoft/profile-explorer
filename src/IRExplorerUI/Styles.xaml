@@ -4,18 +4,6 @@
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:utils="clr-namespace:IRExplorerUI.Utilities">
 
-    <utils:BoolToVisibilityConverter
-        x:Key="BoolToVisibility"
-        False="Collapsed"
-        True="Visible" />
-    <utils:BoolToVisibilityConverter
-        x:Key="InvertedBoolToVisibility"
-        False="Visible"
-        True="Collapsed" />
-    <utils:EnumBooleanConverter x:Key="EnumToBool" />
-    <utils:BoolToParameterConverter x:Key="BooToParameter" />
-    <utils:TreeViewLineConverter x:Key="LineConverter" />
-
     <Style x:Key="HoverUnderlineStyle" TargetType="TextBlock">
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
@@ -382,7 +370,7 @@
                             Margin="0,0,0,-10"
                             SnapsToDevicePixels="true"
                             Stroke="#88888888"
-                            StrokeDashArray="4 4"
+                            StrokeDashArray="2 2"
                             StrokeThickness="1" />
 
                         <ToggleButton
@@ -419,7 +407,7 @@
                                     Margin="1,0,0,0"
                                     SnapsToDevicePixels="true"
                                     Stroke="#8888"
-                                    StrokeDashArray="4 4"
+                                    StrokeDashArray="2 2"
                                     StrokeThickness="1" />
                             </Grid>
                         </Border>
