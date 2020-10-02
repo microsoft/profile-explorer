@@ -1,0 +1,19 @@
+﻿<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:IRExplorerUI"
+    xmlns:utils="clr-namespace:IRExplorerUI.Utilities">
+
+    <utils:BoolToVisibilityConverter
+        x:Key="BoolToVisibility"
+        False="Collapsed"
+        True="Visible" />
+    <utils:BoolToVisibilityConverter
+        x:Key="InvertedBoolToVisibility"
+        False="Visible"
+        True="Collapsed" />
+    <utils:EnumBooleanConverter x:Key="EnumToBool" />
+    <utils:BoolToParameterConverter x:Key="BooToParameter" />
+    <utils:TreeViewLineConverter x:Key="LineConverter" />
+    <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacity" />
+</ResourceDictionary>

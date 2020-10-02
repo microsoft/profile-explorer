@@ -362,9 +362,10 @@ namespace IRExplorerUI {
             }
         }
 
-        private void ShowSectionPanelDiffs(LoadedDocument result) {
+        private async Task ShowSectionPanelDiffs(LoadedDocument result) {
             SectionPanel.DiffSummary = result.Summary;
             SectionPanel.DiffTitle = result.FileName;
+            await SectionPanel.RefreshDocumentsDiff();
         }
 
         private void ShowProgressBar() {

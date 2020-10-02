@@ -82,18 +82,19 @@
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 IsLocked="True">
                 <ToolBar
+                    Name="FunctionToolbar"
                     Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded"
-                    OverflowMode="Never"
                     SizeChanged="ToolBar_SizeChanged">
-                    <Image Source="{StaticResource SearchIcon}" />
+                    <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
                     <Grid
                         x:Name="FunctionFilterGrid"
                         Height="24"
-                        HorizontalAlignment="Stretch">
+                        HorizontalAlignment="Stretch"
+                        ToolBar.OverflowMode="Never">
                         <TextBox
                             Name="FunctionFilter"
                             Height="24"
@@ -125,6 +126,7 @@
                     <Button
                         Command="local:Command.ClearTextbox"
                         CommandParameter="{Binding ElementName=FunctionFilter}"
+                        ToolBar.OverflowMode="Never"
                         ToolTip="Reset function filter">
                         <Image
                             Width="16"
@@ -341,6 +343,7 @@
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
+                ScrollViewer.HorizontalScrollBarVisibility="Hidden"
                 VirtualizingStackPanel.IsVirtualizing="True"
                 VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <ListView.View>
@@ -370,7 +373,7 @@
                                             <Image
                                                 Width="16"
                                                 Height="16"
-                                                Source="{StaticResource ArrowIcon}"
+                                                Source="{StaticResource DockRightIcon}"
                                                 Style="{StaticResource IconSelected}" />
 
                                             <TextBlock Text="{Binding NumberString}" />
@@ -447,6 +450,7 @@
 
                             <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
                                 <Setter Property="Foreground" Value="{Binding Path=MissingSectionBrush}" />
+                                <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.1}" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
@@ -454,6 +458,7 @@
 
                             <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
                                 <Setter Property="Foreground" Value="{Binding Path=NewSectionBrush}" />
+                                <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.1}" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
@@ -461,6 +466,7 @@
 
                             <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
                                 <Setter Property="FontWeight" Value="DemiBold" />
+                                <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.1}" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>

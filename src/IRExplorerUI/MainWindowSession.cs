@@ -131,7 +131,7 @@ namespace IRExplorerUI {
                 sessionState_.SavePanelState(panelState.StateObject, panelInfo.Panel, null);
             }
 
-            SetupSectionPanel();
+            await SetupSectionPanel();
             NotifyPanelsOfSessionStart();
             var idToDocumentHostMap = new Dictionary<Guid, IRDocumentHost>();
 
@@ -157,7 +157,7 @@ namespace IRExplorerUI {
 
             // Compare the two documents.
             if (sessionState_.IsInTwoDocumentsDiffMode) {
-                ShowSectionPanelDiffs(sessionState_.DiffDocument);
+                await ShowSectionPanelDiffs(sessionState_.DiffDocument);
             }
 
             // Enter diff mode if it was active.
@@ -270,7 +270,7 @@ namespace IRExplorerUI {
                 var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
                 if (result != null) {
-                    SetupOpenedIRDocument(SessionKind.Default, filePath, result);
+                    await SetupOpenedIRDocument(SessionKind.Default, filePath, result);
                     return true;
                 }
             }
@@ -325,13 +325,13 @@ namespace IRExplorerUI {
             }, DispatcherPriority.Render);
         }
 
-        private void SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
+        private async Task SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
             StartSession(filePath, sessionKind);
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.MainDocument = result;
 
             UpdateUIAfterLoadDocument();
-            SetupSectionPanel();
+            await SetupSectionPanel();
             NotifyPanelsOfSessionStart();
             StartAutoSaveTimer();
         }
@@ -341,7 +341,7 @@ namespace IRExplorerUI {
                 var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
                 if (result != null) {
-                    SetupOpenedDiffIRDocument(filePath, result);
+                    await SetupOpenedDiffIRDocument(filePath, result);
                     return true;
                 }
             }
@@ -353,11 +353,11 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private void SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
+        private async Task SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.DiffDocument = result;
             UpdateUIAfterLoadDocument();
-            ShowSectionPanelDiffs(result);
+            await ShowSectionPanelDiffs(result);
         }
 
         private LoadedDocument LoadDocument(string path, Guid id, ProgressInfoHandler progressHandler) {

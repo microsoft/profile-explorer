@@ -17,6 +17,7 @@ using IRExplorerCore;
 using ProtoBuf;
 using Microsoft.Win32;
 using System.IO;
+using System.Diagnostics;
 
 namespace IRExplorerUI {
     public static class Command {
@@ -1223,9 +1224,13 @@ namespace IRExplorerUI {
         }
 
         private void ToolBar_SizeChanged(object sender, SizeChangedEventArgs e) {
+            ResizeFunctionFilter(e.NewSize.Width);
+        }
+
+        private void ResizeFunctionFilter(double width) {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
-            //? when the toobar gets smaller - couldn't find another way to do this in WPF..
-            FunctionFilterGrid.Width = Math.Max(1, e.NewSize.Width - 60);
+            //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
+            FunctionFilterGrid.Width = Math.Max(1, width - 60);
         }
     }
 }
