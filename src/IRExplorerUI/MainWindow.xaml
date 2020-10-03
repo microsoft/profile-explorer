@@ -797,16 +797,6 @@
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
                                     <local:SearchResultsPanel x:Name="SearchResultsPanel" />
                                 </avalonDock:LayoutAnchorable>
-
-
-                                <avalonDock:LayoutAnchorable
-                                    x:Name="RemarksPanelHost"
-                                    Title="Remarks"
-                                    ContentId="RemarksPanelHost"
-                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
-                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
-                                    <local:ReferencesPanel x:Name="RemarksPanel" />
-                                </avalonDock:LayoutAnchorable>
                             </avalonDock:LayoutAnchorablePane>
                         </avalonDock:LayoutAnchorablePaneGroup>
                     </avalonDock:LayoutPanel>
@@ -840,8 +830,8 @@
                 Text="Block" />
             <TextBlock
                 x:Name="BlockStatus"
-                MinWidth="50"
-                MaxWidth="50"
+                MinWidth="80"
+                MaxWidth="80"
                 VerticalAlignment="Center"
                 FontSize="11"
                 FontWeight="DemiBold"
@@ -859,7 +849,7 @@
                 Text="Bookmark" />
             <TextBlock
                 x:Name="BookmarkStatus"
-                MinWidth="30"
+                MinWidth="50"
                 MaxWidth="50"
                 VerticalAlignment="Center"
                 FontSize="11"

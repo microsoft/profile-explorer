@@ -209,8 +209,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
-            HideRemarkPanel();
+        private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+            await HideRemarkPanel();
 
             var point = e.GetPosition(TextView.TextArea.TextView);
             var element = TextView.GetElementAt(point);
@@ -219,11 +219,11 @@ namespace IRExplorerUI {
                 HideActionPanel(true);
             }
             else if (element != hoveredElement_ && !actionPanelHovered_) {
-                ShowActionPanel(element, true);
+                await ShowActionPanel(element, true);
             }
         }
 
-        private void TextView_PreviewMouseMove(object sender, MouseEventArgs e) {
+        private async void TextView_PreviewMouseMove(object sender, MouseEventArgs e) {
             if (!actionPanelVisible_) {
                 return;
             }
@@ -234,7 +234,7 @@ namespace IRExplorerUI {
             if (!remarkPanelVisible_ && !actionPanelHovered_ && !actionPanelFromClick_) {
                 if (element == null || element != hoveredElement_) {
                     HideActionPanel();
-                    HideRemarkPanel();
+                    await HideRemarkPanel();
                 }
             }
         }
@@ -275,13 +275,13 @@ namespace IRExplorerUI {
             }
         }
 
-        private void TextView_ElementUnselected(object sender, IRElementEventArgs e) {
+        private async void TextView_ElementUnselected(object sender, IRElementEventArgs e) {
             HideActionPanel(true);
-            HideRemarkPanel();
+            await HideRemarkPanel();
         }
 
-        private void TextView_ElementSelected(object sender, IRElementEventArgs e) {
-            ShowActionPanel(e.Element);
+        private async void TextView_ElementSelected(object sender, IRElementEventArgs e) {
+            await ShowActionPanel(e.Element);
         }
 
         private IRElement GetRemarkElement(IRElement element) {
@@ -291,7 +291,7 @@ namespace IRExplorerUI {
 
             // If it's an operand, check if the instr. has a remark instead.
             if (element is OperandIR op) {
-                var instr = element.ParentTuple;
+                var instr = op.ParentTuple;
 
                 if (instr.GetTag<RemarkTag>() != null) {
                     return instr;
@@ -301,11 +301,11 @@ namespace IRExplorerUI {
             return null;
         }
 
-        private void ShowActionPanel(IRElement element, bool fromClickEvent = false) {
+        private async Task ShowActionPanel(IRElement element, bool fromClickEvent = false) {
             remarkElement_ = GetRemarkElement(element);
 
             if (remarkElement_ == null) {
-                HideRemarkPanel();
+                await HideRemarkPanel();
                 HideActionPanel();
                 return;
             }
@@ -403,7 +403,7 @@ namespace IRExplorerUI {
             remarkPanel_ = null;
         }
 
-        private void RemarkPanel__PanelClosed(object sender, EventArgs e) {
+        private async void RemarkPanel__PanelClosed(object sender, EventArgs e) {
             // If it's one of the detached panels, unregister it.
             var panel = (RemarkPreviewPanel)sender;
 
@@ -412,7 +412,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            HideRemarkPanel();
+            await HideRemarkPanel();
         }
 
         private async void RemarkPanel__RemarkContextChanged(object sender, RemarkContextChangedEventArgs e) {
@@ -532,12 +532,12 @@ namespace IRExplorerUI {
             }
         }
 
-        public void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
+        public async void UnloadSection(IRTextSection section, bool switchingActiveDocument) {
             if (!duringSwitchSearchResults_ && !switchingActiveDocument) {
                 HideSearchPanel();
             }
 
-            HideRemarkPanel();
+            await HideRemarkPanel();
             HideActionPanel();
             SaveSectionState(section);
 
@@ -827,13 +827,13 @@ namespace IRExplorerUI {
 
         public async Task ExitDiffMode() {
             TextView.ExitDiffMode();
-            HideOptionalPanels();
+            await HideOptionalPanels();
         }
 
-        private void HideOptionalPanels() {
+        private async Task HideOptionalPanels() {
             HideSearchPanel();
-            HideRemarkPanel();
             HideActionPanel();
+            await HideRemarkPanel();
         }
 
         private void TextView_BlockSelected(object sender, IRElementEventArgs e) {
@@ -1149,9 +1149,9 @@ namespace IRExplorerUI {
             await CloseRemarkOptionsPanel();
         }
 
-        private void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+        private async void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
             HideActionPanel();
-            HideRemarkPanel();
+            await HideRemarkPanel();
             ScrollChanged?.Invoke(this, e);
         }
 
@@ -1174,9 +1174,9 @@ namespace IRExplorerUI {
             }
         }
 
-        private void ActionPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
+        private async void ActionPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
             if (remarkPanelVisible_) {
-                HideRemarkPanel();
+                await HideRemarkPanel();
             }
             else {
                 ShowRemarkPanel();
@@ -1241,27 +1241,33 @@ namespace IRExplorerUI {
             Session.LoadDocumentQuery(query, TextView);
         }
 
-        private void ScriptMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
-            var defaultItems = SaveDefaultMenuItems(ScriptMenuItem);
-            ScriptMenuItem.Items.Clear();
+        private void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+            var defaultItems = SaveDefaultMenuItems(TaskMenuItem);
+            TaskMenuItem.Items.Clear();
 
-            var actions = Session.CompilerInfo.BuiltinFunctionTasks;
-
-            foreach (var action in actions) {
-                var item = new MenuItem() {
-                    Header = action.Name,
-                    ToolTip = action.Description,
-                    Tag = action
-                };
-
-                item.Click += ActionMenuItem_Click;
-                ScriptMenuItem.Items.Add(item);
+            foreach (var action in Session.CompilerInfo.BuiltinFunctionTasks) {
+                AddFunctionTaskDefinitionMenuItem(action);
             }
 
-            RestoreDefaultMenuItems(ScriptMenuItem, defaultItems);
+            foreach (var action in Session.CompilerInfo.ScriptFunctionTasks) {
+                AddFunctionTaskDefinitionMenuItem(action);
+            }
+
+            RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
         }
 
-        private async void ActionMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
+        private void AddFunctionTaskDefinitionMenuItem(FunctionTaskDefinition action) {
+            var item = new MenuItem() {
+                Header = action.TaskInfo.Name,
+                ToolTip = action.TaskInfo.Description,
+                Tag = action
+            };
+
+            item.Click += TaskActionMenuItem_Click;
+            TaskMenuItem.Items.Add(item);
+        }
+
+        private async void TaskActionMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
             var menuItem = (MenuItem)sender;
             var task = (FunctionTaskDefinition)menuItem.Tag;
 
@@ -1295,7 +1301,7 @@ namespace IRExplorerUI {
             var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, Session);
             Session.RegisterDetachedPanel(queryPanel);
 
-            queryPanel.PanelTitle = "Function task";
+            queryPanel.PanelTitle = "Function Tasks";
             queryPanel.ShowAddButton = false;
             queryPanel.PopupClosed += QueryPanel_PopupClosed;
             queryPanel.IsOpen = true;
@@ -1328,12 +1334,13 @@ namespace IRExplorerUI {
                 return await Task.FromResult(false);
             }
 
-            IFunctionTaskOptions options = instance.Options;
+            var options = instance.Options;
 
-            if (task.HasOptionsPanel) {
-                if (task.ShowOptionsPanelOnExecute) {
+            if (task.TaskInfo.HasOptionsPanel) {
+                if (task.TaskInfo.ShowOptionsPanelOnExecute) {
                     var optionsValues = instance.GetOptionsValues();
-                    var dummyQuery = new QueryDefinition(typeof(DummyQuery), task.Name, task.Description);
+                    var dummyQuery = new QueryDefinition(typeof(DummyQuery),
+                        task.TaskInfo.Name, task.TaskInfo.Description);
                     dummyQuery.Data = optionsValues;
 
                     var queryPanel = CreateFunctionTaskPanel();
@@ -1342,7 +1349,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            if (task.AutoExecute) {
+            if (task.TaskInfo.AutoExecute) {
                 using var cancelableTask = new CancelableTask();
                 return await instance.Execute(Function, TextView, cancelableTask);
             }

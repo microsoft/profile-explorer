@@ -101,6 +101,10 @@ namespace IRExplorerUI {
         }
 
         public async Task RefreshDocumentsDiff() {
+            if (MainPanel.CurrentFunction == null) {
+                return;
+            }
+
             await SwitchPanelDiffFunction(MainPanel.CurrentFunction, DiffPanel);
         }
 
@@ -193,7 +197,7 @@ namespace IRExplorerUI {
             // Scroll to the first diff.
             if (firstDiffResult != null) {
                 MainPanel.SelectSection(firstDiffResult.LeftSection, false);
-                DiffPanel.SelectSection(firstDiffResult.RightSection false);
+                DiffPanel.SelectSection(firstDiffResult.RightSection, false);
             }
         }
 

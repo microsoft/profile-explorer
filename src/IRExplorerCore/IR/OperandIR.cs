@@ -36,6 +36,12 @@ namespace IRExplorerCore.IR {
 
         public OperandKind Kind { get; set; }
         public OperandRole Role { get; set; }
+
+        public bool IsSourceOperand => Role == OperandRole.Source;
+        public bool IsDestinationOperand => Role == OperandRole.Destination;
+
+        public bool IsParameterOperand => Role == OperandRole.Parameter;
+
         public TypeIR Type { get; set; }
         public TupleIR Parent { get; set; }
         public object Value { get; set; }

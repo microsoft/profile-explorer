@@ -155,17 +155,17 @@ namespace IRExplorerUI {
                 idToDocumentHostMap[openSection.DocumentId] = docHost;
             }
 
-            // Compare the two documents.
-            if (sessionState_.IsInTwoDocumentsDiffMode) {
-                await ShowSectionPanelDiffs(sessionState_.DiffDocument);
-            }
-
             // Enter diff mode if it was active.
             if (state.SectionDiffState.IsEnabled &&
                 state.OpenSections.Count > 1 &&
                 idToDocumentHostMap.TryGetValue(state.SectionDiffState.LeftSection.DocumentId, out var leftDocument) &&
                 idToDocumentHostMap.TryGetValue(state.SectionDiffState.RightSection.DocumentId, out var rightDocument)) {
                 await EnterDocumentDiffState(leftDocument, rightDocument);
+
+                // Compare the two files.
+                if (sessionState_.IsInTwoDocumentsDiffMode) {
+                    await ShowSectionPanelDiffs(sessionState_.DiffDocument);
+                }
             }
 
             StartAutoSaveTimer();

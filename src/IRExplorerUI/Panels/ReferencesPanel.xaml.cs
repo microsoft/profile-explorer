@@ -223,17 +223,31 @@ namespace IRExplorerUI {
 
         private string FindPreviewText(Reference reference) {
             var instr = reference.Element.ParentInstruction;
-            string text = instr.GetText(document_.Text).ToString();
+            string text = "";
+
+            if (instr == null) {
+                if (reference.Element is OperandIR op) {
+                    // This is usually a parameter.
+                    text = op.GetText(document_.Text).ToString();
+                }
+                else {
+                    return "";
+                }
+            }
+            else {
+                text = instr.GetText(document_.Text).ToString();
+            }
+
             int start = 0;
             int length = text.Length;
 
-            if (instr.Destinations.Count > 0) {
+            if (instr != null && instr.Destinations.Count > 0) {
                 var firstDest = instr.Destinations[0];
                 start = firstDest.TextLocation.Offset - instr.TextLocation.Offset;
                 start = Math.Max(0, start); //? TODO: Workaround for offset not being right
             }
 
-            if (instr.Sources.Count > 0) {
+            if (instr != null && instr.Sources.Count > 0) {
                 var lastSource = instr.Sources.FindLast(s => s.TextLocation.Offset != 0);
 
                 if (lastSource != null) {
@@ -288,7 +302,9 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            var operandRefs = ReferenceFinder.FindSSAUses(operand);
+            //var operandRefs = ReferenceFinder.FindSSAUses(operand);
+            var refFinder = new ReferenceFinder(document_.Function);
+            var operandRefs = refFinder.FindAllReferences(element, true);
             UpdateReferenceListView(operand, operandRefs);
 
             // Select the SSA uses filter.

@@ -24,6 +24,8 @@ namespace IRExplorerUI.Scripting {
         private static object lockObject_;
         private static long initialized_;
 
+        private dynamic script_;
+
         public string Name { get; set; }
         public string Code { get; set; }
         public bool ScriptResult { get; set; }
@@ -66,14 +68,14 @@ namespace IRExplorerUI.Scripting {
             }
         }
 
-        private dynamic script_;
-
-        private void LoadScript() {
+        public dynamic LoadScript() {
             if (script_ == null) {
                 // Load and compile the script only once.
                 CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
                 script_ = CSScript.Evaluator.LoadCode(Code);
             }
+
+            return script_;
         }
 
         private bool Execute(ScriptSession session, bool fromWarmUp) {

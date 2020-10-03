@@ -13,6 +13,7 @@ using IRExplorerUI.UTC;
 using System.Windows.Media;
 using System;
 using System.ComponentModel;
+using System.IO;
 
 namespace IRExplorerUI.Compilers.UTC {
     public class UTCCompilerInfoProvider : ICompilerInfoProvider {
@@ -71,9 +72,23 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>() {
-            BuiltinFunctionTask.GetDefinition("Unused instructions", "Some description",
-                                               MarkUnusedInstructions, typeof(UnusedInstructionsTaskOptions)).WithOptions(true, true)
+            BuiltinFunctionTask.GetDefinition(
+                new FunctionTaskInfo("Unused instructions", "Some description") {
+                    HasOptionsPanel = true,
+                    ShowOptionsPanelOnExecute = true,
+                    OptionsType = typeof(UnusedInstructionsTaskOptions)
+                },
+                MarkUnusedInstructions)
         };
+
+        public List<FunctionTaskDefinition> ScriptFunctionTasks {
+            get {
+                var list = new List<FunctionTaskDefinition>();
+                var text = File.ReadAllText(@"C:\test\script-task.cs");
+                list.Add(ScriptFunctionTask.GetDefinition(text));
+                return list;
+            }
+        }
 
         public bool AnalyzeLoadedFunction(FunctionIR function) {
             var loopGraph = new LoopGraph(function);

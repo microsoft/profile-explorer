@@ -267,7 +267,7 @@
                     <MenuItem Command="local:ReferenceCommand.UnmarkReference" Header="Clear Marker" />
                     <Separator />
 
-                    <MenuItem Header="Mark Visible References">
+                    <MenuItem Header="Mark Symbol Referencess">
                         <MenuItem>
                             <MenuItem.Header>
                                 <local:ColorSelector ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
@@ -275,8 +275,29 @@
                         </MenuItem>
                     </MenuItem>
 
-                    <MenuItem Header="Mark All References" />
+                    <MenuItem Header="Mark Symbol Loads">
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <local:ColorSelector ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
 
+                    <MenuItem Header="Mark Symbol Stores">
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <local:ColorSelector ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
+
+                    <MenuItem Header="Mark Symbol Addresses">
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <local:ColorSelector ColorSelectedCommand="local:ReferenceCommand.MarkReference" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                    </MenuItem>
                 </ContextMenu>
             </ListView.ContextMenu>
             <ListView.InputBindings>

@@ -546,15 +546,8 @@
                             CommandTarget="{Binding ElementName=SectionList}"
                             Header="Compare Side-By-Side"
                             InputGestureText="Shift+Return"
-                            ToolTip="Compare the two selected sections from the same document">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource DiffIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-
+                            ToolTip="Compare the two selected sections from the same document" />
+                        <Separator />
 
                         <MenuItem
                             Command="local:Command.DiffWithOtherDocument"
@@ -562,14 +555,7 @@
                             CommandTarget="{Binding ElementName=SectionList}"
                             Header="Compare with Other Document"
                             InputGestureText="Ctrl+Return"
-                            ToolTip="Compare section with same one from the other document">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource DiffIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
+                            ToolTip="Compare section with same one from the other document" />
                         <Separator />
 
                         <MenuItem
