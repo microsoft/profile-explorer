@@ -36,8 +36,10 @@ namespace IRExplorerCmd {
             }
         }
 
-        static bool CompareBaseDiffFiles(string baseFilePath, string diffFilePath, Script script, string scriptOutPath,
-                                         ConsoleSession session) {
+        static bool CompareBaseDiffFiles(string baseFilePath, string diffFilePath, string testName,
+                                         Script script, string scriptOutPath, ConsoleSession session) {
+            Console.WriteLine("Loading files");
+
             if (File.Exists(baseFilePath) && File.Exists(diffFilePath)) {
                 if (!session.LoadMainDocument(baseFilePath, false)) {
                     Console.WriteLine($"Failed to load base document: {baseFilePath}");
@@ -59,31 +61,45 @@ namespace IRExplorerCmd {
                 SessionName = scriptOutPath
             };
 
+            Console.WriteLine("Starting script");
+            scriptSession.AddVariable("TestName", testName);
+            scriptSession.AddVariable("ReportFilePath", scriptOutPath);
+
             if (script.Execute(scriptSession)) {
                 // Console.WriteLine($"Result: {script.ScriptResult}");
-                // 
-                // if (script.ScriptException != null) {
-                //     Console.WriteLine($"Exception: {script.ScriptException.Message}");
-                // }
+
+                if (script.ScriptException != null) {
+                    Console.WriteLine($"Exception: {script.ScriptException.Message}");
+                }
 
                 return true;
             }
-
-            return false;
+            else {
+                //Console.WriteLine(scriptSession.OutputText);
+                //Console.ReadKey();
+                return false;
+            }
         }
 
         static void Main(string[] args) {
             var baseDir = args[0];
             var diffDir = args[1];
-            var outDir = args[2];
+            var reportFile = args[2];
             var target = args[3];
-            var irxPath = @"C:\tools\IRExplorerCmd.exe";
             var scriptPath = @"C:\test\irx-compare.cs";
-            var report = @"report.csv";
             var reportHeader = "Test, Function, Blocks, B, D, Instrs, B, D, Stores, B, D, Loads, B, D, Loop Loads, B, D, Symbol Loads, B, D, Address exprs, B, D\n";
 
             var pairs = new List<Tuple<string, string, string>>();
-            CollectBaseDiffFiles(baseDir, baseDir, diffDir, target, pairs);
+
+            if (!Directory.Exists(baseDir) ||
+                !Directory.Exists(diffDir)) {
+                // Assume that two files should be compared.
+                var baseDirName = Path.GetRelativePath(baseDir, baseDir);
+                pairs.Add(new Tuple<string, string, string>(baseDir, diffDir, baseDirName));
+            }
+            else {
+                CollectBaseDiffFiles(baseDir, baseDir, diffDir, target, pairs);
+            }
 
             //foreach (var pair in pairs)
             //{
@@ -110,11 +126,10 @@ namespace IRExplorerCmd {
 
                 tasks[index++] = Task.Run(() => {
                     try {
-                        var relativeTestPath = Path.Combine(pair.Item3, Path.GetFileName(pair.Item1));
                         var compilerInfo = new ConsoleCompilerInfoProvider("UTC", new UTCCompilerIRInfo());
-
                         using var session = new ConsoleSession(compilerInfo);
-                        CompareBaseDiffFiles(pair.Item1, pair.Item2, script, relativeTestPath, session);
+                        var relativeTestPath = Path.Combine(pair.Item3, Path.GetFileName(pair.Item1));
+                        CompareBaseDiffFiles(pair.Item1, pair.Item2, relativeTestPath, script, reportFile, session);
                     }
                     finally {
                         concurrencySemaphore.Release();
@@ -136,8 +151,6 @@ namespace IRExplorerCmd {
             Task.WaitAll(tasks);
             sw.Stop();
             Console.WriteLine($"Done in {sw.Elapsed.TotalSeconds} s");
-
-            var reportFile = Path.Combine(outDir, report);
 
             if (File.Exists(reportFile)) {
                 var text = File.ReadAllText(reportFile);

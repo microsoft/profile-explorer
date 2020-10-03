@@ -151,16 +151,17 @@
 
                         <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                             <MenuItem
-                                Margin="0,0,0,0"
-                                Padding="0,2,2,2"
+                                Height="20"
+                                Margin="0,0,-1,0"
+                                Padding="0,0,0,0"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                Header="Bookmarks"
                                 OverridesDefaultStyle="True">
                                 <MenuItem.Icon>
                                     <Image
                                         Width="16"
                                         Height="16"
+                                        Margin="-4,0,0,0"
                                         Source="{StaticResource BookmarkIcon}" />
                                 </MenuItem.Icon>
 
@@ -223,7 +224,6 @@
                         </Menu>
 
                         <Button
-                            Margin="4,0,0,0"
                             Command="local:DocumentCommand.PreviousBookmark"
                             CommandTarget="{Binding ElementName=TextView}"
                             ToolTip="Jump to previous bookmark (Shift+F2)">
@@ -241,13 +241,15 @@
 
                         <ToggleButton
                             Height="20"
-                            Padding="0,0,0,0"
+                            Margin="0,0,0,0"
+                            Padding="0,0,2,0"
                             IsChecked="{Binding Path=ShowRemarks, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                             ToolTip="Enable/disable showing of remarks">
-                            <StackPanel Margin="0,0,2,0" Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal">
                                 <Image
                                     Width="16"
                                     Height="16"
+                                    Margin="0,1,0,0"
                                     Source="{StaticResource RemarkIcon}" />
                                 <TextBlock Text="Remarks" />
                             </StackPanel>
@@ -281,8 +283,8 @@
                                 OverridesDefaultStyle="True">
                                 <MenuItem.Icon>
                                     <Image
-                                        Width="16"
-                                        Height="16"
+                                        Width="18"
+                                        Height="18"
                                         Margin="-2,0,-2,0"
                                         Source="{StaticResource RemoveIcon}" />
                                 </MenuItem.Icon>
@@ -310,33 +312,38 @@
 
                         <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                             <MenuItem
-                                x:Name="ScriptMenuItem"
-                                Width="20"
+                                x:Name="TaskMenuItem"
                                 Padding="0,0,0,0"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Header="Tasks"
                                 OverridesDefaultStyle="True"
-                                SubmenuOpened="ScriptMenuItem_SubmenuOpened">
+                                SubmenuOpened="TaskMenuItem_SubmenuOpened">
                                 <MenuItem.Icon>
                                     <Image
-                                        Height="18"
-                                        Margin="-2,0,-6,0"
+                                        Width="16"
+                                        Height="16"
+                                        Margin="-2,0,-2,0"
                                         HorizontalAlignment="Center"
-                                        Source="{StaticResource SourceIcon}" />
+                                        VerticalAlignment="Center"
+                                        Source="{StaticResource TasklistIcon}" />
                                 </MenuItem.Icon>
+                                <Separator />
+                                <MenuItem Header="Edit Task Definitions" />
                             </MenuItem>
                             <MenuItem
                                 x:Name="QueryMenuItem"
-                                Width="20"
                                 Padding="0,0,0,0"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Header="Queries"
                                 OverridesDefaultStyle="True"
                                 SubmenuOpened="QueryMenuItem_SubmenuOpened">
                                 <MenuItem.Icon>
                                     <Image
+                                        Width="18"
                                         Height="18"
-                                        Margin="-3,0,-5,0"
+                                        Margin="-2,0,-2,0"
                                         HorizontalAlignment="Center"
                                         Source="{StaticResource QueryIcon}" />
                                 </MenuItem.Icon>
