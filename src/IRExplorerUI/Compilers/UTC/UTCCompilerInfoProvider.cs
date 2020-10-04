@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace IRExplorerUI.Compilers.UTC {
     public class UTCCompilerInfoProvider : ICompilerInfoProvider {
@@ -22,12 +23,17 @@ namespace IRExplorerUI.Compilers.UTC {
         private UTCRemarkProvider remarks_;
         private UTCSectionStyleProvider styles_;
         private List<FunctionTaskDefinition> scriptFuncTasks_;
+        private object lockObject_;
 
         public UTCCompilerInfoProvider() {
             ir_ = new UTCCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
             remarks_ = new UTCRemarkProvider(this);
+            lockObject_ = new object();
+
+            // Load the list of script tasks in the background to reduce UI delay.
+            Task.Run(() => LoadScriptFunctionTasks());
         }
 
         public string CompilerIRName => "UTC";
@@ -83,28 +89,32 @@ namespace IRExplorerUI.Compilers.UTC {
 
         public List<FunctionTaskDefinition> ScriptFunctionTasks {
             get {
-                if (scriptFuncTasks_ == null) {
-                    LoadScriptFunctionTasks();
-                }
-
-                return scriptFuncTasks_;
+                return LoadScriptFunctionTasks();
             }
         }
 
-        private void LoadScriptFunctionTasks() {
-            scriptFuncTasks_ = new List<FunctionTaskDefinition>();
-            var files = App.GetFunctionTaskScripts();
+        private List<FunctionTaskDefinition> LoadScriptFunctionTasks() {
+            lock (lockObject_) {
+                if (scriptFuncTasks_ != null) {
+                    return scriptFuncTasks_;
+                }
 
-            foreach (var file in files) {
-                var text = File.ReadAllText(file);
-                var scriptDef = ScriptFunctionTask.GetDefinition(text);
+                scriptFuncTasks_ = new List<FunctionTaskDefinition>();
+                var files = App.GetFunctionTaskScripts();
 
-                if (scriptDef != null) {
-                    if (string.IsNullOrEmpty(scriptDef.TaskInfo.TargetCompilerIR) ||
-                        scriptDef.TaskInfo.TargetCompilerIR == CompilerIRName) {
-                        scriptFuncTasks_.Add(scriptDef);
+                foreach (var file in files) {
+                    var text = File.ReadAllText(file);
+                    var scriptDef = ScriptFunctionTask.GetDefinition(text);
+
+                    if (scriptDef != null) {
+                        if (string.IsNullOrEmpty(scriptDef.TaskInfo.TargetCompilerIR) ||
+                            scriptDef.TaskInfo.TargetCompilerIR == CompilerIRName) {
+                            scriptFuncTasks_.Add(scriptDef);
+                        }
                     }
                 }
+
+                return scriptFuncTasks_;
             }
         }
 

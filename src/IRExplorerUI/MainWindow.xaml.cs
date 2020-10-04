@@ -38,6 +38,8 @@ using IRExplorerUI.Compilers.UTC;
 using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
 using System.Windows.Media.Imaging;
+using System.Threading.Tasks;
+using IRExplorerUI.Scripting;
 
 namespace IRExplorerUI {
     public static class AppCommand {
