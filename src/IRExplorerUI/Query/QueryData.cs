@@ -56,6 +56,15 @@ namespace IRExplorerUI.Query {
             OnPropertyChange(nameof(Buttons));
         }
 
+        public void RemoveButton(string name) {
+            Buttons.RemoveAll((button) => button.Text == name);
+            OnPropertyChange(nameof(Buttons));
+        }
+
+        public QueryButton ReplaceButton(string name, EventHandler<object> action = null, object data = null) {
+            RemoveButton(name);
+            return AddButton(name, action, data);
+        }
         public void AddInputs(object inputObject) {
             // Use reflection to add the corresponding input value
             // for each of the properties.
@@ -260,17 +269,27 @@ namespace IRExplorerUI.Query {
         }
 
         public void SetOutputWarning(string name, string message = null) {
+            var value = SetOutputMessage(name);
+            value.SetWarning(message);
+            OnPropertyChange(nameof(OutputValues));
+        }
+
+        public void SetOutputInfo(string name, string message = null) {
+            var value = SetOutputMessage(name);
+            OnPropertyChange(nameof(OutputValues));
+        }
+
+        private QueryValue SetOutputMessage(string name) {
             var existingValue = OutputValues.Find(item => item.Name == name);
 
             if (existingValue != null) {
-                existingValue.SetWarning(message);
-                OnPropertyChange(nameof(OutputValues));
+                return existingValue;
             }
             else {
                 var outputValue = new QueryValue(GetNextId(), name, null, QueryValueKind.Other);
                 outputValue.PropertyChanged += OutputValueChanged;
                 OutputValues.Add(outputValue);
-                OnPropertyChange(nameof(OutputValues));
+                return outputValue;
             }
         }
 

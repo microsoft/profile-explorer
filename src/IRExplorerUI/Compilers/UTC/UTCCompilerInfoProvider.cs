@@ -21,6 +21,7 @@ namespace IRExplorerUI.Compilers.UTC {
         private UTCNameProvider names_;
         private UTCRemarkProvider remarks_;
         private UTCSectionStyleProvider styles_;
+        private List<FunctionTaskDefinition> scriptFuncTasks_;
 
         public UTCCompilerInfoProvider() {
             ir_ = new UTCCompilerIRInfo();
@@ -75,7 +76,6 @@ namespace IRExplorerUI.Compilers.UTC {
             BuiltinFunctionTask.GetDefinition(
                 new FunctionTaskInfo("Unused instructions", "Some description") {
                     HasOptionsPanel = true,
-                    ShowOptionsPanelOnExecute = true,
                     OptionsType = typeof(UnusedInstructionsTaskOptions)
                 },
                 MarkUnusedInstructions)
@@ -83,10 +83,28 @@ namespace IRExplorerUI.Compilers.UTC {
 
         public List<FunctionTaskDefinition> ScriptFunctionTasks {
             get {
-                var list = new List<FunctionTaskDefinition>();
-                var text = File.ReadAllText(@"C:\test\script-task.cs");
-                list.Add(ScriptFunctionTask.GetDefinition(text));
-                return list;
+                if (scriptFuncTasks_ == null) {
+                    LoadScriptFunctionTasks();
+                }
+
+                return scriptFuncTasks_;
+            }
+        }
+
+        private void LoadScriptFunctionTasks() {
+            scriptFuncTasks_ = new List<FunctionTaskDefinition>();
+            var files = App.GetFunctionTaskScripts();
+
+            foreach (var file in files) {
+                var text = File.ReadAllText(file);
+                var scriptDef = ScriptFunctionTask.GetDefinition(text);
+
+                if (scriptDef != null) {
+                    if (string.IsNullOrEmpty(scriptDef.TaskInfo.TargetCompilerIR) ||
+                        scriptDef.TaskInfo.TargetCompilerIR == CompilerIRName) {
+                        scriptFuncTasks_.Add(scriptDef);
+                    }
+                }
             }
         }
 

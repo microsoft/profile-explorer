@@ -56,6 +56,8 @@ namespace IRExplorerUI {
         private const string InternalExtensionFile = @"IRExplorerExtension.vsix";
         private const string SyntaxFileSearchPattern = @"*.xshd";
         private const string SyntaxFileExtension = @"xshd";
+        private const string FunctionTaskScriptsDirectory = "scripts";
+        private const string FunctionTaskScriptSearchPattern = @"*.cs";
         public const string AutoUpdateInfo = @"http://irexplorerstorage.file.core.windows.net/irexplorer-app/update.xml?sv=2019-10-10&ss=bfqt&srt=o&sp=rlacupx&se=2023-03-01T14:12:02Z&st=2020-07-02T05:12:02Z&spr=https,http&sig=VEd7d8WhShT20oknDmfe04wTFniOFVpvohax9xMx%2FOg%3D";
         private const string DocumentationLocation = @"file://ir-explorer/docs/index.html";
 
@@ -87,6 +89,17 @@ namespace IRExplorerUI {
             catch (Exception ex) {
                 Trace.TraceError($"Failed to create directories for {path}: {ex}");
                 return false;
+            }
+        }
+
+        public static string[] GetFunctionTaskScripts() {
+            try {
+                var path = GetSettingsFilePath(FunctionTaskScriptsDirectory);
+                return Directory.GetFiles(path, FunctionTaskScriptSearchPattern);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to get function task scripts: {ex}");
+                return null;
             }
         }
 

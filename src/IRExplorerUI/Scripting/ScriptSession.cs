@@ -40,6 +40,11 @@ namespace IRExplorerUI.Scripting {
         public FunctionIR CurrentFunction => document_?.Function;
 
         public string SessionName { get; set; }
+        public object SessionObject { get; set; }
+
+        public bool SessionResult { get; set; }
+        public string SessionResultMessage { get; set; }
+
         public string IRName => session_.CompilerInfo.CompilerIRName;
         public ICompilerIRInfo IR => session_.CompilerInfo.IR;
         public bool IsInTwoDocumentsDiffMode => session_.IsInTwoDocumentsDiffMode;
@@ -77,6 +82,11 @@ namespace IRExplorerUI.Scripting {
 
         public void Cancel() {
             task_.Cancel();
+        }
+
+        public void SetSessionResult(bool result, string message = "") {
+            SessionResult = result;
+            SessionResultMessage = message;
         }
 
         public void Mark(IRElement element, Color color) {
@@ -138,7 +148,6 @@ namespace IRExplorerUI.Scripting {
             }
 
             //using var centerForm = new DialogCenteringHelper(this);
-
             MessageBox.Show(text, "IR Explorer - Script message", MessageBoxButton.OK,
                             MessageBoxImage.Error);
         }

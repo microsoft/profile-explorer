@@ -22,6 +22,10 @@ namespace IRExplorerUI.Query {
         ISession Session { get; }
         FunctionTaskInfo TaskInfo { get; }
 
+        bool Result { get; }
+        string ResultMessage { get; }
+        string OutputText { get; }
+
         void ResetOptions();
         void SaveOptions();
         QueryData GetOptionsValues();

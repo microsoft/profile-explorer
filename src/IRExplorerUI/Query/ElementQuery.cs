@@ -13,12 +13,11 @@ namespace IRExplorerUI.Query {
 
     public class QueryDefinition : INotifyPropertyChanged {
         private Type queryType_;
+        private QueryData data_;
         private IElementQuery queryInstance_;
 
         public QueryDefinition(Type queryType) {
             Data = new QueryData();
-            Data.ValueChanged += InputValueChanged;
-            Data.PropertyChanged += DataPropertyChanged;
             queryType_ = queryType;
         }
 
@@ -29,7 +28,22 @@ namespace IRExplorerUI.Query {
 
         public string Name { get; set; }
         public string Description { get; set; }
-        public QueryData Data { get; set; }
+        public QueryData Data {
+            get => data_;
+            set {
+                if (value != data_) {
+                    if (data_ != null) {
+                        data_.ValueChanged -= InputValueChanged;
+                        data_.PropertyChanged -= DataPropertyChanged;
+                    }
+
+                    data_ = value;
+                    data_.ValueChanged += InputValueChanged;
+                    data_.PropertyChanged += DataPropertyChanged;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Data)));
+                }
+            }
+        }
 
         public bool CreateQueryInstance(ISession session) {
             if (queryInstance_ == null) {
