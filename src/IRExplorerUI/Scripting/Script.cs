@@ -52,6 +52,8 @@ namespace IRExplorerUI.Scripting {
         }
 
         public static bool WarmUp() {
+            // Initializing the Roslyn script engine can take 2-3 sec, a one-time cost,
+            // this allows it to be done on a background thread before any script runs.
             if (Interlocked.Read(ref initialized_) != 0) {
                 return true;
             }
@@ -71,8 +73,14 @@ namespace IRExplorerUI.Scripting {
         public dynamic LoadScript() {
             if (script_ == null) {
                 // Load and compile the script only once.
-                CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
-                script_ = CSScript.Evaluator.LoadCode(Code);
+                try {
+                    CSScript.EvaluatorConfig.Engine = EvaluatorEngine.Roslyn;
+                    script_ = CSScript.Evaluator.LoadCode(Code);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to compile script: {ex.Message}");
+                    return null;
+                }
             }
 
             return script_;
