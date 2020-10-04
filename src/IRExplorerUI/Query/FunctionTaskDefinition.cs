@@ -8,15 +8,13 @@ namespace IRExplorerUI.Query {
         public FunctionTaskInfo(string name, string description = "") {
             Name = name;
             Description = description;
-            AutoExecute = true;
         }
 
         public string Name { get; set; }
         public string Description { get; set; }
-        public bool AutoExecute { get; set; }
         public bool HasOptionsPanel { get; set; }
-        public bool ShowOptionsPanelOnExecute { get; set; }
         public Type OptionsType { get; set; }
+        public string TargetCompilerIR { get; set; }
     }
 
     public class FunctionTaskDefinition {

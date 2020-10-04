@@ -1271,7 +1271,7 @@ namespace IRExplorerUI {
             var menuItem = (MenuItem)sender;
             var task = (FunctionTaskDefinition)menuItem.Tag;
 
-            if (!await ExecuteDocumentTask(task)) {
+            if (!await LoadDocumentTask(task)) {
                 //? TODO: Error handling, message box
             }
         }
@@ -1288,7 +1288,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private QueryPanel CreateFunctionTaskPanel() {
+        private QueryPanel CreateFunctionTaskQueryPanel() {
             var documentHost = this;
             var position = new Point();
 
@@ -1312,49 +1312,80 @@ namespace IRExplorerUI {
         private void AddFunctionTaskPanelButtons(QueryPanel queryPanel, IFunctionTask taskInstance, QueryData optionsData) {
             optionsData.AddButton("Execute", async (sender, value) => {
                 taskInstance.LoadOptionsFromValues(optionsData);
-                var cancelableTask = new CancelableTask();
-                await taskInstance.Execute(Function, TextView, cancelableTask);
+                await ExecuteFunctionTask(taskInstance, optionsData);
             });
 
-            optionsData.AddButton("Reset Settings", (sender, value) => {
+            optionsData.AddButton("Reset", (sender, value) => {
                 taskInstance.ResetOptions();
                 var dummyQuery = queryPanel.GetQueryAt(0);
                 dummyQuery.Data = taskInstance.GetOptionsValues();
                 AddFunctionTaskPanelButtons(queryPanel, taskInstance, dummyQuery.Data);
-
-                queryPanel.RemoveQuery(dummyQuery);
-                queryPanel.AddQuery(dummyQuery);
             });
         }
 
-        private async Task<bool> ExecuteDocumentTask(FunctionTaskDefinition task) {
-            var instance = task.CreateInstance(Session);
+        private async Task ExecuteFunctionTask(IFunctionTask taskInstance, QueryData optionsData) {
+            var cancelableTask = new CancelableTask();
+            optionsData.ResetOutputValues();
 
-            if (instance == null) {
-                return await Task.FromResult(false);
+            if (!await taskInstance.Execute(Function, TextView, cancelableTask)) {
+                string description = "";
+
+                if (taskInstance is ScriptFunctionTask scriptTask) {
+                    description = scriptTask.ScriptException != null ?
+                                  scriptTask.ScriptException.Message : "";
+
+                }
+
+                optionsData.SetOutputWarning("Task failed to execute!", description);
             }
-
-            var options = instance.Options;
-
-            if (task.TaskInfo.HasOptionsPanel) {
-                if (task.TaskInfo.ShowOptionsPanelOnExecute) {
-                    var optionsValues = instance.GetOptionsValues();
-                    var dummyQuery = new QueryDefinition(typeof(DummyQuery),
-                        task.TaskInfo.Name, task.TaskInfo.Description);
-                    dummyQuery.Data = optionsValues;
-
-                    var queryPanel = CreateFunctionTaskPanel();
-                    AddFunctionTaskPanelButtons(queryPanel, instance, optionsValues);
-                    queryPanel.AddQuery(dummyQuery);
+            else if (!string.IsNullOrEmpty(taskInstance.ResultMessage)) {
+                if (taskInstance.Result) {
+                    optionsData.SetOutputInfo(taskInstance.ResultMessage);
+                }
+                else {
+                    optionsData.SetOutputWarning(taskInstance.ResultMessage);
                 }
             }
 
-            if (task.TaskInfo.AutoExecute) {
-                using var cancelableTask = new CancelableTask();
-                return await instance.Execute(Function, TextView, cancelableTask);
+            if (!string.IsNullOrEmpty(taskInstance.OutputText)) {
+                optionsData.ReplaceButton("View Output", (sender, value) => {
+                    MessageBox.Show(taskInstance.OutputText, "IR Explorer - Function Task Output",
+                                    MessageBoxButton.OK);
+                });
+            }
+        }
+
+        private async Task<bool> LoadDocumentTask(FunctionTaskDefinition task) {
+            var instance = task.CreateInstance(Session);
+
+            if (instance == null) {
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show($"Failed to create function task instance for {task.TaskInfo.Name}", "IR Explorer",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return false;
             }
 
+            CreateFunctionTaskOptionsPanel(task, instance);
             return true;
+        }
+
+        private void CreateFunctionTaskOptionsPanel(FunctionTaskDefinition task, IFunctionTask instance) {
+            QueryData optionsValues;
+
+            if (task.TaskInfo.HasOptionsPanel) {
+                optionsValues = instance.GetOptionsValues();
+            }
+            else {
+                optionsValues = new QueryData();
+            }
+
+            var dummyQuery = new QueryDefinition(typeof(DummyQuery),
+                                task.TaskInfo.Name, task.TaskInfo.Description);
+            dummyQuery.Data = optionsValues;
+
+            var queryPanel = CreateFunctionTaskQueryPanel();
+            AddFunctionTaskPanelButtons(queryPanel, instance, optionsValues);
+            queryPanel.AddQuery(dummyQuery);
         }
 
         private void QueryPanel_PopupClosed(object sender, EventArgs e) {

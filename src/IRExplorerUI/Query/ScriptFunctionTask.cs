@@ -11,14 +11,24 @@ using System.Diagnostics;
 namespace IRExplorerUI.Query {
     public class ScriptFunctionTask : IFunctionTask {
         private string scriptCode_;
+        private ScriptSession scriptSession_;
 
         public ISession Session { get; private set; }
         public IFunctionTaskOptions Options { get; private set; }
         public FunctionTaskInfo TaskInfo { get; private set; }
 
+        public string OutputText => scriptSession_?.OutputText;
+
+        public Exception ScriptException { get; private set; }
+        public bool Result { get; private set; }
+        public string ResultMessage { get; private set; }
+
+        static Script instance_;
+
         public static FunctionTaskDefinition GetDefinition(string scriptCode) {
             try {
                 var script = new Script(scriptCode);
+                instance_ = script;
                 var scriptInstance = script.LoadScript();
 
                 FunctionTaskInfo taskInfo = scriptInstance.GetTaskInfo();
@@ -32,17 +42,21 @@ namespace IRExplorerUI.Query {
 
         public async Task<bool> Execute(FunctionIR function, IRDocument document,
                                   CancelableTask cancelableTask) {
-            var scriptSession = new ScriptSession(document, Session);
-            var script = new Script(scriptCode_);
-            var result = await script.ExecuteAsync(scriptSession);
+            scriptSession_ = new ScriptSession(document, Session) {
+                SessionObject = Options
+            };
+            //var script = new Script(scriptCode_);
+            var script = instance_;
+            var scriptResult = await script.ExecuteAsync(scriptSession_);
 
-            foreach (var pair in scriptSession.MarkedElements) {
+            foreach (var pair in scriptSession_.MarkedElements) {
                 document.MarkElement(pair.Item1, pair.Item2);
             }
 
-            return result;
-            //return Task.Run(() => callback_(function, document, Options,
-            //                                Session, cancelableTask));
+            ScriptException = script.ScriptException;
+            Result = scriptSession_.SessionResult;
+            ResultMessage = scriptSession_.SessionResultMessage;
+            return scriptResult;
         }
 
         public bool Initialize(ISession session, FunctionTaskInfo taskInfo, object optionalData) {

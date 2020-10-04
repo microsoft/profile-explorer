@@ -17,6 +17,10 @@ namespace IRExplorerUI.Query {
         public IFunctionTaskOptions Options { get; private set; }
         public FunctionTaskInfo TaskInfo { get; private set; }
 
+        public bool Result { get; set; }
+        public string ResultMessage { get; set; }
+        public string OutputText { get; set; }
+
         public static FunctionTaskDefinition GetDefinition(FunctionTaskInfo taskInfo,
                                                            TaskCallback callback) {
             return new FunctionTaskDefinition(typeof(BuiltinFunctionTask), taskInfo, callback);
