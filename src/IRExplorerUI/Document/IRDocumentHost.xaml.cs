@@ -23,6 +23,7 @@ using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using UserControl = System.Windows.Controls.UserControl;
 using IRExplorerUI.Query;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -1312,7 +1313,7 @@ namespace IRExplorerUI {
         private void AddFunctionTaskPanelButtons(QueryPanel queryPanel, IFunctionTask taskInstance, QueryData optionsData) {
             optionsData.AddButton("Execute", async (sender, value) => {
                 taskInstance.LoadOptionsFromValues(optionsData);
-                await ExecuteFunctionTask(taskInstance, optionsData);
+                await ExecuteFunctionTask(taskInstance, optionsData, queryPanel);
             });
 
             optionsData.AddButton("Reset", (sender, value) => {
@@ -1323,7 +1324,7 @@ namespace IRExplorerUI {
             });
         }
 
-        private async Task ExecuteFunctionTask(IFunctionTask taskInstance, QueryData optionsData) {
+        private async Task ExecuteFunctionTask(IFunctionTask taskInstance, QueryData optionsData, QueryPanel queryPanel) {
             var cancelableTask = new CancelableTask();
             optionsData.ResetOutputValues();
 
@@ -1349,8 +1350,12 @@ namespace IRExplorerUI {
 
             if (!string.IsNullOrEmpty(taskInstance.OutputText)) {
                 optionsData.ReplaceButton("View Output", (sender, value) => {
-                    MessageBox.Show(taskInstance.OutputText, "IR Explorer - Function Task Output",
-                                    MessageBoxButton.OK);
+                    var view = new NotesPopup(new Point(queryPanel.HorizontalOffset, 
+                                                        queryPanel.VerticalOffset + queryPanel.Height),
+                                                        500, 200, null);
+                    view.SetText(taskInstance.OutputText);
+                    view.DetachPopup();
+                    view.IsOpen = true;
                 });
             }
         }

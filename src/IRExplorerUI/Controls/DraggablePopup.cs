@@ -32,9 +32,14 @@ namespace IRExplorerUI.Controls {
         };
 
         public void UpdatePosition(Point position, UIElement referenceElement) {
-            // Due to various DPI settings, setting the Window coordinates needs
+            // Due to various DPI settings, the Window coordinates needs
             // some adjustment of the values based on the monitor.
-            var screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
+            var screenPosition = position;
+
+            if (referenceElement != null) {
+                screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
+            }
+
             HorizontalOffset = screenPosition.X;
             VerticalOffset = screenPosition.Y;
         }

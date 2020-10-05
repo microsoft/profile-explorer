@@ -86,7 +86,7 @@ namespace IRExplorerUI.Query {
         }
 
         public async Task<bool> Execute(FunctionIR function, IRDocument document,
-                                  CancelableTask cancelableTask) {
+                                        CancelableTask cancelableTask) {
             var script = ScriptCache.CreateScript(scriptCode_);
 
             if (script == null) {

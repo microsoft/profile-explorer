@@ -114,7 +114,13 @@ namespace IRExplorerUI {
         }
 
         public static Point CoordinatesToScreen(Point point, UIElement control) {
-            var transform = PresentationSource.FromVisual(control).CompositionTarget.TransformFromDevice;
+            var source = PresentationSource.FromVisual(control);
+
+            if (source == null) {
+                return point;
+            }
+
+            var transform = source.CompositionTarget.TransformFromDevice;
             return transform.Transform(point);
         }
 
