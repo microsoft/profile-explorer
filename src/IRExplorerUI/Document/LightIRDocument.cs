@@ -251,10 +251,7 @@ namespace IRExplorerUI {
 
         public async Task SwitchText(string text, FunctionIR function, IRTextSection section,
                                      IRDocument associatedDocument) {
-            if (!syntaxHighlightingLoaded_) {
-                SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
-                syntaxHighlightingLoaded_ = true;
-            }
+            EnableIRSyntaxHighlighting();
 
             initialText_ = text;
             initialTextChanged_ = false;
@@ -266,6 +263,13 @@ namespace IRExplorerUI {
 
             EnsureInitialTextLines();
             await UpdateElementHighlighting();
+        }
+
+        public void EnableIRSyntaxHighlighting() {
+            if (!syntaxHighlightingLoaded_) {
+                SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
+                syntaxHighlightingLoaded_ = true;
+            }
         }
 
         private async Task UpdateElementHighlighting() {

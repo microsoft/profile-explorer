@@ -99,7 +99,7 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to get function task scripts: {ex}");
-                return null;
+                return new string[] { };
             }
         }
 

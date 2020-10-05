@@ -17,6 +17,7 @@ namespace IRExplorerUI.Scripting {
         private CancelableTask task_;
         private ISession session_;
         private Dictionary<string, object> variables_;
+        private string sectionText_;
 
         public ScriptSession(IRDocument document, ISession session) {
             task_ = new CancelableTask();
@@ -31,6 +32,12 @@ namespace IRExplorerUI.Scripting {
             }
         }
 
+        public string SessionName { get; set; }
+        public object SessionObject { get; set; }
+
+        public bool SessionResult { get; set; }
+        public string SessionResultMessage { get; set; }
+
         public bool IsCanceled => task_.IsCanceled;
 
         public bool SilentMode { get; set; }
@@ -38,12 +45,18 @@ namespace IRExplorerUI.Scripting {
         public List<Tuple<IRElement, Color>> MarkedElements => markedElements_;
         public AnalysisInfo Analysis => analysis_;
         public FunctionIR CurrentFunction => document_?.Function;
+        public IRTextSection CurrentSection => document_?.Section;
 
-        public string SessionName { get; set; }
-        public object SessionObject { get; set; }
+        public string CurrentSectionText {
+            get {
+                // Cache the section text.
+                if (sectionText_ == null && CurrentSection != null) {
+                    sectionText_ = GetSectionText(CurrentSection);
+                }
 
-        public bool SessionResult { get; set; }
-        public string SessionResultMessage { get; set; }
+                return sectionText_;
+            }
+        }
 
         public string IRName => session_.CompilerInfo.CompilerIRName;
         public ICompilerIRInfo IR => session_.CompilerInfo.IR;
@@ -107,9 +120,31 @@ namespace IRExplorerUI.Scripting {
             builder_.AppendLine(text);
         }
 
-        public void Write(IRElement element, IRTextSection section) {
-            var text = GetSectionText(section);
-            WriteLine(text.Substring(element.TextLocation.Offset, element.TextLength));
+        public void WriteLine() {
+            builder_.AppendLine();
+        }
+
+        /// <summary>
+        /// Writes the text (IR) representing the element.
+        /// </summary>
+        /// <param name="element">The IR element to print</param>
+        /// <param name="section">The IR text section to use as a text source. If null it uses CurrentSectionText</param>
+        public void Write(IRElement element, IRTextSection section = null) {
+            string text;
+
+            if (section == null) {
+                text = CurrentSectionText;
+            }
+            else {
+                text = GetSectionText(section);
+            }
+
+            Write(text.Substring(element.TextLocation.Offset, element.TextLength));
+        }
+
+        public void WriteLine(IRElement element, IRTextSection section = null) {
+            Write(element, section);
+            WriteLine();
         }
 
         public void Message(string format, params object[] args) {
