@@ -196,6 +196,7 @@
                 Style="{StaticResource ElementQueryValueStyle}" />
 
             <ContentControl
+                Margin="0,0,-4,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Center"
                 Panel.ZIndex="100"
