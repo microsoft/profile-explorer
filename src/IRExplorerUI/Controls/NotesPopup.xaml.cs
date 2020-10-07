@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,17 +18,39 @@ namespace IRExplorerUI.Controls {
     /// <summary>
     /// Interaction logic for NotesPopup.xaml
     /// </summary>
-    public partial class NotesPopup : DraggablePopup {
+    public partial class NotesPopup : DraggablePopup, INotifyPropertyChanged {
+        private string panelTitle_;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        
         public NotesPopup(Point position, double width, double height,
                           UIElement referenceElement) {
             InitializeComponent();
             Initialize(position, width, height, referenceElement);
             PanelResizeGrip.ResizedControl = this;
+            DataContext = this;
         }
 
         public void SetText(string text) {
             TextView.Text = text;
             TextView.EnableIRSyntaxHighlighting();
+        }
+
+        public string PanelTitle {
+            get => panelTitle_;
+            set {
+                if (panelTitle_ != value) {
+                    panelTitle_ = value;
+                    OnPropertyChange(nameof(PanelTitle));
+                }
+            }
+        }
+        private void OnPropertyChange(string propertyname) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e) {
+            ClosePopup();
         }
     }
 }

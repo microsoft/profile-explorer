@@ -1353,9 +1353,17 @@ namespace IRExplorerUI {
                     var view = new NotesPopup(new Point(queryPanel.HorizontalOffset, 
                                                         queryPanel.VerticalOffset + queryPanel.Height),
                                                         500, 200, null);
+                    var button = (QueryButton)sender;
                     view.SetText(taskInstance.OutputText);
-                    view.DetachPopup();
+                    view.PanelTitle = "Function Task Output";
                     view.IsOpen = true;
+                    view.PopupClosed += (sender, value) => {
+                        view.IsOpen  = false;
+                        button.IsEnabled = true;
+                    };
+
+                    view.DetachPopup();
+                    button.IsEnabled = false;
                 });
             }
         }

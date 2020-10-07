@@ -28,7 +28,7 @@ namespace IRExplorerUI.Scripting {
             variables_ = new Dictionary<string, object>();
 
             if (document != null) {
-                analysis_ = new AnalysisInfo(document.Function);
+                analysis_ = new AnalysisInfo(document.Function, session.CompilerInfo.IR);
             }
         }
 
@@ -200,17 +200,20 @@ namespace IRExplorerUI.Scripting {
 
         public class AnalysisInfo {
             private DominatorAlgorithm domAlgorithm_;
+            private DominatorAlgorithm postdomAlgorithm_;
             private FunctionIR function_;
             private ReferenceFinder referenceFinder_;
+            private ICompilerIRInfo ir_;
 
-            public AnalysisInfo(FunctionIR function) {
+            public AnalysisInfo(FunctionIR function, ICompilerIRInfo ir) {
                 function_ = function;
+                ir_ = ir;
             }
 
             public ReferenceFinder References {
                 get {
                     if (referenceFinder_ == null) {
-                        referenceFinder_ = new ReferenceFinder(function_);
+                        referenceFinder_ = new ReferenceFinder(function_, ir_);
                     }
 
                     return referenceFinder_;
@@ -222,11 +225,25 @@ namespace IRExplorerUI.Scripting {
                     if (domAlgorithm_ == null) {
                         domAlgorithm_ = new DominatorAlgorithm(
                             function_,
-                            DominatorAlgorithmOptions.BuildDominatorTree |
+                            DominatorAlgorithmOptions.BuildTree |
                             DominatorAlgorithmOptions.BuildQueryCache);
                     }
 
                     return domAlgorithm_;
+                }
+            }
+
+            public DominatorAlgorithm PostDominatorTree {
+                get {
+                    if (postdomAlgorithm_ == null) {
+                        postdomAlgorithm_ = new DominatorAlgorithm(
+                            function_,
+                            DominatorAlgorithmOptions.PostDominators |
+                            DominatorAlgorithmOptions.BuildTree |
+                            DominatorAlgorithmOptions.BuildQueryCache);
+                    }
+
+                    return postdomAlgorithm_;
                 }
             }
         }

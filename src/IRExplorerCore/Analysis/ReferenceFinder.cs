@@ -384,8 +384,9 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        private bool IsSameSymbolOperand(OperandIR op, OperandIR searchedOp,
-                                         bool checkType = false) {
+        public bool IsSameSymbolOperand(OperandIR op, OperandIR searchedOp,
+                                         bool checkType = false,
+                                         bool exactCheck = false) {
             if (!AreSymbolOperandsCompatible(op, searchedOp)) {
                 return false;
             }
@@ -398,12 +399,18 @@ namespace IRExplorerCore.Analysis {
                                               StringComparison.Ordinal)) {
                     // Not same symbol name, but the IR may define names
                     // that should be considered to represent the same symbol.
-                    if (irInfo_ == null || !irInfo_.OperandsReferenceSameSymbol(op, searchedOp)) {
+                    if (irInfo_ == null || !irInfo_.OperandsReferenceSameSymbol(op, searchedOp, exactCheck)) {
                         return false;
                     }
 
                     // Check for same type if requested.
                     return !checkType || op.Type.Equals(searchedOp.Type);
+                }
+
+                // The same symbol name, but the IR may define names
+                // that should not be considered the same symbol (different offsets, for ex.)
+                if (irInfo_ != null && !irInfo_.OperandsReferenceSameSymbol(op, searchedOp, exactCheck)) {
+                    return false;
                 }
 
                 return true;
