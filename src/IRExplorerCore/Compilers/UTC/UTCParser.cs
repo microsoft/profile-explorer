@@ -1476,6 +1476,13 @@ namespace IRExplorerCore.UTC {
                     SkipToken();
 
                     if (IsNumber()) {
+                        long offset;
+                        if (TokenLongIntNumber(out offset)) {
+                            var offsetTag = new SymbolOffsetTag(offset);
+                            offsetTag.Owner = operand;
+                            operand.AddTag(offsetTag);
+                        }
+
                         SkipToken();
                     }
                 }

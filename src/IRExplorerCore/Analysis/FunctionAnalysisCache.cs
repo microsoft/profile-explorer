@@ -131,14 +131,14 @@ namespace IRExplorerCore.Analysis {
             return Task.Run(() => new DominatorAlgorithm(function_,
                                                          DominatorAlgorithmOptions.Dominators |
                                                          DominatorAlgorithmOptions.BuildQueryCache |
-                                                         DominatorAlgorithmOptions.BuildDominatorTree));
+                                                         DominatorAlgorithmOptions.BuildTree));
         }
 
         private Task<DominatorAlgorithm> ComputePostDominators() {
             return Task.Run(() => new DominatorAlgorithm(function_,
                                                          DominatorAlgorithmOptions.PostDominators |
                                                          DominatorAlgorithmOptions.BuildQueryCache |
-                                                         DominatorAlgorithmOptions.BuildDominatorTree));
+                                                         DominatorAlgorithmOptions.BuildTree));
         }
 
         private Task<CFGReachability> ComputeReachability() {

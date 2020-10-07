@@ -68,6 +68,15 @@ namespace IRExplorerCore.UTC {
             return instr.OpcodeIs(UTCOpcode.OPPHI);
         }
 
+        public BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex) {
+            if (!IsPhiInstruction(phiInstr)) {
+                return null;
+            }
+
+            var block = phiInstr.ParentBlock;
+            return opIndex < block.Predecessors.Count ? block.Predecessors[opIndex] : null;
+        }
+
         public IRElement SkipCopyInstruction(InstructionIR instr) {
             if (!instr.OpcodeIs(UTCOpcode.OPASSIGN)) {
                 return null;
@@ -83,7 +92,28 @@ namespace IRExplorerCore.UTC {
             return null;
         }
 
-        public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB) {
+        private long FindSymbolOffset(OperandIR op) {
+            var offsetTag = op.GetTag<SymbolOffsetTag>();
+            return offsetTag != null ? offsetTag.Offset : 0;
+        }
+
+        public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck) {
+            if (exactCheck) {
+                var offsetA = FindSymbolOffset(opA);
+                var offsetB = FindSymbolOffset(opB);
+
+                //? TODO: Option for overlap check?
+                if (offsetA != offsetB) {
+                    return false;
+                }
+            }
+
+            if (opA.HasName && opB.HasName &&
+                opA.NameValue.Span.Equals(opB.NameValue.Span, StringComparison.Ordinal)) {
+                return true;
+            }
+
+            // Accept t100/tv100/hv100 as the same symbol.
             return opA.IsTemporary && opB.IsTemporary &&
                    IsTemporaryVariableName(opA.NameValue, out var opAId) &&
                    IsTemporaryVariableName(opB.NameValue, out var opBId) &&

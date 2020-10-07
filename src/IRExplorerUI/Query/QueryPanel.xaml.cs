@@ -64,9 +64,9 @@ namespace IRExplorerUI.Query {
     }
 
     public partial class QueryPanel : DraggablePopup, INotifyPropertyChanged {
-        public const double DefaultHeight = 200;
+        public const double DefaultHeight = 250;
         public const double MinimumHeight = 100;
-        public const double DefaultWidth = 250;
+        public const double DefaultWidth = 300;
         public const double MinimumWidth = 100;
 
         private List<ElementQueryInfoView> activeQueries_;

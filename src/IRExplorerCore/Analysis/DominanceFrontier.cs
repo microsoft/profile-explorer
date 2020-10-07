@@ -17,7 +17,8 @@ namespace IRExplorerCore.Analysis {
             return frontierMap_[block];
         }
 
-        private static Dictionary<BlockIR, List<BlockIR>> BuildDominanceFrontiers(FunctionIR function, DominatorAlgorithm dominanceAlgorithm) {
+        private static Dictionary<BlockIR, List<BlockIR>>
+            BuildDominanceFrontiers(FunctionIR function, DominatorAlgorithm dominanceAlgorithm) {
             // Algorithm adapted from Engineering a Compiler, 2nd edition page 499
             var dominanceFrontiers = InitializeDominanceFrontiersToEmpty(function);
 
@@ -34,13 +35,17 @@ namespace IRExplorerCore.Analysis {
             return result;
         }
 
-        private static void AddCFGDominanceFrontierInfo(FunctionIR function, DominatorAlgorithm dominanceAlgorithm, Dictionary<BlockIR, HashSet<BlockIR>> dominanceFrontiers) {
+        private static void AddCFGDominanceFrontierInfo(FunctionIR function, DominatorAlgorithm dominanceAlgorithm, 
+                                                        Dictionary<BlockIR, HashSet<BlockIR>> dominanceFrontiers) {
             var blocks = new CFGBlockOrdering(function).PostorderList;
+
             foreach (var block in blocks) {
                 var nextBlocks = dominanceAlgorithm.NextBlocks(block).Where(blocks.Contains).ToList();
+            
                 if (nextBlocks.Count > 1) {
                     foreach (var nextBlock in nextBlocks) {
                         var runner = nextBlock;
+                
                         while (runner != dominanceAlgorithm.GetImmediateDominator(block)) {
                             dominanceFrontiers[runner].Add(block);
                             runner = dominanceAlgorithm.GetImmediateDominator(runner);
@@ -50,15 +55,20 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        private static Dictionary<BlockIR, List<BlockIR>> ConvertResult(Dictionary<BlockIR, HashSet<BlockIR>> hashedResult) {
+        private static Dictionary<BlockIR, List<BlockIR>> 
+            ConvertResult(Dictionary<BlockIR, HashSet<BlockIR>> hashedResult) {
             var result = new Dictionary<BlockIR, List<BlockIR>>();
+            
             foreach (var entry in hashedResult) {
                 var list = new List<BlockIR>();
+            
                 foreach (var value in entry.Value) {
                     list.Add(value);
                 }
+                
                 result[entry.Key] = list;
             }
+
             return result;
         }
     }

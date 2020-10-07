@@ -61,7 +61,7 @@
                 client:ContextMenuLeftClickBehavior.IsLeftClickEnabled="True"
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
-                ToolTip="Close query panel"
+                ToolTip="Add query"
                 Visibility="{Binding ShowAddButton, Converter={StaticResource BoolToVisibility}}">
                 <Image
                     Width="16"

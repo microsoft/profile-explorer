@@ -16,9 +16,10 @@ namespace IRExplorerCore {
         bool IsCallInstruction(InstructionIR instr);
         bool IsIntrinsicCallInstruction(InstructionIR instr);
         bool IsPhiInstruction(InstructionIR instr);
+        BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex);
         IRElement SkipCopyInstruction(InstructionIR instr);
         OperandIR GetCallTarget(InstructionIR instr);
 
-        bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB);
+        bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck);
     }
 }

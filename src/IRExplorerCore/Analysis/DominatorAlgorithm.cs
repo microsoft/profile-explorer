@@ -21,7 +21,7 @@ namespace IRExplorerCore.Analysis {
     public enum DominatorAlgorithmOptions {
         Dominators = 1 << 0,
         PostDominators = 1 << 1,
-        BuildDominatorTree = 1 << 2,
+        BuildTree = 1 << 2,
         BuildQueryCache = 1 << 3
     }
 
@@ -83,7 +83,7 @@ namespace IRExplorerCore.Analysis {
 
             Compute();
 
-            if (options.HasFlag(DominatorAlgorithmOptions.BuildDominatorTree)) {
+            if (options.HasFlag(DominatorAlgorithmOptions.BuildTree)) {
                 BuildTree(treeStartBlock_);
             }
         }

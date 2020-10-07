@@ -51,11 +51,15 @@ namespace IRExplorerCore.LLVM {
             return false;
         }
 
+        public BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex) {
+            return null;
+        }
+
         public IRElement SkipCopyInstruction(InstructionIR instr) {
             return null;
         }
 
-        public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB) {
+        public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck) {
             return false;
         }
     }
