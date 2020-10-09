@@ -5,6 +5,7 @@
     xmlns:client="clr-namespace:IRExplorerUI"
     xmlns:controls="clr-namespace:IRExplorerUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:doc="clr-namespace:IRExplorerUI.Document"
     xmlns:local="clr-namespace:IRExplorerUI.Controls"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="450"
@@ -48,6 +49,18 @@
                     FontWeight="DemiBold"
                     Text="{Binding PanelTitle}" />
             </Grid>
+            <ToggleButton
+                x:Name="FindButton"
+                Grid.Row="0"
+                Grid.Column="1"
+                Background="{x:Null}"
+                BorderBrush="{x:Null}"
+                IsChecked="{Binding SearchPanelVisible, Mode=TwoWay, ElementName=TextView}">
+                <Image
+                    Width="14"
+                    Height="14"
+                    Source="{StaticResource SearchIcon}" />
+            </ToggleButton>
             <Button
                 x:Name="CloseButton"
                 Grid.Row="0"
@@ -62,19 +75,14 @@
                     Source="{StaticResource CloseIcon}" />
             </Button>
 
-            <client:LightIRDocument
+            <doc:SearcheableIRDocument
                 x:Name="TextView"
                 Grid.Row="1"
                 Grid.ColumnSpan="3"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                DockPanel.Dock="Bottom"
-                FontFamily="Consolas"
-                FontSize="12"
-                HorizontalScrollBarVisibility="Auto"
-                ShowLineNumbers="True"
-                VerticalScrollBarVisibility="Auto" />
+                DockPanel.Dock="Bottom" />
             <controls:ResizeGrip
                 x:Name="PanelResizeGrip"
                 Grid.Row="1"

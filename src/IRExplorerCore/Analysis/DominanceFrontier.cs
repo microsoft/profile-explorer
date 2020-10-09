@@ -23,15 +23,16 @@ namespace IRExplorerCore.Analysis {
             var dominanceFrontiers = InitializeDominanceFrontiersToEmpty(function);
 
             AddCFGDominanceFrontierInfo(function, dominanceAlgorithm, dominanceFrontiers);
-
             return ConvertResult(dominanceFrontiers);
         }
 
         private static Dictionary<BlockIR, HashSet<BlockIR>> InitializeDominanceFrontiersToEmpty(FunctionIR function) {
             var result = new Dictionary<BlockIR, HashSet<BlockIR>>();
+
             foreach (var block in function.Blocks) {
                 result[block] = new HashSet<BlockIR>();
             }
+
             return result;
         }
 
