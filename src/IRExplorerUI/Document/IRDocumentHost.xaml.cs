@@ -1349,21 +1349,25 @@ namespace IRExplorerUI {
             }
 
             if (!string.IsNullOrEmpty(taskInstance.OutputText)) {
-                optionsData.ReplaceButton("View Output", (sender, value) => {
+                optionsData.ReplaceButton("View Output", async (sender, value) => {
                     var view = new NotesPopup(new Point(queryPanel.HorizontalOffset, 
                                                         queryPanel.VerticalOffset + queryPanel.Height),
                                                         500, 200, null);
+                    Session.RegisterDetachedPanel(view);
                     var button = (QueryButton)sender;
-                    view.SetText(taskInstance.OutputText);
+                    button.IsEnabled = false;
+
                     view.PanelTitle = "Function Task Output";
                     view.IsOpen = true;
                     view.PopupClosed += (sender, value) => {
+                        //? TODO: Should save size of panel and use it next time
                         view.IsOpen  = false;
                         button.IsEnabled = true;
+                        Session.UnregisterDetachedPanel(view);
                     };
 
                     view.DetachPopup();
-                    button.IsEnabled = false;
+                    await view.SetText(taskInstance.OutputText, Function, Section, TextView, Session);
                 });
             }
         }

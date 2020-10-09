@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using IRExplorerCore;
+using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Controls {
     /// <summary>
@@ -32,8 +34,13 @@ namespace IRExplorerUI.Controls {
         }
 
         public void SetText(string text) {
-            TextView.Text = text;
-            TextView.EnableIRSyntaxHighlighting();
+            TextView.SetText(text);
+            //? TextView.EnableIRSyntaxHighlighting();
+        }
+
+        public async Task SetText(string text, FunctionIR function, IRTextSection section,
+                                  IRDocument associatedDocument, ISession session) {
+            await TextView.SetText(text, function, section, associatedDocument, session);
         }
 
         public string PanelTitle {
