@@ -161,45 +161,47 @@ namespace IRExplorerUI.Document {
 
         private void UpdateRemarkList() {
             RemarkList.ItemsSource = null;
+            ContextRemarkTree.Items.Clear();
+
             var remarkTag = element_.GetTag<RemarkTag>();
 
-            if (remarkTag != null) {
-                var list = new List<Remark>();
-                var listEx = new List<ListRemarkEx>();
-                ListRemarkEx firstSectionRemark = null;
+            if (remarkTag == null) {
+                return;
+            }
+            var list = new List<Remark>();
+            var listEx = new List<ListRemarkEx>();
+            ListRemarkEx firstSectionRemark = null;
 
-                if (activeRemarkContext_ != null &&
-                    remarkFilter_.Settings.ShowOnlyContextRemarks) {
-                    CollectContextTreeRemarks(activeRemarkContext_, list, false);
+            if (activeRemarkContext_ != null &&
+                remarkFilter_.Settings.ShowOnlyContextRemarks) {
+                CollectContextTreeRemarks(activeRemarkContext_, list, false);
 
-                    foreach (var remark in list) {
-                        AppendAcceptedRemark(listEx, remark);
-                    }
+                foreach (var remark in list) {
+                    AppendAcceptedRemark(listEx, remark);
                 }
-                else {
-                    foreach (var remark in remarkTag.Remarks) {
-                        AccountForRemarkKind(remark);
+            }
+            else {
+                foreach (var remark in remarkTag.Remarks) {
+                    AccountForRemarkKind(remark);
 
-                        if (parentDocument_.IsAcceptedContextRemark(remark, Section, remarkFilter_.Settings)) {
-                            var remarkEx = AppendAcceptedRemark(listEx, remark);
+                    if (parentDocument_.IsAcceptedContextRemark(remark, Section, remarkFilter_.Settings)) {
+                        var remarkEx = AppendAcceptedRemark(listEx, remark);
 
-                            // Find first remark in current section.
-                            if (remark.Section == Section && firstSectionRemark == null) {
-                                firstSectionRemark = remarkEx;
-                            }
+                        // Find first remark in current section.
+                        if (remark.Section == Section && firstSectionRemark == null) {
+                            firstSectionRemark = remarkEx;
                         }
                     }
                 }
-
-                RemarkList.ItemsSource = listEx;
-
-                // Scroll down to current section.
-                if (firstSectionRemark != null) {
-                    RemarkList.ScrollIntoView(firstSectionRemark);
-                }
             }
 
-            ContextRemarkTree.Items.Clear();
+            RemarkList.ItemsSource = listEx;
+
+            // Scroll down to current section.
+            if (firstSectionRemark != null) {
+                RemarkList.ScrollIntoView(firstSectionRemark);
+            }
+
         }
 
         private (TreeViewItem, int) BuildContextRemarkTreeView(RemarkContext context,
@@ -217,17 +219,11 @@ namespace IRExplorerUI.Document {
             }
 
             var items = new List<Tuple<TreeViewItem, int>>();
-            Remark prevRemark = null;
 
             foreach (var remark in context.Remarks) {
                 var line = remark.RemarkLocation.Line;
 
                 if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
-                    if (prevRemark != null) {
-                        var prevLine = prevRemark.RemarkLocation.Line + 1;
-                        ExtractOutputTextInRange(prevLine, line, outputTextLines, items);
-                    }
-
                     var tempTreeNode = new TreeViewItem() {
                         Header = remark.RemarkText,
                         Foreground = ColorBrushes.GetBrush(Colors.Black),
@@ -237,7 +233,6 @@ namespace IRExplorerUI.Document {
                     };
 
                     items.Add(new Tuple<TreeViewItem, int>(tempTreeNode, remark.RemarkLocation.Line));
-                    prevRemark = remark;
                 }
             }
 
