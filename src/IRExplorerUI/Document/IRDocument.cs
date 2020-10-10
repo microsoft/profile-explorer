@@ -2990,6 +2990,7 @@ namespace IRExplorerUI {
             var element = remark.ReferencedElements[0];
 
             if (selectedRemark_ != null) {
+                // Revert currently selected remark to original style.
                 var selectedElement = selectedRemark_.ReferencedElements[0];
                 remarkHighlighter_.ChangeStyle(selectedElement, GetRemarkLineStyle(remark, true, isSelected: false));
             }
@@ -3065,10 +3066,6 @@ namespace IRExplorerUI {
         private void AddDocumentRemarks(List<Remark> allRemarks, bool hasContextFilter) {
             var markedElements = new HashSet<Tuple<IRElement, RemarkKind>>(allRemarks.Count);
 
-            if (hasContextFilter) {
-                overlayRenderer_.ClearContextRemarks();
-            }
-
             foreach (var remark in allRemarks) {
                 foreach (var element in remark.ReferencedElements) {
                     if (remark.Category.AddTextMark || hasContextFilter) {
@@ -3080,10 +3077,6 @@ namespace IRExplorerUI {
                             var group = new HighlightedGroup(element, style);
                             remarkHighlighter_.Add(group);
                             markedElements.Add(elementKindPair);
-
-                            if (hasContextFilter) {
-                                overlayRenderer_.AddContextRemark(remark);
-                            }
                         }
                     }
                 }
