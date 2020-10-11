@@ -367,10 +367,9 @@
                             x:Name="VerLn"
                             Grid.RowSpan="2"
                             Width="1"
-                            Margin="0,0,0,-10"
-                            SnapsToDevicePixels="true"
+                            Margin="0,0,0,-8"
                             Stroke="#88888888"
-                            StrokeDashArray="2 2"
+                            StrokeDashArray="1 2"
                             StrokeThickness="1" />
 
                         <ToggleButton
@@ -404,10 +403,9 @@
                                 <Rectangle
                                     Grid.Row="1"
                                     Height="1"
-                                    Margin="1,0,0,0"
-                                    SnapsToDevicePixels="true"
+                                    Margin="-8,0,0,0"
                                     Stroke="#8888"
-                                    StrokeDashArray="2 2"
+                                    StrokeDashArray="1 2"
                                     StrokeThickness="1" />
                             </Grid>
                         </Border>

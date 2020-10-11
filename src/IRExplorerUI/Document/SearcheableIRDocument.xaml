@@ -30,7 +30,7 @@
             DockPanel.Dock="Bottom"
             FontFamily="Consolas"
             FontSize="12"
-            HorizontalScrollBarVisibility="Auto"
+            HorizontalScrollBarVisibility="Disabled"
             ShowLineNumbers="True"
             VerticalScrollBarVisibility="Auto" />
 
