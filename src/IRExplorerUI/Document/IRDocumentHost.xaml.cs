@@ -395,13 +395,16 @@ namespace IRExplorerUI {
             TextView.SelectDocumentRemark(e);
         }
 
-        private void RemarkPanel__PanelDetached(object sender, EventArgs e) {
+        private async void RemarkPanel__PanelDetached(object sender, EventArgs e) {
             // Keep the remark panel floating over the document.
             Session.RegisterDetachedPanel(remarkPanel_);
 
             HideActionPanel();
             remarkPanelVisible_ = false;
             remarkPanel_ = null;
+
+            // Detaching the panel stops the context filtering of remarks.
+            await ResetActiveRemarkContext();
         }
 
         private async void RemarkPanel__PanelClosed(object sender, EventArgs e) {
@@ -418,16 +421,21 @@ namespace IRExplorerUI {
 
         private async void RemarkPanel__RemarkContextChanged(object sender, RemarkContextChangedEventArgs e) {
             activeRemarkContext_ = e.Context;
-            remarkSettings_.ShowOnlyContextRemarks = true;
-            // Trace.TraceInformation($"=> Activate context {e.Name}, {e.Id}");
-            await UpdateDocumentRemarks(e.Remarks);
+
+            if (e.Context != null && e.Remarks != null) {
+                await UpdateDocumentRemarks(e.Remarks);
+            }
+            else {
+                // Filtering of context remarks disabled.
+                await UpdateDocumentRemarks(remarkList_);
+            }
         }
 
         private void InitializeRemarkPanel(IRElement element) {
             remarkPanel_.Session = Session;
             remarkPanel_.Function = Function;
             remarkPanel_.Section = Section;
-            remarkPanel_.Initialize(element, remarkPanelLocation_, this, remarkSettings_, activeRemarkContext_);
+            remarkPanel_.Initialize(element, remarkPanelLocation_, this, remarkSettings_);
         }
 
         private async Task HideRemarkPanel() {
@@ -435,6 +443,7 @@ namespace IRExplorerUI {
                 return;
             }
 
+            await ResetActiveRemarkContext();
             var animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(AnimationDuration));
 
             animation.Completed += (s, e) => {
@@ -447,7 +456,9 @@ namespace IRExplorerUI {
 
             remarkPanel_.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
             remarkPanelVisible_ = false;
+        }
 
+        private async Task ResetActiveRemarkContext() {
             if (activeRemarkContext_ != null) {
                 activeRemarkContext_ = null;
                 await UpdateDocumentRemarks(remarkList_);
@@ -775,9 +786,9 @@ namespace IRExplorerUI {
             }
 
             // Filter based on context, accept any context that is a child of the active context.
-            if (activeRemarkContext_ != null && remarkSettings.ShowOnlyContextRemarks) {
-                return IsActiveContextTreeRemark(remark);
-            }
+            //if (activeRemarkContext_ != null) {
+            //    return IsActiveContextTreeRemark(remark);
+            //}
 
             return true;
         }
@@ -1350,7 +1361,7 @@ namespace IRExplorerUI {
 
             if (!string.IsNullOrEmpty(taskInstance.OutputText)) {
                 optionsData.ReplaceButton("View Output", async (sender, value) => {
-                    var view = new NotesPopup(new Point(queryPanel.HorizontalOffset, 
+                    var view = new NotesPopup(new Point(queryPanel.HorizontalOffset,
                                                         queryPanel.VerticalOffset + queryPanel.Height),
                                                         500, 200, null);
                     Session.RegisterDetachedPanel(view);
@@ -1361,7 +1372,7 @@ namespace IRExplorerUI {
                     view.IsOpen = true;
                     view.PopupClosed += (sender, value) => {
                         //? TODO: Should save size of panel and use it next time
-                        view.IsOpen  = false;
+                        view.IsOpen = false;
                         button.IsEnabled = true;
                         Session.UnregisterDetachedPanel(view);
                     };

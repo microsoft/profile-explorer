@@ -108,6 +108,11 @@ namespace IRExplorerUI.Document {
             await TextView.SwitchText(text, function, section, associatedDocument);
         }
 
+        public void SelectText(int offset, int length, int line) {
+            TextView.Select(offset, length);
+            TextView.ScrollToLine(line);
+        }
+
         private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
             if (searchResults_ == null) {
                 return;

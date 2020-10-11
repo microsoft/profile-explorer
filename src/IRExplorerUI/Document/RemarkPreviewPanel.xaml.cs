@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Documents;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -11,6 +13,12 @@ using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.Document {
     public class RemarkEx {
+        public static SolidColorBrush GetRemarkBackground(Remark remark) {
+            return Utils.EstimateBrightness(remark.Category.MarkColor) < 200 ?
+                   ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(remark.Category.MarkColor, 1.75)) :
+                   ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(remark.Category.MarkColor, 1.2));
+        }
+
         public Remark Remark { get; set; }
 
         public string Text {
@@ -23,10 +31,7 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        public Brush Background =>
-            Utils.EstimateBrightness(Remark.Category.MarkColor) < 200 ?
-            ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.75)) :
-            ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(Remark.Category.MarkColor, 1.2));
+        public Brush Background => GetRemarkBackground(Remark);
 
         private string FormatRemarkText() {
             if (Remark.Kind == RemarkKind.None) {
@@ -120,12 +125,17 @@ namespace IRExplorerUI.Document {
         private IRElement element_;
         private RemarkSettingsEx remarkFilter_;
         private bool showPreview_;
+        private bool filterActiveContextRemarks_;
         private Popup colorPopup_;
+        private Remark selectedRemark_;
 
         public RemarkPreviewPanel() {
             InitializeComponent();
-            DataContext = this; // Used for auto-resizing with ShowPreview.
             PanelResizeGrip.ResizedControl = this;
+            DataContext = this; // Used for auto-resizing with ShowPreview.
+
+            //? TODO: Add options
+            filterActiveContextRemarks_ = true;
         }
 
         public bool ShowPreview {
@@ -151,6 +161,22 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        public bool FilterActiveContextRemarks {
+            get => filterActiveContextRemarks_;
+            set {
+                if (filterActiveContextRemarks_ != value) {
+                    if (value && selectedRemark_ != null) {
+                        NotifyRemarkContextChanged(selectedRemark_.Context, null); // Recomputes the list.
+                    }
+                    else {
+                        NotifyRemarkContextChanged(null, null); // Disables filtering.
+                    }
+
+                    filterActiveContextRemarks_ = value;
+                }
+            }
+        }
+
         public FunctionIR Function { get; set; }
         public IRTextSection Section { get; set; }
         public ISession Session { get; set; }
@@ -168,29 +194,20 @@ namespace IRExplorerUI.Document {
             if (remarkTag == null) {
                 return;
             }
+
             var list = new List<Remark>();
             var listEx = new List<ListRemarkEx>();
             ListRemarkEx firstSectionRemark = null;
 
-            if (activeRemarkContext_ != null &&
-                remarkFilter_.Settings.ShowOnlyContextRemarks) {
-                CollectContextTreeRemarks(activeRemarkContext_, list, false);
+            foreach (var remark in remarkTag.Remarks) {
+                AccountForRemarkKind(remark);
 
-                foreach (var remark in list) {
-                    AppendAcceptedRemark(listEx, remark);
-                }
-            }
-            else {
-                foreach (var remark in remarkTag.Remarks) {
-                    AccountForRemarkKind(remark);
+                if (parentDocument_.IsAcceptedContextRemark(remark, Section, remarkFilter_.Settings)) {
+                    var remarkEx = AppendAcceptedRemark(listEx, remark);
 
-                    if (parentDocument_.IsAcceptedContextRemark(remark, Section, remarkFilter_.Settings)) {
-                        var remarkEx = AppendAcceptedRemark(listEx, remark);
-
-                        // Find first remark in current section.
-                        if (remark.Section == Section && firstSectionRemark == null) {
-                            firstSectionRemark = remarkEx;
-                        }
+                    // Find first remark in current section.
+                    if (remark.Section == Section && firstSectionRemark == null) {
+                        firstSectionRemark = remarkEx;
                     }
                 }
             }
@@ -203,6 +220,8 @@ namespace IRExplorerUI.Document {
             }
 
         }
+
+        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
 
         private (TreeViewItem, int) BuildContextRemarkTreeView(RemarkContext context,
                                                Dictionary<RemarkContext, TreeViewItem> treeNodeMap,
@@ -227,11 +246,23 @@ namespace IRExplorerUI.Document {
                     var tempTreeNode = new TreeViewItem() {
                         Header = remark.RemarkText,
                         Foreground = ColorBrushes.GetBrush(Colors.Black),
+                        Background = RemarkEx.GetRemarkBackground(remark),
                         FontWeight = FontWeights.Bold,
                         Tag = remark,
                         ItemContainerStyle = Application.Current.FindResource("RemarkTreeViewItemStyle") as Style
                     };
 
+                    /// var textBlock = new TextBlock();
+                    /// textBlock.FontFamily = PreviewFont;
+                    /// textBlock.Foreground = Brushes.Black;
+                    /// 
+                    /// textBlock.Inlines.Add(new Run(remark.RemarkText) {
+                    ///     FontWeight = FontWeights.Bold
+                    /// });
+                    /// 
+                    /// tempTreeNode.Header = textBlock;
+
+                    tempTreeNode.Selected += TempTreeNode_Selected;
                     items.Add(new Tuple<TreeViewItem, int>(tempTreeNode, remark.RemarkLocation.Line));
                 }
             }
@@ -283,6 +314,14 @@ namespace IRExplorerUI.Document {
             return (treeNode, context.StartLine);
         }
 
+        private void TempTreeNode_Selected(object sender, RoutedEventArgs e) {
+            var remark = (ContextRemarkTree.SelectedItem as TreeViewItem)?.Tag as Remark;
+
+            if (remark != null) {
+                RemarkChanged?.Invoke(this, remark);
+            }
+        }
+
         private static void ExtractOutputTextInRange(int prevLine, int line, string[] outputTextLines,
                                                      List<Tuple<TreeViewItem, int>> items) {
             for (int k = prevLine; k < line; k++) {
@@ -295,7 +334,7 @@ namespace IRExplorerUI.Document {
                 if (!lineText.StartsWith("/// irx:")) {
                     var lineTreeNode = new TreeViewItem() {
                         Header = lineText,
-                        Foreground = ColorBrushes.GetBrush(Colors.DimGray),
+                        Foreground = ColorBrushes.GetBrush(Colors.Black),
                     };
                     items.Add(new Tuple<TreeViewItem, int>(lineTreeNode, k));
                 }
@@ -468,27 +507,42 @@ namespace IRExplorerUI.Document {
             }
 
             var itemEx = e.AddedItems[0] as ListRemarkEx;
-            var item = itemEx.Remark;
-            string outputText = await Session.GetSectionPassOutputAsync(item.Section.OutputBefore, item.Section);
-
-            TextView.Text = outputText;
-            TextView.ScrollToLine(item.RemarkLocation.Line);
-            TextView.Select(item.RemarkLocation.Offset, item.RemarkText.Length);
+            selectedRemark_ = itemEx.Remark;
+            activeRemarkContext_ = selectedRemark_.Context;
             SectionLabel.Content = itemEx.Description;
             ShowPreview = true;
 
-            if (item.Context != null) {
+            if (selectedRemark_.Context != null && IsContextTreeVisible()) {
                 // Show context and children.
-                var list = new List<Remark>();
-                CollectContextTreeRemarks(item.Context, list, true);
-                BuildContextRemarkTreeView(item.Context, outputText);
-                SelectTreeViewNode(ContextRemarkTree, item);
-
-                //? TODO: Setting for enabling
-                if (true) {
-                    RemarkContextChanged?.Invoke(this, new RemarkContextChangedEventArgs(item.Context, list));
-                }
+                await UpdateContextTree(selectedRemark_, activeRemarkContext_);
             }
+            else {
+                RemarksTabControl.SelectedItem = OutputTextTabItem;
+                await UpdateOutputText(selectedRemark_);
+            }
+        }
+
+        private async Task UpdateContextTree(Remark remark, RemarkContext context) {
+            // The context can be a parent of the remark's context.
+            string outputText = await Session.GetSectionPassOutputAsync(remark.Section.OutputBefore,
+                                                                        remark.Section);
+            var list = new List<Remark>();
+            CollectContextTreeRemarks(context, list, true);
+            BuildContextRemarkTreeView(context, outputText);
+            SelectTreeViewNode(ContextRemarkTree, remark);
+
+            if (FilterActiveContextRemarks) {
+                NotifyRemarkContextChanged(context, list);
+            }
+        }
+
+        private void NotifyRemarkContextChanged(RemarkContext context, List<Remark> list) {
+            if (list == null && context != null) {
+                list = new List<Remark>();
+                CollectContextTreeRemarks(context, list, true);
+            }
+
+            RemarkContextChanged?.Invoke(this, new RemarkContextChangedEventArgs(context, list));
         }
 
         private void Button_Click(object sender, RoutedEventArgs e) {
@@ -496,12 +550,9 @@ namespace IRExplorerUI.Document {
         }
 
         public void Initialize(IRElement element, Point position, IRDocumentHost parent,
-                               RemarkSettings filter, RemarkContext activeRemarkContext = null) {
+                               RemarkSettings filter) {
             parentDocument_ = parent;
-            activeRemarkContext_ = activeRemarkContext;
-
             filter = (RemarkSettings)filter.Clone();
-            filter.ShowOnlyContextRemarks = activeRemarkContext_ != null;
             remarkFilter_ = new RemarkSettingsEx(filter);
             ToolbarPanel.DataContext = remarkFilter_;
 
@@ -647,12 +698,45 @@ namespace IRExplorerUI.Document {
             return false;
         }
 
-        private void ContextRemarkTree_MouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) {
-            var remark = (ContextRemarkTree.SelectedItem as TreeViewItem)?.Tag as Remark;
+        private bool IsOutputTextVisible() {
+            return RemarksTabControl.SelectedItem == OutputTextTabItem;
+        }
 
-            if (remark != null) {
-                RemarkChanged?.Invoke(this, remark);
+        private bool IsContextTreeVisible() {
+            return RemarksTabControl.SelectedItem == ContextTreeTabItem;
+        }
+
+        private async Task UpdateOutputText(Remark remark) {
+            string outputText = await Session.GetSectionPassOutputAsync(remark.Section.OutputBefore,
+                                                                    remark.Section);
+
+            await TextView.SetText(outputText, Function, Section, parentDocument_.TextView, Session);
+            TextView.SelectText(remark.RemarkLocation.Offset, remark.RemarkText.Length,
+                                remark.RemarkLocation.Line);
+        }
+
+        private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (selectedRemark_ == null) {
+                return;
             }
+
+            if (IsOutputTextVisible()) {
+                await UpdateOutputText(selectedRemark_);
+            }
+            else if (IsContextTreeVisible()) {
+                await UpdateContextTree(selectedRemark_, activeRemarkContext_);
+            }
+        }
+
+        private async void ContextParentButton_Click(object sender, RoutedEventArgs e) {
+            if (activeRemarkContext_ == null ||
+                activeRemarkContext_.Parent == null) {
+                return;
+            }
+
+
+            activeRemarkContext_ = activeRemarkContext_.Parent;
+            await UpdateContextTree(selectedRemark_, activeRemarkContext_);
         }
     }
 }

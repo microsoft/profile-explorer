@@ -85,6 +85,7 @@ namespace IRExplorerUI {
     public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged {
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
         private IRDocument document_;
+        private string documentText_;
 
         private IRElement element_;
         private ReferenceKind filterKind_;
@@ -228,14 +229,14 @@ namespace IRExplorerUI {
             if (instr == null) {
                 if (reference.Element is OperandIR op) {
                     // This is usually a parameter.
-                    text = op.GetText(document_.Text).ToString();
+                    text = op.GetText(documentText_).ToString();
                 }
                 else {
                     return "";
                 }
             }
             else {
-                text = instr.GetText(document_.Text).ToString();
+                text = instr.GetText(documentText_).ToString();
             }
 
             int start = 0;
@@ -370,6 +371,7 @@ namespace IRExplorerUI {
         public void InitializeFromDocument(IRDocument document) {
             if (document_ != document) {
                 document_ = document;
+                documentText_ = document.Text;
                 Element = null;
             }
         }
@@ -535,6 +537,7 @@ namespace IRExplorerUI {
         public override void ClonePanel(IToolPanel sourcePanel) {
             var sourceRefPanel = sourcePanel as ReferencesPanel;
             document_ = sourceRefPanel.document_;
+            documentText_ = sourceRefPanel.documentText_;
             IsPanelEnabled = document_ != null;
         }
 

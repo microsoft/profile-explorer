@@ -632,10 +632,12 @@ namespace IRExplorerUI {
         public void UnloadDocument() {
             section_ = null;
             function_ = null;
+            selectedRemark_ = null;
             ClearSelectedElements();
             hoverHighlighter_?.Clear();
             markedHighlighter_?.Clear();
             diffHighlighter_?.Clear();
+            remarkHighlighter_?.Clear();
             bookmarks_?.Clear();
             margin_?.Reset();
             Text = "";
@@ -2988,17 +2990,8 @@ namespace IRExplorerUI {
 
         public void SelectDocumentRemark(Remark remark) {
             var element = remark.ReferencedElements[0];
-
-            if (selectedRemark_ != null) {
-                // Revert currently selected remark to original style.
-                var selectedElement = selectedRemark_.ReferencedElements[0];
-                remarkHighlighter_.ChangeStyle(selectedElement, GetRemarkLineStyle(remark, true, isSelected: false));
-            }
-
-            remarkHighlighter_.ChangeStyle(element, GetRemarkLineStyle(remark, true, isSelected: true));
+            HighlightElement(element, HighlighingType.Hovered);
             selectedRemark_ = remark;
-            BringElementIntoView(element);
-            UpdateHighlighting();
         }
 
         private HighlightingStyle GetRemarkLineStyle(Remark remark, bool hasContextFilter, bool isSelected = false) {
@@ -3011,7 +3004,7 @@ namespace IRExplorerUI {
                     backColor = Colors.LightGray;
                 }
 
-                Color borderColor = isSelected ? Colors.Blue : Colors.Black;
+                Color borderColor = Colors.Black;
                 double borderWeight = Math.Max(2, remark.Category.TextMarkBorderWeight);
                 return new HighlightingStyle(backColor, Pens.GetPen(borderColor, borderWeight));
             }
