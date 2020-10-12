@@ -48,6 +48,7 @@ namespace IRExplorerUI.Query {
         public bool CreateQueryInstance(ISession session) {
             if (queryInstance_ == null) {
                 queryInstance_ = (IElementQuery)Activator.CreateInstance(queryType_);
+                data_.Instance = queryInstance_;
                 return queryInstance_.Initialize(session);
             }
 

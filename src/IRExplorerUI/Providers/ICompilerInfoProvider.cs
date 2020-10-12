@@ -12,6 +12,7 @@ using System;
 namespace IRExplorerUI {
     public interface ICompilerInfoProvider {
         string CompilerIRName { get; }
+        ISession Session { get; }
 
         ICompilerIRInfo IR { get; }
         INameProvider NameProvider { get; }
@@ -21,7 +22,7 @@ namespace IRExplorerUI {
         List<FunctionTaskDefinition> BuiltinFunctionTasks { get; }
         List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
 
-        bool AnalyzeLoadedFunction(FunctionIR function);
+        bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
         IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
         IDiffOutputFilter CreateDiffOutputFilter();
     }

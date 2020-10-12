@@ -27,7 +27,7 @@ namespace IRExplorerCmd {
         public ISectionStyleProvider SectionStyleProvider => throw new NotImplementedException();
         public IRRemarkProvider RemarkProvider => throw new NotImplementedException();
 
-        public bool AnalyzeLoadedFunction(FunctionIR function) {
+        public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
             throw new NotImplementedException();
         }
 

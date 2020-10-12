@@ -512,11 +512,10 @@ namespace IRExplorerUI.Diff {
             try {
                 var errorHandler = compilerInfo_.IR.CreateParsingErrorHandler();
                 var sectionParser = compilerInfo_.IR.CreateSectionParser(errorHandler);
-
                 diffResult.DiffFunction = sectionParser.ParseSection(originalSection, diffResult.DiffText);
 
                 if (diffResult.DiffFunction != null) {
-                    compilerInfo_.AnalyzeLoadedFunction(diffResult.DiffFunction);
+                    compilerInfo_.AnalyzeLoadedFunction(diffResult.DiffFunction, originalSection);
                 }
                 else {
                     Trace.TraceWarning("Failed re-parsing diffed section\n");

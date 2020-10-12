@@ -136,28 +136,34 @@ namespace IRExplorerUI.UTC {
             return true;
         }
 
-        public List<RemarkCategory> LoadRemarkCategories() {
-            if (LoadSettings()) {
-                return categories_;
-            }
+        public List<RemarkCategory> RemarkCategories {
+            get {
+                if (LoadSettings()) {
+                    return categories_;
+                }
 
-            return null;
+                return null;
+            }
         }
 
-        public List<RemarkSectionBoundary> LoadRemarkSectionBoundaries() {
-            if (LoadSettings()) {
-                return boundaries_;
-            }
+        public List<RemarkSectionBoundary> RemarkSectionBoundaries {
+            get {
+                if (LoadSettings()) {
+                    return boundaries_;
+                }
 
-            return null;
+                return null;
+            }
         }
 
-        public List<RemarkTextHighlighting> LoadRemarkTextHighlighting() {
-            if (LoadSettings()) {
-                return highlighting_;
-            }
+        public List<RemarkTextHighlighting> RemarkTextHighlighting {
+            get {
+                if (LoadSettings()) {
+                    return highlighting_;
+                }
 
-            return null;
+                return null;
+            }
         }
 
         public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section,
@@ -180,7 +186,6 @@ namespace IRExplorerUI.UTC {
         public OptimizationRemark GetOptimizationRemarkInfo(Remark remark) {
             return null;
         }
-
 
         private void ExtractInstructionRemarks(string text, string[] lines, FunctionIR function,
                                                IRTextSection section, List<Remark> remarks,
