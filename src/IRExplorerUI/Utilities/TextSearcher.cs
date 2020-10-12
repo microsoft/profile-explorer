@@ -124,9 +124,9 @@ namespace IRExplorerUI {
         }
 
         public static List<TextSearchResult> AllIndexesOf(string text, string searchedText,
-                                                            int startOffset = 0,
-                                                            TextSearchKind searchKind = TextSearchKind.Default,
-                                                            CancelableTask cancelableTask = null) {
+                                                          int startOffset = 0,
+                                                          TextSearchKind searchKind = TextSearchKind.Default,
+                                                          CancelableTask cancelableTask = null) {
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchedText)) {
                 return new List<TextSearchResult>();
             }
@@ -150,6 +150,17 @@ namespace IRExplorerUI {
             }
 
             return offsetList;
+        }
+
+        public static TextSearchResult? FirstIndexof(string text, string searchedText, 
+                                                    int startOffset = 0,
+                                                    TextSearchKind searchKind = TextSearchKind.Default) {
+            (int offset, int length) = IndexOf(text, searchedText, startOffset, searchKind, null);
+
+            if (offset != -1) {
+                return new TextSearchResult(offset, length);
+            }
+            return null;
         }
 
         public static bool Contains(string text, string searchedText,

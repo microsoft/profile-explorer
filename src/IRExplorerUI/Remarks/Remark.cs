@@ -42,6 +42,17 @@ namespace IRExplorerUI {
         public TextSearchKind SearchKind { get; set; }
     }
 
+    public class RemarkTextHighlighting {
+        public string SearchedText { get; set; }
+        public TextSearchKind SearchKind { get; set; }
+        public bool UseBoldText { get; set; }
+        public bool UseItalicText { get; set; }
+        public Color TextColor { get; set; }
+        public Color BackgroundColor { get; set; }
+        public bool HasTextColor => TextColor != Colors.Black;
+        public bool HasBackgroundColor => BackgroundColor != Colors.Black;
+    }
+
     public class RemarkContext {
         public RemarkContext(string id, string name, RemarkContext parent = null) {
             Id = id;
@@ -80,11 +91,13 @@ namespace IRExplorerUI {
     }
 
     public class Remark {
-        public Remark(RemarkCategory category, IRTextSection section, string remarkText,
+        public Remark(RemarkCategory category, IRTextSection section, 
+                      string remarkText, string remarkLine,
                       TextLocation remarkLocation) {
             Category = category;
             Section = section;
             RemarkText = remarkText;
+            RemarkLine = remarkLine;
             RemarkLocation = remarkLocation;
             ReferencedElements = new List<IRElement>(1);
             OutputElements = new List<IRElement>(1);
@@ -94,6 +107,7 @@ namespace IRExplorerUI {
         public RemarkKind Kind => Category.Kind;
         public IRTextSection Section { get; set; }
         public string RemarkText { get; set; }
+        public string RemarkLine { get; set; }
         public TextLocation RemarkLocation { get; set; }
         public List<IRElement> ReferencedElements { get; set; }
         public List<IRElement> OutputElements { get; set; }

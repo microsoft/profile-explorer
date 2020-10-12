@@ -36,6 +36,7 @@ namespace IRExplorerUI {
         bool LoadSettings();
         List<RemarkCategory> LoadRemarkCategories();
         List<RemarkSectionBoundary> LoadRemarkSectionBoundaries();
+        List<RemarkTextHighlighting> LoadRemarkTextHighlighting();
 
         List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries);
         List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document,

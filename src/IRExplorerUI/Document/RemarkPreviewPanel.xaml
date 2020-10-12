@@ -9,6 +9,7 @@
     xmlns:local="clr-namespace:IRExplorerUI.Document"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sys="clr-namespace:System;assembly=mscorlib"
+    xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit.PropertyGrid;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     Width="600"
     Height="200"
     MinWidth="400"
@@ -284,21 +285,6 @@
                                 Height="16"
                                 Source="{StaticResource ThemeIcon}" />
                         </Button>
-
-                        <Button
-                            x:Name="ClosePanelButton"
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
-                            Background="#01FFFFFF"
-                            BorderBrush="{x:Null}"
-                            Click="ClosePanelButton_Click"
-                            Visibility="Collapsed">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource RemoveIcon}" />
-                        </Button>
                     </StackPanel>
 
                     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
@@ -325,8 +311,30 @@
                                 Visibility="{Binding ElementName=RemarkFilterTextbox, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
 
                         </Grid>
-
-
+                        <Button
+                            Width="20"
+                            Margin="2,0,0,0"
+                            VerticalAlignment="Center"
+                            Background="{x:Null}"
+                            BorderBrush="{x:Null}"
+                            ToolTip="Show options panel">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource SettingsIcon}" />
+                        </Button>
+                        <Button
+                            Grid.Row="0"
+                            Width="20"
+                            Height="20"
+                            Background="#01FFFFFF"
+                            BorderBrush="{x:Null}"
+                            Click="ClosePanelButton_Click">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource CloseIcon}" />
+                        </Button>
                     </StackPanel>
                 </DockPanel>
             </Border>
@@ -343,7 +351,13 @@
                 SelectionChanged="RemarkList_SelectionChanged">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn DisplayMemberBinding="{Binding Text}" />
+                        <GridViewColumn>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <ContentPresenter Content="{Binding Text}" />
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                     </GridView>
                 </ListView.View>
 
@@ -435,40 +449,6 @@
                                     Height="16"
                                     Source="{StaticResource EyeIcon}" />
                             </ToggleButton>
-                            <Button
-                                Width="20"
-                                VerticalAlignment="Center"
-                                Background="{x:Null}"
-                                BorderBrush="{x:Null}"
-                                ToolTip="Show options panel">
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource SettingsIcon}" />
-                            </Button>
-                            <TextBlock
-                                Grid.Row="0"
-                                Margin="2,0,2,0"
-                                VerticalAlignment="Top"
-                                Text="|">
-                                <TextBlock.Foreground>
-                                    <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ActiveBorderColorKey}}" />
-                                </TextBlock.Foreground>
-                            </TextBlock>
-                            <Button
-                                x:Name="CollapseTextViewButton"
-                                Width="20"
-                                HorizontalAlignment="Right"
-                                VerticalAlignment="Center"
-                                Background="{x:Null}"
-                                BorderBrush="{x:Null}"
-                                Click="CollapseTextViewButton_Click"
-                                ToolTip="Close remark context/text output panel">
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource CloseIcon}" />
-                            </Button>
                         </StackPanel>
                     </DockPanel>
                 </Border>
@@ -488,8 +468,7 @@
                             ItemContainerStyle="{StaticResource RemarkTreeViewItemStyle}"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            VirtualizingStackPanel.IsVirtualizing="True"
-                            VirtualizingStackPanel.VirtualizationMode="Recycling" />
+                            VirtualizingStackPanel.IsVirtualizing="False" />
                     </TabItem>
 
                     <TabItem x:Name="OutputTextTabItem" Header="Output Text">

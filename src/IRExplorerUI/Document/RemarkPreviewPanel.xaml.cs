@@ -13,24 +13,112 @@ using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.Document {
     public class RemarkEx {
+        private static readonly FontFamily RemarkFont = new FontFamily("Consolas");
+
         public static SolidColorBrush GetRemarkBackground(Remark remark) {
             return Utils.EstimateBrightness(remark.Category.MarkColor) < 200 ?
                    ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(remark.Category.MarkColor, 1.75)) :
                    ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(remark.Category.MarkColor, 1.2));
         }
 
-        public Remark Remark { get; set; }
+        public static TextBlock FormatRemarkTextLine(Remark remark, List<RemarkTextHighlighting> highlightingList = null) {
+            int lineOffset = remark.RemarkLocation.Offset;
+            int elementOffset = remark.OutputElements[0].TextLocation.Offset;
+            int elementLength = remark.OutputElements[0].TextLength;
+            int elementLineOffset = elementOffset - lineOffset;
+            int afterElementOffset = elementLineOffset + elementLength;
 
-        public string Text {
-            get {
-                if (!string.IsNullOrEmpty(Remark.Category.Title)) {
-                    return $"{Remark.Section.Number} | {Remark.RemarkText}";
+            var textLine = remark.RemarkLine;
+            var textBlock = new TextBlock();
+            textBlock.FontFamily = RemarkFont;
+            textBlock.FontWeight = FontWeights.Normal;
+            textBlock.Foreground = Brushes.Black;
+
+            if (elementLineOffset > 0) {
+                // Append text found before the IR element.
+                var text = textLine.Substring(0, elementLineOffset);
+                AppendExtraOutputTextRun(text, textBlock, highlightingList);
+            }
+
+            if (elementLength > 0) {
+                // Append the IR element text.
+                var text = textLine.Substring(elementLineOffset, elementLength);
+                textBlock.Inlines.Add(new Run(text) {
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.DarkBlue
+                });
+            }
+
+            if (afterElementOffset < textLine.Length) {
+                // Append text following the IR element.
+                var text = textLine.Substring(afterElementOffset, textLine.Length - afterElementOffset);
+                AppendExtraOutputTextRun(text, textBlock, highlightingList);
+            }
+
+            return textBlock;
+        }
+
+        public static TextBlock FormatExtraTextLine(string text, List<RemarkTextHighlighting> highlightingList = null) {
+            var textBlock = new TextBlock();
+            textBlock.FontFamily = RemarkFont;
+            textBlock.Foreground = Brushes.Black;
+            textBlock.FontWeight = FontWeights.Normal;
+            AppendExtraOutputTextRun(text, textBlock, highlightingList);
+            return textBlock;
+        }
+
+        private static void AppendExtraOutputTextRun(string text, TextBlock textBlock,
+                                                     List<RemarkTextHighlighting> highlightingList = null) {
+            if (highlightingList == null || highlightingList.Count == 0) {
+                textBlock.Inlines.Add(text);
+                return;
+            }
+
+            int index = 0;
+
+            while (index < text.Length) {
+                // Try to find a highlighting match in the order they are in the list,
+                // as defined by the user in the settings.
+                RemarkTextHighlighting matchingQuery = null;
+                TextSearchResult? matchResult = null;
+
+                foreach (var query in highlightingList) {
+                    var result = TextSearcher.FirstIndexof(text, query.SearchedText, index, query.SearchKind);
+
+                    if (result.HasValue) {
+                        matchResult = result.Value;
+                        matchingQuery = query;
+                        break;
+                    }
                 }
 
-                return FormatRemarkText();
+                if(matchingQuery != null) {
+                    if (index < matchResult.Value.Offset) {
+                        textBlock.Inlines.Add(text.Substring(index, matchResult.Value.Offset - index));
+                    }
+
+                    textBlock.Inlines.Add(new Run(text.Substring(matchResult.Value.Offset, matchResult.Value.Length)) {
+                        Foreground = matchingQuery.HasTextColor ? ColorBrushes.GetBrush(matchingQuery.TextColor) : Brushes.Black,
+                        Background = matchingQuery.HasBackgroundColor ? ColorBrushes.GetBrush(matchingQuery.BackgroundColor) : null,
+                        FontStyle = matchingQuery.UseItalicText ? FontStyles.Italic : FontStyles.Normal,
+                        FontWeight = matchingQuery.UseBoldText ? FontWeights.Bold : FontWeights.Normal
+                    });
+
+                    index = matchResult.Value.Offset + matchResult.Value.Length;
+                }
+                else {
+                    break;
+                }
+            }
+
+            if (index < text.Length) {
+                // Append any remaining text at the end.
+                textBlock.Inlines.Add(text.Substring(index, text.Length - index));
             }
         }
 
+        public Remark Remark { get; set; }
+        public TextBlock Text => FormatRemarkTextLine(Remark);
         public Brush Background => GetRemarkBackground(Remark);
 
         private string FormatRemarkText() {
@@ -56,10 +144,6 @@ namespace IRExplorerUI.Document {
         public bool IsAnalysis => Remark.Kind == RemarkKind.Analysis;
         public bool HasCustomBackground => Remark.Category.MarkColor != Colors.Black;
         public string Description => SectionName;
-    }
-
-    public class ContextTreeRemarkEx : RemarkEx {
-
     }
 
     public class RemarkSettingsEx : BindableObject {
@@ -221,8 +305,6 @@ namespace IRExplorerUI.Document {
 
         }
 
-        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
-
         private (TreeViewItem, int) BuildContextRemarkTreeView(RemarkContext context,
                                                Dictionary<RemarkContext, TreeViewItem> treeNodeMap,
                                                string[] outputTextLines) {
@@ -238,30 +320,19 @@ namespace IRExplorerUI.Document {
             }
 
             var items = new List<Tuple<TreeViewItem, int>>();
+            var highlightingList = Session.CompilerInfo.RemarkProvider.LoadRemarkTextHighlighting();
 
             foreach (var remark in context.Remarks) {
                 var line = remark.RemarkLocation.Line;
 
                 if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
                     var tempTreeNode = new TreeViewItem() {
-                        Header = remark.RemarkText,
-                        Foreground = ColorBrushes.GetBrush(Colors.Black),
                         Background = RemarkEx.GetRemarkBackground(remark),
-                        FontWeight = FontWeights.Bold,
-                        Tag = remark,
-                        ItemContainerStyle = Application.Current.FindResource("RemarkTreeViewItemStyle") as Style
+                        ItemContainerStyle = Application.Current.FindResource("RemarkTreeViewItemStyle") as Style,
+                        Tag = remark
                     };
 
-                    /// var textBlock = new TextBlock();
-                    /// textBlock.FontFamily = PreviewFont;
-                    /// textBlock.Foreground = Brushes.Black;
-                    /// 
-                    /// textBlock.Inlines.Add(new Run(remark.RemarkText) {
-                    ///     FontWeight = FontWeights.Bold
-                    /// });
-                    /// 
-                    /// tempTreeNode.Header = textBlock;
-
+                    tempTreeNode.Header = RemarkEx.FormatRemarkTextLine(remark, highlightingList);
                     tempTreeNode.Selected += TempTreeNode_Selected;
                     items.Add(new Tuple<TreeViewItem, int>(tempTreeNode, remark.RemarkLocation.Line));
                 }
@@ -277,7 +348,7 @@ namespace IRExplorerUI.Document {
             }
 
             ExtractOutputTextInRange(firstRegionStart, firstRegionEnd,
-                                     outputTextLines, items);
+                                     outputTextLines, highlightingList, items);
 
             int secondRegionStart = Math.Max(firstRegionEnd,
                 context.Remarks.Count > 0 ? context.Remarks[^1].RemarkLocation.Line + 1 : context.StartLine);
@@ -288,7 +359,7 @@ namespace IRExplorerUI.Document {
             }
 
             ExtractOutputTextInRange(secondRegionStart, secondRegionEnd,
-                                     outputTextLines, items);
+                                     outputTextLines, highlightingList, items);
 
             // Recursively add remarks from the child contexts.
             foreach (var child in context.Children) {
@@ -314,6 +385,8 @@ namespace IRExplorerUI.Document {
             return (treeNode, context.StartLine);
         }
 
+        
+
         private void TempTreeNode_Selected(object sender, RoutedEventArgs e) {
             var remark = (ContextRemarkTree.SelectedItem as TreeViewItem)?.Tag as Remark;
 
@@ -323,6 +396,7 @@ namespace IRExplorerUI.Document {
         }
 
         private static void ExtractOutputTextInRange(int prevLine, int line, string[] outputTextLines,
+                                                     List<RemarkTextHighlighting> highlightingList,
                                                      List<Tuple<TreeViewItem, int>> items) {
             for (int k = prevLine; k < line; k++) {
                 var lineText = outputTextLines[k];
@@ -332,10 +406,8 @@ namespace IRExplorerUI.Document {
                 //? with Session.GetSectionPassOutputAsync using it, plus a new
                 //? GetRawSectionPassOutputAsync so that the remark prov. gets the metadata lines
                 if (!lineText.StartsWith("/// irx:")) {
-                    var lineTreeNode = new TreeViewItem() {
-                        Header = lineText,
-                        Foreground = ColorBrushes.GetBrush(Colors.Black),
-                    };
+                    var lineTreeNode = new TreeViewItem();
+                    lineTreeNode.Header = RemarkEx.FormatExtraTextLine(lineText, highlightingList);
                     items.Add(new Tuple<TreeViewItem, int>(lineTreeNode, k));
                 }
             }
@@ -675,16 +747,11 @@ namespace IRExplorerUI.Document {
             DetachPopup();
             PopupPanelButton.Visibility = Visibility.Collapsed;
             ColorButton.Visibility = Visibility.Visible;
-            ClosePanelButton.Visibility = Visibility.Visible;
             SetPanelAccentColor(GenerateRandomPastelColor());
         }
 
         private void ClosePanelButton_Click(object sender, RoutedEventArgs e) {
             IsOpen = false;
-        }
-
-        private void CollapseTextViewButton_Click(object sender, RoutedEventArgs e) {
-            ShowPreview = false;
         }
 
         public override bool ShouldStartDragging() {

@@ -5,23 +5,34 @@ using System.Collections.Generic;
 
 namespace IRExplorerUI {
     class RemarksDefinitionSerializer {
-        public bool Save(List<RemarkCategory> categories, List<RemarkSectionBoundary> boundaries, string path) {
+        public bool Save(List<RemarkCategory> categories, 
+                         List<RemarkSectionBoundary> boundaries, 
+                         List<RemarkTextHighlighting> highlighting,
+                         string path) {
             var data = new SerializedData {
-                RemarkCategoryList = categories
+                RemarkCategoryList = categories,
+                SectionBoundaryList = boundaries,
             };
 
             return JsonUtils.Serialize(data, path);
         }
 
-        public bool Load(string path, out List<RemarkCategory> categories, out List<RemarkSectionBoundary> boundaries) {
+        public bool Load(string path, 
+                         out List<RemarkCategory> categories, 
+                         out List<RemarkSectionBoundary> boundaries,
+                         out List<RemarkTextHighlighting> highlighting) {
             if (JsonUtils.Deserialize(path, out SerializedData data)) {
                 categories = data.RemarkCategoryList;
                 boundaries = data.SectionBoundaryList;
-                return categories != null && boundaries != null;
+                highlighting = data.RemarkHighlightingList;
+                return categories != null && 
+                       boundaries != null &&
+                       highlighting != null;
             }
 
             categories = new List<RemarkCategory>();
             boundaries = new List<RemarkSectionBoundary>();
+            highlighting = new List<RemarkTextHighlighting>();
             return false;
         }
 
@@ -42,6 +53,7 @@ namespace IRExplorerUI {
 
             public List<RemarkCategory> RemarkCategoryList { get; set; }
             public List<RemarkSectionBoundary> SectionBoundaryList { get; set; }
+            public List<RemarkTextHighlighting> RemarkHighlightingList { get; set; }
         }
     }
 }

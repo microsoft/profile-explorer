@@ -447,11 +447,13 @@ namespace IRExplorerUI {
             var animation = new DoubleAnimation(0.0, TimeSpan.FromSeconds(AnimationDuration));
 
             animation.Completed += (s, e) => {
-                remarkPanel_.IsOpen = false;
-                remarkPanel_.PopupClosed -= RemarkPanel__PanelClosed;
-                remarkPanel_.PopupDetached -= RemarkPanel__PanelDetached;
-                remarkPanel_.RemarkContextChanged -= RemarkPanel__RemarkContextChanged;
-                remarkPanel_ = null;
+                if (remarkPanel_ != null) { // When section unloads, can be before animation completes.
+                    remarkPanel_.IsOpen = false;
+                    remarkPanel_.PopupClosed -= RemarkPanel__PanelClosed;
+                    remarkPanel_.PopupDetached -= RemarkPanel__PanelDetached;
+                    remarkPanel_.RemarkContextChanged -= RemarkPanel__RemarkContextChanged;
+                    remarkPanel_ = null;
+                }
             };
 
             remarkPanel_.BeginAnimation(OpacityProperty, animation, HandoffBehavior.SnapshotAndReplace);
