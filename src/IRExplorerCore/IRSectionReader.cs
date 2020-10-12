@@ -177,12 +177,13 @@ namespace IRExplorerCore {
 
         public override bool Equals(object obj) {
             return obj is IRTextSection section &&
-                   Name == section.Name &&
-                   Output == section.Output;
+                   Id == section.Id &&
+                   Number == section.Number &&
+                   Name == section.Name;
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(Name, Output.StartLine, Output.EndLine);
+            return HashCode.Combine(Name, Id, Number);
         }
 
         public override string ToString() {
