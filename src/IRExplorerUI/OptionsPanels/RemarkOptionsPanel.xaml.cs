@@ -56,7 +56,7 @@ namespace IRExplorerUI.OptionsPanels {
             categoryCheckboxes_ = new List<CheckBox>();
 
             bool initialLoad = !remarkSettings.HasCategoryFilters;
-            var categories = App.Session.CompilerInfo.RemarkProvider.LoadRemarkCategories();
+            var categories = App.Session.CompilerInfo.RemarkProvider.RemarkCategories;
 
             if (categories == null) {
                 using var centerForm = new DialogCenteringHelper(Parent);

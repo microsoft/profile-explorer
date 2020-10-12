@@ -7,6 +7,8 @@ using IRExplorerUI.Query;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using System.Windows;
+using IRExplorerCore.UTC;
+using System.Windows.Media;
 
 namespace IRExplorerUI.Compilers.UTC {
     class UTCBuiltinInterferenceActions : IElementQuery {
@@ -15,13 +17,14 @@ namespace IRExplorerUI.Compilers.UTC {
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
+            query.Data.AddInput("PAS", QueryValueKind.Number);
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool);
             query.Data.SetOutput("Aliasing values", 0);
             query.Data.SetOutput("Mark aliasing values", "");
 
             var a = query.Data.AddButton("All");
             a.HasDemiBoldText = true;
-            a.Action = (sender, data) => MessageBox.Show("Test");
+            a.Action = (sender, data) => query.Data.Instance.Execute(query.Data);
 
             var b = query.Data.AddButton("Block");
             b.Action = (sender, data) => MessageBox.Show("Test");
@@ -45,10 +48,39 @@ namespace IRExplorerUI.Compilers.UTC {
         public bool Execute(QueryData data) {
             var elementA = data.GetInput<IRElement>(0);
             var func = elementA.ParentFunction;
+            int pas = data.GetInput<int>(1);
+
+            var interfTag = func.GetTag<InterferenceTag>();
+            var refFinder = new ReferenceFinder(func);
+
+            if (interfTag != null) {
+                if (interfTag.InterferingPasMap.TryGetValue(pas, out var interPasses)) {
+                    foreach (var interfPas in interPasses) {
+                        if (interfTag.PasToSymMap.TryGetValue(interfPas, out var interfSymbols)) {
+                            foreach (var interfSymbol in interfSymbols) {
+                                //? TODO: Implement basic SymbolTable
+                                MarkAllSymbols(func, interfSymbol);
+                            }
+                        }
+
+                        //? TODO: A pass can also mark indirs
+                    }
+                }
+            }
 
             data.ResetResults();
             data.SetOutput("Aliasing values", 0);
             return true;
+        }
+
+        private void MarkAllSymbols(FunctionIR func, string interfSymbol) {
+            foreach (var elem in func.AllElements) {
+                if (elem is OperandIR op && op.IsVariable && op.HasName &&
+                    op.NameValue.ToString() == interfSymbol) {
+                    var document = Session.CurrentDocument;
+                    document.MarkElement(elem, Colors.YellowGreen);
+                }
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 using System;
+using System.Collections.Generic;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.UTC {
@@ -38,4 +39,22 @@ namespace IRExplorerCore.UTC {
         }
     }
 
+    public class InterferenceTag : ITag {
+        public Dictionary<int, HashSet<int>> InterferingPasMap { get; }
+        public Dictionary<int, List<string>> PasToSymMap { get; }
+        public Dictionary<string, int> SymToPasMap;
+
+        public string Name => "Interference";
+        public TaggedObject Owner { get; set; }
+
+        public InterferenceTag() {
+            InterferingPasMap = new Dictionary<int, HashSet<int>>();
+            PasToSymMap = new Dictionary<int, List<string>>();
+            SymToPasMap = new Dictionary<string, int>();
+        }
+
+        public override string ToString() {
+            return $"interf: pass count {PasToSymMap.Count}";
+        }
+    }
 }

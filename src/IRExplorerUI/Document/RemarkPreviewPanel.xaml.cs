@@ -320,7 +320,7 @@ namespace IRExplorerUI.Document {
             }
 
             var items = new List<Tuple<TreeViewItem, int>>();
-            var highlightingList = Session.CompilerInfo.RemarkProvider.LoadRemarkTextHighlighting();
+            var highlightingList = Session.CompilerInfo.RemarkProvider.RemarkTextHighlighting;
 
             foreach (var remark in context.Remarks) {
                 var line = remark.RemarkLocation.Line;

@@ -608,7 +608,7 @@ namespace IRExplorerUI {
             var parsedSection = docInfo.Loader.LoadSection(section);
 
             if (parsedSection.Function != null) {
-                compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function);
+                compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
                 addressTag_ = parsedSection.Function.GetTag<AddressMetadataTag>();
             }
 

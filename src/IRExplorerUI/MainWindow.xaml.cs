@@ -100,7 +100,7 @@ namespace IRExplorerUI {
 
             App.Session = this;
             panelHostSet_ = new Dictionary<ToolPanelKind, List<PanelHostInfo>>();
-            compilerInfo_ = new UTCCompilerInfoProvider();
+            compilerInfo_ = new UTCCompilerInfoProvider(this);
             changedDocuments_ = new Dictionary<string, DateTime>();
             detachedPanels_ = new List<DraggablePopup>();
             lockObject_ = new object();
@@ -959,7 +959,7 @@ namespace IRExplorerUI {
         }
 
         private void UTCMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget(new UTCCompilerInfoProvider());
+            SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
         }
 
         private async void ShareButton_Click(object sender, RoutedEventArgs e) {

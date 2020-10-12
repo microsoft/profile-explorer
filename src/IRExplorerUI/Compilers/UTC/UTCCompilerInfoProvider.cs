@@ -15,17 +15,20 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace IRExplorerUI.Compilers.UTC {
     public class UTCCompilerInfoProvider : ICompilerInfoProvider {
         private UTCCompilerIRInfo ir_;
+        private ISession session_;
         private UTCNameProvider names_;
         private UTCRemarkProvider remarks_;
         private UTCSectionStyleProvider styles_;
         private List<FunctionTaskDefinition> scriptFuncTasks_;
         private object lockObject_;
 
-        public UTCCompilerInfoProvider() {
+        public UTCCompilerInfoProvider(ISession session) {
+            session_ = session;
             ir_ = new UTCCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
@@ -37,6 +40,7 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public string CompilerIRName => "UTC";
+        public ISession Session => session_;
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;
         public ISectionStyleProvider SectionStyleProvider => styles_;
@@ -80,6 +84,7 @@ namespace IRExplorerUI.Compilers.UTC {
 
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>() {
             BuiltinFunctionTask.GetDefinition(
+                //? TODO: Make it a script
                 new FunctionTaskInfo("Unused instructions", "Some description") {
                     HasOptionsPanel = true,
                     OptionsType = typeof(UnusedInstructionsTaskOptions)
@@ -118,10 +123,80 @@ namespace IRExplorerUI.Compilers.UTC {
             }
         }
 
-        public bool AnalyzeLoadedFunction(FunctionIR function) {
+        public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
+            CreateInterferenceTag(function, section);
+
             var loopGraph = new LoopGraph(function);
             loopGraph.FindLoops();
             return true;
+        }
+
+        private void CreateInterferenceTag(FunctionIR function, IRTextSection section) {
+            //? TODO: Reuse tags for the same IRTextFunction, they don't reference elements
+            //? TODO: Not thread-safe
+
+            if (function.HasTag<InterferenceTag>()) {
+                return;
+            }
+
+            var interfSections = section.ParentFunction.FindAllSections("Tuples after Build Interferences");
+
+            if (interfSections.Count == 0) {
+                return;
+            }
+
+            var interfSection = interfSections[0];
+            var text = session_.GetSectionPassOutputAsync(interfSection.OutputBefore, interfSection).Result; //? TODO: await
+            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+
+            var tag = function.GetOrAddTag<InterferenceTag>();
+            bool seenInterferingPas = false;
+
+            foreach (var line in lines) {
+                var symPasMatch = Regex.Match(line, @"(\d+):(.*)");
+
+                if (symPasMatch.Success && !seenInterferingPas) {
+                    int pas = int.Parse(symPasMatch.Groups[1].Value);
+                    var interferingSyms = new List<string>();
+                    var other = symPasMatch.Groups[2].Value;
+
+                    other = other.Replace("<Unknown Mem>", "");
+                    other = other.Replace("<Untrackable locals:", "");
+                    other = other.Replace(">", "");
+
+                    var symbols = other.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+                    for (int i = 0; i < symbols.Length; i++) {
+                        var symbolName = symbols[i];
+                        interferingSyms.Add(symbolName);
+
+                        if (!tag.SymToPasMap.ContainsKey(symbolName)) {
+                            tag.SymToPasMap[symbolName] = pas;
+                        }
+                    }
+
+                    tag.PasToSymMap[pas] = interferingSyms;
+                    continue;
+                }
+
+                var interferingIndicesMatch = Regex.Match(line, @"(\d+) interferes with: \{ ((\d+)\s)+");
+
+                if (interferingIndicesMatch.Success) {
+                    seenInterferingPas = true;
+                    var interferingPAS = new HashSet<int>();
+                    int basePAS = int.Parse(interferingIndicesMatch.Groups[1].Value);
+
+                    foreach (Capture capture in interferingIndicesMatch.Groups[2].Captures) {
+                        interferingPAS.Add(int.Parse(capture.Value));
+                    }
+
+                    if (interferingPAS.Count > 0) {
+                        tag.InterferingPasMap[basePAS] = interferingPAS;
+                    }
+                    continue;
+                }
+            }
+
         }
 
         //? TODO: Extract this into it's own class

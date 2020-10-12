@@ -59,7 +59,7 @@ namespace IRExplorerCore.IR {
             }
         }
 
-        private IEnumerable<IRElement> AllElements {
+        public IEnumerable<IRElement> AllElements {
             get {
                 foreach (var block in Blocks) {
                     yield return block;

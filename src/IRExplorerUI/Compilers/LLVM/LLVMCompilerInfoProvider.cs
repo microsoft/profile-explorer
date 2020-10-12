@@ -12,6 +12,7 @@ using IRExplorerCore.LLVM;
 namespace IRExplorerUI.Compilers.LLVM {
     public class LLVMCompilerInfoProvider : ICompilerInfoProvider {
         private LLVMCompilerIRInfo ir_;
+        private ISession session_;
         private UTCNameProvider names_;
         private UTCRemarkProvider remarks_;
         private UTCSectionStyleProvider styles_;
@@ -24,6 +25,7 @@ namespace IRExplorerUI.Compilers.LLVM {
         }
 
         public string CompilerIRName => "LLVM";
+        public ISession Session => session_;
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;
         public ISectionStyleProvider SectionStyleProvider => styles_;
@@ -41,7 +43,7 @@ namespace IRExplorerUI.Compilers.LLVM {
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>() { };
         public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>() { };
 
-        public bool AnalyzeLoadedFunction(FunctionIR function) {
+        public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
             //? TODO: var loopGraph = new LoopGraph(function);
             //loopGraph.FindLoops();
             return true;

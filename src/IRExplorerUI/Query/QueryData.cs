@@ -19,6 +19,7 @@ namespace IRExplorerUI.Query {
         public List<QueryValue> OutputValues { get; set; }
         public List<QueryButton> Buttons { get; set; }
         public bool HasInputValuesSwitchButton { get; set; }
+        public IElementQuery Instance { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler ValueChanged;
@@ -136,7 +137,7 @@ namespace IRExplorerUI.Query {
                 if (inputValue.Tag is PropertyInfo propertyTag &&
                     outputType.GetProperty(propertyTag.Name) != null) {
                     // For numbers, try to convert to int.
-                    if (inputValue.Kind == QueryValueKind.Number) {
+                    if (inputValue.Kind.HasFlag(QueryValueKind.Number)) {
                         if (!int.TryParse(inputValue.Value as string, out int result)) {
                             return null;
                         }
@@ -163,11 +164,7 @@ namespace IRExplorerUI.Query {
         public T GetInput<T>(string name) {
             foreach (var value in InputValues) {
                 if (value.Name == name) {
-                    if (value.Value == null) {
-                        throw new InvalidOperationException($"Input value not set: {name}");
-                    }
-
-                    return (T)value.Value;
+                    return ExtractInputValue<T>(value);
                 }
             }
 
@@ -177,15 +174,27 @@ namespace IRExplorerUI.Query {
         public T GetInput<T>(int id) {
             foreach (var value in InputValues) {
                 if (value.Id == id) {
-                    if (value.Value == null) {
-                        throw new InvalidOperationException($"Input value not set: {id}, {value.Name}");
-                    }
-
-                    return (T)value.Value;
+                    return ExtractInputValue<T>(value);
                 }
             }
 
             throw new InvalidOperationException($"Input value not found: {id}");
+        }
+
+        private static T ExtractInputValue<T>(QueryValue value) {
+            if (value.Value == null) {
+                throw new InvalidOperationException($"Input value not set: {value.Name}");
+            }
+
+            if (value.Kind.HasFlag(QueryValueKind.Number)) {
+                if (!int.TryParse(value.Value as string, out int result)) {
+                    throw new InvalidOperationException($"Invalid input number: {value.Name}");
+                }
+
+                return (T)((object)result);
+            }
+
+            return (T)value.Value;
         }
 
         public void AddOutput(string name, QueryValueKind kind, string description = null) {
