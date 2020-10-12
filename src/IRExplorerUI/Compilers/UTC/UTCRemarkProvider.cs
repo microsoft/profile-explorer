@@ -90,6 +90,7 @@ namespace IRExplorerUI.UTC {
         private ICompilerInfoProvider compilerInfo_;
         private List<RemarkCategory> categories_;
         private List<RemarkSectionBoundary> boundaries_;
+        private List<RemarkTextHighlighting> highlighting_;
         private RemarkCategory defaultCategory_;
         private bool settingsLoaded_;
 
@@ -97,6 +98,7 @@ namespace IRExplorerUI.UTC {
             compilerInfo_ = compilerInfo;
             categories_ = new List<RemarkCategory>();
             boundaries_ = new List<RemarkSectionBoundary>();
+            highlighting_ = new List<RemarkTextHighlighting>();
             settingsLoaded_ = LoadSettings();
         }
 
@@ -114,7 +116,10 @@ namespace IRExplorerUI.UTC {
                 return false;
             }
 
-            if (!serializer.Load(settingsPath, out categories_, out boundaries_)) {
+            if (!serializer.Load(settingsPath, 
+                                 out categories_, 
+                                 out boundaries_,
+                                 out highlighting_)) {
                 Trace.TraceError("Failed to load UTCRemarkProvider data");
                 return false;
             }
@@ -142,6 +147,14 @@ namespace IRExplorerUI.UTC {
         public List<RemarkSectionBoundary> LoadRemarkSectionBoundaries() {
             if (LoadSettings()) {
                 return boundaries_;
+            }
+
+            return null;
+        }
+
+        public List<RemarkTextHighlighting> LoadRemarkTextHighlighting() {
+            if (LoadSettings()) {
+                return highlighting_;
             }
 
             return null;
@@ -233,7 +246,8 @@ namespace IRExplorerUI.UTC {
                             instr.TextLocation = location; // Set actual location in output text.
 
                             var remarkKind = FindRemarkKind(line, isInstructionElement: true);
-                            var remark = new Remark(remarkKind, section, line.Trim(), remarkLocation);
+                            var remark = new Remark(remarkKind, section, 
+                                                    line.Trim(), line, remarkLocation);
                             remark.ReferencedElements.Add(similarInstr);
                             remark.OutputElements.Add(instr);
                             remarks.Add(remark);
@@ -276,7 +290,8 @@ namespace IRExplorerUI.UTC {
 
                                 var remarkLocation = new TextLocation(lineStartOffset, i, 0);
                                 var remarkKind = FindRemarkKind(line, isInstructionElement: false);
-                                var remark = new Remark(remarkKind, section, line.Trim(), remarkLocation);
+                                var remark = new Remark(remarkKind, section, 
+                                                        line.Trim(), line, remarkLocation);
 
                                 remark.ReferencedElements.Add(value);
                                 remark.OutputElements.Add(op);
@@ -298,11 +313,11 @@ namespace IRExplorerUI.UTC {
             var tokens = line.Split(new char[] { ' ', ':', ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             if (tokens.Length >= 2) {
-                if (tokens[2] == RemarkContextStartString && tokens.Length >= 5) {
+                if (tokens[2].StartsWith(RemarkContextStartString) && tokens.Length >= 5) {
                     state.StartNewContext(tokens[3], tokens[4], lineNumber);
                     return true;
                 }
-                else if (tokens[2] == RemarkContextEndString) {
+                else if (tokens[2].StartsWith(RemarkContextEndString)) {
                     state.EndCurrentContext(lineNumber);
                     return true;
                 }

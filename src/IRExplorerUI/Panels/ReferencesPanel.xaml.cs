@@ -198,7 +198,7 @@ namespace IRExplorerUI {
             textBlock.Margin = new Thickness(0, 2, 0, 0);
 
             while (index < text.Length) {
-                int symbolIndex = text.IndexOf(symbolName, index, StringComparison.InvariantCulture);
+                int symbolIndex = text.IndexOf(symbolName, index, StringComparison.Ordinal);
 
                 if (symbolIndex == -1) {
                     break;
