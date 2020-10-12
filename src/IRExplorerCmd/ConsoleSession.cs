@@ -42,6 +42,8 @@ namespace IRExplorerCmd {
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => throw new NotImplementedException();
         public List<FunctionTaskDefinition> ScriptFunctionTasks => throw new NotImplementedException();
+
+        public ISession Session { get; set; }
     }
 
     public class ConsoleSession : ISession, IDisposable {

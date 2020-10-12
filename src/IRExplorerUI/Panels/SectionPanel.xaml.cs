@@ -520,6 +520,7 @@ namespace IRExplorerUI {
         public List<IRTextSectionEx> CreateSectionsExtension() {
             SetupSectionExtension();
             var sections = new List<IRTextSectionEx>();
+            int sectionIndex = 0;
 
             if (currentFunction_ == null) {
                 return sections;
@@ -543,18 +544,14 @@ namespace IRExplorerUI {
                     }
 
                     if (sectionSettings_.ShowSectionSeparators) {
-                        ApplySectionBorder(sectionEx, markedName, sections);
+                        ApplySectionBorder(sectionEx, sectionIndex, markedName, sections);
                     }
                     else
                         sectionEx.BorderThickness = new Thickness();
 
                     if (sectionSettings_.UseNameIndentation &&
                         markedName.IndentationLevel > 0) {
-                        //Debug.WriteLine($"Use ident {markedName.IndentationLevel}, {sectionEx.Name}");
                         ApplySectionNameIndentation(sectionEx, markedName);
-                    }
-                    else {
-                        //Debug.WriteLine($"No ident {sectionEx.Name}");
                     }
                 }
                 else {
@@ -563,17 +560,19 @@ namespace IRExplorerUI {
                 }
 
                 sectionEx.SectionDiffKind = DiffKind.None;
+                sectionIndex++;
             }
 
             return sections;
         }
 
-        private void ApplySectionBorder(IRTextSectionEx sectionEx, MarkedSectionName markedName,
+        private void ApplySectionBorder(IRTextSectionEx sectionEx, int sectionIndex,
+                                        MarkedSectionName markedName,
                                         List<IRTextSectionEx> sections) {
             // Don't show the border for the first and last sections in the list,
             // and if there is a before-border following an after-border.
-            bool useBeforeBorder = sectionEx.Index > 0 && !sections[sectionEx.Index - 1].HasAfterBorder;
-            bool useAfterBorder = sectionEx.Index < (currentFunction_.Sections.Count - 1);
+            bool useBeforeBorder = sectionIndex > 0 && !sections[sectionIndex - 1].HasAfterBorder;
+            bool useAfterBorder = sectionIndex < (currentFunction_.Sections.Count - 1);
 
             sectionEx.BorderThickness = new Thickness(0, useBeforeBorder ? markedName.BeforeSeparatorWeight : 0,
                                                       0, useAfterBorder ? markedName.AfterSeparatorWeight : 0);
@@ -594,15 +593,9 @@ namespace IRExplorerUI {
         }
 
         private void UpdateSectionListView() {
-#if true
             var sectionFilter = new ListCollectionView(sections_);
             sectionFilter.Filter = FilterSectionList;
             SectionList.ItemsSource = sectionFilter;
-#else
-            var c = new ObservableCollectionRefresh<IRTextSectionEx>();
-            SectionList.ItemsSource = c;
-            c.AddRange(sections_);
-#endif
 
             if (SectionList.Items.Count > 0) {
                 SectionList.SelectedItem = SectionList.Items[0];
@@ -1057,7 +1050,7 @@ namespace IRExplorerUI {
 
         public bool SelectFunction(IRTextFunction function) {
             if (function == currentFunction_) {
-                return true;
+                return false;
             }
 
             FunctionList.SelectedItem = function;
