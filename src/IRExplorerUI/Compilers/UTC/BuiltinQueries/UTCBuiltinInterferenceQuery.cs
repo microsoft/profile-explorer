@@ -12,26 +12,37 @@ using System.Windows.Media;
 
 namespace IRExplorerUI.Compilers.UTC {
     class UTCBuiltinInterferenceActions : IElementQuery {
+        enum MarkingScope {
+            All,
+            Block,
+            Loop,
+            LoopNest
+        }
+
         public static QueryDefinition GetDefinition() {
             var query = new QueryDefinition(typeof(UTCBuiltinInterferenceActions),
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool, true);
-            query.Data.SetOutput("Mark aliasing values", "");
+            query.Data.AddInput("Show arrows", QueryValueKind.Bool, false);
 
             var a = query.Data.AddButton("All");
             a.HasDemiBoldText = true;
-            a.Action = (sender, data) => query.Data.Instance.Execute(query.Data);
+            a.Action = (sender, data) =>
+                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.All);
 
             var b = query.Data.AddButton("Block");
-            b.Action = (sender, data) => MessageBox.Show("Test");
+            b.Action = (sender, data) =>
+                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.Block);
 
             var c = query.Data.AddButton("Loop");
-            c.Action = (sender, data) => MessageBox.Show("Test");
+            c.Action = (sender, data) =>
+                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.Loop);
 
             var d = query.Data.AddButton("Loop nest");
-            d.Action = (sender, data) => MessageBox.Show("Test");
+            d.Action = (sender, data) =>
+                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.LoopNest);
 
             return query;
         }
@@ -44,8 +55,13 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public bool Execute(QueryData data) {
+            return Execute(data, MarkingScope.All);
+        }
+
+        private bool Execute(QueryData data, MarkingScope markingScope) {
             var element = data.GetInput<IRElement>(0);
             var isTemporary = data.GetInput<bool>(1);
+            var showArrows = data.GetInput<bool>(2);
             var func = element.ParentFunction;
             int pas = 0;
 
@@ -85,24 +101,29 @@ namespace IRExplorerUI.Compilers.UTC {
                 return false;
             }
 
-
-            var refFinder = new ReferenceFinder(func);
+            var block = element.ParentBlock;
             var document = Session.CurrentDocument;
             var highlightingType = isTemporary ? HighlighingType.Selected : HighlighingType.Marked;
             document.BeginMarkElementAppend(highlightingType);
-            document.SetRootElement(element);
+            document.ClearConnectedElements();
+
+            if (showArrows) {
+                document.SetRootElement(element, new HighlightingStyle(Colors.Blue));
+            }
 
             if (interfTag.InterferingPasMap.TryGetValue(pas, out var interPasses)) {
                 foreach (var interfPas in interPasses) {
                     // Mark all symbols.
                     if (interfTag.PasToSymMap.TryGetValue(interfPas, out var interfSymbols)) {
                         foreach (var interfSymbol in interfSymbols) {
-                            MarkAllSymbols(func, interfSymbol, highlightingType);
+                            MarkAllSymbols(func, interfSymbol, block,
+                                           markingScope, highlightingType, showArrows);
                         }
                     }
 
                     // Mark all indirections and calls.
-                    MarkAllIndirections(func, interfPas, highlightingType);
+                    MarkAllIndirections(func, interfPas, block,
+                                        markingScope, highlightingType, showArrows);
                 }
             }
 
@@ -111,31 +132,24 @@ namespace IRExplorerUI.Compilers.UTC {
             return true;
         }
 
-        private void MarkAllSymbols(FunctionIR func, string interfSymbol, HighlighingType highlightingType) {
-            var document = Session.CurrentDocument;
-            var style = new HighlightingStyle(Brushes.Transparent, Pens.GetPen(Colors.Silver));
+        private void MarkAllSymbols(FunctionIR func, string interfSymbol, BlockIR queryBlock,
+                                    MarkingScope markingScope, HighlighingType highlightingType, bool showArrows) {
+            var instrStyle = new HighlightingStyle(Brushes.Transparent, Pens.GetPen(Colors.Gray));
 
             foreach (var elem in func.AllElements) {
                 if (elem is OperandIR op && op.IsVariable && op.HasName &&
                     op.NameValue.ToString() == interfSymbol) {
-
-
-                    if (op.IsDestinationOperand) {
-                        document.MarkElementAppend(op, Colors.Pink, highlightingType, false);
+                    if (ShouldMarkElement(op, markingScope, queryBlock)) {
+                        MarkElement(op, instrStyle, highlightingType, showArrows);
                     }
-                    else {
-                        document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, false);
-                    }
-
-                    document.MarkElementAppend(op.ParentTuple, style, highlightingType, false);
-                    document.AddConnectedElement(op);
                 }
             }
         }
 
-        private void MarkAllIndirections(FunctionIR func, int interfPas, HighlighingType highlightingType) {
+        private void MarkAllIndirections(FunctionIR func, int interfPas, BlockIR queryBlock,
+                                         MarkingScope markingScope, HighlighingType highlightingType, bool showArrows) {
             var document = Session.CurrentDocument;
-            var style = new HighlightingStyle(Brushes.Transparent, Pens.GetBoldPen(Colors.Black));
+            var instrStyle = new HighlightingStyle(Brushes.Transparent, Pens.GetBoldPen(Colors.Gray));
 
             foreach (var element in func.AllElements) {
                 if (!(element is OperandIR op)) {
@@ -145,19 +159,65 @@ namespace IRExplorerUI.Compilers.UTC {
                 var pasTag = op.GetTag<PointsAtSetTag>();
 
                 if (pasTag != null && pasTag.Pas == interfPas) {
-                    document.MarkElementAppend(op.ParentTuple, style, highlightingType, false);
-
-                    if (op.IsDestinationOperand) {
-                        document.MarkElementAppend(op, Colors.Pink, highlightingType, false);
+                    if (ShouldMarkElement(op, markingScope, queryBlock)) {
+                        MarkElement(op, instrStyle, highlightingType, showArrows);
                     }
-                    else {
-                        document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, false);
-                    }
-
-                    document.MarkElementAppend(op.ParentTuple, style, highlightingType, false);
-                    document.AddConnectedElement(op);
                 }
             }
+        }
+
+        private void MarkElement(OperandIR op, HighlightingStyle instrStyle, HighlighingType highlightingType, bool showArrows) {
+            var document = Session.CurrentDocument;
+
+            if (op.IsDestinationOperand) {
+                document.MarkElementAppend(op, Colors.Pink, highlightingType, false);
+            }
+            else {
+                document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, false);
+            }
+
+            document.MarkElementAppend(op.ParentTuple, instrStyle, highlightingType, false);
+
+            if (showArrows) {
+                var style = op.IsDestinationOperand ? new HighlightingStyle(Colors.DarkRed, Pens.GetDashedPen(Colors.DarkRed, DashStyles.Dash, 1.5)) :
+                                                      new HighlightingStyle(Colors.DarkBlue, Pens.GetDashedPen(Colors.DarkBlue, DashStyles.Dash, 1.5));
+                document.AddConnectedElement(op, style);
+            }
+        }
+
+        private bool ShouldMarkElement(OperandIR op, MarkingScope markingScope, BlockIR queryBlock) {
+            switch (markingScope) {
+                case MarkingScope.All: {
+                    return true;
+                }
+                case MarkingScope.Block: {
+                    return op.ParentBlock == queryBlock;
+                }
+                case MarkingScope.Loop: {
+                    return AreBlocksInSameLoop(op.ParentBlock, queryBlock, false);
+                }
+                case MarkingScope.LoopNest: {
+                    return AreBlocksInSameLoop(op.ParentBlock, queryBlock, true);
+                }
+            }
+
+            return false;
+        }
+
+        private bool AreBlocksInSameLoop(BlockIR blockA, BlockIR blockB, bool checkLoopNest) {
+            var tagA = blockA.GetTag<LoopBlockTag>();
+            var tagB = blockB.GetTag<LoopBlockTag>();
+
+            if (tagA != null && tagB != null) {
+                if (checkLoopNest) {
+                    return tagA.Loop.LoopNestRoot == tagB.Loop.LoopNestRoot;
+                }
+                else {
+                    return tagA.Loop == tagB.Loop;
+                }
+            }
+
+            return false;
         }
     }
 

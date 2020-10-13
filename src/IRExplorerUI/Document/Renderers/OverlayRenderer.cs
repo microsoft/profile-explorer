@@ -24,21 +24,20 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        class RemarkSegment : TextSegment {
-            public RemarkSegment(Remark remark) {
-                Remark = remark;
-                var element = remark.ReferencedElements[0];
-                StartOffset = element.TextLocation.Offset;
-                Length = element.TextLength;
+        class ConnectedElement {
+            public ConnectedElement(IRElement element, HighlightingStyle style) {
+                Element = element;
+                Style = style;
             }
 
-            public Remark Remark { get; set; }
+            public IRElement Element { get; set; }
+            public HighlightingStyle Style { get; set; }
         }
 
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
         private ElementHighlighter highlighter_;
-        private IRElement rootElement_;
-        private List<IRElement> connectedElements_;
+        private ConnectedElement rootElement_;
+        private List<ConnectedElement> connectedElements_;
         private TextSegmentCollection<IRSegment> segments_;
         private Dictionary<IRElement, IRSegment> segmentMap_;
 
@@ -46,29 +45,29 @@ namespace IRExplorerUI.Document {
             SnapsToDevicePixels = true;
             Background = null;
             highlighter_ = highlighter;
-            ClearContextRemarks();
+            ClearConnectedElements();
             //MouseMove += OverlayRenderer_MouseMove;
         }
 
         public KnownLayer Layer => KnownLayer.Background;
 
-        public void SetRootElement(IRElement element) {
-            ClearContextRemarks();
-            rootElement_ = element;
+        public void SetRootElement(IRElement element, HighlightingStyle style) {
+            ClearConnectedElements();
+            rootElement_ = new ConnectedElement(element, style);
             var segment = new IRSegment(element);
             segments_.Add(segment);
             segmentMap_[element] = segment;
         }
 
-        public void AddConnectedElement(IRElement element) {
-            connectedElements_.Add(element);
+        public void AddConnectedElement(IRElement element, HighlightingStyle style) {
+            connectedElements_.Add(new ConnectedElement(element, style));
             var segment = new IRSegment(element);
             segments_.Add(segment);
             segmentMap_[element] = segment;
         }
 
-        public void ClearContextRemarks() {
-            connectedElements_ = new List<IRElement>();
+        public void ClearConnectedElements() {
+            connectedElements_ = new List<ConnectedElement>();
             segments_ = new TextSegmentCollection<IRSegment>();
             segmentMap_ = new Dictionary<IRElement, IRSegment>();
         }
@@ -128,21 +127,20 @@ namespace IRExplorerUI.Document {
                 }
             }
 
-            double dotSize = 8;
+            double dotSize = 3;
 
-            var edgeGeometry = new StreamGeometry();
-            var edgeSC = edgeGeometry.Open();
 
-            var dotBackground = ColorBrushes.GetTransparentBrush(Colors.LightBlue, 200);
-            var dotPen = Pens.GetTransparentPen(Colors.DimGray, 200);
+
+            var dotBackground = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 255);
+            var dotPen = Pens.GetTransparentPen(Colors.DarkRed, 255);
             bool first = true;
 
             // Draw extra annotations for remarks in the same context.
-            foreach (var element in connectedElements_) {
-                var prevSegmentRect = GetRemarkSegmentRect(rootElement_, textView);
-                var segmentRect = GetRemarkSegmentRect(element, textView);
+            foreach (var connectedElement in connectedElements_) {
+                var prevSegmentRect = GetRemarkSegmentRect(rootElement_.Element, textView);
+                var segmentRect = GetRemarkSegmentRect(connectedElement.Element, textView);
 
-                double horizontalOffset = 10;
+                double horizontalOffset = 4;
                 double verticalOffset = prevSegmentRect.Height / 2;
 
                 var startPoint = Utils.SnapPointToPixels(prevSegmentRect.Right + horizontalOffset, prevSegmentRect.Top + verticalOffset);
@@ -162,37 +160,49 @@ namespace IRExplorerUI.Document {
                 //                   prevRemark.ReferencedElements[0].TextLocation.Line ? -0.5 : 0.5;
                 var controlPoint = middlePoint + (-factor * vect);
 
-                overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), startPoint, middlePoint);
-                overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), middlePoint, endPoint);
+                //overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), startPoint, middlePoint);
+                //overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), middlePoint, endPoint);
 
                 var startOrientation = FindArrowOrientation(new Point[] { edgeEndPoint, edgeStartPoint, controlPoint }, out var _);
                 var orientation = FindArrowOrientation(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, out var _);
 
 
-                edgeStartPoint = edgeStartPoint + (startOrientation * dotSize);
-                edgeEndPoint = edgeEndPoint - (orientation * dotSize * 1.75);
+                edgeStartPoint = edgeStartPoint + (startOrientation * (dotSize - 1));
+                edgeEndPoint = edgeEndPoint - (orientation * dotSize * 2);
+
+                var edgeGeometry = new StreamGeometry();
+                var edgeSC = edgeGeometry.Open();
                 edgeSC.BeginFigure(edgeStartPoint, false, false);
                 edgeSC.BezierTo(edgeStartPoint, controlPoint, edgeEndPoint, true, false);
-                //DrawEdgeArrow(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, edgeSC);
+                DrawEdgeArrow(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, edgeSC);
 
-                overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), startPoint, endPoint);
+                //edgeSC.BeginFigure(edgeStartPoint, false, false);
+                //edgeSC.LineTo(edgeEndPoint, true, false);
+
+                //edgeSC.BeginFigure(startPoint, false, false);
+                //edgeSC.LineTo(endPoint, true, false);
+
+
+
+                // overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), startPoint, endPoint);
                 //overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), point, point2);
 
-                overlayDC.DrawEllipse(dotBackground, dotPen, endPoint, dotSize, dotSize);
+                // overlayDC.DrawEllipse(connectedElement.Style.BackColor, connectedElement.Style.Border, endPoint, dotSize, dotSize);
 
-                if(first) {
-                    overlayDC.DrawEllipse(dotBackground, dotPen, startPoint, dotSize, dotSize);
+                if (first) {
+                    overlayDC.DrawEllipse(rootElement_.Style.BackColor, rootElement_.Style.Border, startPoint, dotSize, dotSize);
                     first = false;
                 }
+
+                edgeSC.Close();
+                edgeGeometry.Freeze();
+                overlayDC.DrawGeometry(connectedElement.Style.BackColor, connectedElement.Style.Border, edgeGeometry);
 
                 //var text = DocumentUtils.CreateFormattedText(textView, i.ToString(), DefaultFont, 11, Brushes.Black);
                 //overlayDC.DrawText(text, Utils.SnapPointToPixels(startPoint.X - text.Width / 2, startPoint.Y - text.Height / 2));
             }
 
-            edgeSC.Close();
-            edgeGeometry.Freeze();
-            overlayDC.DrawGeometry(ColorBrushes.GetTransparentBrush(Colors.DarkRed, 180),
-                Pens.GetPen(Colors.Blue, 2), edgeGeometry);
+
 
             overlayDC.Close();
             Add(visual);
