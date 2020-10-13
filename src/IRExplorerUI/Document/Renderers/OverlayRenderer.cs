@@ -37,38 +37,44 @@ namespace IRExplorerUI.Document {
 
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
         private ElementHighlighter highlighter_;
-        private List<Remark> contextRemarks_;
-        private TextSegmentCollection<RemarkSegment> contextRemarkSegments_;
-        private Dictionary<Remark, RemarkSegment> contextRemarkMap_;
+        private IRElement rootElement_;
+        private List<IRElement> connectedElements_;
+        private TextSegmentCollection<IRSegment> segments_;
+        private Dictionary<IRElement, IRSegment> segmentMap_;
 
         public OverlayRenderer(ElementHighlighter highlighter) {
             SnapsToDevicePixels = true;
             Background = null;
             highlighter_ = highlighter;
-            contextRemarks_ = new List<Remark>();
-            contextRemarkSegments_ = new TextSegmentCollection<RemarkSegment>();
-            contextRemarkMap_ = new Dictionary<Remark, RemarkSegment>();
-
+            ClearContextRemarks();
             //MouseMove += OverlayRenderer_MouseMove;
         }
 
         public KnownLayer Layer => KnownLayer.Background;
 
-        public void AddContextRemark(Remark remark) {
-            contextRemarks_.Add(remark);
-            var segment = new RemarkSegment(remark);
-            contextRemarkSegments_.Add(segment);
-            contextRemarkMap_[remark] = segment;
+        public void SetRootElement(IRElement element) {
+            ClearContextRemarks();
+            rootElement_ = element;
+            var segment = new IRSegment(element);
+            segments_.Add(segment);
+            segmentMap_[element] = segment;
+        }
+
+        public void AddConnectedElement(IRElement element) {
+            connectedElements_.Add(element);
+            var segment = new IRSegment(element);
+            segments_.Add(segment);
+            segmentMap_[element] = segment;
         }
 
         public void ClearContextRemarks() {
-            contextRemarks_.Clear();
-            contextRemarkSegments_.Clear();
-            contextRemarkMap_.Clear();
+            connectedElements_ = new List<IRElement>();
+            segments_ = new TextSegmentCollection<IRSegment>();
+            segmentMap_ = new Dictionary<IRElement, IRSegment>();
         }
 
-        private Rect GetRemarkSegmentRect(Remark remark, TextView textView) {
-            var segment = contextRemarkMap_[remark];
+        private Rect GetRemarkSegmentRect(IRElement element, TextView textView) {
+            var segment = segmentMap_[element];
 
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                 return rect;
@@ -131,12 +137,9 @@ namespace IRExplorerUI.Document {
             var dotPen = Pens.GetTransparentPen(Colors.DimGray, 200);
 
             // Draw extra annotations for remarks in the same context.
-            for (int i = 1; i < contextRemarks_.Count; i++) {
-                var prevRemark = contextRemarks_[i - 1];
-                var remark = contextRemarks_[i];
-                var prevSegmentRect = GetRemarkSegmentRect(prevRemark, textView);
-                var segmentRect = GetRemarkSegmentRect(remark, textView);
-                var element = prevRemark.ReferencedElements[0];
+            foreach (var element in connectedElements_) {
+                var prevSegmentRect = GetRemarkSegmentRect(rootElement_, textView);
+                var segmentRect = GetRemarkSegmentRect(element, textView);
 
                 double horizontalOffset = 10;
                 double verticalOffset = prevSegmentRect.Height / 2;
@@ -179,22 +182,6 @@ namespace IRExplorerUI.Document {
                 //var text = DocumentUtils.CreateFormattedText(textView, i.ToString(), DefaultFont, 11, Brushes.Black);
                 //overlayDC.DrawText(text, Utils.SnapPointToPixels(startPoint.X - text.Width / 2, startPoint.Y - text.Height / 2));
             }
-
-            if (contextRemarks_.Count >= 2) {
-                var prevRemark = contextRemarks_[^1];
-                var prevSegmentRect = GetRemarkSegmentRect(prevRemark, textView);
-                var element = prevRemark.ReferencedElements[0];
-
-                double horizontalOffset = 10;
-                double verticalOffset = prevSegmentRect.Height / 2;
-
-                var startPoint = Utils.SnapPointToPixels(prevSegmentRect.Right + horizontalOffset, prevSegmentRect.Top + verticalOffset);
-                overlayDC.DrawEllipse(dotBackground, dotPen, startPoint, dotSize, dotSize);
-
-                //var text = DocumentUtils.CreateFormattedText(textView, contextRemarks_.Count.ToString(), DefaultFont, 11, Brushes.Black);
-                //overlayDC.DrawText(text, Utils.SnapPointToPixels(startPoint.X - text.Width / 2, startPoint.Y - text.Height / 2));
-            }
-
 
             edgeSC.Close();
             edgeGeometry.Freeze();

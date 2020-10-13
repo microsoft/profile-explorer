@@ -541,8 +541,7 @@ namespace IRExplorerCore.UTC {
             return newBlock;
         }
 
-        private BlockLabelIR
-            GetOrCreateLabel(ReadOnlyMemory<char> name, BlockIR parent = null) {
+        private BlockLabelIR GetOrCreateLabel(ReadOnlyMemory<char> name, BlockIR parent = null) {
             //? TODO: Label name should not include EH prefix  r$LN758@encode_one:
 
             // Skip any annotations such as EH before the $ and stop at @.
@@ -871,6 +870,10 @@ namespace IRExplorerCore.UTC {
                         stop = true;
                         break;
                     }
+                    case Keyword.PointsAtSet: {
+                        ParsePointsAtSetLine(parent);
+                        return null;
+                    }
                     default: {
                         tuple = ParseCodeTuple(parent);
                         stop = true;
@@ -914,6 +917,48 @@ namespace IRExplorerCore.UTC {
             return tuple;
         }
 
+        private void ParsePointsAtSetLine(BlockIR parent) {
+            var pasTag = ParsePointsAtSet();
+            SkipToLineStart(); // Ignore the rest of the line.
+
+            if (pasTag != null && parent.Tuples.Count > 0 &&
+                parent.Tuples[^1] is InstructionIR prevInstr) {
+                // The tag is attached to the first INDIR operand
+                // that doesn't have yet a tag, starting with destination
+                // and continuing with source operands.
+                foreach (var destOp in prevInstr.Destinations) {
+                    if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
+                        destOp.AddTag(pasTag);
+                        return;
+                    }
+                }
+
+                foreach (var sourceOp in prevInstr.Sources) {
+                    if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
+                        sourceOp.AddTag(pasTag);
+                        return;
+                    }
+                }
+            }
+        }
+
+        private PointsAtSetTag ParsePointsAtSet() {
+            if (!IsKeyword(Keyword.PointsAtSet) || !NextTokenIs(TokenKind.OpenParen)) {
+                return null;
+            }
+
+            SkipToken(); // PAS
+            SkipToken(); /// (
+            PointsAtSetTag pasTag = null;
+
+            if (IsNumber() && TokenIntNumber(out int pas)) {
+                pasTag = new PointsAtSetTag(pas);
+            }
+
+            ExpectAndSkipToken(TokenKind.CloseParen);
+            return pasTag;
+        }
+
         private SourceLocationTag ParseSourceLocation() {
             // There can be a list of source line numbers in case of inlining,
             // following this pattern: #123| #456
@@ -939,7 +984,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private TupleIR ParseCodeTuple(BlockIR parent) {
-            // identifier: usually represnts a label,
+            // identifier: usually represents a label,
             // unless it is a variable with an equiv-class ID like var:2
             if (IsIdentifier() &&
                 NextTokenIs(TokenKind.Colon) &&
@@ -947,8 +992,8 @@ namespace IRExplorerCore.UTC {
                 // label: definition
                 var startToken = current_;
                 var label = GetOrCreateLabel(TokenData(), parent);
-                SkipToken();
-                SkipToken();
+                SkipToken(); // string
+                SkipToken(); // :
                 SetTextRange(label, startToken);
                 SkipToLineEnd(); // Skip other attributes.
                 parent.Label = label;
@@ -1139,19 +1184,16 @@ namespace IRExplorerCore.UTC {
 
             // operand = varOp | intOp | floatOp | | addressOp | indirOp | labelOp | pasOp
             if (IsIdentifier() || TokenIs(TokenKind.Less)) {
-                // Check for PAS(n) first and skip over it.
-                if (IsKeyword(Keyword.PointsAtSet) && NextTokenIs(TokenKind.OpenParen)) {
-                    if (!SkipAfterToken(TokenKind.CloseParen)) {
-                        ReportError(TokenKind.CloseParen, "Failed ParseOperand skip PAS");
-                        return null;
-                    }
+                // Check for PAS(n) first, it appears as dest/source operand for calls.
+                if (IsKeyword(Keyword.PointsAtSet)) {
+                    var pasTag = ParsePointsAtSet();
+                    TryParseType(); // A type can also follow a PAS.
 
-                    // A type can also follow a PAS.
-                    TryParseType();
-
-                    //? TODO: PAS info could be saved here as a tag.
                     operand = new OperandIR(nextElementId_, OperandKind.Other,
                                             TypeIR.GetUnknown(), parent);
+                    if (pasTag != null) {
+                        operand.AddTag(pasTag);
+                    }
                 }
                 else {
                     // Variable/temporary.

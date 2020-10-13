@@ -17,9 +17,7 @@ namespace IRExplorerUI.Compilers.UTC {
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("PAS", QueryValueKind.Number);
-            query.Data.AddInput("Temporary marking", QueryValueKind.Bool);
-            query.Data.SetOutput("Aliasing values", 0);
+            query.Data.AddInput("Temporary marking", QueryValueKind.Bool, true);
             query.Data.SetOutput("Mark aliasing values", "");
 
             var a = query.Data.AddButton("All");
@@ -46,39 +44,117 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public bool Execute(QueryData data) {
-            var elementA = data.GetInput<IRElement>(0);
-            var func = elementA.ParentFunction;
-            int pas = data.GetInput<int>(1);
+            var element = data.GetInput<IRElement>(0);
+            var isTemporary = data.GetInput<bool>(1);
+            var func = element.ParentFunction;
+            int pas = 0;
 
+            data.ResetResults();
             var interfTag = func.GetTag<InterferenceTag>();
+
+            if (interfTag == null) {
+                data.SetOutputWarning("No interference info found", "Use -d2dbINTERF,ITFPAS to output interf logs");
+                return false;
+            }
+
+            if (!(element is OperandIR op)) {
+                data.SetOutputWarning("Invalid IR element", "Selected IR element is not an aliased operand");
+                return false;
+            }
+
+            if (op.IsIndirection) {
+                var pasTag = element.GetTag<PointsAtSetTag>();
+
+                if (pasTag != null) {
+                    pas = pasTag.Pas;
+                    data.SetOutput("Query PAS", pas);
+                }
+                else {
+                    data.SetOutputWarning("Indirection has no PAS", "Selected Indirection operand has no PAS info");
+                    return false;
+                }
+            }
+            else if (op.IsVariable && op.HasName) {
+                if (!interfTag.SymToPasMap.TryGetValue(op.Name, out pas)) {
+                    data.SetOutputWarning("Unaliased variable", "Selected variable is not an aliased operand");
+                    return false;
+                }
+            }
+            else {
+                data.SetOutputWarning("Unaliased IR element", "Selected IR element is not an aliased operand");
+                return false;
+            }
+
+
             var refFinder = new ReferenceFinder(func);
+            var document = Session.CurrentDocument;
+            var highlightingType = isTemporary ? HighlighingType.Selected : HighlighingType.Marked;
+            document.BeginMarkElementAppend(highlightingType);
+            document.SetRootElement(element);
 
-            if (interfTag != null) {
-                if (interfTag.InterferingPasMap.TryGetValue(pas, out var interPasses)) {
-                    foreach (var interfPas in interPasses) {
-                        if (interfTag.PasToSymMap.TryGetValue(interfPas, out var interfSymbols)) {
-                            foreach (var interfSymbol in interfSymbols) {
-                                //? TODO: Implement basic SymbolTable
-                                MarkAllSymbols(func, interfSymbol);
-                            }
+            if (interfTag.InterferingPasMap.TryGetValue(pas, out var interPasses)) {
+                foreach (var interfPas in interPasses) {
+                    // Mark all symbols.
+                    if (interfTag.PasToSymMap.TryGetValue(interfPas, out var interfSymbols)) {
+                        foreach (var interfSymbol in interfSymbols) {
+                            MarkAllSymbols(func, interfSymbol, highlightingType);
                         }
-
-                        //? TODO: A pass can also mark indirs
                     }
+
+                    // Mark all indirections and calls.
+                    MarkAllIndirections(func, interfPas, highlightingType);
                 }
             }
 
-            data.ResetResults();
-            data.SetOutput("Aliasing values", 0);
+            document.EndMarkElementAppend(highlightingType);
+            //data.SetOutput("Aliasing values", 0);
             return true;
         }
 
-        private void MarkAllSymbols(FunctionIR func, string interfSymbol) {
+        private void MarkAllSymbols(FunctionIR func, string interfSymbol, HighlighingType highlightingType) {
+            var document = Session.CurrentDocument;
+            var style = new HighlightingStyle(Brushes.Transparent, Pens.GetPen(Colors.Silver));
+
             foreach (var elem in func.AllElements) {
                 if (elem is OperandIR op && op.IsVariable && op.HasName &&
                     op.NameValue.ToString() == interfSymbol) {
-                    var document = Session.CurrentDocument;
-                    document.MarkElement(elem, Colors.YellowGreen);
+
+
+                    if (op.IsDestinationOperand) {
+                        document.MarkElementAppend(op, Colors.Pink, highlightingType, false);
+                    }
+                    else {
+                        document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, false);
+                    }
+
+                    document.MarkElementAppend(op.ParentTuple, style, highlightingType, false);
+                    document.AddConnectedElement(op);
+                }
+            }
+        }
+
+        private void MarkAllIndirections(FunctionIR func, int interfPas, HighlighingType highlightingType) {
+            var document = Session.CurrentDocument;
+            var style = new HighlightingStyle(Brushes.Transparent, Pens.GetBoldPen(Colors.Black));
+
+            foreach (var element in func.AllElements) {
+                if (!(element is OperandIR op)) {
+                    continue;
+                }
+
+                var pasTag = op.GetTag<PointsAtSetTag>();
+
+                if (pasTag != null && pasTag.Pas == interfPas) {
+                    document.MarkElementAppend(op.ParentTuple, style, highlightingType, false);
+
+                    if (op.IsDestinationOperand) {
+                        document.MarkElementAppend(op, Colors.Pink, highlightingType, false);
+                    }
+                    else {
+                        document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, false);
+                    }
+
+                    document.MarkElementAppend(op.ParentTuple, style, highlightingType, false);
                 }
             }
         }

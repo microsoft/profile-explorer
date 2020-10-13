@@ -128,6 +128,7 @@ namespace IRExplorerCore.IR {
 
         public virtual bool HasName => false;
         public virtual ReadOnlyMemory<char> NameValue => null;
+        public virtual string Name => NameValue.ToString();
 
         public void SetTextRange(TextLocation location, int length) {
             TextLocation = location;

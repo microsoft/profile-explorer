@@ -21,7 +21,7 @@ namespace IRExplorerCore.UTC {
             Offset = offset;
         }
 
-        public long Offset { get;set; }
+        public long Offset { get; set; }
         public string Name => "Symbol offset";
         public TaggedObject Owner { get; set; }
 
@@ -36,6 +36,28 @@ namespace IRExplorerCore.UTC {
 
         public override string ToString() {
             return $"symbol offset: {Offset}";
+        }
+    }
+    public class PointsAtSetTag : ITag {
+        public PointsAtSetTag(int pas) {
+            Pas = pas;
+        }
+
+        public int Pas { get; set; }
+        public string Name => "PointsAtSet";
+        public TaggedObject Owner { get; set; }
+
+        public override bool Equals(object obj) {
+            return obj is PointsAtSetTag tag &&
+                   Pas == tag.Pas;
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(Pas);
+        }
+
+        public override string ToString() {
+            return $"pas: {Pas}";
         }
     }
 
