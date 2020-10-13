@@ -155,6 +155,7 @@ namespace IRExplorerUI.Compilers.UTC {
                     }
 
                     document.MarkElementAppend(op.ParentTuple, style, highlightingType, false);
+                    document.AddConnectedElement(op);
                 }
             }
         }

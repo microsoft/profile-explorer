@@ -135,6 +135,7 @@ namespace IRExplorerUI.Document {
 
             var dotBackground = ColorBrushes.GetTransparentBrush(Colors.LightBlue, 200);
             var dotPen = Pens.GetTransparentPen(Colors.DimGray, 200);
+            bool first = true;
 
             // Draw extra annotations for remarks in the same context.
             foreach (var element in connectedElements_) {
@@ -161,8 +162,8 @@ namespace IRExplorerUI.Document {
                 //                   prevRemark.ReferencedElements[0].TextLocation.Line ? -0.5 : 0.5;
                 var controlPoint = middlePoint + (-factor * vect);
 
-                //overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), startPoint, middlePoint);
-                //overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), middlePoint, endPoint);
+                overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), startPoint, middlePoint);
+                overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), middlePoint, endPoint);
 
                 var startOrientation = FindArrowOrientation(new Point[] { edgeEndPoint, edgeStartPoint, controlPoint }, out var _);
                 var orientation = FindArrowOrientation(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, out var _);
@@ -172,12 +173,17 @@ namespace IRExplorerUI.Document {
                 edgeEndPoint = edgeEndPoint - (orientation * dotSize * 1.75);
                 edgeSC.BeginFigure(edgeStartPoint, false, false);
                 edgeSC.BezierTo(edgeStartPoint, controlPoint, edgeEndPoint, true, false);
-                DrawEdgeArrow(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, edgeSC);
+                //DrawEdgeArrow(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, edgeSC);
 
-                //overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), startPoint, endPoint);
+                overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), startPoint, endPoint);
                 //overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), point, point2);
 
-                overlayDC.DrawEllipse(dotBackground, dotPen, startPoint, dotSize, dotSize);
+                overlayDC.DrawEllipse(dotBackground, dotPen, endPoint, dotSize, dotSize);
+
+                if(first) {
+                    overlayDC.DrawEllipse(dotBackground, dotPen, startPoint, dotSize, dotSize);
+                    first = false;
+                }
 
                 //var text = DocumentUtils.CreateFormattedText(textView, i.ToString(), DefaultFont, 11, Brushes.Black);
                 //overlayDC.DrawText(text, Utils.SnapPointToPixels(startPoint.X - text.Width / 2, startPoint.Y - text.Height / 2));
@@ -185,7 +191,8 @@ namespace IRExplorerUI.Document {
 
             edgeSC.Close();
             edgeGeometry.Freeze();
-            overlayDC.DrawGeometry(ColorBrushes.GetTransparentBrush(Colors.DarkRed, 180), Pens.GetTransparentPen(Colors.DarkRed, 180, 2), edgeGeometry);
+            overlayDC.DrawGeometry(ColorBrushes.GetTransparentBrush(Colors.DarkRed, 180),
+                Pens.GetPen(Colors.Blue, 2), edgeGeometry);
 
             overlayDC.Close();
             Add(visual);
