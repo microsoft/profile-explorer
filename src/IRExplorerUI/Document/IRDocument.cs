@@ -802,12 +802,16 @@ namespace IRExplorerUI {
             }
         }
 
-        public void SetRootElement(IRElement element) {
-            overlayRenderer_.SetRootElement(element);
+        public void SetRootElement(IRElement element, HighlightingStyle style) {
+            overlayRenderer_.SetRootElement(element, style);
         }
 
-        public void AddConnectedElement(IRElement element) {
-            overlayRenderer_.AddConnectedElement(element);
+        public void AddConnectedElement(IRElement element, HighlightingStyle style) {
+            overlayRenderer_.AddConnectedElement(element, style);
+        }
+
+        public void ClearConnectedElements() {
+            overlayRenderer_.ClearConnectedElements();
         }
 
         public void MarkElementAt(Point point, Color selectedColor) {
