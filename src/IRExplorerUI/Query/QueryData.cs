@@ -96,21 +96,21 @@ namespace IRExplorerUI.Query {
 
                 switch (valueType) {
                     case var _ when valueType == typeof(bool): {
-                            valueKind = QueryValueKind.Bool;
-                            break;
-                        }
+                        valueKind = QueryValueKind.Bool;
+                        break;
+                    }
                     case var _ when valueType == typeof(int): {
-                            valueKind = QueryValueKind.Number;
-                            break;
-                        }
+                        valueKind = QueryValueKind.Number;
+                        break;
+                    }
                     case var _ when valueType == typeof(string): {
-                            valueKind = QueryValueKind.String;
-                            break;
-                        }
+                        valueKind = QueryValueKind.String;
+                        break;
+                    }
                     case var _ when valueType == typeof(Color): {
-                            valueKind = QueryValueKind.Color;
-                            break;
-                        }
+                        valueKind = QueryValueKind.Color;
+                        break;
+                    }
                 }
 
                 if (valueKind == QueryValueKind.Other) {
@@ -138,7 +138,7 @@ namespace IRExplorerUI.Query {
                     outputType.GetProperty(propertyTag.Name) != null) {
                     // For numbers, try to convert to int.
                     if (inputValue.Kind.HasFlag(QueryValueKind.Number)) {
-                        if (!int.TryParse(inputValue.Value as string, out int result)) {
+                        if (!ExtractInt(inputValue, out int result)) {
                             return null;
                         }
 
@@ -151,6 +151,17 @@ namespace IRExplorerUI.Query {
             }
 
             return options;
+        }
+
+        private static bool ExtractInt(QueryValue queryValue, out int number) {
+            try {
+                number = Convert.ToInt32(queryValue.Value);
+                return true;
+            }
+            catch (Exception ex) {
+                number = 0;
+                return false;
+            }
         }
 
         public QueryValue AddInput(string name, QueryValueKind kind, string description = null) {
@@ -187,7 +198,7 @@ namespace IRExplorerUI.Query {
             }
 
             if (value.Kind.HasFlag(QueryValueKind.Number)) {
-                if (!int.TryParse(value.Value as string, out int result)) {
+                if (!ExtractInt(value, out int result)) {
                     throw new InvalidOperationException($"Invalid input number: {value.Name}");
                 }
 

@@ -43,7 +43,7 @@ namespace IRExplorerUI {
 
             if (line != null && Session.CurrentDocument != null) {
                 selectedLine_ = line.LineNumber;
-                Session.CurrentDocument.HighlightElementsOnLine(line.LineNumber);
+                Session.CurrentDocument.HighlightElementsOnSourceLine(line.LineNumber);
             }
         }
 
