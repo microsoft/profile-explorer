@@ -43,21 +43,23 @@
                         Text="Show" />
 
                     <ToggleButton
+                        x:Name="BeforeButton"
                         Width="50"
                         Margin="8,0,0,0"
                         Padding="4,2,4,2"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Click="BeforeButton_Click"
                         Content="Before"
-                        IsChecked="{Binding ShowBeforeOutput, Mode=TwoWay}" />
+                        IsChecked="{Binding ShowBeforeOutput, Mode=OneWay}" />
                     <ToggleButton
+                        x:Name="AfterButton"
                         Width="50"
                         Margin="-1,0,0,0"
                         Padding="4,2,4,2"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Click="AfterButton_Click"
                         Content="After"
-                        IsChecked="{Binding ShowAfterOutput, Mode=TwoWay}" />
-
-                    <Separator />
+                        IsChecked="{Binding ShowAfterOutput, Mode=OneWay}" />
 
                     <ToggleButton
                         IsChecked="{Binding WordWrap, Mode=TwoWay}"

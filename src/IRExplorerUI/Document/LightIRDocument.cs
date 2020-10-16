@@ -258,7 +258,7 @@ namespace IRExplorerUI {
             function_ = function;
             section_ = section;
             associatedDocument_ = associatedDocument;
-            Text = initialText_;
+            Text = text;
             IsReadOnly = false;
 
             EnsureInitialTextLines();
@@ -336,8 +336,7 @@ namespace IRExplorerUI {
                 IgnoreOverlappingOperandRemarks = true
             };
 
-            //var remarks = remarkProvider.ExtractRemarks(text, function, section_, options);
-            var remarks = new List<Remark>();
+            var remarks = remarkProvider.ExtractRemarks(text, function, section_, options);
 
             if (cancelableTask.IsCanceled) {
                 cancelableTask.Completed();
