@@ -50,8 +50,7 @@ namespace IRExplorerUI {
 
         public string Kind {
             get {
-                return Info.Kind switch
-                {
+                return Info.Kind switch {
                     ReferenceKind.Address => "Address",
                     ReferenceKind.Load => "Load",
                     ReferenceKind.Store => "Store",
@@ -171,12 +170,12 @@ namespace IRExplorerUI {
                 }
 
                 if (!(value is OperandIR)) {
-                    return;
+                    return; // Only operands can have references.
                 }
 
                 if (element_ != value) {
                     if (value != null && HasPinnedContent) {
-                        return;
+                        return; // Keep pinned element.
                     }
 
                     element_ = value;
@@ -369,9 +368,11 @@ namespace IRExplorerUI {
         }
 
         public void InitializeFromDocument(IRDocument document) {
-            if (document_ != document) {
+            if (document_ != document ||
+                section_ != document.Section) {
                 document_ = document;
-                documentText_ = document.Text;
+                documentText_ = document.Text; // Cache text.
+                section_ = document.Section;
                 Element = null;
             }
         }
@@ -507,7 +508,6 @@ namespace IRExplorerUI {
             }
 
             IsPanelEnabled = document_ != null;
-            section_ = section;
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
