@@ -73,8 +73,8 @@ namespace IRExplorerUI {
             control.ListElement = (Tuple<IRDocument, IRElement, string>)eventArgs.NewValue;
         }
 
-        public void InitializeFromDocument(IRDocument document) {
-            TextView.InitializeFromDocument(document);
+        public void InitializeFromDocument(IRDocument document, string text = null) {
+            TextView.InitializeFromDocument(document, text);
         }
 
         public void InitializeBasedOnDocument(string text, IRDocument document) {
