@@ -10,11 +10,13 @@ namespace IRExplorerUI {
     public class IRPreviewToolTip : ToolTip {
         private IRDocument document_;
         private IRElement element_;
+        private string text_;
 
         public IRPreviewToolTip(double width, double height, IRDocument document, IRElement element,
-                                string style = "IRPreviewTooltip") {
+                                string text = null, string style = "IRPreviewTooltip") {
             document_ = document;
             element_ = element ?? throw new Exception();
+            text_ = text;
             Style = Application.Current.FindResource(style) as Style;
             Width = width;
             Height = height;
@@ -33,9 +35,8 @@ namespace IRExplorerUI {
 
         private void IRPreviewToolTip_Loaded(object sender, RoutedEventArgs e) {
             var previewer = Utils.FindChild<IRPreviewTooltip>(this, "IRPreviewer");
-            previewer.InitializeFromDocument(document_);
+            previewer.InitializeFromDocument(document_, text_);
             previewer.PreviewedElement = element_;
-
             previewer.HeaderText = $"Block {Utils.MakeBlockDescription(element_.ParentBlock)}";
 
             Height = previewer.ResizeForLines(5);

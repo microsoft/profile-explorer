@@ -944,17 +944,17 @@ namespace IRExplorerUI {
 
                 switch (sortingField_) {
                     case FieldKind.Number: {
-                            int result = sectionY.Number - sectionX.Number;
-                            return direction_ == ListSortDirection.Ascending ? -result : result;
-                        }
+                        int result = sectionY.Number - sectionX.Number;
+                        return direction_ == ListSortDirection.Ascending ? -result : result;
+                    }
                     case FieldKind.Name: {
-                            int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
-                            return direction_ == ListSortDirection.Ascending ? -result : result;
-                        }
+                        int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
+                        return direction_ == ListSortDirection.Ascending ? -result : result;
+                    }
                     case FieldKind.Blocks: {
-                            int result = sectionY.BlockCount - sectionX.BlockCount;
-                            return direction_ == ListSortDirection.Ascending ? -result : result;
-                        }
+                        int result = sectionY.BlockCount - sectionX.BlockCount;
+                        return direction_ == ListSortDirection.Ascending ? -result : result;
+                    }
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
@@ -1048,15 +1048,14 @@ namespace IRExplorerUI {
             SectionFilter.Text = "";
         }
 
-        public bool SelectFunction(IRTextFunction function) {
+        public void SelectFunction(IRTextFunction function) {
             if (function == currentFunction_) {
-                return false;
+                return;
             }
 
             FunctionList.SelectedItem = function;
             FunctionList.ScrollIntoView(FunctionList.SelectedItem);
             RefreshSectionList();
-            return true;
         }
 
         public override void OnSessionSave() {

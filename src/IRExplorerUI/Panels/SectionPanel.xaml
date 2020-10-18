@@ -556,6 +556,15 @@
                             Header="Compare with Other Document"
                             InputGestureText="Ctrl+Return"
                             ToolTip="Compare section with same one from the other document" />
+                        <MenuItem
+                            Command="local:Command.DiffWithOtherDocument"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Sync Section with Other Document"
+                            IsCheckable="True"
+                            IsChecked="True"
+                            IsEnabled="False"
+                            ToolTip="Enable syncing of diffed section between the two documents" />
                         <Separator />
 
                         <MenuItem
