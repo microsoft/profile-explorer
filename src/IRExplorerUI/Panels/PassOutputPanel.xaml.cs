@@ -227,6 +227,7 @@ namespace IRExplorerUI {
 
             await TextView.SwitchText(initialText_, function, section, associatedDocument);
             await SearchText();
+            OnPropertyChange(nameof(SectionName));
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -243,6 +244,7 @@ namespace IRExplorerUI {
             initialText_ = null;
             searchResults_ = null;
             TextView.UnloadDocument();
+            OnPropertyChange(nameof(SectionName));
         }
 
         public override void OnSessionSave() {
