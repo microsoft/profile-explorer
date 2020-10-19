@@ -136,7 +136,8 @@ namespace IRExplorerUI {
         private async Task SwitchPanelDiffFunction(IRTextFunction func, SectionPanel otherPanel) {
             var otherFunc = otherPanel.Summary.FindFunction(func.Name);
 
-            if (otherFunc != null && otherPanel.SelectFunction(otherFunc)) {
+            if (otherFunc != null) {
+                otherPanel.SelectFunction(otherFunc);
                 await ComputePanelSectionDiff();
             }
         }

@@ -50,8 +50,7 @@ namespace IRExplorerUI {
 
         public string Kind {
             get {
-                return Info.Kind switch
-                {
+                return Info.Kind switch {
                     ReferenceKind.Address => "Address",
                     ReferenceKind.Load => "Load",
                     ReferenceKind.Store => "Store",
@@ -171,12 +170,12 @@ namespace IRExplorerUI {
                 }
 
                 if (!(value is OperandIR)) {
-                    return;
+                    return; // Only operands can have references.
                 }
 
                 if (element_ != value) {
                     if (value != null && HasPinnedContent) {
-                        return;
+                        return; // Keep pinned element.
                     }
 
                     element_ = value;
@@ -189,6 +188,7 @@ namespace IRExplorerUI {
         }
 
         private (TextBlock, string) CreatePreviewTextBlock(OperandIR operand, Reference reference) {
+            // Mark every instance of the symbol name in the preview text (usually an instr).
             string text = FindPreviewText(reference);
             string symbolName = ReferenceFinder.GetSymbolName(operand);
             int index = 0;
@@ -204,6 +204,7 @@ namespace IRExplorerUI {
                     break;
                 }
 
+                // Append any text before the symbol name.
                 if (index < symbolIndex) {
                     textBlock.Inlines.Add(text.Substring(index, symbolIndex - index));
                 }
@@ -215,6 +216,7 @@ namespace IRExplorerUI {
                 index = symbolIndex + symbolName.Length;
             }
 
+            // Append remaining text at the end.
             if (index < text.Length) {
                 textBlock.Inlines.Add(text.Substring(index, text.Length - index));
             }
@@ -226,7 +228,10 @@ namespace IRExplorerUI {
             var instr = reference.Element.ParentInstruction;
             string text = "";
 
-            if (instr == null) {
+            if (instr != null) {
+                text = instr.GetText(documentText_).ToString();
+            }
+            else {
                 if (reference.Element is OperandIR op) {
                     // This is usually a parameter.
                     text = op.GetText(documentText_).ToString();
@@ -234,9 +239,6 @@ namespace IRExplorerUI {
                 else {
                     return "";
                 }
-            }
-            else {
-                text = instr.GetText(documentText_).ToString();
             }
 
             int start = 0;
@@ -290,7 +292,8 @@ namespace IRExplorerUI {
             var operandRefs = refFinder.FindAllReferences(element);
             UpdateReferenceListView(operand, operandRefs);
 
-            FilterKind = ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
+            // Enabled the filters.
+            FilterKind |= ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
             FixedToolbar.IsPinned = pinElement;
             element_ = element;
             isFindAll_ = true;
@@ -308,8 +311,8 @@ namespace IRExplorerUI {
             var operandRefs = refFinder.FindAllReferences(element, true);
             UpdateReferenceListView(operand, operandRefs);
 
-            // Select the SSA uses filter.
-            FilterKind = ReferenceKind.SSA;
+            // Enable the SSA uses filter.
+            FilterKind |= ReferenceKind.SSA;
             FixedToolbar.IsPinned = pinElement;
             element_ = element;
             isFindAll_ = false;
@@ -369,9 +372,11 @@ namespace IRExplorerUI {
         }
 
         public void InitializeFromDocument(IRDocument document) {
-            if (document_ != document) {
+            if (document_ != document ||
+                section_ != document.Section) {
                 document_ = document;
-                documentText_ = document.Text;
+                documentText_ = document.Text; // Cache text.
+                section_ = document.Section;
                 Element = null;
             }
         }
@@ -437,7 +442,7 @@ namespace IRExplorerUI {
             HideToolTip();
             var listItem = sender as ListViewItem;
             var refInfo = listItem.DataContext as ReferenceInfo;
-            previewTooltip_ = new IRPreviewToolTip(600, 100, document_, refInfo.Info.Element);
+            previewTooltip_ = new IRPreviewToolTip(600, 100, document_, refInfo.Info.Element, documentText_);
             listItem.ToolTip = previewTooltip_;
         }
 
@@ -507,7 +512,6 @@ namespace IRExplorerUI {
             }
 
             IsPanelEnabled = document_ != null;
-            section_ = section;
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {

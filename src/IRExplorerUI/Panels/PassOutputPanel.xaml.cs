@@ -50,7 +50,6 @@ namespace IRExplorerUI {
                     showAfterOutput_ = value;
                     OnPropertyChange(nameof(ShowAfterOutput));
                     OnPropertyChange(nameof(ShowBeforeOutput));
-                    SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
                 }
             }
         }
@@ -62,7 +61,6 @@ namespace IRExplorerUI {
                     showAfterOutput_ = !value;
                     OnPropertyChange(nameof(ShowAfterOutput));
                     OnPropertyChange(nameof(ShowBeforeOutput));
-                    SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
                 }
             }
         }
@@ -120,8 +118,9 @@ namespace IRExplorerUI {
             Utils.PatchToolbarStyle(sender as ToolBar);
         }
 
-        private void ToggleOutputExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private async void ToggleOutputExecuted(object sender, ExecutedRoutedEventArgs e) {
             ShowAfterOutput = !ShowAfterOutput;
+            await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
         }
 
         private void ToggleSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -194,10 +193,10 @@ namespace IRExplorerUI {
             set => FixedToolbar.IsPinned = value;
         }
 
-        public override void ClonePanel(IToolPanel basePanel) {
+        public override async void ClonePanel(IToolPanel basePanel) {
             var otherPanel = (PassOutputPanel)basePanel;
-            //Session = otherPanel.Session;
-            SwitchText(otherPanel.TextView.Section, otherPanel.TextView.Function, otherPanel.TextView.AssociatedDocument);
+            await SwitchText(otherPanel.TextView.Section, otherPanel.TextView.Function,
+                             otherPanel.TextView.AssociatedDocument);
         }
 
         public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
@@ -209,8 +208,8 @@ namespace IRExplorerUI {
 
             if (data != null) {
                 var state = StateSerializer.Deserialize<PassOutputPanelState>(data, document.Function);
-                ShowAfterOutput = state.ShowAfterOutput;
                 await SwitchText(section, document.Function, document);
+                ShowAfterOutput = state.ShowAfterOutput;
             }
             else {
                 await SwitchText(section, document.Function, document);
@@ -228,6 +227,7 @@ namespace IRExplorerUI {
 
             await TextView.SwitchText(initialText_, function, section, associatedDocument);
             await SearchText();
+            OnPropertyChange(nameof(SectionName));
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -244,6 +244,7 @@ namespace IRExplorerUI {
             initialText_ = null;
             searchResults_ = null;
             TextView.UnloadDocument();
+            OnPropertyChange(nameof(SectionName));
         }
 
         public override void OnSessionSave() {
@@ -278,6 +279,16 @@ namespace IRExplorerUI {
 
         private void FixedToolbar_SettingsClicked(object sender, System.EventArgs e) {
             MessageBox.Show("TODO");
+        }
+
+        private async void AfterButton_Click(object sender, RoutedEventArgs e) {
+            ShowAfterOutput = true;
+            await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+        }
+
+        private async void BeforeButton_Click(object sender, RoutedEventArgs e) {
+            ShowBeforeOutput = true;
+            await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
         }
     }
 }

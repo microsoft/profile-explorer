@@ -157,23 +157,23 @@ namespace IRExplorerUI {
                 case ToolPanelKind.FlowGraph:
                 case ToolPanelKind.DominatorTree:
                 case ToolPanelKind.PostDominatorTree: {
-                        var flowGraphPanel = panelHost.Panel as GraphPanel;
-                        flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
-                        flowGraphPanel.GraphViewer.BlockMarked += GraphViewer_BlockMarked;
-                        flowGraphPanel.GraphViewer.BlockUnmarked += GraphViewer_BlockUnmarked;
-                        flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
-                        break;
-                    }
+                    var flowGraphPanel = panelHost.Panel as GraphPanel;
+                    flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
+                    flowGraphPanel.GraphViewer.BlockMarked += GraphViewer_BlockMarked;
+                    flowGraphPanel.GraphViewer.BlockUnmarked += GraphViewer_BlockUnmarked;
+                    flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
+                    break;
+                }
                 case ToolPanelKind.ExpressionGraph: {
-                        var flowGraphPanel = panelHost.Panel as GraphPanel;
-                        flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
-                        flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
-                        break;
-                    }
+                    var flowGraphPanel = panelHost.Panel as GraphPanel;
+                    flowGraphPanel.GraphViewer.BlockSelected += GraphViewer_GraphNodeSelected;
+                    flowGraphPanel.GraphViewer.GraphLoaded += GraphViewer_GraphLoaded;
+                    break;
+                }
                 case ToolPanelKind.CallGraph: {
-                        //? TODO: Handle event
-                        break;
-                    }
+                    //? TODO: Handle event
+                    break;
+                }
             }
         }
 
@@ -184,23 +184,23 @@ namespace IRExplorerUI {
                 case ToolPanelKind.FlowGraph:
                 case ToolPanelKind.DominatorTree:
                 case ToolPanelKind.PostDominatorTree: {
-                        var flowGraphPanel = panelHost.Panel as GraphPanel;
-                        flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
-                        flowGraphPanel.GraphViewer.BlockMarked -= GraphViewer_BlockMarked;
-                        flowGraphPanel.GraphViewer.BlockUnmarked -= GraphViewer_BlockUnmarked;
-                        flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
-                        break;
-                    }
+                    var flowGraphPanel = panelHost.Panel as GraphPanel;
+                    flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
+                    flowGraphPanel.GraphViewer.BlockMarked -= GraphViewer_BlockMarked;
+                    flowGraphPanel.GraphViewer.BlockUnmarked -= GraphViewer_BlockUnmarked;
+                    flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
+                    break;
+                }
                 case ToolPanelKind.ExpressionGraph: {
-                        var flowGraphPanel = panelHost.Panel as GraphPanel;
-                        flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
-                        flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
-                        break;
-                    }
+                    var flowGraphPanel = panelHost.Panel as GraphPanel;
+                    flowGraphPanel.GraphViewer.BlockSelected -= GraphViewer_GraphNodeSelected;
+                    flowGraphPanel.GraphViewer.GraphLoaded -= GraphViewer_GraphLoaded;
+                    break;
+                }
                 case ToolPanelKind.CallGraph: {
-                        //? TODO: Handle event
-                        break;
-                    }
+                    //? TODO: Handle event
+                    break;
+                }
             }
         }
 
@@ -437,8 +437,7 @@ namespace IRExplorerUI {
         }
 
         private string GetDefaultPanelName(ToolPanelKind kind) {
-            return kind switch
-            {
+            return kind switch {
                 ToolPanelKind.Bookmarks => "Bookmarks",
                 ToolPanelKind.Definition => "Definition",
                 ToolPanelKind.FlowGraph => "Flow Graph",
@@ -494,8 +493,7 @@ namespace IRExplorerUI {
         }
 
         private IToolPanel CreateNewPanel(ToolPanelKind kind) {
-            return kind switch
-            {
+            return kind switch {
                 ToolPanelKind.Definition => new DefinitionPanel(),
                 ToolPanelKind.References => new ReferencesPanel(),
                 ToolPanelKind.Notes => new NotesPanel(),
@@ -523,59 +521,59 @@ namespace IRExplorerUI {
 
             switch (duplicateKind) {
                 case DuplicatePanelKind.Floating: {
-                        panelHost.Host.FloatingWidth = 800;
-                        panelHost.Host.FloatingHeight = 600;
+                    panelHost.Host.FloatingWidth = 800;
+                    panelHost.Host.FloatingHeight = 600;
 
-                        var x = DockManager.CreateFloatingWindow(panelHost.Host, false);
-                        panelHost.Host.Show();
-                        panelHost.Host.IsActive = true;
-                        attached = true;
-                        break;
-                    }
+                    var x = DockManager.CreateFloatingWindow(panelHost.Host, false);
+                    panelHost.Host.Show();
+                    panelHost.Host.IsActive = true;
+                    attached = true;
+                    break;
+                }
                 case DuplicatePanelKind.NewSetDockedLeft: {
-                        panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
+                    panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
 
-                        var baseHost = FindPanelHost(relativePanel).Host;
-                        var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
+                    var baseHost = FindPanelHost(relativePanel).Host;
+                    var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
-                        if (baseGroup == null) {
-                            break;
-                        }
-
-                        baseGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
-                        attached = true;
+                    if (baseGroup == null) {
                         break;
                     }
+
+                    baseGroup.Children.Insert(0, new LayoutAnchorablePane(panelHost.Host));
+                    attached = true;
+                    break;
+                }
                 case DuplicatePanelKind.NewSetDockedRight: {
-                        panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
+                    panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
 
-                        var baseHost = FindPanelHost(relativePanel).Host;
-                        var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
+                    var baseHost = FindPanelHost(relativePanel).Host;
+                    var baseGroup = baseHost.FindParent<LayoutAnchorablePaneGroup>();
 
-                        if (baseGroup == null) {
-                            break;
-                        }
-
-                        baseGroup.Children.Add(new LayoutAnchorablePane(panelHost.Host));
-                        attached = true;
+                    if (baseGroup == null) {
                         break;
                     }
+
+                    baseGroup.Children.Add(new LayoutAnchorablePane(panelHost.Host));
+                    attached = true;
+                    break;
+                }
                 case DuplicatePanelKind.SameSet: {
-                        // Insert the new panel on the right of the cloned one.
-                        panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
+                    // Insert the new panel on the right of the cloned one.
+                    panelHost.Host.AddToLayout(DockManager, AnchorableShowStrategy.Right);
 
-                        var relativePanelHost = FindPanelHost(relativePanel);
-                        var relativeLayoutPane = relativePanelHost.Host.FindParent<LayoutAnchorablePane>();
+                    var relativePanelHost = FindPanelHost(relativePanel);
+                    var relativeLayoutPane = relativePanelHost.Host.FindParent<LayoutAnchorablePane>();
 
-                        if (relativeLayoutPane == null) {
-                            break;
-                        }
-
-                        int basePaneIndex = relativeLayoutPane.Children.IndexOf(relativePanelHost.Host);
-                        relativeLayoutPane.Children.Insert(basePaneIndex + 1, panelHost.Host);
-                        attached = true;
+                    if (relativeLayoutPane == null) {
                         break;
                     }
+
+                    int basePaneIndex = relativeLayoutPane.Children.IndexOf(relativePanelHost.Host);
+                    relativeLayoutPane.Children.Insert(basePaneIndex + 1, panelHost.Host);
+                    attached = true;
+                    break;
+                }
                 default:
                     throw new ArgumentOutOfRangeException(nameof(duplicateKind), duplicateKind, null);
             }
@@ -721,32 +719,32 @@ namespace IRExplorerUI {
 
             switch (kind) {
                 case OpenSectionKind.ReplaceCurrent: {
-                        if (activeDocumentPanel_ == null) {
-                            activeDocumentPanel_ = new LayoutDocumentPane(host);
-                            DocumentPanelGroup.Children.Add(activeDocumentPanel_);
-                        }
-                        else {
-                            activeDocumentPanel_.Children.Add(host);
-                        }
-
-                        break;
-                    }
-                case OpenSectionKind.NewTab: {
-                        activeDocumentPanel_.Children.Add(host);
-                        break;
-                    }
-                case OpenSectionKind.NewTabDockLeft:
-                case OpenSectionKind.ReplaceLeft: {
-                        activeDocumentPanel_ = new LayoutDocumentPane(host);
-                        DocumentPanelGroup.Children.Insert(0, activeDocumentPanel_);
-                        break;
-                    }
-                case OpenSectionKind.NewTabDockRight:
-                case OpenSectionKind.ReplaceRight: {
+                    if (activeDocumentPanel_ == null) {
                         activeDocumentPanel_ = new LayoutDocumentPane(host);
                         DocumentPanelGroup.Children.Add(activeDocumentPanel_);
-                        break;
                     }
+                    else {
+                        activeDocumentPanel_.Children.Add(host);
+                    }
+
+                    break;
+                }
+                case OpenSectionKind.NewTab: {
+                    activeDocumentPanel_.Children.Add(host);
+                    break;
+                }
+                case OpenSectionKind.NewTabDockLeft:
+                case OpenSectionKind.ReplaceLeft: {
+                    activeDocumentPanel_ = new LayoutDocumentPane(host);
+                    DocumentPanelGroup.Children.Insert(0, activeDocumentPanel_);
+                    break;
+                }
+                case OpenSectionKind.NewTabDockRight:
+                case OpenSectionKind.ReplaceRight: {
+                    activeDocumentPanel_ = new LayoutDocumentPane(host);
+                    DocumentPanelGroup.Children.Add(activeDocumentPanel_);
+                    break;
+                }
                 default:
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
             }
