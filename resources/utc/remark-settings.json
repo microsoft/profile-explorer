@@ -21,7 +21,6 @@
         "Title": "CSE",
         "SearchedText": "CSE of instr",
         "SearchKind": "default",
-        "ExpectInstructionIR": true,
         "AddTextMark": true,
         "TextMarkBorderColor": "#74d95f",
         "TextMarkBorderWeight": 1.5,
@@ -94,6 +93,29 @@
       {
         "SearchedText": "Tuples \\w+ SSA Optimizer - \\w+ pass",
         "SearchKind": "regex"
+      }
+    ],
+    "RemarkHighlightingList": [
+      {
+        "SearchedText": "Found",
+        "SearchKind": "default",
+        "UseBoldText": false,
+        "UseItalicText": false,
+        "TextColor": "#570080"
+      },
+      {
+        "SearchedText": "not aliased",
+        "SearchKind": "caseInsensitive",
+        "UseBoldText": true,
+        "UseItalicText": false,
+        "TextColor": "#007520"
+      },
+      {
+        "SearchedText": "killed",
+        "SearchKind": "caseInsensitive",
+        "UseBoldText": true,
+        "UseItalicText": false,
+        "TextColor": "#ab0000"
       }
     ]
   }
