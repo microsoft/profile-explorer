@@ -321,9 +321,28 @@ namespace IRExplorerUI.Document {
 
             var items = new List<Tuple<TreeViewItem, int>>();
             var highlightingList = Session.CompilerInfo.RemarkProvider.RemarkTextHighlighting;
+            Remark prevRemark = null;
 
             foreach (var remark in context.Remarks) {
                 var line = remark.RemarkLocation.Line;
+
+                if (prevRemark != null) {
+                    var prevLine = prevRemark.RemarkLocation.Line + 1;
+
+                    //? If there is a context between the remarks,
+                    //? only the text that is not included in the children should be added
+                    // remark 1
+                    //    other text
+                    // context 1
+                    //    other text
+                    // context 2
+                    //    other text
+                    // remark2
+
+                    ExtractOutputTextInRange(prevLine, line, outputTextLines, highlightingList, items);
+                }
+
+                prevRemark = remark;
 
                 if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
                     var tempTreeNode = new TreeViewItem() {
@@ -350,6 +369,15 @@ namespace IRExplorerUI.Document {
             ExtractOutputTextInRange(firstRegionStart, firstRegionEnd,
                                      outputTextLines, highlightingList, items);
 
+          
+
+            // Recursively add remarks from the child contexts.
+            foreach (var child in context.Children) {
+                var (childTreeNode, childFirstLine) =
+                    BuildContextRemarkTreeView(child, treeNodeMap, outputTextLines);
+                items.Add(new Tuple<TreeViewItem, int>(childTreeNode, childFirstLine));
+            }
+
             int secondRegionStart = Math.Max(firstRegionEnd,
                 context.Remarks.Count > 0 ? context.Remarks[^1].RemarkLocation.Line + 1 : context.StartLine);
             int secondRegionEnd = context.EndLine;
@@ -360,13 +388,6 @@ namespace IRExplorerUI.Document {
 
             ExtractOutputTextInRange(secondRegionStart, secondRegionEnd,
                                      outputTextLines, highlightingList, items);
-
-            // Recursively add remarks from the child contexts.
-            foreach (var child in context.Children) {
-                var (childTreeNode, childFirstLine) =
-                    BuildContextRemarkTreeView(child, treeNodeMap, outputTextLines);
-                items.Add(new Tuple<TreeViewItem, int>(childTreeNode, childFirstLine));
-            }
 
             // Sort by line number, so that remarks and sub-contexts
             // appear in the same order as in the output text.
@@ -595,7 +616,7 @@ namespace IRExplorerUI.Document {
         }
 
         private async Task UpdateContextTree(Remark remark, RemarkContext context) {
-            // The context can be a parent of the remark's context.
+            // Note that the context can also be a parent of the remark's context.
             string outputText = await Session.GetSectionPassOutputAsync(remark.Section.OutputBefore,
                                                                         remark.Section);
             var list = new List<Remark>();
@@ -790,7 +811,7 @@ namespace IRExplorerUI.Document {
             if (IsOutputTextVisible()) {
                 await UpdateOutputText(selectedRemark_);
             }
-            else if (IsContextTreeVisible()) {
+            else if (IsContextTreeVisible() && activeRemarkContext_ != null) {
                 await UpdateContextTree(selectedRemark_, activeRemarkContext_);
             }
         }
@@ -800,7 +821,6 @@ namespace IRExplorerUI.Document {
                 activeRemarkContext_.Parent == null) {
                 return;
             }
-
 
             activeRemarkContext_ = activeRemarkContext_.Parent;
             await UpdateContextTree(selectedRemark_, activeRemarkContext_);

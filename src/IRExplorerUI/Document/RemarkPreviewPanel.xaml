@@ -455,6 +455,7 @@
 
                 <TabControl
                     x:Name="RemarksTabControl"
+                    Padding="0"
                     SelectionChanged="TabControl_SelectionChanged"
                     TabStripPlacement="Bottom">
                     <TabItem x:Name="ContextTreeTabItem" Header="Context Tree">
