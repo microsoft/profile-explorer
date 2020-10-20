@@ -24,6 +24,7 @@ namespace IRExplorerUI.Compilers.UTC {
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
+            query.Data.AddInput("Mark only reachable", QueryValueKind.Bool, true);
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool, true);
             query.Data.AddInput("Show arrows", QueryValueKind.Bool, false);
 
