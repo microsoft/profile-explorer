@@ -228,25 +228,6 @@
                                 Text="P" />
                         </ToggleButton>
 
-
-                        <ToggleButton
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
-                            Background="#01FFFFFF"
-                            BorderBrush="{x:Null}"
-                            Click="Button_Click"
-                            IsChecked="{Binding Path=Settings.ShowOnlyContextRemarks}"
-                            ToolTip="Show only remarks associated with the current context">
-                            <TextBlock
-                                Margin="0,0,0,1"
-                                VerticalAlignment="Center"
-                                FontSize="14"
-                                FontWeight="Bold"
-                                IsHitTestVisible="False"
-                                Text="C" />
-                        </ToggleButton>
-
                         <TextBlock
                             Grid.Row="0"
                             Margin="2,0,2,0"
@@ -448,6 +429,18 @@
                                     Width="16"
                                     Height="16"
                                     Source="{StaticResource EyeIcon}" />
+                            </ToggleButton>
+                            <ToggleButton
+                                Width="20"
+                                VerticalAlignment="Center"
+                                Background="{x:Null}"
+                                BorderBrush="{x:Null}"
+                                IsChecked="{Binding FilterActiveContextRemarks, Mode=TwoWay}"
+                                ToolTip="Search remarks">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource SearchIcon}" />
                             </ToggleButton>
                         </StackPanel>
                     </DockPanel>
