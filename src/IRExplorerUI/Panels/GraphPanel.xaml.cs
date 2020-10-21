@@ -71,6 +71,7 @@ namespace IRExplorerUI {
         private bool delayRestoreState_;
 
         private IRDocument document_;
+        private string documentText_;
 
         private bool dragging_;
         private Point draggingStart_;
@@ -210,6 +211,7 @@ namespace IRExplorerUI {
             GraphViewer.HideGraph();
             graph_ = null;
             document_ = null;
+            documentText_ = null;
             section_ = null;
             hoveredNode_ = null;
             Utils.DisableControl(GraphViewer);
@@ -242,9 +244,10 @@ namespace IRExplorerUI {
             GraphViewer.Highlight(info);
         }
 
-        public void InitializeFromDocument(IRDocument doc) {
-            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: initialize with doc {ObjectTracker.Track(doc)}");
-            document_ = doc;
+        public void InitializeFromDocument(IRDocument document) {
+            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: initialize with doc {ObjectTracker.Track(document)}");
+            document_ = document;
+            documentText_ = null; // Loaded on-demand.
         }
 
         private CancelableTask CreateGraphLoadTask() {
@@ -632,7 +635,7 @@ namespace IRExplorerUI {
         private void NodeToolTip__Loaded(object sender, RoutedEventArgs e) {
             var node = nodeToolTip_.Tag as GraphNode;
             var previewer = Utils.FindChild<IRPreviewTooltip>(nodeToolTip_, "IRPreviewer");
-            previewer.InitializeFromDocument(document_);
+            previewer.InitializeFromDocument(document_, GetDocumentText());
 
             if (node.NodeInfo.ElementData is BlockIR block) {
                 previewer.PreviewedElement = block;
@@ -651,6 +654,14 @@ namespace IRExplorerUI {
                 nodeToolTip_.Height = previewer.ResizeForLines(lines);
                 previewer.UpdateView();
             }
+        }
+
+        private string GetDocumentText() {
+            if (documentText_ == null) {
+                documentText_ = document_.Text; // Cache text.
+            }
+
+            return documentText_;
         }
 
         private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {

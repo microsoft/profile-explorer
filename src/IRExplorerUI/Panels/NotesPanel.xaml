@@ -55,36 +55,26 @@
                         <ComboBoxItem Content="Section Notes" Tag="Section" />
                     </ComboBox>
 
-                    <Separator />
-
-                    <Image Source="{StaticResource SearchIcon}" />
-                    <TextBox
-                        Name="TextSearch"
-                        Width="220"
-                        Margin="4,0,0,0"
-                        HorizontalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        TabIndex="4"
-                        TextChanged="TextSearch_TextChanged"
-                        ToolTip="Filter text based on a string">
-                        <TextBox.InputBindings>
-                            <KeyBinding
-                                Key="Escape"
-                                Command="local:Command.ClearTextbox"
-                                CommandParameter="{Binding ElementName=TextSearch}" />
-                        </TextBox.InputBindings>
-                    </TextBox>
-                    <Button
-                        Command="local:Command.ClearTextbox"
-                        CommandParameter="{Binding ElementName=TextSearch}"
+                    <ToggleButton
+                        IsChecked="{Binding WordWrap, Mode=TwoWay}"
                         TabIndex="5"
-                        ToolTip="Reset search text">
+                        ToolTip="Word wrap output text">
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource ClearIcon}" />
-                    </Button>
+                            Source="{StaticResource WordWrapIcon}" />
+                    </ToggleButton>
+                    <Separator />
+
+                    <ToggleButton
+                        IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
+                        TabIndex="5"
+                        ToolTip="Search output text (Ctrl+F)">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource SearchIcon}" />
+                    </ToggleButton>
 
                 </ToolBar>
             </ToolBarTray>

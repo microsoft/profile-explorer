@@ -12,12 +12,10 @@ using ProtoBuf;
 namespace IRExplorerUI {
     [ProtoContract]
     public class NotesPanelState {
-        [ProtoMember(2)]
-        public string SearchText;
-        [ProtoMember(3)]
-        public bool ShowSectionNotes;
         [ProtoMember(1)]
         public string Text;
+        [ProtoMember(2)]
+        public bool ShowSectionNotes;
     }
 
     public class NotesPanelSettings {
@@ -54,8 +52,7 @@ namespace IRExplorerUI {
             string kindString = item.Tag as string;
             OnSessionSave();
 
-            showSectionText_ = kindString switch
-            {
+            showSectionText_ = kindString switch {
                 "Document" => false,
                 "Section" => true,
                 _ => showSectionText_
@@ -139,7 +136,6 @@ namespace IRExplorerUI {
         private void SaveState(IRTextSection section, IRDocument document) {
             var state = new NotesPanelState();
             state.Text = TextView.Text;
-            state.SearchText = TextSearch.Text;
             state.ShowSectionNotes = showSectionText_;
             var data = StateSerializer.Serialize(state, document.Function);
             Session.SavePanelState(data, this, section);
