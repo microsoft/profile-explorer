@@ -261,6 +261,28 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        public bool ShowSearchPanel {
+            get {
+                if(IsContextTreeVisible()) {
+                    return false;
+                }
+                else {
+                    return TextView.SearchPanelVisible;
+                }
+            }
+            set {
+                if(IsContextTreeVisible()) {
+
+                }
+                else {
+                    if(value != TextView.SearchPanelVisible) {
+                        TextView.SearchPanelVisible = value;
+                        NotifyPropertyChanged(nameof(ShowSearchPanel));
+                    }
+                }
+            }
+        }
+
         public FunctionIR Function { get; set; }
         public IRTextSection Section { get; set; }
         public ISession Session { get; set; }
