@@ -435,7 +435,7 @@
                                 VerticalAlignment="Center"
                                 Background="{x:Null}"
                                 BorderBrush="{x:Null}"
-                                IsChecked="{Binding FilterActiveContextRemarks, Mode=TwoWay}"
+                                IsChecked="{Binding ShowSearchPanel, Mode=TwoWay}"
                                 ToolTip="Search remarks">
                                 <Image
                                     Width="16"
