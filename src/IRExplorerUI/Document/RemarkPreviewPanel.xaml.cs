@@ -319,30 +319,40 @@ namespace IRExplorerUI.Document {
                 treeNodeMap[context] = treeNode;
             }
 
-            var items = new List<Tuple<TreeViewItem, int>>();
-            var highlightingList = Session.CompilerInfo.RemarkProvider.RemarkTextHighlighting;
-            Remark prevRemark = null;
+            // Combine the remarks and child contexts into one list and sort it by start line.
+            var inputItems = new List<Tuple<object, int, int>>(context.Remarks.Count + context.Children.Count);
 
             foreach (var remark in context.Remarks) {
-                var line = remark.RemarkLocation.Line;
+                inputItems.Add(new Tuple<object, int, int>(remark, remark.RemarkLocation.Line, 
+                                                           remark.RemarkLocation.Line));
+            }
+
+            foreach (var child in context.Children) {
+                inputItems.Add(new Tuple<object, int, int>(child, child.StartLine, child.EndLine));
+            }
+
+            inputItems.Sort((a, b) => a.Item2 - b.Item2);
+
+            // Append all remarks in the context to the result list.
+            var items = new List<Tuple<TreeViewItem, int>>();
+            var highlightingList = Session.CompilerInfo.RemarkProvider.RemarkTextHighlighting;
+            Tuple<object, int, int> prevRemark = null;
+
+            foreach (var item in inputItems) {
+                var line = item.Item2; // Start line.
 
                 if (prevRemark != null) {
-                    var prevLine = prevRemark.RemarkLocation.Line + 1;
-
-                    //? If there is a context between the remarks,
-                    //? only the text that is not included in the children should be added
-                    // remark 1
-                    //    other text
-                    // context 1
-                    //    other text
-                    // context 2
-                    //    other text
-                    // remark2
-
+                    // Add text between consecutive remarks or the end
+                    // of a child context and a remark.
+                    var prevLine = prevRemark.Item3 + 1; // End line.
                     ExtractOutputTextInRange(prevLine, line, outputTextLines, highlightingList, items);
                 }
 
-                prevRemark = remark;
+                prevRemark = item;
+
+                if(!(item.Item1 is Remark remark)) {
+                    continue;
+                }
 
                 if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
                     var tempTreeNode = new TreeViewItem() {
@@ -360,16 +370,14 @@ namespace IRExplorerUI.Document {
             // Include text preceding the first remark or child context,
             // and following the last remark or child context.
             int firstRegionStart = context.StartLine;
-            int firstRegionEnd = context.Remarks.Count > 0 ? context.Remarks[0].RemarkLocation.Line : context.EndLine;
-
+            int firstRegionEnd = context.Remarks.Count > 0 ? context.Remarks[0].RemarkLocation.Line :
+                                                             context.EndLine;
             if (context.Children.Count > 0) {
                 firstRegionEnd = Math.Min(firstRegionEnd, context.Children[0].StartLine);
             }
 
             ExtractOutputTextInRange(firstRegionStart, firstRegionEnd,
                                      outputTextLines, highlightingList, items);
-
-          
 
             // Recursively add remarks from the child contexts.
             foreach (var child in context.Children) {
@@ -378,8 +386,10 @@ namespace IRExplorerUI.Document {
                 items.Add(new Tuple<TreeViewItem, int>(childTreeNode, childFirstLine));
             }
 
-            int secondRegionStart = Math.Max(firstRegionEnd,
-                context.Remarks.Count > 0 ? context.Remarks[^1].RemarkLocation.Line + 1 : context.StartLine);
+            // Add text found after the last remark in the context.
+            int secondRegionStart = Math.Max(firstRegionEnd, context.Remarks.Count > 0 ? 
+                                                             context.Remarks[^1].RemarkLocation.Line + 1 : 
+                                                             context.StartLine);
             int secondRegionEnd = context.EndLine;
 
             if (context.Children.Count > 0) {
