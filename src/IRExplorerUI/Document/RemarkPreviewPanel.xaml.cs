@@ -92,7 +92,7 @@ namespace IRExplorerUI.Document {
                     }
                 }
 
-                if(matchingQuery != null) {
+                if (matchingQuery != null) {
                     if (index < matchResult.Value.Offset) {
                         textBlock.Inlines.Add(text.Substring(index, matchResult.Value.Offset - index));
                     }
@@ -212,6 +212,9 @@ namespace IRExplorerUI.Document {
         private bool filterActiveContextRemarks_;
         private Popup colorPopup_;
         private Remark selectedRemark_;
+        private bool contextSearchPanelVisible_;
+        private SearchInfo contextSearchInfo_;
+        private List<TreeViewItem> contextSearchResults_;
 
         public RemarkPreviewPanel() {
             InitializeComponent();
@@ -220,6 +223,14 @@ namespace IRExplorerUI.Document {
 
             //? TODO: Add options
             filterActiveContextRemarks_ = true;
+
+            // Setup search panel for context tree.
+            ContextSearchPanel.UseAutoComplete = false;
+            RemarkTextView.UseAutoComplete = false;
+            ContextSearchPanel.SearchChanged += ContextSearchPanel_SearchChanged;
+            ContextSearchPanel.CloseSearchPanel += ContextSearchPanel_CloseSearchPanel;
+            ContextSearchPanel.NavigateToNextResult += ContextSearchPanel_NavigateToResult;
+            ContextSearchPanel.NavigateToPreviousResult += ContextSearchPanel_NavigateToResult;
         }
 
         public bool ShowPreview {
@@ -263,20 +274,32 @@ namespace IRExplorerUI.Document {
 
         public bool ShowSearchPanel {
             get {
-                if(IsContextTreeVisible()) {
-                    return false;
+                if (IsContextTreeVisible()) {
+                    return contextSearchPanelVisible_;
                 }
                 else {
-                    return TextView.SearchPanelVisible;
+                    return RemarkTextView.SearchPanelVisible;
                 }
             }
             set {
-                if(IsContextTreeVisible()) {
+                if (IsContextTreeVisible()) {
+                    if (value != contextSearchPanelVisible_) {
+                        contextSearchPanelVisible_ = value;
+                        ContextSearchPanel.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
 
+                        if (value) {
+                            ContextSearchPanel.Show();
+                        }
+                        else {
+                            ContextSearchPanel.Hide();
+                        }
+
+                        NotifyPropertyChanged(nameof(ShowSearchPanel));
+                    }
                 }
                 else {
-                    if(value != TextView.SearchPanelVisible) {
-                        TextView.SearchPanelVisible = value;
+                    if (value != RemarkTextView.SearchPanelVisible) {
+                        RemarkTextView.SearchPanelVisible = value;
                         NotifyPropertyChanged(nameof(ShowSearchPanel));
                     }
                 }
@@ -293,7 +316,7 @@ namespace IRExplorerUI.Document {
 
         private void UpdateRemarkList() {
             RemarkList.ItemsSource = null;
-            ContextRemarkTree.Items.Clear();
+            RemarkContextTree.Items.Clear();
 
             var remarkTag = element_.GetTag<RemarkTag>();
 
@@ -342,10 +365,13 @@ namespace IRExplorerUI.Document {
             }
 
             // Combine the remarks and child contexts into one list and sort it by start line.
+            // This then allows adding the non-remark text found between remarks, but not part
+            // part of a child context (they would be added too when processing the child context,
+            // ending up with duplicate text lines).
             var inputItems = new List<Tuple<object, int, int>>(context.Remarks.Count + context.Children.Count);
 
             foreach (var remark in context.Remarks) {
-                inputItems.Add(new Tuple<object, int, int>(remark, remark.RemarkLocation.Line, 
+                inputItems.Add(new Tuple<object, int, int>(remark, remark.RemarkLocation.Line,
                                                            remark.RemarkLocation.Line));
             }
 
@@ -372,8 +398,8 @@ namespace IRExplorerUI.Document {
 
                 prevRemark = item;
 
-                if(!(item.Item1 is Remark remark)) {
-                    continue;
+                if (!(item.Item1 is Remark remark)) {
+                    continue; // Child context.
                 }
 
                 if (parentDocument_.IsAcceptedRemark(remark, Section, remarkFilter_.Settings)) {
@@ -409,8 +435,8 @@ namespace IRExplorerUI.Document {
             }
 
             // Add text found after the last remark in the context.
-            int secondRegionStart = Math.Max(firstRegionEnd, context.Remarks.Count > 0 ? 
-                                                             context.Remarks[^1].RemarkLocation.Line + 1 : 
+            int secondRegionStart = Math.Max(firstRegionEnd, context.Remarks.Count > 0 ?
+                                                             context.Remarks[^1].RemarkLocation.Line + 1 :
                                                              context.StartLine);
             int secondRegionEnd = context.EndLine;
 
@@ -427,30 +453,41 @@ namespace IRExplorerUI.Document {
             Tuple<TreeViewItem, int> prevItem = null;
 
             foreach (var item in items) {
+                // Ignore multiple remarks on the same line.
+                // If this remark represents an entire instruction and the other one
+                // is one of its operands, pick the instruction remark.
+                //? TODO: Probably the remark provider shouldn't create the operand remarks at all in this case
                 if (prevItem != null && prevItem.Item2 == item.Item2) {
-                    continue; // Ignore multiple remarks on the same line.
+                    if (prevItem.Item1.Tag is Remark prevItemRemark &&
+                        item.Item1.Tag is Remark itemRemark) {
+                        if (itemRemark.OutputElements[0] is InstructionIR &&
+                            !(prevItemRemark.OutputElements[0] is InstructionIR)) {
+                            treeNode.Items.Remove(prevItem.Item1);
+                            treeNode.Items.Add(item.Item1);
+                        }
+                    }
+                }
+                else {
+                    treeNode.Items.Add(item.Item1);
                 }
 
-                treeNode.Items.Add(item.Item1);
                 prevItem = item;
             }
 
             return (treeNode, context.StartLine);
         }
 
-        
-
         private void TempTreeNode_Selected(object sender, RoutedEventArgs e) {
-            var remark = (ContextRemarkTree.SelectedItem as TreeViewItem)?.Tag as Remark;
+            var remark = (RemarkContextTree.SelectedItem as TreeViewItem)?.Tag as Remark;
 
             if (remark != null) {
                 RemarkChanged?.Invoke(this, remark);
             }
         }
 
-        private static void ExtractOutputTextInRange(int prevLine, int line, string[] outputTextLines,
-                                                     List<RemarkTextHighlighting> highlightingList,
-                                                     List<Tuple<TreeViewItem, int>> items) {
+        private void ExtractOutputTextInRange(int prevLine, int line, string[] outputTextLines,
+                                              List<RemarkTextHighlighting> highlightingList,
+                                              List<Tuple<TreeViewItem, int>> items) {
             for (int k = prevLine; k < line; k++) {
                 var lineText = outputTextLines[k];
 
@@ -466,6 +503,88 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        private TextBlock ApplyTextLineSearch(TextBlock textBlock, SearchInfo searchInfo) {
+            List<Inline> newInlines = null;
+
+            foreach (var element in textBlock.Inlines) {
+                if (element is Run run) {
+                    var searchResults = TextSearcher.AllIndexesOf(run.Text, searchInfo.SearchedText, 0,
+                                                                  searchInfo.SearchKind);
+                    if (searchResults == null || searchResults.Count == 0) {
+                        if (newInlines != null) {
+                            // A new text block is being made, append to it.
+                            newInlines.Add(element);
+                        }
+                        continue;
+                    }
+
+                    if (newInlines == null) {
+                        // Create a new text block that will have the highlighted searched text.
+                        // Copy all elements that were skipped until now.
+                        newInlines = new List<Inline>(textBlock.Inlines.Count);
+                        var prevElement = textBlock.Inlines.FirstInline;
+
+                        while (prevElement != element) {
+                            newInlines.Add(prevElement);
+                            prevElement = prevElement.NextInline;
+                        }
+                    }
+
+                    int previousOffset = 0;
+
+                    foreach (var searchResult in searchResults) {
+                        if (searchResult.Offset > previousOffset) {
+                            // Append text before the searched text.
+                            previousOffset = AppendTextInRange(newInlines, run.Text,
+                                                               searchResult.Offset, previousOffset);
+                        }
+
+                        var searchText = run.Text.Substring(searchResult.Offset, searchResult.Length);
+                        previousOffset += searchText.Length;
+
+                        newInlines.Add(new Run(searchText) {
+                            Background = ColorBrushes.GetBrush(Colors.Khaki) //? TODO: Customize
+                        });
+                    }
+
+                    if (previousOffset < run.Text.Length) {
+                        AppendTextInRange(newInlines, run.Text,
+                                          run.Text.Length, previousOffset);
+                    }
+                }
+                else if (newInlines != null) {
+                    // A new text block is being made, append to it.
+                    newInlines.Add(element);
+                }
+            }
+
+            if (newInlines != null) {
+                var markedTextBlock = CloneEmptyTextBlock(textBlock);
+                markedTextBlock.Inlines.AddRange(newInlines);
+                return markedTextBlock;
+            }
+
+            return textBlock;
+        }
+
+        private int AppendTextInRange(List<Inline> newInlines, string text, int offset, int previousOffset) {
+            int distance = offset - previousOffset;
+            var rangeText = text.Substring(previousOffset, distance);
+            newInlines.Add(new Run(rangeText));
+            return previousOffset + distance;
+        }
+
+        private TextBlock CloneEmptyTextBlock(TextBlock textBlock) {
+            var copyTextBlock = new TextBlock();
+            copyTextBlock.FontFamily = textBlock.FontFamily;
+            copyTextBlock.Foreground = textBlock.Foreground;
+            copyTextBlock.Background = textBlock.Background;
+            copyTextBlock.FontWeight = textBlock.FontWeight;
+            copyTextBlock.FontSize = textBlock.FontSize;
+            copyTextBlock.FontStyle = textBlock.FontStyle;
+            return copyTextBlock;
+        }
+
         private void BuildContextRemarkTreeView(RemarkContext rootContext, string outputText = null) {
             var treeNodeMap = new Dictionary<RemarkContext, TreeViewItem>();
 
@@ -473,12 +592,11 @@ namespace IRExplorerUI.Document {
             var outputTextLines = outputText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             var (rootTreeNode, _) = BuildContextRemarkTreeView(rootContext, treeNodeMap, outputTextLines);
 
-            ContextRemarkTree.Items.Clear();
-            ContextRemarkTree.Items.Add(rootTreeNode);
-            ExpandAllTreeViewNodes(ContextRemarkTree);
+            RemarkContextTree.Items.Clear();
+            RemarkContextTree.Items.Add(rootTreeNode);
+            ExpandAllTreeViewNodes(RemarkContextTree);
         }
 
-        //? TODO: Should be async and run the collection on another thread
         private Remark CollectContextTreeRemarks(RemarkContext rootContext, List<Remark> list,
                                                  bool filterDuplicates) {
             Remark firstSectionRemark = null;
@@ -519,7 +637,7 @@ namespace IRExplorerUI.Document {
 
         private void ExpandAllTreeViewNodes(TreeViewItem rootItem) {
             foreach (object item in rootItem.Items) {
-                TreeViewItem treeItem = item as TreeViewItem;
+                var treeItem = item as TreeViewItem;
 
                 if (treeItem != null) {
                     ExpandAllTreeViewNodes(treeItem);
@@ -530,7 +648,7 @@ namespace IRExplorerUI.Document {
 
         private void ExpandAllTreeViewNodes(TreeView treeView) {
             foreach (object item in treeView.Items) {
-                TreeViewItem treeItem = (TreeViewItem)item;
+                var treeItem = (TreeViewItem)item;
 
                 if (treeItem != null) {
                     ExpandAllTreeViewNodes(treeItem);
@@ -541,11 +659,11 @@ namespace IRExplorerUI.Document {
 
         private bool SelectTreeViewNode(TreeViewItem rootItem, object tag) {
             foreach (object item in rootItem.Items) {
-                TreeViewItem treeItem = item as TreeViewItem;
+                var treeItem = item as TreeViewItem;
 
                 if (treeItem != null) {
                     if (treeItem.Tag == tag) {
-                        treeItem.IsSelected = true;
+                        SelectTreeViewNode(treeItem);
                         return true;
                     }
 
@@ -558,9 +676,14 @@ namespace IRExplorerUI.Document {
             return false;
         }
 
+        private void SelectTreeViewNode(TreeViewItem treeItem) {
+            treeItem.IsSelected = true;
+            treeItem.BringIntoView();
+        }
+
         private void SelectTreeViewNode(TreeView treeView, object tag) {
             foreach (object item in treeView.Items) {
-                TreeViewItem treeItem = (TreeViewItem)item;
+                var treeItem = (TreeViewItem)item;
 
                 if (treeItem != null) {
                     if (treeItem.Tag == tag) {
@@ -576,6 +699,57 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        private void ResetContextTreeTextSearch() {
+            contextSearchInfo_ = null;
+            contextSearchResults_ = null;
+        }
+
+        private void ApplyContextTreeTextSearch(TreeView treeView, SearchInfo searchInfo) {
+            if (searchInfo == null || !searchInfo.HasSearchedText ||
+                searchInfo.SearchedText.Length < 2) {
+                return; // Search not enabled.
+            }
+
+            contextSearchInfo_ = searchInfo;
+            contextSearchResults_ = new List<TreeViewItem>();
+
+            foreach (object item in treeView.Items) {
+                var treeItem = (TreeViewItem)item;
+
+                if (treeItem != null) {
+                    ApplyContextTreeTextSearch(treeItem);
+                }
+            }
+
+            searchInfo.ResultCount = contextSearchResults_.Count;
+            searchInfo.CurrentResult = 0;
+
+            if(contextSearchResults_.Count > 0) {
+                SelectTreeViewNode(contextSearchResults_[0]);
+            }
+        }
+
+        private void ApplyContextTreeTextSearch(TreeViewItem rootItem) {
+            var textBlock = rootItem.Header as TextBlock;
+
+            if (textBlock != null) {
+                // Change formatting of the line if it contains the searched text.
+                var newTextBlock = ApplyTextLineSearch(textBlock, contextSearchInfo_);
+
+                if (newTextBlock != textBlock) {
+                    rootItem.Header = newTextBlock;
+                    contextSearchResults_.Add(rootItem);
+                }
+            }
+
+            foreach (object item in rootItem.Items) {
+                var treeItem = item as TreeViewItem;
+
+                if (treeItem != null) {
+                    ApplyContextTreeTextSearch(treeItem);
+                }
+            }
+        }
 
         private ListRemarkEx AppendAcceptedRemark(List<ListRemarkEx> list, Remark remark) {
             string sectionName = Session.CompilerInfo.NameProvider.GetSectionName(remark.Section);
@@ -588,25 +762,25 @@ namespace IRExplorerUI.Document {
         private void AccountForRemarkKind(Remark remark) {
             switch (remark.Kind) {
                 case RemarkKind.Optimization: {
-                        remarkFilter_.HasOptimizationRemarks = true;
-                        break;
-                    }
+                    remarkFilter_.HasOptimizationRemarks = true;
+                    break;
+                }
                 case RemarkKind.Analysis: {
-                        remarkFilter_.HasAnalysisRemarks = true;
-                        break;
-                    }
+                    remarkFilter_.HasAnalysisRemarks = true;
+                    break;
+                }
                 case RemarkKind.Default: {
-                        remarkFilter_.HasDefaultRemarks = true;
-                        break;
-                    }
+                    remarkFilter_.HasDefaultRemarks = true;
+                    break;
+                }
                 case RemarkKind.Verbose: {
-                        remarkFilter_.HasVerboseRemarks = true;
-                        break;
-                    }
+                    remarkFilter_.HasVerboseRemarks = true;
+                    break;
+                }
                 case RemarkKind.Trace: {
-                        remarkFilter_.HasTraceRemarks = true;
-                        break;
-                    }
+                    remarkFilter_.HasTraceRemarks = true;
+                    break;
+                }
             }
         }
 
@@ -654,7 +828,7 @@ namespace IRExplorerUI.Document {
             var list = new List<Remark>();
             CollectContextTreeRemarks(context, list, true);
             BuildContextRemarkTreeView(context, outputText);
-            SelectTreeViewNode(ContextRemarkTree, remark);
+            SelectTreeViewNode(RemarkContextTree, remark);
 
             if (FilterActiveContextRemarks) {
                 NotifyRemarkContextChanged(context, list);
@@ -688,7 +862,6 @@ namespace IRExplorerUI.Document {
 
             Element = element;
             UpdateSize();
-
         }
 
         private void RemarkList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e) {
@@ -828,11 +1001,10 @@ namespace IRExplorerUI.Document {
 
         private async Task UpdateOutputText(Remark remark) {
             string outputText = await Session.GetSectionPassOutputAsync(remark.Section.OutputBefore,
-                                                                    remark.Section);
-
-            await TextView.SetText(outputText, Function, Section, parentDocument_.TextView, Session);
-            TextView.SelectText(remark.RemarkLocation.Offset, remark.RemarkText.Length,
-                                remark.RemarkLocation.Line);
+                                                                        remark.Section);
+            await RemarkTextView.SetText(outputText, Function, Section, parentDocument_.TextView, Session);
+            RemarkTextView.SelectText(remark.RemarkLocation.Offset, remark.RemarkText.Length,
+                                      remark.RemarkLocation.Line);
         }
 
         private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e) {
@@ -840,6 +1012,11 @@ namespace IRExplorerUI.Document {
                 return;
             }
 
+            await UpdateRemarkView();
+            NotifyPropertyChanged(nameof(ShowSearchPanel));
+        }
+
+        private async Task UpdateRemarkView() {
             if (IsOutputTextVisible()) {
                 await UpdateOutputText(selectedRemark_);
             }
@@ -857,5 +1034,25 @@ namespace IRExplorerUI.Document {
             activeRemarkContext_ = activeRemarkContext_.Parent;
             await UpdateContextTree(selectedRemark_, activeRemarkContext_);
         }
+
+        private async void ContextSearchPanel_CloseSearchPanel(object sender, SearchInfo e) {
+            ShowSearchPanel = false;
+            ResetContextTreeTextSearch();
+            await UpdateRemarkView();
+        }
+
+        private async void ContextSearchPanel_SearchChanged(object sender, SearchInfo e) {
+            await UpdateRemarkView();
+            ApplyContextTreeTextSearch(RemarkContextTree, e);
+        }
+
+        private void ContextSearchPanel_NavigateToResult(object sender, SearchInfo e) {
+            if (contextSearchResults_ == null) {
+                return;
+            }
+
+            SelectTreeViewNode(contextSearchResults_[e.CurrentResult]);
+        }
+
     }
 }

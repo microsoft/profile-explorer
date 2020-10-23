@@ -12,8 +12,14 @@
     mc:Ignorable="d">
 
     <UserControl.CommandBindings>
-        <CommandBinding Command="local:SearchCommand.NextResult" Executed="NextResultExecuted" />
-        <CommandBinding Command="local:SearchCommand.PreviousResult" Executed="PreviousResultExecuted" />
+        <CommandBinding
+            CanExecute="NextResultCanExecute"
+            Command="local:SearchCommand.NextResult"
+            Executed="NextResultExecuted" />
+        <CommandBinding
+            CanExecute="PreviousResultCanExecute"
+            Command="local:SearchCommand.PreviousResult"
+            Executed="PreviousResultExecuted" />
         <CommandBinding Command="local:SearchCommand.ClearText" Executed="ClearTextExecuted" />
         <CommandBinding Command="local:SearchCommand.ToggleCaseSensitive" Executed="ToggleCaseSensitiveExecuted" />
         <CommandBinding Command="local:SearchCommand.ToggleWholeWord" Executed="ToggleWholeWordExecuted" />

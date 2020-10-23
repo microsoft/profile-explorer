@@ -39,7 +39,7 @@ namespace IRExplorerUI {
             DataContext = this;
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
             SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
-            SearchPanel.NaviateToPreviousResult += SearchPanel_NaviateToPreviousResult;
+            SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
             SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
         }
 
