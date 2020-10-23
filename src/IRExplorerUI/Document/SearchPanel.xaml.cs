@@ -43,6 +43,8 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        public bool HasSearchedText => !string.IsNullOrEmpty(searchedText_);
+
         public bool IsCaseInsensitive {
             get => kind_.HasFlag(TextSearchKind.CaseInsensitive);
             set {
@@ -175,13 +177,15 @@ namespace IRExplorerUI.Document {
 
         public SearchPanel() {
             InitializeComponent();
+            UseAutoComplete = true;
         }
 
         public SearchInfo SearchInfo => searchInfo_;
+        public bool UseAutoComplete { get; set; }
 
         public event EventHandler<SearchInfo> SearchChanged;
         public event EventHandler<SearchInfo> NavigateToNextResult;
-        public event EventHandler<SearchInfo> NaviateToPreviousResult;
+        public event EventHandler<SearchInfo> NavigateToPreviousResult;
         public event EventHandler<SearchInfo> CloseSearchPanel;
 
         public void Show(SearchInfo initialInfo = null, bool searchAll = false) {
@@ -190,10 +194,12 @@ namespace IRExplorerUI.Document {
         }
 
         public void Hide() {
-            var text = TextSearch.Text;
+            if (UseAutoComplete) {
+                var text = TextSearch.Text;
 
-            if (text.Trim().Length > 0) {
-                App.Settings.AddRecentTextSearch(text);
+                if (text.Trim().Length > 0) {
+                    App.Settings.AddRecentTextSearch(text);
+                }
             }
         }
 
@@ -236,7 +242,7 @@ namespace IRExplorerUI.Document {
         private void PreviousResultExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (searchInfo_.CurrentResult > 0) {
                 searchInfo_.CurrentResult--;
-                NaviateToPreviousResult?.Invoke(this, searchInfo_);
+                NavigateToPreviousResult?.Invoke(this, searchInfo_);
             }
         }
 
@@ -245,6 +251,14 @@ namespace IRExplorerUI.Document {
                 searchInfo_.CurrentResult++;
                 NavigateToNextResult?.Invoke(this, searchInfo_);
             }
+        }
+
+        private void PreviousResultCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = NavigateToPreviousResult != null;
+        }
+
+        private void NextResultCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = NavigateToNextResult != null;
         }
 
         private void ClearTextExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -270,10 +284,12 @@ namespace IRExplorerUI.Document {
         }
 
         private void TextSearch_Populating(object sender, PopulatingEventArgs e) {
-            var box = (AutoCompleteBox)sender;
-            box.ItemsSource = null;
-            box.ItemsSource = App.Settings.RecentTextSearches;
-            box.PopulateComplete();
+            if (UseAutoComplete) {
+                var box = (AutoCompleteBox)sender;
+                box.ItemsSource = null;
+                box.ItemsSource = App.Settings.RecentTextSearches;
+                box.PopulateComplete();
+            }
         }
 
         private void ToggleCaseSensitiveExecuted(object sender, ExecutedRoutedEventArgs e) {

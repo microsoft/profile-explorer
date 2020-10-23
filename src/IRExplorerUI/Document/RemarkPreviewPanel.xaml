@@ -452,22 +452,33 @@
                     SelectionChanged="TabControl_SelectionChanged"
                     TabStripPlacement="Bottom">
                     <TabItem x:Name="ContextTreeTabItem" Header="Context Tree">
-                        <TreeView
-                            x:Name="ContextRemarkTree"
-                            Grid.Row="1"
-                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                            BorderBrush="{x:Null}"
-                            BorderThickness="0,0,0,0"
-                            FontFamily="Consolas"
-                            ItemContainerStyle="{StaticResource RemarkTreeViewItemStyle}"
-                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            VirtualizingStackPanel.IsVirtualizing="False" />
+                        <DockPanel LastChildFill="True">
+                            <local:SearchPanel
+                                x:Name="ContextSearchPanel"
+                                Height="28"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Top"
+                                DockPanel.Dock="Top"
+                                Opacity="1"
+                                Visibility="Collapsed" />
+                            <TreeView
+                                x:Name="RemarkContextTree"
+                                Grid.Row="1"
+                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                BorderBrush="{x:Null}"
+                                BorderThickness="0,0,0,0"
+                                DockPanel.Dock="Bottom"
+                                FontFamily="Consolas"
+                                ItemContainerStyle="{StaticResource RemarkTreeViewItemStyle}"
+                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                VirtualizingStackPanel.IsVirtualizing="False" />
+                        </DockPanel>
                     </TabItem>
 
                     <TabItem x:Name="OutputTextTabItem" Header="Output Text">
                         <local:SearcheableIRDocument
-                            x:Name="TextView"
+                            x:Name="RemarkTextView"
                             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                             DockPanel.Dock="Bottom" />
                     </TabItem>

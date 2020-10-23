@@ -274,10 +274,6 @@ namespace IRExplorerUI.UTC {
                     continue;
                 }
 
-                //if (line.Contains("t508.i64<*495")) {
-                //    line = line;
-                //}
-
                 var parser = new UTCParser(line, null, null);
 
                 while (!parser.IsDone()) {

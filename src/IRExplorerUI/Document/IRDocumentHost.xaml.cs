@@ -153,7 +153,7 @@ namespace IRExplorerUI {
 
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
-            SearchPanel.NaviateToPreviousResult += SearchPanel_NaviateToPreviousResult;
+            SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
             SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
             SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
             Unloaded += IRDocumentHost_Unloaded;

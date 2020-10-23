@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -55,8 +56,13 @@ namespace IRExplorerUI.Document {
             DataContext = this;
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
             SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
-            SearchPanel.NaviateToPreviousResult += SearchPanel_NaviateToPreviousResult;
+            SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
             SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
+        }
+
+        public bool UseAutoComplete {
+            get => SearchPanel.UseAutoComplete;
+            set => SearchPanel.UseAutoComplete = value;
         }
 
         public void OnPropertyChange(string propertyname) {
@@ -86,6 +92,9 @@ namespace IRExplorerUI.Document {
                     info = SearchPanel.SearchInfo;
                 }
                 else {
+                    //? TODO: Should rather be an assert
+                    MessageBox.Show("SearchText without searchPanelVisible_, attach debugger");
+                    Utils.WaitForDebugger();
                     return;
                 }
             }

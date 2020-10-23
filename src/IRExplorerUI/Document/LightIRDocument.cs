@@ -74,7 +74,7 @@ namespace IRExplorerUI {
             elements_ = new List<IRElement>();
             elementStyle_ = new HighlightingStyle(Utils.ColorFromString("#FFFCDC"));
             hoverElementStyle_ = new HighlightingStyle(Utils.ColorFromString("#FFF487"));
-            searchResultStyle_ = new HighlightingStyle(Colors.Khaki);
+            searchResultStyle_ = new HighlightingStyle(Colors.Khaki);  //? TODO: Customize
             elementMarker_ = new ElementHighlighter(HighlighingType.Marked);
             hoverElementMarker_ = new ElementHighlighter(HighlighingType.Marked);
             searchResultMarker_ = new ElementHighlighter(HighlighingType.Marked);
@@ -358,7 +358,7 @@ namespace IRExplorerUI {
         }
 
         public async Task<List<TextSearchResult>> SearchText(SearchInfo info) {
-            if (string.IsNullOrEmpty(info.SearchedText)) {
+            if (!info.HasSearchedText) {
                 RestoreInitialText();
                 IsReadOnly = false;
                 initialTextLines_ = null;
