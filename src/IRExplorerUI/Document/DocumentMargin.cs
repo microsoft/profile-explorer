@@ -568,8 +568,7 @@ namespace IRExplorerUI {
             }
 
             foreach (var group in blockGroups_) {
-                DrawGroup(group, TextView, drawingContext, viewStart,
-                          viewEnd);
+                DrawGroup(group, TextView, drawingContext, viewStart, viewEnd);
             }
 
             // Draw bookmarks in two steps, first the unselected ones, then the selected ones.
@@ -599,7 +598,7 @@ namespace IRExplorerUI {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, result)) {
                     drawingContext.DrawRectangle(group.BackColor, null,
                                                  Utils.SnapRectToPixels(renderSize.Width - MarginWidth,
-                                                          rect.Top, MarginWidth, rect.Height));
+                                                          rect.Top, MarginWidth, rect.Height + 1));
                 }
             }
         }
@@ -679,9 +678,7 @@ namespace IRExplorerUI {
                     }
                 }
                 else {
-                    double nearbyExtraWidth =
-                        segment.IsNearby || segment.IsExpanded ? NearbyBookmarkExtraWidth : 0;
-
+                    double nearbyExtraWidth = segment.IsNearby || segment.IsExpanded ? NearbyBookmarkExtraWidth : 0;
                     bounds = Utils.SnapRectToPixels(0, y - 1, RenderSize.Width + nearbyExtraWidth, lineHeight);
                     drawingContext.DrawRectangle(style.BackColor, style.Border, bounds);
                 }
