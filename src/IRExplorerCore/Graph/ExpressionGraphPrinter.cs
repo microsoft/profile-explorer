@@ -262,7 +262,7 @@ namespace IRExplorerCore.Graph {
                 return "<Untitled>";
             }
 
-            string label = op.NameValue.ToString();
+            string label = op.Name;
 
             if (options_.PrintSSANumbers) {
                 var ssaNumber = ReferenceFinder.GetSSADefinitionId(op);
@@ -291,7 +291,7 @@ namespace IRExplorerCore.Graph {
                 string ssaNumber = "";
 
                 if (destOp.HasName && options_.PrintVariableNames) {
-                    variableName = destOp.NameValue.ToString();
+                    variableName = destOp.Name;
                 }
 
                 var ssaTag = destOp.GetTag<SSADefinitionTag>();

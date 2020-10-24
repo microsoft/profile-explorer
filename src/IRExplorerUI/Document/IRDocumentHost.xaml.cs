@@ -978,7 +978,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            string symbolName = element.NameValue.ToString();
+            string symbolName = element.Name;
             var searchInfo = new SearchInfo();
             searchInfo.SearchedText = symbolName;
             searchInfo.SearchAll = true;

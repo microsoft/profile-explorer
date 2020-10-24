@@ -18,9 +18,9 @@ namespace IRExplorerCore.IR {
         }
 
         public int Number { get; set; }
-        public List<TupleIR> Tuples { get; set; }
-        public List<BlockIR> Successors { get; set; }
-        public List<BlockIR> Predecessors { get; set; }
+        public List<TupleIR> Tuples { get; }
+        public List<BlockIR> Successors { get; }
+        public List<BlockIR> Predecessors { get; }
         public BlockLabelIR Label { get; set; }
         public FunctionIR Parent { get; set; }
 

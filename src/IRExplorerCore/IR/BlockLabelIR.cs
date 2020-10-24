@@ -6,15 +6,15 @@ using System;
 
 namespace IRExplorerCore.IR {
     public sealed class BlockLabelIR : TupleIR {
+        private ReadOnlyMemory<char> label_;
+
         public BlockLabelIR(IRElementId elementId, ReadOnlyMemory<char> name,
                             BlockIR parent = null) : base(elementId, TupleKind.Label, parent) {
-            Name = name;
+            label_ = name;
         }
 
-        public ReadOnlyMemory<char> Name { get; set; }
-
         public override bool HasName => true;
-        public override ReadOnlyMemory<char> NameValue => Name;
+        public override ReadOnlyMemory<char> NameValue => label_;
 
         public override void Accept(IRVisitor visitor) {
             visitor.Visit(this);
