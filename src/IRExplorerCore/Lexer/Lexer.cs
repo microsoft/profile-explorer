@@ -2,18 +2,20 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
+using System.Buffers;
 
 namespace IRExplorerCore.Lexer {
     public sealed class Lexer {
         private char current_; // The current character.
-        private bool hasReturnedToken_;
         private int line_;            // The current line.
         private int lineStart_;       // The position of the current line start.
-        private Token returnedToken_; // Token returned back to lexer.
+        private Stack<Token> returnedTokens_; // Tokens returned back to lexer.
         private CharSource source_;   // The text being analyzed.
 
         public Lexer(string text) {
             source_ = new CharSource(text);
+            returnedTokens_ = new Stack<Token>(8);
             current_ = source_.NextChar();
             line_ = 0;
             lineStart_ = 0;
@@ -297,17 +299,15 @@ namespace IRExplorerCore.Lexer {
         }
 
         public Token NextToken() {
-            if (hasReturnedToken_) {
-                hasReturnedToken_ = false;
-                return returnedToken_;
+            if (returnedTokens_.Count > 0) {
+                return returnedTokens_.Pop();
             }
 
             return ScanToken();
         }
 
         public void ReturnToken(Token token) {
-            returnedToken_ = token;
-            hasReturnedToken_ = true;
+            returnedTokens_.Push(token);
         }
 
         public Token PeekToken() {
@@ -316,18 +316,50 @@ namespace IRExplorerCore.Lexer {
             return token;
         }
 
-        public Token PeekToken2() {
-            var token = NextToken();
+        public Token PeekToken(int position) {
+            // Use a temp array to store the skipped token,
+            // which must be returned after reaching the desired one.
+            var tempArray = ArrayPool<Token>.Shared.Rent(position);
+            int tempIndex = 0;
 
-            if (!token.IsEOF()) {
-                var token2 = NextToken();
-                ReturnToken(token2);
-                ReturnToken(token);
-                return token2;
+            // Get to the token at the position (starting with 1)
+            // relative to the previously retrieved token.
+            var token = NextToken();
+            tempArray[tempIndex++] = token;
+
+            while (!token.IsEOF() && tempIndex < position) {
+                token = NextToken();
+                tempArray[tempIndex++] = token;
             }
 
-            ReturnToken(token);
+            // Return the tokens so they are are used by NextToken.
+            for (int i = tempIndex - 1; i >= 0; i--) {
+                ReturnToken(tempArray[i]);
+            }
+
+            ArrayPool<Token>.Shared.Return(tempArray);
             return token;
+        }
+
+        public delegate bool TokenAction(Token token);
+
+        public void PeekTokenWhile(TokenAction action, int maxLookupLength) {
+            var tempArray = ArrayPool<Token>.Shared.Rent(maxLookupLength);
+            int tempIndex = 0;
+            Token token;
+
+            do {
+                token = NextToken();
+                tempArray[tempIndex++] = token;
+            } while (!token.IsEOF() &&
+                     action(token) &&
+                     tempIndex < maxLookupLength);
+
+            for (int i = tempIndex - 1; i >= 0; i--) {
+                ReturnToken(tempArray[i]);
+            }
+
+            ArrayPool<Token>.Shared.Return(tempArray);
         }
     }
 }
