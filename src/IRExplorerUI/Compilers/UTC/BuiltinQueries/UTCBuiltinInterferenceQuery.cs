@@ -138,8 +138,9 @@ namespace IRExplorerUI.Compilers.UTC {
             var instrStyle = new HighlightingStyle(Brushes.Transparent, Pens.GetPen(Colors.Gray));
 
             foreach (var elem in func.AllElements) {
-                if (elem is OperandIR op && op.IsVariable && op.HasName &&
-                    op.NameValue.ToString() == interfSymbol) {
+                if (elem is OperandIR op && 
+                    op.IsVariable && op.HasName &&
+                    op.Name == interfSymbol) {
                     if (ShouldMarkElement(op, markingScope, queryBlock)) {
                         MarkElement(op, instrStyle, highlightingType, showArrows);
                     }

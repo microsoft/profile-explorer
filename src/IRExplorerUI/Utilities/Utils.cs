@@ -246,7 +246,7 @@ namespace IRExplorerUI {
             }
 
             if (block.HasLabel) {
-                return $"B{block.Number} ({block.Label.Name.ToString()})";
+                return $"B{block.Number} ({block.Label.Name})";
             }
 
             return $"B{block.Number}";

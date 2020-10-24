@@ -32,8 +32,8 @@ namespace IRExplorerCore.IR {
         public object Opcode { get; set; }
         public ReadOnlyMemory<char> OpcodeText { get; set; }
         public TextLocation OpcodeLocation { get; set; }
-        public List<OperandIR> Sources { get; set; }
-        public List<OperandIR> Destinations { get; set; }
+        public List<OperandIR> Sources { get; }
+        public List<OperandIR> Destinations { get; }
 
         public bool IsUnary => Kind == InstructionKind.Unary;
         public bool IsBinary => Kind == InstructionKind.Binary;
@@ -64,21 +64,6 @@ namespace IRExplorerCore.IR {
                        Sources, instruction.Sources) &&
                    EqualityComparer<List<OperandIR>>.Default.Equals(Destinations,
                                                                     instruction.Destinations);
-        }
-
-        public override int GetHashCode() {
-            int hashCode = -493299099;
-            hashCode = hashCode * -1521134295 + base.GetHashCode();
-            hashCode = hashCode * -1521134295 + Kind.GetHashCode();
-            hashCode = hashCode * -1521134295 + (Opcode?.GetHashCode() ?? 0);
-
-            hashCode = hashCode * -1521134295 +
-                       EqualityComparer<List<OperandIR>>.Default.GetHashCode(Sources);
-
-            hashCode = hashCode * -1521134295 +
-                       EqualityComparer<List<OperandIR>>.Default.GetHashCode(Destinations);
-
-            return hashCode;
         }
 
         public override string ToString() {

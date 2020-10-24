@@ -40,17 +40,6 @@ namespace IRExplorerCore.IR {
                    EqualityComparer<BlockIR>.Default.Equals(Parent, tuple.Parent);
         }
 
-        public override int GetHashCode() {
-            int hashCode = 1648775422;
-            hashCode = hashCode * -1521134295 + base.GetHashCode();
-            hashCode = hashCode * -1521134295 + Kind.GetHashCode();
-
-            hashCode = hashCode * -1521134295 +
-                       EqualityComparer<BlockIR>.Default.GetHashCode(Parent);
-
-            return hashCode;
-        }
-
         public override string ToString() {
             return $"tuple kind: {Kind}, id: {Id}";
         }

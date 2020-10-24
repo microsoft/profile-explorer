@@ -67,7 +67,7 @@ namespace IRExplorerCore.IR {
                     break;
                 }
                 case TupleKind.Label: {
-                    builder_.Append($"  label {((BlockLabelIR)tuple).Name}:");
+                    builder_.Append($"  label {tuple.Name}:");
                     break;
                 }
                 case TupleKind.Exception: {

@@ -21,10 +21,11 @@ namespace IRExplorerCore.IR {
             ReturnType = returnType;
         }
 
-        public string Name { get; set; }
+        public new string Name { get; set; }
+
         public TypeIR ReturnType { get; set; }
-        public List<OperandIR> Parameters { get; set; }
-        public List<BlockIR> Blocks { get; set; }
+        public List<OperandIR> Parameters { get; }
+        public List<BlockIR> Blocks { get; }
         public BlockIR EntryBlock => Blocks.Count > 0 ? Blocks[0] : null;
         public BlockIR ExitBlock => Blocks.Count > 0 ? Blocks[^1] : null;
 

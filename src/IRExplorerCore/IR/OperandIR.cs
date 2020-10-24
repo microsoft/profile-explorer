@@ -90,7 +90,7 @@ namespace IRExplorerCore.IR {
                     }
                 }
                 else if (Kind == OperandKind.LabelAddress) {
-                    return BlockLabelValue.Name;
+                    return BlockLabelValue.NameValue;
                 }
 
                 return (ReadOnlyMemory<char>)Value;
@@ -124,23 +124,6 @@ namespace IRExplorerCore.IR {
                    EqualityComparer<TypeIR>.Default.Equals(Type, operand.Type) &&
                    EqualityComparer<TupleIR>.Default.Equals(Parent, operand.Parent) &&
                    EqualityComparer<object>.Default.Equals(Value, operand.Value);
-        }
-
-        public override int GetHashCode() {
-            int hashCode = -886158275;
-            hashCode = hashCode * -1521134295 + base.GetHashCode();
-            hashCode = hashCode * -1521134295 + Kind.GetHashCode();
-
-            hashCode = hashCode * -1521134295 +
-                       EqualityComparer<TypeIR>.Default.GetHashCode(Type);
-
-            hashCode = hashCode * -1521134295 +
-                       EqualityComparer<TupleIR>.Default.GetHashCode(Parent);
-
-            hashCode = hashCode * -1521134295 +
-                       EqualityComparer<object>.Default.GetHashCode(Value);
-
-            return hashCode;
         }
 
         public override string ToString() {

@@ -234,7 +234,7 @@ namespace IRExplorerCore.Analysis {
                         var callTarget = irInfo_.GetCallTarget(instr);
 
                         if (callTarget != null && callTarget.IsAddress) {
-                            var calleeFuncName = callTarget.NameValue.ToString();
+                            var calleeFuncName = callTarget.Name;
                             var calleeNode = GetOrCreateNode(calleeFuncName);
 
                             var callsite = new CallSite(instr, calleeNode, funcNode);

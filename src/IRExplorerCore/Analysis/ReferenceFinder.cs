@@ -143,8 +143,7 @@ namespace IRExplorerCore.Analysis {
             }
 
             if (firstBlock.HasLabel && secondBlock.HasLabel) {
-                return firstBlock.Label.Name.Span.Equals(secondBlock.Label.Name.Span,
-                                                         StringComparison.Ordinal);
+                return firstBlock.Label.Name == secondBlock.Label.Name;
             }
 
             return false;
