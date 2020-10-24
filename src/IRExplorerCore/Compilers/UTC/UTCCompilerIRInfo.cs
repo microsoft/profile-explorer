@@ -3,6 +3,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
@@ -115,28 +116,9 @@ namespace IRExplorerCore.UTC {
 
             // Accept t100/tv100/hv100 as the same symbol.
             return opA.IsTemporary && opB.IsTemporary &&
-                   IsTemporaryVariableName(opA.NameValue, out var opAId) &&
-                   IsTemporaryVariableName(opB.NameValue, out var opBId) &&
+                   UTCParser.IsTemporary(opA.NameValue.Span, out var opAId) &&
+                   UTCParser.IsTemporary(opB.NameValue.Span, out var opBId) &&
                    opAId == opBId;
-        }
-
-        private static bool IsTemporaryVariableName(ReadOnlyMemory<char> name, out int tempNumber) {
-            tempNumber = 0;
-            int prefixLength = 0;
-
-            if (MemoryExtensions.StartsWith(name.Span, "tv".AsSpan()) ||
-                MemoryExtensions.StartsWith(name.Span, "hv".AsSpan())) {
-                prefixLength = 2;
-            }
-            else if (MemoryExtensions.StartsWith(name.Span, "t".AsSpan())) {
-                prefixLength = 1;
-            }
-            else {
-                return false;
-            }
-
-            var remainingName = name.Slice(prefixLength);
-            return int.TryParse(remainingName.Span, out tempNumber);
         }
     }
 }

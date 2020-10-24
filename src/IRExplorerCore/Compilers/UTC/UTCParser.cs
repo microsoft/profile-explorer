@@ -1,8 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#define USE_TRIE
+
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -134,6 +137,15 @@ namespace IRExplorerCore.UTC {
                 {"address", Keyword.Address}
             };
 
+#if USE_TRIE
+        static StringTrie<Keyword> keywordTrie_;
+
+        static UTCParser() {
+            keywordTrie_ = new StringTrie<Keyword>();
+            keywordTrie_.Build(keywordMap_);
+        }
+#endif
+
         private static readonly Dictionary<Keyword, TypeIR> keywordTypeMap_ =
             new Dictionary<Keyword, TypeIR> {
                 {Keyword.Int8, TypeIR.GetInt8()},
@@ -169,6 +181,12 @@ namespace IRExplorerCore.UTC {
             TokenKind.OpenParen, TokenKind.CloseParen,
             TokenKind.Hash, TokenKind.LineEnd
         };
+
+        private static readonly TokenKind[] NoSourceOperandsTokens = {
+            TokenKind.OpenParen, TokenKind.Hash, 
+            TokenKind.Tilde, TokenKind.LineEnd
+        };
+
         private Dictionary<int, BlockIR> blockMap_;
         private Dictionary<long, IRElement> elementAddressMap_;
 
@@ -251,7 +269,7 @@ namespace IRExplorerCore.UTC {
             }
 
             var newBlock = new BlockIR(nextElementId_, blockNumber, function);
-            blockMap_.Add(blockNumber, newBlock);
+            blockMap_[blockNumber] = newBlock;
             return newBlock;
         }
 
@@ -288,7 +306,7 @@ namespace IRExplorerCore.UTC {
                 SetTextRange(label);
             }
 
-            labelMap_.Add(nameString, label);
+            labelMap_[nameString] = label;
             return label;
         }
 
@@ -298,7 +316,7 @@ namespace IRExplorerCore.UTC {
             }
 
             value = new SSADefinitionTag(id);
-            ssaDefinitionMap_.Add(id, value);
+            ssaDefinitionMap_[id] = value;
             return value;
         }
 
@@ -883,8 +901,7 @@ namespace IRExplorerCore.UTC {
                 if (isDestList && IsEqual()) {
                     break; // Handles the case of no dest. operands.
                 }
-                else if (IsAnyToken(TokenKind.OpenParen, TokenKind.Hash, TokenKind.Tilde,
-                                    TokenKind.LineEnd)) {
+                else if (IsAnyToken(NoSourceOperandsTokens)) {
                     break; // Handles the case of no source operands.
                 }
 
@@ -1183,7 +1200,7 @@ namespace IRExplorerCore.UTC {
             var opName = TokenData();
             var opKind = OperandKind.Variable;
 
-            if (IsTemporary(TokenStringData())) {
+            if (IsTemporary(TokenStringData(), out _)) {
                 opKind = OperandKind.Temporary;
             }
 
@@ -1405,9 +1422,15 @@ namespace IRExplorerCore.UTC {
 
         private Keyword TokenKeyword() {
             if (current_.IsIdentifier()) {
+#if USE_TRIE
+                if(keywordTrie_.TryGetValue(TokenStringData(), out var keyword)) {
+                    return keyword;
+                }
+#else
                 if (keywordMap_.TryGetValue(TokenString(), out var keyword)) {
                     return keyword;
                 }
+#endif
             }
 
             return Keyword.None;
@@ -1476,7 +1499,7 @@ namespace IRExplorerCore.UTC {
             }
         }
 
-        private bool IsTemporary(ReadOnlySpan<char> name) {
+        public static bool IsTemporary(ReadOnlySpan<char> name, out int tempNumber) {
             int prefixLength = 0;
 
             if (name.StartsWith("tv".AsSpan()) || name.StartsWith("hv".AsSpan())) {
@@ -1486,7 +1509,8 @@ namespace IRExplorerCore.UTC {
                 prefixLength = 1;
             }
 
-            return int.TryParse(name.Slice(prefixLength), out _);
+            return int.TryParse(name.Slice(prefixLength), NumberStyles.Integer,
+                                NumberFormatInfo.InvariantInfo, out tempNumber);
         }
 
     }

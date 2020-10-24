@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -31,12 +32,14 @@ namespace IRExplorerCore {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool TokenIntNumber(out int value) {
-            return int.TryParse(TokenStringData(), out value);
+            return int.TryParse(TokenStringData(), NumberStyles.Integer,
+                                NumberFormatInfo.InvariantInfo, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool TokenLongIntNumber(out long value) {
-            return long.TryParse(TokenStringData(), out value);
+            return long.TryParse(TokenStringData(), NumberStyles.Integer,
+                                 NumberFormatInfo.InvariantInfo, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
