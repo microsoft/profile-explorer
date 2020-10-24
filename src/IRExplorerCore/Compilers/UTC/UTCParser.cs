@@ -82,7 +82,7 @@ namespace IRExplorerCore.UTC {
         }
     }
 
-    public sealed class UTCParser {
+    public sealed class UTCParser : ParserBase {
         private static Dictionary<string, Keyword> keywordMap_ =
             new Dictionary<string, Keyword> {
                 {"ENTRY", Keyword.Entry},
@@ -170,16 +170,13 @@ namespace IRExplorerCore.UTC {
             TokenKind.Hash, TokenKind.LineEnd
         };
         private Dictionary<int, BlockIR> blockMap_;
-        private Token current_;
         private Dictionary<long, IRElement> elementAddressMap_;
 
         private ParsingErrorHandler errorHandler_;
         private Dictionary<string, BlockLabelIR> labelMap_;
-        private Lexer.Lexer lexer_;
         private Dictionary<int, string> lineMetadataMap_;
         private int nextBlockNumber;
         private IRElementId nextElementId_;
-        private Token previous_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
 
         public UTCParser(string text, ParsingErrorHandler errorHandler,
@@ -210,289 +207,6 @@ namespace IRExplorerCore.UTC {
             }
 
             return function;
-        }
-
-        public bool IsDone() {
-            return current_.IsEOF();
-        }
-
-        public void SkipCurrentToken() {
-            SkipToken();
-        }
-
-        private void ReportError(TokenKind expectedToken, string message = "") {
-            errorHandler_?.HandleError(current_.Location, expectedToken, current_, message);
-        }
-
-        private int LocationDistance(Token startToken) {
-            if (current_.Location.Offset != startToken.Location.Offset) {
-                return previous_.Location.Offset -
-                       startToken.Location.Offset +
-                       previous_.Length;
-            }
-
-            return startToken.Length;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TokenIntNumber(out int value) {
-            return int.TryParse(TokenStringData(), out value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TokenLongIntNumber(out long value) {
-            return long.TryParse(TokenStringData(), out value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TokenFloatNumber(out double value) {
-            return double.TryParse(TokenStringData(), out value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private string TokenString() {
-            return current_.Data.ToString();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ReadOnlySpan<char> TokenStringData() {
-            return current_.Data.Span;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private ReadOnlyMemory<char> TokenData() {
-            return current_.Data;
-        }
-
-        private Keyword TokenKeyword() {
-            if (current_.IsIdentifier()) {
-                if (keywordMap_.TryGetValue(TokenString(), out var keyword)) {
-                    return keyword;
-                }
-            }
-
-            return Keyword.None;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsKeyword() {
-            return TokenKeyword() != Keyword.None;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsOpcode() {
-            return IsIdentifier() && UTCOpcodes.IsOpcode(TokenString());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsKeyword(Keyword kind) {
-            return TokenKeyword() == kind;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SkipToken() {
-            previous_ = current_;
-            current_ = lexer_.NextToken();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool ExpectAndSkipToken(TokenKind kind) {
-            if (current_.Kind == kind) {
-                SkipToken();
-                return true;
-            }
-
-            ReportError(kind, "Failed ExpectAndSkipToken");
-            return false;
-        }
-
-        private bool SkipOptionalToken(TokenKind kind) {
-            if (current_.Kind == kind) {
-                SkipToken();
-                return true;
-            }
-
-            return false;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool ExpectAndSkipKeyword(Keyword keyword) {
-            if (TokenKeyword() == keyword) {
-                SkipToken();
-                return true;
-            }
-
-            ReportError(TokenKind.Identifier, "Failed ExpectAndSkipKeyword");
-            return false;
-        }
-
-        private bool SkipToAnyKeyword(params Keyword[] keywords) {
-            while (!IsLineEnd()) {
-                var current = TokenKeyword();
-
-                if (current != Keyword.None && Array.IndexOf(keywords, current) != -1) {
-                    return true;
-                }
-
-                SkipToken();
-            }
-
-            return false;
-        }
-
-        private bool SkipToToken(TokenKind kind) {
-            while (!IsLineEnd()) {
-                if (TokenIs(kind)) {
-                    return true;
-                }
-
-                SkipToken();
-            }
-
-            return false;
-        }
-
-        private bool SkipToAnyToken(params TokenKind[] tokens) {
-            while (!IsLineEnd()) {
-                if (IsAnyToken(tokens)) {
-                    return true;
-                }
-
-                SkipToken();
-            }
-
-            return false;
-        }
-
-        private bool SkipAfterToken(TokenKind kind) {
-            while (!IsLineEnd()) {
-                if (TokenIs(kind)) {
-                    SkipToken();
-                    return true;
-                }
-
-                SkipToken();
-            }
-
-            return false;
-        }
-
-        private void SkipToLineEnd() {
-            while (!IsLineEnd()) {
-                SkipToken();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SkipToLineStart() {
-            SkipToLineEnd();
-            SkipToken();
-        }
-
-        private void SkipToNextBlock() {
-            while (!IsEOF()) {
-                if (IsKeyword(Keyword.Block) ||
-                    IsKeyword(Keyword.Exit) ||
-                    (TokenIs(TokenKind.Equal) && //? TODO: Workaround for === Block
-                     NextTokenIs(TokenKind.Equal))) {
-                    break;
-                }
-
-                SkipToken();
-            }
-        }
-
-        private void SkipToFunctionEnd() {
-            while (!IsEOF()) {
-                if (IsKeyword(Keyword.Exit)) {
-                    break;
-                }
-
-                SkipToken();
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsEOF() {
-            return current_.IsEOF();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsLineEnd() {
-            return current_.IsLineEnd() || current_.IsEOF();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsDot() {
-            return current_.Kind == TokenKind.Dot;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsComma() {
-            return current_.Kind == TokenKind.Comma;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsLess() {
-            return current_.Kind == TokenKind.Less;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsEqual() {
-            return current_.Kind == TokenKind.Equal;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsStar() {
-            return current_.Kind == TokenKind.Star;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsHash() {
-            return current_.Kind == TokenKind.Hash;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsIdentifier() {
-            return current_.Kind == TokenKind.Identifier;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsNumber() {
-            return current_.Kind == TokenKind.Number;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TokenIs(TokenKind kind) {
-            return current_.Kind == kind;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IsAnyToken(params TokenKind[] tokens) {
-            return Array.IndexOf(tokens, current_.Kind) != -1;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool NextTokenIs(TokenKind kind) {
-            return lexer_.PeekToken().Kind == kind;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool NextAfterTokenIs(TokenKind kind) {
-            return lexer_.PeekToken2().Kind == kind;
-        }
-
-        private bool IsTemporary(ReadOnlySpan<char> name) {
-            int prefixLength = 0;
-
-            if (name.StartsWith("tv".AsSpan()) || name.StartsWith("hv".AsSpan())) {
-                prefixLength = 2;
-            }
-            else if (name.StartsWith("t".AsSpan())) {
-                prefixLength = 1;
-            }
-
-            return int.TryParse(name.Slice(prefixLength), out _);
         }
 
         private FunctionIR ParseFunction() {
@@ -871,8 +585,14 @@ namespace IRExplorerCore.UTC {
                         break;
                     }
                     case Keyword.PointsAtSet: {
-                        ParsePointsAtSetLine(parent);
-                        return null;
+                        if (ParsePointsAtSetLine(parent)) {
+                            return null; // Parsed as a PAS line.
+                        }
+                        else {
+                            tuple = ParseCodeTuple(parent);
+                            stop = true; // Parse it as an instruction.
+                            break;
+                        }
                     }
                     default: {
                         tuple = ParseCodeTuple(parent);
@@ -917,8 +637,29 @@ namespace IRExplorerCore.UTC {
             return tuple;
         }
 
-        private void ParsePointsAtSetLine(BlockIR parent) {
+        private bool ParsePointsAtSetLine(BlockIR parent) {
+            // Check if the line is actually an CALL/INTRINSIC instruction
+            // starting with PAS like PAS(90) = OPCALL ...
+            // Look ahead in the token stream for = 
+            bool isInstr = false;
+
+            lexer_.PeekTokenWhile((token) => {
+                if (token.Kind == TokenKind.Equal) {
+                    isInstr = true;
+                    return false;
+                }
+                else if (token.IsLineEnd()) {
+                    return false;
+                }
+                return true;
+            }, maxLookupLength: 8);
+
+            if (isInstr) {
+                return false;
+            }
+
             var pasTag = ParsePointsAtSet();
+            TryParseType(); // A type can also follow a PAS.
             SkipToLineStart(); // Ignore the rest of the line.
 
             if (pasTag != null && parent.Tuples.Count > 0 &&
@@ -929,17 +670,19 @@ namespace IRExplorerCore.UTC {
                 foreach (var destOp in prevInstr.Destinations) {
                     if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
                         destOp.AddTag(pasTag);
-                        return;
+                        return true;
                     }
                 }
 
                 foreach (var sourceOp in prevInstr.Sources) {
                     if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
                         sourceOp.AddTag(pasTag);
-                        return;
+                        return true;
                     }
                 }
             }
+
+            return true;
         }
 
         private PointsAtSetTag ParsePointsAtSet() {
@@ -953,6 +696,7 @@ namespace IRExplorerCore.UTC {
 
             if (IsNumber() && TokenIntNumber(out int pas)) {
                 pasTag = new PointsAtSetTag(pas);
+                SkipToken();
             }
 
             ExpectAndSkipToken(TokenKind.CloseParen);
@@ -1065,6 +809,10 @@ namespace IRExplorerCore.UTC {
             // instr = [opList =] OPCODE [.type] opList
             var instr = new InstructionIR(nextElementId_, InstructionKind.Other, parent);
 
+            if (current_.Location.Line == 23) {
+                current_ = current_;
+            }
+
             // Some instrs. don't have a dest. list and start directly with the opcode.
             if (!IsOpcode() && !ParseOperandList(instr, true, instr.Destinations)) {
                 ReportError(TokenKind.Identifier, "Failed ParseInstruction destination list");
@@ -1125,23 +873,6 @@ namespace IRExplorerCore.UTC {
                 instr.Kind = InstructionKind.Other;
                 instr.Opcode = 0;
             }
-        }
-
-        private void SetTextRange(IRElement element, Token startToken, int adjustment = 0) {
-            int distance = Math.Max(0, LocationDistance(startToken) - adjustment);
-            element.SetTextRange(startToken.Location, distance);
-        }
-
-        private void SetTextRange(IRElement element, Token startToken, Token endToken) {
-            int distance =
-                Math.Max(
-                    0, endToken.Location.Offset - startToken.Location.Offset + endToken.Length);
-
-            element.SetTextRange(startToken.Location, distance);
-        }
-
-        private void SetTextRange(IRElement element) {
-            element.SetTextRange(current_.Location, current_.Length);
         }
 
         private bool ParseOperandList(InstructionIR instr, bool isDestList,
@@ -1470,21 +1201,7 @@ namespace IRExplorerCore.UTC {
             }
 
             if (isSpecialName) {
-                // Skip until > is found, then the rest of the name.
-                while (!IsLineEnd()) {
-                    if (TokenIs(TokenKind.Greater)) {
-                        SkipToken();
-                        arrowLevel--;
-
-                        if (arrowLevel == 0) {
-                            break;
-                        }
-                    }
-
-                    SkipToken();
-                }
-
-                SkipOptionalToken(TokenKind.Identifier);
+                ParseSpecialName(arrowLevel);
             }
 
             var operand = new OperandIR(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
@@ -1544,6 +1261,24 @@ namespace IRExplorerCore.UTC {
             }
 
             return operand;
+        }
+
+        private void ParseSpecialName(int arrowLevel) {
+            // Skip until > is found, then the rest of the name.
+            while (!IsLineEnd()) {
+                if (TokenIs(TokenKind.Greater)) {
+                    SkipToken();
+                    arrowLevel--;
+
+                    if (arrowLevel == 0) {
+                        break;
+                    }
+                }
+
+                SkipToken();
+            }
+
+            SkipOptionalToken(TokenKind.Identifier);
         }
 
         private bool IsAlignmentInfo() {
@@ -1662,5 +1397,97 @@ namespace IRExplorerCore.UTC {
             SkipTypeAttributes();
             return type;
         }
+
+
+        private void ReportError(TokenKind expectedToken, string message = "") {
+            errorHandler_?.HandleError(current_.Location, expectedToken, current_, message);
+        }
+
+        private Keyword TokenKeyword() {
+            if (current_.IsIdentifier()) {
+                if (keywordMap_.TryGetValue(TokenString(), out var keyword)) {
+                    return keyword;
+                }
+            }
+
+            return Keyword.None;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsKeyword() {
+            return TokenKeyword() != Keyword.None;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsOpcode() {
+            return IsIdentifier() && UTCOpcodes.IsOpcode(TokenString());
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsKeyword(Keyword kind) {
+            return TokenKeyword() == kind;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool ExpectAndSkipKeyword(Keyword keyword) {
+            if (TokenKeyword() == keyword) {
+                SkipToken();
+                return true;
+            }
+
+            ReportError(TokenKind.Identifier, "Failed ExpectAndSkipKeyword");
+            return false;
+        }
+
+        private bool SkipToAnyKeyword(params Keyword[] keywords) {
+            while (!IsLineEnd()) {
+                var current = TokenKeyword();
+
+                if (current != Keyword.None && Array.IndexOf(keywords, current) != -1) {
+                    return true;
+                }
+
+                SkipToken();
+            }
+
+            return false;
+        }
+
+        private void SkipToNextBlock() {
+            while (!IsEOF()) {
+                if (IsKeyword(Keyword.Block) ||
+                    IsKeyword(Keyword.Exit) ||
+                    (TokenIs(TokenKind.Equal) && //? TODO: Workaround for === Block
+                     NextTokenIs(TokenKind.Equal))) {
+                    break;
+                }
+
+                SkipToken();
+            }
+        }
+
+        private void SkipToFunctionEnd() {
+            while (!IsEOF()) {
+                if (IsKeyword(Keyword.Exit)) {
+                    break;
+                }
+
+                SkipToken();
+            }
+        }
+
+        private bool IsTemporary(ReadOnlySpan<char> name) {
+            int prefixLength = 0;
+
+            if (name.StartsWith("tv".AsSpan()) || name.StartsWith("hv".AsSpan())) {
+                prefixLength = 2;
+            }
+            else if (name.StartsWith("t".AsSpan())) {
+                prefixLength = 1;
+            }
+
+            return int.TryParse(name.Slice(prefixLength), out _);
+        }
+
     }
 }
