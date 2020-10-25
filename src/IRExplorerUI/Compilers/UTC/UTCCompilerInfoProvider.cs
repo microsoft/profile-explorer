@@ -146,13 +146,12 @@ namespace IRExplorerUI.Compilers.UTC {
             }
 
             var interfSection = interfSections[0];
-            var text = session_.GetSectionPassOutputAsync(interfSection.OutputBefore, interfSection).Result; //? TODO: await
-            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var textLines = session_.GetSectionOutputTextLinesAsync(interfSection.OutputBefore, interfSection).Result; //? TODO: await
 
             var tag = function.GetOrAddTag<InterferenceTag>();
             bool seenInterferingPas = false;
 
-            foreach (var line in lines) {
+            foreach (var line in textLines) {
                 var symPasMatch = Regex.Match(line, @"(\d+):(.*)");
 
                 if (symPasMatch.Success && !seenInterferingPas) {

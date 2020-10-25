@@ -52,7 +52,6 @@ namespace IRExplorerUI.UTC {
                     context.Remarks.Add(remark);
                     remark.Context = context;
                 }
-
             }
 
             public RemarkContext GetCurrentContext() {
@@ -168,18 +167,22 @@ namespace IRExplorerUI.UTC {
 
         public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section,
                                            RemarkProviderOptions options) {
+            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            return ExtractRemarks(new List<string>(lines), function, section, options);
+        }
+
+        public List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function, IRTextSection section,
+                                           RemarkProviderOptions options) {
             if (!settingsLoaded_) {
                 return new List<Remark>(); // Failed to load settings, bail out.
             }
 
-            //? TODO: Could use an API that doesn't need splitting into lines again
-            var remarks = new List<Remark>();
-            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-
             // The RemarkContextState allows multiple threads to use the provider
             // by not having any global state visible to all threads.
+            var remarks = new List<Remark>();
             var state = new RemarkContextState();
-            ExtractInstructionRemarks(text, lines, function, section, remarks, options, state);
+
+            ExtractInstructionRemarks(textLines, function, section, remarks, options, state);
             return remarks;
         }
 
@@ -187,7 +190,7 @@ namespace IRExplorerUI.UTC {
             return null;
         }
 
-        private void ExtractInstructionRemarks(string text, string[] lines, FunctionIR function,
+        private void ExtractInstructionRemarks(List<string> lines, FunctionIR function,
                                                IRTextSection section, List<Remark> remarks,
                                                RemarkProviderOptions options,
                                                RemarkContextState state) {
@@ -204,7 +207,7 @@ namespace IRExplorerUI.UTC {
             int lineStartOffset = 0;
 
             //? TODO: For many lines, must be split in chunks and parallelized
-            for (int i = 0; i < lines.Length; i++) {
+            for (int i = 0; i < lines.Count; i++) {
                 int index = 0;
                 string line = lines[i];
 
@@ -285,7 +288,7 @@ namespace IRExplorerUI.UTC {
                         if (value != null) {
                             //var parentInstr = value.ParentInstruction;
 
-                            if (op.TextLocation.Line < lines.Length) {
+                            if (op.TextLocation.Line < lines.Count) {
                                 var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
                                 op.TextLocation = location; // Set actual location in output text.
 
@@ -369,8 +372,8 @@ namespace IRExplorerUI.UTC {
 
                 tasks[index++] = Task.Run(() => {
                     try {
-                        string sectionText = document.Loader.GetSectionPassOutput(section.OutputBefore);
-                        return ExtractRemarks(sectionText, function, section, options);
+                        var sectionTextLines = document.Loader.GetSectionOutputTextLines(section.OutputBefore);
+                        return ExtractRemarks(sectionTextLines, function, section, options);
                     }
                     finally {
                         concurrencySemaphore.Release();

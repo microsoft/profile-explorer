@@ -1,8 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#define USE_TRIE
-
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -137,14 +135,7 @@ namespace IRExplorerCore.UTC {
                 {"address", Keyword.Address}
             };
 
-#if USE_TRIE
-        static StringTrie<Keyword> keywordTrie_;
-
-        static UTCParser() {
-            keywordTrie_ = new StringTrie<Keyword>();
-            keywordTrie_.Build(keywordMap_);
-        }
-#endif
+        static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
 
         private static readonly Dictionary<Keyword, TypeIR> keywordTypeMap_ =
             new Dictionary<Keyword, TypeIR> {
@@ -1415,22 +1406,15 @@ namespace IRExplorerCore.UTC {
             return type;
         }
 
-
         private void ReportError(TokenKind expectedToken, string message = "") {
             errorHandler_?.HandleError(current_.Location, expectedToken, current_, message);
         }
 
         private Keyword TokenKeyword() {
             if (current_.IsIdentifier()) {
-#if USE_TRIE
                 if(keywordTrie_.TryGetValue(TokenStringData(), out var keyword)) {
                     return keyword;
                 }
-#else
-                if (keywordMap_.TryGetValue(TokenString(), out var keyword)) {
-                    return keyword;
-                }
-#endif
             }
 
             return Keyword.None;

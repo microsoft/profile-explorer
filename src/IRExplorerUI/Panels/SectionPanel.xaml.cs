@@ -1160,7 +1160,7 @@ namespace IRExplorerUI {
 
         private async void CopySectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (e.Parameter is IRTextSectionEx section) {
-                var text = await Session.GetSectionTextAsync(section.Section);
+                var text = await Session.GetDocumentTextAsync(section.Section);
                 Clipboard.SetText(text);
             }
         }
@@ -1178,7 +1178,7 @@ namespace IRExplorerUI {
                     var path = fileDialog.FileName;
 
                     try {
-                        var text = await Session.GetSectionTextAsync(section.Section);
+                        var text = await Session.GetDocumentTextAsync(section.Section);
                         await File.WriteAllTextAsync(path, text);
                     }
                     catch (Exception ex) {

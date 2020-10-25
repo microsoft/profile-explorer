@@ -45,7 +45,10 @@ namespace IRExplorerUI {
                                        RemarkProviderOptions options);
 
         //? TODO: Should use a CancelableTaskInfo to support fast canceling when section switches
-        List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section, RemarkProviderOptions options);
+        List<Remark> ExtractRemarks(string text, FunctionIR function,
+                                    IRTextSection section, RemarkProviderOptions options);
+        List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function, 
+                                    IRTextSection section, RemarkProviderOptions options);
         OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
     }
 }

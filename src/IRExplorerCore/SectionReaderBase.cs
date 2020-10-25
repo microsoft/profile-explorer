@@ -13,6 +13,9 @@ namespace IRExplorerCore {
     public abstract class SectionReaderBase : IRSectionReader, IDisposable {
         // Helper to quickly read a couple of private fields of a StreamReader
         // in order to compute the proper offset in the stream.
+        // This is much faster (up to 10x) than using reflection to get to each field,
+        // which was the main bottleneck in reading text files.
+        // https://tyrrrz.me/blog/expression-trees
         class StreamReaderFields {
             public char[] CharBuffer;
             public int CharPos;
@@ -23,7 +26,7 @@ namespace IRExplorerCore {
             private static Action<StreamReader, StreamReaderFields> callback_;
 
             static StreamReaderFields() {
-                // Create and compile to IL an function that reads the private fields
+                // Create and compile to IL a function that reads the private fields
                 // form a StreamReader and saves the values.
                 var inputParam = Expression.Parameter(typeof(StreamReader));
                 var outputParam = Expression.Parameter(typeof(StreamReaderFields));
@@ -152,6 +155,8 @@ namespace IRExplorerCore {
                 expectSectionHeaders_ = false;
                 dataStream_.Seek(0, SeekOrigin.Begin);
                 dataReader_.DiscardBufferedData();
+
+                ResetSummaryState();
                 summary = GenerateSummaryImpl(progressHandler);
             }
 
@@ -166,8 +171,20 @@ namespace IRExplorerCore {
             return GetPassOutputText(section.Output, false);
         }
 
+        public List<string> GetSectionTextLines(IRTextSection section) {
+            if (section.Output == null) {
+                throw new NullReferenceException();
+            }
+
+            return GetPassOutputTextLines(section.Output, false);
+        }
+
         public string GetPassOutputText(IRPassOutput output) {
             return GetPassOutputText(output, true);
+        }
+
+        public List<string> GetPassOutputTextLines(IRPassOutput output) {
+            return GetPassOutputTextLines(output, true);
         }
 
         public string GetRawSectionText(IRTextSection section) {
@@ -227,7 +244,18 @@ namespace IRExplorerCore {
             }
         }
 
+        private void ResetSummaryState() {
+            optionalOutput_ = null;
+            optionalOutputNeeded_ = false;
+            hasPreprocessedLines_ = false;
+            prevLineCount_ = 0;
+            lineIndex_ = 0;
+        }
+
         private IRTextSummary GenerateSummaryImpl(ProgressInfoHandler progressHandler) {
+            // Scan the document once to find the section boundaries,
+            // any before/after text associated with the sections 
+            // and build the function -> sections hierarchy.
             IRTextSection previousSection = null;
             hasPreprocessedLines_ = false;
             (var section, string functionName) = FindNextSection();
@@ -273,29 +301,48 @@ namespace IRExplorerCore {
         }
 
         private string GetPassOutputText(IRPassOutput output, bool isOptionalOutput) {
+            if (output == null) {
+                return "";
+            }
+
             if (!output.HasPreprocessedLines) {
                 // Fast path that avoids reading text line by line.
                 return GetRawPassOutputText(output, isOptionalOutput);
             }
 
-            if (output == null) {
-                return "";
-            }
-
             // If the file was preloaded in memory, create a new stream 
             // to allow parallel loading of text.
             if (preloadedData_ != null) {
-                using var reader = new MemoryStream(preloadedData_, true);
-                var encoding = DetectUTF8Encoding(reader, Encoding.ASCII);
-                using var streamReader = new StreamReader(reader, encoding,
-                                                          true, STREAM_BUFFER_SIZE);
-
+                using var streamReader = CreatePreloadedDataReader();
                 return ReadPassOutputText(streamReader, output, isOptionalOutput);
             }
 
             lock (lockObject_) {
                 return ReadPassOutputText(dataReader_, output, isOptionalOutput);
             }
+        }
+
+        private List<string> GetPassOutputTextLines(IRPassOutput output, bool isOptionalOutput) {
+            if (output == null) {
+                return new List<string>();
+            }
+
+            // If the file was preloaded in memory, create a new stream 
+            // to allow parallel loading of text.
+            if (preloadedData_ != null) {
+                using var streamReader = CreatePreloadedDataReader();
+                return ReadPassOutputTextLines(streamReader, output, isOptionalOutput);
+            }
+
+            lock (lockObject_) {
+                return ReadPassOutputTextLines(dataReader_, output, isOptionalOutput);
+            }
+        }
+
+        private StreamReader CreatePreloadedDataReader() {
+            var reader = new MemoryStream(preloadedData_, true);
+            var encoding = DetectUTF8Encoding(reader, Encoding.ASCII);
+            return new StreamReader(reader, encoding, true, STREAM_BUFFER_SIZE);
         }
 
         private string GetRawPassOutputText(IRPassOutput output, bool isOptionalOutput) {
@@ -339,10 +386,33 @@ namespace IRExplorerCore {
             return builder.ToString();
         }
 
+        private List<string> ReadPassOutputTextLines(StreamReader reader, IRPassOutput output,
+                                                     bool isOptionalOutput) {
+            var list = new List<string>(output.LineCount);
+            reader.BaseStream.Position = output.DataStartOffset;
+            reader.DiscardBufferedData();
+
+            for (int i = output.StartLine; i <= output.EndLine; i++) {
+                string line = NextLine(reader, false);
+
+                if (isOptionalOutput && ShouldSkipOutputLine(line)) {
+                    continue;
+                }
+
+                if (line.Length > MAX_LINE_LENGTH) {
+                    line = line.Substring(0, MAX_LINE_LENGTH);
+                }
+
+                list.Add(line);
+            }
+
+            return list;
+        }
+
         private void AddOptionalOutputLine(string line, long initialOffset) {
             if (optionalOutput_ == null) {
                 // Start a new optional section.
-                long offset = TextOffset();
+                long offset = TextOffset() - 1;
                 optionalOutput_ = new IRPassOutput(initialOffset, offset, lineIndex_, lineIndex_);
                 optionalOutputNeeded_ = false;
             }
@@ -494,7 +564,7 @@ namespace IRExplorerCore {
         private long TextOffset(StreamReader reader) {
             // This is a hack needed to get the proper offset in the stream, see
             // https://stackoverflow.com/questions/5404267/streamreader-and-seeking
-            // Dynamic code generation is used go have an efficient way of reading out the private fields.
+            // Dynamic code generation is used as an efficient way of reading out the private fields.
             var fields = StreamReaderFields.Read(reader);
 
             // The number of bytes the remaining chars use in the original encoding.

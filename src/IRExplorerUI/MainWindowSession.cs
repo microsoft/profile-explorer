@@ -1125,16 +1125,19 @@ namespace IRExplorerUI {
             return Task.Run(() => docInfo.Loader.GetSectionText(section));
         }
 
-
-        public Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section) {
+        public Task<string> GetSectionOutputTextAsync(IRPassOutput output, IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
-            return Task.Run(() => docInfo.Loader.GetSectionPassOutput(output));
+            return Task.Run(() => docInfo.Loader.GetSectionOutputText(output));
         }
 
+        public Task<List<string>> GetSectionOutputTextLinesAsync(IRPassOutput output, IRTextSection section) {
+            var docInfo = sessionState_.FindLoadedDocument(section);
+            return Task.Run(() => docInfo.Loader.GetSectionOutputTextLines(output));
+        }
 
         public Task<string> GetDocumentTextAsync(IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
-            return Task.Run(() => docInfo.Loader.GetDocumentText());
+            return Task.Run(() => docInfo.Loader.GetDocumentOutputText());
         }
 
         public async Task<SectionSearchResult> SearchSectionAsync(

@@ -352,7 +352,7 @@ namespace IRExplorerUI.Document {
 
         private (TreeViewItem, int) BuildContextRemarkTreeView(RemarkContext context,
                                                Dictionary<RemarkContext, TreeViewItem> treeNodeMap,
-                                               string[] outputTextLines) {
+                                               List<string> outputTextLines) {
             if (!treeNodeMap.TryGetValue(context, out var treeNode)) {
                 treeNode = new TreeViewItem() {
                     Header = context.Name,
@@ -485,7 +485,7 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        private void ExtractOutputTextInRange(int prevLine, int line, string[] outputTextLines,
+        private void ExtractOutputTextInRange(int prevLine, int line, List<string> outputTextLines,
                                               List<RemarkTextHighlighting> highlightingList,
                                               List<Tuple<TreeViewItem, int>> items) {
             for (int k = prevLine; k < line; k++) {
@@ -585,11 +585,8 @@ namespace IRExplorerUI.Document {
             return copyTextBlock;
         }
 
-        private void BuildContextRemarkTreeView(RemarkContext rootContext, string outputText = null) {
+        private void BuildContextRemarkTreeView(RemarkContext rootContext, List<string> outputTextLines) {
             var treeNodeMap = new Dictionary<RemarkContext, TreeViewItem>();
-
-            //? TODO: Could use an API that doesn't need splitting into lines again
-            var outputTextLines = outputText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             var (rootTreeNode, _) = BuildContextRemarkTreeView(rootContext, treeNodeMap, outputTextLines);
 
             RemarkContextTree.Items.Clear();
@@ -822,9 +819,9 @@ namespace IRExplorerUI.Document {
         }
 
         private async Task UpdateContextTree(Remark remark, RemarkContext context) {
-            // Note that the context can also be a parent of the remark's context.
-            string outputText = await Session.GetSectionPassOutputAsync(remark.Section.OutputBefore,
-                                                                        remark.Section);
+            // Note that the context can also be a parent of the remarks context.
+            var outputText = await Session.GetSectionOutputTextLinesAsync(remark.Section.OutputBefore,
+                                                                          remark.Section);
             var list = new List<Remark>();
             CollectContextTreeRemarks(context, list, true);
             BuildContextRemarkTreeView(context, outputText);
@@ -1000,7 +997,7 @@ namespace IRExplorerUI.Document {
         }
 
         private async Task UpdateOutputText(Remark remark) {
-            string outputText = await Session.GetSectionPassOutputAsync(remark.Section.OutputBefore,
+            string outputText = await Session.GetSectionOutputTextAsync(remark.Section.OutputBefore,
                                                                         remark.Section);
             await RemarkTextView.SetText(outputText, Function, Section, parentDocument_.TextView, Session);
             RemarkTextView.SelectText(remark.RemarkLocation.Offset, remark.RemarkText.Length,

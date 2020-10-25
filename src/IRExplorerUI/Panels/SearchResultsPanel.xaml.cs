@@ -411,7 +411,7 @@ namespace IRExplorerUI {
                             return previousSectionText_;
                         }
 
-                        var text = Session.GetSectionTextAsync(section).Result;
+                        var text = Session.GetDocumentTextAsync(section).Result;
                         previousSection_ = section;
                         previousSectionText_ = text;
                         return text;
@@ -422,7 +422,7 @@ namespace IRExplorerUI {
                             return previousSectionBeforeOutput_;
                         }
 
-                        var text = Session.GetSectionPassOutputAsync(section.OutputBefore, section).Result;
+                        var text = Session.GetSectionOutputTextAsync(section.OutputBefore, section).Result;
                         previousSection_ = section;
                         previousSectionBeforeOutput_ = text;
                         return text;
@@ -433,7 +433,7 @@ namespace IRExplorerUI {
                             return previousSectionAfterOutput_;
                         }
 
-                        var text = Session.GetSectionPassOutputAsync(section.OutputAfter, section).Result;
+                        var text = Session.GetSectionOutputTextAsync(section.OutputAfter, section).Result;
                         previousSection_ = section;
                         previousSectionAfterOutput_ = text;
                         return text;

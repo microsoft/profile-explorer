@@ -4,11 +4,11 @@
 using IRExplorerCore.Lexer;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace CoreUnitTests {
+namespace IRExplorerCoreTests {
     [TestClass]
-    public class UnitTest1 {
+    public class LexerTests {
         [TestMethod]
-        public void TestMethod1() {
+        public void BasicTest() {
             Lexer lexer = new Lexer("abc 123 xyz abc123_");
             Assert.AreEqual(lexer.NextToken().Kind, TokenKind.Identifier);
         }

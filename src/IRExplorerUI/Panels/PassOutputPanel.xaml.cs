@@ -219,10 +219,10 @@ namespace IRExplorerUI {
 
         private async Task SwitchText(IRTextSection section, FunctionIR function, IRDocument associatedDocument) {
             if (ShowAfterOutput) {
-                initialText_ = await Session.GetSectionPassOutputAsync(section.OutputAfter, section);
+                initialText_ = await Session.GetSectionOutputTextAsync(section.OutputAfter, section);
             }
             else {
-                initialText_ = await Session.GetSectionPassOutputAsync(section.OutputBefore, section);
+                initialText_ = await Session.GetSectionOutputTextAsync(section.OutputBefore, section);
             }
 
             await TextView.SwitchText(initialText_, function, section, associatedDocument);

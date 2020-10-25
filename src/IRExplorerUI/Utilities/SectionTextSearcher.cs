@@ -137,7 +137,7 @@ namespace IRExplorerUI {
             if (options_.SearchBeforeOutput) {
                 var beforeText = options_.UseRawSectionText ?
                                     sectionLoader_.GetRawSectionPassOutput(section.OutputBefore) :
-                                    sectionLoader_.GetSectionPassOutput(section.OutputBefore);
+                                    sectionLoader_.GetSectionOutputText(section.OutputBefore);
 
                 if (!string.IsNullOrEmpty(beforeText)) {
                     result.BeforeOutputResults = TextSearcher.AllIndexesOf(beforeText, searchedText, 0, searchKind, cancelableTask);
@@ -147,7 +147,7 @@ namespace IRExplorerUI {
             if (options_.SearchAfterOutput) {
                 var afterText = options_.UseRawSectionText ?
                                     sectionLoader_.GetRawSectionPassOutput(section.OutputAfter) :
-                                    sectionLoader_.GetSectionPassOutput(section.OutputAfter);
+                                    sectionLoader_.GetSectionOutputText(section.OutputAfter);
 
                 if (!string.IsNullOrEmpty(afterText)) {
                     result.BeforeOutputResults = TextSearcher.AllIndexesOf(afterText, searchedText, 0, searchKind, cancelableTask);

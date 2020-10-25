@@ -17,6 +17,10 @@ namespace IRExplorerCore {
             terminalNodes_ = new List<Optional<T>>();
         }
 
+        public StringTrie(Dictionary<string, T> values) : this() {
+            Build(values);
+        }
+
         int AddNode() {
             nodes_.Add(new Tuple<int, int>(-1, 0));
             return lastNodeId_++;
@@ -66,7 +70,7 @@ namespace IRExplorerCore {
         public void Build(Dictionary<string, T> values) {
             var list = new List<Tuple<string, T>>(values.Count);
 
-            foreach(var pair in values) {
+            foreach (var pair in values) {
                 list.Add(new Tuple<string, T>(pair.Key, pair.Value));
             }
 
