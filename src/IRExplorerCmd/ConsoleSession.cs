@@ -86,6 +86,11 @@ namespace IRExplorerCmd {
             return Task.Run(() => docInfo.Loader.GetSectionText(section));
         }
 
+        public Task<List<string>> GetSectionOutputTextLinesAsync(IRPassOutput output, IRTextSection section) {
+            var docInfo = sessionState_.FindLoadedDocument(section);
+            return Task.Run(() => docInfo.Loader.GetSectionOutputTextLines(output));
+        }
+
         public IRDocument CurrentDocument => throw new NotImplementedException();
         public IRTextSection CurrentDocumentSection => throw new NotImplementedException();
         public List<IRDocument> OpenDocuments => throw new NotImplementedException();
@@ -123,7 +128,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section) {
+        public Task<string> GetSectionOutputTextAsync(IRPassOutput output, IRTextSection section) {
             throw new NotImplementedException();
         }
 

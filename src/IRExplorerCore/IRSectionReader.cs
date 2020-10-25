@@ -106,6 +106,7 @@ namespace IRExplorerCore {
         public long Size => DataEndOffset - DataStartOffset + 1;
         public int StartLine { get; set; }
         public int EndLine { get; set; }
+        public int LineCount => EndLine - StartLine + 1;
         public byte[] Signature { get; set; } // SHA256 signature of the text.
         public bool HasPreprocessedLines { get; set; }
 
@@ -206,7 +207,9 @@ namespace IRExplorerCore {
     public interface IRSectionReader {
         IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler);
         string GetSectionText(IRTextSection section);
+        List<string> GetSectionTextLines(IRTextSection section);
         string GetPassOutputText(IRPassOutput output);
+        List<string> GetPassOutputTextLines(IRPassOutput output);
         string GetRawSectionText(IRTextSection section);
         string GetRawPassOutputText(IRPassOutput output);
         public byte[] GetDocumentTextData();

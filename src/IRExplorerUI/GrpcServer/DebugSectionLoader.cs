@@ -27,7 +27,7 @@ namespace IRExplorerUI {
             return summary_;
         }
 
-        public override string GetDocumentText() {
+        public override string GetDocumentOutputText() {
             var builder = new StringBuilder();
             var list = new List<Tuple<IRTextSection, CompressedString>>();
 
@@ -47,7 +47,7 @@ namespace IRExplorerUI {
         }
 
         public override byte[] GetDocumentTextBytes() {
-            return Encoding.UTF8.GetBytes(GetDocumentText());
+            return Encoding.UTF8.GetBytes(GetDocumentOutputText());
         }
 
         public void AddSection(IRTextSection section, string text) {
@@ -95,8 +95,12 @@ namespace IRExplorerUI {
             return sectionTextMap_[section].ToString();
         }
 
-        public override string GetSectionPassOutput(IRPassOutput output) {
+        public override string GetSectionOutputText(IRPassOutput output) {
             return "";
+        }
+
+        public override List<string> GetSectionOutputTextLines(IRPassOutput output) {
+            return new List<string>();
         }
 
         public override string GetRawSectionText(IRTextSection section) {

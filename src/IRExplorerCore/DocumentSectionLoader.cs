@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using IRExplorerCore.IR;
@@ -28,7 +29,7 @@ namespace IRExplorerCore {
             return documentReader_.GenerateSummary(progressHandler);
         }
 
-        public override string GetDocumentText() {
+        public override string GetDocumentOutputText() {
             var data = documentReader_.GetDocumentTextData();
             return Encoding.UTF8.GetString(data);
         }
@@ -80,13 +81,22 @@ namespace IRExplorerCore {
             return documentReader_.GetSectionText(section);
         }
 
-        public override string GetSectionPassOutput(IRPassOutput output) {
+        public override string GetSectionOutputText(IRPassOutput output) {
             if (output == null) {
                 // With some documents there is no before/after text.
                 return string.Empty;
             }
 
             return documentReader_.GetPassOutputText(output);
+        }
+
+        public override List<string> GetSectionOutputTextLines(IRPassOutput output) {
+            if (output == null) {
+                // With some documents there is no before/after text.
+                return new List<string>();
+            }
+
+            return documentReader_.GetPassOutputTextLines(output);
         }
 
         public override string GetRawSectionText(IRTextSection section) {

@@ -47,7 +47,8 @@ namespace IRExplorerUI {
         bool SwitchToNextSection(IRTextSection section, IRDocument document);
         void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations);
 
-        Task<string> GetSectionPassOutputAsync(IRPassOutput output, IRTextSection section);
+        Task<string> GetSectionOutputTextAsync(IRPassOutput output, IRTextSection section);
+        Task<List<string>> GetSectionOutputTextLinesAsync(IRPassOutput output, IRTextSection section);
         Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null);
         Task<string> GetDocumentTextAsync(IRTextSection section);
 

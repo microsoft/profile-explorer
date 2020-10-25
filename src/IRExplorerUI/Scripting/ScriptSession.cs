@@ -85,12 +85,12 @@ namespace IRExplorerUI.Scripting {
         public FunctionIR ParseSection(IRTextSection section) {
             var errorHandler = IR.CreateParsingErrorHandler();
             var parser = IR.CreateSectionParser(errorHandler);
-            var text = session_.GetSectionTextAsync(section).Result;
+            var text = session_.GetDocumentTextAsync(section).Result;
             return parser.ParseSection(section, text);
         }
 
         public string GetSectionText(IRTextSection section) {
-            return session_.GetSectionTextAsync(section).Result;
+            return session_.GetDocumentTextAsync(section).Result;
         }
 
         public void Cancel() {
