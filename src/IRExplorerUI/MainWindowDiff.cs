@@ -272,8 +272,8 @@ namespace IRExplorerUI {
             var leftDocument = diffState.LeftDocument.TextView;
             var rightDocument = diffState.RightDocument.TextView;
 
-            var leftText = await GetDocumentTextAsync(leftDocument.Section);
-            var rightText = await GetDocumentTextAsync(rightDocument.Section);
+            var leftText = await GetSectionTextAsync(leftDocument.Section);
+            var rightText = await GetSectionTextAsync(rightDocument.Section);
             await DiffDocuments(leftDocument, rightDocument, leftText, rightText);
         }
 
