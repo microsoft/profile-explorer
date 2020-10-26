@@ -91,6 +91,10 @@ namespace IRExplorerCmd {
             return Task.Run(() => docInfo.Loader.GetSectionOutputTextLines(output));
         }
 
+        public Task<string> GetDocumentTextAsync(IRTextSummary summary) {
+            throw new NotImplementedException();
+        }
+
         public IRDocument CurrentDocument => throw new NotImplementedException();
         public IRTextSection CurrentDocumentSection => throw new NotImplementedException();
         public List<IRDocument> OpenDocuments => throw new NotImplementedException();
@@ -197,10 +201,6 @@ namespace IRExplorerCmd {
         }
 
         public void UnregisterDetachedPanel(DraggablePopup panel) {
-            throw new NotImplementedException();
-        }
-
-        public void LoadDocumentQuery(QueryDefinition query, IRDocument document) {
             throw new NotImplementedException();
         }
 

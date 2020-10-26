@@ -835,43 +835,6 @@ namespace IRExplorerUI {
                             MessageBoxButton.OK);
         }
 
-        private void MenuItem_Click_7(object sender, RoutedEventArgs e) {
-            CreateQueryPanel();
-        }
-
-        private QueryPanel CreateQueryPanel() {
-            var documentHost = Utils.FindChildLogical<LayoutDocumentPaneGroupControl>(this);
-            var position = new Point();
-
-            if (documentHost != null) {
-                var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
-                var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
-                position = documentHost.PointToScreen(new Point(left, top));
-            }
-
-            var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, documentHost, this);
-            queryPanel.PanelTitle = "Queries";
-            queryPanel.ShowAddButton = true;
-            queryPanel.PopupClosed += QueryPanel_Closed;
-            queryPanel.IsOpen = true;
-            queryPanel.StaysOpen = true;
-            RegisterDetachedPanel(queryPanel);
-            return queryPanel;
-        }
-
-        private void QueryPanel_Closed(object sender, EventArgs e) {
-            var queryPanel = (QueryPanel)sender;
-            queryPanel.PopupClosed -= QueryPanel_Closed;
-            queryPanel.IsOpen = false;
-            UnregisterDetachedPanel(queryPanel);
-        }
-
-        public void LoadDocumentQuery(QueryDefinition query, IRDocument document) {
-            //? TODO: Show the panel over the associated document
-            var queryPanel = CreateQueryPanel();
-            queryPanel.AddQuery(query);
-        }
-
         private void SetOptionalStatus(string text, string tooltip = "") {
             OptionalStatusText.Text = text;
             OptionalStatusText.Foreground = Brushes.DarkGreen;

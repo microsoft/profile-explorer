@@ -122,6 +122,7 @@ namespace IRExplorerUI {
         private bool optionsPanelVisible_;
         private bool remarkOptionsPanelVisible_;
         private IRElement remarkElement_;
+        private IRElement selectedElement_;
         private RemarkSettings remarkSettings_;
         private RemarkPreviewPanel remarkPanel_;
         private Point remarkPanelLocation_;
@@ -282,6 +283,7 @@ namespace IRExplorerUI {
         }
 
         private async void TextView_ElementSelected(object sender, IRElementEventArgs e) {
+            selectedElement_ = e.Element;
             await ShowActionPanel(e.Element);
         }
 
@@ -304,14 +306,25 @@ namespace IRExplorerUI {
 
         private async Task ShowActionPanel(IRElement element, bool fromClickEvent = false) {
             remarkElement_ = GetRemarkElement(element);
+            var visualElement = remarkElement_;
 
             if (remarkElement_ == null) {
                 await HideRemarkPanel();
-                HideActionPanel();
-                return;
+
+                // If there are action buttons in the panel, keep showing it.
+                if (!ActionPanel.HasActionButtons) {
+                    HideActionPanel();
+                    return;
+                }
+
+                visualElement = element;
+                ActionPanel.ShowRemarksButton = false;
+            }
+            else {
+                ActionPanel.ShowRemarksButton = true;
             }
 
-            var visualLine = TextView.TextArea.TextView.GetVisualLine(remarkElement_.TextLocation.Line + 1);
+            var visualLine = TextView.TextArea.TextView.GetVisualLine(visualElement.TextLocation.Line + 1);
 
             if (visualLine != null) {
                 // If there is an ongoing hiding operation, cancel it since it would
@@ -562,6 +575,7 @@ namespace IRExplorerUI {
 
             // Clear references to IR objects that would keep the previous function alive.
             hoveredElement_ = null;
+            selectedElement_ = null;
             remarkElement_ = null;
             selectedBlock_ = null;
 
@@ -1188,17 +1202,6 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void ActionPanel_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
-            if (remarkPanelVisible_) {
-                await HideRemarkPanel();
-            }
-            else {
-                ShowRemarkPanel();
-            }
-
-            e.Handled = true;
-        }
-
         public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
             await TextView.LoadDiffedFunction(diffResult, newSection);
             await ReloadRemarks();
@@ -1252,7 +1255,40 @@ namespace IRExplorerUI {
         private void QueryMenuItem_Click(object sender, System.Windows.RoutedEventArgs e) {
             var menuItem = (MenuItem)sender;
             var query = (QueryDefinition)menuItem.Tag;
-            Session.LoadDocumentQuery(query, TextView);
+            var queryPanel = CreateQueryPanel();
+            queryPanel.AddQuery(query);
+
+            CreateQueryActionButtons(query.Data);
+        }
+
+        private QueryPanel CreateQueryPanel() {
+            //? TODO: Create panel over the document
+            //? TODO: If query panel already visible, append new query to it?
+            var documentHost = this;
+            var position = new Point();
+
+            if (documentHost != null) {
+                var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
+                var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
+                position = documentHost.PointToScreen(new Point(left, top));
+            }
+
+            var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, 
+                                            documentHost, Session);
+            queryPanel.PanelTitle = "Queries";
+            queryPanel.ShowAddButton = true;
+            queryPanel.PopupClosed += QueryPanel_Closed;
+            queryPanel.IsOpen = true;
+            queryPanel.StaysOpen = true;
+            Session.RegisterDetachedPanel(queryPanel);
+            return queryPanel;
+        }
+
+        private void QueryPanel_Closed(object sender, EventArgs e) {
+            var queryPanel = (QueryPanel)sender;
+            queryPanel.PopupClosed -= QueryPanel_Closed;
+            queryPanel.IsOpen = false;
+            Session.UnregisterDetachedPanel(queryPanel);
         }
 
         private void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
@@ -1418,11 +1454,45 @@ namespace IRExplorerUI {
             queryPanel.AddQuery(dummyQuery);
         }
 
+        private void CreateQueryActionButtons(QueryData optionsValues) {
+            ActionPanel.ClearActionButtons();
+            int actionButtonIndex = 1;
+
+            foreach (var inputValue in optionsValues.InputValues) {
+                if (inputValue.IsElement) {
+                    ActionPanel.AddActionButton($"{actionButtonIndex}", inputValue);
+
+                    if(actionButtonIndex == 1) {
+                        ActionPanel.ActionButtonClicked += ActionPanel_ActionButtonClicked;
+                    }
+
+                    actionButtonIndex++;
+                }
+            }
+        }
+
+        private void ActionPanel_ActionButtonClicked(object sender, ActionPanelButton e) {
+            var inputValue = e.Tag as QueryValue;
+            
+            if(selectedElement_ != null) {
+                inputValue.Value = selectedElement_;
+            }
+        }
+
         private void QueryPanel_PopupClosed(object sender, EventArgs e) {
             var queryPanel = (QueryPanel)sender;
             queryPanel.PopupClosed -= QueryPanel_PopupClosed;
             queryPanel.IsOpen = false;
             Session.UnregisterDetachedPanel(queryPanel);
+        }
+
+        private async void ActionPanel_RemarksButtonClicked(object sender, EventArgs e) {
+            if (remarkPanelVisible_) {
+                await HideRemarkPanel();
+            }
+            else {
+                ShowRemarkPanel();
+            }
         }
     }
 }

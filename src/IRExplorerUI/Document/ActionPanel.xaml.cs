@@ -18,9 +18,52 @@ namespace IRExplorerUI.Document {
     /// <summary>
     /// Interaction logic for ActionPanel.xaml
     /// </summary>
+    /// 
+
+    public class ActionPanelButton {
+        public ActionPanelButton(string name, object tag = null) {
+            Name = name;
+            Tag = tag;
+        }
+
+        public string Name { get; set; }
+        public object Tag { get; set; }
+    }
+
     public partial class ActionPanel : UserControl, INotifyPropertyChanged {
+        private ObservableCollectionRefresh<ActionPanelButton> buttons_;
+        private bool showRemarksButton_;
+
         public ActionPanel() {
             InitializeComponent();
+            buttons_ = new ObservableCollectionRefresh<ActionPanelButton>();
+            ActionButtonsPanel.ItemsSource = buttons_;
+        }
+
+        public event EventHandler RemarksButtonClicked;
+        public event EventHandler<ActionPanelButton> ActionButtonClicked;
+
+        public bool ShowRemarksButton {
+            get => showRemarksButton_;
+            set {
+                if(showRemarksButton_ != value) {
+                    showRemarksButton_ = value;
+                    OnPropertyChange(nameof(ShowRemarksButton));
+                }
+            }
+        }
+
+        public bool HasActionButtons => buttons_.Count > 0;
+
+        public ActionPanelButton AddActionButton(string name, object tag = null) {
+            var button = new ActionPanelButton(name, tag);
+            buttons_.Add(button);
+            buttons_.Refresh();
+            return button;
+        }
+
+        public void ClearActionButtons() {
+            buttons_.Clear();
         }
 
         public void OnPropertyChange(string propertyname) {
@@ -28,5 +71,17 @@ namespace IRExplorerUI.Document {
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
+
+        private void ActionButton_Click(object sender, RoutedEventArgs e) {
+            var button = ((Button)sender).DataContext as ActionPanelButton;
+
+            if (button != null) {
+                ActionButtonClicked?.Invoke(this, button);
+            }
+        }
+
+        private void RemarkButton_Click(object sender, RoutedEventArgs e) {
+            RemarksButtonClicked?.Invoke(this, e);
+        }
     }
 }
