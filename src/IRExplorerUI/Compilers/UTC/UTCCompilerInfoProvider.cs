@@ -133,69 +133,68 @@ namespace IRExplorerUI.Compilers.UTC {
 
         private void CreateInterferenceTag(FunctionIR function, IRTextSection section) {
             //? TODO: Reuse tags for the same IRTextFunction, they don't reference elements
-            //? TODO: Not thread-safe
+            lock (lockObject_) {
+                if (function.HasTag<InterferenceTag>()) {
+                    return;
+                }
 
-            if (function.HasTag<InterferenceTag>()) {
-                return;
-            }
+                var interfSections = section.ParentFunction.
+                    FindAllSections("Tuples after Build Interferences");
 
-            var interfSections = section.ParentFunction.FindAllSections("Tuples after Build Interferences");
+                if (interfSections.Count == 0) {
+                    return;
+                }
 
-            if (interfSections.Count == 0) {
-                return;
-            }
+                var interfSection = interfSections[0];
+                var textLines = session_.GetSectionOutputTextLinesAsync(interfSection.OutputBefore, interfSection).Result; //? TODO: await
 
-            var interfSection = interfSections[0];
-            var textLines = session_.GetSectionOutputTextLinesAsync(interfSection.OutputBefore, interfSection).Result; //? TODO: await
+                var tag = function.GetOrAddTag<InterferenceTag>();
+                bool seenInterferingPas = false;
 
-            var tag = function.GetOrAddTag<InterferenceTag>();
-            bool seenInterferingPas = false;
+                foreach (var line in textLines) {
+                    var symPasMatch = Regex.Match(line, @"(\d+):(.*)");
 
-            foreach (var line in textLines) {
-                var symPasMatch = Regex.Match(line, @"(\d+):(.*)");
+                    if (symPasMatch.Success && !seenInterferingPas) {
+                        int pas = int.Parse(symPasMatch.Groups[1].Value);
+                        var interferingSyms = new List<string>();
+                        var other = symPasMatch.Groups[2].Value;
 
-                if (symPasMatch.Success && !seenInterferingPas) {
-                    int pas = int.Parse(symPasMatch.Groups[1].Value);
-                    var interferingSyms = new List<string>();
-                    var other = symPasMatch.Groups[2].Value;
+                        other = other.Replace("<Unknown Mem>", "");
+                        other = other.Replace("<Untrackable locals:", "");
+                        other = other.Replace(">", "");
 
-                    other = other.Replace("<Unknown Mem>", "");
-                    other = other.Replace("<Untrackable locals:", "");
-                    other = other.Replace(">", "");
+                        var symbols = other.Split(" ", StringSplitOptions.RemoveEmptyEntries);
 
-                    var symbols = other.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                        for (int i = 0; i < symbols.Length; i++) {
+                            var symbolName = symbols[i];
+                            interferingSyms.Add(symbolName);
 
-                    for (int i = 0; i < symbols.Length; i++) {
-                        var symbolName = symbols[i];
-                        interferingSyms.Add(symbolName);
+                            if (!tag.SymToPasMap.ContainsKey(symbolName)) {
+                                tag.SymToPasMap[symbolName] = pas;
+                            }
+                        }
 
-                        if (!tag.SymToPasMap.ContainsKey(symbolName)) {
-                            tag.SymToPasMap[symbolName] = pas;
+                        tag.PasToSymMap[pas] = interferingSyms;
+                    }
+                    else {
+                        var interferingIndicesMatch = Regex.Match(line, @"(\d+) interferes with: \{ ((\d+)\s)+");
+
+                        if (interferingIndicesMatch.Success) {
+                            seenInterferingPas = true;
+                            var interferingPAS = new HashSet<int>();
+                            int basePAS = int.Parse(interferingIndicesMatch.Groups[1].Value);
+
+                            foreach (Capture capture in interferingIndicesMatch.Groups[2].Captures) {
+                                interferingPAS.Add(int.Parse(capture.Value));
+                            }
+
+                            if (interferingPAS.Count > 0) {
+                                tag.InterferingPasMap[basePAS] = interferingPAS;
+                            }
                         }
                     }
-
-                    tag.PasToSymMap[pas] = interferingSyms;
-                    continue;
-                }
-
-                var interferingIndicesMatch = Regex.Match(line, @"(\d+) interferes with: \{ ((\d+)\s)+");
-
-                if (interferingIndicesMatch.Success) {
-                    seenInterferingPas = true;
-                    var interferingPAS = new HashSet<int>();
-                    int basePAS = int.Parse(interferingIndicesMatch.Groups[1].Value);
-
-                    foreach (Capture capture in interferingIndicesMatch.Groups[2].Captures) {
-                        interferingPAS.Add(int.Parse(capture.Value));
-                    }
-
-                    if (interferingPAS.Count > 0) {
-                        tag.InterferingPasMap[basePAS] = interferingPAS;
-                    }
-                    continue;
                 }
             }
-
         }
 
         //? TODO: Extract this into it's own class

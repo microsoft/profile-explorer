@@ -292,7 +292,6 @@
                         <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
                         <Separator />
 
-                        <MenuItem Click="MenuItem_Click_7" Header="IR Query" />
                         <MenuItem Header="IR Kind">
                             <MenuItem
                                 Name="UTCMenuItem"

@@ -639,40 +639,11 @@
         </Grid>
 
         <Canvas x:Name="DocumentCanvas" Panel.ZIndex="100">
-            <Border
+            <doc:ActionPanel
                 x:Name="ActionPanel"
-                Width="40"
-                Height="22"
-                BorderBrush="DimGray"
-                BorderThickness="1,1,1,1">
-                <Button
-                    x:Name="RemarkPanelButton"
-                    Width="Auto"
-                    Height="Auto"
-                    Padding="2,2,2,2"
-                    VerticalAlignment="Stretch"
-                    HorizontalContentAlignment="Stretch"
-                    Background="#FFFFFBCF"
-                    BorderBrush="{x:Null}"
-                    MouseEnter="ActionPanel_MouseEnter"
-                    MouseLeave="ActionPanel_MouseLeave"
-                    PreviewMouseLeftButtonDown="ActionPanel_PreviewMouseDown">
-                    <StackPanel Orientation="Horizontal">
-                        <Image
-                            Width="14"
-                            Height="14"
-                            Margin="0,0,2,0"
-                            Source="{StaticResource RemarkIcon}" />
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Margin="0,-1,0,0"
-                            Source="{StaticResource DownArrowIcon}" />
-                    </StackPanel>
-                </Button>
-
-
-            </Border>
+                MouseEnter="ActionPanel_MouseEnter"
+                MouseLeave="ActionPanel_MouseLeave"
+                RemarksButtonClicked="ActionPanel_RemarksButtonClicked" />
         </Canvas>
     </Grid>
 
