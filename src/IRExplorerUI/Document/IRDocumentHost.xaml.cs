@@ -136,6 +136,7 @@ namespace IRExplorerUI {
         private List<Remark> remarkList_;
         private RemarksButtonState remarksButtonState_;
         private RemarkContext activeRemarkContext_;
+        private QueryPanel activeQueryPanel_;
 
         public IRDocumentHost(ISession session) {
             InitializeComponent();
@@ -1275,13 +1276,30 @@ namespace IRExplorerUI {
 
             var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, 
                                             documentHost, Session);
+            queryPanel.PanelActivated += QueryPanel_PanelActivated;
             queryPanel.PanelTitle = "Queries";
             queryPanel.ShowAddButton = true;
             queryPanel.PopupClosed += QueryPanel_Closed;
             queryPanel.IsOpen = true;
             queryPanel.StaysOpen = true;
+            queryPanel.IsActivePanel = true;
+
             Session.RegisterDetachedPanel(queryPanel);
             return queryPanel;
+        }
+
+        private void QueryPanel_PanelActivated(object sender, EventArgs e) {
+            var panel = (QueryPanel)sender;
+
+            if (activeQueryPanel_ != panel) {
+                if (activeQueryPanel_ != null) {
+                    activeQueryPanel_.IsActivePanel = false;
+                }
+
+                activeQueryPanel_ = panel;
+                activeQueryPanel_.IsActivePanel = true;
+                CreateQueryActionButtons(panel.GetQueryAt(0).Data);
+            }
         }
 
         private void QueryPanel_Closed(object sender, EventArgs e) {
@@ -1472,9 +1490,12 @@ namespace IRExplorerUI {
         }
 
         private void ActionPanel_ActionButtonClicked(object sender, ActionPanelButton e) {
-            var inputValue = e.Tag as QueryValue;
-            
-            if(selectedElement_ != null) {
+            var inputValue = (QueryValue)e.Tag;
+
+            if (hoveredElement_ != null) {
+                inputValue.Value = hoveredElement_;
+            }
+            if (selectedElement_ != null) {
                 inputValue.Value = selectedElement_;
             }
         }

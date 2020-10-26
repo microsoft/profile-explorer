@@ -36,6 +36,8 @@ namespace IRExplorerUI.Document {
 
         public ActionPanel() {
             InitializeComponent();
+            DataContext = this;
+
             buttons_ = new ObservableCollectionRefresh<ActionPanelButton>();
             ActionButtonsPanel.ItemsSource = buttons_;
         }
@@ -58,12 +60,13 @@ namespace IRExplorerUI.Document {
         public ActionPanelButton AddActionButton(string name, object tag = null) {
             var button = new ActionPanelButton(name, tag);
             buttons_.Add(button);
-            buttons_.Refresh();
+            OnPropertyChange(nameof(HasActionButtons));
             return button;
         }
 
         public void ClearActionButtons() {
             buttons_.Clear();
+            OnPropertyChange(nameof(HasActionButtons));
         }
 
         public void OnPropertyChange(string propertyname) {
@@ -73,11 +76,8 @@ namespace IRExplorerUI.Document {
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void ActionButton_Click(object sender, RoutedEventArgs e) {
-            var button = ((Button)sender).DataContext as ActionPanelButton;
-
-            if (button != null) {
-                ActionButtonClicked?.Invoke(this, button);
-            }
+            var button = (ActionPanelButton)((Button)sender).DataContext;
+            ActionButtonClicked?.Invoke(this, button);
         }
 
         private void RemarkButton_Click(object sender, RoutedEventArgs e) {

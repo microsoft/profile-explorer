@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -74,7 +75,9 @@ namespace IRExplorerUI.Query {
         private List<QueryDefinition> registeredUserQueries_;
         private string panelTitle_;
         private bool showAddButton_;
+        private bool isActivePanel_;
 
+        public event EventHandler PanelActivated;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public QueryPanel(Point position, double width, double height,
@@ -88,14 +91,18 @@ namespace IRExplorerUI.Query {
             registeredUserQueries_ = new List<QueryDefinition>();
             activeQueries_ = new List<ElementQueryInfoView>();
 
+            PreviewMouseLeftButtonDown += QueryPanel_PreviewMouseLeftButtonDown;
+            PreviewGotKeyboardFocus += QueryPanel_PreviewGotKeyboardFocus;
+            GotFocus += QueryPanel_GotFocus;
+
             // Populate with the available queries.
-            var queries = Session.CompilerInfo.BuiltinQueries;
+            //var queries = Session.CompilerInfo.BuiltinQueries;
 
-            foreach (var query in queries) {
-                RegisterQuery(query, true);
-            }
+            //foreach (var query in queries) {
+            //    RegisterQuery(query, true);
+            //}
 
-            UpdateContextMenu();
+            //UpdateContextMenu();
             DataContext = this;
         }
 
@@ -117,6 +124,16 @@ namespace IRExplorerUI.Query {
                 if (showAddButton_ != value) {
                     showAddButton_ = value;
                     OnPropertyChange(nameof(ShowAddButton));
+                }
+            }
+        }
+
+        public bool IsActivePanel {
+            get => isActivePanel_;
+            set {
+                if(isActivePanel_ != value) {
+                    isActivePanel_ = value;
+                    OnPropertyChange(nameof(IsActivePanel));
                 }
             }
         }
@@ -161,23 +178,23 @@ namespace IRExplorerUI.Query {
         }
 
         public void UpdateContextMenu() {
-            foreach (MenuItem item in QueryContextMenu.Items) {
-                item.Click -= ContextMenuItem_Click;
-            }
+            //foreach (MenuItem item in QueryContextMenu.Items) {
+            //    item.Click -= ContextMenuItem_Click;
+            //}
 
-            QueryContextMenu.Items.Clear();
+            //QueryContextMenu.Items.Clear();
 
-            foreach (var query in registeredQueries_) {
-                QueryContextMenu.Items.Add(CreateContextMenuItem(query));
-            }
+            //foreach (var query in registeredQueries_) {
+            //    QueryContextMenu.Items.Add(CreateContextMenuItem(query));
+            //}
 
-            if (registeredUserQueries_.Count > 0) {
-                QueryContextMenu.Items.Add(new Separator());
+            //if (registeredUserQueries_.Count > 0) {
+            //    QueryContextMenu.Items.Add(new Separator());
 
-                foreach (var query in registeredUserQueries_) {
-                    QueryContextMenu.Items.Add(CreateContextMenuItem(query));
-                }
-            }
+            //    foreach (var query in registeredUserQueries_) {
+            //        QueryContextMenu.Items.Add(CreateContextMenuItem(query));
+            //    }
+            //}
         }
 
         private MenuItem CreateContextMenuItem(QueryDefinition query) {
@@ -202,6 +219,18 @@ namespace IRExplorerUI.Query {
 
         private void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        }
+
+        private void QueryPanel_GotFocus(object sender, RoutedEventArgs e) {
+            PanelActivated?.Invoke(this, e);
+        }
+
+        private void QueryPanel_PreviewGotKeyboardFocus(object sender, System.Windows.Input.KeyboardFocusChangedEventArgs e) {
+            PanelActivated?.Invoke(this, e);
+        }
+
+        private void QueryPanel_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e) {
+            PanelActivated?.Invoke(this, e);
         }
     }
 }
