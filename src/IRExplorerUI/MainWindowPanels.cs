@@ -718,7 +718,8 @@ namespace IRExplorerUI {
             };
 
             switch (kind) {
-                case OpenSectionKind.ReplaceCurrent: {
+                case OpenSectionKind.ReplaceCurrent:
+                case OpenSectionKind.NewTab: {
                     if (activeDocumentPanel_ == null) {
                         activeDocumentPanel_ = new LayoutDocumentPane(host);
                         DocumentPanelGroup.Children.Add(activeDocumentPanel_);
@@ -727,10 +728,6 @@ namespace IRExplorerUI {
                         activeDocumentPanel_.Children.Add(host);
                     }
 
-                    break;
-                }
-                case OpenSectionKind.NewTab: {
-                    activeDocumentPanel_.Children.Add(host);
                     break;
                 }
                 case OpenSectionKind.NewTabDockLeft:

@@ -1159,14 +1159,14 @@ namespace IRExplorerUI {
         }
 
         private async void CopySectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (e.Parameter is IRTextSectionEx section) {
-                var text = await Session.GetDocumentTextAsync(section.Section);
+            if (e.Parameter is IRTextSectionEx sectionEx) {
+                var text = await Session.GetSectionTextAsync(sectionEx.Section);
                 Clipboard.SetText(text);
             }
         }
 
         private async void SaveSectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (e.Parameter is IRTextSectionEx section) {
+            if (e.Parameter is IRTextSectionEx sectionEx) {
                 var fileDialog = new SaveFileDialog {
                     DefaultExt = "*.txt|All Files|*.*",
                     Filter = "IR text|*.txt"
@@ -1178,7 +1178,7 @@ namespace IRExplorerUI {
                     var path = fileDialog.FileName;
 
                     try {
-                        var text = await Session.GetDocumentTextAsync(section.Section);
+                        var text = await Session.GetSectionTextAsync(sectionEx.Section);
                         await File.WriteAllTextAsync(path, text);
                     }
                     catch (Exception ex) {
@@ -1191,7 +1191,7 @@ namespace IRExplorerUI {
         }
 
         private async void SaveAllSectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (e.Parameter is IRTextSectionEx section) {
+            if (e.Parameter is IRTextSectionEx sectionEx) {
                 var fileDialog = new SaveFileDialog {
                     DefaultExt = "*.txt|All Files|*.*",
                     Filter = "IR text|*.txt"
@@ -1203,7 +1203,7 @@ namespace IRExplorerUI {
                     var path = fileDialog.FileName;
 
                     try {
-                        var text = await Session.GetDocumentTextAsync(section.Section);
+                        var text = await Session.GetDocumentTextAsync(sectionEx.Section.ParentFunction.ParentSummary);
                         await File.WriteAllTextAsync(path, text);
                     }
                     catch (Exception ex) {

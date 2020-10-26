@@ -411,7 +411,7 @@ namespace IRExplorerUI {
                             return previousSectionText_;
                         }
 
-                        var text = Session.GetDocumentTextAsync(section).Result;
+                        var text = Session.GetSectionTextAsync(section).Result;
                         previousSection_ = section;
                         previousSectionText_ = text;
                         return text;

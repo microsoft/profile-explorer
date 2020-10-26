@@ -50,7 +50,7 @@ namespace IRExplorerUI {
         Task<string> GetSectionOutputTextAsync(IRPassOutput output, IRTextSection section);
         Task<List<string>> GetSectionOutputTextLinesAsync(IRPassOutput output, IRTextSection section);
         Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null);
-        Task<string> GetDocumentTextAsync(IRTextSection section);
+        Task<string> GetDocumentTextAsync(IRTextSummary summary);
 
         Task SwitchGraphsAsync(GraphPanel flowGraphPanel, IRTextSection section, IRDocument document);
 

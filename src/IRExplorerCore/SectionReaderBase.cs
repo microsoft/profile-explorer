@@ -412,7 +412,7 @@ namespace IRExplorerCore {
         private void AddOptionalOutputLine(string line, long initialOffset) {
             if (optionalOutput_ == null) {
                 // Start a new optional section.
-                long offset = TextOffset() - 1;
+                long offset = TextOffset() ;
                 optionalOutput_ = new IRPassOutput(initialOffset, offset, lineIndex_, lineIndex_);
                 optionalOutputNeeded_ = false;
             }
