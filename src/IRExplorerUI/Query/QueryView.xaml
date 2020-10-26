@@ -46,7 +46,7 @@
                     Text="{Binding View.Name}"
                     ToolTip="{Binding View.Description}" />
             </Grid>
-            <Button
+            <!--<Button
                 x:Name="CloseButton"
                 Grid.Row="0"
                 Grid.Column="1"
@@ -58,7 +58,7 @@
                     Width="16"
                     Height="16"
                     Source="{StaticResource RemoveIcon}" />
-            </Button>
+            </Button>-->
 
             <StackPanel
                 Grid.Row="1"

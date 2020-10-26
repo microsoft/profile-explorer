@@ -47,15 +47,25 @@
             <Grid
                 Grid.Row="0"
                 Grid.Column="0"
-                Grid.ColumnSpan="3"
-                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
+                Grid.ColumnSpan="3">
+                <Grid.Style>
+                    <Style TargetType="Grid">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsActivePanel}" Value="False">
+                                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Grid.Style>
+
                 <TextBlock
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
                     FontWeight="DemiBold"
                     Text="{Binding PanelTitle}" />
             </Grid>
-            <Button
+            <!--<Button
                 Grid.Row="0"
                 Grid.Column="1"
                 client:ContextMenuLeftClickBehavior.IsLeftClickEnabled="True"
@@ -70,7 +80,7 @@
                 <Button.ContextMenu>
                     <ContextMenu x:Name="QueryContextMenu" />
                 </Button.ContextMenu>
-            </Button>
+            </Button>-->
             <Button
                 x:Name="CloseButton"
                 Grid.Row="0"

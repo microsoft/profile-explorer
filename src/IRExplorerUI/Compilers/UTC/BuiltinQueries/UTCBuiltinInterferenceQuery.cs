@@ -24,7 +24,7 @@ namespace IRExplorerUI.Compilers.UTC {
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("Mark only reachable", QueryValueKind.Bool, true);
+            query.Data.AddInput("Mark only reachable", QueryValueKind.Bool, false);
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool, true);
             query.Data.AddInput("Show arrows", QueryValueKind.Bool, false);
 
@@ -48,6 +48,9 @@ namespace IRExplorerUI.Compilers.UTC {
             return query;
         }
 
+        private int aliasedValues_;
+        private int aliasedIndirectValues_;
+
         public ISession Session { get; private set; }
 
         public bool Initialize(ISession session) {
@@ -61,8 +64,9 @@ namespace IRExplorerUI.Compilers.UTC {
 
         private bool Execute(QueryData data, MarkingScope markingScope) {
             var element = data.GetInput<IRElement>(0);
-            var isTemporary = data.GetInput<bool>(1);
-            var showArrows = data.GetInput<bool>(2);
+            var onlyReachable = data.GetInput<bool>(1);
+            var isTemporary = data.GetInput<bool>(2);
+            var showArrows = data.GetInput<bool>(3);
             var func = element.ParentFunction;
             int pas = 0;
 
@@ -102,6 +106,8 @@ namespace IRExplorerUI.Compilers.UTC {
                 return false;
             }
 
+            aliasedValues_ = 0;
+            aliasedIndirectValues_ = 0;
             var block = element.ParentBlock;
             var document = Session.CurrentDocument;
             var highlightingType = isTemporary ? HighlighingType.Selected : HighlighingType.Marked;
@@ -129,7 +135,11 @@ namespace IRExplorerUI.Compilers.UTC {
             }
 
             document.EndMarkElementAppend(highlightingType);
-            //data.SetOutput("Aliasing values", 0);
+            data.SetOutput("Aliasing values", aliasedValues_);
+
+            if(aliasedValues_ > 0) {
+                data.SetOutput("Aliasing indirect values", aliasedIndirectValues_);
+            }
             return true;
         }
 
@@ -143,6 +153,7 @@ namespace IRExplorerUI.Compilers.UTC {
                     op.Name == interfSymbol) {
                     if (ShouldMarkElement(op, markingScope, queryBlock)) {
                         MarkElement(op, instrStyle, highlightingType, showArrows);
+                        aliasedValues_++;
                     }
                 }
             }
@@ -163,6 +174,8 @@ namespace IRExplorerUI.Compilers.UTC {
                 if (pasTag != null && pasTag.Pas == interfPas) {
                     if (ShouldMarkElement(op, markingScope, queryBlock)) {
                         MarkElement(op, instrStyle, highlightingType, showArrows);
+                        aliasedValues_++;
+                        aliasedIndirectValues_++;
                     }
                 }
             }

@@ -11,18 +11,22 @@
         Height="22"
         BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
         BorderThickness="1,1,1,1">
-        <StackPanel Orientation="Horizontal">
+        <StackPanel Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}" Orientation="Horizontal">
             <ItemsControl x:Name="ActionButtonsPanel">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Button
                             Width="20"
-                            Background="#FFFFFBCF"
+                            Padding="0,0,0,2"
+                            HorizontalContentAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
                             BorderThickness="0,0,1,0"
                             Click="ActionButton_Click"
                             Content="{Binding Name}"
                             FontSize="14"
-                            FontWeight="DemiBold" />
+                            FontWeight="DemiBold"
+                            ToolTip="Select element as query input value #N" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
                 <ItemsControl.ItemsPanel>
@@ -31,12 +35,18 @@
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
             </ItemsControl>
+            <Image
+                Width="16"
+                Height="16"
+                Margin="2,0,2,0"
+                Source="{StaticResource QueryIcon}"
+                Visibility="{Binding HasActionButtons, Converter={StaticResource BoolToVisibility}}" />
             <Button
                 x:Name="RemarkButton"
                 Width="Auto"
                 Height="Auto"
                 Padding="2,2,2,2"
-                Background="#FFFFFBCF"
+                Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
                 BorderThickness="0"
                 Click="RemarkButton_Click"
                 Visibility="{Binding ShowRemarksButton, Converter={StaticResource BoolToVisibility}}">
