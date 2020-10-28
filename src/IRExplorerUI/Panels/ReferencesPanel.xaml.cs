@@ -180,8 +180,8 @@ namespace IRExplorerUI {
 
                     element_ = value;
 
-                    if (!FindSSAUses(element_, false)) {
-                        FindAllReferences(element_, false);
+                    if (!FindAllReferences(element_, showSSAUses: true, false)) {
+                        FindAllReferences(element_, showSSAUses: false, false);
                     }
                 }
             }
@@ -282,40 +282,27 @@ namespace IRExplorerUI {
             return filterKind_.HasFlag(refInfo.Info.Kind);
         }
 
-        public bool FindAllReferences(IRElement element, bool pinElement = true) {
+        public bool FindAllReferences(IRElement element, bool showSSAUses, bool pinElement = true) {
             if (!(element is OperandIR operand)) {
                 ResetReferenceListView();
                 return false;
             }
 
             var refFinder = new ReferenceFinder(document_.Function);
-            var operandRefs = refFinder.FindAllReferences(element);
+            var operandRefs = refFinder.FindAllReferences(element, includeSSAUses: true);
             UpdateReferenceListView(operand, operandRefs);
 
             // Enabled the filters.
-            FilterKind |= ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
+            if (showSSAUses) {
+                FilterKind |= ReferenceKind.SSA;
+            }
+            else {
+                FilterKind |= ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
+            }
+
             FixedToolbar.IsPinned = pinElement;
             element_ = element;
             isFindAll_ = true;
-            return operandRefs.Count > 0;
-        }
-
-        public bool FindSSAUses(IRElement element, bool pinElement = true) {
-            if (!(element is OperandIR operand)) {
-                ResetReferenceListView();
-                return false;
-            }
-
-            //var operandRefs = ReferenceFinder.FindSSAUses(operand);
-            var refFinder = new ReferenceFinder(document_.Function);
-            var operandRefs = refFinder.FindAllReferences(element, true);
-            UpdateReferenceListView(operand, operandRefs);
-
-            // Enable the SSA uses filter.
-            FilterKind |= ReferenceKind.SSA;
-            FixedToolbar.IsPinned = pinElement;
-            element_ = element;
-            isFindAll_ = false;
             return operandRefs.Count > 0;
         }
 
@@ -497,13 +484,7 @@ namespace IRExplorerUI {
             var state = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
 
             if (state != null) {
-                if (state.IsFindAll) {
-                    FindAllReferences(state.Element);
-                }
-                else {
-                    FindSSAUses(state.Element);
-                }
-
+                FindAllReferences(state.Element, !state.IsFindAll);
                 HasPinnedContent = state.HasPinnedContent;
                 FilterKind = state.FilterKind;
             }
