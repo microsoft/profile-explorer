@@ -1539,31 +1539,35 @@ namespace IRExplorerUI {
         }
 
         private OperandIR GetSelectedElementDefinition() {
+            var defs = GetSelectedElementDefinitions();
+            return defs.Count == 1 ? defs[0] : null;
+        }
+
+        private List<OperandIR> GetSelectedElementDefinitions() {
             var selectedOp = GetSelectedElement();
 
-            if (selectedOp is OperandIR op) {
-                var defOp = ReferenceFinder.GetSSADefinition(op) as OperandIR;
-
-                if (defOp != null) {
-                    return defOp;
-                }
-
-                // For an indirection, look for the base value.
-                if (op.IsIndirection) {
-                    op = op.IndirectionBaseValue;
-                }
-
-                //? TODO: Could use block reachability to trim the set of stores marked
-                //? Reachability can be integrated directly into ReferenceFinder,
-                //? refs.FindAllReachableStores(op, block)
-                var storeList = new ReferenceFinder(function_).FindAllStores(op);
-
-                if (storeList.Count == 1) {
-                    return storeList[0].Element as OperandIR;
-                }
+            if (!(selectedOp is OperandIR op)) {
+                return new List<OperandIR>();
             }
 
-            return null;
+            // Try to get the SSA definition.
+            // If not found, search for all stores to the operand.
+            var defOp = ReferenceFinder.GetSSADefinition(op) as OperandIR;
+
+            if (defOp != null) {
+                return new List<OperandIR>() { defOp };
+            }
+
+            // For an indirection, look for the base value.
+            if (op.IsIndirection) {
+                op = op.IndirectionBaseValue;
+            }
+
+            //? TODO: Could use block reachability to trim the set of stores marked
+            //? Reachability can be integrated directly into ReferenceFinder,
+            //? refs.FindAllReachableStores(op, block)
+            var storeList = new ReferenceFinder(function_).FindAllStores(op);
+            return storeList.ConvertAll((reference) => reference.Element as OperandIR);
         }
 
         private void UndoActionExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -2265,9 +2269,9 @@ namespace IRExplorerUI {
 
         private void MarkDefinitionBlockExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (selectedElements_.Count == 1) {
-                var defOp = GetSelectedElementDefinition();
+                var defOps = GetSelectedElementDefinitions();
 
-                if (defOp != null) {
+                foreach(var defOp in defOps) {
                     var element = defOp.ParentBlock;
                     var style = GetMarkerStyleForCommand(e);
                     MarkBlock(element, style);
@@ -2278,9 +2282,9 @@ namespace IRExplorerUI {
 
         private void MarkDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (selectedElements_.Count == 1) {
-                var defOp = GetSelectedElementDefinition();
+                var defOps = GetSelectedElementDefinitions();
 
-                if (defOp != null) {
+                foreach (var defOp in defOps) {
                     var style = GetPairMarkerStyleForCommand(e);
                     MarkElement(defOp, style);
                     MirrorAction(DocumentActionKind.MarkElement, defOp, style);

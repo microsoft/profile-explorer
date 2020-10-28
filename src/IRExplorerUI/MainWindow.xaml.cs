@@ -180,20 +180,19 @@ namespace IRExplorerUI {
         }
 
         public void ShowAllReferences(IRElement element, IRDocument document) {
-            var panelInfo = FindTargetPanel(document, ToolPanelKind.References);
-            var refPanel = panelInfo.Panel as ReferencesPanel;
-            panelInfo.Host.IsSelected = true;
-            refPanel.FindAllReferences(element);
+            ShowAllReferencesImpl(element, document, false);
         }
 
         public void ShowSSAUses(IRElement element, IRDocument document) {
+            ShowAllReferencesImpl(element, document, true);
+        }
+
+        private void ShowAllReferencesImpl(IRElement element, IRDocument document, bool showSSAUses) {
             var panelInfo = FindTargetPanel(document, ToolPanelKind.References);
             var refPanel = panelInfo.Panel as ReferencesPanel;
             panelInfo.Host.IsSelected = true;
-            refPanel.FindSSAUses(element);
+            refPanel.FindAllReferences(element, showSSAUses);
         }
-
-
 
         private void MainWindow_Deactivated(object sender, EventArgs e) {
             appIsActivated_ = false;
