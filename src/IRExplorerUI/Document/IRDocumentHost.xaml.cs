@@ -39,6 +39,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "NextSection", typeof(IRDocumentHost));
         public static readonly RoutedUICommand SearchSymbol =
             new RoutedUICommand("Untitled", "SearchSymbol", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand SearchSymbolAllSections =
+            new RoutedUICommand("Untitled", "SearchSymbolAllSections", typeof(IRDocumentHost));
     }
 
     [ProtoContract]
@@ -136,13 +138,15 @@ namespace IRExplorerUI {
         private List<Remark> remarkList_;
         private RemarksButtonState remarksButtonState_;
         private RemarkContext activeRemarkContext_;
-        private QueryPanel activeQueryPanel_;
+        private List<QueryPanel> activeQueryPanels_;
 
         public IRDocumentHost(ISession session) {
             InitializeComponent();
             ActionPanel.Visibility = Visibility.Collapsed;
             Session = session;
             Settings = App.Settings.DocumentSettings;
+            activeQueryPanels_ = new List<QueryPanel>();
+
             PreviewKeyDown += IRDocumentHost_PreviewKeyDown;
             TextView.PreviewMouseRightButtonDown += TextView_PreviewMouseRightButtonDown;
             TextView.PreviewMouseMove += TextView_PreviewMouseMove;
@@ -987,6 +991,14 @@ namespace IRExplorerUI {
         }
 
         private void SearchSymbolExecuted(object sender, ExecutedRoutedEventArgs e) {
+            SearchSymbolImpl(false);
+        }
+
+        private void SearchSymbolAllSectionsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            SearchSymbolImpl(true);
+        }
+
+        private void SearchSymbolImpl(bool searchAllSections) {
             var element = TextView.TryGetSelectedElement();
 
             if (element == null || !element.HasName) {
@@ -996,7 +1008,7 @@ namespace IRExplorerUI {
             string symbolName = element.Name;
             var searchInfo = new SearchInfo();
             searchInfo.SearchedText = symbolName;
-            searchInfo.SearchAll = true;
+            searchInfo.SearchAll = searchAllSections;
             ShowSearchPanel(searchInfo);
         }
 
@@ -1262,6 +1274,7 @@ namespace IRExplorerUI {
             CreateQueryActionButtons(query.Data);
         }
 
+
         private QueryPanel CreateQueryPanel() {
             //? TODO: Create panel over the document
             //? TODO: If query panel already visible, append new query to it?
@@ -1276,6 +1289,7 @@ namespace IRExplorerUI {
 
             var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, 
                                             documentHost, Session);
+            activeQueryPanels_.Add(queryPanel);
             queryPanel.PanelActivated += QueryPanel_PanelActivated;
             queryPanel.PanelTitle = "Queries";
             queryPanel.ShowAddButton = true;
@@ -1289,17 +1303,21 @@ namespace IRExplorerUI {
         }
 
         private void QueryPanel_PanelActivated(object sender, EventArgs e) {
+            // Change action buttons when another query is activated.
             var panel = (QueryPanel)sender;
+            var currentPanel = activeQueryPanels_[^1];
 
-            if (activeQueryPanel_ != panel) {
-                if (activeQueryPanel_ != null) {
-                    activeQueryPanel_.IsActivePanel = false;
-                }
-
-                activeQueryPanel_ = panel;
-                activeQueryPanel_.IsActivePanel = true;
-                CreateQueryActionButtons(panel.GetQueryAt(0).Data);
+            if (currentPanel != panel) {
+                currentPanel.IsActivePanel = false;
+                SetActiveQueryPanel(panel);
             }
+        }
+
+        private void SetActiveQueryPanel(QueryPanel panel) {
+            activeQueryPanels_.Remove(panel); // Bring to end of list.
+            activeQueryPanels_.Add(panel);
+            panel.IsActivePanel = true;
+            CreateQueryActionButtons(panel.GetQueryAt(0).Data);
         }
 
         private void QueryPanel_Closed(object sender, EventArgs e) {
@@ -1307,6 +1325,16 @@ namespace IRExplorerUI {
             queryPanel.PopupClosed -= QueryPanel_Closed;
             queryPanel.IsOpen = false;
             Session.UnregisterDetachedPanel(queryPanel);
+
+            // Update the active query.
+            activeQueryPanels_.Remove(queryPanel);
+
+            if (activeQueryPanels_.Count > 0) {
+                SetActiveQueryPanel(activeQueryPanels_[^1]);
+            }
+            else {
+                RemoveQueryActionButtons();
+            }
         }
 
         private void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
@@ -1371,7 +1399,7 @@ namespace IRExplorerUI {
 
             queryPanel.PanelTitle = "Function Tasks";
             queryPanel.ShowAddButton = false;
-            queryPanel.PopupClosed += QueryPanel_PopupClosed;
+            queryPanel.PopupClosed += FunctionTaskPanel_PopupClosed;
             queryPanel.IsOpen = true;
             queryPanel.StaysOpen = true;
             return queryPanel;
@@ -1473,7 +1501,7 @@ namespace IRExplorerUI {
         }
 
         private void CreateQueryActionButtons(QueryData optionsValues) {
-            ActionPanel.ClearActionButtons();
+            RemoveQueryActionButtons();
             int actionButtonIndex = 1;
 
             foreach (var inputValue in optionsValues.InputValues) {
@@ -1489,6 +1517,10 @@ namespace IRExplorerUI {
             }
         }
 
+        private void RemoveQueryActionButtons() {
+            ActionPanel.ClearActionButtons();
+        }
+
         private void ActionPanel_ActionButtonClicked(object sender, ActionPanelButton e) {
             var inputValue = (QueryValue)e.Tag;
 
@@ -1500,9 +1532,9 @@ namespace IRExplorerUI {
             }
         }
 
-        private void QueryPanel_PopupClosed(object sender, EventArgs e) {
+        private void FunctionTaskPanel_PopupClosed(object sender, EventArgs e) {
             var queryPanel = (QueryPanel)sender;
-            queryPanel.PopupClosed -= QueryPanel_PopupClosed;
+            queryPanel.PopupClosed -= FunctionTaskPanel_PopupClosed;
             queryPanel.IsOpen = false;
             Session.UnregisterDetachedPanel(queryPanel);
         }

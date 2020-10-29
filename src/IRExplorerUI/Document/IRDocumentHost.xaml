@@ -20,10 +20,8 @@
         <CommandBinding Command="local:DocumentHostCommand.ShowSectionList" Executed="ShowSectionListExecuted" />
         <CommandBinding Command="local:DocumentHostCommand.PreviousSection" Executed="PreviousSectionExecuted" />
         <CommandBinding Command="local:DocumentHostCommand.NextSection" Executed="NextSectionExecuted" />
-        <CommandBinding
-            Command="local:DocumentHostCommand.SearchSymbol"
-            Executed="SearchSymbolExecuted"
-            PreviewExecuted="SearchSymbolExecuted" />
+        <CommandBinding Command="local:DocumentHostCommand.SearchSymbol" Executed="SearchSymbolExecuted" />
+        <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
     </UserControl.CommandBindings>
 
     <Grid>
@@ -409,6 +407,17 @@
                             CommandTarget="{Binding ElementName=TextView}"
                             Header="Search Symbol"
                             InputGestureText="Ctrl+Shift+F">
+                            <MenuItem.Icon>
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource SearchIcon}" />
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem
+                            Command="local:DocumentHostCommand.SearchSymbolAllSections"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            Header="Search Symbol in All Sections">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"

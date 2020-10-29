@@ -406,6 +406,7 @@ namespace IRExplorerUI.Document {
                     var tempTreeNode = new TreeViewItem() {
                         Background = RemarkEx.GetRemarkBackground(remark),
                         ItemContainerStyle = Application.Current.FindResource("RemarkTreeViewItemStyle") as Style,
+                        ToolTip = remark.RemarkText,
                         Tag = remark
                     };
 
@@ -498,6 +499,7 @@ namespace IRExplorerUI.Document {
                 if (!lineText.StartsWith("/// irx:")) {
                     var lineTreeNode = new TreeViewItem();
                     lineTreeNode.Header = RemarkEx.FormatExtraTextLine(lineText, highlightingList);
+                    lineTreeNode.ToolTip = lineText.Trim();
                     items.Add(new Tuple<TreeViewItem, int>(lineTreeNode, k));
                 }
             }
