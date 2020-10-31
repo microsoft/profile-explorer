@@ -66,6 +66,7 @@ namespace IRExplorerUI {
 
     public class IRDocument : TextEditor, INotifyPropertyChanged {
         private const float ParentStyleLightAdjustment = 1.20f;
+        private const int DefaultMaxExpressionLevel = 4;
 
         private static DocumentActionKind[] AutomationActions = {
             DocumentActionKind.SelectElement,
@@ -73,6 +74,7 @@ namespace IRExplorerUI {
             DocumentActionKind.ShowReferences,
             DocumentActionKind.GoToDefinition
         };
+
         private Stack<ReversibleDocumentAction> actionUndoStack_;
         private int automationActionIndex_;
         private IRElement automationPrevElement_;
@@ -136,6 +138,10 @@ namespace IRExplorerUI {
 
         private PairHighlightingStyle ssaUserStyle_;
         private List<IRElement> tupleElements_;
+
+        private IRElement currentExprElement_;
+        private int currentExprStyleIndex_;
+        private int currentExprLevel_;
 
         public IRDocument() {
             // Setup element tracking data structures.
@@ -633,6 +639,7 @@ namespace IRExplorerUI {
             section_ = null;
             function_ = null;
             selectedRemark_ = null;
+            currentExprElement_ = null;
             ClearSelectedElements();
             hoverHighlighter_?.Clear();
             markedHighlighter_?.Clear();
@@ -1686,7 +1693,7 @@ namespace IRExplorerUI {
                                                    markReferences, action);
             }
             else if (element is InstructionIR instr) {
-                highlighted = HandleInstructionElement(instr, highlighter, ref action);
+                highlighted = HandleInstructionElement(instr, highlighter, markExpression, ref action);
             }
 
             if (!highlighted) {
@@ -1695,7 +1702,13 @@ namespace IRExplorerUI {
         }
 
         private bool HandleInstructionElement(InstructionIR instr, ElementHighlighter highlighter,
-                                              ref HighlightingEventAction action) {
+                                              bool markExpression, ref HighlightingEventAction action) {
+            if (markExpression) {
+                // Mark an entire SSA def-use expression DAG.
+                HighlightSSAExpression(instr, highlighter, expressionOperandStyle_, expressionStyle_);
+                return true;
+            }
+
             if (!settings_.HighlightInstructionOperands) {
                 return false;
             }
@@ -1745,7 +1758,7 @@ namespace IRExplorerUI {
                 else if (markExpression) {
                     // Collect the transitive set of users, marking instructions
                     // that depend on the value of this destination operand.
-                    ExpandIteratedUseList(useList);
+                    ExpandIteratedUseList(op, useList);
                 }
 
                 if (useList != null && useList.Count > 0) {
@@ -1776,20 +1789,29 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private void ExpandIteratedUseList(List<Reference> useList) {
+        private void ExpandIteratedUseList(OperandIR operand, List<Reference> useList) {
             var handledElements = new HashSet<IRElement>();
 
             foreach (var use in useList) {
                 handledElements.Add(use.Element);
             }
 
-            ExpandIteratedUseList(useList, handledElements, 0);
+            // Each expansion of the same element doubles the recursion depth.
+            if (currentExprElement_ == operand) {
+                currentExprLevel_ *= 2;
+            }
+            else {
+                currentExprElement_ = operand;
+                currentExprLevel_ = DefaultMaxExpressionLevel;
+            }
+
+            int maxLevel = currentExprLevel_;
+            ExpandIteratedUseList(useList, handledElements, 0, maxLevel);
         }
 
-        private void ExpandIteratedUseList(List<Reference> useList,
-                                           HashSet<IRElement> handledElements, int level) {
-            //? TODO: Max level should be configurable
-            if (level > 8) {
+        private void ExpandIteratedUseList(List<Reference> useList, HashSet<IRElement> handledElements, 
+                                           int level, int maxLevel) {
+            if (level > maxLevel) {
                 return;
             }
 
@@ -1809,7 +1831,7 @@ namespace IRExplorerUI {
                             var iteratedUseList = new List<Reference>();
                             iteratedUseList.Add(iteratedUse);
 
-                            ExpandIteratedUseList(iteratedUseList, handledElements, level + 1);
+                            ExpandIteratedUseList(iteratedUseList, handledElements, level + 1, maxLevel);
                             newUseLists.Add(iteratedUseList);
                         }
                     }
@@ -1961,25 +1983,30 @@ namespace IRExplorerUI {
         private void HighlightSSAExpression(IRElement element, ElementHighlighter highlighter,
                                             HighlightingStyleCollection style,
                                             HighlightingStyleCollection instrStyle) {
-            int styleIndex;
             var locationTag = element.GetTag<SourceLocationTag>();
             var handledElements = new HashSet<IRElement>();
 
-            if (locationTag != null) {
-                styleIndex = locationTag.Line % style.Styles.Count;
+            // Each expansion of the same element doubles the recursion depth.
+            if (currentExprElement_ == element) {
+                currentExprLevel_ *= 2;
             }
             else {
-                styleIndex = new Random().Next(style.Styles.Count - 1);
+                currentExprElement_ = element;
+                currentExprStyleIndex_ = new Random().Next(style.Styles.Count - 1);
+                currentExprLevel_ = DefaultMaxExpressionLevel;
             }
 
+            int maxLevel = currentExprLevel_;
+            int styleIndex = currentExprStyleIndex_;
+
             HighlightSSAExpression(element, element, handledElements,
-                                   highlighter, style, instrStyle, styleIndex, 0);
+                                   highlighter, style, instrStyle, styleIndex, 0, maxLevel);
         }
 
         private void HighlightSSAExpression(IRElement element, IRElement parent, HashSet<IRElement> handledElements,
                                             ElementHighlighter highlighter, HighlightingStyleCollection style,
                                             HighlightingStyleCollection instrStyle, int styleIndex,
-                                            int level) {
+                                            int level, int maxLevel) {
             if (!handledElements.Add(element)) {
                 return; // Element already handled during recursion.
             }
@@ -1992,7 +2019,7 @@ namespace IRExplorerUI {
                     }
 
                     //? TODO: Max level should be configurable
-                    if (level >= 6) {
+                    if (level >= maxLevel) {
                         return;
                     }
 
@@ -2001,7 +2028,7 @@ namespace IRExplorerUI {
                     if (defTag != null) {
                         if (defTag.Owner is OperandIR defOp) {
                             HighlightSSAExpression(defOp.Parent, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level);
+                                                   instrStyle, styleIndex, level, maxLevel);
                         }
                     }
                     else {
@@ -2009,7 +2036,7 @@ namespace IRExplorerUI {
 
                         if (sourceDefOp != null) {
                             HighlightSSAExpression(sourceDefOp, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level);
+                                                   instrStyle, styleIndex, level, maxLevel);
                         }
                     }
 
@@ -2018,19 +2045,19 @@ namespace IRExplorerUI {
                 case InstructionIR instr: {
                     highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
 
-                    if (level >= 4) {
+                    if (level >= maxLevel) {
                         return;
                     }
 
                     foreach (var sourceOp in instr.Sources) {
                         HighlightSSAExpression(sourceOp, instr, handledElements, highlighter, style,
-                                               instrStyle, styleIndex, level + 1);
+                                               instrStyle, styleIndex, level + 1, maxLevel);
                     }
 
                     if (level > 0) {
                         foreach (var destOp in instr.Destinations) {
                             HighlightSSAExpression(destOp, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level + 1);
+                                                   instrStyle, styleIndex, level + 1, maxLevel);
                         }
                     }
 
@@ -2040,7 +2067,7 @@ namespace IRExplorerUI {
         }
 
         private void HighlightUsers(OperandIR op, List<Reference> useList, ElementHighlighter highlighter,
-                                       PairHighlightingStyle style, HighlightingEventAction action) {
+                                    PairHighlightingStyle style, HighlightingEventAction action) {
             var instrGroup = new HighlightedGroup(style.ParentStyle);
             var useGroup = new HighlightedGroup(style.ChildStyle);
             useGroup.Add(op);
