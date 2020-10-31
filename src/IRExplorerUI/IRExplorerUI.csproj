@@ -56,23 +56,23 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.2" />
+		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.3" />
 		<PackageReference Include="AvalonEdit" Version="6.0.1" />
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.6.0" />
 		<PackageReference Include="CS-Script.Core" Version="1.4.0" />
 		<PackageReference Include="DiffPlex" Version="1.6.3" />
-		<PackageReference Include="Dirkster.AvalonDock" Version="4.40.0" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.20.0" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.20.0" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.20.0" />
-		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.20.0" />
+		<PackageReference Include="Dirkster.AvalonDock" Version="4.50.0" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.50.0" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.50.0" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.50.0" />
+		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.50.0" />
 		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.94" />
 		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.85" />
 		<PackageReference Include="Google.Protobuf" Version="3.13.0" />
-		<PackageReference Include="Grpc" Version="2.32.0" />
-		<PackageReference Include="Grpc.Core" Version="2.32.0" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.32.0" />
-		<PackageReference Include="Grpc.Tools" Version="2.32.0">
+		<PackageReference Include="Grpc" Version="2.33.1" />
+		<PackageReference Include="Grpc.Core" Version="2.33.1" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.33.1" />
+		<PackageReference Include="Grpc.Tools" Version="2.33.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -87,9 +87,9 @@
 		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.7.9" />
 		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.7.56" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
-		<PackageReference Include="protobuf-net" Version="3.0.29" />
+		<PackageReference Include="protobuf-net" Version="3.0.52" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.24" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.26" />
 	</ItemGroup>
 
 	<ItemGroup>
