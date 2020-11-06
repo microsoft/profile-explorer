@@ -333,6 +333,10 @@ namespace IRExplorerUI {
             return result?.DocumentHost?.TextView;
         }
 
+        private bool IsActiveDocument(IRDocumentHost document) {
+            return FindActiveDocumentHost() == document;
+        }
+
         private void SetActiveDocumentHost(DocumentHostInfo docHost) {
             foreach (var item in sessionState_.DocumentHosts) {
                 item.IsActiveDocument = false;

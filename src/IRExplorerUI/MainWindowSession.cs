@@ -433,7 +433,7 @@ namespace IRExplorerUI {
 
         private async Task<IRDocumentHost> OpenDocumentSection(OpenSectionEventArgs args,
                                                                  IRDocumentHost targetDocument = null,
-                                                                 bool awaitExtraTasks = true) {
+                                                                 bool runExtraTasks = true) {
             var document = targetDocument;
 
             if (document == null &&
@@ -463,12 +463,8 @@ namespace IRExplorerUI {
 
             var parsedSection = await SwitchSection(args.Section, document);
 
-            if (awaitExtraTasks) {
+            if (runExtraTasks) {
                 await GenerateGraphs(args.Section, document.TextView);
-            }
-            else {
-                // Used in diff mode to have the UI update faster.
-                GenerateGraphs(args.Section, document.TextView, false);
             }
 
             return document;
