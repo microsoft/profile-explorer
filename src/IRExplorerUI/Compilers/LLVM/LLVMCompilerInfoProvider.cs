@@ -25,6 +25,7 @@ namespace IRExplorerUI.Compilers.LLVM {
         }
 
         public string CompilerIRName => "LLVM";
+        public string DefaultSyntaxHighlightingFile => "LLVM";
         public ISession Session => session_;
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;

@@ -82,7 +82,7 @@ namespace IRExplorerUI {
             DefinitionValueColor = Utils.ColorFromString("#F2E67C");
             UseValueColor = Utils.ColorFromString("#95DBAD");
             BorderColor = Colors.Black;
-            SyntaxHighlightingName = "UTC IR";
+            SyntaxHighlightingName = "";
         }
 
         public override SettingsBase Clone() {

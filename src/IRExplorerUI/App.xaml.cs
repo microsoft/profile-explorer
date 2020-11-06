@@ -338,9 +338,15 @@ namespace IRExplorerUI {
         }
 
         public static string GetSyntaxHighlightingFilePath() {
-            // By default use the syntax file from the document settings.
-            var result = GetSyntaxHighlightingFileInfo(Settings.DocumentSettings.SyntaxHighlightingName,
-                                                           Session.CompilerInfo.CompilerIRName);
+            // If a file is not set yet (first run for ex), set the default one.
+            var docSettings = Settings.DocumentSettings;
+
+            if (string.IsNullOrEmpty(docSettings.SyntaxHighlightingName)) {
+                docSettings.SyntaxHighlightingName = Session.CompilerInfo.DefaultSyntaxHighlightingFile;
+            }
+
+            var result = GetSyntaxHighlightingFileInfo(docSettings.SyntaxHighlightingName,
+                                                       Session.CompilerInfo.CompilerIRName);
             return result?.Path;
 
         }

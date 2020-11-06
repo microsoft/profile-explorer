@@ -36,6 +36,8 @@ namespace IRExplorerUI {
         [ProtoMember(22)] public bool ShowModifications { get; set; }
         [ProtoMember(23)] public bool ShowMinorModifications { get; set; }
 
+        public bool ShowAnyChanges => ShowInsertions || ShowDeletions || ShowModifications || ShowMinorModifications;
+
         public override void Reset() {
             IdentifyMinorDiffs = true;
             FilterInsignificantDiffs = true;

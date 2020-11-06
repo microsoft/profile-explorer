@@ -40,6 +40,8 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public string CompilerIRName => "UTC";
+        public string DefaultSyntaxHighlightingFile => "UTC IR";
+
         public ISession Session => session_;
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;
