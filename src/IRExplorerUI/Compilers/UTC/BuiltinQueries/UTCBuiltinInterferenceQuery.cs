@@ -259,10 +259,10 @@ namespace IRExplorerUI.Compilers.UTC {
             var document = Session.CurrentDocument;
 
             if (op.IsDestinationOperand) {
-                document.MarkElementAppend(op, Colors.Pink, highlightingType, false);
+                document.MarkElementAppend(op, Colors.Pink, highlightingType, true);
             }
             else {
-                document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, false);
+                document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, true);
             }
 
             document.MarkElementAppend(op.ParentTuple, instrStyle, highlightingType, false);

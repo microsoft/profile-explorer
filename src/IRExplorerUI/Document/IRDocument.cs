@@ -791,7 +791,7 @@ namespace IRExplorerUI {
         }
 
         public void MarkElementAppend(IRElement element, Color selectedColor,
-                                  HighlighingType highlightingType, bool raiseEvent = true) {
+                                      HighlighingType highlightingType, bool raiseEvent = true) {
             var style = new HighlightingStyle(selectedColor, null);
             MarkElementAppend(element, style, highlightingType, raiseEvent);
 
@@ -806,7 +806,7 @@ namespace IRExplorerUI {
             highlighter.Add(group);
 
             if (raiseEvent) {
-                RaiseElementHighlightingEvent(element, group, markedHighlighter_.Type,
+                RaiseElementHighlightingEvent(element, group, highlightingType,
                                               HighlightingEventAction.AppendHighlighting);
             }
         }
