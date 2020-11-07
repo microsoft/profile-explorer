@@ -118,11 +118,21 @@ namespace IRExplorerUI.OptionsPanels {
                     StyleContextMenu.Items.Add(menuItem);
                 }
 
+                if (Parent is OptionsPanelHostWindow popup) {
+                    popup.StaysOpen = true;
+                    StyleContextMenu.Closed += StyleContextMenu_Closed;
+                }
+
                 StyleContextMenu.IsOpen = true;
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load style document XML: {ex}");
             }
+        }
+
+        private void StyleContextMenu_Closed(object sender, RoutedEventArgs e) {
+            var popup = Parent as OptionsPanelHostWindow;
+            popup.StaysOpen = false;
         }
 
         private void StyleContextMenuItem_Click(object sender, RoutedEventArgs e) {

@@ -99,10 +99,7 @@ namespace IRExplorerUI {
             string fileDir = Path.GetDirectoryName(FilePath);
             string fileName = Path.GetFileName(FilePath);
             documentWatcher_ = new FileSystemWatcher(fileDir, fileName);
-
-            documentWatcher_.NotifyFilter =
-                NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.LastAccess;
-
+            documentWatcher_.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
             documentWatcher_.Changed += DocumentWatcher_Changed;
         }
 
