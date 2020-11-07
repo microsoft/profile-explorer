@@ -356,8 +356,12 @@
                         </Style.Setters>
 
                         <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=HasContext}" Value="True">
+                                <Setter Property="Foreground" Value="DarkBlue" />
+                            </DataTrigger>
+
                             <DataTrigger Binding="{Binding Path=InCurrentSection}" Value="True">
-                                <Setter Property="FontWeight" Value="ExtraBold" />
+                                <Setter Property="FontWeight" Value="Bold" />
                             </DataTrigger>
 
                             <DataTrigger Binding="{Binding Path=HasCustomBackground}" Value="True">

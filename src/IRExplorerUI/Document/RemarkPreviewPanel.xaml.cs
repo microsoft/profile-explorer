@@ -138,6 +138,7 @@ namespace IRExplorerUI.Document {
         }
 
         public bool InCurrentSection { get; set; }
+        public bool HasContext => Remark.Context != null;
         public string SectionName { get; set; }
 
         public bool IsOptimization => Remark.Kind == RemarkKind.Optimization;
