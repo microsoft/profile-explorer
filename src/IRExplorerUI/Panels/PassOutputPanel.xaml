@@ -117,7 +117,7 @@
         <local:LightIRDocument
             x:Name="TextView"
             Grid.Row="1"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             FontFamily="Consolas"
             FontSize="12"
             ShowLineNumbers="True" />

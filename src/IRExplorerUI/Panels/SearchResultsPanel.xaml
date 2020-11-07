@@ -122,7 +122,7 @@
             x:Name="ResultList"
             Grid.Row="1"
             Margin="0,-1,0,0"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
             VirtualizingPanel.IsVirtualizing="True"
@@ -169,7 +169,7 @@
             </ListView.View>
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
 
                     <Style.Triggers>

@@ -1287,7 +1287,6 @@ namespace IRExplorerUI {
 
         private QueryPanel CreateQueryPanel() {
             //? TODO: Create panel over the document
-            //? TODO: If query panel already visible, append new query to it?
             var documentHost = this;
             var position = new Point();
 
@@ -1299,15 +1298,14 @@ namespace IRExplorerUI {
 
             var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, 
                                             documentHost, Session);
-            activeQueryPanels_.Add(queryPanel);
             queryPanel.PanelActivated += QueryPanel_PanelActivated;
             queryPanel.PanelTitle = "Queries";
             queryPanel.ShowAddButton = true;
             queryPanel.PopupClosed += QueryPanel_Closed;
             queryPanel.IsOpen = true;
             queryPanel.StaysOpen = true;
-            queryPanel.IsActivePanel = true;
 
+            SwitchActiveQueryPanel(queryPanel);
             Session.RegisterDetachedPanel(queryPanel);
             return queryPanel;
         }
@@ -1315,10 +1313,19 @@ namespace IRExplorerUI {
         private void QueryPanel_PanelActivated(object sender, EventArgs e) {
             // Change action buttons when another query is activated.
             var panel = (QueryPanel)sender;
-            var currentPanel = activeQueryPanels_[^1];
+            SwitchActiveQueryPanel(panel);
+        }
 
-            if (currentPanel != panel) {
-                currentPanel.IsActivePanel = false;
+        private void SwitchActiveQueryPanel(QueryPanel panel) {
+            if (activeQueryPanels_.Count > 0) {
+                var currentPanel = activeQueryPanels_[^1];
+
+                if (currentPanel != panel) {
+                    currentPanel.IsActivePanel = false;
+                    SetActiveQueryPanel(panel);
+                }
+            }
+            else {
                 SetActiveQueryPanel(panel);
             }
         }
@@ -1327,11 +1334,19 @@ namespace IRExplorerUI {
             activeQueryPanels_.Remove(panel); // Bring to end of list.
             activeQueryPanels_.Add(panel);
             panel.IsActivePanel = true;
-            CreateQueryActionButtons(panel.GetQueryAt(0).Data);
+
+            if (panel.QueryCount > 0) {
+                // Update the action panel buttons.
+                CreateQueryActionButtons(panel.GetQueryAt(0).Data);
+            }
         }
 
         private void QueryPanel_Closed(object sender, EventArgs e) {
             var queryPanel = (QueryPanel)sender;
+            CloseQueryPanel(queryPanel);
+        }
+
+        private void CloseQueryPanel(QueryPanel queryPanel) {
             queryPanel.PopupClosed -= QueryPanel_Closed;
             queryPanel.IsOpen = false;
             Session.UnregisterDetachedPanel(queryPanel);
@@ -1555,6 +1570,12 @@ namespace IRExplorerUI {
             }
             else {
                 ShowRemarkPanel();
+            }
+        }
+
+        private void CloseAllQueryPanelsMenuItem_Click(object sender, RoutedEventArgs e) {
+            while(activeQueryPanels_.Count > 0) {
+                CloseQueryPanel(activeQueryPanels_[0]);
             }
         }
     }
