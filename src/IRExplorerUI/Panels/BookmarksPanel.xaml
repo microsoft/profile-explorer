@@ -119,7 +119,7 @@
             x:Name="BookmarkList"
             Grid.Row="1"
             Margin="0,-1,0,0"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
             VirtualizingPanel.IsVirtualizing="True"

@@ -152,7 +152,7 @@
             x:Name="ReferenceList"
             Grid.RowSpan="2"
             Margin="0,27,0,0"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
             VirtualizingPanel.IsVirtualizing="True"
@@ -219,7 +219,7 @@
             </ListView.View>
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <EventSetter Event="Control.MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
                     <EventSetter Event="UIElement.MouseEnter" Handler="ListViewItem_MouseEnter" />
 

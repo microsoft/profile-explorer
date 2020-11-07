@@ -91,7 +91,7 @@
                             x:Name="BlockSelector"
                             Width="75"
                             Margin="4,0,0,0"
-                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             DisplayMemberPath="Number"
                             Loaded="ComboBox_Loaded"
@@ -346,8 +346,7 @@
                                         Source="{StaticResource QueryIcon}" />
                                 </MenuItem.Icon>
                                 <Separator />
-                                <MenuItem Header="Show Query Panel" />
-                                <MenuItem Header="Close All Query Panels" />
+                                <MenuItem Click="CloseAllQueryPanelsMenuItem_Click" Header="Close All Query Panels" />
                             </MenuItem>
                         </Menu>
 

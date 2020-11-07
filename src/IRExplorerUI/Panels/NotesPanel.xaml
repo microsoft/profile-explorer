@@ -46,7 +46,7 @@
                         Width="120"
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         Loaded="ComboBox_Loaded"
                         SelectedIndex="0"
@@ -88,7 +88,7 @@
         <local:LightIRDocument
             x:Name="TextView"
             Grid.Row="1"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             FontFamily="Consolas"
             FontSize="12"
             ShowLineNumbers="True" />

@@ -102,7 +102,7 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"
                             VerticalContentAlignment="Center"
-                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             TextChanged="FunctionFilter_TextChanged"
                             ToolTip="Filter function list based on a case-insensitive substring">
@@ -115,7 +115,7 @@
 
                         </TextBox>
                         <TextBlock
-                            Margin="8,4"
+                            Margin="8,5"
                             Foreground="DimGray"
                             IsHitTestVisible="False"
                             Text="Search functions"
@@ -141,7 +141,7 @@
                 Grid.Row="1"
                 Panel.ZIndex="1"
                 AutomationProperties.AutomationId="AutoFunctionList"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 SelectionChanged="FunctionList_SelectionChanged"
@@ -173,7 +173,7 @@
                 </ListView.View>
                 <ListView.ItemContainerStyle>
                     <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     </Style>
                 </ListView.ItemContainerStyle>
             </ListView>
@@ -256,7 +256,7 @@
                                 Margin="4,0,0,0"
                                 HorizontalAlignment="Center"
                                 VerticalContentAlignment="Center"
-                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 TabIndex="4"
                                 TextChanged="SectionFilter_TextChanged"
@@ -269,7 +269,7 @@
                                 </TextBox.InputBindings>
                             </TextBox>
                             <TextBlock
-                                Margin="8,4"
+                                Margin="8,5"
                                 Foreground="DimGray"
                                 IsHitTestVisible="False"
                                 Text="Search sections"
@@ -340,7 +340,7 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 AutomationProperties.AutomationId="AutoSectionList"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
@@ -437,7 +437,7 @@
 
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
 
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">
