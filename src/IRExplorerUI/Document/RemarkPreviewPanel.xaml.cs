@@ -965,7 +965,7 @@ namespace IRExplorerUI.Document {
             DetachPanel();
         }
 
-        private void DetachPanel() {
+        public void DetachPanel() {
             if (IsDetached) {
                 return;
             }

@@ -115,6 +115,7 @@ namespace IRExplorerUI {
         private DocumentMargin margin_;
         private ElementHighlighter markedHighlighter_;
         private OverlayRenderer overlayRenderer_;
+        private bool overlayRendererConnectedTemporarely_;
 
         private HighlightingStyleCyclingCollection markerChildStyle_;
 
@@ -151,10 +152,10 @@ namespace IRExplorerUI {
             highlighterVersion_ = new MarkerMarginVersionInfo();
 
             // Setup styles and colors.
+            //? TODO: Expose as option
             definitionStyle_ = new PairHighlightingStyle {
                 ParentStyle = new HighlightingStyle(Color.FromRgb(255, 215, 191)),
-                ChildStyle =
-                    new HighlightingStyle(Color.FromRgb(255, 197, 163), Pens.GetBoldPen(Colors.Black))
+                ChildStyle = new HighlightingStyle(Color.FromRgb(255, 197, 163), Pens.GetBoldPen(Colors.Black))
             };
 
             expressionOperandStyle_ = HighlightingStyles.StyleSet;
@@ -645,6 +646,7 @@ namespace IRExplorerUI {
             markedHighlighter_?.Clear();
             diffHighlighter_?.Clear();
             remarkHighlighter_?.Clear();
+            overlayRenderer_?.Clear();
             bookmarks_?.Clear();
             margin_?.Reset();
             Text = "";
@@ -809,8 +811,10 @@ namespace IRExplorerUI {
             }
         }
 
-        public void SetRootElement(IRElement element, HighlightingStyle style) {
+        public void SetRootConnectedElement(IRElement element, HighlightingStyle style,
+                                             bool isTemporary) {
             overlayRenderer_.SetRootElement(element, style);
+            overlayRendererConnectedTemporarely_ = isTemporary;
         }
 
         public void AddConnectedElement(IRElement element, HighlightingStyle style) {
@@ -1314,6 +1318,10 @@ namespace IRExplorerUI {
         private void ClearTemporaryHighlighting() {
             hoverHighlighter_.Clear();
             ClearSelectedElements();
+
+            if(overlayRendererConnectedTemporarely_) {
+                overlayRenderer_.ClearConnectedElements();
+            }
         }
 
         private void CreateRightMarkerMargin() {
@@ -1506,8 +1514,7 @@ namespace IRExplorerUI {
 
                 return new PairHighlightingStyle {
                     ChildStyle = new HighlightingStyle(colorArgs.SelectedColor),
-                    ParentStyle =
-                        new HighlightingStyle(Utils.ChangeColorLuminisity(colorArgs.SelectedColor, 1.4))
+                    ParentStyle = new HighlightingStyle(Utils.ChangeColorLuminisity(colorArgs.SelectedColor, 1.4))
                 };
             }
 
@@ -1747,7 +1754,7 @@ namespace IRExplorerUI {
             else if ((op.Role == OperandRole.Destination || op.Role == OperandRole.Parameter) &&
                      settings_.HighlightDestinationUses) {
                 // First look for an SSA definition and its uses,
-                // if not found  highlight every load of the same symbol.
+                // if not found highlight every load of the same symbol.
                 var useList = ReferenceFinder.FindSSAUses(op);
                 bool handled = false;
 
@@ -1761,7 +1768,7 @@ namespace IRExplorerUI {
                     ExpandIteratedUseList(op, useList);
                 }
 
-                if (useList != null && useList.Count > 0) {
+                if (useList.Count > 0) {
                     HighlightUsers(op, useList, highlighter, ssaUserStyle_, action);
                     handled = true;
                 }
@@ -2072,6 +2079,11 @@ namespace IRExplorerUI {
             var useGroup = new HighlightedGroup(style.ChildStyle);
             useGroup.Add(op);
 
+            //? TODO: Implement arrows - either to all uses, or just ones outside view
+            // overlayRenderer_.SetRootElement(op, new HighlightingStyle(Colors.Black));
+            // overlayRendererConnectedTemporarely_ = highlighter.Type != HighlighingType.Marked;
+            // var arrowStyle = new HighlightingStyle(Colors.DarkGreen, Pens.GetDashedPen(Colors.DarkGreen, DashStyles.Dash, 1.5));
+
             foreach (var use in useList) {
                 useGroup.Add(use.Element);
                 var useInstr = use.Element.ParentTuple;
@@ -2079,6 +2091,8 @@ namespace IRExplorerUI {
                 if (useInstr != null) {
                     instrGroup.Add(useInstr);
                 }
+
+                // overlayRenderer_.AddConnectedElement(use.Element, arrowStyle);
             }
 
             highlighter.Add(instrGroup);

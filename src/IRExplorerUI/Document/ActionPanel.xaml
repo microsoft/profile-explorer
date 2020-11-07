@@ -12,6 +12,12 @@
         BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
         BorderThickness="1,1,1,1">
         <StackPanel Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}" Orientation="Horizontal">
+            <Image
+                Width="16"
+                Height="16"
+                Margin="2,0,2,0"
+                Source="{StaticResource QueryIcon}"
+                Visibility="{Binding HasActionButtons, Converter={StaticResource BoolToVisibility}}" />
             <ItemsControl x:Name="ActionButtonsPanel">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>

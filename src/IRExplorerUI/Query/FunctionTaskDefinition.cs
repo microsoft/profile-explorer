@@ -34,6 +34,11 @@ namespace IRExplorerUI.Query {
 
         public FunctionTaskInfo TaskInfo => taskInfo_;
 
+        public bool IsCompatibleWith(string compilerIR) {
+            return string.IsNullOrEmpty(taskInfo_.TargetCompilerIR) ||
+                   taskInfo_.TargetCompilerIR == compilerIR;
+        }
+
         public IFunctionTask CreateInstance(ISession session) {
             var actionInstance = (IFunctionTask)Activator.CreateInstance(taskType_);
 
