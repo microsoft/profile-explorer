@@ -198,8 +198,7 @@ namespace IRExplorerUI {
             appIsActivated_ = false;
 
             detachedPanels_.ForEach(panel => {
-                //? TODO: Find a working implementation
-                // panel.SendToBack();
+                panel.SendToBack();
             });
         }
 

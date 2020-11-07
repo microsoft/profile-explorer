@@ -73,7 +73,26 @@ namespace IRExplorerUI.Controls {
         public bool IsDetached => isDetached_;
 
         public void BringToFront() {
-            NativeMethods.SetForegroundWindow(PopupHandle);
+            NativeMethods.RECT rect;
+
+            if (!NativeMethods.GetWindowRect(PopupHandle, out rect)) {
+                return;
+            }
+
+            NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOPMOST, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
+//            NativeMethods.SetForegroundWindow(PopupHandle);
+        }
+
+        public void SendToBack() {
+            NativeMethods.RECT rect;
+
+            if (!NativeMethods.GetWindowRect(PopupHandle, out rect)) {
+                return;
+            }
+
+            //NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_BOTTOM, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
+            //NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOP, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
+            NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_NOTOPMOST, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
         }
 
         public void Minimize() {
