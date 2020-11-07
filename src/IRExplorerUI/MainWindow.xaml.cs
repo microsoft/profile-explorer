@@ -196,10 +196,20 @@ namespace IRExplorerUI {
 
         private void MainWindow_Deactivated(object sender, EventArgs e) {
             appIsActivated_ = false;
+
+            detachedPanels_.ForEach(panel => {
+                //? TODO: Find a working implementation
+                // panel.SendToBack();
+            });
         }
 
         private async void MainWindow_Activated(object sender, EventArgs e) {
             appIsActivated_ = true;
+
+            detachedPanels_.ForEach(panel => {
+                panel.BringToFront();
+            });
+
             var reloadedDocuments = new List<string>();
 
             lock (lockObject_) {
