@@ -186,6 +186,14 @@ namespace IRExplorerUI {
         public bool IsDiffDocument(IRDocumentHost docHost) {
             return docHost == LeftDocument || docHost == RightDocument;
         }
+
+        public void UpdateResults(DiffMarkingResult leftResults, IRTextSection leftSection,
+                                  DiffMarkingResult rightResults, IRTextSection rightSection) {
+            LeftDiffResults = leftResults;
+            LeftSection = leftSection;
+            RightDiffResults = rightResults;
+            RightSection = rightSection;
+        }
     }
 
     public class SessionSettings {

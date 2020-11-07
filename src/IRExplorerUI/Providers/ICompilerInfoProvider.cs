@@ -12,6 +12,7 @@ using System;
 namespace IRExplorerUI {
     public interface ICompilerInfoProvider {
         string CompilerIRName { get; }
+        string DefaultSyntaxHighlightingFile { get; }
         ISession Session { get; }
 
         ICompilerIRInfo IR { get; }

@@ -1,0 +1,193 @@
+﻿<Window
+    x:Class="RLDiffViewer.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:RLDiffViewer"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="RL Diff Result Viewer"
+    Width="1000"
+    Height="700"
+    ResizeMode="CanResizeWithGrip"
+    SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
+    <Window.Resources>
+        <DataTemplate x:Key="InstructionTemplate">
+            <Grid Background="#E7F4FF">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontWeight="Bold"
+                    Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                    Text="{Binding .}" />
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="InstructionContentStyle" TargetType="{x:Type ContentControl}">
+            <Setter Property="ContentTemplate" Value="{StaticResource InstructionTemplate}" />
+            <Setter Property="Content" Value="{Binding .}" />
+        </Style>
+
+        <DataTemplate x:Key="LoadTemplate">
+            <Grid Background="#EEFFE4">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontWeight="Bold"
+                    Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                    Text="{Binding .}" />
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="LoadContentStyle" TargetType="{x:Type ContentControl}">
+            <Setter Property="ContentTemplate" Value="{StaticResource LoadTemplate}" />
+            <Setter Property="Content" Value="{Binding .}" />
+        </Style>
+
+        <DataTemplate x:Key="StoreTemplate">
+            <Grid Background="#FFE9EB">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontWeight="Bold"
+                    Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                    Text="{Binding .}" />
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="StoreContentStyle" TargetType="{x:Type ContentControl}">
+            <Setter Property="ContentTemplate" Value="{StaticResource StoreTemplate}" />
+            <Setter Property="Content" Value="{Binding .}" />
+        </Style>
+
+        <DataTemplate x:Key="OtherTemplate">
+            <Grid Background="#FFFBE9">
+                <TextBlock
+                    HorizontalAlignment="Center"
+                    FontWeight="Bold"
+                    Foreground="{DynamicResource {x:Static SystemColors.WindowTextBrushKey}}"
+                    Text="{Binding .}" />
+            </Grid>
+        </DataTemplate>
+
+        <Style x:Key="OtherContentStyle" TargetType="{x:Type ContentControl}">
+            <Setter Property="ContentTemplate" Value="{StaticResource OtherTemplate}" />
+            <Setter Property="Content" Value="{Binding .}" />
+        </Style>
+    </Window.Resources>
+    <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        <DockPanel LastChildFill="True">
+            <Expander
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                DockPanel.Dock="Top"
+                Header="Configuration"
+                IsExpanded="True">
+                <StackPanel Margin="0,4,0,4" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="Diff report path" />
+                        <TextBox Margin="100,0,0,0" Text="{Binding DiffReportPath}" />
+                    </Grid>
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="Base folder path" />
+                        <TextBox Margin="100,0,0,0" Text="{Binding BaseFolderPath}" />
+                    </Grid>
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="Diff folder path" />
+                        <TextBox Margin="100,0,0,0" Text="{Binding DiffFolderPath}" />
+                    </Grid>
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="IR Explorer path" />
+                        <TextBox Margin="100,0,0,0" Text="{Binding IRExplorerPath}" />
+                    </Grid>
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="Target" />
+                        <TextBox
+                            Width="100"
+                            Margin="100,0,0,0"
+                            HorizontalAlignment="Left"
+                            Text="{Binding Target}" />
+                    </Grid>
+                    <Button
+                        Name="LoadButton"
+                        Width="80"
+                        Height="20"
+                        Margin="4,8,0,4"
+                        HorizontalAlignment="Left"
+                        Click="LoadButton_Click"
+                        Content="Load" />
+                </StackPanel>
+            </Expander>
+            <Separator Margin="0,0,0,0" DockPanel.Dock="Top" />
+            <Expander
+                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                DockPanel.Dock="Top"
+                Header="Filter"
+                IsExpanded="True">
+                <StackPanel Margin="0,4,0,4" Orientation="Vertical">
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="Test name" />
+                        <TextBox
+                            x:Name="TestFilterTextbox"
+                            Width="300"
+                            Margin="100,0,0,0"
+                            HorizontalAlignment="Left"
+                            Text="{Binding TestFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                            TextChanged="TestFilterTextbox_TextChanged" />
+                    </Grid>
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="Function name" />
+                        <TextBox
+                            x:Name="FunctionFilterTextbox"
+                            Width="300"
+                            Margin="100,0,0,0"
+                            HorizontalAlignment="Left"
+                            Text="{Binding FunctionFilter, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                            TextChanged="FunctionFilterTextbox_TextChanged" />
+                    </Grid>
+                    <Grid Margin="4,4,4,0">
+                        <TextBlock Text="Max instrs" />
+                        <Slider
+                            Width="200"
+                            Margin="100,0,0,0"
+                            HorizontalAlignment="Left" />
+                    </Grid>
+                </StackPanel>
+            </Expander>
+            <DataGrid
+                x:Name="DiffView"
+                AlternatingRowBackground="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                AutoGenerateColumns="True"
+                AutoGeneratingColumn="DiffView_AutoGeneratingColumn"
+                CanUserReorderColumns="False"
+                CanUserSortColumns="False"
+                DockPanel.Dock="Bottom"
+                EnableRowVirtualization="True"
+                IsReadOnly="True"
+                ItemsSource="{Binding}"
+                MaxColumnWidth="200"
+                MouseDoubleClick="DiffView_MouseDoubleClick"
+                RowBackground="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                RowHeight="20">
+                <DataGrid.Resources>
+                    <DataTemplate x:Key="InstructionDataItemCellTemplate">
+                        <ContentControl Style="{StaticResource InstructionContentStyle}" />
+                    </DataTemplate>
+                    <DataTemplate x:Key="LoadDataItemCellTemplate">
+                        <ContentControl Style="{StaticResource LoadContentStyle}" />
+                    </DataTemplate>
+                    <DataTemplate x:Key="StoreDataItemCellTemplate">
+                        <ContentControl Style="{StaticResource StoreContentStyle}" />
+                    </DataTemplate>
+                    <DataTemplate x:Key="OtherDataItemCellTemplate">
+                        <ContentControl Style="{StaticResource OtherContentStyle}" />
+                    </DataTemplate>
+                </DataGrid.Resources>
+
+                <DataGrid.ColumnHeaderStyle>
+                    <Style TargetType="DataGridColumnHeader">
+                        <EventSetter Event="Click" Handler="columnHeader_Click" />
+                    </Style>
+                </DataGrid.ColumnHeaderStyle>
+            </DataGrid>
+        </DockPanel>
+    </Grid>
+</Window>

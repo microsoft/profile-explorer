@@ -21,6 +21,7 @@ namespace IRExplorerCmd {
         }
 
         public string CompilerIRName { get; set; }
+        public string DefaultSyntaxHighlightingFile { get; set; }
         public ICompilerIRInfo IR { get; set; }
 
         public INameProvider NameProvider => throw new NotImplementedException();

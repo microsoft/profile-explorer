@@ -2208,8 +2208,10 @@ namespace IRExplorerUI {
             actionUndoStack_.Clear();
             SetupBlockHighlighter();
             SetupBlockFolding();
-            MarkLoopBlocks();
+
             CreateRightMarkerMargin();
+            MarkLoopBlocks();
+            
             UpdateHighlighting();
             NotifyPropertyChanged("Blocks");
             duringSectionLoading_ = false;
@@ -2261,20 +2263,20 @@ namespace IRExplorerUI {
         }
 
         public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
+            UninstallBlockFolding();
+
             // Take ownership of the text document
             diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
             Document = diffResult.DiffDocument;
             function_ = diffResult.DiffFunction;
             section_ = newSection;
 
-            // Block folding is tied to the document, which may have been replaced.
-            UninstallBlockFolding();
-            SetupBlockFolding();
-            TextArea.IsEnabled = true;
+            // 
+            StartDiffSegmentAdding();
+            
             await LateLoadSectionSetup(null);
-
             AddDiffTextSegments(diffResult.DiffSegments);
-            SetupBlockFolding();
+            AllDiffSegmentsAdded();
         }
 
         private void Margin__BookmarkChanged(object sender, Bookmark bookmark) {
@@ -2355,9 +2357,6 @@ namespace IRExplorerUI {
             foreach (var group in loopGroups.Values) {
                 margin_.AddBlock(group, false);
             }
-
-            UpdateMargin();
-            UpdateHighlighting();
         }
 
         private void MarkReferencesExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -3032,7 +3031,6 @@ namespace IRExplorerUI {
         public void AddDiffTextSegments(List<DiffTextSegment> segments) {
             diffSegments_ = segments;
             diffHighlighter_.Add(segments);
-            AllDiffSegmentsAdded();
         }
 
         public void StartDiffSegmentAdding() {

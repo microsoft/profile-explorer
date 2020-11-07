@@ -30,7 +30,14 @@
             IsSynchronizedWithCurrentItem="True"
             SelectedIndex="0"
             TabStripPlacement="Top">
-            <TabItem Header="General" />
+            <TabItem Header="General">
+                <Grid>
+                    <TextBlock
+                        FontSize="14"
+                        Text="This settings window is not working yet, use the wrench icon on the upper-right of each panel to get its settings instead"
+                        TextWrapping="Wrap" />
+                </Grid>
+            </TabItem>
             <TabItem Header="Document">
                 <ScrollViewer
                     Grid.Row="0"
