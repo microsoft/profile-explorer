@@ -358,14 +358,17 @@ namespace IRExplorerUI {
         }
 
         public async Task<List<TextSearchResult>> SearchText(SearchInfo info) {
+            searchResultMarker_.Clear();
+
             if (!info.HasSearchedText) {
                 RestoreInitialText();
                 IsReadOnly = false;
-                initialTextLines_ = null;
+                UpdateHighlighting();
                 return null;
             }
 
             if (info.SearchedText.Length < 2) {
+                UpdateHighlighting();
                 return null;
             }
 
@@ -396,6 +399,8 @@ namespace IRExplorerUI {
                 Text = initialText_;
                 initialTextChanged_ = false;
             }
+
+            initialTextLines_ = null;
         }
 
         private void HighlightSearchResults(List<TextSearchResult> searchResults) {

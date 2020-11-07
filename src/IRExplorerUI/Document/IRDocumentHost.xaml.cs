@@ -415,14 +415,24 @@ namespace IRExplorerUI {
 
         private async void RemarkPanel__PanelDetached(object sender, EventArgs e) {
             // Keep the remark panel floating over the document.
-            Session.RegisterDetachedPanel(remarkPanel_);
+            DetachRemarkPanel();
+        }
 
+        private void DetachRemarkPanel(bool notifyPanel = false) {
+            if(remarkPanel_ == null) {
+                return;
+            }
+
+            Session.RegisterDetachedPanel(remarkPanel_);
             HideActionPanel();
+
+            if(notifyPanel) {
+                remarkPanel_.PopupDetached -= RemarkPanel__PanelDetached;
+                remarkPanel_.DetachPanel();
+            }
+
             remarkPanelVisible_ = false;
             remarkPanel_ = null;
-
-            // Detaching the panel stops the context filtering of remarks.
-            await ResetActiveRemarkContext();
         }
 
         private async void RemarkPanel__PanelClosed(object sender, EventArgs e) {
@@ -1192,7 +1202,7 @@ namespace IRExplorerUI {
 
         private async void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
             HideActionPanel();
-            await HideRemarkPanel();
+            DetachRemarkPanel(true);
             ScrollChanged?.Invoke(this, e);
         }
 

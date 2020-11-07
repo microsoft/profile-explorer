@@ -9,9 +9,11 @@ using IRExplorerCore.IR;
 using System.Windows;
 using IRExplorerCore.UTC;
 using System.Windows.Media;
+using IRExplorerCore;
+using System.Text.RegularExpressions;
 
 namespace IRExplorerUI.Compilers.UTC {
-    class UTCBuiltinInterferenceActions : IElementQuery {
+    class UTCBuiltinInterferenceQuery : IElementQuery {
         enum MarkingScope {
             All,
             Block,
@@ -19,31 +21,102 @@ namespace IRExplorerUI.Compilers.UTC {
             LoopNest
         }
 
+
+        public static void CreateInterferenceTag(FunctionIR function, IRTextSection section,
+            ISession session) {
+            //? TODO: Reuse tags for the same IRTextFunction, they don't reference elements
+            if (function.HasTag<InterferenceTag>()) {
+                return;
+            }
+
+            var interfSections = section.ParentFunction.
+                FindAllSections("Tuples after Build Interferences");
+
+            if (interfSections.Count == 0) {
+                return;
+            }
+
+            var interfSection = interfSections[0];
+            var textLines = session.GetSectionOutputTextLinesAsync(interfSection.OutputBefore, interfSection).Result; //? TODO: await
+
+            var tag = function.GetOrAddTag<InterferenceTag>();
+            bool seenInterferingPas = false;
+
+            foreach (var line in textLines) {
+                var symPasMatch = Regex.Match(line, @"(\d+):(.*)");
+
+                if (symPasMatch.Success && !seenInterferingPas) {
+                    int pas = int.Parse(symPasMatch.Groups[1].Value);
+                    var interferingSyms = new List<string>();
+                    var other = symPasMatch.Groups[2].Value;
+
+                    other = other.Replace("<Unknown Mem>", "");
+                    other = other.Replace("<Untrackable locals:", "");
+                    other = other.Replace(">", "");
+
+                    var symbols = other.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+
+                    for (int i = 0; i < symbols.Length; i++) {
+                        var symbolName = symbols[i];
+                        interferingSyms.Add(symbolName);
+
+                        if (!tag.SymToPasMap.ContainsKey(symbolName)) {
+                            tag.SymToPasMap[symbolName] = pas;
+                        }
+                    }
+
+                    tag.PasToSymMap[pas] = interferingSyms;
+                }
+                else {
+                    var interferingIndicesMatch = Regex.Match(line, @"(\d+) interferes with: \{ ((\d+)\s)+");
+
+                    if (interferingIndicesMatch.Success) {
+                        seenInterferingPas = true;
+                        var interferingPAS = new HashSet<int>();
+                        int basePAS = int.Parse(interferingIndicesMatch.Groups[1].Value);
+
+                        foreach (Capture capture in interferingIndicesMatch.Groups[2].Captures) {
+                            interferingPAS.Add(int.Parse(capture.Value));
+                        }
+
+                        if (interferingPAS.Count > 0) {
+                            tag.InterferingPasMap[basePAS] = interferingPAS;
+                        }
+                    }
+                }
+            }
+        }
+
+        //? TODO: Change definition to use an options struct with reflection
+        //? like UnusedInstructionsTaskOptions
         public static QueryDefinition GetDefinition() {
-            var query = new QueryDefinition(typeof(UTCBuiltinInterferenceActions),
+            var query = new QueryDefinition(typeof(UTCBuiltinInterferenceQuery),
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("Mark only reachable", QueryValueKind.Bool, false);
+            query.Data.AddInput("Mark only reaching", QueryValueKind.Bool, false,
+                "Mark only aliasing values that can reach the query block");
+            query.Data.AddInput("Mark only reachable", QueryValueKind.Bool, false,
+                "Mark only aliasing values that are reachable from the query block");
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool, true);
             query.Data.AddInput("Show arrows", QueryValueKind.Bool, false);
 
             var a = query.Data.AddButton("All");
             a.HasDemiBoldText = true;
             a.Action = (sender, data) =>
-                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.All);
+                ((UTCBuiltinInterferenceQuery)query.Data.Instance).Execute(query.Data, MarkingScope.All);
 
             var b = query.Data.AddButton("Block");
             b.Action = (sender, data) =>
-                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.Block);
+                ((UTCBuiltinInterferenceQuery)query.Data.Instance).Execute(query.Data, MarkingScope.Block);
 
             var c = query.Data.AddButton("Loop");
             c.Action = (sender, data) =>
-                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.Loop);
+                ((UTCBuiltinInterferenceQuery)query.Data.Instance).Execute(query.Data, MarkingScope.Loop);
 
             var d = query.Data.AddButton("Loop nest");
             d.Action = (sender, data) =>
-                ((UTCBuiltinInterferenceActions)query.Data.Instance).Execute(query.Data, MarkingScope.LoopNest);
+                ((UTCBuiltinInterferenceQuery)query.Data.Instance).Execute(query.Data, MarkingScope.LoopNest);
 
             return query;
         }
@@ -64,9 +137,10 @@ namespace IRExplorerUI.Compilers.UTC {
 
         private bool Execute(QueryData data, MarkingScope markingScope) {
             var element = data.GetInput<IRElement>(0);
-            var onlyReachable = data.GetInput<bool>(1);
-            var isTemporary = data.GetInput<bool>(2);
-            var showArrows = data.GetInput<bool>(3);
+            var onlyReaching = data.GetInput<bool>(1);
+            var onlyReachable = data.GetInput<bool>(2);
+            var isTemporary = data.GetInput<bool>(3);
+            var showArrows = data.GetInput<bool>(4);
             var func = element.ParentFunction;
             int pas = 0;
 
@@ -115,7 +189,7 @@ namespace IRExplorerUI.Compilers.UTC {
             document.ClearConnectedElements();
 
             if (showArrows) {
-                document.SetRootElement(element, new HighlightingStyle(Colors.Blue));
+                document.SetRootConnectedElement(element, new HighlightingStyle(Colors.Blue), isTemporary);
             }
 
             if (interfTag.InterferingPasMap.TryGetValue(pas, out var interPasses)) {
@@ -233,35 +307,6 @@ namespace IRExplorerUI.Compilers.UTC {
             }
 
             return false;
-        }
-    }
-
-    class UTCBuiltinInterferenceQuery : IElementQuery {
-        public static QueryDefinition GetDefinition() {
-            var query = new QueryDefinition(typeof(UTCBuiltinInterferenceQuery),
-                                                   "Alias query",
-                                                   "Alias query results for two values");
-            query.Data.AddInput("Operand 1", QueryValueKind.Element);
-            query.Data.AddInput("Operand 2", QueryValueKind.Element);
-            query.Data.AddOutput("May Alias", QueryValueKind.Bool);
-            return query;
-        }
-
-        public ISession Session { get; private set; }
-
-        public bool Initialize(ISession session) {
-            Session = session;
-            return true;
-        }
-
-        public bool Execute(QueryData data) {
-            var elementA = data.GetInput<IRElement>("Operand 1");
-            var elementB = data.GetInput<IRElement>("Operand 2");
-            var func = elementA.ParentFunction;
-
-            data.ResetResults();
-            data.SetOutputWarning("May Alias", "Not yet implemented!");
-            return true;
         }
     }
 }

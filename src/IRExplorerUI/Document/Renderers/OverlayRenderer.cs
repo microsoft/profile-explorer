@@ -11,6 +11,8 @@ using IRExplorerCore.IR.Tags;
 using System.Collections.Generic;
 using ICSharpCode.AvalonEdit.Document;
 using System;
+using System.Diagnostics;
+using ICSharpCode.AvalonEdit;
 
 namespace IRExplorerUI.Document {
     public class OverlayRenderer : Canvas, IBackgroundRenderer {
@@ -67,6 +69,7 @@ namespace IRExplorerUI.Document {
         }
 
         public void ClearConnectedElements() {
+            rootElement_ = null;
             connectedElements_ = new List<ConnectedElement>();
             segments_ = new TextSegmentCollection<IRSegment>();
             segmentMap_ = new Dictionary<IRElement, IRSegment>();
@@ -76,6 +79,21 @@ namespace IRExplorerUI.Document {
             var segment = segmentMap_[element];
 
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
+                return rect;
+            }
+
+            // The segment is outside the visible document.
+            // A visual line must be created for it, then extract the location.
+            var line = textView.Document.GetLineByOffset(segment.StartOffset);
+            var visualLine = textView.GetOrConstructVisualLine(line);
+            var start = new TextViewPosition(textView.Document.GetLocation(segment.StartOffset));
+            var end = new TextViewPosition(textView.Document.GetLocation(segment.StartOffset + segment.Length));
+            int startColumn = visualLine.ValidateVisualColumn(start, false);
+            int endColumn = visualLine.ValidateVisualColumn(end, false);
+
+            foreach (var rect in BackgroundGeometryBuilder.
+                                 GetRectsFromVisualSegment(textView, visualLine, 
+                                                           startColumn, endColumn)) {
                 return rect;
             }
 
@@ -96,7 +114,7 @@ namespace IRExplorerUI.Document {
         public void Draw(TextView textView, DrawingContext drawingContext) {
             Width = textView.RenderSize.Width;
             Height = textView.RenderSize.Height;
-            Reset();
+            Children.Clear();
 
             if (textView.Document == null) {
                 return;
@@ -128,9 +146,6 @@ namespace IRExplorerUI.Document {
             }
 
             double dotSize = 3;
-
-
-
             var dotBackground = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 255);
             var dotPen = Pens.GetTransparentPen(Colors.DarkRed, 255);
             bool first = true;
@@ -144,7 +159,6 @@ namespace IRExplorerUI.Document {
                 double verticalOffset = prevSegmentRect.Height / 2;
 
                 var startPoint = Utils.SnapPointToPixels(prevSegmentRect.Right + horizontalOffset, prevSegmentRect.Top + verticalOffset);
-                //var middlePoint = Utils.SnapPointToPixels(prevSegmentRect.Right + horizontalOffset, segmentRect.Top + verticalOffset);
                 var endPoint = Utils.SnapPointToPixels(segmentRect.Right + horizontalOffset, segmentRect.Top + verticalOffset);
 
                 var edgeStartPoint = startPoint;
@@ -156,16 +170,18 @@ namespace IRExplorerUI.Document {
                 var middlePoint = new Point(startPoint.X + dx / 2, startPoint.Y + dy / 2);
 
                 double factor = FindBezierControlPointFactor(startPoint, endPoint);
-                //double direction = remark.ReferencedElements[0].TextLocation.Line >
-                //                   prevRemark.ReferencedElements[0].TextLocation.Line ? -0.5 : 0.5;
                 var controlPoint = middlePoint + (-factor * vect);
+
+                // Keep the control point in the horizontal bounds of the document.
+                if(controlPoint.X < 0 || controlPoint.X > Width) {
+                    controlPoint = new Point(Math.Clamp(controlPoint.X, 0, Width), controlPoint.Y);
+                }
 
                 //overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), startPoint, middlePoint);
                 //overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), middlePoint, endPoint);
 
                 var startOrientation = FindArrowOrientation(new Point[] { edgeEndPoint, edgeStartPoint, controlPoint }, out var _);
                 var orientation = FindArrowOrientation(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, out var _);
-
 
                 edgeStartPoint = edgeStartPoint + (startOrientation * (dotSize - 1));
                 edgeEndPoint = edgeEndPoint - (orientation * dotSize * 2);
@@ -181,8 +197,6 @@ namespace IRExplorerUI.Document {
 
                 //edgeSC.BeginFigure(startPoint, false, false);
                 //edgeSC.LineTo(endPoint, true, false);
-
-
 
                 // overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), startPoint, endPoint);
                 //overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), point, point2);
@@ -201,8 +215,6 @@ namespace IRExplorerUI.Document {
                 //var text = DocumentUtils.CreateFormattedText(textView, i.ToString(), DefaultFont, 11, Brushes.Black);
                 //overlayDC.DrawText(text, Utils.SnapPointToPixels(startPoint.X - text.Width / 2, startPoint.Y - text.Height / 2));
             }
-
-
 
             overlayDC.Close();
             Add(visual);
@@ -260,8 +272,9 @@ namespace IRExplorerUI.Document {
         //    }
         //}
 
-        public void Reset() {
+        public void Clear() {
             Children.Clear();
+            ClearConnectedElements();
         }
 
         public void Add(Visual drawingVisual) {
