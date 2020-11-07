@@ -170,6 +170,8 @@ namespace IRExplorerUI.Query {
             return activeQueries_[index].View;
         }
 
+        public int QueryCount => activeQueries_.Count;
+
         private void QueryView_Closed(object sender, EventArgs e) {
             var queryView = (ElementQueryInfoView)sender;
             queryView.Closed -= QueryView_Closed;

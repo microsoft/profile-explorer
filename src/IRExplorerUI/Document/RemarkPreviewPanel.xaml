@@ -323,7 +323,7 @@
             <ListView
                 x:Name="RemarkList"
                 Grid.Row="1"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 MouseDoubleClick="RemarkList_MouseDoubleClick"
@@ -468,7 +468,7 @@
                             <TreeView
                                 x:Name="RemarkContextTree"
                                 Grid.Row="1"
-                                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 BorderThickness="0,0,0,0"
                                 DockPanel.Dock="Bottom"
@@ -483,7 +483,7 @@
                     <TabItem x:Name="OutputTextTabItem" Header="Output Text">
                         <local:SearcheableIRDocument
                             x:Name="RemarkTextView"
-                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             DockPanel.Dock="Bottom" />
                     </TabItem>
                 </TabControl>

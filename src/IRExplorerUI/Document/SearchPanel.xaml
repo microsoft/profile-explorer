@@ -65,19 +65,19 @@
     </UserControl.InputBindings>
 
     <Border BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" BorderThickness="1,1,0,1">
-        <Grid Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
+        <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <ToolBarTray
                 Grid.Row="0"
                 Grid.Column="2"
                 Height="28"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 IsLocked="True">
                 <ToolBar
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
 
                     <Image Source="{StaticResource SearchIcon}" ToolTip="Filter text based on a string" />
@@ -86,7 +86,7 @@
                         Width="220"
                         Margin="4,0,0,0"
                         HorizontalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         FilterMode="StartsWithOrdinal"
                         IsTextCompletionEnabled="True"

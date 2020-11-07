@@ -31,7 +31,7 @@
         <DockPanel LastChildFill="True">
             <DockPanel
                 x:Name="SearchPanelHost"
-                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 DockPanel.Dock="Top"
                 LastChildFill="True">
                 <doc:SearchPanel
@@ -41,7 +41,7 @@
                     DockPanel.Dock="Left" />
 
                 <Border
-                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     BorderThickness="0,0,0,1"
                     DockPanel.Dock="Right">
                     <Grid>
