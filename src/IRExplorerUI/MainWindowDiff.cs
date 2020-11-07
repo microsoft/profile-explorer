@@ -228,9 +228,7 @@ namespace IRExplorerUI {
                 // Reload sections in the same documents.
                 Trace.TraceInformation("Diff mode: Reload original sections");
                 var leftArgs = new OpenSectionEventArgs(leftDocument.Section, OpenSectionKind.ReplaceCurrent);
-
-                var rightArgs =
-                    new OpenSectionEventArgs(rightDocument.Section, OpenSectionKind.ReplaceCurrent);
+                var rightArgs = new OpenSectionEventArgs(rightDocument.Section, OpenSectionKind.ReplaceCurrent);
 
                 await OpenDocumentSection(leftArgs, leftDocument, false);
                 await leftDocument.ExitDiffMode();
@@ -286,14 +284,19 @@ namespace IRExplorerUI {
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, string leftText,
                                          string rightText, IRTextSection newLeftSection = null,
                                          IRTextSection newRightSection = null) {
+            // Start the actual document diffing on another thread.
             var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
             var diff = await Task.Run(() => diffBuilder.ComputeDiffs(leftText, rightText));
 
+            // Create the diff filter that will post-process the diff results.
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
             diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
+            // Apply the diff results on the left and right documents in parallel.
+            // This will produce two AvalonEdit documents that will be installed 
+            // in the doc. hosts once back on the UI thread.
             var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
             var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
@@ -307,26 +310,79 @@ namespace IRExplorerUI {
             var leftDiffResult = await leftMarkTask;
             var rightDiffResult = await rightMarkTask;
 
-            sessionState_.SectionDiffState.LeftSection = newLeftSection ?? sessionState_.SectionDiffState.LeftSection;
-            sessionState_.SectionDiffState.RightSection = newRightSection ?? sessionState_.SectionDiffState.RightSection;
-            sessionState_.SectionDiffState.LeftDiffResults = leftDiffResult;
-            sessionState_.SectionDiffState.RightDiffResults = rightDiffResult;
+            // Update the diff session state.
+            newLeftSection ??= sessionState_.SectionDiffState.LeftSection;
+            newRightSection ??= sessionState_.SectionDiffState.RightSection;
+            sessionState_.SectionDiffState.UpdateResults(leftDiffResult, newLeftSection,
+                                                         rightDiffResult, newRightSection);
 
             // The UI-thread dependent work.
-            await UpdateDiffedFunction(leftDocument, leftDiffResult, sessionState_.SectionDiffState.LeftSection);
-            await UpdateDiffedFunction(rightDocument, rightDiffResult, sessionState_.SectionDiffState.RightSection);
+            var leftDocumentHost = FindDocumentHost(leftDocument);
+            var rightDocumentHost = FindDocumentHost(rightDocument);
+            NotifyPanelsOfSectionUnload(leftDocument.Section, leftDocumentHost, true);
+            NotifyPanelsOfSectionUnload(rightDocument.Section, rightDocumentHost, true);
 
-            // Scroll to the first diff.
-            if (leftDiffResult.DiffSegments.Count > 0) {
-                var firstDiff = leftDiffResult.DiffSegments[0];
-                leftDocument.BringTextOffsetIntoView(firstDiff.StartOffset);
-            }
-            else if (rightDiffResult.DiffSegments.Count > 0) {
-                var firstDiff = rightDiffResult.DiffSegments[0];
-                rightDocument.BringTextOffsetIntoView(firstDiff.StartOffset);
-            }
+            await leftDocumentHost.LoadDiffedFunction(leftDiffResult, newLeftSection);
+            await rightDocumentHost.LoadDiffedFunction(rightDiffResult, newRightSection);
 
+            ScrollToFirstDiff(leftDocument, rightDocument, leftDiffResult, rightDiffResult);
             UpdateDiffStatus(rightDiffStats);
+
+            // For the active document only, notify panels of the change
+            // and redo other section post-load tasks.
+            if (IsActiveDocument(leftDocumentHost)) {
+                NotifyPanelsOfSectionLoad(newLeftSection, leftDocumentHost, true);
+                await GenerateGraphs(newLeftSection, leftDocument, false);
+            }
+            else if(IsActiveDocument(rightDocumentHost)) {
+                NotifyPanelsOfSectionLoad(newRightSection, rightDocumentHost, true);
+                await GenerateGraphs(newRightSection, rightDocument, false);
+            }
+        }
+
+        private void ScrollToFirstDiff(IRDocument leftDocument, IRDocument rightDocument, 
+                                       DiffMarkingResult leftDiffResult, DiffMarkingResult rightDiffResult) {
+            // Scroll to the first diff. If minor diffs are enabled, scroll to the first 
+            // major diff in either the left or right document.
+            var firstLeftDiff = SelectFirstDiff(leftDiffResult);
+            var firstRightDiff = SelectFirstDiff(rightDiffResult);
+            DiffTextSegment firstDiff = firstLeftDiff;
+            IRDocument firstDiffDocument = leftDocument;
+
+            if (firstRightDiff != null) {
+                if (firstDiff == null || firstDiff.StartOffset > firstRightDiff.StartOffset) {
+                    firstDiff = firstRightDiff;
+                    firstDiffDocument = rightDocument;
+                }
+            }
+
+            if (firstDiff != null) {
+                firstDiffDocument.BringTextOffsetIntoView(firstDiff.StartOffset);
+            }
+            else {
+                // When there are no diffs, scroll both documents to the start.
+                leftDocument.BringTextOffsetIntoView(0);
+                rightDocument.BringTextOffsetIntoView(0);
+            }
+        }
+
+        private DiffTextSegment SelectFirstDiff(DiffMarkingResult diffResult) {
+            if(diffResult.DiffSegments.Count == 0) {
+                return null;
+            }
+
+            if(App.Settings.DiffSettings.IdentifyMinorDiffs) {
+                // Pick the first major diff.
+                foreach(var diff in diffResult.DiffSegments) {
+                    if(diff.Kind != DiffKind.MinorModification) {
+                        return diff;
+                    }
+                }
+
+                return null;
+            }
+            
+            return diffResult.DiffSegments[0];
         }
 
         private async Task SwitchDiffedDocumentSection(IRTextSection section, IRDocumentHost document,

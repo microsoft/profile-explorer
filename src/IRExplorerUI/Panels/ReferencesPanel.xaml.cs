@@ -355,6 +355,7 @@ namespace IRExplorerUI {
             element_ = null;
             HasPinnedContent = false;
             ReferenceList.ItemsSource = null;
+            ReferenceSummary = null;
             SymbolName.Text = "";
         }
 
