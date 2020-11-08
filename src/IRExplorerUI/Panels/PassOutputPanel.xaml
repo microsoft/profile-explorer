@@ -62,7 +62,12 @@
                         Content="After"
                         IsChecked="{Binding ShowAfterOutput, Mode=OneWay}" />
 
-                    <ToggleButton TabIndex="5" ToolTip="Diff output text with other section">
+                    <ToggleButton
+                        x:Name="DiffToggleButton"
+                        Checked="DiffToggleButton_Checked"
+                        TabIndex="5"
+                        ToolTip="Diff output text with other section"
+                        Unchecked="DiffToggleButton_Unchecked">
                         <Image
                             Width="16"
                             Height="16"
@@ -127,7 +132,9 @@
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             FontFamily="Consolas"
             FontSize="12"
-            ShowLineNumbers="True" />
+            HorizontalScrollBarVisibility="Auto"
+            ShowLineNumbers="True"
+            VerticalScrollBarVisibility="Auto" />
 
         <Grid Grid.Row="1" Panel.ZIndex="100">
             <doc:SearchPanel

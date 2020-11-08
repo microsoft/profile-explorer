@@ -289,7 +289,7 @@ namespace IRExplorerUI {
 
             return Task.Run(() => {
                 var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
-                                                   document, isRightDoc, diffStats);
+                                                   isRightDoc, diffStats);
                 diffUpdater.ReparseDiffedFunction(result, section);
                 return result;
             });
@@ -611,7 +611,7 @@ namespace IRExplorerUI {
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
             var diffResult = diffUpdater.MarkDiffs(prevText, currentText, diff.NewText, diff.OldText,
-                                                   doc.TextView, true, diffStats);
+                                                   true, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();
         }

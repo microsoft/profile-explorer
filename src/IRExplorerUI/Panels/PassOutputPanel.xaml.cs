@@ -11,6 +11,8 @@ using IRExplorerUI.Document;
 using IRExplorerCore;
 using ProtoBuf;
 using IRExplorerCore.IR;
+using IRExplorerUI.Diff;
+using System.Threading;
 
 namespace IRExplorerUI {
     [ProtoContract]
@@ -65,6 +67,7 @@ namespace IRExplorerUI {
             }
         }
 
+        public IRTextSection Section => TextView.Section;
         public string SectionName => TextView.Section != null ?
             Session.CompilerInfo.NameProvider.GetSectionName(TextView.Section) : "";
 
@@ -217,13 +220,13 @@ namespace IRExplorerUI {
             }
         }
 
+        private IRPassOutput SelectSectionOutput(IRTextSection section) {
+            return ShowAfterOutput ? section.OutputAfter : section.OutputBefore;
+        }
+
         private async Task SwitchText(IRTextSection section, FunctionIR function, IRDocument associatedDocument) {
-            if (ShowAfterOutput) {
-                initialText_ = await Session.GetSectionOutputTextAsync(section.OutputAfter, section);
-            }
-            else {
-                initialText_ = await Session.GetSectionOutputTextAsync(section.OutputBefore, section);
-            }
+            var output = SelectSectionOutput(section);
+            initialText_ = await Session.GetSectionOutputTextAsync(output, section);
 
             OnPropertyChange(nameof(SectionName));
             await TextView.SwitchText(initialText_, function, section, associatedDocument);
@@ -289,6 +292,44 @@ namespace IRExplorerUI {
         private async void BeforeButton_Click(object sender, RoutedEventArgs e) {
             ShowBeforeOutput = true;
             await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+        }
+
+        private async void DiffToggleButton_Checked(object sender, RoutedEventArgs e) {
+            if(!Session.IsInTwoDocumentsDiffMode) {
+                return; //? TODO: Button should rather be disabled
+            }
+
+            string text = initialText_;
+            string otherText;
+
+            if(Section == Session.DiffModeInfo.LeftSection) {
+                otherText = await GetSectionOutputText(Session.DiffModeInfo.RightSection);
+            }
+            else {
+                otherText = await GetSectionOutputText(Session.DiffModeInfo.LeftSection);
+            }
+
+            var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
+            var diff = await Task.Run(() => diffBuilder.ComputeDiffs(otherText, text));
+
+            var diffStats = new DiffStatistics();
+            var diffFilter = Session.CompilerInfo.CreateDiffOutputFilter();
+            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, Session.CompilerInfo);
+            var diffResult = diffUpdater.MarkDiffs(otherText, text, diff.NewText, diff.OldText,
+                                                   true, diffStats, true);
+            diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
+            TextView.Document = diffResult.DiffDocument;
+            TextView.AddDiffTextSegments(diffResult.DiffSegments);
+        }
+
+        private async Task<string> GetSectionOutputText(IRTextSection section) {
+            var output = SelectSectionOutput(section);
+            return await Session.GetSectionOutputTextAsync(output, section);
+        }
+
+        private async void DiffToggleButton_Unchecked(object sender, RoutedEventArgs e) {
+            TextView.RemoveDiffTextSegments();
+            await TextView.SwitchText(initialText_);
         }
     }
 }

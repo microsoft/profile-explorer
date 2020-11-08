@@ -37,8 +37,9 @@
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    IsTextCompletionEnabled="True"
-                    MinimumPrefixLength="0"
+                    IsDropDownOpen="True"
+                    IsTextCompletionEnabled="False"
+                    MinimumPrefixLength="1"
                     TabIndex="1" />
 
                 <Button
@@ -61,8 +62,9 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    IsTextCompletionEnabled="True"
-                    MinimumPrefixLength="0"
+                    IsDropDownOpen="True"
+                    IsTextCompletionEnabled="False"
+                    MinimumPrefixLength="1"
                     TabIndex="2" />
 
                 <Button

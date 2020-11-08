@@ -68,6 +68,7 @@ namespace IRExplorerUI {
         private List<Reference> selectedElementRefs_;
         private bool syntaxHighlightingLoaded_;
         private CancelableTask updateHighlightingTask_;
+        private DiffLineHighlighter diffHighlighter_;
 
         public LightIRDocument() {
             lockObject_ = new object();
@@ -78,6 +79,8 @@ namespace IRExplorerUI {
             elementMarker_ = new ElementHighlighter(HighlighingType.Marked);
             hoverElementMarker_ = new ElementHighlighter(HighlighingType.Marked);
             searchResultMarker_ = new ElementHighlighter(HighlighingType.Marked);
+            diffHighlighter_ = new DiffLineHighlighter();
+            TextArea.TextView.BackgroundRenderers.Add(diffHighlighter_);
             TextArea.TextView.BackgroundRenderers.Add(elementMarker_);
             TextArea.TextView.BackgroundRenderers.Add(searchResultMarker_);
             TextArea.TextView.BackgroundRenderers.Add(hoverElementMarker_);
@@ -251,16 +254,20 @@ namespace IRExplorerUI {
 
         public async Task SwitchText(string text, FunctionIR function, IRTextSection section,
                                      IRDocument associatedDocument) {
-            EnableIRSyntaxHighlighting();
 
-            initialText_ = text;
-            initialTextChanged_ = false;
+            
             function_ = function;
             section_ = section;
             associatedDocument_ = associatedDocument;
-            Text = text;
-            IsReadOnly = false;
+            await SwitchText(text);
+        }
 
+        public async Task SwitchText(string text) {
+            initialText_ = text;
+            initialTextChanged_ = false;
+            Text = text;
+
+            EnableIRSyntaxHighlighting();
             EnsureInitialTextLines();
             await UpdateElementHighlighting();
         }
@@ -443,6 +450,17 @@ namespace IRExplorerUI {
             }
 
             return builder.ToString();
+        }
+
+        public void AddDiffTextSegments(List<DiffTextSegment> segments) {
+            diffHighlighter_.Clear();
+            diffHighlighter_.Add(segments);
+            UpdateHighlighting();
+        }
+
+        public void RemoveDiffTextSegments() {
+            diffHighlighter_.Clear();
+            UpdateHighlighting();
         }
     }
 }

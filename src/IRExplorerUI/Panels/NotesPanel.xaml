@@ -92,6 +92,8 @@
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             FontFamily="Consolas"
             FontSize="12"
-            ShowLineNumbers="True" />
+            HorizontalScrollBarVisibility="Auto"
+            ShowLineNumbers="True"
+            VerticalScrollBarVisibility="Auto" />
     </Grid>
 </local:ToolPanelControl>
