@@ -35,7 +35,10 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
 
-                    <TextBlock VerticalAlignment="Center" Text="Symbol" />
+                    <TextBlock
+                        Margin="5,0,0,0"
+                        VerticalAlignment="Center"
+                        Text="Symbol" />
                     <TextBlock
                         x:Name="SymbolName"
                         MinWidth="100"
@@ -57,7 +60,7 @@
         <local:IRDocument
             x:Name="TextView"
             Grid.Row="1"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             FontFamily="Consolas"
             FontSize="12"
             HorizontalScrollBarVisibility="Hidden"

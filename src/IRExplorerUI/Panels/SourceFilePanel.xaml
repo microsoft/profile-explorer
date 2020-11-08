@@ -39,7 +39,7 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
                     <TextBlock
-                        Margin="4,0,0,0"
+                        Margin="5,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="Path" />
@@ -71,7 +71,7 @@
             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
             x:Name="TextView"
             Grid.Row="1"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             FontFamily="Consolas"
             FontSize="12"
             ShowLineNumbers="True"
