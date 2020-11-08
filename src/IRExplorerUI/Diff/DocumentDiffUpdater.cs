@@ -36,7 +36,7 @@ namespace IRExplorerUI.Diff {
         private IDiffOutputFilter diffFilter_;
         private char[] ignoredDiffLetters_;
 
-        public DocumentDiffUpdater(IDiffOutputFilter diffFilter, DiffSettings settings, 
+        public DocumentDiffUpdater(IDiffOutputFilter diffFilter, DiffSettings settings,
                                    ICompilerInfoProvider compilerInfo) {
             diffFilter_ = diffFilter;
             settings_ = settings;
@@ -46,8 +46,8 @@ namespace IRExplorerUI.Diff {
 
         public DiffMarkingResult MarkDiffs(string text, string otherText,
                                            DiffPaneModel diff, DiffPaneModel otherDiff,
-                                           TextEditor textEditor, bool isRightDoc,
-                                           DiffStatistics diffStats) {
+                                           bool isRightDoc, DiffStatistics diffStats,
+                                           bool markRightDocDeletion = false) {
             // Create a new text document and associate it with the task worker.
             var document = new TextDocument(new StringTextSource(text));
             document.SetOwnerThread(Thread.CurrentThread);
@@ -92,12 +92,18 @@ namespace IRExplorerUI.Diff {
                             // Mark the lines that have been removed on the right side.
                             if (actualLine <= document.LineCount) {
                                 var docLine = document.GetLineByNumber(actualLine);
-                                int offset = docLine.Offset;
-                                int length = docLine.Length;
-                                document.Replace(offset, length, new string(RemovedDiffLineChar, length));
 
-                                result.DiffSegments.Add(
-                                    new DiffTextSegment(DiffKind.Placeholder, offset, length));
+                                if (markRightDocDeletion) {
+                                    // Show the actual text that has been deleted.
+                                    result.DiffSegments.Add(
+                                    new DiffTextSegment(DiffKind.Deletion, docLine.Offset, docLine.Length));
+                                }
+                                else {
+                                    document.Replace(docLine.Offset, docLine.Length,
+                                        new string(RemovedDiffLineChar, docLine.Length));
+                                    result.DiffSegments.Add(
+                                    new DiffTextSegment(DiffKind.Placeholder, docLine.Offset, docLine.Length));
+                                }
                             }
                         }
                         else {

@@ -74,7 +74,9 @@
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             FontFamily="Consolas"
             FontSize="12"
+            HorizontalScrollBarVisibility="Auto"
             ShowLineNumbers="True"
-            SyntaxHighlighting="C++" />
+            SyntaxHighlighting="C++"
+            VerticalScrollBarVisibility="Auto" />
     </Grid>
 </local:ToolPanelControl>

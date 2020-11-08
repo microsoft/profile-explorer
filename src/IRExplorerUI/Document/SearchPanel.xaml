@@ -89,8 +89,10 @@
                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         FilterMode="StartsWithOrdinal"
-                        IsTextCompletionEnabled="True"
+                        IsDropDownOpen="True"
+                        IsTextCompletionEnabled="False"
                         Loaded="TextSearch_Loaded"
+                        MinimumPrefixLength="1"
                         Populating="TextSearch_Populating"
                         TabIndex="4"
                         Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
