@@ -38,6 +38,7 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
                     <TextBlock
+                        Margin="5,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="Show" />
@@ -61,6 +62,12 @@
                         Content="After"
                         IsChecked="{Binding ShowAfterOutput, Mode=OneWay}" />
 
+                    <ToggleButton TabIndex="5" ToolTip="Diff output text with other section">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource BookIcon}" />
+                    </ToggleButton>
                     <ToggleButton
                         IsChecked="{Binding WordWrap, Mode=TwoWay}"
                         TabIndex="5"

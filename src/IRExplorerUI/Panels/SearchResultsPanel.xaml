@@ -47,7 +47,7 @@
                     Loaded="ToolBar_Loaded">
 
                     <TextBlock
-                        Margin="4,0,0,0"
+                        Margin="5,0,0,0"
                         VerticalAlignment="Center"
                         Text="Section" />
                     <Button
