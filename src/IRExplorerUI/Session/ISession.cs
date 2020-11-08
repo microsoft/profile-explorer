@@ -26,6 +26,7 @@ namespace IRExplorerUI {
         SessionStateManager SessionState { get; }
         bool IsInDiffMode { get; }
         bool IsInTwoDocumentsDiffMode { get; }
+        DiffModeInfo DiffModeInfo { get; }
 
         IRTextSummary MainDocumentSummary { get; }
         IRTextSummary DiffDocumentSummary { get; }

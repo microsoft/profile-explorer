@@ -11,6 +11,7 @@ using System.Windows.Input;
 using IRExplorerUI.Diff;
 using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
+using DiffPlex.DiffBuilder.Model;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISession {
@@ -19,8 +20,6 @@ namespace IRExplorerUI {
         private bool documentLoadProgressVisible_;
         private bool loadingDocuments_;
         private bool diffOptionsVisible_;
-
-        public bool IsInDiffMode => sessionState_.SectionDiffState.IsEnabled;
 
         private async void OpenBaseDiffDocumentsExecuted(object sender, ExecutedRoutedEventArgs e) {
             await OpenBaseDiffDocuments();
@@ -281,6 +280,21 @@ namespace IRExplorerUI {
             sessionState_.SectionDiffState.IsEnabled = true;
         }
 
+        private Task<DiffMarkingResult> 
+            MarkSectionDiffs(IRTextSection section, string text, string otherText,
+                             DiffPaneModel diff, DiffPaneModel otherDiff,
+                             IRDocument document, bool isRightDoc,
+                             IDiffOutputFilter diffFilter, DiffStatistics diffStats) {
+            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
+
+            return Task.Run(() => {
+                var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
+                                                   document, isRightDoc, diffStats);
+                diffUpdater.ReparseDiffedFunction(result, section);
+                return result;
+            });
+        }
+
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, string leftText,
                                          string rightText, IRTextSection newLeftSection = null,
                                          IRTextSection newRightSection = null) {
@@ -297,14 +311,12 @@ namespace IRExplorerUI {
             // Apply the diff results on the left and right documents in parallel.
             // This will produce two AvalonEdit documents that will be installed 
             // in the doc. hosts once back on the UI thread.
-            var leftDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
-            var rightDiffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
-
-            var leftMarkTask = leftDiffUpdater.MarkDiffs(leftText, rightText, diff.OldText, diff.NewText,
-                                                         leftDocument, false, leftDiffStats);
-
-            var rightMarkTask = rightDiffUpdater.MarkDiffs(leftText, rightText, diff.NewText, diff.OldText,
-                                                           rightDocument, true, rightDiffStats);
+            var leftMarkTask = MarkSectionDiffs(leftDocument.Section, leftText, rightText, 
+                                                diff.OldText, diff.NewText,
+                                                leftDocument, false, diffFilter, leftDiffStats);
+            var rightMarkTask = MarkSectionDiffs(rightDocument.Section, leftText, rightText, 
+                                                 diff.NewText, diff.OldText,
+                                                 rightDocument, true, diffFilter, rightDiffStats);
 
             await Task.WhenAll(leftMarkTask, rightMarkTask);
             var leftDiffResult = await leftMarkTask;
@@ -598,8 +610,8 @@ namespace IRExplorerUI {
             var diffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
-            var diffResult = await diffUpdater.MarkDiffs(prevText, currentText, diff.NewText, diff.OldText,
-                                                         doc.TextView, true, diffStats);
+            var diffResult = diffUpdater.MarkDiffs(prevText, currentText, diff.NewText, diff.OldText,
+                                                   doc.TextView, true, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();
         }
