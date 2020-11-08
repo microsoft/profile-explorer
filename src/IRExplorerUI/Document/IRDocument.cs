@@ -704,13 +704,17 @@ namespace IRExplorerUI {
             margin_.LoadState(savedState.margin_);
             bookmarks_.Bookmarks.ForEach(item => RaiseBookmarkAddedEvent(item));
             SetCaretAtOffset(savedState.caretOffset_);
-            await LateLoadSectionSetup(parsedSection);
+
+            await ComputeElementListsAsync();
+            LateLoadSectionSetup(parsedSection);
         }
 
         public async Task LoadSection(ParsedIRTextSection parsedSection) {
             Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Load section {parsedSection}");
             SetCaretAtOffset(0);
-            await LateLoadSectionSetup(parsedSection);
+
+            await ComputeElementListsAsync();
+            LateLoadSectionSetup(parsedSection);
         }
 
         //? TODO: This is a more efficient way of marking the loop blocks
@@ -988,6 +992,8 @@ namespace IRExplorerUI {
         }
 
         protected override void OnPreviewKeyDown(KeyEventArgs e) {
+            base.OnPreviewKeyDown(e);
+
             if (margin_.SelectedBookmark != null) {
                 e.Handled = EditBookmarkText(margin_.SelectedBookmark, e.Key);
                 return;
@@ -1137,8 +1143,6 @@ namespace IRExplorerUI {
                     break;
                 }
             }
-
-            base.OnPreviewKeyDown(e);
         }
 
         public void PanelContentLoaded(IToolPanel panel) {
@@ -2210,13 +2214,15 @@ namespace IRExplorerUI {
             JumpToBookmark(bookmarks_.JumpToLastBookmark());
         }
 
-        private async Task LateLoadSectionSetup(ParsedIRTextSection parsedSection) {
-            Trace.TraceInformation(
-                $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
-
+        private async Task ComputeElementListsAsync() {
             // Compute the element lists on another thread, for large functions
             // it can be slow would block showing of any text before it's done.
             await Task.Run(() => ComputeElementLists());
+        }
+
+        private void LateLoadSectionSetup(ParsedIRTextSection parsedSection) {
+            Trace.TraceInformation(
+                $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
 
             // Folding uses the basic block boundaries.
             actionUndoStack_.Clear();
@@ -2227,7 +2233,7 @@ namespace IRExplorerUI {
             MarkLoopBlocks();
             
             UpdateHighlighting();
-            NotifyPropertyChanged("Blocks");
+            NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
             duringSectionLoading_ = false;
         }
 
@@ -2277,18 +2283,23 @@ namespace IRExplorerUI {
         }
 
         public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
-            UninstallBlockFolding();
-
-            // Take ownership of the text document
-            diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
-            Document = diffResult.DiffDocument;
+            StartDiffSegmentAdding();
             function_ = diffResult.DiffFunction;
             section_ = newSection;
 
-            // 
-            StartDiffSegmentAdding();
-            
-            await LateLoadSectionSetup(null);
+            // Compute the element lists before removing the block folding.
+            // If done after, the UI may update during the async call
+            // and it would be noticeable how the block folding disappears, then immediately
+            // reappears once LateLoadSectionSetup reinstalls the block folding.
+            await ComputeElementListsAsync();
+
+            // Take ownership of the text document.
+            // Remove the current block folding since it's bound to the current text area.
+            UninstallBlockFolding();
+            diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
+            Document = diffResult.DiffDocument;
+
+            LateLoadSectionSetup(null);
             AddDiffTextSegments(diffResult.DiffSegments);
             AllDiffSegmentsAdded();
         }
@@ -3054,7 +3065,7 @@ namespace IRExplorerUI {
 
             // Disable the caret event because it triggers redrawing of
             // the right marker bar, which besides being slow, causes a
-            // GDI handle leak from the usage of RenderTargetBitmap (known issue).
+            // GDI handle leak from the usage of RenderTargetBitmap (known WPF issue).
             disableCaretEvent_ = true;
             duringDiffModeSetup_ = true;
         }
@@ -3062,6 +3073,7 @@ namespace IRExplorerUI {
         public void AllDiffSegmentsAdded() {
             disableCaretEvent_ = false;
             duringDiffModeSetup_ = false;
+            TextArea.IsEnabled = true;
 
             // This forces the updating of the right bar with the diffed line markers
             // to execute after the editor displayed the scroll bars.
@@ -3280,6 +3292,8 @@ namespace IRExplorerUI {
             HideTemporaryUI();
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
+            //? TODO: This would prevent selection of text from working,
+            //? but allowing it also sometimes selects a letter of the element...
             // e.Handled = element != null;
         }
 

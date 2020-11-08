@@ -79,6 +79,7 @@ namespace IRExplorerCmd {
         public ICompilerInfoProvider CompilerInfo => compilerInfo_;
         public bool IsInDiffMode => false;
         public bool IsInTwoDocumentsDiffMode => diffDocument_ != null;
+        public DiffModeInfo DiffModeInfo => null;
         public IRTextSummary MainDocumentSummary => mainDocument_?.Summary;
         public IRTextSummary DiffDocumentSummary => diffDocument_?.Summary;
 

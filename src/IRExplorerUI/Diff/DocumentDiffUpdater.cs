@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using DiffPlex.DiffBuilder.Model;
+using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.UTC;
@@ -35,111 +36,105 @@ namespace IRExplorerUI.Diff {
         private IDiffOutputFilter diffFilter_;
         private char[] ignoredDiffLetters_;
 
-        public DocumentDiffUpdater(IDiffOutputFilter diffFilter, DiffSettings settings, ICompilerInfoProvider compilerInfo) {
+        public DocumentDiffUpdater(IDiffOutputFilter diffFilter, DiffSettings settings, 
+                                   ICompilerInfoProvider compilerInfo) {
             diffFilter_ = diffFilter;
             settings_ = settings;
             compilerInfo_ = compilerInfo;
             ignoredDiffLetters_ = diffFilter_.IgnoredDiffLetters;
         }
 
-        public Task<DiffMarkingResult> MarkDiffs(string text, string otherText,
-                                                 DiffPaneModel diff, DiffPaneModel otherDiff,
-                                                 IRDocument textEditor, bool isRightDoc,
-                                                 DiffStatistics diffStats) {
-            textEditor.StartDiffSegmentAdding();
-            textEditor.TextArea.IsEnabled = false;
-            var section = textEditor.Section;
+        public DiffMarkingResult MarkDiffs(string text, string otherText,
+                                           DiffPaneModel diff, DiffPaneModel otherDiff,
+                                           TextEditor textEditor, bool isRightDoc,
+                                           DiffStatistics diffStats) {
+            // Create a new text document and associate it with the task worker.
+            var document = new TextDocument(new StringTextSource(text));
+            document.SetOwnerThread(Thread.CurrentThread);
 
-            return Task.Run(() => {
-                // Create a new text document and associate it with the task worker.
-                var document = new TextDocument(new StringTextSource(text));
-                document.SetOwnerThread(Thread.CurrentThread);
+            var result = new DiffMarkingResult(document);
+            int lineCount = diff.Lines.Count;
+            int lineAdjustment = 0;
 
-                var result = new DiffMarkingResult(document);
-                int lineCount = diff.Lines.Count;
-                int lineAdjustment = 0;
+            for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
+                var line = diff.Lines[lineIndex];
 
-                for (int lineIndex = 0; lineIndex < lineCount; lineIndex++) {
-                    var line = diff.Lines[lineIndex];
+                switch (line.Type) {
+                    case ChangeType.Unchanged: {
+                        break; // Ignore.
+                    }
+                    case ChangeType.Inserted: {
+                        int actualLine = line.Position.Value + lineAdjustment;
+                        int offset;
 
-                    switch (line.Type) {
-                        case ChangeType.Unchanged: {
-                            break; // Ignore.
+                        if (actualLine >= document.LineCount) {
+                            offset = document.TextLength;
                         }
-                        case ChangeType.Inserted: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            int offset;
-
-                            if (actualLine >= document.LineCount) {
-                                offset = document.TextLength;
-                            }
-                            else {
-                                offset = document.GetOffset(actualLine, 0);
-                            }
-
-                            document.Insert(offset, line.Text + Environment.NewLine);
-                            AppendInsertionChange(diffStats, result, line, offset);
-                            break;
+                        else {
+                            offset = document.GetOffset(actualLine, 0);
                         }
-                        case ChangeType.Deleted: {
-                            int actualLine = line.Position.Value + lineAdjustment;
-                            var docLine = document.GetLineByNumber(Math.Min(document.LineCount, actualLine));
 
-                            AppendDeletionChange(diffStats, result, docLine);
-                            break;
-                        }
-                        case ChangeType.Imaginary: {
-                            int actualLine = lineIndex + 1;
+                        document.Insert(offset, line.Text + Environment.NewLine);
+                        AppendInsertionChange(diffStats, result, line, offset);
+                        break;
+                    }
+                    case ChangeType.Deleted: {
+                        int actualLine = line.Position.Value + lineAdjustment;
+                        var docLine = document.GetLineByNumber(Math.Min(document.LineCount, actualLine));
 
-                            if (isRightDoc) {
-                                // Mark the lines that have been removed on the right side.
-                                if (actualLine <= document.LineCount) {
-                                    var docLine = document.GetLineByNumber(actualLine);
-                                    int offset = docLine.Offset;
-                                    int length = docLine.Length;
-                                    document.Replace(offset, length, new string(RemovedDiffLineChar, length));
+                        AppendDeletionChange(diffStats, result, docLine);
+                        break;
+                    }
+                    case ChangeType.Imaginary: {
+                        int actualLine = lineIndex + 1;
 
-                                    result.DiffSegments.Add(
-                                        new DiffTextSegment(DiffKind.Placeholder, offset, length));
-                                }
-                            }
-                            else {
-                                // Add a placeholder in the left side to mark
-                                // the lines inserted on the right side.
-                                int offset = actualLine <= document.LineCount
-                                    ? document.GetOffset(actualLine, 0)
-                                    : document.TextLength;
-
-                                string imaginaryText =
-                                    new string(AddedDiffLineChar, otherDiff.Lines[lineIndex].Text.Length);
-
-                                document.Insert(offset, imaginaryText + Environment.NewLine);
+                        if (isRightDoc) {
+                            // Mark the lines that have been removed on the right side.
+                            if (actualLine <= document.LineCount) {
+                                var docLine = document.GetLineByNumber(actualLine);
+                                int offset = docLine.Offset;
+                                int length = docLine.Length;
+                                document.Replace(offset, length, new string(RemovedDiffLineChar, length));
 
                                 result.DiffSegments.Add(
-                                    new DiffTextSegment(DiffKind.Placeholder, offset,
-                                                        imaginaryText.Length));
+                                    new DiffTextSegment(DiffKind.Placeholder, offset, length));
                             }
-
-                            lineAdjustment++;
-                            break;
                         }
-                        case ChangeType.Modified: {
-                            MarkLineModificationDiffs(line, lineIndex, lineAdjustment,
-                                                      document, isRightDoc, otherDiff,
-                                                      result, diffStats);
+                        else {
+                            // Add a placeholder in the left side to mark
+                            // the lines inserted on the right side.
+                            int offset = actualLine <= document.LineCount
+                                ? document.GetOffset(actualLine, 0)
+                                : document.TextLength;
 
-                            break;
+                            string imaginaryText =
+                                new string(AddedDiffLineChar, otherDiff.Lines[lineIndex].Text.Length);
+
+                            document.Insert(offset, imaginaryText + Environment.NewLine);
+
+                            result.DiffSegments.Add(
+                                new DiffTextSegment(DiffKind.Placeholder, offset,
+                                                    imaginaryText.Length));
                         }
-                        default:
-                            throw new ArgumentOutOfRangeException();
+
+                        lineAdjustment++;
+                        break;
                     }
-                }
+                    case ChangeType.Modified: {
+                        MarkLineModificationDiffs(line, lineIndex, lineAdjustment,
+                                                    document, isRightDoc, otherDiff,
+                                                    result, diffStats);
 
-                result.DiffText = document.Text;
-                document.SetOwnerThread(null);
-                ReparseDiffedFunction(result, section);
-                return result;
-            });
+                        break;
+                    }
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+            }
+
+            result.DiffText = document.Text;
+            document.SetOwnerThread(null);
+            return result;
         }
 
         private void MarkLineModificationDiffs(DiffPiece line, int lineIndex, int lineAdjustment,
@@ -506,8 +501,8 @@ namespace IRExplorerUI.Diff {
                                                         beforeDocumentText, afterDocumentText);
         }
 
-        private void ReparseDiffedFunction(DiffMarkingResult diffResult,
-                                           IRTextSection originalSection) {
+        public void ReparseDiffedFunction(DiffMarkingResult diffResult,
+                                          IRTextSection originalSection) {
             try {
                 var errorHandler = compilerInfo_.IR.CreateParsingErrorHandler();
                 var sectionParser = compilerInfo_.IR.CreateSectionParser(errorHandler);
