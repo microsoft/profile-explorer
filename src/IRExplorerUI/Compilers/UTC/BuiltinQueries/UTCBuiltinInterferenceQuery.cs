@@ -94,10 +94,11 @@ namespace IRExplorerUI.Compilers.UTC {
                                                    "Alias marking",
                                                    "Alias query results for two values");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("Mark only reaching", QueryValueKind.Bool, false,
-                "Mark only aliasing values that can reach the query block");
-            query.Data.AddInput("Mark only reachable", QueryValueKind.Bool, false,
-                "Mark only aliasing values that are reachable from the query block");
+            //? TODO: Implement reacheability
+            // query.Data.AddInput("Mark only reaching", QueryValueKind.Bool, false,
+            //     "Mark only aliasing values that can reach the query block");
+            // query.Data.AddInput("Mark only reachable", QueryValueKind.Bool, false,
+            //     "Mark only aliasing values that are reachable from the query block");
             query.Data.AddInput("Temporary marking", QueryValueKind.Bool, true);
             query.Data.AddInput("Show arrows", QueryValueKind.Bool, false);
 
@@ -139,10 +140,10 @@ namespace IRExplorerUI.Compilers.UTC {
             var element = data.GetInput<IRElement>(0);
             var onlyReaching = data.GetInput<bool>(1);
             var onlyReachable = data.GetInput<bool>(2);
-            var isTemporary = data.GetInput<bool>(3);
-            var showArrows = data.GetInput<bool>(4);
+            var isTemporary = data.GetInput<bool>(1);
+            var showArrows = data.GetInput<bool>(2);
             var func = element.ParentFunction;
-            int pas = 0;
+            int pas = -1;
 
             data.ResetResults();
             var interfTag = func.GetTag<InterferenceTag>();
@@ -153,11 +154,22 @@ namespace IRExplorerUI.Compilers.UTC {
             }
 
             if (!(element is OperandIR op)) {
-                data.SetOutputWarning("Invalid IR element", "Selected IR element is not an aliased operand");
-                return false;
-            }
+                // For calls, PAS is on the instr. itself.
+                if(element is InstructionIR instr) {
+                    var pasTag = instr.GetTag<PointsAtSetTag>();
 
-            if (op.IsIndirection) {
+                    if (pasTag != null) {
+                        pas = pasTag.Pas;
+                        data.SetOutput("Query PAS", pas);
+                    }
+                }
+
+                if (pas == -1) {
+                    data.SetOutputWarning("Invalid IR element", "Selected IR element is not an aliased operand");
+                    return false;
+                }
+            }
+            else if (op.IsIndirection) {
                 var pasTag = element.GetTag<PointsAtSetTag>();
 
                 if (pasTag != null) {
@@ -169,10 +181,13 @@ namespace IRExplorerUI.Compilers.UTC {
                     return false;
                 }
             }
-            else if (op.IsVariable && op.HasName) {
+            else if ((op.IsVariable || op.IsAddress) && op.HasName) {
                 if (!interfTag.SymToPasMap.TryGetValue(op.Name, out pas)) {
                     data.SetOutputWarning("Unaliased variable", "Selected variable is not an aliased operand");
                     return false;
+                }
+                else {
+                    data.SetOutput("Query PAS", pas);
                 }
             }
             else {

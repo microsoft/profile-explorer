@@ -673,20 +673,30 @@ namespace IRExplorerCore.UTC {
 
             if (pasTag != null && parent.Tuples.Count > 0 &&
                 parent.Tuples[^1] is InstructionIR prevInstr) {
-                // The tag is attached to the first INDIR operand
-                // that doesn't have yet a tag, starting with destination
-                // and continuing with source operands.
-                foreach (var destOp in prevInstr.Destinations) {
-                    if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
-                        destOp.AddTag(pasTag);
+                if (prevInstr.OpcodeIs(UTCOpcode.OPCALL) ||
+                    prevInstr.OpcodeIs(UTCOpcode.OPINTRINSIC)) {
+                    // For calls, attach directly to the instr
+                    if (!prevInstr.HasTag<PointsAtSetTag>()) {
+                        prevInstr.AddTag(pasTag);
                         return true;
                     }
                 }
+                else {
+                    // The tag is attached to the first INDIR operand
+                    // that doesn't have yet a tag, starting with destination
+                    // and continuing with source operands.
+                    foreach (var destOp in prevInstr.Destinations) {
+                        if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
+                            destOp.AddTag(pasTag);
+                            return true;
+                        }
+                    }
 
-                foreach (var sourceOp in prevInstr.Sources) {
-                    if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
-                        sourceOp.AddTag(pasTag);
-                        return true;
+                    foreach (var sourceOp in prevInstr.Sources) {
+                        if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
+                            sourceOp.AddTag(pasTag);
+                            return true;
+                        }
                     }
                 }
             }
