@@ -768,7 +768,7 @@ namespace IRExplorerUI {
         }
 
         public void MarkElement(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
-            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element}");
+            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
             RecordReversibleAction(DocumentActionKind.MarkElement, element);
             ClearTemporaryHighlighting();
 
@@ -802,7 +802,7 @@ namespace IRExplorerUI {
         }
         public void MarkElementAppend(IRElement element, HighlightingStyle style,
                                       HighlighingType highlightingType, bool raiseEvent = true) {
-            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element}");
+            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
             var highlighter = GetHighlighter(highlightingType);
 
             var group = new HighlightedGroup(element, style);
@@ -937,7 +937,7 @@ namespace IRExplorerUI {
 
         public void SelectElement(IRElement element, bool raiseEvent = true, bool fromUICommand = false,
                                   int textOffset = -1) {
-            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Select element {element}");
+            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Select element {element.Id}");
             ClearTemporaryHighlighting();
 
             if (element != null) {
@@ -3046,6 +3046,11 @@ namespace IRExplorerUI {
                         TextArea.TextView.BackgroundRenderers.Add(diffHighlighter_);
                     }
 
+                    // AvalonEdit text segments cannot be reused, even when removed from the
+                    // segment collection, since they are left with internal fields referencing
+                    // the old tree data struct and adding them to another collection would fail.
+                    // Make a copy of each segment as a workaround.
+                    diffSegments_ = diffSegments_.ConvertAll((segment) => new DiffTextSegment(segment));
                     StartDiffSegmentAdding();
                     AddDiffTextSegments(diffSegments_);
                     AllDiffSegmentsAdded();

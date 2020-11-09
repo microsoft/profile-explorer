@@ -584,17 +584,13 @@ namespace IRExplorerUI {
             SaveSectionState(section);
 
             if (!switchingActiveDocument) {
-                //? TODO: Make UnloadSection async
-                RemoveRemarks().Wait();
-            }
+                await RemoveRemarks();
 
-            // Clear references to IR objects that would keep the previous function alive.
-            hoveredElement_ = null;
-            selectedElement_ = null;
-            remarkElement_ = null;
-            selectedBlock_ = null;
-
-            if (switchingActiveDocument) {
+                // Clear references to IR objects that would keep the previous function alive.
+                hoveredElement_ = null;
+                selectedElement_ = null;
+                remarkElement_ = null;
+                selectedBlock_ = null;
                 BlockSelector.SelectedItem = null;
                 BlockSelector.ItemsSource = null;
             }

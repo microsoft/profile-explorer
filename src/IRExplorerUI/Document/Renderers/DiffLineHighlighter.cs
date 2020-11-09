@@ -26,6 +26,11 @@ namespace IRExplorerUI {
             Length = length;
         }
 
+        public DiffTextSegment(DiffTextSegment other) :
+            this(other.Kind, other.StartOffset, other.Length) {
+
+        }
+
         public DiffKind Kind { get; set; }
 
         public bool IsContinuation(DiffTextSegment otherSegment) {
