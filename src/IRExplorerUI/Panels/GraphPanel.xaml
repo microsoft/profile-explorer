@@ -143,14 +143,6 @@
                         </StackPanel>
                     </Button>
                     <Separator />
-                    <Button
-                        Command="local:GraphCommand.GraphResetWidth"
-                        CommandTarget="{Binding ElementName=GraphHost}"
-                        IsEnabled="False"
-                        ToolTip="Auto-resize graph to show all selected nodes">
-                        <Image Source="{StaticResource FitWidthIcon}" />
-                    </Button>
-                    <Separator />
                     <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                         <MenuItem
                             Padding="0,2,2,2"

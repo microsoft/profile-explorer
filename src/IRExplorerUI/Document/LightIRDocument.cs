@@ -14,6 +14,7 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerCore.Utilities;
+using System.Threading;
 
 // TODO: Clicking on scroll bar not working if there is an IR element under it,
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
@@ -254,8 +255,6 @@ namespace IRExplorerUI {
 
         public async Task SwitchText(string text, FunctionIR function, IRTextSection section,
                                      IRDocument associatedDocument) {
-
-            
             function_ = function;
             section_ = section;
             associatedDocument_ = associatedDocument;
@@ -263,13 +262,23 @@ namespace IRExplorerUI {
         }
 
         public async Task SwitchText(string text) {
+            Text = text;
+            await SwitchTextImpl(text);
+        }
+
+        private async Task SwitchTextImpl(string text) {
             initialText_ = text;
             initialTextChanged_ = false;
-            Text = text;
-
             EnableIRSyntaxHighlighting();
             EnsureInitialTextLines();
             await UpdateElementHighlighting();
+        }
+
+        public async Task SwitchDocument(ICSharpCode.AvalonEdit.Document.TextDocument document, string text) {
+            // Take ownership of the document and replace current text.
+            document.SetOwnerThread(Thread.CurrentThread);
+            Document = document;
+            await SwitchTextImpl(text);
         }
 
         public void EnableIRSyntaxHighlighting() {
@@ -364,13 +373,17 @@ namespace IRExplorerUI {
             TextArea.TextView.Redraw();
         }
 
+        public void ResetTextSearch() {
+            RestoreInitialText();
+            IsReadOnly = false;
+            UpdateHighlighting();
+        }
+
         public async Task<List<TextSearchResult>> SearchText(SearchInfo info) {
             searchResultMarker_.Clear();
 
             if (!info.HasSearchedText) {
-                RestoreInitialText();
-                IsReadOnly = false;
-                UpdateHighlighting();
+                ResetTextSearch();
                 return null;
             }
 

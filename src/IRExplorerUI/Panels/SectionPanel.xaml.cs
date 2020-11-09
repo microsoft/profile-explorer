@@ -437,11 +437,13 @@ namespace IRExplorerUI {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
 
-        private void RegisterSectionListScrollEvent() {
+        public void RegisterSectionListScrollEvent() {
             if (sectionsScrollViewer_ != null) {
                 return;
             }
 
+            // The internal ScrollViewer is not created until items are added,
+            // this is the reason the event is registered in the constructor.
             sectionsScrollViewer_ = Utils.FindChild<ScrollViewer>(SectionList);
 
             if (sectionsScrollViewer_ != null) {
@@ -471,11 +473,9 @@ namespace IRExplorerUI {
             var functionFilter = new ListCollectionView(summary_.Functions);
             functionFilter.Filter = FilterFunctionList;
             FunctionList.ItemsSource = functionFilter;
+            SectionList.ItemsSource = null;
 
-            if (summary_.Functions.Count == 0) {
-                SectionList.ItemsSource = null;
-            }
-            else if (summary_.Functions.Count == 1) {
+            if (summary_.Functions.Count == 1) {
                 SelectFunction(summary_.Functions[0]);
             }
         }
@@ -917,7 +917,7 @@ namespace IRExplorerUI {
             Utils.PatchToolbarStyle(sender as ToolBar);
         }
 
-        internal void ScrollSectionList(double offset) {
+        public void ScrollSectionList(double offset) {
             RegisterSectionListScrollEvent();
             sectionsScrollViewer_?.ScrollToVerticalOffset(offset);
         }

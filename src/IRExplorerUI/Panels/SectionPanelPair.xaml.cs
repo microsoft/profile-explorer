@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 using IRExplorerCore;
 
 namespace IRExplorerUI {
@@ -112,7 +113,7 @@ namespace IRExplorerUI {
             // When using the grid splitter to resize the left/right panels,
             // the event gets called for some reason with a 0 offset and 
             // the current vertical offset gets reset.
-            if (offset == 0) {
+            if (offset < 1) {
                 return;
             }
 
@@ -125,6 +126,8 @@ namespace IRExplorerUI {
         }
 
         private async void DiffPanel_FunctionSwitched(object sender, IRTextFunction func) {
+            Trace.TraceInformation($"Pair {ObjectTracker.Track(this)}: DiffPanel_FunctionSwitched\nstack {Environment.StackTrace}");
+
             var panel = sender as SectionPanel;
             var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
 
@@ -195,10 +198,15 @@ namespace IRExplorerUI {
                 }
             }
 
-            // Scroll to the first diff.
+            // Scroll to the first diff section.
             if (firstDiffResult != null) {
-                MainPanel.SelectSection(firstDiffResult.LeftSection, false);
-                DiffPanel.SelectSection(firstDiffResult.RightSection, false);
+                // Force scrolling to happen after other layout updates,
+                // otherwise the section lists scroll back to offset 0 
+                // on the next layout update, looks like a WPF bug...
+                Dispatcher.Invoke(() => {
+                    MainPanel.SelectSection(firstDiffResult.LeftSection, false);
+                    DiffPanel.SelectSection(firstDiffResult.RightSection, false);
+                }, DispatcherPriority.Background);
             }
         }
 

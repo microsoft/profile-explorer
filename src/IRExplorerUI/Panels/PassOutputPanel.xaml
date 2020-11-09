@@ -64,7 +64,10 @@
 
                     <ToggleButton
                         x:Name="DiffToggleButton"
+                        Margin="4,0,0,0"
                         Checked="DiffToggleButton_Checked"
+                        IsChecked="{Binding DiffModeEnabled}"
+                        IsEnabled="{Binding DiffModeButtonEnabled}"
                         TabIndex="5"
                         ToolTip="Diff output text with other section"
                         Unchecked="DiffToggleButton_Unchecked">
@@ -96,6 +99,7 @@
 
                     <ToggleButton
                         IsChecked="{Binding FilterSearchResults, Mode=TwoWay}"
+                        IsEnabled="{Binding FilterSearchResultsButtonEnabled}"
                         TabIndex="5"
                         ToolTip="Display only lines part of the search result">
                         <Image
