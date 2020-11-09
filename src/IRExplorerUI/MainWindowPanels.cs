@@ -845,7 +845,6 @@ namespace IRExplorerUI {
         }
 
         public void UnregisterDetachedPanel(DraggablePopup panel) {
-            Debug.Assert(detachedPanels_.Contains(panel));
             detachedPanels_.Remove(panel);
         }
     }
