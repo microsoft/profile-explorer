@@ -355,6 +355,7 @@ namespace IRExplorerUI {
 
             var diffStats = new DiffStatistics();
             var diffFilter = Session.CompilerInfo.CreateDiffOutputFilter();
+            diffFilter.Initialize(App.Settings.DiffSettings, Session.CompilerInfo.IR);
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, Session.CompilerInfo);
             var diffResult = await Task.Run(() => diffUpdater.MarkDiffs(otherText, text, diff.NewText, diff.OldText,
                                                                         true, diffStats, true));
