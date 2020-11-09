@@ -449,16 +449,14 @@
                             </DataTrigger>
 
                             <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
-                                <Setter Property="Foreground" Value="{Binding Path=MissingSectionBrush}" />
-                                <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.1}" />
+                                <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>
 
                             <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
-                                <Setter Property="Foreground" Value="{Binding Path=NewSectionBrush}" />
-                                <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.1}" />
+                                <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
                                 <Setter Property="FontWeight" Value="DemiBold" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                                 <Setter Property="BorderThickness" Value="1" />
@@ -466,8 +464,13 @@
 
                             <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
                                 <Setter Property="FontWeight" Value="DemiBold" />
-                                <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.1}" />
+                                <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
                                 <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
+                                <Setter Property="BorderThickness" Value="1" />
+                            </DataTrigger>
+
+                            <DataTrigger Binding="{Binding Path=IsPlaceholderDiff}" Value="True">
+                                <Setter Property="BorderBrush" Value="Transparent" />
                                 <Setter Property="BorderThickness" Value="1" />
                             </DataTrigger>
                         </Style.Triggers>
