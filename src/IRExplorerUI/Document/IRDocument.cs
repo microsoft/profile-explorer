@@ -937,10 +937,11 @@ namespace IRExplorerUI {
 
         public void SelectElement(IRElement element, bool raiseEvent = true, bool fromUICommand = false,
                                   int textOffset = -1) {
-            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Select element {element.Id}");
             ClearTemporaryHighlighting();
 
             if (element != null) {
+                Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Select element {element.Id}");
+
                 // Don't highlight a block unless the header is selected.
                 if (element is BlockIR && fromUICommand && textOffset != -1) {
                     int line = Document.GetLineByOffset(textOffset).LineNumber;
@@ -965,7 +966,6 @@ namespace IRExplorerUI {
             else if (raiseEvent) {
                 // Notify of no element being selected.
                 RaiseElementUnselectedEvent();
-
                 RaiseElementHighlightingEvent(null, null, HighlighingType.Selected,
                                               HighlightingEventAction.ReplaceHighlighting);
             }

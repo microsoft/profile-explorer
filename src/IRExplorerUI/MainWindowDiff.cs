@@ -527,7 +527,7 @@ namespace IRExplorerUI {
                     Math.Min(MainGrid.ActualWidth, DiffOptionsPanel.DefaultWidth));
             var height = Math.Max(DiffOptionsPanel.MinimumHeight,
                     Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
-            var position = MainGrid.PointToScreen(new Point(238, MainMenu.ActualHeight + 1));
+            var position = MainGrid.PointToScreen(new Point(230, MainMenu.ActualHeight + 1));
             diffOptionsPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, this);
             diffOptionsPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
             diffOptionsPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;

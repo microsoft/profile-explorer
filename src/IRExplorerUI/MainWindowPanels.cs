@@ -20,7 +20,6 @@ using IRExplorerUI.OptionsPanels;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
-using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Controls;
@@ -362,7 +361,8 @@ namespace IRExplorerUI {
             if (panelHostSet_.TryGetValue(kind, out var list)) {
                 // Add every panel not bound to another document.
                 foreach (var panelInfo in list) {
-                    if (panelInfo.Panel.BoundDocument == null || panelInfo.Panel.BoundDocument == document) {
+                    if (panelInfo.Panel.BoundDocument == null ||
+                        panelInfo.Panel.BoundDocument == document) {
                         panelList.Add(panelInfo);
                     }
                 }
