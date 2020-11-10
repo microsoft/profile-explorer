@@ -59,7 +59,7 @@ namespace IRExplorerUI {
         private const string FunctionTaskScriptsDirectory = "scripts";
         private const string FunctionTaskScriptSearchPattern = @"*.cs";
         public const string AutoUpdateInfo = @"https://irexplorer.blob.core.windows.net/app/update.xml";
-        private const string DocumentationLocation = @"file://ir-explorer/docs/index.html";
+        private const string DocumentationLocation = @"https://irexplorer.z5.web.core.windows.net/";
 
         private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
 
