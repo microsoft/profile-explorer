@@ -609,6 +609,7 @@ namespace IRExplorerUI {
 
             var diffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
+            diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
             var diffResult = diffUpdater.MarkDiffs(prevText, currentText, diff.NewText, diff.OldText,
                                                    true, diffStats);
