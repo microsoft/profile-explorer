@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <item>
-    <version>0.6.2.0</version>
-    <url>http://irexplorerstorage.file.core.windows.net/irexplorer-app/versions/ir_explorer_0_6_2.zip?sv=2019-10-10&amp;ss=bfqt&amp;srt=o&amp;sp=rlacupx&amp;se=2023-03-01T14:12:02Z&amp;st=2020-07-02T05:12:02Z&amp;spr=https,http&amp;sig=VEd7d8WhShT20oknDmfe04wTFniOFVpvohax9xMx%2FOg%3D</url>
-    <changelog>http://irexplorerstorage.file.core.windows.net/irexplorer-app/release_notes.html?sv=2019-10-10&amp;ss=bfqt&amp;srt=o&amp;sp=rlacupx&amp;se=2023-03-01T14:12:02Z&amp;st=2020-07-02T05:12:02Z&amp;spr=https,http&amp;sig=VEd7d8WhShT20oknDmfe04wTFniOFVpvohax9xMx%2FOg%3D</changelog>
+    <version>0.7.0.0</version>
+    <url>https://irexplorer.blob.core.windows.net/app/versions/ir_explorer_0_7_0.zip</url>
+    <changelog>https://irexplorer.blob.core.windows.net/app/release_notes.html</changelog>
     <mandatory>false</mandatory>
 </item>

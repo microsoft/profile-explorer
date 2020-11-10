@@ -58,7 +58,7 @@ namespace IRExplorerUI {
         private const string SyntaxFileExtension = @"xshd";
         private const string FunctionTaskScriptsDirectory = "scripts";
         private const string FunctionTaskScriptSearchPattern = @"*.cs";
-        public const string AutoUpdateInfo = @"http://irexplorerstorage.file.core.windows.net/irexplorer-app/update.xml?sv=2019-10-10&ss=bfqt&srt=o&sp=rlacupx&se=2023-03-01T14:12:02Z&st=2020-07-02T05:12:02Z&spr=https,http&sig=VEd7d8WhShT20oknDmfe04wTFniOFVpvohax9xMx%2FOg%3D";
+        public const string AutoUpdateInfo = @"https://irexplorer.blob.core.windows.net/app/update.xml";
         private const string DocumentationLocation = @"file://ir-explorer/docs/index.html";
 
         private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
