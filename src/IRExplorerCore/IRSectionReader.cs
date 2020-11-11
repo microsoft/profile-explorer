@@ -184,7 +184,7 @@ namespace IRExplorerCore {
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(Name, Id, Number);
+            return HashCode.Combine(Id, Number);
         }
 
         public override string ToString() {

@@ -364,8 +364,8 @@ namespace IRExplorerUI {
                 }
 
                 debugFunction_.Sections.Add(section);
-                debugSections_.AddSection(section, filteredText);
                 debugSummary_.AddSection(section);
+                debugSections_.AddSection(section, filteredText);
 
                 SectionPanel.MainSummary = null;
                 SectionPanel.MainSummary = debugSummary_;

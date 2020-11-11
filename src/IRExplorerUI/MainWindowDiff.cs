@@ -46,6 +46,10 @@ namespace IRExplorerUI {
         }
 
         private async void ToggleDiffModeExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (sessionState_ == null) {
+                return; // No sessions started yet.
+            }
+
             if (IsInDiffMode) {
                 await ExitDocumentDiffState();
             }
@@ -55,6 +59,10 @@ namespace IRExplorerUI {
         }
 
         private async void SwapDiffDocumentsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (sessionState_ == null) {
+                return; // No sessions started yet.
+            }
+
             await SwapDiffedDocuments();
         }
 
