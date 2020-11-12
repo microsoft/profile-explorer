@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="IRExplorerExtension.968b8230-b177-465a-83a0-761e7054dbe3" Version="0.3" Language="en-US" Publisher="Gratian Lup" />
+        <Identity Id="IRExplorerExtension.968b8230-b177-465a-83a0-761e7054dbe3" Version="0.5" Language="en-US" Publisher="Gratian Lup" />
         <DisplayName>IR Explorer</DisplayName>
         <Description xml:space="preserve">IR Explorer debugger integration</Description>
         <Icon>main.ico</Icon>
