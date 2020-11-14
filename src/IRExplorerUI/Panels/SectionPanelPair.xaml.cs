@@ -98,7 +98,10 @@ namespace IRExplorerUI {
 
         public override ISession Session {
             get => MainPanel.Session;
-            set => MainPanel.Session = value;
+            set {
+                MainPanel.Session = value;
+                DiffPanel.Session = value;
+            }
         }
 
         public async Task RefreshDocumentsDiff() {
