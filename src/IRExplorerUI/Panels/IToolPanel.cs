@@ -38,6 +38,7 @@ namespace IRExplorerUI {
         bool SavesStateToFile { get; }
 
         ISession Session { get; set; }
+        IRDocument Document { get; set; }
         IRDocument BoundDocument { get; set; }
         bool IsPanelEnabled { get; set; }
         bool HasCommandFocus { get; set; }

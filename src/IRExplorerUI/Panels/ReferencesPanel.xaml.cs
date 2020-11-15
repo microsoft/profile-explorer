@@ -83,7 +83,6 @@ namespace IRExplorerUI {
 
     public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged {
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
-        private IRDocument document_;
         private string documentText_;
 
         private IRElement element_;
@@ -288,7 +287,7 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            var refFinder = new ReferenceFinder(document_.Function);
+            var refFinder = new ReferenceFinder(Document.Function);
             var operandRefs = refFinder.FindAllReferences(element, includeSSAUses: true);
             UpdateReferenceListView(operand, operandRefs);
 
@@ -360,9 +359,9 @@ namespace IRExplorerUI {
         }
 
         public void InitializeFromDocument(IRDocument document) {
-            if (document_ != document ||
+            if (Document != document ||
                 section_ != document.Section) {
-                document_ = document;
+                Document = document;
                 documentText_ = document.Text; // Cache text.
                 section_ = document.Section;
                 Element = null;
@@ -383,7 +382,7 @@ namespace IRExplorerUI {
         private void MarkReferenceExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (ReferenceList.SelectedItem is ReferenceInfo refInfo) {
                 var color = ((ColorEventArgs)e.Parameter).SelectedColor;
-                document_.MarkElement(refInfo.Info.Element, color);
+                Document.MarkElement(refInfo.Info.Element, color);
             }
         }
 
@@ -391,7 +390,7 @@ namespace IRExplorerUI {
             var refInfo = ReferenceList.SelectedItem as ReferenceInfo;
 
             if (refInfo != null) {
-                document_.ClearMarkedElement(refInfo.Info.Element);
+                Document.ClearMarkedElement(refInfo.Info.Element);
             }
         }
 
@@ -422,15 +421,15 @@ namespace IRExplorerUI {
 
         private void JumpToReference(ReferenceInfo refInfo) {
             ignoreNextElement_ = true;
-            document_.SelectElement(refInfo.Info.Element);
-            document_.BringElementIntoView(refInfo.Info.Element);
+            Document.SelectElement(refInfo.Info.Element);
+            Document.BringElementIntoView(refInfo.Info.Element);
         }
 
         private void ListViewItem_MouseEnter(object sender, MouseEventArgs e) {
             HideToolTip();
             var listItem = sender as ListViewItem;
             var refInfo = listItem.DataContext as ReferenceInfo;
-            previewTooltip_ = new IRPreviewToolTip(600, 100, document_, refInfo.Info.Element, documentText_);
+            previewTooltip_ = new IRPreviewToolTip(600, 100, Document, refInfo.Info.Element, documentText_);
             listItem.ToolTip = previewTooltip_;
         }
 
@@ -493,7 +492,7 @@ namespace IRExplorerUI {
                 ResetReferenceListView();
             }
 
-            IsPanelEnabled = document_ != null;
+            IsPanelEnabled = Document != null;
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -522,9 +521,9 @@ namespace IRExplorerUI {
 
         public override void ClonePanel(IToolPanel sourcePanel) {
             var sourceRefPanel = sourcePanel as ReferencesPanel;
-            document_ = sourceRefPanel.document_;
+            Document = sourceRefPanel.Document;
             documentText_ = sourceRefPanel.documentText_;
-            IsPanelEnabled = document_ != null;
+            IsPanelEnabled = Document != null;
         }
 
         #endregion

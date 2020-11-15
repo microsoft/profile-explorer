@@ -12,6 +12,7 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerCmd {
     public class ConsoleCompilerInfoProvider : ICompilerInfoProvider {
@@ -191,6 +192,12 @@ namespace IRExplorerCmd {
         }
 
         public Task SwitchGraphsAsync(GraphPanel flowGraphPanel, IRTextSection section, IRDocument document) {
+            throw new NotImplementedException();
+        }
+
+        public Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section,
+                                             IRDocument document, CancelableTask loadTask = null,
+                                             object options = null) {
             throw new NotImplementedException();
         }
 

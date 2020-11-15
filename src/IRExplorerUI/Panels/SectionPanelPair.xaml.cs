@@ -129,8 +129,6 @@ namespace IRExplorerUI {
         }
 
         private async void DiffPanel_FunctionSwitched(object sender, IRTextFunction func) {
-            Trace.TraceInformation($"Pair {ObjectTracker.Track(this)}: DiffPanel_FunctionSwitched\nstack {Environment.StackTrace}");
-
             var panel = sender as SectionPanel;
             var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
 

@@ -218,7 +218,7 @@ namespace IRExplorerUI {
 
                     // Cycle between all references of the operand.
                     if (refElement != prevSelectedElement_) {
-                        selectedElementRefs_ = refFinder.FindAllDefUsesOrReferences(refElement);
+                        selectedElementRefs_ = refFinder.FindAllSSAUsesOrReferences(refElement);
                         selectedElementRefIndex_ = 0;
                         prevSelectedElement_ = refElement;
                     }

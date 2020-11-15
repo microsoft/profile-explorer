@@ -109,9 +109,6 @@
 		<Compile Update="OptionsPanels\FlowGraphOptionsPanel.xaml.cs">
 			<SubType>Code</SubType>
 		</Compile>
-		<Compile Update="Panels\RemarksPanel.xaml.cs">
-			<SubType>Code</SubType>
-		</Compile>
 		<Compile Update="Panels\ScriptingPanel.xaml.cs">
 			<SubType>Code</SubType>
 		</Compile>
@@ -170,9 +167,6 @@
 			<SubType>Designer</SubType>
 		</Page>
 		<Page Update="OptionsPanels\FlowGraphOptionsPanel.xaml">
-			<SubType>Designer</SubType>
-		</Page>
-		<Page Update="Panels\RemarksPanel.xaml">
 			<SubType>Designer</SubType>
 		</Page>
 		<Page Update="Panels\ScriptingPanel.xaml">
