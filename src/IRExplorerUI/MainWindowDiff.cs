@@ -290,8 +290,7 @@ namespace IRExplorerUI {
 
         private Task<DiffMarkingResult> 
             MarkSectionDiffs(IRTextSection section, string text, string otherText,
-                             DiffPaneModel diff, DiffPaneModel otherDiff,
-                             IRDocument document, bool isRightDoc,
+                             DiffPaneModel diff, DiffPaneModel otherDiff, bool isRightDoc,
                              IDiffOutputFilter diffFilter, DiffStatistics diffStats) {
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
@@ -321,10 +320,10 @@ namespace IRExplorerUI {
             // in the doc. hosts once back on the UI thread.
             var leftMarkTask = MarkSectionDiffs(leftDocument.Section, leftText, rightText, 
                                                 diff.OldText, diff.NewText,
-                                                leftDocument, false, diffFilter, leftDiffStats);
+                                                false, diffFilter, leftDiffStats);
             var rightMarkTask = MarkSectionDiffs(rightDocument.Section, leftText, rightText, 
                                                  diff.NewText, diff.OldText,
-                                                 rightDocument, true, diffFilter, rightDiffStats);
+                                                 true, diffFilter, rightDiffStats);
 
             await Task.WhenAll(leftMarkTask, rightMarkTask);
             var leftDiffResult = await leftMarkTask;
@@ -618,9 +617,10 @@ namespace IRExplorerUI {
             var diffStats = new DiffStatistics();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
             diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
-            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
-            var diffResult = diffUpdater.MarkDiffs(prevText, currentText, diff.NewText, diff.OldText,
-                                                   true, diffStats);
+            
+            var diffResult = await MarkSectionDiffs(section, prevText, currentText, 
+                                                    diff.NewText, diff.OldText,
+                                                    true, diffFilter, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();
         }

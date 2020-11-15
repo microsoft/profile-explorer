@@ -2247,10 +2247,17 @@ namespace IRExplorerUI {
         }
 
         private void ComputeElementLists() {
-            blockElements_ = new List<IRElement>(function_.Blocks.Count);
+            // In case the function couldn't be parsed, bail
+            // after creating the elements, this should prevent further issues.
+            int blocks = function_ != null ? function_.Blocks.Count : 1;
+            blockElements_ = new List<IRElement>(blocks);
             tupleElements_ = new List<IRElement>(blockElements_.Count * 4);
             operandElements_ = new List<IRElement>(tupleElements_.Count * 2);
             selectedElements_ = new HashSet<IRElement>();
+
+            if (function_ == null) {
+                return;
+            }
 
             // Add the function parameters.
             foreach (var param in function_.Parameters) {
@@ -2941,7 +2948,7 @@ namespace IRExplorerUI {
                 return;
             }
             else if (function_ == null) {
-                return;
+                return; // Function couldn't be parsed.
             }
 
             UninstallBlockFolding();
