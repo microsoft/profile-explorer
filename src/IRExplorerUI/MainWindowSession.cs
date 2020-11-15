@@ -637,6 +637,15 @@ namespace IRExplorerUI {
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
+        public async Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section, 
+                                                   IRDocument document, CancelableTask loadTask = null,
+                                                   object options = null) {
+            var graphLayout = GetGraphLayoutCache(kind);
+            loadTask ??= new CancelableTask(); // Required, but client may not care about canceling.
+            return await Task.Run(() => graphLayout.GenerateGraph(document.Function, section, 
+                                                                  loadTask, options));
+        }
+
         private void GraphViewer_BlockUnmarked(object sender, IRElementMarkedEventArgs e) {
             var panel = ((GraphViewer)sender).HostPanel;
             var document = FindTargetDocument(panel);

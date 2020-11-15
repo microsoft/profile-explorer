@@ -16,6 +16,7 @@ namespace IRExplorerCore.Analysis {
         }
 
         private void BuildSSADefinitionTable() {
+            // Precompute a table mapping each SSA definition ID to its definition.
             foreach (var block in function_.Blocks) {
                 foreach (var tuple in block.Tuples) {
                     if (tuple is InstructionIR instr && instr.Destinations.Count > 0) {

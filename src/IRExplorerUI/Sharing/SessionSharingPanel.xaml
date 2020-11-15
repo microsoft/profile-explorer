@@ -38,7 +38,7 @@
                     Margin="4,6,0,0"
                     Foreground="DimGray"
                     IsHitTestVisible="False"
-                    Text="Paste sharing link here"
+                    Text="Paste sharing link here to open"
                     Visibility="{Binding ElementName=SharingLinkTextBox, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
             </Grid>
 

@@ -105,10 +105,8 @@ namespace IRExplorerUI {
             get => TextView.SearchMode == LightIRDocument.TextSearchMode.Filter;
             set {
                 var prevSearchMode = TextView.SearchMode;
-
-                TextView.SearchMode =
-                    value ? LightIRDocument.TextSearchMode.Filter : LightIRDocument.TextSearchMode.Mark;
-
+                TextView.SearchMode = value ? LightIRDocument.TextSearchMode.Filter : 
+                                              LightIRDocument.TextSearchMode.Mark;
                 if (TextView.SearchMode != prevSearchMode) {
                     Dispatcher.InvokeAsync(async () => await SearchText());
                     OnPropertyChange(nameof(FilterSearchResults));
@@ -283,7 +281,7 @@ namespace IRExplorerUI {
             searchResults_ = null;
             await DisableDiffMode();
             TextView.UnloadDocument();
-            OnPropertyChange(nameof(SectionName));
+            OnPropertyChange(nameof(SectionName)); // Force update.
         }
 
         public override void OnSessionSave() {
@@ -363,7 +361,7 @@ namespace IRExplorerUI {
 
             // Replace the current text document.
             diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
-            TextView.SwitchDocument(diffResult.DiffDocument, diffResult.DiffText);
+            await TextView.SwitchDocument(diffResult.DiffDocument, diffResult.DiffText);
             TextView.AddDiffTextSegments(diffResult.DiffSegments);
             
             FilterSearchResults = false; // Not compatible.

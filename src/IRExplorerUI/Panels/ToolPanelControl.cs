@@ -8,6 +8,7 @@ namespace IRExplorerUI {
     public class ToolPanelControl : UserControl, IToolPanel {
         public virtual ToolPanelKind PanelKind => ToolPanelKind.Other;
         public virtual HandledEventKind HandledEvents => HandledEventKind.None;
+        public virtual IRDocument Document { get; set; }
         public virtual IRDocument BoundDocument { get; set; }
         public virtual ISession Session { get; set; }
 

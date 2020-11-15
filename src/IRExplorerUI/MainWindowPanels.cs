@@ -55,10 +55,21 @@ namespace IRExplorerUI {
                     }
 
                     // Accept enabled panels handling the event.
-                    if (eventKind == HandledEventKind.None || (panel.HandledEvents & eventKind) != 0) {
+                    if (eventKind == HandledEventKind.None || 
+                        (panel.HandledEvents & eventKind) != 0) {
                         // Don't notify panels bound to another document
                         // or with pinned content.
                         if (ShouldNotifyPanel(panel, document)) {
+                            // Sometimes the selection event is triggered before the
+                            // section-switched event, for ex. when clicking directly on
+                            // an element in another document, not first on the document
+                            // tab header. Ensure that the panel is connected properly.
+                            if (panel.Document  != null &&
+                                panel.Document != document) {
+                                panel.OnDocumentSectionUnloaded(panel.Document.Section, panel.Document);
+                                panel.OnDocumentSectionLoaded(document.Section, document);
+                            }
+
                             action(panel);
                         }
                     }
@@ -509,7 +520,6 @@ namespace IRExplorerUI {
                 ToolPanelKind.ExpressionGraph => new ExpressionGraphPanel(),
                 ToolPanelKind.SearchResults => new SearchResultsPanel(),
                 ToolPanelKind.Scripting => new ScriptingPanel(),
-                ToolPanelKind.Remarks => new RemarksPanel(),
                 _ => null
             };
         }

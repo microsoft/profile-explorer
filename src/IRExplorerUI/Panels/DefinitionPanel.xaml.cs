@@ -10,8 +10,6 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI {
     public class DefinitionPanelState {
         public int CaretOffset;
-
-        //? TODO: Not restored
         public IRElement DefinedOperand;
         public bool HasPinnedContent;
         public double HorizontalOffset;
@@ -20,7 +18,6 @@ namespace IRExplorerUI {
 
     public partial class DefinitionPanel : ToolPanelControl {
         private IRElement definedOperand_;
-        private IRDocument document_;
 
         public DefinitionPanel() {
             InitializeComponent();
@@ -49,35 +46,30 @@ namespace IRExplorerUI {
         }
 
         public override void OnElementSelected(IRElementEventArgs e) {
+            SwitchSelectedElement(e.Element, e.Document);
+        }
+
+        public void SwitchSelectedElement(IRElement element, IRDocument document) {
             if (HasPinnedContent) {
                 return;
             }
 
-            if (!(e.Element is OperandIR op)) {
+            if (!(element is OperandIR op)) {
                 return;
             }
 
-            document_ = e.Document;
-            TextView.InitializeFromDocument(document_);
+            if(Document != null && Document != document) {
+                MessageBox.Show("Not same doc");
+                Utils.WaitForDebugger();
+            }
 
             if (op.IsLabelAddress) {
                 SwitchDefinitionElement(op, op.BlockLabelValue);
                 return;
             }
 
-            // Try to use SSA info first.
-            var ssaDefOp = ReferenceFinder.GetSSADefinition(op);
-
-            if (ssaDefOp != null) {
-                if (ssaDefOp != op) {
-                    SwitchDefinitionElement(op, ssaDefOp);
-                    return;
-                }
-            }
-
-            // Fall back to symbols with a single definition.
-            var refFinder = new ReferenceFinder(document_.Function);
-            var defOp = refFinder.FindDefinition(e.Element);
+            var refFinder = new ReferenceFinder(Document.Function);
+            var defOp = refFinder.FindDefinition(element);
 
             if (defOp != null && defOp != op) {
                 SwitchDefinitionElement(op, defOp);
@@ -88,16 +80,17 @@ namespace IRExplorerUI {
         }
 
         private void SwitchDefinitionElement(OperandIR op, IRElement defOp) {
-            SymbolName.Text = op.GetText(document_.Text).ToString();
+            SymbolName.Text = op.GetText(Document.Text).ToString();
             TextView.MarkElementWithDefaultStyle(defOp);
             definedOperand_ = op;
         }
 
         public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
             TextView.InitializeFromDocument(document);
+            Document = document;
 
             if (Session.LoadPanelState(this, section) is DefinitionPanelState savedState) {
-                OnElementSelected(new IRElementEventArgs { Element = savedState.DefinedOperand });
+                SwitchSelectedElement(savedState.DefinedOperand, document);
 
                 if (savedState.CaretOffset > TextView.Text.Length) {
                     MessageBox.Show("Invalid offset in definition window text, attach debugger");
@@ -120,15 +113,28 @@ namespace IRExplorerUI {
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
             if (definedOperand_ != null) {
                 var savedState = new DefinitionPanelState();
+                savedState.DefinedOperand = definedOperand_;
                 savedState.VerticalOffset = TextView.VerticalOffset;
                 savedState.HorizontalOffset = TextView.HorizontalOffset;
                 savedState.CaretOffset = TextView.CaretOffset;
+
+                if (savedState.CaretOffset > TextView.Text.Length) {
+                    MessageBox.Show("Invalid offset in state, attach debugger");
+                    Utils.WaitForDebugger();
+                }
+
+                if (section != document.Section) {
+                    MessageBox.Show("Invalid section in state, attach debugger");
+                    Utils.WaitForDebugger();
+                }
+
                 savedState.HasPinnedContent = HasPinnedContent;
                 Session.SavePanelState(savedState, this, section);
                 ResetDefinedOperand();
             }
 
             TextView.UnloadDocument();
+            Document = null;
         }
 
         private void ResetDefinedOperand() {

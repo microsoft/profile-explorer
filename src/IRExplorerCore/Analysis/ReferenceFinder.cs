@@ -42,7 +42,7 @@ namespace IRExplorerCore.Analysis {
         }
 
         public void PrecomputeAllReferences() {
-            //? TODO using single walk
+            //? TODO using single walk to collect all refs for each operand
         }
 
 
@@ -149,7 +149,7 @@ namespace IRExplorerCore.Analysis {
             return false;
         }
 
-        private IEnumerable<OperandIR> EnumerateAllOperands(bool includeDestinations = true,
+        public IEnumerable<OperandIR> EnumerateAllOperands(bool includeDestinations = true,
                                                             bool includeSources = true) {
             foreach (var block in function_.Blocks) {
                 foreach (var tuple in block.Tuples) {
@@ -192,7 +192,7 @@ namespace IRExplorerCore.Analysis {
                 : null;
         }
 
-        public List<Reference> FindAllDefUsesOrReferences(IRElement element) {
+        public List<Reference> FindAllSSAUsesOrReferences(IRElement element) {
             if (element is OperandIR op) {
                 var ssaDef = GetSSADefinition(op);
 
@@ -303,6 +303,15 @@ namespace IRExplorerCore.Analysis {
         }
 
         public IRElement FindDefinition(IRElement element) {
+            // Try to use SSA info first.
+            if (element is OperandIR op) {
+                var ssaDefOp = GetSSADefinition(op);
+
+                if (ssaDefOp != null) {
+                    return ssaDefOp;
+                }
+            }
+
             //? TODO: Very inefficient
             var list = FindAllReferences(element, false);
             IRElement definition = null;

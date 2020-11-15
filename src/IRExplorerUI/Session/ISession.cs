@@ -9,6 +9,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Query;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerUI {
     public enum DuplicatePanelKind {
@@ -34,13 +35,13 @@ namespace IRExplorerUI {
         IRTextSummary GetDocumentSummary(IRTextSection section);
         IRDocument FindAssociatedDocument(IToolPanel panel);
         IRDocumentHost FindAssociatedDocumentHost(IToolPanel panel);
+        void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args);
         void BindToDocument(IToolPanel panel, BindMenuItem args);
         void DuplicatePanel(IToolPanel panel, DuplicatePanelKind duplicateKind);
         void ShowAllReferences(IRElement element, IRDocument document);
         void ShowSSAUses(IRElement element, IRDocument document);
         object LoadDocumentState(IRTextSection section);
         object LoadPanelState(IToolPanel panel, IRTextSection section);
-        void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args);
         void SaveDocumentState(object stateObject, IRTextSection section);
         void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section);
         Task SwitchDocumentSectionAsync(OpenSectionEventArgs args, IRDocument document);
@@ -54,6 +55,10 @@ namespace IRExplorerUI {
         Task<string> GetDocumentTextAsync(IRTextSummary summary);
 
         Task SwitchGraphsAsync(GraphPanel flowGraphPanel, IRTextSection section, IRDocument document);
+
+        Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section, 
+                                      IRDocument document, CancelableTask loadTask = null, 
+                                      object options = null);
 
         Task<SectionSearchResult> SearchSectionAsync(SearchInfo searchInfo, IRTextSection section,
                                                      IRDocument document);

@@ -69,8 +69,6 @@ namespace IRExplorerUI {
         private static readonly double VerticalViewMargin = 100;
         private bool delayFitSize_;
         private bool delayRestoreState_;
-
-        private IRDocument document_;
         private string documentText_;
 
         private bool dragging_;
@@ -83,11 +81,9 @@ namespace IRExplorerUI {
         private CancelableTask loadTask_;
         private ToolTip nodeToolTip_;
         private bool optionsPanelVisible_;
-
         private GraphQueryInfo queryInfo_;
         private bool queryPanelVisible_;
         private bool restoredState_;
-        private IRTextSection section_;
 
         public GraphPanel() {
             InitializeComponent();
@@ -125,6 +121,8 @@ namespace IRExplorerUI {
                 }
             }
         }
+
+        public IRTextSection Section => Document.Section;
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
             Settings.Reset();
@@ -210,9 +208,8 @@ namespace IRExplorerUI {
 
             GraphViewer.HideGraph();
             graph_ = null;
-            document_ = null;
+            Document = null;
             documentText_ = null;
-            section_ = null;
             hoveredNode_ = null;
             Utils.DisableControl(GraphViewer);
             IsPanelEnabled = false;
@@ -246,7 +243,7 @@ namespace IRExplorerUI {
 
         public void InitializeFromDocument(IRDocument document) {
             Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: initialize with doc {ObjectTracker.Track(document)}");
-            document_ = document;
+            Document = document;
             documentText_ = null; // Loaded on-demand.
         }
 
@@ -285,7 +282,6 @@ namespace IRExplorerUI {
         }
 
         public CancelableTask OnGenerateGraphStart(IRTextSection section) {
-            section_ = section;
             Utils.DisableControl(GraphViewer);
             var animation = new DoubleAnimation(0.25, TimeSpan.FromSeconds(0.5));
             animation.BeginTime = TimeSpan.FromSeconds(1);
@@ -570,22 +566,18 @@ namespace IRExplorerUI {
             GraphViewer.MarkSelectedNodeSuccessors(GetSelectedColorStyle(e));
         }
 
-        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
         private async void MarkDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
             await GraphViewer.MarkSelectedNodeDominatorsAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
         }
 
-        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
         private async void MarkPostDominatorsExecuted(object sender, ExecutedRoutedEventArgs e) {
             await GraphViewer.MarkSelectedNodePostDominatorsAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
         }
 
-        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
         private async void MarkDominanceFrontierExecuted(object sender, ExecutedRoutedEventArgs e) {
             await GraphViewer.MarkSelectedNodeDominanceFrontierAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
         }
 
-        [SuppressMessage("Usage", "VSTHRD100:Avoid async void methods", Justification = "event handler")]
         private async void MarkPostDominanceFrontierExecuted(object sender, ExecutedRoutedEventArgs e) {
             await GraphViewer.MarkSelectedNodePostDominanceFrontierAsync(GetSelectedColorStyle(e)).ConfigureAwait(true);
         }
@@ -621,7 +613,7 @@ namespace IRExplorerUI {
 
         private async void ShowReachablePathExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (queryPanelVisible_ && queryInfo_.Reaches) {
-                var cache = FunctionAnalysisCache.Get(document_.Function);
+                var cache = FunctionAnalysisCache.Get(Document.Function);
 
                 var pathBlocks =
                     (await cache.GetReachabilityAsync()).FindPath(queryInfo_.Block1, queryInfo_.Block2);
@@ -635,7 +627,7 @@ namespace IRExplorerUI {
         private void NodeToolTip__Loaded(object sender, RoutedEventArgs e) {
             var node = nodeToolTip_.Tag as GraphNode;
             var previewer = Utils.FindChild<IRPreviewTooltip>(nodeToolTip_, "IRPreviewer");
-            previewer.InitializeFromDocument(document_, GetDocumentText());
+            previewer.InitializeFromDocument(Document, GetDocumentText());
 
             if (node.NodeInfo.ElementData is BlockIR block) {
                 previewer.PreviewedElement = block;
@@ -649,7 +641,7 @@ namespace IRExplorerUI {
             else {
                 var element = node.NodeInfo.ElementData;
                 previewer.PreviewedElement = element;
-                nodeToolTip_.DataContext = new IRPreviewToolTip(600, 100, document_, element);
+                nodeToolTip_.DataContext = new IRPreviewToolTip(600, 100, Document, element);
                 int lines = Math.Max(1, Math.Min(element.ParentBlock.Tuples.Count + 1, 20));
                 nodeToolTip_.Height = previewer.ResizeForLines(lines);
                 previewer.UpdateView();
@@ -658,7 +650,7 @@ namespace IRExplorerUI {
 
         private string GetDocumentText() {
             if (documentText_ == null) {
-                documentText_ = document_.Text; // Cache text.
+                documentText_ = Document.Text; // Cache text.
             }
 
             return documentText_;
@@ -705,7 +697,7 @@ namespace IRExplorerUI {
             QueryPanel.DataContext = null;
 
             if (queryInfo_.Block1 != null && queryInfo_.Block2 != null) {
-                var cache = FunctionAnalysisCache.Get(document_.Function);
+                var cache = FunctionAnalysisCache.Get(Document.Function);
                 await cache.CacheAll();
 
                 queryInfo_.Dominates =
@@ -940,6 +932,7 @@ namespace IRExplorerUI {
         }
 
         public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+            var previousSection = Document?.Section;
             InitializeFromDocument(document);
 
             if (document.DuringSectionLoading) {
@@ -955,7 +948,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            if (section != null && section != section_) {
+            if (section != null && section != previousSection) {
                 // User switched between two sections, reload the proper graph.
                 await Session.SwitchGraphsAsync(this, section, document);
             }
@@ -975,12 +968,12 @@ namespace IRExplorerUI {
 
         private void LoadSavedState() {
             //? TODO: This can happen for the expression graph, which does not support switching.
-            if (document_ == null) {
+            if (Document == null) {
                 return;
             }
 
-            var data = Session.LoadPanelState(this, document_.Section) as byte[];
-            var state = StateSerializer.Deserialize<GraphPanelState>(data, document_.Function);
+            var data = Session.LoadPanelState(this, Document.Section) as byte[];
+            var state = StateSerializer.Deserialize<GraphPanelState>(data, Document.Function);
 
             if (state != null) {
                 SetZoom(state.ZoomLevel);
@@ -1011,9 +1004,8 @@ namespace IRExplorerUI {
             Session.SavePanelState(data, this, section);
 
             // Clear references to IR objects that would keep the previous function alive.
-            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: unloaded doc {ObjectTracker.Track(document_)}");
-            document_ = null;
-            section_ = null;
+            Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: unloaded doc {ObjectTracker.Track(Document)}");
+            Document = null;
             graph_ = null;
             hoveredNode_ = null;
         }
@@ -1053,23 +1045,25 @@ namespace IRExplorerUI {
             }
         }
 
-        public override void ClonePanel(IToolPanel sourcePanel) {
-            //? TODO: This shouldn't be done here
+        public override async void ClonePanel(IToolPanel sourcePanel) {
             var sourceGraphPanel = sourcePanel as GraphPanel;
-            InitializeFromDocument(sourceGraphPanel.document_);
+            InitializeFromDocument(sourceGraphPanel.Document);
 
             // Rebuild the graph, otherwise the visual nodes
             // point to the same instance.
-            //? TODO: This is not efficient regarding memory, SourceText and BlockNameMap
-            //? waste a lot of space for large graphs
-            //var graphReader = new GraphvizReader(sourceGraphPanel.graph_.GraphKind,
-            //                                     sourceGraphPanel.graph_.SourceText,
-            //                                     sourceGraphPanel.graph_.BlockNameMap);
-
-            //var newGraph = graphReader.ReadGraph();
-            //DisplayGraph(newGraph);
+            var newGraph = await Session.ComputeGraphAsync(sourceGraphPanel.graph_.Kind,
+                                                           Section, Document);
+            DisplayGraph(newGraph);
         }
 
         #endregion
+
+        private void PanelToolbarTray_BindMenuItemSelected(object sender, BindMenuItem e) {
+            Session.BindToDocument(this, e);
+        }
+
+        private void PanelToolbarTray_BindMenuOpen(object sender, BindMenuItemsArgs e) {
+            Session.PopulateBindMenu(this, e);
+        }
     }
 }

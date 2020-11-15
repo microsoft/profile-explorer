@@ -23,12 +23,7 @@ namespace IRExplorerUI {
 
     public partial class BookmarksPanel : ToolPanelControl {
         private ObservableCollectionRefresh<Bookmark> bookmarks_;
-        private IRDocument document_;
-        private bool focusedOnce_;
-
         private IRPreviewToolTip previewTooltip_;
-
-        // public event EventHandler OpenSection;
 
         public BookmarksPanel() {
             InitializeComponent();
@@ -38,12 +33,12 @@ namespace IRExplorerUI {
         public ObservableCollectionRefresh<Bookmark> Bookmarks => bookmarks_;
 
         public void InitializeForDocument(IRDocument document) {
-            document_ = document;
+            Document = document;
         }
 
         private void TextBox_TextChanged(object sender, TextChangedEventArgs e) {
             var bookmark = ((TextBox)sender).DataContext as Bookmark;
-            document_.BookmarkInfoChanged(bookmark);
+            Document.BookmarkInfoChanged(bookmark);
         }
 
         private void HideToolTip() {
@@ -57,7 +52,7 @@ namespace IRExplorerUI {
             HideToolTip();
             var listItem = sender as ListViewItem;
             var bookmark = listItem.DataContext as Bookmark;
-            previewTooltip_ = new IRPreviewToolTip(600, 100, document_, bookmark.Element);
+            previewTooltip_ = new IRPreviewToolTip(600, 100, Document, bookmark.Element);
             listItem.ToolTip = previewTooltip_;
         }
 
@@ -77,34 +72,34 @@ namespace IRExplorerUI {
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e) {
             var bookmark = ((CheckBox)sender).DataContext as Bookmark;
-            document_.BookmarkInfoChanged(bookmark);
+            Document.BookmarkInfoChanged(bookmark);
         }
 
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e) {
             var bookmark = ((CheckBox)sender).DataContext as Bookmark;
-            document_.BookmarkInfoChanged(bookmark);
+            Document.BookmarkInfoChanged(bookmark);
         }
 
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             var bookmark = ((ListViewItem)sender).DataContext as Bookmark;
-            document_.JumpToBookmark(bookmark);
+            Document.JumpToBookmark(bookmark);
             bookmarks_.Refresh();
         }
 
         private void JumpToBookmarkExecuted(object sender, ExecutedRoutedEventArgs e) {
             var bookmark = e.Parameter as Bookmark;
-            document_.JumpToBookmark(bookmark);
+            Document.JumpToBookmark(bookmark);
             bookmarks_.Refresh();
         }
 
         private void RemoveBookmarkExecuted(object sender, ExecutedRoutedEventArgs e) {
             var bookmark = e.Parameter as Bookmark;
-            document_.RemoveBookmark(bookmark);
+            Document.RemoveBookmark(bookmark);
             bookmarks_.Refresh();
         }
 
         private void RemoveAllBookmarksExecuted(object sender, ExecutedRoutedEventArgs e) {
-            document_.RemoveAllBookmarks();
+            Document.RemoveAllBookmarks();
             bookmarks_.Refresh();
         }
 
@@ -123,7 +118,7 @@ namespace IRExplorerUI {
             }
 
             bookmark.Style = style;
-            document_.BookmarkInfoChanged(bookmark);
+            Document.BookmarkInfoChanged(bookmark);
             bookmarks_.Refresh();
         }
 
@@ -137,7 +132,7 @@ namespace IRExplorerUI {
 
         public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
             InitializeForDocument(document);
-            IsPanelEnabled = document_ != null;
+            IsPanelEnabled = Document != null;
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -148,16 +143,7 @@ namespace IRExplorerUI {
             bookmarks_ = new ObservableCollectionRefresh<Bookmark>();
             BookmarkList.ItemsSource = bookmarks_;
         }
-
-        public override void OnActivatePanel() {
-            // Hack to prevent DropDown in toolbar to get focus 
-            // the first time the panel is made visible.
-            if (!focusedOnce_) {
-                BookmarkList.Focus();
-                focusedOnce_ = true;
-            }
-        }
-
+        
         public override void OnSessionEnd() {
             base.OnSessionEnd();
             ResetBookmarks();
