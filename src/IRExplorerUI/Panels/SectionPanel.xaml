@@ -115,7 +115,7 @@
 
                         </TextBox>
                         <TextBlock
-                            Margin="8,5"
+                            Margin="8,4"
                             Foreground="DimGray"
                             IsHitTestVisible="False"
                             Text="Search functions"
@@ -269,7 +269,7 @@
                                 </TextBox.InputBindings>
                             </TextBox>
                             <TextBlock
-                                Margin="8,5"
+                                Margin="8,4"
                                 Foreground="DimGray"
                                 IsHitTestVisible="False"
                                 Text="Search sections"
