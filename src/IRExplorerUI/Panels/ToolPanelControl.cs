@@ -16,6 +16,8 @@ namespace IRExplorerUI {
         public virtual bool IsPanelEnabled { get; set; }
         public virtual bool HasCommandFocus { get; set; }
         public virtual bool HasPinnedContent { get; set; }
+        public virtual bool IgnoreNextLoadEvent { get; set; }
+        public virtual bool IgnoreNextUnloadEvent { get; set; }
 
         public virtual void OnRegisterPanel() {
             IsPanelEnabled = true;

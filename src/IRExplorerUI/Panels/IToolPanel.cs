@@ -43,6 +43,8 @@ namespace IRExplorerUI {
         bool IsPanelEnabled { get; set; }
         bool HasCommandFocus { get; set; }
         bool HasPinnedContent { get; set; }
+        bool IgnoreNextLoadEvent { get; set; }
+        bool IgnoreNextUnloadEvent { get; set; }
 
         void OnRegisterPanel();
         void OnUnregisterPanel();

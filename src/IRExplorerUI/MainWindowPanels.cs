@@ -68,6 +68,12 @@ namespace IRExplorerUI {
                                 panel.Document != document) {
                                 panel.OnDocumentSectionUnloaded(panel.Document.Section, panel.Document);
                                 panel.OnDocumentSectionLoaded(document.Section, document);
+
+                                // After this action, the load/unload events for the panel
+                                // will trigger, but since it was done here already,
+                                // don't do it again, slows down UI for no reason.
+                                panel.IgnoreNextLoadEvent = true;
+                                panel.IgnoreNextUnloadEvent = true;
                             }
 
                             action(panel);
@@ -103,7 +109,11 @@ namespace IRExplorerUI {
         private void NotifyPanelsOfSectionLoad(IRTextSection section, IRDocumentHost document,
                                                bool notifyAll) {
             ForEachPanel(panel => {
-                if (ShouldNotifyPanel(panel, document.TextView, notifyAll)) {
+                // See comments in NotifyPanelsOfElementEvent about this check.
+                if (panel.IgnoreNextLoadEvent) {
+                    panel.IgnoreNextLoadEvent = false;
+                }
+                else if (ShouldNotifyPanel(panel, document.TextView, notifyAll)) {
                     panel.OnDocumentSectionLoaded(section, document.TextView);
                 }
             });
@@ -112,13 +122,18 @@ namespace IRExplorerUI {
         private void NotifyPanelsOfSectionUnload(IRTextSection section, IRDocumentHost document,
                                                  bool notifyAll, bool ignoreBoundPanels = false) {
             ForEachPanel(panel => {
-                if (ShouldNotifyPanel(panel, document.TextView, notifyAll, ignoreBoundPanels)) {
+                // See comments in NotifyPanelsOfElementEvent about this check.
+                if (panel.IgnoreNextUnloadEvent) {
+                    panel.IgnoreNextUnloadEvent = false;
+                }
+                else if (ShouldNotifyPanel(panel, document.TextView, notifyAll, ignoreBoundPanels)) {
                     panel.OnDocumentSectionUnloaded(section, document.TextView);
                 }
             });
         }
 
-        private bool ShouldNotifyPanel(IToolPanel panel, IRDocument document, bool notifyAll = false,
+        private bool ShouldNotifyPanel(IToolPanel panel, IRDocument document, 
+                                       bool notifyAll = false,
                                        bool ignoreBoundPanels = false) {
             // Don't notify panels bound to another document or with pinned content.
             // If all panels should be notified, pinning in ignored.

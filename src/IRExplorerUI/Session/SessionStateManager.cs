@@ -280,6 +280,10 @@ namespace IRExplorerUI {
                 return;
             }
 
+            //? TODO: By not serializing the panel state object, 
+            //? references to object in a FunctionIR could be kept around
+            //? after the section is unloaded, increasing memory usage more and more
+            //? when switching sections
             var docInfo = FindLoadedDocument(section);
             docInfo.SavePanelState(stateObject, panel, section);
         }
