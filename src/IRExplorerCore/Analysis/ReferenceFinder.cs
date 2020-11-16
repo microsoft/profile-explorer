@@ -198,7 +198,8 @@ namespace IRExplorerCore.Analysis {
 
                 if (ssaDef != null) {
                     var list = new List<Reference> { new Reference(ssaDef, ReferenceKind.SSA) };
-                    FindSSAUses(op, list);
+                    var useList = FindSSAUses(op);
+                    useList.ForEach((item) => list.Add(new Reference(item, ReferenceKind.SSA)));
                     return list;
                 }
             }
@@ -258,7 +259,8 @@ namespace IRExplorerCore.Analysis {
             }
 
             if (includeSSAUses) {
-                FindSSAUses(op, list);
+                var useList = FindSSAUses(op);
+                useList.ForEach((item) => list.Add(new Reference(item, ReferenceKind.SSA)));
             }
 
             return list;
@@ -285,20 +287,49 @@ namespace IRExplorerCore.Analysis {
                                      (element, kind) => kind == ReferenceKind.Load);
         }
 
-        public static List<Reference> FindSSAUses(OperandIR op) {
-            var list = new List<Reference>();
+        public static List<IRElement> FindSSAUses(OperandIR op) {
+            var list = new List<IRElement>();
             FindSSAUses(op, list);
             return list;
         }
 
-        public static List<Reference> FindSSAUses(InstructionIR instr) {
-            var list = new List<Reference>();
+        public static List<IRElement> FindSSAUses(InstructionIR instr) {
+            var list = new List<IRElement>();
 
             if (instr.Destinations.Count == 0) {
                 return list;
             }
 
             FindSSAUses(instr.Destinations[0], list);
+            return list;
+        }
+
+        public List<IRElement> FindAllUses(OperandIR op) {
+            var list = new List<IRElement>();
+            return FindAllUses(op, list);
+        }
+
+        public List<IRElement> FindAllUses(InstructionIR instr) {
+            var list = new List<IRElement>();
+
+            if (instr.Destinations.Count == 0) {
+                return list;
+            }
+
+            FindAllUses(instr.Destinations[0], list);
+            return list;
+        }
+
+        public List<IRElement> FindAllUses(OperandIR op, List<IRElement> list) {
+            foreach (var use in EnumerateSSAUses(op)) {
+                list.Add(use);
+            }
+
+            if(list.Count == 0 && op.GetTag<SSADefinitionTag>() == null) {
+                var allLoads = FindAllLoads(op);
+                allLoads.ForEach((item) => list.Add(item.Element));
+            }
+
             return list;
         }
 
@@ -313,21 +344,41 @@ namespace IRExplorerCore.Analysis {
             }
 
             //? TODO: Very inefficient
-            var list = FindAllReferences(element, false);
-            IRElement definition = null;
+            var list = FindAllDefinitions(element);
 
-            foreach (var reference in list) {
-                if (reference.Kind == ReferenceKind.Store) {
-                    if (definition == null) {
-                        definition = reference.Element;
-                    }
-                    else {
-                        return null; // Multiple definitions.
-                    }
+            if (list.Count == 1) {
+                return list[0];
+            }
+
+            return null;
+        }
+
+        public List<IRElement> FindAllDefinitions(IRElement element) {
+            var list = new List<IRElement>();
+
+            // Try to use SSA info first.
+            if (element is OperandIR op) {
+                var ssaDefOp = GetSSADefinition(op);
+
+                if (ssaDefOp != null) {
+                    list.Add(ssaDefOp);
+                    return list;
+                }
+                else if (op.IsIndirection) {
+                    element = op.IndirectionBaseValue;
                 }
             }
 
-            return definition;
+            //? TODO: Very inefficient
+            var refList = FindAllReferences(element, false);
+
+            foreach (var reference in refList) {
+                if (reference.Kind == ReferenceKind.Store) {
+                    list.Add(reference.Element);
+                }
+            }
+
+            return list;
         }
 
         public static SSADefinitionTag GetSSADefinitionTag(OperandIR op) {
@@ -349,14 +400,19 @@ namespace IRExplorerCore.Analysis {
             return tag != null ? tag.OwnerElement : null;
         }
 
+        public static InstructionIR GetSSADefinitionInstruction(OperandIR op) {
+            var tag = GetSSADefinitionTag(op);
+            return tag != null ? tag.DefinitionInstruction : null;
+        }
+
         public static int? GetSSADefinitionId(OperandIR op) {
             var tag = GetSSADefinitionTag(op);
             return tag?.DefinitionId;
         }
 
-        public static void FindSSAUses(OperandIR op, List<Reference> list) {
+        public static void FindSSAUses(OperandIR op, List<IRElement> list) {
             foreach (var use in EnumerateSSAUses(op)) {
-                list.Add(new Reference(use, ReferenceKind.SSA));
+                list.Add(use);
             }
         }
 
