@@ -52,7 +52,8 @@ namespace IRExplorerCore.Graph {
 
         protected override void PrintGraph(StringBuilder builder) {
             builder_ = builder;
-            var exprNode = PrintSSAExpression(startElement_, null, 0);
+            var refFinder = new ReferenceFinder(startElement_.ParentFunction);
+            var exprNode = PrintExpression(startElement_, null, 0, refFinder);
             rootElement_ = CreateFakeIRElement();
             CreateNode(rootElement_, null, "ROOT");
             CreateEdge(rootElement_, exprNode);
@@ -73,9 +74,7 @@ namespace IRExplorerCore.Graph {
         }
 
         private void PrintGroupedNodes() {
-            var blockGroups =
-                new Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>>();
-
+            var blockGroups = new Dictionary<BlockIR, List<Tuple<IRElement, IRElement, string>>>();
             var noGroupNodes = new List<Tuple<IRElement, IRElement, string>>();
 
             foreach (var node in nodes_) {
@@ -173,7 +172,8 @@ namespace IRExplorerCore.Graph {
             return op;
         }
 
-        private IRElement PrintSSAExpression(IRElement element, IRElement parent, int level) {
+        private IRElement PrintExpression(IRElement element, IRElement parent,
+                                          int level, ReferenceFinder refFinder) {
             if (visitedElements_.TryGetValue(element, out var mappedElement)) {
                 return mappedElement;
             }
@@ -183,7 +183,7 @@ namespace IRExplorerCore.Graph {
             }
 
             if (element is OperandIR op) {
-                var defElement = ReferenceFinder.GetSSADefinition(op);
+                var defElement = refFinder.FindDefinition(op);
 
                 if (defElement != null) {
                     if (defElement is OperandIR defOp) {
@@ -195,7 +195,7 @@ namespace IRExplorerCore.Graph {
                         }
                     }
 
-                    var result = PrintSSAExpression(defElement.ParentTuple, op, level);
+                    var result = PrintExpression(defElement.ParentTuple, op, level, refFinder);
                     visitedElements_[element] = result;
                     return result;
                 }
@@ -203,8 +203,7 @@ namespace IRExplorerCore.Graph {
                     CreateNode(op, parent, op.IntValue.ToString(CultureInfo.InvariantCulture));
                 }
                 else if (op.IsFloatConstant) {
-                    CreateNode(op, parent,
-                               op.FloatValue.ToString(CultureInfo.InvariantCulture));
+                    CreateNode(op, parent, op.FloatValue.ToString(CultureInfo.InvariantCulture));
                 }
                 else {
                     string label = GetOperandLabel(op);
@@ -224,13 +223,13 @@ namespace IRExplorerCore.Graph {
                 }
 
                 foreach (var sourceOp in instr.Sources) {
-                    var result = PrintSSAExpression(sourceOp, instr, level + 1);
+                    var result = PrintExpression(sourceOp, instr, level + 1, refFinder);
                     ConnectChildNode(instr, result);
                 }
 
                 foreach (var destOp in instr.Destinations) {
                     if (destOp.IsIndirection) {
-                        var result = PrintSSAExpression(destOp, instr, level + 1);
+                        var result = PrintExpression(destOp, instr, level + 1, refFinder);
                         ConnectChildNode(instr, result);
                     }
                 }
