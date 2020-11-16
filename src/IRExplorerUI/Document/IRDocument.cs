@@ -938,6 +938,7 @@ namespace IRExplorerUI {
         public void SelectElement(IRElement element, bool raiseEvent = true, bool fromUICommand = false,
                                   int textOffset = -1) {
             ClearTemporaryHighlighting();
+            ResetExpressionLevel(element);
 
             if (element != null) {
                 Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Select element {element.Id}");
@@ -976,6 +977,7 @@ namespace IRExplorerUI {
         public void UnselectElements() {
             ClearSelectedElements();
             UpdateHighlighting();
+            ResetExpressionLevel();
         }
 
         public void SelectElementAt(Point point) {
@@ -1568,24 +1570,8 @@ namespace IRExplorerUI {
                 return new List<OperandIR>();
             }
 
-            // Try to get the SSA definition.
-            // If not found, search for all stores to the operand.
-            var defOp = ReferenceFinder.GetSSADefinition(op) as OperandIR;
-
-            if (defOp != null) {
-                return new List<OperandIR>() { defOp };
-            }
-
-            // For an indirection, look for the base value.
-            if (op.IsIndirection) {
-                op = op.IndirectionBaseValue;
-            }
-
-            //? TODO: Could use block reachability to trim the set of stores marked
-            //? Reachability can be integrated directly into ReferenceFinder,
-            //? refs.FindAllReachableStores(op, block)
-            var storeList = new ReferenceFinder(function_).FindAllStores(op);
-            return storeList.ConvertAll((reference) => reference.Element as OperandIR);
+            return new ReferenceFinder(Function).FindAllDefinitions(op).
+                ConvertAll((item) => item as OperandIR);
         }
 
         private void UndoActionExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -1654,7 +1640,7 @@ namespace IRExplorerUI {
                 }
 
                 // Try to find a definition for the source operand.
-                var defOp = ReferenceFinder.GetSSADefinition(op);
+                var defOp = new ReferenceFinder(Function).FindDefinition(op);
 
                 if (defOp != null) {
                     if (skipCopies) {
@@ -1671,17 +1657,6 @@ namespace IRExplorerUI {
                     HighlightSingleElement(targetOp, selectedHighlighter_);
                     SetCaretAtElement(targetOp);
                     return true;
-                }
-                else {
-                    // Try to use reference info to find an unique definition.
-                    //? TODO: Definition set can be refined using reaching defs DFA.
-                    defOp = new ReferenceFinder(function_).FindDefinition(element);
-
-                    if (defOp != null) {
-                        HighlightSingleElement(defOp, selectedHighlighter_);
-                        SetCaretAtElement(defOp);
-                        return true;
-                    }
                 }
             }
             else if (element is InstructionIR instr) {
@@ -1716,7 +1691,7 @@ namespace IRExplorerUI {
                                               bool markExpression, ref HighlightingEventAction action) {
             if (markExpression) {
                 // Mark an entire SSA def-use expression DAG.
-                HighlightSSAExpression(instr, highlighter, expressionOperandStyle_, expressionStyle_);
+                HighlightExpression(instr, highlighter, expressionOperandStyle_, expressionStyle_);
                 return true;
             }
 
@@ -1749,7 +1724,7 @@ namespace IRExplorerUI {
             if (op.Role == OperandRole.Source) {
                 if (markExpression) {
                     // Mark an entire SSA def-use expression DAG.
-                    HighlightSSAExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
+                    HighlightExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
                     return true;
                 }
 
@@ -1759,14 +1734,10 @@ namespace IRExplorerUI {
                      settings_.HighlightDestinationUses) {
                 // First look for an SSA definition and its uses,
                 // if not found highlight every load of the same symbol.
-                var useList = ReferenceFinder.FindSSAUses(op);
+                var useList = new ReferenceFinder(Function).FindAllUses(op);
                 bool handled = false;
-
-                if (useList.Count == 0) {
-                    //? TODO: Could use block reachability to trim the set of loads marked
-                    useList = new ReferenceFinder(function_).FindAllLoads(op);
-                }
-                else if (markExpression) {
+                
+                if (markExpression) {
                     // Collect the transitive set of users, marking instructions
                     // that depend on the value of this destination operand.
                     ExpandIteratedUseList(op, useList);
@@ -1800,11 +1771,11 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private void ExpandIteratedUseList(OperandIR operand, List<Reference> useList) {
+        private void ExpandIteratedUseList(OperandIR operand, List<IRElement> useList) {
             var handledElements = new HashSet<IRElement>();
 
             foreach (var use in useList) {
-                handledElements.Add(use.Element);
+                handledElements.Add(use);
             }
 
             // Each expansion of the same element doubles the recursion depth.
@@ -1817,34 +1788,38 @@ namespace IRExplorerUI {
             }
 
             int maxLevel = currentExprLevel_;
-            ExpandIteratedUseList(useList, handledElements, 0, maxLevel);
+            var refFinder = new ReferenceFinder(Function);
+            ExpandIteratedUseList(useList, handledElements, 0, maxLevel, refFinder);
         }
 
-        private void ExpandIteratedUseList(List<Reference> useList, HashSet<IRElement> handledElements, 
-                                           int level, int maxLevel) {
+        private void ExpandIteratedUseList(List<IRElement> useList, HashSet<IRElement> handledElements, 
+                                           int level, int maxLevel, ReferenceFinder refFinder) {
             if (level > maxLevel) {
                 return;
             }
 
-            var newUseLists = new List<List<Reference>>();
+            var newUseLists = new List<List<IRElement>>();
 
             foreach (var use in useList) {
-                if (use.Element is OperandIR op) {
-                    var useInstr = op.ParentInstruction;
+                if (use is not OperandIR op) {
+                    continue;
+                }
 
-                    if (useInstr != null) {
-                        foreach (var iteratedUse in ReferenceFinder.FindSSAUses(useInstr)) {
-                            if (!handledElements.Add(iteratedUse.Element)) {
-                                continue; /// Use already visited during recursion.
-                            }
+                var useInstr = op.ParentInstruction;
 
-                            // Recursively iterate over and collect uses
-                            var iteratedUseList = new List<Reference>();
-                            iteratedUseList.Add(iteratedUse);
-
-                            ExpandIteratedUseList(iteratedUseList, handledElements, level + 1, maxLevel);
-                            newUseLists.Add(iteratedUseList);
+                if (useInstr != null) {
+                    foreach (var iteratedUse in refFinder.FindAllUses(useInstr)) {
+                        if (!handledElements.Add(iteratedUse)) {
+                            continue; // Use already visited during recursion.
                         }
+
+                        // Recursively iterate over and collect uses
+                        var iteratedUseList = new List<IRElement>();
+                        iteratedUseList.Add(iteratedUse);
+
+                        ExpandIteratedUseList(iteratedUseList, handledElements,
+                                              level + 1, maxLevel, refFinder);
+                        newUseLists.Add(iteratedUseList);
                     }
                 }
             }
@@ -1947,22 +1922,7 @@ namespace IRExplorerUI {
                                          bool highlightDefInstr = true) {
             // First look for an SSA definition, if not found 
             // highlight every store to the same symbol.
-            var defList = new List<IRElement>();
-            var defElement = ReferenceFinder.GetSSADefinition(op);
-
-            if (defElement != null) {
-                defList.Add(defElement);
-            }
-            else {
-                // For an indirection, look for the base value.
-                if (op.IsIndirection) {
-                    op = op.IndirectionBaseValue;
-                }
-
-                //? TODO: Could use block reachability to trim the set of stores marked
-                var storeList = new ReferenceFinder(function_).FindAllStores(op);
-                defList = storeList.ConvertAll(storeRef => storeRef.Element);
-            }
+            var defList = new ReferenceFinder(Function).FindAllDefinitions(op);
 
             if (defList.Count == 0) {
                 return false;
@@ -1991,9 +1951,9 @@ namespace IRExplorerUI {
             return true;
         }
 
-        private void HighlightSSAExpression(IRElement element, ElementHighlighter highlighter,
-                                            HighlightingStyleCollection style,
-                                            HighlightingStyleCollection instrStyle) {
+        private void HighlightExpression(IRElement element, ElementHighlighter highlighter,
+                                         HighlightingStyleCollection style,
+                                         HighlightingStyleCollection instrStyle) {
             var locationTag = element.GetTag<SourceLocationTag>();
             var handledElements = new HashSet<IRElement>();
 
@@ -2009,45 +1969,37 @@ namespace IRExplorerUI {
 
             int maxLevel = currentExprLevel_;
             int styleIndex = currentExprStyleIndex_;
-
-            HighlightSSAExpression(element, element, handledElements,
-                                   highlighter, style, instrStyle, styleIndex, 0, maxLevel);
+            var refFinder = new ReferenceFinder(Function);
+            HighlightExpression(element, null, handledElements,
+                                highlighter, style, instrStyle, styleIndex, 
+                                0, maxLevel, refFinder);
         }
 
-        private void HighlightSSAExpression(IRElement element, IRElement parent, HashSet<IRElement> handledElements,
-                                            ElementHighlighter highlighter, HighlightingStyleCollection style,
-                                            HighlightingStyleCollection instrStyle, int styleIndex,
-                                            int level, int maxLevel) {
+        private void HighlightExpression(IRElement element, IRElement parent, HashSet<IRElement> handledElements,
+                                         ElementHighlighter highlighter, HighlightingStyleCollection style,
+                                         HighlightingStyleCollection instrStyle, int styleIndex,
+                                         int level, int maxLevel, ReferenceFinder refFinder) {
             if (!handledElements.Add(element)) {
                 return; // Element already handled during recursion.
             }
 
             switch (element) {
                 case OperandIR op: {
-                    if (parent != null) {
-                        //? TODO: Add option to mark each level with a brighter color.
-                        highlighter.Add(new HighlightedGroup(op, style.ForIndex(styleIndex)));
-                    }
+                    highlighter.Add(new HighlightedGroup(element, style.ForIndex(styleIndex)));
 
-                    //? TODO: Max level should be configurable
                     if (level >= maxLevel) {
                         return;
                     }
 
-                    var defTag = op.GetTag<SSADefinitionTag>();
+                    var sourceDefOp = refFinder.FindDefinition(op);
 
-                    if (defTag != null) {
-                        if (defTag.Owner is OperandIR defOp) {
-                            HighlightSSAExpression(defOp.Parent, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level, maxLevel);
-                        }
-                    }
-                    else {
-                        var sourceDefOp = ReferenceFinder.GetSSADefinition(op);
+                    if (sourceDefOp != null) {
+                        highlighter.Add(new HighlightedGroup(sourceDefOp, style.ForIndex(styleIndex)));
 
-                        if (sourceDefOp != null) {
-                            HighlightSSAExpression(sourceDefOp, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level, maxLevel);
+                        if (sourceDefOp.ParentInstruction != null) {
+                            HighlightExpression(sourceDefOp.ParentInstruction, parent, handledElements,
+                                                highlighter, style, instrStyle, styleIndex, 
+                                                level, maxLevel, refFinder);
                         }
                     }
 
@@ -2061,14 +2013,14 @@ namespace IRExplorerUI {
                     }
 
                     foreach (var sourceOp in instr.Sources) {
-                        HighlightSSAExpression(sourceOp, instr, handledElements, highlighter, style,
-                                               instrStyle, styleIndex, level + 1, maxLevel);
+                        HighlightExpression(sourceOp, instr, handledElements, highlighter, style,
+                                            instrStyle, styleIndex, level + 1, maxLevel, refFinder);
                     }
 
                     if (level > 0) {
                         foreach (var destOp in instr.Destinations) {
-                            HighlightSSAExpression(destOp, parent, handledElements, highlighter, style,
-                                                   instrStyle, styleIndex, level + 1, maxLevel);
+                            HighlightExpression(destOp, instr, handledElements, highlighter, style,
+                                                instrStyle, styleIndex, level + 1, maxLevel, refFinder);
                         }
                     }
 
@@ -2077,7 +2029,14 @@ namespace IRExplorerUI {
             }
         }
 
-        private void HighlightUsers(OperandIR op, List<Reference> useList, ElementHighlighter highlighter,
+        private void ResetExpressionLevel(IRElement element = null) {
+            if (element == null || element != currentExprElement_) {
+                currentExprElement_ = null;
+                currentExprLevel_ = 0;
+            }
+        }
+
+        private void HighlightUsers(OperandIR op, List<IRElement> useList, ElementHighlighter highlighter,
                                     PairHighlightingStyle style, HighlightingEventAction action) {
             var instrGroup = new HighlightedGroup(style.ParentStyle);
             var useGroup = new HighlightedGroup(style.ChildStyle);
@@ -2089,8 +2048,8 @@ namespace IRExplorerUI {
             // var arrowStyle = new HighlightingStyle(Colors.DarkGreen, Pens.GetDashedPen(Colors.DarkGreen, DashStyles.Dash, 1.5));
 
             foreach (var use in useList) {
-                useGroup.Add(use.Element);
-                var useInstr = use.Element.ParentTuple;
+                useGroup.Add(use);
+                var useInstr = use.ParentTuple;
 
                 if (useInstr != null) {
                     instrGroup.Add(useInstr);
@@ -2467,7 +2426,7 @@ namespace IRExplorerUI {
                 JumpToBookmark(bookmarks_.JumpToFirstBookmark());
             }
         }
-
+         
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
@@ -2874,7 +2833,7 @@ namespace IRExplorerUI {
             }
 
             MouseDown += IRDocument_MouseDown;
-            PreviewMouseLeftButtonDown += TextEditor_PreviewMouseLeftButtonDown;
+            PreviewMouseLeftButtonDown += IRDocument_PreviewMouseLeftButtonDown;
             PreviewMouseRightButtonDown += IRDocument_PreviewMouseRightButtonDown;
             PreviewMouseLeftButtonUp += IRDocument_PreviewMouseLeftButtonUp;
             PreviewMouseHover += IRDocument_PreviewMouseHover;
@@ -3204,7 +3163,7 @@ namespace IRExplorerUI {
                     target = op.BlockLabelValue;
                 }
                 else {
-                    target = ReferenceFinder.GetSSADefinition(op);
+                    target = new ReferenceFinder(Function).FindDefinition(op);
                 }
             }
 
@@ -3287,7 +3246,7 @@ namespace IRExplorerUI {
             Session.ShowSSAUses(defOp, this);
         }
 
-        private void TextEditor_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+        private void IRDocument_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
             var position = e.GetPosition(TextArea.TextView);
 
             // Ignore click outside the text view, such as the right marker bar.
@@ -3304,6 +3263,7 @@ namespace IRExplorerUI {
             HideTemporaryUI();
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
+
             //? TODO: This would prevent selection of text from working,
             //? but allowing it also sometimes selects a letter of the element...
             // e.Handled = element != null;

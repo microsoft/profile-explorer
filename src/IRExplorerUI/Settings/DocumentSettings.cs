@@ -57,6 +57,8 @@ namespace IRExplorerUI {
 
         [ProtoMember(23)] public string SyntaxHighlightingName { get; set; }
 
+        [ProtoMember(24)] public int DefaultExpressionsLevel { get; set; }
+        [ProtoMember(25)] public bool MarkMultipleDefinitionExpressions { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
