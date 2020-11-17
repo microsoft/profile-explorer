@@ -46,7 +46,6 @@ namespace IRExplorerUI {
 
                     if (string.IsNullOrEmpty(inputText)) {
                         // Printing the graph failed for some reason, like running out of memory.
-                        task.Completed();
                         return null;
                     }
 
@@ -67,7 +66,6 @@ namespace IRExplorerUI {
 
                         if (string.IsNullOrEmpty(graphText)) {
                             Trace.TraceWarning($"Graph cache: Failed to create graph for {section}");
-                            task.Completed();
                             return null; // Failed or canceled by user.
                         }
 
@@ -94,7 +92,6 @@ namespace IRExplorerUI {
                 layoutGraph.DataNodeGroupsMap = blockNodeGroupsMap;
             }
 
-            task.Completed();
             return layoutGraph;
         }
 

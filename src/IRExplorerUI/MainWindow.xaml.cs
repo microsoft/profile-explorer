@@ -698,10 +698,10 @@ namespace IRExplorerUI {
             var active = FindActiveDocumentView();
 
             if (active != null) {
-                cg.Execute(active.Section.ParentFunction, "Tuples after Reader (-db7 == DB_INITIAL)");
+                cg.Execute(active.Section.ParentFunction, "Tuples after Build Interferences (-db73 == DB_INTERF)");
             }
             else {
-                cg.Execute("Tuples after Reader (-db7 == DB_INITIAL)");
+                cg.Execute("Tuples after Build Interferences (-db73 == DB_INTERF)");
             }
 
             var options = new CallGraphPrinterOptions() {
@@ -720,19 +720,20 @@ namespace IRExplorerUI {
 
 
 
-            //var window = new Window();
-            //window.Content = panel;
-            //window.Width = 1000;
-            //window.Height = 900;
+            var window = new Window();
+            window.Content = panel;
+            window.Width = 1000;
+            window.Height = 900;
 
             var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, printer.CreateNodeDataMap());
             var layoutGraph = graphReader.ReadGraph();
             layoutGraph.GraphOptions = options;
 
-            AddNewPanel(panel);
-            DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
+            //AddNewPanel(panel);
+            //DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
+            
             panel.DisplayGraph(layoutGraph);
-            //window.Show();
+            window.Show();
         }
 
         private void Cg_CallGraphNodeCreated(object sender, CallGraphEventArgs e) {
