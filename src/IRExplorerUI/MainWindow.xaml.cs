@@ -406,6 +406,7 @@ namespace IRExplorerUI {
         private async void Window_Loaded(object sender, RoutedEventArgs e) {
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
+            SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;
             SearchResultsPanel.OpenSection += SectionPanel_OpenSection;
 
             RegisterDefaultToolPanels();

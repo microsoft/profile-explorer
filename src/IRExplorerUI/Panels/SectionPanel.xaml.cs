@@ -37,6 +37,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Open section in new tab", "DiffSideBySide", typeof(SectionPanel));
         public static readonly RoutedUICommand DiffWithOtherDocument =
             new RoutedUICommand("Open section in new tab", "DiffWithOtherDocument", typeof(SectionPanel));
+        public static readonly RoutedUICommand SyncDiffedDocuments =
+            new RoutedUICommand("Untitled", "SyncDiffedDocuments", typeof(SectionPanel));
         public static readonly RoutedUICommand ToggleTag =
             new RoutedUICommand("Toggle tag", "ToggleTag", typeof(SectionPanel));
         public static readonly RoutedUICommand PreviousSection =
@@ -150,7 +152,7 @@ namespace IRExplorerUI {
             get => isTagged_;
             set {
                 isTagged_ = value;
-                OnPropertyChange("IsTagged");
+                OnPropertyChange(nameof(IsTagged));
             }
         }
 
@@ -158,7 +160,7 @@ namespace IRExplorerUI {
             get => isSelected_;
             set {
                 isSelected_ = value;
-                OnPropertyChange("IsSelected");
+                OnPropertyChange(nameof(IsSelected));
             }
         }
 
@@ -227,6 +229,7 @@ namespace IRExplorerUI {
 
         private string documentTitle_;
         private bool isDiffModeEnabled_;
+        private bool syncDiffedDocuments_;
         private bool isFunctionListVisible_;
         private SortAdorner listViewSortAdorner;
         private GridViewColumnHeader listViewSortCol;
@@ -244,6 +247,7 @@ namespace IRExplorerUI {
             sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
             annotatedSections_ = new HashSet<IRTextSectionEx>();
             IsFunctionListVisible = true;
+            SyncDiffedDocuments = true;
             MainGrid.DataContext = this;
             sectionSettings_ = App.Settings.SectionSettings;
         }
@@ -284,7 +288,7 @@ namespace IRExplorerUI {
                         MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
                     }
 
-                    OnPropertyChange("IsFunctionListVisible");
+                    OnPropertyChange(nameof(IsFunctionListVisible));
                 }
             }
         }
@@ -294,7 +298,7 @@ namespace IRExplorerUI {
             set {
                 if (documentTitle_ != value) {
                     documentTitle_ = value;
-                    OnPropertyChange("DocumentTitle");
+                    OnPropertyChange(nameof(DocumentTitle));
                 }
             }
         }
@@ -304,7 +308,18 @@ namespace IRExplorerUI {
             set {
                 if (isDiffModeEnabled_ != value) {
                     isDiffModeEnabled_ = value;
-                    OnPropertyChange("IsDiffModeEnabled");
+                    OnPropertyChange(nameof(IsDiffModeEnabled));
+                }
+            }
+        }
+
+        public bool SyncDiffedDocuments {
+            get => syncDiffedDocuments_;
+            set {
+                if (syncDiffedDocuments_ != value) {
+                    syncDiffedDocuments_ = value;
+                    OnPropertyChange(nameof(SyncDiffedDocuments));
+                    SyncDiffedDocumentsChanged?.Invoke(this, value);
                 }
             }
         }
@@ -432,6 +447,7 @@ namespace IRExplorerUI {
         public event EventHandler<OpenSectionEventArgs> OpenSection;
         public event EventHandler<DiffModeEventArgs> EnterDiffMode;
         public event EventHandler<double> SectionListScrollChanged;
+        public event EventHandler<bool> SyncDiffedDocumentsChanged;
 
         public void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
@@ -704,7 +720,11 @@ namespace IRExplorerUI {
             e.Handled = true;
         }
 
-        private void DiffSideBySideExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private void SyncDiffedDocumentsExecuted(object sender, ExecutedRoutedEventArgs e) {
+            e.Handled = true;
+        }
+
+            private void DiffSideBySideExecuted(object sender, ExecutedRoutedEventArgs e) {
             var leftSectionEx = SectionList.SelectedItems[0] as IRTextSectionEx;
             var rightSectionEx = SectionList.SelectedItems[1] as IRTextSectionEx;
 

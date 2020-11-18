@@ -357,7 +357,7 @@ namespace IRExplorerUI {
 
         private async Task SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
             sessionState_.RegisterLoadedDocument(result);
-            sessionState_.DiffDocument = result;
+            sessionState_.EnterTwoDocumentDiffMode(result);
             UpdateUIAfterLoadDocument();
             await ShowSectionPanelDiffs(result);
         }
@@ -409,7 +409,7 @@ namespace IRExplorerUI {
                             sessionState_.MainDocument = result;
                         }
                         else if (docState.Id == state.DiffDocumentId) {
-                            sessionState_.DiffDocument = result;
+                            sessionState_.EnterTwoDocumentDiffMode(result);
                         }
                     }
                     else {
