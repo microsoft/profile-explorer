@@ -916,7 +916,8 @@ namespace IRExplorerUI {
             if (appIsActivated_) {
                 // The event doesn't run on the main thread, redirect.
                 await Dispatcher.BeginInvoke(async () => {
-                    if (eventTime < lastDocumentLoadTime_) {
+                    if (eventTime < lastDocumentLoadTime_ ||
+                        eventTime < lastDocumentReloadQueryTime_) {
                         return; // Event happened before the last document reload, ignore.
                     }
 
@@ -938,6 +939,8 @@ namespace IRExplorerUI {
             if (SilentMode) {
                 return false;
             }
+
+            lastDocumentReloadQueryTime_ = DateTime.UtcNow;
 
             using var centerForm = new DialogCenteringHelper(this);
             return MessageBox.Show(

@@ -92,6 +92,7 @@ namespace IRExplorerUI {
         private List<DraggablePopup> detachedPanels_;
         private Point previousWindowPosition_;
         private DateTime lastDocumentLoadTime_;
+        private DateTime lastDocumentReloadQueryTime_;
         private object lockObject_;
 
         public MainWindow() {
@@ -213,7 +214,8 @@ namespace IRExplorerUI {
 
             lock (lockObject_) {
                 foreach (var pair in changedDocuments_) {
-                    if (pair.Value < lastDocumentLoadTime_) {
+                    if (pair.Value < lastDocumentLoadTime_ ||
+                        pair.Value < lastDocumentReloadQueryTime_) {
                         continue; // Event happened before the last document reload, ignore.
                     }
 
