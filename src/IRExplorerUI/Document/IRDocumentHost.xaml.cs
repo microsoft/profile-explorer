@@ -861,6 +861,7 @@ namespace IRExplorerUI {
                 SaveSectionState(Section);
             }
 
+            HideOptionalPanels();
             TextView.EnterDiffMode();
         }
 
