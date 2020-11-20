@@ -43,6 +43,7 @@ namespace IRExplorerUI {
         }
 
         public bool HasAnnotatedSections => MainPanel.HasAnnotatedSections || DiffPanel.HasAnnotatedSections;
+        public bool SyncDiffedDocuments => MainPanel.SyncDiffedDocuments;
 
         public IRTextSummary MainSummary {
             get => MainPanel.Summary;
@@ -123,10 +124,12 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var otherPanel = PickOtherPanel(sender);
+            if (SyncDiffedDocuments) {
+                var otherPanel = PickOtherPanel(sender);
 
-            if (otherPanel.Summary != null && diffModeEnabled_) {
-                otherPanel.ScrollSectionList(offset);
+                if (otherPanel.Summary != null && diffModeEnabled_) {
+                    otherPanel.ScrollSectionList(offset);
+                }
             }
         }
 

@@ -956,8 +956,8 @@ namespace IRExplorerUI {
 
                 bool markExpression = fromUICommand && Utils.IsControlModifierActive();
                 bool markReferences = fromUICommand && Utils.IsShiftModifierActive();
-                HandleElement(element, selectedHighlighter_, markExpression, markReferences);
                 AddSelectedElement(element, raiseEvent);
+                HandleElement(element, selectedHighlighter_, markExpression, markReferences);
 
                 if (fromUICommand) {
                     ignoreNextCaretEvent_ = true;
@@ -1196,11 +1196,11 @@ namespace IRExplorerUI {
             currentBlock_ = element.ParentBlock;
 
             if (raiseEvent) {
-                RaiseElementSelectedEvent(element);
-
                 if (currentBlock_ != previousBlock) {
                     RaiseBlockSelectedEvent(currentBlock_);
                 }
+
+                RaiseElementSelectedEvent(element);
             }
         }
 
@@ -1321,9 +1321,12 @@ namespace IRExplorerUI {
             selectedElements_.Clear();
         }
 
-        private void ClearTemporaryHighlighting() {
+        private void ClearTemporaryHighlighting(bool clearSelected = true) {
             hoverHighlighter_.Clear();
-            ClearSelectedElements();
+
+            if (clearSelected) {
+                ClearSelectedElements();
+            }
 
             if(overlayRendererConnectedTemporarely_) {
                 overlayRenderer_.ClearConnectedElements();
@@ -1899,7 +1902,7 @@ namespace IRExplorerUI {
         }
 
         private void HighlightSingleElement(IRElement element, ElementHighlighter highlighter) {
-            ClearTemporaryHighlighting();
+            ClearTemporaryHighlighting(highlighter.Type == HighlighingType.Selected);
             highlighter.Clear();
 
             if (element is OperandIR op && op.Parent != null) {
