@@ -531,7 +531,6 @@ namespace IRExplorerUI {
                 ToolPanelKind.FlowGraph => new GraphPanel(),
                 ToolPanelKind.DominatorTree => new GraphPanel(),
                 ToolPanelKind.PostDominatorTree => new GraphPanel(),
-                ToolPanelKind.CallGraph => new CallGraphPanel(),
                 ToolPanelKind.ExpressionGraph => new ExpressionGraphPanel(),
                 ToolPanelKind.SearchResults => new SearchResultsPanel(),
                 ToolPanelKind.Scripting => new ScriptingPanel(),
@@ -550,12 +549,14 @@ namespace IRExplorerUI {
 
             switch (duplicateKind) {
                 case DuplicatePanelKind.Floating: {
+                    //? TODO: Use saved position settings
+                    panelHost.Host.FloatingLeft = Left + 100;
+                    panelHost.Host.FloatingTop = Top + 100;
                     panelHost.Host.FloatingWidth = 800;
                     panelHost.Host.FloatingHeight = 600;
 
-                    var x = DockManager.CreateFloatingWindow(panelHost.Host, false);
-                    panelHost.Host.Show();
-                    panelHost.Host.IsActive = true;
+                    var window = DockManager.CreateFloatingWindow(panelHost.Host, false);
+                    window.Show();
                     attached = true;
                     break;
                 }

@@ -34,6 +34,8 @@
         <CommandBinding Command="local:Command.CopySectionText" Executed="CopySectionTextExecuted" />
         <CommandBinding Command="local:Command.SaveSectionText" Executed="SaveSectionTextExecuted" />
         <CommandBinding Command="local:Command.SaveAllSectionText" Executed="SaveAllSectionTextExecuted" />
+        <CommandBinding Command="local:Command.DisplayCallGraph" Executed="DisplayCallGraphExecuted" />
+        <CommandBinding Command="local:Command.DisplayPartialCallGraph" Executed="DisplayPartialCallGraphExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <local:ToolPanelControl.Resources>
@@ -604,14 +606,14 @@
 
                         <MenuItem Header="More...">
                             <MenuItem
-                                Command="local:Command.Open"
+                                Command="local:Command.DisplayPartialCallGraph"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Show Function Call Graph"
                                 ToolTip="Show the call graph that includes all reachable functions starting with the selected one" />
 
                             <MenuItem
-                                Command="local:Command.Open"
+                                Command="local:Command.DisplayCallGraph"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Show Call Graph"

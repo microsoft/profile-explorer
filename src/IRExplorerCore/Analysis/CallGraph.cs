@@ -181,13 +181,13 @@ namespace IRExplorerCore.Analysis {
             entryNodes_ = new List<CallGraphNode>();
         }
 
-        public void Execute(string sectionName) {
+        public void Execute(IRTextSection section) {
             foreach (var func in summary_.Functions) {
                 if (visitedFuncts_.Contains(func)) {
                     continue;
                 }
 
-                BuildCallSubgraph(func, sectionName);
+                BuildCallSubgraph(func, section.Name);
             }
 
             // Find entry functions.
@@ -198,8 +198,8 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        public CallGraphNode Execute(IRTextFunction startFunction, string sectionName) {
-            BuildCallSubgraph(startFunction, sectionName);
+        public CallGraphNode Execute(IRTextFunction startFunction, IRTextSection section) {
+            BuildCallSubgraph(startFunction, section.Name);
             return GetOrCreateNode(startFunction);
         }
 
@@ -225,9 +225,7 @@ namespace IRExplorerCore.Analysis {
                 // Notify client about the node being created and function IR being available,
                 // can be used to add extra annotation tags on the node without having
                 // to reparse the functions later.
-                if (CallGraphNodeCreated != null) {
-                    CallGraphNodeCreated(this, new CallGraphEventArgs(funcIR, funcNode));
-                }
+                CallGraphNodeCreated?.Invoke(this, new CallGraphEventArgs(funcIR, funcNode));
 
                 foreach (var instr in funcIR.AllInstructions) {
                     if (irInfo_.IsCallInstruction(instr)) {

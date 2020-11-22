@@ -53,6 +53,10 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "SaveSectionText", typeof(SectionPanel));
         public static readonly RoutedUICommand SaveAllSectionText =
             new RoutedUICommand("Untitled", "SaveAllSectionText", typeof(SectionPanel));
+        public static readonly RoutedUICommand DisplayCallGraph =
+           new RoutedUICommand("Untitled", "DisplayCallGraph", typeof(SectionPanel));
+        public static readonly RoutedUICommand DisplayPartialCallGraph =
+           new RoutedUICommand("Untitled", "DisplayPartialCallGraph", typeof(SectionPanel));
     }
 
     public enum OpenSectionKind {
@@ -82,6 +86,18 @@ namespace IRExplorerUI {
         public bool IsWithOtherDocument { get; set; }
         public OpenSectionEventArgs Left { get; set; }
         public OpenSectionEventArgs Right { get; set; }
+    }
+
+    public class DisplayCallGraphEventArgs : EventArgs {
+        public DisplayCallGraphEventArgs(IRTextSummary summary, IRTextSection section, bool buildPartialGraph) {
+            Summary = summary;
+            Section = section;
+            BuildPartialGraph = buildPartialGraph;
+        }
+
+        public IRTextSummary Summary { get; set; }
+        public IRTextSection Section { get; set; }
+        public bool BuildPartialGraph { get; set; }
     }
 
     public class IRTextSectionEx : INotifyPropertyChanged {
@@ -432,6 +448,7 @@ namespace IRExplorerUI {
         public event EventHandler<OpenSectionEventArgs> OpenSection;
         public event EventHandler<DiffModeEventArgs> EnterDiffMode;
         public event EventHandler<double> SectionListScrollChanged;
+        public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
 
         public void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
@@ -1212,6 +1229,18 @@ namespace IRExplorerUI {
                                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
                     }
                 }
+            }
+        }
+
+        private async void DisplayCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (e.Parameter is IRTextSectionEx sectionEx) {
+                DisplayCallGraph?.Invoke(this, new DisplayCallGraphEventArgs(Summary, sectionEx.Section, false));
+            }
+        }
+
+        private async void DisplayPartialCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (e.Parameter is IRTextSectionEx sectionEx) {
+                DisplayCallGraph?.Invoke(this, new DisplayCallGraphEventArgs(Summary, sectionEx.Section, true));
             }
         }
 
