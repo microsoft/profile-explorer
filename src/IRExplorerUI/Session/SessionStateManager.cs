@@ -229,6 +229,7 @@ namespace IRExplorerUI {
             SectionDiffState = new DiffModeInfo();
             SessionStartTime = DateTime.UtcNow;
             IsAutoSaveEnabled = sessionKind != SessionKind.DebugSession;
+            SyncDiffedDocuments = false;
         }
 
         public SessionInfo Info { get; set; }
@@ -241,9 +242,20 @@ namespace IRExplorerUI {
         public bool NotifiedSessionStart { get; set; }
         public DateTime SessionStartTime { get; set; }
         public bool IsAutoSaveEnabled { get; set; }
-        public bool IsInTwoDocumentsDiffMode => DiffDocument != null;
+        public bool IsInTwoDocumentsDiffMode => DiffDocument != null && SyncDiffedDocuments;
+        public bool SyncDiffedDocuments { get; set; }
 
         public event EventHandler DocumentChanged;
+
+        public void EnterTwoDocumentDiffMode(LoadedDocument diffDocument) {
+            DiffDocument = diffDocument;
+            SyncDiffedDocuments = true;
+        }
+
+        public void ExitTwoDocumentDiffMode() {
+            DiffDocument = null;
+            SyncDiffedDocuments = false;
+        }
 
         public void RegisterLoadedDocument(LoadedDocument docInfo) {
             documents_.Add(docInfo);

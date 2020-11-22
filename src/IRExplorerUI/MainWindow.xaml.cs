@@ -93,6 +93,7 @@ namespace IRExplorerUI {
         private List<DraggablePopup> detachedPanels_;
         private Point previousWindowPosition_;
         private DateTime lastDocumentLoadTime_;
+        private DateTime lastDocumentReloadQueryTime_;
         private object lockObject_;
 
         public MainWindow() {
@@ -214,7 +215,8 @@ namespace IRExplorerUI {
 
             lock (lockObject_) {
                 foreach (var pair in changedDocuments_) {
-                    if (pair.Value < lastDocumentLoadTime_) {
+                    if (pair.Value < lastDocumentLoadTime_ ||
+                        pair.Value < lastDocumentReloadQueryTime_) {
                         continue; // Event happened before the last document reload, ignore.
                     }
 
@@ -407,6 +409,7 @@ namespace IRExplorerUI {
         private async void Window_Loaded(object sender, RoutedEventArgs e) {
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
+            SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;
             SectionPanel.DisplayCallGraph += SectionPanel_DisplayCallGraph;
             SearchResultsPanel.OpenSection += SectionPanel_OpenSection;
 

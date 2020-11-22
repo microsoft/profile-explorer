@@ -357,7 +357,7 @@ namespace IRExplorerUI {
 
         private async Task SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
             sessionState_.RegisterLoadedDocument(result);
-            sessionState_.DiffDocument = result;
+            sessionState_.EnterTwoDocumentDiffMode(result);
             UpdateUIAfterLoadDocument();
             await ShowSectionPanelDiffs(result);
         }
@@ -409,7 +409,7 @@ namespace IRExplorerUI {
                             sessionState_.MainDocument = result;
                         }
                         else if (docState.Id == state.DiffDocumentId) {
-                            sessionState_.DiffDocument = result;
+                            sessionState_.EnterTwoDocumentDiffMode(result);
                         }
                     }
                     else {
@@ -916,7 +916,8 @@ namespace IRExplorerUI {
             if (appIsActivated_) {
                 // The event doesn't run on the main thread, redirect.
                 await Dispatcher.BeginInvoke(async () => {
-                    if (eventTime < lastDocumentLoadTime_) {
+                    if (eventTime < lastDocumentLoadTime_ ||
+                        eventTime < lastDocumentReloadQueryTime_) {
                         return; // Event happened before the last document reload, ignore.
                     }
 
@@ -938,6 +939,8 @@ namespace IRExplorerUI {
             if (SilentMode) {
                 return false;
             }
+
+            lastDocumentReloadQueryTime_ = DateTime.UtcNow;
 
             using var centerForm = new DialogCenteringHelper(this);
             return MessageBox.Show(

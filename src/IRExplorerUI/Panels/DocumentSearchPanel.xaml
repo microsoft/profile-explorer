@@ -41,7 +41,7 @@
                     DockPanel.Dock="Left" />
 
                 <Border
-                    BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     BorderThickness="0,0,0,1"
                     DockPanel.Dock="Right">
                     <Grid>
