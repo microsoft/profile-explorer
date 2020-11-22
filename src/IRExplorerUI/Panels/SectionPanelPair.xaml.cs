@@ -122,9 +122,8 @@ namespace IRExplorerUI {
             // When using the grid splitter to resize the left/right panels,
             // the event gets called for some reason with a 0 offset and 
             // the current vertical offset gets reset.
-            if (offset < 1) {
-                return;
-            }
+            //? TODO: Ignoring 0 offset causes other scroll issues, likely fix is to ignore
+            //? the event between grid splitter mouse down and up events.
 
             if (SyncDiffedDocuments) {
                 var otherPanel = PickOtherPanel(sender);
@@ -179,6 +178,10 @@ namespace IRExplorerUI {
         private void MainPanel_SyncDiffedDocumentsChanged(object sender, bool e) {
             SyncDiffedDocumentsChanged?.Invoke(this, e);
             PickOtherPanel(sender).SyncDiffedDocuments = e;
+        }
+
+        private void MainPanel_DisplayCallGraph(object sender, DisplayCallGraphEventArgs e) {
+            DisplayCallGraph?.Invoke(this, e);
         }
 
         private void MainPanel_OpenSection(object sender, OpenSectionEventArgs e) {
