@@ -34,6 +34,8 @@ namespace IRExplorerUI {
 
     public interface IToolPanel {
         ToolPanelKind PanelKind { get; }
+        string TitlePrefix { get; }
+        string TitleSuffix { get; }
         HandledEventKind HandledEvents { get; }
         bool SavesStateToFile { get; }
 

@@ -95,11 +95,6 @@
                     VerticalAlignment="Top"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
-                    <TextBlock
-                        Margin="4,0,0,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Text="Zoom" />
                     <Button
                         Margin="4,0,0,0"
                         Command="local:GraphCommand.GraphZoomOut"
@@ -120,7 +115,7 @@
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource OpenExternalIcon}" />
+                            <Image Source="{StaticResource FitWidthIcon}" />
                             <TextBlock Margin="4,0,0,0" Text="Fit Width" />
                         </StackPanel>
                     </Button>
@@ -166,7 +161,14 @@
                                 Header="All Markers" />
                         </MenuItem>
                     </Menu>
-                    <Grid />
+                    <Separator />
+                    <Button
+                        Command="local:GraphCommand.GraphZoomIn"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        IsEnabled="False"
+                        ToolTip="Search graph node text (Ctrl+F)">
+                        <Image Source="{StaticResource SearchIcon}" />
+                    </Button>
                 </ToolBar>
             </ToolBarTray>
 

@@ -112,7 +112,7 @@ namespace IRExplorerUI.Document {
         }
 
         public async Task SetText(string text, FunctionIR function, IRTextSection section,
-                                 IRDocument associatedDocument, ISession session) {
+                                  IRDocument associatedDocument, ISession session) {
             TextView.Session = session;
             await TextView.SwitchText(text, function, section, associatedDocument);
         }

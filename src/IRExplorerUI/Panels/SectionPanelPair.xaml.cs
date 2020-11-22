@@ -25,10 +25,13 @@ namespace IRExplorerUI {
             MainPanel.EnterDiffMode += MainPanel_EnterDiffMode;
             MainPanel.FunctionSwitched += DiffPanel_FunctionSwitched;
             MainPanel.SectionListScrollChanged += MainPanel_SectionListScrollChanged;
+            MainPanel.DisplayCallGraph += MainPanel_DisplayCallGraph;
+
             DiffPanel.OpenSection += MainPanel_OpenSection;
             DiffPanel.EnterDiffMode += MainPanel_EnterDiffMode;
             DiffPanel.FunctionSwitched += DiffPanel_FunctionSwitched;
             DiffPanel.SectionListScrollChanged += MainPanel_SectionListScrollChanged;
+            DiffPanel.DisplayCallGraph += MainPanel_DisplayCallGraph;
         }
 
         public ICompilerInfoProvider CompilerInfo {
@@ -116,9 +119,9 @@ namespace IRExplorerUI {
             // When using the grid splitter to resize the left/right panels,
             // the event gets called for some reason with a 0 offset and 
             // the current vertical offset gets reset.
-            if (offset < 1) {
-                return;
-            }
+            //if (offset < 1) {
+            //    return;
+            //}
 
             var panel = sender as SectionPanel;
             var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
@@ -126,6 +129,10 @@ namespace IRExplorerUI {
             if (otherPanel.Summary != null && diffModeEnabled_) {
                 otherPanel.ScrollSectionList(offset);
             }
+        }
+
+        private void MainPanel_DisplayCallGraph(object sender, DisplayCallGraphEventArgs e) {
+            DisplayCallGraph?.Invoke(sender, e);
         }
 
         private async void DiffPanel_FunctionSwitched(object sender, IRTextFunction func) {
@@ -273,6 +280,7 @@ namespace IRExplorerUI {
 
         public event EventHandler<OpenSectionEventArgs> OpenSection;
         public event EventHandler<DiffModeEventArgs> EnterDiffMode;
+        public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
 
         private (List<IRTextSectionEx>, List<IRTextSectionEx>) ComputeSectionNameListDiff(
             List<IRTextSectionEx> baseList, List<IRTextSectionEx> diffList) {
