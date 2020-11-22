@@ -140,7 +140,7 @@ namespace IRExplorerUI {
 
                 // Reset the section panel.
                 SectionPanel.DiffSummary = null;
-                sessionState_.DiffDocument = null;
+                sessionState_.ExitTwoDocumentDiffMode();
                 UpdateWindowTitle();
             }
         }
@@ -191,7 +191,6 @@ namespace IRExplorerUI {
 
             if (sessionState_.IsInTwoDocumentsDiffMode) {
                 // Used when diffing two different documents.
-                sessionState_.SectionDiffState.IsEnabled = true;
                 await SwitchDiffedDocumentSection(leftDocument.Section, leftDocument, false);
             }
             else {
@@ -253,7 +252,7 @@ namespace IRExplorerUI {
 
         private async void SectionPanel_EnterDiffMode(object sender, DiffModeEventArgs e) {
             if (sessionState_.SectionDiffState.IsEnabled) {
-                sessionState_.SectionDiffState.IsEnabled = false;
+                sessionState_.SectionDiffState.End();
             }
 
             sessionState_.SectionDiffState.StartModeChange();
@@ -270,6 +269,17 @@ namespace IRExplorerUI {
             UpdateDiffModeButton(result);
             sessionState_.SectionDiffState.EndModeChange();
             Trace.TraceInformation("Diff mode: Entered");
+        }
+
+        private async void SectionPanel_SyncDiffedDocumentsChanged(object sender, bool value) {
+            if(IsInDiffMode) {
+                if ((IsInTwoDocumentsDiffMode && !value) ||
+                    (!IsInTwoDocumentsDiffMode && value)) {
+                    await ExitDocumentDiffState();
+                }
+            }
+
+            sessionState_.SyncDiffedDocuments = value;
         }
 
         private async Task DiffCurrentDocuments(DiffModeInfo diffState) {

@@ -318,4 +318,48 @@ namespace IRExplorerUI.Document {
             }
         }
     }
+
+    public interface IElementOverlay {
+        HorizontalAlignment AlignmentX { get; }
+        VerticalAlignment AlignmentY { get; }
+        Size Size { get; }
+        void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
+    }
+
+    public class TextElementOverlay : IElementOverlay {
+        public Size Size => throw new NotImplementedException();
+
+        public HorizontalAlignment AlignmentX { get; set; }
+
+        public VerticalAlignment AlignmentY { get; set; }
+
+        public void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext) {
+            
+        }
+    }
+    public class IconElementOverlay : IElementOverlay {
+        public IconElementOverlay(IconDrawing icon, double width, double height) {
+            Icon = icon;
+            Width = width;
+            Height = height;
+        }
+
+        public static IconElementOverlay FromIconResource(string name, double width, double height) {
+            return new IconElementOverlay(IconDrawing.FromIconResource(name), width, height);
+        }
+
+        public IconDrawing Icon { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+        public Size Size => new Size(Width, Height);
+
+        public HorizontalAlignment AlignmentX { get; set; }
+
+        public VerticalAlignment AlignmentY { get; set; }
+
+        public void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext) {
+            //? TODO: Adjust position relative to elem based on alignment
+            Icon.Draw(elementRect.Left, elementRect.Top, Height, Width, drawingContext);
+        }
+    }
 }

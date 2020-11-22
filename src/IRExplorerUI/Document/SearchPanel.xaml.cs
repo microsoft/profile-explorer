@@ -25,6 +25,7 @@ namespace IRExplorerUI.Document {
             searchedText_ = string.Empty;
             kind_ = TextSearchKind.CaseInsensitive;
             showSearchAllButton_ = true;
+            searchAllEnabled_ = true;
             showNavigationSection_ = true;
         }
 
@@ -174,10 +175,26 @@ namespace IRExplorerUI.Document {
 
     public partial class SearchPanel : UserControl {
         private SearchInfo searchInfo_;
+        private bool selectTextOnFocus_;
 
         public SearchPanel() {
             InitializeComponent();
             UseAutoComplete = true;
+
+            // The AutoCompleteBox has no SelectAll method, get the underlying TextBox
+            // to do that when it gets focus.
+            var textBox = Utils.FindChild<TextBox>(TextSearch);
+
+            if(textBox != null) {
+                textBox.GotFocus += TextBox_GotFocus;
+            }
+        }
+
+        private void TextBox_GotFocus(object sender, RoutedEventArgs e) {
+            if(selectTextOnFocus_) {
+                ((TextBox)sender).SelectAll();
+                selectTextOnFocus_ = false;
+            }
         }
 
         public SearchInfo SearchInfo => searchInfo_;
@@ -188,8 +205,10 @@ namespace IRExplorerUI.Document {
         public event EventHandler<SearchInfo> NavigateToPreviousResult;
         public event EventHandler<SearchInfo> CloseSearchPanel;
 
-        public void Show(SearchInfo initialInfo = null, bool searchAll = false) {
+        public void Show(SearchInfo initialInfo = null, bool searchAll = false,
+                         bool selectTextOnFocus = false) {
             Reset(initialInfo, searchAll);
+            selectTextOnFocus_ = selectTextOnFocus;
             Keyboard.Focus(TextSearch);
         }
 

@@ -23,6 +23,7 @@ namespace IRExplorerUI {
             MainGrid.ColumnDefinitions[2].Width = new GridLength(0, GridUnitType.Pixel);
             MainPanel.OpenSection += MainPanel_OpenSection;
             MainPanel.EnterDiffMode += MainPanel_EnterDiffMode;
+            MainPanel.SyncDiffedDocumentsChanged += MainPanel_SyncDiffedDocumentsChanged;
             MainPanel.FunctionSwitched += DiffPanel_FunctionSwitched;
             MainPanel.SectionListScrollChanged += MainPanel_SectionListScrollChanged;
             MainPanel.DisplayCallGraph += MainPanel_DisplayCallGraph;
@@ -31,6 +32,7 @@ namespace IRExplorerUI {
             DiffPanel.EnterDiffMode += MainPanel_EnterDiffMode;
             DiffPanel.FunctionSwitched += DiffPanel_FunctionSwitched;
             DiffPanel.SectionListScrollChanged += MainPanel_SectionListScrollChanged;
+            DiffPanel.SyncDiffedDocumentsChanged += MainPanel_SyncDiffedDocumentsChanged;
             DiffPanel.DisplayCallGraph += MainPanel_DisplayCallGraph;
         }
 
@@ -43,6 +45,7 @@ namespace IRExplorerUI {
         }
 
         public bool HasAnnotatedSections => MainPanel.HasAnnotatedSections || DiffPanel.HasAnnotatedSections;
+        public bool SyncDiffedDocuments => MainPanel.SyncDiffedDocuments;
 
         public IRTextSummary MainSummary {
             get => MainPanel.Summary;
@@ -119,25 +122,26 @@ namespace IRExplorerUI {
             // When using the grid splitter to resize the left/right panels,
             // the event gets called for some reason with a 0 offset and 
             // the current vertical offset gets reset.
-            //if (offset < 1) {
-            //    return;
-            //}
+            if (offset < 1) {
+                return;
+            }
 
-            var panel = sender as SectionPanel;
-            var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
+            if (SyncDiffedDocuments) {
+                var otherPanel = PickOtherPanel(sender);
 
-            if (otherPanel.Summary != null && diffModeEnabled_) {
-                otherPanel.ScrollSectionList(offset);
+                if (otherPanel.Summary != null && diffModeEnabled_) {
+                    otherPanel.ScrollSectionList(offset);
+                }
             }
         }
 
-        private void MainPanel_DisplayCallGraph(object sender, DisplayCallGraphEventArgs e) {
-            DisplayCallGraph?.Invoke(sender, e);
+        private SectionPanel PickOtherPanel(object sender) {
+            var panel = sender as SectionPanel;
+            return panel == MainPanel ? DiffPanel : MainPanel;
         }
 
         private async void DiffPanel_FunctionSwitched(object sender, IRTextFunction func) {
-            var panel = sender as SectionPanel;
-            var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
+            var otherPanel = PickOtherPanel(sender);
 
             if (otherPanel.Summary != null && diffModeEnabled_) {
                 await SwitchPanelDiffFunction(func, otherPanel);
@@ -156,7 +160,6 @@ namespace IRExplorerUI {
         private void MainPanel_EnterDiffMode(object sender, DiffModeEventArgs e) {
             if (e.IsWithOtherDocument) {
                 var panel = sender as SectionPanel;
-                var otherPanel = panel == MainPanel ? DiffPanel : MainPanel;
                 var otherSection = FindDiffDocumentSection(e.Left.Section);
 
                 if (panel == MainPanel) {
@@ -171,6 +174,11 @@ namespace IRExplorerUI {
             }
 
             EnterDiffMode?.Invoke(sender, e);
+        }
+
+        private void MainPanel_SyncDiffedDocumentsChanged(object sender, bool e) {
+            SyncDiffedDocumentsChanged?.Invoke(this, e);
+            PickOtherPanel(sender).SyncDiffedDocuments = e;
         }
 
         private void MainPanel_OpenSection(object sender, OpenSectionEventArgs e) {
@@ -280,7 +288,8 @@ namespace IRExplorerUI {
 
         public event EventHandler<OpenSectionEventArgs> OpenSection;
         public event EventHandler<DiffModeEventArgs> EnterDiffMode;
-        public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
+        public event EventHandler<bool> SyncDiffedDocumentsChanged;
+		        public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
 
         private (List<IRTextSectionEx>, List<IRTextSectionEx>) ComputeSectionNameListDiff(
             List<IRTextSectionEx> baseList, List<IRTextSectionEx> diffList) {

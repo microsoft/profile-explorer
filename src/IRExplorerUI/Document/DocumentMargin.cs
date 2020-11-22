@@ -74,7 +74,7 @@ namespace IRExplorerUI {
         public bool HasAnnotations => blockGroups_.Count > 0 || bookmarkSegments_.Count > 0;
     }
 
-    public class DocumentMargin : AbstractMargin {
+    public partial class DocumentMargin : AbstractMargin {
         private const int NearbyBookmarkDistance = 100;
         private const int NearbyBookmarkExtraWidth = 16;
 
@@ -122,15 +122,15 @@ namespace IRExplorerUI {
             blockElements_ = new HashSet<IRElement>();
             bookmarkSegments_ = new TextSegmentCollection<BookmarkSegment>();
             nearbyBookmarks_ = new HashSet<BookmarkSegment>();
-            bookmarkIcon_ = LoadIconResource("MarkerIcon");
-            removeIcon_ = LoadIconResource("RemoveIcon");
-            pinIcon_ = LoadIconResource("PinIcon");
+            bookmarkIcon_ = IconDrawing.FromIconResource("MarkerIcon");
+            removeIcon_ = IconDrawing.FromIconResource("RemoveIcon");
+            pinIcon_ = IconDrawing.FromIconResource("PinIcon");
             remarkIcons_ = new List<IconDrawing>();
-            remarkIcons_.Add(LoadIconResource("DotIcon"));
-            remarkIcons_.Add(LoadIconResource("ZapIcon"));
-            remarkIcons_.Add(LoadIconResource("StarIcon"));
-            remarkIcons_.Add(LoadIconResource("TagIcon"));
-            remarkIcons_.Add(LoadIconResource("WarningIcon"));
+            remarkIcons_.Add(IconDrawing.FromIconResource("DotIcon"));
+            remarkIcons_.Add(IconDrawing.FromIconResource("ZapIcon"));
+            remarkIcons_.Add(IconDrawing.FromIconResource("StarIcon"));
+            remarkIcons_.Add(IconDrawing.FromIconResource("TagIcon"));
+            remarkIcons_.Add(IconDrawing.FromIconResource("WarningIcon"));
             Version = 1;
         }
 
@@ -172,15 +172,6 @@ namespace IRExplorerUI {
 
         public event EventHandler<Bookmark> BookmarkRemoved;
         public event EventHandler<Bookmark> BookmarkChanged;
-
-        private IconDrawing LoadIconResource(string name) {
-            var icon = Application.Current.Resources[name] as ImageSource;
-
-            return new IconDrawing {
-                Icon = icon,
-                Proportion = icon.Width / icon.Height
-            };
-        }
 
         public void AddBlock(HighlightedGroup group, bool saveToFile = true) {
             foreach (var block in group.Elements) {
@@ -492,16 +483,6 @@ namespace IRExplorerUI {
             InvalidateVisual();
         }
 
-        private void DrawIcon(IconDrawing icon, double x, double y, double size, double availableSize,
-                              DrawingContext drawingContext) {
-            double height = size;
-            double width = height * icon.Proportion;
-            var rect = Utils.SnapToPixels(new Rect(x + availableSize - width - (availableSize - width) / 2, y,
-                                              width, height));
-
-            drawingContext.DrawImage(icon.Icon, rect);
-        }
-
         private HighlightingStyle GetBookmarkStyle(BookmarkSegment segment) {
             var style = defaultBookmarkStyle_;
 
@@ -686,8 +667,8 @@ namespace IRExplorerUI {
                 var icon = SelectBookmarkIcon(segment);
 
                 if (icon != null) {
-                    DrawIcon(icon, 0, y - 1, lineHeight - 1,
-                             RenderSize.Width, drawingContext);
+                    icon.Draw(0, y - 1, lineHeight - 1,
+                              RenderSize.Width, drawingContext);
                 }
 
                 if (segment.IsExpanded) {
@@ -737,9 +718,8 @@ namespace IRExplorerUI {
                                                 startBounds.Height);
             drawingContext.DrawRectangle(pinStyle.BackColor, pinStyle.Border, bounds);
 
-            DrawIcon(icon, bounds.Left + 1, bounds.Top + 1, ButtonIconWidth,
-                     ButtonIconWidth, drawingContext);
-
+            icon.Draw(bounds.Left + 1, bounds.Top + 1, ButtonIconWidth,
+                      ButtonIconWidth, drawingContext);
             return bounds;
         }
 
@@ -758,11 +738,6 @@ namespace IRExplorerUI {
             foreach (var segment in bookmarkList) {
                 bookmarkSegments_.Add(segment);
             }
-        }
-
-        private class IconDrawing {
-            public ImageSource Icon { get; set; }
-            public double Proportion { get; set; }
         }
 
         private enum BookmarkSegmentElement {

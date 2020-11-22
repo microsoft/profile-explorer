@@ -25,6 +25,10 @@
             CanExecute="DiffWithOtherDocumentCanExecute"
             Command="local:Command.DiffWithOtherDocument"
             Executed="DiffWithOtherDocumentExecuted" />
+        <CommandBinding
+            CanExecute="DiffWithOtherDocumentCanExecute"
+            Command="local:Command.SyncDiffedDocuments"
+            Executed="SyncDiffedDocumentsExecuted" />
         <CommandBinding Command="local:Command.Open" Executed="OpenExecuted" />
         <CommandBinding Command="local:Command.ToggleTag" Executed="ToggleTagExecuted" />
         <CommandBinding Command="local:Command.PreviousSection" Executed="PreviousSectionExecuted" />
@@ -579,13 +583,12 @@
                             InputGestureText="Ctrl+Return"
                             ToolTip="Compare section with same one from the other document" />
                         <MenuItem
-                            Command="local:Command.DiffWithOtherDocument"
+                            Command="local:Command.SyncDiffedDocuments"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                             CommandTarget="{Binding ElementName=SectionList}"
                             Header="Sync Section with Other Document"
                             IsCheckable="True"
-                            IsChecked="True"
-                            IsEnabled="False"
+                            IsChecked="{Binding Path=SyncDiffedDocuments, Mode=TwoWay}"
                             ToolTip="Enable syncing of diffed section between the two documents" />
                         <Separator />
 

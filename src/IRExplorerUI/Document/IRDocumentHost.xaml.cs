@@ -861,6 +861,7 @@ namespace IRExplorerUI {
                 SaveSectionState(Section);
             }
 
+            HideOptionalPanels();
             TextView.EnterDiffMode();
         }
 
@@ -929,23 +930,35 @@ namespace IRExplorerUI {
         }
 
         private void ToggleSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
-            SearchButton.IsChecked = !SearchButton.IsChecked;
-            ShowSearchExecuted(sender, e);
+            ShowSearchPanel(true);
         }
 
         private void ShowSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (SearchButton.IsChecked.HasValue && SearchButton.IsChecked.Value) {
-                if (!searchPanelVisible_) {
-                    var info = new SearchInfo();
+            ShowSearchPanel(false);
+        }
 
-                    // Use selected text as initial search input.
-                    if (TextView.SelectionLength > 1) {
-                        info.SearchedText = TextView.SelectedText;
-                        info.IsCaseInsensitive = true;
-                    }
+        private void ShowSearchPanel(bool fromKeyboardShortcut) {
+            // Use selected text as initial search input.
+            var info = new SearchInfo();
+            bool hasInitialText = false;
 
-                    ShowSearchPanel(info);
-                }
+            if (TextView.SelectionLength > 1) {
+                info.SearchedText = TextView.SelectedText;
+                info.IsCaseInsensitive = true;
+                hasInitialText = true;
+            }
+
+            if (!searchPanelVisible_) {
+                ShowSearchPanel(info);
+            }
+            else if (fromKeyboardShortcut) {
+                // For a subsequent keyboard shortcut press,
+                // don't hide the visible panel, instead either use the new selected text,
+                // or there is no selection, select the entire text in the search panel.
+                SearchPanel.SearchInfo.SearchedText = info.SearchedText;
+                SearchPanel.SearchInfo.IsCaseInsensitive = info.IsCaseInsensitive;
+                SearchPanel.Show(SearchPanel.SearchInfo,
+                                 SearchPanel.SearchInfo.SearchAll, !hasInitialText);
             }
             else {
                 HideSearchPanel();
@@ -965,8 +978,6 @@ namespace IRExplorerUI {
         }
 
         private void ShowSearchPanel(SearchInfo searchInfo, bool searchAll = false) {
-            searchInfo.SearchAllEnabled = !Session.IsInDiffMode;
-
             SearchPanel.Visibility = Visibility.Visible;
             SearchPanel.Show(searchInfo, searchAll);
             SearchButton.IsChecked = true;
