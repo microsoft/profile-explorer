@@ -76,11 +76,7 @@ namespace IRExplorerUI {
         public KnownLayer Layer => KnownLayer.Background;
 
         public void Draw(TextView textView, DrawingContext drawingContext) {
-            if (textView.Document == null) {
-                return;
-            }
-
-            if (textView.Document.TextLength == 0) {
+            if (textView.Document == null || textView.Document.TextLength == 0) {
                 return;
             }
 
@@ -90,6 +86,8 @@ namespace IRExplorerUI {
             if (visualLines.Count == 0) {
                 return;
             }
+            
+            CreatePlaceholderTiledBrush(textView.DefaultLineHeight / 2);
 
             int viewStart = visualLines[0].FirstDocumentLine.Offset;
             int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
@@ -99,10 +97,6 @@ namespace IRExplorerUI {
             //? TODO: Can be made more efficient by having one GeometryGBuilder for each type of diff,
             //? then at the end render each one that was used
             foreach (var segment in segments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
-                if (segment.Kind == DiffKind.Placeholder) {
-                    CreatePlaceholderTiledBrush(textView.DefaultLineHeight / 2);
-                }
-
                 if (geoBuilder == null) {
                     geoBuilder = CreateGeometryBuilder();
                 }

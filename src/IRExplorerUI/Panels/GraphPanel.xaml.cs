@@ -70,6 +70,7 @@ namespace IRExplorerUI {
         private bool delayFitSize_;
         private bool delayRestoreState_;
         private string documentText_;
+        private object lockObject_;
 
         private bool dragging_;
         private Point draggingStart_;
@@ -87,6 +88,8 @@ namespace IRExplorerUI {
 
         public GraphPanel() {
             InitializeComponent();
+            lockObject_ = new object();
+
             GraphViewer.HostPanel = this;
             GraphViewer.MaxZoomLevel = MaxZoomLevel;
             GraphViewer.BlockSelected += GraphViewer_BlockSelected;
@@ -99,6 +102,7 @@ namespace IRExplorerUI {
             MouseLeave += GraphPanel_MouseLeave;
             PreviewKeyDown += GraphPanel_PreviewKeyDown;
             GraphHost.ScrollChanged += GraphHost_ScrollChanged;
+
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
             hover.MouseHoverStopped += Hover_MouseHoverStopped;
@@ -248,8 +252,9 @@ namespace IRExplorerUI {
         }
 
         private CancelableTask CreateGraphLoadTask() {
-            lock (this) {
+            lock (lockObject_) {
                 if (loadTask_ != null) {
+                    // Cancel running task without blocking.
                     CancelGraphLoadTask();
                 }
 
@@ -259,17 +264,23 @@ namespace IRExplorerUI {
         }
 
         private void CancelGraphLoadTask() {
-            Session.SessionState.UnregisterCancelableTask(loadTask_);
-            loadTask_.Cancel();
-            loadTask_.WaitToComplete(TimeSpan.FromSeconds(5));
-            loadTask_.Dispose();
+            var canceledTask = loadTask_;
             loadTask_ = null;
+
+            // Cancel the task and wait for it to complete without blocking.
+            canceledTask.Cancel();
+            Session.SessionState.UnregisterCancelableTask(canceledTask);
+
+            Task.Run(() => {
+                canceledTask.WaitToComplete();
+                canceledTask.Dispose();
+            });
         }
 
         private void CompleteGraphLoadTask(CancelableTask task) {
-            lock (this) {
+            lock (lockObject_) {
                 if (task != loadTask_) {
-                    return; // A canceled task.
+                    return; // A canceled task, ignore it.
                 }
 
                 if (loadTask_ != null) {
@@ -291,6 +302,7 @@ namespace IRExplorerUI {
             var animation2 = new DoubleAnimation(1.0, TimeSpan.FromSeconds(0.5));
             animation2.BeginTime = TimeSpan.FromSeconds(2);
             LongOperationView.BeginAnimation(OpacityProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+
             return CreateGraphLoadTask();
         }
 
@@ -336,10 +348,9 @@ namespace IRExplorerUI {
         }
 
         private Size AvailableGraphSize() {
-            return new Size(
-                GraphHost.RenderSize.Width -
-                SystemParameters.VerticalScrollBarWidth -
-                SystemParameters.BorderWidth * 2, GraphHost.RenderSize.Height);
+            return new Size(GraphHost.RenderSize.Width -
+                            SystemParameters.VerticalScrollBarWidth -
+                            SystemParameters.BorderWidth * 2, GraphHost.RenderSize.Height);
         }
 
         private void Button_MouseDown(object sender, MouseButtonEventArgs e) {
@@ -641,6 +652,8 @@ namespace IRExplorerUI {
             else {
                 var element = node.NodeInfo.ElementData;
                 previewer.PreviewedElement = element;
+
+                //? TODO: Use settings for size
                 nodeToolTip_.DataContext = new IRPreviewToolTip(600, 100, Document, element);
                 int lines = Math.Max(1, Math.Min(element.ParentBlock.Tuples.Count + 1, 20));
                 nodeToolTip_.Height = previewer.ResizeForLines(lines);
@@ -872,7 +885,7 @@ namespace IRExplorerUI {
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e) {
-            lock (this) {
+            lock (lockObject_) {
                 loadTask_?.Cancel();
             }
         }
