@@ -5,6 +5,5 @@
         }
 
         public override ToolPanelKind PanelKind => ToolPanelKind.CallGraph;
-        public override string TitleSuffix => "";
     }
 }
