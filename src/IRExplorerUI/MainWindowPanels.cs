@@ -177,6 +177,7 @@ namespace IRExplorerUI {
 
         private void SetupPanelEvents(PanelHostInfo panelHost) {
             panelHost.Host.Hiding += PanelHost_Hiding;
+            panelHost.Host.Closing += PanelHost_Hiding;
 
             switch (panelHost.PanelKind) {
                 case ToolPanelKind.FlowGraph:
@@ -204,6 +205,7 @@ namespace IRExplorerUI {
 
         private void ResetPanelEvents(PanelHostInfo panelHost) {
             panelHost.Host.Hiding -= PanelHost_Hiding;
+            panelHost.Host.Closing -= PanelHost_Hiding;
 
             switch (panelHost.PanelKind) {
                 case ToolPanelKind.FlowGraph:
@@ -497,6 +499,14 @@ namespace IRExplorerUI {
         private string GetPanelName(ToolPanelKind kind, IToolPanel panel) {
             string name = GetDefaultPanelName(kind);
 
+            if(!string.IsNullOrEmpty(panel.TitlePrefix)) {
+                name = $"{panel.TitlePrefix}{name}";
+            }
+
+            if(!string.IsNullOrEmpty(panel.TitleSuffix)) {
+                name = $"{name}{panel.TitleSuffix}";
+            }
+
             if (panel.BoundDocument != null) {
                 name = $"{name} - Bound to S{panel.BoundDocument.Section.Number} ";
             }
@@ -511,7 +521,7 @@ namespace IRExplorerUI {
             else {
                 for (int i = 0; i < list.Count; i++) {
                     string name = GetPanelName(kind, list[i].Panel);
-                    list[i].Host.Title = $"{name} ({i + 1})";
+                    list[i].Host.Title = $"{name}:{i + 1}";
                 }
             }
         }

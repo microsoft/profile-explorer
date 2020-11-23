@@ -708,14 +708,15 @@ namespace IRExplorerUI {
             var layoutGraph = await Task.Run(() => 
                 CallGraphUtils.BuildCallGraphLayout(summary, section, loadedDoc,
                                                     CompilerInfo, buildPartialGraph));
-            DisplayCallGraph(layoutGraph);
+            DisplayCallGraph(layoutGraph, section);
         }
 
-        private void DisplayCallGraph(Graph layoutGraph) {
+        private void DisplayCallGraph(Graph layoutGraph, IRTextSection section) {
             var panel = new CallGraphPanel(this);
-            panel.OnRegisterPanel();
-            AddNewPanel(panel);
+            panel.TitleSuffix = $" - S{section.Number} ({CompilerInfo.NameProvider.GetSectionName(section)})";
+
             DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
+            RenameAllPanels();
             panel.DisplayGraph(layoutGraph);
         }
 

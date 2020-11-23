@@ -7,9 +7,8 @@ using IRExplorerCore;
 namespace IRExplorerUI {
     public class ToolPanelControl : UserControl, IToolPanel {
         public virtual ToolPanelKind PanelKind => ToolPanelKind.Other;
-        public virtual string TitlePrefix => "";
-
-        public virtual string TitleSuffix => "";
+        public virtual string TitlePrefix { get; set; }
+        public virtual string TitleSuffix { get; set; }
         public virtual HandledEventKind HandledEvents => HandledEventKind.None;
         public virtual IRDocument Document { get; set; }
         public virtual IRDocument BoundDocument { get; set; }
