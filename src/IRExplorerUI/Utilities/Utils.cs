@@ -779,6 +779,11 @@ namespace IRExplorerUI {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double SnapToPixels(double value) {
+            return Math.Round(value);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Point SnapToPixels(Point point) {
             return new Point(Math.Round(point.X), Math.Round(point.Y));
         }

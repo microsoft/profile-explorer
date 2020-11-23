@@ -8,8 +8,8 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI.Document {
     public class IconElementOverlay : ElementOverlayBase {
         public IconElementOverlay(IconDrawing icon, double width, double height,
-                                  double marginX = 2, double marginY = 2, 
-                                  HorizontalAlignment alignmentX = HorizontalAlignment.Left,
+                                  double marginX = 8, double marginY = 2, 
+                                  HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                   VerticalAlignment alignmentY = VerticalAlignment.Center,
                                   string toolTip = "") :
             base(width, height, marginX, marginY, alignmentX, alignmentY, toolTip) {
@@ -22,10 +22,14 @@ namespace IRExplorerUI.Document {
 
         public IconDrawing Icon { get; set; }
 
-        public override void Draw(Rect elementRect, IRElement element, 
+        public override void Draw(Rect elementRect, IRElement element, bool isMouseOver,
                                   DrawingContext drawingContext) {
-            Icon.Draw(ComputePositionX(elementRect), ComputePositionY(elementRect),
-                      Height, Width, drawingContext);
+            double x = ComputePositionX(elementRect);
+            double y = ComputePositionY(elementRect);
+            double opacity = IsMouseOver ? 1 : 0.5;
+            DrawBackground(x, y, Width, elementRect.Height, opacity, drawingContext);
+            Icon.Draw(x + Padding, y + Padding, Height - Padding*2, Width - Padding*2, 
+                      opacity, drawingContext);
         }
     }
 }

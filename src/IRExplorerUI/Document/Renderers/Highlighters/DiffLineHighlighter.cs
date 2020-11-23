@@ -8,6 +8,7 @@ using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     public enum DiffKind {
@@ -80,19 +81,14 @@ namespace IRExplorerUI {
                 return;
             }
 
-            textView.EnsureVisualLines();
-            var visualLines = textView.VisualLines;
-
-            if (visualLines.Count == 0) {
+            // Find start/end index of visible lines.
+            if (!DocumentUtils.FindVisibleText(textView, out int viewStart, out int viewEnd)) {
                 return;
             }
-            
-            CreatePlaceholderTiledBrush(textView.DefaultLineHeight / 2);
 
-            int viewStart = visualLines[0].FirstDocumentLine.Offset;
-            int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
             BackgroundGeometryBuilder geoBuilder = null;
             DiffTextSegment prevSegment = null;
+            CreatePlaceholderTiledBrush(textView.DefaultLineHeight / 2);
 
             //? TODO: Can be made more efficient by having one GeometryGBuilder for each type of diff,
             //? then at the end render each one that was used

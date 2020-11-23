@@ -136,27 +136,17 @@ namespace IRExplorerUI.Document {
             Height = textView.RenderSize.Height;
             Children.Clear();
 
-            if (textView.Document == null) {
-                return;
-            }
-
-            if (textView.Document.TextLength == 0) {
+            if (textView.Document == null || textView.Document.TextLength == 0) {
                 return;
             }
 
             // Find start/end index of visible lines.
-            textView.EnsureVisualLines();
-            var visualLines = textView.VisualLines;
-
-            if (visualLines.Count == 0) {
+            if (!DocumentUtils.FindVisibleText(textView, out int viewStart, out int viewEnd)) {
                 return;
             }
 
             var visual = new DrawingVisual();
             var overlayDC = visual.RenderOpen();
-
-            int viewStart = visualLines[0].FirstDocumentLine.Offset;
-            int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
 
             if (highlighter_.Groups.Count > 0) {
                 // Query and draw visible segments from each group.
@@ -168,7 +158,7 @@ namespace IRExplorerUI.Document {
             foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                     foreach(var overlay in segment.Overlays) {
-                        overlay.Draw(rect, segment.Element, overlayDC);
+                        overlay.Draw(rect, segment.Element, false, overlayDC);
                     }
                 }
             }
@@ -276,21 +266,16 @@ namespace IRExplorerUI.Document {
             return new Vector(0, 0);
         }
 
-        //private void OverlayRenderer_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-        //{
-        //    if (!FindVisibleText(out int viewStart, out int viewEnd))
-        //    {
+        //private void OverlayRenderer_MouseMove(object sender, System.Windows.Input.MouseEventArgs e) {
+        //    if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
         //        return;
         //    }
 
         //    var point = e.GetPosition(this);
 
-        //    foreach (var group in highlighter_.Groups)
-        //    {
-        //        foreach(var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart))
-        //        {
-        //            foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView_, segment))
-        //            {
+        //    foreach (var group in highlighter_.Groups) {
+        //        foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+        //            foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView_, segment)) {
         //                // check intersection
         //                // mark as hovered
         //                // redraw

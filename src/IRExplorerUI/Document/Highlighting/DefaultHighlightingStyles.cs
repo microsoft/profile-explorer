@@ -4,11 +4,11 @@
 using System.Windows.Media;
 
 namespace IRExplorerUI {
-    public static class HighlightingStyles {
+    public static class DefaultHighlightingStyles {
         public static HighlightingStyleCollection StyleSet;
         public static HighlightingStyleCollection LightStyleSet;
 
-        static HighlightingStyles() {
+        static DefaultHighlightingStyles() {
             StyleSet = new HighlightingStyleCollection();
 
             StyleSet.Styles.Add(

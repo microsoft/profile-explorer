@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Utilities {
@@ -78,6 +79,20 @@ namespace IRExplorerUI.Utilities {
             }
 
             return formattedText;
+        }
+
+        public static bool FindVisibleText(TextView textView, out int viewStart, out int viewEnd) {
+            textView.EnsureVisualLines();
+            var visualLines = textView.VisualLines;
+
+            if (visualLines.Count == 0) {
+                viewStart = viewEnd = 0;
+                return false;
+            }
+
+            viewStart = visualLines[0].FirstDocumentLine.Offset;
+            viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
+            return true;
         }
     }
 }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore.IR;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     public sealed class RemarkHighlighter : IBackgroundRenderer {
@@ -34,15 +35,10 @@ namespace IRExplorerUI {
             }
 
             // Find start/end index of visible lines.
-            textView.EnsureVisualLines();
-            var visualLines = textView.VisualLines;
-
-            if (visualLines.Count == 0) {
+            if (!DocumentUtils.FindVisibleText(textView, out int viewStart, out int viewEnd)) {
                 return;
             }
 
-            int viewStart = visualLines[0].FirstDocumentLine.Offset;
-            int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
             InvalidateRemarkBrushCache();
 
             // Query and draw visible segments from each group.
@@ -135,7 +131,7 @@ namespace IRExplorerUI {
                 }
 
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-                    var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 0);
+                    var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 1);
                     geoBuilder.AddRectangle(textView, actualRect);
                 }
             }

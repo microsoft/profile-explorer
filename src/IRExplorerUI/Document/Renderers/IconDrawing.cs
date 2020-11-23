@@ -29,5 +29,12 @@ namespace IRExplorerUI {
                                               width, height);
             drawingContext.DrawImage(Icon, rect);
         }
+
+        public void Draw(double x, double y, double size, double availableSize,
+                         double opacity, DrawingContext drawingContext) {
+            drawingContext.PushOpacity(opacity);
+            Draw(x, y, size, availableSize, drawingContext);
+            drawingContext.Pop();
+        }
     }
 }

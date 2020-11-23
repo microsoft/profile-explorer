@@ -243,7 +243,7 @@ namespace IRExplorerUI {
                     }
                     else {
                         if (debugCurrentStackFrame_ != null) {
-                            var style = HighlightingStyles.StyleSet.ForIndex(debugCurrentStackFrame_.LineNumber);
+                            var style = DefaultHighlightingStyles.StyleSet.ForIndex(debugCurrentStackFrame_.LineNumber);
                             activeDoc.TextView.MarkElement(element, style);
                         }
                         else {

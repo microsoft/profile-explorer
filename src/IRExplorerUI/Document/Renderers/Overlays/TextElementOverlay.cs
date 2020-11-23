@@ -19,7 +19,7 @@ namespace IRExplorerUI.Document {
 
         public string Text { get; set; }
 
-        public override void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext) {
+        public override void Draw(Rect elementRect, IRElement element, bool isMouseOver, DrawingContext drawingContext) {
             
         }
     }
