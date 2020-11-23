@@ -575,14 +575,8 @@ namespace IRExplorerUI {
 
         public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
                                             Func<FunctionIR, IRTextSection, CancelableTask, Graph> computeGraphAction) {
-            //? TODO: When the section is changed quickly and there are long-running tasks,
-            //? the CFG panel can get out of sync - the doc. tries to highlight a block
-            //? for another CFG if the loading of the prev. CFG completes between loading the text
-            //? and the caret reset event.
             var loadTask = graphPanel.OnGenerateGraphStart(section);
-
-            var functionGraph =
-                await Task.Run(() => computeGraphAction(document.Function, section, loadTask));
+            var functionGraph = await Task.Run(() => computeGraphAction(document.Function, section, loadTask));
 
             if (functionGraph != null) {
                 graphPanel.DisplayGraph(functionGraph);

@@ -36,14 +36,29 @@ namespace IRExplorerUI.Document {
             public HighlightingStyle Style { get; set; }
         }
 
+        public class IROverlaySegment : IRSegment {
+            public IROverlaySegment(IRElement element) : base(element) {
+                Overlays = new List<IElementOverlay>();
+            }
+
+            public IROverlaySegment(IRElement element, IElementOverlay overlay) : this(element) {
+                Overlays.Add(overlay);
+            }
+
+            public List<IElementOverlay> Overlays { get; set; }
+        }
+
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
         private ElementHighlighter highlighter_;
-        private ConnectedElement rootElement_;
+        private ConnectedElement rootConnectedElement_;
         private List<ConnectedElement> connectedElements_;
         private TextSegmentCollection<IRSegment> segments_;
         private Dictionary<IRElement, IRSegment> segmentMap_;
+        
+        private TextSegmentCollection<IROverlaySegment> overlaySegments_;
 
         public OverlayRenderer(ElementHighlighter highlighter) {
+            overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
             SnapsToDevicePixels = true;
             Background = null;
             highlighter_ = highlighter;
@@ -52,10 +67,15 @@ namespace IRExplorerUI.Document {
         }
 
         public KnownLayer Layer => KnownLayer.Background;
+        public int Version { get; set; }
+
+        public void AddElementOverlay(IRElement element, IElementOverlay overlay) {
+            overlaySegments_.Add(new IROverlaySegment(element, overlay));
+        }
 
         public void SetRootElement(IRElement element, HighlightingStyle style) {
             ClearConnectedElements();
-            rootElement_ = new ConnectedElement(element, style);
+            rootConnectedElement_ = new ConnectedElement(element, style);
             var segment = new IRSegment(element);
             segments_.Add(segment);
             segmentMap_[element] = segment;
@@ -69,7 +89,7 @@ namespace IRExplorerUI.Document {
         }
 
         public void ClearConnectedElements() {
-            rootElement_ = null;
+            rootConnectedElement_ = null;
             connectedElements_ = new List<ConnectedElement>();
             segments_ = new TextSegmentCollection<IRSegment>();
             segmentMap_ = new Dictionary<IRElement, IRSegment>();
@@ -135,13 +155,21 @@ namespace IRExplorerUI.Document {
             var visual = new DrawingVisual();
             var overlayDC = visual.RenderOpen();
 
-            if (highlighter_.Groups.Count > 0) {
-                int viewStart = visualLines[0].FirstDocumentLine.Offset;
-                int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
+            int viewStart = visualLines[0].FirstDocumentLine.Offset;
+            int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
 
+            if (highlighter_.Groups.Count > 0) {
                 // Query and draw visible segments from each group.
                 foreach (var group in highlighter_.Groups) {
                     DrawGroup(group, textView, overlayDC, viewStart, viewEnd);
+                }
+            }
+
+            foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+                foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
+                    foreach(var overlay in segment.Overlays) {
+                        overlay.Draw(rect, segment.Element, overlayDC);
+                    }
                 }
             }
 
@@ -152,7 +180,7 @@ namespace IRExplorerUI.Document {
 
             // Draw extra annotations for remarks in the same context.
             foreach (var connectedElement in connectedElements_) {
-                var prevSegmentRect = GetRemarkSegmentRect(rootElement_.Element, textView);
+                var prevSegmentRect = GetRemarkSegmentRect(rootConnectedElement_.Element, textView);
                 var segmentRect = GetRemarkSegmentRect(connectedElement.Element, textView);
 
                 double horizontalOffset = 4;
@@ -204,7 +232,7 @@ namespace IRExplorerUI.Document {
                 // overlayDC.DrawEllipse(connectedElement.Style.BackColor, connectedElement.Style.Border, endPoint, dotSize, dotSize);
 
                 if (first) {
-                    overlayDC.DrawEllipse(rootElement_.Style.BackColor, rootElement_.Style.Border, startPoint, dotSize, dotSize);
+                    overlayDC.DrawEllipse(rootConnectedElement_.Style.BackColor, rootConnectedElement_.Style.Border, startPoint, dotSize, dotSize);
                     first = false;
                 }
 
@@ -219,7 +247,6 @@ namespace IRExplorerUI.Document {
             overlayDC.Close();
             Add(visual);
         }
-
 
         private void DrawEdgeArrow(Point[] tempPoints, StreamGeometryContext sc) {
             // Draw arrow head with a slope matching the line,
@@ -275,6 +302,11 @@ namespace IRExplorerUI.Document {
         public void Clear() {
             Children.Clear();
             ClearConnectedElements();
+            ClearElementOverlays();
+        }
+
+        private void ClearElementOverlays() {
+            overlaySegments_.Clear();
         }
 
         public void Add(Visual drawingVisual) {
@@ -316,50 +348,6 @@ namespace IRExplorerUI.Document {
                     }
                 }
             }
-        }
-    }
-
-    public interface IElementOverlay {
-        HorizontalAlignment AlignmentX { get; }
-        VerticalAlignment AlignmentY { get; }
-        Size Size { get; }
-        void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
-    }
-
-    public class TextElementOverlay : IElementOverlay {
-        public Size Size => throw new NotImplementedException();
-
-        public HorizontalAlignment AlignmentX { get; set; }
-
-        public VerticalAlignment AlignmentY { get; set; }
-
-        public void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext) {
-            
-        }
-    }
-    public class IconElementOverlay : IElementOverlay {
-        public IconElementOverlay(IconDrawing icon, double width, double height) {
-            Icon = icon;
-            Width = width;
-            Height = height;
-        }
-
-        public static IconElementOverlay FromIconResource(string name, double width, double height) {
-            return new IconElementOverlay(IconDrawing.FromIconResource(name), width, height);
-        }
-
-        public IconDrawing Icon { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-        public Size Size => new Size(Width, Height);
-
-        public HorizontalAlignment AlignmentX { get; set; }
-
-        public VerticalAlignment AlignmentY { get; set; }
-
-        public void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext) {
-            //? TODO: Adjust position relative to elem based on alignment
-            Icon.Draw(elementRect.Left, elementRect.Top, Height, Width, drawingContext);
         }
     }
 }

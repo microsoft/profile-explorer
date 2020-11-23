@@ -6,69 +6,59 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore.IR;
+using ProtoBuf;
 
 namespace IRExplorerUI {
-    public sealed class RemarkHighlighter : IBackgroundRenderer {
+    [ProtoContract]
+    public class ElementGroupState {
+        [ProtoMember(1)]
+        public List<IRElementReference> Elements;
+        [ProtoMember(2)]
+        public HighlightingStyle Style;
+
+        public ElementGroupState() {
+            Elements = new List<IRElementReference>();
+        }
+    }
+
+    [ProtoContract]
+    public class ElementHighlighterState {
+        [ProtoMember(1)]
+        public List<ElementGroupState> Groups;
+
+        public ElementHighlighterState() {
+            Groups = new List<ElementGroupState>();
+        }
+
+        public ElementHighlighterState(List<ElementGroupState> groups) {
+            Groups = groups;
+        }
+
+        public bool HasAnnotations => Groups.Count > 0;
+    }
+
+    public sealed class ElementHighlighter : IBackgroundRenderer {
         //? TODO: Change to Set to have faster Remove (search panel)
         private List<HighlightedSegmentGroup> groups_;
-        private Dictionary<Color, Brush> remarkBrushCache_;
-        private int remarkBackgroundOpacity_;
-        private bool useTransparentRemarkBackground_;
 
-        public RemarkHighlighter(HighlighingType type) {
+        public ElementHighlighter(HighlighingType type) {
             Type = type;
             groups_ = new List<HighlightedSegmentGroup>(64);
-            remarkBrushCache_ = new Dictionary<Color, Brush>();
             Version = 1;
-        }
-
-        private void InvalidateRemarkBrushCache() {
-            if (App.Settings.RemarkSettings.UseTransparentRemarkBackground != useTransparentRemarkBackground_ ||
-                App.Settings.RemarkSettings.RemarkBackgroundOpacity != remarkBackgroundOpacity_) {
-                remarkBrushCache_.Clear();
-                useTransparentRemarkBackground_ = App.Settings.RemarkSettings.UseTransparentRemarkBackground;
-                remarkBackgroundOpacity_ = App.Settings.RemarkSettings.RemarkBackgroundOpacity;
-            }
-        }
-
-        private Brush GetRemarkBackgroundBrush(HighlightedSegmentGroup group) {
-            if (!App.Settings.RemarkSettings.UseRemarkBackground) {
-                return Brushes.Transparent;
-            }
-
-            var color = ((SolidColorBrush)group.BackColor).Color;
-
-            if (color == Colors.Black || color == Colors.Transparent) {
-                return Brushes.Transparent;
-            }
-
-            if (remarkBrushCache_.TryGetValue(color, out var brush)) {
-                return brush;
-            }
-
-            if (useTransparentRemarkBackground_) {
-                var alpha = (byte)(255.0 * ((double)remarkBackgroundOpacity_ / 100.0));
-                brush = ColorBrushes.GetBrush(Color.FromArgb(alpha, color.R, color.G, color.B));
-            }
-            else {
-                brush = ColorBrushes.GetBrush(color);
-            }
-
-            remarkBrushCache_[color] = brush;
-            return brush;
         }
 
         public HighlighingType Type { get; set; }
         public int Version { get; set; }
 
+        public List<HighlightedSegmentGroup> Groups {
+            get => groups_;
+            set => groups_ = value;
+        }
+
         public KnownLayer Layer => KnownLayer.Background;
 
         public void Draw(TextView textView, DrawingContext drawingContext) {
-            if (textView.Document == null) {
-                return;
-            }
-
-            if (textView.Document.TextLength == 0) {
+            if (textView.Document == null || textView.Document.TextLength == 0) {
                 return;
             }
 
@@ -82,7 +72,6 @@ namespace IRExplorerUI {
 
             int viewStart = visualLines[0].FirstDocumentLine.Offset;
             int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
-            InvalidateRemarkBrushCache();
 
             // Query and draw visible segments from each group.
             foreach (var group in groups_) {
@@ -100,7 +89,7 @@ namespace IRExplorerUI {
             Version++;
         }
 
-        public void CopyFrom(RemarkHighlighter other) {
+        public void CopyFrom(ElementHighlighter other) {
             foreach (var item in other.groups_) {
                 groups_.Add(new HighlightedSegmentGroup(item.Group));
             }
@@ -132,18 +121,6 @@ namespace IRExplorerUI {
             Version++;
         }
 
-        public void ChangeStyle(IRElement element, HighlightingStyle newStyle) {
-            for (int i = 0; i < groups_.Count; i++) {
-                if (groups_[i].Group.Contains(element)) {
-                    groups_[i].Group.Style = newStyle;
-                    break;
-                }
-
-            }
-
-            Version++;
-        }
-
         public void Clear() {
             groups_.Clear();
             Version++;
@@ -159,27 +136,41 @@ namespace IRExplorerUI {
             });
         }
 
+        public ElementHighlighterState SaveState(FunctionIR function) {
+            return new ElementHighlighterState(StateSerializer.SaveElementGroupState(groups_));
+        }
+
+        public void LoadState(ElementHighlighterState state, FunctionIR function) {
+            groups_ = StateSerializer.LoadElementGroupState(state.Groups);
+            Version++;
+        }
+
         private void DrawGroup(HighlightedSegmentGroup group, TextView textView,
                                DrawingContext drawingContext, int viewStart, int viewEnd) {
-            var geoBuilder = new BackgroundGeometryBuilder {
-                AlignToWholePixels = true,
-                BorderThickness = 0,
-                CornerRadius = 0
-            };
+            // Create BackgroundGeometryBuilder only if needed.
+            BackgroundGeometryBuilder geoBuilder = null;
 
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
-                // segment.Element
+                if (geoBuilder == null) {
+                    geoBuilder = new BackgroundGeometryBuilder() {
+                        AlignToWholePixels = true,
+                        BorderThickness = 0,
+                        CornerRadius = 0
+                    };
+                }
+
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                     var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 0);
                     geoBuilder.AddRectangle(textView, actualRect);
                 }
             }
 
-            var geometry = geoBuilder.CreateGeometry();
+            if (geoBuilder != null) {
+                var geometry = geoBuilder.CreateGeometry();
 
-            if (geometry != null) {
-                var brush = GetRemarkBackgroundBrush(group);
-                drawingContext.DrawGeometry(brush, group.Border, geometry);
+                if (geometry != null) {
+                    drawingContext.DrawGeometry(group.BackColor, group.Border, geometry);
+                }
             }
         }
     }
