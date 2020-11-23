@@ -12,8 +12,12 @@ namespace IRExplorerUI.Document {
         VerticalAlignment AlignmentY { get; }
         double MarginX { get; }
         double MarginY { get; }
+        double Padding { get; }
+        HighlightingStyle Style { get; }
         Size Size { get; }
-        void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
+        bool IsMouseOver { get; }
+        void Draw(Rect elementRect, IRElement element, bool isMouseOver,
+                  DrawingContext drawingContext);
     }
 
     public abstract class ElementOverlayBase : IElementOverlay {
@@ -36,34 +40,47 @@ namespace IRExplorerUI.Document {
         public double Height { get; set; }
         public double MarginX { get; set; }
         public double MarginY { get; set;  }
+        public double Padding { get; set; }
         public Size Size => new Size(Width, Height);
         public HorizontalAlignment AlignmentX { get; set; }
         public VerticalAlignment AlignmentY { get; set; }
+        public HighlightingStyle Style { get; set; }
+        public bool IsMouseOver { get; set; }
 
-        public abstract void Draw(Rect elementRect, IRElement element, 
+        public abstract void Draw(Rect elementRect, IRElement element, bool isMouseOver,
                                   DrawingContext drawingContext);
+
+        protected void DrawBackground(double x, double y, double width, double height,
+                                      double opacity, DrawingContext drawingContext) {
+            if (Style != null) {
+                drawingContext.PushOpacity(opacity);
+                drawingContext.DrawRectangle(Style.BackColor, Style.Border,
+                                             Utils.SnapRectToPixels(x, y, width, height));
+                drawingContext.Pop();
+            }
+        }
 
         protected double ComputePositionX(Rect rect) {
             if (AlignmentX == HorizontalAlignment.Left) {
-                return rect.Left - Width - MarginX;
+                return Utils.SnapToPixels(rect.Left - Width - MarginX);
             }
             else if(AlignmentX == HorizontalAlignment.Right) {
-                return rect.Right + MarginX;
+                return Utils.SnapToPixels(rect.Right + MarginX);
             }
             else {
-                return rect.Left + (rect.Width - Width) / 2;
+                return Utils.SnapToPixels(rect.Left + (rect.Width - Width) / 2);
             }
         }
 
         protected double ComputePositionY(Rect rect) {
             if (AlignmentY == VerticalAlignment.Top) {
-                return rect.Top - Height - MarginY;
+                return Utils.SnapToPixels(rect.Top - Height - MarginY);
             }
             else if(AlignmentY == VerticalAlignment.Bottom) {
-                return rect.Right + MarginX;
+                return Utils.SnapToPixels(rect.Right + MarginX);
             }
             else {
-                return rect.Top + (rect.Height - Height) / 2;
+                return Utils.SnapToPixels(rect.Top + (rect.Height - Height) / 2);
             }
         }
     }

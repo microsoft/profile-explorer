@@ -33,11 +33,7 @@ namespace IRExplorerUI {
         public KnownLayer Layer => KnownLayer.Background;
 
         public void Draw(TextView textView, DrawingContext drawingContext) {
-            if (textView.Document == null) {
-                return;
-            }
-
-            if (textView.Document.TextLength == 0) {
+            if (textView.Document == null || textView.Document.TextLength == 0) {
                 return;
             }
 
@@ -46,9 +42,9 @@ namespace IRExplorerUI {
             var currentLine = textView.Document.GetLineByOffset(editor_.CaretOffset);
 
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, currentLine)) {
-                drawingContext.DrawRectangle(backgroundBrush_, borderPen_,
-                                             Utils.SnapToPixels(new Rect(rect.Location,
-                                                      new Size(textView.ActualWidth, rect.Height))));
+                var lineRect = Utils.SnapRectToPixels(rect.X, rect.Y,
+                                                      textView.ActualWidth, rect.Height + 1);
+                drawingContext.DrawRectangle(backgroundBrush_, borderPen_, lineRect);
             }
         }
     }

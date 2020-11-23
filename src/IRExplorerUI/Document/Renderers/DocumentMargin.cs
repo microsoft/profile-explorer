@@ -292,7 +292,7 @@ namespace IRExplorerUI {
             BookmarkSegment newHoveredBookmark = null;
             bool needsRedrawing = false;
 
-            if (FindVisibleText(out int viewStart, out int viewEnd)) {
+            if (DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
                 foreach (var segment in bookmarkSegments_.FindOverlappingSegments(
                     viewStart, viewEnd - viewStart)) {
                     if (newHoveredBookmark == null) {
@@ -360,7 +360,7 @@ namespace IRExplorerUI {
         }
 
         private Tuple<BookmarkSegment, BookmarkSegmentElement> HitTestBookmarks() {
-            if (!FindVisibleText(out int viewStart, out int viewEnd)) {
+            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
                 return null;
             }
 
@@ -524,19 +524,7 @@ namespace IRExplorerUI {
             return GetBookmarkStyle(segment);
         }
 
-        private bool FindVisibleText(out int viewStart, out int viewEnd) {
-            TextView.EnsureVisualLines();
-            var visualLines = TextView.VisualLines;
-
-            if (visualLines.Count == 0) {
-                viewStart = viewEnd = 0;
-                return false;
-            }
-
-            viewStart = visualLines[0].FirstDocumentLine.Offset;
-            viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
-            return true;
-        }
+        
 
         protected override void OnRender(DrawingContext drawingContext) {
             // Draw margin background.
@@ -544,7 +532,7 @@ namespace IRExplorerUI {
                                          new Rect(0, 0, RenderSize.Width, RenderSize.Height));
 
             // Draw highlighted blocks.
-            if (!FindVisibleText(out int viewStart, out int viewEnd)) {
+            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
                 return;
             }
 

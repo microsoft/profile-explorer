@@ -55,7 +55,7 @@ namespace IRExplorerUI {
             selectedNodes_ = new Dictionary<GraphNode, HighlightingStyle>();
 
             var stylesWithBorder =
-                HighlightingStyles.GetStyleSetWithBorder(HighlightingStyles.StyleSet, DefaultBoldPen);
+                DefaultHighlightingStyles.GetStyleSetWithBorder(DefaultHighlightingStyles.StyleSet, DefaultBoldPen);
 
             nodeStyles_ = new HighlightingStyleCyclingCollection(stylesWithBorder);
             SetupEvents();

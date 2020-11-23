@@ -158,10 +158,10 @@ namespace IRExplorerUI {
                 ChildStyle = new HighlightingStyle(Color.FromRgb(255, 197, 163), Pens.GetBoldPen(Colors.Black))
             };
 
-            expressionOperandStyle_ = HighlightingStyles.StyleSet;
-            expressionStyle_ = HighlightingStyles.LightStyleSet;
-            markerChildStyle_ = new HighlightingStyleCyclingCollection(HighlightingStyles.StyleSet);
-            markerParentStyle_ = new HighlightingStyleCyclingCollection(HighlightingStyles.LightStyleSet);
+            expressionOperandStyle_ = DefaultHighlightingStyles.StyleSet;
+            expressionStyle_ = DefaultHighlightingStyles.LightStyleSet;
+            markerChildStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.StyleSet);
+            markerParentStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.LightStyleSet);
             SetupProperties();
             SetupStableRenderers();
             SetupCommands();
@@ -2994,7 +2994,8 @@ namespace IRExplorerUI {
             // Create the overlay and place it on top of the text.
             overlayRenderer_ = new OverlayRenderer(markedHighlighter_);
             TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
-            TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+            // TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+            TextArea.TextView.Layers.Insert(0, overlayRenderer_);
 
             if (DiffModeEnabled) {
                 if (diffHighlighter_ != null) {
@@ -3266,6 +3267,13 @@ namespace IRExplorerUI {
             HideTemporaryUI();
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
+
+            if(element != null && e.MiddleButton == MouseButtonState.Pressed) {
+                var temp = IconElementOverlay.FromIconResource("WarningIcon", 16, 16);
+                //temp.Style = definitionStyle_.ChildStyle;
+                temp.Padding = 0;
+                overlayRenderer_.AddElementOverlay(element, temp);
+            }
 
             //? TODO: This would prevent selection of text from working,
             //? but allowing it also sometimes selects a letter of the element...
