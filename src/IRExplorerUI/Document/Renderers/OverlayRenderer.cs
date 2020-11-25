@@ -58,6 +58,8 @@ namespace IRExplorerUI.Document {
         private TextSegmentCollection<IRSegment> conntectedSegments_;
         private Dictionary<IRElement, IRSegment> connectedSegmentMap_;
         private TextSegmentCollection<IROverlaySegment> overlaySegments_;
+        private IElementOverlay hoveredOverlay_;
+        private IElementOverlay selectedOverlay_;
 
         public OverlayRenderer(ElementHighlighter highlighter) {
             overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
@@ -271,11 +273,13 @@ namespace IRExplorerUI.Document {
             return new Vector(0, 0);
         }
 
-        public void MouseMoved() {
-            HandleMouseMoved(Mouse.GetPosition(this));
+        public void MouseClick(MouseEventArgs e) {
+            HandleMouseClicked(e.GetPosition(this), e);
         }
 
-        IElementOverlay currentOverlay_;
+        public void MouseMoved(MouseEventArgs e) {
+            HandleMouseMoved(e.GetPosition(this));
+        }
 
         private void HandleMouseMoved(Point point) {
             if (overlaySegments_.Count == 0 || TextView == null) {
@@ -301,20 +305,61 @@ namespace IRExplorerUI.Document {
                 }
             }
 
-            if(hoverOverlay != currentOverlay_) {
-                if(currentOverlay_ != null) {
+            if(hoverOverlay != hoveredOverlay_) {
+                if(hoveredOverlay_ != null) {
                     // Deselect previous overlay.
-                    currentOverlay_.IsMouseOver = false;
-                    currentOverlay_ = null;
+                    hoveredOverlay_.IsMouseOver = false;
+                    hoveredOverlay_ = null;
                 }
 
                 if(hoverOverlay != null) {
                     hoverOverlay.IsMouseOver = true;
-                    currentOverlay_ = hoverOverlay;
+                    hoveredOverlay_ = hoverOverlay;
                 }
 
                 TextView.Redraw();
             } 
+        }
+
+        private void HandleMouseClicked(Point point, MouseEventArgs e) {
+            if (overlaySegments_.Count == 0 || TextView == null) {
+                return;
+            }
+
+            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
+                return;
+            }
+
+            IElementOverlay hoverOverlay = null;
+
+            foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+                if (hoverOverlay != null) {
+                    break;
+                }
+
+                foreach (var overlay in segment.Overlays) {
+                    if (overlay.CheckIsMouseOver(point)) {
+                        hoverOverlay = overlay;
+                        break;
+                    }
+                }
+            }
+
+            if (hoverOverlay != selectedOverlay_) {
+                if (selectedOverlay_ != null) {
+                    // Deselect previous overlay.
+                    selectedOverlay_.IsSelected = false;
+                    selectedOverlay_ = null;
+                }
+
+                if (hoverOverlay != null) {
+                    selectedOverlay_ = hoverOverlay;
+                    selectedOverlay_.IsSelected = true;
+                    selectedOverlay_.MouseClicked(e);
+                }
+
+                TextView.Redraw();
+            }
         }
 
         public void Clear() {

@@ -27,13 +27,13 @@ namespace IRExplorerUI.Document {
                                   DrawingContext drawingContext) {
             double x = ComputePositionX(elementRect);
             double y = ComputePositionY(elementRect);
-            double opacity = IsMouseOver ? 1 : 0.5;
+            double opacity = ActiveOpacity;
             Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, 
                                             Math.Max(ActualHeight, elementRect.Height));
             if (ShowToolTip) {
                 DrawToolTip(Bounds, opacity, drawingContext);
             }
-            else if(!ShowBackgroundOnMouseOverOnly || IsMouseOver) {
+            else if(ShowBackground) {
                 DrawBackground(Bounds, opacity, drawingContext);
             }
 

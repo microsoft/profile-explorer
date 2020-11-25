@@ -281,8 +281,8 @@ namespace IRExplorerUI {
             }
         }
 
-        public void MouseMoved() {
-            HandleMouseMoved(Mouse.GetPosition(this));
+        public void MouseMoved(MouseEventArgs e) {
+            HandleMouseMoved(e.GetPosition(this));
         }
 
         private void HandleMouseMoved(Point point) {
@@ -521,8 +521,6 @@ namespace IRExplorerUI {
 
             return GetBookmarkStyle(segment);
         }
-
-        
 
         protected override void OnRender(DrawingContext drawingContext) {
             // Draw margin background.
