@@ -1382,7 +1382,9 @@ namespace IRExplorerUI {
 
         private bool EditBookmarkText(Bookmark bookmark, Key key) {
             // Because a TextBox is not used for the bookmarks,
-            // editing the optionala text must be handled manually.
+            // editing the optional text must be handled manually.
+            // This method is not part of Bookmark because it handles lots
+            // of state through the BookmarkManager.
             var keyInfo = Utils.KeyToChar(key);
 
             if (keyInfo.IsLetter) {
@@ -2152,8 +2154,8 @@ namespace IRExplorerUI {
         private void IRDocument_PreviewMouseMove(object sender, MouseEventArgs e) {
             ForceCursor = true;
             Cursor = Cursors.Arrow;
-            margin_.MouseMoved();
-            overlayRenderer_?.MouseMoved();
+            margin_.MouseMoved(e);
+            overlayRenderer_?.MouseMoved(e);
         }
 
         private void IRDocument_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
@@ -3268,14 +3270,19 @@ namespace IRExplorerUI {
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
 
-            if(element != null && e.MiddleButton == MouseButtonState.Pressed) {
+            // Check if there is any overlay being clicked.
+            overlayRenderer_?.MouseClick(e);
+
+            if (element != null && e.MiddleButton == MouseButtonState.Pressed) {
                 var temp = IconElementOverlay.FromIconResource("WarningIcon", 16, 16);
                 temp.Background = definitionStyle_.ChildStyle.BackColor;
+                temp.SelectedBackground = ssaUserStyle_.ChildStyle.BackColor;
                 temp.Border = definitionStyle_.ChildStyle.Border;
                 temp.ShowBackgroundOnMouseOverOnly = true;
                 temp.ToolTip = "Heyoo there";
                 temp.ShowToolTipOnMouseOverOnly = true;
                 temp.UseToolTipBackground = true;
+                temp.DefaultOpacity = 0.6;
                 temp.Padding = 1;
                 overlayRenderer_.AddElementOverlay(element, temp);
             }
