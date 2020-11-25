@@ -13,10 +13,11 @@ using ICSharpCode.AvalonEdit.Document;
 using System;
 using System.Diagnostics;
 using ICSharpCode.AvalonEdit;
+using System.Windows.Input;
 
 namespace IRExplorerUI.Document {
     public class OverlayRenderer : Canvas, IBackgroundRenderer {
-        class VisualHost : UIElement {
+        class VisualHost : FrameworkElement {
             public Visual Visual { get; set; }
 
             protected override int VisualChildrenCount => Visual != null ? 1 : 0;
@@ -49,21 +50,24 @@ namespace IRExplorerUI.Document {
         }
 
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
+
+        private TextView TextView;
         private ElementHighlighter highlighter_;
         private ConnectedElement rootConnectedElement_;
         private List<ConnectedElement> connectedElements_;
-        private TextSegmentCollection<IRSegment> segments_;
-        private Dictionary<IRElement, IRSegment> segmentMap_;
-        
+        private TextSegmentCollection<IRSegment> conntectedSegments_;
+        private Dictionary<IRElement, IRSegment> connectedSegmentMap_;
         private TextSegmentCollection<IROverlaySegment> overlaySegments_;
 
         public OverlayRenderer(ElementHighlighter highlighter) {
             overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
             SnapsToDevicePixels = true;
-            Background = null;
+            IsHitTestVisible = true;
+            Background = Brushes.Transparent; // Needed for mouse events to fire...
+            //PreviewMouseMove += OverlayRenderer_PreviewMouseMove;
+            //PreviewMouseLeftButtonDown += OverlayRenderer_PreviewMouseLeftButtonDown;
             highlighter_ = highlighter;
             ClearConnectedElements();
-            //MouseMove += OverlayRenderer_MouseMove;
         }
 
         public KnownLayer Layer => KnownLayer.Background;
@@ -77,26 +81,26 @@ namespace IRExplorerUI.Document {
             ClearConnectedElements();
             rootConnectedElement_ = new ConnectedElement(element, style);
             var segment = new IRSegment(element);
-            segments_.Add(segment);
-            segmentMap_[element] = segment;
+            conntectedSegments_.Add(segment);
+            connectedSegmentMap_[element] = segment;
         }
 
         public void AddConnectedElement(IRElement element, HighlightingStyle style) {
             connectedElements_.Add(new ConnectedElement(element, style));
             var segment = new IRSegment(element);
-            segments_.Add(segment);
-            segmentMap_[element] = segment;
+            conntectedSegments_.Add(segment);
+            connectedSegmentMap_[element] = segment;
         }
 
         public void ClearConnectedElements() {
             rootConnectedElement_ = null;
             connectedElements_ = new List<ConnectedElement>();
-            segments_ = new TextSegmentCollection<IRSegment>();
-            segmentMap_ = new Dictionary<IRElement, IRSegment>();
+            conntectedSegments_ = new TextSegmentCollection<IRSegment>();
+            connectedSegmentMap_ = new Dictionary<IRElement, IRSegment>();
         }
 
         private Rect GetRemarkSegmentRect(IRElement element, TextView textView) {
-            var segment = segmentMap_[element];
+            var segment = connectedSegmentMap_[element];
 
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                 return rect;
@@ -132,6 +136,7 @@ namespace IRExplorerUI.Document {
         }
 
         public void Draw(TextView textView, DrawingContext drawingContext) {
+            TextView = textView;
             Width = textView.RenderSize.Width;
             Height = textView.RenderSize.Height;
             Children.Clear();
@@ -158,7 +163,7 @@ namespace IRExplorerUI.Document {
             foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                     foreach(var overlay in segment.Overlays) {
-                        overlay.Draw(rect, segment.Element, false, overlayDC);
+                        overlay.Draw(rect, segment.Element, overlayDC);
                     }
                 }
             }
@@ -266,23 +271,51 @@ namespace IRExplorerUI.Document {
             return new Vector(0, 0);
         }
 
-        //private void OverlayRenderer_MouseMove(object sender, System.Windows.Input.MouseEventArgs e) {
-        //    if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
-        //        return;
-        //    }
+        public void MouseMoved() {
+            HandleMouseMoved(Mouse.GetPosition(this));
+        }
 
-        //    var point = e.GetPosition(this);
+        IElementOverlay currentOverlay_;
 
-        //    foreach (var group in highlighter_.Groups) {
-        //        foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
-        //            foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView_, segment)) {
-        //                // check intersection
-        //                // mark as hovered
-        //                // redraw
-        //            }
-        //        }
-        //    }
-        //}
+        private void HandleMouseMoved(Point point) {
+            if (overlaySegments_.Count == 0 || TextView == null) {
+                return;
+            }
+
+            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
+                return;
+            }
+
+            IElementOverlay hoverOverlay = null;
+
+            foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+                if (hoverOverlay != null) {
+                    break;
+                }
+
+                foreach (var overlay in segment.Overlays) {
+                    if (overlay.CheckIsMouseOver(point)) {
+                        hoverOverlay = overlay;
+                        break;
+                    }
+                }
+            }
+
+            if(hoverOverlay != currentOverlay_) {
+                if(currentOverlay_ != null) {
+                    // Deselect previous overlay.
+                    currentOverlay_.IsMouseOver = false;
+                    currentOverlay_ = null;
+                }
+
+                if(hoverOverlay != null) {
+                    hoverOverlay.IsMouseOver = true;
+                    currentOverlay_ = hoverOverlay;
+                }
+
+                TextView.Redraw();
+            } 
+        }
 
         public void Clear() {
             Children.Clear();
@@ -295,7 +328,11 @@ namespace IRExplorerUI.Document {
         }
 
         public void Add(Visual drawingVisual) {
-            Children.Add(new VisualHost { Visual = drawingVisual });
+            // Hit testing and focus must be disabled to allow events to propagate properly.
+            var visualHost = new VisualHost { Visual = drawingVisual };
+            visualHost.IsHitTestVisible = false;
+            visualHost.Focusable = false;
+            Children.Add(visualHost);
         }
 
         public void Add(UIElement element) {
