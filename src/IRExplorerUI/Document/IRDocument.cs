@@ -2153,6 +2153,7 @@ namespace IRExplorerUI {
             ForceCursor = true;
             Cursor = Cursors.Arrow;
             margin_.MouseMoved();
+            overlayRenderer_?.MouseMoved();
         }
 
         private void IRDocument_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
@@ -2994,8 +2995,7 @@ namespace IRExplorerUI {
             // Create the overlay and place it on top of the text.
             overlayRenderer_ = new OverlayRenderer(markedHighlighter_);
             TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
-            // TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
-            TextArea.TextView.Layers.Insert(0, overlayRenderer_);
+            TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
 
             if (DiffModeEnabled) {
                 if (diffHighlighter_ != null) {
@@ -3270,8 +3270,13 @@ namespace IRExplorerUI {
 
             if(element != null && e.MiddleButton == MouseButtonState.Pressed) {
                 var temp = IconElementOverlay.FromIconResource("WarningIcon", 16, 16);
-                //temp.Style = definitionStyle_.ChildStyle;
-                temp.Padding = 0;
+                temp.Background = definitionStyle_.ChildStyle.BackColor;
+                temp.Border = definitionStyle_.ChildStyle.Border;
+                temp.ShowBackgroundOnMouseOverOnly = true;
+                temp.ToolTip = "Heyoo there";
+                temp.ShowToolTipOnMouseOverOnly = true;
+                temp.UseToolTipBackground = true;
+                temp.Padding = 1;
                 overlayRenderer_.AddElementOverlay(element, temp);
             }
 

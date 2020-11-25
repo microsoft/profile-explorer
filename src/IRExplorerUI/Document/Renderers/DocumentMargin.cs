@@ -31,7 +31,6 @@ namespace IRExplorerUI {
         }
 
         [ProtoMember(1)] public Bookmark Bookmark { get; set; }
-
         [ProtoMember(2)] public BookmarkSegmentKind Kind { get; set; }
 
         public Rect Bounds { get; set; }
@@ -106,7 +105,6 @@ namespace IRExplorerUI {
 
         private HashSet<IRElement> blockElements_;
         private List<HighlightedSegmentGroup> blockGroups_;
-
         private IconDrawing bookmarkIcon_;
         private TextSegmentCollection<BookmarkSegment> bookmarkSegments_;
         private BookmarkSegment hoveredBookmark_;
@@ -610,7 +608,7 @@ namespace IRExplorerUI {
                             }
 
                             var text = DocumentUtils.CreateFormattedText(this, remark.RemarkText, DefaultFont, fontSize,
-                                                                 Brushes.Black, fontWeight);
+                                                                         Brushes.Black, fontWeight);
                             textSegments.Add(text);
                             maxTextWidth = Math.Max(maxTextWidth, text.Width);
                             index++;

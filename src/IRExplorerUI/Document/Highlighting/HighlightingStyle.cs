@@ -19,21 +19,9 @@ namespace IRExplorerUI {
             Utils.ColorFromString(color), 1.0, border) { }
 
         public HighlightingStyle(Color color, double opacity = 1.0, Pen border = null) {
-            Brush colorBrush;
-
-            if (Math.Abs(opacity - 1.0) < double.Epsilon) {
-                colorBrush = ColorBrushes.GetBrush(color);
-            }
-            else {
-                colorBrush = new SolidColorBrush(color);
-                colorBrush.Opacity = opacity;
-
-                if (colorBrush.CanFreeze) {
-                    colorBrush.Freeze();
-                }
-            }
-
-            BackColor = colorBrush;
+            BackColor = Math.Abs(opacity - 1.0) < double.Epsilon ?
+                        ColorBrushes.GetBrush(color) :
+                        ColorBrushes.GetTransparentBrush(color, opacity);
             Border = border;
         }
 
