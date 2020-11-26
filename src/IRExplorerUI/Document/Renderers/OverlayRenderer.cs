@@ -281,6 +281,14 @@ namespace IRExplorerUI.Document {
             HandleMouseMoved(e.GetPosition(this));
         }
 
+        public void KeyPressed(KeyEventArgs e) {
+            if (selectedOverlay_ != null) {
+                if (selectedOverlay_.KeyPressed(e)) {
+                    TextView.Redraw(); // Force refresh
+                }
+            }
+        }
+
         private void HandleMouseMoved(Point point) {
             if (overlaySegments_.Count == 0 || TextView == null) {
                 return;
@@ -331,6 +339,7 @@ namespace IRExplorerUI.Document {
             }
 
             IElementOverlay hoverOverlay = null;
+            bool redraw = false;
 
             foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 if (hoverOverlay != null) {
@@ -350,14 +359,24 @@ namespace IRExplorerUI.Document {
                     // Deselect previous overlay.
                     selectedOverlay_.IsSelected = false;
                     selectedOverlay_ = null;
+                    redraw = true;
                 }
 
                 if (hoverOverlay != null) {
                     selectedOverlay_ = hoverOverlay;
                     selectedOverlay_.IsSelected = true;
-                    selectedOverlay_.MouseClicked(e);
+                    redraw = true;
                 }
+            }
 
+            // Send click event to selected overlay.
+            if (selectedOverlay_ != null) {
+                if (selectedOverlay_.MouseClicked(e)) {
+                    redraw = true;
+                }
+            }
+
+            if(redraw) {
                 TextView.Redraw();
             }
         }
