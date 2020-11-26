@@ -1000,6 +1000,10 @@ namespace IRExplorerUI {
                 e.Handled = EditBookmarkText(margin_.SelectedBookmark, e.Key);
                 return;
             }
+            else {
+                // Notify overlay layer in case there is a selected overlay visual.
+                overlayRenderer_?.KeyPressed(e);
+            }
 
             switch (e.Key) {
                 case Key.Return: {
@@ -3283,6 +3287,8 @@ namespace IRExplorerUI {
                 temp.ShowToolTipOnMouseOverOnly = true;
                 temp.UseToolTipBackground = true;
                 temp.DefaultOpacity = 0.6;
+                temp.AllowToolTipEditing = true;
+                // pinning
                 temp.Padding = 1;
                 overlayRenderer_.AddElementOverlay(element, temp);
             }

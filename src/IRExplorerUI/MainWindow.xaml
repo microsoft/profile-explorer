@@ -173,6 +173,7 @@
         </Grid.RowDefinitions>
         <Border
             Grid.Row="0"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
             BorderBrush="{DynamicResource {x:Static SystemColors.ScrollBarBrushKey}}"
             BorderThickness="0,0,0,1">
             <Grid>
@@ -325,6 +326,7 @@
 
                 <StackPanel
                     Grid.Column="1"
+                    Margin="20,0,0,0"
                     HorizontalAlignment="Left"
                     Orientation="Horizontal">
                     <Border
@@ -336,7 +338,7 @@
                                 x:Name="DiffModeButton"
                                 Padding="2,1,2,1"
                                 VerticalAlignment="Center"
-                                Background="#FFFAF4B7"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                 BorderBrush="{x:Null}"
                                 Checked="ToggleButton_Checked"
                                 FontSize="11"

@@ -1155,17 +1155,19 @@ namespace IRExplorerUI {
                 }
 
                 var sections = section.ParentFunction.Sections;
-                var result = await searcher.SearchAsync(searchInfo.SearchedText, searchInfo.SearchKind, sections);
+                var results = await searcher.SearchAsync(searchInfo.SearchedText, searchInfo.SearchKind, sections);
 
                 var panelInfo = FindTargetPanel(document, ToolPanelKind.SearchResults);
                 var searchPanel = panelInfo.Panel as SearchResultsPanel;
-                searchPanel.UpdateSearchResults(result, searchInfo);
+                searchPanel.UpdateSearchResults(results, searchInfo);
 
-                if (result.Count > 0) {
+                if (results.Count > 0) {
                     panelInfo.Host.IsSelected = true;
                 }
 
-                return result.Find(item => item.Section == section);
+                // Return the results for the section that started the searc, if any.
+                var sectionResult = results.Find(item => item.Section == section);
+                return sectionResult ?? new SectionSearchResult(section);
             }
 
             // In diff mode, use the diff text being displayed, which may be different

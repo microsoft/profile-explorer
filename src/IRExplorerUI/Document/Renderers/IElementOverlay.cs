@@ -21,8 +21,8 @@ namespace IRExplorerUI.Document {
         void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
 
         bool CheckIsMouseOver(Point point);
-        void MouseClicked(MouseEventArgs e);
-        void KeyPressed(KeyEventArgs e);
+        bool MouseClicked(MouseEventArgs e);
+        bool KeyPressed(KeyEventArgs e);
 
         // event EventHandler OnHover;
         event MouseEventHandler OnClick;
@@ -57,6 +57,7 @@ namespace IRExplorerUI.Document {
         public bool ShowToolTipOnMouseOverOnly { get; set; }
         public bool UseToolTipBackground { get; set; }
         public bool AllowToolTipEditing { get; set; }
+        public bool IsToolTipPinned { get; set; }
         public double DefaultOpacity { get; set; }
         public double MouseOverOpacity { get; set; }
         public bool IsMouseOver { get; set; }
@@ -72,7 +73,8 @@ namespace IRExplorerUI.Document {
         protected double ActualWidth => Width + 2 * Padding;
         protected double ActualHeight => Height + 2 * Padding;
         protected virtual bool ShowToolTip => !string.IsNullOrEmpty(ToolTip) &&
-                                             (!ShowToolTipOnMouseOverOnly || IsMouseOver || IsSelected);
+                                             (!ShowToolTipOnMouseOverOnly || 
+                                              IsToolTipPinned || IsMouseOver || IsSelected);
         protected virtual bool ShowBackground => !ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected;
 
         public abstract void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
@@ -150,12 +152,54 @@ namespace IRExplorerUI.Document {
             return IsMouseOver;
         }
 
-        public virtual void MouseClicked(MouseEventArgs e) {
+        public virtual bool MouseClicked(MouseEventArgs e) {
             OnClick?.Invoke(this, e);
+            return e.Handled;
         }
 
-        public virtual void KeyPressed(KeyEventArgs e) {
+        public virtual bool KeyPressed(KeyEventArgs e) {
             OnKeyPress?.Invoke(this, e);
+
+            if (!AllowToolTipEditing || !IsSelected) {
+                return e.Handled;
+            }
+
+            var keyInfo = Utils.KeyToChar(e.Key);
+
+            if (keyInfo.IsLetter) {
+                // Append a new letter.
+                string keyString = keyInfo.Letter.ToString();
+
+                if (string.IsNullOrEmpty(ToolTip)) {
+                    ToolTip = keyString;
+                }
+                else {
+                    ToolTip += keyString;
+                }
+
+                return true;
+            }
+            else if (e.Key == Key.Back) {
+                // Remove last letter.
+                if (!string.IsNullOrEmpty(ToolTip)) {
+                    ToolTip = ToolTip.Substring(0, ToolTip.Length - 1);
+                    return true;
+                }
+            }
+            else if (e.Key == Key.Delete) {
+                ToolTip = null; // Delete all text.
+                return true;
+            }
+            else if(e.Key == Key.Enter) {
+                IsToolTipPinned = true;
+                return true;
+            }
+            else if (e.Key == Key.Escape) {
+                IsToolTipPinned = false;
+                return true;
+            }
+
+            return e.Handled;
         }
     }
 }
