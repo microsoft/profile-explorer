@@ -28,7 +28,8 @@ maxiter=4;
 mclimit=2;
 nslimit=2;
         ";
-        private static readonly string HugeGraphSettings = @"
+
+        private const string HugeGraphSettings = @"
 maxiter=2;
 mclimit=1;
 nslimit=1;
@@ -76,12 +77,8 @@ nslimit=1;
             int elements = Math.Max(edgeCount, nodeCount);
 
             if (elements > LargeGraphThresholdMin) {
-                if (elements < LargeGraphThresholdMax) {
-                    return $"{text}{LargeGraphSettings}";
-                }
-                else {
-                    return $"{text}{HugeGraphSettings}";
-                }
+                return elements < LargeGraphThresholdMax ? 
+                    $"{text}{LargeGraphSettings}" : $"{text}{HugeGraphSettings}";
             }
 
             return text;

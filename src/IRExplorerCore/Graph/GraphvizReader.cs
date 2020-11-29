@@ -10,7 +10,7 @@ using IRExplorerCore.Lexer;
 
 namespace IRExplorerCore.Graph {
     public sealed class GraphvizReader {
-        private static Dictionary<string, Keyword> keywordMap_ =
+        private static readonly Dictionary<string, Keyword> keywordMap_ =
             new Dictionary<string, Keyword> {
                 {"graph", Keyword.Graph},
                 {"node", Keyword.Node},
@@ -18,20 +18,18 @@ namespace IRExplorerCore.Graph {
                 {"stop", Keyword.Stop}
             };
 
-        private Dictionary<string, Node> nodeMap_;
-        private Dictionary<string, TaggedObject> dataNameMap_;
+        private readonly Dictionary<string, Node> nodeMap_;
+        private readonly Dictionary<string, TaggedObject> dataNameMap_;
         private Token current_;
         private Graph graph_;
 
         private GraphKind graphKind_;
         private Lexer.Lexer lexer_;
-        private string sourceText_;
 
         public GraphvizReader(GraphKind kind, string text,
                               Dictionary<string, TaggedObject> dataNameMap) {
             graphKind_ = kind;
             dataNameMap_ = dataNameMap;
-            sourceText_ = text;
 
             nodeMap_ = new Dictionary<string, Node>();
             lexer_ = new Lexer.Lexer(text);

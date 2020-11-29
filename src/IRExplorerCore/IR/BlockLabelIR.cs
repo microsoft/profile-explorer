@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using IRExplorerCore.Utilities;
 using System;
 
 namespace IRExplorerCore.IR {
@@ -21,11 +20,15 @@ namespace IRExplorerCore.IR {
         }
 
         public override bool Equals(object obj) {
-            return obj is BlockLabelIR iR && base.Equals(obj) && Name.Equals(iR.Name);
+            return ReferenceEquals(this, obj) || obj is BlockLabelIR other && Equals(other);
         }
 
+        private bool Equals(BlockLabelIR other) {
+            return base.Equals(other) && label_.Equals(other.label_);
+        }
+        
         public override int GetHashCode() {
-            return HashCode.Combine(base.GetHashCode(), Name);
+            return HashCode.Combine(base.GetHashCode(), label_);
         }
 
         public override string ToString() {

@@ -78,20 +78,19 @@ namespace IRExplorerCore.Graph {
             var noGroupNodes = new List<Tuple<IRElement, IRElement, string>>();
 
             foreach (var node in nodes_) {
-                if (node.Item1 is TupleIR tuple) {
-                    AddNodeToGroup(node, tuple, blockGroups);
-                    AddElementToGroupMap(node.Item1, tuple);
-                    continue;
-                }
-                else if (node.Item1 is OperandIR) {
-                    if (node.Item2 is TupleIR parentTuple) {
+                switch (node.Item1) {
+                    case TupleIR tuple:
+                        AddNodeToGroup(node, tuple, blockGroups);
+                        AddElementToGroupMap(node.Item1, tuple);
+                        break;
+                    case OperandIR _ when node.Item2 is TupleIR parentTuple:
                         AddNodeToGroup(node, parentTuple, blockGroups);
                         AddElementToGroupMap(node.Item1, parentTuple);
-                        continue;
-                    }
+                        break;
+                    default:
+                        noGroupNodes.Add(node);
+                        break;
                 }
-
-                noGroupNodes.Add(node);
             }
 
             foreach (var (_, tuples) in blockGroups) {
@@ -140,6 +139,7 @@ namespace IRExplorerCore.Graph {
         }
 
         private void PrintNode(IRElement element, string label) {
+            // Numbers picked by trial and error for graph to look good...
             double verticalMargin = 0.055;
             double horizontalMargin = Math.Min(Math.Max(0.1, label.Length * 0.03), 1.0);
 
@@ -182,63 +182,65 @@ namespace IRExplorerCore.Graph {
                 element = SkipAllCopies(element);
             }
 
-            if (element is OperandIR op) {
-                var defElement = refFinder.FindDefinition(op);
+            switch (element) {
+                case OperandIR op: {
+                    var defElement = refFinder.FindDefinition(op);
 
-                if (defElement != null) {
-                    if (defElement is OperandIR defOp) {
-                        if (defOp.Role == OperandRole.Parameter) {
-                            string label = GetOperandLabel(defOp);
-                            CreateNode(defOp, parent, label);
-                            visitedElements_[element] = defOp;
-                            return defOp;
+                    if (defElement != null) {
+                        if (defElement is OperandIR defOp) {
+                            if (defOp.Role == OperandRole.Parameter) {
+                                string label = GetOperandLabel(defOp);
+                                CreateNode(defOp, parent, label);
+                                visitedElements_[element] = defOp;
+                                return defOp;
+                            }
+                        }
+
+                        var result = PrintExpression(defElement.ParentTuple, op, level, refFinder);
+                        visitedElements_[element] = result;
+                        return result;
+                    }
+                    else if (op.IsIntConstant) {
+                        CreateNode(op, parent, op.IntValue.ToString(CultureInfo.InvariantCulture));
+                    }
+                    else if (op.IsFloatConstant) {
+                        CreateNode(op, parent, op.FloatValue.ToString(CultureInfo.InvariantCulture));
+                    }
+                    else {
+                        string label = GetOperandLabel(op);
+                        CreateNode(op, parent, label);
+                    }
+
+                    visitedElements_[element] = op;
+                    return op;
+                }
+                case InstructionIR instr: {
+                    string label = GetInstructionLabel(instr);
+                    CreateNode(instr, parent, label);
+                    visitedElements_[element] = instr;
+
+                    if (level >= options_.MaxExpressionDepth) {
+                        return instr;
+                    }
+
+                    foreach (var sourceOp in instr.Sources) {
+                        var result = PrintExpression(sourceOp, instr, level + 1, refFinder);
+                        ConnectChildNode(instr, result);
+                    }
+
+                    foreach (var destOp in instr.Destinations) {
+                        if (destOp.IsIndirection) {
+                            var result = PrintExpression(destOp, instr, level + 1, refFinder);
+                            ConnectChildNode(instr, result);
                         }
                     }
 
-                    var result = PrintExpression(defElement.ParentTuple, op, level, refFinder);
-                    visitedElements_[element] = result;
-                    return result;
-                }
-                else if (op.IsIntConstant) {
-                    CreateNode(op, parent, op.IntValue.ToString(CultureInfo.InvariantCulture));
-                }
-                else if (op.IsFloatConstant) {
-                    CreateNode(op, parent, op.FloatValue.ToString(CultureInfo.InvariantCulture));
-                }
-                else {
-                    string label = GetOperandLabel(op);
-                    CreateNode(op, parent, label);
-                }
-
-                visitedElements_[element] = op;
-                return op;
-            }
-            else if (element is InstructionIR instr) {
-                string label = GetInstructionLabel(instr);
-                CreateNode(instr, parent, label);
-                visitedElements_[element] = instr;
-
-                if (level >= options_.MaxExpressionDepth) {
                     return instr;
                 }
-
-                foreach (var sourceOp in instr.Sources) {
-                    var result = PrintExpression(sourceOp, instr, level + 1, refFinder);
-                    ConnectChildNode(instr, result);
-                }
-
-                foreach (var destOp in instr.Destinations) {
-                    if (destOp.IsIndirection) {
-                        var result = PrintExpression(destOp, instr, level + 1, refFinder);
-                        ConnectChildNode(instr, result);
-                    }
-                }
-
-                return instr;
-            }
-            else {
-                // Use the element text.
-                CreateNode(element, parent, "<Undefined>");
+                default:
+                    // Use the element text.
+                    CreateNode(element, parent, "<Undefined>");
+                    break;
             }
 
             visitedElements_[element] = element;
@@ -300,12 +302,9 @@ namespace IRExplorerCore.Graph {
                 }
 
                 if (!string.IsNullOrEmpty(variableName)) {
-                    if (!string.IsNullOrEmpty(ssaNumber)) {
-                        return $"{variableName}<{ssaNumber}> = {label}";
-                    }
-                    else {
-                        return $"{variableName} = {label}";
-                    }
+                    return !string.IsNullOrEmpty(ssaNumber) ? 
+                        $"{variableName}<{ssaNumber}> = {label}" : 
+                        $"{variableName} = {label}";
                 }
                 else if (!string.IsNullOrEmpty(ssaNumber)) {
                     return $"<{ssaNumber}> = {label}";

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.Serialization.Formatters.Binary;
@@ -27,14 +28,13 @@ namespace IRExplorerCore {
         }
 
         public static byte[] Decompress(byte[] data) {
-            byte[] decompressedBytes;
             var compressedStream = new MemoryStream(data);
             using var decompressorStream = new BrotliStream(compressedStream, CompressionMode.Decompress);
 
             // The compression ratio is about 5x, preallocate this much.
             using var decompressedStream = new MemoryStream(data.Length * 5);
             decompressorStream.CopyTo(decompressedStream);
-            decompressedBytes = decompressedStream.ToArray();
+            byte[] decompressedBytes = decompressedStream.ToArray();
             return decompressedBytes;
         }
 
@@ -49,7 +49,8 @@ namespace IRExplorerCore {
 
         public static string CreateMD5String(byte[] data) {
             var hash = CreateMD5(data);
-            return BitConverter.ToString(hash).Replace("-", string.Empty).ToLower();
+            return BitConverter.ToString(hash).Replace("-", string.Empty, StringComparison.Ordinal).
+                ToLowerInvariant();
         }
 
         public static string CreateMD5String(string text) {

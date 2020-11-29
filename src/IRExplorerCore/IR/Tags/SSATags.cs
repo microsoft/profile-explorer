@@ -46,7 +46,7 @@ namespace IRExplorerCore.IR {
     }
 
     public sealed class SSADefinitionTag : ITag, ISSAValue {
-        public List<SSAUseTag> Users;
+        public List<SSAUseTag> Users { get; }
 
         public SSADefinitionTag(int defId) {
             DefinitionId = defId;

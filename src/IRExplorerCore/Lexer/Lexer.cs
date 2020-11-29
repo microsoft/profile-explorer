@@ -289,7 +289,7 @@ namespace IRExplorerCore.Lexer {
                         return MakeToken(TokenKind.Percent);
                     }
                     case '#': {
-                        //? TODO: Add as custom commnent char
+                        //? TODO: Add as custom comment char
                         return MakeToken(TokenKind.Hash);
                     }
                 }
@@ -299,11 +299,8 @@ namespace IRExplorerCore.Lexer {
         }
 
         public Token NextToken() {
-            if (returnedTokens_.Count > 0) {
-                return returnedTokens_.Pop();
-            }
-
-            return ScanToken();
+            return returnedTokens_.Count > 0 ? 
+                   returnedTokens_.Pop() : ScanToken();
         }
 
         public void ReturnToken(Token token) {
