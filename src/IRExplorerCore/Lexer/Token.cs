@@ -127,5 +127,31 @@ namespace IRExplorerCore.Lexer {
 
             return text;
         }
+        
+        public bool Equals(Token other)
+        {
+            return Kind == other.Kind && Location.Equals(other.Location) && Length == other.Length;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Token other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine((int) Kind, Location, Length);
+        }
+
+        public static bool operator ==(Token left, Token right)
+        {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(Token left, Token right)
+        {
+            return !left.Equals(right);
+        }
+
     }
 }

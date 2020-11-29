@@ -7,7 +7,7 @@ using System.Text;
 
 namespace IRExplorerCore.IR {
     public class TaggedObject {
-        public List<ITag> Tags { get; set; }
+        public List<ITag> Tags { get; protected set; }
 
         public void AddTag(ITag tag) {
             Tags ??= new List<ITag>();

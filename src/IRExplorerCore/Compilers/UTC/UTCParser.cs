@@ -94,7 +94,7 @@ namespace IRExplorerCore.UTC {
                 {"In", Keyword.In},
                 {"Out", Keyword.Out},
 
-                // Type keywoards.
+                // Type keywords.
                 {"i8", Keyword.Int8},
                 {"i16", Keyword.Int16},
                 {"i32", Keyword.Int32},
@@ -348,65 +348,67 @@ namespace IRExplorerCore.UTC {
 
         private void ParseMetadata(IRElement element, Dictionary<long, IRElement> addressMap) {
             // Metadata starts with /// followed by irx:metadata_type
-            if (TokenIs(TokenKind.Div) &&
-                NextTokenIs(TokenKind.Div) &&
-                NextAfterTokenIs(TokenKind.Div)) {
-                if (!SkipToAnyKeyword(Keyword.Irx)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                SkipToken();
-
-                if (!ExpectAndSkipToken(TokenKind.Colon)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                if (!ExpectAndSkipKeyword(Keyword.Address)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                // Parse instr. address.
-                var addressList = new List<long>();
-                ParseAddressList(addressList);
-
-                if (addressList.Count > 0) {
-                    SetElementAddress(element, addressList[0], addressMap);
-                }
-
-                if (!(element is InstructionIR instr)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                // Parse destination list address.
-                ParseAddressList(addressList);
-
-                for (int i = 0; i < instr.Destinations.Count; i++) {
-                    if (i < addressList.Count) {
-                        SetElementAddress(instr.Destinations[i], addressList[i], addressMap);
-                    }
-                    else {
-                        break;
-                    }
-                }
-
-                // Parse source list address.
-                ParseAddressList(addressList);
-
-                for (int i = 0; i < instr.Sources.Count; i++) {
-                    if (i < addressList.Count) {
-                        SetElementAddress(instr.Sources[i], addressList[i], addressMap);
-                    }
-                    else {
-                        break;
-                    }
-                }
-
-                SkipToLineStart();
+            if (!TokenIs(TokenKind.Div) || 
+                !NextTokenIs(TokenKind.Div) || 
+                !NextAfterTokenIs(TokenKind.Div)) {
+                return;
             }
+
+            if (!SkipToAnyKeyword(Keyword.Irx)) {
+                SkipToLineStart();
+                return;
+            }
+
+            SkipToken();
+
+            if (!ExpectAndSkipToken(TokenKind.Colon)) {
+                SkipToLineStart();
+                return;
+            }
+
+            if (!ExpectAndSkipKeyword(Keyword.Address)) {
+                SkipToLineStart();
+                return;
+            }
+
+            // Parse instr. address.
+            var addressList = new List<long>();
+            ParseAddressList(addressList);
+
+            if (addressList.Count > 0) {
+                SetElementAddress(element, addressList[0], addressMap);
+            }
+
+            if (!(element is InstructionIR instr)) {
+                SkipToLineStart();
+                return;
+            }
+
+            // Parse destination list address.
+            ParseAddressList(addressList);
+
+            for (int i = 0; i < instr.Destinations.Count; i++) {
+                if (i < addressList.Count) {
+                    SetElementAddress(instr.Destinations[i], addressList[i], addressMap);
+                }
+                else {
+                    break;
+                }
+            }
+
+            // Parse source list address.
+            ParseAddressList(addressList);
+
+            for (int i = 0; i < instr.Sources.Count; i++) {
+                if (i < addressList.Count) {
+                    SetElementAddress(instr.Sources[i], addressList[i], addressMap);
+                }
+                else {
+                    break;
+                }
+            }
+
+            SkipToLineStart();
         }
 
         private BlockIR ParseBlock(FunctionIR function) {
@@ -652,7 +654,7 @@ namespace IRExplorerCore.UTC {
             // Look ahead in the token stream for = 
             bool isInstr = false;
 
-            lexer_.PeekTokenWhile((token) => {
+            lexer_.PeekTokenWhile(token => {
                 if (token.Kind == TokenKind.Equal) {
                     isInstr = true;
                     return false;
@@ -671,32 +673,34 @@ namespace IRExplorerCore.UTC {
             TryParseType(); // A type can also follow a PAS.
             SkipToLineStart(); // Ignore the rest of the line.
 
-            if (pasTag != null && parent.Tuples.Count > 0 &&
-                parent.Tuples[^1] is InstructionIR prevInstr) {
-                if (prevInstr.OpcodeIs(UTCOpcode.OPCALL) ||
-                    prevInstr.OpcodeIs(UTCOpcode.OPINTRINSIC)) {
-                    // For calls, attach directly to the instr
-                    if (!prevInstr.HasTag<PointsAtSetTag>()) {
-                        prevInstr.AddTag(pasTag);
+            if (pasTag == null || parent.Tuples.Count == 0 || 
+                !(parent.Tuples[^1] is InstructionIR prevInstr)) {
+                return true; // No instr. found before this.
+            }
+
+            if (prevInstr.OpcodeIs(UTCOpcode.OPCALL) ||
+                prevInstr.OpcodeIs(UTCOpcode.OPINTRINSIC)) {
+                // For calls, attach directly to the instr
+                if (!prevInstr.HasTag<PointsAtSetTag>()) {
+                    prevInstr.AddTag(pasTag);
+                    return true;
+                }
+            }
+            else {
+                // The tag is attached to the first INDIR operand
+                // that doesn't have yet a tag, starting with destination
+                // and continuing with source operands.
+                foreach (var destOp in prevInstr.Destinations) {
+                    if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
+                        destOp.AddTag(pasTag);
                         return true;
                     }
                 }
-                else {
-                    // The tag is attached to the first INDIR operand
-                    // that doesn't have yet a tag, starting with destination
-                    // and continuing with source operands.
-                    foreach (var destOp in prevInstr.Destinations) {
-                        if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
-                            destOp.AddTag(pasTag);
-                            return true;
-                        }
-                    }
 
-                    foreach (var sourceOp in prevInstr.Sources) {
-                        if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
-                            sourceOp.AddTag(pasTag);
-                            return true;
-                        }
+                foreach (var sourceOp in prevInstr.Sources) {
+                    if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
+                        sourceOp.AddTag(pasTag);
+                        return true;
                     }
                 }
             }
@@ -710,7 +714,7 @@ namespace IRExplorerCore.UTC {
             }
 
             SkipToken(); // PAS
-            SkipToken(); /// (
+            SkipToken(); // (
             PointsAtSetTag pasTag = null;
 
             if (IsNumber() && TokenIntNumber(out int pas)) {
@@ -827,10 +831,6 @@ namespace IRExplorerCore.UTC {
         private InstructionIR ParseInstruction(BlockIR parent) {
             // instr = [opList =] OPCODE [.type] opList
             var instr = new InstructionIR(nextElementId_, InstructionKind.Other, parent);
-
-            if (current_.Location.Line == 23) {
-                current_ = current_;
-            }
 
             // Some instrs. don't have a dest. list and start directly with the opcode.
             if (!IsOpcode() && !ParseOperandList(instr, true, instr.Destinations)) {
@@ -1016,8 +1016,10 @@ namespace IRExplorerCore.UTC {
                 SkipOperandFlags();
             }
 
-            var operand = new OperandIR(nextElementId_, OperandKind.Indirection, TypeIR.GetUnknown(), parent);
-            operand.Value = baseOp;
+            var operand = new OperandIR(nextElementId_, OperandKind.Indirection,
+                                        TypeIR.GetUnknown(), parent) {
+                Value = baseOp
+            };
             SetTextRange(operand, startToken);
 
             // Parse type and other attributes.
@@ -1108,8 +1110,9 @@ namespace IRExplorerCore.UTC {
             }
 
             var type = TryParseType();
-            var operand = new OperandIR(nextElementId_, opKind, type, parent);
-            operand.Value = opValue;
+            var operand = new OperandIR(nextElementId_, opKind, type, parent) {
+                Value = opValue
+            };
             SetTextRange(operand, startToken);
             return operand;
         }
@@ -1222,8 +1225,9 @@ namespace IRExplorerCore.UTC {
                 ParseSpecialName(arrowLevel);
             }
 
-            var operand = new OperandIR(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
-            operand.Value = opName;
+            var operand = new OperandIR(nextElementId_, opKind, TypeIR.GetUnknown(), parent) {
+                Value = opName
+            };
             SetTextRange(operand, startToken);
 
             // Parse type and other attributes.
@@ -1253,10 +1257,8 @@ namespace IRExplorerCore.UTC {
                     SkipToken();
 
                     if (IsNumber()) {
-                        long offset;
-                        if (TokenLongIntNumber(out offset)) {
-                            var offsetTag = new SymbolOffsetTag(offset);
-                            offsetTag.Owner = operand;
+                        if (TokenLongIntNumber(out long offset)) {
+                            var offsetTag = new SymbolOffsetTag(offset) {Owner = operand};
                             operand.AddTag(offsetTag);
                         }
 
@@ -1341,8 +1343,7 @@ namespace IRExplorerCore.UTC {
                 else {
                     // Create a use-def link for the source,
                     // and add it as an user of the definition.
-                    var ssaUDLinkTag = new SSAUseTag(defNumber, ssaDefTag);
-                    ssaUDLinkTag.Owner = parent;
+                    var ssaUDLinkTag = new SSAUseTag(defNumber, ssaDefTag) {Owner = parent};
                     ssaDefTag.Users.Add(ssaUDLinkTag);
                     tag = ssaUDLinkTag;
                 }

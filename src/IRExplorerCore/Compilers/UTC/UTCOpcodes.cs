@@ -180,7 +180,7 @@ namespace IRExplorerCore.UTC {
     }
 
     public static class UTCOpcodes {
-        private static Dictionary<string, UTCOpcodeInfo> opcodes_ =
+        private static readonly Dictionary<string, UTCOpcodeInfo> opcodes_ =
             new Dictionary<string, UTCOpcodeInfo> {
                 {"OPARG", new UTCOpcodeInfo(UTCOpcode.OPARG, InstructionKind.Unary)},
                 {"OPASSIGN", new UTCOpcodeInfo(UTCOpcode.OPASSIGN, InstructionKind.Unary)}, {

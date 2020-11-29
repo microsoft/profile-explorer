@@ -95,7 +95,7 @@ namespace IRExplorerCore.UTC {
 
         private long FindSymbolOffset(OperandIR op) {
             var offsetTag = op.GetTag<SymbolOffsetTag>();
-            return offsetTag != null ? offsetTag.Offset : 0;
+            return offsetTag?.Offset ?? 0;
         }
 
         public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck) {
