@@ -332,7 +332,8 @@ namespace IRExplorerUI {
                 }
 
                 if (debugFunction_ == null || funcName != debugFunction_.Name) {
-                    debugFunction_ = new IRTextFunction(funcName);
+                    int funcNumer = sessionState_.MainDocument.Summary.Functions.Count;
+                    debugFunction_ = new IRTextFunction(funcName, funcNumer);
                     previousDebugSection_ = null;
                     debugSectionId_ = 0;
                     debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();

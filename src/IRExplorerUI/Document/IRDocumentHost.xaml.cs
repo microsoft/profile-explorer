@@ -579,6 +579,8 @@ namespace IRExplorerUI {
                 HideSearchPanel();
             }
 
+            // Cancel any running tasks and hide panels.
+            loadTask_.CanceTask();
             await HideRemarkPanel();
             HideActionPanel();
             SaveSectionState(section);
@@ -681,18 +683,32 @@ namespace IRExplorerUI {
 
         private async Task ReloadRemarks() {
             await RemoveRemarks();
-            remarkList_ = await FindRemarks();
+
+            // Loading remarks can take several seconds for very large functions,
+            // this makes it possible to cancel the work if section switches.
+            using var cancelableTask = loadTask_.CreateTask();
+            remarkList_ = await FindRemarks(cancelableTask);
+
+            if(cancelableTask.IsCanceled) {
+                return;
+            }
+
             await AddRemarks(remarkList_);
         }
 
-        private async Task<List<Remark>> FindRemarks() {
+        CancelableTaskInstance loadTask_ = new CancelableTaskInstance();
+
+        private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
+
             return await Task.Run(() => {
                 var sections = remarkProvider.GetSectionList(Section, remarkSettings_.SectionHistoryDepth,
                                                              remarkSettings_.StopAtSectionBoundaries);
                 var document = Session.SessionState.FindLoadedDocument(Section);
                 var options = new RemarkProviderOptions();
-                return remarkProvider.ExtractAllRemarks(sections, Function, document, options);
+                var results = remarkProvider.ExtractAllRemarks(sections, Function, document, options, cancelableTask);
+                loadTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
+                return results;
             });
         }
 

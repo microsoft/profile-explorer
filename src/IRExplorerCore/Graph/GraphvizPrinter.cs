@@ -161,8 +161,6 @@ namespace IRExplorerCore.Graph {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: Failed writing GraphViz input file: {ex}");
-
-                task.Completed();
                 return null;
             }
 
@@ -196,7 +194,6 @@ namespace IRExplorerCore.Graph {
 
                         process.CancelOutputRead();
                         process.Kill();
-                        task.Completed();
                         return null;
                     }
                 } while (!process.HasExited);
@@ -206,15 +203,11 @@ namespace IRExplorerCore.Graph {
                 if (process.ExitCode != 0) {
                     // dot failed somehow, treat it as an error.
                     Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: GraphViz failed with error code: {process.ExitCode}");
-
-                    task.Completed();
                     return null;
                 }
             }
             catch (Exception ex) {
                 Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: Failed running GraphViz: {ex}");
-
-                task.Completed();
                 return null;
             }
 
@@ -225,7 +218,6 @@ namespace IRExplorerCore.Graph {
             }
             catch (Exception) { }
 #endif
-            task.Completed();
             Trace.TraceInformation($"Graphviz task {ObjectTracker.Track(task)}: Completed");
             return outputText.ToString();
         }

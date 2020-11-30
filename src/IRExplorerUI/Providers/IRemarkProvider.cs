@@ -41,14 +41,16 @@ namespace IRExplorerUI {
         List<RemarkTextHighlighting> RemarkTextHighlighting { get; }
 
         List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries);
-        List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document,
-                                       RemarkProviderOptions options);
 
-        //? TODO: Should use a CancelableTaskInfo to support fast canceling when section switches
+        List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function, LoadedDocument document,
+                                       RemarkProviderOptions options, CancelableTask cancelableTask);
+
         List<Remark> ExtractRemarks(string text, FunctionIR function,
-                                    IRTextSection section, RemarkProviderOptions options);
+                                    IRTextSection section, RemarkProviderOptions options,
+                                    CancelableTask cancelableTask);
         List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function, 
-                                    IRTextSection section, RemarkProviderOptions options);
+                                    IRTextSection section, RemarkProviderOptions options, 
+                                    CancelableTask cancelableTask);
         OptimizationRemark GetOptimizationRemarkInfo(Remark remark);
     }
 }
