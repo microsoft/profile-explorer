@@ -25,6 +25,10 @@ namespace IRExplorerCore.IR {
     }
 
     public sealed class OperandIR : IRElement {
+        public OperandIR() {
+            // Used by object pool allocation only.
+        }
+
         public OperandIR(IRElementId elementId, OperandKind kind, TypeIR type, TupleIR parent)
             : base(elementId.NextOperand()) {
             Kind = kind;
@@ -43,6 +47,9 @@ namespace IRExplorerCore.IR {
 
         public TypeIR Type { get; set; }
         public TupleIR Parent { get; set; }
+
+        //? TODO: Boxing (allocating heap value) can be avoided to reduce GC pressure:
+        //? https://stackoverflow.com/questions/6163335/how-to-store-structs-of-different-types-without-boxing
         public object Value { get; set; }
 
         public bool IsVariable => Kind == OperandKind.Variable;

@@ -5,6 +5,10 @@ using System;
 
 namespace IRExplorerCore.IR {
     public class IRElement : TaggedObject {
+        public IRElement() {
+            // Used by object pool allocation only.
+        }
+
         public IRElement(IRElementId elementId) {
             Id = elementId;
             TextLocation = default;

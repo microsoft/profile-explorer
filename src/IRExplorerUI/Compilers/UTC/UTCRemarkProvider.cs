@@ -274,6 +274,9 @@ namespace IRExplorerUI.UTC {
                             index += instr.TextLength;
                             continue;
                         }
+                        else {
+                            //? return pool
+                        }
                     }
 
                     index++;
@@ -296,6 +299,7 @@ namespace IRExplorerUI.UTC {
                         var value = refFinder.FindEquivalentValue(op, true);
 
                         if (value == null) {
+                            parser.ReturnObject(op);
                             continue;
                         }
 
