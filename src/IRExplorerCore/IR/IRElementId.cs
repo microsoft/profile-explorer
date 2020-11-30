@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 namespace IRExplorerCore.IR {
-    public class IRElementId {
+    public struct IRElementId {
         public ushort BlockId;
         public ushort OperandId;
         public uint TupleId;

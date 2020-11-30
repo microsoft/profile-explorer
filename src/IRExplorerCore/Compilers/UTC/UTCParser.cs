@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#define USE_POOL
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -8,6 +10,8 @@ using System.Runtime.CompilerServices;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Lexer;
+using Microsoft.Extensions.ObjectPool;
+
 
 namespace IRExplorerCore.UTC {
     enum Keyword {
@@ -87,6 +91,37 @@ namespace IRExplorerCore.UTC {
 
         public void SkipToNextBlock() {
             throw new NotImplementedException();
+        }
+    }
+
+    public class IRObjectPool<T> where T:class,new() {
+        T[] items_;
+        int count_;
+
+        public IRObjectPool(int maxItems) {
+            items_ = new T[maxItems];
+            count_ = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Get() {
+            if(count_ > 0) {
+                int index = count_ - 1;
+                var item = items_[index];
+                items_[index] = null;
+                count_ = index;
+                return item;
+            }
+
+            return new T();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Return(T item) {
+            if(count_ < items_.Length) {
+                items_[count_] = item;
+                count_++;
+            }
         }
     }
 
@@ -205,6 +240,42 @@ namespace IRExplorerCore.UTC {
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
             elementAddressMap_ = new Dictionary<long, IRElement>();
             lexer_ = new Lexer.Lexer();
+            operandPool_ = new IRObjectPool<OperandIR>(64);
+        }
+
+        //? TODO: Move to a base class that supports pooling.
+        //? TODO: Extend pooling to cover most IR types
+        private IRObjectPool<OperandIR> operandPool_;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ReturnObject(OperandIR op) {
+#if USE_POOL
+            op.Tags = null;
+            op.Value = null;
+            op.Parent = null;
+            operandPool_.Return(op);
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private OperandIR CreateOperand(IRElementId elementId, OperandKind kind,
+                                        TypeIR type, TupleIR parent) {
+#if USE_POOL
+            var op = operandPool_.Get();
+            op.Id = elementId.NextOperand();
+            op.Kind = kind;
+            op.Type = type;
+            op.Parent = parent;
+            return op;
+#else
+            return new OperandIR(elementId, kind, type, parent);
+#endif
+        }
+
+        public UTCParser(string text, ParsingErrorHandler errorHandler,
+                         Dictionary<int, string> lineMetadata) : 
+            this(errorHandler, lineMetadata) {
+            Initialize(text);
         }
 
         public void Initialize(string text) {
@@ -966,7 +1037,7 @@ namespace IRExplorerCore.UTC {
                     var pasTag = ParsePointsAtSet();
                     TryParseType(); // A type can also follow a PAS.
 
-                    operand = new OperandIR(nextElementId_, OperandKind.Other,
+                    operand = CreateOperand(nextElementId_, OperandKind.Other,
                                             TypeIR.GetUnknown(), parent);
                     if (pasTag != null) {
                         operand.AddTag(pasTag);
@@ -1044,10 +1115,9 @@ namespace IRExplorerCore.UTC {
                 SkipOperandFlags();
             }
 
-            var operand = new OperandIR(nextElementId_, OperandKind.Indirection,
-                                        TypeIR.GetUnknown(), parent) {
-                Value = baseOp
-            };
+            var operand = CreateOperand(nextElementId_, OperandKind.Indirection,
+                                        TypeIR.GetUnknown(), parent);
+            operand.Value = baseOp;
             SetTextRange(operand, startToken);
 
             // Parse type and other attributes.
@@ -1138,9 +1208,8 @@ namespace IRExplorerCore.UTC {
             }
 
             var type = TryParseType();
-            var operand = new OperandIR(nextElementId_, opKind, type, parent) {
-                Value = opValue
-            };
+            var operand = CreateOperand(nextElementId_, opKind, type, parent);
+            operand.Value = opValue;
             SetTextRange(operand, startToken);
             return operand;
         }
@@ -1253,9 +1322,8 @@ namespace IRExplorerCore.UTC {
                 ParseSpecialName(arrowLevel);
             }
 
-            var operand = new OperandIR(nextElementId_, opKind, TypeIR.GetUnknown(), parent) {
-                Value = opName
-            };
+            var operand = CreateOperand(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
+            operand.Value = opName;
             SetTextRange(operand, startToken);
 
             // Parse type and other attributes.

@@ -9,7 +9,8 @@ namespace IRExplorerCoreTests {
     public class LexerTests {
         [TestMethod]
         public void BasicTest() {
-            Lexer lexer = new Lexer("abc 123 xyz abc123_");
+            Lexer lexer = new Lexer();
+            lexer.Initialize("abc 123 xyz abc123_");
             Assert.AreEqual(lexer.NextToken().Kind, TokenKind.Identifier);
         }
     }
