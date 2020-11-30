@@ -18,6 +18,8 @@ namespace IRExplorerCore.Graph {
                 {"stop", Keyword.Stop}
             };
 
+        private static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
+
         private readonly Dictionary<string, Node> nodeMap_;
         private readonly Dictionary<string, TaggedObject> dataNameMap_;
         private Token current_;
@@ -32,7 +34,8 @@ namespace IRExplorerCore.Graph {
             dataNameMap_ = dataNameMap;
 
             nodeMap_ = new Dictionary<string, Node>();
-            lexer_ = new Lexer.Lexer(text);
+            lexer_ = new Lexer.Lexer();
+            lexer_.Initialize(text);
             current_ = lexer_.NextToken();
         }
 
@@ -41,10 +44,9 @@ namespace IRExplorerCore.Graph {
         }
 
         private Keyword TokenKeyword() {
-            if (current_.IsIdentifier()) {
-                if (keywordMap_.TryGetValue(TokenString(), out var keyword)) {
-                    return keyword;
-                }
+            if (current_.IsIdentifier() &&
+                keywordTrie_.TryGetValue(TokenData(), out var keyword)) {
+                return keyword;
             }
 
             return Keyword.None;

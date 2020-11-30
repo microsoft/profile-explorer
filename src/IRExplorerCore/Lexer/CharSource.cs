@@ -9,14 +9,20 @@ namespace IRExplorerCore.Lexer {
         public static readonly char EOF = '\0';
         public static readonly char NewLine = '\n';
 
-        public CharSource(string text) {
-            Text = text;
+        public void Initialize(ReadOnlyMemory<char> text) {
+            TextSpan = text;
             Position = 0;
         }
 
-        public string Text {
+        public void Initialize(string text) {
+            TextSpan = new ReadOnlyMemory<char>(text.ToCharArray());
+            Position = 0;
+        }
+
+        public ReadOnlyMemory<char> TextSpan {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get;
+            private set;
         }
 
         public int Position {
@@ -27,17 +33,18 @@ namespace IRExplorerCore.Lexer {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public char NextChar() {
-            if (Position >= Text.Length) {
+            if (Position >= TextSpan.Length) {
                 Position++;
                 return EOF;
             }
 
-            return Text[Position++];
+            return TextSpan.Span[Position++];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public char PeekChar() {
-            return Position >= Text.Length ? EOF : Text[Position];
+            return Position >= TextSpan.Length ? EOF :
+                               TextSpan.Span[Position];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,7 +61,7 @@ namespace IRExplorerCore.Lexer {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ReadOnlyMemory<char> Extract(int position, int length) {
-            return Text.AsMemory(position, length);
+            return TextSpan.Slice(position, length);
         }
     }
 }

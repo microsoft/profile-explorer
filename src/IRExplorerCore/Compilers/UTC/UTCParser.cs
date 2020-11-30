@@ -58,7 +58,14 @@ namespace IRExplorerCore.UTC {
         }
 
         public FunctionIR ParseSection(IRTextSection section, string sectionText) {
-            parser_ = new UTCParser(sectionText, errorHandler_, section?.LineMetadata);
+            parser_ = new UTCParser(errorHandler_, section?.LineMetadata);
+            parser_.Initialize(sectionText);
+            return parser_.Parse();
+        }
+
+        public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
+            parser_ = new UTCParser(errorHandler_, section?.LineMetadata);
+            parser_.Initialize(sectionText);
             return parser_.Parse();
         }
 
@@ -188,17 +195,37 @@ namespace IRExplorerCore.UTC {
         private IRElementId nextElementId_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
 
-        public UTCParser(string text, ParsingErrorHandler errorHandler,
+        public UTCParser(ParsingErrorHandler errorHandler,
                          Dictionary<int, string> lineMetadata) {
-            nextElementId_ = IRElementId.FromLong(0);
             errorHandler_ = errorHandler;
             lineMetadataMap_ = lineMetadata;
-            lexer_ = new Lexer.Lexer(text);
-            SkipToken(); // Get first token.
+            
             blockMap_ = new Dictionary<int, BlockIR>();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
             elementAddressMap_ = new Dictionary<long, IRElement>();
+            lexer_ = new Lexer.Lexer();
+        }
+
+        public void Initialize(string text) {
+            Reset();
+            lexer_.Initialize(text);
+            SkipToken(); // Get first token.
+        }
+
+        public void Initialize(ReadOnlyMemory<char> text) {
+            Reset();
+            lexer_.Initialize(text);
+            SkipToken(); // Get first token.
+        }
+
+        private void Reset() {
+            blockMap_.Clear();
+            labelMap_.Clear();
+            ssaDefinitionMap_.Clear();
+            elementAddressMap_.Clear();
+            nextBlockNumber = 0;
+            nextElementId_ = IRElementId.FromLong(0);
         }
 
         //? TODO: Handle SWITCH
@@ -341,7 +368,8 @@ namespace IRExplorerCore.UTC {
         private void ParseMetadata(IRElement element, int lineNumber) {
             if (lineMetadataMap_ != null &&
                 lineMetadataMap_.TryGetValue(lineNumber, out string metadata)) {
-                var metadataParser = new UTCParser(metadata, null, null);
+                var metadataParser = new UTCParser(null, null);
+                metadataParser.Initialize(metadata);
                 metadataParser.ParseMetadata(element, elementAddressMap_);
             }
         }
@@ -1438,7 +1466,7 @@ namespace IRExplorerCore.UTC {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsOpcode() {
-            return IsIdentifier() && UTCOpcodes.IsOpcode(TokenString());
+            return IsIdentifier() && UTCOpcodes.IsOpcode(TokenData());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -514,16 +514,22 @@ namespace IRExplorerCore.UTC {
                 }
             };
 
+        private static readonly StringTrie<UTCOpcodeInfo> opcodesTrie_ = new StringTrie<UTCOpcodeInfo>(opcodes_);
+
         public static bool GetOpcodeInfo(string value, out UTCOpcodeInfo info) {
             return opcodes_.TryGetValue(value, out info);
         }
 
         public static bool GetOpcodeInfo(ReadOnlyMemory<char> value, out UTCOpcodeInfo info) {
-            return opcodes_.TryGetValue(value.ToString(), out info);
+            return opcodesTrie_.TryGetValue(value, out info);
         }
 
         public static bool IsOpcode(string value) {
             return GetOpcodeInfo(value, out _);
+        }
+
+        public static bool IsOpcode(ReadOnlyMemory<char> value) {
+            return opcodesTrie_.Contains(value);
         }
     }
 }
