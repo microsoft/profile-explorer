@@ -433,9 +433,9 @@ namespace IRExplorerUI {
             await OpenDocumentSection(args, args.TargetDocument);
         }
 
-        private async Task<IRDocumentHost> OpenDocumentSection(OpenSectionEventArgs args,
-                                                                 IRDocumentHost targetDocument = null,
-                                                                 bool runExtraTasks = true) {
+        private async Task<IRDocumentHost> 
+        OpenDocumentSection(OpenSectionEventArgs args, IRDocumentHost targetDocument = null,
+                            bool runExtraTasks = true) {
             var document = targetDocument;
 
             if (document == null &&
@@ -458,21 +458,18 @@ namespace IRExplorerUI {
             }
 
             // In diff mode, reload both left/right sections and redo the diffs.
-            if (sessionState_.SectionDiffState.IsEnabled && sessionState_.SectionDiffState.IsDiffDocument(document)) {
+            if (sessionState_.SectionDiffState.IsEnabled &&
+                sessionState_.SectionDiffState.IsDiffDocument(document)) {
                 await SwitchDiffedDocumentSection(args.Section, document);
                 return document;
             }
 
-            var parsedSection = await SwitchSection(args.Section, document);
-
-            if (runExtraTasks) {
-                await GenerateGraphs(args.Section, document.TextView);
-            }
-
+            await SwitchSection(args.Section, document, runExtraTasks);
             return document;
         }
 
-        private async Task<ParsedIRTextSection> SwitchSection(IRTextSection section, IRDocumentHost document) {
+        private async Task<ParsedIRTextSection> 
+        SwitchSection(IRTextSection section, IRDocumentHost document, bool runExtraTasks) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(document)}: Switch to section ({section.Number}) {section.Name}");
 
@@ -497,11 +494,24 @@ namespace IRExplorerUI {
                 OptionalStatusText.Text = "";
             }
 
+            // Update UI to reflect new section before starting long-running tasks.
             document.LoadSectionMinimal(result);
             NotifyPanelsOfSectionLoad(section, document, true);
             SetupDocumentEvents(document);
-            await document.LoadSection(result);
+            UpdateUIAfterSectionSwitch(section, document);
 
+            // Load both the document and generate graphs in parallel,
+            // since both can be fairly time-consuming for huge functions.
+            Task graphTask = Task.CompletedTask;
+
+            if (runExtraTasks) {
+                graphTask = GenerateGraphs(section, document.TextView);
+            }
+
+            var documentTask = document.LoadSection(result);
+            await Task.WhenAll(documentTask, graphTask);
+
+            // Hide any UI that may show due to long-running tasks.
             UpdateUIAfterSectionLoad(section, document, delayedAction);
             return result;
         }
@@ -607,26 +617,20 @@ namespace IRExplorerUI {
             return parsedSection;
         }
 
-        private async void ReloadDocumentSection(IRDocumentHost document) {
-            if (document.Section != null) {
-                await SwitchSection(document.Section, document);
-            }
-        }
-
         private Graph ComputeFlowGraph(FunctionIR function, IRTextSection section,
-                                                         CancelableTask loadTask) {
+                                       CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.FlowGraph);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
         private Graph ComputeDominatorTree(FunctionIR function, IRTextSection section,
-                                                             CancelableTask loadTask) {
+                                           CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.DominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
         private Graph ComputePostDominatorTree(FunctionIR function, IRTextSection section,
-                                                                 CancelableTask loadTask) {
+                                               CancelableTask loadTask) {
             var graphLayout = GetGraphLayoutCache(GraphKind.PostDominatorTree);
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
@@ -678,24 +682,28 @@ namespace IRExplorerUI {
 
 
         private DelayedAction UpdateUIBeforeSectionLoad(IRTextSection section, IRDocumentHost document) {
-            document.Focusable = false;
-            document.IsHitTestVisible = false;
             var delayedAction = new DelayedAction();
-            delayedAction.Start(TimeSpan.FromMilliseconds(500), () => { document.Opacity = 0.5; });
+            //delayedAction.Start(TimeSpan.FromMilliseconds(500), () => { document.Opacity = 0.5; });
             return delayedAction;
         }
 
-        private void UpdateUIAfterSectionLoad(IRTextSection section, IRDocumentHost document,
-                                              DelayedAction delayedAction = null) {
-            delayedAction?.Cancel();
-            document.Opacity = 1;
-            document.Focusable = true;
-            document.IsHitTestVisible = true;
+        private void UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
+                                                DelayedAction delayedAction = null) {
             var docHostPair = FindDocumentHostPair(document);
             docHostPair.Host.Title = GetSectionName(section);
             docHostPair.Host.ToolTip = GetDocumentDescription(section);
             RenameAllPanels(); // For bound panels.
             SectionPanel.SelectSection(section, false);
+
+            if(delayedAction != null) {
+                UpdateUIAfterSectionLoad(section, document, delayedAction);
+            }
+        }
+
+        private void UpdateUIAfterSectionLoad(IRTextSection section, IRDocumentHost document,
+                                              DelayedAction delayedAction) {
+            delayedAction.Cancel();
+            //document.Opacity = 1;
         }
 
         private IRDocumentHost FindTargetDocument(IToolPanel panel) {

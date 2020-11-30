@@ -259,22 +259,29 @@ namespace IRExplorerUI {
                 }
 
                 loadTask_ = new CancelableTask();
+                Session.SessionState.RegisterCancelableTask(loadTask_);
                 return loadTask_;
             }
         }
 
         private void CancelGraphLoadTask() {
-            var canceledTask = loadTask_;
-            loadTask_ = null;
+            lock (lockObject_) {
+                if(loadTask_ == null) {
+                    return;
+                }
 
-            // Cancel the task and wait for it to complete without blocking.
-            canceledTask.Cancel();
-            Session.SessionState.UnregisterCancelableTask(canceledTask);
+                var canceledTask = loadTask_;
+                loadTask_ = null;
 
-            Task.Run(() => {
-                canceledTask.WaitToComplete();
-                canceledTask.Dispose();
-            });
+                // Cancel the task and wait for it to complete without blocking.
+                canceledTask.Cancel();
+                Session.SessionState.UnregisterCancelableTask(canceledTask);
+
+                Task.Run(() => {
+                    canceledTask.WaitToComplete();
+                    canceledTask.Dispose();
+                });
+            }
         }
 
         private void CompleteGraphLoadTask(CancelableTask task) {
