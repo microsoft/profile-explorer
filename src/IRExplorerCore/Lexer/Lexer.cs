@@ -13,12 +13,9 @@ namespace IRExplorerCore.Lexer {
         private Stack<Token> returnedTokens_; // Tokens returned back to lexer.
         private CharSource source_;   // The text being analyzed.
 
-        public Lexer(string text) {
-            source_ = new CharSource(text);
-            returnedTokens_ = new Stack<Token>(8);
-            current_ = source_.NextChar();
-            line_ = 0;
-            lineStart_ = 0;
+        public Lexer() {
+            source_ = new CharSource();
+            returnedTokens_ = new Stack<Token>(8);            
         }
 
         private void NextChar() {
@@ -296,6 +293,24 @@ namespace IRExplorerCore.Lexer {
 
                 letter = current_;
             }
+        }
+
+        private void Reset() {
+            returnedTokens_.Clear();
+            line_ = 0;
+            lineStart_ = 0;
+        }
+
+        public void Initialize(string text) {
+            Reset();
+            source_.Initialize(text);
+            current_ = source_.NextChar();
+        }
+
+        public void Initialize(ReadOnlyMemory<char> text) {
+            Reset();
+            source_.Initialize(text);
+            current_ = source_.NextChar();
         }
 
         public Token NextToken() {

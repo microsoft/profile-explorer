@@ -210,6 +210,8 @@ namespace IRExplorerUI.UTC {
             // the \r \n is needed to get the proper document offset.
             int newLineLength = Environment.NewLine.Length;
             int lineStartOffset = 0;
+            var lineParser = new UTCParser(null, null);
+            var parser = new UTCParser(null, null);
 
             //? TODO: For many lines, must be split in chunks and parallelized,
             //? it can take 5-7s even on 30-40k instruction functs, which is not that uncommon...
@@ -247,9 +249,7 @@ namespace IRExplorerUI.UTC {
                         break;
                     }
 
-                    //? TODO: This should use span to avoid allocations in Substring
-                    string lineChunk = line.Substring(index);
-                    var lineParser = new UTCParser(lineChunk, null, null);
+                    lineParser.Initialize(line.AsMemory(index));
                     var tuple = lineParser.ParseTuple(fakeBlock);
 
                     if (tuple is InstructionIR instr) {
@@ -287,7 +287,7 @@ namespace IRExplorerUI.UTC {
                     continue;
                 }
 
-                var parser = new UTCParser(line, null, null);
+                parser.Initialize(line);
 
                 while (!parser.IsDone()) {
                     var op = parser.ParseOperand(fakeTuple, false, false, true);
@@ -295,23 +295,23 @@ namespace IRExplorerUI.UTC {
                     if (op != null) {
                         var value = refFinder.FindEquivalentValue(op, true);
 
-                        if (value != null) {
-                            //var parentInstr = value.ParentInstruction;
+                        if (value == null) {
+                            continue;
+                        }
 
-                            if (op.TextLocation.Line < lines.Count) {
-                                var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
-                                op.TextLocation = location; // Set actual location in output text.
+                        if (op.TextLocation.Line < lines.Count) {
+                            var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
+                            op.TextLocation = location; // Set actual location in output text.
 
-                                var remarkLocation = new TextLocation(lineStartOffset, i, 0);
-                                var remarkKind = FindRemarkKind(line, isInstructionElement: false);
-                                var remark = new Remark(remarkKind, section, 
-                                                        line.Trim(), line, remarkLocation);
+                            var remarkLocation = new TextLocation(lineStartOffset, i, 0);
+                            var remarkKind = FindRemarkKind(line, isInstructionElement: false);
+                            var remark = new Remark(remarkKind, section,
+                                                    line.Trim(), line, remarkLocation);
 
-                                remark.ReferencedElements.Add(value);
-                                remark.OutputElements.Add(op);
-                                remarks.Add(remark);
-                                state.AttachToCurrentContext(remark);
-                            }
+                            remark.ReferencedElements.Add(value);
+                            remark.OutputElements.Add(op);
+                            remarks.Add(remark);
+                            state.AttachToCurrentContext(remark);
                         }
                     }
                     else {

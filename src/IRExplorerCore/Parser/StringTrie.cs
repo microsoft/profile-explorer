@@ -110,9 +110,10 @@ namespace IRExplorerCore {
             return TryGetValue(value, out _);
         }
 
-        public bool Contains(ReadOnlySpan<char> value) {
+        public bool Contains(ReadOnlyMemory<char> value) {
             return TryGetValue(value, out _);
         }
+
         private int AddNode() {
             nodes_.Add(new Tuple<int, int>(-1, 0));
             return lastNodeId_++;
