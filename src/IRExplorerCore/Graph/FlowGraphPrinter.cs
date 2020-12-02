@@ -14,7 +14,8 @@ namespace IRExplorerCore.Graph {
         private const string LargeGraphSettings = @"
 maxiter=8;
         ";
-        private static readonly string HugeGraphSettings = @"
+
+        private const string HugeGraphSettings = @"
 maxiter=4;
 mclimit=2;
 nslimit=2;

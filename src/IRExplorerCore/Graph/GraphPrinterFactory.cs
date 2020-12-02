@@ -11,21 +11,14 @@ namespace IRExplorerCore.Graph {
         public static GraphVizPrinter CreateInstance<T, U>(
             GraphKind kind, T element, U options) where T : class where U : class {
             if (typeof(T) == typeof(FunctionIR)) {
-                switch (kind) {
-                    case GraphKind.FlowGraph: {
-                        return new FlowGraphPrinter(element as FunctionIR);
-                    }
-                    case GraphKind.DominatorTree: {
-                        return new DominatorTreePrinter(element as FunctionIR,
-                                                        DominatorAlgorithmOptions.Dominators);
-                    }
-                    case GraphKind.PostDominatorTree: {
-                        return new DominatorTreePrinter(element as FunctionIR,
-                                                        DominatorAlgorithmOptions.PostDominators);
-                    }
-                    default:
-                        throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
-                }
+                return kind switch {
+                    GraphKind.FlowGraph => new FlowGraphPrinter(element as FunctionIR),
+                    GraphKind.DominatorTree => new DominatorTreePrinter(element as FunctionIR,
+                                                                        DominatorAlgorithmOptions.Dominators),
+                    GraphKind.PostDominatorTree => new DominatorTreePrinter(element as FunctionIR,
+                                                                            DominatorAlgorithmOptions.PostDominators),
+                    _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null)
+                };
             }
             else if (typeof(T) == typeof(IRElement)) {
                 switch (kind) {

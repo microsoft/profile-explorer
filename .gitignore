@@ -11,6 +11,8 @@
 *.sln.docstates
 *.tlog
 *.lib
+*.dll
+*.exp
 *.recipe
 *.txt
 
@@ -34,6 +36,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+vcpkg/
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

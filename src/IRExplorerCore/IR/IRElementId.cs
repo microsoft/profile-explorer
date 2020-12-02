@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 namespace IRExplorerCore.IR {
-    public class IRElementId {
+    public struct IRElementId {
         public ushort BlockId;
         public ushort OperandId;
         public uint TupleId;
@@ -15,7 +15,7 @@ namespace IRExplorerCore.IR {
             };
         }
 
-        public IRElementId NewBlock(ushort blockId) {
+        private IRElementId NewBlock(ushort blockId) {
             BlockId = blockId;
             TupleId = 0;
             OperandId = 0;
@@ -53,7 +53,7 @@ namespace IRExplorerCore.IR {
             return ToLong(blockId: BlockId, tupleId: TupleId, operandId: OperandId);
         }
 
-        public static ulong ToLong(ushort blockId = 0, uint tupleId = 0, ushort operandId = 0) {
+        public static ulong ToLong(ushort blockId, uint tupleId = 0, ushort operandId = 0) {
             return ((ulong)blockId << 48) | ((ulong)tupleId << 32) | operandId;
         }
     }

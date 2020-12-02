@@ -1,7 +1,6 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using IRExplorerCore.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,6 +25,10 @@ namespace IRExplorerCore.IR {
     }
 
     public sealed class OperandIR : IRElement {
+        public OperandIR() {
+            // Used by object pool allocation only.
+        }
+
         public OperandIR(IRElementId elementId, OperandKind kind, TypeIR type, TupleIR parent)
             : base(elementId.NextOperand()) {
             Kind = kind;
@@ -44,6 +47,9 @@ namespace IRExplorerCore.IR {
 
         public TypeIR Type { get; set; }
         public TupleIR Parent { get; set; }
+
+        //? TODO: Boxing (allocating heap value) can be avoided to reduce GC pressure:
+        //? https://stackoverflow.com/questions/6163335/how-to-store-structs-of-different-types-without-boxing
         public object Value { get; set; }
 
         public bool IsVariable => Kind == OperandKind.Variable;
@@ -84,16 +90,11 @@ namespace IRExplorerCore.IR {
             get {
                 Debug.Assert(HasName);
 
-                if (Kind == OperandKind.Address) {
-                    if (Value is OperandIR ir) {
-                        return ir.NameValue;
-                    }
-                }
-                else if (Kind == OperandKind.LabelAddress) {
-                    return BlockLabelValue.NameValue;
-                }
-
-                return (ReadOnlyMemory<char>)Value;
+                return Kind switch {
+                    OperandKind.Address when Value is OperandIR ir => ir.NameValue,
+                    OperandKind.LabelAddress => BlockLabelValue.NameValue,
+                    _ => (ReadOnlyMemory<char>)Value
+                };
             }
         }
 
@@ -124,6 +125,10 @@ namespace IRExplorerCore.IR {
                    EqualityComparer<TypeIR>.Default.Equals(Type, operand.Type) &&
                    EqualityComparer<TupleIR>.Default.Equals(Parent, operand.Parent) &&
                    EqualityComparer<object>.Default.Equals(Value, operand.Value);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(base.GetHashCode(), (int) Kind, (int) Role, Type, Parent, Value);
         }
 
         public override string ToString() {

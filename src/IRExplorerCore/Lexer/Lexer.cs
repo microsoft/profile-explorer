@@ -13,12 +13,9 @@ namespace IRExplorerCore.Lexer {
         private Stack<Token> returnedTokens_; // Tokens returned back to lexer.
         private CharSource source_;   // The text being analyzed.
 
-        public Lexer(string text) {
-            source_ = new CharSource(text);
-            returnedTokens_ = new Stack<Token>(8);
-            current_ = source_.NextChar();
-            line_ = 0;
-            lineStart_ = 0;
+        public Lexer() {
+            source_ = new CharSource();
+            returnedTokens_ = new Stack<Token>(8);            
         }
 
         private void NextChar() {
@@ -289,7 +286,7 @@ namespace IRExplorerCore.Lexer {
                         return MakeToken(TokenKind.Percent);
                     }
                     case '#': {
-                        //? TODO: Add as custom commnent char
+                        //? TODO: Add as custom comment char
                         return MakeToken(TokenKind.Hash);
                     }
                 }
@@ -298,12 +295,27 @@ namespace IRExplorerCore.Lexer {
             }
         }
 
-        public Token NextToken() {
-            if (returnedTokens_.Count > 0) {
-                return returnedTokens_.Pop();
-            }
+        private void Reset() {
+            returnedTokens_.Clear();
+            line_ = 0;
+            lineStart_ = 0;
+        }
 
-            return ScanToken();
+        public void Initialize(string text) {
+            Reset();
+            source_.Initialize(text);
+            current_ = source_.NextChar();
+        }
+
+        public void Initialize(ReadOnlyMemory<char> text) {
+            Reset();
+            source_.Initialize(text);
+            current_ = source_.NextChar();
+        }
+
+        public Token NextToken() {
+            return returnedTokens_.Count > 0 ? 
+                   returnedTokens_.Pop() : ScanToken();
         }
 
         public void ReturnToken(Token token) {

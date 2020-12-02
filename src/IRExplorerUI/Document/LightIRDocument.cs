@@ -352,8 +352,8 @@ namespace IRExplorerUI {
                 IgnoreOverlappingOperandRemarks = true
             };
 
-            var remarks = remarkProvider.ExtractRemarks(text, function, section_, options);
-
+            var remarks = remarkProvider.ExtractRemarks(text, function, section_, 
+                                                        options, cancelableTask);
             if (cancelableTask.IsCanceled) {
                 cancelableTask.Completed();
                 return elements;

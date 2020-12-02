@@ -56,14 +56,18 @@ namespace IRExplorerCore.IR {
         }
 
         public override bool Equals(object obj) {
-            return obj is InstructionIR instruction &&
-                   base.Equals(obj) &&
-                   Kind == instruction.Kind &&
-                   Opcode == instruction.Opcode &&
-                   EqualityComparer<List<OperandIR>>.Default.Equals(
-                       Sources, instruction.Sources) &&
-                   EqualityComparer<List<OperandIR>>.Default.Equals(Destinations,
-                                                                    instruction.Destinations);
+            return ReferenceEquals(this, obj) || obj is InstructionIR other && Equals(other);
+        }
+
+        private bool Equals(InstructionIR other) {
+            return base.Equals(other) && Kind == other.Kind && 
+                   Equals(Opcode, other.Opcode) &&
+                   Equals(Sources, other.Sources) && 
+                   Equals(Destinations, other.Destinations);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(base.GetHashCode(), (int) Kind, Opcode);
         }
 
         public override string ToString() {

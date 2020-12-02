@@ -49,7 +49,7 @@ namespace IRExplorerCore.IR {
                 }
 
                 // Consider exit block to also be a return block.
-                return this == Parent.ExitBlock;
+                return this.Equals(Parent.ExitBlock);
             }
         }
 
@@ -108,7 +108,6 @@ namespace IRExplorerCore.IR {
                 foreach (var tuple in Tuples) {
                     if (tuple is InstructionIR instr) {
                         yield return instr;
-                        ;
                     }
                 }
             }
@@ -119,7 +118,6 @@ namespace IRExplorerCore.IR {
                 for (int i = Tuples.Count - 1; i >= 0; i--) {
                     if (Tuples[i] is InstructionIR instr) {
                         yield return instr;
-                        ;
                     }
                 }
             }

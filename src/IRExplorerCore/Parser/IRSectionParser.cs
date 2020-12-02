@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using IRExplorerCore.IR;
 using IRExplorerCore.Lexer;
@@ -37,5 +38,6 @@ namespace IRExplorerCore {
         void SkipToFunctionEnd();
 
         FunctionIR ParseSection(IRTextSection section, string sectionText);
+        FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText);
     }
 }

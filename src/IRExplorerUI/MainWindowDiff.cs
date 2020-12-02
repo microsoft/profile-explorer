@@ -445,11 +445,11 @@ namespace IRExplorerUI {
             }
 
             if (newLeftSection != null) {
-                UpdateUIAfterSectionLoad(newLeftSection, sessionState_.SectionDiffState.LeftDocument);
+                UpdateUIAfterSectionSwitch(newLeftSection, sessionState_.SectionDiffState.LeftDocument);
             }
 
             if (newRightSection != null) {
-                UpdateUIAfterSectionLoad(newRightSection, sessionState_.SectionDiffState.RightDocument);
+                UpdateUIAfterSectionSwitch(newRightSection, sessionState_.SectionDiffState.RightDocument);
             }
 
             await EnableDocumentDiffState(sessionState_.SectionDiffState);

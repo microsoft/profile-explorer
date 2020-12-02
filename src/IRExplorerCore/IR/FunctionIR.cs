@@ -47,14 +47,16 @@ namespace IRExplorerCore.IR {
                 foreach (var tuple in block.Tuples) {
                     elementMap_[tuple.Id] = tuple;
 
-                    if (tuple is InstructionIR instr) {
-                        foreach (var op in instr.Destinations) {
-                            elementMap_[op.Id] = op;
-                        }
+                    if (!(tuple is InstructionIR instr)) {
+                        continue;
+                    }
 
-                        foreach (var op in instr.Sources) {
-                            elementMap_[op.Id] = op;
-                        }
+                    foreach (var op in instr.Destinations) {
+                        elementMap_[op.Id] = op;
+                    }
+
+                    foreach (var op in instr.Sources) {
+                        elementMap_[op.Id] = op;
                     }
                 }
             }
@@ -68,14 +70,16 @@ namespace IRExplorerCore.IR {
                     foreach (var tuple in block.Tuples) {
                         yield return tuple;
 
-                        if (tuple is InstructionIR instr) {
-                            foreach (var op in instr.Destinations) {
-                                yield return op;
-                            }
+                        if (!(tuple is InstructionIR instr)) {
+                            continue;
+                        }
 
-                            foreach (var op in instr.Sources) {
-                                yield return op;
-                            }
+                        foreach (var op in instr.Destinations) {
+                            yield return op;
+                        }
+
+                        foreach (var op in instr.Sources) {
+                            yield return op;
                         }
                     }
                 }
@@ -132,7 +136,7 @@ namespace IRExplorerCore.IR {
         public int InstructionCount {
             get {
                 if (instructionCount_ == 0) {
-                    ForEachInstruction((instr) => {
+                    ForEachInstruction(instr => {
                         instructionCount_++;
                         return true;
                     });
@@ -145,7 +149,7 @@ namespace IRExplorerCore.IR {
         public int TupleCount {
             get {
                 if (tupleCount_ == 0) {
-                    ForEachTuple((tuple) => {
+                    ForEachTuple(tuple => {
                         tupleCount_++;
                         return true;
                     });
@@ -164,7 +168,7 @@ namespace IRExplorerCore.IR {
         }
 
         public override int GetHashCode() {
-            return Name?.GetHashCode() ?? 0;
+            return Name?.GetHashCode(StringComparison.Ordinal) ?? 0;
         }
     }
 }

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using IRExplorerCore.Utilities;
+using System;
 using System.Collections.Generic;
 
 namespace IRExplorerCore.IR {
@@ -34,10 +34,27 @@ namespace IRExplorerCore.IR {
         }
 
         public override bool Equals(object obj) {
-            return obj is TupleIR tuple &&
-                   base.Equals(obj) &&
-                   Kind == tuple.Kind &&
-                   EqualityComparer<BlockIR>.Default.Equals(Parent, tuple.Parent);
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((TupleIR) obj);
+        }
+        
+        protected bool Equals(TupleIR other) {
+            return base.Equals(other) && Kind == other.Kind;
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(base.GetHashCode(), (int) Kind);
         }
 
         public override string ToString() {

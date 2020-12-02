@@ -108,124 +108,64 @@ class DebugService final {
      public:
       virtual ~experimental_async_interface() {}
       virtual void StartSession(::grpc::ClientContext* context, const ::StartSessionRequest* request, ::StartSessionResult* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void StartSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::StartSessionResult* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void StartSession(::grpc::ClientContext* context, const ::StartSessionRequest* request, ::StartSessionResult* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void StartSession(::grpc::ClientContext* context, const ::StartSessionRequest* request, ::StartSessionResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void StartSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::StartSessionResult* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void StartSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::StartSessionResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void EndSession(::grpc::ClientContext* context, const ::EndSessionRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void EndSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void EndSession(::grpc::ClientContext* context, const ::EndSessionRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void EndSession(::grpc::ClientContext* context, const ::EndSessionRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void EndSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void EndSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void UpdateIR(::grpc::ClientContext* context, const ::UpdateIRRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void UpdateIR(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void UpdateIR(::grpc::ClientContext* context, const ::UpdateIRRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void UpdateIR(::grpc::ClientContext* context, const ::UpdateIRRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UpdateIR(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UpdateIR(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void MarkElement(::grpc::ClientContext* context, const ::MarkElementRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void MarkElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void MarkElement(::grpc::ClientContext* context, const ::MarkElementRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void MarkElement(::grpc::ClientContext* context, const ::MarkElementRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void MarkElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void MarkElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void SetCurrentElement(::grpc::ClientContext* context, const ::SetCurrentElementRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void SetCurrentElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void SetCurrentElement(::grpc::ClientContext* context, const ::SetCurrentElementRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void SetCurrentElement(::grpc::ClientContext* context, const ::SetCurrentElementRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void SetCurrentElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void SetCurrentElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void ExecuteCommand(::grpc::ClientContext* context, const ::ElementCommandRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void ExecuteCommand(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void ExecuteCommand(::grpc::ClientContext* context, const ::ElementCommandRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void ExecuteCommand(::grpc::ClientContext* context, const ::ElementCommandRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void ExecuteCommand(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void ExecuteCommand(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void HasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void HasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void HasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
       virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
-      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) = 0;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
       #else
       virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) = 0;
-      #else
-      virtual void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) = 0;
       #endif
     };
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
@@ -334,124 +274,64 @@ class DebugService final {
       public StubInterface::experimental_async_interface {
      public:
       void StartSession(::grpc::ClientContext* context, const ::StartSessionRequest* request, ::StartSessionResult* response, std::function<void(::grpc::Status)>) override;
-      void StartSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::StartSessionResult* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void StartSession(::grpc::ClientContext* context, const ::StartSessionRequest* request, ::StartSessionResult* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void StartSession(::grpc::ClientContext* context, const ::StartSessionRequest* request, ::StartSessionResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void StartSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::StartSessionResult* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void StartSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::StartSessionResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void EndSession(::grpc::ClientContext* context, const ::EndSessionRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void EndSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void EndSession(::grpc::ClientContext* context, const ::EndSessionRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void EndSession(::grpc::ClientContext* context, const ::EndSessionRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void EndSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void EndSession(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void UpdateIR(::grpc::ClientContext* context, const ::UpdateIRRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void UpdateIR(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void UpdateIR(::grpc::ClientContext* context, const ::UpdateIRRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void UpdateIR(::grpc::ClientContext* context, const ::UpdateIRRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UpdateIR(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UpdateIR(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void MarkElement(::grpc::ClientContext* context, const ::MarkElementRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void MarkElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void MarkElement(::grpc::ClientContext* context, const ::MarkElementRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void MarkElement(::grpc::ClientContext* context, const ::MarkElementRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void MarkElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void MarkElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void SetCurrentElement(::grpc::ClientContext* context, const ::SetCurrentElementRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void SetCurrentElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void SetCurrentElement(::grpc::ClientContext* context, const ::SetCurrentElementRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void SetCurrentElement(::grpc::ClientContext* context, const ::SetCurrentElementRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void SetCurrentElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void SetCurrentElement(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void ExecuteCommand(::grpc::ClientContext* context, const ::ElementCommandRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void ExecuteCommand(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void ExecuteCommand(::grpc::ClientContext* context, const ::ElementCommandRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void ExecuteCommand(::grpc::ClientContext* context, const ::ElementCommandRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void ExecuteCommand(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void ExecuteCommand(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void HasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response, std::function<void(::grpc::Status)>) override;
-      void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void HasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void HasActiveBreakpoint(::grpc::ClientContext* context, const ::ActiveBreakpointRequest* request, ::ActiveBreakpointResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void HasActiveBreakpoint(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::ActiveBreakpointResult* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::ClearHighlightingRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void ClearTemporaryHighlighting(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void SetSessionState(::grpc::ClientContext* context, const ::SessionStateRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void SetSessionState(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
       void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, std::function<void(::grpc::Status)>) override;
-      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, std::function<void(::grpc::Status)>) override;
       #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
       void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
       #else
       void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::CurrentStackFrameRequest* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
-      #endif
-      #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
-      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::ClientUnaryReactor* reactor) override;
-      #else
-      void UpdateCurrentStackFrame(::grpc::ClientContext* context, const ::grpc::ByteBuffer* request, ::Result* response, ::grpc::experimental::ClientUnaryReactor* reactor) override;
       #endif
      private:
       friend class Stub;
@@ -725,7 +605,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(0,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::StartSessionRequest, ::StartSessionResult>(
+          new ::grpc::internal::CallbackUnaryHandler< ::StartSessionRequest, ::StartSessionResult>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -740,7 +620,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(0);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::StartSessionRequest, ::StartSessionResult>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::StartSessionRequest, ::StartSessionResult>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_StartSession() override {
@@ -772,7 +652,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(1,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::EndSessionRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::EndSessionRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -787,7 +667,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(1);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::EndSessionRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::EndSessionRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_EndSession() override {
@@ -819,7 +699,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(2,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::UpdateIRRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::UpdateIRRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -834,7 +714,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(2);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::UpdateIRRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::UpdateIRRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_UpdateIR() override {
@@ -866,7 +746,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(3,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::MarkElementRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::MarkElementRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -881,7 +761,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(3);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::MarkElementRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::MarkElementRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_MarkElement() override {
@@ -913,7 +793,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(4,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::SetCurrentElementRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::SetCurrentElementRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -928,7 +808,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(4);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::SetCurrentElementRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::SetCurrentElementRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_SetCurrentElement() override {
@@ -960,7 +840,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(5,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::ElementCommandRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::ElementCommandRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -975,7 +855,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(5);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::ElementCommandRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::ElementCommandRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_ExecuteCommand() override {
@@ -1007,7 +887,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(6,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::ActiveBreakpointRequest, ::ActiveBreakpointResult>(
+          new ::grpc::internal::CallbackUnaryHandler< ::ActiveBreakpointRequest, ::ActiveBreakpointResult>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1022,7 +902,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(6);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::ActiveBreakpointRequest, ::ActiveBreakpointResult>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::ActiveBreakpointRequest, ::ActiveBreakpointResult>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_HasActiveBreakpoint() override {
@@ -1054,7 +934,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(7,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::ClearHighlightingRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::ClearHighlightingRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1069,7 +949,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(7);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::ClearHighlightingRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::ClearHighlightingRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_ClearTemporaryHighlighting() override {
@@ -1101,7 +981,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(8,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::SessionStateRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::SessionStateRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1116,7 +996,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(8);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::SessionStateRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::SessionStateRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_SetSessionState() override {
@@ -1148,7 +1028,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodCallback(9,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::CurrentStackFrameRequest, ::Result>(
+          new ::grpc::internal::CallbackUnaryHandler< ::CurrentStackFrameRequest, ::Result>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1163,7 +1043,7 @@ class DebugService final {
     #else
       ::grpc::internal::MethodHandler* const handler = ::grpc::Service::experimental().GetHandler(9);
     #endif
-      static_cast<::grpc_impl::internal::CallbackUnaryHandler< ::CurrentStackFrameRequest, ::Result>*>(handler)
+      static_cast<::grpc::internal::CallbackUnaryHandler< ::CurrentStackFrameRequest, ::Result>*>(handler)
               ->SetMessageAllocator(allocator);
     }
     ~ExperimentalWithCallbackMethod_UpdateCurrentStackFrame() override {
@@ -1570,7 +1450,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(0,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1608,7 +1488,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(1,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1646,7 +1526,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(2,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1684,7 +1564,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(3,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1722,7 +1602,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(4,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1760,7 +1640,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(5,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1798,7 +1678,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(6,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1836,7 +1716,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(7,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1874,7 +1754,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(8,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1912,7 +1792,7 @@ class DebugService final {
       ::grpc::Service::experimental().
     #endif
         MarkMethodRawCallback(9,
-          new ::grpc_impl::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
+          new ::grpc::internal::CallbackUnaryHandler< ::grpc::ByteBuffer, ::grpc::ByteBuffer>(
             [this](
     #ifdef GRPC_CALLBACK_API_NONEXPERIMENTAL
                    ::grpc::CallbackServerContext*
@@ -1947,8 +1827,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(0,
         new ::grpc::internal::StreamedUnaryHandler<
           ::StartSessionRequest, ::StartSessionResult>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::StartSessionRequest, ::StartSessionResult>* streamer) {
                        return this->StreamedStartSession(context,
                          streamer);
@@ -1974,8 +1854,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(1,
         new ::grpc::internal::StreamedUnaryHandler<
           ::EndSessionRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::EndSessionRequest, ::Result>* streamer) {
                        return this->StreamedEndSession(context,
                          streamer);
@@ -2001,8 +1881,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(2,
         new ::grpc::internal::StreamedUnaryHandler<
           ::UpdateIRRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::UpdateIRRequest, ::Result>* streamer) {
                        return this->StreamedUpdateIR(context,
                          streamer);
@@ -2028,8 +1908,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(3,
         new ::grpc::internal::StreamedUnaryHandler<
           ::MarkElementRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::MarkElementRequest, ::Result>* streamer) {
                        return this->StreamedMarkElement(context,
                          streamer);
@@ -2055,8 +1935,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(4,
         new ::grpc::internal::StreamedUnaryHandler<
           ::SetCurrentElementRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::SetCurrentElementRequest, ::Result>* streamer) {
                        return this->StreamedSetCurrentElement(context,
                          streamer);
@@ -2082,8 +1962,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(5,
         new ::grpc::internal::StreamedUnaryHandler<
           ::ElementCommandRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::ElementCommandRequest, ::Result>* streamer) {
                        return this->StreamedExecuteCommand(context,
                          streamer);
@@ -2109,8 +1989,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(6,
         new ::grpc::internal::StreamedUnaryHandler<
           ::ActiveBreakpointRequest, ::ActiveBreakpointResult>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::ActiveBreakpointRequest, ::ActiveBreakpointResult>* streamer) {
                        return this->StreamedHasActiveBreakpoint(context,
                          streamer);
@@ -2136,8 +2016,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(7,
         new ::grpc::internal::StreamedUnaryHandler<
           ::ClearHighlightingRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::ClearHighlightingRequest, ::Result>* streamer) {
                        return this->StreamedClearTemporaryHighlighting(context,
                          streamer);
@@ -2163,8 +2043,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(8,
         new ::grpc::internal::StreamedUnaryHandler<
           ::SessionStateRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::SessionStateRequest, ::Result>* streamer) {
                        return this->StreamedSetSessionState(context,
                          streamer);
@@ -2190,8 +2070,8 @@ class DebugService final {
       ::grpc::Service::MarkMethodStreamed(9,
         new ::grpc::internal::StreamedUnaryHandler<
           ::CurrentStackFrameRequest, ::Result>(
-            [this](::grpc_impl::ServerContext* context,
-                   ::grpc_impl::ServerUnaryStreamer<
+            [this](::grpc::ServerContext* context,
+                   ::grpc::ServerUnaryStreamer<
                      ::CurrentStackFrameRequest, ::Result>* streamer) {
                        return this->StreamedUpdateCurrentStackFrame(context,
                          streamer);
