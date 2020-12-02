@@ -503,6 +503,7 @@ namespace IRExplorerUI {
             ignoreNextCaretEvent_ = true;
             int line = Document.GetLineByOffset(offset).LineNumber;
 
+            // Leave a few lines be visible above.
             if (line > 2) {
                 line -= 2;
             }
@@ -695,16 +696,16 @@ namespace IRExplorerUI {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(this)}: Load saved section {parsedSection}");
 
-            selectedElements_ = savedState.selectedElements_?.ToHashSet(item => (IRElement)item) ??
+            selectedElements_ = savedState.SelectedElements?.ToHashSet(item => (IRElement)item) ??
                                 new HashSet<IRElement>();
 
-            bookmarks_.LoadState(savedState.bookmarks_, Function);
-            hoverHighlighter_.LoadState(savedState.hoverHighlighter_, Function);
-            selectedHighlighter_.LoadState(savedState.selectedHighlighter_, Function);
-            markedHighlighter_.LoadState(savedState.markedHighlighter_, Function);
-            margin_.LoadState(savedState.margin_);
+            bookmarks_.LoadState(savedState.Bookmarks, Function);
+            hoverHighlighter_.LoadState(savedState.HoverHighlighter, Function);
+            selectedHighlighter_.LoadState(savedState.SelectedHighlighter, Function);
+            markedHighlighter_.LoadState(savedState.MarkedHighlighter, Function);
+            margin_.LoadState(savedState.Margin);
             bookmarks_.Bookmarks.ForEach(item => RaiseBookmarkAddedEvent(item));
-            SetCaretAtOffset(savedState.caretOffset_);
+            SetCaretAtOffset(savedState.CaretOffset);
 
             await ComputeElementListsAsync();
             LateLoadSectionSetup(parsedSection);
@@ -926,13 +927,13 @@ namespace IRExplorerUI {
 
         public IRDocumentState SaveState() {
             var savedState = new IRDocumentState();
-            savedState.selectedElements_ = selectedElements_.ToList(item => new IRElementReference(item));
-            savedState.bookmarks_ = bookmarks_.SaveState(Function);
-            savedState.hoverHighlighter_ = hoverHighlighter_.SaveState(Function);
-            savedState.selectedHighlighter_ = selectedHighlighter_.SaveState(Function);
-            savedState.markedHighlighter_ = markedHighlighter_.SaveState(Function);
-            savedState.margin_ = margin_.SaveState();
-            savedState.caretOffset_ = TextArea.Caret.Offset;
+            savedState.SelectedElements = selectedElements_.ToList(item => new IRElementReference(item));
+            savedState.Bookmarks = bookmarks_.SaveState(Function);
+            savedState.HoverHighlighter = hoverHighlighter_.SaveState(Function);
+            savedState.SelectedHighlighter = selectedHighlighter_.SaveState(Function);
+            savedState.MarkedHighlighter = markedHighlighter_.SaveState(Function);
+            savedState.Margin = margin_.SaveState();
+            savedState.CaretOffset = TextArea.Caret.Offset;
             return savedState;
         }
 

@@ -64,7 +64,7 @@ namespace IRExplorerUI {
                             // section-switched event, for ex. when clicking directly on
                             // an element in another document, not first on the document
                             // tab header. Ensure that the panel is connected properly.
-                            if (panel.Document  != null &&
+                            if (panel.Document != null &&
                                 panel.Document != document) {
                                 panel.OnDocumentSectionUnloaded(panel.Document.Section, panel.Document);
                                 panel.OnDocumentSectionLoaded(document.Section, document);
@@ -834,19 +834,41 @@ namespace IRExplorerUI {
             return FindActiveDocumentHost();
         }
 
-        public void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section) {
+        public void SavePanelState(object stateObject, IToolPanel panel, 
+                                   IRTextSection section, IRDocument document) {
             //? TODO: Find a way to at least temporarily save state for the two diffed docs
             //? Issue is that in diff mode a section can have a different FunctionIR depending
             //? on the other section is compared with
-            if (sessionState_.SectionDiffState.IsEnabled) {
-                return;
+            if (IsInDiffMode) {
+                if(document == null) {
+                    return;
+                }
+
+                var docHost = FindDocumentHost(document);
+
+                if(sessionState_.SectionDiffState.IsDiffDocument(docHost)) {
+                    sessionState_.SaveDiffModePanelState(stateObject, panel, section);
+                    return;
+                }               
             }
 
             sessionState_.SavePanelState(stateObject, panel, section);
         }
 
-        public object LoadPanelState(IToolPanel panel, IRTextSection section) {
-            return sessionState_.SectionDiffState.IsEnabled ? null : sessionState_.LoadPanelState(panel, section);
+        public object LoadPanelState(IToolPanel panel, IRTextSection section, IRDocument document) {
+            if (IsInDiffMode) {
+                if (document == null) {
+                    return null;
+                }
+
+                var docHost = FindDocumentHost(document);
+
+                if (sessionState_.SectionDiffState.IsDiffDocument(docHost)) {
+                    return sessionState_.LoadDiffModePanelState(panel, section);
+                }
+            }
+
+            return sessionState_.LoadPanelState(panel, section);
         }
 
         public void DuplicatePanel(IToolPanel panel, DuplicatePanelKind duplicateKind) {

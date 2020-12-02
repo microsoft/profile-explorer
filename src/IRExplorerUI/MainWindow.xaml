@@ -431,49 +431,6 @@
                                         Source="{StaticResource RightArrowIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
-                                <Line
-                                    Margin="2,0,2,0"
-                                    Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                    Y1="0"
-                                    Y2="17" />
-
-
-
-                                <Button
-                                    x:Name="PreviousSegmentDiffButton"
-                                    Width="16"
-                                    VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                    BorderBrush="{x:Null}"
-                                    Click="PreviousSegmentDiffButton_Click"
-                                    ToolTip="Go to previous difference">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Margin="0,1,0,0"
-                                        VerticalAlignment="Center"
-                                        SnapsToDevicePixels="True"
-                                        Source="{StaticResource UpArrowIcon}"
-                                        UseLayoutRounding="True" />
-                                </Button>
-
-                                <Button
-                                    x:Name="NextDiffSegmentButton"
-                                    Width="16"
-                                    VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                    BorderBrush="{x:Null}"
-                                    Click="NextDiffSegmentButton_Click"
-                                    ToolTip="Go to next difference">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Margin="0,1,0,0"
-                                        VerticalAlignment="Center"
-                                        SnapsToDevicePixels="True"
-                                        Source="{StaticResource DownArrowIcon}"
-                                        UseLayoutRounding="True" />
-                                </Button>
 
                                 <Line
                                     Margin="2,0,2,0"
@@ -511,6 +468,42 @@
                                     FontSize="11"
                                     FontWeight="Bold"
                                     ToolTip="Number of Added, Deleted, Modified lines" />
+
+                                <Button
+                                    x:Name="PreviousSegmentDiffButton"
+                                    Width="16"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                    BorderBrush="{x:Null}"
+                                    Click="PreviousSegmentDiffButton_Click"
+                                    ToolTip="Go to previous difference">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,1,0,0"
+                                        VerticalAlignment="Center"
+                                        SnapsToDevicePixels="True"
+                                        Source="{StaticResource UpArrowIcon}"
+                                        UseLayoutRounding="True" />
+                                </Button>
+
+                                <Button
+                                    x:Name="NextDiffSegmentButton"
+                                    Width="16"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                    BorderBrush="{x:Null}"
+                                    Click="NextDiffSegmentButton_Click"
+                                    ToolTip="Go to next difference">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,1,0,0"
+                                        VerticalAlignment="Center"
+                                        SnapsToDevicePixels="True"
+                                        Source="{StaticResource DownArrowIcon}"
+                                        UseLayoutRounding="True" />
+                                </Button>
                             </StackPanel>
                         </StackPanel>
                     </Border>

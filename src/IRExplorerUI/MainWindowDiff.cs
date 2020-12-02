@@ -146,7 +146,7 @@ namespace IRExplorerUI {
         }
 
         private bool IsDiffModeDocument(IRDocumentHost document) {
-            return sessionState_.SectionDiffState.IsEnabled &&
+            return IsInDiffMode &&
                    (document == sessionState_.SectionDiffState.LeftDocument ||
                     document == sessionState_.SectionDiffState.RightDocument);
         }
@@ -159,7 +159,7 @@ namespace IRExplorerUI {
 
             sessionState_.SectionDiffState.StartModeChange();
 
-            if (sessionState_.SectionDiffState.IsEnabled) {
+            if (IsInDiffMode) {
                 sessionState_.SectionDiffState.EndModeChange();
                 return true;
             }
@@ -182,7 +182,7 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            if (sessionState_.SectionDiffState.IsEnabled) {
+            if (IsInDiffMode) {
                 return true;
             }
 
@@ -201,6 +201,8 @@ namespace IRExplorerUI {
 
             // CreateDefaultSideBySidePanels();
             ShowDiffsControlsPanel();
+            UpdateUIAfterSectionSwitch(leftDocument.Section, leftDocument);
+            UpdateUIAfterSectionSwitch(rightDocument.Section, rightDocument);
             return true;
         }
 
@@ -221,7 +223,7 @@ namespace IRExplorerUI {
         private async Task ExitDocumentDiffState(bool isSessionEnding = false, bool disableControls = true) {
             sessionState_.SectionDiffState.StartModeChange();
 
-            if (!sessionState_.SectionDiffState.IsEnabled) {
+            if (!IsInDiffMode) {
                 sessionState_.SectionDiffState.EndModeChange();
                 return;
             }
@@ -247,11 +249,12 @@ namespace IRExplorerUI {
             }
 
             sessionState_.SectionDiffState.EndModeChange();
+            sessionState_.ClearDiffModePanelState();
             Trace.TraceInformation("Diff mode: Exited");
         }
 
         private async void SectionPanel_EnterDiffMode(object sender, DiffModeEventArgs e) {
-            if (sessionState_.SectionDiffState.IsEnabled) {
+            if (IsInDiffMode) {
                 sessionState_.SectionDiffState.End();
             }
 
@@ -636,7 +639,7 @@ namespace IRExplorerUI {
         }
 
         private void PreviousSegmentDiffButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.SectionDiffState.IsEnabled) {
+            if (!IsInDiffMode) {
                 return;
             }
 
@@ -685,7 +688,7 @@ namespace IRExplorerUI {
         }
 
         private void NextDiffSegmentButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.SectionDiffState.IsEnabled) {
+            if (!IsInDiffMode) {
                 return;
             }
 
@@ -749,7 +752,11 @@ namespace IRExplorerUI {
 
             DiffSwapButton.IsEnabled = false;
             await ExitDocumentDiffState(isSessionEnding: false, disableControls: false);
-            await EnterDocumentDiffState(rightDocHost, leftDocHost);
+
+            // Swap the section displayed in the documents.
+            await SwitchSection(rightSection, leftDocHost, false);
+            await SwitchSection(leftSection, rightDocHost, false);
+            await EnterDocumentDiffState(leftDocHost, rightDocHost);
             DiffSwapButton.IsEnabled = true;
         }
 
@@ -761,7 +768,7 @@ namespace IRExplorerUI {
         }
 
         private async void PreviousDiffButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.SectionDiffState.IsEnabled) {
+            if (!IsInDiffMode) {
                 return;
             }
 
@@ -783,7 +790,7 @@ namespace IRExplorerUI {
         }
 
         private async void NextDiffButton_Click(object sender, RoutedEventArgs e) {
-            if (!sessionState_.SectionDiffState.IsEnabled) {
+            if (!IsInDiffMode) {
                 return;
             }
 

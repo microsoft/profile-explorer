@@ -639,7 +639,22 @@ namespace IRExplorerUI {
             return $"({section.Number}) {name}";
         }
 
-        private string GetDocumentDescription(IRTextSection section) {
+        private string GetDocumentTitle(IRDocumentHost document, IRTextSection section) {
+            var title = GetSectionName(section);
+
+            if(sessionState_.SectionDiffState.IsEnabled) {
+                if(sessionState_.SectionDiffState.LeftDocument == document) {
+                    return $"{title} (Base)";
+                }
+                else if(sessionState_.SectionDiffState.RightDocument == document) {
+                    return $"{title} (Diff)";
+                }
+            }
+
+            return title;
+        }
+
+        private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
             return $"{section.ParentFunction.Name.Trim()} ({docInfo.FileName})";
         }

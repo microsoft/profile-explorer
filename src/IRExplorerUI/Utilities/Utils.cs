@@ -817,7 +817,12 @@ namespace IRExplorerUI {
             public bool IsAlt;
         }
 
-        public static void WaitForDebugger() {
+        public static void WaitForDebugger(bool showMessageBox = false) {
+            if(showMessageBox) {
+                MessageBox.Show($"Waiting for debugger PID {Environment.ProcessId}", "Error", 
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+
             while (!Debugger.IsAttached) {
                 Thread.Sleep(1000);
                 Trace.TraceWarning(".");

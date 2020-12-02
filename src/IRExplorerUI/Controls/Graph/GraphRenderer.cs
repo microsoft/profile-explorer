@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
@@ -169,6 +170,14 @@ namespace IRExplorerUI {
             double yMax = double.MinValue;
 
             foreach (var element in nodeElements) {
+                if(!graph_.DataNodeMap.ContainsKey(element)) {
+                    Trace.TraceError($"ComputeBoundingBox element not in node map: {element}");
+#if DEBUG
+                    Utils.WaitForDebugger(true);
+#endif
+                    continue;
+                }
+
                 var node = graph_.DataNodeMap[element];
                 xMin = Math.Min(xMin, node.CenterX - node.Width / 2);
                 yMin = Math.Min(yMin, node.CenterY - node.Height / 2);

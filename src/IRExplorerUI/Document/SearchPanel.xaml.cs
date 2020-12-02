@@ -7,154 +7,8 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
-using System.Windows.Media;
 
 namespace IRExplorerUI.Document {
-    public class SearchInfo : INotifyPropertyChanged {
-        private int currentResult_;
-        private TextSearchKind kind_;
-        private int resultCount_;
-        private bool searchAllEnabled_;
-        private bool searchAll_;
-        private string searchedText_;
-        private bool showSearchAllButton_;
-        private bool showNavigationSection_;
-        private Color borderColor_;
-
-        public SearchInfo() {
-            searchedText_ = string.Empty;
-            kind_ = TextSearchKind.CaseInsensitive;
-            showSearchAllButton_ = true;
-            searchAllEnabled_ = true;
-            showNavigationSection_ = true;
-        }
-
-        public TextSearchKind SearchKind {
-            get => kind_;
-            set => kind_ = value;
-        }
-
-        public string SearchedText {
-            get => searchedText_;
-            set {
-                if (value != searchedText_) {
-                    searchedText_ = value;
-                    OnPropertyChange(nameof(SearchedText));
-                }
-            }
-        }
-
-        public bool HasSearchedText => !string.IsNullOrEmpty(searchedText_);
-
-        public bool IsCaseInsensitive {
-            get => kind_.HasFlag(TextSearchKind.CaseInsensitive);
-            set {
-                if (SetKindFlag(TextSearchKind.CaseInsensitive, value)) {
-                    OnPropertyChange(nameof(IsCaseInsensitive));
-                }
-            }
-        }
-
-        public bool IsWholeWord {
-            get => kind_.HasFlag(TextSearchKind.WholeWord);
-            set {
-                if (SetKindFlag(TextSearchKind.WholeWord, value)) {
-                    OnPropertyChange(nameof(IsWholeWord));
-                }
-            }
-        }
-
-        public bool IsRegex {
-            get => kind_.HasFlag(TextSearchKind.Regex);
-            set {
-                if (SetKindFlag(TextSearchKind.Regex, value)) {
-                    OnPropertyChange(nameof(IsRegex));
-                }
-            }
-        }
-
-        public bool SearchAll {
-            get => searchAll_ && searchAllEnabled_;
-            set {
-                if (value != searchAll_) {
-                    searchAll_ = value;
-                    OnPropertyChange(nameof(SearchAll));
-                }
-            }
-        }
-
-        public bool SearchAllEnabled {
-            get => searchAllEnabled_;
-            set {
-                if (value != searchAllEnabled_) {
-                    searchAllEnabled_ = value;
-                    OnPropertyChange(nameof(SearchAllEnabled));
-                }
-            }
-        }
-
-        public int ResultCount {
-            get => resultCount_;
-            set {
-                if (resultCount_ != value) {
-                    resultCount_ = value;
-                    OnPropertyChange(nameof(ResultText));
-                }
-            }
-        }
-
-        public int CurrentResult {
-            get => currentResult_;
-            set {
-                if (currentResult_ != value) {
-                    currentResult_ = value;
-                    OnPropertyChange(nameof(ResultText));
-                }
-            }
-        }
-
-        public string ResultText => $"{(resultCount_ > 0 ? currentResult_ + 1 : 0)} / {resultCount_}";
-
-        public bool ShowSearchAllButton {
-            get => showSearchAllButton_;
-            set {
-                if (value != showSearchAllButton_) {
-                    showSearchAllButton_ = value;
-                    OnPropertyChange(nameof(ShowSearchAllButton));
-                }
-            }
-        }
-
-        public bool ShowNavigationnSection {
-            get => showNavigationSection_;
-            set {
-                if (value != showNavigationSection_) {
-                    showNavigationSection_ = value;
-                    OnPropertyChange(nameof(ShowNavigationnSection));
-                }
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        public void OnPropertyChange(string propertyname) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
-        }
-
-        private bool SetKindFlag(TextSearchKind flag, bool value) {
-            if (value && !kind_.HasFlag(flag)) {
-                kind_ |= flag;
-                return true;
-            }
-            else if (!value && kind_.HasFlag(flag)) {
-                kind_ &= ~flag;
-                return true;
-            }
-
-            return false;
-        }
-    }
-
     public static class SearchCommand {
         public static readonly RoutedUICommand PreviousResult =
             new RoutedUICommand("Untitled", "PreviousResult", typeof(SearchPanel));
@@ -209,7 +63,10 @@ namespace IRExplorerUI.Document {
                          bool selectTextOnFocus = false) {
             Reset(initialInfo, searchAll);
             selectTextOnFocus_ = selectTextOnFocus;
-            Keyboard.Focus(TextSearch);
+
+            if (selectTextOnFocus) {
+                Keyboard.Focus(TextSearch);
+            }
         }
 
         public void Hide() {

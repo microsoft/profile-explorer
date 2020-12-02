@@ -57,20 +57,20 @@ namespace IRExplorerUI {
     [ProtoContract]
     public class DocumentMarginState {
         [ProtoMember(1)]
-        public List<ElementGroupState> blockGroups_;
+        public List<ElementGroupState> BlockGroups;
         [ProtoMember(2)]
-        public List<BookmarkSegment> bookmarkSegments_;
+        public List<BookmarkSegment> BookmarkSegments;
         [ProtoMember(3)]
-        public BookmarkSegment hoveredBookmark_;
+        public BookmarkSegment HoveredBookmark;
         [ProtoMember(4)]
-        public BookmarkSegment selectedBookmark_;
+        public BookmarkSegment SelectedBookmark;
 
         public DocumentMarginState() {
-            blockGroups_ = new List<ElementGroupState>();
-            bookmarkSegments_ = new List<BookmarkSegment>();
+            BlockGroups = new List<ElementGroupState>();
+            BookmarkSegments = new List<BookmarkSegment>();
         }
 
-        public bool HasAnnotations => blockGroups_.Count > 0 || bookmarkSegments_.Count > 0;
+        public bool HasAnnotations => BlockGroups.Count > 0 || BookmarkSegments.Count > 0;
     }
 
     public partial class DocumentMargin : AbstractMargin {
@@ -148,20 +148,20 @@ namespace IRExplorerUI {
 
         public DocumentMarginState SaveState() {
             var marginState = new DocumentMarginState();
-            marginState.blockGroups_ = StateSerializer.SaveElementGroupState(blockGroups_);
-            marginState.bookmarkSegments_ = bookmarkSegments_.ToList();
-            marginState.hoveredBookmark_ = hoveredBookmark_;
-            marginState.selectedBookmark_ = selectedBookmark_;
+            marginState.BlockGroups = StateSerializer.SaveElementGroupState(blockGroups_);
+            marginState.BookmarkSegments = bookmarkSegments_.ToList();
+            marginState.HoveredBookmark = hoveredBookmark_;
+            marginState.SelectedBookmark = selectedBookmark_;
             return marginState;
         }
 
         public void LoadState(DocumentMarginState state) {
-            blockGroups_ = StateSerializer.LoadElementGroupState(state.blockGroups_);
-            hoveredBookmark_ = state.hoveredBookmark_;
-            selectedBookmark_ = state.selectedBookmark_;
+            blockGroups_ = StateSerializer.LoadElementGroupState(state.BlockGroups);
+            hoveredBookmark_ = state.HoveredBookmark;
+            selectedBookmark_ = state.SelectedBookmark;
             bookmarkSegments_ = new TextSegmentCollection<BookmarkSegment>();
 
-            state.bookmarkSegments_.ForEach(item => {
+            state.BookmarkSegments.ForEach(item => {
                 if (item.Kind == BookmarkSegmentKind.Bookmark) {
                     AddBookmark(item.Bookmark);
                 }

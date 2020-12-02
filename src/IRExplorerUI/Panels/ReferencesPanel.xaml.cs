@@ -480,7 +480,7 @@ namespace IRExplorerUI {
             }
 
             InitializeFromDocument(document);
-            var data = Session.LoadPanelState(this, section);
+            var data = Session.LoadPanelState(this, section, document);
             var state = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
 
             if (state != null) {
@@ -492,7 +492,7 @@ namespace IRExplorerUI {
                 ResetReferenceListView();
             }
 
-            IsPanelEnabled = Document != null;
+            IsPanelEnabled = document != null;
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -506,13 +506,19 @@ namespace IRExplorerUI {
             state.HasPinnedContent = HasPinnedContent;
             state.FilterKind = FilterKind;
             var data = StateSerializer.Serialize(state, document.Function);
-            Session.SavePanelState(data, this, section);
+            var back = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
+            Session.SavePanelState(data, this, section, Document);
+
+            var data2 = Session.LoadPanelState(this, section, Document);
+            var back2 = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
+
             ResetReferenceListView();
+            Document = null;
         }
 
         public override void OnSessionEnd() {
-            base.OnSessionEnd();
             ResetReferenceListView();
+            base.OnSessionEnd();
         }
 
         public override void OnElementSelected(IRElementEventArgs e) {

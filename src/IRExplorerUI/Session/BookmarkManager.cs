@@ -10,13 +10,13 @@ namespace IRExplorerUI {
     [ProtoContract]
     public class BookmarkManagerState {
         [ProtoMember(1)]
-        public List<Bookmark> bookmarks_;
+        public List<Bookmark> Bookmarks;
         [ProtoMember(2)]
-        public List<Tuple<IRElementReference, Bookmark>> elementBookmarkMap_;
+        public List<Tuple<IRElementReference, Bookmark>> ElementBookmarkMap;
         [ProtoMember(3)]
-        public int nextIndex_;
+        public int NextIndex;
         [ProtoMember(4)]
-        public int selectedIndex_;
+        public int SelectedIndex;
     }
 
     public class BookmarkManager {
@@ -40,26 +40,26 @@ namespace IRExplorerUI {
 
         public byte[] SaveState(FunctionIR function) {
             var bookmarkState = new BookmarkManagerState();
-            bookmarkState.bookmarks_ = bookmarks_.CloneList();
+            bookmarkState.Bookmarks = bookmarks_.CloneList();
 
-            bookmarkState.elementBookmarkMap_ =
+            bookmarkState.ElementBookmarkMap =
                 elementBookmarkMap_?.ToList<IRElement, IRElementReference, Bookmark>();
 
-            bookmarkState.nextIndex_ = nextIndex_;
-            bookmarkState.selectedIndex_ = selectedIndex_;
+            bookmarkState.NextIndex = nextIndex_;
+            bookmarkState.SelectedIndex = selectedIndex_;
             return StateSerializer.Serialize(bookmarkState, function);
         }
 
         public void LoadState(byte[] data, FunctionIR function) {
             var bookmarkState = StateSerializer.Deserialize<BookmarkManagerState>(data, function);
-            bookmarks_ = bookmarkState.bookmarks_ ?? new List<Bookmark>();
+            bookmarks_ = bookmarkState.Bookmarks ?? new List<Bookmark>();
 
             elementBookmarkMap_ =
-                bookmarkState.elementBookmarkMap_?.ToDictionary<IRElementReference, IRElement, Bookmark>() ??
+                bookmarkState.ElementBookmarkMap?.ToDictionary<IRElementReference, IRElement, Bookmark>() ??
                 new Dictionary<IRElement, Bookmark>();
 
-            nextIndex_ = bookmarkState.nextIndex_;
-            selectedIndex_ = bookmarkState.selectedIndex_;
+            nextIndex_ = bookmarkState.NextIndex;
+            selectedIndex_ = bookmarkState.SelectedIndex;
             Version++;
         }
 
