@@ -1178,10 +1178,6 @@ namespace IRExplorerUI {
             var searcher = new SectionTextSearcher(docInfo.Loader);
 
             if (searchInfo.SearchAll) {
-                if (IsInDiffMode) {
-                    return new SectionSearchResult(section);
-                }
-
                 var sections = section.ParentFunction.Sections;
                 var results = await searcher.SearchAsync(searchInfo.SearchedText, searchInfo.SearchKind, sections);
 
@@ -1193,7 +1189,7 @@ namespace IRExplorerUI {
                     panelInfo.Host.IsSelected = true;
                 }
 
-                // Return the results for the section that started the searc, if any.
+                // Return the results for the section that started the search, if any.
                 var sectionResult = results.Find(item => item.Section == section);
                 return sectionResult ?? new SectionSearchResult(section);
             }

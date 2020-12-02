@@ -243,10 +243,10 @@ namespace IRExplorerUI {
         }
 
         public void UnloadDocument() {
-            Text = "";
+            initialText_ = null;
             section_ = null;
             function_ = null;
-            initialText_ = null;
+            Text = "";
         }
 
         private async void TextView_TextChanged(object sender, EventArgs e) {
@@ -304,6 +304,7 @@ namespace IRExplorerUI {
                 await currentUpdateTask.WaitToCompleteAsync();
             }
 
+            elements_.Clear();
             elementMarker_.Clear();
             hoverElementMarker_.Clear();
             searchResultMarker_.Clear();

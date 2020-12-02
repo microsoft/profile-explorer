@@ -64,9 +64,11 @@ namespace IRExplorerUI {
                             // section-switched event, for ex. when clicking directly on
                             // an element in another document, not first on the document
                             // tab header. Ensure that the panel is connected properly.
-                            if (panel.Document != null &&
-                                panel.Document != document) {
-                                panel.OnDocumentSectionUnloaded(panel.Document.Section, panel.Document);
+                            if (panel.IsUnloaded || panel.Document != document) {
+                                if (!panel.IsUnloaded) {
+                                    panel.OnDocumentSectionUnloaded(panel.Document.Section, panel.Document);
+                                }
+
                                 panel.OnDocumentSectionLoaded(document.Section, document);
 
                                 // After this action, the load/unload events for the panel
@@ -800,7 +802,7 @@ namespace IRExplorerUI {
         public void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args) {
             foreach (var doc in sessionState_.DocumentHosts) {
                 var menuItem = new BindMenuItem {
-                    Header = GetSectionName(doc.DocumentHost.Section),
+                    Header = compilerInfo_.NameProvider.GetSectionName(doc.DocumentHost.Section, true),
                     ToolTip = doc.DocumentHost.Section.ParentFunction.Name,
                     Tag = doc.DocumentHost.TextView,
                     IsChecked = panel.BoundDocument == doc.DocumentHost.TextView

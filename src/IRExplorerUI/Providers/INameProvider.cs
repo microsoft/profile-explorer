@@ -5,7 +5,7 @@ using IRExplorerCore;
 
 namespace IRExplorerUI {
     public interface INameProvider {
-        string GetSectionName(IRTextSection section);
+        string GetSectionName(IRTextSection section, bool includeNumber = false);
 
         // GetBlockName
     }

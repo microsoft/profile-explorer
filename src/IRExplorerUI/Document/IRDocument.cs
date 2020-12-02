@@ -862,18 +862,9 @@ namespace IRExplorerUI {
         }
 
         public void MarkSearchResults(List<TextSearchResult> results, Color color) {
-            if (searchResultsGroup_ != null) {
-                markedHighlighter_.Remove(searchResultsGroup_);
-                searchResultsGroup_ = null;
-
-                if (currentSearchResultGroup_ != null) {
-                    markedHighlighter_.Remove(currentSearchResultGroup_);
-                    currentSearchResultGroup_ = null;
-                }
-            }
+            ClearSearchResults();
 
             if (results.Count == 0) {
-                UpdateHighlighting();
                 return;
             }
 
@@ -889,6 +880,20 @@ namespace IRExplorerUI {
 
             markedHighlighter_.Add(searchResultsGroup_, false);
             ClearTemporaryHighlighting();
+            UpdateHighlighting();
+        }
+
+        public void ClearSearchResults() {
+            if (searchResultsGroup_ != null) {
+                markedHighlighter_.Remove(searchResultsGroup_);
+                searchResultsGroup_ = null;
+
+                if (currentSearchResultGroup_ != null) {
+                    markedHighlighter_.Remove(currentSearchResultGroup_);
+                    currentSearchResultGroup_ = null;
+                }
+            }
+
             UpdateHighlighting();
         }
 

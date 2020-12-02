@@ -634,15 +634,10 @@ namespace IRExplorerUI {
             e.Handled = true;
         }
 
-        private string GetSectionName(IRTextSection section) {
-            string name = compilerInfo_.NameProvider.GetSectionName(section);
-            return $"({section.Number}) {name}";
-        }
-
         private string GetDocumentTitle(IRDocumentHost document, IRTextSection section) {
-            var title = GetSectionName(section);
+            var title = compilerInfo_.NameProvider.GetSectionName(section, true);
 
-            if(sessionState_.SectionDiffState.IsEnabled) {
+            if (sessionState_.SectionDiffState.IsEnabled) {
                 if(sessionState_.SectionDiffState.LeftDocument == document) {
                     return $"{title} (Base)";
                 }
