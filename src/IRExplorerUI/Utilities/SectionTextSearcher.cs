@@ -13,6 +13,8 @@ namespace IRExplorerUI {
             Section = section;
         }
 
+        public bool HasResults => Results != null && Results.Count > 0;
+
         public IRTextSection Section { get; set; }
         public string SectionText { get; set; }
         public List<TextSearchResult> Results { get; set; }

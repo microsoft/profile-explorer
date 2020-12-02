@@ -15,6 +15,7 @@ namespace IRExplorerUI {
         public virtual ISession Session { get; set; }
 
         public virtual bool SavesStateToFile => false;
+        public virtual bool IsUnloaded => Document == null;
         public virtual bool IsPanelEnabled { get; set; }
         public virtual bool HasCommandFocus { get; set; }
         public virtual bool HasPinnedContent { get; set; }

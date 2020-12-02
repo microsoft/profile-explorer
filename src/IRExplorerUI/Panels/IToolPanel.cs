@@ -38,6 +38,7 @@ namespace IRExplorerUI {
         string TitleSuffix { get; }
         HandledEventKind HandledEvents { get; }
         bool SavesStateToFile { get; }
+        bool IsUnloaded { get; }
 
         ISession Session { get; set; }
         IRDocument Document { get; set; }

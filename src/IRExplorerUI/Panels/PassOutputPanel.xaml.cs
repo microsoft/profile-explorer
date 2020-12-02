@@ -80,7 +80,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public IRTextSection Section => TextView.Section;
+        public IRTextSection Section { get; set; }
 
         public bool SearchPanelVisible {
             get => searchPanelVisible_;
@@ -147,7 +147,7 @@ namespace IRExplorerUI {
         }
 
         public string SectionName => TextView.Section != null ?
-            Session.CompilerInfo.NameProvider.GetSectionName(TextView.Section) : "";
+            Session.CompilerInfo.NameProvider.GetSectionName(TextView.Section, true) : "";
 
         private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {
             if (searchResults_ == null) {
@@ -249,6 +249,9 @@ namespace IRExplorerUI {
             }
 
             Document = document;
+            Section = section;
+            OnPropertyChange(nameof(SectionName)); // Force update.
+
             DiffModeButtonEnabled = Session.IsInTwoDocumentsDiffMode;
             var data = Session.LoadPanelState(this, section, Document);
 
@@ -301,7 +304,6 @@ namespace IRExplorerUI {
 
             await TextView.SwitchText(initialText_, function, section, associatedDocument);
             await SearchText();
-            OnPropertyChange(nameof(SectionName)); // Force update.
         }
 
         public override async void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -312,6 +314,7 @@ namespace IRExplorerUI {
             SaveState(section, document);
             await ResetOutputPanel();
             Document = null;
+            Section = null;
         }
 
         private async Task ResetOutputPanel() {

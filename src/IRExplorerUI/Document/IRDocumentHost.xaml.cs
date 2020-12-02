@@ -1050,6 +1050,14 @@ namespace IRExplorerUI {
 
             if (searchedText.Length > 1) {
                 searchResult_ = await Session.SearchSectionAsync(info, Section, TextView);
+
+                if(!searchResult_.HasResults) {
+                    // Nothing found in the current document.
+                    info.ResultCount = 0;
+                    TextView.ClearSearchResults();
+                    return;
+                }
+
                 info.ResultCount = searchResult_.Results.Count;
                 TextView.MarkSearchResults(searchResult_.Results, Colors.Khaki);
 
@@ -1064,7 +1072,7 @@ namespace IRExplorerUI {
                 }
 
                 await Session.SearchSectionAsync(info, Section, TextView);
-                TextView.MarkSearchResults(new List<TextSearchResult>(), Colors.Transparent);
+                TextView.ClearSearchResults();
                 searchResult_ = null;
             }
         }

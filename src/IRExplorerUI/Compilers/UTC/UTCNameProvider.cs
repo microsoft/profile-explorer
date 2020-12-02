@@ -38,7 +38,7 @@ namespace IRExplorerUI.UTC {
                 new FilteredSectionName("tuples after", FilteredSectionNameKind.RemoveSubstring));
         }
 
-        public string GetSectionName(IRTextSection section) {
+        public string GetSectionName(IRTextSection section, bool includeNumber) {
             string sectionName = section.Name;
 
             if (string.IsNullOrEmpty(sectionName)) {
@@ -61,8 +61,7 @@ namespace IRExplorerUI.UTC {
                     }
                     case FilteredSectionNameKind.TrimSuffix: {
                         if (sectionName.EndsWith(nameFilter.Text, StringComparison.Ordinal)) {
-                            sectionName =
-                                sectionName.Substring(0, sectionName.Length - nameFilter.Text.Length - 1);
+                            sectionName = sectionName.Substring(0, sectionName.Length - nameFilter.Text.Length - 1);
                         }
 
                         break;
@@ -89,6 +88,10 @@ namespace IRExplorerUI.UTC {
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+            }
+
+            if(includeNumber) {
+                return $"({section.Number}) {sectionName}";
             }
 
             return sectionName;
