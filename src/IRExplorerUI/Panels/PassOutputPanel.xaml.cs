@@ -13,14 +13,23 @@ using ProtoBuf;
 using IRExplorerCore.IR;
 using IRExplorerUI.Diff;
 using System.Threading;
+using System.Diagnostics;
 
 namespace IRExplorerUI {
     [ProtoContract]
     public class PassOutputPanelState {
         [ProtoMember(1)]
-        public string SearchText;
+        public SearchInfo SearchInfo;
         [ProtoMember(2)]
         public bool ShowAfterOutput;
+        [ProtoMember(3)]
+        public bool DiffModeEnabled;
+        [ProtoMember(4)]
+        public int CaretOffset;
+        [ProtoMember(5)]
+        public double HorizontalOffset;
+        [ProtoMember(6)]
+        public double VerticalOffset;
     }
 
     public static class PassOutputPanelCommand {
@@ -239,18 +248,47 @@ namespace IRExplorerUI {
                 return;
             }
 
+            Document = document;
             DiffModeButtonEnabled = Session.IsInTwoDocumentsDiffMode;
-            var data = Session.LoadPanelState(this, section);
+            var data = Session.LoadPanelState(this, section, Document);
 
             if (data != null) {
                 var state = StateSerializer.Deserialize<PassOutputPanelState>(data, document.Function);
                 await SwitchText(section, document.Function, document);
                 ShowAfterOutput = state.ShowAfterOutput;
+
+                if(state.SearchInfo != null) {
+                    // Show search panel and redo the search.
+                    SearchPanelVisible = true;
+                    SearchPanel.Reset(state.SearchInfo);
+                    await SearchText(state.SearchInfo);
+                }
+
+                if(state.DiffModeEnabled) {
+                    await EnableDiffMode();
+                }
+
+                // Restore position in document.
+                TextView.TextArea.Caret.Offset = state.CaretOffset;
+                TextView.ScrollToVerticalOffset(state.VerticalOffset);
+                TextView.ScrollToHorizontalOffset(state.HorizontalOffset);
             }
             else {
                 await SwitchText(section, document.Function, document);
                 await TextView.SearchText(new SearchInfo());
             }
+        }
+
+        private void SaveState(IRTextSection section, IRDocument document) {
+            var state = new PassOutputPanelState();
+            state.ShowAfterOutput = ShowAfterOutput;
+            state.DiffModeEnabled = DiffModeEnabled;
+            state.SearchInfo = searchPanelVisible_ ? SearchPanel.SearchInfo : null;
+            state.CaretOffset = TextView.TextArea.Caret.Offset;
+            state.VerticalOffset = TextView.VerticalOffset;
+            state.HorizontalOffset = TextView.HorizontalOffset;
+            var data = StateSerializer.Serialize(state, document.Function);
+            Session.SavePanelState(data, this, section, Document);
         }
 
         private IRPassOutput SelectSectionOutput(IRTextSection section) {
@@ -273,6 +311,7 @@ namespace IRExplorerUI {
 
             SaveState(section, document);
             await ResetOutputPanel();
+            Document = null;
         }
 
         private async Task ResetOutputPanel() {
@@ -290,13 +329,6 @@ namespace IRExplorerUI {
             if (document != null) {
                 SaveState(document.Section, document);
             }
-        }
-
-        private void SaveState(IRTextSection section, IRDocument document) {
-            var state = new PassOutputPanelState();
-            state.ShowAfterOutput = ShowAfterOutput;
-            var data = StateSerializer.Serialize(state, document.Function);
-            Session.SavePanelState(data, this, section);
         }
 
         public override async void OnSessionEnd() {
@@ -374,9 +406,7 @@ namespace IRExplorerUI {
         }
 
         private async void DiffToggleButton_Checked(object sender, RoutedEventArgs e) {
-            if (!DiffModeEnabled) {
-                await EnableDiffMode();
-            }
+            await EnableDiffMode();
         }
 
         private async void DiffToggleButton_Unchecked(object sender, RoutedEventArgs e) {

@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#define USE_POOL
+//#define USE_POOL
 
 using System;
 using System.Collections.Generic;

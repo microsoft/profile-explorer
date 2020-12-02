@@ -31,9 +31,13 @@ namespace IRExplorerUI {
 
         public virtual void OnElementHighlighted(IRHighlightingEventArgs e) { }
 
-        public virtual void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) { }
+        public virtual void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+            Document = Document;
+        }
 
-        public virtual void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) { }
+        public virtual void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            Document = null;
+        }
 
         public virtual void OnActivatePanel() { }
 
@@ -52,6 +56,7 @@ namespace IRExplorerUI {
         public virtual void OnSessionSave() { }
 
         public virtual void OnSessionEnd() {
+            Document = null;
             Utils.DisableControl(this, 0.75);
         }
 

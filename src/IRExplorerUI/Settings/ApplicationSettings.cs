@@ -93,8 +93,12 @@ namespace IRExplorerUI {
 
         public void AddRecentFile(string path) {
             // Keep at most N recent files, and move this one on the top of the list.
-            if (RecentFiles.Contains(path)) {
-                RecentFiles.Remove(path);
+            // Search as case-insensitive so that C:\file and c:\file are considered the same.
+            int index = RecentFiles.FindIndex(file => file.Equals(path, 
+                StringComparison.InvariantCultureIgnoreCase));
+
+            if(index != -1) {
+                RecentFiles.RemoveAt(index);
             }
             else if (RecentFiles.Count >= 10) {
                 RecentFiles.RemoveAt(RecentFiles.Count - 1);
@@ -137,6 +141,10 @@ namespace IRExplorerUI {
             }
 
             RecentComparedFiles.Insert(0, pair);
+
+            // Also add both files to the recent file list.
+            AddRecentFile(basePath);
+            AddRecentFile(diffPath);
         }
 
         public void ClearRecentComparedFiles() {

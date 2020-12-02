@@ -143,7 +143,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public object LoadPanelState(IToolPanel panel, IRTextSection section) {
+        public object LoadPanelState(IToolPanel panel, IRTextSection section, IRDocument document) {
             throw new NotImplementedException();
         }
 
@@ -171,7 +171,7 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
-        public void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section) {
+        public void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section, IRDocument document) {
             throw new NotImplementedException();
         }
 

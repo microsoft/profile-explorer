@@ -458,7 +458,7 @@ namespace IRExplorerUI {
             }
 
             // In diff mode, reload both left/right sections and redo the diffs.
-            if (sessionState_.SectionDiffState.IsEnabled &&
+            if (IsInDiffMode &&
                 sessionState_.SectionDiffState.IsDiffDocument(document)) {
                 await SwitchDiffedDocumentSection(args.Section, document);
                 return document;
@@ -690,8 +690,9 @@ namespace IRExplorerUI {
         private void UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
                                                 DelayedAction delayedAction = null) {
             var docHostPair = FindDocumentHostPair(document);
-            docHostPair.Host.Title = GetSectionName(section);
-            docHostPair.Host.ToolTip = GetDocumentDescription(section);
+            docHostPair.Host.Title = GetDocumentTitle(document, section);
+            docHostPair.Host.ToolTip = GetDocumentDescription(document, section);
+
             RenameAllPanels(); // For bound panels.
             SectionPanel.SelectSection(section, false);
 
@@ -743,7 +744,7 @@ namespace IRExplorerUI {
         }
 
         private void Document_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            if (!sessionState_.SectionDiffState.IsEnabled || 
+            if (!IsInDiffMode || 
                 Math.Abs(e.VerticalChange) < double.Epsilon) {
                 return;
             }
@@ -759,7 +760,7 @@ namespace IRExplorerUI {
         }
 
         private void TextView_CaretChanged(object sender, int caretOffset) {
-            if (!sessionState_.SectionDiffState.IsEnabled) {
+            if (!IsInDiffMode) {
                 return;
             }
 
@@ -1038,7 +1039,7 @@ namespace IRExplorerUI {
         private string ShowOpenFileDialog() {
             var fileDialog = new OpenFileDialog {
                 DefaultExt = "*.*",
-                Filter = "IR Files|*.txt;*.log;*.ir;*.irx|IR Explorer Session Files|*.irx|All Files|*.*"
+                Filter = "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.irx|IR Explorer Session Files|*.irx|All Files|*.*"
             };
 
             var result = fileDialog.ShowDialog();
@@ -1132,7 +1133,7 @@ namespace IRExplorerUI {
         }
 
         public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
-            if (sessionState_.SectionDiffState.IsEnabled && targetDiffDocument != null) {
+            if (IsInDiffMode && targetDiffDocument != null) {
                 IRDocument diffDocument = null;
 
                 if (targetDiffDocument == sessionState_.SectionDiffState.LeftDocument.TextView) {
@@ -1177,7 +1178,7 @@ namespace IRExplorerUI {
             var searcher = new SectionTextSearcher(docInfo.Loader);
 
             if (searchInfo.SearchAll) {
-                if (sessionState_.SectionDiffState.IsEnabled) {
+                if (IsInDiffMode) {
                     return new SectionSearchResult(section);
                 }
 
@@ -1234,7 +1235,10 @@ namespace IRExplorerUI {
         }
 
         public void SaveDocumentState(object stateObject, IRTextSection section) {
-            if (sessionState_.SectionDiffState.IsEnabled) {
+            if (IsInDiffMode) {
+                //? TODO: Find a way to at least temporarily save state for the two diffed docs
+                //? Issue is that in diff mode a section can have a different FunctionIR depending
+                //? on the other section is compared with
                 if (section == sessionState_.SectionDiffState.LeftSection ||
                     section == sessionState_.SectionDiffState.RightSection) {
                     return;
@@ -1245,7 +1249,7 @@ namespace IRExplorerUI {
         }
 
         public object LoadDocumentState(IRTextSection section) {
-            if (sessionState_.SectionDiffState.IsEnabled) {
+            if (IsInDiffMode) {
                 if (section == sessionState_.SectionDiffState.LeftSection ||
                     section == sessionState_.SectionDiffState.RightSection) {
                     return null;

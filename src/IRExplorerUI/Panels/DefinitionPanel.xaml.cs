@@ -89,7 +89,7 @@ namespace IRExplorerUI {
             TextView.InitializeFromDocument(document);
             Document = document;
 
-            if (Session.LoadPanelState(this, section) is DefinitionPanelState savedState) {
+            if (Session.LoadPanelState(this, section, Document) is DefinitionPanelState savedState) {
                 SwitchSelectedElement(savedState.DefinedOperand, document);
 
                 if (savedState.CaretOffset > TextView.Text.Length) {
@@ -129,7 +129,7 @@ namespace IRExplorerUI {
                 }
 
                 savedState.HasPinnedContent = HasPinnedContent;
-                Session.SavePanelState(savedState, this, section);
+                Session.SavePanelState(savedState, this, section, Document);
                 ResetDefinedOperand();
             }
 

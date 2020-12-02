@@ -41,9 +41,10 @@ namespace IRExplorerUI {
         void ShowAllReferences(IRElement element, IRDocument document);
         void ShowSSAUses(IRElement element, IRDocument document);
         object LoadDocumentState(IRTextSection section);
-        object LoadPanelState(IToolPanel panel, IRTextSection section);
+        object LoadPanelState(IToolPanel panel, IRTextSection section, IRDocument document = null);
         void SaveDocumentState(object stateObject, IRTextSection section);
-        void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section);
+        void SavePanelState(object stateObject, IToolPanel panel, 
+                            IRTextSection section, IRDocument document = null);
         Task SwitchDocumentSectionAsync(OpenSectionEventArgs args, IRDocument document);
         bool SwitchToPreviousSection(IRTextSection section, IRDocument document);
         bool SwitchToNextSection(IRTextSection section, IRDocument document);

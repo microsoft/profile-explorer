@@ -8,22 +8,22 @@ namespace IRExplorerUI {
     [ProtoContract]
     public class IRDocumentState {
         [ProtoMember(5)]
-        public byte[] bookmarks_;
+        public byte[] Bookmarks;
         [ProtoMember(7)]
-        public int caretOffset_;
+        public int CaretOffset;
         [ProtoMember(1)]
-        public ElementHighlighterState hoverHighlighter_;
+        public ElementHighlighterState HoverHighlighter;
 
         [ProtoMember(4)]
-        public DocumentMarginState margin_;
+        public DocumentMarginState Margin;
         [ProtoMember(3)]
-        public ElementHighlighterState markedHighlighter_;
+        public ElementHighlighterState MarkedHighlighter;
 
         [ProtoMember(6)]
-        public List<IRElementReference> selectedElements_;
+        public List<IRElementReference> SelectedElements;
         [ProtoMember(2)]
-        public ElementHighlighterState selectedHighlighter_;
+        public ElementHighlighterState SelectedHighlighter;
 
-        public bool HasAnnotations => markedHighlighter_.HasAnnotations || margin_.HasAnnotations;
+        public bool HasAnnotations => MarkedHighlighter.HasAnnotations || Margin.HasAnnotations;
     }
 }

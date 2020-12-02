@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using AvalonDock.Layout;
 using ICSharpCode.AvalonEdit.Document;
@@ -135,89 +134,42 @@ namespace IRExplorerUI {
         public bool IsActiveDocument { get; set; }
     }
 
-
-    public class DiffMarkingResult {
-        public TextDocument DiffDocument;
-        internal FunctionIR DiffFunction;
-        public List<DiffTextSegment> DiffSegments;
-        public string DiffText;
-        public bool FunctionReparsingRequired;
-        public int CurrentSegmentIndex;
-
-        public DiffMarkingResult(TextDocument diffDocument) {
-            DiffDocument = diffDocument;
-            DiffSegments = new List<DiffTextSegment>();
-        }
-    }
-
-    public class DiffModeInfo {
-        public ManualResetEvent DiffModeChangeCompleted;
-
-        public DiffModeInfo() {
-            DiffModeChangeCompleted = new ManualResetEvent(true);
-        }
-
-        public bool IsEnabled { get; set; }
-        public IRDocumentHost LeftDocument { get; set; }
-        public IRDocumentHost RightDocument { get; set; }
-        public IRTextSection LeftSection { get; set; }
-        public IRTextSection RightSection { get; set; }
-        public IRDocumentHost IgnoreNextScrollEventDocument { get; set; }
-        public DiffMarkingResult LeftDiffResults { get; set; }
-        public DiffMarkingResult RightDiffResults { get; set; }
-
-        public void StartModeChange() {
-            // If a diff-mode change is in progress, wait until it's done.
-            DiffModeChangeCompleted.WaitOne();
-            DiffModeChangeCompleted.Reset();
-        }
-
-        public void EndModeChange() {
-            DiffModeChangeCompleted.Set();
-        }
-
-        public void End() {
-            IsEnabled = false;
-            LeftDocument = RightDocument = null;
-            LeftSection = RightSection = null;
-            IgnoreNextScrollEventDocument = null;
-        }
-
-        public bool IsDiffDocument(IRDocumentHost docHost) {
-            return docHost == LeftDocument || docHost == RightDocument;
-        }
-
-        public IRDocumentHost GetOtherDocument(IRDocumentHost docHost) {
-            if(docHost == LeftDocument) {
-                return RightDocument;
-            }
-            else if(docHost == RightDocument) {
-                return LeftDocument;
-            }
-
-            throw new InvalidOperationException("Check IsDiffDocument first");
-        }
-
-        public void UpdateResults(DiffMarkingResult leftResults, IRTextSection leftSection,
-                                  DiffMarkingResult rightResults, IRTextSection rightSection) {
-            LeftDiffResults = leftResults;
-            LeftSection = leftSection;
-            RightDiffResults = rightResults;
-            RightSection = rightSection;
-        }
-    }
-
     public class SessionSettings {
         public bool AutoReloadDocument { get; set; }
     }
 
     public class PanelObjectPair {
-        public IToolPanel Panel;
-        public object StateObject;
+        public IToolPanel Panel { get; set; }
+        public object StateObject { get; set; }
 
         public PanelObjectPair(IToolPanel panel, object stateObject) {
             Panel = panel;
             StateObject = stateObject;
+        }
+    }
+
+    public class BaseDiffSectionGroup {
+        public BaseDiffSectionGroup(IRTextSection baseSection, 
+                                    IRTextSection diffSection, 
+                                    IRTextSection stateSection) {
+            BaseSection = baseSection;
+            DiffSection = diffSection;
+            StateSection = stateSection;
+        }
+
+        public IRTextSection BaseSection { get; set; }
+        public IRTextSection DiffSection { get; set; }
+        public IRTextSection StateSection { get; set; }
+
+        public override bool Equals(object obj) {
+            return obj is BaseDiffSectionGroup group &&
+                   EqualityComparer<IRTextSection>.Default.Equals(BaseSection, group.BaseSection) &&
+                   EqualityComparer<IRTextSection>.Default.Equals(DiffSection, group.DiffSection) &&
+                   EqualityComparer<IRTextSection>.Default.Equals(StateSection, group.StateSection);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(BaseSection, DiffSection, StateSection);
         }
     }
 
@@ -226,6 +178,7 @@ namespace IRExplorerUI {
         private object lockObject_;
         private List<LoadedDocument> documents_;
         private Dictionary<ToolPanelKind, object> globalPanelStates_;
+        private Dictionary<BaseDiffSectionGroup, List<PanelObjectPair>> diffPanelStates_;
         private List<CancelableTask> pendingTasks_;
         private bool watchDocumentChanges_;
 
@@ -235,6 +188,7 @@ namespace IRExplorerUI {
             Info.Notes = "";
             documents_ = new List<LoadedDocument>();
             globalPanelStates_ = new Dictionary<ToolPanelKind, object>();
+            diffPanelStates_ = new Dictionary<BaseDiffSectionGroup, List<PanelObjectPair>>();
             pendingTasks_ = new List<CancelableTask>();
             DocumentHosts = new List<DocumentHostInfo>();
             SectionDiffState = new DiffModeInfo();
@@ -309,6 +263,39 @@ namespace IRExplorerUI {
             //? when switching sections
             var docInfo = FindLoadedDocument(section);
             docInfo.SavePanelState(stateObject, panel, section);
+        }
+
+        public void SaveDiffModePanelState(object stateObject, IToolPanel panel, IRTextSection section) {
+            var group = new BaseDiffSectionGroup(SectionDiffState.LeftSection,
+                                                 SectionDiffState.RightSection, section);
+            if(!diffPanelStates_.TryGetValue(group, out var list)) {
+                list = new List<PanelObjectPair>();
+                diffPanelStates_.Add(group, list);
+            }
+
+            var state = list.Find(item => item.Panel == panel);
+
+            if (state != null) {
+                state.StateObject = stateObject;
+            }
+            else {
+                list.Add(new PanelObjectPair(panel, stateObject));
+            }
+        }
+
+        public object LoadDiffModePanelState(IToolPanel panel, IRTextSection section) {
+            var group = new BaseDiffSectionGroup(SectionDiffState.LeftSection,
+                                                 SectionDiffState.RightSection, section);
+            if (diffPanelStates_.TryGetValue(group, out var list)) {
+                var state = list.Find(item => item.Panel == panel);
+                return state?.StateObject;
+            }
+
+            return null;
+        }
+
+        public void ClearDiffModePanelState() {
+            diffPanelStates_.Clear();
         }
 
         public object LoadPanelState(IToolPanel panel, IRTextSection section) {
