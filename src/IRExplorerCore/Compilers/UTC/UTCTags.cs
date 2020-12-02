@@ -64,7 +64,7 @@ namespace IRExplorerCore.UTC {
     public class InterferenceTag : ITag {
         public Dictionary<int, HashSet<int>> InterferingPasMap { get; }
         public Dictionary<int, List<string>> PasToSymMap { get; }
-        public Dictionary<string, int> SymToPasMap;
+        public Dictionary<string, int> SymToPasMap { get; }
 
         public string Name => "Interference";
         public TaggedObject Owner { get; set; }

@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using IRExplorerCore.IR;
@@ -19,15 +20,17 @@ namespace IRExplorerCore.Graph {
         }
 
         protected string CreateNode(ulong id, string label, StringBuilder builder,
-                                string labelPrefix = null) {
+                                    string labelPrefix = null) {
             string nodeName = $"n{id}";
 
             if (!string.IsNullOrEmpty(labelPrefix)) {
-                builder.AppendFormat("{0}[shape=rectangle, label=\"{1}{2}\"];\n", nodeName,
+                builder.AppendFormat(CultureInfo.InvariantCulture, 
+                                     "{0}[shape=rectangle, label=\"{1}{2}\"];\n", nodeName,
                                      labelPrefix, label);
             }
             else {
-                builder.AppendFormat("{0}[shape=rectangle, label=\"{1}\"];\n", nodeName, label);
+                builder.AppendFormat(CultureInfo.InvariantCulture,
+                                     "{0}[shape=rectangle, label=\"{1}\"];\n", nodeName, label);
             }
 
             return nodeName;
@@ -45,12 +48,12 @@ namespace IRExplorerCore.Graph {
             string nodeName = $"n{id}";
 
             if (!string.IsNullOrEmpty(labelPrefix)) {
-                builder.AppendFormat(
+                builder.AppendFormat(CultureInfo.InvariantCulture, 
                     "{0}[shape=rectangle, margin=\"{1},{2}\", label=\"{3}{4}\"];\n", nodeName,
                     horizontalMargin, verticalMargin, labelPrefix, label);
             }
             else {
-                builder.AppendFormat(
+                builder.AppendFormat(CultureInfo.InvariantCulture, 
                     "{0}[shape=rectangle, margin=\"{1},{2}\", label=\"{3}\"];\n", nodeName,
                     horizontalMargin, verticalMargin, label);
             }
@@ -60,7 +63,7 @@ namespace IRExplorerCore.Graph {
 
         protected string CreateInvisibleNode(StringBuilder builder) {
             string nodeName = $"inv{nextInvisibleId_++}";
-            builder.AppendFormat($"{nodeName}[shape=point,width=0,height=0];\n");
+            builder.AppendFormat(CultureInfo.InvariantCulture, $"{nodeName}[shape=point,width=0,height=0];\n");
             return nodeName;
         }
 
@@ -73,11 +76,11 @@ namespace IRExplorerCore.Graph {
         }
 
         protected void CreateEdge(string id1, string id2, StringBuilder builder) {
-            builder.AppendFormat("{0} -> {1};\n", id1, id2);
+            builder.AppendFormat(CultureInfo.InvariantCulture, "{0} -> {1};\n", id1, id2);
         }
 
         protected void CreateEdge(ulong id1, string id2, StringBuilder builder) {
-            builder.AppendFormat("n{0} -> {1};\n", id1, id2);
+            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> {1};\n", id1, id2);
         }
 
         protected void CreateEdge(int id1, int id2, StringBuilder builder) {
@@ -85,12 +88,12 @@ namespace IRExplorerCore.Graph {
         }
 
         protected void CreateEdge(ulong id1, ulong id2, StringBuilder builder) {
-            builder.AppendFormat("n{0} -> n{1};\n", id1, id2);
+            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1};\n", id1, id2);
         }
 
         protected void CreateEdge(ulong id1, ulong id2, string attribute,
                                   StringBuilder builder) {
-            builder.AppendFormat("n{0} -> n{1} {2};\n", id1, id2, attribute);
+            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1} {2};\n", id1, id2, attribute);
         }
 
         protected void CreateEdgeWithStyle(int id1, int id2, string style,
@@ -100,7 +103,7 @@ namespace IRExplorerCore.Graph {
 
         protected void CreateEdgeWithStyle(ulong id1, ulong id2, string style,
                                            StringBuilder builder) {
-            builder.AppendFormat("n{0} -> n{1}[style={2}];\n", id1, id2, style);
+            builder.AppendFormat(CultureInfo.InvariantCulture, "n{0} -> n{1}[style={2}];\n", id1, id2, style);
         }
 
         protected void StartSubgraph(int margin, StringBuilder builder) {
@@ -157,10 +160,7 @@ namespace IRExplorerCore.Graph {
                 File.WriteAllText(inputFilePath, inputText);
             }
             catch (Exception ex) {
-                Trace.TraceError(
-                    $"Graphviz task {ObjectTracker.Track(task)}: Failed writing GraphViz input file: {ex}");
-
-                task.Completed();
+                Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: Failed writing GraphViz input file: {ex}");
                 return null;
             }
 
@@ -177,7 +177,7 @@ namespace IRExplorerCore.Graph {
             //? TODO: Put path between " to support whitespace in the path.
 
             try {
-                var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+                using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
 
                 process.OutputDataReceived += (sender, e) => {
                     outputText.AppendLine(e.Data);
@@ -190,12 +190,10 @@ namespace IRExplorerCore.Graph {
                     process.WaitForExit(200);
 
                     if (task.IsCanceled) {
-                        Trace.TraceWarning(
-                            $"Graphviz task {ObjectTracker.Track(task)}: Canceled");
+                        Trace.TraceWarning($"Graphviz task {ObjectTracker.Track(task)}: Canceled");
 
                         process.CancelOutputRead();
                         process.Kill();
-                        task.Completed();
                         return null;
                     }
                 } while (!process.HasExited);
@@ -204,18 +202,12 @@ namespace IRExplorerCore.Graph {
 
                 if (process.ExitCode != 0) {
                     // dot failed somehow, treat it as an error.
-                    Trace.TraceError(
-                        $"Graphviz task {ObjectTracker.Track(task)}: GraphViz failed with error code: {process.ExitCode}");
-
-                    task.Completed();
+                    Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: GraphViz failed with error code: {process.ExitCode}");
                     return null;
                 }
             }
             catch (Exception ex) {
-                Trace.TraceError(
-                    $"Graphviz task {ObjectTracker.Track(task)}: Failed running GraphViz: {ex}");
-
-                task.Completed();
+                Trace.TraceError($"Graphviz task {ObjectTracker.Track(task)}: Failed running GraphViz: {ex}");
                 return null;
             }
 
@@ -226,7 +218,6 @@ namespace IRExplorerCore.Graph {
             }
             catch (Exception) { }
 #endif
-            task.Completed();
             Trace.TraceInformation($"Graphviz task {ObjectTracker.Track(task)}: Completed");
             return outputText.ToString();
         }

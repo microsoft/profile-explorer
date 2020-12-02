@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+#define USE_POOL
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -8,6 +10,8 @@ using System.Runtime.CompilerServices;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Lexer;
+using Microsoft.Extensions.ObjectPool;
+
 
 namespace IRExplorerCore.UTC {
     enum Keyword {
@@ -58,7 +62,14 @@ namespace IRExplorerCore.UTC {
         }
 
         public FunctionIR ParseSection(IRTextSection section, string sectionText) {
-            parser_ = new UTCParser(sectionText, errorHandler_, section?.LineMetadata);
+            parser_ = new UTCParser(errorHandler_, section?.LineMetadata);
+            parser_.Initialize(sectionText);
+            return parser_.Parse();
+        }
+
+        public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
+            parser_ = new UTCParser(errorHandler_, section?.LineMetadata);
+            parser_.Initialize(sectionText);
             return parser_.Parse();
         }
 
@@ -83,6 +94,37 @@ namespace IRExplorerCore.UTC {
         }
     }
 
+    public class IRObjectPool<T> where T:class,new() {
+        T[] items_;
+        int count_;
+
+        public IRObjectPool(int maxItems) {
+            items_ = new T[maxItems];
+            count_ = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Get() {
+            if(count_ > 0) {
+                int index = count_ - 1;
+                var item = items_[index];
+                items_[index] = null;
+                count_ = index;
+                return item;
+            }
+
+            return new T();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Return(T item) {
+            if(count_ < items_.Length) {
+                items_[count_] = item;
+                count_++;
+            }
+        }
+    }
+
     public sealed class UTCParser : ParserBase {
         private static Dictionary<string, Keyword> keywordMap_ =
             new Dictionary<string, Keyword> {
@@ -94,7 +136,7 @@ namespace IRExplorerCore.UTC {
                 {"In", Keyword.In},
                 {"Out", Keyword.Out},
 
-                // Type keywoards.
+                // Type keywords.
                 {"i8", Keyword.Int8},
                 {"i16", Keyword.Int16},
                 {"i32", Keyword.Int32},
@@ -188,17 +230,73 @@ namespace IRExplorerCore.UTC {
         private IRElementId nextElementId_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
 
-        public UTCParser(string text, ParsingErrorHandler errorHandler,
+        public UTCParser(ParsingErrorHandler errorHandler,
                          Dictionary<int, string> lineMetadata) {
-            nextElementId_ = IRElementId.FromLong(0);
             errorHandler_ = errorHandler;
             lineMetadataMap_ = lineMetadata;
-            lexer_ = new Lexer.Lexer(text);
-            SkipToken(); // Get first token.
+            
             blockMap_ = new Dictionary<int, BlockIR>();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
             elementAddressMap_ = new Dictionary<long, IRElement>();
+            lexer_ = new Lexer.Lexer();
+            operandPool_ = new IRObjectPool<OperandIR>(64);
+        }
+
+        //? TODO: Move to a base class that supports pooling.
+        //? TODO: Extend pooling to cover most IR types
+        private IRObjectPool<OperandIR> operandPool_;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ReturnObject(OperandIR op) {
+#if USE_POOL
+            op.Tags = null;
+            op.Value = null;
+            op.Parent = null;
+            operandPool_.Return(op);
+#endif
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private OperandIR CreateOperand(IRElementId elementId, OperandKind kind,
+                                        TypeIR type, TupleIR parent) {
+#if USE_POOL
+            var op = operandPool_.Get();
+            op.Id = elementId.NextOperand();
+            op.Kind = kind;
+            op.Type = type;
+            op.Parent = parent;
+            return op;
+#else
+            return new OperandIR(elementId, kind, type, parent);
+#endif
+        }
+
+        public UTCParser(string text, ParsingErrorHandler errorHandler,
+                         Dictionary<int, string> lineMetadata) : 
+            this(errorHandler, lineMetadata) {
+            Initialize(text);
+        }
+
+        public void Initialize(string text) {
+            Reset();
+            lexer_.Initialize(text);
+            SkipToken(); // Get first token.
+        }
+
+        public void Initialize(ReadOnlyMemory<char> text) {
+            Reset();
+            lexer_.Initialize(text);
+            SkipToken(); // Get first token.
+        }
+
+        private void Reset() {
+            blockMap_.Clear();
+            labelMap_.Clear();
+            ssaDefinitionMap_.Clear();
+            elementAddressMap_.Clear();
+            nextBlockNumber = 0;
+            nextElementId_ = IRElementId.FromLong(0);
         }
 
         //? TODO: Handle SWITCH
@@ -341,72 +439,75 @@ namespace IRExplorerCore.UTC {
         private void ParseMetadata(IRElement element, int lineNumber) {
             if (lineMetadataMap_ != null &&
                 lineMetadataMap_.TryGetValue(lineNumber, out string metadata)) {
-                var metadataParser = new UTCParser(metadata, null, null);
+                var metadataParser = new UTCParser(null, null);
+                metadataParser.Initialize(metadata);
                 metadataParser.ParseMetadata(element, elementAddressMap_);
             }
         }
 
         private void ParseMetadata(IRElement element, Dictionary<long, IRElement> addressMap) {
             // Metadata starts with /// followed by irx:metadata_type
-            if (TokenIs(TokenKind.Div) &&
-                NextTokenIs(TokenKind.Div) &&
-                NextAfterTokenIs(TokenKind.Div)) {
-                if (!SkipToAnyKeyword(Keyword.Irx)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                SkipToken();
-
-                if (!ExpectAndSkipToken(TokenKind.Colon)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                if (!ExpectAndSkipKeyword(Keyword.Address)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                // Parse instr. address.
-                var addressList = new List<long>();
-                ParseAddressList(addressList);
-
-                if (addressList.Count > 0) {
-                    SetElementAddress(element, addressList[0], addressMap);
-                }
-
-                if (!(element is InstructionIR instr)) {
-                    SkipToLineStart();
-                    return;
-                }
-
-                // Parse destination list address.
-                ParseAddressList(addressList);
-
-                for (int i = 0; i < instr.Destinations.Count; i++) {
-                    if (i < addressList.Count) {
-                        SetElementAddress(instr.Destinations[i], addressList[i], addressMap);
-                    }
-                    else {
-                        break;
-                    }
-                }
-
-                // Parse source list address.
-                ParseAddressList(addressList);
-
-                for (int i = 0; i < instr.Sources.Count; i++) {
-                    if (i < addressList.Count) {
-                        SetElementAddress(instr.Sources[i], addressList[i], addressMap);
-                    }
-                    else {
-                        break;
-                    }
-                }
-
-                SkipToLineStart();
+            if (!TokenIs(TokenKind.Div) || 
+                !NextTokenIs(TokenKind.Div) || 
+                !NextAfterTokenIs(TokenKind.Div)) {
+                return;
             }
+
+            if (!SkipToAnyKeyword(Keyword.Irx)) {
+                SkipToLineStart();
+                return;
+            }
+
+            SkipToken();
+
+            if (!ExpectAndSkipToken(TokenKind.Colon)) {
+                SkipToLineStart();
+                return;
+            }
+
+            if (!ExpectAndSkipKeyword(Keyword.Address)) {
+                SkipToLineStart();
+                return;
+            }
+
+            // Parse instr. address.
+            var addressList = new List<long>();
+            ParseAddressList(addressList);
+
+            if (addressList.Count > 0) {
+                SetElementAddress(element, addressList[0], addressMap);
+            }
+
+            if (!(element is InstructionIR instr)) {
+                SkipToLineStart();
+                return;
+            }
+
+            // Parse destination list address.
+            ParseAddressList(addressList);
+
+            for (int i = 0; i < instr.Destinations.Count; i++) {
+                if (i < addressList.Count) {
+                    SetElementAddress(instr.Destinations[i], addressList[i], addressMap);
+                }
+                else {
+                    break;
+                }
+            }
+
+            // Parse source list address.
+            ParseAddressList(addressList);
+
+            for (int i = 0; i < instr.Sources.Count; i++) {
+                if (i < addressList.Count) {
+                    SetElementAddress(instr.Sources[i], addressList[i], addressMap);
+                }
+                else {
+                    break;
+                }
+            }
+
+            SkipToLineStart();
         }
 
         private BlockIR ParseBlock(FunctionIR function) {
@@ -652,7 +753,7 @@ namespace IRExplorerCore.UTC {
             // Look ahead in the token stream for = 
             bool isInstr = false;
 
-            lexer_.PeekTokenWhile((token) => {
+            lexer_.PeekTokenWhile(token => {
                 if (token.Kind == TokenKind.Equal) {
                     isInstr = true;
                     return false;
@@ -671,32 +772,34 @@ namespace IRExplorerCore.UTC {
             TryParseType(); // A type can also follow a PAS.
             SkipToLineStart(); // Ignore the rest of the line.
 
-            if (pasTag != null && parent.Tuples.Count > 0 &&
-                parent.Tuples[^1] is InstructionIR prevInstr) {
-                if (prevInstr.OpcodeIs(UTCOpcode.OPCALL) ||
-                    prevInstr.OpcodeIs(UTCOpcode.OPINTRINSIC)) {
-                    // For calls, attach directly to the instr
-                    if (!prevInstr.HasTag<PointsAtSetTag>()) {
-                        prevInstr.AddTag(pasTag);
+            if (pasTag == null || parent.Tuples.Count == 0 || 
+                !(parent.Tuples[^1] is InstructionIR prevInstr)) {
+                return true; // No instr. found before this.
+            }
+
+            if (prevInstr.OpcodeIs(UTCOpcode.OPCALL) ||
+                prevInstr.OpcodeIs(UTCOpcode.OPINTRINSIC)) {
+                // For calls, attach directly to the instr
+                if (!prevInstr.HasTag<PointsAtSetTag>()) {
+                    prevInstr.AddTag(pasTag);
+                    return true;
+                }
+            }
+            else {
+                // The tag is attached to the first INDIR operand
+                // that doesn't have yet a tag, starting with destination
+                // and continuing with source operands.
+                foreach (var destOp in prevInstr.Destinations) {
+                    if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
+                        destOp.AddTag(pasTag);
                         return true;
                     }
                 }
-                else {
-                    // The tag is attached to the first INDIR operand
-                    // that doesn't have yet a tag, starting with destination
-                    // and continuing with source operands.
-                    foreach (var destOp in prevInstr.Destinations) {
-                        if (destOp.IsIndirection && !destOp.HasTag<PointsAtSetTag>()) {
-                            destOp.AddTag(pasTag);
-                            return true;
-                        }
-                    }
 
-                    foreach (var sourceOp in prevInstr.Sources) {
-                        if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
-                            sourceOp.AddTag(pasTag);
-                            return true;
-                        }
+                foreach (var sourceOp in prevInstr.Sources) {
+                    if (sourceOp.IsIndirection && !sourceOp.HasTag<PointsAtSetTag>()) {
+                        sourceOp.AddTag(pasTag);
+                        return true;
                     }
                 }
             }
@@ -710,7 +813,7 @@ namespace IRExplorerCore.UTC {
             }
 
             SkipToken(); // PAS
-            SkipToken(); /// (
+            SkipToken(); // (
             PointsAtSetTag pasTag = null;
 
             if (IsNumber() && TokenIntNumber(out int pas)) {
@@ -828,10 +931,6 @@ namespace IRExplorerCore.UTC {
             // instr = [opList =] OPCODE [.type] opList
             var instr = new InstructionIR(nextElementId_, InstructionKind.Other, parent);
 
-            if (current_.Location.Line == 23) {
-                current_ = current_;
-            }
-
             // Some instrs. don't have a dest. list and start directly with the opcode.
             if (!IsOpcode() && !ParseOperandList(instr, true, instr.Destinations)) {
                 ReportError(TokenKind.Identifier, "Failed ParseInstruction destination list");
@@ -938,7 +1037,7 @@ namespace IRExplorerCore.UTC {
                     var pasTag = ParsePointsAtSet();
                     TryParseType(); // A type can also follow a PAS.
 
-                    operand = new OperandIR(nextElementId_, OperandKind.Other,
+                    operand = CreateOperand(nextElementId_, OperandKind.Other,
                                             TypeIR.GetUnknown(), parent);
                     if (pasTag != null) {
                         operand.AddTag(pasTag);
@@ -1016,7 +1115,8 @@ namespace IRExplorerCore.UTC {
                 SkipOperandFlags();
             }
 
-            var operand = new OperandIR(nextElementId_, OperandKind.Indirection, TypeIR.GetUnknown(), parent);
+            var operand = CreateOperand(nextElementId_, OperandKind.Indirection,
+                                        TypeIR.GetUnknown(), parent);
             operand.Value = baseOp;
             SetTextRange(operand, startToken);
 
@@ -1108,7 +1208,7 @@ namespace IRExplorerCore.UTC {
             }
 
             var type = TryParseType();
-            var operand = new OperandIR(nextElementId_, opKind, type, parent);
+            var operand = CreateOperand(nextElementId_, opKind, type, parent);
             operand.Value = opValue;
             SetTextRange(operand, startToken);
             return operand;
@@ -1222,7 +1322,7 @@ namespace IRExplorerCore.UTC {
                 ParseSpecialName(arrowLevel);
             }
 
-            var operand = new OperandIR(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
+            var operand = CreateOperand(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
             operand.Value = opName;
             SetTextRange(operand, startToken);
 
@@ -1253,10 +1353,8 @@ namespace IRExplorerCore.UTC {
                     SkipToken();
 
                     if (IsNumber()) {
-                        long offset;
-                        if (TokenLongIntNumber(out offset)) {
-                            var offsetTag = new SymbolOffsetTag(offset);
-                            offsetTag.Owner = operand;
+                        if (TokenLongIntNumber(out long offset)) {
+                            var offsetTag = new SymbolOffsetTag(offset) {Owner = operand};
                             operand.AddTag(offsetTag);
                         }
 
@@ -1341,8 +1439,7 @@ namespace IRExplorerCore.UTC {
                 else {
                     // Create a use-def link for the source,
                     // and add it as an user of the definition.
-                    var ssaUDLinkTag = new SSAUseTag(defNumber, ssaDefTag);
-                    ssaUDLinkTag.Owner = parent;
+                    var ssaUDLinkTag = new SSAUseTag(defNumber, ssaDefTag) {Owner = parent};
                     ssaDefTag.Users.Add(ssaUDLinkTag);
                     tag = ssaUDLinkTag;
                 }
@@ -1437,7 +1534,7 @@ namespace IRExplorerCore.UTC {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsOpcode() {
-            return IsIdentifier() && UTCOpcodes.IsOpcode(TokenString());
+            return IsIdentifier() && UTCOpcodes.IsOpcode(TokenData());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

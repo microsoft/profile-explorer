@@ -40,11 +40,11 @@ namespace IRExplorerCore.Lexer {
             0, 0, 0, 0, 0, 0, 0, 0
         };
 
-        private static readonly byte CHAR_WHITESPACE = 1;
-        private static readonly byte CHAR_LETTER = 2;
-        private static readonly byte CHAR_DIGIT = 4;
-        private static readonly byte CHAR_NUMBER = 8;
-        private static readonly byte CHAR_IDENTIFIER = 16;
+        private const byte CHAR_WHITESPACE = 1;
+        private const byte CHAR_LETTER = 2;
+        private const byte CHAR_DIGIT = 4;
+        private const byte CHAR_NUMBER = 8;
+        private const byte CHAR_IDENTIFIER = 16;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsDigit(char value) {

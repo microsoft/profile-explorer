@@ -2,10 +2,13 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 
 namespace IRExplorerCore.IR {
     public class IRElement : TaggedObject {
+        public IRElement() {
+            // Used by object pool allocation only.
+        }
+
         public IRElement(IRElementId elementId) {
             Id = elementId;
             TextLocation = default;
@@ -29,27 +32,21 @@ namespace IRExplorerCore.IR {
 
         public TupleIR ParentTuple {
             get {
-                if (this is TupleIR) {
-                    return this as TupleIR;
-                }
-                else if (this is OperandIR) {
-                    return ((OperandIR)this).Parent;
-                }
-
-                return null;
+                return this switch {
+                    TupleIR _ => this as TupleIR,
+                    OperandIR _ => ((OperandIR)this).Parent,
+                    _ => null
+                };
             }
         }
 
         public InstructionIR ParentInstruction {
             get {
-                if (this is InstructionIR) {
-                    return this as InstructionIR;
-                }
-                else if (this is OperandIR) {
-                    return ((OperandIR)this).Parent as InstructionIR;
-                }
-
-                return null;
+                return this switch {
+                    InstructionIR _ => this as InstructionIR,
+                    OperandIR _ => ((OperandIR)this).Parent as InstructionIR,
+                    _ => null
+                };
             }
         }
 
@@ -88,11 +85,27 @@ namespace IRExplorerCore.IR {
         }
 
         public override bool Equals(object obj) {
-            return obj is IRElement element && Id == element.Id;
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((IRElement) obj);
+        }
+        
+        protected bool Equals(IRElement other) {
+            return Id == other.Id;
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(Id);
+            return Id.GetHashCode();
         }
     }
 }

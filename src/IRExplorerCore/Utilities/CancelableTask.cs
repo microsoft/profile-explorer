@@ -28,10 +28,9 @@ namespace IRExplorerCore {
 
     public class CancelableTask : IDisposable {
         private CancellationToken cancelToken_;
-
-        private bool disposed_;
         private ManualResetEvent taskCompletedEvent_;
         private CancellationTokenSource tokenSource_;
+        private bool disposed_;
 
         public CancelableTask() {
             taskCompletedEvent_ = new ManualResetEvent(false);
@@ -56,41 +55,60 @@ namespace IRExplorerCore {
         public void WaitToComplete() {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
-            Debug.Assert(!disposed_);
+            if (disposed_) {
+                return;
+            }
+
             taskCompletedEvent_.WaitOne();
         }
 
         public async Task WaitToCompleteAsync() {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
-            Debug.Assert(!disposed_);
+            if (disposed_) {
+                return;
+            }
+
             await taskCompletedEvent_.AsTask();
         }
 
         public void WaitToComplete(TimeSpan timeout) {
-            Debug.Assert(!disposed_);
+            if (disposed_) {
+                return;
+            }
+
             taskCompletedEvent_.WaitOne(timeout);
         }
 
         public async Task WaitToCompleteAsync(TimeSpan timeout) {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
-            Debug.Assert(!disposed_);
+            if (disposed_) {
+                return;
+            }
+
             await taskCompletedEvent_.AsTask(timeout);
         }
 
         public void Completed() {
             //Debug.WriteLine($"+ Complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
-            Debug.Assert(!disposed_);
+            if (disposed_) {
+                return;
+            }
+
             taskCompletedEvent_.Set();
         }
 
         public void Cancel() {
             //Debug.WriteLine($"+ Cancel task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
-            Debug.Assert(!disposed_);
+            if (disposed_) {
+                return;
+            }
+
             tokenSource_.Cancel();
+            taskCompletedEvent_.Set();
         }
 
         protected virtual void Dispose(bool disposing) {

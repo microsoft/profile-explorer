@@ -166,13 +166,16 @@ namespace IRExplorerUI.UTC {
         }
 
         public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section,
-                                           RemarkProviderOptions options) {
+                                           RemarkProviderOptions options,
+                                           CancelableTask cancelableTask) {
             var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            return ExtractRemarks(new List<string>(lines), function, section, options);
+            return ExtractRemarks(new List<string>(lines), function, section, 
+                                  options, cancelableTask);
         }
 
         public List<Remark> ExtractRemarks(List<string> textLines, FunctionIR function, IRTextSection section,
-                                           RemarkProviderOptions options) {
+                                           RemarkProviderOptions options,
+                                           CancelableTask cancelableTask) {
             if (!settingsLoaded_) {
                 return new List<Remark>(); // Failed to load settings, bail out.
             }
@@ -182,7 +185,8 @@ namespace IRExplorerUI.UTC {
             var remarks = new List<Remark>();
             var state = new RemarkContextState();
 
-            ExtractInstructionRemarks(textLines, function, section, remarks, options, state);
+            ExtractInstructionRemarks(textLines, function, section, remarks, 
+                                      options, state, cancelableTask);
             return remarks;
         }
 
@@ -193,21 +197,29 @@ namespace IRExplorerUI.UTC {
         private void ExtractInstructionRemarks(List<string> lines, FunctionIR function,
                                                IRTextSection section, List<Remark> remarks,
                                                RemarkProviderOptions options,
-                                               RemarkContextState state) {
+                                               RemarkContextState state,
+                                               CancelableTask cancelableTask) {
             var (fakeTuple, fakeBlock) = CreateFakeIRElements();
 
             var similarValueFinder = new SimilarValueFinder(function);
             var refFinder = new ReferenceFinder(function, compilerInfo_.IR);
 
-            //? TODO: Extract "block N" as a block reference
+            //? TODO: Extract "block N" as a block reference, at least
 
             // The split lines don't include the endline, but considering
             // the \r \n is needed to get the proper document offset.
             int newLineLength = Environment.NewLine.Length;
             int lineStartOffset = 0;
+            var lineParser = new UTCParser(null, null);
+            var parser = new UTCParser(null, null);
 
-            //? TODO: For many lines, must be split in chunks and parallelized
+            //? TODO: For many lines, must be split in chunks and parallelized,
+            //? it can take 5-7s even on 30-40k instruction functs, which is not that uncommon...
             for (int i = 0; i < lines.Count; i++) {
+                if(cancelableTask.IsCanceled) {
+                    return;
+                }
+
                 int index = 0;
                 string line = lines[i];
 
@@ -237,9 +249,7 @@ namespace IRExplorerUI.UTC {
                         break;
                     }
 
-                    //? TODO: This should use span to avoid allocations in Substring
-                    string lineChunk = line.Substring(index);
-                    var lineParser = new UTCParser(lineChunk, null, null);
+                    lineParser.Initialize(line.AsMemory(index));
                     var tuple = lineParser.ParseTuple(fakeBlock);
 
                     if (tuple is InstructionIR instr) {
@@ -264,6 +274,9 @@ namespace IRExplorerUI.UTC {
                             index += instr.TextLength;
                             continue;
                         }
+                        else {
+                            //? return pool
+                        }
                     }
 
                     index++;
@@ -277,7 +290,7 @@ namespace IRExplorerUI.UTC {
                     continue;
                 }
 
-                var parser = new UTCParser(line, null, null);
+                parser.Initialize(line);
 
                 while (!parser.IsDone()) {
                     var op = parser.ParseOperand(fakeTuple, false, false, true);
@@ -285,23 +298,24 @@ namespace IRExplorerUI.UTC {
                     if (op != null) {
                         var value = refFinder.FindEquivalentValue(op, true);
 
-                        if (value != null) {
-                            //var parentInstr = value.ParentInstruction;
+                        if (value == null) {
+                            parser.ReturnObject(op);
+                            continue;
+                        }
 
-                            if (op.TextLocation.Line < lines.Count) {
-                                var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
-                                op.TextLocation = location; // Set actual location in output text.
+                        if (op.TextLocation.Line < lines.Count) {
+                            var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
+                            op.TextLocation = location; // Set actual location in output text.
 
-                                var remarkLocation = new TextLocation(lineStartOffset, i, 0);
-                                var remarkKind = FindRemarkKind(line, isInstructionElement: false);
-                                var remark = new Remark(remarkKind, section, 
-                                                        line.Trim(), line, remarkLocation);
+                            var remarkLocation = new TextLocation(lineStartOffset, i, 0);
+                            var remarkKind = FindRemarkKind(line, isInstructionElement: false);
+                            var remark = new Remark(remarkKind, section,
+                                                    line.Trim(), line, remarkLocation);
 
-                                remark.ReferencedElements.Add(value);
-                                remark.OutputElements.Add(op);
-                                remarks.Add(remark);
-                                state.AttachToCurrentContext(remark);
-                            }
+                            remark.ReferencedElements.Add(value);
+                            remark.OutputElements.Add(op);
+                            remarks.Add(remark);
+                            state.AttachToCurrentContext(remark);
                         }
                     }
                     else {
@@ -356,7 +370,8 @@ namespace IRExplorerUI.UTC {
         }
 
         public List<Remark> ExtractAllRemarks(List<IRTextSection> sections, FunctionIR function,
-                                              LoadedDocument document, RemarkProviderOptions options) {
+                                              LoadedDocument document, RemarkProviderOptions options,
+                                              CancelableTask cancelableTask) {
             if (!settingsLoaded_) {
                 return new List<Remark>(); // Failed to load settings, bail out.
             }
@@ -373,7 +388,8 @@ namespace IRExplorerUI.UTC {
                 tasks[index++] = Task.Run(() => {
                     try {
                         var sectionTextLines = document.Loader.GetSectionOutputTextLines(section.OutputBefore);
-                        return ExtractRemarks(sectionTextLines, function, section, options);
+                        return ExtractRemarks(sectionTextLines, function, section, 
+                                              options, cancelableTask);
                     }
                     finally {
                         concurrencySemaphore.Release();

@@ -58,15 +58,17 @@ namespace IRExplorerCore.UTC {
         protected override string PreprocessLine(string line) {
             // Sometimes a line starts with a number followed by > like
             // 32>actual line text, keep only the text following the >.
-            if (!string.IsNullOrEmpty(line) && char.IsDigit(line[0])) {
-                for (int i = 1; i < line.Length; i++) {
-                    if (line[i] == '>') {
-                        MarkPreprocessedLine(i);
-                        return line.Substring(i + 1);
-                    }
-                    else if (!char.IsDigit(line[i])) {
-                        break;
-                    }
+            if (string.IsNullOrEmpty(line) || !char.IsDigit(line[0])) {
+                return line;
+            }
+
+            for (int i = 1; i < line.Length; i++) {
+                if (line[i] == '>') {
+                    MarkPreprocessedLine(i);
+                    return line.Substring(i + 1);
+                }
+                else if (!char.IsDigit(line[i])) {
+                    break;
                 }
             }
 
@@ -75,7 +77,7 @@ namespace IRExplorerCore.UTC {
 
         protected override bool ShouldSkipOutputLine(string line) {
             return string.IsNullOrWhiteSpace(line) ||
-                   line.StartsWith(SectionStartLine);
+                   line.StartsWith(SectionStartLine, StringComparison.Ordinal);
         }
     }
 }
