@@ -717,6 +717,7 @@ namespace IRExplorerUI {
             document.TextView.BookmarkChanged += TextView_BookmarkChanged;
             document.TextView.BookmarkSelected += TextView_BookmarkSelected;
             document.TextView.BookmarkListCleared += TextView_BookmarkListCleared;
+            document.TextView.CaretChanged += TextView_CaretChanged;
             document.ScrollChanged += Document_ScrollChanged;
         }
 
@@ -729,12 +730,13 @@ namespace IRExplorerUI {
             document.TextView.BookmarkChanged -= TextView_BookmarkChanged;
             document.TextView.BookmarkSelected -= TextView_BookmarkSelected;
             document.TextView.BookmarkListCleared -= TextView_BookmarkListCleared;
+            document.TextView.CaretChanged -= TextView_CaretChanged;
             document.ScrollChanged -= Document_ScrollChanged;
         }
 
-
         private void Document_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            if (!sessionState_.SectionDiffState.IsEnabled || Math.Abs(e.VerticalChange) < double.Epsilon) {
+            if (!sessionState_.SectionDiffState.IsEnabled || 
+                Math.Abs(e.VerticalChange) < double.Epsilon) {
                 return;
             }
 
@@ -746,6 +748,23 @@ namespace IRExplorerUI {
             else if (sessionState_.SectionDiffState.RightDocument == document) {
                 sessionState_.SectionDiffState.LeftDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
             }
+        }
+
+        private void TextView_CaretChanged(object sender, int caretOffset) {
+            if (!sessionState_.SectionDiffState.IsEnabled) {
+                return;
+            }
+
+            // Move the caret in the other document to the same position.
+            var document = sender as IRDocument;
+            var docHost = FindDocumentHost(document);
+            
+            if(!sessionState_.SectionDiffState.IsDiffDocument(docHost)) {
+                return;
+            }
+
+            var otherDocHost = sessionState_.SectionDiffState.GetOtherDocument(docHost);
+            otherDocHost.TextView.SetCaretAtOffset(caretOffset);
         }
 
         private void TextView_ActionPerformed(object sender, DocumentAction e) {

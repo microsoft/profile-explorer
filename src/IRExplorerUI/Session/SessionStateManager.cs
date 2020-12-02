@@ -187,6 +187,17 @@ namespace IRExplorerUI {
             return docHost == LeftDocument || docHost == RightDocument;
         }
 
+        public IRDocumentHost GetOtherDocument(IRDocumentHost docHost) {
+            if(docHost == LeftDocument) {
+                return RightDocument;
+            }
+            else if(docHost == RightDocument) {
+                return LeftDocument;
+            }
+
+            throw new InvalidOperationException("Check IsDiffDocument first");
+        }
+
         public void UpdateResults(DiffMarkingResult leftResults, IRTextSection leftSection,
                                   DiffMarkingResult rightResults, IRTextSection rightSection) {
             LeftDiffResults = leftResults;

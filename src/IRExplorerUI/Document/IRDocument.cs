@@ -265,6 +265,7 @@ namespace IRExplorerUI {
         public event EventHandler<IRHighlightingEventArgs> ElementHighlighting;
         public event EventHandler<IRElementEventArgs> ElementSelected;
         public event EventHandler<IRElementEventArgs> ElementUnselected;
+        public event EventHandler<int> CaretChanged;
 
         public void BookmarkInfoChanged(Bookmark bookmark) {
             UpdateHighlighting();
@@ -1268,6 +1269,9 @@ namespace IRExplorerUI {
             if (disableCaretEvent_) {
                 return;
             }
+
+            // Trigger event, used during diff mode to sync caret with other document.
+            CaretChanged?.Invoke(this, TextArea.Caret.Offset);
 
             if (ignoreNextCaretEvent_) {
                 ignoreNextCaretEvent_ = false;
@@ -2811,6 +2815,14 @@ namespace IRExplorerUI {
             TextArea.Caret.Offset = offset;
         }
 
+        public void TrySetCaretAtOffset(int offset) {
+            ignoreNextCaretEvent_ = true;
+
+            if (offset < Document.TextLength) {
+                TextArea.Caret.Offset = offset;
+            }
+        }
+
         private void SetupCommands() {
             AddCommand(DocumentCommand.GoToDefinition, GoToDefinitionExecuted);
             AddCommand(DocumentCommand.GoToDefinitionSkipCopies, GoToDefinitionSkipCopiesExecuted);
@@ -2853,11 +2865,11 @@ namespace IRExplorerUI {
             Drop += IRDocument_Drop;
             DragOver += IRDocument_DragOver;
             GiveFeedback += IRDocument_GiveFeedback;
-            AllowDrop = true;
             TextArea.Caret.PositionChanged += Caret_PositionChanged;
             margin_.BookmarkRemoved += Margin__BookmarkRemoved;
             margin_.BookmarkChanged += Margin__BookmarkChanged;
             eventSetupDone_ = true;
+            AllowDrop = true; // Enable drag-and-drop handilng.
         }
 
         private void IRDocument_GiveFeedback(object sender, GiveFeedbackEventArgs e) {
