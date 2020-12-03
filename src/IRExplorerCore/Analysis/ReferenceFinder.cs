@@ -66,6 +66,7 @@ namespace IRExplorerCore.Analysis {
                 return element;
             }
 
+            //? TODO: Handle instructions
             if (!(element is OperandIR op)) {
                 return null;
             }
@@ -125,11 +126,8 @@ namespace IRExplorerCore.Analysis {
                     int opBlockIndex = op.ParentTuple.BlockIndex;
                     int useBlockIndex = useOp.ParentTuple.BlockIndex;
                     int distance = Math.Abs(useBlockIndex - opBlockIndex);
-
-                    if (distance == 0) {
-                        //return useOp;
-                    }
-                    else if (distance < bestUseDistance) {
+                    
+                    if (distance < bestUseDistance) {
                         bestUse = useOp;
                         bestUseDistance = distance;
                     }

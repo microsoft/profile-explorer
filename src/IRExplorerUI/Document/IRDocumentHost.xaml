@@ -537,7 +537,7 @@
                         <MenuItem
                             Command="local:DocumentCommand.MarkDefinition"
                             CommandTarget="{Binding ElementName=TextView}"
-                            Header="Mark Definition"
+                            Header="Mark Definition(s)"
                             InputGestureText="Ctrl+D">
                             <MenuItem>
                                 <MenuItem.Header>
@@ -555,7 +555,7 @@
                         <MenuItem
                             Command="local:DocumentCommand.MarkUses"
                             CommandTarget="{Binding ElementName=TextView}"
-                            Header="Mark SSA Uses"
+                            Header="Mark Uses"
                             InputGestureText="Ctrl+Shift+U">
                             <MenuItem>
                                 <MenuItem.Header>
