@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Rendering;
+using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Utilities {
@@ -93,6 +94,21 @@ namespace IRExplorerUI.Utilities {
             viewStart = visualLines[0].FirstDocumentLine.Offset;
             viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
             return true;
+        }
+
+        public static ReferenceFinder CreateReferenceFinder(FunctionIR function, ISession session,
+                                                            DocumentSettings settings) {
+            var irInfo = session.CompilerInfo.IR;
+            IReachableReferenceFilter filter = null;
+
+            if (settings.FilterSourceDefinitions ||
+                settings.FilterDestinationUses) {
+                filter = irInfo.CreateReferenceFilter(function);
+                filter.FilterUses = settings.FilterDestinationUses;
+                filter.FilterDefinitions = settings.FilterSourceDefinitions;
+            }
+
+            return new ReferenceFinder(function, irInfo, filter);
         }
     }
 }
