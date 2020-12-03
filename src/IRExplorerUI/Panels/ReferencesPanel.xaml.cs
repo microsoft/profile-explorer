@@ -179,6 +179,9 @@ namespace IRExplorerUI {
 
                     element_ = value;
 
+                    //? TODO: There should be an option to pick default behavior for SSA values
+                    //?  - if SSA def, show only SSA uses
+                    //?  - or always show all refs
                     if (!FindAllReferences(element_, showSSAUses: true, false)) {
                         FindAllReferences(element_, showSSAUses: false, false);
                     }

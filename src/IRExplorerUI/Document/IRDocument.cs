@@ -1640,17 +1640,7 @@ namespace IRExplorerUI {
         }
 
         private ReferenceFinder CreateReferenceFinder() {
-            var irInfo = Session.CompilerInfo.IR;
-            IReachableReferenceFilter filter = null;
-            
-            if (settings_.FilterSourceDefinitions ||
-                settings_.FilterDestinationUses) {
-                filter = irInfo.CreateReferenceFilter(Function);
-                filter.FilterUses = settings_.FilterDestinationUses;
-                filter.FilterDefinitions = settings_.FilterSourceDefinitions;
-            }
-            
-            return new ReferenceFinder(Function, irInfo, filter);
+            return DocumentUtils.CreateReferenceFinder(Function, Session, settings_);
         }
 
         private bool GoToElementDefinition(IRElement element, bool skipCopies = false) {

@@ -6,6 +6,7 @@ using System.Windows.Controls;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     public class DefinitionPanelState {
@@ -58,17 +59,13 @@ namespace IRExplorerUI {
                 return;
             }
 
-            if(Document != null && Document != document) {
-                MessageBox.Show("Not same doc");
-                Utils.WaitForDebugger();
-            }
-
             if (op.IsLabelAddress) {
                 SwitchDefinitionElement(op, op.BlockLabelValue);
                 return;
             }
 
-            var refFinder = new ReferenceFinder(Document.Function);
+            var refFinder = DocumentUtils.CreateReferenceFinder(Document.Function, Session,
+                                                                App.Settings.DocumentSettings);
             var defOp = refFinder.FindSingleDefinition(element);
 
             if (defOp != null && defOp != op) {
