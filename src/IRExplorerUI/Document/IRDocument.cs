@@ -1589,7 +1589,8 @@ namespace IRExplorerUI {
                 return new List<OperandIR>();
             }
 
-            return new ReferenceFinder(Function).FindAllDefinitions(op).
+            var refFinder = CreateReferenceFinder();
+            return refFinder.FindAllDefinitions(op).
                 ConvertAll((item) => item as OperandIR);
         }
 
@@ -1638,6 +1639,20 @@ namespace IRExplorerUI {
             return op;
         }
 
+        private ReferenceFinder CreateReferenceFinder() {
+            var irInfo = Session.CompilerInfo.IR;
+            IReachableReferenceFilter filter = null;
+            
+            if (settings_.FilterSourceDefinitions ||
+                settings_.FilterDestinationUses) {
+                filter = irInfo.CreateReferenceFilter(Function);
+                filter.FilterUses = settings_.FilterDestinationUses;
+                filter.FilterDefinitions = settings_.FilterSourceDefinitions;
+            }
+            
+            return new ReferenceFinder(Function, irInfo, filter);
+        }
+
         private bool GoToElementDefinition(IRElement element, bool skipCopies = false) {
             RecordReversibleAction(DocumentActionKind.GoToDefinition, element);
             ClearTemporaryHighlighting();
@@ -1648,8 +1663,10 @@ namespace IRExplorerUI {
 
             if (element is OperandIR op) {
                 // If it's a destination operand and has a single user, jump to it.
+                var refFinder = CreateReferenceFinder();
+
                 if (op.Role == OperandRole.Destination) {
-                    var useOp = ReferenceFinder.GetSingleUse(op);
+                    var useOp = refFinder.GetSingleUse(op);
 
                     if (useOp != null) {
                         HighlightSingleElement(useOp, selectedHighlighter_);
@@ -1659,7 +1676,7 @@ namespace IRExplorerUI {
                 }
 
                 // Try to find a definition for the source operand.
-                var defOp = new ReferenceFinder(Function).FindDefinition(op);
+                var defOp = refFinder.FindSingleDefinition(op);
 
                 if (defOp != null) {
                     if (skipCopies) {
@@ -1753,7 +1770,8 @@ namespace IRExplorerUI {
                      settings_.HighlightDestinationUses) {
                 // First look for an SSA definition and its uses,
                 // if not found highlight every load of the same symbol.
-                var useList = new ReferenceFinder(Function).FindAllUses(op);
+                var refFinder = CreateReferenceFinder();
+                var useList = refFinder.FindAllUses(op);
                 bool handled = false;
                 
                 if (markExpression) {
@@ -1807,7 +1825,7 @@ namespace IRExplorerUI {
             }
 
             int maxLevel = currentExprLevel_;
-            var refFinder = new ReferenceFinder(Function);
+            var refFinder = CreateReferenceFinder();
             ExpandIteratedUseList(useList, handledElements, 0, maxLevel, refFinder);
         }
 
@@ -1941,7 +1959,8 @@ namespace IRExplorerUI {
                                          bool highlightDefInstr = true) {
             // First look for an SSA definition, if not found 
             // highlight every store to the same symbol.
-            var defList = new ReferenceFinder(Function).FindAllDefinitions(op);
+            var refFinder = CreateReferenceFinder();
+            var defList = refFinder.FindAllDefinitions(op);
 
             if (defList.Count == 0) {
                 return false;
@@ -1988,7 +2007,7 @@ namespace IRExplorerUI {
 
             int maxLevel = currentExprLevel_;
             int styleIndex = currentExprStyleIndex_;
-            var refFinder = new ReferenceFinder(Function);
+            var refFinder = CreateReferenceFinder();
             HighlightExpression(element, null, handledElements,
                                 highlighter, style, instrStyle, styleIndex, 
                                 0, maxLevel, refFinder);
@@ -2010,7 +2029,7 @@ namespace IRExplorerUI {
                         return;
                     }
 
-                    var sourceDefOp = refFinder.FindDefinition(op);
+                    var sourceDefOp = refFinder.FindSingleDefinition(op);
 
                     if (sourceDefOp != null) {
                         highlighter.Add(new HighlightedGroup(sourceDefOp, style.ForIndex(styleIndex)));
@@ -2386,7 +2405,7 @@ namespace IRExplorerUI {
                 op = op.IndirectionBaseValue;
             }
 
-            var refFinder = new ReferenceFinder(function_);
+            var refFinder = CreateReferenceFinder();
             var operandRefs = refFinder.FindAllReferences(op);
             var markedInstrs = new HashSet<InstructionIR>();
 
@@ -2431,10 +2450,11 @@ namespace IRExplorerUI {
 
         private void MarkUses(OperandIR defOp, PairHighlightingStyle style) {
             ClearTemporaryHighlighting();
-            var useList = ReferenceFinder.FindSSAUses(defOp);
+            var refFinder = CreateReferenceFinder();
+            var useList = refFinder.FindAllUses(defOp);
 
             HighlightUsers(defOp, useList, markedHighlighter_, style,
-                              HighlightingEventAction.AppendHighlighting);
+                           HighlightingEventAction.AppendHighlighting);
 
             UpdateHighlighting();
             Session.ShowSSAUses(defOp, this);
@@ -3191,7 +3211,8 @@ namespace IRExplorerUI {
                     target = op.BlockLabelValue;
                 }
                 else {
-                    target = new ReferenceFinder(Function).FindDefinition(op);
+                    var refFinder = CreateReferenceFinder();
+                    target = refFinder.FindSingleDefinition(op);
                 }
             }
 

@@ -23,6 +23,10 @@ namespace IRExplorerCore.LLVM {
             return new ParsingErrorHandler();
         }
 
+        public IReachableReferenceFilter CreateReferenceFilter(FunctionIR function) {
+            return null;
+        }
+
         public bool IsCopyInstruction(InstructionIR instr) {
             return SkipCopyInstruction(instr) != null;
         }

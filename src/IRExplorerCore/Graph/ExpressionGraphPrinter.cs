@@ -184,7 +184,7 @@ namespace IRExplorerCore.Graph {
 
             switch (element) {
                 case OperandIR op: {
-                    var defElement = refFinder.FindDefinition(op);
+                    var defElement = refFinder.FindSingleDefinition(op);
 
                     if (defElement != null) {
                         if (defElement is OperandIR defOp) {

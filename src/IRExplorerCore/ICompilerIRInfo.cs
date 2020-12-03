@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using IRExplorerCore.IR;
+using IRExplorerCore.Analysis;
 
 namespace IRExplorerCore {
     public interface ICompilerIRInfo {
@@ -9,6 +10,7 @@ namespace IRExplorerCore {
         IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders = true);
         IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler);
         IRParsingErrorHandler CreateParsingErrorHandler();
+        IReachableReferenceFilter CreateReferenceFilter(FunctionIR function);
 
         bool IsCopyInstruction(InstructionIR instr);
         bool IsLoadInstruction(InstructionIR instr);
