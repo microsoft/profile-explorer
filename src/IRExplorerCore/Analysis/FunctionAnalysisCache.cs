@@ -15,9 +15,12 @@ namespace IRExplorerCore.Analysis {
         private static object lockObject_ = new object();
 
         private FunctionIR function_;
+
+        //? TODO: Create IAnalysis as a common interface and keep a list,
+        //? then change API to be like GetAsync<T>(), with T being the analysis.
         private volatile DominatorAlgorithm dominators_;
         private volatile DominatorAlgorithm postDominators_;
-        private volatile CFGReachability reachability_;
+        private volatile CFGReachability cfgReachability_;
         private volatile DominanceFrontier dominanceFrontier_;
         private volatile DominanceFrontier postDominanceFrontier_;
 
@@ -106,17 +109,17 @@ namespace IRExplorerCore.Analysis {
         }
 
         public async Task<CFGReachability> GetReachabilityAsync() {
-            if (reachability_ == null) {
+            if (cfgReachability_ == null) {
                 var result = await ComputeReachability().ConfigureAwait(false);
 
                 if (cacheEnabled_) {
-                    Interlocked.Exchange(ref reachability_, result);
+                    Interlocked.Exchange(ref cfgReachability_, result);
                 }
 
                 return result;
             }
 
-            return reachability_;
+            return cfgReachability_;
         }
 
         public DominatorAlgorithm GetDominators() {
@@ -125,6 +128,10 @@ namespace IRExplorerCore.Analysis {
 
         public DominatorAlgorithm GetPostDominators() {
             return GetPostDominatorsAsync().Result;
+        }
+
+        public CFGReachability GetReachability() {
+            return GetReachabilityAsync().Result;
         }
 
         private Task<DominatorAlgorithm> ComputeDominators() {
@@ -149,11 +156,11 @@ namespace IRExplorerCore.Analysis {
             var domTask = ComputeDominators();
             var postDomTask = ComputePostDominators();
             var reachTask = ComputeReachability();
-            await Task.WhenAll(domTask, postDomTask, reachTask);
+            await Task.WhenAll(domTask, postDomTask, reachTask).ConfigureAwait(false);
 
-            Interlocked.Exchange(ref dominators_, await domTask);
-            Interlocked.Exchange(ref postDominators_, await postDomTask);
-            Interlocked.Exchange(ref reachability_, await reachTask);
+            Interlocked.Exchange(ref dominators_, await domTask.ConfigureAwait(false));
+            Interlocked.Exchange(ref postDominators_, await postDomTask.ConfigureAwait(false));
+            Interlocked.Exchange(ref cfgReachability_, await reachTask.ConfigureAwait(false));
         }
 		
 		public async Task CacheAllAsync() {
@@ -163,7 +170,7 @@ namespace IRExplorerCore.Analysis {
         public void InvalidateAll() {
             dominators_ = null;
             postDominators_ = null;
-            reachability_ = null;
+            cfgReachability_ = null;
         }
 
         public static FunctionAnalysisCache Get(FunctionIR function) {

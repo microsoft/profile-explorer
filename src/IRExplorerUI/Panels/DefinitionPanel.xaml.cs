@@ -69,7 +69,7 @@ namespace IRExplorerUI {
             }
 
             var refFinder = new ReferenceFinder(Document.Function);
-            var defOp = refFinder.FindDefinition(element);
+            var defOp = refFinder.FindSingleDefinition(element);
 
             if (defOp != null && defOp != op) {
                 SwitchDefinitionElement(op, defOp);

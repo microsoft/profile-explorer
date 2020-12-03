@@ -128,7 +128,7 @@ namespace IRExplorerUI {
                         return;
                     }
 
-                    var refElementDef = refFinder.FindDefinition(refElement);
+                    var refElementDef = refFinder.FindSingleDefinition(refElement);
                     var tooltipElement = refElementDef ?? refElement;
                     previewTooltip_ = new IRPreviewToolTip(600, 100, Session.CurrentDocument, tooltipElement);
                     previewTooltip_.Show();

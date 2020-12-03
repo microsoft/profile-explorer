@@ -31,14 +31,26 @@ namespace IRExplorerCore.Analysis {
         public ReferenceKind Kind { get; set; }
     }
 
+    public interface IReachableReferenceFilter {
+        public bool FilterDefinitions { get; set; }
+        public bool FilterUses { get; set; }
+
+        public bool AcceptReference(IRElement element, IRElement startElement);
+        public bool AcceptDefinitionReference(IRElement element, IRElement startSourceElement);
+        public bool AcceptUseReference(IRElement element, IRElement startDestElement);
+    }
+
     public sealed class ReferenceFinder {
         private FunctionIR function_;
         private ICompilerIRInfo irInfo_;
+        private IReachableReferenceFilter referenceFilter_;
         private Dictionary<int, SSADefinitionTag> ssaDefTagMap_;
 
-        public ReferenceFinder(FunctionIR function, ICompilerIRInfo irInfo = null) {
+        public ReferenceFinder(FunctionIR function, ICompilerIRInfo irInfo = null,
+                               IReachableReferenceFilter referenceFilter = null) {
             function_ = function;
             irInfo_ = irInfo;
+            referenceFilter_ = referenceFilter;
         }
 
         public void PrecomputeAllReferences() {
@@ -224,13 +236,15 @@ namespace IRExplorerCore.Analysis {
 
                     foreach (var destOp in instr.Destinations) {
                         var comparedOp = destOp;
+                        var refKind = ReferenceKind.Store;
 
                         if (destOp.IsIndirection) {
                             comparedOp = destOp.IndirectionBaseValue;
+                            refKind = ReferenceKind.Load;
                         }
 
                         if (IsSameSymbolOperand(comparedOp, op)) {
-                            CreateReference(destOp, ReferenceKind.Store, list, filterAction);
+                            CreateReference(destOp, refKind, list, filterAction);
                         }
                     }
 
@@ -320,20 +334,26 @@ namespace IRExplorerCore.Analysis {
             return list;
         }
 
-        public List<IRElement> FindAllUses(OperandIR op, List<IRElement> list) {
+        private List<IRElement> FindAllUses(OperandIR op, List<IRElement> list) {
             foreach (var use in EnumerateSSAUses(op)) {
                 list.Add(use);
             }
 
+            // If there is no SSA info, collect all the symbol loads.
             if(list.Count == 0 && op.GetTag<SSADefinitionTag>() == null) {
                 var allLoads = FindAllLoads(op);
-                allLoads.ForEach((item) => list.Add(item.Element));
+
+                foreach (var reference in allLoads) {
+                    if (AcceptReferenceForDestination(reference.Element, op)) {
+                        list.Add(reference.Element);
+                    }
+                }
             }
 
             return list;
         }
 
-        public IRElement FindDefinition(IRElement element) {
+        public IRElement FindSingleDefinition(IRElement element) {
             // Try to use SSA info first.
             if (element is OperandIR op) {
                 var ssaDefOp = GetSSADefinition(op);
@@ -365,15 +385,16 @@ namespace IRExplorerCore.Analysis {
                     return list;
                 }
                 else if (op.IsIndirection) {
-                    element = op.IndirectionBaseValue;
+                    // Search for the base operand of an indirection.
+                    return FindAllDefinitions(op.IndirectionBaseValue);
                 }
             }
 
             //? TODO: Very inefficient
-            var refList = FindAllReferences(element, false);
+            var refList = FindAllStores(element);
 
             foreach (var reference in refList) {
-                if (reference.Kind == ReferenceKind.Store) {
+                if (AcceptReferenceForSource(reference.Element, element)) {
                     list.Add(reference.Element);
                 }
             }
@@ -416,13 +437,21 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        public static IRElement GetSingleUse(OperandIR op) {
+        public IRElement GetSingleUse(OperandIR op) {
             var ssaDefTag = op.GetTag<SSADefinitionTag>();
 
             if (ssaDefTag != null) {
                 if (ssaDefTag.HasSingleUser) {
                     return ssaDefTag.Users[0].OwnerElement;
                 }
+
+                return null;
+            }
+
+            var useList = FindAllUses(op);
+
+            if(useList.Count == 1) {
+                return useList[0];
             }
 
             return null;
@@ -505,6 +534,28 @@ namespace IRExplorerCore.Analysis {
             }
 
             return "";
+        }
+
+        private bool AcceptReference(IRElement element, IRElement startElement) {
+            if(referenceFilter_ != null) {
+                return referenceFilter_.AcceptReference(element, startElement);
+            }
+
+            return true;
+        }
+        private bool AcceptReferenceForSource(IRElement element, IRElement startSourceElement) {
+            if (referenceFilter_ != null) {
+                return referenceFilter_.AcceptDefinitionReference(element, startSourceElement);
+            }
+
+            return true;
+        }
+        private bool AcceptReferenceForDestination(IRElement element, IRElement startDestElement) {
+            if (referenceFilter_ != null) {
+                return referenceFilter_.AcceptUseReference(element, startDestElement);
+            }
+
+            return true;
         }
     }
 }

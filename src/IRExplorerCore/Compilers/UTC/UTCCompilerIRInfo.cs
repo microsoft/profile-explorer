@@ -25,6 +25,10 @@ namespace IRExplorerCore.UTC {
             return new ParsingErrorHandler();
         }
 
+        public IReachableReferenceFilter CreateReferenceFilter(FunctionIR function) {
+            return new UTCReferenceFilter(function);
+        }
+
         public bool IsCopyInstruction(InstructionIR instr) {
             return SkipCopyInstruction(instr) != null;
         }

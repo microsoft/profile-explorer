@@ -200,13 +200,27 @@
             <TextBlock FontWeight="DemiBold" Text="IR Value Interaction" />
 
             <CheckBox
+                x:Name="HighlightDefinitionCheckbox"
                 Margin="0,4,0,2"
-                Content="Highlight definition of selected source value"
+                Content="Highlight definition(s) of selected source value"
                 IsChecked="{Binding Path=HighlightSourceDefinition, Mode=TwoWay}" />
             <CheckBox
+                Margin="20,2,0,2"
+                Content="Consider only reaching definitions"
+                IsChecked="{Binding Path=FilterSourceDefinitions, Mode=TwoWay}"
+                IsEnabled="{Binding ElementName=HighlightDefinitionCheckbox, Path=IsChecked}"
+                ToolTip="Filter out any definition that can't reach the source value in the flow graph" />
+            <CheckBox
+                x:Name="HighlightUsesCheckbox"
                 Margin="0,2,0,2"
                 Content="Highlight uses of selected destination value"
                 IsChecked="{Binding Path=HighlightDestinationUses, Mode=TwoWay}" />
+            <CheckBox
+                Margin="20,2,0,2"
+                Content="Consider only reachable uses"
+                IsChecked="{Binding Path=FilterDestinationUses, Mode=TwoWay}"
+                IsEnabled="{Binding ElementName=HighlightUsesCheckbox, Path=IsChecked}"
+                ToolTip="Filter out any use that can't be reached by the destination value in the flow graph" />
             <CheckBox
                 Margin="0,2,0,2"
                 Content="Highlight definitions of all sources of selected instruction"

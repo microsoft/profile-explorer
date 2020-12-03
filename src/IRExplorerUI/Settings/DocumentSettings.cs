@@ -59,6 +59,8 @@ namespace IRExplorerUI {
 
         [ProtoMember(24)] public int DefaultExpressionsLevel { get; set; }
         [ProtoMember(25)] public bool MarkMultipleDefinitionExpressions { get; set; }
+        [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
+        [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -75,6 +77,8 @@ namespace IRExplorerUI {
             ShowInfoOnHoverWithModifier = true;
             ShowPreviewPopup = true;
             ShowPreviewPopupWithModifier = false;
+            FilterSourceDefinitions = true;
+            FilterDestinationUses = true;
             BackgroundColor = Utils.ColorFromString("#FFFAFA");
             AlternateBackgroundColor = Utils.ColorFromString("#f5f5f5");
             TextColor = Colors.Black;
@@ -106,6 +110,8 @@ namespace IRExplorerUI {
                    ShowInfoOnHoverWithModifier == settings.ShowInfoOnHoverWithModifier &&
                    ShowPreviewPopup == settings.ShowPreviewPopup &&
                    ShowPreviewPopupWithModifier == settings.ShowPreviewPopupWithModifier &&
+                   FilterSourceDefinitions == settings.FilterSourceDefinitions &&
+                   FilterDestinationUses == settings.FilterDestinationUses &&
                    BackgroundColor.Equals(settings.BackgroundColor) &&
                    AlternateBackgroundColor.Equals(settings.AlternateBackgroundColor) &&
                    MarginBackgroundColor.Equals(settings.MarginBackgroundColor) &&
