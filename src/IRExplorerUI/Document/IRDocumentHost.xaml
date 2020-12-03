@@ -24,11 +24,43 @@
         <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
     </UserControl.CommandBindings>
 
+    <UserControl.Resources>
+        <Style x:Key="GridSplitterStyle" TargetType="{x:Type RowDefinition}">
+            <Style.Setters>
+                <Setter Property="Height" Value="2" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding PassOutputVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Height" Value="0" />
+                        <Setter Property="MaxHeight" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="PassOutputStyle" TargetType="{x:Type RowDefinition}">
+            <Style.Setters>
+                <Setter Property="Height" Value="*" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding PassOutputVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Height" Value="0" />
+                        <Setter Property="MaxHeight" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
     <Grid>
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="28" />
-                <RowDefinition Height="*" />
+                <RowDefinition Height="3*" />
+                <RowDefinition Style="{StaticResource GridSplitterStyle}" />
+                <RowDefinition Style="{StaticResource PassOutputStyle}" />
             </Grid.RowDefinitions>
 
             <Grid
@@ -89,7 +121,7 @@
                             Text="Block" />
                         <ComboBox
                             x:Name="BlockSelector"
-                            Width="75"
+                            Width="50"
                             Margin="4,0,0,0"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -139,6 +171,7 @@
                             ToolTip="Go to previous block (Ctrl+Arrow Up)">
                             <Image Source="{StaticResource UpArrowIcon}" />
                         </Button>
+
                         <Button
                             Command="local:DocumentCommand.NextBlock"
                             CommandTarget="{Binding ElementName=TextView}"
@@ -351,6 +384,17 @@
                         </Menu>
 
                         <Separator />
+
+
+                        <ToggleButton
+                            Width="20"
+                            Height="20"
+                            Margin="0,0,2,0"
+                            Padding="0,0,0,0"
+                            IsChecked="{Binding Path=PassOutputVisible, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                            ToolTip="Show associated pass output in this document">
+                            <Image Source="{StaticResource ListIcon}" />
+                        </ToggleButton>
 
                         <ToggleButton
                             x:Name="SearchButton"
@@ -612,6 +656,19 @@
                     </ContextMenu>
                 </local:IRDocument.ContextMenu>
             </local:IRDocument>
+
+            <GridSplitter
+                Grid.Row="2"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                ResizeBehavior="PreviousAndNext" />
+
+            <local:PassOutputPanel
+                x:Name="PassOutput"
+                Grid.Row="3"
+                HasDuplicateButton="false"
+                HasPinButton="false"
+                Visibility="{Binding PassOutputVisible, Converter={StaticResource BoolToVisibility}}" />
         </Grid>
 
         <Border

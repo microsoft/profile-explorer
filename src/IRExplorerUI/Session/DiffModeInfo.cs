@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -28,6 +29,7 @@ namespace IRExplorerUI {
 
         public DiffModeInfo() {
             DiffModeChangeCompleted = new ManualResetEvent(true);
+            PassOutputShowBefore = true; //? TODO: Restore settings
         }
 
         public bool IsEnabled { get; set; }
@@ -38,10 +40,12 @@ namespace IRExplorerUI {
         public IRDocumentHost IgnoreNextScrollEventDocument { get; set; }
         public DiffMarkingResult LeftDiffResults { get; set; }
         public DiffMarkingResult RightDiffResults { get; set; }
+        public bool PassOutputVisible { get; set; }
+        public bool PassOutputShowBefore { get; set; }
 
-        public void StartModeChange() {
+        public async Task StartModeChange() {
             // If a diff-mode change is in progress, wait until it's done.
-            DiffModeChangeCompleted.WaitOne();
+            await DiffModeChangeCompleted.AsTask();
             DiffModeChangeCompleted.Reset();
         }
 
@@ -73,7 +77,7 @@ namespace IRExplorerUI {
                 return LeftDocument;
             }
 
-            throw new InvalidOperationException("Check IsDiffDocument first");
+            return null;
         }
 
         public void UpdateResults(DiffMarkingResult leftResults, IRTextSection leftSection,

@@ -14,6 +14,7 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Diff;
 using System.Threading;
 using System.Diagnostics;
+using System;
 
 namespace IRExplorerUI {
     [ProtoContract]
@@ -46,16 +47,23 @@ namespace IRExplorerUI {
         private bool showAfterOutput_;
         private bool diffModeEnabled_;
         private bool diffModeButtonEnabled_;
+        private bool diffModeButtonVisible_;
+        private bool sectionNameVisible_;
 
         public PassOutputPanel() {
             InitializeComponent();
-            DataContext = this;
+            Toolbar.DataContext = this;
+            diffModeButtonVisible_ = true;
+            sectionNameVisible_ = true;
+
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
             SearchPanel.CloseSearchPanel += SearchPanel_CloseSearchPanel;
             SearchPanel.NavigateToPreviousResult += SearchPanel_NaviateToPreviousResult;
             SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
         }
 
+        public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
+        public event EventHandler<bool> ShowBeforeOutputChanged;
         public event PropertyChangedEventHandler PropertyChanged;
 
         public bool ShowAfterOutput {
@@ -76,6 +84,26 @@ namespace IRExplorerUI {
                     showAfterOutput_ = !value;
                     OnPropertyChange(nameof(ShowAfterOutput));
                     OnPropertyChange(nameof(ShowBeforeOutput));
+                }
+            }
+        }
+
+        public bool DiffModeButtonVisible {
+            get => diffModeButtonVisible_;
+            set {
+                if (diffModeButtonVisible_ != value) {
+                    diffModeButtonVisible_ = value;
+                    OnPropertyChange(nameof(DiffModeButtonVisible));
+                }
+            }
+        }
+
+        public bool SectionNameVisible {
+            get => sectionNameVisible_;
+            set {
+                if (sectionNameVisible_ != value) {
+                    sectionNameVisible_ = value;
+                    OnPropertyChange(nameof(SectionNameVisible));
                 }
             }
         }
@@ -209,6 +237,7 @@ namespace IRExplorerUI {
         private async void ToggleOutputExecuted(object sender, ExecutedRoutedEventArgs e) {
             ShowAfterOutput = !ShowAfterOutput;
             await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+            ShowBeforeOutputChanged?.Invoke(this, ShowBeforeOutput);
         }
 
         private void ToggleSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -237,17 +266,23 @@ namespace IRExplorerUI {
             set => FixedToolbar.IsPinned = value;
         }
 
+        public bool HasPinButton {
+            get => FixedToolbar.HasPinButton;
+            set => FixedToolbar.HasPinButton = value;
+        }
+
+        public bool HasDuplicateButton {
+            get => FixedToolbar.HasDuplicateButton;
+            set => FixedToolbar.HasDuplicateButton = value;
+        }
+
         public override async void ClonePanel(IToolPanel basePanel) {
             var otherPanel = (PassOutputPanel)basePanel;
             await SwitchText(otherPanel.TextView.Section, otherPanel.TextView.Function,
                              otherPanel.TextView.AssociatedDocument);
         }
 
-        public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
-            if (HasPinnedContent) {
-                return;
-            }
-
+        public async Task SwitchSection(IRTextSection section, IRDocument document) {
             Document = document;
             Section = section;
             OnPropertyChange(nameof(SectionName)); // Force update.
@@ -260,15 +295,15 @@ namespace IRExplorerUI {
                 await SwitchText(section, document.Function, document);
                 ShowAfterOutput = state.ShowAfterOutput;
 
-                if(state.SearchInfo != null) {
+                if (state.SearchInfo != null) {
                     // Show search panel and redo the search.
                     SearchPanelVisible = true;
                     SearchPanel.Reset(state.SearchInfo);
                     await SearchText(state.SearchInfo);
                 }
 
-                if(state.DiffModeEnabled) {
-                    await EnableDiffMode();
+                if (state.DiffModeEnabled) {
+                    await EnterDiffMode();
                 }
 
                 // Restore position in document.
@@ -280,6 +315,14 @@ namespace IRExplorerUI {
                 await SwitchText(section, document.Function, document);
                 await TextView.SearchText(new SearchInfo());
             }
+        }
+
+        public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+            if (HasPinnedContent) {
+                return;
+            }
+
+            await SwitchSection(section, document);
         }
 
         private void SaveState(IRTextSection section, IRDocument document) {
@@ -302,8 +345,15 @@ namespace IRExplorerUI {
             var output = SelectSectionOutput(section);
             initialText_ = await Session.GetSectionOutputTextAsync(output, section);
 
+            TextView.RemoveDiffTextSegments();
             await TextView.SwitchText(initialText_, function, section, associatedDocument);
             await SearchText();
+        }
+
+        public async Task UnloadSection(IRTextSection section, IRDocument document) {
+            await ResetOutputPanel();
+            Document = null;
+            Section = null;
         }
 
         public override async void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -312,16 +362,14 @@ namespace IRExplorerUI {
             }
 
             SaveState(section, document);
-            await ResetOutputPanel();
-            Document = null;
-            Section = null;
+            await UnloadSection(section, document);
         }
 
         private async Task ResetOutputPanel() {
             SearchPanelVisible = false;
             initialText_ = null;
             searchResults_ = null;
-            await DisableDiffMode();
+            await EndDiffMode();
             TextView.UnloadDocument();
             OnPropertyChange(nameof(SectionName)); // Force update.
         }
@@ -355,16 +403,30 @@ namespace IRExplorerUI {
 
         private async void AfterButton_Click(object sender, RoutedEventArgs e) {
             ShowAfterOutput = true;
-            await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+
+            if (ShowBeforeOutputChanged != null) {
+                // Let the owner handle the text change (used with diff mode).
+                ShowBeforeOutputChanged(this, ShowBeforeOutput);
+            }
+            else {
+                await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+            }
         }
 
         private async void BeforeButton_Click(object sender, RoutedEventArgs e) {
             ShowBeforeOutput = true;
-            await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+
+            if (ShowBeforeOutputChanged != null) {
+                // Let the owner handle the text change (used with diff mode).
+                ShowBeforeOutputChanged(this, ShowBeforeOutput);
+            }
+            else {
+                await SwitchText(TextView.Section, TextView.Function, TextView.AssociatedDocument);
+            }
         }
 
-        private async Task EnableDiffMode() {
-            if (!Session.IsInTwoDocumentsDiffMode) {
+        private async Task EnterDiffMode() {
+            if (!Session.IsInDiffMode) {
                 return;
             }
 
@@ -395,12 +457,20 @@ namespace IRExplorerUI {
             ResetTextSearch(); // Reset current search, if there is any.
 
             // Replace the current text document.
-            diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
+            await LoadDiffedPassOutput(diffResult);
+            DiffModeEnabled = true;
+        }
+
+        public async Task LoadDiffedPassOutput(DiffMarkingResult diffResult) {
+            TextView.RemoveDiffTextSegments();
             await TextView.SwitchDocument(diffResult.DiffDocument, diffResult.DiffText);
             TextView.AddDiffTextSegments(diffResult.DiffSegments);
-            
             FilterSearchResults = false; // Not compatible.
-            DiffModeEnabled = true;
+        }
+
+        public async Task RestorePassOutput() {
+            TextView.RemoveDiffTextSegments();
+            await TextView.SwitchText(initialText_);
         }
 
         private async Task<string> GetSectionOutputText(IRTextSection section) {
@@ -409,21 +479,24 @@ namespace IRExplorerUI {
         }
 
         private async void DiffToggleButton_Checked(object sender, RoutedEventArgs e) {
-            await EnableDiffMode();
+            await EnterDiffMode();
         }
 
         private async void DiffToggleButton_Unchecked(object sender, RoutedEventArgs e) {
-            await DisableDiffMode();
+            await EndDiffMode();
         }
 
-        private async Task DisableDiffMode() {
+        private async Task EndDiffMode() {
             if(!DiffModeEnabled) {
                 return;
             }
 
-            TextView.RemoveDiffTextSegments();
-            await TextView.SwitchText(initialText_);
+            await RestorePassOutput();
             DiffModeEnabled = false;
+        }
+
+        private void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+            ScrollChanged?.Invoke(this, e);
         }
     }
 }

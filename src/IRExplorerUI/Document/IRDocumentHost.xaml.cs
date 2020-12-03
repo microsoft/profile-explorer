@@ -57,7 +57,6 @@ namespace IRExplorerUI {
 
     class RemarksButtonState : INotifyPropertyChanged {
         private RemarkSettings remarkSettings_;
-        private RemarkSettings previousSettings_;
 
         public RemarksButtonState(RemarkSettings settings) {
             remarkSettings_ = (RemarkSettings)settings.Clone();
@@ -108,7 +107,7 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-    public partial class IRDocumentHost : UserControl {
+    public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         private const double ActionPanelInitialOpacity = 0.5;
         private const int ActionPanelHeight = 20;
         private const double ActionPanelHideTimeout = 0.5;
@@ -136,16 +135,27 @@ namespace IRExplorerUI {
         private ISession session_;
         private DocumentSettings settings_;
         private List<Remark> remarkList_;
-        private RemarksButtonState remarksButtonState_;
         private RemarkContext activeRemarkContext_;
         private List<QueryPanel> activeQueryPanels_;
+        private bool pasOutputVisible_;
 
         public IRDocumentHost(ISession session) {
             InitializeComponent();
-            ActionPanel.Visibility = Visibility.Collapsed;
+            DataContext = this;
+            PassOutput.DataContext = this;
+
             Session = session;
             Settings = App.Settings.DocumentSettings;
-            activeQueryPanels_ = new List<QueryPanel>();
+            ActionPanel.Visibility = Visibility.Collapsed;
+
+            // Initialize pass output panel.
+            PassOutput.Session = session;
+            PassOutput.HasPinButton = false;
+            PassOutput.HasDuplicateButton = false;
+            PassOutput.DiffModeButtonVisible = false;
+            PassOutput.SectionNameVisible = false;
+            PassOutput.ScrollChanged += PassOutput_ScrollChanged;
+            PassOutput.ShowBeforeOutputChanged += PassOutput_ShowBeforeOutputChanged;
 
             PreviewKeyDown += IRDocumentHost_PreviewKeyDown;
             TextView.PreviewMouseRightButtonDown += TextView_PreviewMouseRightButtonDown;
@@ -167,15 +177,17 @@ namespace IRExplorerUI {
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
 
+            activeQueryPanels_ = new List<QueryPanel>();
             remarkSettings_ = App.Settings.RemarkSettings;
-            remarksButtonState_ = new RemarksButtonState(remarkSettings_);
-            remarksButtonState_.PropertyChanged += RemarksButtonState_PropertyChanged;
-            DocumentToolbar.DataContext = remarksButtonState_;
         }
 
-        private async void RemarksButtonState_PropertyChanged(object sender, PropertyChangedEventArgs e) {
+        public void NotifyPropertyChanged(string propertyName) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private async void HandleRemarkSettingsChange() {
             if (!remarkPanelVisible_ && !remarkOptionsPanelVisible_) {
-                await HandleNewRemarkSettings(remarksButtonState_.Settings, false);
+                await HandleNewRemarkSettings(remarkSettings_, false);
             }
         }
 
@@ -198,7 +210,34 @@ namespace IRExplorerUI {
         public RemarkSettings RemarkSettings {
             get => remarkSettings_;
             set {
-                HandleNewRemarkSettings(value, false);
+                if (!value.Equals(remarkSettings_)) {
+                    remarkSettings_ = (RemarkSettings)value.Clone();
+
+                    NotifyPropertyChanged(nameof(ShowRemarks));
+                    NotifyPropertyChanged(nameof(ShowPreviousSections));
+                    HandleNewRemarkSettings(value, false);
+                }
+            }
+        }
+
+        public bool ShowRemarks {
+            get => remarkSettings_.ShowRemarks;
+            set {
+                if (value != remarkSettings_.ShowRemarks) {
+                    remarkSettings_.ShowRemarks = value;
+                    NotifyPropertyChanged(nameof(ShowRemarks));
+                    HandleRemarkSettingsChange();
+                }
+            }
+        }
+
+        public bool ShowPreviousSections {
+            get => ShowRemarks && remarkSettings_.ShowPreviousSections;
+            set {
+                if (value != remarkSettings_.ShowPreviousSections) {
+                    remarkSettings_.ShowPreviousSections = value;
+                    NotifyPropertyChanged(nameof(ShowPreviousSections));
+                }
             }
         }
 
@@ -207,6 +246,10 @@ namespace IRExplorerUI {
         public bool DuringSectionLoading => TextView.DuringSectionLoading;
 
         public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
+        public event EventHandler<ScrollChangedEventArgs> PassOutputScrollChanged;
+        public event EventHandler<bool> PassOutputShowBeforeChanged;
+        public event EventHandler<bool> PassOutputVisibilityChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
 
         private void IRDocumentHost_Unloaded(object sender, RoutedEventArgs e) {
             if (remarkPanelVisible_) {
@@ -586,6 +629,10 @@ namespace IRExplorerUI {
             SaveSectionState(section);
 
             if (!switchingActiveDocument) {
+                if (PassOutputVisible) {
+                    await PassOutput.UnloadSection(section, TextView);
+                }
+
                 await RemoveRemarks();
 
                 // Clear references to IR objects that would keep the previous function alive.
@@ -678,7 +725,26 @@ namespace IRExplorerUI {
                 await TextView.LoadSection(parsedSection);
             }
 
+            if (PassOutputVisible) {
+                await PassOutput.SwitchSection(parsedSection.Section, TextView);
+            }
+
             await ReloadRemarks();
+        }
+
+        public bool PassOutputVisible {
+            get => pasOutputVisible_;
+            set {
+                if(pasOutputVisible_ != value) {
+                    if(!pasOutputVisible_) {
+                        PassOutput.SwitchSection(Section, TextView);
+                    }
+
+                    pasOutputVisible_ = value;
+                    NotifyPropertyChanged(nameof(PassOutputVisible));
+                    PassOutputVisibilityChanged?.Invoke(this, value);
+                }
+            }
         }
 
         private async Task ReloadRemarks() {
@@ -883,6 +949,11 @@ namespace IRExplorerUI {
 
         public async Task ExitDiffMode() {
             TextView.ExitDiffMode();
+
+            if(PassOutputVisible) {
+                await PassOutput.RestorePassOutput();
+            }
+
             await HideOptionalPanels();
         }
 
@@ -1196,8 +1267,7 @@ namespace IRExplorerUI {
                                     (newSettings.StopAtSectionBoundaries != remarkSettings_.StopAtSectionBoundaries ||
                                      newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth));
             App.Settings.RemarkSettings = newSettings;
-            remarkSettings_ = newSettings;
-            remarksButtonState_.Settings = newSettings;
+            RemarkSettings = newSettings;
 
             if (rebuildRemarkList) {
                 Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Find and load remarks");
@@ -1231,10 +1301,18 @@ namespace IRExplorerUI {
             await CloseRemarkOptionsPanel();
         }
 
-        private async void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+        private void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
             HideActionPanel();
             DetachRemarkPanel(true);
             ScrollChanged?.Invoke(this, e);
+        }
+
+        private void PassOutput_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+            PassOutputScrollChanged?.Invoke(this, e);
+        }
+
+        private void PassOutput_ShowBeforeOutputChanged(object sender, bool e) {
+            PassOutputShowBeforeChanged?.Invoke(this, e);
         }
 
         private void ActionPanel_MouseEnter(object sender, MouseEventArgs e) {
@@ -1258,7 +1336,18 @@ namespace IRExplorerUI {
 
         public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
             await TextView.LoadDiffedFunction(diffResult, newSection);
+            
+            if (PassOutputVisible) {
+                await PassOutput.SwitchSection(newSection, TextView);
+            }
+
             await ReloadRemarks();
+        }
+
+        public async Task LoadDiffedPassOutput(DiffMarkingResult diffResult) {
+            if (PassOutputVisible) {
+                await PassOutput.LoadDiffedPassOutput(diffResult);
+            }
         }
 
         private void QueryMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {

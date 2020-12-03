@@ -728,6 +728,9 @@ namespace IRExplorerUI {
             document.TextView.BookmarkListCleared += TextView_BookmarkListCleared;
             document.TextView.CaretChanged += TextView_CaretChanged;
             document.ScrollChanged += Document_ScrollChanged;
+            document.PassOutputScrollChanged += Document_PassOutputScrollChanged;
+            document.PassOutputVisibilityChanged += Document_PassOutputVisibilityChanged;
+            document.PassOutputShowBeforeChanged += Document_PassOutputShowBeforeChanged;
         }
 
         private void ResetDocumentEvents(IRDocumentHost document) {
@@ -741,6 +744,9 @@ namespace IRExplorerUI {
             document.TextView.BookmarkListCleared -= TextView_BookmarkListCleared;
             document.TextView.CaretChanged -= TextView_CaretChanged;
             document.ScrollChanged -= Document_ScrollChanged;
+            document.PassOutputScrollChanged -= Document_PassOutputScrollChanged;
+            document.PassOutputVisibilityChanged -= Document_PassOutputVisibilityChanged;
+            document.PassOutputShowBeforeChanged -= Document_PassOutputShowBeforeChanged;
         }
 
         private void Document_ScrollChanged(object sender, ScrollChangedEventArgs e) {
@@ -750,12 +756,58 @@ namespace IRExplorerUI {
             }
 
             var document = sender as IRDocumentHost;
+            var otherDocument = sessionState_.SectionDiffState.GetOtherDocument(document);
 
-            if (sessionState_.SectionDiffState.LeftDocument == document) {
-                sessionState_.SectionDiffState.RightDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
+            if(otherDocument != null) {
+                otherDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
             }
-            else if (sessionState_.SectionDiffState.RightDocument == document) {
-                sessionState_.SectionDiffState.LeftDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
+        }
+
+        private async void Document_PassOutputShowBeforeChanged(object sender, bool e) {
+            sessionState_.SectionDiffState.PassOutputShowBefore = e;
+
+            if (!IsInDiffMode) {
+                return;
+            }
+
+            var document = sender as IRDocumentHost;
+            var otherDocument = sessionState_.SectionDiffState.GetOtherDocument(document);
+
+            if (otherDocument != null) {
+                otherDocument.PassOutput.ShowBeforeOutput = e;
+                await DiffDocumentPassOutput();
+            }
+        }
+
+        private async void Document_PassOutputVisibilityChanged(object sender, bool e) {
+            sessionState_.SectionDiffState.PassOutputVisible = e;
+
+            if (!IsInDiffMode) {
+                return;
+            }
+
+            var document = sender as IRDocumentHost;
+            var otherDocument = sessionState_.SectionDiffState.GetOtherDocument(document);
+
+            if (otherDocument != null) {
+                otherDocument.PassOutputVisible = e;
+
+                if(e) {
+                    await DiffDocumentPassOutput();
+                }
+            }
+        }
+
+        private void Document_PassOutputScrollChanged(object sender, ScrollChangedEventArgs e) {
+            if (!IsInDiffMode || Math.Abs(e.VerticalChange) < double.Epsilon) {
+                return;
+            }
+
+            var document = sender as IRDocumentHost;
+            var otherDocument = sessionState_.SectionDiffState.GetOtherDocument(document);
+
+            if (otherDocument != null) {
+                otherDocument.PassOutput.TextView.ScrollToVerticalOffset(e.VerticalOffset);
             }
         }
 
@@ -1158,6 +1210,12 @@ namespace IRExplorerUI {
         }
 
         public Task<string> GetSectionOutputTextAsync(IRPassOutput output, IRTextSection section) {
+            var docInfo = sessionState_.FindLoadedDocument(section);
+            return Task.Run(() => docInfo.Loader.GetSectionOutputText(output));
+        }
+
+        public Task<string> GetSectionOutputTextAsync(IRTextSection section, bool useOutputBefore) {
+            var output = useOutputBefore ? section.OutputBefore : section.OutputAfter;
             var docInfo = sessionState_.FindLoadedDocument(section);
             return Task.Run(() => docInfo.Loader.GetSectionOutputText(output));
         }

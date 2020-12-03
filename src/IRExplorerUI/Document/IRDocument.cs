@@ -2224,14 +2224,14 @@ namespace IRExplorerUI {
             NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
             duringSectionLoading_ = false;
 
-            //! Check if other functions have marked elements
+            //? Check if other functions have marked elements
             //!  - session can be queried
             //!  - load func and deserialize state object
             //!    - for each marker/bookmark, use FindEquivalentValue
             //!    - maybe set "no saving" flag for these copied markers
-            var other = Session.GetNextSection(section_);
-            if (other != null)
-                CloneOtherSectionAnnotations(other);
+            //var other = Session.GetNextSection(section_);
+            //if (other != null)
+            //    CloneOtherSectionAnnotations(other);
         }
 
         private void CloneOtherSectionAnnotations(IRTextSection otherSection) {
