@@ -2223,6 +2223,53 @@ namespace IRExplorerUI {
             UpdateHighlighting();
             NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
             duringSectionLoading_ = false;
+
+            //! Check if other functions have marked elements
+            //!  - session can be queried
+            //!  - load func and deserialize state object
+            //!    - for each marker/bookmark, use FindEquivalentValue
+            //!    - maybe set "no saving" flag for these copied markers
+            var other = Session.GetNextSection(section_);
+            if (other != null)
+                CloneOtherSectionAnnotations(other);
+        }
+
+        private void CloneOtherSectionAnnotations(IRTextSection otherSection) {
+            var parsedSection = Session.LoadAndParseSection(otherSection);
+            if (parsedSection == null)
+                return;
+
+            var data = Session.LoadDocumentState(otherSection);
+            var refFinder = CreateReferenceFinder();
+
+            if (data != null) {
+                var state = StateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
+                var markerState = state.DocumentState.MarkedHighlighter;
+
+                if(markerState != null && markerState.Groups != null) {
+                    foreach (var groupState in markerState.Groups) {
+                        var group = new HighlightedGroup(groupState.Style);
+
+                        foreach (var item in groupState.Elements) {
+                            if (item.Value == null) {
+                                continue;
+                            }
+
+                            // Search for equivalent value in current section.
+                            var equivElement = refFinder.FindEquivalentValue(item);
+
+                            if (equivElement != null) {
+                                group.Add(equivElement);
+                            }
+                            
+                        }
+
+                        if (!group.IsEmpty()) {
+                            markedHighlighter_.Add(new HighlightedSegmentGroup(group, false));
+                        }
+                    }
+                }
+            }
         }
 
         private void SetupBlockHighlighter() {

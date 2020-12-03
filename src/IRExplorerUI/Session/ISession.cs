@@ -50,6 +50,9 @@ namespace IRExplorerUI {
         bool SwitchToNextSection(IRTextSection section, IRDocument document);
         void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations);
 
+        IRTextSection GetPreviousSection(IRTextSection section);
+        IRTextSection GetNextSection(IRTextSection section);
+        ParsedIRTextSection LoadAndParseSection(IRTextSection section);
         Task<string> GetSectionOutputTextAsync(IRPassOutput output, IRTextSection section);
         Task<List<string>> GetSectionOutputTextLinesAsync(IRPassOutput output, IRTextSection section);
         Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null);

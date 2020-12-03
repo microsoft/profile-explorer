@@ -78,6 +78,10 @@ namespace IRExplorerUI {
             groups_.Add(new HighlightedSegmentGroup(group, saveToFile));
             Version++;
         }
+        public void Add(HighlightedSegmentGroup group) {
+            groups_.Add(group);
+            Version++;
+        }
 
         public void AddFront(HighlightedGroup group, bool saveToFile = true) {
             groups_.Insert(0, new HighlightedSegmentGroup(group, saveToFile));

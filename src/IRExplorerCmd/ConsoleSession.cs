@@ -209,6 +209,18 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
+        public IRTextSection GetPreviousSection(IRTextSection section) {
+            throw new NotImplementedException();
+        }
+
+        public IRTextSection GetNextSection(IRTextSection section) {
+            throw new NotImplementedException();
+        }
+
+        public ParsedIRTextSection LoadAndParseSection(IRTextSection section) {
+            throw new NotImplementedException();
+        }
+
         public void UnregisterDetachedPanel(DraggablePopup panel) {
             throw new NotImplementedException();
         }

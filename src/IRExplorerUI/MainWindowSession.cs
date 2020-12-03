@@ -605,7 +605,7 @@ namespace IRExplorerUI {
             document.TextView.HighlightElement(e.Element, HighlighingType.Hovered);
         }
 
-        private ParsedIRTextSection LoadAndParseSection(IRTextSection section) {
+        public ParsedIRTextSection LoadAndParseSection(IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
             var parsedSection = docInfo.Loader.LoadSection(section);
 
@@ -1205,10 +1205,9 @@ namespace IRExplorerUI {
         }
 
         public bool SwitchToPreviousSection(IRTextSection section, IRDocument document) {
-            int index = section.Number - 1;
+            var prevSection = GetPreviousSection(section);
 
-            if (index > 0) {
-                var prevSection = section.ParentFunction.Sections[index - 1];
+            if (prevSection != null) {
                 var docHost = FindDocumentHost(document);
                 SectionPanel.SwitchToSection(prevSection, docHost);
                 return true;
@@ -1218,16 +1217,35 @@ namespace IRExplorerUI {
         }
 
         public bool SwitchToNextSection(IRTextSection section, IRDocument document) {
-            int index = section.Number - 1;
+            var nextSection = GetNextSection(section);
 
-            if (index < section.ParentFunction.SectionCount - 1) {
-                var nextSection = section.ParentFunction.Sections[index + 1];
+            if (nextSection != null) {
                 var docHost = FindDocumentHost(document);
                 SectionPanel.SwitchToSection(nextSection, docHost);
                 return true;
             }
 
             return false;
+        }
+
+        public IRTextSection GetNextSection(IRTextSection section) {
+            int index = section.Number - 1;
+
+            if (index < section.ParentFunction.SectionCount - 1) {
+                return section.ParentFunction.Sections[index + 1];
+            }
+
+            return null;
+        }
+
+        public IRTextSection GetPreviousSection(IRTextSection section) {
+            int index = section.Number - 1;
+
+            if (index > 0) {
+                return section.ParentFunction.Sections[index - 1];
+            }
+
+            return null;
         }
 
         public void SaveDocumentState(object stateObject, IRTextSection section) {
