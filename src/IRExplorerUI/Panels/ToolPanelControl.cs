@@ -33,7 +33,7 @@ namespace IRExplorerUI {
         public virtual void OnElementHighlighted(IRHighlightingEventArgs e) { }
 
         public virtual void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
-            Document = Document;
+            Document = document;
         }
 
         public virtual void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {

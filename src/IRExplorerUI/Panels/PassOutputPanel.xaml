@@ -25,6 +25,7 @@
             HorizontalAlignment="Stretch"
             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <ToolBarTray
+                x:Name="Toolbar"
                 Grid.Row="0"
                 Grid.Column="2"
                 Height="28"
@@ -70,7 +71,8 @@
                         IsEnabled="{Binding DiffModeButtonEnabled}"
                         TabIndex="5"
                         ToolTip="Diff output text with other section"
-                        Unchecked="DiffToggleButton_Unchecked">
+                        Unchecked="DiffToggleButton_Unchecked"
+                        Visibility="{Binding DiffModeButtonVisible, Converter={StaticResource BoolToVisibility}}">
                         <Image
                             Width="16"
                             Height="16"
@@ -111,12 +113,14 @@
                     <TextBlock
                         Margin="4,0,0,0"
                         VerticalAlignment="Center"
-                        Text="Section" />
+                        Text="Section"
+                        Visibility="{Binding SectionNameVisible, Converter={StaticResource BoolToVisibility}}" />
                     <TextBlock
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         FontWeight="DemiBold"
-                        Text="{Binding SectionName}" />
+                        Text="{Binding SectionName}"
+                        Visibility="{Binding SectionNameVisible, Converter={StaticResource BoolToVisibility}}" />
                 </ToolBar>
             </ToolBarTray>
 
@@ -137,6 +141,7 @@
             FontFamily="Consolas"
             FontSize="12"
             HorizontalScrollBarVisibility="Auto"
+            ScrollViewer.ScrollChanged="TextView_ScrollChanged"
             ShowLineNumbers="True"
             VerticalScrollBarVisibility="Auto" />
 
