@@ -300,8 +300,6 @@ namespace IRExplorerCore.UTC {
         }
 
         //? TODO: Handle SWITCH
-        //? TODO: Branch not parsed if inverted ' in (ORDER')
-        //?    also other annotations like {Z}
         //? TODO: Parse special flags for volatile, WT
 
         public FunctionIR Parse() {
@@ -1102,22 +1100,23 @@ namespace IRExplorerCore.UTC {
                 }
             }
 
+            var operand = CreateOperand(nextElementId_, OperandKind.Indirection,
+                                        TypeIR.GetUnknown(), parent);
+            operand.Value = baseOp;
+
             if (!ExpectAndSkipToken(TokenKind.CloseSquare)) {
                 ReportError(TokenKind.CloseSquare, "Failed ParseIndirection");
                 return null;
             }
 
-            SkipOperandFlags();
+            SkipOperandFlags(operand);
 
             // A hash var can follow an indirection, ignore it.
             if (TokenIs(TokenKind.OpenParen)) {
                 SkipAfterToken(TokenKind.CloseParen);
-                SkipOperandFlags();
+                SkipOperandFlags(operand);
             }
 
-            var operand = CreateOperand(nextElementId_, OperandKind.Indirection,
-                                        TypeIR.GetUnknown(), parent);
-            operand.Value = baseOp;
             SetTextRange(operand, startToken);
 
             // Parse type and other attributes.
@@ -1125,6 +1124,7 @@ namespace IRExplorerCore.UTC {
             bool foundType = false;
 
             while (!IsLineEnd() && !IsEqual() && !IsHash()) {
+                SkipOperandFlags(operand);
                 SkipToType();
 
                 if (IsDot()) { // .type
@@ -1214,16 +1214,30 @@ namespace IRExplorerCore.UTC {
             return operand;
         }
 
-        private void SkipOperandFlags() {
+        private void SkipOperandFlags(IRElement currentElement) {
             // Skip various flags for marking ops. as volatile, write-through, etc.
             while (IsAnyToken(SkipOperandFlagsTokens)) {
+                SymbolAnnotationKind kind = SymbolAnnotationKind.None;
+
+                if (TokenIs(TokenKind.Xor)) { // ^
+                    kind = SymbolAnnotationKind.Volatile;    
+                }
+                else if (TokenIs(TokenKind.Tilde)) { // ^
+                    kind = SymbolAnnotationKind.Writethrough;
+                }
+                else if (TokenIs(TokenKind.Minus)) { // ^
+                    kind = SymbolAnnotationKind.CantMakeSDSU;
+                }
+
+                if (kind != SymbolAnnotationKind.None) {
+                    currentElement.GetOrAddTag<SymbolAnnotationTag>().AddKind(kind);
+                }
+
                 SkipToken();
             }
         }
 
         private void SkipTypeAttributes() {
-            SkipOperandFlags();
-
             // Skip various attributes before the type like [dL], [pdS].
             while (TokenIs(TokenKind.OpenSquare)) {
                 SkipAfterToken(TokenKind.CloseSquare);
@@ -1335,6 +1349,7 @@ namespace IRExplorerCore.UTC {
                     break; // Found end of [indir].
                 }
 
+                SkipOperandFlags(operand);
                 SkipToType();
 
                 if (IsDot()) { // .type

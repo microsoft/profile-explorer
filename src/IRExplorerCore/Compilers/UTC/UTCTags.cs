@@ -5,15 +5,45 @@ using System.Collections.Generic;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.UTC {
+    [Flags]
     public enum SymbolAnnotationKind {
-        Volatile,     // ^
-        Writethrough, // ~
-        CantMakeSDSU, // -
-        Dead          // !
+        None = 0,
+        Volatile = 1 << 0,     // ^
+        Writethrough = 1 << 1, // ~
+        CantMakeSDSU = 1 << 2, // -
+        Dead = 1 << 3          // !
     }
 
-    public class SymbolAnnotationTag {
-        //? TODO
+    public class SymbolAnnotationTag : ITag {
+        public SymbolAnnotationTag() {
+
+        }
+
+        public SymbolAnnotationKind Kind { get; set; }
+        public string Name => "Symbol annotation";
+
+        public bool HasVolatile => Kind.HasFlag(SymbolAnnotationKind.Volatile);
+        public bool HasWritethrough => Kind.HasFlag(SymbolAnnotationKind.Writethrough);
+        public bool HasCantMakeSDSU => Kind.HasFlag(SymbolAnnotationKind.CantMakeSDSU);
+
+        public void AddKind(SymbolAnnotationKind kind) {
+            Kind |= kind;
+        }
+
+        public TaggedObject Owner { get; set; }
+
+        public override string ToString() {
+            return $"symbol annotation: {Kind}";
+        }
+
+        public override bool Equals(object obj) {
+            return obj is SymbolAnnotationTag tag &&
+                   Kind == tag.Kind;
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(Kind);
+        }
     }
 
     public class SymbolOffsetTag : ITag {
