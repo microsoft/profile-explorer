@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using IRExplorerCore;
 using ProtoBuf;
@@ -96,11 +97,17 @@ namespace IRExplorerUI {
         }
 
         public void SetupDocumentWatcher() {
-            string fileDir = Path.GetDirectoryName(FilePath);
-            string fileName = Path.GetFileName(FilePath);
-            documentWatcher_ = new FileSystemWatcher(fileDir, fileName);
-            documentWatcher_.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
-            documentWatcher_.Changed += DocumentWatcher_Changed;
+            try {
+                string fileDir = Path.GetDirectoryName(FilePath);
+                string fileName = Path.GetFileName(FilePath);
+                documentWatcher_ = new FileSystemWatcher(fileDir, fileName);
+                documentWatcher_.NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size;
+                documentWatcher_.Changed += DocumentWatcher_Changed;
+            }
+            catch(Exception ex) {
+                Trace.TraceError($"Failed to setup document watcher for file {FilePath}: {ex.Message}");
+                documentWatcher_ = null;
+            }
         }
 
         public LoadedDocumentState SerializeDocument() {
