@@ -425,6 +425,8 @@ namespace IRExplorerUI {
                 bool opened = false;
 
                 if (File.Exists(baseFilePath) && File.Exists(diffFilePath)) {
+                    baseFilePath = Path.GetFullPath(baseFilePath);
+                    diffFilePath = Path.GetFullPath(diffFilePath);
                     opened = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
                 }
 
@@ -451,10 +453,6 @@ namespace IRExplorerUI {
                                 scriptOutPath = args[6];
                             }
                         }
-                        else {
-                        }
-
-                        //Utils.WaitForDebugger();
 
                         var session = new ScriptSession(null, this) {
                             SilentMode = true,
@@ -465,6 +463,7 @@ namespace IRExplorerUI {
                         this.Close();
                     }
                     else if (args[3].EndsWith("func")) {
+                        // Open a ceratin function and section.
                         var funcName = args[4];
                         var func = sessionState_.MainDocument.Summary.FindFunction(funcName);
 
@@ -490,6 +489,7 @@ namespace IRExplorerUI {
                 string filePath = args[1];
 
                 if (File.Exists(filePath)) {
+                    filePath = Path.GetFullPath(filePath);
                     await OpenDocument(filePath);
                 }
             }
