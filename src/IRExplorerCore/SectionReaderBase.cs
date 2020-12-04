@@ -27,7 +27,7 @@ namespace IRExplorerCore {
 
             static StreamReaderFields() {
                 // Create and compile to IL a function that reads the private fields
-                // form a StreamReader and saves the values.
+                // from a StreamReader and saves the values.
                 var inputParam = Expression.Parameter(typeof(StreamReader));
                 var outputParam = Expression.Parameter(typeof(StreamReaderFields));
                 var block = Expression.Block(
@@ -494,7 +494,7 @@ namespace IRExplorerCore {
                     }
                     else if (IsFunctionEnd(line)) {
                         // Found function end.
-                        endOffset = TextOffset();
+                        endOffset = TextOffset() - 1;
                         sectionEndLine = lineIndex_ + 1;
                         break;
                     }
