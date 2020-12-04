@@ -611,9 +611,10 @@
                             DockWidth="400"
                             FloatingWidth="400" />
 
-
                         <!--  Document viewer  -->
-                        <avalonDock:LayoutDocumentPaneGroup x:Name="DocumentPanelGroup" />
+                        <avalonDock:LayoutDocumentPaneGroup x:Name="DocumentPanelGroup" IsMaximized="True">
+                            <avalonDock:LayoutDocumentPane />
+                        </avalonDock:LayoutDocumentPaneGroup>
 
                         <!--  Right panels  -->
                         <avalonDock:LayoutAnchorablePaneGroup
