@@ -49,6 +49,7 @@ namespace IRExplorerUI {
 
         private const string SettingsPath = @"Microsoft\IRExplorer";
         private const string SettingsFile = "IRExplorer.settings";
+        private const string DockLayoutFile = "DockLayout.xml";
         private const string TraceFile = "IRExplorer.trace";
         private const string RemarkDefinitionFile = @"remark-settings.json";
         private const string SectionDefinitionFile = @"section-settings.json";
@@ -123,6 +124,11 @@ namespace IRExplorerUI {
 
         public static string GetCompilerSettingsDirectoryPath(string compilerName) {
             return GetSettingsFilePath(compilerName);
+        }
+
+        public static string GetDockLayoutFilePath() {
+            string path = GetSettingsDirectoryPath();
+            return Path.Combine(path, DockLayoutFile);
         }
 
         public static string GetCompilerSettingsFilePath(string file, string compilerName, string extension = "") {

@@ -23,6 +23,8 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Controls;
+using AvalonDock.Controls;
+using System.Linq;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISession {
@@ -754,17 +756,22 @@ namespace IRExplorerUI {
 
         private DocumentHostInfo AddNewDocument(OpenSectionKind kind) {
             var document = new IRDocumentHost(this);
-
             var host = new LayoutDocument {
                 Content = document
             };
+
+            // The document group must be found at runtime since when restoring
+            // the dock layout to a previous state, it creates another layout tree
+            // that is different than the initial layout defined in the XAML file.
+            var documentGroup = DockManager.Layout.Descendents().
+                OfType<LayoutDocumentPaneGroup>().SingleOrDefault();
 
             switch (kind) {
                 case OpenSectionKind.ReplaceCurrent:
                 case OpenSectionKind.NewTab: {
                     if (activeDocumentPanel_ == null) {
                         activeDocumentPanel_ = new LayoutDocumentPane(host);
-                        DocumentPanelGroup.Children.Add(activeDocumentPanel_);
+                        documentGroup.Children.Add(activeDocumentPanel_);
                     }
                     else {
                         activeDocumentPanel_.Children.Add(host);
@@ -775,13 +782,13 @@ namespace IRExplorerUI {
                 case OpenSectionKind.NewTabDockLeft:
                 case OpenSectionKind.ReplaceLeft: {
                     activeDocumentPanel_ = new LayoutDocumentPane(host);
-                    DocumentPanelGroup.Children.Insert(0, activeDocumentPanel_);
+                    documentGroup.Children.Insert(0, activeDocumentPanel_);
                     break;
                 }
                 case OpenSectionKind.NewTabDockRight:
                 case OpenSectionKind.ReplaceRight: {
                     activeDocumentPanel_ = new LayoutDocumentPane(host);
-                    DocumentPanelGroup.Children.Add(activeDocumentPanel_);
+                    documentGroup.Children.Add(activeDocumentPanel_);
                     break;
                 }
                 default:

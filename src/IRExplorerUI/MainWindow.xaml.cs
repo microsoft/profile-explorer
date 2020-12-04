@@ -41,6 +41,7 @@ using System.Windows.Media.Imaging;
 using System.Threading.Tasks;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Utilities;
+using AvalonDock.Layout.Serialization;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -118,7 +119,6 @@ namespace IRExplorerUI {
             Activated += MainWindow_Activated;
             Deactivated += MainWindow_Deactivated;
         }
-
 
         private void MainWindow_StateChanged(object sender, EventArgs e) {
             if (WindowState == WindowState.Minimized) {
@@ -247,6 +247,7 @@ namespace IRExplorerUI {
 
         private void AddRecentFile(string path) {
             App.Settings.AddRecentFile(path);
+            App.SaveApplicationSettings();
             PopulateRecentFilesMenu();
         }
 
@@ -292,6 +293,7 @@ namespace IRExplorerUI {
             App.Settings.MainWindowPlacement = WindowPlacement.GetPlacement(this);
             App.Settings.ThemeIndex = ThemeCombobox.SelectedIndex;
             App.SaveApplicationSettings();
+            SaveDockLayout();
 
             if (sessionState_ == null) {
                 return;
@@ -343,6 +345,8 @@ namespace IRExplorerUI {
                     CheckForUpdate()
                 );
             });
+
+          
         }
 
         private static void CheckForUpdate() {
@@ -415,6 +419,7 @@ namespace IRExplorerUI {
 
             RegisterDefaultToolPanels();
             ResetStatusBar();
+            RestoreDockLayout();
 
             //? TODO: This needs a proper arg parsing lib
             var args = Environment.GetCommandLineArgs();
@@ -962,5 +967,44 @@ namespace IRExplorerUI {
             documentSearchPanel_ = null;
             documentSearchVisible_ = false;
         }
+
+        private void RestoreDockLayout() {
+            var dockLayoutFile = App.GetDockLayoutFilePath();
+
+            if (!File.Exists(dockLayoutFile)) {
+                return;
+            }
+
+            try {
+                var serializer = new XmlLayoutSerializer(DockManager);
+
+                serializer.LayoutSerializationCallback += (s, args) => {
+                    if (args.Model is LayoutDocument) {
+                        args.Cancel = true; // Don't recreate any document panels.
+                    }
+                    else {
+                        args.Content = args.Content;
+                    }
+                };
+
+                serializer.Deserialize(dockLayoutFile);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to load dock layout: {ex}");
+            }
+        }
+
+        private void SaveDockLayout() {
+            var dockLayoutFile = App.GetDockLayoutFilePath();
+
+            try {
+                var serializer = new XmlLayoutSerializer(DockManager);
+                serializer.Serialize(dockLayoutFile);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to save dock layout: {ex}");
+            }
+        }
+
     }
 }
