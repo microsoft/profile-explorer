@@ -463,7 +463,7 @@ namespace IRExplorerUI {
                         this.Close();
                     }
                     else if (args[3].EndsWith("func")) {
-                        // Open a ceratin function and section.
+                        // Open a certain function and section.
                         var funcName = args[4];
                         var func = sessionState_.MainDocument.Summary.FindFunction(funcName);
 
