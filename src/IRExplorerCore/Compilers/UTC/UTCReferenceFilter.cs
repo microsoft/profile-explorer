@@ -36,7 +36,20 @@ namespace IRExplorerCore.UTC {
             // Accept element if it can be reached from the dest. element.
             //? TODO: Use reaching definitions if available
             var cfgReachability = GetReachabilityInfo();
-            return cfgReachability.Reaches(startDestElement.ParentBlock, element.ParentBlock);
+            
+            if(!cfgReachability.Reaches(startDestElement.ParentBlock, element.ParentBlock)) {
+                return false;
+            }
+
+            // If in the same block, accept it only if dest is found before the use,
+            // or the block is found in a loop (value may reach through a backedge).
+            if(startDestElement.ParentBlock == element.ParentBlock) {
+                var destIndex = startDestElement.ParentInstruction.IndexInBlock;
+                var useIndex = element.ParentInstruction.IndexInBlock;
+                return destIndex < useIndex;
+            }
+
+            return true;
         }
 
         public bool AcceptDefinitionReference(IRElement element, IRElement startSourceElement) {
@@ -46,7 +59,22 @@ namespace IRExplorerCore.UTC {
 
             // Accept element if it's a definition that can reach the source element.
             var cfgReachability = GetReachabilityInfo();
-            return cfgReachability.Reaches(element.ParentBlock, startSourceElement.ParentBlock);
+
+            if (!cfgReachability.Reaches(element.ParentBlock, startSourceElement.ParentBlock)) {
+                return false;
+            }
+
+            //? TODO: Use reaching definitions if available
+            // If in the same block, accept it only if dest is found before the use,
+            // or the block is found in a loop (value may reach through a backedge).
+            if (startSourceElement.ParentBlock == element.ParentBlock) {
+                var destIndex = element.ParentInstruction.IndexInBlock;
+                var useIndex = startSourceElement.ParentInstruction.IndexInBlock;
+                return destIndex < useIndex;
+            }
+
+
+            return true;
         }
     }
 }

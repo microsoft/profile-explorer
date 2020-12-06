@@ -57,12 +57,14 @@ namespace IRExplorerUI.Document {
         private List<ConnectedElement> connectedElements_;
         private TextSegmentCollection<IRSegment> conntectedSegments_;
         private Dictionary<IRElement, IRSegment> connectedSegmentMap_;
+        private Dictionary<IRElement, IROverlaySegment> overlaySegmentMap_;
         private TextSegmentCollection<IROverlaySegment> overlaySegments_;
         private IElementOverlay hoveredOverlay_;
         private IElementOverlay selectedOverlay_;
 
         public OverlayRenderer(ElementHighlighter highlighter) {
             overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
+            overlaySegmentMap_ = new Dictionary<IRElement, IROverlaySegment>();
             SnapsToDevicePixels = true;
             IsHitTestVisible = true;
             Background = Brushes.Transparent; // Needed for mouse events to fire...
@@ -76,7 +78,50 @@ namespace IRExplorerUI.Document {
         public int Version { get; set; }
 
         public void AddElementOverlay(IRElement element, IElementOverlay overlay) {
-            overlaySegments_.Add(new IROverlaySegment(element, overlay));
+            overlay.Element = element;
+            Version++;
+
+            if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
+                segment.Overlays.Add(overlay);
+            }
+            else {
+                segment = new IROverlaySegment(element, overlay);
+                overlaySegments_.Add(segment);
+                overlaySegmentMap_[element] = segment;
+            }
+        }
+
+        public bool RemoveElementOverlays(IRElement element) {
+            if (overlaySegmentMap_.TryGetValue(element, out var segment)) {
+                overlaySegmentMap_.Remove(element);
+                overlaySegments_.Remove(segment);
+                Version++;
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool RemoveElementOverlay(IElementOverlay overlay) {
+            if (overlaySegmentMap_.TryGetValue(overlay.Element, out var segment)) {
+                if (segment.Overlays.Remove(overlay)) {
+                    if(segment.Overlays.Count == 0) {
+                        overlaySegmentMap_.Remove(overlay.Element);
+                        overlaySegments_.Remove(segment);
+                    }
+
+                    Version++;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void ForEachElementOverlay(Action<IRElement, IROverlaySegment> action) {
+            foreach(var pair in overlaySegmentMap_) {
+                action(pair.Key, pair.Value);
+            }
         }
 
         public void SetRootElement(IRElement element, HighlightingStyle style) {
@@ -385,10 +430,14 @@ namespace IRExplorerUI.Document {
             Children.Clear();
             ClearConnectedElements();
             ClearElementOverlays();
+            TextView?.Redraw();
+            Version++;
         }
 
-        private void ClearElementOverlays() {
+        public void ClearElementOverlays() {
             overlaySegments_.Clear();
+            overlaySegmentMap_.Clear();
+            TextView?.Redraw();
         }
 
         public void Add(Visual drawingVisual) {

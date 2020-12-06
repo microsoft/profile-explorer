@@ -575,7 +575,7 @@ namespace IRExplorerCore.UTC {
                     continue;
                 }
 
-                tuple.BlockIndex = block.Tuples.Count;
+                tuple.IndexInBlock = block.Tuples.Count;
                 block.Tuples.Add(tuple);
             }
 

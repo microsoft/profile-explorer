@@ -8,6 +8,7 @@ using System;
 using IRExplorerUI.Scripting;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Windows;
 
 namespace IRExplorerUI.Query {
     public class ScriptFunctionTask : IFunctionTask {
@@ -103,6 +104,13 @@ namespace IRExplorerUI.Query {
 
             foreach (var pair in scriptSession_.MarkedElements) {
                 document.MarkElement(pair.Item1, pair.Item2);
+            }
+
+            foreach (var pair in scriptSession_.IconElementOverlays) {
+                var info = pair.Item2;
+                document.AddIconElementOverlay(pair.Item1, info.Icon, 16, 16, 
+                                               info.Tooltip, info.AlignmentX,
+                                               VerticalAlignment.Center, info.MarginX);
             }
 
             ScriptException = script.ScriptException;

@@ -644,13 +644,8 @@ namespace IRExplorerUI {
             selectedRemark_ = null;
             currentExprElement_ = null;
             ClearSelectedElements();
-            hoverHighlighter_?.Clear();
-            markedHighlighter_?.Clear();
-            diffHighlighter_?.Clear();
-            remarkHighlighter_?.Clear();
-            overlayRenderer_?.Clear();
-            bookmarks_?.Clear();
-            margin_?.Reset();
+
+            ResetRenderers();
             Text = "";
         }
 
@@ -1381,17 +1376,22 @@ namespace IRExplorerUI {
             section_ = parsedSection.Section;
             function_ = parsedSection.Function;
             ignoreNextCaretEvent_ = true;
+            ClearSelectedElements();
 
+            ResetRenderers();
             Document.Text = parsedSection.Text;
+        }
 
-            bookmarks_.Clear();
-            hoverHighlighter_.Clear();
-            selectedHighlighter_.Clear();
-            markedHighlighter_.Clear();
-            blockHighlighter_.Clear();
+        private void ResetRenderers() {
+            bookmarks_?.Clear();
+            hoverHighlighter_?.Clear();
+            selectedHighlighter_?.Clear();
+            markedHighlighter_?.Clear();
+            blockHighlighter_?.Clear();
             diffHighlighter_?.Clear();
-            remarkHighlighter_.Clear();
-            margin_.Reset();
+            remarkHighlighter_?.Clear();
+            overlayRenderer_?.Clear();
+            margin_?.Reset();
         }
 
         private bool EditBookmarkText(Bookmark bookmark, Key key) {
@@ -2535,7 +2535,8 @@ namespace IRExplorerUI {
                    hoverHighlighter_.Version != info.LastHoveredVersion ||
                    diffHighlighter_.Version != info.LastDiffVersion ||
                    margin_.Version != info.LastBlockMarginVersion ||
-                   bookmarks_.Version != info.LastBookmarkVersion;
+                   bookmarks_.Version != info.LastBookmarkVersion ||
+                   overlayRenderer_.Version != info.LastOverlayVersion;
         }
 
         private void SaveHighlighterVersion(MarkerMarginVersionInfo info) {
@@ -2545,6 +2546,7 @@ namespace IRExplorerUI {
             info.LastDiffVersion = diffHighlighter_.Version;
             info.LastBlockMarginVersion = margin_.Version;
             info.LastBookmarkVersion = bookmarks_.Version;
+            info.LastOverlayVersion = overlayRenderer_.Version;
             info.NeedsRedrawing = true;
         }
 
@@ -2576,21 +2578,15 @@ namespace IRExplorerUI {
             double markerDotSize = Math.Max(8, availableHeight / lines);
             availableHeight -= dotSize;
 
-            PopulateMarkerBarForHighlighter(markedHighlighter_, startY, width, availableHeight,
-                                            dotSize);
-
-            PopulateMarkerBarForHighlighter(selectedHighlighter_, startY, width, availableHeight,
-                                            dotSize);
-
-            PopulateMarkerBarForHighlighter(hoverHighlighter_, startY, width, availableHeight,
-                                            dotSize);
-
+            PopulateMarkerBarForHighlighter(markedHighlighter_, startY, width, availableHeight, dotSize);
+            PopulateMarkerBarForHighlighter(selectedHighlighter_, startY, width, availableHeight, dotSize);
+            PopulateMarkerBarForHighlighter(hoverHighlighter_, startY, width, availableHeight, dotSize);
+            PopulateMarkerBarForElementOverlays(startY, width, availableHeight, dotSize);
             PopulateMarkerBarForDiffs(diffHighlighter_, startY, width, availableHeight);
             PopulateMarkerBarForBlocks(startY, width, availableHeight);
 
             margin_.ForEachBookmark(bookmark => {
-                PopulateMarkerBarForBookmark(bookmark, startY, width, height,
-                                             dotWidth, dotSize);
+                PopulateMarkerBarForBookmark(bookmark, startY, width, height, dotWidth, dotSize);
             });
 
             // Sort so that searching for elements can be speed up.
@@ -2675,6 +2671,8 @@ namespace IRExplorerUI {
             var lastColor = Colors.Transparent;
 
             highlighter.ForEachDiffSegment((segment, color) => {
+                // Combine the marking of multiple diffs of the same type
+                // to speed up rendering.
                 int line = Document.GetLineByOffset(segment.StartOffset).LineNumber;
 
                 if (line != lastLine) {
@@ -2716,6 +2714,24 @@ namespace IRExplorerUI {
                 Visual = elementVisual,
                 Style = barStyle,
                 HandlesInput = false
+            });
+        }
+
+        private void PopulateMarkerBarForElementOverlays(int startY, double width,
+                                                         double height, double dotSize) {
+            overlayRenderer_.ForEachElementOverlay((element, overlay) => {
+                double y = (double)element.TextLocation.Line / LineCount * height;
+                var brush = Brushes.Blue;
+                var color = ColorUtils.IncreaseSaturation(brush.Color);
+                var elementVisual = new Rect(0, startY + y, width, dotSize);
+                var barStyle = new HighlightingStyle(color);
+
+                markerMargingElements_.Add(new MarkerBarElement {
+                    Element = element,
+                    Visual = elementVisual,
+                    Style = barStyle,
+                    HandlesInput = true
+                });
             });
         }
 
@@ -3353,25 +3369,41 @@ namespace IRExplorerUI {
             // Check if there is any overlay being clicked.
             overlayRenderer_?.MouseClick(e);
 
-            if (element != null && e.MiddleButton == MouseButtonState.Pressed) {
-                var temp = IconElementOverlay.FromIconResource("WarningIcon", 16, 16);
-                temp.Background = definitionStyle_.ChildStyle.BackColor;
-                temp.SelectedBackground = ssaUserStyle_.ChildStyle.BackColor;
-                temp.Border = definitionStyle_.ChildStyle.Border;
-                temp.ShowBackgroundOnMouseOverOnly = true;
-                temp.ToolTip = "Heyoo there";
-                temp.ShowToolTipOnMouseOverOnly = true;
-                temp.UseToolTipBackground = true;
-                temp.DefaultOpacity = 0.6;
-                temp.AllowToolTipEditing = true;
-                // pinning
-                temp.Padding = 1;
-                overlayRenderer_.AddElementOverlay(element, temp);
-            }
-
             //? TODO: This would prevent selection of text from working,
             //? but allowing it also sometimes selects a letter of the element...
             // e.Handled = element != null;
+        }
+
+        public void AddElementOverlay(IRElement element, IElementOverlay overlay) {
+            overlayRenderer_.AddElementOverlay(element, overlay);
+            UpdateHighlighting();
+        }
+
+        public void AddIconElementOverlay(IRElement element, IconDrawing icon,
+                                          double width, double height, string toolTip = "",
+                                          HorizontalAlignment alignmentX = HorizontalAlignment.Right,
+                                          VerticalAlignment alignmentY = VerticalAlignment.Center,
+                                          double marginX = 8, double marginY = 2) {
+            var temp = IconElementOverlay.CreateDefault(icon, width, height,
+                definitionStyle_.ChildStyle.BackColor,
+                ssaUserStyle_.ChildStyle.BackColor,
+                definitionStyle_.ChildStyle.Border,
+                toolTip, alignmentX, alignmentY,
+                marginX, marginY);
+            
+            temp.OnKeyPress += (sender, e) => {
+                if (e.Key == Key.Delete) {
+                    overlayRenderer_.RemoveElementOverlay((IElementOverlay)sender);
+                }
+            };
+
+            overlayRenderer_.AddElementOverlay(element, temp);
+            UpdateHighlighting();
+        }
+
+        public void ClearElementOverlays() {
+            overlayRenderer_.ClearElementOverlays();
+            UpdateHighlighting();
         }
 
         public void EnterDiffMode() {
@@ -3400,6 +3432,7 @@ namespace IRExplorerUI {
             public int LastHoveredVersion;
             public int LastMarkedVersion;
             public int LastSelectedVersion;
+            public int LastOverlayVersion;
             public bool NeedsRedrawing;
         }
 

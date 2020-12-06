@@ -10,6 +10,7 @@ using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI.Document {
     public interface IElementOverlay {
+        public IRElement Element { get; set; }
         HorizontalAlignment AlignmentX { get; }
         VerticalAlignment AlignmentY { get; }
         double MarginX { get; }
@@ -42,6 +43,12 @@ namespace IRExplorerUI.Document {
             MarginY = marginY;
             AlignmentX = alignmentX;
             AlignmentY = alignmentY;
+        }
+
+        private IRElementReference elementRef_;
+        public IRElement Element {
+            get => elementRef_;
+            set => elementRef_ = value;
         }
 
         public string ToolTip { get; set; }
@@ -98,6 +105,7 @@ namespace IRExplorerUI.Document {
             (MouseOverOpacity > 0 ? MouseOverOpacity : 1.0) :
             (DefaultOpacity > 0 ? DefaultOpacity : 1.0);
 
+       
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
 
         public event MouseEventHandler OnClick;
