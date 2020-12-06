@@ -8,17 +8,32 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Document {
     public class IconElementOverlay : ElementOverlayBase {
-        public IconElementOverlay(IconDrawing icon, double width, double height,
-                                  double marginX = 4, double marginY = 2, 
-                                  HorizontalAlignment alignmentX = HorizontalAlignment.Right,
-                                  VerticalAlignment alignmentY = VerticalAlignment.Center,
-                                  string toolTip = "") :
+        public IconElementOverlay(IconDrawing icon, double width, double height, string toolTip,
+                                  HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
+                                  double marginX, double marginY) :
             base(width, height, marginX, marginY, alignmentX, alignmentY, toolTip) {
             Icon = icon;
         }
 
-        public static IconElementOverlay FromIconResource(string name, double width, double height) {
-            return new IconElementOverlay(IconDrawing.FromIconResource(name), width, height);
+        public static IconElementOverlay
+        CreateDefault(IconDrawing icon, double width, double height,
+                      Brush backColor, Brush selectedBackColor, Pen border,
+                      string toolTip = "", 
+                      HorizontalAlignment alignmentX = HorizontalAlignment.Right,
+                      VerticalAlignment alignmentY = VerticalAlignment.Center,
+                      double marginX = 8, double marginY = 2) {
+            return new IconElementOverlay(icon, width, height, toolTip, alignmentX, alignmentY,
+                                          marginX, marginY) {
+                Background = backColor,
+                SelectedBackground = selectedBackColor,
+                Border = border,
+                ShowBackgroundOnMouseOverOnly = true,
+                ShowToolTipOnMouseOverOnly = true,
+                UseToolTipBackground = true,
+                DefaultOpacity = 0.7,
+                Padding = 1,
+                AllowToolTipEditing = true,
+            };
         }
 
         public IconDrawing Icon { get; set; }

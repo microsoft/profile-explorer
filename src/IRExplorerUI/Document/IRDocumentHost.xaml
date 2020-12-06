@@ -121,7 +121,7 @@
                             Text="Block" />
                         <ComboBox
                             x:Name="BlockSelector"
-                            Width="50"
+                            Width="70"
                             Margin="4,0,0,0"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"

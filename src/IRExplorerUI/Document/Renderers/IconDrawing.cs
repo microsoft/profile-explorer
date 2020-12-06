@@ -12,6 +12,10 @@ namespace IRExplorerUI {
         }
 
         public static IconDrawing FromIconResource(string name) {
+            if(!Application.Current.Resources.Contains(name)) {
+                return null;
+            }
+
             var icon = Application.Current.Resources[name] as ImageSource;
             return new IconDrawing(icon, icon.Width / icon.Height);
         }

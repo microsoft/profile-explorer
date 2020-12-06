@@ -7,13 +7,22 @@ using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI.Scripting {
+    public class IconOverlayInfo {
+        public IconDrawing Icon { get; set; }
+        public string Tooltip { get; set; }
+        public HorizontalAlignment AlignmentX { get; set; }
+        public double MarginX { get; set; }
+    }
+
     public class ScriptSession {
         private AnalysisInfo analysis_;
         private StringBuilder builder_;
         private IRDocument document_;
         private List<Tuple<IRElement, Color>> markedElements_;
+        private List<Tuple<IRElement, IconOverlayInfo>> iconElementOverlays_;
         private CancelableTask task_;
         private ISession session_;
         private Dictionary<string, object> variables_;
@@ -25,6 +34,7 @@ namespace IRExplorerUI.Scripting {
             session_ = session;
             builder_ = new StringBuilder();
             markedElements_ = new List<Tuple<IRElement, Color>>();
+            iconElementOverlays_ = new List<Tuple<IRElement, IconOverlayInfo>>();
             variables_ = new Dictionary<string, object>();
 
             if (document != null) {
@@ -43,6 +53,7 @@ namespace IRExplorerUI.Scripting {
         public bool SilentMode { get; set; }
         public string OutputText => builder_.ToString();
         public List<Tuple<IRElement, Color>> MarkedElements => markedElements_;
+        public List<Tuple<IRElement, IconOverlayInfo>> IconElementOverlays => iconElementOverlays_;
         public AnalysisInfo Analysis => analysis_;
         public FunctionIR CurrentFunction => document_?.Function;
         public IRTextSection CurrentSection => document_?.Section;
@@ -107,7 +118,30 @@ namespace IRExplorerUI.Scripting {
         }
 
         public void Mark(IRElement element) {
-            markedElements_.Add(new Tuple<IRElement, Color>(element, Colors.Transparent));
+            markedElements_.Add(new Tuple<IRElement, Color>(element, Colors.Gold));
+        }
+
+        public void AddIcon(IRElement element, string iconName, string text = "") {
+            var icon = IconDrawing.FromIconResource(iconName);
+            
+            if(icon == null) {
+                WriteLine($"Failed to add element icon with name {iconName}");
+                return;
+            }
+
+            bool isDestination = element is OperandIR ir && ir.IsDestinationOperand;
+
+            iconElementOverlays_.Add(new Tuple<IRElement, IconOverlayInfo>(
+                element,
+                new IconOverlayInfo() {
+                    Icon = icon,
+                    Tooltip = text,
+                    AlignmentX = isDestination ? HorizontalAlignment.Left : HorizontalAlignment.Right
+                }));
+        }
+
+        public void AddWarningIcon(IRElement element, string text = "") {
+            AddIcon(element, "WarningIcon", text);
         }
 
         public void Write(string format, params object[] args) {
