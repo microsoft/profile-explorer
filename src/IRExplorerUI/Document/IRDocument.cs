@@ -3404,8 +3404,8 @@ namespace IRExplorerUI {
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
                                           double marginX = 8, double marginY = 2) {
-            // Pick a background color that matches the one used for the entire text line.
-            var backColor = element.TextLocation.Line % 2 == 1 ?
+            // Pick a background color that matches the one used for the entire block.
+            var backColor = element.ParentBlock.Number % 2 == 0 ?
                            settings_.BackgroundColor :
                            settings_.AlternateBackgroundColor;
             var overlay = IconElementOverlay.CreateDefault(icon, width, height, 

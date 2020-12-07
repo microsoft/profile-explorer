@@ -218,12 +218,34 @@ namespace IRExplorerUI.Document {
                 }
             }
 
+            Tuple<IElementOverlay, IRElement, Rect> hoverSegment = null;
+            Tuple<IElementOverlay, IRElement, Rect> selectedSegment = null;
+
             foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                     foreach (var overlay in segment.Overlays) {
+                        // Draw hover/selected overlay last so that it shows up on top
+                        // in case there is some overlap between overlays.
+                        if (overlay == hoveredOverlay_) {
+                            hoverSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
+                            continue;
+                        }
+                        else if (overlay == selectedOverlay_) {
+                            selectedSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
+                            continue;
+                        }
+
                         overlay.Draw(rect, segment.Element, overlayDC);
                     }
                 }
+            }
+
+            if(selectedSegment != null) {
+                selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, overlayDC);
+            }
+
+            if (hoverSegment != null) {
+                hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, overlayDC);
             }
 
             double dotSize = 3;
