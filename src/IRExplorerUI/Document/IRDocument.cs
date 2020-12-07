@@ -698,6 +698,7 @@ namespace IRExplorerUI {
             hoverHighlighter_.LoadState(savedState.HoverHighlighter, Function);
             selectedHighlighter_.LoadState(savedState.SelectedHighlighter, Function);
             markedHighlighter_.LoadState(savedState.MarkedHighlighter, Function);
+            overlayRenderer_.LoadState(savedState.ElementOverlays, Function);
             margin_.LoadState(savedState.Margin);
             bookmarks_.Bookmarks.ForEach(item => RaiseBookmarkAddedEvent(item));
             SetCaretAtOffset(savedState.CaretOffset);
@@ -932,6 +933,7 @@ namespace IRExplorerUI {
             savedState.HoverHighlighter = hoverHighlighter_.SaveState(Function);
             savedState.SelectedHighlighter = selectedHighlighter_.SaveState(Function);
             savedState.MarkedHighlighter = markedHighlighter_.SaveState(Function);
+            savedState.ElementOverlays = overlayRenderer_.SaveState(Function);
             savedState.Margin = margin_.SaveState();
             savedState.CaretOffset = TextArea.Caret.Offset;
             return savedState;

@@ -63,6 +63,16 @@ namespace IRExplorerUI {
             MinorModificationColor = Utils.ColorFromString("#E1E1E1");
         }
 
+        [ProtoAfterDeserialization]
+        private void AfterDeserialization() {
+            if(!ShowAnyChanges) {
+                ShowInsertions = true;
+                ShowDeletions = true;
+                ShowModifications = true;
+                ShowMinorModifications = true;
+            }
+        }
+
         public override SettingsBase Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<DiffSettings>(serialized);

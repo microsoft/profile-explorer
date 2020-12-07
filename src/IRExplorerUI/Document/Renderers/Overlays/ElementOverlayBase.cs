@@ -1,0 +1,229 @@
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media;
+using IRExplorerCore.IR;
+using IRExplorerUI.Utilities;
+using ProtoBuf;
+
+namespace IRExplorerUI.Document {
+    [ProtoContract(SkipConstructor = true)]
+    [ProtoInclude(200, typeof(IconElementOverlay))]
+    public abstract class ElementOverlayBase : IElementOverlay {
+        static ElementOverlayBase() {
+           // StateSerializer.RegisterDerivedClass(typeof(ElementOverlayBase), typeof(IElementOverlay), 100);
+        }
+
+        [ProtoAfterDeserialization]
+        private void AfterDeserialization() {
+            return;
+        }
+
+        protected ElementOverlayBase() {
+            // Used for deserialization.
+        }
+
+        protected ElementOverlayBase(double width, double height,
+                                  double marginX, double marginY, 
+                                  HorizontalAlignment alignmentX,
+                                  VerticalAlignment alignmentY,
+                                  string toolTip) {
+            ToolTip = toolTip;
+            Width = width;
+            Height = height;
+            MarginX = marginX;
+            MarginY = marginY;
+            AlignmentX = alignmentX;
+            AlignmentY = alignmentY;
+        }
+
+        [ProtoMember(23)]
+        private IRElementReference elementRef_;
+        public IRElement Element {
+            get => elementRef_;
+            set => elementRef_ = value;
+        }
+
+        [ProtoMember(1)]
+        public string ToolTip { get; set; }
+        [ProtoMember(2)]
+        public double Width { get; set; }
+        [ProtoMember(3)]
+        public double Height { get; set; }
+        [ProtoMember(4)]
+        public double MarginX { get; set; }
+        [ProtoMember(5)]
+        public double MarginY { get; set;  }
+        [ProtoMember(6)]
+        public double Padding { get; set; }
+        public Size Size => new Size(ActualWidth, ActualHeight);
+        [ProtoMember(7)]
+        public HorizontalAlignment AlignmentX { get; set; }
+        [ProtoMember(8)]
+        public VerticalAlignment AlignmentY { get; set; }
+        [ProtoMember(9)]
+        public bool ShowBackgroundOnMouseOverOnly { get; set; }
+        [ProtoMember(10)]
+        public bool ShowToolTipOnMouseOverOnly { get; set; }
+        [ProtoMember(11)]
+        public bool UseToolTipBackground { get; set; }
+        [ProtoMember(12)]
+        public bool AllowToolTipEditing { get; set; }
+        [ProtoMember(13)]
+        public bool IsToolTipPinned { get; set; }
+        [ProtoMember(14)]
+        public double DefaultOpacity { get; set; }
+        [ProtoMember(15)]
+        public double MouseOverOpacity { get; set; }
+        public bool IsMouseOver { get; set; }
+        public bool IsSelected { get; set; }
+        public Rect Bounds { get; set; }
+        [ProtoMember(16)]
+        public Brush Background { get; set; }
+        [ProtoMember(17)]
+        public Brush SelectedBackground { get; set; }
+        [ProtoMember(18)]
+        public Pen Border { get; set; }
+        [ProtoMember(19)]
+        public Brush TextColor { get; set; }
+        [ProtoMember(20)]
+        public Brush SelectedTextColor { get; set; }
+        [ProtoMember(21)]
+        public int TextSize { get; set; }
+        [ProtoMember(22)]
+        public FontWeight TextWeight { get; set; }
+        protected double ActualWidth => Width + 2 * Padding;
+        protected double ActualHeight => Height + 2 * Padding;
+        protected virtual bool ShowToolTip => !string.IsNullOrEmpty(ToolTip) &&
+                                             (!ShowToolTipOnMouseOverOnly || 
+                                              IsToolTipPinned || IsMouseOver || IsSelected);
+        protected virtual bool ShowBackground => !ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected;
+
+        public abstract void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
+
+        protected void DrawBackground(Rect elementRect, double opacity, DrawingContext drawingContext) {
+            if (Background != null || Border != null) {
+                drawingContext.PushOpacity(opacity);
+                drawingContext.DrawRectangle(CurrentBackgroundBrush, Border, elementRect);
+                drawingContext.Pop();
+            }
+        }
+
+        protected virtual Brush CurrentBackgroundBrush => IsSelected && SelectedBackground != null ?
+                   SelectedBackground : Background;
+
+        protected virtual Brush ActiveTextBrush => IsSelected && SelectedTextColor != null ?
+                   SelectedTextColor : (TextColor ?? Brushes.Black);
+
+        protected virtual double ActiveOpacity => (IsMouseOver || IsSelected) ?
+            (MouseOverOpacity > 0 ? MouseOverOpacity : 1.0) :
+            (DefaultOpacity > 0 ? DefaultOpacity : 1.0);
+
+       
+        private static readonly Typeface DefaultFont = new Typeface("Consolas");
+
+        public event MouseEventHandler OnClick;
+        public event KeyEventHandler OnKeyPress;
+
+        protected void DrawToolTip(Rect elementRect, double opacity, DrawingContext drawingContext) {
+            var host = App.Current.MainWindow; // Used to get DPI.
+            double fontSize = TextSize != 0 ? TextSize : App.Settings.DocumentSettings.FontSize;
+            
+            var text = DocumentUtils.CreateFormattedText(host, ToolTip, DefaultFont, fontSize,
+                                                         ActiveTextBrush, TextWeight);
+            double textX = elementRect.Right + MarginX;
+            double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
+            drawingContext.PushOpacity(opacity);
+
+            if (UseToolTipBackground) {
+                // Draw a rectangle covering both the icon and tooltip.
+                var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * MarginX, 0);
+                drawingContext.DrawRectangle(CurrentBackgroundBrush, Border, rect);
+            }
+
+            drawingContext.DrawText(text, Utils.SnapPointToPixels(textX, textY));
+            drawingContext.Pop();
+        }
+
+        protected double ComputePositionX(Rect rect) {
+            if (AlignmentX == HorizontalAlignment.Left) {
+                return Utils.SnapToPixels(rect.Left - ActualWidth - MarginX);
+            }
+            else if(AlignmentX == HorizontalAlignment.Right) {
+                return Utils.SnapToPixels(rect.Right + MarginX);
+            }
+            else {
+                return Utils.SnapToPixels(rect.Left + (rect.Width - ActualWidth) / 2);
+            }
+        }
+
+        protected double ComputePositionY(Rect rect) {
+            if (AlignmentY == VerticalAlignment.Top) {
+                return Utils.SnapToPixels(rect.Top - ActualHeight - MarginY);
+            }
+            else if(AlignmentY == VerticalAlignment.Bottom) {
+                return Utils.SnapToPixels(rect.Right + MarginX);
+            }
+            else {
+                return Utils.SnapToPixels(rect.Top + (rect.Height - ActualHeight) / 2);
+            }
+        }
+
+        public virtual bool CheckIsMouseOver(Point point) {
+            IsMouseOver = Bounds.Contains(point);
+            return IsMouseOver;
+        }
+
+        public virtual bool MouseClicked(MouseEventArgs e) {
+            OnClick?.Invoke(this, e);
+            return e.Handled;
+        }
+
+        public virtual bool KeyPressed(KeyEventArgs e) {
+            OnKeyPress?.Invoke(this, e);
+
+            if (!AllowToolTipEditing || !IsSelected) {
+                return e.Handled;
+            }
+
+            var keyInfo = Utils.KeyToChar(e.Key);
+
+            if (keyInfo.IsLetter) {
+                // Append a new letter.
+                string keyString = keyInfo.Letter.ToString();
+
+                if (string.IsNullOrEmpty(ToolTip)) {
+                    ToolTip = keyString;
+                }
+                else {
+                    ToolTip += keyString;
+                }
+
+                return true;
+            }
+            else if (e.Key == Key.Back) {
+                // Remove last letter.
+                if (!string.IsNullOrEmpty(ToolTip)) {
+                    ToolTip = ToolTip.Substring(0, ToolTip.Length - 1);
+                    return true;
+                }
+            }
+            else if (e.Key == Key.Delete) {
+                ToolTip = null; // Delete all text.
+                return true;
+            }
+            else if(e.Key == Key.Enter) {
+                IsToolTipPinned = true;
+                return true;
+            }
+            else if (e.Key == Key.Escape) {
+                IsToolTipPinned = false;
+                return true;
+            }
+
+            return e.Handled;
+        }
+    }
+}

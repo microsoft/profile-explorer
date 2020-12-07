@@ -663,6 +663,7 @@ namespace IRExplorerUI {
             state.HorizontalOffset = TextView.HorizontalOffset;
             state.VerticalOffset = TextView.VerticalOffset;
             var data = StateSerializer.Serialize(state, Function);
+
             Session.SaveDocumentState(data, section);
             Session.SetSectionAnnotationState(section, state.HasAnnotations);
         }
