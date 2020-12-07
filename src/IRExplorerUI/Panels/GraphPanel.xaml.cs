@@ -401,7 +401,7 @@ namespace IRExplorerUI {
         }
 
         private HighlightingStyle GetSelectedColorStyle(ExecutedRoutedEventArgs e) {
-            return Utils.GetSelectedColorStyle(e.Parameter as ColorEventArgs, GraphViewer.DefaultBoldPen);
+            return Utils.GetSelectedColorStyle(e.Parameter as SelectedColorEventArgs, GraphViewer.DefaultBoldPen);
         }
 
         private void GraphHost_ScrollChanged(object sender, ScrollChangedEventArgs e) {

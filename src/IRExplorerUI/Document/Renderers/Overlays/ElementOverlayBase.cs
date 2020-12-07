@@ -12,15 +12,6 @@ namespace IRExplorerUI.Document {
     [ProtoContract(SkipConstructor = true)]
     [ProtoInclude(200, typeof(IconElementOverlay))]
     public abstract class ElementOverlayBase : IElementOverlay {
-        static ElementOverlayBase() {
-           // StateSerializer.RegisterDerivedClass(typeof(ElementOverlayBase), typeof(IElementOverlay), 100);
-        }
-
-        [ProtoAfterDeserialization]
-        private void AfterDeserialization() {
-            return;
-        }
-
         protected ElementOverlayBase() {
             // Used for deserialization.
         }
@@ -104,7 +95,7 @@ namespace IRExplorerUI.Document {
         public abstract void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
 
         protected void DrawBackground(Rect elementRect, double opacity, DrawingContext drawingContext) {
-            if (Background != null || Border != null) {
+            if (CurrentBackgroundBrush != null || Border != null) {
                 drawingContext.PushOpacity(opacity);
                 drawingContext.DrawRectangle(CurrentBackgroundBrush, Border, elementRect);
                 drawingContext.Pop();
@@ -112,7 +103,10 @@ namespace IRExplorerUI.Document {
         }
 
         protected virtual Brush CurrentBackgroundBrush => IsSelected && SelectedBackground != null ?
-                   SelectedBackground : Background;
+                                                        SelectedBackground : Background;
+        protected virtual Brush CurrentToolTipBackgroundBrush => Background == null || 
+                                                          (IsSelected && SelectedBackground != null) ?
+                                                           SelectedBackground : Background;
 
         protected virtual Brush ActiveTextBrush => IsSelected && SelectedTextColor != null ?
                    SelectedTextColor : (TextColor ?? Brushes.Black);
@@ -140,7 +134,7 @@ namespace IRExplorerUI.Document {
             if (UseToolTipBackground) {
                 // Draw a rectangle covering both the icon and tooltip.
                 var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * MarginX, 0);
-                drawingContext.DrawRectangle(CurrentBackgroundBrush, Border, rect);
+                drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, Border, rect);
             }
 
             drawingContext.DrawText(text, Utils.SnapPointToPixels(textX, textY));

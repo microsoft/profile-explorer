@@ -926,7 +926,7 @@ namespace IRExplorerUI.Document {
 #endif
         }
 
-        private void ColorSelector_ColorSelected(object sender, ColorEventArgs e) {
+        private void ColorSelector_ColorSelected(object sender, SelectedColorEventArgs e) {
             SetPanelAccentColor(e.SelectedColor);
             HideColorSelector();
         }

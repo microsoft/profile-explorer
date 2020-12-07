@@ -16,6 +16,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "MarkDefinitionBlock", typeof(IRDocumentHost));
         public static readonly RoutedUICommand Mark =
             new RoutedUICommand("Untitled", "Mark", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand MarkIcon =
+            new RoutedUICommand("Untitled", "MarkIcon", typeof(IRDocumentHost));
         public static readonly RoutedUICommand ShowUses =
             new RoutedUICommand("Untitled", "ShowUses", typeof(IRDocumentHost));
         public static readonly RoutedUICommand MarkUses =

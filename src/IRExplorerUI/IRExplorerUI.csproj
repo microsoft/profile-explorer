@@ -166,6 +166,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Page Update="Controls\IconSelector.xaml">
+		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
 		<Page Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml">
 			<SubType>Designer</SubType>
 		</Page>

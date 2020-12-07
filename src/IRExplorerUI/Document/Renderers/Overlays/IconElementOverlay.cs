@@ -10,18 +10,14 @@ using ProtoBuf;
 namespace IRExplorerUI.Document {
     [ProtoContract(SkipConstructor = true)]
     public class IconElementOverlay : ElementOverlayBase {
-        static IconElementOverlay() {
-            //StateSerializer.RegisterDerivedClass(typeof(IconElementOverlay), typeof(ElementOverlayBase), 100);
-        }
-
         public IconElementOverlay() : base() {
             // Used by deserialization.
             return;
         }
 
         public IconElementOverlay(IconDrawing icon, double width, double height, string toolTip,
-                                  HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
-                                  double marginX, double marginY) :
+                               HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
+                               double marginX, double marginY) :
             base(width, height, marginX, marginY, alignmentX, alignmentY, toolTip) {
             Icon = icon;
         }
@@ -47,21 +43,16 @@ namespace IRExplorerUI.Document {
             };
         }
 
-        [ProtoAfterDeserialization]
-        private void AfterDeserialization() {
-            return;
-        }
-
         [ProtoMember(1)]
         public IconDrawing Icon { get; set; }
 
         public override void Draw(Rect elementRect, IRElement element,
-                                  DrawingContext drawingContext) {
+                               DrawingContext drawingContext) {
             double x = ComputePositionX(elementRect);
             double y = ComputePositionY(elementRect);
             double opacity = ActiveOpacity;
             Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, 
-                                            Math.Max(ActualHeight, elementRect.Height));
+                                           Math.Max(ActualHeight, elementRect.Height));
             if (ShowToolTip) {
                 DrawToolTip(Bounds, opacity, drawingContext);
             }
@@ -69,7 +60,7 @@ namespace IRExplorerUI.Document {
                 DrawBackground(Bounds, opacity, drawingContext);
             }
 
-            Icon.Draw(x + Padding, y + Padding, Height, ActualWidth, opacity, drawingContext);
+            Icon.Draw(x + Padding, y + Padding, Height, Width, opacity, drawingContext);
         }
     }
 }

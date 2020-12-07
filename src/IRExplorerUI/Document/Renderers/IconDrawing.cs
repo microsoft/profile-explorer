@@ -48,12 +48,12 @@ namespace IRExplorerUI {
 
             // Center icon in the available space.
             var rect = Utils.SnapRectToPixels(x + (availableSize - width) / 2, y,
-                                              width, height);
+                                             width, height);
             drawingContext.DrawImage(Icon, rect);
         }
 
         public void Draw(double x, double y, double size, double availableSize,
-                         double opacity, DrawingContext drawingContext) {
+                       double opacity, DrawingContext drawingContext) {
             drawingContext.PushOpacity(opacity);
             Draw(x, y, size, availableSize, drawingContext);
             drawingContext.Pop();

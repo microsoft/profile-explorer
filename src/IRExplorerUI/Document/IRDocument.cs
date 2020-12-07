@@ -698,7 +698,7 @@ namespace IRExplorerUI {
             hoverHighlighter_.LoadState(savedState.HoverHighlighter, Function);
             selectedHighlighter_.LoadState(savedState.SelectedHighlighter, Function);
             markedHighlighter_.LoadState(savedState.MarkedHighlighter, Function);
-            overlayRenderer_.LoadState(savedState.ElementOverlays, Function);
+            overlayRenderer_.LoadState(savedState.ElementOverlays, Function, SetupElementOverlayEvents);
             margin_.LoadState(savedState.Margin);
             bookmarks_.Bookmarks.ForEach(item => RaiseBookmarkAddedEvent(item));
             SetCaretAtOffset(savedState.CaretOffset);
@@ -1006,7 +1006,7 @@ namespace IRExplorerUI {
             }
             else {
                 // Notify overlay layer in case there is a selected overlay visual.
-                overlayRenderer_?.KeyPressed(e);
+                overlayRenderer_.KeyPressed(e);
             }
 
             switch (e.Key) {
@@ -1069,13 +1069,12 @@ namespace IRExplorerUI {
                     break;
                 }
                 case Key.Delete: {
-                    if (Utils.IsControlModifierActive()) {
-                        if (Utils.IsShiftModifierActive()) {
-                            ClearAllMarkersExecuted(this, null);
-                        }
-                        else {
-                            ClearMarkerExecuted(this, null);
-                        }
+                    if (Utils.IsControlModifierActive() || 
+                        Utils.IsShiftModifierActive()) {
+                        ClearAllMarkersExecuted(this, null);
+                    }
+                    else {
+                        ClearMarkerExecuted(this, null);
                     }
 
                     e.Handled = true;
@@ -1293,6 +1292,7 @@ namespace IRExplorerUI {
         private void ClearAllMarkers() {
             ClearBlockMarkers();
             ClearInstructionMarkers();
+            overlayRenderer_.Clear();
         }
 
         private void ClearBlockMarkersExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -1528,7 +1528,7 @@ namespace IRExplorerUI {
         }
 
         private HighlightingStyle GetMarkerStyleForCommand(ExecutedRoutedEventArgs e) {
-            if (e != null && e.Parameter is ColorEventArgs colorArgs) {
+            if (e != null && e.Parameter is SelectedColorEventArgs colorArgs) {
                 return new HighlightingStyle(colorArgs.SelectedColor);
             }
 
@@ -1536,7 +1536,7 @@ namespace IRExplorerUI {
         }
 
         private PairHighlightingStyle GetPairMarkerStyleForCommand(ExecutedRoutedEventArgs e) {
-            if (e != null && e.Parameter is ColorEventArgs colorArgs) {
+            if (e != null && e.Parameter is SelectedColorEventArgs colorArgs) {
                 var style = new HighlightingStyle(colorArgs.SelectedColor);
 
                 return new PairHighlightingStyle {
@@ -2180,7 +2180,7 @@ namespace IRExplorerUI {
             ForceCursor = true;
             Cursor = Cursors.Arrow;
             margin_.MouseMoved(e);
-            overlayRenderer_?.MouseMoved(e);
+            overlayRenderer_.MouseMoved(e);
         }
 
         private void IRDocument_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
@@ -2400,6 +2400,19 @@ namespace IRExplorerUI {
                 var style = GetPairMarkerStyleForCommand(e);
                 MarkElement(element, style);
                 MirrorAction(DocumentActionKind.MarkElement, element, style);
+            }
+        }
+
+        private void MarkIconExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (selectedElements_.Count == 1) {
+                var element = GetSelectedElement();
+
+                if (e != null && e.Parameter is SelectedIconEventArgs iconArgs) {
+                    var icon = IconDrawing.FromIconResource(iconArgs.SelectedIconName);
+                    AddIconElementOverlay(element, icon, this.TextArea.TextView.DefaultLineHeight,
+                                                     this.TextArea.TextView.DefaultLineHeight);
+                    // MirrorAction(DocumentActionKind.MarkIcon, element, iconArgs);
+                }
             }
         }
 
@@ -2908,6 +2921,7 @@ namespace IRExplorerUI {
             AddCommand(DocumentCommand.GoToDefinition, GoToDefinitionExecuted);
             AddCommand(DocumentCommand.GoToDefinitionSkipCopies, GoToDefinitionSkipCopiesExecuted);
             AddCommand(DocumentCommand.Mark, MarkExecuted);
+            AddCommand(DocumentCommand.MarkIcon, MarkIconExecuted);
             AddCommand(DocumentCommand.MarkBlock, MarkBlockExecuted);
             AddCommand(DocumentCommand.MarkDefinition, MarkDefinitionExecuted);
             AddCommand(DocumentCommand.MarkDefinitionBlock, MarkDefinitionBlockExecuted);
@@ -3365,11 +3379,16 @@ namespace IRExplorerUI {
             }
 
             HideTemporaryUI();
+
+            // Check if there is any overlay being clicked
+            // and don't propagate event to elements if it is.
+            if (overlayRenderer_.MouseClick(e)) {
+                e.Handled = true;
+                return;
+            }
+
             var element = FindPointedElement(position, out int textOffset);
             SelectElement(element, true, true, textOffset);
-
-            // Check if there is any overlay being clicked.
-            overlayRenderer_?.MouseClick(e);
 
             //? TODO: This would prevent selection of text from working,
             //? but allowing it also sometimes selects a letter of the element...
@@ -3386,21 +3405,29 @@ namespace IRExplorerUI {
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
                                           double marginX = 8, double marginY = 2) {
-            var temp = IconElementOverlay.CreateDefault(icon, width, height,
-                definitionStyle_.ChildStyle.BackColor,
-                ssaUserStyle_.ChildStyle.BackColor,
-                definitionStyle_.ChildStyle.Border,
-                toolTip, alignmentX, alignmentY,
-                marginX, marginY);
-            
-            temp.OnKeyPress += (sender, e) => {
-                if (e.Key == Key.Delete) {
-                    overlayRenderer_.RemoveElementOverlay((IElementOverlay)sender);
-                }
-            };
-
-            overlayRenderer_.AddElementOverlay(element, temp);
+            var overlay = IconElementOverlay.CreateDefault(icon, width, height, null,
+                                                       selectedStyle_.BackColor,
+                                                       selectedStyle_.Border,
+                                                       toolTip, alignmentX, alignmentY,
+                                                       marginX, marginY);
+            SetupElementOverlayEvents(overlay);
+            overlayRenderer_.AddElementOverlay(element, overlay);
             UpdateHighlighting();
+        }
+
+        private void SetupElementOverlayEvents(IElementOverlay overlay) {
+            overlay.OnKeyPress += ElementOverlay_OnKeyPress;
+            overlay.OnClick += ElementOverlay_OnClick;
+        }
+
+        private void ElementOverlay_OnClick(object sender, MouseEventArgs e) {
+            
+        }
+
+        private void ElementOverlay_OnKeyPress(object sender, KeyEventArgs e) {
+            if (e.Key == Key.Delete) {
+                overlayRenderer_.RemoveElementOverlay((IElementOverlay)sender);
+            }
         }
 
         public void ClearElementOverlays() {
