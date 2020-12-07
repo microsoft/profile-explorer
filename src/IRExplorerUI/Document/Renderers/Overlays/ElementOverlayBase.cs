@@ -30,60 +30,62 @@ namespace IRExplorerUI.Document {
             AlignmentY = alignmentY;
         }
 
-        [ProtoMember(23)]
+        [ProtoMember(1)]
         private IRElementReference elementRef_;
         public IRElement Element {
             get => elementRef_;
             set => elementRef_ = value;
         }
 
-        [ProtoMember(1)]
-        public string ToolTip { get; set; }
         [ProtoMember(2)]
-        public double Width { get; set; }
+        public string ToolTip { get; set; }
         [ProtoMember(3)]
-        public double Height { get; set; }
+        public double Width { get; set; }
         [ProtoMember(4)]
-        public double MarginX { get; set; }
+        public double Height { get; set; }
         [ProtoMember(5)]
-        public double MarginY { get; set;  }
+        public double MarginX { get; set; }
         [ProtoMember(6)]
+        public double MarginY { get; set;  }
+        [ProtoMember(7)]
         public double Padding { get; set; }
         public Size Size => new Size(ActualWidth, ActualHeight);
-        [ProtoMember(7)]
-        public HorizontalAlignment AlignmentX { get; set; }
         [ProtoMember(8)]
-        public VerticalAlignment AlignmentY { get; set; }
+        public HorizontalAlignment AlignmentX { get; set; }
         [ProtoMember(9)]
-        public bool ShowBackgroundOnMouseOverOnly { get; set; }
+        public VerticalAlignment AlignmentY { get; set; }
         [ProtoMember(10)]
-        public bool ShowToolTipOnMouseOverOnly { get; set; }
+        public bool ShowBackgroundOnMouseOverOnly { get; set; }
         [ProtoMember(11)]
-        public bool UseToolTipBackground { get; set; }
+        public bool ShowBorderOnMouseOverOnly { get; set; }
         [ProtoMember(12)]
-        public bool AllowToolTipEditing { get; set; }
+        public bool ShowToolTipOnMouseOverOnly { get; set; }
         [ProtoMember(13)]
-        public bool IsToolTipPinned { get; set; }
+        public bool UseToolTipBackground { get; set; }
         [ProtoMember(14)]
-        public double DefaultOpacity { get; set; }
+        public bool AllowToolTipEditing { get; set; }
         [ProtoMember(15)]
+        public bool IsToolTipPinned { get; set; }
+        [ProtoMember(16)]
+        public double DefaultOpacity { get; set; }
+        [ProtoMember(17)]
         public double MouseOverOpacity { get; set; }
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
         public Rect Bounds { get; set; }
-        [ProtoMember(16)]
-        public Brush Background { get; set; }
-        [ProtoMember(17)]
-        public Brush SelectedBackground { get; set; }
         [ProtoMember(18)]
-        public Pen Border { get; set; }
+        public Brush Background { get; set; }
         [ProtoMember(19)]
-        public Brush TextColor { get; set; }
+        public Brush SelectedBackground { get; set; }
         [ProtoMember(20)]
-        public Brush SelectedTextColor { get; set; }
+        public Pen Border { get; set; }
         [ProtoMember(21)]
-        public int TextSize { get; set; }
+        public Brush TextColor { get; set; }
         [ProtoMember(22)]
+        public Brush SelectedTextColor { get; set; }
+        [ProtoMember(23)]
+        public int TextSize { get; set; }
+        [ProtoMember(24)]
         public FontWeight TextWeight { get; set; }
         protected double ActualWidth => Width + 2 * Padding;
         protected double ActualHeight => Height + 2 * Padding;
@@ -91,19 +93,22 @@ namespace IRExplorerUI.Document {
                                              (!ShowToolTipOnMouseOverOnly || 
                                               IsToolTipPinned || IsMouseOver || IsSelected);
         protected virtual bool ShowBackground => !ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected;
+        protected virtual bool ShowBorder => !ShowBorderOnMouseOverOnly || IsMouseOver || IsSelected;
 
         public abstract void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
 
         protected void DrawBackground(Rect elementRect, double opacity, DrawingContext drawingContext) {
-            if (CurrentBackgroundBrush != null || Border != null) {
+            if (ShowBackground || ShowBorder) {
                 drawingContext.PushOpacity(opacity);
-                drawingContext.DrawRectangle(CurrentBackgroundBrush, Border, elementRect);
+                drawingContext.DrawRectangle(CurrentBackgroundBrush, CurrentBorder, elementRect);
                 drawingContext.Pop();
             }
         }
 
         protected virtual Brush CurrentBackgroundBrush => IsSelected && SelectedBackground != null ?
                                                         SelectedBackground : Background;
+        protected virtual Pen CurrentBorder => !ShowBorderOnMouseOverOnly || IsSelected || IsMouseOver ?
+                                            Border : null;
         protected virtual Brush CurrentToolTipBackgroundBrush => Background == null || 
                                                           (IsSelected && SelectedBackground != null) ?
                                                            SelectedBackground : Background;
@@ -134,7 +139,7 @@ namespace IRExplorerUI.Document {
             if (UseToolTipBackground) {
                 // Draw a rectangle covering both the icon and tooltip.
                 var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * MarginX, 0);
-                drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, Border, rect);
+                drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, CurrentBorder, rect);
             }
 
             drawingContext.DrawText(text, Utils.SnapPointToPixels(textX, textY));
