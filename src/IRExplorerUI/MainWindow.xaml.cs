@@ -417,9 +417,11 @@ namespace IRExplorerUI {
             SectionPanel.DisplayCallGraph += SectionPanel_DisplayCallGraph;
             SearchResultsPanel.OpenSection += SectionPanel_OpenSection;
 
-            RegisterDefaultToolPanels();
+            if (!RestoreDockLayout()) {
+                RegisterDefaultToolPanels();
+            }
+
             ResetStatusBar();
-            RestoreDockLayout();
 
             //? TODO: This needs a proper arg parsing lib
             var args = Environment.GetCommandLineArgs();
@@ -740,68 +742,6 @@ namespace IRExplorerUI {
             CreateDefaultSideBySidePanels();
         }
 
-        private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
-            //? TODO: Panel hosts must be found at runtime because of deserialization
-            switch (((MenuItem)sender).Tag) {
-                case "Section": {
-                        SectionPanelHost.Show();
-                        break;
-                    }
-                case "Definition": {
-                        DefinitionPanelHost.Show();
-                        break;
-                    }
-                case "References": {
-                        ReferencesPanelHost.Show();
-                        break;
-                    }
-                case "Bookmarks": {
-                        BookmarksPanelHost.Show();
-                        break;
-                    }
-                case "SourceFile": {
-                        SourceFilePanelHost.Show();
-                        break;
-                    }
-                case "PassOutput": {
-                    PassOutputHost.Show();
-                    break;
-                }
-                case "SearchResults": {
-                    SearchResultsPanelHost.Show();
-                    break;
-                }
-                case "Notes": {
-                    NotesPanelHost.Show();
-                    break;
-                }
-                case "Scripting": {
-                    ScriptingPanelHost.Show();
-                    break;
-                }
-                case "Developer": {
-                    IRInfoPanelHost.Show();
-                    break;
-                }
-                case "FlowGraph": {
-                        FlowGraphPanelHost.Show();
-                        break;
-                    }
-                case "DominatorTree": {
-                        DominatorTreePanelHost.Show();
-                        break;
-                    }
-                case "PostDominatorTree": {
-                        PostDominatorTreePanelHost.Show();
-                        break;
-                    }
-                case "ExpressionGraph": {
-                        ExpressionGraphPanelHost.Show();
-                        break;
-                    }
-            }
-        }
-
         private void UpdateButton_Click(object sender, RoutedEventArgs e) {
             var updateWindow = new UpdateWindow(UpdateButton.Tag as UpdateInfoEventArgs);
             updateWindow.Owner = this;
@@ -987,32 +927,6 @@ namespace IRExplorerUI {
             documentSearchPanel_.PopupDetached -= DocumentSearchPanel__PopupDetached;
             documentSearchPanel_ = null;
             documentSearchVisible_ = false;
-        }
-
-        private void RestoreDockLayout() {
-            var dockLayoutFile = App.GetDockLayoutFilePath();
-
-            if (!File.Exists(dockLayoutFile)) {
-                return;
-            }
-
-            try {
-                var serializer = new XmlLayoutSerializer(DockManager);
-
-                serializer.LayoutSerializationCallback += (s, args) => {
-                    if (args.Model is LayoutDocument) {
-                        args.Cancel = true; // Don't recreate any document panels.
-                    }
-                    else {
-                        args.Content = args.Content;
-                    }
-                };
-
-                serializer.Deserialize(dockLayoutFile);
-            }
-            catch (Exception ex) {
-                Trace.TraceError($"Failed to load dock layout: {ex}");
-            }
         }
 
         private void SaveDockLayout() {

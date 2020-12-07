@@ -301,6 +301,7 @@
                             Header="Post-Dominator Tree Panel"
                             Tag="PostDominatorTree" />
                         <MenuItem Header="Control Dependence Graph Panel" IsEnabled="False" />
+                        <MenuItem Header="Loop Graph Panel" IsEnabled="False" />
                         <MenuItem
                             Header="Expression Graph Panel"
                             IsEnabled="True"

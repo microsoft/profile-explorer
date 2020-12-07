@@ -25,6 +25,7 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Controls;
 using AvalonDock.Controls;
 using System.Linq;
+using AvalonDock.Layout.Serialization;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISession {
@@ -492,7 +493,6 @@ namespace IRExplorerUI {
                 ToolPanelKind.PassOutput => "Pass Output",
                 ToolPanelKind.SearchResults => "Search Results",
                 ToolPanelKind.Scripting => "Scripting",
-                ToolPanelKind.Remarks => "Remarks",
                 _ => ""
             };
         }
@@ -642,12 +642,11 @@ namespace IRExplorerUI {
         }
 
         private PanelHostInfo RegisterPanel(IToolPanel panel, LayoutAnchorable host) {
-            var panelHost = new PanelHostInfo(panel, host);
-
             if (!panelHostSet_.TryGetValue(panel.PanelKind, out var list)) {
                 list = new List<PanelHostInfo>();
             }
 
+            var panelHost = new PanelHostInfo(panel, host);
             list.Add(panelHost);
             panelHostSet_[panel.PanelKind] = list;
 
@@ -918,5 +917,192 @@ namespace IRExplorerUI {
             detachedPanels_.Remove(panel);
         }
 
+        private bool RestoreDockLayout() {
+            var dockLayoutFile = App.GetDockLayoutFilePath();
+
+            if (!File.Exists(dockLayoutFile)) {
+                return false;
+            }
+
+            try {
+                var serializer = new XmlLayoutSerializer(DockManager);
+
+                serializer.LayoutSerializationCallback += (s, args) => {
+                    if (args.Model is LayoutDocument) {
+                        args.Cancel = true; // Don't recreate any document panels.
+                    }
+                    else {
+                        args.Content = args.Content;
+
+                        if (args.Content is not IToolPanel panel) {
+                            return;
+                        }
+
+                        switch (panel.PanelKind) {
+                            case ToolPanelKind.Bookmarks: {
+                                BookmarksPanel = (BookmarksPanel)panel;
+                                BookmarksPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(BookmarksPanel, BookmarksPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.Definition: {
+                                DefinitionPanel = (DefinitionPanel)panel;
+                                DefinitionPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(DefinitionPanel, DefinitionPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.FlowGraph: {
+                                FlowGraphPanel = (GraphPanel)panel;
+                                FlowGraphPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(FlowGraphPanel, FlowGraphPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.DominatorTree: {
+                                DominatorTreePanel = (DominatorTreePanel)panel;
+                                DominatorTreePanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(DominatorTreePanel, DominatorTreePanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.PostDominatorTree: {
+                                PostDominatorTreePanel = (PostDominatorTreePanel)panel;
+                                PostDominatorTreePanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(PostDominatorTreePanel, PostDominatorTreePanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.ExpressionGraph: {
+                                ExpressionGraphPanel = (ExpressionGraphPanel)panel;
+                                ExpressionGraphPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.Developer: {
+                                IRInfoPanel = (IRInfoPanel)panel;
+                                IRInfoPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(IRInfoPanel, IRInfoPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.Notes: {
+                                NotesPanel = (NotesPanel)panel;
+                                NotesPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(NotesPanel, NotesPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.References: {
+                                ReferencesPanel = (ReferencesPanel)panel;
+                                ReferencesPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(ReferencesPanel, ReferencesPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.Section: {
+                                SectionPanel = (SectionPanelPair)panel;
+                                SectionPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(SectionPanel, SectionPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.Source: {
+                                SourceFilePanel = (SourceFilePanel)panel;
+                                SourceFilePanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(SourceFilePanel, SourceFilePanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.PassOutput: {
+                                PassOutputPanel = (PassOutputPanel)panel;
+                                PassOutputHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(PassOutputPanel, PassOutputHost);
+                                break;
+                            }
+                            case ToolPanelKind.SearchResults: {
+                                SearchResultsPanel = (SearchResultsPanel)panel;
+                                SearchResultsPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.Scripting: {
+                                ScriptingPanel = (ScriptingPanel)panel;
+                                ScriptingPanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(ScriptingPanel, ScriptingPanelHost);
+                                break;
+                            }
+                        }
+                    }
+                };
+
+                serializer.Deserialize(dockLayoutFile);
+                return true;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to load dock layout: {ex}");
+                return false;
+            }
+        }
+
+        private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
+            //? TODO: Panel hosts must be found at runtime because of deserialization
+            LayoutAnchorable panelHost = null;
+
+            switch (((MenuItem)sender).Tag) {
+                case "Section": {
+                    panelHost = SectionPanelHost;
+                    break;
+                }
+                case "Definition": {
+                    panelHost = DefinitionPanelHost;
+                    break;
+                }
+                case "References": {
+                    panelHost = ReferencesPanelHost;
+                    break;
+                }
+                case "Bookmarks": {
+                    panelHost = SectionPanelHost;
+                    break;
+                }
+                case "SourceFile": {
+                    panelHost = SourceFilePanelHost;
+                    break;
+                }
+                case "PassOutput": {
+                    panelHost = PassOutputHost;
+                    break;
+                }
+                case "SearchResults": {
+                    panelHost = SearchResultsPanelHost;
+                    break;
+                }
+                case "Notes": {
+                    panelHost = NotesPanelHost;
+                    break;
+                }
+                case "Scripting": {
+                    panelHost = ScriptingPanelHost;
+                    break;
+                }
+                case "Developer": {
+                    panelHost = IRInfoPanelHost;
+                    break;
+                }
+                case "FlowGraph": {
+                    panelHost = FlowGraphPanelHost;
+                    break;
+                }
+                case "DominatorTree": {
+                    panelHost = DominatorTreePanelHost;
+                    break;
+                }
+                case "PostDominatorTree": {
+                    panelHost = PostDominatorTreePanelHost;
+                    break;
+                }
+                case "ExpressionGraph": {
+                    panelHost = ExpressionGraphPanelHost;
+                    break;
+                }
+            }
+
+            if(panelHost != null) {
+                panelHost.Show();
+                panelHost.IsActive = true;
+            }
+        }
     }
 }
