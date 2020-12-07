@@ -571,6 +571,8 @@
                                 <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.Mark" />
                             </MenuItem.Header>
                         </MenuItem>
+                        <Separator />
+
                         <MenuItem>
                             <MenuItem.Header>
                                 <local:IconSelector Margin="0,2,0,2" IconSelectedCommand="local:DocumentCommand.MarkIcon" />

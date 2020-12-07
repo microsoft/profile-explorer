@@ -141,7 +141,7 @@ namespace IRExplorerUI.Scripting {
         }
 
         public void AddWarningIcon(IRElement element, string text = "") {
-            AddIcon(element, "WarningIcon", text);
+            AddIcon(element, "WarningIconColor", text);
         }
 
         public void Write(string format, params object[] args) {

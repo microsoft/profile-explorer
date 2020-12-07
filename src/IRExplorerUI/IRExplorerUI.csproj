@@ -169,6 +169,9 @@
 		<Page Update="Controls\IconSelector.xaml">
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
+		<Page Update="OptionsPanels\LightDocumentOptionsPanel.xaml">
+		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
 		<Page Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml">
 			<SubType>Designer</SubType>
 		</Page>

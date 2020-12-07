@@ -131,14 +131,14 @@ namespace IRExplorerUI.Document {
             double fontSize = TextSize != 0 ? TextSize : App.Settings.DocumentSettings.FontSize;
             
             var text = DocumentUtils.CreateFormattedText(host, ToolTip, DefaultFont, fontSize,
-                                                         ActiveTextBrush, TextWeight);
+                                                        ActiveTextBrush, TextWeight);
             double textX = elementRect.Right + MarginX;
             double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
             drawingContext.PushOpacity(opacity);
 
             if (UseToolTipBackground) {
                 // Draw a rectangle covering both the icon and tooltip.
-                var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * MarginX, 0);
+                var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * MarginX + 2 * Padding, 0);
                 drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, CurrentBorder, rect);
             }
 
