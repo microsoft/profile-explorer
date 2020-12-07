@@ -24,6 +24,10 @@ public class Script {
         [Description("Mark operands having the \"Can't make SDSU\" flag set")]
         public bool MarkCantMakeSDSU { get; set; }
 
+        [DisplayName("Use icons")]
+        [Description("Add icons to flagged elements")]
+        public bool UseIcons { get; set; }
+
         [DisplayName("Volatile marker color")]
         public Color VolatileMarkerColor { get; set; }
 
@@ -41,6 +45,7 @@ public class Script {
             MarkVolatile = true;
             MarkWriteThrough = true;
             MarkCantMakeSDSU = true;
+            UseIcons = true;
             VolatileMarkerColor = Colors.Pink;
             WriteThroughMarkerColor = Colors.Gold;
             CantMakeSDSUMarkerColor = Colors.PaleGreen;
@@ -48,7 +53,8 @@ public class Script {
     }
 
     public FunctionTaskInfo GetTaskInfo() {
-        return new FunctionTaskInfo("Symbol annotation marking", "Some description") {
+        return new FunctionTaskInfo(Guid.Parse("88190F36-562E-44A3-8364-815FB236D4AD"),
+                                    "Symbol annotation marking", "Some description") {
             HasOptionsPanel = true,
             OptionsType = typeof(Options)
         };
@@ -64,14 +70,26 @@ public class Script {
 
             if(tag.HasVolatile && options.MarkVolatile) {
                 s.Mark(element, options.VolatileMarkerColor);
+
+                if(options.UseIcons) {
+                    s.AddWarningIcon(element, "Volatile");
+                }
             }
             
             if(tag.HasWritethrough && options.MarkWriteThrough) {
-                s.Mark(element, options.WriteThroughMarkerColor);
+                //s.Mark(element, options.WriteThroughMarkerColor);
+
+                if(options.UseIcons) {
+                    s.AddWarningIcon(element, "Write-through SEH");
+                }
             }
             
             if(tag.HasCantMakeSDSU && options.MarkCantMakeSDSU) {
                 s.Mark(element, options.CantMakeSDSUMarkerColor);
+
+                if(options.UseIcons) {
+                    s.AddWarningIcon(element, "Can't make SDSU");
+                }
             }
         }
 
