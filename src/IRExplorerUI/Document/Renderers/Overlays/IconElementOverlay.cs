@@ -5,9 +5,20 @@ using System;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore.IR;
+using ProtoBuf;
 
 namespace IRExplorerUI.Document {
+    [ProtoContract(SkipConstructor = true)]
     public class IconElementOverlay : ElementOverlayBase {
+        static IconElementOverlay() {
+            //StateSerializer.RegisterDerivedClass(typeof(IconElementOverlay), typeof(ElementOverlayBase), 100);
+        }
+
+        public IconElementOverlay() : base() {
+            // Used by deserialization.
+            return;
+        }
+
         public IconElementOverlay(IconDrawing icon, double width, double height, string toolTip,
                                   HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
                                   double marginX, double marginY) :
@@ -36,6 +47,12 @@ namespace IRExplorerUI.Document {
             };
         }
 
+        [ProtoAfterDeserialization]
+        private void AfterDeserialization() {
+            return;
+        }
+
+        [ProtoMember(1)]
         public IconDrawing Icon { get; set; }
 
         public override void Draw(Rect elementRect, IRElement element,

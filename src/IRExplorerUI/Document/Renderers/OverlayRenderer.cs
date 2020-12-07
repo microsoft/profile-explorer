@@ -14,8 +14,24 @@ using System;
 using System.Diagnostics;
 using ICSharpCode.AvalonEdit;
 using System.Windows.Input;
+using ProtoBuf;
 
 namespace IRExplorerUI.Document {
+    [ProtoContract(SkipConstructor = true)]
+    public class ElementOverlayState {
+        [ProtoMember(1)]
+        public List<Tuple<IRElementReference, List<ElementOverlayBase>>> Overlays;
+
+        [ProtoAfterDeserialization]
+        private void AfterDeserialization() {
+            return;
+        }
+
+        public ElementOverlayState() {
+            Overlays = new List<Tuple<IRElementReference, List<ElementOverlayBase>>>();
+        }
+    }
+
     public class OverlayRenderer : Canvas, IBackgroundRenderer {
         class VisualHost : FrameworkElement {
             public Visual Visual { get; set; }
@@ -105,7 +121,7 @@ namespace IRExplorerUI.Document {
         public bool RemoveElementOverlay(IElementOverlay overlay) {
             if (overlaySegmentMap_.TryGetValue(overlay.Element, out var segment)) {
                 if (segment.Overlays.Remove(overlay)) {
-                    if(segment.Overlays.Count == 0) {
+                    if (segment.Overlays.Count == 0) {
                         overlaySegmentMap_.Remove(overlay.Element);
                         overlaySegments_.Remove(segment);
                     }
@@ -119,7 +135,7 @@ namespace IRExplorerUI.Document {
         }
 
         public void ForEachElementOverlay(Action<IRElement, IROverlaySegment> action) {
-            foreach(var pair in overlaySegmentMap_) {
+            foreach (var pair in overlaySegmentMap_) {
                 action(pair.Key, pair.Value);
             }
         }
@@ -163,7 +179,7 @@ namespace IRExplorerUI.Document {
             int endColumn = visualLine.ValidateVisualColumn(end, false);
 
             foreach (var rect in BackgroundGeometryBuilder.
-                                 GetRectsFromVisualSegment(textView, visualLine, 
+                                 GetRectsFromVisualSegment(textView, visualLine,
                                                            startColumn, endColumn)) {
                 return rect;
             }
@@ -209,7 +225,7 @@ namespace IRExplorerUI.Document {
 
             foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-                    foreach(var overlay in segment.Overlays) {
+                    foreach (var overlay in segment.Overlays) {
                         overlay.Draw(rect, segment.Element, overlayDC);
                     }
                 }
@@ -243,7 +259,7 @@ namespace IRExplorerUI.Document {
                 var controlPoint = middlePoint + (-factor * vect);
 
                 // Keep the control point in the horizontal bounds of the document.
-                if(controlPoint.X < 0 || controlPoint.X > Width) {
+                if (controlPoint.X < 0 || controlPoint.X > Width) {
                     controlPoint = new Point(Math.Clamp(controlPoint.X, 0, Width), controlPoint.Y);
                 }
 
@@ -358,20 +374,20 @@ namespace IRExplorerUI.Document {
                 }
             }
 
-            if(hoverOverlay != hoveredOverlay_) {
-                if(hoveredOverlay_ != null) {
+            if (hoverOverlay != hoveredOverlay_) {
+                if (hoveredOverlay_ != null) {
                     // Deselect previous overlay.
                     hoveredOverlay_.IsMouseOver = false;
                     hoveredOverlay_ = null;
                 }
 
-                if(hoverOverlay != null) {
+                if (hoverOverlay != null) {
                     hoverOverlay.IsMouseOver = true;
                     hoveredOverlay_ = hoverOverlay;
                 }
 
                 TextView.Redraw();
-            } 
+            }
         }
 
         private void HandleMouseClicked(Point point, MouseEventArgs e) {
@@ -421,7 +437,7 @@ namespace IRExplorerUI.Document {
                 }
             }
 
-            if(redraw) {
+            if (redraw) {
                 TextView.Redraw();
             }
         }
@@ -483,6 +499,29 @@ namespace IRExplorerUI.Document {
                     }
                 }
             }
+        }
+
+        public ElementOverlayState SaveState(FunctionIR function) {
+            var state = new ElementOverlayState();
+
+            //? TODO: Remove events
+            foreach (var pair in overlaySegmentMap_) {
+                var list = pair.Value.Overlays.ConvertAll<ElementOverlayBase>(item => (ElementOverlayBase)item);
+                state.Overlays.Add(new Tuple<IRElementReference, List<ElementOverlayBase>>
+                    (pair.Key, list));
+            }
+
+            return state;
+        }
+
+        public void LoadState(ElementOverlayState state, FunctionIR function) {
+            foreach(var item in state.Overlays) {
+                foreach (var overlay in item.Item2) {
+                    AddElementOverlay(item.Item1, overlay);
+                }
+            }
+
+            Version++;
         }
     }
 }

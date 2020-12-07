@@ -3,9 +3,15 @@
 
 using System.Windows;
 using System.Windows.Media;
+using ProtoBuf;
 
 namespace IRExplorerUI {
+    [ProtoContract(SkipConstructor = true)]
     public class IconDrawing {
+        public IconDrawing() {
+            // Used for deserialization.
+        }
+
         public IconDrawing(ImageSource icon, double proportion) {
             Icon = icon;
             Proportion = proportion;
@@ -16,12 +22,24 @@ namespace IRExplorerUI {
                 return null;
             }
 
-            var icon = Application.Current.Resources[name] as ImageSource;
-            return new IconDrawing(icon, icon.Width / icon.Height);
+            var icon = (ImageSource)Application.Current.Resources[name];
+            return new IconDrawing(icon, icon.Width / icon.Height) {
+                IconResourceName = name
+            };
         }
 
-        public ImageSource Icon { get; set; }
+        [ProtoMember(1)]
+        public string IconResourceName { get; set; }
+        [ProtoMember(2)]
         public double Proportion { get; set; }
+        public ImageSource Icon { get; set; }
+
+        [ProtoAfterDeserialization]
+        private void AfterDeserialization() {
+            if(!string.IsNullOrEmpty(IconResourceName)) {
+                Icon = (ImageSource)Application.Current.Resources[IconResourceName];
+            }
+        }
 
         public void Draw(double x, double y, double size, double availableSize,
                          DrawingContext drawingContext) {
