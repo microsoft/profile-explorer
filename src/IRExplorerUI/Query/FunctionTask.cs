@@ -7,10 +7,8 @@ using IRExplorerCore.IR;
 using System.Collections.Generic;
 using IRExplorerUI.Query;
 using System.Threading.Tasks;
-using System;
 using System.Reflection;
 using System.ComponentModel;
-using System.Windows.Media;
 
 namespace IRExplorerUI.Query {
     public interface IFunctionTaskOptions {

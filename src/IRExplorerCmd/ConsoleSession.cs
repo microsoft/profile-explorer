@@ -225,6 +225,14 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
+        public bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options) {
+            throw new NotImplementedException();
+        }
+
+        public IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo) {
+            throw new NotImplementedException();
+        }
+
         #region IDisposable Support
 
         private bool disposed_;

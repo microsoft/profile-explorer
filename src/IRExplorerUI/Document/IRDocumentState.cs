@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using IRExplorerUI.Document;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -23,6 +24,8 @@ namespace IRExplorerUI {
         public List<IRElementReference> SelectedElements;
         [ProtoMember(2)]
         public ElementHighlighterState SelectedHighlighter;
+        [ProtoMember(8)]
+        public ElementOverlayState ElementOverlays;
 
         public bool HasAnnotations => MarkedHighlighter.HasAnnotations || Margin.HasAnnotations;
     }

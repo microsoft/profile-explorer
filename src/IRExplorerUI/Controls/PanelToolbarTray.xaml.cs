@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace IRExplorerUI {
     public class PinEventArgs : EventArgs {
@@ -38,6 +39,8 @@ namespace IRExplorerUI {
         public static readonly DependencyProperty HasDuplicateButtonProperty =
             DependencyProperty.Register("HasDuplicateButton", typeof(bool), typeof(PanelToolbarTray),
                                         new PropertyMetadata(true, OnHasDuplicateButtonPropertyChanged));
+
+        private bool registerLeftButtonDown_;
 
         public PanelToolbarTray() {
             InitializeComponent();
@@ -106,6 +109,14 @@ namespace IRExplorerUI {
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e) {
+            // If popup was active when the click started, ignore it since
+            // the user most likely wants to close the popup panel.
+            if(!registerLeftButtonDown_) {
+                registerLeftButtonDown_ = false;
+                return;
+            }
+
+            registerLeftButtonDown_ = false;
             SettingsClicked?.Invoke(this, new EventArgs());
         }
 
@@ -158,6 +169,21 @@ namespace IRExplorerUI {
                 var menuItem = sender as MenuItem;
                 BindMenuItemSelected(this, menuItem.Tag as BindMenuItem);
             }
+        }
+
+        private void SettingsButton_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
+            // This is a workaround for the way clicks on the options icon are handled by WPF
+            // when the popup panel is active. The user most likely wants to close the popup
+            // by clicking again on the icon, but instead the popup closes and immediately opens again.
+            //
+            // - When the button is clicked, it Opens the popup.
+            // - When the button is clicked again, the button raises the MouseDown event 
+            //   and the Popup closes on that event.
+            // - Afterwards the Clicked event is raised, but since the Popup is already closed, 
+            //   it will open it again, thus causing for the Popup to be closed & opened immediately.
+            //
+            // The MouseLeftButtonDown is not triggered when the popup is active.
+            registerLeftButtonDown_ = true;
         }
     }
 }

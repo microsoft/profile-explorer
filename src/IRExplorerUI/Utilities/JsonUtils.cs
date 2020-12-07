@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Windows.Media;
@@ -30,7 +31,7 @@ namespace IRExplorerUI {
             return options;
         }
 
-        public static bool Serialize<T>(T data, string path) {
+        public static bool SerializeToFile<T>(T data, string path) {
             try {
                 var options = GetJsonOptions();
                 string result = JsonSerializer.Serialize(data, options);
@@ -43,7 +44,23 @@ namespace IRExplorerUI {
             }
         }
 
-        public static bool Deserialize<T>(string path, out T data) where T : class {
+        public static string Serialize<T>(T data) {
+            try {
+                var options = GetJsonOptions();
+                return JsonSerializer.Serialize(data, options);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to save JSON: {ex.Message}");
+                return null;
+            }
+        }
+
+        public static byte[] SerializeToBytes<T>(T data) {
+            var text = Serialize(data);
+            return text != null ? Encoding.UTF8.GetBytes(text) : null;
+        }
+
+        public static bool DeserializeFromFile<T>(string path, out T data) where T : class {
             try {
                 var options = GetJsonOptions();
                 string text = File.ReadAllText(path);
@@ -55,6 +72,23 @@ namespace IRExplorerUI {
                 data = default;
                 return false;
             }
+        }
+
+        public static bool Deserialize<T>(string text, out T data) where T : class {
+            try {
+                var options = GetJsonOptions();
+                data = JsonSerializer.Deserialize<T>(text, options);
+                return true;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to save JSON: {ex.Message}");
+                data = default;
+                return false;
+            }
+        }
+
+        public static bool DeserializeFromBytes<T>(byte[] textData, out T data) where T : class {
+            return Deserialize(Encoding.UTF8.GetString(textData), out data);
         }
     }
 }

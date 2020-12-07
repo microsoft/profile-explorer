@@ -5,16 +5,27 @@ using System;
 
 namespace IRExplorerUI.Query {
     public class FunctionTaskInfo {
-        public FunctionTaskInfo(string name, string description = "") {
+        public FunctionTaskInfo(Guid id, string name, string description = "") {
             Name = name;
+            Id = id;
             Description = description;
         }
 
+        public Guid Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public bool HasOptionsPanel { get; set; }
         public Type OptionsType { get; set; }
         public string TargetCompilerIR { get; set; }
+
+        public override bool Equals(object obj) {
+            return obj is FunctionTaskInfo info &&
+                   Id.Equals(info.Id);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(Id);
+        }
     }
 
     public class FunctionTaskDefinition {
@@ -28,7 +39,7 @@ namespace IRExplorerUI.Query {
         }
 
         public FunctionTaskDefinition(Type taskType, FunctionTaskInfo taskInfo,
-                                      object optionalData = null) : this(taskType, optionalData) {
+                                  object optionalData = null) : this(taskType, optionalData) {
             taskInfo_ = taskInfo;
         }
 
@@ -47,14 +58,6 @@ namespace IRExplorerUI.Query {
             }
 
             return actionInstance;
-        }
-
-        public QueryData CreateOptionsPanel(ISession session) {
-            if (!taskInfo_.HasOptionsPanel) {
-                throw new InvalidOperationException("Task doesn't have an options panel!");
-            }
-
-            return CreateInstance(session).GetOptionsValues();
         }
     }
 }

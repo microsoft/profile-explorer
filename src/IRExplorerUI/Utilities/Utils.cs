@@ -24,6 +24,38 @@ namespace IRExplorerUI {
     static class Utils {
         private static readonly char[] NewLineChars = { '\r', '\n' };
 
+        public static UIElement FindParentHost(UIElement control) {
+            var logicalRoot = LogicalTreeHelper.GetParent(control);
+
+            while (logicalRoot != null) {
+                if (logicalRoot is UserControl || logicalRoot is Window) {
+                    break;
+                }
+
+                logicalRoot = LogicalTreeHelper.GetParent(logicalRoot);
+            }
+
+            return logicalRoot as UIElement;
+        }
+
+        public static void CloseParentMenu(UIElement control) {
+            // Close the context menu hosting the control.
+            var logicalRoot = LogicalTreeHelper.GetParent(control);
+
+            while (logicalRoot != null) {
+                if (logicalRoot is ContextMenu menu) {
+                    menu.IsOpen = false;
+                    break;
+                }
+                else if (logicalRoot is Popup popup) {
+                    popup.IsOpen = false;
+                    break;
+                }
+
+                logicalRoot = LogicalTreeHelper.GetParent(logicalRoot);
+            }
+        }
+
         public static T FindChild<T>(DependencyObject parent, string childName = null)
             where T : DependencyObject {
             // Confirm parent and childName are valid. 
@@ -181,7 +213,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public static HighlightingStyle GetSelectedColorStyle(ColorEventArgs args, Pen pen = null) {
+        public static HighlightingStyle GetSelectedColorStyle(SelectedColorEventArgs args, Pen pen = null) {
             return args != null ? new HighlightingStyle(args.SelectedColor, pen) : null;
         }
 

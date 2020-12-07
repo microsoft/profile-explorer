@@ -64,7 +64,8 @@ namespace IRExplorerUI.Compilers.UTC {
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>() {
             BuiltinFunctionTask.GetDefinition(
                 //? TODO: Make it a script
-                new FunctionTaskInfo("Unused instructions", "Some description") {
+                new FunctionTaskInfo(Guid.Parse("B3B91F6E-5A00-4E47-9B25-DB31F6E2395C"),
+                                   "Unused instructions", "Some description") {
                     HasOptionsPanel = true,
                     OptionsType = typeof(UnusedInstructionsTaskOptions)
                 },

@@ -121,7 +121,7 @@
                             Text="Block" />
                         <ComboBox
                             x:Name="BlockSelector"
-                            Width="50"
+                            Width="70"
                             Margin="4,0,0,0"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -571,6 +571,15 @@
                                 <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.Mark" />
                             </MenuItem.Header>
                         </MenuItem>
+                        <Separator />
+
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <local:IconSelector Margin="0,2,0,2" IconSelectedCommand="local:DocumentCommand.MarkIcon" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <Separator />
+
                         <MenuItem Header="Mark Block" InputGestureText="Ctrl+Shift+M">
                             <MenuItem>
                                 <MenuItem.Header>
