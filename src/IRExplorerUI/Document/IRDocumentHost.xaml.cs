@@ -1554,11 +1554,15 @@ namespace IRExplorerUI {
         private void AddFunctionTaskPanelButtons(QueryPanel queryPanel, IFunctionTask taskInstance, QueryData optionsData) {
             optionsData.AddButton("Execute", async (sender, value) => {
                 taskInstance.LoadOptionsFromValues(optionsData);
+                taskInstance.SaveOptions();
                 await ExecuteFunctionTask(taskInstance, optionsData, queryPanel);
             });
 
             optionsData.AddButton("Reset", (sender, value) => {
                 taskInstance.ResetOptions();
+                taskInstance.SaveOptions();
+
+                // Force a refresh by recreating the query panel.
                 var dummyQuery = queryPanel.GetQueryAt(0);
                 dummyQuery.Data = taskInstance.GetOptionsValues();
                 AddFunctionTaskPanelButtons(queryPanel, taskInstance, dummyQuery.Data);

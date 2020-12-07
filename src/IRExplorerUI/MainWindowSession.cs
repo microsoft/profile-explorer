@@ -23,6 +23,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using Microsoft.Win32;
+using IRExplorerUI.Query;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISession {
@@ -1329,6 +1330,22 @@ namespace IRExplorerUI {
             }
 
             return sessionState_.LoadDocumentState(section);
+        }
+
+        public bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options) {
+            var data = FunctionTaskOptionsSerializer.Serialize(options);
+            App.Settings.SaveFunctionTaskOptions(taskInfo, data);
+            return true;
+        }
+        
+        public IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo) {
+            var data = App.Settings.LoadFunctionTaskOptions(taskInfo);
+
+            if(data != null) {
+                return FunctionTaskOptionsSerializer.Deserialize(data, taskInfo.OptionsType);
+            }
+
+            return null;
         }
     }
 }

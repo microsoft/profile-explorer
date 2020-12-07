@@ -3064,10 +3064,9 @@ namespace IRExplorerUI {
 
             if (settings_.ShowBlockSeparatorLine) {
                 blockHighlighter_ = new BlockBackgroundHighlighter(settings_.ShowBlockSeparatorLine,
-                                                                   settings_.BlockSeparatorColor,
-                                                                   settings_.BackgroundColor,
-                                                                   settings_.AlternateBackgroundColor);
-
+                                                             settings_.BlockSeparatorColor,
+                                                             settings_.BackgroundColor,
+                                                             settings_.AlternateBackgroundColor);
                 TextArea.TextView.BackgroundRenderers.Insert(0, blockHighlighter_);
 
                 if (function_ != null) {
@@ -3405,7 +3404,12 @@ namespace IRExplorerUI {
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
                                           double marginX = 8, double marginY = 2) {
-            var overlay = IconElementOverlay.CreateDefault(icon, width, height, null,
+            // Pick a background color that matches the one used for the entire text line.
+            var backColor = element.TextLocation.Line % 2 == 1 ?
+                           settings_.BackgroundColor :
+                           settings_.AlternateBackgroundColor;
+            var overlay = IconElementOverlay.CreateDefault(icon, width, height, 
+                                                       ColorBrushes.GetBrush(backColor),
                                                        selectedStyle_.BackColor,
                                                        selectedStyle_.Border,
                                                        toolTip, alignmentX, alignmentY,
