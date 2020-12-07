@@ -10,6 +10,8 @@ namespace IRExplorerUI.Query {
     public class FunctionTaskOptionsSerializer {
         public static byte[] Serialize(IFunctionTaskOptions inputObject) {
             try {
+                // Save each property to a dictionary and serialize it in JSON format.
+                // Protobuf is not used here because by default it cannot handle the generic object values.
                 var fields = new Dictionary<string, object>();
                 var inputType = inputObject.GetType();
 

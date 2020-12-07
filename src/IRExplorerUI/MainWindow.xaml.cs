@@ -740,47 +740,6 @@ namespace IRExplorerUI {
             CreateDefaultSideBySidePanels();
         }
 
-        private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
-            switch (((MenuItem)sender).Tag) {
-                case "Section": {
-                        SectionPanelHost.IsVisible = true;
-                        break;
-                    }
-                case "Definition": {
-                        DefinitionPanelHost.IsVisible = true;
-                        break;
-                    }
-                case "References": {
-                        ReferencesPanelHost.IsVisible = true;
-                        break;
-                    }
-                case "Bookmarks": {
-                        BookmarksPanelHost.IsVisible = true;
-                        break;
-                    }
-                case "SourceFile": {
-                        SourceFilePanelHost.IsVisible = true;
-                        break;
-                    }
-                case "FlowGraph": {
-                        FlowGraphPanelHost.IsVisible = true;
-                        break;
-                    }
-                case "DominatorTree": {
-                        DominatorTreePanelHost.IsVisible = true;
-                        break;
-                    }
-                case "PostDominatorTree": {
-                        PostDominatorTreePanelHost.IsVisible = true;
-                        break;
-                    }
-                case "ExpressionGraph": {
-                        ExpressionGraphPanelHost.IsVisible = true;
-                        break;
-                    }
-            }
-        }
-
         private void UpdateButton_Click(object sender, RoutedEventArgs e) {
             var updateWindow = new UpdateWindow(UpdateButton.Tag as UpdateInfoEventArgs);
             updateWindow.Owner = this;
