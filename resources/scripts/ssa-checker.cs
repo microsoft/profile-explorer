@@ -46,7 +46,8 @@ public class Script {
     }
 
     public FunctionTaskInfo GetTaskInfo() {
-        return new FunctionTaskInfo("SSA form checks", "Some description") {
+        return new FunctionTaskInfo(Guid.Parse("C18CD53C-7BE6-4893-BCFC-B093DD5FD91C"),
+                                    "SSA form checks", "Some description") {
             HasOptionsPanel = true,
             OptionsType = typeof(Options)
         };
