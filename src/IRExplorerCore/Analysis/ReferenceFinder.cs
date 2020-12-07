@@ -123,8 +123,8 @@ namespace IRExplorerCore.Analysis {
                 if (useOp.Role == op.Role && IsSameBlock(useOp.ParentBlock, opBlock)) {
                     // If in the same block, pick the use that is the closest
                     // to the original one based on the index in the block.
-                    int opBlockIndex = op.ParentTuple.BlockIndex;
-                    int useBlockIndex = useOp.ParentTuple.BlockIndex;
+                    int opBlockIndex = op.ParentTuple.IndexInBlock;
+                    int useBlockIndex = useOp.ParentTuple.IndexInBlock;
                     int distance = Math.Abs(useBlockIndex - opBlockIndex);
                     
                     if (distance < bestUseDistance) {

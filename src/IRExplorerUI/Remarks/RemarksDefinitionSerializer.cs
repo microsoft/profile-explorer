@@ -14,14 +14,14 @@ namespace IRExplorerUI {
                 SectionBoundaryList = boundaries,
             };
 
-            return JsonUtils.Serialize(data, path);
+            return JsonUtils.SerializeToFile(data, path);
         }
 
         public bool Load(string path, 
                          out List<RemarkCategory> categories, 
                          out List<RemarkSectionBoundary> boundaries,
                          out List<RemarkTextHighlighting> highlighting) {
-            if (JsonUtils.Deserialize(path, out SerializedData data)) {
+            if (JsonUtils.DeserializeFromFile(path, out SerializedData data)) {
                 categories = data.RemarkCategoryList;
                 boundaries = data.SectionBoundaryList;
                 highlighting = data.RemarkHighlightingList;

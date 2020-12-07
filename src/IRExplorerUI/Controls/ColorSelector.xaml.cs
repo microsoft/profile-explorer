@@ -9,7 +9,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 
 namespace IRExplorerUI {
-    public sealed class ColorEventArgs : EventArgs {
+    public sealed class SelectedColorEventArgs : EventArgs {
         public Color SelectedColor { get; set; }
     }
 
@@ -46,7 +46,6 @@ namespace IRExplorerUI {
 
         public ICommand ColorSelectedCommand {
             get => (ICommand)GetValue(ColorSelectedCommandProperty);
-
             set => SetValue(ColorSelectedCommandProperty, value);
         }
 
@@ -55,7 +54,7 @@ namespace IRExplorerUI {
             set => SetValue(CommandTargetProperty, value);
         }
 
-        public event EventHandler<ColorEventArgs> ColorSelected;
+        public event EventHandler<SelectedColorEventArgs> ColorSelected;
 
         private void ColorSelector_Loaded(object sender, RoutedEventArgs e) {
             Focus();
@@ -89,7 +88,7 @@ namespace IRExplorerUI {
 
         private void CommitColor(Color color) {
             RaiseSelectedColorEvent(color);
-            CloseParentMenu();
+            Utils.CloseParentMenu(this);
         }
 
         private void RaiseSelectedColorEvent(Color color) {
@@ -97,13 +96,13 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var parentHost = FindParentHost();
+            var parentHost = Utils.FindParentHost(this);
 
             if (parentHost != null) {
                 parentHost.Focus();
             }
 
-            var args = new ColorEventArgs {
+            var args = new SelectedColorEventArgs {
                 SelectedColor = color
             };
 
@@ -117,43 +116,11 @@ namespace IRExplorerUI {
             }
         }
 
-        private UIElement FindParentHost() {
-            var logicalRoot = LogicalTreeHelper.GetParent(this);
-
-            while (logicalRoot != null) {
-                if (logicalRoot is UserControl || logicalRoot is Window) {
-                    break;
-                }
-
-                logicalRoot = LogicalTreeHelper.GetParent(logicalRoot);
-            }
-
-            return logicalRoot as UIElement;
-        }
-
-        private void CloseParentMenu() {
-            // Close the context menu hosting the control.
-            var logicalRoot = LogicalTreeHelper.GetParent(this);
-
-            while (logicalRoot != null) {
-                if (logicalRoot is ContextMenu menu) {
-                    menu.IsOpen = false;
-                    break;
-                }
-                else if (logicalRoot is Popup popup) {
-                    popup.IsOpen = false;
-                    break;
-                }
-
-                logicalRoot = LogicalTreeHelper.GetParent(logicalRoot);
-            }
-        }
-
         private void Button_MouseUp(object sender, MouseButtonEventArgs e) {
             var button = sender as Button;
             var brush = button.Background as SolidColorBrush;
             RaiseSelectedColorEvent(brush.Color);
-            CloseParentMenu();
+            Utils.CloseParentMenu(this);
             e.Handled = true;
         }
 

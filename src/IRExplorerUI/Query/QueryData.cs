@@ -66,6 +66,7 @@ namespace IRExplorerUI.Query {
             RemoveButton(name);
             return AddButton(name, action, data);
         }
+
         public void AddInputs(object inputObject) {
             // Use reflection to add the corresponding input value
             // for each of the properties.

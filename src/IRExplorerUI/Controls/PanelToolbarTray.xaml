@@ -112,6 +112,7 @@
             x:Name="SettingsButton"
             Click="SettingsButton_Click"
             Focusable="False"
+            PreviewMouseLeftButtonDown="SettingsButton_PreviewMouseLeftButtonDown"
             ToolBar.OverflowMode="Never"
             ToolTip="Show panel settings">
             <Image Source="{StaticResource SettingsIcon}" />

@@ -8,6 +8,7 @@ using System;
 using IRExplorerUI.Scripting;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Windows;
 
 namespace IRExplorerUI.Query {
     public class ScriptFunctionTask : IFunctionTask {
@@ -86,7 +87,7 @@ namespace IRExplorerUI.Query {
         }
 
         public async Task<bool> Execute(FunctionIR function, IRDocument document,
-                                        CancelableTask cancelableTask) {
+                                    CancelableTask cancelableTask) {
             var script = ScriptCache.CreateScript(scriptCode_);
 
             if (script == null) {
@@ -105,6 +106,13 @@ namespace IRExplorerUI.Query {
                 document.MarkElement(pair.Item1, pair.Item2);
             }
 
+            foreach (var pair in scriptSession_.IconElementOverlays) {
+                var info = pair.Item2;
+                document.AddIconElementOverlay(pair.Item1, info.Icon, 16, 16, 
+                                               info.Tooltip, info.AlignmentX,
+                                               VerticalAlignment.Center, info.MarginX);
+            }
+
             ScriptException = script.ScriptException;
             Result = scriptSession_.SessionResult;
             ResultMessage = scriptSession_.SessionResultMessage;
@@ -115,19 +123,25 @@ namespace IRExplorerUI.Query {
             Session = session;
             TaskInfo = taskInfo;
             scriptCode_ = (string)optionalData;
-
-            //? TODO: Load options from session, or from App.Settings
-            //? To serialize, use JSON?
             LoadOptions();
             return true;
         }
 
         private void LoadOptions() {
-            ResetOptions();
+            var options = Session.LoadFunctionTaskOptions(TaskInfo);
+
+            if (options != null) {
+                Options = options;
+            }
+            else {
+                ResetOptions();
+            }
         }
 
         public void SaveOptions() {
-            var data = StateSerializer.Serialize(Options);
+            if (Options != null) {
+                Session.SaveFunctionTaskOptions(TaskInfo, Options);
+            }
         }
 
         public void ResetOptions() {

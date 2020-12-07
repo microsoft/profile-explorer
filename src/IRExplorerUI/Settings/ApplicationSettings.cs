@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using IRExplorerUI.Query;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -56,6 +57,9 @@ namespace IRExplorerUI {
         [ProtoMember(12)]
         public List<string> RecentTextSearches;
 
+        [ProtoMember(13)]
+        public Dictionary<Guid, byte[]> FunctionTaskOptions;
+
         public ApplicationSettings() {
             Reset();
         }
@@ -84,6 +88,7 @@ namespace IRExplorerUI {
             RemarkSettings ??= new RemarkSettings();
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
+            FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
 
             //? REMOVE
             /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {
@@ -149,6 +154,18 @@ namespace IRExplorerUI {
 
         public void ClearRecentComparedFiles() {
             RecentComparedFiles.Clear();
+        }
+
+        public void SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, byte[] data) {
+            FunctionTaskOptions[taskInfo.Id] = data;
+        }
+
+        public byte[] LoadFunctionTaskOptions(FunctionTaskInfo taskInfo) {
+            if(FunctionTaskOptions.TryGetValue(taskInfo.Id, out var data)) {
+                return data;
+            }
+
+            return null;
         }
     }
 }

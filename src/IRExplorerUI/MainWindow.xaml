@@ -309,7 +309,7 @@
 
                         <MenuItem
                             Click="MenuItem_Click_3"
-                            Header="Side-by-side panels"
+                            Header="Show Side-by-Side Panels"
                             IsEnabled="False" />
                         <MenuItem
                             Click="MenuItem_Click_3"
@@ -323,8 +323,6 @@
                             IsChecked="{Binding ElementName=DiffModeButton, Path=IsChecked, Mode=TwoWay}" />
                         <Separator />
 
-                        <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
-                        <Separator />
 
                         <MenuItem Header="IR Kind">
                             <MenuItem
@@ -338,7 +336,12 @@
                         </MenuItem>
                         <Separator />
 
-                        <MenuItem Click="MenuItem_Click_6" Header="Settings" />
+
+                        <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
+                        <MenuItem
+                            Click="MenuItem_Click_6"
+                            Header="Settings"
+                            IsEnabled="False" />
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Click="MenuItem_Click_4" Header="Documentation" />

@@ -22,6 +22,7 @@ namespace IRExplorerUI {
             RegisterSurrogate<Brush, BrushSurrogate>();
             RegisterSurrogate<Pen, PenSurrogate>();
             RegisterSurrogate<Rect, RectSurrogate>();
+            RegisterSurrogate<FontWeight, FontWeightSurrogate>();
         }
 
         public static void RegisterSurrogate<T1, T2>() {
@@ -245,14 +246,14 @@ namespace IRExplorerUI {
 
     [ProtoContract]
     public class RectSurrogate {
-        [ProtoMember(4)]
-        private double Height;
         [ProtoMember(2)]
         private double Left;
         [ProtoMember(1)]
         private double Top;
         [ProtoMember(3)]
         private double Width;
+        [ProtoMember(4)]
+        private double Height;
 
         public static implicit operator RectSurrogate(Rect rect) {
             if (rect == null) {
@@ -269,6 +270,26 @@ namespace IRExplorerUI {
 
         public static implicit operator Rect(RectSurrogate value) {
             return new Rect(value.Top, value.Left, value.Width, value.Height);
+        }
+    }
+
+    [ProtoContract]
+    public class FontWeightSurrogate {
+        [ProtoMember(1)]
+        private int Weight;
+
+        public static implicit operator FontWeightSurrogate(FontWeight fontWeigth) {
+            if (fontWeigth == null) {
+                return null;
+            }
+
+            return new FontWeightSurrogate {
+                Weight = fontWeigth.ToOpenTypeWeight()
+            };
+        }
+
+        public static implicit operator FontWeight(FontWeightSurrogate value) {
+            return FontWeight.FromOpenTypeWeight(value.Weight);
         }
     }
 }
