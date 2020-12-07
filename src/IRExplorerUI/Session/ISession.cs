@@ -75,5 +75,8 @@ namespace IRExplorerUI {
 
         Task<bool> SaveSessionDocument(string filePath);
         Task<bool> OpenSessionDocument(string filePath);
+
+        bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
+        IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
     }
 }

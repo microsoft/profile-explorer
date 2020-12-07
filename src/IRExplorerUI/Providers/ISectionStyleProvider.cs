@@ -43,11 +43,11 @@ namespace IRExplorerUI {
                 List = sectionNameMarkers
             };
 
-            return JsonUtils.Serialize(data, path);
+            return JsonUtils.SerializeToFile(data, path);
         }
 
         public bool Load(string path, out List<MarkedSectionName> sectionNameMarkers) {
-            if (JsonUtils.Deserialize(path, out SerializedData data)) {
+            if (JsonUtils.DeserializeFromFile(path, out SerializedData data)) {
                 sectionNameMarkers = data.List;
                 return true;
             }
