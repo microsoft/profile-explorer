@@ -741,41 +741,62 @@ namespace IRExplorerUI {
         }
 
         private void ShowPanelMenuClicked(object sender, RoutedEventArgs e) {
+            //? TODO: Panel hosts must be found at runtime because of deserialization
             switch (((MenuItem)sender).Tag) {
                 case "Section": {
-                        SectionPanelHost.IsVisible = true;
+                        SectionPanelHost.Show();
                         break;
                     }
                 case "Definition": {
-                        DefinitionPanelHost.IsVisible = true;
+                        DefinitionPanelHost.Show();
                         break;
                     }
                 case "References": {
-                        ReferencesPanelHost.IsVisible = true;
+                        ReferencesPanelHost.Show();
                         break;
                     }
                 case "Bookmarks": {
-                        BookmarksPanelHost.IsVisible = true;
+                        BookmarksPanelHost.Show();
                         break;
                     }
                 case "SourceFile": {
-                        SourceFilePanelHost.IsVisible = true;
+                        SourceFilePanelHost.Show();
                         break;
                     }
+                case "PassOutput": {
+                    PassOutputHost.Show();
+                    break;
+                }
+                case "SearchResults": {
+                    SearchResultsPanelHost.Show();
+                    break;
+                }
+                case "Notes": {
+                    NotesPanelHost.Show();
+                    break;
+                }
+                case "Scripting": {
+                    ScriptingPanelHost.Show();
+                    break;
+                }
+                case "Developer": {
+                    IRInfoPanelHost.Show();
+                    break;
+                }
                 case "FlowGraph": {
-                        FlowGraphPanelHost.IsVisible = true;
+                        FlowGraphPanelHost.Show();
                         break;
                     }
                 case "DominatorTree": {
-                        DominatorTreePanelHost.IsVisible = true;
+                        DominatorTreePanelHost.Show();
                         break;
                     }
                 case "PostDominatorTree": {
-                        PostDominatorTreePanelHost.IsVisible = true;
+                        PostDominatorTreePanelHost.Show();
                         break;
                     }
                 case "ExpressionGraph": {
-                        ExpressionGraphPanelHost.IsVisible = true;
+                        ExpressionGraphPanelHost.Show();
                         break;
                     }
             }
