@@ -417,9 +417,11 @@ namespace IRExplorerUI {
             SectionPanel.DisplayCallGraph += SectionPanel_DisplayCallGraph;
             SearchResultsPanel.OpenSection += SectionPanel_OpenSection;
 
-            RegisterDefaultToolPanels();
+            if (!RestoreDockLayout()) {
+                RegisterDefaultToolPanels();
+            }
+
             ResetStatusBar();
-            RestoreDockLayout();
 
             //? TODO: This needs a proper arg parsing lib
             var args = Environment.GetCommandLineArgs();
@@ -925,32 +927,6 @@ namespace IRExplorerUI {
             documentSearchPanel_.PopupDetached -= DocumentSearchPanel__PopupDetached;
             documentSearchPanel_ = null;
             documentSearchVisible_ = false;
-        }
-
-        private void RestoreDockLayout() {
-            var dockLayoutFile = App.GetDockLayoutFilePath();
-
-            if (!File.Exists(dockLayoutFile)) {
-                return;
-            }
-
-            try {
-                var serializer = new XmlLayoutSerializer(DockManager);
-
-                serializer.LayoutSerializationCallback += (s, args) => {
-                    if (args.Model is LayoutDocument) {
-                        args.Cancel = true; // Don't recreate any document panels.
-                    }
-                    else {
-                        args.Content = args.Content;
-                    }
-                };
-
-                serializer.Deserialize(dockLayoutFile);
-            }
-            catch (Exception ex) {
-                Trace.TraceError($"Failed to load dock layout: {ex}");
-            }
         }
 
         private void SaveDockLayout() {

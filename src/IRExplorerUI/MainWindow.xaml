@@ -252,6 +252,10 @@
                             Tag="Section" />
                         <MenuItem
                             Click="ShowPanelMenuClicked"
+                            Header="Pass Output Panel"
+                            Tag="PassOutput" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
                             Header="Definition Panel"
                             Tag="Definition" />
                         <MenuItem
@@ -266,7 +270,24 @@
                             Click="ShowPanelMenuClicked"
                             Header="Source File Panel"
                             Tag="SourceFile" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Search Results Panel"
+                            Tag="SearchResults" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Notes Panel"
+                            Tag="Notes" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Scripting Panel"
+                            Tag="Scripting" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Developer Panel"
+                            Tag="Developer" />
                         <Separator />
+
                         <MenuItem
                             Click="ShowPanelMenuClicked"
                             Header="Flow Graph Panel"
@@ -280,8 +301,21 @@
                             Header="Post-Dominator Tree Panel"
                             Tag="PostDominatorTree" />
                         <MenuItem Header="Control Dependence Graph Panel" IsEnabled="False" />
-                        <MenuItem Header="Expression Graph Panel" IsEnabled="False" />
-                        <MenuItem Click="MenuItem_Click_3" Header="Side-by-side panels" />
+                        <MenuItem Header="Loop Graph Panel" IsEnabled="False" />
+                        <MenuItem
+                            Header="Expression Graph Panel"
+                            IsEnabled="True"
+                            Tag="ExpressionGraph" />
+                        <Separator />
+
+                        <MenuItem
+                            Click="MenuItem_Click_3"
+                            Header="Show Side-by-Side Panels"
+                            IsEnabled="False" />
+                        <MenuItem
+                            Click="MenuItem_Click_3"
+                            Header="Reset Panel Layout"
+                            IsEnabled="False" />
                     </MenuItem>
                     <MenuItem Header="Tools">
                         <MenuItem
@@ -290,8 +324,6 @@
                             IsChecked="{Binding ElementName=DiffModeButton, Path=IsChecked, Mode=TwoWay}" />
                         <Separator />
 
-                        <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
-                        <Separator />
 
                         <MenuItem Header="IR Kind">
                             <MenuItem
@@ -305,7 +337,12 @@
                         </MenuItem>
                         <Separator />
 
-                        <MenuItem Click="MenuItem_Click_6" Header="Settings" />
+
+                        <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
+                        <MenuItem
+                            Click="MenuItem_Click_6"
+                            Header="Settings"
+                            IsEnabled="False" />
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Click="MenuItem_Click_4" Header="Documentation" />
