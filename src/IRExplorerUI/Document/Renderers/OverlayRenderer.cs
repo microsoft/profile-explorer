@@ -17,15 +17,10 @@ using System.Windows.Input;
 using ProtoBuf;
 
 namespace IRExplorerUI.Document {
-    [ProtoContract(SkipConstructor = true)]
+    [ProtoContract]
     public class ElementOverlayState {
         [ProtoMember(1)]
         public List<Tuple<IRElementReference, List<ElementOverlayBase>>> Overlays;
-
-        [ProtoAfterDeserialization]
-        private void AfterDeserialization() {
-            return;
-        }
 
         public ElementOverlayState() {
             Overlays = new List<Tuple<IRElementReference, List<ElementOverlayBase>>>();
@@ -334,8 +329,8 @@ namespace IRExplorerUI.Document {
             return new Vector(0, 0);
         }
 
-        public void MouseClick(MouseEventArgs e) {
-            HandleMouseClicked(e.GetPosition(this), e);
+        public bool MouseClick(MouseEventArgs e) {
+            return HandleMouseClicked(e.GetPosition(this), e);
         }
 
         public void MouseMoved(MouseEventArgs e) {
@@ -390,13 +385,13 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        private void HandleMouseClicked(Point point, MouseEventArgs e) {
+        private bool HandleMouseClicked(Point point, MouseEventArgs e) {
             if (overlaySegments_.Count == 0 || TextView == null) {
-                return;
+                return false;
             }
 
             if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
-                return;
+                return false;
             }
 
             IElementOverlay hoverOverlay = null;
@@ -440,6 +435,8 @@ namespace IRExplorerUI.Document {
             if (redraw) {
                 TextView.Redraw();
             }
+
+            return hoverOverlay != null;
         }
 
         public void Clear() {
@@ -504,19 +501,21 @@ namespace IRExplorerUI.Document {
         public ElementOverlayState SaveState(FunctionIR function) {
             var state = new ElementOverlayState();
 
-            //? TODO: Remove events
             foreach (var pair in overlaySegmentMap_) {
+                //? TODO: Casting to ElementOverlayBase is done to avoid issues when deserializing
+                //? the IElementOverlay objects with protobuf-net.
                 var list = pair.Value.Overlays.ConvertAll<ElementOverlayBase>(item => (ElementOverlayBase)item);
-                state.Overlays.Add(new Tuple<IRElementReference, List<ElementOverlayBase>>
-                    (pair.Key, list));
+                state.Overlays.Add(new Tuple<IRElementReference, List<ElementOverlayBase>>(pair.Key, list));
             }
 
             return state;
         }
 
-        public void LoadState(ElementOverlayState state, FunctionIR function) {
+        public void LoadState(ElementOverlayState state, FunctionIR function, 
+                            Action<IElementOverlay> registerAction) {
             foreach(var item in state.Overlays) {
                 foreach (var overlay in item.Item2) {
+                    registerAction(overlay);
                     AddElementOverlay(item.Item1, overlay);
                 }
             }

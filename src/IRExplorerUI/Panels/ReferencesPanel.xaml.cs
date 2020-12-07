@@ -384,7 +384,7 @@ namespace IRExplorerUI {
 
         private void MarkReferenceExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (ReferenceList.SelectedItem is ReferenceInfo refInfo) {
-                var color = ((ColorEventArgs)e.Parameter).SelectedColor;
+                var color = ((SelectedColorEventArgs)e.Parameter).SelectedColor;
                 Document.MarkElement(refInfo.Info.Element, color);
             }
         }

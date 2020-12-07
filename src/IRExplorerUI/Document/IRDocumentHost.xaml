@@ -571,6 +571,13 @@
                                 <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.Mark" />
                             </MenuItem.Header>
                         </MenuItem>
+                        <MenuItem>
+                            <MenuItem.Header>
+                                <local:IconSelector Margin="0,2,0,2" IconSelectedCommand="local:DocumentCommand.MarkIcon" />
+                            </MenuItem.Header>
+                        </MenuItem>
+                        <Separator />
+
                         <MenuItem Header="Mark Block" InputGestureText="Ctrl+Shift+M">
                             <MenuItem>
                                 <MenuItem.Header>
