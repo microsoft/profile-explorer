@@ -288,7 +288,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void MainWindow_Closing(object sender, CancelEventArgs e) {
+        private async void MainWindow_Closing(object sender, CancelEventArgs e) {
             // Save settings, including the window state.
             App.Settings.MainWindowPlacement = WindowPlacement.GetPlacement(this);
             App.Settings.ThemeIndex = ThemeCombobox.SelectedIndex;
@@ -325,7 +325,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            EndSession();
+            await EndSession();
         }
 
         private void MainWindow_ContentRendered(object sender, EventArgs e) {
@@ -661,8 +661,8 @@ namespace IRExplorerUI {
             return $"{section.ParentFunction.Name.Trim()} ({docInfo.FileName})";
         }
 
-        private void MenuItem_Click_1(object sender, RoutedEventArgs e) {
-            EndSession();
+        private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {
+            await EndSession();
         }
 
         private async void CreateDefaultSideBySidePanels() {
@@ -856,8 +856,8 @@ namespace IRExplorerUI {
             Clipboard.SetImage(bmpCopied);
         }
 
-        private void SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
-            EndSession();
+        private async void SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
+            await EndSession();
             compilerInfo_ = compilerInfo;
             SetupMainWindow();
         }
