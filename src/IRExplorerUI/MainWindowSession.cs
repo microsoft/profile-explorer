@@ -83,7 +83,7 @@ namespace IRExplorerUI {
 
         public async Task<bool> OpenSessionDocument(string filePath) {
             try {
-                EndSession();
+                await EndSession();
                 UpdateUIBeforeReadSession(filePath);
                 var data = await File.ReadAllBytesAsync(filePath);
                 var state = await SessionStateManager.DeserializeSession(data);
@@ -97,10 +97,12 @@ namespace IRExplorerUI {
                 return loaded;
             }
             catch (IOException ioEx) {
-                Trace.TraceError($"Failed to save session, IO exception: {ioEx}");
+                Trace.TraceError($"Failed to loadsession, IO exception: {ioEx}");
+                await EndSession();
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to save session, exception: {ex}");
+                Trace.TraceError($"Failed to load session, exception: {ex}");
+                await EndSession();
             }
 
             UpdateUIAfterLoadDocument();
@@ -231,7 +233,7 @@ namespace IRExplorerUI {
             HideStartPage();
         }
 
-        private async void EndSession(bool showStartPage = false) {
+        private async Task EndSession(bool showStartPage = false) {
             if (sessionState_ == null) {
                 return; // Session not opened.
             }
@@ -268,7 +270,7 @@ namespace IRExplorerUI {
 
         private async Task<bool> OpenIRDocument(string filePath) {
             try {
-                EndSession();
+                await EndSession();
                 UpdateUIBeforeLoadDocument(filePath);
                 var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
@@ -279,6 +281,7 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load document: {ex}");
+                await EndSession();
             }
 
             UpdateUIAfterLoadDocument();
@@ -1116,8 +1119,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private void CloseDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            EndSession(showStartPage: true);
+        private async void CloseDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
+            await EndSession(showStartPage: true);
         }
 
         private async void SaveDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {

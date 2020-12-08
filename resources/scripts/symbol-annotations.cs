@@ -24,9 +24,13 @@ public class Script {
         [Description("Mark operands having the \"Can't make SDSU\" flag set")]
         public bool MarkCantMakeSDSU { get; set; }
 
-        [DisplayName("Use icons")]
-        [Description("Add icons to flagged elements")]
-        public bool UseIcons { get; set; }
+        [DisplayName("Use icon markers")]
+        [Description("Attach icons to flagged elements")]
+        public bool UseIconMarkers { get; set; }
+        
+        [DisplayName("Use color markers")]
+        [Description("Highlight flagged elements")]
+        public bool UseColorMarkers { get; set; }
 
         [DisplayName("Volatile marker color")]
         public Color VolatileMarkerColor { get; set; }
@@ -45,7 +49,8 @@ public class Script {
             MarkVolatile = true;
             MarkWriteThrough = true;
             MarkCantMakeSDSU = true;
-            UseIcons = true;
+            UseIconMarkers = true;
+            UseColorMarkers = false;
             VolatileMarkerColor = Colors.Pink;
             WriteThroughMarkerColor = Colors.Gold;
             CantMakeSDSUMarkerColor = Colors.PaleGreen;
@@ -69,25 +74,31 @@ public class Script {
             if (tag == null) continue;
 
             if(tag.HasVolatile && options.MarkVolatile) {
-                s.Mark(element, options.VolatileMarkerColor);
+				if(options.UseColorMarkers) {
+					s.Mark(element, options.VolatileMarkerColor);
+                }
 
-                if(options.UseIcons) {
+                if(options.UseIconMarkers) {
                     s.AddWarningIcon(element, "Volatile");
                 }
             }
             
             if(tag.HasWritethrough && options.MarkWriteThrough) {
-                //s.Mark(element, options.WriteThroughMarkerColor);
+				if(options.UseColorMarkers) {
+					s.Mark(element, options.WriteThroughMarkerColor);
+				}
 
-                if(options.UseIcons) {
+                if(options.UseIconMarkers) {
                     s.AddWarningIcon(element, "Write-through SEH");
                 }
             }
             
             if(tag.HasCantMakeSDSU && options.MarkCantMakeSDSU) {
-                s.Mark(element, options.CantMakeSDSUMarkerColor);
+				if(options.UseColorMarkers) {
+					s.Mark(element, options.CantMakeSDSUMarkerColor);
+				}
 
-                if(options.UseIcons) {
+                if(options.UseIconMarkers) {
                     s.AddWarningIcon(element, "Can't make SDSU");
                 }
             }

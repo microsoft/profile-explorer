@@ -129,14 +129,12 @@ namespace IRExplorerUI.Scripting {
                 return;
             }
 
-            bool isDestination = element is OperandIR ir && ir.IsDestinationOperand;
-
             iconElementOverlays_.Add(new Tuple<IRElement, IconOverlayInfo>(
                 element,
                 new IconOverlayInfo() {
                     Icon = icon,
                     Tooltip = text,
-                    AlignmentX = isDestination ? HorizontalAlignment.Left : HorizontalAlignment.Right
+                    AlignmentX = HorizontalAlignment.Right
                 }));
         }
 

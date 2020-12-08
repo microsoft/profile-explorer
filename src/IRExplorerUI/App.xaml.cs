@@ -69,8 +69,10 @@ namespace IRExplorerUI {
                 string path = GetSettingsDirectoryPath();
                 CreateDirectories(path);
 
-                CreateSyntaxFilesDirectory("UTC");
-                CreateSyntaxFilesDirectory("LLVM");
+                InitializeSettingsFilesDirectory("utc");
+                InitializeSettingsFilesDirectory("llvm");
+                InitializeSettingsFilesDirectory("scripts");
+                InitializeSettingsFilesDirectory("themes");
                 return true;
             }
             catch (Exception ex) {
@@ -311,22 +313,19 @@ namespace IRExplorerUI {
             return GetSyntaxHighlightingFiles(compilerIRName);
         }
 
-        private static bool CreateSyntaxFilesDirectory(string compilerIRName) {
+        private static bool InitializeSettingsFilesDirectory(string directory) {
             try {
-                var syntaxFilesDir = GetCompilerSettingsDirectoryPath(compilerIRName);
-
-                if (Directory.Exists(syntaxFilesDir)) {
-                    return true;
-                }
-
+                var syntaxFilesDir = GetCompilerSettingsDirectoryPath(directory);
                 CreateDirectories(syntaxFilesDir);
-                var files = GetSyntaxHighlightingFiles(compilerIRName, true);
+
+                var compilerDir = GetCompilerApplicationDirectoryPath(directory);
+                var files = Directory.GetFiles(compilerDir, "*.*");
 
                 foreach (var file in files) {
-                    var destFile = GetCompilerSettingsFilePath(Path.GetFileName(file.Path), compilerIRName);
+                    var destFile = GetCompilerSettingsFilePath(Path.GetFileName(file), directory);
 
                     if (!File.Exists(destFile)) {
-                        File.Copy(file.Path, destFile);
+                        File.Copy(file, destFile);
                     }
                 }
 
@@ -337,6 +336,7 @@ namespace IRExplorerUI {
                 return false;
             }
         }
+
 
         public static SyntaxFileInfo GetSyntaxHighlightingFileInfo(string name, string compilerIRName) {
             var files = GetSyntaxHighlightingFiles(compilerIRName);
@@ -365,7 +365,7 @@ namespace IRExplorerUI {
         }
 
         public static string GetSyntaxHighlightingFilePath(string name, string compilerIRName) {
-            CreateSyntaxFilesDirectory(compilerIRName);
+            InitializeSettingsFilesDirectory(compilerIRName);
             return GetCompilerSettingsFilePath(name, compilerIRName, SyntaxFileExtension);
         }
 

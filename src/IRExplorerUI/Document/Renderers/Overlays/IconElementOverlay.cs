@@ -28,7 +28,7 @@ namespace IRExplorerUI.Document {
                       string toolTip = "", 
                       HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                       VerticalAlignment alignmentY = VerticalAlignment.Center,
-                      double marginX = 8, double marginY = 2) {
+                      double marginX = 4, double marginY = 2) {
             return new IconElementOverlay(icon, width, height, toolTip, alignmentX, alignmentY,
                                           marginX, marginY) {
                 Background = backColor,
