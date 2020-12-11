@@ -156,6 +156,10 @@ namespace IRExplorerUI {
         }
 
         public void LoadState(DocumentMarginState state) {
+            if (state == null) {
+                return; // Most likely a file from an older version of the app.
+            }
+
             blockGroups_ = StateSerializer.LoadElementGroupState(state.BlockGroups);
             hoveredBookmark_ = state.HoveredBookmark;
             selectedBookmark_ = state.SelectedBookmark;

@@ -140,6 +140,10 @@ namespace IRExplorerUI {
         }
 
         public void LoadState(ElementHighlighterState state, FunctionIR function) {
+            if (state == null) {
+                return; // Most likely a file from an older version of the app.
+            }
+
             groups_ = StateSerializer.LoadElementGroupState(state.Groups);
             Version++;
         }

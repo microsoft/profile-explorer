@@ -700,6 +700,7 @@ namespace IRExplorerUI {
             markedHighlighter_.LoadState(savedState.MarkedHighlighter, Function);
             overlayRenderer_.LoadState(savedState.ElementOverlays, Function, SetupElementOverlayEvents);
             margin_.LoadState(savedState.Margin);
+            
             bookmarks_.Bookmarks.ForEach(item => RaiseBookmarkAddedEvent(item));
             SetCaretAtOffset(savedState.CaretOffset);
 
@@ -1147,8 +1148,11 @@ namespace IRExplorerUI {
                     break;
                 }
                 case Key.E: {
-                    ShowExpressionGraphExecuted(this, null);
-                    e.Handled = true;
+                    if (Utils.IsControlModifierActive()) {
+                        ShowExpressionGraphExecuted(this, null);
+                        e.Handled = true;
+                    }
+
                     break;
                 }
             }
