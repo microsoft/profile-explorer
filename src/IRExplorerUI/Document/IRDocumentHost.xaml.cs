@@ -137,6 +137,7 @@ namespace IRExplorerUI {
         private List<Remark> remarkList_;
         private RemarkContext activeRemarkContext_;
         private List<QueryPanel> activeQueryPanels_;
+        private QueryValue mainQueryInputValue_;
         private bool pasOutputVisible_;
 
         public IRDocumentHost(ISession session) {
@@ -267,9 +268,17 @@ namespace IRExplorerUI {
 
             if (element == null) {
                 HideActionPanel(true);
+                return;
             }
-            else if (element != hoveredElement_ && !actionPanelHovered_) {
+            
+            if (element != hoveredElement_ && !actionPanelHovered_) {
                 await ShowActionPanel(element, true);
+            }
+
+            // Middle-button click sets the input element in the active query panel.
+            if(mainQueryInputValue_ != null && e.MiddleButton == MouseButtonState.Pressed) {
+                mainQueryInputValue_.ForceValueUpdate(element);
+                e.Handled = true;
             }
         }
 
@@ -1439,10 +1448,12 @@ namespace IRExplorerUI {
 
         private void SwitchActiveQueryPanel(QueryPanel panel) {
             if (activeQueryPanels_.Count > 0) {
+                // Deactivate the currently active panel.
                 var currentPanel = activeQueryPanels_[^1];
 
                 if (currentPanel != panel) {
                     currentPanel.IsActivePanel = false;
+                    mainQueryInputValue_ = null;
                     SetActiveQueryPanel(panel);
                 }
             }
@@ -1452,7 +1463,8 @@ namespace IRExplorerUI {
         }
 
         private void SetActiveQueryPanel(QueryPanel panel) {
-            activeQueryPanels_.Remove(panel); // Bring to end of list.
+            // Bring to end of list, which is the top of the "stack" of panels.
+            activeQueryPanels_.Remove(panel);
             activeQueryPanels_.Add(panel);
             panel.IsActivePanel = true;
 
@@ -1659,7 +1671,9 @@ namespace IRExplorerUI {
                     ActionPanel.AddActionButton($"{actionButtonIndex}", inputValue);
 
                     if(actionButtonIndex == 1) {
+                        // Attach event only once if it's needed.
                         ActionPanel.ActionButtonClicked += ActionPanel_ActionButtonClicked;
+                        mainQueryInputValue_ = inputValue;
                     }
 
                     actionButtonIndex++;
@@ -1669,16 +1683,17 @@ namespace IRExplorerUI {
 
         private void RemoveQueryActionButtons() {
             ActionPanel.ClearActionButtons();
+            mainQueryInputValue_ = null;
         }
 
         private void ActionPanel_ActionButtonClicked(object sender, ActionPanelButton e) {
             var inputValue = (QueryValue)e.Tag;
 
             if (hoveredElement_ != null) {
-                inputValue.Value = hoveredElement_;
+                inputValue.ForceValueUpdate(hoveredElement_);
             }
             if (selectedElement_ != null) {
-                inputValue.Value = selectedElement_;
+                inputValue.ForceValueUpdate(selectedElement_);
             }
         }
 

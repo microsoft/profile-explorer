@@ -71,6 +71,14 @@ namespace IRExplorerUI.Query {
             set => SetAndNotify(ref value_, value);
         }
 
+        public void ForceValueUpdate(object newValue) {
+            // If value is the same the notify event is not triggered, but sometimes
+            // that is needed to have the query redo the temporary marking, for ex.
+            if (!SetAndNotify(ref value_, newValue, "Value")) {
+                NotifyPropertyChanged(nameof(Value));
+            }
+        }
+
         public object Tag { get; set; }
 
         public bool IsBool => Kind.HasFlag(QueryValueKind.Bool);

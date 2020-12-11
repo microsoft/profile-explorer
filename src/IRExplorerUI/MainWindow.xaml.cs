@@ -859,6 +859,7 @@ namespace IRExplorerUI {
         private async void SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
             await EndSession();
             compilerInfo_ = compilerInfo;
+            compilerInfo_.ReloadSettings();
             SetupMainWindow();
         }
 

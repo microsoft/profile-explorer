@@ -224,6 +224,7 @@ namespace IRExplorerUI {
             sessionState_.DocumentChanged += DocumentState_DocumentChangedEvent;
             sessionState_.ChangeDocumentWatcherState(App.Settings.AutoReloadDocument);
             ClearGraphLayoutCache();
+            compilerInfo_.ReloadSettings();
 
             if (sessionKind != SessionKind.DebugSession) {
                 AddRecentFile(filePath);
@@ -1178,6 +1179,8 @@ namespace IRExplorerUI {
                     docHostInfo.DocumentHost.Settings = newSettings;
                 }
             }
+
+            CompilerInfo.ReloadSettings();
         }
 
         public void ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document) {
