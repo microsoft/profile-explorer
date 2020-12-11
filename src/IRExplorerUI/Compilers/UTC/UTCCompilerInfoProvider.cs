@@ -56,6 +56,7 @@ namespace IRExplorerUI.Compilers.UTC {
 
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() {
             UTCBuiltinInterferenceQuery.GetDefinition(),
+            UTCRegisterQuery.GetDefinition(),
             UTCValueNumberQuery.GetDefinition(),
             InstructionSSAInfoQuery.GetDefinition(),
             OperandSSAInfoQuery.GetDefinition()

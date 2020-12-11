@@ -6,7 +6,7 @@ using IRExplorerUI.UTC;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI.Compilers.UTC {
-    public class UTCValueNumberQuery : IElementQuery {
+    public class UTCRegisterQuery : IElementQuery {
         public static QueryDefinition GetDefinition() {
             var query = new QueryDefinition(typeof(UTCRegisterQuery), "Registers",
                                                    "Details about post-lower register info");
@@ -27,39 +27,38 @@ namespace IRExplorerUI.Compilers.UTC {
         public bool Execute(QueryData data) {
             data.ResetResults();
             var element = data.GetInput<IRElement>("Operand");
-            string vn = UTCRemarkParser.ExtractVN(element);
+            var func = element.ParentFunction;
 
-            if (vn == null) {
+            var tag = element.GetTag<RegisterTag>();
+
+            if(tag == null) {
+                data.SetOutputWarning("Value has no register");
                 return true;
             }
 
-            var func = element.ParentFunction;
-            var sameVNInstrs = new HashSet<InstructionIR>();
+            int count = 0;
 
-            func.ForEachInstruction(instr => {
-                string instrVN = UTCRemarkParser.ExtractVN(instr);
-
-                if (instrVN == vn) {
-                    sameVNInstrs.Add(instr);
+            foreach(var operand in func.AllElements) {
+                var otherTag = operand.GetTag<RegisterTag>();
+                if(otherTag != null && otherTag.Register.OverlapsWith(tag.Register)) {
+                    Session.CurrentDocument.MarkElement(operand, Colors.YellowGreen);
+                    count++;
                 }
+            }
 
-                return true;
-            });
-
-            data.SetOutput("Value number", vn);
-            data.SetOutput("Instrs. with same value number", sameVNInstrs.Count);
+            data.SetOutput("Register instances", count);
             data.ClearButtons();
 
-            if (sameVNInstrs.Count > 0) {
-                data.AddButton("Mark same value number instrs.", (sender, data) => {
-                    //? TODO: Check for document/function still being the same
-                    var document = Session.CurrentDocument;
+            //if (sameVNInstrs.Count > 0) {
+            //    data.AddButton("Mark same value number instrs.", (sender, data) => {
+            //        //? TODO: Check for document/function still being the same
+            //        var document = Session.CurrentDocument;
 
-                    foreach (var instr in sameVNInstrs) {
-                        document.MarkElement(instr, Colors.YellowGreen);
-                    }
-                });
-            }
+            //        foreach (var instr in sameVNInstrs) {
+            //            document.MarkElement(instr, Colors.YellowGreen);
+            //        }
+            //    });
+            //}
 
             return true;
         }

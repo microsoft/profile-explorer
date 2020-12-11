@@ -44,6 +44,13 @@ namespace IRExplorerCore.UTC {
             // If in the same block, accept it only if dest is found before the use,
             // or the block is found in a loop (value may reach through a backedge).
             if(startDestElement.ParentBlock == element.ParentBlock) {
+                if (startDestElement.ParentInstruction == null) {
+                    return true; // Use dominated by parameter.
+                }
+                else if(element.ParentInstruction == null) {
+                    return false;
+                }
+
                 var destIndex = startDestElement.ParentInstruction.IndexInBlock;
                 var useIndex = element.ParentInstruction.IndexInBlock;
                 return destIndex < useIndex;
@@ -68,6 +75,13 @@ namespace IRExplorerCore.UTC {
             // If in the same block, accept it only if dest is found before the use,
             // or the block is found in a loop (value may reach through a backedge).
             if (startSourceElement.ParentBlock == element.ParentBlock) {
+                if(element.ParentInstruction == null) {
+                    return true; // Parameter dominates everything.
+                }
+                else if(startSourceElement.ParentInstruction == null) {
+                    return false;
+                }
+
                 var destIndex = element.ParentInstruction.IndexInBlock;
                 var useIndex = startSourceElement.ParentInstruction.IndexInBlock;
                 return destIndex < useIndex;

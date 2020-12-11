@@ -1,10 +1,12 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+//? TODO: Switch to pool
 //#define USE_POOL
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using IRExplorerCore.IR;
@@ -194,6 +196,8 @@ namespace IRExplorerCore.UTC {
                 {Keyword.Void, TypeIR.GetVoid()},
                 {Keyword.CC, TypeIR.GetBool()}
             };
+
+        private static readonly X86RegisterTable x86Registers_ = new X86RegisterTable();
 
         private static readonly TokenKind[] SkipOperandFlagsTokens = {
             TokenKind.Xor, TokenKind.Tilde,
@@ -1134,6 +1138,8 @@ namespace IRExplorerCore.UTC {
                     SkipAfterToken(TokenKind.Greater); // Ignore optional SSA def. number.
                 }
                 else if (TokenIs(TokenKind.OpenParen)) {
+                    SkipToken();
+                    ParseRegister(operand);
                     SkipAfterToken(TokenKind.CloseParen); // Ignore lexical hash var.
                 }
                 else {
@@ -1319,6 +1325,13 @@ namespace IRExplorerCore.UTC {
                 opKind = OperandKind.Temporary;
             }
 
+            var operand = CreateOperand(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
+            operand.Value = opName;
+
+            // After lowering, registers can appear without without a symbol name,
+            // check if the variable represents a register.
+            ParseRegister(operand);
+
             var startToken = current_;
             SkipToken();
 
@@ -1336,8 +1349,7 @@ namespace IRExplorerCore.UTC {
                 ParseSpecialName(arrowLevel);
             }
 
-            var operand = CreateOperand(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
-            operand.Value = opName;
+            
             SetTextRange(operand, startToken);
 
             // Parse type and other attributes.
@@ -1384,6 +1396,8 @@ namespace IRExplorerCore.UTC {
                     }
                 }
                 else if (TokenIs(TokenKind.OpenParen)) {
+                    SkipToken();
+                    ParseRegister(operand);
                     SkipAfterToken(TokenKind.CloseParen); // Ignore lexical hash var.
                 }
                 else {
@@ -1392,6 +1406,16 @@ namespace IRExplorerCore.UTC {
             }
 
             return operand;
+        }
+
+        private void ParseRegister(OperandIR operand) {
+            if(IsIdentifier()) {
+                var register = x86Registers_.GetRegister(TokenString());
+
+                if(register != null) {
+                    operand.AddTag(new RegisterTag(register, operand));
+                }
+            }
         }
 
         private void ParseSpecialName(int arrowLevel) {
