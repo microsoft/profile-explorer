@@ -535,6 +535,10 @@ namespace IRExplorerUI.Document {
 
         public void LoadState(ElementOverlayState state, FunctionIR function, 
                             Action<IElementOverlay> registerAction) {
+            if(state == null) {
+                return; // Most likely a file from an older version of the app.
+            }
+
             foreach(var item in state.Overlays) {
                 foreach (var overlay in item.Item2) {
                     registerAction(overlay);
