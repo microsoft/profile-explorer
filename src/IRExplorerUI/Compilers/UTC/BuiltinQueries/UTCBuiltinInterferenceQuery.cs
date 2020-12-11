@@ -199,6 +199,7 @@ namespace IRExplorerUI.Compilers.UTC {
             aliasedIndirectValues_ = 0;
             var block = element.ParentBlock;
             var document = Session.CurrentDocument;
+
             var highlightingType = isTemporary ? HighlighingType.Selected : HighlighingType.Marked;
             document.BeginMarkElementAppend(highlightingType);
             document.ClearConnectedElements();
@@ -277,6 +278,7 @@ namespace IRExplorerUI.Compilers.UTC {
                 document.MarkElementAppend(op, Colors.Pink, highlightingType, true);
             }
             else {
+                //? TODO: Customize color, and at least don't re-parse a string each time
                 document.MarkElementAppend(op, Utils.ColorFromString("#AEA9FC"), highlightingType, true);
             }
 

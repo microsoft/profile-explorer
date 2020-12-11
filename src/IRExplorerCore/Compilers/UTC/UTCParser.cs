@@ -53,10 +53,17 @@ namespace IRExplorerCore.UTC {
     // string -> keyword
 
     public sealed class UTCSectionParser : IRSectionParser {
+        // Static instances to have the tables built only once.
+        private static readonly X86RegisterTable x86RegisterTable_ = new X86RegisterTable();
+        private static readonly ARM64RegisterTable arm64RegisterTable_ = new ARM64RegisterTable();
+
         private ParsingErrorHandler errorHandler_;
         private UTCParser parser_;
+        private UTCIRMode irMode_;
 
-        public UTCSectionParser(ParsingErrorHandler errorHandler = null) {
+        public UTCSectionParser(UTCIRMode irMode, ParsingErrorHandler errorHandler = null) {
+            irMode_ = irMode;
+
             if (errorHandler != null) {
                 errorHandler_ = errorHandler;
                 errorHandler_.Parser = this;
@@ -64,15 +71,22 @@ namespace IRExplorerCore.UTC {
         }
 
         public FunctionIR ParseSection(IRTextSection section, string sectionText) {
-            parser_ = new UTCParser(errorHandler_, section?.LineMetadata);
+            parser_ = new UTCParser(errorHandler_, section?.LineMetadata, SelectRegisterTable());
             parser_.Initialize(sectionText);
             return parser_.Parse();
         }
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
-            parser_ = new UTCParser(errorHandler_, section?.LineMetadata);
+            parser_ = new UTCParser(errorHandler_, section?.LineMetadata, SelectRegisterTable());
             parser_.Initialize(sectionText);
             return parser_.Parse();
+        }
+
+        private RegisterTable SelectRegisterTable() {
+            return irMode_ switch {
+                UTCIRMode.x86 => x86RegisterTable_,
+                UTCIRMode.ARM64 => arm64RegisterTable_
+            };
         }
 
         public void SkipCurrentToken() {
@@ -197,8 +211,6 @@ namespace IRExplorerCore.UTC {
                 {Keyword.CC, TypeIR.GetBool()}
             };
 
-        private static readonly X86RegisterTable x86Registers_ = new X86RegisterTable();
-
         private static readonly TokenKind[] SkipOperandFlagsTokens = {
             TokenKind.Xor, TokenKind.Tilde,
             TokenKind.Exclamation, TokenKind.Minus
@@ -233,12 +245,15 @@ namespace IRExplorerCore.UTC {
         private int nextBlockNumber;
         private IRElementId nextElementId_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
+        private RegisterTable registerTable_;
 
         public UTCParser(ParsingErrorHandler errorHandler,
-                         Dictionary<int, string> lineMetadata) {
+                         Dictionary<int, string> lineMetadata,
+                         RegisterTable registerTable = null) {
             errorHandler_ = errorHandler;
             lineMetadataMap_ = lineMetadata;
-            
+            registerTable_ = registerTable;
+
             blockMap_ = new Dictionary<int, BlockIR>();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
@@ -1409,8 +1424,12 @@ namespace IRExplorerCore.UTC {
         }
 
         private void ParseRegister(OperandIR operand) {
+            if(registerTable_ == null) {
+                return;
+            }
+
             if(IsIdentifier()) {
-                var register = x86Registers_.GetRegister(TokenString());
+                var register = registerTable_.GetRegister(TokenString());
 
                 if(register != null) {
                     operand.AddTag(new RegisterTag(register, operand));

@@ -8,7 +8,14 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.UTC {
+    public enum UTCIRMode {
+        x86,
+        ARM64
+    }
+
     public class UTCCompilerIRInfo : ICompilerIRInfo {
+        public UTCIRMode IRMode { get; set; }
+
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders) {
             return new UTCSectionReader(filePath, expectSectionHeaders);
         }
@@ -18,7 +25,7 @@ namespace IRExplorerCore.UTC {
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
-            return new UTCSectionParser((ParsingErrorHandler)errorHandler);
+            return new UTCSectionParser(IRMode, (ParsingErrorHandler)errorHandler);
         }
 
         public IRParsingErrorHandler CreateParsingErrorHandler() {

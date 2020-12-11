@@ -23,6 +23,8 @@ namespace IRExplorerUI {
         List<FunctionTaskDefinition> BuiltinFunctionTasks { get; }
         List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
 
+        void ReloadSettings();
+
         bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
         IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
         IDiffOutputFilter CreateDiffOutputFilter();

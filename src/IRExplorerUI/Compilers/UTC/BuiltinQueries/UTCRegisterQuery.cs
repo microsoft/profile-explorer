@@ -9,11 +9,11 @@ namespace IRExplorerUI.Compilers.UTC {
     public class UTCRegisterQuery : IElementQuery {
         public static QueryDefinition GetDefinition() {
             var query = new QueryDefinition(typeof(UTCRegisterQuery), "Registers",
-                                                   "Details about post-lower register info");
+                                                   "Details about post-lower registers");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("Consider overlapping registers", QueryValueKind.Bool);
-            query.Data.AddInput("Marking color", QueryValueKind.Color);
-            query.Data.AddOutput("Value number", QueryValueKind.String);
+            query.Data.AddInput("Consider overlapping registers", QueryValueKind.Bool, true);
+            query.Data.AddInput("Use temporary marking", QueryValueKind.Bool, true);
+            query.Data.AddInput("Marking color", QueryValueKind.Color, Colors.Pink);
             return query;
         }
 
@@ -26,41 +26,54 @@ namespace IRExplorerUI.Compilers.UTC {
 
         public bool Execute(QueryData data) {
             data.ResetResults();
-            var element = data.GetInput<IRElement>("Operand");
+            var element = data.GetInput<IRElement>(0);
+            var considerOverlapping = data.GetInput<bool>(1);
+            var isTemporary = data.GetInput<bool>(2);
+            var color = data.GetInput<Color>(3);
             var func = element.ParentFunction;
 
-            var tag = element.GetTag<RegisterTag>();
+            // Pick the query register.
+            RegisterTag tag = GetRegisterTag(element);
 
-            if(tag == null) {
+            if (tag == null) {
                 data.SetOutputWarning("Value has no register");
                 return true;
             }
 
             int count = 0;
+            var document = Session.CurrentDocument;
 
-            foreach(var operand in func.AllElements) {
-                var otherTag = operand.GetTag<RegisterTag>();
-                if(otherTag != null && otherTag.Register.OverlapsWith(tag.Register)) {
-                    Session.CurrentDocument.MarkElement(operand, Colors.YellowGreen);
+            var highlightingType = isTemporary ? HighlighingType.Selected : HighlighingType.Marked;
+            document.BeginMarkElementAppend(highlightingType);
+
+            foreach (var operand in func.AllElements) {
+                var otherTag = GetRegisterTag(operand);
+
+                if (otherTag == null) {
+                    continue;
+                }
+
+                if (otherTag.Register.Equals(tag.Register) ||
+                   (considerOverlapping && otherTag.Register.OverlapsWith(tag.Register))) {
+                    document.MarkElementAppend(operand, color, highlightingType, true);
                     count++;
                 }
             }
 
+            document.EndMarkElementAppend(highlightingType);
             data.SetOutput("Register instances", count);
             data.ClearButtons();
-
-            //if (sameVNInstrs.Count > 0) {
-            //    data.AddButton("Mark same value number instrs.", (sender, data) => {
-            //        //? TODO: Check for document/function still being the same
-            //        var document = Session.CurrentDocument;
-
-            //        foreach (var instr in sameVNInstrs) {
-            //            document.MarkElement(instr, Colors.YellowGreen);
-            //        }
-            //    });
-            //}
-
             return true;
+        }
+
+        private static RegisterTag GetRegisterTag(IRElement element) {
+            // For indirection, use the base value register.
+            if (element is OperandIR op && op.IsIndirection) {
+                return op.IndirectionBaseValue.GetTag<RegisterTag>();
+            }
+            else {
+                return element.GetTag<RegisterTag>();
+            }
         }
     }
 }

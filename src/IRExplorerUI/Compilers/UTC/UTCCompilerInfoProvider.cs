@@ -110,5 +110,19 @@ namespace IRExplorerUI.Compilers.UTC {
             loopGraph.FindLoops();
             return true;
         }
+
+        public void ReloadSettings() {
+            // Set the IR parsing mode (target architecture)
+            // based on the syntax highlighting file selected.
+            var path = App.GetSyntaxHighlightingFilePath();
+
+            if (!string.IsNullOrEmpty(path) && 
+                path.Contains("arm64", StringComparison.OrdinalIgnoreCase)) {
+                ir_.IRMode = UTCIRMode.ARM64;
+            }
+            else {
+                ir_.IRMode = UTCIRMode.x86;
+            }
+        }
     }
 }

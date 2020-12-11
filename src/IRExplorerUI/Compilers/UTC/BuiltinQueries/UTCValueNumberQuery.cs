@@ -8,10 +8,10 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI.Compilers.UTC {
     public class UTCValueNumberQuery : IElementQuery {
         public static QueryDefinition GetDefinition() {
-            var query = new QueryDefinition(typeof(UTCRegisterQuery), "Registers",
-                                                   "Details about post-lower register info");
+            var query = new QueryDefinition(typeof(UTCValueNumberQuery), "Value Numbers",
+                                                  "Details about values with SSA info");
             query.Data.AddInput("Operand", QueryValueKind.Element);
-            query.Data.AddInput("Consider overlapping registers", QueryValueKind.Bool);
+            query.Data.AddInput("Consider only dominated values", QueryValueKind.Bool);
             query.Data.AddInput("Marking color", QueryValueKind.Color);
             query.Data.AddOutput("Value number", QueryValueKind.String);
             return query;

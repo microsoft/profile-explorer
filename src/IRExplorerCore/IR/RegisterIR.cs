@@ -53,13 +53,13 @@ namespace IRExplorerCore.IR {
 
         public bool IsSubregister => Parent != null;
         public bool HasSubregisters => Subregisters.Count > 0;
-
         public bool OverlapsWith(RegisterIR other) {
             //? TODO: ALso check bit range overlap
             return other.Root == Root;
         }
 
         public bool CompletelyOverlapsWith(RegisterIR other) {
+            //? TODO: Impelement
             return false;
         }
 

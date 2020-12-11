@@ -49,5 +49,8 @@ namespace IRExplorerUI.Compilers.LLVM {
             //loopGraph.FindLoops();
             return true;
         }
+
+        public void ReloadSettings() {
+        }
     }
 }
