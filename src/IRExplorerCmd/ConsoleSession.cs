@@ -41,6 +41,10 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
+        public void ReloadSettings() {
+            throw new NotImplementedException();
+        }
+
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => throw new NotImplementedException();
         public List<FunctionTaskDefinition> ScriptFunctionTasks => throw new NotImplementedException();

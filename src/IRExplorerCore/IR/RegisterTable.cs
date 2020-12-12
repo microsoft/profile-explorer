@@ -21,7 +21,6 @@ namespace IRExplorerCore.IR {
             }
         }
 
-
         public RegisterTable() {
             registerMap_ = new Dictionary<string, RegisterIR>();
             virtualRegisters_ = new List<RegisterIR>();
@@ -31,13 +30,12 @@ namespace IRExplorerCore.IR {
             //? TODO: Support for gr0-grN, etc
         }
 
-        public void AddRegisterAlias(string register, string registerAlias) {
-            //? TODO: Add name aliases representing same register
-            //? For ex. UTC IR uses cc_zf instead of zf, etc
+        public void AddRegisterAlias(string registerAlias, string register) {
+            registerMap_[registerAlias] = registerMap_[register];
         }
 
-        public void AddRegisterAlias(RegisterIR register, string registerAliasa) {
-
+        public void AddRegisterAlias(string registerAlias, RegisterIR register) {
+            registerMap_[registerAlias] = register;
         }
 
         public virtual RegisterIR GetRegister(string name) {
@@ -51,6 +49,11 @@ namespace IRExplorerCore.IR {
 
         public virtual RegisterIR GetRegister(ReadOnlyMemory<char> name) {
             return null;
+        }
+
+        public RegisterIR this[string name] {
+            get => GetRegister(name);
+            set => throw new NotImplementedException();
         }
     }
 }
