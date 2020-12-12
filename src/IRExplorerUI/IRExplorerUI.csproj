@@ -5,9 +5,9 @@
 		<TargetFramework>net5.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
-		<AssemblyVersion>0.7.3.0</AssemblyVersion>
-		<FileVersion>0.7.3.0</FileVersion>
-		<Version>0.7.3</Version>
+		<AssemblyVersion>0.7.6.0</AssemblyVersion>
+		<FileVersion>0.7.6.0</FileVersion>
+		<Version>0.7.6</Version>
 		<Authors></Authors>
 		<Company>Microsoft Corporation</Company>
 		<Product>IR Explorer</Product>
