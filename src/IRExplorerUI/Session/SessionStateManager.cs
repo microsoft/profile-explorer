@@ -131,7 +131,10 @@ namespace IRExplorerUI {
         public IRDocument DocumentView => DocumentHost.TextView;
         public LayoutDocument Host { get; set; }
         public LayoutDocumentPane HostParent { get; set; }
-        public bool IsActiveDocument { get; set; }
+        public bool IsActiveDocument {
+            get => DocumentHost.IsActiveDocument;
+            set => DocumentHost.IsActiveDocument = value;
+        }
     }
 
     public class SessionSettings {

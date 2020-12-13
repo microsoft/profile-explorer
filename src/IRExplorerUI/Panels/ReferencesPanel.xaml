@@ -17,7 +17,7 @@
         <Grid
             Grid.Row="0"
             HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            Background="{DynamicResource BackgroundColor5Brush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="75" />
@@ -26,12 +26,12 @@
                 Grid.Column="0"
                 Height="28"
                 HorizontalAlignment="Stretch"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource BackgroundColor5Brush}"
                 IsLocked="True">
                 <ToolBar
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     Loaded="ToolBar_Loaded">
 
                     <TextBlock
@@ -44,7 +44,7 @@
                         Margin="8,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
                         IsChecked="{Binding ShowLoad, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
@@ -61,7 +61,7 @@
                         Margin="-1,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
                         IsChecked="{Binding ShowStore, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
@@ -78,7 +78,7 @@
                         Margin="-1,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
                         IsChecked="{Binding ShowAddress, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
@@ -95,7 +95,7 @@
                         Margin="-1,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
                         IsChecked="{Binding ShowSSA, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
@@ -142,6 +142,7 @@
             <local:PanelToolbarTray
                 x:Name="FixedToolbar"
                 Grid.Column="1"
+                Background="{DynamicResource BackgroundColor5Brush}"
                 BindMenuItemSelected="FixedToolbar_BindMenuItemSelected"
                 BindMenuOpen="FixedToolbar_BindMenuOpen"
                 DuplicateClicked="PanelToolbarTray_DuplicateClicked"
@@ -153,19 +154,22 @@
             x:Name="ReferenceList"
             Grid.RowSpan="2"
             Margin="0,27,0,0"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+            Background="{DynamicResource DataGridBackgroundBrush}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
             VirtualizingPanel.IsVirtualizing="True"
             VirtualizingPanel.VirtualizationMode="Recycling">
             <ListView.View>
                 <GridView>
+                    <GridView.ColumnHeaderContainerStyle>
+                        <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}" />
+                    </GridView.ColumnHeaderContainerStyle>
                     <GridViewColumn
                         Width="30"
                         DisplayMemberBinding="{Binding Index}"
                         Header="#">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -175,7 +179,7 @@
                         DisplayMemberBinding="{Binding Kind}"
                         Header="Kind">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -186,7 +190,7 @@
                         DisplayMemberBinding="{Binding Block}"
                         Header="Block">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -194,7 +198,7 @@
 
                     <GridViewColumn Width="400" Header="Preview">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -211,7 +215,7 @@
                         DisplayMemberBinding="{Binding Line}"
                         Header="Line">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -220,7 +224,8 @@
             </ListView.View>
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    <Setter Property="Background" Value="{DynamicResource DataGridRowFirstBackgroundBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
                     <EventSetter Event="Control.MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
                     <EventSetter Event="UIElement.MouseEnter" Handler="ListViewItem_MouseEnter" />
 

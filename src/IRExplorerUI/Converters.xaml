@@ -16,4 +16,5 @@
     <utils:BoolToParameterConverter x:Key="BooToParameter" />
     <utils:TreeViewLineConverter x:Key="LineConverter" />
     <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacity" />
+
 </ResourceDictionary>

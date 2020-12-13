@@ -66,7 +66,7 @@
             <Grid
                 Grid.Row="0"
                 HorizontalAlignment="Stretch"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                Background="{DynamicResource BackgroundColor5Brush}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="25" />
@@ -77,12 +77,12 @@
                     Height="28"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     IsLocked="True">
                     <ToolBar
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Top"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                        Background="{DynamicResource BackgroundColor5Brush}"
                         Loaded="ToolBar_Loaded">
 
                         <Button
@@ -123,9 +123,10 @@
                             x:Name="BlockSelector"
                             Width="70"
                             Margin="4,0,0,0"
-                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            Background="{DynamicResource ComboBoxListBackgroundBrush}"
+                            BorderBrush="{DynamicResource ComboBoxListBorderBrush}"
                             DisplayMemberPath="Number"
+                            Foreground="{DynamicResource ComboBoxButtonForegroundBrush}"
                             Loaded="ComboBox_Loaded"
                             SelectedValuePath="Number"
                             SelectionChanged="BlockSelector_SelectionChanged"
@@ -180,13 +181,17 @@
                         </Button>
                         <Separator />
 
-                        <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <Menu
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource BackgroundColor5Brush}"
+                            BorderBrush="{DynamicResource BackgroundColor5Brush}"
+                            Foreground="{DynamicResource WindowForegroundBrush}">
                             <MenuItem
                                 Height="20"
                                 Margin="0,0,-1,0"
                                 Padding="0,0,0,0"
-                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Background="{DynamicResource BackgroundColor5Brush}"
+                                BorderBrush="{DynamicResource BackgroundColor5Brush}"
                                 OverridesDefaultStyle="True">
                                 <MenuItem.Icon>
                                     <Image
@@ -303,13 +308,18 @@
                             ToolTip="Show remarks options panel">
                             <Image Source="{StaticResource ConfigIcon}" />
                         </Button>
-
                         <Separator />
-                        <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+
+                        <Menu
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource BackgroundColor5Brush}"
+                            BorderBrush="{DynamicResource BackgroundColor5Brush}"
+                            Foreground="{DynamicResource WindowForegroundBrush}">
                             <MenuItem
                                 Padding="0,2,2,2"
-                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Background="{DynamicResource BackgroundColor5Brush}"
+                                BorderBrush="{DynamicResource BackgroundColor5Brush}"
+                                Foreground="{Binding Path=(Menu.Foreground), RelativeSource={RelativeSource AncestorType=Menu}}"
                                 Header="Clear"
                                 OverridesDefaultStyle="True">
                                 <MenuItem.Icon>
@@ -341,12 +351,16 @@
                         </Menu>
                         <Separator />
 
-                        <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <Menu
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource BackgroundColor5Brush}"
+                            Foreground="{DynamicResource WindowForegroundBrush}">
                             <MenuItem
                                 x:Name="TaskMenuItem"
                                 Padding="0,0,0,0"
-                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Background="{DynamicResource BackgroundColor5Brush}"
+                                BorderBrush="{DynamicResource BackgroundColor5Brush}"
+                                Foreground="{Binding Path=(Menu.Foreground), RelativeSource={RelativeSource AncestorType=Menu}}"
                                 Header="Tasks"
                                 OverridesDefaultStyle="True"
                                 SubmenuOpened="TaskMenuItem_SubmenuOpened">
@@ -362,11 +376,13 @@
                                 <Separator />
                                 <MenuItem Header="Edit Task Definitions" />
                             </MenuItem>
+
                             <MenuItem
                                 x:Name="QueryMenuItem"
                                 Padding="0,0,0,0"
-                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Background="{DynamicResource BackgroundColor5Brush}"
+                                BorderBrush="{DynamicResource BackgroundColor5Brush}"
+                                Foreground="{Binding Path=(Menu.Foreground), RelativeSource={RelativeSource AncestorType=Menu}}"
                                 Header="Queries"
                                 OverridesDefaultStyle="True"
                                 SubmenuOpened="QueryMenuItem_SubmenuOpened">
@@ -407,6 +423,7 @@
                 </ToolBarTray>
                 <local:PanelToolbarTray
                     Grid.Column="1"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     HasDuplicateButton="False"
                     HasPinButton="False"
                     SettingsClicked="PanelToolbarTray_SettingsClicked" />
@@ -419,6 +436,9 @@
                 FontSize="13"
                 ScrollViewer.ScrollChanged="TextView_ScrollChanged"
                 ShowLineNumbers="True">
+                <local:IRDocument.Effect>
+                    <local:DesaturateEffect x:Name="AwayEffect" Strength="0" />
+                </local:IRDocument.Effect>
                 <local:IRDocument.ContextMenu>
                     <ContextMenu>
                         <MenuItem

@@ -10,14 +10,14 @@
     VerticalAlignment="Top"
     d:DesignHeight="28"
     d:DesignWidth="200"
-    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+    Background="{DynamicResource BackgroundColor5Brush}"
     IsLocked="True"
     mc:Ignorable="d">
     <ToolBar
         MinWidth="24"
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource BackgroundColor5Brush}"
         Loaded="ToolBar_Loaded">
 
         <Separator />
@@ -43,8 +43,8 @@
             <MenuItem
                 Margin="0,0,0,0"
                 Padding="0,0,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource BackgroundColor5Brush}"
+                BorderBrush="{DynamicResource BackgroundColor5Brush}"
                 Focusable="False"
                 OverridesDefaultStyle="True"
                 SubmenuOpened="MenuItem_SubmenuOpened">

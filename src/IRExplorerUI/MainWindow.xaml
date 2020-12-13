@@ -14,6 +14,7 @@
     Background="#F0F0F0F0"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
+    Style="{DynamicResource FlatWindowStyle}"
     UseLayoutRounding="True"
     mc:Ignorable="d">
     <Window.CommandBindings>
@@ -173,8 +174,8 @@
         </Grid.RowDefinitions>
         <Border
             Grid.Row="0"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ScrollBarBrushKey}}"
+            Background="{DynamicResource WindowBackgroundBrush}"
+            BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
             BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -186,7 +187,8 @@
                     x:Name="MainMenu"
                     Grid.Column="0"
                     VerticalAlignment="Center"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                    Background="{DynamicResource WindowBackgroundBrush}"
+                    Foreground="{DynamicResource WindowForegroundBrush}">
                     <MenuItem Header="_File">
                         <MenuItem
                             Command="local:AppCommand.OpenDocument"
@@ -339,10 +341,7 @@
 
 
                         <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
-                        <MenuItem
-                            Click="MenuItem_Click_6"
-                            Header="Settings"
-                            IsEnabled="False" />
+                        <MenuItem Click="MenuItem_Click_6" Header="Settings" />
                     </MenuItem>
                     <MenuItem Header="Help">
                         <MenuItem Click="MenuItem_Click_4" Header="Documentation" />
@@ -367,15 +366,15 @@
                     HorizontalAlignment="Left"
                     Orientation="Horizontal">
                     <Border
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                        Background="{DynamicResource WindowBackgroundBrush}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="1,0,1,0">
-                        <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal">
                             <ToggleButton
                                 x:Name="DiffModeButton"
                                 Padding="2,1,2,1"
                                 VerticalAlignment="Center"
-                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                Background="{DynamicResource BackgroundColor5Brush}"
                                 BorderBrush="{x:Null}"
                                 Checked="ToggleButton_Checked"
                                 FontSize="11"
@@ -548,7 +547,7 @@
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                        Background="{DynamicResource WindowBackgroundBrush}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="0,0,1,0">
                         <Button
@@ -581,7 +580,7 @@
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                        Background="{DynamicResource WindowBackgroundBrush}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="0,0,1,0">
                         <Button
@@ -841,7 +840,7 @@
             x:Name="MainStatusBar"
             Grid.Row="2"
             Height="24"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            Background="{DynamicResource WindowBackgroundBrush}">
             <Image
                 Width="14"
                 Height="14"
@@ -949,7 +948,8 @@
             <ToggleButton
                 x:Name="FullScreenButton"
                 VerticalAlignment="Center"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                Background="{DynamicResource ButtonBackgroundBrush}"
+                BorderBrush="{DynamicResource ButtonBorderBrush}"
                 Command="local:AppCommand.FullScreen"
                 FontSize="11"
                 ToolTip="Enter/exit full screen mode (F11)">
@@ -989,7 +989,8 @@
                 Width="18"
                 Height="18"
                 VerticalAlignment="Center"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                Background="{DynamicResource ButtonBackgroundBrush}"
+                BorderBrush="{DynamicResource ButtonBorderBrush}"
                 Click="AlwaysOnTopButton_Click"
                 FontSize="11"
                 ToolTip="Toggle always on top">

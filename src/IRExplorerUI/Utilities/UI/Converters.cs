@@ -82,4 +82,5 @@ namespace IRExplorerUI.Utilities {
             throw new Exception("The method or operation is not implemented.");
         }
     }
+
 }

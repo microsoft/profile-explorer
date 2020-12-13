@@ -11,7 +11,7 @@
     d:DesignHeight="560"
     d:DesignWidth="340 "
     mc:Ignorable="d">
-    <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+    <Grid>
         <StackPanel Margin="4,4,4,4">
             <TextBlock FontWeight="DemiBold" Text="Displayed changes" />
             <StackPanel Margin="0,4,0,2" Orientation="Horizontal">

@@ -161,10 +161,10 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="true">
-                            <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectedBackgroundBrush}" />
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource DataGridCellSelectedBackgroundBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="false">
-                            <Setter Property="Foreground" Value="{StaticResource DisabledForegroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource DataGridDisabledForegroundBrush}" />
                         </Trigger>
 
                         <MultiTrigger>
@@ -172,12 +172,86 @@
                                 <Condition Property="IsMouseOver" Value="true" />
                                 <Condition Property="IsSelected" Value="false" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="Border" Property="Background" Value="#D0E3F1" />
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource DataGridRowSelectedBackgroundBrush}" />
                         </MultiTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+    </Style>
+
+    <Style x:Key="GridViewColumnHeaderGripper" TargetType="Thumb">
+        <Setter Property="Width" Value="18" />
+        <Setter Property="Background">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <LinearGradientBrush.GradientStops>
+                        <GradientStopCollection>
+                            <GradientStop Offset="0.0" Color="{DynamicResource BorderLightColor}" />
+                            <GradientStop Offset="1.0" Color="{DynamicResource BorderDarkColor}" />
+                        </GradientStopCollection>
+                    </LinearGradientBrush.GradientStops>
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Thumb}">
+                    <Border Padding="{TemplateBinding Padding}" Background="Transparent">
+                        <Rectangle
+                            Width="1"
+                            HorizontalAlignment="Center"
+                            Fill="{TemplateBinding Background}" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BorderBrush">
+            <Setter.Value>
+                <LinearGradientBrush StartPoint="0.5,0" EndPoint="0.5,1">
+                    <GradientStop Offset="0" Color="Black" />
+                    <GradientStop Offset="1" Color="White" />
+                </LinearGradientBrush>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="HeaderStyle" TargetType="{x:Type GridViewColumnHeader}">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
+                    <Grid>
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{DynamicResource DataGridDisabledForegroundBrush}"
+                            BorderThickness="0,0,1,1">
+                            <TextBlock
+                                x:Name="ContentHeader"
+                                Width="{TemplateBinding Width}"
+                                Padding="5,3,5,1"
+                                Text="{TemplateBinding Content}"
+                                TextAlignment="Left" />
+                        </Border>
+                        <Thumb
+                            x:Name="PART_HeaderGripper"
+                            Margin="0,0,-9,0"
+                            HorizontalAlignment="Right"
+                            Style="{StaticResource GridViewColumnHeaderGripper}" />
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+
+        <Setter Property="IsHitTestVisible" Value="True" />
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource DataGridHeaderBackgroundBrush}" />
+
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="true">
+                <Setter Property="Background" Value="{DynamicResource DataGridRowSelectedBackgroundBrush}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <ContextMenu x:Key="GraphContextMenu">

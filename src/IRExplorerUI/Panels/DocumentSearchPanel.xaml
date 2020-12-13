@@ -17,7 +17,7 @@
     mc:Ignorable="d">
     <Border
         Margin="0,0,6,6"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        Background="{DynamicResource WindowBackgroundBrush}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         BorderThickness="1,1,1,1">
         <Border.Effect>
@@ -31,7 +31,6 @@
         <DockPanel LastChildFill="True">
             <DockPanel
                 x:Name="SearchPanelHost"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 DockPanel.Dock="Top"
                 LastChildFill="True">
                 <doc:SearchPanel

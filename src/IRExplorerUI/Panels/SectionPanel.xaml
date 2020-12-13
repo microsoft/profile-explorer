@@ -58,6 +58,7 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
     </local:ToolPanelControl.Resources>
 
     <Grid
@@ -73,7 +74,7 @@
         <Grid
             x:Name="FunctionPart"
             Grid.Column="0"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            Background="{DynamicResource BackgroundColor5Brush}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="28" />
                 <RowDefinition Height="*" />
@@ -85,14 +86,14 @@
                 Margin="0,0,24,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource BackgroundColor5Brush}"
                 IsLocked="True">
                 <ToolBar
                     Name="FunctionToolbar"
                     Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     Loaded="ToolBar_Loaded"
                     SizeChanged="ToolBar_SizeChanged">
                     <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
@@ -108,8 +109,6 @@
                             HorizontalAlignment="Stretch"
                             VerticalAlignment="Center"
                             VerticalContentAlignment="Center"
-                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             TextChanged="FunctionFilter_TextChanged"
                             ToolTip="Filter function list based on a case-insensitive substring">
                             <TextBox.InputBindings>
@@ -147,7 +146,7 @@
                 Grid.Row="1"
                 Panel.ZIndex="1"
                 AutomationProperties.AutomationId="AutoFunctionList"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                Background="{DynamicResource DataGridBackgroundBrush}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 SelectionChanged="FunctionList_SelectionChanged"
@@ -155,12 +154,15 @@
                 VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <ListView.View>
                     <GridView>
+                        <GridView.ColumnHeaderContainerStyle>
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}" />
+                        </GridView.ColumnHeaderContainerStyle>
                         <GridViewColumn
                             Width="200"
                             DisplayMemberBinding="{Binding Name}"
                             Header="Function">
                             <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
@@ -170,7 +172,7 @@
                             DisplayMemberBinding="{Binding SectionCount}"
                             Header="Sections">
                             <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
@@ -179,7 +181,8 @@
                 </ListView.View>
                 <ListView.ItemContainerStyle>
                     <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        <Setter Property="Background" Value="{DynamicResource DataGridRowFirstBackgroundBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
                     </Style>
                 </ListView.ItemContainerStyle>
                 <ListView.ContextMenu>
@@ -204,6 +207,7 @@
                     Margin="0,2,2,0"
                     HorizontalAlignment="Left"
                     VerticalAlignment="Top"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     IsChecked="{Binding IsFunctionListVisible, Mode=TwoWay}"
                     ToolTip="Show/hide the function list">
                     <Image
@@ -238,7 +242,7 @@
             Width="2"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" />
+            Background="{DynamicResource BackgroundColor5Brush}" />
 
         <Grid x:Name="SectionGrid" Grid.Column="2">
             <Grid.RowDefinitions>
@@ -256,12 +260,12 @@
                     x:Name="SectionToolbar"
                     Grid.Column="0"
                     Height="28"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     IsLocked="True">
                     <ToolBar
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Top"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                        Background="{DynamicResource BackgroundColor5Brush}"
                         Loaded="ToolBar_Loaded">
 
                         <Image Source="{StaticResource SearchIcon}" />
@@ -272,8 +276,6 @@
                                 Margin="4,0,0,0"
                                 HorizontalAlignment="Center"
                                 VerticalContentAlignment="Center"
-                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 TabIndex="4"
                                 TextChanged="SectionFilter_TextChanged"
                                 ToolTip="Filter setion list based on a case-insensitive string (Ctrl+F)">
@@ -343,6 +345,7 @@
                 <local:PanelToolbarTray
                     x:Name="FixedToolbar"
                     Grid.Column="1"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     DockPanel.Dock="Right"
                     HasDuplicateButton="False"
                     HasPinButton="False"
@@ -356,7 +359,7 @@
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Stretch"
                 AutomationProperties.AutomationId="AutoSectionList"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                Background="{DynamicResource DataGridBackgroundBrush}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
@@ -364,13 +367,16 @@
                 VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <ListView.View>
                     <GridView>
+                        <GridView.ColumnHeaderContainerStyle>
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}" />
+                        </GridView.ColumnHeaderContainerStyle>
                         <GridViewColumn Width="50">
                             <GridViewColumnHeader
                                 x:Name="NumberColumnHeader"
                                 Click="GridViewColumnHeader_Click"
                                 Content="#" />
                             <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
@@ -405,7 +411,7 @@
                                 Click="GridViewColumnHeader_Click"
                                 Content="Section" />
                             <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
@@ -428,7 +434,7 @@
                                 Click="GridViewColumnHeader_Click"
                                 Content="Blocks" />
                             <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
@@ -453,7 +459,8 @@
 
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        <Setter Property="Background" Value="{DynamicResource DataGridBackgroundBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
 
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">

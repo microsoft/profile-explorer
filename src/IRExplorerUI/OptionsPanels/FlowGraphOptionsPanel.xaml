@@ -9,7 +9,7 @@
     d:DesignHeight="600"
     d:DesignWidth="400"
     mc:Ignorable="d">
-    <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+    <Grid>
         <StackPanel Margin="4,4,4,4">
             <TextBlock FontWeight="DemiBold" Text="Graph Interaction" />
             <StackPanel Margin="0,0,0,2" Orientation="Horizontal" />

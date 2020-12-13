@@ -246,6 +246,15 @@ namespace IRExplorerUI {
         public FunctionIR Function => TextView.Function;
         public bool DuringSectionLoading => TextView.DuringSectionLoading;
 
+        private bool isActiveDocument_;
+        public bool IsActiveDocument {
+            get => isActiveDocument_;
+            set {
+                isActiveDocument_ = value;
+                AwayEffect.Strength = value ? 0.0 : 0.7;
+            }
+        }
+
         public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
         public event EventHandler<ScrollChangedEventArgs> PassOutputScrollChanged;
         public event EventHandler<bool> PassOutputShowBeforeChanged;

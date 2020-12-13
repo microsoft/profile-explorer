@@ -52,6 +52,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Remove="Effects\DesaturateEffect.ps" />
 		<None Remove="refresh.png" />
 	</ItemGroup>
 
@@ -102,6 +103,13 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Reference Include="WpfPlusTheme">
+	    <HintPath>..\..\..\Users\lgrat\Downloads\WpfPlus-master\WpfPlusTheme\bin\Release\net5.0-windows\WpfPlusTheme.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Resource Include="Effects\DesaturateEffect.ps" />
 		<Resource Include="refresh.png" />
 	</ItemGroup>
 
@@ -167,6 +175,9 @@
 
 	<ItemGroup>
 		<Page Update="Controls\IconSelector.xaml">
+		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+		<Page Update="IconsWhite.xaml">
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 		<Page Update="OptionsPanels\LightDocumentOptionsPanel.xaml">
