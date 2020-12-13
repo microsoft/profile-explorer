@@ -665,7 +665,7 @@ namespace IRExplorerUI {
             await EndSession();
         }
 
-        private async void CreateDefaultSideBySidePanels() {
+        private void CreateDefaultSideBySidePanels() {
             if (sessionState_ == null) {
                 //? TODO: Avoid this by disabling UI
                 return; // Session not started yet.
@@ -715,7 +715,7 @@ namespace IRExplorerUI {
             ErrorReporting.SaveOpenSections();
         }
 
-        private async void MenuItem_Click(object sender, RoutedEventArgs e) {
+        private void MenuItem_Click(object sender, RoutedEventArgs e) {
             throw new InvalidOperationException("Crash Handler test assert");
         }
 
@@ -871,7 +871,7 @@ namespace IRExplorerUI {
             SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
         }
 
-        private async void ShareButton_Click(object sender, RoutedEventArgs e) {
+        private void ShareButton_Click(object sender, RoutedEventArgs e) {
             var width = Math.Max(SessionSharingPanel.MinimumWidth,
                                   Math.Min(MainGrid.ActualWidth, SessionSharingPanel.DefaultWidth));
             var height = Math.Max(SessionSharingPanel.MinimumHeight,
