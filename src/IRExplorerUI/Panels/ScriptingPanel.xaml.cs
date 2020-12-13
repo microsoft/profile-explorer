@@ -250,7 +250,7 @@ namespace IRExplorerUI {
                 var errors = await autoComplete_.GetSourceErrorsAsync(text);
                 errorDiagnostics_ = errors;
 
-                Dispatcher.BeginInvoke((Action)(() => {
+                await Dispatcher.BeginInvoke((Action)(() => {
                     ClearSyntaxErrorHighlighting();
                     var group = new HighlightedGroup(new HighlightingStyle(Colors.Red, 0.1, Pens.GetPen(Colors.Red)));
 

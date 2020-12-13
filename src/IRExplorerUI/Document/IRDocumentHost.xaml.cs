@@ -298,7 +298,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void Hover_MouseHover(object sender, MouseEventArgs e) {
+        private async void Hover_MouseHover(object sender, MouseEventArgs e) {
             if (!remarkSettings_.ShowActionButtonOnHover ||
                 (remarkSettings_.ShowActionButtonWithModifier && !Utils.IsKeyboardModifierActive())) {
                 actionPanelHovered_ = false;
@@ -324,7 +324,7 @@ namespace IRExplorerUI {
                 // If the panel is already showing for this element, ignore the action
                 // so that it doesn't move around after the mouse cursor.
                 if (element != hoveredElement_) {
-                    ShowActionPanel(element);
+                    await ShowActionPanel(element);
                     hoveredElement_ = element;
                 }
             }
@@ -465,7 +465,7 @@ namespace IRExplorerUI {
             TextView.SelectDocumentRemark(e);
         }
 
-        private async void RemarkPanel__PanelDetached(object sender, EventArgs e) {
+        private void RemarkPanel__PanelDetached(object sender, EventArgs e) {
             // Keep the remark panel floating over the document.
             DetachRemarkPanel();
         }
@@ -953,7 +953,7 @@ namespace IRExplorerUI {
                 SaveSectionState(Section);
             }
 
-            HideOptionalPanels();
+            await HideOptionalPanels();
             TextView.EnterDiffMode();
         }
 
