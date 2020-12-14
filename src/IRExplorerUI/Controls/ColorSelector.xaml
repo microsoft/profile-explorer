@@ -18,6 +18,7 @@
                 BorderThickness="1,1,1,1"
                 Content="1"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -27,6 +28,7 @@
                 BorderThickness="1,1,1,1"
                 Content="2"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -36,6 +38,7 @@
                 BorderThickness="1,1,1,1"
                 Content="3"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -45,6 +48,7 @@
                 BorderThickness="1,1,1,1"
                 Content="4"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -54,6 +58,7 @@
                 BorderThickness="1,1,1,1"
                 Content="5"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 x:Name="PickAnyButton"
@@ -74,6 +79,7 @@
                 BorderThickness="1,1,1,1"
                 Content="6"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -83,6 +89,7 @@
                 BorderThickness="1,1,1,1"
                 Content="7"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -92,6 +99,7 @@
                 BorderThickness="1,1,1,1"
                 Content="8"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -101,6 +109,7 @@
                 BorderThickness="1,1,1,1"
                 Content="9"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 Width="20"
@@ -110,6 +119,7 @@
                 BorderThickness="1,1,1,1"
                 Content="0"
                 FontSize="10"
+                Foreground="Black"
                 PreviewMouseUp="Button_MouseUp" />
             <Button
                 x:Name="MoreButton"
