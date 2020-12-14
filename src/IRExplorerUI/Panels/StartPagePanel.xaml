@@ -10,56 +10,58 @@
     UseLayoutRounding="True"
     mc:Ignorable="d">
     <Border
-        Background="#BFD9EFFF"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        BorderThickness="2,2,2,2">
+        Background="{DynamicResource WindowBackgroundBrush}"
+        BorderBrush="{DynamicResource SeparatorBrush}"
+        BorderThickness="1,1,1,1">
         <DockPanel LastChildFill="True">
-            <DockPanel Margin="10,10,10,0" DockPanel.Dock="Top">
-                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                    <Image
-                        Width="32"
-                        Height="32"
-                        Source="{StaticResource LogoImage}" />
-                    <TextBlock
-                        Margin="8,0,0,0"
-                        VerticalAlignment="Center"
-                        FontSize="20"
-                        FontWeight="Normal"
-                        Text="IR Explorer" />
 
-                </StackPanel>
-                <StackPanel>
-                    <TextBlock
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Cursor="Hand"
-                        DockPanel.Dock="Right"
-                        FontSize="14"
-                        MouseDown="TextBlock_MouseDown_1"
-                        Text="Documentation">
-                        <TextBlock.TextDecorations>
-                            <TextDecoration />
-                        </TextBlock.TextDecorations>
-                    </TextBlock>
-                    <TextBlock
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Center"
-                        Cursor="Hand"
-                        DockPanel.Dock="Right"
-                        FontSize="14"
-                        MouseDown="TextBlock_MouseDown"
-                        Text="Visual Studio extension">
-                        <TextBlock.TextDecorations>
-                            <TextDecoration />
-                        </TextBlock.TextDecorations>
-                    </TextBlock>
-                </StackPanel>
+            <DockPanel Background="{DynamicResource AccentBackgroundBrush2}" DockPanel.Dock="Top">
+                <Border Padding="10,10,10,10">
+                    <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
+                        <Image
+                            Width="32"
+                            Height="32"
+                            Source="{StaticResource LogoImage}" />
+                        <TextBlock
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            FontSize="20"
+                            FontWeight="Normal"
+                            Text="IR Explorer" />
+
+                    </StackPanel>
+                </Border>
+                <Border Padding="10,10,10,10" DockPanel.Dock="Right">
+                    <StackPanel>
+                        <TextBlock
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Cursor="Hand"
+                            FontSize="14"
+                            MouseDown="TextBlock_MouseDown_1"
+                            Text="Documentation">
+                            <TextBlock.TextDecorations>
+                                <TextDecoration />
+                            </TextBlock.TextDecorations>
+                        </TextBlock>
+                        <TextBlock
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Cursor="Hand"
+                            DockPanel.Dock="Right"
+                            FontSize="14"
+                            MouseDown="TextBlock_MouseDown"
+                            Text="Visual Studio extension">
+                            <TextBlock.TextDecorations>
+                                <TextDecoration />
+                            </TextBlock.TextDecorations>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
             </DockPanel>
 
             <ScrollViewer
-                Margin="0,12,0,0"
-                Padding="10,10,10,10"
-                Background="#7FFFFFFF"
+                Margin="10,12,10,10"
                 HorizontalScrollBarVisibility="Disabled"
                 VerticalScrollBarVisibility="Auto">
                 <StackPanel VerticalAlignment="Top" Orientation="Vertical">
@@ -98,7 +100,6 @@
                     <ListBox
                         Name="RecentFilesListBox"
                         Margin="0,8,0,0"
-                        Background="#D8F0F0F0"
                         FontSize="12"
                         KeyDown="RecentFilesListBox_KeyDown"
                         MouseDoubleClick="RecentFilesListBox_MouseDoubleClick" />
@@ -137,7 +138,6 @@
                     <ListBox
                         Name="RecentDiffFilesListBox"
                         Margin="0,8,0,0"
-                        Background="#D8F0F0F0"
                         FontSize="14"
                         KeyDown="RecentDiffFilesListBox_KeyDown"
                         MouseDoubleClick="RecentDiffFilesListBox_MouseDoubleClick">

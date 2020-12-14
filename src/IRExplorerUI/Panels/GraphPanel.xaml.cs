@@ -727,7 +727,7 @@ namespace IRExplorerUI {
                     (await cache.GetPostDominatorsAsync()).Dominates(queryInfo_.Block1, queryInfo_.Block2);
 
                 queryInfo_.Reaches =
-                    (await cache.GetReachabilityAsync()).Reaches(queryInfo_.Block1, queryInfo_.Block2);
+                    (await cache.GetReachabilityAsync()).BlockReachesBlock(queryInfo_.Block1, queryInfo_.Block2);
             }
 
             QueryPanel.DataContext = queryInfo_;

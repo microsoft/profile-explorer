@@ -367,14 +367,13 @@
                     Orientation="Horizontal">
                     <Border
                         Background="{DynamicResource WindowBackgroundBrush}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderBrush="{DynamicResource SeparatorBrush}"
                         BorderThickness="1,0,1,0">
                         <StackPanel Orientation="Horizontal">
                             <ToggleButton
                                 x:Name="DiffModeButton"
                                 Padding="2,1,2,1"
                                 VerticalAlignment="Center"
-                                Background="{DynamicResource BackgroundColor5Brush}"
                                 BorderBrush="{x:Null}"
                                 Checked="ToggleButton_Checked"
                                 FontSize="11"
@@ -405,7 +404,7 @@
                                 Visibility="Collapsed">
                                 <Line
                                     Margin="0,0,2,0"
-                                    Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                    Stroke="{DynamicResource SeparatorBrush}"
                                     Y1="0"
                                     Y2="17" />
                                 <Button
@@ -413,7 +412,6 @@
                                     Width="16"
                                     Padding="0,0,0,0"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
                                     Click="DiffSettingsButton_Click"
                                     ToolTip="Show diff settings panel">
@@ -428,7 +426,7 @@
                                 </Button>
                                 <Line
                                     Margin="2,0,2,0"
-                                    Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                    Stroke="{DynamicResource SeparatorBrush}"
                                     Y1="0"
                                     Y2="17" />
 
@@ -436,7 +434,6 @@
                                     x:Name="PreviousDiffButton"
                                     Width="16"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
                                     Click="PreviousDiffButton_Click"
                                     ToolTip="Go backward by one section in both the left and right side">
@@ -454,7 +451,6 @@
                                     x:Name="NextDiffButton"
                                     Width="16"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
                                     Click="NextDiffButton_Click"
                                     ToolTip="Go forward by one section in both the left and right side">
@@ -470,7 +466,6 @@
 
                                 <Line
                                     Margin="2,0,2,0"
-                                    Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     Y1="0"
                                     Y2="17" />
 
@@ -479,7 +474,6 @@
                                     Width="16"
                                     Padding="0,0,0,0"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
                                     Click="DiffSwapButton_Click"
                                     ToolTip="Swap left/right diff documents">
@@ -494,7 +488,6 @@
 
                                 <Line
                                     Margin="2,0,2,0"
-                                    Stroke="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     Y1="0"
                                     Y2="17" />
                                 <TextBlock
@@ -509,7 +502,6 @@
                                     x:Name="PreviousSegmentDiffButton"
                                     Width="16"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
                                     Click="PreviousSegmentDiffButton_Click"
                                     ToolTip="Go to previous difference">
@@ -527,7 +519,6 @@
                                     x:Name="NextDiffSegmentButton"
                                     Width="16"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                                     BorderBrush="{x:Null}"
                                     Click="NextDiffSegmentButton_Click"
                                     ToolTip="Go to next difference">
@@ -547,8 +538,6 @@
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        Background="{DynamicResource WindowBackgroundBrush}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="0,0,1,0">
                         <Button
                             x:Name="ShareButton"
@@ -580,8 +569,6 @@
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"
-                        Background="{DynamicResource WindowBackgroundBrush}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="0,0,1,0">
                         <Button
                             x:Name="FindButton"
@@ -840,7 +827,8 @@
             x:Name="MainStatusBar"
             Grid.Row="2"
             Height="24"
-            Background="{DynamicResource WindowBackgroundBrush}">
+            Background="{DynamicResource WindowBackgroundBrush}"
+            Foreground="{DynamicResource WindowForegroundBrush}">
             <Image
                 Width="14"
                 Height="14"
@@ -903,7 +891,6 @@
                 Padding="2,0,5,0"
                 VerticalAlignment="Center"
                 VerticalContentAlignment="Center"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 FontSize="11"
                 SelectedIndex="0">
                 <ComboBoxItem Content="Default" />
@@ -977,7 +964,7 @@
                 Width="18"
                 Height="18"
                 VerticalAlignment="Center"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                BorderBrush="{DynamicResource SeparatorBrush}"
                 Click="ScreenshotButton_Click"
                 FontSize="11"
                 ToolTip="Take screenshot of IR Explorer and save it to clipboard">
@@ -1017,7 +1004,7 @@
                 x:Name="UpdateButton"
                 VerticalAlignment="Center"
                 Background="#FFAFEABF"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                BorderBrush="{DynamicResource SeparatorBrush}"
                 Click="UpdateButton_Click"
                 FontSize="11"
                 FontWeight="DemiBold"

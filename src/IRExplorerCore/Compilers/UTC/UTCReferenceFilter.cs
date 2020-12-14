@@ -37,7 +37,7 @@ namespace IRExplorerCore.UTC {
             //? TODO: Use reaching definitions if available
             var cfgReachability = GetReachabilityInfo();
             
-            if(!cfgReachability.Reaches(startDestElement.ParentBlock, element.ParentBlock)) {
+            if(!cfgReachability.BlockReachesBlock(startDestElement.ParentBlock, element.ParentBlock)) {
                 return false;
             }
 
@@ -67,7 +67,7 @@ namespace IRExplorerCore.UTC {
             // Accept element if it's a definition that can reach the source element.
             var cfgReachability = GetReachabilityInfo();
 
-            if (!cfgReachability.Reaches(element.ParentBlock, startSourceElement.ParentBlock)) {
+            if (!cfgReachability.BlockReachesBlock(element.ParentBlock, startSourceElement.ParentBlock)) {
                 return false;
             }
 

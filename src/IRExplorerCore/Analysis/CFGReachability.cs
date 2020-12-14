@@ -24,12 +24,17 @@ namespace IRExplorerCore.Analysis {
             Compute();
         }
 
-        public bool Reaches(BlockIR block, BlockIR targetBlock) {
+        public bool BlockReachesBlock(BlockIR block, BlockIR targetBlock) {
+            if (!HasValidId(block) || !HasValidId(targetBlock)) {
+                return true; // Invalid CFG, conservative result.
+            }
+
             return reachableBlocks_[targetBlock.Number].Get(block.Number);
         }
 
         public List<BlockIR> FindPath(BlockIR block, BlockIR targetBlock) {
-            if (!Reaches(block, targetBlock)) {
+            if (!HasValidId(block) || !HasValidId(targetBlock) ||
+                !BlockReachesBlock(block, targetBlock)) {
                 return new List<BlockIR>();
             }
 
@@ -102,6 +107,11 @@ namespace IRExplorerCore.Analysis {
                     }
                 }
             }
+        }
+
+        private bool HasValidId(BlockIR block) {
+            return block.Number >= 0 &&
+                   block.Number < maxBlockNumber_;
         }
 
         private class PathBlock {

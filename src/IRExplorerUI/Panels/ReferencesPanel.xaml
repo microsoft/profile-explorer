@@ -44,14 +44,15 @@
                         Margin="8,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
+                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                         IsChecked="{Binding ShowLoad, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Loads" />
+                                <TextBlock Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Text="Loads" />
                                 <TextBlock
                                     Margin="8,0,0,0"
                                     FontWeight="DemiBold"
+                                    Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}"
                                     Text="{Binding LoadCount}" />
                             </StackPanel>
                         </ToggleButton.Content>
@@ -61,14 +62,15 @@
                         Margin="-1,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
+                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                         IsChecked="{Binding ShowStore, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Stores" />
+                                <TextBlock Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Text="Stores" />
                                 <TextBlock
                                     Margin="8,0,0,0"
                                     FontWeight="DemiBold"
+                                    Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}"
                                     Text="{Binding StoreCount}" />
                             </StackPanel>
                         </ToggleButton.Content>
@@ -78,14 +80,15 @@
                         Margin="-1,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
+                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                         IsChecked="{Binding ShowAddress, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Address" />
+                                <TextBlock Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Text="Address" />
                                 <TextBlock
                                     Margin="8,0,0,0"
                                     FontWeight="DemiBold"
+                                    Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}"
                                     Text="{Binding AddressCount}" />
                             </StackPanel>
                         </ToggleButton.Content>
@@ -95,14 +98,15 @@
                         Margin="-1,0,0,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource GridSplitterBackgroundBrush}"
+                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                         IsChecked="{Binding ShowSSA, Mode=TwoWay}">
                         <ToggleButton.Content>
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="SSA uses" />
+                                <TextBlock Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Text="SSA uses" />
                                 <TextBlock
                                     Margin="8,0,0,0"
                                     FontWeight="DemiBold"
+                                    Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}"
                                     Text="{Binding SSACount}" />
                             </StackPanel>
                         </ToggleButton.Content>
