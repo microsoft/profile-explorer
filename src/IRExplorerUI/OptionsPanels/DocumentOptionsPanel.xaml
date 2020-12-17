@@ -62,6 +62,7 @@
                     Height="20"
                     Margin="4,0,0,0"
                     HorizontalAlignment="Right"
+                    BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                     Click="SyntaxEditButton_Click"
                     DockPanel.Dock="Right"
                     ToolTip="Edit colors used by selected IR syntax highlighting">

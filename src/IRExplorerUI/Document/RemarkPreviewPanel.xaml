@@ -26,8 +26,8 @@
     <Border
         x:Name="PanelBorder"
         Margin="0,0,6,6"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        Background="{DynamicResource BackgroundColor5Brush}"
+        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
         BorderThickness="1,1,1,1">
         <Border.Effect>
             <DropShadowEffect
@@ -87,7 +87,7 @@
 
             <Border
                 Grid.Row="0"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource BackgroundColor5Brush}"
                 BorderBrush="DimGray"
                 BorderThickness="0,0,0,1">
                 <DockPanel
@@ -383,7 +383,7 @@
             <DockPanel Grid.Row="3" LastChildFill="True">
                 <Border
                     Height="20"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     BorderBrush="DimGray"
                     BorderThickness="0,0,0,1"
                     DockPanel.Dock="Top">

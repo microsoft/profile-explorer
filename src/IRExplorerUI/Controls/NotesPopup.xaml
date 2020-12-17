@@ -16,8 +16,8 @@
     mc:Ignorable="d">
     <Border
         Margin="0,0,6,6"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        Background="{DynamicResource BackgroundColor5Brush}"
+        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
         BorderThickness="1,1,1,1">
         <Border.Effect>
             <DropShadowEffect

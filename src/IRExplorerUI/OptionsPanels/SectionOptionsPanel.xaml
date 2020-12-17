@@ -9,7 +9,7 @@
     d:DesignHeight="250"
     d:DesignWidth="350"
     mc:Ignorable="d">
-    <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+    <Grid Background="{DynamicResource BackgroundColor5Brush}">
         <StackPanel Margin="4,4,4,4">
             <TextBlock FontWeight="DemiBold" Text="Section List" />
             <StackPanel Orientation="Horizontal">
@@ -22,7 +22,7 @@
                     Width="20"
                     Height="20"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     BorderBrush="{x:Null}"
                     Click="EditButton_Click"
                     ToolTip="Edit section style definition file (JSON format)">
@@ -34,7 +34,7 @@
                     Width="20"
                     Height="20"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     BorderBrush="{x:Null}"
                     Click="ReloadButton_Click"
                     ToolTip="Reload the session style definitions">

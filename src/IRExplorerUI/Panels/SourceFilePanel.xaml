@@ -21,7 +21,7 @@
         <Grid
             Grid.Row="0"
             HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            Background="{DynamicResource BackgroundColor5Brush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="25" />
@@ -31,12 +31,12 @@
                 Height="28"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource BackgroundColor5Brush}"
                 IsLocked="True">
                 <ToolBar
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     Loaded="ToolBar_Loaded">
                     <TextBlock
                         Margin="5,0,0,0"
@@ -49,7 +49,7 @@
                         Margin="4,0,0,0"
                         HorizontalAlignment="Center"
                         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}" />
                     <Button Click="Button_Click" ToolTip="Select source file">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{StaticResource FolderIcon}" />

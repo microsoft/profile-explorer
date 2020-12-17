@@ -325,7 +325,7 @@
                             x:Name="ExternalAppPathTextbox"
                             Height="20"
                             Margin="8,0,62,0"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                             IsEnabled="{Binding ElementName=ExternalDiffRadioButton, Path=IsChecked}"
                             Text="{Binding ExternalDiffAppPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <Button

@@ -25,7 +25,7 @@
         <Grid
             Grid.Row="0"
             HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            Background="{DynamicResource BackgroundColor5Brush}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="25" />
@@ -35,12 +35,12 @@
                 Height="28"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource BackgroundColor5Brush}"
                 IsLocked="True">
                 <ToolBar
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     Loaded="ToolBar_Loaded">
                     <Button
                         Command="local:BookmarkCommand.JumpToBookmark"
@@ -81,11 +81,11 @@
                     </Button>
                     <Separator />
 
-                    <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                    <Menu VerticalAlignment="Center" Background="{DynamicResource BackgroundColor5Brush}">
                         <MenuItem
                             Margin="0,0,0,0"
                             Padding="0,2,2,2"
-                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                            Background="{DynamicResource BackgroundColor5Brush}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             Header="Remove"
                             OverridesDefaultStyle="True">

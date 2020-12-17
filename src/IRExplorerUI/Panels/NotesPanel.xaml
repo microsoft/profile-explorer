@@ -22,19 +22,19 @@
         <DockPanel
             Grid.Row="0"
             HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            Background="{DynamicResource BackgroundColor5Brush}">
             <ToolBarTray
                 Grid.Row="0"
                 Grid.Column="2"
                 Height="28"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                Background="{DynamicResource BackgroundColor5Brush}"
                 IsLocked="True">
                 <ToolBar
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     Loaded="ToolBar_Loaded">
                     <TextBlock
                         Margin="5,0,0,0"
@@ -48,7 +48,7 @@
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                         Loaded="ComboBox_Loaded"
                         SelectedIndex="0"
                         SelectionChanged="FilterComboBox_SelectionChanged">

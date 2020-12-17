@@ -706,7 +706,7 @@
             HorizontalAlignment="Left"
             VerticalAlignment="Top"
             Panel.ZIndex="99"
-            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+            BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
             BorderThickness="0,2,2,2"
             Visibility="Collapsed">
             <local:SectionPanel

@@ -373,8 +373,9 @@
                             <ToggleButton
                                 x:Name="DiffModeButton"
                                 Padding="2,1,2,1"
-                                VerticalAlignment="Center"
+                                VerticalAlignment="Stretch"
                                 BorderBrush="{x:Null}"
+                                BorderThickness="0"
                                 Checked="ToggleButton_Checked"
                                 FontSize="11"
                                 FontWeight="DemiBold"
@@ -411,7 +412,7 @@
                                     x:Name="DiffSettingsButton"
                                     Width="16"
                                     Padding="0,0,0,0"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Stretch"
                                     BorderBrush="{x:Null}"
                                     Click="DiffSettingsButton_Click"
                                     ToolTip="Show diff settings panel">
@@ -433,7 +434,7 @@
                                 <Button
                                     x:Name="PreviousDiffButton"
                                     Width="16"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Stretch"
                                     BorderBrush="{x:Null}"
                                     Click="PreviousDiffButton_Click"
                                     ToolTip="Go backward by one section in both the left and right side">
@@ -450,7 +451,7 @@
                                 <Button
                                     x:Name="NextDiffButton"
                                     Width="16"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Stretch"
                                     BorderBrush="{x:Null}"
                                     Click="NextDiffButton_Click"
                                     ToolTip="Go forward by one section in both the left and right side">
@@ -473,14 +474,14 @@
                                     x:Name="DiffSwapButton"
                                     Width="16"
                                     Padding="0,0,0,0"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Stretch"
                                     BorderBrush="{x:Null}"
                                     Click="DiffSwapButton_Click"
                                     ToolTip="Swap left/right diff documents">
                                     <Image
                                         Width="14"
                                         Height="14"
-                                        VerticalAlignment="Center"
+                                        VerticalAlignment="Stretch"
                                         SnapsToDevicePixels="True"
                                         Source="{StaticResource SwitchIcon}"
                                         UseLayoutRounding="True" />
@@ -493,7 +494,7 @@
                                 <TextBlock
                                     x:Name="DiffStatusText"
                                     Margin="4,0,4,0"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Stretch"
                                     FontSize="11"
                                     FontWeight="Bold"
                                     ToolTip="Number of Added, Deleted, Modified lines" />
@@ -501,7 +502,7 @@
                                 <Button
                                     x:Name="PreviousSegmentDiffButton"
                                     Width="16"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Stretch"
                                     BorderBrush="{x:Null}"
                                     Click="PreviousSegmentDiffButton_Click"
                                     ToolTip="Go to previous difference">
@@ -518,7 +519,7 @@
                                 <Button
                                     x:Name="NextDiffSegmentButton"
                                     Width="16"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Stretch"
                                     BorderBrush="{x:Null}"
                                     Click="NextDiffSegmentButton_Click"
                                     ToolTip="Go to next difference">
@@ -538,12 +539,15 @@
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"
+                        Background="{DynamicResource WindowBackgroundBrush}"
+                        BorderBrush="{DynamicResource SeparatorBrush}"
                         BorderThickness="0,0,1,0">
                         <Button
                             x:Name="ShareButton"
                             Padding="2,1,2,1"
-                            VerticalAlignment="Center"
+                            VerticalAlignment="Stretch"
                             BorderBrush="{x:Null}"
+                            BorderThickness="0"
                             Click="ShareButton_Click"
                             FontSize="11"
                             FontWeight="DemiBold"
@@ -569,12 +573,15 @@
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"
+                        Background="{DynamicResource WindowBackgroundBrush}"
+                        BorderBrush="{DynamicResource SeparatorBrush}"
                         BorderThickness="0,0,1,0">
                         <Button
                             x:Name="FindButton"
                             Padding="2,1,2,1"
-                            VerticalAlignment="Center"
+                            VerticalAlignment="Stretch"
                             BorderBrush="{x:Null}"
+                            BorderThickness="0"
                             Click="FindButton_Click"
                             FontSize="11"
                             FontWeight="DemiBold"

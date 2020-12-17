@@ -23,7 +23,7 @@
             Width="2"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" />
+            Background="{DynamicResource BackgroundColor5Brush}" />
         <local:SectionPanel
             x:Name="DiffPanel"
             Grid.Column="2"
