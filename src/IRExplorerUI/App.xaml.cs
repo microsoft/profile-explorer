@@ -467,10 +467,14 @@ namespace IRExplorerUI {
             AppStartTime = DateTime.UtcNow;
             base.OnStartup(e);
 
+#if DEBUG
             if (!Debugger.IsAttached) {
-                //? TODO: Disable UI only when the /automation arg is used
-                SetupExceptionHandling(true);
+                SetupExceptionHandling(false);
             }
+#else
+            SetupExceptionHandling(true);
+            
+#endif
 
             // Enable file output for tracing.
             try {

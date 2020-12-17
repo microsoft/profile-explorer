@@ -81,12 +81,14 @@
                     </Button>
                     <Separator />
 
-                    <Menu VerticalAlignment="Center" Background="{DynamicResource BackgroundColor5Brush}">
+                    <Menu
+                        VerticalAlignment="Center"
+                        Background="{DynamicResource BackgroundColor5Brush}"
+                        BorderBrush="{DynamicResource BackgroundColor5Brush}"
+                        Foreground="{DynamicResource WindowForegroundBrush}">
                         <MenuItem
                             Margin="0,0,0,0"
                             Padding="0,2,2,2"
-                            Background="{DynamicResource BackgroundColor5Brush}"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             Header="Remove"
                             OverridesDefaultStyle="True">
                             <MenuItem.Icon>
@@ -119,26 +121,29 @@
             x:Name="BookmarkList"
             Grid.Row="1"
             Margin="0,-1,0,0"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+            Background="{DynamicResource DataGridBackgroundBrush}"
             BorderBrush="{x:Null}"
-            BorderThickness="0,0,0,0"
+            BorderThickness="0"
             VirtualizingPanel.IsVirtualizing="True"
             VirtualizingPanel.VirtualizationMode="Recycling">
             <ListView.View>
                 <GridView>
+                    <GridView.ColumnHeaderContainerStyle>
+                        <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}" />
+                    </GridView.ColumnHeaderContainerStyle>
                     <GridViewColumn
                         Width="30"
                         DisplayMemberBinding="{Binding Index}"
                         Header="#">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
                     <GridViewColumn Width="30" Header="Pin">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -158,7 +163,7 @@
                         DisplayMemberBinding="{Binding Line}"
                         Header="Line">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -168,14 +173,14 @@
                         DisplayMemberBinding="{Binding Block}"
                         Header="Block">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
                     </GridViewColumn>
                     <GridViewColumn Width="300" Header="Description">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>

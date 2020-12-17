@@ -89,6 +89,7 @@
                             <Button
                                 x:Name="OpenButton"
                                 Height="24"
+                                Margin="2,0,0,0"
                                 Padding="6,1,6,1"
                                 HorizontalAlignment="Right"
                                 Click="OpenFileButton_Click"
@@ -127,6 +128,7 @@
                             <Button
                                 x:Name="OpenBaseDiffFilesButton"
                                 Height="24"
+                                Margin="2,0,0,0"
                                 Padding="6,1,6,1"
                                 HorizontalAlignment="Right"
                                 VerticalAlignment="Top"

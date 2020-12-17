@@ -285,7 +285,7 @@
                                     Height="16"
                                     Margin="0,1,0,0"
                                     Source="{StaticResource RemarkIcon}" />
-                                <TextBlock Foreground="{Binding Path=(TextElement.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Text="Remarks" />
+                                <TextBlock Foreground="{Binding Path=(ToggleButton.Foreground), RelativeSource={RelativeSource AncestorType=ContentPresenter}}" Text="Remarks" />
                             </StackPanel>
                         </ToggleButton>
                         <ToggleButton

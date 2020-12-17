@@ -905,6 +905,7 @@
             </ComboBox>
             <Separator />
             <TextBlock
+                Margin="2,0,0,0"
                 VerticalAlignment="Center"
                 FontSize="11"
                 Text="Theme" />

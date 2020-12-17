@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:toolkit="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     d:DesignHeight="600"
-    d:DesignWidth="400              "
+    d:DesignWidth="400"
     mc:Ignorable="d">
     <Grid>
         <StackPanel Margin="4,4,4,4">

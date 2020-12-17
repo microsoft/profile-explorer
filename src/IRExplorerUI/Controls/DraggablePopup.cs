@@ -11,9 +11,6 @@ namespace IRExplorerUI.Controls {
         private bool isDetached_;
 
         public DraggablePopup() {
-            Style style = this.FindResource("FlatPopupStyle") as Style;
-            this.Style = style;
-
             MouseDown += (sender, e) => {
                 if (ShouldStartDragging()) {
                     Thumb.RaiseEvent(e);

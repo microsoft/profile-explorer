@@ -11,10 +11,11 @@
     Height="200"
     Loaded="Window_Loaded"
     ShowInTaskbar="False"
+    Style="{DynamicResource FlatWindowStyle}"
     WindowStartupLocation="CenterOwner"
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
-    <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="48" />
@@ -35,7 +36,8 @@
                     Height="22"
                     Margin="0,0,55,0"
                     HorizontalAlignment="Stretch"
-                    BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
+                    Background="{DynamicResource TextBoxBackgroundBrush}"
+                    BorderBrush="{DynamicResource TextBoxBorderBrush}"
                     FilterMode="StartsWithOrdinal"
                     IsDropDownOpen="True"
                     IsTextCompletionEnabled="False"
@@ -59,8 +61,8 @@
                     Height="22"
                     Margin="0,0,55,0"
                     HorizontalAlignment="Stretch"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                    BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
+                    Background="{DynamicResource TextBoxBackgroundBrush}"
+                    BorderBrush="{DynamicResource TextBoxBorderBrush}"
                     FilterMode="StartsWithOrdinal"
                     IsDropDownOpen="True"
                     IsTextCompletionEnabled="False"
@@ -118,7 +120,6 @@
                 x:Name="UpdateButton"
                 Height="24"
                 Padding="4,1,4,1"
-                Background="#FFFCF4CC"
                 Click="UpdateButton_Click"
                 Content="Open Files"
                 TabIndex="3" />

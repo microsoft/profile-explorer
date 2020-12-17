@@ -15,97 +15,100 @@
     StaysOpen="False"
     UseLayoutRounding="True"
     mc:Ignorable="d">
-    <Border
-        Margin="0,0,6,6"
-        Background="{DynamicResource WindowBackgroundBrush}"
-        BorderBrush="{DynamicResource ButtonBorderBrush}"
-        BorderThickness="1,1,1,1">
-        <Border.Effect>
-            <DropShadowEffect
-                BlurRadius="5"
-                Direction="315"
-                RenderingBias="Performance"
-                ShadowDepth="2"
-                Color="#FF929292" />
-        </Border.Effect>
-        <DockPanel LastChildFill="True">
-            <DockPanel
-                x:Name="SearchPanelHost"
-                DockPanel.Dock="Top"
-                LastChildFill="True">
-                <doc:SearchPanel
-                    x:Name="SearchPanel"
-                    Height="28"
-                    Margin="-1,-1,0,0"
-                    Background="{DynamicResource WindowBackgroundBrush}"
-                    DockPanel.Dock="Left" />
+    <ContentControl Style="{DynamicResource FlatControlStyle}">
+        <Border
+            Margin="0,0,6,6"
+            Background="{DynamicResource WindowBackgroundBrush}"
+            BorderBrush="{DynamicResource ButtonBorderBrush}"
+            BorderThickness="1,1,1,1">
+            <Border.Effect>
+                <DropShadowEffect
+                    BlurRadius="5"
+                    Direction="315"
+                    RenderingBias="Performance"
+                    ShadowDepth="2"
+                    Color="#FF929292" />
+            </Border.Effect>
+            <DockPanel LastChildFill="True">
+                <DockPanel
+                    x:Name="SearchPanelHost"
+                    DockPanel.Dock="Top"
+                    LastChildFill="True">
+                    <doc:SearchPanel
+                        x:Name="SearchPanel"
+                        Height="28"
+                        Margin="-1,-1,0,0"
+                        Background="{DynamicResource WindowBackgroundBrush}"
+                        DockPanel.Dock="Left" />
 
-                <Border
-                    BorderBrush="{DynamicResource ButtonBorderBrush}"
-                    BorderThickness="0,0,0,1"
-                    DockPanel.Dock="Right">
-                    <Grid>
-                        <StackPanel Margin="4,4,4,4" Orientation="Horizontal">
-                            <CheckBox
-                                VerticalAlignment="Center"
-                                Content="Search all functions"
-                                IsChecked="{Binding Path=SearchAllFunctions}"
-                                ToolTip="Search over all functions part of the opened document" />
-                            <CheckBox
-                                Margin="8,0,0,0"
-                                VerticalAlignment="Center"
-                                Content="Include pass output"
-                                IsChecked="{Binding Path=SearchPassOutput}"
-                                ToolTip="Search over the additional text associated with sections" />
-                        </StackPanel>
-                        <Button
-                            x:Name="PinPanelButton"
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
-                            Margin="0,0,2,0"
-                            HorizontalAlignment="Right"
-                            Background="#01FFFFFF"
-                            BorderBrush="{x:Null}"
-                            Click="PinPanelButton_Click"
-                            Visibility="{Binding IsPanelDetached, Converter={StaticResource InvertedBoolToVisibility}}">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource PinIcon}" />
-                        </Button>
-                        <Button
-                            x:Name="ClosePanelButton"
-                            Grid.Row="0"
-                            Width="20"
-                            Height="20"
-                            Margin="0,0,2,0"
-                            HorizontalAlignment="Right"
-                            Background="#01FFFFFF"
-                            BorderBrush="{x:Null}"
-                            Click="ClosePanelButton_Click"
-                            Visibility="{Binding IsPanelDetached, Converter={StaticResource BoolToVisibility}}">
-                            <Image
-                                Width="16"
-                                Height="16"
-                                Source="{StaticResource CloseIcon}" />
-                        </Button>
-                    </Grid>
-                </Border>
+                    <Border
+                        BorderBrush="{DynamicResource ButtonBorderBrush}"
+                        BorderThickness="0,0,0,1"
+                        DockPanel.Dock="Right">
+                        <Grid>
+                            <StackPanel Margin="4,4,4,4" Orientation="Horizontal">
+                                <CheckBox
+                                    VerticalAlignment="Center"
+                                    Content="Search all functions"
+                                    IsChecked="{Binding Path=SearchAllFunctions}"
+                                    ToolTip="Search over all functions part of the opened document" />
+                                <CheckBox
+                                    Margin="8,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Content="Include pass output"
+                                    IsChecked="{Binding Path=SearchPassOutput}"
+                                    ToolTip="Search over the additional text associated with sections" />
+                            </StackPanel>
+                            <Button
+                                x:Name="PinPanelButton"
+                                Grid.Row="0"
+                                Width="20"
+                                Height="20"
+                                Margin="0,0,2,0"
+                                HorizontalAlignment="Right"
+                                Background="#01FFFFFF"
+                                BorderBrush="{x:Null}"
+                                Click="PinPanelButton_Click"
+                                Visibility="{Binding IsPanelDetached, Converter={StaticResource InvertedBoolToVisibility}}">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource PinIcon}" />
+                            </Button>
+                            <Button
+                                x:Name="ClosePanelButton"
+                                Grid.Row="0"
+                                Width="20"
+                                Height="20"
+                                Margin="0,0,2,0"
+                                HorizontalAlignment="Right"
+                                Background="#01FFFFFF"
+                                BorderBrush="{x:Null}"
+                                Click="ClosePanelButton_Click"
+                                Visibility="{Binding IsPanelDetached, Converter={StaticResource BoolToVisibility}}">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Source="{StaticResource CloseIcon}" />
+                            </Button>
+                        </Grid>
+                    </Border>
+                </DockPanel>
+
+                <Grid DockPanel.Dock="Bottom">
+                    <controls:ResizeGrip
+                        x:Name="PanelResizeGrip"
+                        Grid.Row="0"
+                        Width="16"
+                        Height="16"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Bottom"
+                        Panel.ZIndex="100" />
+
+                    <irexplorer:SearchResultsPanel x:Name="ResultsPanel" />
+                </Grid>
             </DockPanel>
+        </Border>
+    </ContentControl>
 
-            <Grid DockPanel.Dock="Bottom">
-                <controls:ResizeGrip
-                    x:Name="PanelResizeGrip"
-                    Grid.Row="0"
-                    Width="16"
-                    Height="16"
-                    HorizontalAlignment="Right"
-                    VerticalAlignment="Bottom"
-                    Panel.ZIndex="100" />
-
-                <irexplorer:SearchResultsPanel x:Name="ResultsPanel" />
-            </Grid>
-        </DockPanel>
-    </Border>
 </controls:DraggablePopup>

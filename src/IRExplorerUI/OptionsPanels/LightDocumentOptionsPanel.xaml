@@ -40,7 +40,7 @@
         </DataTemplate>
     </local:OptionsPanelBase.Resources>
 
-    <Grid Background="{DynamicResource BackgroundColor5Brush}">
+    <Grid>
         <StackPanel Grid.Row="0" Margin="4,4,4,4">
             <TextBlock FontWeight="DemiBold" Text="Document Style" />
 

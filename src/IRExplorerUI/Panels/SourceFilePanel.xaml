@@ -47,9 +47,7 @@
                         Name="PathTextbox"
                         Width="400"
                         Margin="4,0,0,0"
-                        HorizontalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}" />
+                        HorizontalAlignment="Center" />
                     <Button Click="Button_Click" ToolTip="Select source file">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{StaticResource FolderIcon}" />

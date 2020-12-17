@@ -122,20 +122,22 @@
             x:Name="ResultList"
             Grid.Row="1"
             Margin="0,-1,0,0"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+            Background="{DynamicResource DataGridBackgroundBrush}"
             BorderBrush="{x:Null}"
-            BorderThickness="0,0,0,0"
+            BorderThickness="0"
             VirtualizingPanel.IsVirtualizing="True"
             VirtualizingPanel.VirtualizationMode="Recycling">
             <ListView.View>
                 <GridView>
-
+                    <GridView.ColumnHeaderContainerStyle>
+                        <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}" />
+                    </GridView.ColumnHeaderContainerStyle>
                     <GridViewColumn
                         Width="300"
                         DisplayMemberBinding="{Binding SectionName}"
                         Header="Section">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -146,7 +148,7 @@
                         DisplayMemberBinding="{Binding Index}"
                         Header="#">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
@@ -154,7 +156,7 @@
 
                     <GridViewColumn Width="380" Header="Search result">
                         <GridViewColumn.HeaderContainerStyle>
-                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Style BasedOn="{StaticResource HeaderStyle}" TargetType="{x:Type GridViewColumnHeader}">
                                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                             </Style>
                         </GridViewColumn.HeaderContainerStyle>
