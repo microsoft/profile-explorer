@@ -43,14 +43,14 @@
     <Grid>
         <StackPanel Grid.Row="0" Margin="4,4,4,4">
             <TextBlock FontWeight="DemiBold" Text="Document Style" />
-            <StackPanel Margin="0,4,0,2" Orientation="Horizontal">
+            <StackPanel Margin="0,8,0,2" Orientation="Horizontal">
                 <TextBlock
                     Width="50"
                     VerticalAlignment="Center"
                     Text="IR syntax" />
                 <ComboBox
                     Name="IRSyntaxCombobox"
-                    Width="180"
+                    Width="200"
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
                     DisplayMemberPath="Name"
@@ -155,7 +155,7 @@
                     VerticalAlignment="Center"
                     Text="Font" />
                 <ComboBox
-                    Width="180"
+                    Width="200"
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
                     IsSynchronizedWithCurrentItem="True"
@@ -194,7 +194,7 @@
 
             <CheckBox
                 x:Name="HighlightDefinitionCheckbox"
-                Margin="0,4,0,2"
+                Margin="0,8,0,2"
                 Content="Highlight definition(s) of selected source value"
                 IsChecked="{Binding Path=HighlightSourceDefinition, Mode=TwoWay}" />
             <CheckBox
@@ -242,12 +242,26 @@
                 IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
             <Separator Margin="0,4,0,4" />
 
-            <DockPanel>
-                <TextBlock FontWeight="DemiBold" Text="Document Colors" />
+            <TextBlock FontWeight="DemiBold" Text="Document Colors" />
+
+            <StackPanel Margin="0,8,0,4" Orientation="Horizontal">
+                <TextBlock
+                    Width="50"
+                    VerticalAlignment="Center"
+                    Text="Theme" />
+                <ComboBox
+                    Width="200"
+                    Margin="4,0,0,0"
+                    VerticalAlignment="Center"
+                    IsSynchronizedWithCurrentItem="True"
+                    ItemsSource="{Binding Source={StaticResource FontCollection}}"
+                    SelectedValue="{Binding Path=FontName, Mode=TwoWay, Converter={StaticResource FontFamilyConverter}}" />
+
                 <Button
                     x:Name="StyleButton"
                     Width="20"
                     Height="20"
+                    Margin="4,0,0,0"
                     HorizontalAlignment="Right"
                     BorderBrush="{x:Null}"
                     Click="StyleButton_Click"
@@ -260,7 +274,9 @@
                         </ContextMenu>
                     </Button.ContextMenu>
                 </Button>
-            </DockPanel>
+            </StackPanel>
+
+
             <StackPanel Margin="0,0,0,0" Orientation="Vertical">
 
                 <Grid>
@@ -376,7 +392,7 @@
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="DemiBold" Text="IR Value Colors" />
-            <StackPanel Margin="0,4,0,0" Orientation="Vertical">
+            <StackPanel Margin="0,8,0,0" Orientation="Vertical">
 
                 <Grid>
                     <Grid.ColumnDefinitions>

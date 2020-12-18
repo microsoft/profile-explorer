@@ -137,9 +137,10 @@
         <local:LightIRDocument
             x:Name="TextView"
             Grid.Row="1"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+            Background="{DynamicResource TextBoxBackgroundBrush}"
             FontFamily="Consolas"
             FontSize="12"
+            Foreground="{DynamicResource TextBoxForegroundBrush}"
             HorizontalScrollBarVisibility="Auto"
             ScrollViewer.ScrollChanged="TextView_ScrollChanged"
             ShowLineNumbers="True"

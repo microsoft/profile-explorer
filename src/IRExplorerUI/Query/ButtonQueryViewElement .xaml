@@ -8,7 +8,6 @@
     Height="24"
     d:DesignHeight="50"
     d:DesignWidth="200"
-    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
     mc:Ignorable="d">
     <UserControl.Resources>
         <Style x:Key="ButtonStyle" TargetType="{x:Type Button}">
@@ -22,15 +21,18 @@
             </Style.Triggers>
         </Style>
     </UserControl.Resources>
-    <Button
-        Height="20"
-        MinWidth="20"
-        Margin="2,0,2,0"
-        Padding="4,0,4,0"
-        VerticalAlignment="Center"
-        Click="Button_Click"
-        Content="{Binding Text}"
-        IsEnabled="{Binding IsEnabled}"
-        Style="{StaticResource ButtonStyle}"
-        ToolTip="{Binding Description}" />
+
+    <ContentControl Style="{DynamicResource FlatControlStyle}">
+        <Button
+            Height="20"
+            MinWidth="20"
+            Margin="2,0,2,0"
+            Padding="4,0,4,0"
+            VerticalAlignment="Center"
+            Click="Button_Click"
+            Content="{Binding Text}"
+            IsEnabled="{Binding IsEnabled}"
+            Style="{StaticResource ButtonStyle}"
+            ToolTip="{Binding Description}" />
+    </ContentControl>
 </UserControl>

@@ -9,9 +9,9 @@
     mc:Ignorable="d">
     <Border
         Height="22"
-        BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+        BorderBrush="{DynamicResource ButtonBorderBrush}"
         BorderThickness="1,1,1,1">
-        <StackPanel Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}" Orientation="Horizontal">
+        <StackPanel Background="{DynamicResource HighlightColor1Brush}" Orientation="Horizontal">
             <Image
                 Width="16"
                 Height="16"
@@ -26,7 +26,7 @@
                             Padding="0,0,0,2"
                             HorizontalContentAlignment="Center"
                             VerticalContentAlignment="Center"
-                            Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}"
+                            Background="{DynamicResource HighlightColor1Brush}"
                             BorderThickness="0,0,1,0"
                             Click="ActionButton_Click"
                             Content="{Binding Name}"
@@ -46,7 +46,7 @@
                 Width="Auto"
                 Height="Auto"
                 Padding="2,2,2,2"
-                Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
+                Background="{DynamicResource AccentBackgroundBrush}"
                 BorderThickness="0"
                 Click="RemarkButton_Click"
                 Visibility="{Binding ShowRemarksButton, Converter={StaticResource BoolToVisibility}}">

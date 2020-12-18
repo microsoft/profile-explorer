@@ -16,11 +16,11 @@
         <Style x:Key="BackgroundStyle" TargetType="{x:Type DockPanel}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsWarning}" Value="True">
-                    <Setter Property="Background" Value="#FAD5D2" />
+                    <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsWarning}" Value="False">
-                    <Setter Property="Background" Value="#FFFCE7" />
+                    <Setter Property="Background" Value="{DynamicResource HighlightColor1Brush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -88,7 +88,6 @@
                                 <CheckBox
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     IsChecked="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                             </DataTemplate>
                         </Setter.Value>
@@ -119,7 +118,6 @@
                                     Width="100"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     IsEnabled="{Binding Path=IsInput}"
                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                     TextAlignment="Right"
@@ -137,7 +135,6 @@
                                     Width="75"
                                     HorizontalAlignment="Right"
                                     VerticalAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     IsEnabled="{Binding Path=IsInput}"
                                     Text="{Binding Path=Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                                     ToolTip="String value expected" />
@@ -168,7 +165,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" BorderThickness="0,1,0,0">
+    <Border BorderBrush="{DynamicResource ButtonBorderBrush}" BorderThickness="0,1,0,0">
         <DockPanel LastChildFill="True" Style="{StaticResource BackgroundStyle}">
             <TextBlock
                 Margin="4,0,4,0"

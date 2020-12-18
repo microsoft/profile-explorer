@@ -27,6 +27,12 @@ namespace IRExplorerUI.Compilers.UTC {
         public bool Execute(QueryData data) {
             data.ResetResults();
             var element = data.GetInput<IRElement>("Operand");
+
+            if (element == null) {
+                data.SetOutputWarning("No IR element selected", "Select an IR element on which to run the query");
+                return false;
+            }
+
             string vn = UTCRemarkParser.ExtractVN(element);
 
             if (vn == null) {

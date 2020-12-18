@@ -39,6 +39,7 @@
                     Background="{DynamicResource TextBoxBackgroundBrush}"
                     BorderBrush="{DynamicResource TextBoxBorderBrush}"
                     FilterMode="StartsWithOrdinal"
+                    Foreground="{DynamicResource TextBoxForegroundBrush}"
                     IsDropDownOpen="True"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
@@ -64,6 +65,7 @@
                     Background="{DynamicResource TextBoxBackgroundBrush}"
                     BorderBrush="{DynamicResource TextBoxBorderBrush}"
                     FilterMode="StartsWithOrdinal"
+                    Foreground="{DynamicResource TextBoxForegroundBrush}"
                     IsDropDownOpen="True"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
@@ -120,6 +122,7 @@
                 x:Name="UpdateButton"
                 Height="24"
                 Padding="4,1,4,1"
+                Background="{DynamicResource HighlightColor1Brush}"
                 Click="UpdateButton_Click"
                 Content="Open Files"
                 TabIndex="3" />

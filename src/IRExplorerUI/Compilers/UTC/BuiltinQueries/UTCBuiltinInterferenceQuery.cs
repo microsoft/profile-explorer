@@ -137,7 +137,14 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         private bool Execute(QueryData data, MarkingScope markingScope) {
+            data.ResetResults();
             var element = data.GetInput<IRElement>(0);
+
+            if(element == null) {
+                data.SetOutputWarning("No IR element selected", "Select an IR element on which to run the query");
+                return false;
+            }
+
             var onlyReaching = data.GetInput<bool>(1);
             var onlyReachable = data.GetInput<bool>(2);
             var isTemporary = data.GetInput<bool>(1);

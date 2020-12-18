@@ -17,11 +17,11 @@
         <Style x:Key="BackgroundStyle" TargetType="{x:Type DockPanel}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsWarning}" Value="True">
-                    <Setter Property="Background" Value="#FFD2CE" />
+                    <Setter Property="Background" Value="{DynamicResource WarningBrush}" />
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsWarning}" Value="False">
-                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    <Setter Property="Background" Value="{DynamicResource HighlightColor2Brush}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -103,7 +103,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Border BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" BorderThickness="0,1,0,0">
+    <Border BorderBrush="{DynamicResource ButtonBorderBrush}" BorderThickness="0,1,0,0">
         <DockPanel LastChildFill="True" Style="{StaticResource BackgroundStyle}">
             <TextBlock
                 Margin="4,0,4,0"

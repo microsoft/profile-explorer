@@ -46,9 +46,15 @@
                     <TextBox
                         Name="PathTextbox"
                         Width="400"
+                        Margin="8,0,0,0"
+                        HorizontalAlignment="Center"
+                        Background="{DynamicResource TextBoxBackgroundBrush}"
+                        BorderBrush="{DynamicResource TextBoxBorderBrush}"
+                        Foreground="{DynamicResource TextBoxForegroundBrush}" />
+                    <Button
                         Margin="4,0,0,0"
-                        HorizontalAlignment="Center" />
-                    <Button Click="Button_Click" ToolTip="Select source file">
+                        Click="Button_Click"
+                        ToolTip="Select source file">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{StaticResource FolderIcon}" />
                             <TextBlock Margin="4,0,0,0" Text="Browse..." />
@@ -69,9 +75,10 @@
             xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
             x:Name="TextView"
             Grid.Row="1"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+            Background="{DynamicResource TextBoxBackgroundBrush}"
             FontFamily="Consolas"
             FontSize="12"
+            Foreground="{DynamicResource TextBoxForegroundBrush}"
             HorizontalScrollBarVisibility="Auto"
             ShowLineNumbers="True"
             SyntaxHighlighting="C++"

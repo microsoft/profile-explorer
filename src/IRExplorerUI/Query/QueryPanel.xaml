@@ -13,59 +13,58 @@
     SnapsToDevicePixels="True"
     UseLayoutRounding="True"
     mc:Ignorable="d">
-
     <controls:DraggablePopup.Resources>
         <DataTemplate x:Key="ListElementTemplate">
             <local:QueryView />
         </DataTemplate>
     </controls:DraggablePopup.Resources>
 
-    <Border
-        Margin="0,0,6,6"
-        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
-        BorderThickness="1,1,1,1">
-        <Border.Effect>
-            <DropShadowEffect
-                BlurRadius="5"
-                Direction="315"
-                RenderingBias="Performance"
-                ShadowDepth="2"
-                Color="#FF929292" />
-        </Border.Effect>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="20" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="20" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+    <ContentControl Style="{DynamicResource FlatControlStyle}">
+        <Border
+            Margin="0,0,6,6"
+            BorderBrush="{DynamicResource ButtonBorderBrush}"
+            BorderThickness="1,1,1,1">
+            <Border.Effect>
+                <DropShadowEffect
+                    BlurRadius="5"
+                    Direction="315"
+                    RenderingBias="Performance"
+                    ShadowDepth="2"
+                    Color="#FF929292" />
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <Grid
-                Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="3">
-                <Grid.Style>
-                    <Style TargetType="Grid">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ActiveCaptionBrushKey}}" />
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding IsActivePanel}" Value="False">
-                                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </Grid.Style>
+                <Grid
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3">
+                    <Grid.Style>
+                        <Style TargetType="Grid">
+                            <Setter Property="Background" Value="{DynamicResource AccentBackgroundBrush2}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsActivePanel}" Value="False">
+                                    <Setter Property="Background" Value="{DynamicResource AccentBackgroundBrush1}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Grid.Style>
 
-                <TextBlock
-                    Margin="4,0,0,0"
-                    VerticalAlignment="Center"
-                    FontWeight="DemiBold"
-                    Text="{Binding PanelTitle}" />
-            </Grid>
-            <!--<Button
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="DemiBold"
+                        Text="{Binding PanelTitle}" />
+                </Grid>
+                <!--<Button
                 Grid.Row="0"
                 Grid.Column="1"
                 client:ContextMenuLeftClickBehavior.IsLeftClickEnabled="True"
@@ -81,49 +80,50 @@
                     <ContextMenu x:Name="QueryContextMenu" />
                 </Button.ContextMenu>
             </Button>-->
-            <Button
-                x:Name="CloseButton"
-                Grid.Row="0"
-                Grid.Column="2"
-                Background="{x:Null}"
-                BorderBrush="{x:Null}"
-                Click="CloseButton_Click"
-                ToolTip="Close query panel">
-                <Image
+                <Button
+                    x:Name="CloseButton"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Background="{x:Null}"
+                    BorderBrush="{x:Null}"
+                    Click="CloseButton_Click"
+                    ToolTip="Close query panel">
+                    <Image
+                        Width="16"
+                        Height="16"
+                        Source="{StaticResource CloseIcon}" />
+                </Button>
+
+                <ScrollViewer
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    HorizontalAlignment="Stretch"
+                    CanContentScroll="True"
+                    HorizontalScrollBarVisibility="Disabled"
+                    VerticalScrollBarVisibility="Auto"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+
+                    <ItemsControl x:Name="QueryViewList" ItemTemplate="{StaticResource ListElementTemplate}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                </ScrollViewer>
+
+                <controls:ResizeGrip
+                    x:Name="PanelResizeGrip"
+                    Grid.Row="1"
+                    Grid.Column="2"
                     Width="16"
                     Height="16"
-                    Source="{StaticResource CloseIcon}" />
-            </Button>
-
-            <ScrollViewer
-                Grid.Row="1"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
-                HorizontalAlignment="Stretch"
-                CanContentScroll="True"
-                HorizontalScrollBarVisibility="Disabled"
-                VerticalScrollBarVisibility="Auto"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
-
-                <ItemsControl x:Name="QueryViewList" ItemTemplate="{StaticResource ListElementTemplate}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                </ItemsControl>
-            </ScrollViewer>
-
-            <controls:ResizeGrip
-                x:Name="PanelResizeGrip"
-                Grid.Row="1"
-                Grid.Column="2"
-                Width="16"
-                Height="16"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Panel.ZIndex="100" />
-        </Grid>
-    </Border>
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Panel.ZIndex="100" />
+            </Grid>
+        </Border>
+    </ContentControl>
 </controls:DraggablePopup>

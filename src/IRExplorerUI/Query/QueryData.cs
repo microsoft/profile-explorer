@@ -195,7 +195,7 @@ namespace IRExplorerUI.Query {
 
         private static T ExtractInputValue<T>(QueryValue value) {
             if (value.Value == null) {
-                throw new InvalidOperationException($"Input value not set: {value.Name}");
+                return default(T);
             }
 
             if (value.Kind.HasFlag(QueryValueKind.Number)) {

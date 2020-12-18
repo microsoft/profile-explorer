@@ -26,10 +26,11 @@
             x:Name="TextView"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+            Background="{DynamicResource TextBoxBackgroundBrush}"
             DockPanel.Dock="Bottom"
             FontFamily="Consolas"
             FontSize="12"
+            Foreground="{DynamicResource TextBoxForegroundBrush}"
             HorizontalScrollBarVisibility="Disabled"
             ShowLineNumbers="True"
             VerticalScrollBarVisibility="Auto" />

@@ -67,7 +67,6 @@
 
                 <ItemsControl
                     x:Name="InputElementList"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     ItemTemplate="{StaticResource InputListTemplate}"
                     ItemsSource="{Binding InputValues}">
                     <ItemsControl.ItemsPanel>
@@ -79,7 +78,6 @@
 
                 <ItemsControl
                     x:Name="OutputElementList"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     ItemTemplate="{StaticResource OutputListTemplate}"
                     ItemsSource="{Binding OutputValues}">
                     <ItemsControl.ItemsPanel>
@@ -92,7 +90,7 @@
                 <ItemsControl
                     x:Name="ButtonList"
                     Padding="2,0,2,0"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                    Background="{DynamicResource BackgroundColor5Brush}"
                     ItemTemplate="{StaticResource ButtonListTemplate}"
                     ItemsSource="{Binding Buttons}">
                     <ItemsControl.ItemsPanel>

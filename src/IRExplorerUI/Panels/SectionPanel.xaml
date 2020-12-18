@@ -121,7 +121,7 @@
                         </TextBox>
                         <TextBlock
                             Margin="8,4"
-                            Foreground="DimGray"
+                            Foreground="{DynamicResource ButtonDisabledForegroundBrush}"
                             IsHitTestVisible="False"
                             Text="Search functions"
                             Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
@@ -288,7 +288,7 @@
                             </TextBox>
                             <TextBlock
                                 Margin="8,4"
-                                Foreground="DimGray"
+                                Foreground="{DynamicResource ButtonDisabledForegroundBrush}"
                                 IsHitTestVisible="False"
                                 Text="Search sections"
                                 Visibility="{Binding ElementName=SectionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
