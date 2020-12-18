@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:IRExplorerUI"
-    xmlns:plus="clr-namespace:WpfPlus;assembly=WpfPlusTheme"
+    xmlns:plus="clr-namespace:IRExplorerTheme;assembly=IRExplorerTheme"
     StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>

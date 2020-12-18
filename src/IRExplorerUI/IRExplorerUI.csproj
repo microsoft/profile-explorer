@@ -100,12 +100,7 @@
 		<ProjectReference Include="..\ClientServer\GrpcLib.csproj" />
 		<ProjectReference Include="..\IRExplorerCore\IRExplorerCore.csproj" />
 		<ProjectReference Include="..\IRExplorerLib\IRExplorerLib.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Reference Include="WpfPlusTheme">
-	    <HintPath>..\..\..\Users\lgrat\Downloads\WpfPlus-master\WpfPlusTheme\bin\Release\net5.0-windows\WpfPlusTheme.dll</HintPath>
-	  </Reference>
+		<ProjectReference Include="..\IRExplorerTheme\IRExplorerTheme.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

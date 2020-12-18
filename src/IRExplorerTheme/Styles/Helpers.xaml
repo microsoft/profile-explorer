@@ -1,0 +1,21 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:IRExplorerTheme.Styles">
+    <ControlTemplate x:Key="ValidationErrorOverlayTemplate">
+        <Border BorderThickness="2"
+                            BorderBrush="{DynamicResource ValidationErrorOverlayBorderBrush}"
+                            SnapsToDevicePixels="True">
+            <StackPanel Orientation="Vertical">
+                <AdornedElementPlaceholder x:Name="Adorner" />
+                <TextBlock Foreground="{DynamicResource ValidationErrorOverlayForegroundBrush}"
+                                       Background="{DynamicResource ValidationErrorOverlayBorderBrush}"
+                                       FontWeight="Bold"
+                                       Padding="2"
+                                       TextWrapping="Wrap"
+                                       Width="{Binding ElementName=Adorner, Path=ActualWidth}"
+                                       HorizontalAlignment="Stretch"
+                                       Text="{Binding ElementName=Adoner, Path=AdornerElement.(Validation.Errors)[0].ErrorContent, FallbackValue=Invalid Input}" />
+            </StackPanel>
+        </Border>
+    </ControlTemplate>
+</ResourceDictionary>

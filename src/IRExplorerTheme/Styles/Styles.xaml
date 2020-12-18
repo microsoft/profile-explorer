@@ -1,0 +1,109 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Helpers.xaml" />
+
+        <ResourceDictionary Source="WindowStyle.xaml" />
+        <ResourceDictionary Source="TabControlStyle.xaml" />
+        <ResourceDictionary Source="ButtonStyle.xaml" />
+        <ResourceDictionary Source="ToggleButtonStyle.xaml" />
+        <ResourceDictionary Source="TextBoxStyle.xaml" />
+        <ResourceDictionary Source="ComboBoxStyle.xaml" />
+        <ResourceDictionary Source="CheckBoxStyle.xaml" />
+        <ResourceDictionary Source="RadioButtonStyle.xaml" />
+        <ResourceDictionary Source="GroupBoxStyle.xaml" />
+        <ResourceDictionary Source="ListBoxStyle.xaml" />
+        <ResourceDictionary Source="DataGridStyle.xaml" />
+        <ResourceDictionary Source="ScrollBarStyle.xaml" />
+        <ResourceDictionary Source="ScrollViewerStyle.xaml" />
+        <ResourceDictionary Source="GridSplitterStyle.xaml" />
+        <ResourceDictionary Source="ToolbarStyles.xaml" />
+        <ResourceDictionary Source="SeparatorStyle.xaml" />
+        <ResourceDictionary Source="MenuStyle.xaml" />
+        <ResourceDictionary Source="SliderStyle.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <ResourceDictionary x:Key="ContainedStyles">
+        <Style BasedOn="{StaticResource TabControlStyle}" TargetType="{x:Type TabControl}">
+            <Setter Property="Background" Value="{DynamicResource TabControlContainedBackgroundBrush}" />
+        </Style>
+        <Style BasedOn="{StaticResource GroupBoxStyle}" TargetType="{x:Type GroupBox}">
+            <Setter Property="Background" Value="{DynamicResource GroupBoxContainedBackgroundBrush}" />
+        </Style>
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="FlatControlStyles">
+        <Style
+            BasedOn="{StaticResource TabControlStyle}"
+            Resources="{StaticResource ContainedStyles}"
+            TargetType="{x:Type TabControl}" />
+        <Style BasedOn="{StaticResource ButtonStyle}" TargetType="{x:Type Button}" />
+        <Style BasedOn="{StaticResource ToggleButtonStyle}" TargetType="{x:Type ToggleButton}" />
+        <Style BasedOn="{StaticResource TextBoxStyle}" TargetType="{x:Type TextBox}" />
+        <Style BasedOn="{StaticResource ComboBoxStyle}" TargetType="{x:Type ComboBox}" />
+        <Style BasedOn="{StaticResource CheckBoxStyle}" TargetType="{x:Type CheckBox}" />
+        <Style BasedOn="{StaticResource RadioButtonStyle}" TargetType="{x:Type RadioButton}" />
+        <Style
+            BasedOn="{StaticResource GroupBoxStyle}"
+            Resources="{StaticResource ContainedStyles}"
+            TargetType="{x:Type GroupBox}" />
+        <Style BasedOn="{StaticResource ListBoxStyle}" TargetType="{x:Type ListBox}" />
+        <Style BasedOn="{StaticResource DataGridStyle}" TargetType="{x:Type DataGrid}" />
+        <Style BasedOn="{StaticResource ScrollBarStyle}" TargetType="{x:Type ScrollBar}" />
+        <Style BasedOn="{StaticResource ScrollViewerStyle}" TargetType="{x:Type ScrollViewer}" />
+        <Style BasedOn="{StaticResource GridSplitterStyle}" TargetType="{x:Type GridSplitter}" />
+        <Style BasedOn="{StaticResource SeparatorStyle}" TargetType="{x:Type Separator}" />
+
+        <Style
+            x:Key="{x:Static ToolBar.ButtonStyleKey}"
+            BasedOn="{StaticResource ToolBarButtonStyle}"
+            TargetType="{x:Type Button}" />
+        <Style
+            x:Key="{x:Static ToolBar.ToggleButtonStyleKey}"
+            BasedOn="{StaticResource ToolBarToggleButtonStyle}"
+            TargetType="{x:Type ToggleButton}" />
+        <Style
+            x:Key="{x:Static ToolBar.CheckBoxStyleKey}"
+            BasedOn="{StaticResource ToolBarToggleButtonStyle}"
+            TargetType="{x:Type CheckBox}" />
+        <Style
+            x:Key="{x:Static ToolBar.RadioButtonStyleKey}"
+            BasedOn="{StaticResource ToolBarToggleButtonStyle}"
+            TargetType="{x:Type RadioButton}" />
+        <Style
+            x:Key="{x:Static ToolBar.ComboBoxStyleKey}"
+            BasedOn="{StaticResource ToolBarComboBoxStyle}"
+            TargetType="{x:Type ComboBox}" />
+
+        <Style x:Key="{x:Static ToolBar.SeparatorStyleKey}" TargetType="Separator">
+            <Setter Property="Background" Value="{DynamicResource SeparatorBrush}" />
+            <Setter Property="Width" Value="1" />
+        </Style>
+
+        <Style
+            x:Key="{x:Static ToolBar.MenuStyleKey}"
+            BasedOn="{StaticResource ToolBarMenuStyle}"
+            TargetType="{x:Type Menu}" />
+
+        <Style BasedOn="{StaticResource ThemedMenuItem}" TargetType="{x:Type MenuItem}" />
+        <Style BasedOn="{StaticResource ThemedMenu}" TargetType="{x:Type Menu}" />
+        <Style BasedOn="{StaticResource ThemedContextMenu}" TargetType="{x:Type ContextMenu}" />
+
+        <Style BasedOn="{StaticResource SliderStyle}" TargetType="{x:Type Slider}" />
+    </ResourceDictionary>
+
+    <Style
+        x:Key="FlatWindowStyle"
+        BasedOn="{StaticResource WindowStyle}"
+        Resources="{StaticResource FlatControlStyles}"
+        TargetType="{x:Type Window}" />
+    <Style
+        x:Key="FlatControlStyle"
+        BasedOn="{StaticResource ControlStyle}"
+        Resources="{StaticResource FlatControlStyles}"
+        TargetType="{x:Type ContentControl}" />
+    <Style
+        x:Key="FlatPopupStyle"
+        BasedOn="{StaticResource PopupStyle}"
+        Resources="{StaticResource FlatControlStyles}"
+        TargetType="{x:Type Popup}" />
+</ResourceDictionary>

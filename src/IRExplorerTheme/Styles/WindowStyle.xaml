@@ -1,0 +1,13 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="WindowStyle" TargetType="{x:Type Window}">
+        <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WindowForegroundBrush}" />
+    </Style>
+
+    <Style x:Key="ControlStyle" TargetType="{x:Type ContentControl}">
+        <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource WindowForegroundBrush}" />
+    </Style>
+
+    <Style x:Key="PopupStyle" TargetType="{x:Type Popup}" />
+</ResourceDictionary>
