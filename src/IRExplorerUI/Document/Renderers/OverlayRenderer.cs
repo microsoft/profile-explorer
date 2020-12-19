@@ -60,9 +60,7 @@ namespace IRExplorerUI.Document {
             public List<IElementOverlay> Overlays { get; set; }
         }
 
-        private static readonly Typeface DefaultFont = new Typeface("Consolas");
-
-        private TextView TextView;
+        private TextView textView_;
         private ElementHighlighter highlighter_;
         private ConnectedElement rootConnectedElement_;
         private List<ConnectedElement> connectedElements_;
@@ -194,7 +192,7 @@ namespace IRExplorerUI.Document {
         }
 
         public void Draw(TextView textView, DrawingContext drawingContext) {
-            TextView = textView;
+            textView_ = textView;
             Width = textView.RenderSize.Width;
             Height = textView.RenderSize.Height;
             Children.Clear();
@@ -362,17 +360,17 @@ namespace IRExplorerUI.Document {
         public void KeyPressed(KeyEventArgs e) {
             if (selectedOverlay_ != null) {
                 if (selectedOverlay_.KeyPressed(e)) {
-                    TextView.Redraw(); // Force refresh
+                    textView_.Redraw(); // Force refresh
                 }
             }
         }
 
         private void HandleMouseMoved(Point point) {
-            if (overlaySegments_.Count == 0 || TextView == null) {
+            if (overlaySegments_.Count == 0 || textView_ == null) {
                 return;
             }
 
-            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
+            if (!DocumentUtils.FindVisibleText(textView_, out int viewStart, out int viewEnd)) {
                 return;
             }
 
@@ -403,16 +401,16 @@ namespace IRExplorerUI.Document {
                     hoveredOverlay_ = hoverOverlay;
                 }
 
-                TextView.Redraw();
+                textView_.Redraw();
             }
         }
 
         private bool HandleMouseClicked(Point point, MouseEventArgs e) {
-            if (overlaySegments_.Count == 0 || TextView == null) {
+            if (overlaySegments_.Count == 0 || textView_ == null) {
                 return false;
             }
 
-            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
+            if (!DocumentUtils.FindVisibleText(textView_, out int viewStart, out int viewEnd)) {
                 return false;
             }
 
@@ -455,7 +453,7 @@ namespace IRExplorerUI.Document {
             }
 
             if (redraw) {
-                TextView.Redraw();
+                textView_.Redraw();
             }
 
             return hoverOverlay != null;
@@ -465,14 +463,14 @@ namespace IRExplorerUI.Document {
             Children.Clear();
             ClearConnectedElements();
             ClearElementOverlays();
-            TextView?.Redraw();
+            textView_?.Redraw();
             Version++;
         }
 
         public void ClearElementOverlays() {
             overlaySegments_.Clear();
             overlaySegmentMap_.Clear();
-            TextView?.Redraw();
+            textView_?.Redraw();
         }
 
         public void Add(Visual drawingVisual) {
@@ -490,6 +488,8 @@ namespace IRExplorerUI.Document {
         private void DrawGroup(HighlightedSegmentGroup group, TextView textView,
                                DrawingContext drawingContext, int viewStart, int viewEnd) {
             IRElement element = null;
+            var font = App.StyleResources.DocumentTypeface;
+            var fontBrush = App.StyleResources.DocumentForegroundBrush;
             double fontSize = App.Settings.DocumentSettings.FontSize;
 
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
@@ -506,10 +506,9 @@ namespace IRExplorerUI.Document {
                         //{
                         //    label += $", {notesTag.Notes[0]}";
                         //}
-
                         var pen = group.Border ?? Pens.GetPen(Colors.Gray);
-                        var text = DocumentUtils.CreateFormattedText(textView, label, DefaultFont,
-                                                                     fontSize, Brushes.Black);
+                        var text = DocumentUtils.CreateFormattedText(textView, label, font,
+                                                                     fontSize, fontBrush);
                         drawingContext.DrawRectangle(group.BackColor, pen,
                                                      Utils.SnapRectToPixels(rect.X + rect.Width + 8, rect.Y,
                                                                             text.Width + 10,

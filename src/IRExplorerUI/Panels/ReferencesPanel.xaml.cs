@@ -82,9 +82,7 @@ namespace IRExplorerUI {
     }
 
     public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged {
-        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
         private string documentText_;
-
         private IRElement element_;
         private ReferenceKind filterKind_;
         private bool ignoreNextElement_;
@@ -193,11 +191,12 @@ namespace IRExplorerUI {
             // Mark every instance of the symbol name in the preview text (usually an instr).
             string text = FindPreviewText(reference);
             string symbolName = ReferenceFinder.GetSymbolName(operand);
-            int index = 0;
+            
             var textBlock = new TextBlock();
-            textBlock.FontFamily = PreviewFont;
-            textBlock.Foreground = Brushes.Black;
+            textBlock.FontFamily = App.StyleResources.DocumentFont;
+            textBlock.Foreground = App.StyleResources.ForegroundBrush;
             textBlock.Margin = new Thickness(0, 2, 0, 0);
+            int index = 0;
 
             while (index < text.Length) {
                 int symbolIndex = text.IndexOf(symbolName, index, StringComparison.Ordinal);
@@ -212,7 +211,8 @@ namespace IRExplorerUI {
                 }
 
                 textBlock.Inlines.Add(new Run(symbolName) {
-                    FontWeight = FontWeights.Bold
+                    FontWeight = FontWeights.Bold,
+                    Background = App.StyleResources.HighlightBackgroundBrush
                 });
 
                 index = symbolIndex + symbolName.Length;

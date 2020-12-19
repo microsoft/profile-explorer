@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
@@ -69,10 +70,10 @@ namespace IRExplorerUI.Utilities {
         }
 
         public static FormattedText CreateFormattedText(FrameworkElement element, string text, Typeface typeface,
-                                                  double? emSize, Brush foreground, FontWeight? fontWeight = null) {
+                                                  double emSize, Brush foreground, FontWeight? fontWeight = null) {
 
             var formattedText = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                                                  typeface, emSize.Value, foreground, null,
+                                                  typeface, emSize, foreground, null,
                                                   TextOptions.GetTextFormattingMode(element),
                                                   VisualTreeHelper.GetDpi(element).PixelsPerDip);
             if (fontWeight.HasValue) {
@@ -80,6 +81,31 @@ namespace IRExplorerUI.Utilities {
             }
 
             return formattedText;
+        }
+
+        public static GlyphRun CreateGlyphRun(string text, Typeface typeface, double emSize, 
+                                              Point origin, float pixelsPerDip) {
+            GlyphTypeface glyphTypeface;
+            if (!typeface.TryGetGlyphTypeface(out glyphTypeface)) {
+                throw new InvalidOperationException();
+            }
+
+            ushort[] glyphIndexes = new ushort[text.Length];
+            double[] advanceWidths = new double[text.Length];
+            double totalWidth = 0;
+
+            for (int n = 0; n < text.Length; n++) {
+                ushort glyphIndex = glyphTypeface.CharacterToGlyphMap[text[n]];
+                glyphIndexes[n] = glyphIndex;
+
+                double width = glyphTypeface.AdvanceWidths[glyphIndex] * emSize;
+                advanceWidths[n] = width;
+
+                totalWidth += width;
+            }
+
+            return new GlyphRun(glyphTypeface, 0, false, emSize, pixelsPerDip,
+                glyphIndexes, origin, advanceWidths, null, null, null, null, null, null);
         }
 
         public static bool FindVisibleText(TextView textView, out int viewStart, out int viewEnd) {

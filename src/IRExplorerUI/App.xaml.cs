@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media;
 using System.Xml;
 
 namespace IRExplorerUI {
@@ -41,11 +42,24 @@ namespace IRExplorerUI {
         }
     }
 
+    public class ThemeResources {
+        public FontFamily DocumentFont { get; set; }
+        public Typeface DocumentTypeface { get; set; }
+        public Brush BackgroundBrush { get; set; }
+        public Brush ForegroundBrush { get; set; }
+        public Brush HighlightBackgroundBrush { get; set; }
+        public Brush ListViewBackgroundBrush { get; set; }
+        public Brush ListViewForegroundBrush { get; set; }
+        public Brush DocumentBackgroundBrush { get; set; }
+        public Brush DocumentForegroundBrush { get; set; }
+    }
+
     public partial class App : Application {
         public static DateTime AppStartTime;
         public static DateTime WindowShowTime;
         public static ApplicationSettings Settings;
         public static ISession Session;
+        public static ThemeResources StyleResources;
 
         private const string SettingsPath = @"Microsoft\IRExplorer";
         private const string SettingsFile = "IRExplorer.settings";
@@ -543,6 +557,22 @@ namespace IRExplorerUI {
             catch (Exception) {
                 MessageBox.Show($"Failed to open documentation page,\nmake sure the VPN connection is active", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        public static void ReloadThemeStyle() {
+            // Resources that may be used from code-behind.
+            StyleResources = new ThemeResources() {
+                BackgroundBrush = App.Current.Resources["WindowBackgroundBrush"] as Brush,
+                ForegroundBrush = App.Current.Resources["WindowForegroundBrush"] as Brush,
+                ListViewBackgroundBrush = App.Current.Resources["DataGridBackgroundBrush"] as Brush,
+                ListViewForegroundBrush = App.Current.Resources["DataGridForegroundBrush"] as Brush,
+                //? TODO: Document brushes must be extracted from the syntax highlighting file!
+                DocumentBackgroundBrush = App.Current.Resources["WindowBackgroundBrush"] as Brush,
+                DocumentForegroundBrush = App.Current.Resources["WindowForegroundBrush"] as Brush,
+                DocumentFont = new FontFamily(App.Settings.DocumentSettings.FontName),
+                DocumentTypeface = new Typeface(App.Settings.DocumentSettings.FontName),
+                HighlightBackgroundBrush = App.Current.Resources["HighlightColor1Brush"] as Brush,
+            };
         }
     }
 }

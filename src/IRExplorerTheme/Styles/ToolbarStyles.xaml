@@ -283,7 +283,7 @@
                                 <Condition Property="IsDropDownOpen" Value="false" />
                                 <Condition Property="IsEditable" Value="false" />
                             </MultiTrigger.Conditions>
-                            <Setter TargetName="SelectedContentBorder" Property="Background" Value="{DynamicResource SelectionColor1Brush}" />
+                            <Setter TargetName="SelectedContentBorder" Property="Background" Value="{DynamicResource MenuHighlightedBrush}" />
                         </MultiTrigger>
                         <Trigger Property="IsEditable" Value="true">
                             <Setter TargetName="DropDownButton" Property="Background" Value="{x:Null}" />
@@ -451,7 +451,7 @@
                                 </Trigger>
                                 <Trigger Property="IsHighlighted" Value="true">
                                     <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ButtonHoverBorderBrush}" />
-                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource SelectionColor1Brush}" />
+                                    <Setter TargetName="Border" Property="Background" Value="{DynamicResource MenuHighlightedBrush}" />
                                     <!--<Setter TargetName="GlyphPanel" Property="BorderBrush" Value="{StaticResource ToolBarButtonPressedBorder}" />
                                     <Setter TargetName="GlyphPanel" Property="Background" Value="{StaticResource ToolBarDarkFill}" />-->
                                 </Trigger>
@@ -628,7 +628,7 @@
                                         </Trigger>
                                         <Trigger Property="IsHighlighted" Value="true">
                                             <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ButtonHoverBorderBrush}" />
-                                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SelectionColor1Brush}" />
+                                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource MenuHighlightedBrush}" />
                                         </Trigger>
                                         <Trigger Property="IsEnabled" Value="false">
                                             <Setter Property="Foreground" Value="{DynamicResource ButtonDisabledForegroundBrush}" />
@@ -757,7 +757,7 @@
                                         </Trigger>
                                         <Trigger Property="IsHighlighted" Value="true">
                                             <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource ButtonHoverBorderBrush}" />
-                                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SelectionColor1Brush}" />
+                                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource MenuHighlightedBrush}" />
                                             <!--<Setter TargetName="GlyphPanel" Property="BorderBrush" Value="{StaticResource ToolBarButtonPressedBorder}" />
                                             <Setter TargetName="GlyphPanel" Property="Background" Value="{StaticResource ToolBarDarkFill}" />-->
                                         </Trigger>

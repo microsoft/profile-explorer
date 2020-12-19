@@ -21,8 +21,8 @@
     <SolidColorBrush x:Key="WindowForegroundBrush" Color="{DynamicResource ForegroundColor1}" />
 
     <!--  TabControl  -->
-    <SolidColorBrush x:Key="TabControlBackgroundBrush" Color="{DynamicResource BackgroundColor6}" />
-    <SolidColorBrush x:Key="TabControlContainedBackgroundBrush" Color="{DynamicResource BackgroundColor6}" />
+    <SolidColorBrush x:Key="TabControlBackgroundBrush" Color="{DynamicResource BackgroundColor5}" />
+    <SolidColorBrush x:Key="TabControlContainedBackgroundBrush" Color="{DynamicResource BackgroundColor5}" />
     <SolidColorBrush x:Key="TabControlBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="TabControlTabBackgroundBrush" Color="{DynamicResource BackgroundColor4}" />
     <SolidColorBrush x:Key="TabControlTabForegroundBrush" Color="{DynamicResource ForegroundColor2}" />
@@ -36,9 +36,9 @@
     <SolidColorBrush x:Key="ButtonBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="ButtonForegroundBrush" Color="{DynamicResource ForegroundColor2}" />
     <SolidColorBrush x:Key="ButtonHoverBackgroundBrush" Color="{DynamicResource BackgroundColor6}" />
-    <SolidColorBrush x:Key="ButtonHoverBorderBrush" Color="{DynamicResource BackgroundColor6}" />
+    <SolidColorBrush x:Key="ButtonHoverBorderBrush" Color="{DynamicResource BackgroundColor7}" />
     <SolidColorBrush x:Key="ButtonPressBackgroundBrush" Color="{DynamicResource BackgroundColor6}" />
-    <SolidColorBrush x:Key="ButtonPressBorderBrush" Color="{DynamicResource BackgroundColor6}" />
+    <SolidColorBrush x:Key="ButtonPressBorderBrush" Color="{DynamicResource BackgroundColor7}" />
     <SolidColorBrush x:Key="ButtonDisabledBackgroundBrush" Color="{DynamicResource BackgroundColor4}" />
     <SolidColorBrush x:Key="ButtonDisabledBorderBrush" Color="{DynamicResource BackgroundColor4}" />
     <SolidColorBrush x:Key="ButtonDisabledForegroundBrush" Color="{DynamicResource ForegroundColor3}" />
@@ -48,9 +48,9 @@
     <SolidColorBrush x:Key="TextBoxBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="TextBoxForegroundBrush" Color="{DynamicResource ForegroundColor2}" />
     <SolidColorBrush x:Key="TextBoxHoverBackgroundBrush" Color="{DynamicResource BackgroundColor3}" />
-    <SolidColorBrush x:Key="TextBoxHoverBorderBrush" Color="{DynamicResource BackgroundColor6}" />
+    <SolidColorBrush x:Key="TextBoxHoverBorderBrush" Color="{DynamicResource BackgroundColor7}" />
     <SolidColorBrush x:Key="TextBoxFocusBackgroundBrush" Color="{DynamicResource BackgroundColor3}" />
-    <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="{DynamicResource BackgroundColor6}" />
+    <SolidColorBrush x:Key="TextBoxFocusBorderBrush" Color="{DynamicResource BackgroundColor7}" />
     <SolidColorBrush x:Key="TextBoxDisabledBackgroundBrush" Color="Transparent" />
     <SolidColorBrush x:Key="TextBoxDisabledBorderBrush" Color="{DynamicResource BackgroundColor5}" />
     <SolidColorBrush x:Key="TextBoxDisabledForegroundBrush" Color="{DynamicResource ForegroundColor3}" />
@@ -154,4 +154,5 @@
     <SolidColorBrush x:Key="SliderBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="SliderTrackBrush" Color="{DynamicResource ForegroundColor4}" />
 
+    <SolidColorBrush x:Key="MenuHighlightedBrush" Color="{DynamicResource MenuHighlightColor}" />
 </ResourceDictionary>

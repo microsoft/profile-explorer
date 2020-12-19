@@ -62,5 +62,7 @@ namespace IRExplorerUI {
         }
 
         public virtual void OnDocumentLoaded(IRDocument document) { }
+
+        public virtual void OnThemeChanged() { }
     }
 }

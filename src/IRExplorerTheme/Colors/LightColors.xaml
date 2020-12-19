@@ -17,7 +17,8 @@
     <Color x:Key="SelectionColor2">#B2D8FF</Color>
     <Color x:Key="HighlightColor1">#FFF7D6</Color>
     <Color x:Key="HighlightColor2">#ECFFE5</Color>
-    <Color x:Key="WarningColor">#F9CBC7</Color>
+    <Color x:Key="MenuHighlightColor">#B2D8FF</Color>
 
+    <Color x:Key="WarningColor">#F9CBC7</Color>
     <Color x:Key="RedColor">#A20D0D</Color>
 </ResourceDictionary>

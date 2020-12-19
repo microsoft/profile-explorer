@@ -43,7 +43,6 @@ namespace IRExplorerUI {
 
         public delegate string SectionTextDelegate(SearchResultKind resultKind, IRTextSection section);
 
-        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
         private bool isMarked_;
         private TextBlock preview_;
         private Brush textColor_;
@@ -73,8 +72,8 @@ namespace IRExplorerUI {
                 }
 
                 preview_ = new TextBlock();
-                preview_.FontFamily = PreviewFont;
-                preview_.Foreground = Brushes.Black;
+                preview_.FontFamily = App.StyleResources.DocumentFont;
+                preview_.Foreground = App.StyleResources.ForegroundBrush;
                 preview_.Margin = new Thickness(0, 2, 0, 0);
 
                 // Load text on-demand and extract the line with the result.
@@ -89,7 +88,7 @@ namespace IRExplorerUI {
                 // Append search result.
                 preview_.Inlines.Add(new Run(sectionText.Substring(Result.Offset, Result.Length)) {
                     FontWeight = FontWeights.Bold,
-                    Background = Brushes.Khaki
+                    Background = App.StyleResources.HighlightBackgroundBrush
                 });
 
                 // Append text after search result.

@@ -18,7 +18,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <local:IRPreviewTooltip x:Name="IRPreviewer" Background="Silver" />
+                    <local:IRPreviewTooltip x:Name="IRPreviewer" Background="{DynamicResource WindowBackgroundBrush}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -29,96 +29,92 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="120" />
-                        </Grid.ColumnDefinitions>
+                    <ContentControl Style="{DynamicResource FlatControlStyle}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="120" />
+                            </Grid.ColumnDefinitions>
 
-                        <local:IRPreviewTooltip
-                            x:Name="IRPreviewer"
-                            Grid.Column="0"
-                            Background="Silver" />
-                        <Border
-                            Grid.Column="1"
-                            Width="120"
-                            Background="Gainsboro"
-                            BorderBrush="Black"
-                            BorderThickness="0,2,2,2">
-                            <Grid Margin="4,4,4,4">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="80" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="16" />
-                                    <RowDefinition Height="16" />
-                                    <RowDefinition Height="16" />
-                                    <RowDefinition Height="16" />
-                                    <RowDefinition Height="16" />
-                                </Grid.RowDefinitions>
+                            <local:IRPreviewTooltip
+                                x:Name="IRPreviewer"
+                                Grid.Column="0"
+                                Background="{DynamicResource WindowBackgroundBrush}" />
+                            <Border
+                                Grid.Column="1"
+                                Width="120"
+                                Background="{DynamicResource WindowBackgroundBrush}"
+                                BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
+                                BorderThickness="0,2,2,2">
+                                <Grid Margin="4,4,4,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="16" />
+                                        <RowDefinition Height="16" />
+                                        <RowDefinition Height="16" />
+                                        <RowDefinition Height="16" />
+                                        <RowDefinition Height="16" />
+                                    </Grid.RowDefinitions>
 
-                                <TextBlock
-                                    Grid.Row="0"
-                                    Grid.Column="0"
-                                    Text="Predecessors" />
-                                <TextBlock
-                                    Grid.Row="1"
-                                    Grid.Column="0"
-                                    Text="Successors" />
-                                <TextBlock
-                                    Grid.Row="2"
-                                    Grid.Column="0"
-                                    Foreground="DarkBlue"
-                                    Text="Loop nesting"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
-                                <TextBlock
-                                    Grid.Row="3"
-                                    Grid.Column="0"
-                                    Foreground="DarkBlue"
-                                    Text="Loop blocks"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
-                                <TextBlock
-                                    Grid.Row="4"
-                                    Grid.Column="0"
-                                    Foreground="DarkBlue"
-                                    Text="Loop children"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock
+                                        Grid.Row="0"
+                                        Grid.Column="0"
+                                        Text="Predecessors" />
+                                    <TextBlock
+                                        Grid.Row="1"
+                                        Grid.Column="0"
+                                        Text="Successors" />
+                                    <TextBlock
+                                        Grid.Row="2"
+                                        Grid.Column="0"
+                                        Text="Loop nesting"
+                                        Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock
+                                        Grid.Row="3"
+                                        Grid.Column="0"
+                                        Text="Loop blocks"
+                                        Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock
+                                        Grid.Row="4"
+                                        Grid.Column="0"
+                                        Text="Loop children"
+                                        Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
 
-                                <TextBlock
-                                    Grid.Row="0"
-                                    Grid.Column="1"
-                                    FontWeight="DemiBold"
-                                    Text="{Binding PredecessorCount}" />
-                                <TextBlock
-                                    Grid.Row="1"
-                                    Grid.Column="1"
-                                    FontWeight="DemiBold"
-                                    Text="{Binding SuccessorCount}" />
-                                <TextBlock
-                                    Grid.Row="2"
-                                    Grid.Column="1"
-                                    FontWeight="DemiBold"
-                                    Foreground="DarkBlue"
-                                    Text="{Binding LoopNesting}"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
-                                <TextBlock
-                                    Grid.Row="3"
-                                    Grid.Column="1"
-                                    FontWeight="DemiBold"
-                                    Foreground="DarkBlue"
-                                    Text="{Binding LoopBlocks}"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
-                                <TextBlock
-                                    Grid.Row="4"
-                                    Grid.Column="1"
-                                    FontWeight="DemiBold"
-                                    Foreground="DarkBlue"
-                                    Text="{Binding NestedLoops}"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
-                            </Grid>
-                        </Border>
-                    </Grid>
+                                    <TextBlock
+                                        Grid.Row="0"
+                                        Grid.Column="1"
+                                        FontWeight="DemiBold"
+                                        Text="{Binding PredecessorCount}" />
+                                    <TextBlock
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        FontWeight="DemiBold"
+                                        Text="{Binding SuccessorCount}" />
+                                    <TextBlock
+                                        Grid.Row="2"
+                                        Grid.Column="1"
+                                        FontWeight="DemiBold"
+                                        Text="{Binding LoopNesting}"
+                                        Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock
+                                        Grid.Row="3"
+                                        Grid.Column="1"
+                                        FontWeight="DemiBold"
+                                        Text="{Binding LoopBlocks}"
+                                        Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock
+                                        Grid.Row="4"
+                                        Grid.Column="1"
+                                        FontWeight="DemiBold"
+                                        Text="{Binding NestedLoops}"
+                                        Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </ContentControl>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -134,15 +130,12 @@
                         <local:IRPreviewTooltip
                             x:Name="IRPreviewer"
                             Grid.Column="0"
-                            Background="Silver" />
+                            Background="{DynamicResource WindowBackgroundBrush}" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
-
-    <SolidColorBrush x:Key="SelectedBackgroundBrush" Color="#FFB1D6F1" />
-    <SolidColorBrush x:Key="DisabledForegroundBrush" Color="#888" />
 
     <Style x:Key="FlatListViewItem" TargetType="ListViewItem">
         <Setter Property="SnapsToDevicePixels" Value="true" />

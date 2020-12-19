@@ -8,51 +8,53 @@
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
-    <Grid
-        x:Name="TextViewHost"
-        HorizontalAlignment="Stretch"
-        VerticalAlignment="Stretch">
-        <Border
-            x:Name="ViewBorder"
-            BorderBrush="Black"
-            BorderThickness="2,2,2,2">
-            <DockPanel VerticalAlignment="Top" LastChildFill="True">
-                <DockPanel
-                    x:Name="ViewHeader"
-                    DockPanel.Dock="Top"
-                    Visibility="Visible">
-                    <TextBlock
-                        x:Name="HeaderLabel"
-                        Margin="6,2,2,2"
-                        DockPanel.Dock="Left"
-                        FontSize="12"
-                        FontWeight="Bold"
-                        Text="" />
-                    <TextBlock
-                        Margin="2,2,8,2"
-                        DockPanel.Dock="Right"
-                        FontSize="12"
-                        FontWeight="DemiBold"
-                        Text="Preview"
-                        TextAlignment="Right" />
+    <ContentControl Style="{DynamicResource FlatControlStyle}">
+        <Grid
+            x:Name="TextViewHost"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
+            <Border
+                x:Name="ViewBorder"
+                BorderBrush="{DynamicResource ButtonBorderBrush}"
+                BorderThickness="2,2,2,2">
+                <DockPanel VerticalAlignment="Top" LastChildFill="True">
+                    <DockPanel
+                        x:Name="ViewHeader"
+                        DockPanel.Dock="Top"
+                        Visibility="Visible">
+                        <TextBlock
+                            x:Name="HeaderLabel"
+                            Margin="6,2,2,2"
+                            DockPanel.Dock="Left"
+                            FontSize="12"
+                            FontWeight="Bold"
+                            Text="" />
+                        <TextBlock
+                            Margin="2,2,8,2"
+                            DockPanel.Dock="Right"
+                            FontSize="12"
+                            FontWeight="DemiBold"
+                            Text="Preview"
+                            TextAlignment="Right" />
+                    </DockPanel>
+
+                    <local:IRDocument
+                        x:Name="TextView"
+                        Background="{DynamicResource TextBoxBackgroundBrush}"
+                        DockPanel.Dock="Bottom"
+                        Focusable="False"
+                        FontFamily="Consolas"
+                        FontSize="13"
+                        Foreground="{DynamicResource TextBoxForegroundBrush}"
+                        HorizontalScrollBarVisibility="Hidden"
+                        IsHitTestVisible="False"
+                        IsTabStop="False"
+                        ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                        ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                        ShowLineNumbers="True"
+                        VerticalScrollBarVisibility="Hidden" />
                 </DockPanel>
-
-                <local:IRDocument
-                    x:Name="TextView"
-                    Background="OldLace"
-                    DockPanel.Dock="Bottom"
-                    Focusable="False"
-                    FontFamily="Consolas"
-                    FontSize="13"
-                    HorizontalScrollBarVisibility="Hidden"
-                    IsHitTestVisible="False"
-                    IsTabStop="False"
-                    ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                    ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                    ShowLineNumbers="True"
-                    VerticalScrollBarVisibility="Hidden" />
-            </DockPanel>
-
-        </Border>
-    </Grid>
+            </Border>
+        </Grid>
+    </ContentControl>
 </UserControl>

@@ -411,6 +411,7 @@ namespace IRExplorerUI {
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e) {
+            App.ReloadThemeStyle();
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
             SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;

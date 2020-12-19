@@ -66,6 +66,7 @@ namespace IRExplorerUI {
 
         void OnElementSelected(IRElementEventArgs e);
         void OnElementHighlighted(IRHighlightingEventArgs e);
+        void OnThemeChanged();
 
         void ClonePanel(IToolPanel basePanel);
     }

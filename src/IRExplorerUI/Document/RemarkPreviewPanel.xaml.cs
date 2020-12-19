@@ -13,8 +13,6 @@ using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.Document {
     public class RemarkEx {
-        private static readonly FontFamily RemarkFont = new FontFamily("Consolas");
-
         public static SolidColorBrush GetRemarkBackground(Remark remark) {
             return Utils.EstimateBrightness(remark.Category.MarkColor) < 200 ?
                    ColorBrushes.GetBrush(Utils.ChangeColorLuminisity(remark.Category.MarkColor, 1.75)) :
@@ -30,9 +28,9 @@ namespace IRExplorerUI.Document {
 
             var textLine = remark.RemarkLine;
             var textBlock = new TextBlock();
-            textBlock.FontFamily = RemarkFont;
+            textBlock.FontFamily = App.StyleResources.DocumentFont;
+            textBlock.Foreground = App.StyleResources.ForegroundBrush;
             textBlock.FontWeight = FontWeights.Normal;
-            textBlock.Foreground = Brushes.Black;
 
             if (elementLineOffset > 0) {
                 // Append text found before the IR element.
@@ -45,7 +43,7 @@ namespace IRExplorerUI.Document {
                 var text = textLine.Substring(elementLineOffset, elementLength);
                 textBlock.Inlines.Add(new Run(text) {
                     FontWeight = FontWeights.Bold,
-                    Foreground = Brushes.DarkBlue
+                    //? TODO: Fix theme: Foreground = Brushes.DarkBlue
                 });
             }
 
@@ -60,8 +58,8 @@ namespace IRExplorerUI.Document {
 
         public static TextBlock FormatExtraTextLine(string text, List<RemarkTextHighlighting> highlightingList = null) {
             var textBlock = new TextBlock();
-            textBlock.FontFamily = RemarkFont;
-            textBlock.Foreground = Brushes.Black;
+            textBlock.FontFamily = App.StyleResources.DocumentFont;
+            textBlock.Foreground = App.StyleResources.ForegroundBrush;
             textBlock.FontWeight = FontWeights.Normal;
             AppendExtraOutputTextRun(text, textBlock, highlightingList);
             return textBlock;
@@ -357,6 +355,7 @@ namespace IRExplorerUI.Document {
             if (!treeNodeMap.TryGetValue(context, out var treeNode)) {
                 treeNode = new TreeViewItem() {
                     Header = context.Name,
+                    //? TODO: Fix theme
                     Foreground = ColorBrushes.GetBrush(Colors.DarkBlue),
                     FontWeight = FontWeights.Bold,
                     ItemContainerStyle = Application.Current.FindResource("RemarkTreeViewItemStyle") as Style
@@ -546,6 +545,7 @@ namespace IRExplorerUI.Document {
                         previousOffset += searchText.Length;
 
                         newInlines.Add(new Run(searchText) {
+                            //? TODO: Fix theme
                             Background = ColorBrushes.GetBrush(Colors.Khaki) //? TODO: Customize
                         });
                     }
@@ -947,6 +947,7 @@ namespace IRExplorerUI.Document {
 
         private void ColorButton_Click(object sender, RoutedEventArgs e) {
             var colorSelector = new ColorSelector();
+            //? TODO: Fix theme
             colorSelector.BorderBrush = SystemColors.ActiveBorderBrush;
             colorSelector.BorderThickness = new Thickness(1);
             colorSelector.Background = ToolbarPanel.Background;
