@@ -12,7 +12,6 @@
         <CommandBinding Command="local:Command.ClearTextbox" Executed="ExecuteClearTextSearch" />
     </local:ToolPanelControl.CommandBindings>
 
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="28" />
@@ -47,8 +46,6 @@
                         Width="120"
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
                         Loaded="ComboBox_Loaded"
                         SelectedIndex="0"
                         SelectionChanged="FilterComboBox_SelectionChanged">
