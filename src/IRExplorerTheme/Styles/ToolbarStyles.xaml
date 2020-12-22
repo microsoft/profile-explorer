@@ -695,7 +695,7 @@
                                             Grid.Column="3"
                                             Margin="4,0,6,0"
                                             VerticalAlignment="Center"
-                                            Data="{StaticResource RightArrow}"
+                                            Data="M0,0 L0,8 L4,4 z"
                                             DockPanel.Dock="Right"
                                             Fill="{TemplateBinding Foreground}" />
                                         <Popup

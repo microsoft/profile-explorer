@@ -22,6 +22,7 @@
     <ContentControl Style="{DynamicResource FlatControlStyle}">
         <Border
             Margin="0,0,6,6"
+            Background="{DynamicResource WindowBackgroundBrush}"
             BorderBrush="{DynamicResource ButtonBorderBrush}"
             BorderThickness="1,1,1,1">
             <Border.Effect>

@@ -230,7 +230,6 @@
         </Setter>
     </Style>
 
-    <!--  Source: http://www.codeproject.com/Articles/442856/Visual-Studio-2012-Metro-Styles-for-WPF  -->
     <Style x:Key="ThemedMenu" TargetType="{x:Type Menu}">
         <Style.Resources>
             <Style x:Key="{x:Static MenuItem.SeparatorStyleKey}" TargetType="Separator">
@@ -276,25 +275,6 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type ContextMenu}">
                     <Border Uid="Border_93">
-                        <Border.Style>
-                            <Style TargetType="{x:Type Border}">
-                                <Setter Property="Tag" Value="{DynamicResource {x:Static SystemParameters.DropShadowKey}}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
-                                        <Setter Property="Background" Value="Black" />
-                                        <Setter Property="Padding" Value="0,0,5,5" />
-                                        <Setter Property="Effect">
-                                            <Setter.Value>
-                                                <DropShadowEffect
-                                                    BlurRadius="4"
-                                                    Opacity="0.8"
-                                                    ShadowDepth="1" />
-                                            </Setter.Value>
-                                        </Setter>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
                         <Border
                             Uid="Border_50"
                             Background="{DynamicResource WindowBackgroundBrush}"

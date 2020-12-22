@@ -61,7 +61,6 @@
                                     VerticalAlignment="Center"
                                     DockPanel.Dock="Right"
                                     FontWeight="DemiBold"
-                                    Foreground="DarkBlue"
                                     Text="{Binding Path=Value, Converter={StaticResource ElementObjectConverter}}"
                                     TextAlignment="Right"
                                     TextTrimming="CharacterEllipsis"
