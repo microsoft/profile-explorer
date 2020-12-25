@@ -14,6 +14,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ICSharpCode.AvalonEdit.Highlighting;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 
@@ -30,6 +31,16 @@ namespace IRExplorerUI.Document {
     public partial class SearcheableIRDocument : UserControl, INotifyPropertyChanged {
         private bool searchPanelVisible_;
         private List<TextSearchResult> searchResults_;
+
+        public ISession Session {
+            get => TextView.Session;
+            set => TextView.Session = value;
+        }
+
+        public string Text {
+            get => TextView.Text;
+            set => TextView.Text = value;
+        }
 
         public bool SearchPanelVisible {
             get => searchPanelVisible_;
@@ -86,7 +97,12 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        private async Task SearchText(SearchInfo info = null) {
+        public IHighlightingDefinition SyntaxHighlighting {
+            get => TextView.SyntaxHighlighting;
+            set => TextView.SyntaxHighlighting = value;
+        }
+
+        public async Task SearchText(SearchInfo info = null) {
             if (info == null) {
                 if (searchPanelVisible_) {
                     info = SearchPanel.SearchInfo;
@@ -107,19 +123,22 @@ namespace IRExplorerUI.Document {
             }
         }
 
-        public void SetText(string text) {
-            TextView.Text = text;
+        public async Task ResetTextSearch() {
+            await SearchText(new SearchInfo());
         }
 
         public async Task SetText(string text, FunctionIR function, IRTextSection section,
-                                  IRDocument associatedDocument, ISession session) {
-            TextView.Session = session;
+                                  IRDocument associatedDocument) {
             await TextView.SwitchText(text, function, section, associatedDocument);
         }
 
         public void SelectText(int offset, int length, int line) {
             TextView.Select(offset, length);
             TextView.ScrollToLine(line);
+        }
+
+        public void UnloadDocument() {
+            TextView.UnloadDocument();
         }
 
         private void SearchPanel_NaviateToPreviousResult(object sender, SearchInfo e) {

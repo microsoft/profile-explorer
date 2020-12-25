@@ -26,21 +26,26 @@ namespace IRExplorerUI.Controls {
         public event PropertyChangedEventHandler PropertyChanged;
         
         public NotesPopup(Point position, double width, double height,
-                          UIElement referenceElement) {
+                          UIElement referenceElement, ISession session) {
             InitializeComponent();
             Initialize(position, width, height, referenceElement);
+            Session = session;
             PanelResizeGrip.ResizedControl = this;
             DataContext = this;
         }
 
+        public ISession Session {
+            get => TextView.Session;
+            set => TextView.Session = value;
+        }
+
         public void SetText(string text) {
-            TextView.SetText(text);
-            //? TextView.EnableIRSyntaxHighlighting();
+            TextView.Text = text;
         }
 
         public async Task SetText(string text, FunctionIR function, IRTextSection section,
-                                  IRDocument associatedDocument, ISession session) {
-            await TextView.SetText(text, function, section, associatedDocument, session);
+                                  IRDocument associatedDocument) {
+            await TextView.SetText(text, function, section, associatedDocument);
         }
 
         public string PanelTitle {

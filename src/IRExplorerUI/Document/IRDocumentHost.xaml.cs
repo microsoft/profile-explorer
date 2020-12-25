@@ -204,7 +204,7 @@ namespace IRExplorerUI {
             get => settings_;
             set {
                 settings_ = value;
-                ReloadSettings();
+                TextView.Settings = settings_;
             }
         }
 
@@ -559,12 +559,7 @@ namespace IRExplorerUI {
         private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
             if (optionsPanelVisible_) {
                 var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
-
-                if (newSettings != null) {
-                    LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
-                    optionsPanelWindow_.Settings = null;
-                    optionsPanelWindow_.Settings = newSettings.Clone();
-                }
+                LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
             }
         }
 
@@ -592,7 +587,7 @@ namespace IRExplorerUI {
         }
 
         public void ReloadSettings() {
-            TextView.Settings = settings_;
+            Settings = App.Settings.DocumentSettings;
         }
 
         private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
@@ -1208,7 +1203,6 @@ namespace IRExplorerUI {
             }
 
             optionsPanelWindow_.IsOpen = false;
-            ;
             optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
@@ -1618,7 +1612,7 @@ namespace IRExplorerUI {
                 optionsData.ReplaceButton("View Output", async (sender, value) => {
                     var view = new NotesPopup(new Point(queryPanel.HorizontalOffset,
                                                         queryPanel.VerticalOffset + queryPanel.Height),
-                                                        500, 200, null);
+                                                        500, 200, null, Session);
                     Session.RegisterDetachedPanel(view);
                     var button = (QueryButton)sender;
                     button.IsEnabled = false;
@@ -1633,7 +1627,7 @@ namespace IRExplorerUI {
                     };
 
                     view.DetachPopup();
-                    await view.SetText(taskInstance.OutputText, Function, Section, TextView, Session);
+                    await view.SetText(taskInstance.OutputText, Function, Section, TextView);
                 });
             }
         }

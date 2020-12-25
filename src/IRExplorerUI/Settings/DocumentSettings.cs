@@ -62,6 +62,9 @@ namespace IRExplorerUI {
         [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
         [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
 
+        [ProtoMember(28)] public Color LineNumberTextColor { get; set; }
+        [ProtoMember(29)] public Color SearchResultColor { get; set; }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public override void Reset() {
@@ -84,6 +87,9 @@ namespace IRExplorerUI {
             TextColor = Colors.Black;
             BlockSeparatorColor = Colors.Silver;
             MarginBackgroundColor = Colors.Gainsboro;
+            LineNumberTextColor = Colors.Silver;
+            SearchResultColor = Colors.Khaki;
+
             SelectedValueColor = Utils.ColorFromString("#C5DEEA");
             DefinitionValueColor = Utils.ColorFromString("#F2E67C");
             UseValueColor = Utils.ColorFromString("#95DBAD");
@@ -121,6 +127,8 @@ namespace IRExplorerUI {
                    DefinitionValueColor.Equals(settings.DefinitionValueColor) &&
                    UseValueColor.Equals(settings.UseValueColor) &&
                    BorderColor.Equals(settings.BorderColor) &&
+                   LineNumberTextColor.Equals(settings.LineNumberTextColor) &&
+                   SearchResultColor.Equals(settings.SearchResultColor) &&
                    SyntaxHighlightingName == settings.SyntaxHighlightingName;
         }
     }

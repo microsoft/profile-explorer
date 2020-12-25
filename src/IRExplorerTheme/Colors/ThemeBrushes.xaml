@@ -7,6 +7,7 @@
     <SolidColorBrush x:Key="BackgroundColor4Brush" Color="{DynamicResource BackgroundColor4}" />
     <SolidColorBrush x:Key="BackgroundColor5Brush" Color="{DynamicResource BackgroundColor5}" />
     <SolidColorBrush x:Key="BackgroundColor6Brush" Color="{DynamicResource BackgroundColor6}" />
+    <SolidColorBrush x:Key="BackgroundColor7Brush" Color="{DynamicResource BackgroundColor7}" />
     <SolidColorBrush x:Key="ForegroundColor5Brush" Color="{DynamicResource ForegroundColor5}" />
     <SolidColorBrush x:Key="ForegroundColor4Brush" Color="{DynamicResource ForegroundColor4}" />
     <SolidColorBrush x:Key="ForegroundColor3Brush" Color="{DynamicResource ForegroundColor3}" />
@@ -153,6 +154,10 @@
     <SolidColorBrush x:Key="SliderDisabledBackgroundBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="SliderBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="SliderTrackBrush" Color="{DynamicResource ForegroundColor4}" />
+
+    <SolidColorBrush x:Key="ExpanderArrowBrush" Color="{DynamicResource ForegroundColor3}" />
+    <SolidColorBrush x:Key="HoverExpanderArrowBrush" Color="{DynamicResource ForegroundColor2}" />
+    <SolidColorBrush x:Key="DisabledExpanderArrowBrush" Color="{DynamicResource ForegroundColor4}" />
 
     <SolidColorBrush x:Key="MenuHighlightedBrush" Color="{DynamicResource MenuHighlightColor}" />
 </ResourceDictionary>

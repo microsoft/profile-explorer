@@ -85,6 +85,7 @@ namespace IRExplorerUI {
         private GraphQueryInfo queryInfo_;
         private bool queryPanelVisible_;
         private bool restoredState_;
+        private OptionsPanelHostWindow graphOptionsPanel_;
 
         public GraphPanel() {
             InitializeComponent();
@@ -754,8 +755,6 @@ namespace IRExplorerUI {
             queryPanelVisible_ = false;
         }
 
-        private OptionsPanelHostWindow graphOptionsPanel_;
-
         //? TODO: Should be a virtual overriden in the expr panel
         private void ShowOptionsPanel() {
             if (optionsPanelVisible_) {
@@ -785,7 +784,6 @@ namespace IRExplorerUI {
             graphOptionsPanel_.PanelReset += OptionsPanel_PanelReset;
             graphOptionsPanel_.Settings = Settings.Clone();
             graphOptionsPanel_.IsOpen = true;
-            ;
             optionsPanelVisible_ = true;
         }
 

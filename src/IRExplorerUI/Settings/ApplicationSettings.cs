@@ -60,6 +60,9 @@ namespace IRExplorerUI {
         [ProtoMember(13)]
         public Dictionary<Guid, byte[]> FunctionTaskOptions;
 
+        [ProtoMember(14)]
+        public Dictionary<ToolPanelKind, LightDocumentSettings> LightDocumentSettings;
+
         public ApplicationSettings() {
             Reset();
         }
@@ -89,6 +92,7 @@ namespace IRExplorerUI {
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
+            LightDocumentSettings ??= new Dictionary<ToolPanelKind, LightDocumentSettings>();
 
             //? REMOVE
             /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {
@@ -166,6 +170,28 @@ namespace IRExplorerUI {
             }
 
             return null;
+        }
+
+        public LightDocumentSettings LoadLightDocumentSettings(ToolPanelKind panelKind) {
+            LightDocumentSettings settings;
+
+            if (!LightDocumentSettings.TryGetValue(panelKind, out settings)) {
+                settings = new LightDocumentSettings();
+                LightDocumentSettings[panelKind] = settings;
+            }
+
+            if(settings.SyncStyleWithDocument) {
+                settings = (LightDocumentSettings)settings.Clone();
+                settings.BackgroundColor = DocumentSettings.BackgroundColor;
+                settings.TextColor = DocumentSettings.TextColor;
+                settings.SearchResultColor = DocumentSettings.SearchResultColor;
+            }
+
+            return settings;
+        }
+
+        public void SaveLightDocumentSettings(ToolPanelKind panelKind, LightDocumentSettings settings) {
+            LightDocumentSettings[panelKind] = settings;
         }
     }
 }

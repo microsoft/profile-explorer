@@ -22,11 +22,12 @@ namespace IRExplorerUI {
         public bool FilterSearchedTextLines;
     }
 
-    public partial class NotesPanel : ToolPanelControl {
+    public partial class NotesPanel : LightDocumentPanelBase {
         private bool showSectionText_;
 
         public NotesPanel() {
             InitializeComponent();
+            Initialize(TextView.TextView);
         }
 
         private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {
@@ -91,20 +92,20 @@ namespace IRExplorerUI {
 
                 if (data != null) {
                     var state = StateSerializer.Deserialize<NotesPanelState>(data, document.Function);
-                    await TextView.SwitchText(state.Text, document.Function, section, document);
+                    await TextView.SetText(state.Text, document.Function, section, document);
                     showSectionText_ = state.ShowSectionNotes;
                     FilterComboBox.SelectedIndex = showSectionText_ ? 1 : 0;
                 }
                 else {
-                    await TextView.SwitchText("", document.Function, section, document);
-                    await TextView.SearchText(new SearchInfo());
+                    await TextView.SetText("", document.Function, section, document);
+                    await TextView.ResetTextSearch();
                 }
             }
         }
 
         private async Task LoadSessionNotes() {
-            await TextView.SwitchText(Session.SessionState.Info.Notes, null, null, null);
-            await TextView.SearchText(new SearchInfo());
+            TextView.Text = Session.SessionState.Info.Notes;
+            await TextView.ResetTextSearch();
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -114,6 +115,8 @@ namespace IRExplorerUI {
             else {
                 SaveState(section, document);
             }
+
+            TextView.UnloadDocument();
         }
 
         private void SaveSessionNotes() {
@@ -140,7 +143,6 @@ namespace IRExplorerUI {
             var data = StateSerializer.Serialize(state, document.Function);
             Session.SavePanelState(data, this, section);
         }
-
 
         public override void OnSessionEnd() {
             base.OnSessionEnd();

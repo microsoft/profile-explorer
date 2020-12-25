@@ -47,6 +47,7 @@ namespace IRExplorerUI {
             Filter
         }
 
+        private LightDocumentSettings settings_;
         private ElementHighlighter elementMarker_;
         private List<IRElement> elements_;
         private HighlightingStyle elementStyle_;
@@ -74,9 +75,6 @@ namespace IRExplorerUI {
         public LightIRDocument() {
             lockObject_ = new object();
             elements_ = new List<IRElement>();
-            elementStyle_ = new HighlightingStyle(Utils.ColorFromString("#FFFCDC"));
-            hoverElementStyle_ = new HighlightingStyle(Utils.ColorFromString("#FFF487"));
-            searchResultStyle_ = new HighlightingStyle(Colors.Khaki);  //? TODO: Customize
             elementMarker_ = new ElementHighlighter(HighlighingType.Marked);
             hoverElementMarker_ = new ElementHighlighter(HighlighingType.Marked);
             searchResultMarker_ = new ElementHighlighter(HighlighingType.Marked);
@@ -106,6 +104,37 @@ namespace IRExplorerUI {
         public TextSearchMode SearchMode {
             get => searchMode_;
             set => searchMode_ = value;
+        }
+
+        public LightDocumentSettings Settings {
+            get => settings_;
+            set {
+                if(settings_ != value) {
+                    settings_ = value;
+                    ReloadSettings();
+                }
+            }
+        }
+
+        private void ReloadSettings() {
+            Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
+            Foreground = ColorBrushes.GetBrush(settings_.TextColor);
+            LineNumbersForeground = ColorBrushes.GetBrush(settings_.LineNumberTextColor);
+            FontFamily = new FontFamily(settings_.FontName);
+            FontSize = settings_.FontSize;
+            WordWrap = settings_.WordWrap;
+            ShowLineNumbers = settings_.ShowLineNumbers;
+
+            elementStyle_ = new HighlightingStyle(settings_.HighlightedIRElementColor);
+            hoverElementStyle_ = new HighlightingStyle(settings_.HoveredIRElementColor);
+            searchResultStyle_ = new HighlightingStyle(settings_.SearchResultColor);
+
+            if(settings_.UseIRSyntaxHighlighting) {
+                EnableIRSyntaxHighlighting();
+            }
+            else {
+                DisableIRSyntaxHighlighting();
+            }
         }
 
         internal void JumpToSearchResult(TextSearchResult result) {
@@ -246,6 +275,10 @@ namespace IRExplorerUI {
             initialText_ = null;
             section_ = null;
             function_ = null;
+            prevSelectedElement_ = null;
+            associatedDocument_ = null;
+            initialTextLines_ = null;
+            selectedElementRefs_ = null;
             Text = "";
         }
 
@@ -269,7 +302,6 @@ namespace IRExplorerUI {
         private async Task SwitchTextImpl(string text) {
             initialText_ = text;
             initialTextChanged_ = false;
-            EnableIRSyntaxHighlighting();
             EnsureInitialTextLines();
             await UpdateElementHighlighting();
         }
@@ -288,7 +320,18 @@ namespace IRExplorerUI {
             }
         }
 
+        public void DisableIRSyntaxHighlighting() {
+            if(syntaxHighlightingLoaded_) {
+                SyntaxHighlighting = null;
+                syntaxHighlightingLoaded_ = false;
+            }
+        }
+
         private async Task UpdateElementHighlighting() {
+            if(!settings_.HighlightIRElements) {
+                return;
+            }
+
             // If there is another task running, cancel it and wait for it to complete
             // before starting a new task, this can happen when quickly changing sections.
             CancelableTask currentUpdateTask = null;
@@ -397,6 +440,7 @@ namespace IRExplorerUI {
             IsReadOnly = true;
 
             if (searchMode_ == TextSearchMode.Filter) {
+                // In filter mode, only text lines that contain the searched text are displayed.
                 EnsureInitialTextLines();
                 string searchResult = await Task.Run(() => SearchAndFilterTextLines(info));
                 Text = searchResult;
@@ -406,10 +450,8 @@ namespace IRExplorerUI {
             }
             else {
                 RestoreInitialText();
-
-                var searchResults =
-                    await Task.Run(() => TextSearcher.AllIndexesOf(initialText_, info.SearchedText, 0, info.SearchKind));
-
+                var searchResults = await Task.Run(() => TextSearcher.AllIndexesOf(initialText_, 
+                                                            info.SearchedText, 0, info.SearchKind));
                 HighlightSearchResults(searchResults);
                 return searchResults;
             }

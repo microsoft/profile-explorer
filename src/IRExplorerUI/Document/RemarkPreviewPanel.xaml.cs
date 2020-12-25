@@ -307,7 +307,10 @@ namespace IRExplorerUI.Document {
 
         public FunctionIR Function { get; set; }
         public IRTextSection Section { get; set; }
-        public ISession Session { get; set; }
+        public ISession Session {
+            get => RemarkTextView.Session;
+            set => RemarkTextView.Session = value;
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
         public event EventHandler<RemarkContextChangedEventArgs> RemarkContextChanged;
@@ -1003,7 +1006,7 @@ namespace IRExplorerUI.Document {
         private async Task UpdateOutputText(Remark remark) {
             string outputText = await Session.GetSectionOutputTextAsync(remark.Section.OutputBefore,
                                                                         remark.Section);
-            await RemarkTextView.SetText(outputText, Function, Section, parentDocument_.TextView, Session);
+            await RemarkTextView.SetText(outputText, Function, Section, parentDocument_.TextView);
             RemarkTextView.SelectText(remark.RemarkLocation.Offset, remark.RemarkText.Length,
                                       remark.RemarkLocation.Line);
         }

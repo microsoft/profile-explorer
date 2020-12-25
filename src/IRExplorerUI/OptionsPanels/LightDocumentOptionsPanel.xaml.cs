@@ -14,12 +14,12 @@ using System.Xml;
 
 namespace IRExplorerUI.OptionsPanels {
     public partial class LightDocumentOptionsPanel : OptionsPanelBase {
-        public const double DefaultHeight = 500;
+        public const double DefaultHeight = 300;
         public const double MinimumHeight = 300;
         public const double DefaultWidth = 360;
         public const double MinimumWidth = 360;
 
-        private DocumentSettings settings_;
+        private LightDocumentSettings settings_;
 
         public LightDocumentOptionsPanel() {
             InitializeComponent();
@@ -29,11 +29,11 @@ namespace IRExplorerUI.OptionsPanels {
 
         public override void Initialize(FrameworkElement parent) {
             base.Initialize(parent);
-            settings_ = (DocumentSettings)Settings;
+            settings_ = (LightDocumentSettings)Settings;
         }
 
         public override void OnSettingsChanged(object newSettings) {
-            settings_ = (DocumentSettings)newSettings;
+            settings_ = (LightDocumentSettings)newSettings;
         }
 
         public bool SyntaxFileChanged { get; set; }

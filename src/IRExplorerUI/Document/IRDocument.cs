@@ -274,12 +274,14 @@ namespace IRExplorerUI {
         private void ReloadSettings() {
             Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
             Foreground = ColorBrushes.GetBrush(settings_.TextColor);
+            LineNumbersForeground = ColorBrushes.GetBrush(settings_.LineNumberTextColor);
             FontFamily = new FontFamily(settings_.FontName);
             FontSize = settings_.FontSize;
             SetupRenderers();
             SetupStyles();
             SetupBlockFolding();
             SetupEvents();
+
             SyntaxHighlighting = Utils.LoadSyntaxHighlightingFile(App.GetSyntaxHighlightingFilePath());
             UpdateHighlighting();
         }

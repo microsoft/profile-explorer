@@ -15,6 +15,7 @@ using IRExplorerUI.Diff;
 using System.Threading;
 using System.Diagnostics;
 using System;
+using IRExplorerUI.OptionsPanels;
 
 namespace IRExplorerUI {
     [ProtoContract]
@@ -40,7 +41,7 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "ToggleSearch", typeof(PassOutputPanel));
     }
 
-    public partial class PassOutputPanel : ToolPanelControl, INotifyPropertyChanged {
+    public partial class PassOutputPanel : LightDocumentPanelBase, INotifyPropertyChanged {
         private string initialText_;
         private bool searchPanelVisible_;
         private List<TextSearchResult> searchResults_;
@@ -52,6 +53,7 @@ namespace IRExplorerUI {
 
         public PassOutputPanel() {
             InitializeComponent();
+            Initialize(TextView);
             Toolbar.DataContext = this;
             diffModeButtonVisible_ = true;
             sectionNameVisible_ = true;
@@ -130,19 +132,11 @@ namespace IRExplorerUI {
             }
         }
 
-        public bool WordWrap {
-            get => TextView.WordWrap;
-            set {
-                TextView.WordWrap = value;
-                OnPropertyChange(nameof(WordWrap));
-            }
-        }
-
         public bool FilterSearchResults {
             get => TextView.SearchMode == LightIRDocument.TextSearchMode.Filter;
             set {
                 var prevSearchMode = TextView.SearchMode;
-                TextView.SearchMode = value ? LightIRDocument.TextSearchMode.Filter : 
+                TextView.SearchMode = value ? LightIRDocument.TextSearchMode.Filter :
                                               LightIRDocument.TextSearchMode.Mark;
                 if (TextView.SearchMode != prevSearchMode) {
                     Dispatcher.InvokeAsync(async () => await SearchText());
@@ -167,7 +161,7 @@ namespace IRExplorerUI {
         bool DiffModeButtonEnabled {
             get => diffModeButtonEnabled_;
             set {
-                if(value != diffModeButtonEnabled_) {
+                if (value != diffModeButtonEnabled_) {
                     diffModeButtonEnabled_ = value;
                     OnPropertyChange(nameof(DiffModeButtonEnabled));
                 }
@@ -202,7 +196,7 @@ namespace IRExplorerUI {
         }
 
         private void ResetTextSearch() {
-            if(searchPanelVisible_) {
+            if (searchPanelVisible_) {
                 SearchPanelVisible = false;
                 TextView.ResetTextSearch();
             }
@@ -247,7 +241,7 @@ namespace IRExplorerUI {
         #region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.PassOutput;
-        
+
         public void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
@@ -398,7 +392,7 @@ namespace IRExplorerUI {
         }
 
         private void FixedToolbar_SettingsClicked(object sender, System.EventArgs e) {
-            MessageBox.Show("TODO");
+            ToggleOptionsPanelVisibility();
         }
 
         private async void AfterButton_Click(object sender, RoutedEventArgs e) {
@@ -487,7 +481,7 @@ namespace IRExplorerUI {
         }
 
         private async Task EndDiffMode() {
-            if(!DiffModeEnabled) {
+            if (!DiffModeEnabled) {
                 return;
             }
 

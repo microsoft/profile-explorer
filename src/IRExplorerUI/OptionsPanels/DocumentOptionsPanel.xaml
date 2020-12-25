@@ -9,12 +9,8 @@
     d:DesignHeight="600"
     d:DesignWidth="400"
     mc:Ignorable="d">
-
     <local:OptionsPanelBase.Resources>
         <CollectionViewSource x:Key="FontCollection" Source="{Binding Source={x:Static Fonts.SystemFontFamilies}}" />
-
-        <local:FontFamilyConverter x:Key="FontFamilyConverter" />
-
         <DataTemplate x:Key="ColorPickerItemList">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -40,7 +36,7 @@
         </DataTemplate>
     </local:OptionsPanelBase.Resources>
 
-    <Grid>
+    <Grid Background="{DynamicResource WindowBackgroundBrush}">
         <StackPanel Grid.Row="0" Margin="4,4,4,4">
             <TextBlock FontWeight="DemiBold" Text="Document Style" />
             <StackPanel Margin="0,8,0,2" Orientation="Horizontal">
@@ -188,63 +184,68 @@
                 Margin="0,0,0,2"
                 Content="Allow block folding"
                 IsChecked="{Binding Path=ShowBlockFolding, Mode=TwoWay}" />
-            <Separator Margin="0,4,0,4" />
+            <Separator Margin="0,8,0,8" />
 
-            <TextBlock FontWeight="DemiBold" Text="IR Value Interaction" />
+            <Expander IsExpanded="True">
+                <Expander.Header>
+                    <TextBlock FontWeight="DemiBold" Text="IR Value Interaction" />
+                </Expander.Header>
+                <StackPanel>
+                    <CheckBox
+                        x:Name="HighlightDefinitionCheckbox"
+                        Margin="0,8,0,2"
+                        Content="Highlight definition(s) of selected source value"
+                        IsChecked="{Binding Path=HighlightSourceDefinition, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="20,2,0,2"
+                        Content="Consider only reaching definitions"
+                        IsChecked="{Binding Path=FilterSourceDefinitions, Mode=TwoWay}"
+                        IsEnabled="{Binding ElementName=HighlightDefinitionCheckbox, Path=IsChecked}"
+                        ToolTip="Filter out any definition that can't reach the source value in the flow graph" />
+                    <CheckBox
+                        x:Name="HighlightUsesCheckbox"
+                        Margin="0,2,0,2"
+                        Content="Highlight uses of selected destination value"
+                        IsChecked="{Binding Path=HighlightDestinationUses, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="20,2,0,2"
+                        Content="Consider only reachable uses"
+                        IsChecked="{Binding Path=FilterDestinationUses, Mode=TwoWay}"
+                        IsEnabled="{Binding ElementName=HighlightUsesCheckbox, Path=IsChecked}"
+                        ToolTip="Filter out any use that can't be reached by the destination value in the flow graph" />
+                    <CheckBox
+                        Margin="0,2,0,2"
+                        Content="Highlight definitions of all sources of selected instruction"
+                        IsChecked="{Binding Path=HighlightInstructionOperands, Mode=TwoWay}" />
 
-            <CheckBox
-                x:Name="HighlightDefinitionCheckbox"
-                Margin="0,8,0,2"
-                Content="Highlight definition(s) of selected source value"
-                IsChecked="{Binding Path=HighlightSourceDefinition, Mode=TwoWay}" />
-            <CheckBox
-                Margin="20,2,0,2"
-                Content="Consider only reaching definitions"
-                IsChecked="{Binding Path=FilterSourceDefinitions, Mode=TwoWay}"
-                IsEnabled="{Binding ElementName=HighlightDefinitionCheckbox, Path=IsChecked}"
-                ToolTip="Filter out any definition that can't reach the source value in the flow graph" />
-            <CheckBox
-                x:Name="HighlightUsesCheckbox"
-                Margin="0,2,0,2"
-                Content="Highlight uses of selected destination value"
-                IsChecked="{Binding Path=HighlightDestinationUses, Mode=TwoWay}" />
-            <CheckBox
-                Margin="20,2,0,2"
-                Content="Consider only reachable uses"
-                IsChecked="{Binding Path=FilterDestinationUses, Mode=TwoWay}"
-                IsEnabled="{Binding ElementName=HighlightUsesCheckbox, Path=IsChecked}"
-                ToolTip="Filter out any use that can't be reached by the destination value in the flow graph" />
-            <CheckBox
-                Margin="0,2,0,2"
-                Content="Highlight definitions of all sources of selected instruction"
-                IsChecked="{Binding Path=HighlightInstructionOperands, Mode=TwoWay}" />
+                    <CheckBox
+                        x:Name="HoverCheckbox"
+                        Margin="0,2,0,2"
+                        Content="Show value information on hover"
+                        IsChecked="{Binding Path=ShowInfoOnHover, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="20,2,0,2"
+                        Content="Only when the Ctrl/Alt/Shift key is pressed"
+                        IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
+                        IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
 
-            <CheckBox
-                x:Name="HoverCheckbox"
-                Margin="0,2,0,2"
-                Content="Show value information on hover"
-                IsChecked="{Binding Path=ShowInfoOnHover, Mode=TwoWay}" />
-            <CheckBox
-                Margin="20,2,0,2"
-                Content="Only when the Ctrl/Alt/Shift key is pressed"
-                IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
-                IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
-
-            <CheckBox
-                x:Name="ShowPreviewCheckbox"
-                Margin="0,2,0,2"
-                Content="Show definition preview popup on hover"
-                IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
-            <CheckBox
-                Margin="20,2,0,2"
-                Content="Only when the Ctrl/Alt/Shift key is pressed"
-                IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
-                IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
-            <Separator Margin="0,4,0,4" />
+                    <CheckBox
+                        x:Name="ShowPreviewCheckbox"
+                        Margin="0,2,0,2"
+                        Content="Show definition preview popup on hover"
+                        IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="20,2,0,2"
+                        Content="Only when the Ctrl/Alt/Shift key is pressed"
+                        IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
+                        IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
+                    <Separator Margin="0,8,0,8" />
+                </StackPanel>
+            </Expander>
 
             <TextBlock FontWeight="DemiBold" Text="Document Colors" />
 
-            <StackPanel Margin="0,8,0,4" Orientation="Horizontal">
+            <StackPanel Margin="0,4,0,8" Orientation="Horizontal">
                 <TextBlock
                     Width="50"
                     VerticalAlignment="Center"
@@ -342,7 +343,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Default text color" />
+                        Text="Text color" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -387,9 +388,31 @@
                         VerticalAlignment="Center"
                         Text="Left margin background color" />
                 </Grid>
+
+                <Grid Margin="0,2,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <xctk:ColorPicker
+                        Grid.Column="0"
+                        Width="64"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        AvailableColorsSortingMode="HueSaturationBrightness"
+                        BorderBrush="#707070"
+                        SelectedColor="{Binding Path=LineNumberTextColor, Mode=TwoWay}"
+                        ShowDropDownButton="True"
+                        UsingAlphaChannel="False" />
+                    <TextBlock
+                        Grid.Column="1"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Text="Line number text color" />
+                </Grid>
             </StackPanel>
 
-            <Separator Margin="0,4,0,4" />
+            <Separator Margin="0,8,0,4" />
 
             <TextBlock FontWeight="DemiBold" Text="IR Value Colors" />
             <StackPanel Margin="0,8,0,0" Orientation="Vertical">

@@ -20,6 +20,7 @@
         <ResourceDictionary Source="SeparatorStyle.xaml" />
         <ResourceDictionary Source="MenuStyle.xaml" />
         <ResourceDictionary Source="SliderStyle.xaml" />
+        <ResourceDictionary Source="ExpanderStyle.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <ResourceDictionary x:Key="ContainedStyles">
@@ -89,6 +90,7 @@
         <Style BasedOn="{StaticResource ThemedContextMenu}" TargetType="{x:Type ContextMenu}" />
 
         <Style BasedOn="{StaticResource SliderStyle}" TargetType="{x:Type Slider}" />
+        <Style BasedOn="{StaticResource ExpanderStyle}" TargetType="{x:Type Expander}" />
     </ResourceDictionary>
 
     <Style

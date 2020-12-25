@@ -1,4 +1,4 @@
-﻿<local:ToolPanelControl
+﻿<local:LightDocumentPanelBase
     x:Class="IRExplorerUI.PassOutputPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -77,15 +77,6 @@
                             Width="16"
                             Height="16"
                             Source="{StaticResource BookIcon}" />
-                    </ToggleButton>
-                    <ToggleButton
-                        IsChecked="{Binding WordWrap, Mode=TwoWay}"
-                        TabIndex="5"
-                        ToolTip="Word wrap output text">
-                        <Image
-                            Width="16"
-                            Height="16"
-                            Source="{StaticResource WordWrapIcon}" />
                     </ToggleButton>
                     <Separator />
 
@@ -170,4 +161,4 @@
             CommandTarget="{Binding ElementName=TextView}"
             Modifiers="Ctrl" />
     </local:ToolPanelControl.InputBindings>
-</local:ToolPanelControl>
+</local:LightDocumentPanelBase>

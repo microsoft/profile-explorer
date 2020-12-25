@@ -23,8 +23,8 @@ namespace IRExplorerUI {
             ErrorList.Visibility = Visibility.Collapsed;
             TextView.Visibility = Visibility.Visible;
             var printer = new IRPrinter(Session.CurrentDocument.Function);
-            TextView.Text = printer.Print();
 
+            TextView.Text = printer.Print();
             TextView.SyntaxHighlighting =
                 Utils.LoadSyntaxHighlightingFile(App.GetInternalIRSyntaxHighlightingFilePath());
         }

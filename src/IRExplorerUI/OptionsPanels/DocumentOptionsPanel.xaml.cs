@@ -13,21 +13,6 @@ using System.Windows.Media;
 using System.Xml;
 
 namespace IRExplorerUI.OptionsPanels {
-    public class FontFamilyConverter : IValueConverter {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-            try {
-                return new FontFamily((string)value);
-            }
-            catch (Exception) {
-                return null;
-            }
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
-            return ((FontFamily)value).Source;
-        }
-    }
-
     public partial class DocumentOptionsPanel : OptionsPanelBase {
         public const double DefaultHeight = 500;
         public const double MinimumHeight = 300;

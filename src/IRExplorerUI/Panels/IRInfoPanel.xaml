@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:doc="clr-namespace:IRExplorerUI.Document"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="450"
@@ -64,15 +65,7 @@
             <local:PanelToolbarTray Grid.Column="1" HasPinButton="False" />
         </Grid>
 
-        <avalonEdit:TextEditor
-            xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
-            x:Name="TextView"
-            Grid.Row="1"
-            Background="{DynamicResource TextBoxBackgroundBrush}"
-            FontFamily="Consolas"
-            FontSize="12"
-            Foreground="{DynamicResource TextBoxForegroundBrush}"
-            ShowLineNumbers="True" />
+        <doc:SearcheableIRDocument x:Name="TextView" Grid.Row="1" />
 
         <ListBox
             x:Name="ErrorList"
