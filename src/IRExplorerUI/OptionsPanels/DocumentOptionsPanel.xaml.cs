@@ -69,10 +69,8 @@ namespace IRExplorerUI.OptionsPanels {
         }
 
         private void NotifySettingsChanged() {
-            DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-                SyntaxFileChanged = DataContext != null && UpdateSyntaxHighlightingStyle();
-                RaiseSettingsChanged(null);
-            });
+            SyntaxFileChanged = DataContext != null && UpdateSyntaxHighlightingStyle();
+            RaiseSettingsChanged(null);
         }
 
         public override void PanelClosing() {
@@ -135,8 +133,6 @@ namespace IRExplorerUI.OptionsPanels {
             settings_.DefinitionValueColor = style.Colors["DefinitionValueColor"];
             settings_.UseValueColor = style.Colors["UseValueColor"];
             settings_.BorderColor = style.Colors["BorderColor"];
-            DataContext = null;
-            DataContext = settings_;
             NotifySettingsChanged();
         }
 

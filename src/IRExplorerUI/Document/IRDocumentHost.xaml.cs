@@ -564,7 +564,7 @@ namespace IRExplorerUI {
 
         private void LoadNewSettings(bool force, bool commit) {
             var newSettings = optionsPanelWindow_.GetSettingsSnapshot<DocumentSettings>();
-
+            
             if (force || newSettings.HasChanges(Settings)) {
                 App.Settings.DocumentSettings = newSettings;
                 Settings = newSettings;
