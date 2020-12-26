@@ -33,7 +33,7 @@ namespace IRExplorerUI.OptionsPanels {
             PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
             PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
         }
-
+        
         public override void Initialize(FrameworkElement parent) {
             base.Initialize(parent);
             settings_ = (DocumentSettings)Settings;

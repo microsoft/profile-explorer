@@ -14,9 +14,10 @@ namespace IRExplorerUI {
     /// <summary>
     ///     Interaction logic for SectionPanel.xaml
     /// </summary>
-    public partial class IRInfoPanel : ToolPanelControl {
+    public partial class IRInfoPanel : LightDocumentPanelBase {
         public IRInfoPanel() {
             InitializeComponent();
+            Initialize(TextView.TextView);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e) {

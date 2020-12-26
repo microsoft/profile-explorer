@@ -1,4 +1,4 @@
-﻿<local:ToolPanelControl
+﻿<local:LightDocumentPanelBase
     x:Class="IRExplorerUI.IRInfoPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -73,4 +73,4 @@
             SelectionChanged="ErrorList_SelectionChanged"
             Visibility="Collapsed" />
     </Grid>
-</local:ToolPanelControl>
+</local:LightDocumentPanelBase>

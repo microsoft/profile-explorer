@@ -34,9 +34,8 @@ namespace IRExplorerUI {
         }
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
-            Settings.Reset();
-            optionsPanel_.Settings = null;
-            optionsPanel_.Settings = Settings.Clone();
+            optionsPanel_.ResetSettings();
+            LoadNewSettings(true);
         }
 
         public void ToggleOptionsPanelVisibility() {
@@ -89,7 +88,7 @@ namespace IRExplorerUI {
         }
 
         private bool LoadNewSettings(bool commit) {
-            var newSettings = (LightDocumentSettings)optionsPanel_.Settings;
+            var newSettings = optionsPanel_.GetSettingsSnapshot<LightDocumentSettings>();
 
             if (newSettings.HasChanges(Settings)) {
                 if (commit) {

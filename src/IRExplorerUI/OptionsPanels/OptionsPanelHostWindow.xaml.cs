@@ -75,9 +75,23 @@ namespace IRExplorerUI.OptionsPanels {
             StaysOpen = staysOpen;
         }
 
-        public object Settings {
+        public SettingsBase Settings {
             get => optionsPanel_.Settings;
             set => optionsPanel_.Settings = value;
+        }
+        
+        public T GetSettingsSnapshot<T>() where T: SettingsBase {
+            var newSettings = (T)Settings.Clone();
+            Settings = null;
+            Settings = newSettings;
+            return newSettings;
+        }
+
+        public void ResetSettings() {
+            var newSettings = Settings.Clone();
+            newSettings.Reset();
+            Settings = null;
+            Settings = newSettings;
         }
 
         public event EventHandler PanelClosed;

@@ -558,12 +558,13 @@ namespace IRExplorerUI {
 
         private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
             if (optionsPanelVisible_) {
-                var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
-                LoadNewSettings(newSettings, optionsPanel_.SyntaxFileChanged, false);
+                LoadNewSettings(optionsPanel_.SyntaxFileChanged, false);
             }
         }
 
-        private void LoadNewSettings(DocumentSettings newSettings, bool force, bool commit) {
+        private void LoadNewSettings(bool force, bool commit) {
+            var newSettings = optionsPanelWindow_.GetSettingsSnapshot<DocumentSettings>();
+
             if (force || newSettings.HasChanges(Settings)) {
                 App.Settings.DocumentSettings = newSettings;
                 Settings = newSettings;
@@ -576,10 +577,8 @@ namespace IRExplorerUI {
         }
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
-            var newOptions = new DocumentSettings();
-            LoadNewSettings(newOptions, true, false);
-            optionsPanelWindow_.Settings = null;
-            optionsPanelWindow_.Settings = newOptions;
+            optionsPanelWindow_.ResetSettings();
+            LoadNewSettings(false, true);
         }
 
         private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
@@ -1206,9 +1205,7 @@ namespace IRExplorerUI {
             optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
-
-            var newSettings = (DocumentSettings)optionsPanelWindow_.Settings;
-            LoadNewSettings(newSettings, syntaxFileChanged, true);
+            LoadNewSettings(syntaxFileChanged, true);
 
             optionsPanel_ = null;
             optionsPanelWindow_ = null;

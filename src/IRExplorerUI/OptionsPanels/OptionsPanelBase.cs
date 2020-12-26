@@ -16,7 +16,7 @@ namespace IRExplorerUI.OptionsPanels {
         void PanelClosing();
         void PanelResetting();
         void PanelResetted();
-        object Settings { get; set; }
+        SettingsBase Settings { get; set; }
     }
 
     public class OptionsPanelBase : UserControl, IOptionsPanel {
@@ -57,12 +57,12 @@ namespace IRExplorerUI.OptionsPanels {
 
         }
 
-        public object Settings {
-            get => DataContext;
+        public SettingsBase Settings {
+            get => (SettingsBase)DataContext;
             set {
                 if (DataContext != value) {
-                    DataContext = value; //? TODO: Should first set to null and remove all Settings = null
-
+                    DataContext = value;
+                    
                     if (value != null && initialized_) {
                         OnSettingsChanged(value);
                     }

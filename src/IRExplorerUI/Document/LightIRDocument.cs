@@ -15,6 +15,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerCore.Utilities;
 using System.Threading;
+using System.Windows;
 
 // TODO: Clicking on scroll bar not working if there is an IR element under it,
 // that one should be ignored if in the scroll bar bounds. GraphPanel does thats
@@ -328,6 +329,11 @@ namespace IRExplorerUI {
         }
 
         private async Task UpdateElementHighlighting() {
+            if (settings_ == null) {
+                MessageBox.Show("Null settings, attach dbg");
+                Utils.WaitForDebugger();
+            }
+            
             if(!settings_.HighlightIRElements) {
                 return;
             }
