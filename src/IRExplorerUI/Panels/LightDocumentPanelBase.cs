@@ -9,8 +9,8 @@ namespace IRExplorerUI {
     public class LightDocumentPanelBase : ToolPanelControl {
         private LightIRDocument textView_;
         private LightDocumentSettings settings_;
-        private bool optionsPanelVisible_;
         private OptionsPanelHostWindow optionsPanel_;
+        private bool optionsPanelVisible_;
 
         public void Initialize(LightIRDocument textView) {
             textView_ = textView;
@@ -19,8 +19,10 @@ namespace IRExplorerUI {
         public LightDocumentSettings Settings {
             get => settings_;
             set {
-                settings_ = value;
-                textView_.Settings = Settings;
+                if (settings_ != value) {
+                    settings_ = value;
+                    textView_.Settings = settings_;
+                }
             }
         }
 
@@ -60,7 +62,7 @@ namespace IRExplorerUI {
             optionsPanel_ = new OptionsPanelHostWindow(new LightDocumentOptionsPanel(),
                                                        position, width, height, this);
 
-            optionsPanel_.Settings = Settings.Clone();
+            optionsPanel_.Settings = Settings;
             optionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
             optionsPanel_.PanelReset += OptionsPanel_PanelReset;
             optionsPanel_.SettingsChanged += OptionsPanel_SettingsChanged;
@@ -83,11 +85,12 @@ namespace IRExplorerUI {
             optionsPanel_.IsOpen = false;
             optionsPanel_.PanelClosed -= OptionsPanel_PanelClosed;
             optionsPanel_.PanelReset -= OptionsPanel_PanelReset;
+            optionsPanel_.SettingsChanged -= OptionsPanel_SettingsChanged;
             optionsPanelVisible_ = false;
             optionsPanel_ = null;
         }
 
-        private bool LoadNewSettings(bool commit) {
+        private void LoadNewSettings(bool commit) {
             var newSettings = optionsPanel_.GetSettingsSnapshot<LightDocumentSettings>();
 
             if (newSettings.HasChanges(Settings)) {
@@ -97,10 +100,12 @@ namespace IRExplorerUI {
                 }
 
                 Settings = newSettings;
-                return true;
             }
+        }
 
-            return false;
+        public override void OnThemeChanged() {
+            base.OnThemeChanged();
+            Settings = (LightDocumentSettings)Settings.Clone();
         }
     }
 }

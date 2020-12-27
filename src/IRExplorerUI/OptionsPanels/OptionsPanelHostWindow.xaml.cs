@@ -77,7 +77,7 @@ namespace IRExplorerUI.OptionsPanels {
 
         public SettingsBase Settings {
             get => optionsPanel_.Settings;
-            set => optionsPanel_.Settings = value;
+            set => optionsPanel_.Settings = value != null ? value.Clone() : null;
         }
         
         public T GetSettingsSnapshot<T>() where T: SettingsBase {

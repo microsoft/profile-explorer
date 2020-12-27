@@ -131,8 +131,7 @@ namespace IRExplorerUI {
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
             Settings.Reset();
-            graphOptionsPanel_.Settings = null;
-            graphOptionsPanel_.Settings = Settings.Clone();
+            graphOptionsPanel_.ResetSettings();
         }
 
         private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
@@ -782,7 +781,7 @@ namespace IRExplorerUI {
 
             graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
             graphOptionsPanel_.PanelReset += OptionsPanel_PanelReset;
-            graphOptionsPanel_.Settings = Settings.Clone();
+            graphOptionsPanel_.Settings = Settings;
             graphOptionsPanel_.IsOpen = true;
             optionsPanelVisible_ = true;
         }

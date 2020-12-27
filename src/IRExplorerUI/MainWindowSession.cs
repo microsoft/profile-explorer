@@ -1179,8 +1179,12 @@ namespace IRExplorerUI {
                     docHostInfo.DocumentHost.Settings = newSettings;
                 }
             }
-
+            
             CompilerInfo.ReloadSettings();
+
+            // Some panels may inherit settings from the document,
+            // notify them about the change.
+            ForEachPanel((panel) => panel.OnThemeChanged());
         }
 
         public void ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document) {

@@ -3,17 +3,17 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:IRExplorerUI"
-    xmlns:plus="clr-namespace:IRExplorerTheme;assembly=IRExplorerTheme"
+    xmlns:theme="clr-namespace:IRExplorerTheme;assembly=IRExplorerTheme"
     StartupUri="MainWindow.xaml">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Converters.xaml" />
-                <!--<ResourceDictionary Source="Icons.xaml" />-->
-                <ResourceDictionary Source="IconsWhite.xaml" />
+                <ResourceDictionary Source="Icons.xaml" />
+                <!--<ResourceDictionary Source="IconsWhite.xaml" />-->
                 <ResourceDictionary Source="Styles.xaml" />
-                <plus:DarkTheme />
-                <!--<plus:LightTheme />-->
+                <!--<theme:DarkTheme />-->
+                <theme:LightTheme />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

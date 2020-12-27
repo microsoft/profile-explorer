@@ -118,9 +118,18 @@ namespace IRExplorerUI {
         }
 
         private void ReloadSettings() {
-            Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-            Foreground = ColorBrushes.GetBrush(settings_.TextColor);
-            LineNumbersForeground = ColorBrushes.GetBrush(settings_.LineNumberTextColor);
+            if(settings_.SyncStyleWithDocument) {
+                var docSettings = App.Settings.DocumentSettings;
+                Background = ColorBrushes.GetBrush(docSettings.BackgroundColor);
+                Foreground = ColorBrushes.GetBrush(docSettings.TextColor);
+                LineNumbersForeground = ColorBrushes.GetBrush(docSettings.LineNumberTextColor);
+            }
+            else {
+                Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
+                Foreground = ColorBrushes.GetBrush(settings_.TextColor);
+                LineNumbersForeground = ColorBrushes.GetBrush(settings_.LineNumberTextColor);
+            }
+
             FontFamily = new FontFamily(settings_.FontName);
             FontSize = settings_.FontSize;
             WordWrap = settings_.WordWrap;

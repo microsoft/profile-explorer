@@ -1,5 +1,5 @@
-﻿                  <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿                  
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style x:Key="RadioButtonStyle" TargetType="{x:Type RadioButton}">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="SnapsToDevicePixels" Value="True" />
@@ -11,25 +11,29 @@
                 <ControlTemplate TargetType="{x:Type RadioButton}">
                     <BulletDecorator>
                         <BulletDecorator.Bullet>
-                            <Grid Width="12"
-                                  Height="12">
-                                <Ellipse Fill="{TemplateBinding Background}"
-                                         StrokeThickness="1"
-                                         Stroke="{TemplateBinding BorderBrush}" />
-                                <Ellipse x:Name="Mark"
-                                         Visibility="Collapsed"
-                                         Margin="3"
-                                         Fill="{DynamicResource RadioButtonMarkBrush}" />
+                            <Grid Width="12" Height="12">
+                                <Ellipse
+                                    Fill="{TemplateBinding Background}"
+                                    Stroke="{TemplateBinding BorderBrush}"
+                                    StrokeThickness="1" />
+                                <Ellipse
+                                    x:Name="Mark"
+                                    Margin="3"
+                                    Fill="{DynamicResource RadioButtonMarkBrush}"
+                                    Visibility="Collapsed" />
                             </Grid>
                         </BulletDecorator.Bullet>
+                        <ContentPresenter
+                            Margin="4,0,0,0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            RecognizesAccessKey="True" />
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="CheckStates">
                                 <VisualState x:Name="Checked">
                                     <Storyboard>
-                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetProperty="Visibility"
-                                                                       Storyboard.TargetName="Mark">
-                                            <DiscreteObjectKeyFrame KeyTime="0"
-                                                                    Value="{x:Static Visibility.Visible}" />
+                                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="Mark" Storyboard.TargetProperty="Visibility">
+                                            <DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}" />
                                         </ObjectAnimationUsingKeyFrames>
                                     </Storyboard>
                                 </VisualState>
@@ -37,10 +41,6 @@
                                 <VisualState x:Name="Unchecked" />
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
-                        <ContentPresenter Margin="4,0,0,0"
-                                          HorizontalAlignment="Left"
-                                          VerticalAlignment="Center"
-                                          RecognizesAccessKey="True" />
                     </BulletDecorator>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsEnabled" Value="False">

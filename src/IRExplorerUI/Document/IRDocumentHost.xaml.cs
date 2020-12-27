@@ -55,58 +55,6 @@ namespace IRExplorerUI {
         public bool HasAnnotations => DocumentState.HasAnnotations;
     }
 
-    class RemarksButtonState : INotifyPropertyChanged {
-        private RemarkSettings remarkSettings_;
-
-        public RemarksButtonState(RemarkSettings settings) {
-            remarkSettings_ = (RemarkSettings)settings.Clone();
-        }
-
-        public RemarkSettings Settings {
-            get {
-                return remarkSettings_;
-            }
-            set {
-                if (!value.Equals(remarkSettings_)) {
-                    NotifyPropertyChanged(nameof(ShowRemarks));
-                    NotifyPropertyChanged(nameof(ShowPreviousSections));
-                }
-
-                remarkSettings_ = (RemarkSettings)value.Clone();
-            }
-        }
-
-        public bool ShowRemarks {
-            get {
-                return remarkSettings_.ShowRemarks;
-            }
-            set {
-                if (value != remarkSettings_.ShowRemarks) {
-                    remarkSettings_.ShowRemarks = value;
-                    NotifyPropertyChanged(nameof(ShowRemarks));
-                }
-            }
-        }
-
-        public bool ShowPreviousSections {
-            get {
-                return ShowRemarks && remarkSettings_.ShowPreviousSections;
-            }
-            set {
-                if (value != remarkSettings_.ShowPreviousSections) {
-                    remarkSettings_.ShowPreviousSections = value;
-                    NotifyPropertyChanged(nameof(ShowPreviousSections));
-                }
-            }
-        }
-
-        public void NotifyPropertyChanged(string propertyName) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-    }
-
     public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         private const double ActionPanelInitialOpacity = 0.5;
         private const int ActionPanelHeight = 20;
@@ -203,8 +151,10 @@ namespace IRExplorerUI {
         public DocumentSettings Settings {
             get => settings_;
             set {
-                settings_ = value;
-                TextView.Settings = settings_;
+                if (settings_ != value) {
+                    settings_ = value;
+                    TextView.Settings = settings_;
+                }
             }
         }
 
@@ -1191,7 +1141,7 @@ namespace IRExplorerUI {
             optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
-            optionsPanelWindow_.Settings = settings_.Clone();
+            optionsPanelWindow_.Settings = settings_;
             optionsPanelWindow_.IsOpen = true;
             optionsPanelVisible_ = true;
         }
@@ -1234,7 +1184,7 @@ namespace IRExplorerUI {
             remarkOptionsPanelWindow_.PanelClosed += RemarkOptionsPanel_PanelClosed;
             remarkOptionsPanelWindow_.PanelReset += RemarkOptionsPanel_PanelReset;
             remarkOptionsPanelWindow_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
-            remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
+            remarkOptionsPanelWindow_.Settings = remarkSettings_;
             remarkOptionsPanelWindow_.IsOpen = true;
             remarkOptionsPanelVisible_ = true;
         }
@@ -1291,20 +1241,17 @@ namespace IRExplorerUI {
 
         private async void RemarkOptionsPanel_SettingsChanged(object sender, EventArgs e) {
             if (remarkOptionsPanelVisible_) {
-                var newSettings = (RemarkSettings)remarkOptionsPanelWindow_.Settings;
+                var newSettings = remarkOptionsPanelWindow_.GetSettingsSnapshot<RemarkSettings>();
 
                 if (newSettings != null) {
                     await HandleNewRemarkSettings(newSettings, false);
-                    remarkOptionsPanelWindow_.Settings = null;
-                    remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
                 }
             }
         }
 
         private async void RemarkOptionsPanel_PanelReset(object sender, EventArgs e) {
             await HandleNewRemarkSettings(new RemarkSettings(), true);
-            remarkOptionsPanelWindow_.Settings = null;
-            remarkOptionsPanelWindow_.Settings = remarkSettings_.Clone();
+            remarkOptionsPanelWindow_.ResetSettings();
         }
 
         private async void RemarkOptionsPanel_PanelClosed(object sender, EventArgs e) {

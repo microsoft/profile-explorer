@@ -52,17 +52,20 @@ namespace IRExplorerUI {
         }
 
         public override bool Equals(object obj) {
-            return obj is LightDocumentSettings settings &&
-                   FontName == settings.FontName &&
-                   FontSize == settings.FontSize &&
-                   BackgroundColor.Equals(settings.BackgroundColor) &&
-                   TextColor.Equals(settings.TextColor) &&
-                   HighlightedIRElementColor.Equals(settings.HighlightedIRElementColor) &&
-                   LineNumberTextColor.Equals(settings.LineNumberTextColor) &&
-                   SearchResultColor.Equals(settings.SearchResultColor) &&
-                   HighlightIRElements == settings.HighlightIRElements &&
-                   ShowLineNumbers == settings.ShowLineNumbers &&
-                   WordWrap == settings.WordWrap;
+            return obj is LightDocumentSettings other &&
+                   FontName == other.FontName &&
+                   FontSize.Equals(other.FontSize) &&
+                   BackgroundColor.Equals(other.BackgroundColor) &&
+                   TextColor.Equals(other.TextColor) &&
+                   LineNumberTextColor.Equals(other.LineNumberTextColor) &&
+                   HighlightedIRElementColor.Equals(other.HighlightedIRElementColor) &&
+                   HoveredIRElementColor.Equals(other.HoveredIRElementColor) &&
+                   SearchResultColor.Equals(other.SearchResultColor) &&
+                   UseIRSyntaxHighlighting == other.UseIRSyntaxHighlighting &&
+                   HighlightIRElements == other.HighlightIRElements &&
+                   ShowLineNumbers == other.ShowLineNumbers &&
+                   WordWrap == other.WordWrap &&
+                   SyncStyleWithDocument == other.SyncStyleWithDocument;
         }
     }
 }

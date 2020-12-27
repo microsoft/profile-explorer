@@ -1,5 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style x:Key="TextBoxStyle" TargetType="{x:Type TextBoxBase}">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Background" Value="{DynamicResource TextBoxBackgroundBrush}" />
@@ -17,34 +16,30 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type TextBoxBase}">
-                    <Border x:Name="Border"
-                            Background="{TemplateBinding Background}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            BorderBrush="{TemplateBinding BorderBrush}">
-                        <ScrollViewer x:Name="PART_ContentHost"
-                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
-                                      SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
-                                      Margin="{TemplateBinding Padding}" />
+                    <Border
+                        x:Name="Border"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                        <ScrollViewer
+                            x:Name="PART_ContentHost"
+                            Margin="{TemplateBinding Padding}"
+                            HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="Background"
-                                    Value="{DynamicResource TextBoxHoverBackgroundBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush"
-                                    Value="{DynamicResource TextBoxHoverBorderBrush}" />
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource TextBoxHoverBackgroundBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource TextBoxHoverBorderBrush}" />
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
-                            <Setter TargetName="Border" Property="Background"
-                                    Value="{DynamicResource TextBoxFocusBackgroundBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush"
-                                    Value="{DynamicResource TextBoxFocusBorderBrush}" />
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource TextBoxFocusBackgroundBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource TextBoxFocusBorderBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
-                            <Setter TargetName="Border" Property="Background"
-                                    Value="{DynamicResource TextBoxDisabledBackgroundBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush"
-                                    Value="{DynamicResource TextBoxDisabledBorderBrush}" />
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource TextBoxDisabledBackgroundBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource TextBoxDisabledBorderBrush}" />
                             <Setter Property="Foreground" Value="{DynamicResource TextBoxDisabledForegroundBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>

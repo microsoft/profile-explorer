@@ -1,5 +1,4 @@
-﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Style x:Key="GroupBoxStyle" TargetType="{x:Type GroupBox}">
         <Setter Property="SnapsToDevicePixels" Value="True" />
         <Setter Property="OverridesDefaultStyle" Value="True" />
@@ -15,18 +14,21 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0"
-                                   Background="{TemplateBinding BorderBrush}"
-                                   HorizontalAlignment="Left"
-                                   Foreground="{DynamicResource GroupBoxHeaderForegroundBrush}">
-                            <ContentPresenter ContentSource="Header"
-                                              RecognizesAccessKey="True"
-                                              Margin="8,3,8,3" />
+                        <TextBlock
+                            Grid.Row="0"
+                            HorizontalAlignment="Left"
+                            Background="{TemplateBinding BorderBrush}"
+                            Foreground="{DynamicResource GroupBoxHeaderForegroundBrush}">
+                            <ContentPresenter
+                                Margin="8,3,8,3"
+                                ContentSource="Header"
+                                RecognizesAccessKey="True" />
                         </TextBlock>
-                        <Border Grid.Row="1"
-                                Background="{TemplateBinding Background}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                BorderBrush="{TemplateBinding BorderBrush}">
+                        <Border
+                            Grid.Row="1"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}">
                             <ContentPresenter Margin="{TemplateBinding Padding}" />
                         </Border>
                     </Grid>
