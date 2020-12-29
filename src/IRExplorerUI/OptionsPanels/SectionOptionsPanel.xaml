@@ -26,7 +26,7 @@
                     BorderBrush="{x:Null}"
                     Click="EditButton_Click"
                     ToolTip="Edit section style definition file (JSON format)">
-                    <Image Source="{StaticResource EditIcon}" />
+                    <Image Source="{DynamicResource EditIcon}" />
                 </Button>
 
                 <Button
@@ -38,7 +38,7 @@
                     BorderBrush="{x:Null}"
                     Click="ReloadButton_Click"
                     ToolTip="Reload the session style definitions">
-                    <Image Source="{StaticResource ReloadIcon}" />
+                    <Image Source="{DynamicResource ReloadIcon}" />
                 </Button>
             </StackPanel>
 

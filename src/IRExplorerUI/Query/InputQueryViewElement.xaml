@@ -32,11 +32,11 @@
         <Style x:Key="InOutTextStyle" TargetType="{x:Type Image}">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsInput}" Value="True">
-                    <Setter Property="Source" Value="{StaticResource CrosshairIcon}" />
+                    <Setter Property="Source" Value="{DynamicResource CrosshairIcon}" />
                 </DataTrigger>
 
                 <DataTrigger Binding="{Binding Path=IsInput}" Value="False">
-                    <Setter Property="Source" Value="{StaticResource RightArrowIcon}" />
+                    <Setter Property="Source" Value="{DynamicResource RightArrowIcon}" />
                 </DataTrigger>
             </Style.Triggers>
 
@@ -179,7 +179,7 @@
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center"
                 DockPanel.Dock="Right"
-                Source="{StaticResource WarningIcon}"
+                Source="{DynamicResource WarningIcon}"
                 ToolTip="{Binding WarningMessage}"
                 Visibility="{Binding IsWarning, Converter={StaticResource BoolToVisibility}}" />
 

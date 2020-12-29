@@ -42,7 +42,7 @@
                         Command="local:ScriptingCommand.ExecuteScript"
                         CommandTarget="{Binding ElementName=TextView}"
                         ToolTip="Execute script (Ctrl+Return)">
-                        <Image Source="{StaticResource ExecuteIcon}" />
+                        <Image Source="{DynamicResource ExecuteIcon}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>

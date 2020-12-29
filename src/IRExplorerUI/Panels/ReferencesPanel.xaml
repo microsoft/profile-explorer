@@ -118,14 +118,14 @@
                         CommandParameter="{Binding ElementName=ReferenceList, Path=SelectedItem}"
                         CommandTarget="{Binding ElementName=ReferenceList}"
                         ToolTip="Jump to reference (Return)">
-                        <Image Source="{StaticResource JumpIcon}" />
+                        <Image Source="{DynamicResource JumpIcon}" />
                     </Button>
 
                     <Button
                         Command="local:ReferenceCommand.CopyToClipboard"
                         CommandTarget="{Binding ElementName=ReferenceList}"
                         ToolTip="Copy reference list to clipboard (Ctrl+C)">
-                        <Image Source="{StaticResource ClipboardIcon}" />
+                        <Image Source="{DynamicResource ClipboardIcon}" />
                     </Button>
 
                     <Separator />
@@ -259,7 +259,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource JumpIcon}" />
+                                Source="{DynamicResource JumpIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />

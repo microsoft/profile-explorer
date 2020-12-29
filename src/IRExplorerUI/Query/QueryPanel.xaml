@@ -76,7 +76,7 @@
                 <Image
                     Width="16"
                     Height="16"
-                    Source="{StaticResource PlusIcon}" />
+                    Source="{DynamicResource PlusIcon}" />
                 <Button.ContextMenu>
                     <ContextMenu x:Name="QueryContextMenu" />
                 </Button.ContextMenu>
@@ -92,7 +92,7 @@
                     <Image
                         Width="16"
                         Height="16"
-                        Source="{StaticResource CloseIcon}" />
+                        Source="{DynamicResource CloseIcon}" />
                 </Button>
 
                 <ScrollViewer

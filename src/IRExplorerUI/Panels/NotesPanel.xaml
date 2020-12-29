@@ -61,7 +61,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource WordWrapIcon}" />
+                            Source="{DynamicResource WordWrapIcon}" />
                     </ToggleButton>
                     <Separator />
 
@@ -72,7 +72,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource SearchIcon}" />
+                            Source="{DynamicResource SearchIcon}" />
                     </ToggleButton>
 
                 </ToolBar>

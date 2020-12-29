@@ -18,7 +18,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="WarningIconColor">
-                <Image Source="{StaticResource WarningIconColor}" />
+                <Image Source="{DynamicResource WarningIconColor}" />
             </Button>
             <Button
                 Width="20"
@@ -28,7 +28,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="QuestionIconColor">
-                <Image Source="{StaticResource QuestionIconColor}" />
+                <Image Source="{DynamicResource QuestionIconColor}" />
             </Button>
             <Button
                 Width="20"
@@ -38,7 +38,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="MarkerIcon">
-                <Image Source="{StaticResource MarkerIcon}" />
+                <Image Source="{DynamicResource MarkerIcon}" />
             </Button>
             <Button
                 Width="20"
@@ -48,7 +48,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="StarIconColor">
-                <Image Source="{StaticResource StarIconColor}" />
+                <Image Source="{DynamicResource StarIconColor}" />
             </Button>
 
             <Button
@@ -59,7 +59,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="PinIconColor">
-                <Image Source="{StaticResource PinIconColor}" />
+                <Image Source="{DynamicResource PinIconColor}" />
             </Button>
             <Button
                 Width="20"
@@ -69,7 +69,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="ExecuteIconColor">
-                <Image Source="{StaticResource ExecuteIconColor}" />
+                <Image Source="{DynamicResource ExecuteIconColor}" />
             </Button>
             <Button
                 Width="20"
@@ -79,7 +79,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="BellIcon">
-                <Image Source="{StaticResource BellIcon}" />
+                <Image Source="{DynamicResource BellIcon}" />
             </Button>
         </StackPanel>
     </StackPanel>

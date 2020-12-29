@@ -388,7 +388,7 @@
                                         Margin="0,1,0,0"
                                         VerticalAlignment="Center"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource BookIcon}"
+                                        Source="{DynamicResource BookIcon}"
                                         UseLayoutRounding="True" />
                                     <TextBlock
                                         Margin="2,-1,0,0"
@@ -422,7 +422,7 @@
                                         Margin="0,1,0,0"
                                         VerticalAlignment="Center"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource SettingsIcon}"
+                                        Source="{DynamicResource SettingsIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
                                 <Line
@@ -444,7 +444,7 @@
                                         Margin="0,1,0,0"
                                         VerticalAlignment="Center"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource LeftArrowIcon}"
+                                        Source="{DynamicResource LeftArrowIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
 
@@ -461,7 +461,7 @@
                                         Margin="0,1,0,0"
                                         VerticalAlignment="Center"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource RightArrowIcon}"
+                                        Source="{DynamicResource RightArrowIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
 
@@ -483,7 +483,7 @@
                                         Height="14"
                                         VerticalAlignment="Stretch"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource SwitchIcon}"
+                                        Source="{DynamicResource SwitchIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
 
@@ -512,7 +512,7 @@
                                         Margin="0,1,0,0"
                                         VerticalAlignment="Center"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource UpArrowIcon}"
+                                        Source="{DynamicResource UpArrowIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
 
@@ -529,7 +529,7 @@
                                         Margin="0,1,0,0"
                                         VerticalAlignment="Center"
                                         SnapsToDevicePixels="True"
-                                        Source="{StaticResource DownArrowIcon}"
+                                        Source="{DynamicResource DownArrowIcon}"
                                         UseLayoutRounding="True" />
                                 </Button>
                             </StackPanel>
@@ -559,7 +559,7 @@
                                     Margin="0,0,0,0"
                                     VerticalAlignment="Center"
                                     SnapsToDevicePixels="True"
-                                    Source="{StaticResource UploadIcon}"
+                                    Source="{DynamicResource UploadIcon}"
                                     UseLayoutRounding="True" />
                                 <TextBlock
                                     Margin="2,-1,0,0"
@@ -592,7 +592,7 @@
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
                                 SnapsToDevicePixels="True"
-                                Source="{StaticResource SearchIcon}"
+                                Source="{DynamicResource SearchIcon}"
                                 UseLayoutRounding="True" />
                         </Button>
                     </Border>
@@ -839,7 +839,7 @@
             <Image
                 Width="14"
                 Height="14"
-                Source="{StaticResource DocumentIcon}" />
+                Source="{DynamicResource DocumentIcon}" />
             <StatusBarItem
                 x:Name="IRTypeLabel"
                 VerticalAlignment="Center"
@@ -849,7 +849,7 @@
             <Image
                 Width="14"
                 Height="14"
-                Source="{StaticResource BlockIcon}" />
+                Source="{DynamicResource BlockIcon}" />
             <TextBlock
                 VerticalAlignment="Center"
                 FontSize="11"
@@ -868,7 +868,7 @@
             <Image
                 Width="14"
                 Height="14"
-                Source="{StaticResource BookmarkIcon}" />
+                Source="{DynamicResource BookmarkIcon}" />
             <TextBlock
                 VerticalAlignment="Center"
                 FontSize="11"
@@ -886,7 +886,7 @@
             <Image
                 Width="14"
                 Height="14"
-                Source="{StaticResource MonitorIcon}" />
+                Source="{DynamicResource MonitorIcon}" />
             <TextBlock
                 VerticalAlignment="Center"
                 FontSize="11"
@@ -956,7 +956,7 @@
                         Width="14"
                         Height="14"
                         VerticalAlignment="Center"
-                        Source="{StaticResource OpenExternalIcon}" />
+                        Source="{DynamicResource OpenExternalIcon}" />
                     <TextBlock
                         Height="12"
                         Margin="2,0,0,0"
@@ -976,7 +976,7 @@
                 Click="ScreenshotButton_Click"
                 FontSize="11"
                 ToolTip="Take screenshot of IR Explorer and save it to clipboard">
-                <Image VerticalAlignment="Center" Source="{StaticResource MonitorIcon}" />
+                <Image VerticalAlignment="Center" Source="{DynamicResource MonitorIcon}" />
             </Button>
 
             <ToggleButton
@@ -989,7 +989,7 @@
                 Click="AlwaysOnTopButton_Click"
                 FontSize="11"
                 ToolTip="Toggle always on top">
-                <Image VerticalAlignment="Center" Source="{StaticResource PinIcon}" />
+                <Image VerticalAlignment="Center" Source="{DynamicResource PinIcon}" />
             </ToggleButton>
 
             <Separator />
@@ -1019,7 +1019,7 @@
                 ToolTip="Update application to newest version"
                 Visibility="Hidden">
                 <StackPanel Orientation="Horizontal">
-                    <Image VerticalAlignment="Center" Source="{StaticResource ReloadIcon}" />
+                    <Image VerticalAlignment="Center" Source="{DynamicResource ReloadIcon}" />
                     <TextBlock
                         Margin="4,0,0,0"
                         VerticalAlignment="Center"

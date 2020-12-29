@@ -96,7 +96,7 @@
                     Background="{DynamicResource BackgroundColor5Brush}"
                     Loaded="ToolBar_Loaded"
                     SizeChanged="ToolBar_SizeChanged">
-                    <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
+                    <Image Source="{DynamicResource SearchIcon}" ToolBar.OverflowMode="Never" />
                     <Grid
                         x:Name="FunctionFilterGrid"
                         Height="24"
@@ -136,7 +136,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource ClearIcon}" />
+                            Source="{DynamicResource ClearIcon}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>
@@ -213,7 +213,7 @@
                     <Image
                         Width="16"
                         Height="16"
-                        Source="{StaticResource ListIcon}" />
+                        Source="{DynamicResource ListIcon}" />
                     <ToggleButton.Style>
                         <Style TargetType="{x:Type ToggleButton}">
                             <Setter Property="Template">
@@ -268,7 +268,7 @@
                         Background="{DynamicResource BackgroundColor5Brush}"
                         Loaded="ToolBar_Loaded">
 
-                        <Image Source="{StaticResource SearchIcon}" />
+                        <Image Source="{DynamicResource SearchIcon}" />
                         <Grid Height="24">
                             <TextBox
                                 Name="SectionFilter"
@@ -302,7 +302,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource ClearIcon}" />
+                                Source="{DynamicResource ClearIcon}" />
                         </Button>
                         <Separator />
 
@@ -312,7 +312,7 @@
                             TabIndex="2"
                             ToolTip="Show only sections with a tag"
                             Unchecked="FilterTagged_Unchecked">
-                            <Image Source="{StaticResource TagIcon}" />
+                            <Image Source="{DynamicResource TagIcon}" />
                         </ToggleButton>
                         <Separator />
 
@@ -322,7 +322,7 @@
                             CommandTarget="{Binding ElementName=SectionList}"
                             TabIndex="0"
                             ToolTip="Switch to previous section (Ctrl+P)">
-                            <Image Source="{StaticResource LeftArrowIcon}" />
+                            <Image Source="{DynamicResource LeftArrowIcon}" />
                         </Button>
                         <Button
                             x:Name="NextButton"
@@ -330,7 +330,7 @@
                             CommandTarget="{Binding ElementName=SectionList}"
                             TabIndex="1"
                             ToolTip="Switch to next section (Ctrl+N)">
-                            <Image Source="{StaticResource RightArrowIcon}" />
+                            <Image Source="{DynamicResource RightArrowIcon}" />
                         </Button>
 
                         <Separator />
@@ -390,12 +390,12 @@
                                             <Image
                                                 Width="16"
                                                 Height="16"
-                                                Source="{StaticResource TagIcon}"
+                                                Source="{DynamicResource TagIcon}"
                                                 Style="{StaticResource IconTagged}" />
                                             <Image
                                                 Width="16"
                                                 Height="16"
-                                                Source="{StaticResource DockRightIcon}"
+                                                Source="{DynamicResource DockRightIcon}"
                                                 Style="{StaticResource IconSelected}" />
 
                                             <TextBlock Text="{Binding NumberString}" />
@@ -518,7 +518,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource OpenExternalIcon}" />
+                                    Source="{DynamicResource OpenExternalIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
 
@@ -533,7 +533,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource DockLeftIcon}" />
+                                    Source="{DynamicResource DockLeftIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem
@@ -546,7 +546,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource DockRightIcon}" />
+                                    Source="{DynamicResource DockRightIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
@@ -562,7 +562,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource WordWrapIcon}" />
+                                    Source="{DynamicResource WordWrapIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
 
@@ -577,7 +577,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource BookIcon}" />
+                                    Source="{DynamicResource BookIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
@@ -609,7 +609,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource TagIcon}" />
+                                    Source="{DynamicResource TagIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
                         <Separator />
@@ -640,7 +640,7 @@
                                     <Image
                                         Width="16"
                                         Height="16"
-                                        Source="{StaticResource ClipboardIcon}" />
+                                        Source="{DynamicResource ClipboardIcon}" />
                                 </MenuItem.Icon>
                             </MenuItem>
 

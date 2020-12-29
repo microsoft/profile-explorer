@@ -348,7 +348,7 @@
                 <Image
                     Width="16"
                     Height="16"
-                    Source="{StaticResource RemoveIcon}" />
+                    Source="{DynamicResource RemoveIcon}" />
             </MenuItem.Icon>
             <MenuItem
                 Command="local:GraphCommand.ClearMarked"

@@ -115,7 +115,7 @@
                 Height="16"
                 Margin="4,0,4,0"
                 VerticalAlignment="Center"
-                Source="{StaticResource WarningIcon}"
+                Source="{DynamicResource WarningIcon}"
                 ToolTip="{Binding WarningMessage}"
                 Visibility="{Binding IsWarning, Converter={StaticResource BoolToVisibility}}" />
             <ContentControl

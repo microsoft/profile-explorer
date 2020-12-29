@@ -55,14 +55,14 @@
                         Command="local:SearchResultsCommand.JumpToPreviousSection"
                         CommandTarget="{Binding ElementName=ResultList}"
                         ToolTip="Jump to previous section results (Ctrl+Shift+F3)">
-                        <Image Source="{StaticResource BoldUpArrowIcon}" />
+                        <Image Source="{DynamicResource BoldUpArrowIcon}" />
                     </Button>
 
                     <Button
                         Command="local:SearchResultsCommand.JumpToNextSection"
                         CommandTarget="{Binding ElementName=ResultList}"
                         ToolTip="Jump to next section results (Ctrl+F3)">
-                        <Image Source="{StaticResource BoldDownArrowIcon}" />
+                        <Image Source="{DynamicResource BoldDownArrowIcon}" />
                     </Button>
                     <Separator />
 
@@ -71,14 +71,14 @@
                         Command="local:SearchResultsCommand.JumpToPrevious"
                         CommandTarget="{Binding ElementName=ResultList}"
                         ToolTip="Jump to previous result (Shift+F3)">
-                        <Image Source="{StaticResource UpArrowIcon}" />
+                        <Image Source="{DynamicResource UpArrowIcon}" />
                     </Button>
 
                     <Button
                         Command="local:SearchResultsCommand.JumpToNext"
                         CommandTarget="{Binding ElementName=ResultList}"
                         ToolTip="Jump to next result (F3)">
-                        <Image Source="{StaticResource DownArrowIcon}" />
+                        <Image Source="{DynamicResource DownArrowIcon}" />
                     </Button>
 
                     <TextBlock
@@ -193,7 +193,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource OpenExternalIcon}" />
+                                Source="{DynamicResource OpenExternalIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
 
@@ -207,7 +207,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource DockLeftIcon}" />
+                                Source="{DynamicResource DockLeftIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
@@ -220,7 +220,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource DockRightIcon}" />
+                                Source="{DynamicResource DockRightIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
                 </ContextMenu>

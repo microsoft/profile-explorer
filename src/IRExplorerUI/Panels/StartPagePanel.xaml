@@ -84,7 +84,7 @@
                                 Padding="2,2,2,2"
                                 Click="ClearButton_Click"
                                 ToolTip="Clear list of recent files">
-                                <Image Source="{StaticResource RemoveIcon}" UseLayoutRounding="True" />
+                                <Image Source="{DynamicResource RemoveIcon}" UseLayoutRounding="True" />
                             </Button>
                             <Button
                                 x:Name="OpenButton"
@@ -123,7 +123,7 @@
                                 Padding="2,2,2,2"
                                 Click="ClearDiffButton_Click"
                                 ToolTip="Clear list of recent compared files">
-                                <Image Source="{StaticResource RemoveIcon}" UseLayoutRounding="True" />
+                                <Image Source="{DynamicResource RemoveIcon}" UseLayoutRounding="True" />
                             </Button>
                             <Button
                                 x:Name="OpenBaseDiffFilesButton"

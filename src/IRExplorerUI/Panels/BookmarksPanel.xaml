@@ -47,7 +47,7 @@
                         CommandParameter="{Binding ElementName=BookmarkList, Path=SelectedItem}"
                         CommandTarget="{Binding ElementName=BookmarkList}"
                         ToolTip="Jump to Bookmark (Return)">
-                        <Image Source="{StaticResource BookmarkArrowIcon}" />
+                        <Image Source="{DynamicResource BookmarkArrowIcon}" />
                     </Button>
 
                     <Separator />
@@ -57,10 +57,10 @@
                         Command="local:DocumentCommand.PreviousBookmark"
                         CommandTarget="{Binding ElementName=BookmarkList}"
                         ToolTip="Jump to previous bookmark (Shift+F2)">
-                        <Image Source="{StaticResource UpArrowIcon}" />
+                        <Image Source="{DynamicResource UpArrowIcon}" />
                     </Button>
                     <Button Command="local:DocumentCommand.NextBookmark" ToolTip="Jump to next bookmark (F2)">
-                        <Image Source="{StaticResource DownArrowIcon}" />
+                        <Image Source="{DynamicResource DownArrowIcon}" />
                     </Button>
                     <Separator />
 
@@ -69,7 +69,7 @@
                         Command="local:DocumentCommand.FirstBookmark"
                         CommandTarget="{Binding ElementName=BookmarkList}"
                         ToolTip="Jump to first bookmark">
-                        <Image Source="{StaticResource BoldUpArrowIcon}" />
+                        <Image Source="{DynamicResource BoldUpArrowIcon}" />
                     </Button>
 
                     <Button
@@ -77,7 +77,7 @@
                         Command="local:DocumentCommand.LastBookmark"
                         CommandTarget="{Binding ElementName=BookmarkList}"
                         ToolTip="Jump to last bookmark">
-                        <Image Source="{StaticResource BoldDownArrowIcon}" />
+                        <Image Source="{DynamicResource BoldDownArrowIcon}" />
                     </Button>
                     <Separator />
 
@@ -95,7 +95,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource RemoveIcon}" />
+                                    Source="{DynamicResource RemoveIcon}" />
                             </MenuItem.Icon>
                             <MenuItem
                                 Command="local:BookmarkCommand.RemoveBookmark"
@@ -240,7 +240,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource BookmarkArrowIcon}" />
+                                Source="{DynamicResource BookmarkArrowIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <MenuItem
@@ -253,7 +253,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource RemoveIcon}" />
+                                Source="{DynamicResource RemoveIcon}" />
                         </MenuItem.Icon>
                     </MenuItem>
                     <Separator />

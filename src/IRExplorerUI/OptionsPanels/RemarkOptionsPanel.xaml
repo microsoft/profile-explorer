@@ -86,7 +86,7 @@
                         BorderBrush="{x:Null}"
                         Click="SetAllKindCheckboxesButton_Click"
                         ToolTip="Select All">
-                        <Image Source="{StaticResource TasklistIcon}" />
+                        <Image Source="{DynamicResource TasklistIcon}" />
                     </Button>
                     <Button
                         Name="ResetAllKindCheckboxesButton"
@@ -97,7 +97,7 @@
                         BorderBrush="{x:Null}"
                         Click="ResetAllKindCheckboxesButton_Click"
                         ToolTip="Clear All">
-                        <Image Source="{StaticResource ClearIcon}" />
+                        <Image Source="{DynamicResource ClearIcon}" />
                     </Button>
                 </StackPanel>
 
@@ -146,7 +146,7 @@
                         BorderBrush="{x:Null}"
                         Click="SetAllCategoryCheckboxesButton_Click"
                         ToolTip="Select all">
-                        <Image Source="{StaticResource TasklistIcon}" />
+                        <Image Source="{DynamicResource TasklistIcon}" />
                     </Button>
 
                     <Button
@@ -157,7 +157,7 @@
                         BorderBrush="{x:Null}"
                         Click="ResetAllCategoryCheckboxesButton_Click"
                         ToolTip="Clear all">
-                        <Image Source="{StaticResource ClearIcon}" />
+                        <Image Source="{DynamicResource ClearIcon}" />
                     </Button>
 
                     <Button
@@ -168,7 +168,7 @@
                         BorderBrush="{x:Null}"
                         Click="EditButton_Click"
                         ToolTip="Edit remark definition file (JSON format)">
-                        <Image Source="{StaticResource EditIcon}" />
+                        <Image Source="{DynamicResource EditIcon}" />
                     </Button>
                     <Button
                         Name="ReloadButton"
@@ -178,7 +178,7 @@
                         BorderBrush="{x:Null}"
                         Click="ReloadButton_Click"
                         ToolTip="Reload the remark definitions">
-                        <Image Source="{StaticResource ReloadIcon}" />
+                        <Image Source="{DynamicResource ReloadIcon}" />
                     </Button>
                 </StackPanel>
                 <ScrollViewer

@@ -100,13 +100,13 @@
                         Command="local:GraphCommand.GraphZoomOut"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom Out (Ctrol+_">
-                        <Image Source="{StaticResource MinusIcon}" />
+                        <Image Source="{DynamicResource MinusIcon}" />
                     </Button>
                     <Button
                         Command="local:GraphCommand.GraphZoomIn"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom In (Ctrl+=)">
-                        <Image Source="{StaticResource PlusIcon}" />
+                        <Image Source="{DynamicResource PlusIcon}" />
                     </Button>
                     <Separator />
                     <Button
@@ -116,7 +116,7 @@
                         Foreground="{DynamicResource WindowForegroundBrush}"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource FitWidthIcon}" />
+                            <Image Source="{DynamicResource FitWidthIcon}" />
                             <TextBlock
                                 Margin="4,0,0,0"
                                 Foreground="{Binding Path=(Button.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
@@ -129,7 +129,7 @@
                         Foreground="{DynamicResource WindowForegroundBrush}"
                         ToolTip="Zoom the view to show the entire graph (Ctrl+A)">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource FitAllIcon}" />
+                            <Image Source="{DynamicResource FitAllIcon}" />
                             <TextBlock
                                 Margin="4,0,0,0"
                                 Foreground="{Binding Path=(Button.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
@@ -143,7 +143,7 @@
                         Foreground="{DynamicResource WindowForegroundBrush}"
                         ToolTip="Zoom the graph view to 100% (Ctrl+R)">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource ResetWidthIcon}" />
+                            <Image Source="{DynamicResource ResetWidthIcon}" />
                             <TextBlock
                                 Margin="4,0,0,0"
                                 Foreground="{Binding Path=(Button.Foreground), RelativeSource={RelativeSource AncestorType=Button}}"
@@ -166,7 +166,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource RemoveIcon}" />
+                                    Source="{DynamicResource RemoveIcon}" />
                             </MenuItem.Icon>
                             <MenuItem
                                 Command="local:GraphCommand.ClearMarked"
@@ -184,7 +184,7 @@
                         CommandTarget="{Binding ElementName=GraphHost}"
                         IsEnabled="False"
                         ToolTip="Search graph node text (Ctrl+F)">
-                        <Image Source="{StaticResource SearchIcon}" />
+                        <Image Source="{DynamicResource SearchIcon}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>
@@ -303,7 +303,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource CloseIcon}" />
+                                    Source="{DynamicResource CloseIcon}" />
                             </Button>
 
                             <Button
@@ -317,7 +317,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource DiffIcon}" />
+                                    Source="{DynamicResource DiffIcon}" />
                             </Button>
 
                             <StackPanel
@@ -371,7 +371,7 @@
                                 <Image
                                     Width="12"
                                     Height="12"
-                                    Source="{StaticResource PeekDefinitionIcon}" />
+                                    Source="{DynamicResource PeekDefinitionIcon}" />
                             </Button>
                         </StackPanel>
                         <Separator />

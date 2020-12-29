@@ -29,7 +29,7 @@
             ToolBar.OverflowMode="Never"
             ToolTip="Pin panel content (don't sync with document)"
             Unchecked="PinButton_Unchecked">
-            <Image Source="{StaticResource PinIcon}" />
+            <Image Source="{DynamicResource PinIcon}" />
         </ToggleButton>
 
         <Menu
@@ -52,7 +52,7 @@
                     <Image
                         Width="16"
                         Height="20"
-                        Source="{StaticResource VersionsIcon}" />
+                        Source="{DynamicResource VersionsIcon}" />
                 </MenuItem.Icon>
                 <MenuItem
                     x:Name="DuplicateMenu"
@@ -68,7 +68,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource DockLeftIcon}" />
+                            Source="{DynamicResource DockLeftIcon}" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -80,7 +80,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource DockRightIcon}" />
+                            Source="{DynamicResource DockRightIcon}" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <MenuItem
@@ -92,7 +92,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource OpenExternalIcon}" />
+                            Source="{DynamicResource OpenExternalIcon}" />
                     </MenuItem.Icon>
                 </MenuItem>
                 <Separator />
@@ -102,7 +102,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource LockIcon}" />
+                            Source="{DynamicResource LockIcon}" />
                     </MenuItem.Icon>
                 </MenuItem>
             </MenuItem>
@@ -115,7 +115,7 @@
             PreviewMouseLeftButtonDown="SettingsButton_PreviewMouseLeftButtonDown"
             ToolBar.OverflowMode="Never"
             ToolTip="Show panel settings">
-            <Image Source="{StaticResource SettingsIcon}" />
+            <Image Source="{DynamicResource SettingsIcon}" />
         </Button>
     </ToolBar>
 </ToolBarTray>

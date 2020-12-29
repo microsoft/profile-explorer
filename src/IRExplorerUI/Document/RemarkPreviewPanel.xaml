@@ -118,7 +118,7 @@
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center"
                                     IsHitTestVisible="False"
-                                    Source="{StaticResource ZapIcon}" />
+                                    Source="{DynamicResource ZapIcon}" />
                             </ToggleButton>
 
                             <ToggleButton
@@ -242,7 +242,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource PinIcon}" />
+                                    Source="{DynamicResource PinIcon}" />
                             </Button>
 
                             <Button
@@ -257,7 +257,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource ThemeIcon}" />
+                                    Source="{DynamicResource ThemeIcon}" />
                             </Button>
                         </StackPanel>
 
@@ -265,7 +265,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Source="{StaticResource SearchIcon}" />
+                                Source="{DynamicResource SearchIcon}" />
                             <Grid>
                                 <TextBox
                                     Name="RemarkFilterTextbox"
@@ -294,7 +294,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource SettingsIcon}" />
+                                    Source="{DynamicResource SettingsIcon}" />
                             </Button>
                             <Button
                                 Grid.Row="0"
@@ -306,7 +306,7 @@
                                 <Image
                                     Width="16"
                                     Height="16"
-                                    Source="{StaticResource CloseIcon}" />
+                                    Source="{DynamicResource CloseIcon}" />
                             </Button>
                         </StackPanel>
                     </DockPanel>
@@ -415,7 +415,7 @@
                                     <Image
                                         Width="16"
                                         Height="16"
-                                        Source="{StaticResource GotoDefinitionIcon}" />
+                                        Source="{DynamicResource GotoDefinitionIcon}" />
                                 </Button>
                                 <ToggleButton
                                     Width="20"
@@ -427,7 +427,7 @@
                                     <Image
                                         Width="16"
                                         Height="16"
-                                        Source="{StaticResource EyeIcon}" />
+                                        Source="{DynamicResource EyeIcon}" />
                                 </ToggleButton>
                                 <ToggleButton
                                     Width="20"
@@ -439,7 +439,7 @@
                                     <Image
                                         Width="16"
                                         Height="16"
-                                        Source="{StaticResource SearchIcon}" />
+                                        Source="{DynamicResource SearchIcon}" />
                                 </ToggleButton>
                             </StackPanel>
                         </DockPanel>

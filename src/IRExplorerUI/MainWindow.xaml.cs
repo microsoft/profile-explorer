@@ -727,6 +727,11 @@ namespace IRExplorerUI {
         }
 
         private void SwitchTheme(ApplicationTheme theme) {
+            //? TODO: 
+            //? - use themes in main window combobox
+            //? - send OnThemeChanged to all docs
+            //? - fix icons staticResource
+
             App.SwitchTheme(theme);
             DockManager.Theme = theme.GetDockPanelTheme();
 

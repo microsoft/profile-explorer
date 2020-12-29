@@ -80,7 +80,7 @@
                     Background="{DynamicResource WindowBackgroundBrush}"
                     Loaded="ToolBar_Loaded">
 
-                    <Image Source="{StaticResource SearchIcon}" ToolTip="Filter text based on a string" />
+                    <Image Source="{DynamicResource SearchIcon}" ToolTip="Filter text based on a string" />
                     <toolkit:AutoCompleteBox
                         Name="TextSearch"
                         Width="220"
@@ -113,7 +113,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource ClearIcon}" />
+                            Source="{DynamicResource ClearIcon}" />
                     </Button>
                     <Separator />
 
@@ -122,14 +122,14 @@
                         IsChecked="{Binding Path=IsCaseInsensitive, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         TabIndex="5"
                         ToolTip="Accept case mismatch (Alt+C)">
-                        <Image Source="{StaticResource CaseIcon}" />
+                        <Image Source="{DynamicResource CaseIcon}" />
                     </ToggleButton>
 
                     <ToggleButton
                         IsChecked="{Binding Path=IsWholeWord, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
                         TabIndex="5"
                         ToolTip="Match whole word (Alt+W)">
-                        <Image Source="{StaticResource WholeWordIcon}" />
+                        <Image Source="{DynamicResource WholeWordIcon}" />
                     </ToggleButton>
 
                     <ToggleButton
@@ -152,7 +152,7 @@
                         TabIndex="5"
                         ToolTip="Search across all sections in the function (Alt+A)"
                         Visibility="{Binding ShowSearchAllButton, Converter={StaticResource BoolToVisibility}}">
-                        <Image Source="{StaticResource SearchListIcon}" />
+                        <Image Source="{DynamicResource SearchListIcon}" />
                     </ToggleButton>
                     <Separator Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}" />
 
@@ -163,7 +163,7 @@
                         TabIndex="5"
                         ToolTip="Jump to previous search result (Shift+F3)"
                         Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
-                        <Image Source="{StaticResource UpArrowIcon}" />
+                        <Image Source="{DynamicResource UpArrowIcon}" />
                     </Button>
 
                     <Button
@@ -173,7 +173,7 @@
                         TabIndex="5"
                         ToolTip="Jump to next search result (F3)"
                         Visibility="{Binding ShowNavigationnSection, Converter={StaticResource BoolToVisibility}}">
-                        <Image Source="{StaticResource DownArrowIcon}" />
+                        <Image Source="{DynamicResource DownArrowIcon}" />
                     </Button>
 
                     <TextBlock

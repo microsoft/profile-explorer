@@ -62,7 +62,7 @@
                     Click="SyntaxEditButton_Click"
                     DockPanel.Dock="Right"
                     ToolTip="Edit colors used by selected IR syntax highlighting">
-                    <Image Source="{StaticResource ThemeIcon}" />
+                    <Image Source="{DynamicResource ThemeIcon}" />
 
                 </ToggleButton>
 
@@ -76,7 +76,7 @@
                     Click="OpenSyntaxStyleButton_Click"
                     DockPanel.Dock="Right"
                     ToolTip="Open the directory with the IR sytax highlighting files">
-                    <Image Source="{StaticResource FolderIcon}" />
+                    <Image Source="{DynamicResource FolderIcon}" />
                 </Button>
 
                 <Button
@@ -88,7 +88,7 @@
                     Click="ReloadSyntaxStyleButton_Click"
                     DockPanel.Dock="Right"
                     ToolTip="Reload all IR sytax highlighting files">
-                    <Image Source="{StaticResource ReloadIcon}" />
+                    <Image Source="{DynamicResource ReloadIcon}" />
                 </Button>
 
             </StackPanel>
@@ -118,7 +118,7 @@
                             Click="ResetSyntaxStyleButton_Click"
                             DockPanel.Dock="Right"
                             ToolTip="Reset the syntax highlighting file to initial state">
-                            <Image Source="{StaticResource UndoIcon}" />
+                            <Image Source="{DynamicResource UndoIcon}" />
                         </Button>
 
                         <Button
@@ -131,7 +131,7 @@
                             Click="EditSyntaxFileButton_Click"
                             DockPanel.Dock="Right"
                             ToolTip="Edit the syntax highlighting file in external text editor">
-                            <Image Source="{StaticResource EditIcon}" />
+                            <Image Source="{DynamicResource EditIcon}" />
                         </Button>
 
                     </StackPanel>
@@ -268,7 +268,7 @@
                     Click="StyleButton_Click"
                     DockPanel.Dock="Right"
                     ToolTip="Use custom document colors style">
-                    <Image Source="{StaticResource StyleIcon}" />
+                    <Image Source="{DynamicResource StyleIcon}" />
                     <Button.ContextMenu>
                         <ContextMenu x:Name="StyleContextMenu">
                             <MenuItem Header="Default" />

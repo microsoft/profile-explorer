@@ -56,12 +56,12 @@
                         Click="Button_Click"
                         ToolTip="Select source file">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource FolderIcon}" />
+                            <Image Source="{DynamicResource FolderIcon}" />
                             <TextBlock Margin="4,0,0,0" Text="Browse..." />
                         </StackPanel>
                     </Button>
                     <Button ToolTip="Reload source file">
-                        <Image Source="{StaticResource ReloadIcon}" />
+                        <Image Source="{DynamicResource ReloadIcon}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>

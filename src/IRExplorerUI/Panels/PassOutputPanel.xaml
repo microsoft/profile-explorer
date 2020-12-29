@@ -76,7 +76,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource BookIcon}" />
+                            Source="{DynamicResource BookIcon}" />
                     </ToggleButton>
                     <Separator />
 
@@ -87,7 +87,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource SearchIcon}" />
+                            Source="{DynamicResource SearchIcon}" />
                     </ToggleButton>
 
                     <ToggleButton
@@ -98,7 +98,7 @@
                         <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource TasklistIcon}" />
+                            Source="{DynamicResource TasklistIcon}" />
                     </ToggleButton>
                     <Separator />
                     <TextBlock
