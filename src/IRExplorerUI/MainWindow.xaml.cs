@@ -717,7 +717,22 @@ namespace IRExplorerUI {
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e) {
-            throw new InvalidOperationException("Crash Handler test assert");
+            //throw new InvalidOperationException("Crash Handler test assert");
+            if (App.Theme.Kind == ApplicationThemeKind.Light) {
+                SwitchTheme(ApplicationTheme.Dark);
+            }
+            else {
+                SwitchTheme(ApplicationTheme.Light);
+            }
+        }
+
+        private void SwitchTheme(ApplicationTheme theme) {
+            App.SwitchTheme(theme);
+            DockManager.Theme = theme.GetDockPanelTheme();
+
+            CompilerInfo.ReloadSettings();
+            ForEachPanel((panel) => panel.OnThemeChanged());
+
         }
 
         private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section, 

@@ -80,6 +80,14 @@ namespace IRExplorerUI {
             ThemeIndex = 2; // Blue theme.
         }
 
+        public void LoadThemeSettings() {
+            //? TODO: Reload settings for other panels
+
+            foreach (var pair in LightDocumentSettings) {
+                pair.Value.LoadThemeSettings();
+            }
+        }
+
         [ProtoAfterDeserialization]
         private void InitializeReferenceMembers() {
             RecentFiles ??= new List<string>();

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Xml;
+using AvalonDock.Themes;
 
 namespace IRExplorerUI {
     public class SyntaxFileInfo {
@@ -42,6 +43,9 @@ namespace IRExplorerUI {
         }
     }
 
+    /// <summary>
+    /// Used to expose resources to code-behind rendering.
+    /// </summary>
     public class ThemeResources {
         public FontFamily DocumentFont { get; set; }
         public Typeface DocumentTypeface { get; set; }
@@ -54,12 +58,84 @@ namespace IRExplorerUI {
         public Brush DocumentForegroundBrush { get; set; }
     }
 
+    public enum ApplicationThemeKind {
+        Light,
+        Gray,
+        Blue,
+        Dark
+    }
+
+    public class ApplicationTheme {
+        public delegate Theme ThemeDelegate();
+        private readonly ThemeDelegate themeDelegate_;
+
+        public ApplicationTheme(ApplicationThemeKind kind, string name, string uri, ThemeDelegate themeDelegate) {
+            Kind = kind;
+            Name = name;
+            ResourcesUri = uri;
+            themeDelegate_ = themeDelegate;
+        }
+
+        public ApplicationThemeKind Kind { get; set; }
+        public string Name { get; set; }
+        public string ResourcesUri { get; set; }
+
+        public static readonly ApplicationTheme Light = 
+            new ApplicationTheme(ApplicationThemeKind.Light, "Light", 
+                                 "/IRExplorer;component/Themes/LightAppTheme.xaml", 
+                                 () => new Vs2013LightTheme());
+        public static readonly ApplicationTheme Gray = 
+            new ApplicationTheme(ApplicationThemeKind.Gray, "Gray", 
+                                 "/IRExplorer;component/Themes/LightAppTheme.xaml",
+                                 () => new Vs2013LightTheme());
+        public static readonly ApplicationTheme Blue = 
+            new ApplicationTheme(ApplicationThemeKind.Blue, "Blue", 
+                                 "/IRExplorer;component/Themes/LightAppTheme.xaml",
+                                 () => new Vs2013BlueTheme());
+        public static readonly ApplicationTheme Dark = 
+            new ApplicationTheme(ApplicationThemeKind.Dark, "Dark", 
+                                 "/IRExplorer;component/Themes/DarkAppTheme.xaml",
+                                 () => new Vs2013DarkTheme());
+
+        public static readonly List<ApplicationTheme> Themes = 
+            new List<ApplicationTheme>() {Light, Gray, Blue, Dark};
+
+        public Theme GetDockPanelTheme() {
+            return themeDelegate_();
+        }
+
+        protected bool Equals(ApplicationTheme other) {
+            return Kind == other.Kind;
+        }
+
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((ApplicationTheme)obj);
+        }
+
+        public override int GetHashCode() {
+            return Kind.GetHashCode();
+        }
+    }
+
     public partial class App : Application {
         public static DateTime AppStartTime;
         public static DateTime WindowShowTime;
         public static ApplicationSettings Settings;
         public static ISession Session;
         public static ThemeResources StyleResources;
+        public static ApplicationTheme Theme;
 
         private const string SettingsPath = @"Microsoft\IRExplorer";
         private const string SettingsFile = "IRExplorer.settings";
@@ -77,6 +153,21 @@ namespace IRExplorerUI {
         private const string DocumentationLocation = @"https://irexplorer.z5.web.core.windows.net/";
 
         private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
+
+        static App() {
+            Theme = ApplicationTheme.Dark;
+        }
+
+        public static void SwitchTheme(ApplicationTheme theme) {
+            Theme = theme;
+            Settings.LoadThemeSettings();
+
+            var dict = Application.Current.Resources.MergedDictionaries;
+            dict.RemoveAt(0);
+            dict.Insert(0, new ResourceDictionary() {Source = new Uri(theme.ResourcesUri, UriKind.Relative)});
+
+            //? TODO: Notify panels and documents about change
+        }
 
         private static bool CreateSettingsDirectory() {
             try {

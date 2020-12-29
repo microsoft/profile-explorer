@@ -45,13 +45,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Themes\**" />
-		<EmbeddedResource Remove="Themes\**" />
-		<None Remove="Themes\**" />
-		<Page Remove="Themes\**" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Remove="Effects\DesaturateEffect.ps" />
 		<None Remove="refresh.png" />
 	</ItemGroup>
@@ -213,6 +206,10 @@
 		</Page>
 		<Page Update="Converters.xaml">
 			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+		<Page Update="Themes\LightAppTheme.xaml">
+		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		  <SubType>Designer</SubType>
 		</Page>
 	</ItemGroup>
 
