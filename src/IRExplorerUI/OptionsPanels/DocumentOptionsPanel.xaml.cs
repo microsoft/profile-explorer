@@ -20,7 +20,6 @@ namespace IRExplorerUI.OptionsPanels {
         public const double MinimumWidth = 360;
 
         private const string DocumentStylesFilePath = @"documentStyles.xml";
-        private bool syntaxEditPanelVisible_;
 
         private List<ColorPickerInfo> syntaxHighlightingColors_;
         private DocumentColorStyle syntaxHighlightingStyle_;
@@ -30,8 +29,6 @@ namespace IRExplorerUI.OptionsPanels {
 
         public DocumentOptionsPanel() {
             InitializeComponent();
-            PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
-            PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
         }
         
         public override void Initialize(FrameworkElement parent) {
@@ -44,32 +41,39 @@ namespace IRExplorerUI.OptionsPanels {
             syntaxFiles_ = App.ReloadSyntaxHighlightingFiles(App.Session.CompilerInfo.CompilerIRName);
             selectedSyntaxFile_ = App.GetSyntaxHighlightingFileInfo(settings_.SyntaxHighlightingName,
                                                                     App.Session.CompilerInfo.CompilerIRName);
-
-            // Unbind the combobox event while loading the list
-            // so that it doesn't change the selected syntax file.
-            IRSyntaxCombobox.SelectionChanged -= IRSyntaxCombobox_SelectionChanged;
             IRSyntaxCombobox.ItemsSource = new CollectionView(syntaxFiles_);
-            IRSyntaxCombobox.SelectedItem = selectedSyntaxFile_;
-            IRSyntaxCombobox.SelectionChanged += IRSyntaxCombobox_SelectionChanged;
+            SetSelectedSyntaxFile();
         }
 
-        public override void OnSettingsChanged(object newSettings) {
+        private void SetSelectedSyntaxFile() {
+            // Unbind the combobox event while loading the list
+            // so that it doesn't change the selected syntax file.
+            if(selectedSyntaxFile_ == null) {
+                return;
+            }
+
+            IRSyntaxCombobox.SelectionChanged -= IRSyntaxCombobox_SelectionChanged;
+            IRSyntaxCombobox.SelectedItem = selectedSyntaxFile_;
+            IRSyntaxCombobox.SelectionChanged += IRSyntaxCombobox_SelectionChanged;
+            UpdateSyntaxEditPanel(selectedSyntaxFile_.Path);
+        }
+
+        public override void OnSettingsChanged(SettingsBase newSettings) {
             settings_ = (DocumentSettings)newSettings;
             ReloadSyntaxHighlightingList();
         }
 
         public bool SyntaxFileChanged { get; set; }
-
-        private void DocumentOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
-            NotifySettingsChanged();
-        }
-
-        private void DocumentOptionsPanel_PreviewMouseUp(object sender, MouseButtonEventArgs e) {
-            NotifySettingsChanged();
-        }
-
+        
         private void NotifySettingsChanged() {
-            SyntaxFileChanged = DataContext != null && UpdateSyntaxHighlightingStyle();
+            if (HasSyntaxHighlightingStyleChanges()) {
+                UpdateSyntaxHighlightingStyle();
+                SyntaxFileChanged = true;
+            }
+            else {
+                SyntaxFileChanged = false;
+            }
+
             RaiseSettingsChanged(null);
         }
 
@@ -83,9 +87,7 @@ namespace IRExplorerUI.OptionsPanels {
         }
 
         public override void PanelResetted() {
-            if (syntaxEditPanelVisible_) {
-                ShowSyntaxEditPanel(null);
-            }
+                UpdateSyntaxEditPanel(null);
         }
 
         private void StyleButton_Click(object sender, RoutedEventArgs e) {
@@ -155,6 +157,24 @@ namespace IRExplorerUI.OptionsPanels {
             return CreateSyntaxHighlightingStyle(selectedSyntaxFile_.Path, selectedSyntaxFile_.Path);
         }
 
+        private bool HasSyntaxHighlightingStyleChanges() {
+            if (syntaxHighlightingColors_ == null) {
+                return false;
+            }
+
+            foreach (var info in syntaxHighlightingColors_) {
+                if (!syntaxHighlightingStyle_.Colors.TryGetValue(info.Name, out var currentColor)) {
+                    return true;
+                }
+
+                if (currentColor != info.Value) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private bool CreateSyntaxHighlightingStyle(string inputFile, string outputFile) {
             if (syntaxHighlightingStyle_ == null) {
                 return false;
@@ -164,11 +184,11 @@ namespace IRExplorerUI.OptionsPanels {
                 syntaxHighlightingStyle_.Colors[info.Name] = info.Value;
             }
 
-            var newSyntaxFile = App.GetSyntaxHighlightingFilePath(outputFile, App.Session.CompilerInfo.CompilerIRName);
+            var newSyntaxFile = App.GetNewSyntaxHighlightingFilePath(outputFile, App.Session.CompilerInfo.CompilerIRName);
             ApplySyntaxHighlightingStyles(inputFile, newSyntaxFile, syntaxHighlightingStyle_);
             return true;
         }
-
+        
         private DocumentColorStyle ApplySyntaxHighlightingStyles(string stylePath,
                                                                  string outputStylePath = null,
                                                                  DocumentColorStyle replacementStyles = null) {
@@ -227,43 +247,13 @@ namespace IRExplorerUI.OptionsPanels {
 
             return docStyles;
         }
-
-        private void SyntaxEditButton_Click(object sender, RoutedEventArgs e) {
-            if (!syntaxEditPanelVisible_) {
-                ShowSyntaxEditPanel(null);
-            }
-            else {
-                HideSyntaxEditPanel();
-            }
-        }
-
-        private void ShowSyntaxEditPanel(string filePath, bool force = false) {
-            if (syntaxEditPanelVisible_ && !force) {
-                return;
-            }
-
+        
+        private void UpdateSyntaxEditPanel(string filePath) {
             filePath ??= App.GetSyntaxHighlightingFilePath(selectedSyntaxFile_);
             var utcStyle = ApplySyntaxHighlightingStyles(filePath);
             PopulateSyntaxHighlightingColorPickers(utcStyle);
-            SyntaxHighlightingPanel.Visibility = Visibility.Visible;
-            SyntaxEditButton.IsChecked = true;
-            syntaxEditPanelVisible_ = true;
         }
-
-        private void HideSyntaxEditPanel(bool reset = false) {
-            if (!syntaxEditPanelVisible_) {
-                return;
-            }
-
-            SyntaxHighlightingPanel.Visibility = Visibility.Collapsed;
-            SyntaxEditButton.IsChecked = false;
-            syntaxEditPanelVisible_ = false;
-
-            if (reset) {
-                syntaxHighlightingStyle_ = null;
-            }
-        }
-
+        
         private class DocumentColorStyle {
             public DocumentColorStyle(string name) {
                 Name = name;
@@ -286,15 +276,12 @@ namespace IRExplorerUI.OptionsPanels {
 
         private void IRSyntaxCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (IRSyntaxCombobox.SelectedItem != null) {
-                bool syntaxPanelVisible = syntaxEditPanelVisible_;
-                HideSyntaxEditPanel();
-
                 selectedSyntaxFile_ = (SyntaxFileInfo)IRSyntaxCombobox.SelectedItem;
-                settings_.SyntaxHighlightingName = selectedSyntaxFile_.Name;
+                settings_.SyntaxHighlightingName = selectedSyntaxFile_.Title;
+                UpdateSyntaxEditPanel(selectedSyntaxFile_.Path);
 
-                if (syntaxPanelVisible) {
-                    ShowSyntaxEditPanel(selectedSyntaxFile_.Path);
-                }
+                NotifySettingsChanged(); // Manual update since it's not data-bound.
+                SetSelectedSyntaxFile();
             }
         }
 
@@ -317,10 +304,10 @@ namespace IRExplorerUI.OptionsPanels {
                 return;
             }
 
-            var path = App.GetInternalSyntaxHighlightingFilePath(selectedSyntaxFile_.Name, App.Session.CompilerInfo.CompilerIRName);
+            var path = App.GetInternalSyntaxHighlightingFilePath(selectedSyntaxFile_.Title, App.Session.CompilerInfo.CompilerIRName);
 
             if (path != null) {
-                ShowSyntaxEditPanel(path, true);
+                UpdateSyntaxEditPanel(path);
                 UpdateSyntaxHighlightingStyle();
             }
         }
@@ -328,9 +315,9 @@ namespace IRExplorerUI.OptionsPanels {
         private void ReloadSyntaxStyleButton_Click(object sender, RoutedEventArgs e) {
             ReloadSyntaxHighlightingList();
         }
-
-        private void CloneSyntaxFileButton_Click(object sender, RoutedEventArgs e) {
-
+        
+        private void FrameworkElement_OnSourceUpdated(object? sender, DataTransferEventArgs e) {
+            NotifySettingsChanged();
         }
     }
 }

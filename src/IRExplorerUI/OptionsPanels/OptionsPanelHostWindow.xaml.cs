@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -59,6 +60,10 @@ namespace IRExplorerUI.OptionsPanels {
         }
 
         private void SettingsPanel_SettingsChanged(object sender, EventArgs e) {
+            if (Settings == null) {
+                return; // Ignore event triggered during GetSettingsSnapshot.
+            }
+
             SettingsChanged?.Invoke(this, e);
         }
 

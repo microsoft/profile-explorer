@@ -53,7 +53,7 @@ namespace IRExplorerUI.OptionsPanels {
         public virtual void PanelResetting() { }
         public virtual void PanelResetted() { }
 
-        public virtual void OnSettingsChanged(object newSettings) {
+        public virtual void OnSettingsChanged(SettingsBase newSettings) {
 
         }
 

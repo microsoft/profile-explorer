@@ -15,21 +15,25 @@ namespace IRExplorerUI {
         public static readonly ApplicationTheme Light =
             new ApplicationTheme(ApplicationThemeKind.Light, "Light",
                 "/IRExplorer;component/Themes/LightAppTheme.xaml",
+                "-light",
                 () => new Vs2013LightTheme());
 
         public static readonly ApplicationTheme Gray =
             new ApplicationTheme(ApplicationThemeKind.Gray, "Gray",
                 "/IRExplorer;component/Themes/LightAppTheme.xaml",
+                "-gray}",
                 () => new Vs2013LightTheme());
 
         public static readonly ApplicationTheme Blue =
             new ApplicationTheme(ApplicationThemeKind.Blue, "Blue",
                 "/IRExplorer;component/Themes/LightAppTheme.xaml",
+                "-blue",
                 () => new Vs2013BlueTheme());
 
         public static readonly ApplicationTheme Dark =
             new ApplicationTheme(ApplicationThemeKind.Dark, "Dark",
                 "/IRExplorer;component/Themes/DarkAppTheme.xaml",
+                "-dark",
                 () => new Vs2013DarkTheme());
 
         public static readonly List<ApplicationTheme> Themes =
@@ -38,16 +42,19 @@ namespace IRExplorerUI {
         public delegate Theme ThemeDelegate();
         private readonly ThemeDelegate themeDelegate_;
 
-        public ApplicationTheme(ApplicationThemeKind kind, string name, string uri, ThemeDelegate themeDelegate) {
+        public ApplicationTheme(ApplicationThemeKind kind, string name, string uri,
+                                string syntaxFileFormat, ThemeDelegate themeDelegate) {
             Kind = kind;
             Name = name;
             ResourcesUri = uri;
+            SyntaxFileFormat = syntaxFileFormat;
             themeDelegate_ = themeDelegate;
         }
 
         public ApplicationThemeKind Kind { get; set; }
         public string Name { get; set; }
         public string ResourcesUri { get; set; }
+        public string SyntaxFileFormat { get; set; }
 
         public Theme GetDockPanelTheme() {
             return themeDelegate_();

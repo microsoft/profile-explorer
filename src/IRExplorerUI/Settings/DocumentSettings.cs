@@ -8,6 +8,56 @@ using ProtoBuf;
 
 namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
+    public class DocumentColors {
+        public DocumentColors() {
+            switch (App.Theme.Kind) {
+                case ApplicationThemeKind.Dark: {
+                    //? TODO: Set default dark theme colors
+                    BackgroundColor = Utils.ColorFromString("#FFFAFA");
+                    AlternateBackgroundColor = Utils.ColorFromString("#f5f5f5");
+                    TextColor = Colors.Black;
+                    BlockSeparatorColor = Colors.Silver;
+                    MarginBackgroundColor = Colors.Gainsboro;
+                    LineNumberTextColor = Colors.Silver;
+                    SearchResultColor = Colors.Khaki;
+                    SelectedValueColor = Utils.ColorFromString("#C5DEEA");
+                    DefinitionValueColor = Utils.ColorFromString("#F2E67C");
+                    UseValueColor = Utils.ColorFromString("#95DBAD");
+                    BorderColor = Colors.Black;
+                    break;
+                }
+                default: {
+                    BackgroundColor = Utils.ColorFromString("#FFFAFA");
+                    AlternateBackgroundColor = Utils.ColorFromString("#f5f5f5");
+                    TextColor = Colors.Black;
+                    BlockSeparatorColor = Colors.Silver;
+                    MarginBackgroundColor = Colors.Gainsboro;
+                    LineNumberTextColor = Colors.Silver;
+                    SearchResultColor = Colors.Khaki;
+                    SelectedValueColor = Utils.ColorFromString("#C5DEEA");
+                    DefinitionValueColor = Utils.ColorFromString("#F2E67C");
+                    UseValueColor = Utils.ColorFromString("#95DBAD");
+                    BorderColor = Colors.Black;
+                    break;
+                }
+            }
+        }
+
+        [ProtoMember(1)] public Color BackgroundColor { get; set; }
+        [ProtoMember(2)] public Color AlternateBackgroundColor { get; set; }
+        [ProtoMember(3)] public Color MarginBackgroundColor { get; set; }
+        [ProtoMember(4)] public Color TextColor { get; set; }
+        [ProtoMember(5)] public Color BlockSeparatorColor { get; set; }
+        [ProtoMember(6)] public Color SelectedValueColor { get; set; }
+        [ProtoMember(7)] public Color DefinitionValueColor { get; set; }
+        [ProtoMember(8)] public Color UseValueColor { get; set; }
+        [ProtoMember(9)] public Color BorderColor { get; set; }
+        [ProtoMember(10)] public Color LineNumberTextColor { get; set; }
+        [ProtoMember(10)] public Color SearchResultColor { get; set; }
+
+    }
+
+    [ProtoContract(SkipConstructor = true)]
     public class DocumentSettings : SettingsBase, INotifyPropertyChanged {
         public DocumentSettings() {
             Reset();

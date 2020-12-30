@@ -9,8 +9,8 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/DarkAppTheme.xaml" />
-                <ResourceDictionary Source="Styles.xaml" />
                 <ResourceDictionary Source="Converters.xaml" />
+                <ResourceDictionary Source="Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

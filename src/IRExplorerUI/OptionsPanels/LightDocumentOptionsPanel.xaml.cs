@@ -32,7 +32,7 @@ namespace IRExplorerUI.OptionsPanels {
             settings_ = (LightDocumentSettings)Settings;
         }
 
-        public override void OnSettingsChanged(object newSettings) {
+        public override void OnSettingsChanged(SettingsBase newSettings) {
             settings_ = (LightDocumentSettings)newSettings;
         }
 

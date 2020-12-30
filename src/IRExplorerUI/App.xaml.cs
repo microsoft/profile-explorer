@@ -12,25 +12,25 @@ using System.Xml;
 
 namespace IRExplorerUI {
     public class SyntaxFileInfo {
-        public SyntaxFileInfo(string name, string compiler, string path) {
-            Name = name;
+        public SyntaxFileInfo(string title, string compiler, string path) {
+            Title = title;
             Compiler = compiler;
             Path = path;
         }
 
-        public string Name { get; set; }
+        public string Title { get; set; }
         public string Compiler { get; set; }
         public string Path { get; set; }
 
         public override bool Equals(object obj) {
             return obj is SyntaxFileInfo info &&
-                   Name == info.Name &&
+                   Title == info.Title &&
                    Compiler == info.Compiler &&
                    Path == info.Path;
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(Name, Compiler, Path);
+            return HashCode.Combine(Title, Compiler, Path);
         }
 
         public static bool operator ==(SyntaxFileInfo left, SyntaxFileInfo right) {
@@ -75,7 +75,7 @@ namespace IRExplorerUI {
         private const string InternalIRSyntaxHighlightingFile = @"ir.xshd";
         private const string InternalExtensionFile = @"IRExplorerExtension.vsix";
         private const string SyntaxFileSearchPattern = @"*.xshd";
-        private const string SyntaxFileExtension = @"xshd";
+        private const string SyntaxFileExtension = @".xshd";
         private const string FunctionTaskScriptsDirectory = "scripts";
         private const string FunctionTaskScriptSearchPattern = @"*.cs";
         public const string AutoUpdateInfo = @"https://irexplorer.blob.core.windows.net/app/update.xml";
@@ -90,6 +90,7 @@ namespace IRExplorerUI {
         public static void SwitchTheme(ApplicationTheme theme) {
             Theme = theme;
             Settings.LoadThemeSettings();
+            cachedSyntaxHighlightinFiles_ = null;
 
             var dict = Application.Current.Resources.MergedDictionaries;
             dict.RemoveAt(0);
@@ -219,7 +220,7 @@ namespace IRExplorerUI {
 
         public static string GetInternalSyntaxHighlightingFilePath(string name, string compilerIRName) {
             var files = GetSyntaxHighlightingFiles(compilerIRName, true);
-            var result = files.Find(item => item.Name == name);
+            var result = files.Find(item => item.Title == name);
             return result?.Path;
         }
 
@@ -281,19 +282,28 @@ namespace IRExplorerUI {
         }
 
         public static string GetInternalRemarksDefinitionFilePath(string compilerIRName) {
-            return GetApplicationFilePath(compilerIRName, RemarkDefinitionFile);
+            var path = GetApplicationFilePath(compilerIRName, RemarkDefinitionFile);
+            return PickThemeFilePath(path);
         }
 
 
         public static string GetUserSectionsDefinitionFilePath(string compilerIRName) {
-            return GetSettingsFilePath(compilerIRName, SectionDefinitionFile);
+            var filePath = GetThemeFilePath(SectionDefinitionFile);
+            return GetSettingsFilePath(compilerIRName, filePath);
         }
 
         public static string GetInternalSectionsDefinitionFilePath(string compilerIRName) {
-            return GetApplicationFilePath(compilerIRName, SectionDefinitionFile);
+            var path = GetApplicationFilePath(compilerIRName, SectionDefinitionFile);
+            return PickThemeFilePath(path);
         }
 
-        private static string GetSyntaxFileName(string filePath) {
+        private static string PickThemeFilePath(string path) {
+            // Try to use a theme-based file if it exists.
+            var themePath = GetThemeFilePath(path);
+            return File.Exists(themePath) ? themePath : path;
+        }
+
+        private static string GetSyntaxFileTitle(string filePath) {
             try {
                 var xmlDoc = new XmlDocument();
                 var ns = new XmlNamespaceManager(xmlDoc.NameTable);
@@ -328,7 +338,14 @@ namespace IRExplorerUI {
                 var themes = Directory.GetFiles(baseDir, SyntaxFileSearchPattern);
 
                 foreach (string theme in themes) {
-                    list.Add(new SyntaxFileInfo(GetSyntaxFileName(theme), compilerIRName, theme));
+                    if (!internalFiles) {
+                        // Include only the files matching the current theme.
+                        if (!theme.Contains(Theme.SyntaxFileFormat, StringComparison.Ordinal)) {
+                            continue;
+                        }
+                    }
+
+                    list.Add(new SyntaxFileInfo(GetSyntaxFileTitle(theme), compilerIRName, theme));
                 }
             }
             catch (Exception ex) {
@@ -336,6 +353,10 @@ namespace IRExplorerUI {
             }
 
             if (!internalFiles) {
+                if (list.Count == 0) {
+                    return GetSyntaxHighlightingFiles(compilerIRName, true);
+                }
+
                 cachedSyntaxHighlightinFiles_ = list;
             }
 
@@ -371,36 +392,52 @@ namespace IRExplorerUI {
             }
         }
 
-
         public static SyntaxFileInfo GetSyntaxHighlightingFileInfo(string name, string compilerIRName) {
             var files = GetSyntaxHighlightingFiles(compilerIRName);
-            return files.Find(item => item.Name == name);
+            return files.Find(item => item.Title == name);
         }
 
         public static string GetSyntaxHighlightingFilePath() {
             // If a file is not set yet (first run for ex), set the default one.
             var docSettings = Settings.DocumentSettings;
+            bool hadCustomFile = true;
 
             if (string.IsNullOrEmpty(docSettings.SyntaxHighlightingName)) {
+                //? TODO: SHould try to pick up the right file for theme
                 docSettings.SyntaxHighlightingName = Session.CompilerInfo.DefaultSyntaxHighlightingFile;
+                hadCustomFile = false;
             }
 
             var result = GetSyntaxHighlightingFileInfo(docSettings.SyntaxHighlightingName,
                                                        Session.CompilerInfo.CompilerIRName);
-            return result?.Path;
+            if (result == null && !hadCustomFile) {
+                // File not found for some reason, fall back to internal one.
+                return Session.CompilerInfo.DefaultSyntaxHighlightingFile;
+            }
 
+            return result?.Path;
         }
 
         public static string GetSyntaxHighlightingFilePath(SyntaxFileInfo syntaxFile) {
             if (syntaxFile != null && File.Exists(syntaxFile.Path)) {
                 return syntaxFile.Path;
             }
+
             return GetSyntaxHighlightingFilePath();
         }
 
-        public static string GetSyntaxHighlightingFilePath(string name, string compilerIRName) {
-            InitializeSettingsFilesDirectory(compilerIRName);
-            return GetCompilerSettingsFilePath(name, compilerIRName, SyntaxFileExtension);
+        public static string GetNewSyntaxHighlightingFilePath(string name, string compilerIRName) {
+            var path = GetCompilerSettingsFilePath(name, compilerIRName);
+            return GetThemeFilePath(path, SyntaxFileExtension);
+        }
+
+        private static string GetThemeFilePath(string path, string extension = "") {
+            // Form a file path such as llvm-dark.xshd
+            if (string.IsNullOrEmpty(extension)) {
+                extension = Path.GetExtension(path);
+            }
+
+            return $"{Path.GetFileNameWithoutExtension(path)}{Theme.SyntaxFileFormat}{extension}";
         }
 
         public static bool LoadApplicationSettings() {

@@ -85,6 +85,10 @@ namespace IRExplorerUI.Utilities {
 
     public class FontFamilyConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+            if(value == null) {
+                return null;
+            }
+
             try {
                 return new FontFamily((string)value);
             }
