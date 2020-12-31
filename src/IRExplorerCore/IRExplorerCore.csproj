@@ -40,4 +40,8 @@
     <Folder Include="Plugins\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\LLVMSharp\LLVMSharp.csproj" />
+  </ItemGroup>
+
 </Project>
