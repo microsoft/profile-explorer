@@ -15,6 +15,7 @@ namespace IRExplorerCore.IR {
         Pointer,
         Void,
         Bool,
+        Function,
         Unknown
     }
 

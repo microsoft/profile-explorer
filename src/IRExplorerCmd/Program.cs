@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore.UTC;
 using IRExplorerUI.Scripting;
+using IRExplorerCore.LLVM;
 
 namespace IRExplorerCmd {
     class Program {
@@ -82,12 +83,21 @@ namespace IRExplorerCmd {
         }
 
         static void Main(string[] args) {
+            string path = @"C:\test\llvm.ir";
+            var text = File.ReadAllText(path);
+
+            var parser = new LLVMParser(null, null);
+            parser.Initialize(text);
+            var list = parser.Parse();
+
+#if false
             var baseDir = args[0];
             var diffDir = args[1];
             var reportFile = args[2];
             var target = args[3];
             var scriptPath = @"C:\test\irx-compare.cs";
-            var reportHeader = "Test, Function, Blocks, B, D, Instrs, B, D, Stores, B, D, Loads, B, D, Loop Loads, B, D, Symbol Loads, B, D, Address exprs, B, D\n";
+            var reportHeader =
+ "Test, Function, Blocks, B, D, Instrs, B, D, Stores, B, D, Loads, B, D, Loop Loads, B, D, Symbol Loads, B, D, Address exprs, B, D\n";
 
             var pairs = new List<Tuple<string, string, string>>();
 
@@ -156,6 +166,7 @@ namespace IRExplorerCmd {
                 var text = File.ReadAllText(reportFile);
                 File.WriteAllText(reportFile, reportHeader + text);
             }
+#endif
         }
     }
 }

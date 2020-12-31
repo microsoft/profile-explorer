@@ -134,26 +134,6 @@ namespace IRExplorerCore.UTC {
                 UTCIRMode.ARM64 => arm64RegisterTable_
             };
         }
-
-        public void SkipCurrentToken() {
-            throw new NotImplementedException();
-        }
-
-        public void SkipToFunctionEnd() {
-            throw new NotImplementedException();
-        }
-
-        public void SkipToLineEnd() {
-            throw new NotImplementedException();
-        }
-
-        public void SkipToLineStart() {
-            throw new NotImplementedException();
-        }
-
-        public void SkipToNextBlock() {
-            throw new NotImplementedException();
-        }
     }
 
     public class IRObjectPool<T> where T:class,new() {
@@ -398,7 +378,6 @@ namespace IRExplorerCore.UTC {
         }
 
         //? TODO: Handle SWITCH
-        //? TODO: Parse special flags for volatile, WT
 
         public FunctionIR Parse() {
             var function = ParseFunction();

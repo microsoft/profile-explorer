@@ -14,6 +14,7 @@ namespace IRExplorerCore.IR {
         Indirection,
         Address,
         LabelAddress,
+        Undefined,
         Other
     }
 
@@ -63,6 +64,8 @@ namespace IRExplorerCore.IR {
         public bool IsAddress => Kind == OperandKind.Address;
         public bool IsLabelAddress => Kind == OperandKind.LabelAddress;
         public bool IsIndirection => Kind == OperandKind.Indirection;
+
+        public bool IsUndefined => Kind == OperandKind.Undefined;
 
         public long IntValue {
             get {
