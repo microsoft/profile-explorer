@@ -94,17 +94,19 @@ namespace IRExplorerCore.LLVM {
         }
 
         private FunctionIR ParseFunction(LLVMValueRef llvmFunc) {
-            var function = new FunctionIR() {Name = llvmFunc.Name};
-            var llvmBlock = llvmFunc.FirstBasicBlock;
+            Reset();
+            var function = CreateFunction(llvmFunc);
 
-            //? todo: parse params
+            // Create parameters.
             var llvmParams = llvmFunc.Params;
 
             foreach(var llvmParam in llvmParams) {
                 var param = ParseOperand(llvmParam, null);
                 function.Parameters.Add(param);
-                
             }
+
+            // Create basic blocks.
+            var llvmBlock = llvmFunc.FirstBasicBlock;
 
             while (llvmBlock != null) {
                 var block = GetOrCreateBlock(llvmBlock.Handle, function);
@@ -124,17 +126,26 @@ namespace IRExplorerCore.LLVM {
                 llvmBlock = llvmBlock.Next;
             }
 
+            Console.WriteLine("-------------------------------");
+            var t = new IRPrinter(function).Print();
+            Console.WriteLine(t);
             return function;
+        }
+
+        private FunctionIR CreateFunction(LLVMValueRef llvmFunc) {
+            return new FunctionIR() {
+                Name = llvmFunc.Name, 
+                ReturnType = ParseType(llvmFunc)
+            };
         }
 
         private InstructionIR ParseInstruction(LLVMValueRef llvmInstr, BlockIR parent) {
             var instr = CreateInstruction(llvmInstr, parent);
-
-            instr.Opcode = llvmInstr.InstructionOpcode;
             int opCount = llvmInstr.OperandCount;
 
             for (uint i = 0; i < opCount; i++) {
                 var op = ParseOperand(llvmInstr.GetOperand(i), instr);
+                instr.Sources.Add(op);
             }
 
             // Extract the list of successor blocks from the terminator instr.
@@ -147,10 +158,24 @@ namespace IRExplorerCore.LLVM {
                     var llvmSuccBlock = termInstr.GetSuccessor(i);
                     var succBlock = GetOrCreateBlock(llvmSuccBlock.Handle, parent.ParentFunction);
 
+                    // With switch a block can appear multiple times as a successor.
                     if (!parent.Successors.Contains(succBlock)) {
                         parent.Successors.Add(succBlock);
                         succBlock.Predecessors.Add(parent);
                     }
+                }
+            }
+
+
+            if (llvmInstr.HasMetadata) {
+                Console.WriteLine("Instr MD ");
+
+                var md = llvmInstr.GetMetadata(llvm.LLVMIRXTextLocationKind);
+
+                if (md != null) {
+                    llvm.IRXTextLocationGetInstrRange(llvm.ValueAsMetadata(md),
+                                                        out var offset, out var length);
+                        Console.WriteLine($"Instr location: {offset}, {length}");
                 }
             }
 
@@ -159,18 +184,28 @@ namespace IRExplorerCore.LLVM {
 
         private InstructionIR CreateInstruction(LLVMValueRef llvmInstr, BlockIR parent) {
             var instr = new InstructionIR(nextElementId_, InstructionKind.Other, parent);
-            CreateSSADefinition(llvmInstr, instr);
+            instr.Opcode = llvmInstr.InstructionOpcode;
+            instr.OpcodeText = instr.Opcode.ToString().AsMemory();
             instrMap_[llvmInstr.Handle] = instr;
+
+            //? Create a fake destination to attach a name to
+            var operand = CreateOperand(nextElementId_, OperandKind.Temporary,
+                                        ParseType(llvmInstr), instr);
+            operand.Role = OperandRole.Destination;
+            operand.Value = $"%{nextValueNumber_}".AsMemory();
+            instr.Destinations.Add(operand);
+            CreateSSADefinition(llvmInstr, operand);
             return instr;
         }
 
         private OperandIR ParseOperand(LLVMValueRef llvmOperand, InstructionIR parent) {
             var operand = CreateOperand(nextElementId_, OperandKind.Other,
                                       ParseType(llvmOperand), parent);
+            
             switch (llvmOperand.Kind) {
                 case LLVMValueKind.LLVMArgumentValueKind:
                     operand.Kind = OperandKind.Variable;
-                    // operand.Name = "%0";
+                    operand.Value = $"%{nextValueNumber_}".AsMemory();
 
                     if (parent == null) {
                         // This is a parameter definition.
@@ -185,7 +220,8 @@ namespace IRExplorerCore.LLVM {
                     Console.WriteLine($"Found LLVMArgumentValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMBasicBlockValueKind:
-                    Console.WriteLine($"Found LLVMBasicBlockValueKind: {llvmOperand}");
+                    //? TODO: A labelAddress ref for a block label
+                    //Console.WriteLine($"Found LLVMBasicBlockValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMMemoryUseValueKind:
                     Console.WriteLine($"Found LLVMMemoryUseValueKind: {llvmOperand}");
@@ -206,6 +242,9 @@ namespace IRExplorerCore.LLVM {
                     Console.WriteLine($"Found LLVMGlobalVariableValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMBlockAddressValueKind:
+                    var block = GetOrCreateBlock(llvmOperand.Handle, parent.ParentFunction);
+                    operand.Kind = OperandKind.LabelAddress;
+
                     Console.WriteLine($"Found LLVMBlockAddressValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantExprValueKind:
@@ -254,10 +293,10 @@ namespace IRExplorerCore.LLVM {
                     break;
                 case LLVMValueKind.LLVMInstructionValueKind:
                     if(instrMap_.TryGetValue(llvmOperand.Handle, out var instr)) {
+                        operand.Kind = OperandKind.Temporary;
                         operand.Role = OperandRole.Source;
+                        operand.Value = $"%{nextValueNumber_}".AsMemory();
                         CreateUseDefinitionLink(llvmOperand, operand);
-
-                        // operand.Name = "%0";
                     }
                     else {
                         throw new InvalidOperationException("Ref to unseen instr");
@@ -268,7 +307,7 @@ namespace IRExplorerCore.LLVM {
             }
 
             if (llvmOperand.HasMetadata) {
-
+                Console.WriteLine("Operand MD ");
             }
 
             return operand;
@@ -349,6 +388,10 @@ namespace IRExplorerCore.LLVM {
                 Id = nextElementId_.NewBlock(nextBlockNumber_)
             };
 
+            //? TODO: Extract a label name
+            var name = $"%{nextValueNumber_}".AsMemory();
+            newBlock.Label = new BlockLabelIR(nextElementId_, name, newBlock);
+
             nextBlockNumber_++;
             blockMap_[blockHandle] = newBlock;
             return newBlock;
@@ -380,10 +423,6 @@ namespace IRExplorerCore.LLVM {
         }
 
         private void Reset() {
-            // blockMap_.Clear();
-            // labelMap_.Clear();
-            // ssaDefinitionMap_.Clear();
-            // elementAddressMap_.Clear();
             nextBlockNumber_ = 0;
             nextValueNumber_ = 0;
             nextElementId_ = IRElementId.FromLong(0);
@@ -391,68 +430,6 @@ namespace IRExplorerCore.LLVM {
             instrMap_ = new Dictionary<IntPtr, InstructionIR>();
             valueMap_ = new Dictionary<IntPtr, int>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
-        }
-        
-        private unsafe static int DumpFunction(LLVMValueRef func)
-        {
-            var block = func.FirstBasicBlock;
-            int blockId = 0;
-            int sum = 0;
-
-            while (block != null)
-            {
-                blockId++;
-                //Console.WriteLine($"BLOCK {blockId}: {block.Handle}");
-                //var name = LLVM.GetBasicBlockName(block);
-                var instr = block.FirstInstruction;
-
-                while (instr != null)
-                {
-                    //Console.WriteLine($"{instr.Handle} {instr.InstructionOpcode}, {instr.OperandCount}");
-                    var opcode = instr.InstructionOpcode;
-                    var opCount = instr.OperandCount;
-
-                    for (uint i = 0; i < opCount; i++)
-                    {
-                        var op = instr.GetOperand(i);
-                        //Console.WriteLine($"op {i}: {op.Handle}, {op.Kind}");
-                        sum += (int)op.Kind;
-                    }
-
-                    var termInstr = instr.IsATerminatorInst;
-
-                    if (termInstr != null)
-                    {
-                        //Console.Write($"  > succ {termInstr.SuccessorsCount}: ");
-                        var succCount = termInstr.SuccessorsCount;
-
-                        for (uint i = 0; i < succCount; i++)
-                        {
-                            // Console.Write($"{termInstr.GetSuccessor(i).Handle}");
-                            sum += (int)termInstr.GetSuccessor(i).Handle;
-                        }
-                    }
-
-                    //var size = instr.TypeOf.IntWidth;
-                    // PointerSize, IntPtrType
-
-                    if (instr.HasMetadata)
-                    {
-                        var md = instr.GetMetadata(0);
-
-                        if (md != null)
-                        {
-                            sum += (int)llvm.DILocationGetLine(llvm.ValueAsMetadata(md));
-                        }
-                    }
-
-                    instr = instr.NextInstruction;
-                }
-
-                block = block.Next;
-            }
-
-            return sum + blockId;
         }
     }
 }

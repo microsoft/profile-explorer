@@ -39,5 +39,8 @@ namespace LLVMSharp.Interop
         LLVMDIMacroMetadataKind,
         LLVMDIMacroFileMetadataKind,
         LLVMDICommonBlockMetadataKind,
+        LLVMDIStringTypeKind,
+        LLVMDIDIGenericSubrangeKind,
+        LLVMIRXTextLocationKind,
     }
 }

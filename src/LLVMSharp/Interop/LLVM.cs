@@ -2783,6 +2783,9 @@ namespace LLVMSharp.Interop
         public const int LLVMDIMacroMetadataKind = 29;
         public const int LLVMDIMacroFileMetadataKind = 30;
         public const int LLVMDICommonBlockMetadataKind = 31;
+        public const int LLVMDIStringTypeKind = 32;
+        public const int LLVMDIDIGenericSubrangeKind = 33;
+        public const int LLVMIRXTextLocationKind = 34;
 
         [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMDebugMetadataVersion", ExactSpelling = true)]
         [return: NativeTypeName("unsigned int")]
@@ -4726,5 +4729,10 @@ namespace LLVMSharp.Interop
 
         [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMAddSLPVectorizePass", ExactSpelling = true)]
         public static extern void AddSLPVectorizePass([NativeTypeName("LLVMPassManagerRef")] LLVMOpaquePassManager* PM);
+
+        [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMIRXTextLocationGetInstrRange", ExactSpelling = true)]
+        public static extern void IRXTextLocationGetInstrRange([NativeTypeName("LLVMMetadataRef")] LLVMOpaqueMetadata* Location,
+            [NativeTypeName("unsigned int *")] out uint Offset,
+            [NativeTypeName("unsigned int *")] out uint Len);
     }
 }

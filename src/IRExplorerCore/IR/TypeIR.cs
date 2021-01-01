@@ -184,15 +184,18 @@ namespace IRExplorerCore.IR {
                 case TypeKind.Multibyte:
                     return $"mb{Size}";
                 case TypeKind.Array:
-                    return "<TODO:array>";
+                    return "array";
                 case TypeKind.Struct:
-                    return "<TODO:array>";
+                    return "struct";
                 case TypeKind.Pointer:
-                    return "<TODO:array>";
+                    return "pointer";
                 case TypeKind.Void:
                     return "void";
                 case TypeKind.Bool:
                     return "bool";
+                case TypeKind.Function: {
+                    return "func";
+                }
                 case TypeKind.Unknown:
                     return "unknown";
             }
