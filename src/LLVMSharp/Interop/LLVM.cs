@@ -769,6 +769,10 @@ namespace LLVMSharp.Interop
         [return: NativeTypeName("LLVMValueRef")]
         public static extern LLVMOpaqueValue* IsAUndefValue([NativeTypeName("LLVMValueRef")] LLVMOpaqueValue* Val);
 
+        [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMIsAPoisonValue", ExactSpelling = true)]
+        [return: NativeTypeName("LLVMValueRef")]
+        public static extern LLVMOpaqueValue* IsAPoisonValue([NativeTypeName("LLVMValueRef")] LLVMOpaqueValue* Val);
+
         [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMIsAInstruction", ExactSpelling = true)]
         [return: NativeTypeName("LLVMValueRef")]
         public static extern LLVMOpaqueValue* IsAInstruction([NativeTypeName("LLVMValueRef")] LLVMOpaqueValue* Val);

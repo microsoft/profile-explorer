@@ -314,6 +314,8 @@ namespace LLVMSharp.Interop
 
         public LLVMValueRef IsAUndefValue => LLVM.IsAUndefValue(this);
 
+        public LLVMValueRef IsAPoisonValue => LLVM.IsAPoisonValue(this);
+
         public LLVMValueRef IsAUnreachableInst => LLVM.IsAUnreachableInst(this);
 
         public LLVMValueRef IsAUser => LLVM.IsAUser(this);

@@ -22,6 +22,7 @@ namespace LLVMSharp.Interop
         LLVMConstantStructValueKind,
         LLVMConstantVectorValueKind,
         LLVMUndefValueValueKind,
+        LLVMPoisonValueValueKind,
         LLVMConstantAggregateZeroValueKind,
         LLVMConstantDataArrayValueKind,
         LLVMConstantDataVectorValueKind,
