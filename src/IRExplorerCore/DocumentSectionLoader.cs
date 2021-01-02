@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using IRExplorerCore.IR;
+using IRExplorerCore.LLVM;
 
 namespace IRExplorerCore {
     public class DocumentSectionLoader : IRTextSectionLoader {
@@ -29,7 +30,7 @@ namespace IRExplorerCore {
             return documentReader_.GenerateSummary(progressHandler);
         }
 
-        public override string GetDocumentOutputText() {
+        public override string GetDocumentText() {
             var data = documentReader_.GetDocumentTextData();
             return Encoding.UTF8.GetString(data);
         }
@@ -59,7 +60,12 @@ namespace IRExplorerCore {
                 function = new FunctionIR();
             }
             else {
-                function = sectionParser.ParseSection(section, text);
+                if (sectionParser is LLVMSectionParser llvmParser) {
+                    function = sectionParser.ParseSection(section, GetDocumentText());
+                }
+                else {
+                    function = sectionParser.ParseSection(section, text);
+                }
             }
 
             var result = new ParsedIRTextSection(section, text, function);

@@ -4733,6 +4733,20 @@ namespace LLVMSharp.Interop
         [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMIRXTextLocationGetInstrRange", ExactSpelling = true)]
         public static extern void IRXTextLocationGetInstrRange([NativeTypeName("LLVMMetadataRef")] LLVMOpaqueMetadata* Location,
             [NativeTypeName("unsigned int *")] out uint Offset,
-            [NativeTypeName("unsigned int *")] out uint Len);
+            [NativeTypeName("unsigned int *")] out uint Len,
+            [NativeTypeName("unsigned int *")] out uint Line);
+
+        [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMIRXTextLocationGetInstrDestRange", ExactSpelling = true)]
+        public static extern void LLVMIRXTextLocationGetInstrDestRange([NativeTypeName("LLVMMetadataRef")] LLVMOpaqueMetadata* Location,
+            [NativeTypeName("unsigned int *")] out uint Offset,
+            [NativeTypeName("unsigned int *")] out uint Len,
+            [NativeTypeName("unsigned int *")] out uint Line);
+
+        [DllImport("libLLVM", CallingConvention = CallingConvention.Cdecl, EntryPoint = "LLVMIRXTextLocationGetInstrSourceRange", ExactSpelling = true)]
+        public static extern void LLVMIRXTextLocationGetInstrSourceRange([NativeTypeName("LLVMMetadataRef")] LLVMOpaqueMetadata* Location,
+            [NativeTypeName("unsigned int")] uint SourceIndex,
+            [NativeTypeName("unsigned int *")] out uint Offset,
+            [NativeTypeName("unsigned int *")] out uint Len,
+            [NativeTypeName("unsigned int *")] out uint Line);
     }
 }

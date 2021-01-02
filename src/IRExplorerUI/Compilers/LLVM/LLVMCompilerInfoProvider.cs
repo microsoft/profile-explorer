@@ -14,14 +14,14 @@ namespace IRExplorerUI.Compilers.LLVM {
         private LLVMCompilerIRInfo ir_;
         private ISession session_;
         private UTCNameProvider names_;
-        private UTCRemarkProvider remarks_;
+        private LLVMRemarkProvider remarks_;
         private UTCSectionStyleProvider styles_;
 
         public LLVMCompilerInfoProvider() {
             ir_ = new LLVMCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
             names_ = new UTCNameProvider();
-            remarks_ = new UTCRemarkProvider(null);
+            remarks_ = new LLVMRemarkProvider();
         }
 
         public string CompilerIRName => "LLVM";

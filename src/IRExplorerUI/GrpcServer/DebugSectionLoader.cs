@@ -27,7 +27,7 @@ namespace IRExplorerUI {
             return summary_;
         }
 
-        public override string GetDocumentOutputText() {
+        public override string GetDocumentText() {
             var builder = new StringBuilder();
             var list = new List<Tuple<IRTextSection, CompressedString>>();
 
@@ -47,7 +47,7 @@ namespace IRExplorerUI {
         }
 
         public override byte[] GetDocumentTextBytes() {
-            return Encoding.UTF8.GetBytes(GetDocumentOutputText());
+            return Encoding.UTF8.GetBytes(GetDocumentText());
         }
 
         public void AddSection(IRTextSection section, string text) {

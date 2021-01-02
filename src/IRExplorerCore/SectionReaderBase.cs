@@ -77,6 +77,7 @@ namespace IRExplorerCore {
         private string[] prevLines_;
         private bool hasPreprocessedLines_;
         private IRTextSummary summary_;
+        private string lastSectionName_;
 
         public SectionReaderBase(string filePath, bool expectSectionHeaders = true) {
             expectSectionHeaders_ = expectSectionHeaders;
@@ -258,6 +259,8 @@ namespace IRExplorerCore {
             // and build the function -> sections hierarchy.
             IRTextSection previousSection = null;
             hasPreprocessedLines_ = false;
+            lastSectionName_ = string.Empty;
+
             (var section, string functionName) = FindNextSection();
 
             while (section != null) {
@@ -456,7 +459,7 @@ namespace IRExplorerCore {
                 bool hasName = true;
 
                 if (!IsSectionStart(line)) {
-                    if (!expectSectionHeaders_ &&
+                    if ((!expectSectionHeaders_ || !string.IsNullOrEmpty(lastSectionName_)) &&
                         (IsFunctionStart(line) || IsBlockStart(line))) {
                         hasName = false;
                     }
@@ -470,7 +473,8 @@ namespace IRExplorerCore {
 
                 // Go back and find the name of the section.
                 int sectionStartLine = lineIndex_ + (hasName ? 1 : 0);
-                string sectionName = hasName ? ExtractSectionName(line) : string.Empty;
+                string sectionName = hasName ? ExtractSectionName(line) : lastSectionName_;
+                lastSectionName_ = sectionName;
 
                 // Find the end of the section and extract the function name.
                 long startOffset = hasName ? TextOffset() : initialOffset;
@@ -479,9 +483,12 @@ namespace IRExplorerCore {
                 int sectionEndLine = 0;
                 int blockCount = 0;
 
-                while (true) {
+                // Skip over the section name line, if present.
+                if (hasName) {
                     line = NextLine();
+                }
 
+                while (true) {
                     if (line == null) {
                         break;
                     }
@@ -503,6 +510,7 @@ namespace IRExplorerCore {
                     }
 
                     lineIndex_++;
+                    line = NextLine();
                 }
 
                 sectionEndLine = Math.Max(sectionEndLine, sectionStartLine);

@@ -8,6 +8,8 @@ namespace IRExplorerCore.LLVM {
         private static readonly char[] WhitespaceChars = { ' ', '\t' };
         private const string SectionStartLine = "*** IR Dump ";
         private const string SectionEndLine = "***";
+        private const string SectionStartLine2 = "; IR Dump ";
+        private const string SectionEndLine2 = ";";
 
         public LLVMSectionReader(string filePath, bool expectSectionHeaders = true) :
             base(filePath, expectSectionHeaders) { }
@@ -16,7 +18,8 @@ namespace IRExplorerCore.LLVM {
             base(textData, expectSectionHeaders) { }
 
         protected override bool IsSectionStart(string line) {
-            return line.StartsWith(SectionStartLine, StringComparison.Ordinal);
+            return line.StartsWith(SectionStartLine, StringComparison.Ordinal) ||
+                   line.StartsWith(SectionStartLine2, StringComparison.Ordinal);
         }
 
         protected override bool IsFunctionStart(string line) {
@@ -34,25 +37,34 @@ namespace IRExplorerCore.LLVM {
         }
 
         protected override string ExtractSectionName(string line) {
-            int start = line.IndexOf(SectionStartLine);
+            var name = ExtractSectionNameImpl(line, SectionStartLine, SectionEndLine);
+            if (name != null) return name;
+
+            name = ExtractSectionNameImpl(line, SectionStartLine2, SectionEndLine2);
+            if (name != null) return name;
+            return "";
+        }
+
+        private string ExtractSectionNameImpl(string line, string lineStartMarker, string lineEndMarker) {
+            int start = line.IndexOf(lineStartMarker, StringComparison.Ordinal);
 
             if (start == -1) {
-                return "";
+                return null;
             }
 
-            int end = line.LastIndexOf(SectionEndLine);
-            int length = end - start - SectionStartLine.Length;
+            int end = line.LastIndexOf(lineEndMarker, StringComparison.Ordinal);
+            int length = end - start - lineStartMarker.Length;
 
             if (length > 0) {
-                return line.Substring(start + SectionStartLine.Length, length).Trim();
+                return line.Substring(start + lineStartMarker.Length, length).Trim();
             }
 
-            return "";
+            return null;
         }
 
         protected override string ExtractFunctionName(string line) {
             // Function names start with @ and end before the ( starting the parameter list.
-            int start = line.IndexOf('@');
+            int start = line.IndexOf('@', StringComparison.Ordinal);
 
             if (start == -1) {
                 return "";

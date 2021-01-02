@@ -16,7 +16,7 @@ namespace IRExplorerCore.LLVM {
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
-            return null;
+            return new LLVMSectionParser((ParsingErrorHandler)errorHandler);
         }
 
         public IRParsingErrorHandler CreateParsingErrorHandler() {

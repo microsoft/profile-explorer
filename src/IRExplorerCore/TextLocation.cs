@@ -18,19 +18,11 @@ namespace IRExplorerCore {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set;
         }
-
-        public int Column {
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get;
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set;
-        }
-
+        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public TextLocation(int offset, int line, int column) {
+        public TextLocation(int offset, int line) {
             Offset = offset;
             Line = line;
-            Column = column;
         }
 
         public override string ToString() {
@@ -40,15 +32,13 @@ namespace IRExplorerCore {
         public override bool Equals(object obj) {
             return obj is TextLocation location &&
                    Offset == location.Offset &&
-                   Line == location.Line &&
-                   Column == location.Column;
+                   Line == location.Line;
         }
 
         public override int GetHashCode() {
             int hashCode = -1429159632;
             hashCode = hashCode * -1521134295 + Offset.GetHashCode();
             hashCode = hashCode * -1521134295 + Line.GetHashCode();
-            hashCode = hashCode * -1521134295 + Column.GetHashCode();
             return hashCode;
         }
 

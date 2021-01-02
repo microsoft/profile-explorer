@@ -47,7 +47,7 @@ namespace IRExplorerCore {
         }
 
         public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
-        public abstract string GetDocumentOutputText();
+        public abstract string GetDocumentText();
         public abstract byte[] GetDocumentTextBytes();
         public abstract ParsedIRTextSection LoadSection(IRTextSection section);
         public abstract string GetSectionText(IRTextSection section);

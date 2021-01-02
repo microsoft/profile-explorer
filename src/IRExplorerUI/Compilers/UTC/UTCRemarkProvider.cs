@@ -256,10 +256,10 @@ namespace IRExplorerUI.UTC {
                         var similarInstr = similarValueFinder.Find(instr);
 
                         if (similarInstr != null) {
-                            var remarkLocation = new TextLocation(lineStartOffset, i, 0);
+                            var remarkLocation = new TextLocation(lineStartOffset, i);
 
                             var location = new TextLocation(
-                                instr.TextLocation.Offset + index + lineStartOffset, i, 0);
+                                instr.TextLocation.Offset + index + lineStartOffset, i);
 
                             instr.TextLocation = location; // Set actual location in output text.
 
@@ -304,10 +304,10 @@ namespace IRExplorerUI.UTC {
                         }
 
                         if (op.TextLocation.Line < lines.Count) {
-                            var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i, 0);
+                            var location = new TextLocation(op.TextLocation.Offset + lineStartOffset, i);
                             op.TextLocation = location; // Set actual location in output text.
 
-                            var remarkLocation = new TextLocation(lineStartOffset, i, 0);
+                            var remarkLocation = new TextLocation(lineStartOffset, i);
                             var remarkKind = FindRemarkKind(line, isInstructionElement: false);
                             var remark = new Remark(remarkKind, section,
                                                     line.Trim(), line, remarkLocation);

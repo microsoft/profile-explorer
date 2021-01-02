@@ -429,7 +429,7 @@ namespace IRExplorerUI {
 
             foreach (var result in searchResults) {
                 int line = Document.GetLineByOffset(result.Offset).LineNumber;
-                var location = new TextLocation(result.Offset, line, 0);
+                var location = new TextLocation(result.Offset, line);
                 var element = new IRElement(location, result.Length);
                 group.Add(element);
             }

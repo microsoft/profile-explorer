@@ -1234,7 +1234,7 @@ namespace IRExplorerUI {
 
         public Task<string> GetDocumentTextAsync(IRTextSummary summary) {
             var docInfo = sessionState_.FindLoadedDocument(summary);
-            return Task.Run(() => docInfo.Loader.GetDocumentOutputText());
+            return Task.Run(() => docInfo.Loader.GetDocumentText());
         }
 
         public async Task<SectionSearchResult> SearchSectionAsync(

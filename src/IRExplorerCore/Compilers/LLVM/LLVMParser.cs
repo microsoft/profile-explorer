@@ -24,9 +24,15 @@ namespace IRExplorerCore.LLVM {
 
         public FunctionIR ParseSection(IRTextSection section, string sectionText) {
             parser_ = new LLVMParser(errorHandler_, section?.LineMetadata);
-            parser_.Initialize(sectionText);
+            parser_.Initialize(sectionText, section.Output.StartLine);
             var result = parser_.Parse();
-            return result.Count > 0 ? result[0] : null;
+
+            if (result.Count > 0) {
+                var function = result.Find((f => f.Name == section.ParentFunction.Name));
+                return function;
+            }
+
+            return null;
         }
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
@@ -35,7 +41,6 @@ namespace IRExplorerCore.LLVM {
             var result = parser_.Parse();
             return result.Count > 0 ? result[0] : null;
         }
-
     }
 
     public unsafe class LLVMParser {
@@ -48,15 +53,17 @@ namespace IRExplorerCore.LLVM {
         private int nextBlockNumber_;
         private int nextValueNumber_;
         private IRElementId nextElementId_;
+        private int functionStartLine_;
 
         public LLVMParser(ParsingErrorHandler errorHandler,
                           Dictionary<int, string> lineMetadata) {
             context_ = new LLVMContext();
         }
 
-        public void Initialize(string text) {
+        public void Initialize(string text, long startLine) {
             var inputText = new MarshaledString(text);
             textBuffer_ = llvm.CreateMemoryBufferWithMemoryRange(inputText, (UIntPtr)inputText.Length, new MarshaledString(""), 1);
+            //functionStartLine_ = (int)startLine;
             Reset();
         }
 
@@ -147,7 +154,7 @@ namespace IRExplorerCore.LLVM {
                 var op = ParseOperand(llvmInstr.GetOperand(i), instr);
                 instr.Sources.Add(op);
             }
-
+            
             // Extract the list of successor blocks from the terminator instr.
             var termInstr = llvmInstr.IsATerminatorInst;
 
@@ -166,20 +173,55 @@ namespace IRExplorerCore.LLVM {
                 }
             }
 
-
+            // Extract the text location metadata for the IR elements.
             if (llvmInstr.HasMetadata) {
-                Console.WriteLine("Instr MD ");
-
                 var md = llvmInstr.GetMetadata(llvm.LLVMIRXTextLocationKind);
-
                 if (md != null) {
-                    llvm.IRXTextLocationGetInstrRange(llvm.ValueAsMetadata(md),
-                                                        out var offset, out var length);
-                        Console.WriteLine($"Instr location: {offset}, {length}");
+                    var mdNode = llvm.ValueAsMetadata(md);
+                    llvm.IRXTextLocationGetInstrRange(mdNode, out var offset, out var length, out var line);
+                    instr.TextLocation = new TextLocation((int)offset, (int)line - functionStartLine_);
+                    instr.TextLength = (int)length;
+
+                    if (instr.Destinations.Count > 0) {
+                        llvm.LLVMIRXTextLocationGetInstrDestRange(mdNode, 
+                            out var destOffset, out var destLength, out var destLine);
+                        if (destOffset > 0) { //? TODO: Better way to deal with missing dest?
+                            instr.Destinations[0].TextLocation =
+                                new TextLocation((int)destOffset, (int)destLine - functionStartLine_);
+                            instr.Destinations[0].TextLength = (int)destLength;
+                        }
+                    }
+                    
+                    for (int i = 0; i < instr.Sources.Count; i++) {
+                        llvm.LLVMIRXTextLocationGetInstrSourceRange(mdNode, (uint)i,
+                            out var sourceOffset, out var sourceLength, out var sourceLine);
+                        instr.Sources[i].TextLocation = new TextLocation((int)sourceOffset, (int)sourceLine - functionStartLine_);
+                        instr.Sources[i].TextLength = (int)sourceLength;
+                    }
                 }
             }
 
             return instr;
+        }
+
+        private bool HasDestination(LLVMValueRef llvmInstr) {
+            switch (llvmInstr.InstructionOpcode) {
+                case LLVMOpcode.LLVMStore:
+                case LLVMOpcode.LLVMBr:
+                case LLVMOpcode.LLVMCallBr:
+                case LLVMOpcode.LLVMIndirectBr:
+                case LLVMOpcode.LLVMSwitch:
+                case LLVMOpcode.LLVMRet: {
+                    return false;
+                }
+                case LLVMOpcode.LLVMCall:
+                case LLVMOpcode.LLVMInvoke: {
+                    var type = llvmInstr.TypeOf;
+                    return llvmInstr.TypeOf.Kind != LLVMTypeKind.LLVMVoidTypeKind;
+                }
+            }
+
+            return true;
         }
 
         private InstructionIR CreateInstruction(LLVMValueRef llvmInstr, BlockIR parent) {
@@ -188,13 +230,18 @@ namespace IRExplorerCore.LLVM {
             instr.OpcodeText = instr.Opcode.ToString().AsMemory();
             instrMap_[llvmInstr.Handle] = instr;
 
-            //? Create a fake destination to attach a name to
-            var operand = CreateOperand(nextElementId_, OperandKind.Temporary,
-                                        ParseType(llvmInstr), instr);
-            operand.Role = OperandRole.Destination;
-            operand.Value = $"%{nextValueNumber_}".AsMemory();
-            instr.Destinations.Add(operand);
-            CreateSSADefinition(llvmInstr, operand);
+            // Create a fake destination to attach a name to.
+            if (HasDestination(llvmInstr)) {
+                var operand = CreateOperand(nextElementId_, OperandKind.Temporary,
+                    ParseType(llvmInstr), instr);
+                operand.Role = OperandRole.Destination;
+
+                //? TODO: Check if instr has a name, see LLParser.cpp,   Inst->setName(NameStr);
+                operand.Value = $"%{nextValueNumber_}".AsMemory();
+                instr.Destinations.Add(operand);
+                CreateSSADefinition(llvmInstr, operand);
+            }
+
             return instr;
         }
 
@@ -220,8 +267,9 @@ namespace IRExplorerCore.LLVM {
                     Console.WriteLine($"Found LLVMArgumentValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMBasicBlockValueKind:
-                    //? TODO: A labelAddress ref for a block label
-                    //Console.WriteLine($"Found LLVMBasicBlockValueKind: {llvmOperand}");
+                    var targetBlock = GetOrCreateBlock(llvmOperand.Handle, parent.ParentFunction);
+                    operand.Kind = OperandKind.LabelAddress;
+                    operand.Value = targetBlock.Label;
                     break;
                 case LLVMValueKind.LLVMMemoryUseValueKind:
                     Console.WriteLine($"Found LLVMMemoryUseValueKind: {llvmOperand}");
@@ -295,7 +343,7 @@ namespace IRExplorerCore.LLVM {
                     if(instrMap_.TryGetValue(llvmOperand.Handle, out var instr)) {
                         operand.Kind = OperandKind.Temporary;
                         operand.Role = OperandRole.Source;
-                        operand.Value = $"%{nextValueNumber_}".AsMemory();
+                        operand.Value = instr.Destinations[0].NameValue;
                         CreateUseDefinitionLink(llvmOperand, operand);
                     }
                     else {
@@ -334,7 +382,7 @@ namespace IRExplorerCore.LLVM {
         private TypeIR ParseType(LLVMValueRef llvmOperand) {
             var llvmType = llvmOperand.TypeOf;
 
-            //? TODO: More precise type translation, including size
+            //? TODO: More precise type translation, including bit size
             switch (llvmType.Kind) {
                 case LLVMTypeKind.LLVMVoidTypeKind:
                     return TypeIR.GetVoid();
@@ -389,6 +437,7 @@ namespace IRExplorerCore.LLVM {
             };
 
             //? TODO: Extract a label name
+            //? TODO: Flow graph should use the label name
             var name = $"%{nextValueNumber_}".AsMemory();
             newBlock.Label = new BlockLabelIR(nextElementId_, name, newBlock);
 

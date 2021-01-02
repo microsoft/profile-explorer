@@ -275,7 +275,7 @@ namespace IRExplorerUI {
 
         private IRElement CreateDummyElement(int offset, int length) {
             int line = TextView.Document.GetLineByOffset(offset).LineNumber;
-            var location = new IRExplorerCore.TextLocation(offset, line, 0);
+            var location = new IRExplorerCore.TextLocation(offset, line);
             return new IRElement(location, length);
         }
 

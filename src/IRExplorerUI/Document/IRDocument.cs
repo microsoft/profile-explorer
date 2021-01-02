@@ -846,7 +846,7 @@ namespace IRExplorerUI {
 
         private IRElement CreateDummyElement(int offset, int length) {
             int line = Document.GetLineByOffset(offset).LineNumber;
-            var location = new TextLocation(offset, line, 0);
+            var location = new TextLocation(offset, line);
             return new IRElement(location, length);
         }
 
@@ -1967,7 +1967,10 @@ namespace IRExplorerUI {
                 var instrGroup = new HighlightedGroup(style.ParentStyle);
 
                 foreach (var element in defList) {
-                    instrGroup.Add(element.ParentTuple);
+                    // Parameters may not have a parent, ignore.
+                    if (element.ParentTuple != null) {
+                        instrGroup.Add(element.ParentTuple);
+                    }
                 }
 
                 highlighter.Add(instrGroup);

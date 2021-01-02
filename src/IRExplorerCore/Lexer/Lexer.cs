@@ -27,8 +27,7 @@ namespace IRExplorerCore.Lexer {
                 Kind = kind,
                 Location = new TextLocation {
                     Offset = source_.Position - length - 1,
-                    Line = line_,
-                    Column = source_.Position - lineStart_ - length - 1
+                    Line = line_
                 },
                 Length = length,
                 Data = ReadOnlyMemory<char>.Empty
@@ -40,8 +39,7 @@ namespace IRExplorerCore.Lexer {
                 Kind = kind,
                 Location = new TextLocation {
                     Offset = startPosition,
-                    Line = line_,
-                    Column = startPosition - lineStart_
+                    Line = line_
                 },
                 Length = length,
                 Data = source_.Extract(startPosition, length)
