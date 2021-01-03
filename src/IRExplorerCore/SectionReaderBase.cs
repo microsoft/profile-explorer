@@ -480,6 +480,7 @@ namespace IRExplorerCore {
                 long startOffset = hasName ? TextOffset() : initialOffset;
                 long endOffset = startOffset;
                 string funcName = string.Empty;
+                bool foundFuncStart = false;
                 int sectionEndLine = 0;
                 int blockCount = 0;
 
@@ -495,8 +496,9 @@ namespace IRExplorerCore {
 
                     if (IsFunctionStart(line)) {
                         // Extract function name.
-                        if (string.IsNullOrEmpty(funcName)) {
+                        if (!foundFuncStart) {
                             funcName = ExtractFunctionName(line);
+                            foundFuncStart = true;
                         }
                     }
                     else if (IsFunctionEnd(line)) {
@@ -507,6 +509,12 @@ namespace IRExplorerCore {
                     }
                     else if (IsBlockStart(line)) {
                         blockCount++;
+                    }
+
+                    if (!foundFuncStart) {
+                        AddOptionalOutputLine(line, initialOffset);
+                        sectionStartLine = lineIndex_ + (hasName ? 1 : 0);
+                        startOffset = TextOffset();
                     }
 
                     lineIndex_++;

@@ -72,14 +72,17 @@ namespace IRExplorerCore.IR {
 
         public override string ToString() {
             var builder = new StringBuilder();
-            builder.AppendLine($"instr kind: {Kind}, opcode: {OpcodeText} ({Opcode}), id: {Id}");
+            builder.Append($"instr kind: {Kind}, opcode: {OpcodeText} ({Opcode}), id: {Id}");
+            builder.AppendLine($" // loc {{{TextLocation.Offset};{TextLength}}}, line {TextLocation.Line}");
 
             for (int i = 0; i < Destinations.Count; i++) {
-                builder.AppendLine($"o dest {i}: {Destinations[i]}".Indent(2));
+                builder.Append($"o dest {i}: {Destinations[i]}".Indent(2));
+                builder.AppendLine($" // loc {{{Destinations[i].TextLocation.Offset};{Destinations[i].TextLength}}}, line {Destinations[i].TextLocation.Line}");
             }
 
             for (int i = 0; i < Sources.Count; i++) {
-                builder.AppendLine($"o src {i}: {Sources[i]}".Indent(2));
+                builder.Append($"o src {i}: {Sources[i]}".Indent(2));
+                builder.AppendLine($" // loc {{{Sources[i].TextLocation.Offset};{Sources[i].TextLength}}}, line {Sources[i].TextLocation.Line}");
             }
 
             return builder.ToString();

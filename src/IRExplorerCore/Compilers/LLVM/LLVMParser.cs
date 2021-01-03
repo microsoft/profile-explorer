@@ -132,10 +132,7 @@ namespace IRExplorerCore.LLVM {
                 function.Blocks.Add(block);
                 llvmBlock = llvmBlock.Next;
             }
-
-            Console.WriteLine("-------------------------------");
-            var t = new IRPrinter(function).Print();
-            Console.WriteLine(t);
+            
             return function;
         }
 
@@ -165,7 +162,7 @@ namespace IRExplorerCore.LLVM {
                     var llvmSuccBlock = termInstr.GetSuccessor(i);
                     var succBlock = GetOrCreateBlock(llvmSuccBlock.Handle, parent.ParentFunction);
 
-                    // With switch a block can appear multiple times as a successor.
+                    // For switch a block can appear multiple times as a successor.
                     if (!parent.Successors.Contains(succBlock)) {
                         parent.Successors.Add(succBlock);
                         succBlock.Predecessors.Add(parent);
@@ -177,6 +174,10 @@ namespace IRExplorerCore.LLVM {
             if (llvmInstr.HasMetadata) {
                 var md = llvmInstr.GetMetadata(llvm.LLVMIRXTextLocationKind);
                 if (md != null) {
+                    if (llvmInstr.InstructionOpcode == LLVMOpcode.LLVMICmp) {
+                        md = md;
+                    }
+
                     var mdNode = llvm.ValueAsMetadata(md);
                     llvm.IRXTextLocationGetInstrRange(mdNode, out var offset, out var length, out var line);
                     instr.TextLocation = new TextLocation((int)offset, (int)line - functionStartLine_);
@@ -185,7 +186,7 @@ namespace IRExplorerCore.LLVM {
                     if (instr.Destinations.Count > 0) {
                         llvm.LLVMIRXTextLocationGetInstrDestRange(mdNode, 
                             out var destOffset, out var destLength, out var destLine);
-                        if (destOffset > 0) { //? TODO: Better way to deal with missing dest?
+                        if (destOffset > 0) {
                             instr.Destinations[0].TextLocation =
                                 new TextLocation((int)destOffset, (int)destLine - functionStartLine_);
                             instr.Destinations[0].TextLength = (int)destLength;
@@ -205,6 +206,7 @@ namespace IRExplorerCore.LLVM {
         }
 
         private bool HasDestination(LLVMValueRef llvmInstr) {
+            //? TODO: Any better way? 0 users?
             switch (llvmInstr.InstructionOpcode) {
                 case LLVMOpcode.LLVMStore:
                 case LLVMOpcode.LLVMBr:
@@ -233,7 +235,7 @@ namespace IRExplorerCore.LLVM {
             // Create a fake destination to attach a name to.
             if (HasDestination(llvmInstr)) {
                 var operand = CreateOperand(nextElementId_, OperandKind.Temporary,
-                    ParseType(llvmInstr), instr);
+                                            ParseType(llvmInstr), instr);
                 operand.Role = OperandRole.Destination;
 
                 //? TODO: Check if instr has a name, see LLParser.cpp,   Inst->setName(NameStr);
@@ -247,8 +249,7 @@ namespace IRExplorerCore.LLVM {
 
         private OperandIR ParseOperand(LLVMValueRef llvmOperand, InstructionIR parent) {
             var operand = CreateOperand(nextElementId_, OperandKind.Other,
-                                      ParseType(llvmOperand), parent);
-            
+                                        ParseType(llvmOperand), parent);
             switch (llvmOperand.Kind) {
                 case LLVMValueKind.LLVMArgumentValueKind:
                     operand.Kind = OperandKind.Variable;
