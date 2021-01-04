@@ -3,8 +3,7 @@
 
 using System;
 
-namespace IRExplorerCore
-{
+namespace IRExplorerCore {
     public class IRPassOutput {
         public IRPassOutput(long dataStartOffset, long dataEndOffset, int startLine,
             int endLine) {
@@ -20,7 +19,6 @@ namespace IRExplorerCore
         public int StartLine { get; set; }
         public int EndLine { get; set; }
         public int LineCount => EndLine - StartLine + 1;
-        public byte[] Signature { get; set; } // SHA256 signature of the text.
         public bool HasPreprocessedLines { get; set; }
 
         public override bool Equals(object obj) {

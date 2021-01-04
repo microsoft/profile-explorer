@@ -129,6 +129,20 @@ namespace IRExplorerCore.LLVM {
                     llvmInstr = llvmInstr.NextInstruction;
                 }
 
+                // Set block text range.
+                //? TODO: Label text range must be set before it can be used here
+                if (block.Label != null) {
+                    block.TextLocation = block.Label.TextLocation;
+                }
+                
+                if (block.Tuples.Count > 0) {
+                    //if (block.Label == null) {
+                        block.TextLocation = block.Tuples[0].TextLocation;
+                    //}
+
+                    block.TextLength = block.Tuples[^1].TextLocation.Offset - block.TextLocation.Offset;
+                }
+                
                 function.Blocks.Add(block);
                 llvmBlock = llvmBlock.Next;
             }
@@ -226,24 +240,33 @@ namespace IRExplorerCore.LLVM {
             return true;
         }
 
-        private InstructionIR CreateInstruction(LLVMValueRef llvmInstr, BlockIR parent) {
-            var instr = new InstructionIR(nextElementId_, InstructionKind.Other, parent);
-            instr.Opcode = llvmInstr.InstructionOpcode;
-            instr.OpcodeText = instr.Opcode.ToString().AsMemory();
-            instrMap_[llvmInstr.Handle] = instr;
+        private InstructionIR GetOrCreateInstruction(LLVMValueRef llvmInstr) {
+            if (!instrMap_.TryGetValue(llvmInstr.Handle, out var instr)) {
+                instr = new InstructionIR(nextElementId_, InstructionKind.Other, null);
+                instrMap_[llvmInstr.Handle] = instr;
 
-            // Create a fake destination to attach a name to.
-            if (HasDestination(llvmInstr)) {
-                var operand = CreateOperand(nextElementId_, OperandKind.Temporary,
-                                            ParseType(llvmInstr), instr);
-                operand.Role = OperandRole.Destination;
+                // Create a fake destination to attach a name to.
+                if (HasDestination(llvmInstr)) {
+                    var operand = CreateOperand(nextElementId_, OperandKind.Temporary,
+                                                ParseType(llvmInstr), instr);
+                    operand.Role = OperandRole.Destination;
 
-                //? TODO: Check if instr has a name, see LLParser.cpp,   Inst->setName(NameStr);
-                operand.Value = $"%{nextValueNumber_}".AsMemory();
-                instr.Destinations.Add(operand);
-                CreateSSADefinition(llvmInstr, operand);
+                    //? TODO: Check if instr has a name, see LLParser.cpp,   Inst->setName(NameStr);
+                    operand.Value = $"%{nextValueNumber_}".AsMemory();
+                    instr.Destinations.Add(operand);
+                    CreateSSADefinition(llvmInstr, operand);
+                }
             }
 
+            return instr;
+        }
+
+        private InstructionIR CreateInstruction(LLVMValueRef llvmInstr, BlockIR parent) {
+            // Check if the instr. was already created due to a forward-reference.
+            var instr = GetOrCreateInstruction(llvmInstr);
+            instr.Opcode = llvmInstr.InstructionOpcode;
+            instr.OpcodeText = instr.Opcode.ToString().AsMemory();
+            instr.Parent = parent;
             return instr;
         }
 
@@ -265,7 +288,7 @@ namespace IRExplorerCore.LLVM {
                         operand.Role = OperandRole.Source;
                     }
 
-                    Console.WriteLine($"Found LLVMArgumentValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMArgumentValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMBasicBlockValueKind:
                     var targetBlock = GetOrCreateBlock(llvmOperand.Handle, parent.ParentFunction);
@@ -273,7 +296,7 @@ namespace IRExplorerCore.LLVM {
                     operand.Value = targetBlock.Label;
                     break;
                 case LLVMValueKind.LLVMMemoryUseValueKind:
-                    Console.WriteLine($"Found LLVMMemoryUseValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMMemoryUseValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMMemoryDefValueKind:
                     break;
@@ -282,43 +305,43 @@ namespace IRExplorerCore.LLVM {
                 case LLVMValueKind.LLVMFunctionValueKind:
                     break;
                 case LLVMValueKind.LLVMGlobalAliasValueKind:
-                    Console.WriteLine($"Found LLVMGlobalAliasValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMGlobalAliasValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMGlobalIFuncValueKind:
-                    Console.WriteLine($"Found LLVMGlobalIFuncValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMGlobalIFuncValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMGlobalVariableValueKind:
-                    Console.WriteLine($"Found LLVMGlobalVariableValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMGlobalVariableValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMBlockAddressValueKind:
                     var block = GetOrCreateBlock(llvmOperand.Handle, parent.ParentFunction);
                     operand.Kind = OperandKind.LabelAddress;
 
-                    Console.WriteLine($"Found LLVMBlockAddressValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMBlockAddressValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantExprValueKind:
-                    Console.WriteLine($"Found LLVMConstantExprValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantExprValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantArrayValueKind:
-                    Console.WriteLine($"Found LLVMConstantArrayValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantArrayValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantStructValueKind:
-                    Console.WriteLine($"Found LLVMConstantStructValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantStructValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantVectorValueKind:
-                    Console.WriteLine($"Found LLVMConstantVectorValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantVectorValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMUndefValueValueKind:
                     operand.Kind = OperandKind.Undefined;
                     break;
                 case LLVMValueKind.LLVMConstantAggregateZeroValueKind:
-                    Console.WriteLine($"Found LLVMConstantAggregateZeroValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantAggregateZeroValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantDataArrayValueKind:
-                    Console.WriteLine($"Found LLVMConstantDataArrayValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantDataArrayValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantDataVectorValueKind:
-                    Console.WriteLine($"Found LLVMConstantDataVectorValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantDataVectorValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMConstantIntValueKind:
                     operand.Kind = OperandKind.IntConstant;
@@ -333,34 +356,35 @@ namespace IRExplorerCore.LLVM {
                     operand.Value = 0;
                     break;
                 case LLVMValueKind.LLVMConstantTokenNoneValueKind:
-                    Console.WriteLine($"Found LLVMConstantTokenNoneValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMConstantTokenNoneValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMMetadataAsValueValueKind:
-                    Console.WriteLine($"Found LLVMMetadataAsValueValueKind: {llvmOperand}");
+                    // Console.WriteLine($"Found LLVMMetadataAsValueValueKind: {llvmOperand}");
                     break;
                 case LLVMValueKind.LLVMInlineAsmValueKind:
                     break;
                 case LLVMValueKind.LLVMInstructionValueKind:
-                    if(instrMap_.TryGetValue(llvmOperand.Handle, out var instr)) {
-                        operand.Kind = OperandKind.Temporary;
-                        operand.Role = OperandRole.Source;
+                    // This will create an instr. in case of a forward-reference,
+                    // which will get the opcode and other info set later.
+                    var instr = GetOrCreateInstruction(llvmOperand);
+                    operand.Kind = OperandKind.Temporary;
+                    operand.Role = OperandRole.Source;
+
+                    //? TODO: Set the operand name with forward-declared instrs somehow
+                    //? Maybe have a dict of {fwd instr -> list of users}, then update the users later
+                    if (instr.Destinations != null && instr.Destinations.Count > 0) {
                         operand.Value = instr.Destinations[0].NameValue;
-                        CreateUseDefinitionLink(llvmOperand, operand);
                     }
-                    else {
-                        throw new InvalidOperationException("Ref to unseen instr");
-                    }
+
+                    CreateUseDefinitionLink(llvmOperand, operand);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
 
-            if (llvmOperand.HasMetadata) {
-                Console.WriteLine("Operand MD ");
-            }
-
             return operand;
         }
+
         private SSADefinitionTag CreateSSADefinition(LLVMValueRef value, IRElement element) {
             int defNumber = nextValueNumber_++;
             valueMap_[value.Handle] = defNumber;

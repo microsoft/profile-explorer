@@ -12,11 +12,13 @@ namespace IRExplorerCore.Graph {
         private FunctionIR function_;
         private DominatorAlgorithmOptions options_;
         private Dictionary<string, TaggedObject> blockNameMap_;
+        private HashSet<BlockIR> visited_;
 
         public DominatorTreePrinter(FunctionIR function, DominatorAlgorithmOptions options) {
             function_ = function;
             options_ = options;
             blockNameMap_ = new Dictionary<string, TaggedObject>();
+            visited_ = new HashSet<BlockIR>();
         }
 
         private void CreateNode(BlockIR block, StringBuilder builder) {
@@ -45,9 +47,17 @@ namespace IRExplorerCore.Graph {
 
         private void PrintDomTree(DominatorTreeNode node, StringBuilder builder) {
             CreateNode(node.Block, builder);
+            visited_.Add(node.Block);
 
             foreach (var child in node.Children) {
-                PrintDomTree(child, builder);
+                if (!visited_.Contains(child.Block)) {
+                    PrintDomTree(child, builder);
+                }
+                else {
+                    Trace.TraceWarning($"Loop in DomTree");
+                    return;
+                }
+
                 CreateEdge(node.Block, child.Block, builder);
             }
         }

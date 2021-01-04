@@ -7,8 +7,8 @@ using System.Collections.Generic;
 namespace IRExplorerCore {
     public class IRTextSummary {
         private Dictionary<string, IRTextFunction> functionMap_;
-        private ulong nextSectionId_;
         private Dictionary<ulong, IRTextSection> sectionMap_;
+        private ulong nextSectionId_;
 
         public List<IRTextFunction> Functions { get; set; }
 

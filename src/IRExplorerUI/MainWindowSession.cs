@@ -509,7 +509,7 @@ namespace IRExplorerUI {
             // since both can be fairly time-consuming for huge functions.
             Task graphTask = Task.CompletedTask;
 
-            if (runExtraTasks) {
+            if (runExtraTasks && result.Function != null) {
                 graphTask = GenerateGraphs(section, document.TextView);
             }
 
@@ -590,6 +590,11 @@ namespace IRExplorerUI {
 
         public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section, IRDocument document,
                                             Func<FunctionIR, IRTextSection, CancelableTask, Graph> computeGraphAction) {
+            // If there is no function, it means that parsing failed.
+            if (document.Function == null) {
+                return;
+            }
+            
             var loadTask = graphPanel.OnGenerateGraphStart(section);
             var functionGraph = await Task.Run(() => computeGraphAction(document.Function, section, loadTask));
 

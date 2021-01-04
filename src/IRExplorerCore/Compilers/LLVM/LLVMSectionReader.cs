@@ -74,6 +74,12 @@ namespace IRExplorerCore.LLVM {
             int length = end - start - 1;
 
             if (length > 0) {
+                // If there are quotes around the name, ignore them.
+                if (line[start + 1] == '"' &&
+                    line[end - 1] == '"') {
+                    return line.Substring(start + 2, length - 2);
+                }
+
                 return line.Substring(start + 1, length);
             }
 

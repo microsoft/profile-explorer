@@ -70,7 +70,6 @@ namespace IRExplorerCore {
         private Dictionary<string, IRTextFunction> functionMap_;
         private int lineIndex_;
         private IRPassOutput optionalOutput_;
-        private bool optionalOutputNeeded_;
         private byte[] preloadedData_;
         private MemoryStream preloadedDataStream_;
         private int prevLineCount_;
@@ -247,7 +246,6 @@ namespace IRExplorerCore {
 
         private void ResetSummaryState() {
             optionalOutput_ = null;
-            optionalOutputNeeded_ = false;
             hasPreprocessedLines_ = false;
             prevLineCount_ = 0;
             lineIndex_ = 0;
@@ -412,24 +410,19 @@ namespace IRExplorerCore {
             return list;
         }
 
-        private void AddOptionalOutputLine(string line, long initialOffset) {
-            if (optionalOutput_ == null) {
+        private void AddOptionalOutputLine(string line, long initialOffset, ref IRPassOutput passOutput) {
+            if (passOutput == null) {
                 // Start a new optional section.
                 long offset = TextOffset();
-                optionalOutput_ = new IRPassOutput(initialOffset, offset, lineIndex_, lineIndex_);
-                optionalOutputNeeded_ = false;
+                passOutput = new IRPassOutput(initialOffset, offset, lineIndex_, lineIndex_);
             }
 
-            optionalOutput_.DataEndOffset = TextOffset() - 1;
-            optionalOutput_.EndLine = lineIndex_;
-
-            if (!string.IsNullOrWhiteSpace(line)) {
-                optionalOutputNeeded_ = true;
-            }
+            passOutput.DataEndOffset = TextOffset() - 1;
+            passOutput.EndLine = lineIndex_;
         }
 
         private IRPassOutput GetAdditionalOutput() {
-            if (optionalOutput_ != null && optionalOutputNeeded_) {
+            if (optionalOutput_ != null) {
                 optionalOutput_.HasPreprocessedLines = hasPreprocessedLines_;
                 return optionalOutput_;
             }
@@ -465,7 +458,7 @@ namespace IRExplorerCore {
                     }
                     else {
                         // Skip over line.
-                        AddOptionalOutputLine(line, initialOffset);
+                        AddOptionalOutputLine(line, initialOffset, ref optionalOutput_);
                         lineIndex_++;
                         continue;
                     }
@@ -489,6 +482,8 @@ namespace IRExplorerCore {
                     line = NextLine();
                 }
 
+                IRPassOutput beforeFuncOutput = null;
+
                 while (true) {
                     if (line == null) {
                         break;
@@ -511,8 +506,10 @@ namespace IRExplorerCore {
                         blockCount++;
                     }
 
+                    // Text between the section start and the function start
+                    // is added to a different pass output.
                     if (!foundFuncStart) {
-                        AddOptionalOutputLine(line, initialOffset);
+                        AddOptionalOutputLine(line, startOffset, ref beforeFuncOutput);
                         sectionStartLine = lineIndex_ + (hasName ? 1 : 0);
                         startOffset = TextOffset();
                     }
@@ -536,6 +533,7 @@ namespace IRExplorerCore {
                 };
 
                 var section = new IRTextSection(null, 0, 0, sectionName, output, blockCount);
+                section.OutputBeforeFunction = beforeFuncOutput;
                 return (section, funcName);
             }
 

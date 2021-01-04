@@ -61,7 +61,21 @@ namespace IRExplorerCore {
             }
             else {
                 if (sectionParser is LLVMSectionParser llvmParser) {
-                    function = sectionParser.ParseSection(section, GetDocumentText());
+                    //? TODO: This should be done by the section parser, the loader
+                    //? is also in the Core lib
+                    var parsedText = text;
+
+                    if (section.OutputBeforeFunction != null) {
+                        var beforeFuncText = GetSectionOutputText(section.OutputBeforeFunction);
+                        parsedText = $"{beforeFuncText}\n{parsedText}";
+                    }
+
+                    if (section.OutputAfter != null) {
+                        var afterText = GetSectionOutputText(section.OutputAfter);
+                        parsedText = $"{parsedText}\n{afterText}";
+                    }
+
+                    function = sectionParser.ParseSection(section, parsedText);
                 }
                 else {
                     function = sectionParser.ParseSection(section, text);

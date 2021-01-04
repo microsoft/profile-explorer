@@ -167,7 +167,7 @@ namespace IRExplorerUI {
             SetupCommands();
         }
 
-        public List<BlockIR> Blocks => function_.Blocks;
+        public List<BlockIR> Blocks => function_?.Blocks;
         public BookmarkManager BookmarkManager => bookmarks_;
         public ISession Session { get; set; }
         public FunctionIR Function => function_;
@@ -2424,6 +2424,10 @@ namespace IRExplorerUI {
         }
 
         private void MarkLoopBlocks() {
+            if (function_ == null) {
+                return; // Function failed to parse.
+            }
+
             var dummyGraph = new Graph(GraphKind.FlowGraph);
             var graphStyle = new FlowGraphStyleProvider(dummyGraph, App.Settings.FlowGraphSettings);
             var loopGroups = new Dictionary<HighlightingStyle, HighlightedGroup>();

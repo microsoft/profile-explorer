@@ -789,6 +789,10 @@ namespace IRExplorerUI {
         }
 
         private async Task AddRemarks(List<Remark> remarks) {
+            if (remarks.Count == 0 || Function == null) {
+                return;
+            }
+
             await AddRemarkTags(remarks);
             await UpdateDocumentRemarks(remarks);
         }
@@ -981,8 +985,10 @@ namespace IRExplorerUI {
         }
 
         private void TextView_PropertyChanged(object sender, PropertyChangedEventArgs e) {
-            var blockList = new CollectionView(TextView.Blocks);
-            BlockSelector.ItemsSource = blockList;
+            // If the function fails parsing, use an empty block list to avoid asserts.
+            var blockList = TextView.Blocks;
+            blockList ??= new List<BlockIR>();
+            BlockSelector.ItemsSource = new CollectionView(blockList);
         }
 
         private void TextView_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
