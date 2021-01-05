@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Windows.Media;
 using IRExplorerCore;
 
@@ -21,9 +22,14 @@ namespace IRExplorerUI {
             TextColor = textColor;
         }
 
+        [DisplayName("Searched Text")]
         public string SearchedText { get; set; }
+        [DisplayName("Searched Kind")]
+        [Editor(typeof(EnumCheckComboBoxEditor), typeof(EnumCheckComboBoxEditor))]
         public TextSearchKind SearchKind { get; set; }
+        [DisplayName("Text Color")]
         public Color TextColor { get; set; }
+        [DisplayName("Separator Color")]
         public Color SeparatorColor { get; set; }
         public int BeforeSeparatorWeight { get; set; }
         public int AfterSeparatorWeight { get; set; }

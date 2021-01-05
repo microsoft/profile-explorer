@@ -718,12 +718,25 @@ namespace IRExplorerUI {
 
         private void MenuItem_Click(object sender, RoutedEventArgs e) {
             //throw new InvalidOperationException("Crash Handler test assert");
-            if (App.Theme.Kind == ApplicationThemeKind.Light) {
-                SwitchTheme(ApplicationTheme.Dark);
+
+            var w = new Window();
+            var p = new PropertyEditor();
+            var prov = (UTC.UTCSectionStyleProvider)compilerInfo_.SectionStyleProvider;
+
+            if (prov.LoadSettings()) {
+                p.Editor.SelectedObject = prov.SectionNameMarkers[0];
+                w.Content = p;
+                w.ShowDialog();
+
+                w.Hide();
             }
-            else {
-                SwitchTheme(ApplicationTheme.Light);
-            }
+
+            //if (App.Theme.Kind == ApplicationThemeKind.Light) {
+            //    SwitchTheme(ApplicationTheme.Dark);
+            //}
+            //else {
+            //    SwitchTheme(ApplicationTheme.Light);
+            //}
         }
 
         private void SwitchTheme(ApplicationTheme theme) {

@@ -4,16 +4,30 @@
 using IRExplorerCore;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Xceed.Wpf.Toolkit;
 
 namespace IRExplorerUI {
     [Flags]
     public enum TextSearchKind {
+        [Browsable(false)]
+        [DefaultValue(true)]
+        [Description("Default (case sensitive substring)")]
         Default = 1 << 0, // Case sensitive
+        [Description("Case insensitive")]
         CaseInsensitive = 1 << 1,
+        [Description("Regex")]
         Regex = 1 << 2,
+        [Description("Whole word")]
         WholeWord = 1 << 3
+    }
+
+    public class PropertyGridEditorCheckComboBox : CheckComboBox {
+        static PropertyGridEditorCheckComboBox() {
+
+        }
     }
 
     public struct TextSearchResult {

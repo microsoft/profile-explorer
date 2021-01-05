@@ -10,7 +10,19 @@
     d:DesignWidth="800"
     mc:Ignorable="d">
     <Grid>
-
-        <xctk:PropertyGrid />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="2" />
+            <ColumnDefinition Width="2*" />
+        </Grid.ColumnDefinitions>
+        <ListView Grid.Column="0" />
+        <GridSplitter Grid.Column="1" />
+        <xctk:PropertyGrid
+            x:Name="Editor"
+            Grid.Column="2"
+            ShowDescriptionByTooltip="True"
+            ShowSearchBox="False"
+            ShowSortOptions="False"
+            ShowTitle="False" />
     </Grid>
 </UserControl>

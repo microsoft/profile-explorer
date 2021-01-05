@@ -14,6 +14,8 @@ namespace IRExplorerUI.UTC {
             LoadSettings();
         }
 
+        public List<MarkedSectionName> SectionNameMarkers => sectionNameMarkers_;
+
         public bool IsMarkedSection(IRTextSection section, out MarkedSectionName result) {
             foreach (var nameMarker in sectionNameMarkers_) {
                 if (TextSearcher.Contains(section.Name, nameMarker.SearchedText, nameMarker.SearchKind)) {
