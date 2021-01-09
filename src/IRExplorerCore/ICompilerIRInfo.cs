@@ -12,6 +12,8 @@ namespace IRExplorerCore {
         IRParsingErrorHandler CreateParsingErrorHandler();
         IReachableReferenceFilter CreateReferenceFilter(FunctionIR function);
 
+        string GetBlockName(BlockIR block);
+        string GetBlockLabelName(BlockIR block);
         bool IsCopyInstruction(InstructionIR instr);
         bool IsLoadInstruction(InstructionIR instr);
         bool IsStoreInstruction(InstructionIR instr);

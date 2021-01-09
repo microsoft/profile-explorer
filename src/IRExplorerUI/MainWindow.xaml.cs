@@ -109,7 +109,6 @@ namespace IRExplorerUI {
             lockObject_ = new object();
 
             SetupMainWindow();
-            SetupGraphLayoutCache();
 
             DockManager.LayoutUpdated += DockManager_LayoutUpdated;
             ContentRendered += MainWindow_ContentRendered;
@@ -234,6 +233,7 @@ namespace IRExplorerUI {
         }
 
         private void SetupMainWindow() {
+            SetupGraphLayoutCache();
             PopulateRecentFilesMenu();
             ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
             DiffModeButton.IsEnabled = false;

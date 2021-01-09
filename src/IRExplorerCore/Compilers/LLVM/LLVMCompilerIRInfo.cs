@@ -27,6 +27,15 @@ namespace IRExplorerCore.LLVM {
             return null;
         }
 
+        public string GetBlockName(BlockIR block) {
+            return block.HasLabel ? block.Label.Name : "ENTRY";
+        }
+
+        public string GetBlockLabelName(BlockIR block) {
+            // return block.HasLabel ? block.Label.Name : "";
+            return "";
+        }
+
         public bool IsCopyInstruction(InstructionIR instr) {
             return SkipCopyInstruction(instr) != null;
         }

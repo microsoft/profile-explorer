@@ -453,7 +453,7 @@ namespace IRExplorerCore {
 
                 if (!IsSectionStart(line)) {
                     if ((!expectSectionHeaders_ || !string.IsNullOrEmpty(lastSectionName_)) &&
-                        (IsFunctionStart(line) || IsBlockStart(line))) {
+                        IsFunctionStart(line)) {
                         hasName = false;
                     }
                     else {

@@ -15,9 +15,11 @@ namespace IRExplorerUI {
         private Dictionary<IRTextSection, CompressedString> graphLayout_;
         private Dictionary<byte[], CompressedString> shapeGraphLayout_;
         private ReaderWriterLockSlim rwLock_;
+        private ICompilerIRInfo irInfo_;
 
-        public GraphLayoutCache(GraphKind graphKind) {
+        public GraphLayoutCache(GraphKind graphKind, ICompilerIRInfo compilerIrInfo) {
             graphKind_ = graphKind;
+            irInfo_ = compilerIrInfo;
             shapeGraphLayout_ = new Dictionary<byte[], CompressedString>();
             graphLayout_ = new Dictionary<IRTextSection, CompressedString>();
             rwLock_ = new ReaderWriterLockSlim();
@@ -41,7 +43,7 @@ namespace IRExplorerUI {
                 else {
                     // Check if the same Graphviz input was used before, since
                     // the resulting graph will be identical even though the function is not.
-                    printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options);
+                    printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options, irInfo_);
                     string inputText = printer.PrintGraph();
 
                     if (string.IsNullOrEmpty(inputText)) {
@@ -81,7 +83,7 @@ namespace IRExplorerUI {
 
             // Parse the graph layout output from Graphviz to build
             // the actual Graph object with nodes and edges.
-            printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options);
+            printer ??= GraphPrinterFactory.CreateInstance(graphKind_, element, options, irInfo_);
             var blockNodeMap = printer.CreateNodeDataMap();
             var blockNodeGroupsMap = printer.CreateNodeDataGroupsMap();
             var graphReader = new GraphvizReader(graphKind_, graphText, blockNodeMap);

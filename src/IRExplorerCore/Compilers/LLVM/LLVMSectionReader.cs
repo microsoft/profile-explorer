@@ -28,7 +28,7 @@ namespace IRExplorerCore.LLVM {
         };
 
         private static readonly string[] FunctionNameStart = {
-            "define",
+            "@",
             "Machine code for function"
         };
 
@@ -127,18 +127,18 @@ namespace IRExplorerCore.LLVM {
             if (start == -1) {
                 return null;
             }
-
-            int end = line.IndexOf(nameEndMarker, start + 1, StringComparison.Ordinal);
-            int length = end - start - 1;
+            
+            int end = line.IndexOf(nameEndMarker, start + nameStartMarker.Length, StringComparison.Ordinal);
+            int length = end - start - nameStartMarker.Length;
 
             if (length > 0) {
                 // If there are quotes around the name, ignore them.
                 if (line[start + 1] == '"' &&
                     line[end - 1] == '"') {
-                    return line.Substring(start + 2, length - 2);
+                    return line.Substring(start + nameStartMarker.Length + 1, length - 2).Trim();
                 }
 
-                return line.Substring(start + 1, length);
+                return line.Substring(start + nameStartMarker.Length, length).Trim();
             }
 
             return null;

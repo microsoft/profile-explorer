@@ -2429,7 +2429,7 @@ namespace IRExplorerUI {
             }
 
             var dummyGraph = new Graph(GraphKind.FlowGraph);
-            var graphStyle = new FlowGraphStyleProvider(dummyGraph, App.Settings.FlowGraphSettings);
+            var graphStyle = new FlowGraphStyleProvider(dummyGraph, App.Settings.FlowGraphSettings, Session.CompilerInfo);
             var loopGroups = new Dictionary<HighlightingStyle, HighlightedGroup>();
 
             foreach (var block in function_.Blocks) {

@@ -70,6 +70,7 @@ namespace CompilerStudio {
 
             Console.WriteLine("Loading file");
 
+            var irInfo = new UTCCompilerIRInfo();
             SectionReaderBase reader;
             IRTextSummary summary;
             int failed = 0;
@@ -110,7 +111,7 @@ namespace CompilerStudio {
                                          var function = sectionParser.ParseSection(section, text);
 
                                          if (function != null) {
-                                             var p = new FlowGraphPrinter(function);
+                                             var p = new FlowGraphPrinter(function, irInfo);
                                              string s = p.PrintGraph();
                                              File.WriteAllText(Guid.NewGuid().ToString() + ".in", s);
 
