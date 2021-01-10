@@ -69,8 +69,8 @@ namespace IRExplorerCore {
         public bool TryGetValue(string value, out T outValue) {
             int nodeId = 0;
 
-            for (int i = 0; i < value.Length; i++) {
-                char letter = value[i];
+            foreach (var letter in value)
+            {
                 int childId = FindChildForLetter(nodeId, letter);
 
                 if (childId == -1) {
@@ -87,8 +87,8 @@ namespace IRExplorerCore {
         public bool TryGetValue(ReadOnlySpan<char> value, out T outValue) {
             int nodeId = 0;
 
-            for (int i = 0; i < value.Length; i++) {
-                char letter = value[i];
+            foreach (var letter in value)
+            {
                 int childId = FindChildForLetter(nodeId, letter);
 
                 if (childId == -1) {

@@ -19,9 +19,7 @@ namespace IRExplorerCore {
 
                 taskInstance_ = new CancelableTask();
 
-                if (registerAction != null) {
-                    registerAction(taskInstance_);
-                }
+                registerAction?.Invoke(taskInstance_);
 
                 return taskInstance_;
             }
@@ -39,9 +37,7 @@ namespace IRExplorerCore {
                 // Cancel the task and wait for it to complete without blocking.
                 canceledTask.Cancel();
 
-                if (unregisterAction != null) {
-                    unregisterAction(taskInstance_);
-                }
+                unregisterAction?.Invoke(taskInstance_);
 
                 Task.Run(() => {
                     canceledTask.WaitToComplete();
@@ -57,9 +53,7 @@ namespace IRExplorerCore {
                 }
 
                 if (taskInstance_ != null) {
-                    if (unregisterAction != null) {
-                        unregisterAction(taskInstance_);
-                    }
+                    unregisterAction?.Invoke(taskInstance_);
 
                     taskInstance_.Completed();
                     taskInstance_.Dispose();
@@ -70,9 +64,7 @@ namespace IRExplorerCore {
 
         public void WaitForTask() {
             lock (lockObject_) {
-                if (taskInstance_ != null) {
-                    taskInstance_.WaitToComplete();
-                }
+                taskInstance_?.WaitToComplete();
             }
         }
 
@@ -89,9 +81,7 @@ namespace IRExplorerCore {
         }
 
         public void Dispose() {
-            if(taskInstance_ != null) {
-                taskInstance_.Dispose();
-            }
+            taskInstance_?.Dispose();
         }
     }
 }

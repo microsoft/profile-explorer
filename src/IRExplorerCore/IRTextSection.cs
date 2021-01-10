@@ -53,9 +53,7 @@ namespace IRExplorerCore {
         }
 
         public void CompressLineMetadata() {
-            if (lineMetadata_ != null) {
-                lineMetadata_.Compress();
-            }
+            lineMetadata_?.Compress();
         }
 
         public override bool Equals(object obj) {

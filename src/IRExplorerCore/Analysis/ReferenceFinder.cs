@@ -416,12 +416,12 @@ namespace IRExplorerCore.Analysis {
 
         public static IRElement GetSSADefinition(OperandIR op) {
             var tag = GetSSADefinitionTag(op);
-            return tag != null ? tag.OwnerElement : null;
+            return tag?.OwnerElement;
         }
 
         public static InstructionIR GetSSADefinitionInstruction(OperandIR op) {
             var tag = GetSSADefinitionTag(op);
-            return tag != null ? tag.DefinitionInstruction : null;
+            return tag?.DefinitionInstruction;
         }
 
         public static int? GetSSADefinitionId(OperandIR op) {
