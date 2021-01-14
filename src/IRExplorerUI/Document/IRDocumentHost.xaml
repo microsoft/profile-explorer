@@ -125,36 +125,16 @@
                             Margin="4,0,0,0"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            DisplayMemberPath="Number"
+                            DisplayMemberPath="Label"
                             Loaded="ComboBox_Loaded"
-                            SelectedValuePath="Number"
+                            SelectedValuePath="Label"
                             SelectionChanged="BlockSelector_SelectionChanged"
                             ToolTip="Jump to block (Alt+G)">
                             <ComboBox.Resources>
                                 <Style TargetType="ComboBoxItem">
                                     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsEmpty}" Value="True">
-                                            <Setter Property="Foreground" Value="Gray" />
-                                            <Setter Property="FontWeight" Value="Light" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsBranchBlock}" Value="True">
-                                            <Setter Property="Foreground" Value="#0042B6" />
-                                            <Setter Property="FontWeight" Value="DemiBold" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsSwitchBlock}" Value="True">
-                                            <Setter Property="Foreground" Value="#8500BE" />
-                                            <Setter Property="FontWeight" Value="DemiBold" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsReturnBlock}" Value="True">
-                                            <Setter Property="Foreground" Value="#B30606" />
-                                            <Setter Property="FontWeight" Value="Bold" />
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding HasLoopBackedge}" Value="True">
-                                            <Setter Property="Foreground" Value="#008D00" />
-                                            <Setter Property="FontWeight" Value="Bold" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
+                                    <Setter Property="Foreground" Value="{Binding TextColor}" />
+                                    <!--<Setter Property="FontWeight" Value="Light" />-->
                                 </Style>
                             </ComboBox.Resources>
 

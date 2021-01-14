@@ -12,6 +12,9 @@ using LLVMSharp.Interop;
 using llvm = LLVMSharp.Interop.LLVM;
 
 namespace IRExplorerCore.LLVM {
+    //? TODO: Map from LLVMopcode -> {text, InstructionKind}
+    //? set InstrKind
+
     public class LLVMSectionParser : IRSectionParser {
         private ParsingErrorHandler errorHandler_;
         private LLVMParser parser_;
