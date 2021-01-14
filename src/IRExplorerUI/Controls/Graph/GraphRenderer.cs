@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using IRExplorerCore;
 using IRExplorerCore.Graph;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
@@ -22,6 +23,7 @@ namespace IRExplorerUI {
         public HighlightingStyle Style { get; set; }
         public Typeface TextFont { get; set; }
         public Brush TextColor { get; set; }
+        public string Label { get; set; }
 
         public void Draw() {
             using var dc = Visual.RenderOpen();
@@ -50,19 +52,40 @@ namespace IRExplorerUI {
             var graphTag = NodeInfo.Data?.GetTag<GraphNodeTag>();
 
             if(graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
-                var labelText = new FormattedText(graphTag.Label, CultureInfo.InvariantCulture,
-                                                  FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, TextColor,
-                                                  VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
-                var textBackground = ColorBrushes.GetBrush(Settings.BackgroundColor);
-                dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
-                                                 region.Bottom + labelText.Height / 4,
-                                                 labelText.Width, labelText.Height));
-            
-                //? TODO: Use LabelPlacement
-                //? TODO: Use LabelFontColor if set
-                dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
-                                                 region.Bottom + labelText.Height / 4));
+                DrawGraphTagNodeLabel(graphTag, region, dc);
             }
+            else if (!string.IsNullOrEmpty(Label)) {
+                DrawNodeLabel(Label, TextColor, ColorBrushes.GetBrush(Settings.BackgroundColor), null, region, dc);
+            }
+        }
+        
+        private void DrawGraphTagNodeLabel(GraphNodeTag graphTag, Rect region, DrawingContext dc) {
+            var labelTextColor = graphTag.LabelFontColor.HasValue
+                ? ColorBrushes.GetBrush(graphTag.LabelFontColor.Value)
+                : TextColor;
+            var textBackground = graphTag.BackgroundColor.HasValue
+                ? ColorBrushes.GetBrush(graphTag.BackgroundColor.Value)
+                : ColorBrushes.GetBrush(Settings.BackgroundColor);
+            var textBorder = graphTag.BorderColor.HasValue
+                ? Pens.GetPen(graphTag.BorderColor.Value, graphTag.BorderThickness)
+                : null;
+            DrawNodeLabel(graphTag.Label, labelTextColor, textBackground, textBorder, region, dc);
+        }
+
+        private void DrawNodeLabel(string label, Brush labelTextColor , 
+                                    SolidColorBrush textBackground, Pen textBorder,
+                                    Rect region, DrawingContext dc) {
+            var labelText = new FormattedText(label, CultureInfo.InvariantCulture,
+                FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, labelTextColor,
+                VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
+
+            //? TODO: Use LabelPlacement, now it's centered under node.
+            dc.DrawRectangle(textBackground, textBorder, new Rect(NodeInfo.CenterX - labelText.Width / 2,
+                region.Bottom + labelText.Height / 4,
+                labelText.Width, labelText.Height));
+
+            dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
+                region.Bottom + labelText.Height / 4));
         }
     }
 
@@ -76,6 +99,7 @@ namespace IRExplorerUI {
     }
 
     public interface IGraphStyleProvider {
+        string GetNodeLabel(Node Node);
         Brush GetDefaultTextColor();
         Brush GetDefaultNodeBackground();
         HighlightingStyle GetDefaultNodeStyle();
@@ -90,29 +114,31 @@ namespace IRExplorerUI {
         private const double DefaultEdgeThickness = 0.025;
         private const double GroupBoundingBoxMargin = 0.20;
         private const double GroupBoundingBoxTextMargin = 0.10;
+
+        private ICompilerInfoProvider compilerInfo_;
         private Typeface defaultNodeFont_;
         private Typeface edgeFont_;
         private Graph graph_;
         private IGraphStyleProvider graphStyle_;
-
         private GraphSettings settings_;
         private DrawingVisual visual_;
 
         public GraphRenderer(Graph graph, GraphSettings settings,
                              ICompilerInfoProvider compilerInfo) {
-            settings_ = settings;
             graph_ = graph;
+            settings_ = settings;
+            compilerInfo_ = compilerInfo;
             edgeFont_ = new Typeface("Verdana");
             defaultNodeFont_ = new Typeface("Verdana");
 
             graphStyle_ = graph.Kind switch
             {
                 GraphKind.FlowGraph => 
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings, compilerInfo),
                 GraphKind.DominatorTree =>
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings, compilerInfo),
                 GraphKind.PostDominatorTree =>
-                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings),
+                    new FlowGraphStyleProvider(graph, (FlowGraphSettings)settings, compilerInfo),
                 GraphKind.ExpressionGraph =>
                     new ExpressionGraphStyleProvider(graph_, (ExpressionGraphSettings)settings, compilerInfo),
                 GraphKind.CallGraph =>
@@ -216,9 +242,10 @@ namespace IRExplorerUI {
                     Visual = nodeVisual,
                     TextFont = defaultNodeFont_,
                     TextColor = textColor,
-                    Style = GetDefaultNodeStyle(node)
+                    Style = GetDefaultNodeStyle(node),
+                    Label = graphStyle_.GetNodeLabel(node)
                 };
-
+                
                 graphNode.Draw();
                 node.Tag = graphNode;
                 nodeVisual.SetValue(FrameworkElement.TagProperty, graphNode);

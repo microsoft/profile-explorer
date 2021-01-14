@@ -9,10 +9,10 @@ using IRExplorerCore.IR;
 namespace IRExplorerCore.Graph {
     public static class GraphPrinterFactory {
         public static GraphVizPrinter CreateInstance<T, U>(
-            GraphKind kind, T element, U options) where T : class where U : class {
+            GraphKind kind, T element, U options, ICompilerIRInfo compilerIrInfo) where T : class where U : class {
             if (typeof(T) == typeof(FunctionIR)) {
                 return kind switch {
-                    GraphKind.FlowGraph => new FlowGraphPrinter(element as FunctionIR),
+                    GraphKind.FlowGraph => new FlowGraphPrinter(element as FunctionIR, compilerIrInfo),
                     GraphKind.DominatorTree => new DominatorTreePrinter(element as FunctionIR,
                                                                         DominatorAlgorithmOptions.Dominators),
                     GraphKind.PostDominatorTree => new DominatorTreePrinter(element as FunctionIR,

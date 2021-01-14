@@ -6,11 +6,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.CompilerServices;
 using IRExplorerCore.IR;
+using IRExplorerCore.Lexer;
 using LLVMSharp;
 using LLVMSharp.Interop;
 using llvm = LLVMSharp.Interop.LLVM;
 
 namespace IRExplorerCore.LLVM {
+    //? TODO: Map from LLVMopcode -> {text, InstructionKind}
+    //? set InstrKind
+
     public class LLVMSectionParser : IRSectionParser {
         private ParsingErrorHandler errorHandler_;
         private LLVMParser parser_;
@@ -44,6 +48,7 @@ namespace IRExplorerCore.LLVM {
     }
 
     public unsafe class LLVMParser {
+        private ParsingErrorHandler errorHandler_;
         private LLVMOpaqueMemoryBuffer* textBuffer_;
         private LLVMContext context_;
         private Dictionary<IntPtr, BlockIR> blockMap_;
@@ -55,8 +60,11 @@ namespace IRExplorerCore.LLVM {
         private IRElementId nextElementId_;
         private int functionStartLine_;
 
+        private string text_;
+
         public LLVMParser(ParsingErrorHandler errorHandler,
                           Dictionary<int, string> lineMetadata) {
+            errorHandler_ = errorHandler;
             context_ = new LLVMContext();
         }
 
@@ -65,12 +73,16 @@ namespace IRExplorerCore.LLVM {
             textBuffer_ = llvm.CreateMemoryBufferWithMemoryRange(inputText, (UIntPtr)inputText.Length, new MarshaledString(""), 1);
             //functionStartLine_ = (int)startLine;
             Reset();
+
+            text_ = text;
         }
 
         public void Initialize(ReadOnlyMemory<char> text) {
             Reset();
             var inputText = new MarshaledString(text.Span);
             textBuffer_ = llvm.CreateMemoryBufferWithMemoryRange(inputText, (UIntPtr)inputText.Length, new MarshaledString(""), 1);
+
+            text_ = text.ToString();
         }
 
         public List<FunctionIR> Parse() {
@@ -95,6 +107,8 @@ namespace IRExplorerCore.LLVM {
             }
             else {
                 // todo: handle error using messages
+                errorHandler_.HandleError(new TextLocation(0, 0), TokenKind.And,
+                    new Token(TokenKind.And, new TextLocation(0, 0), 0), message);
             }
 
             return functions;
@@ -117,9 +131,10 @@ namespace IRExplorerCore.LLVM {
 
             while (llvmBlock != null) {
                 var block = GetOrCreateBlock(llvmBlock.Handle, function);
+                //? TODO: Extract a label name
+                var name = $"%{nextValueNumber_}".AsMemory();
+                block.Label = new BlockLabelIR(nextElementId_, name, block);
                 nextValueNumber_++; // Blocks are also counted as values.
-
-                // todo: block label GetBasicBlockName
 
                 var llvmInstr = llvmBlock.FirstInstruction;
 
@@ -460,11 +475,6 @@ namespace IRExplorerCore.LLVM {
             var newBlock = new BlockIR(nextElementId_, nextBlockNumber_, function) {
                 Id = nextElementId_.NewBlock(nextBlockNumber_)
             };
-
-            //? TODO: Extract a label name
-            //? TODO: Flow graph should use the label name
-            var name = $"%{nextValueNumber_}".AsMemory();
-            newBlock.Label = new BlockLabelIR(nextElementId_, name, newBlock);
 
             nextBlockNumber_++;
             blockMap_[blockHandle] = newBlock;

@@ -48,6 +48,11 @@ namespace IRExplorerCore.IR {
 
         private void PrintBlock(BlockIR block) {
             builder_.Append($"block {block.Number}:");
+
+            if (block.HasLabel) {
+                builder_.Append($" label \"{block.Label.Name}\"");
+            }
+
             builder_.AppendLine();
 
             foreach (var tuple in block.Tuples) {

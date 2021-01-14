@@ -17,6 +17,7 @@
 	<Color name="Annotation" foreground="Silver" />
 	<Color name="Variable" foreground="Black" fontWeight="bold" />
 	<Color name="CallTarget" foreground="DarkGreen" fontWeight="bold" />
+	<Color name="ConditionCode" foreground="DarkOrange" fontWeight="bold" />
     <RuleSet ignoreCase="false">
 		<Span color="Comment" begin=";" />
         <Span color="String">
@@ -69,6 +70,7 @@
             <Word>insertvalue</Word>
             <Word>getelementptr</Word>
             <Word>inttoptr</Word>
+            <Word>ptrtoint</Word>
             <Word>sitofp</Word>
             <Word>uitofp</Word>
             <Word>fptosi</Word>
@@ -168,6 +170,29 @@
         <Keywords color="Attributes">
             <Word>true</Word>
             <Word>false</Word>
+        </Keywords> 
+        
+        <Keywords color="ConditionCode">
+            <Word>eq</Word>
+            <Word>ne</Word>
+            <Word>ugt</Word>
+            <Word>uge</Word>
+            <Word>ult</Word>
+            <Word>ule</Word>
+            <Word>sgt</Word>
+            <Word>sge</Word>
+            <Word>slt</Word>
+            <Word>sle</Word>
+			<Word>oeq</Word>
+			<Word>ogt</Word>
+			<Word>oge</Word>
+			<Word>olt</Word>
+			<Word>ole</Word>
+			<Word>one</Word>
+			<Word>ord</Word>
+			<Word>ueq</Word>
+			<Word>une</Word>
+			<Word>uno</Word>
         </Keywords> 
    </RuleSet>
 </SyntaxDefinition>

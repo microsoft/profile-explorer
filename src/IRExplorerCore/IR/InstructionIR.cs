@@ -40,7 +40,6 @@ namespace IRExplorerCore.IR {
         public bool IsBranch => Kind == InstructionKind.Branch;
         public bool IsGoto => Kind == InstructionKind.Goto;
         public bool IsSwitch => Kind == InstructionKind.Switch;
-        public bool IsCall => Kind == InstructionKind.Call;
         public bool IsReturn => Kind == InstructionKind.Return;
 
         public T OpcodeAs<T>() where T : Enum {

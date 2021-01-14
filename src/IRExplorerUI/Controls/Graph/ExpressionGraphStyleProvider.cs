@@ -82,6 +82,10 @@ namespace IRExplorerUI {
             loopEdgeStyle_ = Pens.GetPen(options.LoopPhiBackedgeColor, BoldEdgeThickness);
         }
 
+        public string GetNodeLabel(Node node) {
+            return "";
+        }
+
         public HighlightingStyle GetDefaultNodeStyle() {
             return defaultNodeStyle_;
         }

@@ -14,6 +14,7 @@ namespace IRExplorerUI {
         private const double BoldEdgeThickness = 0.05;
         private const double DashedEdgeThickness = 0.035;
 
+        private ICompilerInfoProvider compilerInfo_;
         private HighlightingStyle branchBlockStyle_;
         private Pen branchEdgeStyle_;
         private Brush defaultNodeBackground_;
@@ -32,9 +33,11 @@ namespace IRExplorerUI {
         private Pen returnEdgeStyle_;
         private HighlightingStyle switchBlockStyle_;
 
-        public FlowGraphStyleProvider(Graph graph, FlowGraphSettings options) {
+        public FlowGraphStyleProvider(Graph graph, FlowGraphSettings options, 
+                                      ICompilerInfoProvider compilerInfo) {
             graph_ = graph;
             options_ = options;
+            compilerInfo_ = compilerInfo;
             defaultTextColor_ = ColorBrushes.GetBrush(options.TextColor);
             defaultNodeBackground_ = ColorBrushes.GetBrush(options.NodeColor);
 
@@ -83,6 +86,15 @@ namespace IRExplorerUI {
             }
         }
 
+        public string GetNodeLabel(Node node) {
+            //? TODO: Only if enabled in options
+            if (node.ElementData is BlockIR block) {
+                return compilerInfo_.IR.GetBlockLabelName(block);
+            }
+
+            return "";
+        }
+
         public HighlightingStyle GetDefaultNodeStyle() {
             return defaultNodeStyle_;
         }
@@ -100,7 +112,6 @@ namespace IRExplorerUI {
 
             return element switch
             {
-                null => defaultNodeStyle_,
                 BlockIR block => GetBlockNodeStyle(block),
                 _ => defaultNodeStyle_
             };

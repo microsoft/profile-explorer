@@ -36,6 +36,10 @@ namespace IRExplorerUI {
             edgeStyle_ = Pens.GetPen(Colors.DarkBlue, DefaultEdgeThickness);
         }
 
+        public string GetNodeLabel(Node node) {
+            return "";
+        }
+
         public Brush GetDefaultNodeBackground() {
             return defaultNodeBackground_;
         }

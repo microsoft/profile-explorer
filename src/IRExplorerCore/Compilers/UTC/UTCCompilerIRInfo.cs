@@ -36,6 +36,14 @@ namespace IRExplorerCore.UTC {
             return new UTCReferenceFilter(function);
         }
 
+        public string GetBlockName(BlockIR block) {
+            return $"B{block.Number}";
+        }
+
+        public string GetBlockLabelName(BlockIR block) {
+            return block.HasLabel ? block.Label.Name : "";
+        }
+
         public bool IsCopyInstruction(InstructionIR instr) {
             return SkipCopyInstruction(instr) != null;
         }

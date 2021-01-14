@@ -107,6 +107,18 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
+    public class BlockIREx {
+        public BlockIREx(BlockIR block, string label, Brush textColor) {
+            Block = block;
+            Label = label;
+            TextColor = textColor;
+        }
+
+        public BlockIR Block { get; set; }
+        public string Label { get; set; }
+        public Brush TextColor { get; set; } //? Get from options
+    }
+
     public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         private const double ActionPanelInitialOpacity = 0.5;
         private const int ActionPanelHeight = 20;
@@ -979,16 +991,24 @@ namespace IRExplorerUI {
 
         private void TextView_BlockSelected(object sender, IRElementEventArgs e) {
             if (e.Element != selectedBlock_) {
-                selectedBlock_ = e.Element;
-                BlockSelector.SelectedItem = e.Element;
+                //? selectedBlock_ = e.Element;
+                //? BlockSelector.SelectedItem = e.Element;
             }
         }
 
         private void TextView_PropertyChanged(object sender, PropertyChangedEventArgs e) {
             // If the function fails parsing, use an empty block list to avoid asserts.
-            var blockList = TextView.Blocks;
-            blockList ??= new List<BlockIR>();
-            BlockSelector.ItemsSource = new CollectionView(blockList);
+            var blocks = TextView.Blocks;
+            blocks ??= new List<BlockIR>();
+
+            var blocksEx = new List<BlockIREx>(blocks.Count);
+            var irInfo = Session.CompilerInfo.IR;
+
+            foreach (var block in blocks) {
+                blocksEx.Add(new BlockIREx(block, irInfo.GetBlockName(block), Brushes.Blue));
+            }
+
+            BlockSelector.ItemsSource = new CollectionView(blocksEx);
         }
 
         private void TextView_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
@@ -1419,7 +1439,6 @@ namespace IRExplorerUI {
 
             CreateQueryActionButtons(query.Data);
         }
-
 
         private QueryPanel CreateQueryPanel() {
             //? TODO: Create panel over the document
