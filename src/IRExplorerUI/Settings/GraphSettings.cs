@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Windows.Media;
+using IRExplorerCore.Graph;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -41,7 +42,7 @@ namespace IRExplorerUI {
 
         [ProtoMember(14)] public Color EdgeColor { get; set; }
         [ProtoMember(15)] public bool DisplayBlockLabels { get; set; }
-
+        [ProtoMember(16)] public LabelPlacementKind BlockLabelPlacement { get; set; }
 
         public override void Reset() {
             SyncSelectedNodes = true;
@@ -58,6 +59,7 @@ namespace IRExplorerUI {
             NodeColor = Utils.ColorFromString("#CBCBCB");
             NodeBorderColor = Utils.ColorFromString("#000000");
             DisplayBlockLabels = true;
+            BlockLabelPlacement = LabelPlacementKind.Auto;
         }
 
         public override bool Equals(object obj) {
@@ -76,7 +78,8 @@ namespace IRExplorerUI {
                    HighlightConnectedNodesOnHover == options.HighlightConnectedNodesOnHover &&
                    HighlightConnectedNodesOnSelection == options.HighlightConnectedNodesOnSelection &&
                    BackgroundColor.Equals(options.BackgroundColor) &&
-                   DisplayBlockLabels == options.DisplayBlockLabels;
+                   DisplayBlockLabels == options.DisplayBlockLabels &&
+                   BlockLabelPlacement == options.BlockLabelPlacement;
         }
     }
 }

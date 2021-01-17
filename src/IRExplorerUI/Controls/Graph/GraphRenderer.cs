@@ -14,6 +14,7 @@ using IRExplorerCore;
 using IRExplorerCore.Graph;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     public sealed class GraphNode {
@@ -282,8 +283,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private Point ToPoint(Tuple<double, double> value) {
-            return new Point(value.Item1, value.Item2);
+        private Point ToPoint(Coordinate value) {
+            return new Point(value.X, value.Y);
         }
 
         private void DrawEdges() {
@@ -293,6 +294,9 @@ namespace IRExplorerUI {
             var returnPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Return);
             var immDomPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.ImmediateDominator);
             var dc = visual_.RenderOpen();
+
+            // Draw all edges of the same type in the same geometry,
+            // it is more efficient since they have the same pen.
             var defaultEdgeGeometry = new StreamGeometry();
             var loopEdgeGeometry = new StreamGeometry();
             var branchEdgeGeometry = new StreamGeometry();
@@ -312,6 +316,10 @@ namespace IRExplorerUI {
                 var points = edge.LinePoints;
                 var edgeType = graphStyle_.GetEdgeKind(edge);
 
+                if (points.Length < 2) {
+                    continue; // Invalid edge.
+                }
+
                 var sc = edgeType switch
                 {
                     GraphEdgeKind.Default => defaultSC,
@@ -323,36 +331,32 @@ namespace IRExplorerUI {
                     _ => defaultSC
                 };
 
-                //? TODO: Avoid making copies at all
+                // Start a new line by setting initial point.
                 sc.BeginFigure(ToPoint(points[0]), false, false);
 
-                //unsafe {
-                //    Span<Point> localPoints = stackalloc Point[ptrs.Length];
-                //    var mem = ptrs.AsMemory();
-                //    var handle=  mem.Pin();
-                    
-                //    var span = new Span<Point>((void*)handle.Pointer, ptrs.Length);
-                //    span.CopyTo(localPoints);
+                // The line points must be passed to WPF as a IList<Point>,
+                // while the graph uses a Coordinate struct, with same X/Y members as Point,
+                // just to avoid taking a dependency on WPF in the core library.
+                var tempPoints = ConvertCoordinatesToPoints(points, 1);
+                IList<Point> linePoints = tempPoints;
 
-                //    Trace.WriteLine($"total = {span.Length}");
-                //}
-
-                var tempPoints = new Point[points.Length - 1];
-
-                for (int i = 1; i < points.Length; i++) {
-                    tempPoints[i - 1] = ToPoint(points[i]);
+                if (tempPoints.Length >= points.Length) {
+                    // The memory pool returned an array larger than needed, which has 
+                    // garbage values at the end that should not be used for the line.
+                    linePoints = new ListSegment<Point>(tempPoints, 0, points.Length - 1);
                 }
 
                 if (usePolyLine) {
-                    sc.PolyLineTo(tempPoints, true, false);
+                    sc.PolyLineTo(linePoints, true, false);
                 }
                 else {
-                    sc.PolyBezierTo(tempPoints, true, false);
+                    sc.PolyBezierTo(linePoints, true, false);
                 }
 
                 // Draw arrow head with a slope matching the line,
                 // but only if the target node is visible.
-                DrawEdgeArrow(edge, tempPoints, sc);
+                DrawEdgeArrow(edge, linePoints, sc);
+                ArrayPool<Point>.Shared.Return(tempPoints);
             }
 
             defaultSC.Close();
@@ -377,11 +381,24 @@ namespace IRExplorerUI {
             dc.Close();
         }
 
-        private void DrawEdgeArrow(Edge edge, Point[] tempPoints, StreamGeometryContext sc) {
+        private unsafe Point[] ConvertCoordinatesToPoints(Coordinate[] points, int startIndex = 0) {
+            // A hacky way of speeding up the pointless Coordinate -> WPF Point conversion,
+            // since a C++ style "reinterpret_cast" is not possible without copying memory in C#.
+            // Since the layout of the two structs is identical, this uses a memcpy
+            // that is faster then a loop handling each value by itself. An ArrayPool
+            // is also used to reduce pressure on GC.
+            var tempPoints = ArrayPool<Point>.Shared.Rent(points.Length - startIndex);
+            var pointsMemory = points.AsMemory(startIndex);
+            var pointsPtr = pointsMemory.Pin();
+            var span = new Span<Point>((void*) pointsPtr.Pointer, points.Length - startIndex);
+            span.CopyTo(tempPoints);
+            return tempPoints;
+        }
+
+        private void DrawEdgeArrow(Edge edge, IList<Point> tempPoints, StreamGeometryContext sc) {
             // Draw arrow head with a slope matching the line,
             // this uses the last two points to find the angle.
-            Point start;
-            Vector v = FindArrowOrientation(tempPoints, out start);
+            Vector v = FindArrowOrientation(tempPoints, out var start);
 
             sc.BeginFigure(start + v * 0.1, true, true);
             double t = v.X;
@@ -391,8 +408,8 @@ namespace IRExplorerUI {
             sc.LineTo(start + v * -0.075, true, true);
         }
 
-        private Vector FindArrowOrientation(Point[] tempPoints, out Point start) {
-            for(int i = tempPoints.Length - 1; i > 0; i--) { 
+        private Vector FindArrowOrientation(IList<Point> tempPoints, out Point start) {
+            for(int i = tempPoints.Count - 1; i > 0; i--) { 
                 start = tempPoints[i];
                 var v = start - tempPoints[i - 1];
 
