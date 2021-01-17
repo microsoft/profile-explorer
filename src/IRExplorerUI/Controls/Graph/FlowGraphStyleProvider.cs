@@ -89,7 +89,7 @@ namespace IRExplorerUI {
         public string GetNodeLabel(Node node) {
             //? TODO: Only if enabled in options
             if (node.ElementData is BlockIR block) {
-                return compilerInfo_.IR.GetBlockLabelName(block);
+                return compilerInfo_.NameProvider.GetBlockName(block);
             }
 
             return "";

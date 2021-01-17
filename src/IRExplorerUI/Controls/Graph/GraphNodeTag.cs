@@ -5,16 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using IRExplorerCore.IR;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerUI {
     public class GraphNodeTag : ITag {
-        public enum LabelPlacementKind {
-            Top,
-            Bottom,
-            Left,
-            Right
-        }
-
         public static readonly Color[] HeatmapColors = new Color[] {
             Utils.ColorFromString("#63BE7B"),
             Utils.ColorFromString("#85C77D"),

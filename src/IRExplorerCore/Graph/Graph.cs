@@ -7,10 +7,17 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Graph {
+    public enum LabelPlacementKind {
+        Top,
+        Bottom,
+        Left,
+        Right,
+        Auto
+    }
+
     public sealed class Node {
         //? Commented properties are currently not used.
         public ReadOnlyMemory<char> Name { get; set; }
-        //public ReadOnlyMemory<char> Label { get; set; }
         public string Label { get; set; }
         //public ReadOnlyMemory<char> Style { get; set; }
         //public ReadOnlyMemory<char> Shape { get; set; }

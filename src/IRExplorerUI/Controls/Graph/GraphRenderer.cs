@@ -2,9 +2,12 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore;
@@ -15,7 +18,8 @@ using IRExplorerCore.IR;
 namespace IRExplorerUI {
     public sealed class GraphNode {
         private const double DefaultTextSize = 0.225;
-        private const double DefaultLabelTextSize = 0.190;
+        private const double DefaultLabelTextSize = 0.200;
+        private const double LabelBackgroundOpacity = 0.85;
 
         public Node NodeInfo { get; set; }
         public GraphSettings Settings{ get; set; }
@@ -54,8 +58,9 @@ namespace IRExplorerUI {
             if(graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
                 DrawGraphTagNodeLabel(graphTag, region, dc);
             }
-            else if (!string.IsNullOrEmpty(Label)) {
-                DrawNodeLabel(Label, TextColor, ColorBrushes.GetBrush(Settings.BackgroundColor), null, region, dc);
+            else if (!string.IsNullOrEmpty(Label) && Settings.DisplayBlockLabels) {
+                DrawNodeLabel(Label, TextColor, ColorBrushes.GetTransparentBrush(Settings.BackgroundColor, LabelBackgroundOpacity), null, 
+                              LabelPlacementKind.Bottom, region, dc);
             }
         }
         
@@ -69,23 +74,47 @@ namespace IRExplorerUI {
             var textBorder = graphTag.BorderColor.HasValue
                 ? Pens.GetPen(graphTag.BorderColor.Value, graphTag.BorderThickness)
                 : null;
-            DrawNodeLabel(graphTag.Label, labelTextColor, textBackground, textBorder, region, dc);
+            DrawNodeLabel(graphTag.Label, labelTextColor, textBackground, textBorder, 
+                          graphTag.LabelPlacement, region, dc);
         }
 
-        private void DrawNodeLabel(string label, Brush labelTextColor , 
+        private void DrawNodeLabel(string label, Brush labelTextColor, 
                                     SolidColorBrush textBackground, Pen textBorder,
+                                    LabelPlacementKind labelPlacement,
                                     Rect region, DrawingContext dc) {
             var labelText = new FormattedText(label, CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, labelTextColor,
                 VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
+            
+            var labelPosition = ComputeLabelPosition(labelPlacement, labelText, region);
+            dc.DrawRectangle(textBackground, textBorder, 
+                             new Rect(labelPosition.X, labelPosition.Y,
+                                      labelText.Width, labelText.Height));
+            dc.DrawText(labelText, labelPosition);
+        }
 
-            //? TODO: Use LabelPlacement, now it's centered under node.
-            dc.DrawRectangle(textBackground, textBorder, new Rect(NodeInfo.CenterX - labelText.Width / 2,
-                region.Bottom + labelText.Height / 4,
-                labelText.Width, labelText.Height));
+        private Point ComputeLabelPosition(LabelPlacementKind labelPlacement,
+                                           FormattedText labelText, Rect region) {
+            switch (labelPlacement) {
+                case LabelPlacementKind.Bottom: {
+                    return new Point(NodeInfo.CenterX - labelText.Width / 2,
+                        region.Bottom + labelText.Height / 4);
+                }
+                case LabelPlacementKind.Top: {
+                    return new Point(NodeInfo.CenterX - labelText.Width / 2,
+                        region.Top - labelText.Height - labelText.Height / 4);
+                }
+                case LabelPlacementKind.Left: {
+                    return new Point(region.Left - labelText.Width - labelText.Width / 4,
+                        NodeInfo.CenterY - labelText.Height / 2);
+                }
+                case LabelPlacementKind.Right: {
+                    return new Point(region.Right - labelText.Width / 4,
+                        NodeInfo.CenterY - labelText.Height / 2);
+                }
+            }
 
-            dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
-                region.Bottom + labelText.Height / 4));
+            throw new InvalidOperationException();
         }
     }
 
@@ -296,6 +325,18 @@ namespace IRExplorerUI {
 
                 //? TODO: Avoid making copies at all
                 sc.BeginFigure(ToPoint(points[0]), false, false);
+
+                //unsafe {
+                //    Span<Point> localPoints = stackalloc Point[ptrs.Length];
+                //    var mem = ptrs.AsMemory();
+                //    var handle=  mem.Pin();
+                    
+                //    var span = new Span<Point>((void*)handle.Pointer, ptrs.Length);
+                //    span.CopyTo(localPoints);
+
+                //    Trace.WriteLine($"total = {span.Length}");
+                //}
+
                 var tempPoints = new Point[points.Length - 1];
 
                 for (int i = 1; i < points.Length; i++) {

@@ -29,7 +29,7 @@ namespace IRExplorerUI.Compilers.UTC {
             session_ = session;
             ir_ = new UTCCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
-            names_ = new UTCNameProvider();
+            names_ = new UTCNameProvider(ir_);
             remarks_ = new UTCRemarkProvider(this);
             lockObject_ = new object();
 

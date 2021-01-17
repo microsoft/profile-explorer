@@ -40,6 +40,8 @@ namespace IRExplorerUI {
         [ProtoMember(13)] public Color NodeBorderColor { get; set; }
 
         [ProtoMember(14)] public Color EdgeColor { get; set; }
+        [ProtoMember(15)] public bool DisplayBlockLabels { get; set; }
+
 
         public override void Reset() {
             SyncSelectedNodes = true;
@@ -55,6 +57,7 @@ namespace IRExplorerUI {
             EdgeColor = Colors.Black;
             NodeColor = Utils.ColorFromString("#CBCBCB");
             NodeBorderColor = Utils.ColorFromString("#000000");
+            DisplayBlockLabels = true;
         }
 
         public override bool Equals(object obj) {
@@ -72,7 +75,8 @@ namespace IRExplorerUI {
                    ColorizeEdges == options.ColorizeEdges &&
                    HighlightConnectedNodesOnHover == options.HighlightConnectedNodesOnHover &&
                    HighlightConnectedNodesOnSelection == options.HighlightConnectedNodesOnSelection &&
-                   BackgroundColor.Equals(options.BackgroundColor);
+                   BackgroundColor.Equals(options.BackgroundColor) &&
+                   DisplayBlockLabels == options.DisplayBlockLabels;
         }
     }
 }

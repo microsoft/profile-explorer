@@ -1002,10 +1002,23 @@ namespace IRExplorerUI {
             blocks ??= new List<BlockIR>();
 
             var blocksEx = new List<BlockIREx>(blocks.Count);
-            var irInfo = Session.CompilerInfo.IR;
+            var nameProvider = Session.CompilerInfo.NameProvider;
+            var graphSettings = App.Settings.FlowGraphSettings;
 
             foreach (var block in blocks) {
-                blocksEx.Add(new BlockIREx(block, irInfo.GetBlockName(block), Brushes.Blue));
+                Brush textColor = Brushes.Black; //? TODO: Use text brush from App.ThemeResources from darkmode branch
+
+                if (block.IsBranchBlock) {
+                    textColor = ColorBrushes.GetBrush(graphSettings.BranchNodeBorderColor);
+                }
+                else if (block.IsSwitchBlock) {
+                    textColor = ColorBrushes.GetBrush(graphSettings.SwitchNodeBorderColor);
+                }
+                else if (block.IsReturnBlock) {
+                    textColor = ColorBrushes.GetBrush(graphSettings.ReturnNodeBorderColor);
+                }
+
+                blocksEx.Add(new BlockIREx(block, nameProvider.GetBlockAndLabelName(block), textColor));
             }
 
             BlockSelector.ItemsSource = new CollectionView(blocksEx);
@@ -1028,7 +1041,7 @@ namespace IRExplorerUI {
 
         private void BlockSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (e.AddedItems.Count == 1) {
-                var block = e.AddedItems[0] as BlockIR;
+                var block = ((BlockIREx)e.AddedItems[0]).Block;
 
                 // If the event triggers during loading the section, while the combobox is update,
                 // ignore it, otherwise it selects the first block.

@@ -15,15 +15,15 @@
             <StackPanel Margin="0,0,0,2" Orientation="Horizontal" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Sync selected/hovered nodes with document"
+                Content="Sync selected/hovered blocks with document"
                 IsChecked="{Binding Path=SyncSelectedNodes, Mode=TwoWay}" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Sync marked nodes with document"
+                Content="Sync marked blocks with document"
                 IsChecked="{Binding Path=SyncMarkedNodes, Mode=TwoWay}" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Bring selected node into view"
+                Content="Bring selected block into view"
                 IsChecked="{Binding Path=BringNodesIntoView, Mode=TwoWay}" />
 
             <CheckBox
@@ -34,7 +34,7 @@
             <CheckBox
                 x:Name="ShowPreviewCheckbox"
                 Margin="0,2,0,2"
-                Content="Show node preview popup on hover"
+                Content="Show block preview popup on hover"
                 IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
             <CheckBox
                 Margin="20,3,0,2"
@@ -46,7 +46,7 @@
             <TextBlock FontWeight="DemiBold" Text="Graph Node Style" />
             <CheckBox
                 Margin="0,4,0,2"
-                Content="Use semantic colorization for nodes"
+                Content="Use semantic colorization for blocks"
                 IsChecked="{Binding Path=ColorizeNodes, Mode=TwoWay}" />
             <CheckBox
                 Margin="0,2,0,2"
@@ -54,12 +54,19 @@
                 IsChecked="{Binding Path=ColorizeEdges, Mode=TwoWay}" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Highlight connected nodes on hover"
+                Content="Highlight connected blocks on hover"
                 IsChecked="{Binding Path=HighlightConnectedNodesOnHover, Mode=TwoWay}" />
             <CheckBox
                 Margin="0,2,0,2"
-                Content="Highlight connected nodes on selection"
+                Content="Highlight connected blocks on selection"
                 IsChecked="{Binding Path=HighlightConnectedNodesOnSelection, Mode=TwoWay}" />
+
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Show block labels"
+                IsChecked="{Binding Path=DisplayBlockLabels, Mode=TwoWay}"
+                ToolTip="Show the block label next to the graph block" />
+
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="DemiBold" Text="Graph Colors" />
@@ -128,7 +135,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Node color" />
+                        Text="Block color" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -172,7 +179,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Node border color" />
+                        Text="Block border color" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -193,7 +200,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Empty node color" />
+                        Text="Empty block color" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -215,7 +222,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Branch node border color" />
+                        Text="Branch block border color" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -237,7 +244,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Switch node border color" />
+                        Text="Switch block border color" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -259,7 +266,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Return node border color" />
+                        Text="Return block border color" />
                 </Grid>
 
                 <Grid Margin="0,2,0,0">
@@ -281,7 +288,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Loop header node border color" />
+                        Text="Loop header block border color" />
                 </Grid>
 
 
@@ -312,7 +319,7 @@
                 <CheckBox
                     x:Name="LoopCheckbox"
                     Margin="0,4,0,2"
-                    Content="Colorize loop nodes"
+                    Content="Colorize loop blocks"
                     IsChecked="{Binding Path=MarkLoopBlocks, Mode=TwoWay}" />
 
                 <Grid Margin="0,2,0,0">
@@ -335,7 +342,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 1" />
+                        Text="Loop block color - nesting level 1" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -357,7 +364,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 2" />
+                        Text="Loop block color - nesting level 2" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -379,7 +386,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 3" />
+                        Text="Loop block color - nesting level 3" />
                 </Grid>
                 <Grid Margin="0,2,0,0">
                     <Grid.ColumnDefinitions>
@@ -401,7 +408,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Loop node color - nesting level 4+" />
+                        Text="Loop block color - nesting level 4+" />
                 </Grid>
             </StackPanel>
         </StackPanel>
