@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using System;
 
 namespace IRExplorerUI.Query {
-    public class BuiltinFunctionTask : IFunctionTask {
+    public class BuiltinFunctionTask : FunctionTaskOptions, IFunctionTask {
         public delegate bool TaskCallback(FunctionIR function, IRDocument document,
                                           IFunctionTaskOptions options, ISession session,
                                           CancelableTask cancelableTask);
@@ -36,37 +36,8 @@ namespace IRExplorerUI.Query {
             Session = session;
             TaskInfo = taskInfo;
             callback_ = (TaskCallback)optionalData;
-
-            //? TODO: Load options from session, or from App.Settings
             LoadOptions();
             return true;
-        }
-
-        private void LoadOptions() {
-            ResetOptions();
-        }
-
-        public void SaveOptions() {
-            var data = StateSerializer.Serialize(Options);
-        }
-
-        public void ResetOptions() {
-            if (TaskInfo.OptionsType == null) {
-                return;
-            }
-
-            Options = (IFunctionTaskOptions)Activator.CreateInstance(TaskInfo.OptionsType);
-            Options.Reset();
-        }
-
-        public QueryData GetOptionsValues() {
-            var data = new QueryData();
-            data.AddInputs(Options);
-            return data;
-        }
-
-        public void LoadOptionsFromValues(QueryData data) {
-            Options = (IFunctionTaskOptions)data.ExtractInputs(TaskInfo.OptionsType);
         }
     }
 }

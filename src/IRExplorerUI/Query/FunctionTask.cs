@@ -9,6 +9,7 @@ using IRExplorerUI.Query;
 using System.Threading.Tasks;
 using System.Reflection;
 using System.ComponentModel;
+using System;
 
 namespace IRExplorerUI.Query {
     public interface IFunctionTaskOptions {
@@ -31,5 +32,47 @@ namespace IRExplorerUI.Query {
 
         bool Initialize(ISession session, FunctionTaskInfo taskInfo, object optionalData);
         Task<bool> Execute(FunctionIR function, IRDocument document, CancelableTask cancelableTask);
+    }
+
+    public class FunctionTaskOptions {
+        public ISession Session { get; protected set; }
+        public IFunctionTaskOptions Options { get; protected set; }
+        public FunctionTaskInfo TaskInfo { get; protected set; }
+
+        public QueryData GetOptionsValues() {
+            var data = new QueryData();
+            data.AddInputs(Options);
+            return data;
+        }
+
+        public void LoadOptionsFromValues(QueryData data) {
+            Options = (IFunctionTaskOptions)data.ExtractInputs(TaskInfo.OptionsType);
+        }
+
+        public void ResetOptions() {
+            if (TaskInfo.OptionsType == null) {
+                return;
+            }
+
+            Options = (IFunctionTaskOptions)Activator.CreateInstance(TaskInfo.OptionsType);
+            Options.Reset();
+        }
+
+        public void SaveOptions() {
+            if (Options != null) {
+                Session.SaveFunctionTaskOptions(TaskInfo, Options);
+            }
+        }
+
+        public void LoadOptions() {
+            var options = Session.LoadFunctionTaskOptions(TaskInfo);
+
+            if (options != null) {
+                Options = options;
+            }
+            else {
+                ResetOptions();
+            }
+        }
     }
 }

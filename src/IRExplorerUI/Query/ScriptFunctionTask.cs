@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Windows;
 
 namespace IRExplorerUI.Query {
-    public class ScriptFunctionTask : IFunctionTask {
+    public class ScriptFunctionTask : FunctionTaskOptions, IFunctionTask {
         // The script cache is used mostly to ensure there is a single instance
         // of the script object being created and the options type provided in GetDefinition
         // (FunctionTaskInfo.OptionsType) will be compatible with the type when the script executes. 
@@ -58,10 +58,6 @@ namespace IRExplorerUI.Query {
 
         private string scriptCode_;
         private ScriptSession scriptSession_;
-
-        public ISession Session { get; private set; }
-        public IFunctionTaskOptions Options { get; private set; }
-        public FunctionTaskInfo TaskInfo { get; private set; }
 
         public string OutputText => scriptSession_?.OutputText;
 
@@ -125,42 +121,6 @@ namespace IRExplorerUI.Query {
             scriptCode_ = (string)optionalData;
             LoadOptions();
             return true;
-        }
-
-        private void LoadOptions() {
-            var options = Session.LoadFunctionTaskOptions(TaskInfo);
-
-            if (options != null) {
-                Options = options;
-            }
-            else {
-                ResetOptions();
-            }
-        }
-
-        public void SaveOptions() {
-            if (Options != null) {
-                Session.SaveFunctionTaskOptions(TaskInfo, Options);
-            }
-        }
-
-        public void ResetOptions() {
-            if (TaskInfo.OptionsType == null) {
-                return;
-            }
-
-            Options = (IFunctionTaskOptions)Activator.CreateInstance(TaskInfo.OptionsType);
-            Options.Reset();
-        }
-
-        public QueryData GetOptionsValues() {
-            var data = new QueryData();
-            data.AddInputs(Options);
-            return data;
-        }
-
-        public void LoadOptionsFromValues(QueryData data) {
-            Options = (IFunctionTaskOptions)data.ExtractInputs(TaskInfo.OptionsType);
         }
     }
 }
