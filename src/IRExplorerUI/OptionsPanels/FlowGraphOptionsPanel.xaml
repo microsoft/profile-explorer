@@ -386,29 +386,7 @@
                         Grid.Column="1"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Loop block color - nesting level 3" />
-                </Grid>
-                <Grid Margin="0,2,0,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="70" />
-                        <ColumnDefinition />
-                    </Grid.ColumnDefinitions>
-                    <toolkit:ColorPicker
-                        Grid.Column="0"
-                        Width="64"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        AvailableColorsSortingMode="HueSaturationBrightness"
-                        BorderBrush="#707070"
-                        IsEnabled="{Binding ElementName=LoopCheckbox, Path=IsChecked}"
-                        SelectedColor="{Binding Path=LoopNodeColors[3], Mode=TwoWay}"
-                        ShowDropDownButton="True"
-                        UsingAlphaChannel="False" />
-                    <TextBlock
-                        Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Center"
-                        Text="Loop block color - nesting level 4+" />
+                        Text="Loop block color - nesting level 3+" />
                 </Grid>
             </StackPanel>
         </StackPanel>

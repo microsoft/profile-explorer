@@ -45,8 +45,7 @@ namespace IRExplorerUI {
             LoopNodeColors = new Color[] {
                 Utils.ColorFromString("#FCD1A4"),
                 Utils.ColorFromString("#FFA56D"),
-                Utils.ColorFromString("#FF7554"),
-                Utils.ColorFromString("#FC5B5B")
+                Utils.ColorFromString("#FF7554")
             };
 
             ShowImmDominatorEdges = true;

@@ -88,6 +88,11 @@ namespace IRExplorerCore.Analysis {
 
                     foreach (var predBlock in block.Predecessors) {
                         var inValues = reachableBlocks_[predBlock.Number];
+
+                        if(inValues == null) {
+                            continue; // Ignore unreachable block.
+                        }
+
                         currentValues.Or(inValues);
                     }
 

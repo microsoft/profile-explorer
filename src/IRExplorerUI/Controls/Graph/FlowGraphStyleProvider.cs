@@ -79,9 +79,7 @@ namespace IRExplorerUI {
                 loopBlockStyles_ = new List<HighlightingStyle>();
 
                 foreach (var color in options.LoopNodeColors) {
-                    loopBlockStyles_.Add(
-                        new HighlightingStyle(
-                            color, Pens.GetPen(options.NodeBorderColor, DefaultEdgeThickness)));
+                    loopBlockStyles_.Add(new HighlightingStyle(color, Pens.GetPen(options.NodeBorderColor, DefaultEdgeThickness)));
                 }
             }
         }
