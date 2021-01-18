@@ -2,20 +2,25 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.Graph;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     public sealed class GraphNode {
         private const double DefaultTextSize = 0.225;
-        private const double DefaultLabelTextSize = 0.190;
+        private const double DefaultLabelTextSize = 0.200;
+        private const double LabelBackgroundOpacity = 0.85;
 
         public Node NodeInfo { get; set; }
         public GraphSettings Settings{ get; set; }
@@ -54,8 +59,9 @@ namespace IRExplorerUI {
             if(graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
                 DrawGraphTagNodeLabel(graphTag, region, dc);
             }
-            else if (!string.IsNullOrEmpty(Label)) {
-                DrawNodeLabel(Label, TextColor, ColorBrushes.GetBrush(Settings.BackgroundColor), null, region, dc);
+            else if (!string.IsNullOrEmpty(Label) && Settings.DisplayBlockLabels) {
+                DrawNodeLabel(Label, TextColor, ColorBrushes.GetTransparentBrush(Settings.BackgroundColor, LabelBackgroundOpacity), null, 
+                              LabelPlacementKind.Bottom, region, dc);
             }
         }
         
@@ -69,23 +75,47 @@ namespace IRExplorerUI {
             var textBorder = graphTag.BorderColor.HasValue
                 ? Pens.GetPen(graphTag.BorderColor.Value, graphTag.BorderThickness)
                 : null;
-            DrawNodeLabel(graphTag.Label, labelTextColor, textBackground, textBorder, region, dc);
+            DrawNodeLabel(graphTag.Label, labelTextColor, textBackground, textBorder, 
+                          graphTag.LabelPlacement, region, dc);
         }
 
-        private void DrawNodeLabel(string label, Brush labelTextColor , 
+        private void DrawNodeLabel(string label, Brush labelTextColor, 
                                     SolidColorBrush textBackground, Pen textBorder,
+                                    LabelPlacementKind labelPlacement,
                                     Rect region, DrawingContext dc) {
             var labelText = new FormattedText(label, CultureInfo.InvariantCulture,
                 FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, labelTextColor,
                 VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
+            
+            var labelPosition = ComputeLabelPosition(labelPlacement, labelText, region);
+            dc.DrawRectangle(textBackground, textBorder, 
+                             new Rect(labelPosition.X, labelPosition.Y,
+                                      labelText.Width, labelText.Height));
+            dc.DrawText(labelText, labelPosition);
+        }
 
-            //? TODO: Use LabelPlacement, now it's centered under node.
-            dc.DrawRectangle(textBackground, textBorder, new Rect(NodeInfo.CenterX - labelText.Width / 2,
-                region.Bottom + labelText.Height / 4,
-                labelText.Width, labelText.Height));
+        private Point ComputeLabelPosition(LabelPlacementKind labelPlacement,
+                                           FormattedText labelText, Rect region) {
+            switch (labelPlacement) {
+                case LabelPlacementKind.Bottom: {
+                    return new Point(NodeInfo.CenterX - labelText.Width / 2,
+                        region.Bottom + labelText.Height / 4);
+                }
+                case LabelPlacementKind.Top: {
+                    return new Point(NodeInfo.CenterX - labelText.Width / 2,
+                        region.Top - labelText.Height - labelText.Height / 4);
+                }
+                case LabelPlacementKind.Left: {
+                    return new Point(region.Left - labelText.Width - labelText.Width / 4,
+                        NodeInfo.CenterY - labelText.Height / 2);
+                }
+                case LabelPlacementKind.Right: {
+                    return new Point(region.Right - labelText.Width / 4,
+                        NodeInfo.CenterY - labelText.Height / 2);
+                }
+            }
 
-            dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
-                region.Bottom + labelText.Height / 4));
+            throw new InvalidOperationException();
         }
     }
 
@@ -253,8 +283,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private Point ToPoint(Tuple<double, double> value) {
-            return new Point(value.Item1, value.Item2);
+        private Point ToPoint(Coordinate value) {
+            return new Point(value.X, value.Y);
         }
 
         private void DrawEdges() {
@@ -264,6 +294,9 @@ namespace IRExplorerUI {
             var returnPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.Return);
             var immDomPen = graphStyle_.GetEdgeStyle(GraphEdgeKind.ImmediateDominator);
             var dc = visual_.RenderOpen();
+
+            // Draw all edges of the same type in the same geometry,
+            // it is more efficient since they have the same pen.
             var defaultEdgeGeometry = new StreamGeometry();
             var loopEdgeGeometry = new StreamGeometry();
             var branchEdgeGeometry = new StreamGeometry();
@@ -283,6 +316,10 @@ namespace IRExplorerUI {
                 var points = edge.LinePoints;
                 var edgeType = graphStyle_.GetEdgeKind(edge);
 
+                if (points.Length < 2) {
+                    continue; // Invalid edge.
+                }
+
                 var sc = edgeType switch
                 {
                     GraphEdgeKind.Default => defaultSC,
@@ -294,24 +331,32 @@ namespace IRExplorerUI {
                     _ => defaultSC
                 };
 
-                //? TODO: Avoid making copies at all
+                // Start a new line by setting initial point.
                 sc.BeginFigure(ToPoint(points[0]), false, false);
-                var tempPoints = new Point[points.Length - 1];
 
-                for (int i = 1; i < points.Length; i++) {
-                    tempPoints[i - 1] = ToPoint(points[i]);
+                // The line points must be passed to WPF as a IList<Point>,
+                // while the graph uses a Coordinate struct, with same X/Y members as Point,
+                // just to avoid taking a dependency on WPF in the core library.
+                var tempPoints = ConvertCoordinatesToPoints(points, 1);
+                IList<Point> linePoints = tempPoints;
+
+                if (tempPoints.Length >= points.Length) {
+                    // The memory pool returned an array larger than needed, which has 
+                    // garbage values at the end that should not be used for the line.
+                    linePoints = new ListSegment<Point>(tempPoints, 0, points.Length - 1);
                 }
 
                 if (usePolyLine) {
-                    sc.PolyLineTo(tempPoints, true, false);
+                    sc.PolyLineTo(linePoints, true, false);
                 }
                 else {
-                    sc.PolyBezierTo(tempPoints, true, false);
+                    sc.PolyBezierTo(linePoints, true, false);
                 }
 
                 // Draw arrow head with a slope matching the line,
                 // but only if the target node is visible.
-                DrawEdgeArrow(edge, tempPoints, sc);
+                DrawEdgeArrow(edge, linePoints, sc);
+                ArrayPool<Point>.Shared.Return(tempPoints);
             }
 
             defaultSC.Close();
@@ -336,11 +381,24 @@ namespace IRExplorerUI {
             dc.Close();
         }
 
-        private void DrawEdgeArrow(Edge edge, Point[] tempPoints, StreamGeometryContext sc) {
+        private unsafe Point[] ConvertCoordinatesToPoints(Coordinate[] points, int startIndex = 0) {
+            // A hacky way of speeding up the pointless Coordinate -> WPF Point conversion,
+            // since a C++ style "reinterpret_cast" is not possible without copying memory in C#.
+            // Since the layout of the two structs is identical, this uses a memcpy
+            // that is faster then a loop handling each value by itself. An ArrayPool
+            // is also used to reduce pressure on GC.
+            var tempPoints = ArrayPool<Point>.Shared.Rent(points.Length - startIndex);
+            var pointsMemory = points.AsMemory(startIndex);
+            var pointsPtr = pointsMemory.Pin();
+            var span = new Span<Point>((void*) pointsPtr.Pointer, points.Length - startIndex);
+            span.CopyTo(tempPoints);
+            return tempPoints;
+        }
+
+        private void DrawEdgeArrow(Edge edge, IList<Point> tempPoints, StreamGeometryContext sc) {
             // Draw arrow head with a slope matching the line,
             // this uses the last two points to find the angle.
-            Point start;
-            Vector v = FindArrowOrientation(tempPoints, out start);
+            Vector v = FindArrowOrientation(tempPoints, out var start);
 
             sc.BeginFigure(start + v * 0.1, true, true);
             double t = v.X;
@@ -350,8 +408,8 @@ namespace IRExplorerUI {
             sc.LineTo(start + v * -0.075, true, true);
         }
 
-        private Vector FindArrowOrientation(Point[] tempPoints, out Point start) {
-            for(int i = tempPoints.Length - 1; i > 0; i--) { 
+        private Vector FindArrowOrientation(IList<Point> tempPoints, out Point start) {
+            for(int i = tempPoints.Count - 1; i > 0; i--) { 
                 start = tempPoints[i];
                 var v = start - tempPoints[i - 1];
 

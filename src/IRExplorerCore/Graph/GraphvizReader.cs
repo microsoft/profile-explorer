@@ -281,7 +281,7 @@ namespace IRExplorerCore.Graph {
 
             //edge.NodeNameFrom = fromNode;
             //edge.NodeNameTo = toNode;
-            edge.LinePoints = new Tuple<double, double>[pointCont];
+            edge.LinePoints = new Coordinate[pointCont];
 
             for (int i = 0; i < pointCont; i++) {
                 if (!ReadPoint(out double x, out double y)) {
@@ -289,7 +289,7 @@ namespace IRExplorerCore.Graph {
                     return null;
                 }
 
-                edge.LinePoints[i] = new Tuple<double, double>(x, y);
+                edge.LinePoints[i] = new Coordinate(x, y);
             }
 
             ReadOnlyMemory<char> label = default;

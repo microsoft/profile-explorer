@@ -20,7 +20,7 @@ namespace IRExplorerUI.Compilers.LLVM {
         public LLVMCompilerInfoProvider() {
             ir_ = new LLVMCompilerIRInfo();
             styles_ = new UTCSectionStyleProvider();
-            names_ = new UTCNameProvider();
+            names_ = new UTCNameProvider(ir_);
             remarks_ = new LLVMRemarkProvider();
         }
 

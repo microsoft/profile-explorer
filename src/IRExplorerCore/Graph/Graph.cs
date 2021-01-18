@@ -7,10 +7,29 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Graph {
+    public enum LabelPlacementKind {
+        Top,
+        Bottom,
+        Left,
+        Right,
+        Auto
+    }
+
+    // The edges use an array of Coordinate structs, with same X/Y members as Point,
+    // just to avoid taking a dependency on WPF in the core library.
+    public struct Coordinate {
+        public double X;
+        public double Y;
+
+        public Coordinate(double x, double y) {
+            X = x;
+            Y = y;
+        }
+    }
+
     public sealed class Node {
-        //? Commented properties are currently not used.
+        // Note: Commented properties are currently not used.
         public ReadOnlyMemory<char> Name { get; set; }
-        //public ReadOnlyMemory<char> Label { get; set; }
         public string Label { get; set; }
         //public ReadOnlyMemory<char> Style { get; set; }
         //public ReadOnlyMemory<char> Shape { get; set; }
@@ -44,7 +63,7 @@ namespace IRExplorerCore.Graph {
         //public ReadOnlyMemory<char> Label { get; set; }
         public double LabelX { get; set; }
         public double LabelY { get; set; }
-        public Tuple<double, double>[] LinePoints { get; set; }
+        public Coordinate[] LinePoints { get; set; }
         public EdgeKind Style { get; set; }
         public ReadOnlyMemory<char> Color { get; set; }
 

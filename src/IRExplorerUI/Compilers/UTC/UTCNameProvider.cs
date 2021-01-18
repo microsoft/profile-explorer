@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using IRExplorerCore;
+using IRExplorerCore.IR;
 
 namespace IRExplorerUI.UTC {
     public enum FilteredSectionNameKind {
@@ -37,6 +38,12 @@ namespace IRExplorerUI.UTC {
             sectionNameFilters_.Add(
                 new FilteredSectionName("tuples after", FilteredSectionNameKind.RemoveSubstring));
         }
+
+        public UTCNameProvider(ICompilerIRInfo ir) {
+            IR = ir;
+        }
+
+        public ICompilerIRInfo IR { get; set; }
 
         public string GetSectionName(IRTextSection section, bool includeNumber) {
             string sectionName = section.Name;
@@ -95,6 +102,20 @@ namespace IRExplorerUI.UTC {
             }
 
             return sectionName;
+        }
+
+        public string GetBlockName(BlockIR block) {
+            return IR.GetBlockName(block);
+        }
+
+        public string GetBlockLabelName(BlockIR block) {
+            return IR.GetBlockLabelName(block);
+        }
+
+        public string GetBlockAndLabelName(BlockIR block) {
+            var blockName = GetBlockName(block);
+            var label = GetBlockLabelName(block);
+            return !string.IsNullOrEmpty(label) ? $"{blockName}  ({label})" : blockName;
         }
     }
 }
