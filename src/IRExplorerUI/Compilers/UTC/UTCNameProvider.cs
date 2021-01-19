@@ -109,7 +109,14 @@ namespace IRExplorerUI.UTC {
         }
 
         public string GetBlockLabelName(BlockIR block) {
-            return IR.GetBlockLabelName(block);
+            var label = IR.GetBlockLabelName(block);
+
+            if(string.IsNullOrEmpty(label)) {
+                return label;
+            }
+
+            // Trim very long labels.
+            return label.Length >= 10 ? $"${label.Substring(0, 10)}.." : label;
         }
 
         public string GetBlockAndLabelName(BlockIR block) {

@@ -379,12 +379,12 @@ namespace IRExplorerUI {
 
                         if (action.Element is InstructionIR instr) {
                             if (instr.Destinations.Count > 0) {
-                                HandleElement(instr.Destinations[0], highlighter,
+                                HandleSelectedElement(instr.Destinations[0], highlighter,
                                               markExpression: true, markReferences: false);
                             }
                         }
                         else {
-                            HandleElement(action.Element, highlighter,
+                            HandleSelectedElement(action.Element, highlighter,
                                           markExpression: true, markReferences: false);
                         }
                     }
@@ -961,8 +961,10 @@ namespace IRExplorerUI {
 
                 bool markExpression = fromUICommand && Utils.IsControlModifierActive();
                 bool markReferences = fromUICommand && Utils.IsShiftModifierActive();
+                var highlighter = fromUICommand && Utils.IsAltModifierActive()
+                                  ? markedHighlighter_ : selectedHighlighter_;
                 AddSelectedElement(element, raiseEvent);
-                HandleElement(element, selectedHighlighter_, markExpression, markReferences);
+                HandleSelectedElement(element, highlighter, markExpression, markReferences);
 
                 if (fromUICommand) {
                     ignoreNextCaretEvent_ = true;
@@ -1059,10 +1061,10 @@ namespace IRExplorerUI {
                 case Key.U: {
                     if (Utils.IsControlModifierActive()) {
                         if (Utils.IsShiftModifierActive()) {
-                            MarkUsesExecuted(this, null);
+                            ShowUsesExecuted(this, null);
                         }
                         else {
-                            ShowUsesExecuted(this, null);
+                            MarkUsesExecuted(this, null);
                         }
                     }
 
@@ -1097,10 +1099,10 @@ namespace IRExplorerUI {
                 case Key.R: {
                     if (Utils.IsControlModifierActive()) {
                         if (Utils.IsShiftModifierActive()) {
-                            MarkReferencesExecuted(this, null);
+                            ShowReferencesExecuted(this, null);
                         }
                         else {
-                            ShowReferencesExecuted(this, null);
+                            MarkReferencesExecuted(this, null);
                         }
                     }
 
@@ -1589,15 +1591,27 @@ namespace IRExplorerUI {
         }
 
         private List<OperandIR> GetSelectedElementDefinitions() {
+            // If an instruction is selected, get the definitions of all sources.
             var selectedOp = GetSelectedElement();
+            var refFinder = CreateReferenceFinder();
 
-            if (!(selectedOp is OperandIR op)) {
-                return new List<OperandIR>();
+            if (selectedOp is OperandIR op) {
+                return refFinder.FindAllDefinitions(op).
+                    ConvertAll((item) => item as OperandIR);
+            }
+            else if (selectedOp is InstructionIR instr) {
+                var defList = new List<OperandIR>();
+
+                foreach (var sourceOp in instr.Sources) {
+                    var sourceDefOps = refFinder.FindAllDefinitions(sourceOp).
+                        ConvertAll((item) => item as OperandIR);
+                    defList.AddRange((sourceDefOps));
+                }
+
+                return defList;
             }
 
-            var refFinder = CreateReferenceFinder();
-            return refFinder.FindAllDefinitions(op).
-                ConvertAll((item) => item as OperandIR);
+            return new List<OperandIR>();
         }
 
         private void UndoActionExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -1701,7 +1715,7 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private void HandleElement(IRElement element, ElementHighlighter highlighter,
+        private void HandleSelectedElement(IRElement element, ElementHighlighter highlighter,
                                    bool markExpression, bool markReferences) {
             var action = HighlightingEventAction.ReplaceHighlighting;
             bool highlighted = false;
@@ -1742,8 +1756,7 @@ namespace IRExplorerUI {
                     HighlightBlockLabel(sourceOp, highlighter, ssaUserStyle_, action);
                 }
                 else {
-                    HighlightDefinition(sourceOp, highlighter, ssaDefinitionStyle_, action,
-                                           false);
+                    HighlightDefinition(sourceOp, highlighter, ssaDefinitionStyle_, action, false);
                 }
             }
 
@@ -2137,7 +2150,7 @@ namespace IRExplorerUI {
 
                     if (highlightElement) {
                         hoverHighlighter_.Clear();
-                        HandleElement(element, hoverHighlighter_,
+                        HandleSelectedElement(element, hoverHighlighter_,
                                       markExpression: Utils.IsControlModifierActive(),
                                       markReferences: Utils.IsShiftModifierActive());
                         UpdateHighlighting();

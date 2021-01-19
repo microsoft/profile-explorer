@@ -246,45 +246,8 @@
                             ToolTip="Jump to next bookmark (F2)">
                             <Image Source="{StaticResource DownArrowIcon}" />
                         </Button>
-
-
                         <Separator />
 
-                        <ToggleButton
-                            Height="20"
-                            Margin="0,0,0,0"
-                            Padding="0,0,2,0"
-                            IsChecked="{Binding Path=ShowRemarks, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                            ToolTip="Enable/disable showing of remarks">
-                            <StackPanel Orientation="Horizontal">
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Margin="0,1,0,0"
-                                    Source="{StaticResource RemarkIcon}" />
-                                <TextBlock Text="Remarks" />
-                            </StackPanel>
-                        </ToggleButton>
-                        <ToggleButton
-                            Width="20"
-                            Height="20"
-                            Margin="0,0,2,0"
-                            Padding="0,0,0,0"
-                            IsChecked="{Binding Path=ShowPreviousSections, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                            IsEnabled="{Binding Path=ShowRemarks}"
-                            ToolTip="Show remarks from previous sections">
-                            <Image Source="{StaticResource HistoryIcon}" />
-                        </ToggleButton>
-                        <Button
-                            Width="20"
-                            Height="20"
-                            Padding="0,0,0,0"
-                            Click="MenuItem_Click_1"
-                            ToolTip="Show remarks options panel">
-                            <Image Source="{StaticResource ConfigIcon}" />
-                        </Button>
-
-                        <Separator />
                         <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                             <MenuItem
                                 Padding="0,2,2,2"
@@ -362,11 +325,10 @@
                                 <MenuItem Click="CloseAllQueryPanelsMenuItem_Click" Header="Close All Query Panels" />
                             </MenuItem>
                         </Menu>
-
                         <Separator />
 
-
                         <ToggleButton
+                            x:Name="PassOutputButton"
                             Width="20"
                             Height="20"
                             Margin="0,0,2,0"
@@ -383,6 +345,43 @@
                             ToolTip="Search section text (Ctrl+F)">
                             <Image Source="{StaticResource SearchIcon}" />
                         </ToggleButton>
+                        <Separator />
+
+                        <ToggleButton
+                            x:Name="ShowRemarksButton"
+                            Height="20"
+                            Margin="0,0,0,0"
+                            Padding="0,0,2,0"
+                            IsChecked="{Binding Path=ShowRemarks, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                            ToolTip="Enable/disable showing of remarks">
+                            <StackPanel Orientation="Horizontal">
+                                <Image
+                                    Width="16"
+                                    Height="16"
+                                    Margin="0,1,0,0"
+                                    Source="{StaticResource RemarkIcon}" />
+                                <TextBlock Text="Remarks" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <ToggleButton
+                            x:Name="ShowPreviousRemarksButton"
+                            Width="20"
+                            Height="20"
+                            Margin="0,0,2,0"
+                            Padding="0,0,0,0"
+                            IsChecked="{Binding Path=ShowPreviousSections, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                            IsEnabled="{Binding Path=ShowRemarks}"
+                            ToolTip="Show remarks from previous sections">
+                            <Image Source="{StaticResource HistoryIcon}" />
+                        </ToggleButton>
+                        <Button
+                            Width="20"
+                            Height="20"
+                            Padding="0,0,0,0"
+                            Click="MenuItem_Click_1"
+                            ToolTip="Show remarks options panel">
+                            <Image Source="{StaticResource ConfigIcon}" />
+                        </Button>
                     </ToolBar>
                 </ToolBarTray>
                 <local:PanelToolbarTray
@@ -454,7 +453,7 @@
                             Command="local:DocumentCommand.ShowReferences"
                             CommandTarget="{Binding ElementName=TextView}"
                             Header="Show All References"
-                            InputGestureText="Ctrl+R">
+                            InputGestureText="Ctrl+Shift+R">
                             <MenuItem.Icon>
                                 <Image
                                     Width="16"
@@ -589,7 +588,7 @@
                             Command="local:DocumentCommand.MarkUses"
                             CommandTarget="{Binding ElementName=TextView}"
                             Header="Mark Uses"
-                            InputGestureText="Ctrl+Shift+U">
+                            InputGestureText="Ctrl+U">
                             <MenuItem>
                                 <MenuItem.Header>
                                     <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkUses" />
@@ -600,7 +599,7 @@
                             Command="local:DocumentCommand.MarkReferences"
                             CommandTarget="{Binding ElementName=TextView}"
                             Header="Mark All References"
-                            InputGestureText="Ctrl+Shift+R" />
+                            InputGestureText="Ctrl+R" />
                         <Separator />
 
                         <MenuItem

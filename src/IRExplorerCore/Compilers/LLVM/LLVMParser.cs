@@ -68,7 +68,7 @@ namespace IRExplorerCore.LLVM {
             context_ = new LLVMContext();
         }
 
-        public void Initialize(string text, long startLine) {
+        public void Initialize(string text, long start) {
             var inputText = new MarshaledString(text);
             textBuffer_ = llvm.CreateMemoryBufferWithMemoryRange(inputText, (UIntPtr)inputText.Length, new MarshaledString(""), 1);
             //functionStartLine_ = (int)startLine;

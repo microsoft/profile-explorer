@@ -198,8 +198,8 @@ namespace IRExplorerUI {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private async void HandleRemarkSettingsChange() {
-            if (!remarkPanelVisible_ && !remarkOptionsPanelVisible_) {
+        private async Task HandleRemarkSettingsChange() {
+            if (!remarkOptionsPanelVisible_) {
                 await HandleNewRemarkSettings(remarkSettings_, false);
             }
         }
@@ -239,7 +239,22 @@ namespace IRExplorerUI {
                 if (value != remarkSettings_.ShowRemarks) {
                     remarkSettings_.ShowRemarks = value;
                     NotifyPropertyChanged(nameof(ShowRemarks));
-                    HandleRemarkSettingsChange();
+
+                    // Properties don't support async operation,
+                    // so run the update later on the UI thread
+                    // and disable the button in the meantime.
+                    ShowRemarksButton.IsEnabled = false;
+
+                    Dispatcher.InvokeAsync(async () => {
+                        if (value) {
+                            await ReloadRemarks();
+                        }
+                        else {
+                            await RemoveRemarks();
+                        }
+
+                        ShowRemarksButton.IsEnabled = true;
+                    });
                 }
             }
         }
@@ -250,6 +265,14 @@ namespace IRExplorerUI {
                 if (value != remarkSettings_.ShowPreviousSections) {
                     remarkSettings_.ShowPreviousSections = value;
                     NotifyPropertyChanged(nameof(ShowPreviousSections));
+
+                    // See comments in ShowRemarks.
+                    ShowPreviousRemarksButton.IsEnabled = false;
+
+                    Dispatcher.InvokeAsync(async () => {
+                        await ApplyRemarkSettings(remarkSettings_);
+                        ShowPreviousRemarksButton.IsEnabled = true;
+                    });
                 }
             }
         }
@@ -759,11 +782,20 @@ namespace IRExplorerUI {
             set {
                 if(pasOutputVisible_ != value) {
                     if(!pasOutputVisible_) {
-                        PassOutput.SwitchSection(Section, TextView);
+                        // First time showing the output for this section, load text.
+                        // See comments in ShowRemarks.
+                        PassOutputButton.IsEnabled = false;
+
+                        Dispatcher.InvokeAsync(async () => {
+                            await PassOutput.SwitchSection(Section, TextView);
+                            PassOutputButton.IsEnabled = true;
+                        });
                     }
 
                     pasOutputVisible_ = value;
                     NotifyPropertyChanged(nameof(PassOutputVisible));
+
+                    // Notify session so that in diff mode the action is mirrored.
                     PassOutputVisibilityChanged?.Invoke(this, value);
                 }
             }

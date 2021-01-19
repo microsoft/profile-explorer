@@ -87,7 +87,7 @@ namespace IRExplorerCmd {
             var text = File.ReadAllText(path);
 
             var parser = new LLVMParser(null, null);
-            parser.Initialize(text);
+            parser.Initialize(text, 0);
             var list = parser.Parse();
 
 #if false
