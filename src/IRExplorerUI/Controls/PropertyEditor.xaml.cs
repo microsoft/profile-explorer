@@ -21,5 +21,11 @@ namespace IRExplorerUI.Controls {
         public PropertyEditor() {
             InitializeComponent();
         }
+
+        private void ValueList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (ValueList.SelectedItem != null) {
+                Editor.SelectedObject = ValueList.SelectedItem;
+            }
+        }
     }
 }

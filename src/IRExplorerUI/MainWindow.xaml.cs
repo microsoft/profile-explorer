@@ -39,6 +39,7 @@ using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
 using System.Windows.Media.Imaging;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Utilities;
 using AvalonDock.Layout.Serialization;
@@ -724,7 +725,7 @@ namespace IRExplorerUI {
             var prov = (UTC.UTCSectionStyleProvider)compilerInfo_.SectionStyleProvider;
 
             if (prov.LoadSettings()) {
-                p.Editor.SelectedObject = prov.SectionNameMarkers[0];
+                p.ValueList.ItemsSource = new CollectionView(prov.SectionNameMarkers);
                 w.Content = p;
                 w.ShowDialog();
 

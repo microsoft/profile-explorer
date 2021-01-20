@@ -15,7 +15,10 @@
             <ColumnDefinition Width="2" />
             <ColumnDefinition Width="2*" />
         </Grid.ColumnDefinitions>
-        <ListView Grid.Column="0" />
+        <DockPanel Grid.Column="0" LastChildFill="True">
+
+            <ListView x:Name="ValueList" SelectionChanged="ValueList_OnSelectionChanged"/>
+        </DockPanel>
         <GridSplitter Grid.Column="1" />
         <xctk:PropertyGrid
             x:Name="Editor"

@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Windows.Media;
 using IRExplorerCore;
 
@@ -22,18 +23,28 @@ namespace IRExplorerUI {
             TextColor = textColor;
         }
 
-        [DisplayName("Searched Text")]
+        [DisplayName("Searched Text"), Display(Order=1)]
         public string SearchedText { get; set; }
-        [DisplayName("Searched Kind")]
-        [Editor(typeof(EnumCheckComboBoxEditor), typeof(EnumCheckComboBoxEditor))]
+        [DisplayName("Searched Kind"), Display(Order = 2)]
         public TextSearchKind SearchKind { get; set; }
-        [DisplayName("Text Color")]
+        [DisplayName("Text Color"), Display(Order = 3)]
         public Color TextColor { get; set; }
-        [DisplayName("Separator Color")]
+        [DisplayName("Separator Color"), Display(Order = 4)]
         public Color SeparatorColor { get; set; }
+        [DisplayName("Separator weight before"), Display(Order = 5)]
         public int BeforeSeparatorWeight { get; set; }
+        [DisplayName("Separator weight after"), Display(Order = 6)]
         public int AfterSeparatorWeight { get; set; }
+        [DisplayName("Indentation level"), Display(Order = 7)]
         public int IndentationLevel { get; set; }
+
+        public override string ToString() {
+            if (!string.IsNullOrEmpty(SearchedText)) {
+                return SearchedText;
+            }
+
+            return "<untitled>";
+        }
     }
 
     public interface ISectionStyleProvider {

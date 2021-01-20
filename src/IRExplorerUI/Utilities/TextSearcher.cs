@@ -11,23 +11,20 @@ using Xceed.Wpf.Toolkit;
 
 namespace IRExplorerUI {
     [Flags]
+    [TypeConverter(typeof(EnumNameConverter))]
     public enum TextSearchKind {
-        [Browsable(false)]
-        [DefaultValue(true)]
-        [Description("Default (case sensitive substring)")]
+        [Description("Case sensitive")]
         Default = 1 << 0, // Case sensitive
         [Description("Case insensitive")]
         CaseInsensitive = 1 << 1,
         [Description("Regex")]
         Regex = 1 << 2,
-        [Description("Whole word")]
-        WholeWord = 1 << 3
-    }
-
-    public class PropertyGridEditorCheckComboBox : CheckComboBox {
-        static PropertyGridEditorCheckComboBox() {
-
-        }
+        [Browsable(false)]
+        WholeWord = 1 << 3,
+        [Description("Case sensitive, whole word")]
+        CaseSensitiveWholeWord = Default | WholeWord,
+        [Description("Case insensitive, whole word")]
+        CaseInsensitiveWholeWord = CaseInsensitive | WholeWord
     }
 
     public struct TextSearchResult {
