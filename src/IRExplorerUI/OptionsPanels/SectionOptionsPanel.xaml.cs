@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Input;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.OptionsPanels {
     public partial class SectionOptionsPanel : OptionsPanelBase {
@@ -33,8 +34,18 @@ namespace IRExplorerUI.OptionsPanels {
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e) {
-            var settingsPath = App.GetSectionsDefinitionFilePath("utc");
-            App.LaunchSettingsFileEditor(settingsPath);
+            //var settingsPath = App.GetSectionsDefinitionFilePath("utc");
+            //App.LaunchSettingsFileEditor(settingsPath);
+
+            var prov = compilerInfo_.SectionStyleProvider;
+
+            if (prov.LoadSettings()) {
+                var p = new PropertyEditorPopup(new Point(0, 0), 400, 300, this);
+                p.PanelTitle = "Section name styles";
+                p.Editor.Initialize(prov.SectionNameMarkers);
+                p.IsOpen = true;
+            }
+
         }
 
         private void ReloadButton_Click(object sender, RoutedEventArgs e) {

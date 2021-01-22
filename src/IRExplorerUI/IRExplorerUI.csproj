@@ -102,6 +102,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Compile Update="Controls\PropertyEditorPopup.xaml.cs">
+		  <SubType>Code</SubType>
+		</Compile>
 		<Compile Update="OptionsPanels\ExpressionGraphOptionsPanel.xaml.cs">
 			<SubType>Code</SubType>
 		</Compile>
@@ -164,6 +167,10 @@
 	<ItemGroup>
 		<Page Update="Controls\IconSelector.xaml">
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		</Page>
+		<Page Update="Controls\PropertyEditorPopup.xaml">
+		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
+		  <SubType>Designer</SubType>
 		</Page>
 		<Page Update="IconsWhite.xaml">
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>

@@ -14,7 +14,10 @@ namespace IRExplorerUI.UTC {
             LoadSettings();
         }
 
-        public List<MarkedSectionName> SectionNameMarkers => sectionNameMarkers_;
+        public List<MarkedSectionName> SectionNameMarkers {
+            get => sectionNameMarkers_;
+            set => sectionNameMarkers_ = value;
+        }
 
         public bool IsMarkedSection(IRTextSection section, out MarkedSectionName result) {
             foreach (var nameMarker in sectionNameMarkers_) {

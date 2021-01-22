@@ -16,8 +16,38 @@
             <ColumnDefinition Width="2*" />
         </Grid.ColumnDefinitions>
         <DockPanel Grid.Column="0" LastChildFill="True">
+            <ToolBarTray
+                Height="28"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Background="{DynamicResource BackgroundColor5Brush}"
+                DockPanel.Dock="Top"
+                IsLocked="True">
+                <ToolBar
+                    Loaded="ToolBar_Loaded"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource BackgroundColor5Brush}">
+                    <Button Click="AddButton_Click">
+                        <Image Source="{DynamicResource AddBookmarkIcon}" />
+                    </Button>
+                    <Button Click="RemoveButton_Click">
+                        <Image Source="{DynamicResource RemoveIcon}" />
+                    </Button>
+                    <Separator />
 
-            <ListView x:Name="ValueList" SelectionChanged="ValueList_OnSelectionChanged"/>
+                    <Button
+                        Margin="4,0,0,0"
+                        Click="MoveUpButton_Click"
+                        ToolTip="Move value up in the list">
+                        <Image Source="{DynamicResource BoldUpArrowIcon}" />
+                    </Button>
+                    <Button Click="MoveDownButton_Click" ToolTip="Move value down in the list">
+                        <Image Source="{DynamicResource BoldDownArrowIcon}" />
+                    </Button>
+                </ToolBar>
+            </ToolBarTray>
+            <ListView x:Name="ValueList" SelectionChanged="ValueList_OnSelectionChanged" />
         </DockPanel>
         <GridSplitter Grid.Column="1" />
         <xctk:PropertyGrid

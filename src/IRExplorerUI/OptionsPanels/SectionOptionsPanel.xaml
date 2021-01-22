@@ -25,7 +25,7 @@
                     Background="{DynamicResource BackgroundColor5Brush}"
                     BorderBrush="{x:Null}"
                     Click="EditButton_Click"
-                    ToolTip="Edit section style definition file (JSON format)">
+                    ToolTip="Edit section style definitions">
                     <Image Source="{DynamicResource EditIcon}" />
                 </Button>
 
