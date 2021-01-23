@@ -19,36 +19,26 @@ namespace IRExplorerUI.Controls {
     public partial class PropertyEditor : UserControl {
         private List<object> values_;
         private ObservableCollectionRefresh<object> valuesView_;
+        private PropertyValueManager valueManager_;
 
         public PropertyEditor() {
             InitializeComponent();
             Editor.PropertyValueChanged += Editor_PropertyValueChanged;
         }
 
-        public class ValueArgs : EventArgs {
-            public ValueArgs() { }
-
-            public ValueArgs(object value) {
-                Value = value;
+        public PropertyValueManager ValueManager {
+            get => valueManager_;
+            set {
+                valueManager_ = value;
+                Values = valueManager_.LoadValues();
             }
-
-            public object Value { get; set; }
         }
-
-        public event EventHandler<ValueArgs> CreateValue;
-        public event EventHandler<ValueArgs> ValueRemoved;
-        public event EventHandler PropertyChanged;
-
-        public void Initialize<T>(List<T> values) where T : class {
-            Values = values.Cast<object>().ToList();
-        }
-
-        public bool HasChanges { get; set; }
 
         public List<object> Values {
             get => values_;
             set {
                 if (value != values_) {
+                    //? TODO: Use GetValueName
                     values_ = value;
                     valuesView_ = new ObservableCollectionRefresh<object>(values_);
                     ValueList.ItemsSource = valuesView_;
@@ -65,32 +55,30 @@ namespace IRExplorerUI.Controls {
         }
 
         private void AddNewValue() {
-            var args = new ValueArgs();
-            CreateValue?.Invoke(this, args);
-
-            if (args.Value != null) {
-                InsertValue(values_.Count, args.Value);
-            }
+            var value = valueManager_.CreateNewValue();
+            InsertValue(values_.Count, value);
         }
 
         private void InsertValue(int index, object value) {
             values_.Insert(index, value);
             valuesView_.Insert(index, value);
             ValueList.SelectedItem = value;
-            HasChanges = true;
+            valueManager_.HasChanges = true;
         }
 
         private int RemoveValue(object value, bool triggerEvent = true) {
             int index = values_.IndexOf(value);
 
             if (index != -1) {
+                if (triggerEvent) {
+                    if (!valueManager_.OnValueRemoved(value)) {
+                        return -1;
+                    }
+                }
+
                 values_.RemoveAt(index);
                 valuesView_.RemoveAt(index);
-                HasChanges = true;
-
-                if (triggerEvent) {
-                    ValueRemoved?.Invoke(this, new ValueArgs(value));
-                }
+                valueManager_.HasChanges = true;
             }
 
             return index;
@@ -142,8 +130,8 @@ namespace IRExplorerUI.Controls {
 
         private void Editor_PropertyValueChanged(object sender, Xceed.Wpf.Toolkit.PropertyGrid.PropertyValueChangedEventArgs e) {
             valuesView_.Refresh();
-            HasChanges = true;
-            PropertyChanged?.Invoke(this, null);
+            valueManager_.HasChanges = true;
+            valueManager_.OnValueChanged(ValueList.SelectedItem);
         }
 
     }

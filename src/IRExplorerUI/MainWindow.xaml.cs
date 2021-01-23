@@ -725,7 +725,6 @@ namespace IRExplorerUI {
             var prov = (UTC.UTCSectionStyleProvider)compilerInfo_.SectionStyleProvider;
 
             if (prov.LoadSettings()) {
-                p.Initialize(prov.SectionNameMarkers);
                 w.Content = p;
                 w.ShowDialog();
 
