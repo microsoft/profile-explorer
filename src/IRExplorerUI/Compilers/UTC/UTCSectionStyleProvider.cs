@@ -50,7 +50,9 @@ namespace IRExplorerUI.UTC {
         }
 
         public bool SaveSettings() {
-            return false;
+            var serializer = new SectionStyleProviderSerializer();
+            var settingsPath = App.GetSectionsDefinitionFilePath("utc");
+            return serializer.Save(sectionNameMarkers_, settingsPath);
         }
     }
 }

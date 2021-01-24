@@ -568,6 +568,7 @@ namespace IRExplorerUI {
                 sections.Add(sectionEx);
 
                 if (CompilerInfo.SectionStyleProvider.IsMarkedSection(section, out var markedName)) {
+                    // Section name has a custom style, based on settings apply it.
                     if (sectionSettings_.ColorizeSectionNames) {
                         sectionEx.IsMarked = true;
                         sectionEx.TextColor = ColorBrushes.GetBrush(markedName.TextColor);
@@ -579,8 +580,9 @@ namespace IRExplorerUI {
                     if (sectionSettings_.ShowSectionSeparators) {
                         ApplySectionBorder(sectionEx, sectionIndex, markedName, sections);
                     }
-                    else
+                    else {
                         sectionEx.BorderThickness = new Thickness();
+                    }
 
                     if (sectionSettings_.UseNameIndentation &&
                         markedName.IndentationLevel > 0) {
@@ -1143,9 +1145,9 @@ namespace IRExplorerUI {
             optionsPanelVisible_ = true;
         }
 
-        private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
+        private void OptionsPanel_SettingsChanged(object sender, bool force) {
             var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
-            HandleNewDiffSettings(newSettings, false);
+            HandleNewDiffSettings(newSettings, false, force);
             optionsPanelWindow_.Settings = null;
             optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
         }
@@ -1179,13 +1181,13 @@ namespace IRExplorerUI {
             optionsPanelVisible_ = false;
         }
 
-        private void HandleNewDiffSettings(SectionSettings newSettings, bool commit) {
+        private void HandleNewDiffSettings(SectionSettings newSettings, bool commit, bool force = false) {
             if (commit) {
                 App.Settings.SectionSettings = newSettings;
                 App.SaveApplicationSettings();
             }
 
-            if (newSettings.Equals(sectionSettings_)) {
+            if (newSettings.Equals(sectionSettings_) && !force) {
                 return;
             }
 
@@ -1272,6 +1274,10 @@ namespace IRExplorerUI {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
             //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
             FunctionFilterGrid.Width = Math.Max(1, width - 60);
+        }
+
+        public override void OnThemeChanged() {
+            HandleNewDiffSettings(App.Settings.SectionSettings, false, true);
         }
     }
 }

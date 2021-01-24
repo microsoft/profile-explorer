@@ -46,9 +46,9 @@ namespace IRExplorerUI.OptionsPanels {
             NotifySettingsChanged();
         }
 
-        private void NotifySettingsChanged() {
+        private void NotifySettingsChanged(bool force = false) {
             DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-                RaiseSettingsChanged(null);
+                RaiseSettingsChanged(force);
             });
         }
 

@@ -351,7 +351,6 @@ namespace IRExplorerUI {
                 }
 
                 var linePos = visualLine.GetVisualPosition(0, VisualYPosition.LineBottom);
-                var t = Mouse.GetPosition(this);
                 double x = Mouse.GetPosition(this).X + ActionPanelOffset;
                 double y = linePos.Y + DocumentToolbar.ActualHeight -
                            1 - TextView.TextArea.TextView.ScrollOffset.Y;
@@ -364,7 +363,7 @@ namespace IRExplorerUI {
                 var animation2 = new DoubleAnimation(ActionPanelInitialOpacity,
                                                      TimeSpan.FromSeconds(fromClickEvent ? 0 : AnimationDuration));
                 ActionPanel.BeginAnimation(OpacityProperty, animation2,
-                                            HandoffBehavior.SnapshotAndReplace);
+                                           HandoffBehavior.SnapshotAndReplace);
 
                 actionPanelFromClick_ = fromClickEvent;
                 actionPanelVisible_ = true;
@@ -506,9 +505,9 @@ namespace IRExplorerUI {
             }
         }
 
-        private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
+        private void OptionsPanel_SettingsChanged(object sender, bool force) {
             if (optionsPanelVisible_) {
-                LoadNewSettings(optionsPanel_.SyntaxFileChanged, false);
+                LoadNewSettings(force, false);
             }
         }
 
@@ -532,7 +531,7 @@ namespace IRExplorerUI {
         }
 
         private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
-            CloseOptionsPanel(optionsPanel_.SyntaxFileChanged);
+            CloseOptionsPanel(false);
         }
 
         public void ReloadSettings() {
@@ -1239,7 +1238,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void RemarkOptionsPanel_SettingsChanged(object sender, EventArgs e) {
+        private async void RemarkOptionsPanel_SettingsChanged(object sender, bool force) {
             if (remarkOptionsPanelVisible_) {
                 var newSettings = remarkOptionsPanelWindow_.GetSettingsSnapshot<RemarkSettings>();
 

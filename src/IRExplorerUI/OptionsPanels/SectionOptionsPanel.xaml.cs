@@ -13,17 +13,32 @@ namespace IRExplorerUI.OptionsPanels {
             compilerInfo_ = compilerInfo;
         }
 
-        public override List<object> LoadValues() {
-            var prov = compilerInfo_.SectionStyleProvider;
+        public event EventHandler ValueChanged;
 
-            if (prov.LoadSettings()) {
-                return prov.SectionNameMarkers.ToObjectList();
+        public override List<object> LoadValues() {
+            var provider = compilerInfo_.SectionStyleProvider;
+
+            if (provider.LoadSettings()) {
+                return provider.SectionNameMarkers.ToObjectList();
             }
 
             return null;
         }
 
+        public override void UpdateValues(List<object> values) {
+            if (HasChanges) {
+                var provider = compilerInfo_.SectionStyleProvider;
+                provider.SectionNameMarkers = values.ConvertAll(item => (MarkedSectionName)item);
+            }
+        }
+
         public override bool SaveValues(List<object> values) {
+            if (HasChanges) {
+                var provider = compilerInfo_.SectionStyleProvider;
+                provider.SectionNameMarkers = values.ConvertAll(item => (MarkedSectionName)item);
+                return provider.SaveSettings();
+            }
+
             return true;
         }
 
@@ -33,6 +48,10 @@ namespace IRExplorerUI.OptionsPanels {
 
         public override List<object> ResetValues() {
             return null;
+        }
+
+        public override void OnValueChanged(object value) {
+            ValueChanged?.Invoke(this, null);
         }
     }
 
@@ -59,25 +78,46 @@ namespace IRExplorerUI.OptionsPanels {
             NotifySettingsChanged();
         }
 
-        private void NotifySettingsChanged() {
+        private void NotifySettingsChanged(bool force = false) {
             DelayedAction.StartNew(TimeSpan.FromMilliseconds(100), () => {
-                RaiseSettingsChanged(null);
+                RaiseSettingsChanged(force);
             });
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e) {
             //var settingsPath = App.GetSectionsDefinitionFilePath("utc");
             //App.LaunchSettingsFileEditor(settingsPath);
-
-            var prov = compilerInfo_.SectionStyleProvider;
             
-            if (prov.LoadSettings()) {
-                var valueManager = new SectionNameValueManager(compilerInfo_);
-                var p = new PropertyEditorPopup(valueManager, new Point(0, 0), 400, 300, this);
-                p.PanelTitle = "Section name styles";
-                p.IsOpen = true;
+            // Keep the settings popup open while showing the editor over it.
+            if (Parent is OptionsPanelHostWindow popup) {
+                popup.StaysOpen = true;
             }
 
+            var valueManager = new SectionNameValueManager(compilerInfo_);
+            valueManager.ValueChanged += (sender, e) => {
+                NotifySettingsChanged(true);
+            };
+
+            // Show the value editor.
+            var position = ParentPosition;
+            position.Offset(24, 24);
+            var editorPopup = new PropertyEditorPopup(valueManager, position, 600, 400, null);
+            
+            editorPopup.PopupClosed += (sender, e) => {
+                if (Parent is OptionsPanelHostWindow popup) {
+                    popup.StaysOpen = false;
+                }
+
+                editorPopup.IsOpen = false;
+
+                if (valueManager.HasChanges) {
+                    NotifySettingsChanged(true);
+                }
+            };
+
+            editorPopup.PanelTitle = "Section name styles";
+            editorPopup.StaysOpen = true;
+            editorPopup.IsOpen = true;
         }
 
         private void ReloadButton_Click(object sender, RoutedEventArgs e) {

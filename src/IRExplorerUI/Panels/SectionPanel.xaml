@@ -521,8 +521,6 @@
                                     Source="{DynamicResource OpenExternalIcon}" />
                             </MenuItem.Icon>
                         </MenuItem>
-
-
                         <MenuItem
                             Command="local:Command.OpenLeft"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"

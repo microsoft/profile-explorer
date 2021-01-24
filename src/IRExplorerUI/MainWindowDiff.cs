@@ -647,7 +647,7 @@ namespace IRExplorerUI {
             await HandleNewDiffSettings(newSettings, true);
         }
 
-        private async void DiffOptionsPanel_SettingsChanged(object sender, EventArgs e) {
+        private async void DiffOptionsPanel_SettingsChanged(object sender, bool force) {
             var newSettings = (DiffSettings)diffOptionsPanelHost_.Settings;
 
             if (newSettings != null) {

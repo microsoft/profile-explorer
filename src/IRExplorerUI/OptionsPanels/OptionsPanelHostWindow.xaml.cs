@@ -59,12 +59,12 @@ namespace IRExplorerUI.OptionsPanels {
 
         }
 
-        private void SettingsPanel_SettingsChanged(object sender, EventArgs e) {
+        private void SettingsPanel_SettingsChanged(object sender, bool force) {
             if (Settings == null) {
                 return; // Ignore event triggered during GetSettingsSnapshot.
             }
 
-            SettingsChanged?.Invoke(this, e);
+            SettingsChanged?.Invoke(this, force);
         }
 
         private void SettingsPanel_PanelReset(object sender, EventArgs e) {
@@ -101,7 +101,7 @@ namespace IRExplorerUI.OptionsPanels {
 
         public event EventHandler PanelClosed;
         public event EventHandler PanelReset;
-        public event EventHandler SettingsChanged;
+        public event EventHandler<bool> SettingsChanged;
         public event EventHandler<bool> StayOpenChanged;
 
         public void PanelClosing() { }

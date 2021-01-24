@@ -20,20 +20,32 @@ namespace IRExplorerUI {
             TextColor = textColor;
         }
 
+        [Category("Text")]
         [DisplayName("Searched Text"), Display(Order=1, Description = "TODO ADD DESCRIPTION")]
         public string SearchedText { get; set; }
-        [DisplayName("Searched Kind"), Display(Order = 2, Description = "TODO ADD DESCRIPTION")]
+        [Category("Text")]
+        [DisplayName("Search Kind"), Display(Order = 2, Description = "TODO ADD DESCRIPTION")]
         public TextSearchKind SearchKind { get; set; }
+        [Category("Style")]
         [DisplayName("Text Color"), Display(Order = 3)]
         public Color TextColor { get; set; }
+        [Category("Style")]
+
         [DisplayName("Separator Color"), Display(Order = 4)]
         public Color SeparatorColor { get; set; }
         [DisplayName("Separator weight before"), Display(Order = 5)]
+        [Category("Style")]
+
         public int BeforeSeparatorWeight { get; set; }
         [DisplayName("Separator weight after"), Display(Order = 6)]
+        [Category("Style")]
+
         public int AfterSeparatorWeight { get; set; }
         [DisplayName("Indentation level"), Display(Order = 7)]
+        [Category("Style")]
         public int IndentationLevel { get; set; }
+        [Category("Style")]
+
 
         public override string ToString() {
             if (!string.IsNullOrEmpty(SearchedText)) {

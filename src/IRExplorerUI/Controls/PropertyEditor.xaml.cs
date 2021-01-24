@@ -15,8 +15,13 @@ using System.Windows.Shapes;
 
 namespace IRExplorerUI.Controls {
     //! Option to get background color for listview item
-
+    //? export, import, clear buttons
     public partial class PropertyEditor : UserControl {
+        public class PropertyValueEx {
+            public object Value { get; set; }
+            
+        }
+
         private List<object> values_;
         private ObservableCollectionRefresh<object> valuesView_;
         private PropertyValueManager valueManager_;
@@ -131,8 +136,8 @@ namespace IRExplorerUI.Controls {
         private void Editor_PropertyValueChanged(object sender, Xceed.Wpf.Toolkit.PropertyGrid.PropertyValueChangedEventArgs e) {
             valuesView_.Refresh();
             valueManager_.HasChanges = true;
+            valueManager_.UpdateValues(values_);
             valueManager_.OnValueChanged(ValueList.SelectedItem);
         }
-
     }
 }

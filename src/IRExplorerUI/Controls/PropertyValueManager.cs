@@ -8,6 +8,7 @@ namespace IRExplorerUI.Controls {
         public bool HasChanges { get; set; }
         public abstract List<object> LoadValues();
         public abstract bool SaveValues(List<object> values);
+        public abstract void UpdateValues(List<object> values);
         public abstract object CreateNewValue();
         public abstract List<object> ResetValues();
 

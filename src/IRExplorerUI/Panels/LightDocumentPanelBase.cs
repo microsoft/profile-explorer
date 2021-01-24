@@ -70,7 +70,7 @@ namespace IRExplorerUI {
             optionsPanelVisible_ = true;
         }
 
-        private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
+        private void OptionsPanel_SettingsChanged(object sender, bool force) {
             if (optionsPanelVisible_) {
                 LoadNewSettings(false);
             }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -20,6 +21,8 @@ namespace IRExplorerUI.Controls {
             Thumb.DragDelta += (sender, e) => {
                 HorizontalOffset += e.HorizontalChange;
                 VerticalOffset += e.VerticalChange;
+
+                Debug.WriteLine($"x = {HorizontalOffset}, y = {VerticalOffset}");
             };
         }
 

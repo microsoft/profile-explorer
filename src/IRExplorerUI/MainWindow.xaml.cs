@@ -719,31 +719,19 @@ namespace IRExplorerUI {
 
         private void MenuItem_Click(object sender, RoutedEventArgs e) {
             //throw new InvalidOperationException("Crash Handler test assert");
-
-            var w = new Window();
-            var p = new PropertyEditor();
-            var prov = (UTC.UTCSectionStyleProvider)compilerInfo_.SectionStyleProvider;
-
-            if (prov.LoadSettings()) {
-                w.Content = p;
-                w.ShowDialog();
-
-                w.Hide();
+            
+            if (App.Theme.Kind == ApplicationThemeKind.Light) {
+                SwitchTheme(ApplicationTheme.Dark);
             }
-
-            //if (App.Theme.Kind == ApplicationThemeKind.Light) {
-            //    SwitchTheme(ApplicationTheme.Dark);
-            //}
-            //else {
-            //    SwitchTheme(ApplicationTheme.Light);
-            //}
+            else {
+                SwitchTheme(ApplicationTheme.Light);
+            }
         }
 
         private void SwitchTheme(ApplicationTheme theme) {
             //? TODO: 
             //? - use themes in main window combobox
             //? - send OnThemeChanged to all docs
-            //? - fix icons staticResource
 
             App.SwitchTheme(theme);
             DockManager.Theme = theme.GetDockPanelTheme();

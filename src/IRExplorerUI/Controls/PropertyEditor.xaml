@@ -24,14 +24,14 @@
                 DockPanel.Dock="Top"
                 IsLocked="True">
                 <ToolBar
-                    Loaded="ToolBar_Loaded"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
-                    Background="{DynamicResource BackgroundColor5Brush}">
-                    <Button Click="AddButton_Click">
+                    Background="{DynamicResource BackgroundColor5Brush}"
+                    Loaded="ToolBar_Loaded">
+                    <Button Click="AddButton_Click" ToolTip="Add a new value">
                         <Image Source="{DynamicResource AddBookmarkIcon}" />
                     </Button>
-                    <Button Click="RemoveButton_Click">
+                    <Button Click="RemoveButton_Click" ToolTip="Remove selected value">
                         <Image Source="{DynamicResource RemoveIcon}" />
                     </Button>
                     <Separator />
@@ -47,12 +47,35 @@
                     </Button>
                 </ToolBar>
             </ToolBarTray>
-            <ListView x:Name="ValueList" SelectionChanged="ValueList_OnSelectionChanged" />
+            <ListView
+                x:Name="ValueList"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Background="{DynamicResource DataGridBackgroundBrush}"
+                BorderBrush="{x:Null}"
+                BorderThickness="0,0,0,0"
+                SelectionChanged="ValueList_OnSelectionChanged">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource DataGridBackgroundBrush}" />
+                        <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
+
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                <Setter Property="Foreground" Value="{Binding Path=TextColor}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
         </DockPanel>
         <GridSplitter Grid.Column="1" />
         <xctk:PropertyGrid
             x:Name="Editor"
             Grid.Column="2"
+            Background="{DynamicResource DataGridBackgroundBrush}"
+            BorderBrush="{x:Null}"
+            BorderThickness="0,0,0,0"
             ShowDescriptionByTooltip="True"
             ShowSearchBox="False"
             ShowSortOptions="False"

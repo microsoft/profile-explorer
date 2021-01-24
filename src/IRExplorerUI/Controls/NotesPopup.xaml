@@ -14,85 +14,87 @@
     SnapsToDevicePixels="True"
     UseLayoutRounding="True"
     mc:Ignorable="d">
-    <Border
-        Margin="0,0,6,6"
-        Background="{DynamicResource BackgroundColor5Brush}"
-        BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
-        BorderThickness="1,1,1,1">
-        <Border.Effect>
-            <DropShadowEffect
-                BlurRadius="5"
-                Direction="315"
-                RenderingBias="Performance"
-                ShadowDepth="2"
-                Color="#FF929292" />
-        </Border.Effect>
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="20" />
-                <ColumnDefinition Width="20" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="20" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+    <ContentControl Style="{DynamicResource FlatControlStyle}">
+        <Border
+            Margin="0,0,6,6"
+            Background="{DynamicResource WindowBackgroundBrush}"
+            BorderBrush="{DynamicResource ButtonBorderBrush}"
+            BorderThickness="1,1,1,1">
+            <Border.Effect>
+                <DropShadowEffect
+                    BlurRadius="5"
+                    Direction="315"
+                    RenderingBias="Performance"
+                    ShadowDepth="2"
+                    Color="#FF929292" />
+            </Border.Effect>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="20" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-            <Grid
-                Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
-                Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
-                <TextBlock
-                    Margin="4,0,0,0"
-                    VerticalAlignment="Center"
-                    FontWeight="DemiBold"
-                    Text="{Binding PanelTitle}" />
-            </Grid>
-            <ToggleButton
-                x:Name="FindButton"
-                Grid.Row="0"
-                Grid.Column="1"
-                Background="{x:Null}"
-                BorderBrush="{x:Null}"
-                IsChecked="{Binding SearchPanelVisible, Mode=TwoWay, ElementName=TextView}">
-                <Image
-                    Width="14"
-                    Height="14"
-                    Source="{DynamicResource SearchIcon}" />
-            </ToggleButton>
-            <Button
-                x:Name="CloseButton"
-                Grid.Row="0"
-                Grid.Column="2"
-                Background="{x:Null}"
-                BorderBrush="{x:Null}"
-                Click="CloseButton_Click"
-                ToolTip="Close query panel">
-                <Image
+                <Grid
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    Background="{DynamicResource AccentBackgroundBrush2}">
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="DemiBold"
+                        Text="{Binding PanelTitle}" />
+                </Grid>
+                <ToggleButton
+                    x:Name="FindButton"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Background="{x:Null}"
+                    BorderBrush="{x:Null}"
+                    IsChecked="{Binding SearchPanelVisible, Mode=TwoWay, ElementName=TextView}">
+                    <Image
+                        Width="14"
+                        Height="14"
+                        Source="{DynamicResource SearchIcon}" />
+                </ToggleButton>
+                <Button
+                    x:Name="CloseButton"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Background="{x:Null}"
+                    BorderBrush="{x:Null}"
+                    Click="CloseButton_Click"
+                    ToolTip="Close query panel">
+                    <Image
+                        Width="16"
+                        Height="16"
+                        Source="{DynamicResource CloseIcon}" />
+                </Button>
+
+                <doc:SearcheableIRDocument
+                    x:Name="TextView"
+                    Grid.Row="1"
+                    Grid.ColumnSpan="3"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    DockPanel.Dock="Bottom" />
+                <controls:ResizeGrip
+                    x:Name="PanelResizeGrip"
+                    Grid.Row="1"
+                    Grid.Column="2"
                     Width="16"
                     Height="16"
-                    Source="{DynamicResource CloseIcon}" />
-            </Button>
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Panel.ZIndex="100" />
 
-            <doc:SearcheableIRDocument
-                x:Name="TextView"
-                Grid.Row="1"
-                Grid.ColumnSpan="3"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                DockPanel.Dock="Bottom" />
-            <controls:ResizeGrip
-                x:Name="PanelResizeGrip"
-                Grid.Row="1"
-                Grid.Column="2"
-                Width="16"
-                Height="16"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Bottom"
-                Panel.ZIndex="100" />
-
-        </Grid>
-    </Border>
+            </Grid>
+        </Border>
+    </ContentControl>
 </controls:DraggablePopup>

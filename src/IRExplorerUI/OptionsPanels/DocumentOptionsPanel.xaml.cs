@@ -63,22 +63,13 @@ namespace IRExplorerUI.OptionsPanels {
             ReloadSyntaxHighlightingList();
         }
 
-        public bool SyntaxFileChanged { get; set; }
-        
-        private void NotifySettingsChanged() {
+        private void NotifySettingsChanged(bool force = false) {
             if (HasSyntaxHighlightingStyleChanges()) {
                 UpdateSyntaxHighlightingStyle();
-                SyntaxFileChanged = true;
+                force = true;
             }
-            else {
-                SyntaxFileChanged = false;
-            }
-
-            RaiseSettingsChanged(null);
-        }
-
-        public override void PanelClosing() {
-            SyntaxFileChanged = UpdateSyntaxHighlightingStyle();
+            
+            RaiseSettingsChanged(force);
         }
 
         public override void PanelResetting() {
@@ -87,7 +78,7 @@ namespace IRExplorerUI.OptionsPanels {
         }
 
         public override void PanelResetted() {
-                UpdateSyntaxEditPanel(null);
+            UpdateSyntaxEditPanel(null);
         }
 
         private void StyleButton_Click(object sender, RoutedEventArgs e) {

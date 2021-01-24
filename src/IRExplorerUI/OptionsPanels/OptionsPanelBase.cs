@@ -4,12 +4,13 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.OptionsPanels {
     public interface IOptionsPanel {
         event EventHandler PanelClosed;
         event EventHandler PanelReset;
-        event EventHandler SettingsChanged;
+        event EventHandler <bool> SettingsChanged;
         event EventHandler<bool> StayOpenChanged;
 
         void Initialize(FrameworkElement parent);
@@ -25,12 +26,23 @@ namespace IRExplorerUI.OptionsPanels {
         public FrameworkElement Parent { get; set; }
         public event EventHandler PanelClosed;
         public event EventHandler PanelReset;
-        public event EventHandler SettingsChanged;
+        public event EventHandler<bool> SettingsChanged;
         public event EventHandler<bool> StayOpenChanged;
 
         public virtual void Initialize(FrameworkElement parent) {
             Parent = parent;
             initialized_ = true;
+        }
+
+        public Point ParentPosition {
+            get {
+                if(Parent is DraggablePopup popup) {
+                    return new Point(popup.HorizontalOffset, popup.VerticalOffset);
+                }
+
+                var window = Window.GetWindow(this);
+                return window != null ? new Point(window.Left, window.Top) : new Point();
+            }
         }
 
         public void RaisePanelClosed(EventArgs e) {
@@ -41,8 +53,8 @@ namespace IRExplorerUI.OptionsPanels {
             PanelReset?.Invoke(this, e);
         }
 
-        public void RaiseSettingsChanged(EventArgs e) {
-            SettingsChanged?.Invoke(this, e);
+        public void RaiseSettingsChanged(bool force = false) {
+            SettingsChanged?.Invoke(this, force);
         }
 
         public void RaiseStayOpenChanged(bool staysOpen) {
