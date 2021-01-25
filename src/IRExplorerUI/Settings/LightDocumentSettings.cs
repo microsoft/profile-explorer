@@ -95,7 +95,6 @@ namespace IRExplorerUI {
         private Dictionary<ApplicationThemeKind, LightDocumentColors> themeColors_;
         private LightDocumentColors currentThemeColors_;
 
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         public override void Reset() {

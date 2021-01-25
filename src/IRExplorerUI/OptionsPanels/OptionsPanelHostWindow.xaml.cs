@@ -19,7 +19,7 @@ namespace IRExplorerUI.OptionsPanels {
                                       bool showResetButton = true) {
             InitializeComponent();
             
-            // Offset to account for drop shadow margin.
+            // Offset to amount for drop shadow margin.
             position.Offset(6, 0);
             Initialize(position, width, height, referenceElement);
 

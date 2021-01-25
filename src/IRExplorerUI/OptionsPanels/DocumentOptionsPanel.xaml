@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
-    d:DesignHeight="800"
+    d:DesignHeight="1000"
     d:DesignWidth="400"
     mc:Ignorable="d">
     <local:OptionsPanelBase.Resources>
@@ -60,19 +60,6 @@
                             DisplayMemberPath="Title"
                             SelectedIndex="0"
                             SourceUpdated="FrameworkElement_OnSourceUpdated" />
-
-                        <ToggleButton
-                            x:Name="SyntaxEditButton"
-                            Width="20"
-                            Height="20"
-                            Margin="4,0,0,0"
-                            HorizontalAlignment="Right"
-                            BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
-                            DockPanel.Dock="Right"
-                            ToolTip="Edit colors used by selected IR syntax highlighting">
-                            <Image Source="{DynamicResource ThemeIcon}" />
-                        </ToggleButton>
-
 
                         <Button
                             x:Name="OpenSyntaxStyleButton"
@@ -212,9 +199,9 @@
                         IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay, NotifyOnSourceUpdated=True}"
                         IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}"
                         SourceUpdated="FrameworkElement_OnSourceUpdated" />
-                    <Separator Margin="0,8,0,8" />
                 </StackPanel>
             </Expander>
+            <Separator Margin="0,8,0,8" />
 
             <Expander IsExpanded="True">
                 <Expander.Header>
@@ -244,7 +231,6 @@
                             Height="20"
                             Margin="4,0,0,0"
                             HorizontalAlignment="Right"
-                            BorderBrush="{x:Null}"
                             Click="StyleButton_Click"
                             DockPanel.Dock="Right"
                             ToolTip="Use custom document colors style">
@@ -394,6 +380,29 @@
                                 VerticalAlignment="Center"
                                 Text="Line number text color" />
                         </Grid>
+
+                        <Grid Margin="0,2,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <xctk:ColorPicker
+                                Grid.Column="0"
+                                Width="64"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                AvailableColorsSortingMode="HueSaturationBrightness"
+                                BorderBrush="#707070"
+                                SelectedColor="{Binding Path=SearchResultColor, Mode=TwoWay, NotifyOnSourceUpdated=True}"
+                                ShowDropDownButton="True"
+                                SourceUpdated="FrameworkElement_OnSourceUpdated"
+                                UsingAlphaChannel="False" />
+                            <TextBlock
+                                Grid.Column="1"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center"
+                                Text="Search result background color" />
+                        </Grid>
                     </StackPanel>
                 </StackPanel>
             </Expander>
@@ -429,7 +438,7 @@
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Text="Selected value color" />
+                            Text="Selected value background color" />
                     </Grid>
 
                     <Grid Margin="0,2,0,0">
@@ -452,7 +461,7 @@
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Text="Source definition value color" />
+                            Text="Source value definition background color" />
                     </Grid>
                     <Grid Margin="0,2,0,0">
                         <Grid.ColumnDefinitions>
@@ -474,8 +483,32 @@
                             Grid.Column="1"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Text="Destination use values color" />
+                            Text="Destination value use background color" />
                     </Grid>
+
+                    <Grid Margin="0,2,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70" />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <xctk:ColorPicker
+                            Grid.Column="0"
+                            Width="64"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            AvailableColorsSortingMode="HueSaturationBrightness"
+                            BorderBrush="#707070"
+                            SelectedColor="{Binding Path=DefinitionMarkerColor, Mode=TwoWay, NotifyOnSourceUpdated=True}"
+                            ShowDropDownButton="True"
+                            SourceUpdated="FrameworkElement_OnSourceUpdated"
+                            UsingAlphaChannel="False" />
+                        <TextBlock
+                            Grid.Column="1"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Text="Value definition background color" />
+                    </Grid>
+
                     <Grid Margin="0,2,0,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="70" />
@@ -505,41 +538,46 @@
 
             <Expander IsExpanded="True">
                 <Expander.Header>
-                    <TextBlock
-                        FontSize="13"
-                        FontWeight="DemiBold"
-                        Text="IR Syntax Highlighting Colors" />
+                    <DockPanel LastChildFill="True">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            DockPanel.Dock="Left"
+                            FontSize="13"
+                            FontWeight="DemiBold"
+                            Text="IR Syntax Highlighting Colors" />
+                        <StackPanel
+                            Margin="20,0,0,0"
+                            VerticalAlignment="Center"
+                            DockPanel.Dock="Right"
+                            Orientation="Horizontal">
+                            <Button
+                                x:Name="ResetSyntaxStyleButton"
+                                Width="20"
+                                Height="20"
+                                Padding="0,2,0,-1"
+                                HorizontalAlignment="Right"
+                                Click="ResetSyntaxStyleButton_Click"
+                                DockPanel.Dock="Right"
+                                ToolTip="Reset the syntax highlighting file to initial state">
+                                <Image Source="{DynamicResource UndoIcon}" />
+                            </Button>
+
+                            <Button
+                                x:Name="EditSyntaxFileButton"
+                                Width="20"
+                                Height="20"
+                                Margin="2,0,0,0"
+                                HorizontalAlignment="Right"
+                                Click="EditSyntaxFileButton_Click"
+                                DockPanel.Dock="Right"
+                                ToolTip="Edit the syntax highlighting file in external text editor">
+                                <Image Source="{DynamicResource EditIcon}" />
+                            </Button>
+
+                        </StackPanel>
+                    </DockPanel>
                 </Expander.Header>
-                <StackPanel Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal">
-                        <Button
-                            x:Name="ResetSyntaxStyleButton"
-                            Width="20"
-                            Height="20"
-                            Margin="8,0,0,0"
-                            Padding="0,2,0,-1"
-                            HorizontalAlignment="Right"
-                            BorderBrush="{x:Null}"
-                            Click="ResetSyntaxStyleButton_Click"
-                            DockPanel.Dock="Right"
-                            ToolTip="Reset the syntax highlighting file to initial state">
-                            <Image Source="{DynamicResource UndoIcon}" />
-                        </Button>
-
-                        <Button
-                            x:Name="EditSyntaxFileButton"
-                            Width="20"
-                            Height="20"
-                            Margin="2,0,0,0"
-                            HorizontalAlignment="Right"
-                            BorderBrush="{x:Null}"
-                            Click="EditSyntaxFileButton_Click"
-                            DockPanel.Dock="Right"
-                            ToolTip="Edit the syntax highlighting file in external text editor">
-                            <Image Source="{DynamicResource EditIcon}" />
-                        </Button>
-
-                    </StackPanel>
+                <StackPanel Margin="0,8,0,0" Orientation="Vertical">
                     <ItemsControl x:Name="SyntaxHighlightingColorPickers" ItemTemplate="{StaticResource ColorPickerItemList}">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>

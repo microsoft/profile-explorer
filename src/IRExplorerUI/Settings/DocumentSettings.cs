@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows.Media;
 using ProtoBuf;
@@ -24,6 +25,7 @@ namespace IRExplorerUI {
                     DefinitionValueColor = Utils.ColorFromString("#F2E67C");
                     UseValueColor = Utils.ColorFromString("#95DBAD");
                     BorderColor = Colors.Black;
+                    DefinitionMarkerColor = Utils.ColorFromString("#ffc5a3");
                     break;
                 }
                 default: {
@@ -38,6 +40,7 @@ namespace IRExplorerUI {
                     DefinitionValueColor = Utils.ColorFromString("#F2E67C");
                     UseValueColor = Utils.ColorFromString("#95DBAD");
                     BorderColor = Colors.Black;
+                    DefinitionMarkerColor = Utils.ColorFromString("#ffc5a3");
                     break;
                 }
             }
@@ -53,8 +56,24 @@ namespace IRExplorerUI {
         [ProtoMember(8)] public Color UseValueColor { get; set; }
         [ProtoMember(9)] public Color BorderColor { get; set; }
         [ProtoMember(10)] public Color LineNumberTextColor { get; set; }
-        [ProtoMember(10)] public Color SearchResultColor { get; set; }
+        [ProtoMember(11)] public Color SearchResultColor { get; set; }
+        [ProtoMember(12)] public Color DefinitionMarkerColor { get; set; }
 
+        public override bool Equals(object obj) {
+            return obj is DocumentColors settings &&
+                   BackgroundColor.Equals(settings.BackgroundColor) &&
+                   AlternateBackgroundColor.Equals(settings.AlternateBackgroundColor) &&
+                   MarginBackgroundColor.Equals(settings.MarginBackgroundColor) &&
+                   TextColor.Equals(settings.TextColor) &&
+                   BlockSeparatorColor.Equals(settings.BlockSeparatorColor) &&
+                   SelectedValueColor.Equals(settings.SelectedValueColor) &&
+                   DefinitionValueColor.Equals(settings.DefinitionValueColor) &&
+                   UseValueColor.Equals(settings.UseValueColor) &&
+                   BorderColor.Equals(settings.BorderColor) &&
+                   LineNumberTextColor.Equals(settings.LineNumberTextColor) &&
+                   SearchResultColor.Equals(settings.SearchResultColor) &&
+                   DefinitionMarkerColor.Equals(settings.DefinitionMarkerColor);
+        }
     }
 
     [ProtoContract(SkipConstructor = true)]
@@ -87,37 +106,78 @@ namespace IRExplorerUI {
 
         [ProtoMember(12)] public bool ShowPreviewPopupWithModifier { get; set; }
 
-        [ProtoMember(13)] public Color BackgroundColor { get; set; }
+        public Color BackgroundColor {
+            get => currentThemeColors_.BackgroundColor;
+            set => currentThemeColors_.BackgroundColor = value;
+        }
 
-        [ProtoMember(14)] public Color AlternateBackgroundColor { get; set; }
+        public Color AlternateBackgroundColor {
+            get => currentThemeColors_.AlternateBackgroundColor;
+            set => currentThemeColors_.AlternateBackgroundColor = value;
+        }
 
-        [ProtoMember(15)] public Color MarginBackgroundColor { get; set; }
+        public Color MarginBackgroundColor {
+            get => currentThemeColors_.MarginBackgroundColor;
+            set => currentThemeColors_.MarginBackgroundColor = value;
+        }
 
-        [ProtoMember(16)] public Color TextColor { get; set; }
+        public Color TextColor {
+            get => currentThemeColors_.TextColor;
+            set => currentThemeColors_.TextColor = value;
+        }
 
-        [ProtoMember(17)] public Color BlockSeparatorColor { get; set; }
+        public Color BlockSeparatorColor {
+            get => currentThemeColors_.BlockSeparatorColor;
+            set => currentThemeColors_.BlockSeparatorColor = value;
+        }
 
-        [ProtoMember(18)] public Color SelectedValueColor { get; set; }
+        public Color SelectedValueColor {
+            get => currentThemeColors_.SelectedValueColor;
+            set => currentThemeColors_.SelectedValueColor = value;
+        }
 
-        [ProtoMember(19)] public Color DefinitionValueColor { get; set; }
+        public Color DefinitionValueColor {
+            get => currentThemeColors_.DefinitionValueColor;
+            set => currentThemeColors_.DefinitionValueColor = value;
+        }
 
-        [ProtoMember(20)] public Color UseValueColor { get; set; }
+        public Color UseValueColor {
+            get => currentThemeColors_.UseValueColor;
+            set => currentThemeColors_.UseValueColor = value;
+        }
 
-        [ProtoMember(21)] public Color BorderColor { get; set; }
+        public Color BorderColor {
+            get => currentThemeColors_.BorderColor;
+            set => currentThemeColors_.BorderColor = value;
+        }
+        public Color LineNumberTextColor {
+            get => currentThemeColors_.LineNumberTextColor;
+            set => currentThemeColors_.LineNumberTextColor = value;
+        }
+        public Color SearchResultColor {
+            get => currentThemeColors_.SearchResultColor;
+            set => currentThemeColors_.SearchResultColor = value;
+        }
 
-        [ProtoMember(23)] public string SyntaxHighlightingName { get; set; }
+        public Color DefinitionMarkerColor {
+            get => currentThemeColors_.DefinitionMarkerColor;
+            set => currentThemeColors_.DefinitionMarkerColor = value;
+        }
 
-        [ProtoMember(24)] public int DefaultExpressionsLevel { get; set; }
-        [ProtoMember(25)] public bool MarkMultipleDefinitionExpressions { get; set; }
-        [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
-        [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
+        [ProtoMember(13)] public string SyntaxHighlightingName { get; set; }
+        [ProtoMember(14)] public int DefaultExpressionsLevel { get; set; }
+        [ProtoMember(15)] public bool MarkMultipleDefinitionExpressions { get; set; }
+        [ProtoMember(16)] public bool FilterSourceDefinitions { get; set; }
+        [ProtoMember(17)] public bool FilterDestinationUses { get; set; }
 
-        [ProtoMember(28)] public Color LineNumberTextColor { get; set; }
-        [ProtoMember(29)] public Color SearchResultColor { get; set; }
+        [ProtoMember(18)]
+        private Dictionary<ApplicationThemeKind, DocumentColors> themeColors_;
+        private DocumentColors currentThemeColors_;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public override void Reset() {
+            LoadThemeSettings();
             ShowBlockSeparatorLine = true;
             FontName = "Consolas";
             FontSize = 12;
@@ -132,24 +192,24 @@ namespace IRExplorerUI {
             ShowPreviewPopupWithModifier = false;
             FilterSourceDefinitions = true;
             FilterDestinationUses = true;
-            BackgroundColor = Utils.ColorFromString("#FFFAFA");
-            AlternateBackgroundColor = Utils.ColorFromString("#f5f5f5");
-            TextColor = Colors.Black;
-            BlockSeparatorColor = Colors.Silver;
-            MarginBackgroundColor = Colors.Gainsboro;
-            LineNumberTextColor = Colors.Silver;
-            SearchResultColor = Colors.Khaki;
-
-            SelectedValueColor = Utils.ColorFromString("#C5DEEA");
-            DefinitionValueColor = Utils.ColorFromString("#F2E67C");
-            UseValueColor = Utils.ColorFromString("#95DBAD");
-            BorderColor = Colors.Black;
             SyntaxHighlightingName = "";
         }
 
         public override SettingsBase Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<DocumentSettings>(serialized);
+        }
+
+        [ProtoAfterDeserialization]
+        public void LoadThemeSettings() {
+            themeColors_ ??= new Dictionary<ApplicationThemeKind, DocumentColors>();
+
+            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
+                colors = new DocumentColors();
+                themeColors_[App.Theme.Kind] = colors;
+            }
+
+            currentThemeColors_ = colors;
         }
 
         public override bool Equals(object obj) {
@@ -168,18 +228,8 @@ namespace IRExplorerUI {
                    ShowPreviewPopupWithModifier == settings.ShowPreviewPopupWithModifier &&
                    FilterSourceDefinitions == settings.FilterSourceDefinitions &&
                    FilterDestinationUses == settings.FilterDestinationUses &&
-                   BackgroundColor.Equals(settings.BackgroundColor) &&
-                   AlternateBackgroundColor.Equals(settings.AlternateBackgroundColor) &&
-                   MarginBackgroundColor.Equals(settings.MarginBackgroundColor) &&
-                   TextColor.Equals(settings.TextColor) &&
-                   BlockSeparatorColor.Equals(settings.BlockSeparatorColor) &&
-                   SelectedValueColor.Equals(settings.SelectedValueColor) &&
-                   DefinitionValueColor.Equals(settings.DefinitionValueColor) &&
-                   UseValueColor.Equals(settings.UseValueColor) &&
-                   BorderColor.Equals(settings.BorderColor) &&
-                   LineNumberTextColor.Equals(settings.LineNumberTextColor) &&
-                   SearchResultColor.Equals(settings.SearchResultColor) &&
-                   SyntaxHighlightingName == settings.SyntaxHighlightingName;
+                   SyntaxHighlightingName == settings.SyntaxHighlightingName &&
+                   Utils.AreEqual(themeColors_, settings.themeColors_);
         }
     }
 }

@@ -21,8 +21,6 @@ namespace IRExplorerUI.Controls {
             Thumb.DragDelta += (sender, e) => {
                 HorizontalOffset += e.HorizontalChange;
                 VerticalOffset += e.VerticalChange;
-
-                Debug.WriteLine($"x = {HorizontalOffset}, y = {VerticalOffset}");
             };
         }
 

@@ -63,6 +63,9 @@ namespace IRExplorerUI {
         [ProtoMember(14)]
         public Dictionary<ToolPanelKind, LightDocumentSettings> LightDocumentSettings;
 
+        [ProtoMember(15)]
+        public ReferenceSettings ReferenceSettings;
+
         public ApplicationSettings() {
             Reset();
         }
@@ -76,12 +79,16 @@ namespace IRExplorerUI {
             RemarkSettings.Reset();
             DiffSettings.Reset();
             SectionSettings.Reset();
+            ReferenceSettings.Reset();
             AutoReloadDocument = true;
             ThemeIndex = 2; // Blue theme.
         }
 
         public void LoadThemeSettings() {
             //? TODO: Reload settings for other panels
+            DocumentSettings.LoadThemeSettings();
+            SectionSettings.LoadThemeSettings();
+            ReferenceSettings.LoadThemeSettings();
 
             foreach (var pair in LightDocumentSettings) {
                 pair.Value.LoadThemeSettings();
@@ -101,11 +108,7 @@ namespace IRExplorerUI {
             SectionSettings ??= new SectionSettings();
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
             LightDocumentSettings ??= new Dictionary<ToolPanelKind, LightDocumentSettings>();
-
-            //? REMOVE
-            /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {
-            //DocumentSettings.SyntaxHighlightingName = "UTC IR";
-            //}
+            ReferenceSettings ??= new ReferenceSettings();
         }
 
         public void AddRecentFile(string path) {

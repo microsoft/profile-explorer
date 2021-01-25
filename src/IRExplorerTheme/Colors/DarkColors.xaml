@@ -15,8 +15,8 @@
 
     <Color x:Key="SelectionColor1">#1B375B</Color>
     <Color x:Key="SelectionColor2">#284366</Color>
-    <Color x:Key="HighlightColor1">#183551</Color>
-    <Color x:Key="HighlightColor2">#333333</Color>
+    <Color x:Key="HighlightColor1">#153559</Color>
+    <Color x:Key="HighlightColor2">#152c4a</Color>
     <Color x:Key="MenuHighlightColor">#444444</Color>
 
     <Color x:Key="WarningColor">#660909</Color>

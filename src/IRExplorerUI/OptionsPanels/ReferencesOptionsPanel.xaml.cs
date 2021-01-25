@@ -13,15 +13,15 @@ using System.Windows.Media;
 using System.Xml;
 
 namespace IRExplorerUI.OptionsPanels {
-    public partial class LightDocumentOptionsPanel : OptionsPanelBase {
-        public const double DefaultHeight = 300;
+    public partial class ReferencesOptionsPanel : OptionsPanelBase {
+        public const double DefaultHeight = 260;
         public const double MinimumHeight = 200;
         public const double DefaultWidth = 360;
         public const double MinimumWidth = 360;
 
-        private LightDocumentSettings settings_;
+        private ReferenceSettings settings_;
 
-        public LightDocumentOptionsPanel() {
+        public ReferencesOptionsPanel() {
             InitializeComponent();
             PreviewMouseUp += DocumentOptionsPanel_PreviewMouseUp;
             PreviewKeyUp += DocumentOptionsPanel_PreviewKeyUp;
@@ -29,14 +29,12 @@ namespace IRExplorerUI.OptionsPanels {
 
         public override void Initialize(FrameworkElement parent) {
             base.Initialize(parent);
-            settings_ = (LightDocumentSettings)Settings;
+            settings_ = (ReferenceSettings)Settings;
         }
 
         public override void OnSettingsChanged(SettingsBase newSettings) {
-            settings_ = (LightDocumentSettings)newSettings;
+            settings_ = (ReferenceSettings)newSettings;
         }
-
-        public bool SyntaxFileChanged { get; set; }
 
         private void DocumentOptionsPanel_PreviewKeyUp(object sender, KeyEventArgs e) {
             NotifySettingsChanged();

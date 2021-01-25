@@ -45,6 +45,12 @@
                     <Button Click="MoveDownButton_Click" ToolTip="Move value down in the list">
                         <Image Source="{DynamicResource BoldDownArrowIcon}" />
                     </Button>
+                    <Separator />
+                    <Button Content="Clear" ToolTip="Remove all values in the list" />
+
+                    <Separator />
+                    <Button Content="Import" />
+                    <Button Content="Export" />
                 </ToolBar>
             </ToolBarTray>
             <ListView

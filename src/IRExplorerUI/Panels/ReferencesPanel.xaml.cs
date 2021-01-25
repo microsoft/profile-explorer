@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,6 +15,7 @@ using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.OptionsPanels;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -35,8 +37,8 @@ namespace IRExplorerUI {
         public int AddressCount { get; set; }
     }
 
-    public class ReferenceInfo {
-        public ReferenceInfo(int index, Reference info, TextBlock preview, string previewText) {
+    public class ReferenceEx {
+        public ReferenceEx(int index, Reference info, TextBlock preview, string previewText) {
             Index = index;
             Info = info;
             Preview = preview;
@@ -62,6 +64,7 @@ namespace IRExplorerUI {
 
         public TextBlock Preview { get; }
         public string PreviewText { get; }
+        public Brush TextColor { get; set; }
     }
 
     [ProtoContract]
@@ -89,13 +92,17 @@ namespace IRExplorerUI {
         private bool isFindAll_;
 
         private IRPreviewToolTip previewTooltip_;
-        private List<ReferenceInfo> referenceList_;
+        private List<ReferenceEx> referenceList_;
         private ListCollectionView referenceListView_;
         private ReferenceSummary referenceSummary_;
         private IRTextSection section_;
+        private ReferenceSettings settings_;
+        private OptionsPanelHostWindow optionsPanel_;
+        private bool optionsPanelVisible_;
 
         public ReferencesPanel() {
             InitializeComponent();
+            settings_ = App.Settings.ReferenceSettings;
             DataContext = this;
         }
 
@@ -167,22 +174,17 @@ namespace IRExplorerUI {
                 }
 
                 if (!(value is OperandIR)) {
+                    ResetReferenceListView();
                     return; // Only operands can have references.
                 }
 
                 if (element_ != value) {
-                    if (value != null && HasPinnedContent) {
+                    if (HasPinnedContent) {
                         return; // Keep pinned element.
                     }
 
                     element_ = value;
-
-                    //? TODO: There should be an option to pick default behavior for SSA values
-                    //?  - if SSA def, show only SSA uses
-                    //?  - or always show all refs
-                    if (!FindAllReferences(element_, showSSAUses: true, false)) {
-                        FindAllReferences(element_, showSSAUses: false, false);
-                    }
+                    FindAllReferences(element_, false, false);
                 }
             }
         }
@@ -280,11 +282,11 @@ namespace IRExplorerUI {
         }
 
         private bool FilterReferenceList(object value) {
-            var refInfo = value as ReferenceInfo;
+            var refInfo = value as ReferenceEx;
             return filterKind_.HasFlag(refInfo.Info.Kind);
         }
 
-        public bool FindAllReferences(IRElement element, bool showSSAUses, bool pinElement = true) {
+        public bool FindAllReferences(IRElement element, bool showOnlySSAUses, bool pinElement = true) {
             if (!(element is OperandIR operand)) {
                 ResetReferenceListView();
                 return false;
@@ -292,11 +294,11 @@ namespace IRExplorerUI {
 
             var refFinder = new ReferenceFinder(Document.Function);
             var operandRefs = refFinder.FindAllReferences(element, includeSSAUses: true);
-            UpdateReferenceListView(operand, operandRefs);
+            var summary = UpdateReferenceListView(operand, operandRefs);
 
             // Enabled the filters.
-            if (showSSAUses) {
-                FilterKind |= ReferenceKind.SSA;
+            if (showOnlySSAUses || (summary.SSACount > 0 && settings_.ShowOnlySSA)) {
+                FilterKind = ReferenceKind.SSA;
             }
             else {
                 FilterKind |= ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
@@ -308,36 +310,8 @@ namespace IRExplorerUI {
             return operandRefs.Count > 0;
         }
 
-        private void UpdateReferenceListView(OperandIR operand, List<Reference> operandRefs) {
-            referenceList_ = new List<ReferenceInfo>(operandRefs.Count);
-            var summary = new ReferenceSummary();
-            int index = 1;
-
-            // Sort based on the ref. element text offset.
-            operandRefs.Sort((a, b) => a.Element.TextLocation.Offset - b.Element.TextLocation.Offset);
-
-            foreach (var reference in operandRefs) {
-                (var preview, string previewText) = CreatePreviewTextBlock(operand, reference);
-                referenceList_.Add(new ReferenceInfo(index, reference, preview, previewText));
-                index++;
-
-                switch (reference.Kind) {
-                    case ReferenceKind.Address:
-                        summary.AddressCount++;
-                        break;
-                    case ReferenceKind.Load:
-                        summary.LoadCount++;
-                        break;
-                    case ReferenceKind.Store:
-                        summary.StoreCount++;
-                        break;
-                    case ReferenceKind.SSA:
-                        summary.SSACount++;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-            }
+        private ReferenceSummary UpdateReferenceListView(OperandIR operand, List<Reference> operandRefs) {
+            var summary = BuildReferenceList(operand, operandRefs);
 
             referenceListView_ = new ListCollectionView(referenceList_);
             referenceListView_.Filter = FilterReferenceList;
@@ -350,6 +324,49 @@ namespace IRExplorerUI {
             else {
                 SymbolName.Text = "";
             }
+
+            return summary;
+        }
+
+        private ReferenceSummary BuildReferenceList(OperandIR operand, List<Reference> operandRefs) {
+            referenceList_ = new List<ReferenceEx>(operandRefs.Count);
+            var summary = new ReferenceSummary();
+            int index = 1;
+
+            // Sort based on the ref. element text offset.
+            operandRefs.Sort((a, b) => a.Element.TextLocation.Offset - b.Element.TextLocation.Offset);
+
+            foreach (var reference in operandRefs) {
+                (var preview, string previewText) = CreatePreviewTextBlock(operand, reference);
+                var referenceEx = new ReferenceEx(index, reference, preview, previewText);
+
+                switch (reference.Kind)
+                {
+                    case ReferenceKind.Address:
+                        referenceEx.TextColor = ColorBrushes.GetBrush(settings_.AddressTextColor);
+                        summary.AddressCount++;
+                        break;
+                    case ReferenceKind.Load:
+                        referenceEx.TextColor = ColorBrushes.GetBrush(settings_.LoadTextColor);
+                        summary.LoadCount++;
+                        break;
+                    case ReferenceKind.Store:
+                        referenceEx.TextColor = ColorBrushes.GetBrush(settings_.StoreTextColor);
+                        summary.StoreCount++;
+                        break;
+                    case ReferenceKind.SSA:
+                        referenceEx.TextColor = ColorBrushes.GetBrush(settings_.SSATextColor);
+                        summary.SSACount++;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                referenceList_.Add(referenceEx);
+                index++;
+            }
+
+            return summary;
         }
 
         private void ResetReferenceListView() {
@@ -378,19 +395,19 @@ namespace IRExplorerUI {
         }
 
         private void JumpToReferenceExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var refInfo = e.Parameter as ReferenceInfo;
+            var refInfo = e.Parameter as ReferenceEx;
             JumpToReference(refInfo);
         }
 
         private void MarkReferenceExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (ReferenceList.SelectedItem is ReferenceInfo refInfo) {
+            if (ReferenceList.SelectedItem is ReferenceEx refInfo) {
                 var color = ((SelectedColorEventArgs)e.Parameter).SelectedColor;
                 Document.MarkElement(refInfo.Info.Element, color);
             }
         }
 
         private void UnmarkReferenceExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var refInfo = ReferenceList.SelectedItem as ReferenceInfo;
+            var refInfo = ReferenceList.SelectedItem as ReferenceEx;
 
             if (refInfo != null) {
                 Document.ClearMarkedElement(refInfo.Info.Element);
@@ -418,20 +435,25 @@ namespace IRExplorerUI {
         }
 
         private void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            var refInfo = ((ListViewItem)sender).DataContext as ReferenceInfo;
+            var refInfo = ((ListViewItem)sender).DataContext as ReferenceEx;
             JumpToReference(refInfo);
         }
 
-        private void JumpToReference(ReferenceInfo refInfo) {
+        private void JumpToReference(ReferenceEx refEx) {
             ignoreNextElement_ = true;
-            Document.SelectElement(refInfo.Info.Element);
-            Document.BringElementIntoView(refInfo.Info.Element);
+            Document.SelectElement(refEx.Info.Element);
+            Document.BringElementIntoView(refEx.Info.Element);
         }
 
         private void ListViewItem_MouseEnter(object sender, MouseEventArgs e) {
             HideToolTip();
+
+            if(!settings_.ShowPreviewPopup) {
+                return;
+            }
+
             var listItem = sender as ListViewItem;
-            var refInfo = listItem.DataContext as ReferenceInfo;
+            var refInfo = listItem.DataContext as ReferenceEx;
             previewTooltip_ = new IRPreviewToolTip(600, 100, Document, refInfo.Info.Element, documentText_);
             listItem.ToolTip = previewTooltip_;
         }
@@ -448,7 +470,12 @@ namespace IRExplorerUI {
         }
 
         private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
-            MessageBox.Show("TODO");
+            if (optionsPanelVisible_) {
+                CloseOptionsPanel();
+            }
+            else {
+                ShowOptionsPanel();
+            }
         }
 
         private void PanelToolbarTray_PinnedChanged(object sender, PinEventArgs e) {
@@ -548,6 +575,80 @@ namespace IRExplorerUI {
             }
 
             return false;
+        }
+
+        private void HandleNewSettings(ReferenceSettings newSettings, bool commit, bool force = false) {
+            if (commit) {
+                App.Settings.ReferenceSettings = newSettings;
+                App.SaveApplicationSettings();
+            }
+
+            if (newSettings.Equals(settings_) && !force) {
+                return;
+            }
+
+            App.Settings.ReferenceSettings = newSettings;
+            settings_ = newSettings;
+            FindAllReferences(element_, !isFindAll_);
+        }
+
+        public override void OnThemeChanged() {
+            HandleNewSettings(App.Settings.ReferenceSettings, false, true);
+        }
+        
+        private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
+            CloseOptionsPanel();
+        }
+
+        private void OptionsPanel_PanelReset(object sender, EventArgs e) {
+            optionsPanel_.ResetSettings();
+            LoadNewSettings(true);
+        }
+        
+        protected virtual void ShowOptionsPanel() {
+            if (optionsPanelVisible_) {
+                return;
+            }
+
+            var width = Math.Max(ReferencesOptionsPanel.MinimumWidth,
+                    Math.Min(ReferenceList.ActualWidth, ReferencesOptionsPanel.DefaultWidth));
+            var height = Math.Max(ReferencesOptionsPanel.MinimumHeight,
+                Math.Min(ReferenceList.ActualHeight, ReferencesOptionsPanel.DefaultHeight));
+            var position = ReferenceList.PointToScreen(new Point(ReferenceList.ActualWidth - width, 0));
+            optionsPanel_ = new OptionsPanelHostWindow(new ReferencesOptionsPanel(),
+                                                       position, width, height, this);
+
+            optionsPanel_.Settings = settings_;
+            optionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
+            optionsPanel_.PanelReset += OptionsPanel_PanelReset;
+            optionsPanel_.SettingsChanged += OptionsPanel_SettingsChanged;
+            optionsPanel_.IsOpen = true;
+            optionsPanelVisible_ = true;
+        }
+
+        private void OptionsPanel_SettingsChanged(object sender, bool force) {
+            if (optionsPanelVisible_) {
+                LoadNewSettings(false);
+            }
+        }
+
+        protected virtual void CloseOptionsPanel() {
+            if (!optionsPanelVisible_) {
+                return;
+            }
+
+            LoadNewSettings(true);
+            optionsPanel_.IsOpen = false;
+            optionsPanel_.PanelClosed -= OptionsPanel_PanelClosed;
+            optionsPanel_.PanelReset -= OptionsPanel_PanelReset;
+            optionsPanel_.SettingsChanged -= OptionsPanel_SettingsChanged;
+            optionsPanelVisible_ = false;
+            optionsPanel_ = null;
+        }
+
+        private void LoadNewSettings(bool commit) {
+            var newSettings = optionsPanel_.GetSettingsSnapshot<ReferenceSettings>();
+            HandleNewSettings(newSettings, commit);
         }
     }
 }

@@ -152,12 +152,6 @@ namespace IRExplorerUI {
             highlighterVersion_ = new MarkerMarginVersionInfo();
 
             // Setup styles and colors.
-            //? TODO: Expose as option
-            definitionStyle_ = new PairHighlightingStyle {
-                ParentStyle = new HighlightingStyle(Color.FromRgb(255, 215, 191)),
-                ChildStyle = new HighlightingStyle(Color.FromRgb(255, 197, 163), Pens.GetBoldPen(Colors.Black))
-            };
-
             expressionOperandStyle_ = DefaultHighlightingStyles.StyleSet;
             expressionStyle_ = DefaultHighlightingStyles.LightStyleSet;
             markerChildStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.StyleSet);
@@ -232,27 +226,31 @@ namespace IRExplorerUI {
             selectedStyle_ ??= new HighlightingStyle();
             selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
             selectedStyle_.Border = borderPen;
+
             selectedBlockStyle_ ??= new HighlightingStyle();
             selectedBlockStyle_.BackColor = ColorBrushes.GetBrush(Colors.Transparent);
-
-            selectedBlockStyle_.Border =
-                Pens.GetPen(ColorUtils.AdjustLight(settings_.SelectedValueColor, 0.75f), 2);
+            selectedBlockStyle_.Border = Pens.GetPen(ColorUtils.AdjustLight(settings_.SelectedValueColor, 0.75f), 2);
 
             ssaUserStyle_ ??= new PairHighlightingStyle();
-
             ssaUserStyle_.ParentStyle.BackColor =
-                ColorBrushes.GetBrush(
-                    ColorUtils.AdjustLight(settings_.UseValueColor, ParentStyleLightAdjustment));
+                ColorBrushes.GetBrush(ColorUtils.AdjustLight(settings_.UseValueColor, ParentStyleLightAdjustment));
 
             ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.UseValueColor);
             ssaUserStyle_.ChildStyle.Border = borderPen;
-            ssaDefinitionStyle_ ??= new PairHighlightingStyle();
 
+            ssaDefinitionStyle_ ??= new PairHighlightingStyle();
             ssaDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetBrush(
                 ColorUtils.AdjustLight(settings_.DefinitionValueColor, ParentStyleLightAdjustment));
 
             ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.DefinitionValueColor);
             ssaDefinitionStyle_.ChildStyle.Border = borderPen;
+
+            definitionStyle_ ??= new PairHighlightingStyle();
+            definitionStyle_.ParentStyle.BackColor = ColorBrushes.GetBrush(
+                ColorUtils.AdjustLight(settings_.DefinitionMarkerColor, ParentStyleLightAdjustment));
+
+            definitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.DefinitionMarkerColor);
+            definitionStyle_.ChildStyle.Border = borderPen;
         }
 
         public event EventHandler<DocumentAction> ActionPerformed;
@@ -1744,8 +1742,7 @@ namespace IRExplorerUI {
                     HighlightBlockLabel(sourceOp, highlighter, ssaUserStyle_, action);
                 }
                 else {
-                    HighlightDefinition(sourceOp, highlighter, ssaDefinitionStyle_, action,
-                                           false);
+                    HighlightDefinition(sourceOp, highlighter, ssaDefinitionStyle_, action, false);
                 }
             }
 

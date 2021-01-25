@@ -459,8 +459,6 @@
 
                         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                        <Setter Property="Background" Value="{DynamicResource DataGridBackgroundBrush}" />
-                        <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
 
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">

@@ -199,7 +199,6 @@ namespace IRExplorerUI {
         public Brush ChangedSectionBrush => ColorBrushes.GetBrush(App.Settings.SectionSettings.ChangedSectionColor);
 
         public Brush TextColor { get; set; }
-        public Brush BackColor { get; set; }
 
         public string NumberString => Section != null ? Section.Number.ToString() : "";
         public string BlockCountString => Section != null ? Section.BlockCount.ToString() : "";

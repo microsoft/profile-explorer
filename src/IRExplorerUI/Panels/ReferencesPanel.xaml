@@ -228,24 +228,9 @@
             </ListView.View>
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                    <Setter Property="Background" Value="{DynamicResource DataGridRowFirstBackgroundBrush}" />
-                    <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
                     <EventSetter Event="Control.MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
                     <EventSetter Event="UIElement.MouseEnter" Handler="ListViewItem_MouseEnter" />
-
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding Kind}" Value="Store">
-                            <Setter Property="Foreground" Value="#006700" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Kind}" Value="Load">
-                            <Setter Property="Foreground" Value="#4E0088" />
-                        </DataTrigger>
-                        <DataTrigger Binding="{Binding Kind}" Value="Address">
-                            <Setter Property="FontWeight" Value="DemiBold" />
-                            <Setter Property="Foreground" Value="#BE0000" />
-                        </DataTrigger>
-                    </Style.Triggers>
-
+                    <Setter Property="Foreground" Value="{Binding TextColor}" />
                 </Style>
             </ListView.ItemContainerStyle>
             <ListView.ContextMenu>

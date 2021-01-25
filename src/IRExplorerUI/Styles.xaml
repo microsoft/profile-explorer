@@ -140,6 +140,8 @@
     <Style x:Key="FlatListViewItem" TargetType="ListViewItem">
         <Setter Property="SnapsToDevicePixels" Value="true" />
         <Setter Property="OverridesDefaultStyle" Value="true" />
+        <Setter Property="Background" Value="{DynamicResource DataGridBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
