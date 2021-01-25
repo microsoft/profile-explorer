@@ -71,6 +71,11 @@ namespace IRExplorerUI.Document {
             SearchPanel.NavigateToNextResult += SearchPanel_NavigateToNextResult;
         }
 
+        public LightDocumentSettings Settings {
+            get => TextView.Settings;
+            set => TextView.Settings = value;
+        }
+
         public bool UseAutoComplete {
             get => SearchPanel.UseAutoComplete;
             set => SearchPanel.UseAutoComplete = value;
@@ -86,9 +91,8 @@ namespace IRExplorerUI.Document {
             get => TextView.SearchMode == LightIRDocument.TextSearchMode.Filter;
             set {
                 var prevSearchMode = TextView.SearchMode;
-
                 TextView.SearchMode = value ? LightIRDocument.TextSearchMode.Filter :
-                                              LightIRDocument.TextSearchMode.Mark;
+                                           LightIRDocument.TextSearchMode.Mark;
 
                 if (TextView.SearchMode != prevSearchMode) {
                     Dispatcher.InvokeAsync(async () => await SearchText());

@@ -226,6 +226,7 @@ namespace IRExplorerUI.Document {
             // Setup search panel for context tree.
             ContextSearchPanel.UseAutoComplete = false;
             RemarkTextView.UseAutoComplete = false;
+            RemarkTextView.Settings = App.Settings.LoadLightDocumentSettings(ToolPanelKind.PassOutput);
             ContextSearchPanel.SearchChanged += ContextSearchPanel_SearchChanged;
             ContextSearchPanel.CloseSearchPanel += ContextSearchPanel_CloseSearchPanel;
             ContextSearchPanel.NavigateToNextResult += ContextSearchPanel_NavigateToResult;
@@ -1004,11 +1005,10 @@ namespace IRExplorerUI.Document {
         }
 
         private async Task UpdateOutputText(Remark remark) {
-            string outputText = await Session.GetSectionOutputTextAsync(remark.Section.OutputBefore,
-                                                                        remark.Section);
-            await RemarkTextView.SetText(outputText, Function, Section, parentDocument_.TextView);
+            string outputText = await Session.GetSectionOutputTextAsync(remark.Section.OutputBefore, remark.Section);
+            RemarkTextView.SetText(outputText, Function, Section, parentDocument_.TextView);
             RemarkTextView.SelectText(remark.RemarkLocation.Offset, remark.RemarkText.Length,
-                                      remark.RemarkLocation.Line);
+                                   remark.RemarkLocation.Line);
         }
 
         private async void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e) {
