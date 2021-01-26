@@ -324,7 +324,6 @@
                             IsChecked="{Binding ElementName=DiffModeButton, Path=IsChecked, Mode=TwoWay}" />
                         <Separator />
 
-
                         <MenuItem Header="IR Kind">
                             <MenuItem
                                 Name="UTCMenuItem"
@@ -338,7 +337,8 @@
                         <Separator />
 
 
-                        <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio extension" />
+                        <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio Extension" />
+                        <MenuItem Click="MenuItem_OnClick" Header="Load Profile Data" />
                         <MenuItem
                             Click="MenuItem_Click_6"
                             Header="Settings"

@@ -942,5 +942,33 @@ namespace IRExplorerUI {
             }
         }
 
+        private ProfileData profileData_;
+        public ProfileData ProfileData => profileData_;
+
+        private async void MenuItem_OnClick(object sender, RoutedEventArgs e) {
+            var window = new ProfileLoadWindow();
+            window.Owner = this;
+            var result = window.ShowDialog();
+
+            if (result.HasValue && result.Value) {
+                SetOptionalStatus("Loading profile data...");
+                profileData_ = new ProfileData(MainDocumentSummary);
+
+                if (!await profileData_.LoadTrace(window.ProfileFilePath, 
+                                        window.BinaryFilePath, 
+                                        window.DebugFilePath)) {
+                    profileData_ = null;
+
+                    MessageBox.Show("Failed to load profile data");
+                    SetOptionalStatus("");
+                    return;
+                }
+                else {
+                    SectionPanel.MainSummary = null;
+                    SectionPanel.MainSummary = MainDocumentSummary;
+                    SetOptionalStatus("Profile data loaded");
+                }
+            }
+        }
     }
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Windows.Media;
 
 namespace IRExplorerUI {
@@ -18,6 +19,20 @@ namespace IRExplorerUI {
             l = Math.Clamp(l * lightAdjustment, 0, 1);
             return hslToRgb(h, s, l);
         }
+
+        public static List<Color> MakeColorPallete(float hue, float saturation,
+            float minLight, float maxLight, int lightSteps) {
+            float rangeStep = (maxLight - minLight) / lightSteps;
+            var colors = new List<Color>();
+
+            for (float light = minLight; light <= maxLight; light += rangeStep) {
+                colors.Add(ColorUtils.hslToRgb(hue, saturation, light));
+
+            }
+
+            return colors;
+        }
+
 
         private static void rgbToHsl(Color color, out float h, out float s, out float l) {
             float r = color.R / 255f;
