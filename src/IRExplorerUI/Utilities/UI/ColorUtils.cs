@@ -48,7 +48,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private static Color hslToRgb(float h, float s, float l) {
+        public static Color hslToRgb(float h, float s, float l) {
             float r, g, b;
 
             if (Math.Abs(s) < double.Epsilon) {

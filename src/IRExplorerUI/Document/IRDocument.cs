@@ -603,9 +603,20 @@ namespace IRExplorerUI {
             HighlightSingleElement(element, GetHighlighter(type));
         }
 
-        public void HighlightElementsOnSourceLine(int lineNumber) {
+        public void SelectElementsOnSourceLine(int lineNumber) {
             ClearTemporaryHighlighting();
-            var group = new HighlightedGroup(selectedStyle_);
+            MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent, false, true);
+            UpdateHighlighting();
+        }
+
+        public void MarkElementsOnSourceLine(int lineNumber, Color selectedColor, bool raiseEvent = true) {
+            MarkElementsOnSourceLine(markedHighlighter_, lineNumber, selectedColor, raiseEvent, false);
+        }
+
+        private void MarkElementsOnSourceLine(ElementHighlighter highlighter, int lineNumber, Color selectedColor,
+                                         bool raiseEvent, bool bringIntoView) {
+            var style = highlighter == selectedHighlighter_ ? selectedStyle_ : new HighlightingStyle(selectedColor);
+            var group = new HighlightedGroup(style);
             IRElement firstTuple = null;
 
             foreach (var block in function_.Blocks) {
@@ -618,13 +629,23 @@ namespace IRExplorerUI {
                         if (firstTuple == null) {
                             firstTuple = tuple;
                         }
+
+                        if (raiseEvent) {
+                            RaiseElementHighlightingEvent(tuple, group, highlighter.Type, 
+                                HighlightingEventAction.AppendHighlighting);
+                        }
                     }
                 }
             }
 
             if (!group.IsEmpty()) {
-                selectedHighlighter_.Add(group);
-                BringElementIntoView(firstTuple);
+                highlighter.Add(group);
+
+                if (bringIntoView) {
+                    BringElementIntoView(firstTuple);
+                }
+
+                
             }
 
             UpdateHighlighting();

@@ -2,13 +2,20 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Editing;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerUI.Document;
+using IRExplorerUI.Utilities;
 using Microsoft.Win32;
+using Color = System.Windows.Media.Color;
 
 namespace IRExplorerUI {
     /// <summary>
@@ -19,14 +26,23 @@ namespace IRExplorerUI {
         private bool fileLoaded_;
         private bool ignoreNextCaretEvent_;
         private int selectedLine_;
+        private ElementHighlighter profileMarker_;
+        private OverlayRenderer overlayRenderer_;
 
         public SourceFilePanel() {
             InitializeComponent();
             TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
             var lineBrush = Utils.BrushFromColor(Color.FromRgb(197, 222, 234));
 
+            profileMarker_ = new ElementHighlighter(HighlighingType.Marked);
+            TextView.TextArea.TextView.BackgroundRenderers.Add(profileMarker_);
             TextView.TextArea.TextView.BackgroundRenderers.Add(
                 new CurrentLineHighlighter(TextView, lineBrush, Pens.GetPen(Colors.Gray)));
+
+            // Create the overlay and place it on top of the text.
+            overlayRenderer_ = new OverlayRenderer(profileMarker_);
+            TextView.TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
+            TextView.TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
         }
 
         private void Caret_PositionChanged(object sender, EventArgs e) {
@@ -43,7 +59,7 @@ namespace IRExplorerUI {
 
             if (line != null && Session.CurrentDocument != null) {
                 selectedLine_ = line.LineNumber;
-                Session.CurrentDocument.HighlightElementsOnSourceLine(line.LineNumber);
+                Session.CurrentDocument.SelectElementsOnSourceLine(line.LineNumber);
             }
         }
 
@@ -77,6 +93,8 @@ namespace IRExplorerUI {
                 TextView.Text = text;
                 PathTextbox.Text = path;
                 fileLoaded_ = true;
+
+                await AnnotateProfilerData();
             }
             catch (Exception) {
                 TextView.Text = "Failed to load source file!";
@@ -134,5 +152,77 @@ namespace IRExplorerUI {
         }
 
         #endregion
+
+        private List<Color> MakeColorPallete(float hue, float saturation, 
+            float minLight, float maxLight, int lightSteps) {
+            float rangeStep = (maxLight - minLight) / lightSteps;
+            var colors = new List<Color>();
+
+            for (float light = minLight; light <= maxLight; light += rangeStep) {
+                colors.Add(ColorUtils.hslToRgb(hue, saturation, light));
+
+            }
+
+            return colors;
+        }
+
+        private async Task AnnotateProfilerData() {
+            var data = new ProfileData(Session.MainDocumentSummary);
+            await data.LoadTrace(@"C:\work\y.etl", "x.exe", @"C:\work\x.pdb");
+            var function = Session.CurrentDocumentSection.ParentFunction;
+
+            if (data.FunctionProfiles.TryGetValue(function, out var profile)) {
+                int lightSteps = 10; // 1,1,0.5 is red
+                var colors = MakeColorPallete(1, 1, 0.7f, 1, lightSteps);
+                var nextElementId = new IRElementId();
+
+                foreach (var pair in profile.SourceLineWeight) {
+                    int sourceLine = pair.Key;
+                    double weightPercentage = profile.ScaleLineWeight(pair.Value);
+                    int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+                    var color = colors[colorIndex];
+                    var style = new HighlightingStyle(colors[colorIndex]);
+
+                    if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
+                        continue;
+                    }
+
+                    var documentLine = TextView.Document.GetLineByNumber(sourceLine);
+                    var location = new TextLocation(documentLine.Offset, sourceLine, 0);
+                    var element = new IRElement(location, documentLine.Length);
+                    element.Id = nextElementId.NextOperand();
+
+                    var group = new HighlightedGroup(style);
+                    group.Add(element);
+                    profileMarker_.Add(group);
+
+                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
+                    AddElementOverlay(element, null, 16, 16, tooltip);
+
+                    Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
+                }
+
+                UpdateHighlighting();
+            }
+        }
+
+        public void AddElementOverlay(IRElement element, IconDrawing icon,
+            double width, double height, string toolTip = "",
+            HorizontalAlignment alignmentX = HorizontalAlignment.Right,
+            VerticalAlignment alignmentY = VerticalAlignment.Center,
+            double marginX = 8, double marginY = 2) {
+            // Pick a background color that matches the one used for the entire block.
+            var overlay = IconElementOverlay.CreateDefault(icon, width, height,
+                Brushes.Transparent, Brushes.Transparent, null,
+                toolTip, alignmentX, alignmentY, marginX, marginY);
+            overlay.IsToolTipPinned = true;
+            overlay.TextColor = Brushes.DarkRed;
+            overlayRenderer_.AddElementOverlay(element, overlay);
+        }
+
+
+        private void UpdateHighlighting() {
+            TextView.TextArea.TextView.Redraw();
+        }
     }
 }

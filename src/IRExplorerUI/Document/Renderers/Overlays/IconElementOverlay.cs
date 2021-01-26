@@ -61,7 +61,7 @@ namespace IRExplorerUI.Document {
                 DrawBackground(Bounds, opacity, drawingContext);
             }
 
-            Icon.Draw(x + Padding, y + Padding, Height, Width, opacity, drawingContext);
+            Icon?.Draw(x + Padding, y + Padding, Height, Width, opacity, drawingContext);
         }
     }
 }
