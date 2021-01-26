@@ -10,6 +10,7 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Query;
 using IRExplorerCore.Graph;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     public enum DuplicatePanelKind {
@@ -31,6 +32,7 @@ namespace IRExplorerUI {
 
         IRTextSummary MainDocumentSummary { get; }
         IRTextSummary DiffDocumentSummary { get; }
+        ProfileData ProfileData { get; }
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
         IRDocument FindAssociatedDocument(IToolPanel panel);

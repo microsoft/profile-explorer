@@ -18,6 +18,7 @@ using ProtoBuf;
 using Microsoft.Win32;
 using System.IO;
 using System.Diagnostics;
+using System.Globalization;
 
 namespace IRExplorerUI {
     public static class Command {
@@ -60,7 +61,7 @@ namespace IRExplorerUI {
         public static readonly RoutedUICommand DisplayPartialCallGraph =
            new RoutedUICommand("Untitled", "DisplayPartialCallGraph", typeof(SectionPanel));
     }
-
+    
     public enum OpenSectionKind {
         ReplaceCurrent,
         ReplaceLeft,
@@ -214,6 +215,39 @@ namespace IRExplorerUI {
         }
     }
 
+    public class IRTextFunctionEx : INotifyPropertyChanged {
+        public IRTextFunctionEx(IRTextFunction function, int index) {
+            Function = function;
+            Index = index;
+        }
+
+        public int Index { get; set; }
+        public IRTextFunction Function { get; set; }
+        public object OptionalData { get; set; }
+        public string OptionalDataText { get; set; }
+
+        private bool isMarked_;
+        public bool IsMarked {
+            get => isMarked_;
+            set {
+                isMarked_ = value;
+                OnPropertyChange(nameof(IsMarked));
+            }
+        }
+        
+        public Brush TextColor { get; set; }
+        public Brush BackColor { get; set; }
+
+        public string Name => Function.Name;
+        public int SectionCount => Function.SectionCount;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChange(string propertyname) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        }
+    }
+
     [ProtoContract]
     public class SectionPanelState {
         [ProtoMember(1)]
@@ -247,8 +281,13 @@ namespace IRExplorerUI {
         private bool isDiffModeEnabled_;
         private bool syncDiffedDocuments_;
         private bool isFunctionListVisible_;
+
         private SortAdorner listViewSortAdorner;
         private GridViewColumnHeader listViewSortCol;
+
+        private SortAdorner functionListViewSortAdorner;
+        private GridViewColumnHeader functionListViewSortCol;
+        
         private IRTextSummary otherSummary_;
         private bool sectionExtensionComputed_;
         private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
@@ -357,6 +396,28 @@ namespace IRExplorerUI {
                 if (value != otherSummary_) {
                     otherSummary_ = value;
                     RefreshFunctionList();
+                }
+            }
+        }
+
+        private string optionalDataColumnName_;
+        public string OptionalDataColumnName {
+            get => optionalDataColumnName_;
+            set {
+                if (optionalDataColumnName_ != value) {
+                    optionalDataColumnName_ = value;
+                    OnPropertyChange(nameof(OptionalDataColumnName));
+                }
+            }
+        }
+        
+        private bool optionalDataColumnVisible_;
+        public bool OptionalDataColumnVisible {
+            get => optionalDataColumnVisible_;
+            set {
+                if (optionalDataColumnVisible_ != value) {
+                    optionalDataColumnVisible_ = value;
+                    OnPropertyChange(nameof(OptionalDataColumnVisible));
                 }
             }
         }
@@ -503,10 +564,51 @@ namespace IRExplorerUI {
             }
 
             SetupSectionExtension();
-            var functionFilter = new ListCollectionView(summary_.Functions);
+            
+            var profile = Session.ProfileData;
+            List<Color> colors = null;
+            int lightSteps = 10; // 1,1,0.5 is red
+
+            if (profile != null) {
+                OptionalDataColumnVisible = true;
+                OptionalDataColumnName = "Timing";
+                colors = ColorUtils.MakeColorPallete(1, 1, 0.8f, 1, lightSteps);
+            }
+
+            int index = 0;
+            var functionsEx = new List<IRTextFunctionEx>();
+
+            foreach (var func in summary_.Functions) {
+                var funcEx = new IRTextFunctionEx(func, index++);
+                functionsEx.Add(funcEx);
+
+                if (profile != null) {
+                    if (profile.FunctionProfiles.TryGetValue(func, out var funcProfile)) {
+                        double weightPercentage = profile.ScaleFunctionWeight(funcProfile.TotalWeight);
+                        funcEx.OptionalData = weightPercentage;
+                        funcEx.OptionalDataText =
+                            $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.TotalWeight.TotalMilliseconds, 2)} ms)";
+                        int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+
+                        Debug.Assert(colors != null);
+                        funcEx.BackColor = ColorBrushes.GetBrush(colors[colorIndex]);
+                    }
+                    else {
+                        funcEx.OptionalData = 0.0;
+                    }
+                }
+            }
+
+            var functionFilter = new ListCollectionView(functionsEx);
             functionFilter.Filter = FilterFunctionList;
             FunctionList.ItemsSource = functionFilter;
             SectionList.ItemsSource = null;
+
+            if (profile != null) {
+                //? TODO: HACK, introduce function to sort in a certain way
+                FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
+                FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
+            }
 
             if (summary_.Functions.Count == 1) {
                 SelectFunction(summary_.Functions[0]);
@@ -639,7 +741,8 @@ namespace IRExplorerUI {
         }
 
         private bool FilterFunctionList(object value) {
-            var function = (IRTextFunction)value;
+            var functionEx = (IRTextFunctionEx)value;
+            var function = functionEx.Function;
 
             // In two-document diff mode, show only functions
             // that are common in the two summaries.
@@ -808,7 +911,7 @@ namespace IRExplorerUI {
 
         private void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (e.AddedItems.Count == 1) {
-                UpdateSectionListBindings((IRTextFunction)e.AddedItems[0]);
+                UpdateSectionListBindings(((IRTextFunctionEx)FunctionList.SelectedItem).Function);
             }
         }
 
@@ -950,6 +1053,43 @@ namespace IRExplorerUI {
             SectionList.Items.Refresh();
         }
 
+        private void FunctionGridViewColumnHeader_Click(object sender, RoutedEventArgs e) {
+            var column = sender as GridViewColumnHeader;
+
+            if (functionListViewSortCol != null) {
+                AdornerLayer.GetAdornerLayer(functionListViewSortCol).Remove(functionListViewSortAdorner);
+            }
+
+            var sortingDirection = ListSortDirection.Ascending;
+
+            if (functionListViewSortCol == column && functionListViewSortAdorner.Direction == sortingDirection) {
+                sortingDirection = ListSortDirection.Descending;
+            }
+
+            functionListViewSortCol = column;
+            functionListViewSortAdorner = new SortAdorner(functionListViewSortCol, sortingDirection);
+            AdornerLayer.GetAdornerLayer(functionListViewSortCol).Add(functionListViewSortAdorner);
+            FunctionSorter.FieldKind sortingField;
+
+            if (sender == FunctionColumnHeader) {
+                sortingField = FunctionSorter.FieldKind.Name;
+            }
+            else if (sender == SectionsColumnHeader) {
+                sortingField = FunctionSorter.FieldKind.Sections;
+            }
+            else {
+                sortingField = FunctionSorter.FieldKind.Optional;
+            }
+
+            if (!(FunctionList.ItemsSource is ListCollectionView view)) {
+                return; // No function selected yet.
+            }
+
+            view.CustomSort = new FunctionSorter(sortingField, sortingDirection);
+            FunctionList.Items.Refresh();
+        }
+
+
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
             Utils.PatchToolbarStyle(sender as ToolBar);
         }
@@ -967,7 +1107,6 @@ namespace IRExplorerUI {
             }
 
             private ListSortDirection direction_;
-
             private FieldKind sortingField_;
 
             public SectionSorter(FieldKind sortingField, ListSortDirection direction) {
@@ -999,6 +1138,48 @@ namespace IRExplorerUI {
                 return 0;
             }
         }
+
+
+        private sealed class FunctionSorter : IComparer {
+            public enum FieldKind {
+                Name,
+                Sections,
+                Optional
+            }
+
+            private ListSortDirection direction_;
+            private FieldKind sortingField_;
+
+            public FunctionSorter(FieldKind sortingField, ListSortDirection direction) {
+                sortingField_ = sortingField;
+                direction_ = direction;
+            }
+
+            public int Compare(object x, object y) {
+                var sectionX = x as IRTextFunctionEx;
+                var sectionY = y as IRTextFunctionEx;
+
+                switch (sortingField_) {
+                    case FieldKind.Sections: {
+                        int result = sectionY.SectionCount - sectionX.SectionCount;
+                        return direction_ == ListSortDirection.Ascending ? -result : result;
+                    }
+                    case FieldKind.Name: {
+                        int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
+                        return direction_ == ListSortDirection.Ascending ? -result : result;
+                    }
+                    case FieldKind.Optional: {
+                        int result = ((double)sectionY.OptionalData).CompareTo((double)sectionX.OptionalData);
+                        return direction_ == ListSortDirection.Ascending ? -result : result;
+                    }
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+
+                return 0;
+            }
+        }
+
 
         public sealed class SortAdorner : Adorner {
             private static Geometry ascGeometry = Geometry.Parse("M 0 4 L 3.5 0 L 7 4 Z");
@@ -1101,7 +1282,7 @@ namespace IRExplorerUI {
             state.AnnotatedSections = annotatedSections_.ToList(item => item.Section.Id);
 
             state.SelectedFunctionNumber = FunctionList.SelectedItem != null
-                ? ((IRTextFunction)FunctionList.SelectedItem).Number : 0;
+                ? ((IRTextFunctionEx)FunctionList.SelectedItem).Function.Number : 0;
 
             var data = StateSerializer.Serialize(state);
             Session.SavePanelState(data, this, null);

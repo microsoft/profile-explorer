@@ -22,10 +22,12 @@ namespace IRExplorerUI {
     ///     Interaction logic for SectionPanel.xaml
     /// </summary>
     public partial class SourceFilePanel : ToolPanelControl {
+        private IRTextSection section_;
         private IRElement element_;
         private bool fileLoaded_;
         private bool ignoreNextCaretEvent_;
         private int selectedLine_;
+        private string currentFilePath_;
         private ElementHighlighter profileMarker_;
         private OverlayRenderer overlayRenderer_;
 
@@ -87,25 +89,24 @@ namespace IRExplorerUI {
             return null;
         }
 
-        private async void LoadSourceFile(string path) {
+        private async Task LoadSourceFile(string path) {
             try {
                 string text = await File.ReadAllTextAsync(path);
                 TextView.Text = text;
                 PathTextbox.Text = path;
                 fileLoaded_ = true;
-
-                await AnnotateProfilerData();
+                currentFilePath_ = path;
             }
             catch (Exception) {
                 TextView.Text = "Failed to load source file!";
             }
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e) {
+        private async void Button_Click(object sender, RoutedEventArgs e) {
             string path = BrowseSourceFile();
 
             if (path != null) {
-                LoadSourceFile(path);
+                await LoadSourceFile(path);
             }
         }
 
@@ -114,8 +115,28 @@ namespace IRExplorerUI {
         public override ToolPanelKind PanelKind => ToolPanelKind.Source;
         public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
 
+        public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+            section_ = section;
+            var profile = FindFunctionProfile(section.ParentFunction);
+
+            if (profile != null) {
+                if (!string.IsNullOrEmpty(profile.SourceFilePath)) {
+                    // Load new source file.
+                    if (profile.SourceFilePath != currentFilePath_) {
+                        await LoadSourceFile(profile.SourceFilePath);
+                    }
+
+                    await AnnotateProfilerData();
+                }
+            }
+        }
+
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
             ResetSelectedLine();
+
+            overlayRenderer_.Clear();
+            profileMarker_.Clear();
+            section_ = null;
         }
 
         private void ResetSelectedLine() {
@@ -153,57 +174,55 @@ namespace IRExplorerUI {
 
         #endregion
 
-        private List<Color> MakeColorPallete(float hue, float saturation, 
-            float minLight, float maxLight, int lightSteps) {
-            float rangeStep = (maxLight - minLight) / lightSteps;
-            var colors = new List<Color>();
+      
+        private FunctionProfileData FindFunctionProfile(IRTextFunction function) {
+            var data = Session.ProfileData;
 
-            for (float light = minLight; light <= maxLight; light += rangeStep) {
-                colors.Add(ColorUtils.hslToRgb(hue, saturation, light));
-
+            if (data != null && data.FunctionProfiles.TryGetValue(function, out var profile)) {
+                return profile;
             }
 
-            return colors;
+            return null;
         }
 
         private async Task AnnotateProfilerData() {
-            var data = new ProfileData(Session.MainDocumentSummary);
-            await data.LoadTrace(@"C:\work\y.etl", "x.exe", @"C:\work\x.pdb");
-            var function = Session.CurrentDocumentSection.ParentFunction;
+            var profile = FindFunctionProfile(section_.ParentFunction);
 
-            if (data.FunctionProfiles.TryGetValue(function, out var profile)) {
-                int lightSteps = 10; // 1,1,0.5 is red
-                var colors = MakeColorPallete(1, 1, 0.7f, 1, lightSteps);
-                var nextElementId = new IRElementId();
+            if (profile == null) {
+                return;
+            }
 
-                foreach (var pair in profile.SourceLineWeight) {
-                    int sourceLine = pair.Key;
-                    double weightPercentage = profile.ScaleLineWeight(pair.Value);
-                    int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
-                    var color = colors[colorIndex];
-                    var style = new HighlightingStyle(colors[colorIndex]);
+            int lightSteps = 10; // 1,1,0.5 is red
+            var colors = ColorUtils.MakeColorPallete(1, 1, 0.8f, 1, lightSteps);
+            var nextElementId = new IRElementId();
 
-                    if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
-                        continue;
-                    }
+            foreach (var pair in profile.SourceLineWeight) {
+                int sourceLine = pair.Key;
+                double weightPercentage = profile.ScaleLineWeight(pair.Value);
+                int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+                var color = colors[colorIndex];
+                var style = new HighlightingStyle(colors[colorIndex]);
 
-                    var documentLine = TextView.Document.GetLineByNumber(sourceLine);
-                    var location = new TextLocation(documentLine.Offset, sourceLine, 0);
-                    var element = new IRElement(location, documentLine.Length);
-                    element.Id = nextElementId.NextOperand();
-
-                    var group = new HighlightedGroup(style);
-                    group.Add(element);
-                    profileMarker_.Add(group);
-
-                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
-                    AddElementOverlay(element, null, 16, 16, tooltip);
-
-                    Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
+                if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
+                    continue;
                 }
 
-                UpdateHighlighting();
+                var documentLine = TextView.Document.GetLineByNumber(sourceLine);
+                var location = new TextLocation(documentLine.Offset, sourceLine, 0);
+                var element = new IRElement(location, documentLine.Length);
+                element.Id = nextElementId.NextOperand();
+
+                var group = new HighlightedGroup(style);
+                group.Add(element);
+                profileMarker_.Add(group);
+
+                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
+                AddElementOverlay(element, null, 16, 16, tooltip);
+
+                Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
             }
+
+            UpdateHighlighting();
         }
 
         public void AddElementOverlay(IRElement element, IconDrawing icon,
