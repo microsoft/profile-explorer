@@ -28,7 +28,7 @@
         <Border
             x:Name="PanelBorder"
             Margin="0,0,6,6"
-            Background="{DynamicResource BackgroundColor5Brush}"
+            Background="{DynamicResource HighlightColor1Brush}"
             BorderBrush="{DynamicResource ButtonBorderBrush}"
             BorderThickness="1,1,1,1">
             <Border.Effect>
@@ -89,26 +89,19 @@
 
                 <Border
                     Grid.Row="0"
-                    Background="{DynamicResource BackgroundColor5Brush}"
-                    BorderBrush="DimGray"
+                    Background="{DynamicResource HighlightColor1Brush}"
+                    BorderBrush="{DynamicResource ButtonBorderBrush}"
                     BorderThickness="0,0,0,1">
-                    <DockPanel
-                        x:Name="ToolbarPanel"
-                        Background="{DynamicResource AccentBackgroundBrush}"
-                        LastChildFill="False">
-
+                    <DockPanel x:Name="ToolbarPanel" LastChildFill="False">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock
-                                Grid.Row="0"
                                 Margin="6,0,6,0"
                                 Padding="0,0,0,1"
                                 VerticalAlignment="Center"
                                 Text="Filter" />
                             <ToggleButton
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{Binding Path=HasOptimizationRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                                 Click="Button_Click"
                                 IsChecked="{Binding Path=Settings.Optimization}"
@@ -122,10 +115,8 @@
                             </ToggleButton>
 
                             <ToggleButton
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{Binding Path=HasAnalysisRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                                 Click="Button_Click"
                                 IsChecked="{Binding Path=Settings.Analysis}"
@@ -139,17 +130,14 @@
                             </ToggleButton>
 
                             <TextBlock
-                                Grid.Row="0"
                                 Margin="2,0,2,0"
                                 VerticalAlignment="Top"
                                 Foreground="{DynamicResource SeparatorBrush}"
                                 Text="|" />
 
                             <ToggleButton
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{Binding Path=HasDefaultRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                                 Click="Button_Click"
                                 IsChecked="{Binding Path=Settings.Default}"
@@ -164,10 +152,8 @@
                             </ToggleButton>
 
                             <ToggleButton
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{Binding Path=HasVerboseRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                                 Click="Button_Click"
                                 IsChecked="{Binding Path=Settings.Verbose}"
@@ -182,10 +168,8 @@
                             </ToggleButton>
 
                             <ToggleButton
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{Binding Path=HasTraceRemarks, Converter={StaticResource BooToParameter}, ConverterParameter={StaticResource ActiveBorderColor}}"
                                 Click="Button_Click"
                                 IsChecked="{Binding Path=Settings.Trace}"
@@ -200,17 +184,14 @@
                             </ToggleButton>
 
                             <TextBlock
-                                Grid.Row="0"
                                 Margin="2,0,2,0"
                                 VerticalAlignment="Top"
                                 Foreground="{DynamicResource SeparatorBrush}"
                                 Text="|" />
 
                             <ToggleButton
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{x:Null}"
                                 Click="Button_Click"
                                 IsChecked="{Binding Path=Settings.ShowPreviousSections}"
@@ -225,7 +206,6 @@
                             </ToggleButton>
 
                             <TextBlock
-                                Grid.Row="0"
                                 Margin="2,0,2,0"
                                 VerticalAlignment="Top"
                                 Foreground="{DynamicResource SeparatorBrush}"
@@ -233,10 +213,8 @@
 
                             <Button
                                 x:Name="PopupPanelButton"
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{x:Null}"
                                 Click="PopupPanelButton_Click">
                                 <Image
@@ -247,10 +225,8 @@
 
                             <Button
                                 x:Name="ColorButton"
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{x:Null}"
                                 Click="ColorButton_Click"
                                 Visibility="Collapsed">
@@ -268,7 +244,7 @@
                                 Source="{DynamicResource SearchIcon}" />
                             <Grid>
                                 <TextBox
-                                    Name="RemarkFilterTextbox"
+                                    x:Name="RemarkFilterTextbox"
                                     Width="150"
                                     Height="21"
                                     Margin="4,0,0,0"
@@ -278,7 +254,7 @@
                                 <TextBlock
                                     Margin="8,0,8,1"
                                     VerticalAlignment="Center"
-                                    Foreground="DimGray"
+                                    Foreground="{DynamicResource ButtonBorderBrush}"
                                     IsHitTestVisible="False"
                                     Text="Search remarks"
                                     Visibility="{Binding ElementName=RemarkFilterTextbox, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
@@ -288,7 +264,6 @@
                                 Width="20"
                                 Margin="2,0,0,0"
                                 VerticalAlignment="Center"
-                                Background="{x:Null}"
                                 BorderBrush="{x:Null}"
                                 ToolTip="Show options panel">
                                 <Image
@@ -297,10 +272,8 @@
                                     Source="{DynamicResource SettingsIcon}" />
                             </Button>
                             <Button
-                                Grid.Row="0"
                                 Width="20"
                                 Height="20"
-                                Background="#01FFFFFF"
                                 BorderBrush="{x:Null}"
                                 Click="ClosePanelButton_Click">
                                 <Image
@@ -345,7 +318,6 @@
                     <ListView.ItemContainerStyle>
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                             <Style.Setters>
-                                <Setter Property="Foreground" Value="{DynamicResource DataGridForegroundBrush}" />
                                 <Setter Property="FontFamily" Value="Consolas" />
                                 <Setter Property="FontSize" Value="12" />
                             </Style.Setters>
@@ -378,14 +350,11 @@
                 <DockPanel Grid.Row="3" LastChildFill="True">
                     <Border
                         Height="20"
-                        Background="{DynamicResource AccentBackgroundBrush}"
+                        Background="{DynamicResource HighlightColor1Brush}"
                         BorderBrush="{DynamicResource ButtonBorderBrush}"
                         BorderThickness="0,0,0,1"
                         DockPanel.Dock="Top">
-                        <DockPanel
-                            x:Name="ContextToolbarPanel"
-                            Background="#FFFFFBCF"
-                            LastChildFill="True">
+                        <DockPanel x:Name="ContextToolbarPanel" LastChildFill="True">
 
                             <StackPanel Orientation="Horizontal">
                                 <Label
@@ -408,7 +377,6 @@
                                     x:Name="ContextParentButton"
                                     Width="20"
                                     VerticalAlignment="Center"
-                                    Background="{x:Null}"
                                     BorderBrush="{x:Null}"
                                     Click="ContextParentButton_Click"
                                     ToolTip="Switch to parent remark context">
@@ -420,7 +388,6 @@
                                 <ToggleButton
                                     Width="20"
                                     VerticalAlignment="Center"
-                                    Background="{x:Null}"
                                     BorderBrush="{x:Null}"
                                     IsChecked="{Binding FilterActiveContextRemarks, Mode=TwoWay}"
                                     ToolTip="Show only remarks from selected context in the document">
@@ -432,7 +399,6 @@
                                 <ToggleButton
                                     Width="20"
                                     VerticalAlignment="Center"
-                                    Background="{x:Null}"
                                     BorderBrush="{x:Null}"
                                     IsChecked="{Binding ShowSearchPanel, Mode=TwoWay}"
                                     ToolTip="Search remarks">
@@ -462,8 +428,7 @@
                                     Visibility="Collapsed" />
                                 <TreeView
                                     x:Name="RemarkContextTree"
-                                    Grid.Row="1"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    Background="{DynamicResource DataGridBackgroundBrush}"
                                     BorderBrush="{x:Null}"
                                     BorderThickness="0,0,0,0"
                                     DockPanel.Dock="Bottom"
