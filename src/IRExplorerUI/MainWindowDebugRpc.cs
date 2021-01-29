@@ -427,7 +427,7 @@ namespace IRExplorerUI {
 
             await Dispatcher.BeginInvoke(new Action(async () => {
                 SetOptionalStatus($"Client connected, process {e.ProcessId}");
-                EndSession();
+                await EndSession();
 
                 FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
                 var result = new LoadedDocument("Debug session", Guid.NewGuid());
