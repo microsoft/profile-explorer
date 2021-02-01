@@ -500,8 +500,8 @@ namespace IRExplorerUI {
             }
         }
 
-        public void SelectSection(IRTextSection section, bool focus = true) {
-            UpdateSectionListBindings(section.ParentFunction);
+        public void SelectSection(IRTextSection section, bool focus = true, bool force = false) {
+            UpdateSectionListBindings(section.ParentFunction, force);
             var sectionEx = sections_.Find(item => item.Section == section);
             SectionList.SelectedItem = sectionEx;
 
@@ -643,10 +643,6 @@ namespace IRExplorerUI {
             Summary = function.ParentSummary;
             currentFunction_ = function;
             FunctionList.SelectedItem = function;
-
-            if (function == null) {
-                return;
-            }
 
             Sections = CreateSectionsExtension();
             FunctionSwitched?.Invoke(this, currentFunction_);
