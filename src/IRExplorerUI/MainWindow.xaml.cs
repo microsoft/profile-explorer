@@ -780,9 +780,9 @@ namespace IRExplorerUI {
                             MessageBoxButton.OK);
         }
 
-        private void SetOptionalStatus(string text, string tooltip = "") {
+        private void SetOptionalStatus(string text, string tooltip = "", Brush textBrush = null) {
             OptionalStatusText.Text = text;
-            OptionalStatusText.Foreground = Brushes.DarkGreen;
+            OptionalStatusText.Foreground = textBrush ?? Brushes.Black;
             OptionalStatusText.ToolTip = tooltip;
         }
 
