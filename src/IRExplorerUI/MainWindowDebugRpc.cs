@@ -446,6 +446,7 @@ namespace IRExplorerUI {
             }));
         }
 
+        //? TODO: Not needed anymore, parser extracts
         private string ExtractLineMetadata(IRTextSection section, string text) {
             var builder = new StringBuilder(text.Length);
             var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);

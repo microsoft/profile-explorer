@@ -8,47 +8,20 @@ using Microsoft.Windows.EventTracing.Symbols;
 using IRExplorerCore;
 
 namespace IRExplorerUI.Utilities {
-    public class FunctionProfileData {
-        public string SourceFilePath { get; set; }
-        public Duration TotalWeight { get; set; }
-        public Dictionary<int, Duration> SourceLineWeight { get; set; }
-
-        public FunctionProfileData(string filePath) {
-            SourceFilePath = filePath;
-            TotalWeight = Duration.Zero;
-            SourceLineWeight = new Dictionary<int, Duration>();
-        }
-
-        public void AddSample(int sourceLine, Duration weight) {
-            TotalWeight += weight;
-
-            if (SourceLineWeight.TryGetValue(sourceLine, out var currentWeight)) {
-                SourceLineWeight[sourceLine] = currentWeight + weight;
-            }
-            else {
-                SourceLineWeight[sourceLine] = weight;
-            }
-        }
-
-        public double ScaleLineWeight(Duration weight) {
-            return (double)weight.Nanoseconds / (double)TotalWeight.Nanoseconds;
-        }
-    }
-
     public class ProfileData {
         private IRTextSummary summary_;
 
         public ProfileData(IRTextSummary summary) {
             summary_ = summary;
             FunctionProfiles = new Dictionary<IRTextFunction, FunctionProfileData>();
-            TotalWeight = Duration.Zero;
+            TotalWeight = TimeSpan.Zero;
         }
         
         public Dictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; }
-        public Duration TotalWeight { get; set; }
+        public TimeSpan TotalWeight { get; set; }
 
-        public double ScaleFunctionWeight(Duration weight) {
-            return (double)weight.Nanoseconds / (double)TotalWeight.Nanoseconds;
+        public double ScaleFunctionWeight(TimeSpan weight) {
+            return (double)weight.Ticks / (double)TotalWeight.Ticks;
         }
 
         public async Task<bool> LoadTrace(string tracePath, string imageName, string symbolPath) {
@@ -91,11 +64,16 @@ namespace IRExplorerUI.Utilities {
                                     profile = new FunctionProfileData(symbol.SourceFileName);
                                     FunctionProfiles[textFunction] = profile;
                                 }
-                                
-                                profile.AddSample(symbol.SourceLineNumber + 1, sample.Weight);
-                                TotalWeight += sample.Weight;
+
+                                var rva = frame.Address;
+                                var functionRVA = symbol.AddressRange.BaseAddress;
+                                var offset = rva.Value - functionRVA.Value;
+                                profile.AddInstructionSample(offset, sample.Weight.TimeSpan);
+                                profile.AddLineSample(symbol.SourceLineNumber + 1, sample.Weight.TimeSpan);
+                                profile.Weight += sample.Weight.TimeSpan;
                             }
 
+                            TotalWeight += sample.Weight.TimeSpan;
                             break;
                         }
                     }

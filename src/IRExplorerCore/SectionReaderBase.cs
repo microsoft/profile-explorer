@@ -76,6 +76,7 @@ namespace IRExplorerCore {
         private int prevLineCount_;
         private string[] prevLines_;
         private bool hasPreprocessedLines_;
+        private bool hasMetadataLines_;
         private IRTextSummary summary_;
 
         public SectionReaderBase(string filePath, bool expectSectionHeaders = true) {
@@ -140,6 +141,10 @@ namespace IRExplorerCore {
             return false;
         }
 
+        protected virtual bool IsMetadataLine(string line) {
+            return false;
+        }
+        
         protected void MarkPreprocessedLine(int line) {
             hasPreprocessedLines_ = true;
         }
@@ -248,6 +253,7 @@ namespace IRExplorerCore {
             optionalOutput_ = null;
             optionalOutputNeeded_ = false;
             hasPreprocessedLines_ = false;
+            hasMetadataLines_ = false;
             prevLineCount_ = 0;
             lineIndex_ = 0;
         }
@@ -256,16 +262,12 @@ namespace IRExplorerCore {
             // Scan the document once to find the section boundaries,
             // any before/after text associated with the sections 
             // and build the function -> sections hierarchy.
+            ResetAdditionalOutput();
             IRTextSection previousSection = null;
-            hasPreprocessedLines_ = false;
-            (var section, string functionName) = FindNextSection();
+            var section = FindNextSection();
 
             while (section != null) {
-                var textFunc = GetOrCreateFunction(functionName);
-                textFunc.Sections.Add(section);
                 summary_.AddSection(section);
-                section.ParentFunction = textFunc;
-                section.Number = textFunc.Sections.Count;
 
                 if (previousSection != null) {
                     previousSection.OutputAfter = GetAdditionalOutput();
@@ -274,7 +276,7 @@ namespace IRExplorerCore {
                 section.OutputBefore = GetAdditionalOutput();
                 ResetAdditionalOutput();
                 previousSection = section;
-                (section, functionName) = FindNextSection();
+                section = FindNextSection();
 
                 if (progressHandler != null) {
                     var info = new SectionReaderProgressInfo(TextOffset(), dataStreamSize_);
@@ -376,6 +378,12 @@ namespace IRExplorerCore {
                     continue;
                 }
 
+                // Skip over metadata lines, they are not supposed to be part of the IR
+                // and are already saved in the LineMetadata table of the IRTextSection.
+                if (IsMetadataLine(line)) {
+                    continue;
+                }
+
                 if (line.Length > MAX_LINE_LENGTH) {
                     line = line.Substring(0, MAX_LINE_LENGTH);
                 }
@@ -422,12 +430,16 @@ namespace IRExplorerCore {
 
             if (!string.IsNullOrWhiteSpace(line)) {
                 optionalOutputNeeded_ = true;
+
+                if (IsMetadataLine(line)) {
+                    hasMetadataLines_ = true;
+                }
             }
         }
 
         private IRPassOutput GetAdditionalOutput() {
             if (optionalOutput_ != null && optionalOutputNeeded_) {
-                optionalOutput_.HasPreprocessedLines = hasPreprocessedLines_;
+                optionalOutput_.HasPreprocessedLines = hasPreprocessedLines_ || hasMetadataLines_;
                 return optionalOutput_;
             }
 
@@ -437,9 +449,10 @@ namespace IRExplorerCore {
         private void ResetAdditionalOutput() {
             optionalOutput_ = null;
             hasPreprocessedLines_ = false;
+            hasMetadataLines_ = false;
         }
 
-        private (IRTextSection, string) FindNextSection() {
+        private IRTextSection FindNextSection() {
             prevLineCount_ = 0;
 
             while (true) {
@@ -470,14 +483,18 @@ namespace IRExplorerCore {
 
                 // Go back and find the name of the section.
                 int sectionStartLine = lineIndex_ + (hasName ? 1 : 0);
+                int sectionEndLine = 0;
                 string sectionName = hasName ? ExtractSectionName(line) : string.Empty;
 
                 // Find the end of the section and extract the function name.
                 long startOffset = hasName ? TextOffset() : initialOffset;
                 long endOffset = startOffset;
                 string funcName = string.Empty;
-                int sectionEndLine = 0;
                 int blockCount = 0;
+
+                // A section can have metadata associated with the previous line.
+                Dictionary<int, string> lineMetadata = null;
+                int metadataLines = 0;
 
                 while (true) {
                     line = NextLine();
@@ -501,6 +518,12 @@ namespace IRExplorerCore {
                     else if (IsBlockStart(line)) {
                         blockCount++;
                     }
+                    else if (IsMetadataLine(line)) {
+                        // Add line - metadata mapping to auxiliary table.
+                        lineMetadata ??= new Dictionary<int, string>();
+                        lineMetadata[lineIndex_ - sectionStartLine - metadataLines] = line;
+                        metadataLines++;
+                    }
 
                     lineIndex_++;
                 }
@@ -515,15 +538,23 @@ namespace IRExplorerCore {
                 }
 
                 var output = new IRPassOutput(startOffset, endOffset,
-                                              sectionStartLine, sectionEndLine) {
-                    HasPreprocessedLines = hasPreprocessedLines_
+                                           sectionStartLine, sectionEndLine) {
+                    HasPreprocessedLines = hasPreprocessedLines_ || lineMetadata != null
                 };
 
-                var section = new IRTextSection(null, 0, 0, sectionName, output, blockCount);
-                return (section, funcName);
+                var textFunc = GetOrCreateFunction(funcName);
+                var section = new IRTextSection(textFunc, 0, textFunc.Sections.Count, sectionName, output, blockCount);
+                textFunc.Sections.Add(section);
+
+                if (lineMetadata != null) {
+                    section.LineMetadata = lineMetadata;
+                    section.CompressLineMetadata();
+                }
+
+                return section;
             }
 
-            return (null, null);
+            return null;
         }
 
         protected string NextLine() {

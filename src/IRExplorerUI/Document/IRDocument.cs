@@ -3424,7 +3424,7 @@ namespace IRExplorerUI {
             UpdateHighlighting();
         }
 
-        public void AddIconElementOverlay(IRElement element, IconDrawing icon,
+        public IconElementOverlay AddIconElementOverlay(IRElement element, IconDrawing icon,
                                           double width, double height, string toolTip = "",
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
@@ -3442,6 +3442,7 @@ namespace IRExplorerUI {
             SetupElementOverlayEvents(overlay);
             overlayRenderer_.AddElementOverlay(element, overlay);
             UpdateHighlighting();
+            return overlay;
         }
 
         private void SetupElementOverlayEvents(IElementOverlay overlay) {
