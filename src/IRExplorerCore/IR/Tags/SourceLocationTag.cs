@@ -2,9 +2,25 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace IRExplorerCore.IR {
-    public sealed class SourceLocationTag : ITag {
+    public class InlineeSourceLocation {
+        public InlineeSourceLocation(string function, int line, int column) {
+            Function = function;
+            Line = line;
+            Column = column;
+        }
+
+        public string Function { get; set; }
+        public int Line { get; set; }
+        public int Column { get; set; }
+    }
+
+    public class SourceLocationTag : ITag {
+        public SourceLocationTag() { }
+        
         public SourceLocationTag(int line, int column) {
             Line = line;
             Column = column;
@@ -12,6 +28,8 @@ namespace IRExplorerCore.IR {
 
         public int Line { get; set; }
         public int Column { get; set; }
+        public List<InlineeSourceLocation> Inlinees { get; set; }
+
         public string Name => "Source location";
         public TaggedObject Owner { get; set; }
 
@@ -24,7 +42,18 @@ namespace IRExplorerCore.IR {
         }
 
         public override string ToString() {
-            return $"source location: {Line};{Column}";
+            var builder = new StringBuilder();
+            builder.Append($"source location: {Line};{Column}");
+
+            if (Inlinees != null) {
+                builder.AppendLine($"\n  inlinees: {Inlinees.Count}");
+
+                foreach (var item in Inlinees) {
+                    builder.AppendLine($"    {item.Line};{item.Column}: {item.Function}");
+                }
+            }
+
+            return builder.ToString();
         }
     }
 }

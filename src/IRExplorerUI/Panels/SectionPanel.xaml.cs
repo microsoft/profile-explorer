@@ -500,8 +500,8 @@ namespace IRExplorerUI {
             }
         }
 
-        public void SelectSection(IRTextSection section, bool focus = true) {
-            UpdateSectionListBindings(section.ParentFunction);
+        public void SelectSection(IRTextSection section, bool focus = true, bool force = false) {
+            UpdateSectionListBindings(section.ParentFunction, force);
             var sectionEx = sections_.Find(item => item.Section == section);
             SectionList.SelectedItem = sectionEx;
 
@@ -572,7 +572,7 @@ namespace IRExplorerUI {
             if (profile != null) {
                 OptionalDataColumnVisible = true;
                 OptionalDataColumnName = "Timing";
-                colors = ColorUtils.MakeColorPallete(1, 1, 0.8f, 1, lightSteps);
+                colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
             }
 
             int index = 0;
@@ -584,10 +584,10 @@ namespace IRExplorerUI {
 
                 if (profile != null) {
                     if (profile.FunctionProfiles.TryGetValue(func, out var funcProfile)) {
-                        double weightPercentage = profile.ScaleFunctionWeight(funcProfile.TotalWeight);
+                        double weightPercentage = profile.ScaleFunctionWeight(funcProfile.Weight);
                         funcEx.OptionalData = weightPercentage;
                         funcEx.OptionalDataText =
-                            $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.TotalWeight.TotalMilliseconds, 2)} ms)";
+                            $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
                         int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
 
                         Debug.Assert(colors != null);
@@ -643,10 +643,6 @@ namespace IRExplorerUI {
             Summary = function.ParentSummary;
             currentFunction_ = function;
             FunctionList.SelectedItem = function;
-
-            if (function == null) {
-                return;
-            }
 
             Sections = CreateSectionsExtension();
             FunctionSwitched?.Invoke(this, currentFunction_);
@@ -1021,7 +1017,7 @@ namespace IRExplorerUI {
             var column = sender as GridViewColumnHeader;
 
             if (listViewSortCol != null) {
-                AdornerLayer.GetAdornerLayer(listViewSortCol).Remove(listViewSortAdorner);
+                AdornerLayer.GetAdornerLayer(listViewSortCol)?.Remove(listViewSortAdorner);
             }
 
             var sortingDirection = ListSortDirection.Ascending;
@@ -1032,7 +1028,7 @@ namespace IRExplorerUI {
 
             listViewSortCol = column;
             listViewSortAdorner = new SortAdorner(listViewSortCol, sortingDirection);
-            AdornerLayer.GetAdornerLayer(listViewSortCol).Add(listViewSortAdorner);
+            AdornerLayer.GetAdornerLayer(listViewSortCol)?.Add(listViewSortAdorner);
             SectionSorter.FieldKind sortingField;
 
             if (sender == NumberColumnHeader) {
@@ -1057,7 +1053,7 @@ namespace IRExplorerUI {
             var column = sender as GridViewColumnHeader;
 
             if (functionListViewSortCol != null) {
-                AdornerLayer.GetAdornerLayer(functionListViewSortCol).Remove(functionListViewSortAdorner);
+                AdornerLayer.GetAdornerLayer(functionListViewSortCol)?.Remove(functionListViewSortAdorner);
             }
 
             var sortingDirection = ListSortDirection.Ascending;
@@ -1068,7 +1064,7 @@ namespace IRExplorerUI {
 
             functionListViewSortCol = column;
             functionListViewSortAdorner = new SortAdorner(functionListViewSortCol, sortingDirection);
-            AdornerLayer.GetAdornerLayer(functionListViewSortCol).Add(functionListViewSortAdorner);
+            AdornerLayer.GetAdornerLayer(functionListViewSortCol)?.Add(functionListViewSortAdorner);
             FunctionSorter.FieldKind sortingField;
 
             if (sender == FunctionColumnHeader) {

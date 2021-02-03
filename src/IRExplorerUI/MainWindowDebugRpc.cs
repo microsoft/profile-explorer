@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
@@ -47,6 +48,7 @@ namespace IRExplorerUI {
         private int debugSectionId_;
         private DebugSectionLoader debugSections_;
         private IRTextSummary debugSummary_;
+        private CancelableTask sessionStartTask_;
 
         private void StartGrpcServer() {
             try {
@@ -65,36 +67,64 @@ namespace IRExplorerUI {
                 Trace.TraceInformation("Grpc server started, waiting for client...");
                 SetOptionalStatus("Waiting for client...");
                 DiffPreviousSectionCheckbox.Visibility = Visibility.Visible;
+                sessionStartTask_ = new CancelableTask();
             }
             catch (Exception ex) {
                 Trace.TraceError("Failed to start Grpc server: {0}", $"{ex.Message}\n{ex.StackTrace}");
-                SetOptionalStatus("Failed to start Grpc server.", $"{ex.Message}\n{ex.StackTrace}");
+                SetOptionalStatus("Failed to start Grpc server.", $"{ex.Message}\n{ex.StackTrace}", Brushes.Red);
             }
         }
 
-        private void DebugService__OnUpdateCurrentStackFrame(object sender, CurrentStackFrameRequest e) {
-            Dispatcher.BeginInvoke(new Action(() => { debugCurrentStackFrame_ = e.CurrentFrame; }));
+        private async Task<bool> WaitForSessionInitialization() {
+            // Wait until the session initialized properly.
+            if (sessionStartTask_ == null) {
+                return false;
+            }
+
+            await sessionStartTask_.WaitToCompleteAsync(TimeSpan.FromSeconds(10));
+            return !sessionStartTask_.IsCanceled;
+        }
+
+        private async void DebugService__OnUpdateCurrentStackFrame(object sender, CurrentStackFrameRequest e) {
+            await Dispatcher.BeginInvoke(new Action(async () => {
+                if (!(await WaitForSessionInitialization())) {
+                    return;
+                }
+
+                debugCurrentStackFrame_ = e.CurrentFrame;
+            }));
         }
 
         private void DebugService__OnClearTemporaryHighlighting(object sender, ClearHighlightingRequest e) {
             Dispatcher.BeginInvoke(new Action(async () => {
-                var activeDoc = await GetDebugSessionDocument();
-                if (activeDoc == null)
+                if (!(await WaitForSessionInitialization())) {
                     return;
+                }
+
+                var activeDoc = await GetDebugSessionDocument();
+                
+                if (activeDoc == null) {
+                    return;
+                }
 
                 var action = new DocumentAction(DocumentActionKind.ClearTemporaryMarkers);
                 activeDoc.TextView.ExecuteDocumentAction(action);
             }));
         }
 
-        private void DebugService_OnHasActiveBreakpoint(object sender,
+        private async void DebugService_OnHasActiveBreakpoint(object sender,
                                                         RequestResponsePair<ActiveBreakpointRequest, bool> e) {
+            if (!(await WaitForSessionInitialization())) {
+                return;
+            }
+
             if (addressTag_ == null) {
                 return;
             }
 
+
             if (addressTag_.AddressToElementMap.TryGetValue(e.Request.ElementAddress, out var element)) {
-                Dispatcher.Invoke(async () => {
+                await Dispatcher.Invoke(async () => {
                     var activeDoc = await GetDebugSessionDocument();
                     if (activeDoc == null)
                         return;
@@ -119,13 +149,17 @@ namespace IRExplorerUI {
             };
         }
 
-        private void DebugService_OnExecuteCommand(object sender, ElementCommandRequest e) {
+        private async void DebugService_OnExecuteCommand(object sender, ElementCommandRequest e) {
+            if (!(await WaitForSessionInitialization())) {
+                return;
+            }
+
             if (addressTag_ == null) {
                 return;
             }
 
             if (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element)) {
-                Dispatcher.BeginInvoke(new Action(async () => {
+                await Dispatcher.BeginInvoke(new Action(async () => {
                     var activeDoc = await GetDebugSessionDocument();
                     if (activeDoc == null)
                         return;
@@ -155,12 +189,16 @@ namespace IRExplorerUI {
             }
         }
 
-        private void DebugService_OnSetCurrentElement(object sender, SetCurrentElementRequest e) {
+        private async void DebugService_OnSetCurrentElement(object sender, SetCurrentElementRequest e) {
+            if (!(await WaitForSessionInitialization())) {
+                return;
+            }
+
             if (addressTag_ == null) {
                 return;
             }
 
-            Dispatcher.BeginInvoke(new Action(async () => {
+            await Dispatcher.BeginInvoke(new Action(async () => {
                 var activeDoc = await GetDebugSessionDocument();
                 if (activeDoc == null)
                     return;
@@ -228,13 +266,17 @@ namespace IRExplorerUI {
             };
         }
 
-        private void DebugService_OnElementMarked(object sender, MarkElementRequest e) {
+        private async void DebugService_OnElementMarked(object sender, MarkElementRequest e) {
+            if (!(await WaitForSessionInitialization())) {
+                return;
+            }
+
             if (addressTag_ == null) {
                 return;
             }
 
             if (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element)) {
-                Dispatcher.BeginInvoke(new Action(async () => {
+                await Dispatcher.BeginInvoke(new Action(async () => {
                     var activeDoc = await GetDebugSessionDocument();
                     var notesTag = AppendNotesTag(element, e.Label);
 
@@ -316,8 +358,12 @@ namespace IRExplorerUI {
             return null;
         }
 
-        private void DebugService_OnIRUpdated(object sender, UpdateIRRequest e) {
-            Dispatcher.BeginInvoke(new Action(async () => {
+        private async void DebugService_OnIRUpdated(object sender, UpdateIRRequest e) {
+            await Dispatcher.BeginInvoke(new Action(async () => {
+                if (!(await WaitForSessionInitialization())) {
+                    return;
+                }
+
                 if (sessionState_ == null ||
                     sessionState_.MainDocument == null) {
                     return;
@@ -400,6 +446,7 @@ namespace IRExplorerUI {
             }));
         }
 
+        //? TODO: Not needed anymore, parser extracts
         private string ExtractLineMetadata(IRTextSection section, string text) {
             var builder = new StringBuilder(text.Length);
             var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
@@ -425,26 +472,38 @@ namespace IRExplorerUI {
                 return;
             }
 
+            // Mark that session is about to start.
+            sessionStartTask_ = new CancelableTask();
+
             await Dispatcher.BeginInvoke(new Action(async () => {
-                SetOptionalStatus($"Client connected, process {e.ProcessId}");
-                EndSession();
+                try {
+                    SetOptionalStatus($"Client connected to process #{e.ProcessId}");
+                    await EndSession();
 
-                FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
-                var result = new LoadedDocument("Debug session", Guid.NewGuid());
-                debugSections_ = new DebugSectionLoader(compilerInfo_.IR);
-                debugSummary_ = debugSections_.LoadDocument(null);
-                result.Loader = debugSections_;
-                result.Summary = debugSummary_;
+                    FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
+                    var result = new LoadedDocument("Debug session", Guid.NewGuid());
+                    debugSections_ = new DebugSectionLoader(compilerInfo_.IR);
+                    debugSummary_ = debugSections_.LoadDocument(null);
+                    result.Loader = debugSections_;
+                    result.Summary = debugSummary_;
 
-                await SetupOpenedIRDocument(SessionKind.DebugSession, "Debug session", result);
+                    await SetupOpenedIRDocument(SessionKind.DebugSession, "Debug session", result);
 
-                debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
-                debugProcessId_ = e.ProcessId;
-                debugSectionId_ = 0;
-                debugFunction_ = null;
-                previousDebugSection_ = null;
+                    debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
+                    debugProcessId_ = e.ProcessId;
+                    debugSectionId_ = 0;
+                    debugFunction_ = null;
+                    previousDebugSection_ = null;
+
+                    // Mark session started.
+                    sessionStartTask_.Completed();
+                }
+                catch (Exception ex) {
+                    Trace.TraceError("Failed to start debug session: {0}", $"{ex.Message}\n{ex.StackTrace}");
+                    SetOptionalStatus($"Failed to start debug session", ex.Message, Brushes.Red);
+                    sessionStartTask_.Cancel();
+                }
             }));
         }
-
     }
 }
