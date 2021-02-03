@@ -970,8 +970,11 @@ namespace IRExplorerCore.UTC {
         }
 
         private SourceLocationTag ParseSourceLocation() {
-            // There can be a list of source line numbers in case of inlining,
-            // following this pattern: #123| #456
+            // There can be a list of inlinee source line numbers
+            // like: #123 | #456 | #789
+            // or in verbose/extra metadata mode, it can also include the inlinee function name
+            // like: 35(?example@@YAHH@Z) | #46(?bar@@YAHH@Z) | #62
+            SourceLocationTag tag = new SourceLocationTag();
             int lastLineNumber = -1;
 
             while (TokenIs(TokenKind.Hash)) {
@@ -983,14 +986,35 @@ namespace IRExplorerCore.UTC {
                     }
 
                     SkipToken();
+
+                    // If there is a function name, the number represents an inlinee frame.
+                    if (TokenIs(TokenKind.OpenParen)) {
+                        SkipToken();
+
+                        if (!IsIdentifier()) {
+                            return null;
+                        }
+
+                        var inlineeName = TokenString();
+                        SkipToken();
+
+                        var inlinee = new InlineeSourceLocation(inlineeName, lastLineNumber, 0);
+                        tag.Inlinees ??= new List<InlineeSourceLocation>();
+                        tag.Inlinees.Add(inlinee);
+
+                        if (!ExpectAndSkipToken(TokenKind.CloseParen)) {
+                            return null;
+                        }
+                    }
                 }
 
-                if (!TokenIs(TokenKind.Or)) {
-                    break;
+                if (TokenIs(TokenKind.Or)) {
+                    SkipToken();
                 }
             }
 
-            return new SourceLocationTag(lastLineNumber, 0);
+            tag.Line = lastLineNumber;
+            return tag;
         }
 
         private TupleIR ParseCodeTuple(BlockIR parent) {

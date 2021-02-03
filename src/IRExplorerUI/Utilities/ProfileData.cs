@@ -53,9 +53,13 @@ namespace IRExplorerUI.Utilities {
 
                     //? TODO: parallel
                     foreach (var frame in sample.Stack.Frames) {
+                        
+
                         var symbol = frame.Symbol;
 
                         if (symbol != null) {
+                           
+
                             //? TODO: FunctionName is unmangled, summary has mangled names
                             var functs = summary_.FindAllFunctions(symbol.FunctionName);
 
@@ -63,13 +67,14 @@ namespace IRExplorerUI.Utilities {
                                 if (!FunctionProfiles.TryGetValue(textFunction, out var profile)) {
                                     profile = new FunctionProfileData(symbol.SourceFileName);
                                     FunctionProfiles[textFunction] = profile;
+
                                 }
 
                                 var rva = frame.Address;
                                 var functionRVA = symbol.AddressRange.BaseAddress;
                                 var offset = rva.Value - functionRVA.Value;
                                 profile.AddInstructionSample(offset, sample.Weight.TimeSpan);
-                                profile.AddLineSample(symbol.SourceLineNumber + 1, sample.Weight.TimeSpan);
+                                profile.AddLineSample(symbol.SourceLineNumber, sample.Weight.TimeSpan);
                                 profile.Weight += sample.Weight.TimeSpan;
                             }
 
