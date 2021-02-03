@@ -79,5 +79,9 @@ namespace IRExplorerCore.UTC {
             return string.IsNullOrWhiteSpace(line) ||
                    line.StartsWith(SectionStartLine, StringComparison.Ordinal);
         }
+
+        protected override bool IsMetadataLine(string line) {
+            return line.StartsWith("/// irx:", StringComparison.Ordinal);
+        }
     }
 }

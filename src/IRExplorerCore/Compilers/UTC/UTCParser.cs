@@ -218,7 +218,8 @@ namespace IRExplorerCore.UTC {
             EHDestructor,
             EHExcept,
             Irx,
-            Address
+            Address,
+            Offset
         }
 
         private static Dictionary<string, Keyword> keywordMap_ =
@@ -269,7 +270,8 @@ namespace IRExplorerCore.UTC {
 
                 // Metadata keywords.
                 {"irx", Keyword.Irx},
-                {"address", Keyword.Address}
+                {"address", Keyword.Address},
+                {"offset", Keyword.Offset}
             };
 
         static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
@@ -316,11 +318,11 @@ namespace IRExplorerCore.UTC {
         };
 
         private Dictionary<int, BlockIR> blockMap_;
-        private Dictionary<long, IRElement> elementAddressMap_;
 
         private ParsingErrorHandler errorHandler_;
         private Dictionary<string, BlockLabelIR> labelMap_;
         private Dictionary<int, string> lineMetadataMap_;
+        private AddressMetadataTag metadataTag_;
         private int nextBlockNumber;
         private IRElementId nextElementId_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
@@ -336,7 +338,6 @@ namespace IRExplorerCore.UTC {
             blockMap_ = new Dictionary<int, BlockIR>();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
-            elementAddressMap_ = new Dictionary<long, IRElement>();
             lexer_ = new Lexer.Lexer();
             operandPool_ = new IRObjectPool<OperandIR>(64);
         }
@@ -392,7 +393,7 @@ namespace IRExplorerCore.UTC {
             blockMap_.Clear();
             labelMap_.Clear();
             ssaDefinitionMap_.Clear();
-            elementAddressMap_.Clear();
+            metadataTag_ = null;
             nextBlockNumber = 0;
             nextElementId_ = IRElementId.FromLong(0);
         }
@@ -404,8 +405,8 @@ namespace IRExplorerCore.UTC {
             var function = ParseFunction();
 
             if (function != null) {
-                if (elementAddressMap_.Count > 0) {
-                    function.AddTag(new AddressMetadataTag(elementAddressMap_));
+                if (metadataTag_!= null) {
+                    function.AddTag(metadataTag_);
                 }
             }
 
@@ -505,43 +506,49 @@ namespace IRExplorerCore.UTC {
             return value;
         }
 
-        private bool ParseAddressList(List<long> list) {
+        private bool ParseInt64List(List<long> list) {
             list.Clear();
 
             while (!TokenIs(TokenKind.SemiColon) && !IsEOF()) {
-                if (!TokenLongIntNumber(out long address)) {
-                    // Try to parse again as a HEX int.
-                    try {
-                        address = Convert.ToInt64(TokenStringData().ToString(), 16);
-                    }
-                    catch (Exception) {
-                        return false;
-                    }
+                long? value = ParseInt64();
+
+                if (!value.HasValue) {
+                    return false;
                 }
 
-                list.Add(address);
-                SkipToken();
+                list.Add(value.Value);
             }
 
-            SkipToken();
+            SkipToken(); // Skip over ;
             return true;
         }
 
-        private void SetElementAddress(IRElement element, long address,
-                                       Dictionary<long, IRElement> addressMap) {
-            addressMap[address] = element;
-        }
+        private long? ParseInt64() {
+            if (!TokenLongIntNumber(out long value)) {
+                // Try to parse again as a HEX int.
+                try {
+                    value = Convert.ToInt64(TokenStringData().ToString(), 16);
+                }
+                catch (Exception) {
+                    return null;
+                }
+            }
 
+            SkipToken();
+            return value;
+        }
+        
         private void ParseMetadata(IRElement element, int lineNumber) {
             if (lineMetadataMap_ != null &&
                 lineMetadataMap_.TryGetValue(lineNumber, out string metadata)) {
                 var metadataParser = new UTCParser(null, null);
                 metadataParser.Initialize(metadata);
-                metadataParser.ParseMetadata(element, elementAddressMap_);
+                metadataTag_ ??= new AddressMetadataTag();
+                metadataParser.ParseMetadata(element, metadataTag_);
             }
         }
 
-        private void ParseMetadata(IRElement element, Dictionary<long, IRElement> addressMap) {
+        private void ParseMetadata(IRElement element, AddressMetadataTag tag) {
             // Metadata starts with /// followed by irx:metadata_type
             if (!TokenIs(TokenKind.Div) || 
                 !NextTokenIs(TokenKind.Div) || 
@@ -561,30 +568,45 @@ namespace IRExplorerCore.UTC {
                 return;
             }
 
-            if (!ExpectAndSkipKeyword(Keyword.Address)) {
-                SkipToLineStart();
+            // Currently supported metadata:
+            // irx::address INSTR_ADDRESS; DEST1 DESTn; SRC1 SRCn
+            // irx::offset INSTR_ADDRESS; OFFSET
+            if (IsKeyword(Keyword.Address)) {
+                ParseAddressMetadata(element, tag);
+            }
+            else if (IsKeyword(Keyword.Offset)) {
+                ParseOffsetMetadata(element, tag);
+            }
+
+            SkipToLineStart();
+        }
+
+        private void ParseAddressMetadata(IRElement element, AddressMetadataTag tag) {
+            // irx::address INSTR_ADDRESS; DEST1 DESTn; SRC1 SRCn
+            SkipToken(); // address
+            long? address = ParseInt64();
+
+            if (!address.HasValue || 
+               !(element is InstructionIR instr)) {
                 return;
             }
 
-            // Parse instr. address.
-            var addressList = new List<long>();
-            ParseAddressList(addressList);
-
-            if (addressList.Count > 0) {
-                SetElementAddress(element, addressList[0], addressMap);
-            }
-
-            if (!(element is InstructionIR instr)) {
-                SkipToLineStart();
+            tag.AddressToElementMap[address.Value] = element;
+            
+            if (!ExpectAndSkipToken(TokenKind.SemiColon)) {
                 return;
             }
 
             // Parse destination list address.
-            ParseAddressList(addressList);
+            var addressList = new List<long>();
+
+            if (!ParseInt64List(addressList)) {
+                return;
+            }
 
             for (int i = 0; i < instr.Destinations.Count; i++) {
                 if (i < addressList.Count) {
-                    SetElementAddress(instr.Destinations[i], addressList[i], addressMap);
+                    tag.AddressToElementMap[addressList[i]] = instr.Destinations[i];
                 }
                 else {
                     break;
@@ -592,19 +614,45 @@ namespace IRExplorerCore.UTC {
             }
 
             // Parse source list address.
-            ParseAddressList(addressList);
+            if (!ParseInt64List(addressList)) {
+                return;
+            }
 
             for (int i = 0; i < instr.Sources.Count; i++) {
                 if (i < addressList.Count) {
-                    SetElementAddress(instr.Sources[i], addressList[i], addressMap);
+                    tag.AddressToElementMap[addressList[i]] = instr.Sources[i];
                 }
                 else {
                     break;
                 }
             }
-
-            SkipToLineStart();
         }
+
+        private void ParseOffsetMetadata(IRElement element, AddressMetadataTag tag) {
+            // irx::offset INSTR_ADDRESS; OFFSET
+            SkipToken(); // offset
+            long? address = ParseInt64();
+
+            if (!address.HasValue) {
+                return;
+            }
+
+            tag.AddressToElementMap[address.Value] = element;
+
+            if (!ExpectAndSkipToken(TokenKind.SemiColon)) {
+                return;
+            }
+
+            // Parse instruction offset.
+            long? offset = ParseInt64();
+
+            if (!offset.HasValue) {
+                return;
+            }
+
+            tag.OffsetToElementMap[offset.Value] = element;
+        }
+
 
         private BlockIR ParseBlock(FunctionIR function) {
             var startToken = current_;
@@ -922,8 +970,11 @@ namespace IRExplorerCore.UTC {
         }
 
         private SourceLocationTag ParseSourceLocation() {
-            // There can be a list of source line numbers in case of inlining,
-            // following this pattern: #123| #456
+            // There can be a list of inlinee source line numbers
+            // like: #123 | #456 | #789
+            // or in verbose/extra metadata mode, it can also include the inlinee function name
+            // like: 35(?example@@YAHH@Z) | #46(?bar@@YAHH@Z) | #62
+            SourceLocationTag tag = new SourceLocationTag();
             int lastLineNumber = -1;
 
             while (TokenIs(TokenKind.Hash)) {
@@ -935,14 +986,35 @@ namespace IRExplorerCore.UTC {
                     }
 
                     SkipToken();
+
+                    // If there is a function name, the number represents an inlinee frame.
+                    if (TokenIs(TokenKind.OpenParen)) {
+                        SkipToken();
+
+                        if (!IsIdentifier()) {
+                            return null;
+                        }
+
+                        var inlineeName = TokenString();
+                        SkipToken();
+
+                        var inlinee = new InlineeSourceLocation(inlineeName, lastLineNumber, 0);
+                        tag.Inlinees ??= new List<InlineeSourceLocation>();
+                        tag.Inlinees.Add(inlinee);
+
+                        if (!ExpectAndSkipToken(TokenKind.CloseParen)) {
+                            return null;
+                        }
+                    }
                 }
 
-                if (!TokenIs(TokenKind.Or)) {
-                    break;
+                if (TokenIs(TokenKind.Or)) {
+                    SkipToken();
                 }
             }
 
-            return new SourceLocationTag(lastLineNumber, 0);
+            tag.Line = lastLineNumber;
+            return tag;
         }
 
         private TupleIR ParseCodeTuple(BlockIR parent) {

@@ -12,10 +12,12 @@ using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Document;
 using IRExplorerUI.Utilities;
 using Microsoft.Win32;
 using Color = System.Windows.Media.Color;
+using TimeSpan = System.TimeSpan;
 
 namespace IRExplorerUI {
     /// <summary>
@@ -193,12 +195,16 @@ namespace IRExplorerUI {
             }
 
             int lightSteps = 10; // 1,1,0.5 is red
-            var colors = ColorUtils.MakeColorPallete(1, 1, 0.8f, 1, lightSteps);
+            var colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
             var nextElementId = new IRElementId();
+
+            var function = Session.CurrentDocument.Function;
+            var metadataTag = function.GetTag<AddressMetadataTag>();
+            bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
             foreach (var pair in profile.SourceLineWeight) {
                 int sourceLine = pair.Key;
-                double weightPercentage = profile.ScaleLineWeight(pair.Value);
+                double weightPercentage = profile.ScaleWeight(pair.Value);
                 int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
                 var color = colors[colorIndex];
                 var style = new HighlightingStyle(colors[colorIndex]);
@@ -219,7 +225,56 @@ namespace IRExplorerUI {
                 var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
                 AddElementOverlay(element, null, 16, 16, tooltip);
 
-                Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
+                if (!hasInstrOffsetMetadata) {
+                    Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
+                }
+            }
+            
+            if (hasInstrOffsetMetadata) {
+                var elements = new List<Tuple<IRElement, TimeSpan>>(profile.InstructionWeight.Count);
+
+                foreach (var pair in profile.InstructionWeight) {
+                    if (metadataTag.OffsetToElementMap.TryGetValue(pair.Key, out var element)) {
+                        elements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
+                    }
+                }
+
+                elements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+                int index = 0;
+
+                foreach (var pair in elements) {
+                    var element = pair.Item1;
+                    double weightPercentage = profile.ScaleWeight(pair.Item2);
+                    int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+                    var color = colors[colorIndex];
+
+                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
+                    Session.CurrentDocument.MarkElement(element, color);
+
+                    IconDrawing icon = null;
+                    bool isPinned = false;
+                    Brush textColor;
+
+                    if (index == 0) {
+                        icon = IconDrawing.FromIconResource("WarningIconColor");
+                        textColor = Brushes.DarkRed;
+                        isPinned = true;
+                    }
+                    else if (index <= 3) {
+                        icon = IconDrawing.FromIconResource("StarIconColor");
+                        textColor = Brushes.DarkRed;
+                        isPinned = true;
+                    }
+                    else {
+                        icon = IconDrawing.FromIconResource("DotIcon");
+                        textColor = Brushes.DarkRed;
+                    }
+                    
+                    var overlay = Session.CurrentDocument.AddIconElementOverlay(element, icon, 16,16, tooltip);
+                    overlay.IsToolTipPinned = isPinned;
+                    overlay.TextColor = textColor;
+                    index++;
+                }
             }
 
             UpdateHighlighting();
