@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using Microsoft.Windows.EventTracing;
@@ -54,7 +55,7 @@ namespace IRExplorerUI.Utilities {
         public async Task<bool> LoadTrace(string tracePath, string imageName, string symbolPath) {
             try {
                 // Extract just the file name.
-                imageName = Path.GetFileName(imageName);
+                imageName = Path.GetFileNameWithoutExtension(imageName);
 
                 using var trace = TraceProcessor.Create(tracePath);
                 IPendingResult<ISymbolDataSource> pendingSymbolData = trace.UseSymbols();
@@ -67,24 +68,47 @@ namespace IRExplorerUI.Utilities {
                 ICpuSampleDataSource cpuSamplingData = pendingCpuSamplingData.Result;
                 await symbolData.LoadSymbolsAsync(SymCachePath.Automatic, new RawSymbolPath(symbolPath));
 
+                
+                HashSet<string> images = new HashSet<string>();
+
                 foreach (var sample in cpuSamplingData.Samples) {
                     if (sample.IsExecutingDeferredProcedureCall == true || 
                         sample.IsExecutingInterruptServicingRoutine == true) {
                         continue;
                     }
 
-                    if (sample.Process.ImageName != imageName ||
+                    if(!images.Contains(sample.Process.ImageName)) {
+                        images.Add(sample.Process.ImageName);
+                        Trace.TraceWarning($"image: {sample.Process.ImageName}");
+                    }
+
+                    if (!sample.Process.ImageName.Contains(imageName, StringComparison.OrdinalIgnoreCase) ||
                         sample.Stack == null) {
                         continue;
                     }
 
                     //? TODO: parallel
                     foreach (var frame in sample.Stack.Frames) {
+                        // Ignore samples targeting other images loaded in the process.
+                        if (frame.Image == null ||
+                            !frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                            continue;
+                        }
+
                         var symbol = frame.Symbol;
 
                         if (symbol != null) {
                             //? TODO: FunctionName is unmangled, summary has mangled names
-                            var functs = summary_.FindAllFunctions(symbol.FunctionName);
+                            List<IRTextFunction> functs = null;
+
+                            if (symbol.FunctionName.Contains("::")) {
+                                //? TODO: Hacky way of dealing with manged C++ names
+                                var parts = symbol.FunctionName.Split("::", StringSplitOptions.RemoveEmptyEntries);
+                                functs = summary_.FindAllFunctions(parts);
+                            }
+                            else {
+                                functs = summary_.FindAllFunctions(symbol.FunctionName);
+                            }
 
                             foreach (var textFunction in functs) {
                                 if (!FunctionProfiles.TryGetValue(textFunction, out var profile)) {
@@ -98,10 +122,20 @@ namespace IRExplorerUI.Utilities {
 
                             break;
                         }
+                        else {
+                            Trace.WriteLine("Could not find debug info for\n");
+                            Trace.WriteLine($"   image: {frame.Image.FileName}");
+                            Trace.WriteLine($"   pdb path: {frame.Image.Pdb.Path}");
+                            Trace.WriteLine($"   pdb loaded: {frame.Image.Pdb.IsLoaded}");
+                            Trace.WriteLine($"   pdb id: {frame.Image.Pdb.Id}");
+                            Trace.Flush();
+                        }
                     }
                 }
             }
             catch (Exception ex) {
+                Trace.WriteLine($"Exception loading profile: {ex.Message}");
+                Trace.Flush();
                 return false;
             }
 

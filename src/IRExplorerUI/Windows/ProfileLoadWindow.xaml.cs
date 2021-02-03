@@ -28,7 +28,7 @@ namespace IRExplorerUI {
 
         private void OpenFiles() {
             if (ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile") &&
-                ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
+                //ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
                 ValidateFilePath(BinaryFilePath, DebugAutocompleteBox, "debug")) {
                 DialogResult = true;
                 Close();
@@ -75,7 +75,7 @@ namespace IRExplorerUI {
         private string ShowOpenFileDialog(string filter) {
             var fileDialog = new OpenFileDialog {
                 DefaultExt = "*.*",
-                Filter = "Log Files|*.txt;*.log;*.ir;|All Files|*.*"
+                Filter = filter
             };
 
             var result = fileDialog.ShowDialog();
