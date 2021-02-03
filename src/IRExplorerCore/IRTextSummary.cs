@@ -43,6 +43,18 @@ namespace IRExplorerCore {
             return Functions.FindAll((func) => func.Name.Contains(nameSubstring, StringComparison.Ordinal));
         }
 
+        public List<IRTextFunction> FindAllFunctions(string[] nameSubstrings) {
+            return Functions.FindAll((func) => {
+                foreach (var name in nameSubstrings) {
+                    if (!func.Name.Contains(name, StringComparison.Ordinal)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
+
         public IRTextFunction FindFunction(IRTextFunction function) {
             return functionMap_.TryGetValue(function.Name, out var result) ? result : null;
         }
