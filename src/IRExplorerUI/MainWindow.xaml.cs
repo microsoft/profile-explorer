@@ -407,7 +407,6 @@ namespace IRExplorerUI {
             }
 
             Title = title;
-            Utils.EnableControl(DockManager);
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e) {

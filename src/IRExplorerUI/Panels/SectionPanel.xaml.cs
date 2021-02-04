@@ -640,7 +640,6 @@ namespace IRExplorerUI {
                 return;
             }
 
-            Summary = function.ParentSummary;
             currentFunction_ = function;
             FunctionList.SelectedItem = function;
 
@@ -1263,10 +1262,12 @@ namespace IRExplorerUI {
         }
 
         public void SelectFunction(IRTextFunction function) {
-            if (function == currentFunction_) {
+            if (function == currentFunction_ ||
+                function.ParentSummary != Summary) {
                 return;
             }
 
+            UpdateSectionListBindings(function);
             FunctionList.SelectedItem = function;
             FunctionList.ScrollIntoView(FunctionList.SelectedItem);
             RefreshSectionList();
