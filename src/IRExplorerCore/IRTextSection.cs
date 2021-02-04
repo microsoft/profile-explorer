@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace IRExplorerCore {
     public class IRTextSection {
@@ -14,6 +15,8 @@ namespace IRExplorerCore {
             IRPassOutput sectionOutput, int blocks = 0) {
             ParentFunction = parent;
             Id = id;
+
+            Debug.Assert(number > 0, "Section numbers must start at 1");
             Number = number;
             Name = name;
             Output = sectionOutput;

@@ -543,7 +543,7 @@ namespace IRExplorerCore {
                 };
 
                 var textFunc = GetOrCreateFunction(funcName);
-                var section = new IRTextSection(textFunc, 0, textFunc.Sections.Count, sectionName, output, blockCount);
+                var section = new IRTextSection(textFunc, 0, textFunc.Sections.Count + 1, sectionName, output, blockCount);
                 textFunc.Sections.Add(section);
 
                 if (lineMetadata != null) {

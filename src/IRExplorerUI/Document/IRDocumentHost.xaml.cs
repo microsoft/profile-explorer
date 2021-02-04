@@ -1087,6 +1087,7 @@ namespace IRExplorerUI {
             }
             else {
                 SectionPanel.CompilerInfo = Session.CompilerInfo;
+                SectionPanel.Session = Session;
                 SectionPanel.Summary = Session.GetDocumentSummary(Section);
                 SectionPanel.SelectSection(Section, true, true);
                 SectionPanelHost.Visibility = Visibility.Visible;
