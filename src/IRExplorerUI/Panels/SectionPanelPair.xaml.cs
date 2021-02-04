@@ -50,7 +50,7 @@ namespace IRExplorerUI {
         public IRTextSummary MainSummary {
             get => MainPanel.Summary;
             set {
-                if (!diffModeEnabled_) {
+                if (MainPanel.Summary != value) {
                     MainPanel.Summary = value;
                 }
             }

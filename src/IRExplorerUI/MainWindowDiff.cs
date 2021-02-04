@@ -70,7 +70,7 @@ namespace IRExplorerUI {
             bool result = false;
 
             try {
-                EndSession();
+                await EndSession();
                 UpdateUIBeforeLoadDocument($"Loading {baseFilePath}, {diffFilePath}");
                 var baseTask = Task.Run(() => LoadDocument(baseFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
                 var diffTask = Task.Run(() => LoadDocument(diffFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
@@ -80,6 +80,9 @@ namespace IRExplorerUI {
                     await SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
                     await SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
                     result = true;
+                }
+                else {
+                    Trace.TraceWarning($"Failed to load base/diff documents: base {baseTask.Result != null}, diff {diffTask.Result != null}");
                 }
             }
             catch (Exception ex) {

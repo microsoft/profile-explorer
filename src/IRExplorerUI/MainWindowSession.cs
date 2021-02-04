@@ -353,7 +353,7 @@ namespace IRExplorerUI {
                 }
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to load diff document: {ex}");
+                Trace.TraceError($"Failed to load diff document {filePath}: {ex}");
             }
 
             UpdateUIAfterLoadDocument();
@@ -374,8 +374,8 @@ namespace IRExplorerUI {
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
-            catch (Exception) {
-                Trace.TraceError("$Failed to load document {path}");
+            catch (Exception ex) {
+                Trace.TraceError("$Failed to load document {path}: {ex}");
                 return null;
             }
         }
@@ -387,8 +387,8 @@ namespace IRExplorerUI {
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
-            catch (Exception) {
-                Trace.TraceError("$Failed to load in-memory document");
+            catch (Exception ex) {
+                Trace.TraceError("$Failed to load in-memory document: {ex}");
                 return null;
             }
         }
@@ -973,9 +973,11 @@ namespace IRExplorerUI {
 
             if (sessionState_ != null) {
                 UpdateWindowTitle();
+                Utils.EnableControl(DockManager);
             }
             else {
                 Title = "IR Explorer - Failed to load file";
+                Utils.DisableControl(DockManager, 0.85);
             }
 
             // Hide temporary UI.
