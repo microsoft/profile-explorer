@@ -61,6 +61,16 @@ namespace IRExplorerCore {
             }
         }
 
+        public bool IsSectionTextDifferent(IRTextSection other) {
+            // If there is a signature, assume that same signature means same text.
+            if (Output?.Signature != null &&
+                other?.Output.Signature != null) {
+                return !Output.Signature.AsSpan().SequenceEqual(other.Output.Signature.AsSpan());
+            }
+
+            return true;
+        }
+
         public override bool Equals(object obj) {
             return obj is IRTextSection section &&
                    Id == section.Id &&

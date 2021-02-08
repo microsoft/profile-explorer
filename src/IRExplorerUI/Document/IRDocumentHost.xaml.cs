@@ -127,7 +127,7 @@ namespace IRExplorerUI {
         private RemarkSettings remarkSettings_;
         private RemarkPreviewPanel remarkPanel_;
         private Point remarkPanelLocation_;
-
+        private CancelableTaskInstance loadTask_;
         private bool remarkPanelVisible_;
         private bool searchPanelVisible_;
         private SectionSearchResult searchResult_;
@@ -177,7 +177,7 @@ namespace IRExplorerUI {
 
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
-
+            loadTask_ = new CancelableTaskInstance();
             activeQueryPanels_ = new List<QueryPanel>();
             remarkSettings_ = App.Settings.RemarkSettings;
         }
@@ -632,7 +632,7 @@ namespace IRExplorerUI {
             }
 
             // Cancel any running tasks and hide panels.
-            loadTask_.CanceTask();
+            loadTask_.CancelTask();
             await HideRemarkPanel();
             HideActionPanel();
             SaveSectionState(section);
@@ -771,9 +771,7 @@ namespace IRExplorerUI {
 
             await AddRemarks(remarkList_);
         }
-
-        CancelableTaskInstance loadTask_ = new CancelableTaskInstance();
-
+        
         private async Task<List<Remark>> FindRemarks(CancelableTask cancelableTask) {
             var remarkProvider = Session.CompilerInfo.RemarkProvider;
 

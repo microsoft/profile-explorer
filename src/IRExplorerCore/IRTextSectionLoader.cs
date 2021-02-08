@@ -31,6 +31,12 @@ namespace IRExplorerCore {
         protected bool cacheEnabled_;
         protected object lockObject_;
 
+        public event EventHandler<bool> SectionPreprocessingCompleted;
+
+        protected void NotifySectionPreprocessingCompleted(bool canceled) {
+            SectionPreprocessingCompleted(this, canceled);
+        }
+
         protected void Initialize(ICompilerIRInfo irInfo, bool cacheEnabled) {
             irInfo_ = irInfo;
             cacheEnabled_ = cacheEnabled;

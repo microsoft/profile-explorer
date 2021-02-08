@@ -4,12 +4,18 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
     public class DocumentSectionLoader : IRTextSectionLoader {
         private IRSectionReader documentReader_;
+        private ConcurrentExclusiveSchedulerPair taskScheduler_;
+        private TaskFactory taskFactory_;
+        private CancelableTask preprocessTask_;
 
         public DocumentSectionLoader(ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
@@ -26,8 +32,51 @@ namespace IRExplorerCore {
         }
 
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
-            return documentReader_.GenerateSummary(progressHandler);
+            var tasks = new List<Task>();
+
+            var result = documentReader_.GenerateSummary(progressHandler, (reader, sectionInfo) => {
+                //? TODO: Extract to be reusable?
+                if (taskScheduler_ == null) {
+                    taskScheduler_ = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 2);
+                    taskFactory_ = new TaskFactory(taskScheduler_.ConcurrentScheduler);
+                    preprocessTask_ = new CancelableTask();
+                }
+
+                tasks.Add(taskFactory_.StartNew(() => {
+                    ComputeSectionSignature(sectionInfo);
+                }, preprocessTask_.Token));
+            });
+
+            if (result == null) {
+                preprocessTask_.Cancel();
+            }
+            else if(tasks.Count > 0) {
+                Task.Run(() => {
+                    Task.WaitAll(tasks.ToArray());
+                    NotifySectionPreprocessingCompleted(preprocessTask_.IsCanceled);
+                });
+            }
+
+            return result;
         }
+
+        private void ComputeSectionSignature(SectionReaderText sectionInfo) {
+            var sha = SHA256.Create();
+            var lines = sectionInfo.TextLines;
+
+            for (int i = 0; i < lines.Count - 1; i++) {
+                var data = Encoding.ASCII.GetBytes(lines[i]);
+                sha.TransformBlock(data, 0, data.Length, null, 0);
+            }
+
+            if (lines.Count > 0) {
+                var data = Encoding.ASCII.GetBytes(lines[^1]);
+                sha.TransformFinalBlock(data, 0, data.Length);
+            }
+
+            sectionInfo.Output.Signature = sha.Hash;
+        }
+        
 
         public override string GetDocumentOutputText() {
             var data = documentReader_.GetDocumentTextData();
@@ -110,6 +159,7 @@ namespace IRExplorerCore {
         protected override void Dispose(bool disposing) {
             if (!disposed_) {
                 documentReader_?.Dispose();
+                preprocessTask_?.Cancel();
                 documentReader_ = null;
                 disposed_ = true;
             }

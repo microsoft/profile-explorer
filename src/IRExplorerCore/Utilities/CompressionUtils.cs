@@ -58,8 +58,8 @@ namespace IRExplorerCore {
         }
 
         public static byte[] CreateSHA256(byte[] data) {
-            using var md5 = SHA256.Create();
-            return md5.ComputeHash(data);
+            using var sha = SHA256.Create();
+            return sha.ComputeHash(data);
         }
 
         public static byte[] CreateSHA256(string text) {

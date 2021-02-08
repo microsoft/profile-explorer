@@ -3,10 +3,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace IRExplorerCore {
@@ -151,8 +153,9 @@ namespace IRExplorerCore {
 
         // Main function for reading the text source and producing a summary
         // with all functions and their sections.
-        public IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler) {
-            var summary = GenerateSummaryImpl(progressHandler);
+        public IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler,
+                                         SectionTextHandler sectionTextHandler) {
+            var summary = GenerateSummaryImpl(progressHandler, sectionTextHandler);
 
             if (summary.Functions.Count == 0 && expectSectionHeaders_) {
                 // Try parsing again, but without looking for section headers.
@@ -162,7 +165,7 @@ namespace IRExplorerCore {
                 dataReader_.DiscardBufferedData();
 
                 ResetSummaryState();
-                summary = GenerateSummaryImpl(progressHandler);
+                summary = GenerateSummaryImpl(progressHandler, sectionTextHandler);
             }
 
             return summary;
@@ -258,13 +261,14 @@ namespace IRExplorerCore {
             lineIndex_ = 0;
         }
 
-        private IRTextSummary GenerateSummaryImpl(ProgressInfoHandler progressHandler) {
+        private IRTextSummary GenerateSummaryImpl(ProgressInfoHandler progressHandler,
+                                              SectionTextHandler sectionTextHandler) {
             // Scan the document once to find the section boundaries,
             // any before/after text associated with the sections 
             // and build the function -> sections hierarchy.
             ResetAdditionalOutput();
             IRTextSection previousSection = null;
-            var section = FindNextSection();
+            var section = FindNextSection(sectionTextHandler);
 
             while (section != null) {
                 summary_.AddSection(section);
@@ -276,7 +280,7 @@ namespace IRExplorerCore {
                 section.OutputBefore = GetAdditionalOutput();
                 ResetAdditionalOutput();
                 previousSection = section;
-                section = FindNextSection();
+                section = FindNextSection(sectionTextHandler);
 
                 if (progressHandler != null) {
                     var info = new SectionReaderProgressInfo(TextOffset(), dataStreamSize_);
@@ -452,7 +456,7 @@ namespace IRExplorerCore {
             hasMetadataLines_ = false;
         }
 
-        private IRTextSection FindNextSection() {
+        private IRTextSection FindNextSection(SectionTextHandler sectionTextHandler) {
             prevLineCount_ = 0;
 
             while (true) {
@@ -481,6 +485,14 @@ namespace IRExplorerCore {
                     }
                 }
 
+                // Collect the text lines if the client wants to process
+                // the text while first reading the document.
+                List<string> sectionLines = null;
+
+                if (sectionTextHandler != null) {
+                    sectionLines = new List<string>();
+                }
+
                 // Go back and find the name of the section.
                 int sectionStartLine = lineIndex_ + (hasName ? 1 : 0);
                 int sectionEndLine = 0;
@@ -501,6 +513,10 @@ namespace IRExplorerCore {
 
                     if (line == null) {
                         break;
+                    }
+
+                    if (sectionTextHandler != null) {
+                        sectionLines.Add(line);
                     }
 
                     if (IsFunctionStart(line)) {
@@ -537,15 +553,22 @@ namespace IRExplorerCore {
                     continue;
                 }
 
+                // Create the a new section and its corresponding function, if needed.
                 var output = new IRPassOutput(startOffset, endOffset,
                                            sectionStartLine, sectionEndLine) {
-                    HasPreprocessedLines = hasPreprocessedLines_ || lineMetadata != null
+                    HasPreprocessedLines = hasPreprocessedLines_ || lineMetadata != null,
                 };
 
                 var textFunc = GetOrCreateFunction(funcName);
                 var section = new IRTextSection(textFunc, 0, textFunc.Sections.Count + 1, sectionName, output, blockCount);
                 textFunc.Sections.Add(section);
 
+                // Notify client a new section has been read.
+                if (sectionTextHandler != null) {
+                    sectionTextHandler(this, new SectionReaderText(output, sectionLines));
+                }
+
+                // Attach any metadata lines.
                 if (lineMetadata != null) {
                     section.LineMetadata = lineMetadata;
                     section.CompressLineMetadata();

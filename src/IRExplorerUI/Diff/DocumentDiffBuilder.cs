@@ -112,6 +112,7 @@ namespace IRExplorerUI {
 
                 tasks[index++] = Task.Run(() => {
                     try {
+                        //? TODO: Check SHA first, then compare text if no SHA
                         string leftText = leftDocLoader.GetSectionText(leftSection, false);
                         string rightText = rightDocLoader.GetSectionText(rightSection, false);
                         var diffs = ComputeInternalDiffs(leftText, rightText);

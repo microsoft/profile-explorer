@@ -14,7 +14,7 @@ namespace IRExplorerCore {
             lock (lockObject_) {
                 if (taskInstance_ != null) {
                     // Cancel running task without blocking.
-                    CanceTask();
+                    CancelTask();
                 }
 
                 taskInstance_ = new CancelableTask();
@@ -27,7 +27,7 @@ namespace IRExplorerCore {
             }
         }
 
-        public void CanceTask(CancelableTaskDelegate unregisterAction = null) {
+        public void CancelTask(CancelableTaskDelegate unregisterAction = null) {
             lock (lockObject_) {
                 if (taskInstance_ == null) {
                     return;
