@@ -287,15 +287,20 @@ namespace IRExplorerUI {
 
             sessionState_.SyncDiffedDocuments = value;
         }
-
+        
         private async Task DiffCurrentDocuments(DiffModeInfo diffState) {
             await EnableDocumentDiffState(diffState);
             var leftDocument = diffState.LeftDocument.TextView;
             var rightDocument = diffState.RightDocument.TextView;
 
-            var leftText = await GetSectionTextAsync(leftDocument.Section);
-            var rightText = await GetSectionTextAsync(rightDocument.Section);
-            await DiffDocuments(leftDocument, rightDocument, leftText, rightText);
+            if (leftDocument.Section.IsSectionTextDifferent(rightDocument.Section)) {
+                var leftText = await GetSectionTextAsync(leftDocument.Section);
+                var rightText = await GetSectionTextAsync(rightDocument.Section);
+                await DiffDocuments(leftDocument, rightDocument, leftText, rightText);
+            }
+            else {
+                HandleNoDiffDocuments(leftDocument, rightDocument);
+            }
 
             if (diffState.PassOutputVisible) {
                 await DiffDocumentPassOutput(leftDocument, rightDocument, 
@@ -323,14 +328,42 @@ namespace IRExplorerUI {
             });
         }
 
-        private async Task DiffDocuments(IRDocument leftDocument, 
-                                         IRDocument rightDocument, 
-                                         string leftText, string rightText, 
-                                         IRTextSection newLeftSection = null,
-                                         IRTextSection newRightSection = null) {
+        private async Task<SideBySideDiffModel> ComputeSectionDiffs(string leftText, string rightText,
+                                                            IRTextSection newLeftSection,
+                                                            IRTextSection newRightSection) {
+            if (CanReuseSectionDiffs(newLeftSection, newRightSection)) {
+                return sessionState_.SectionDiffState.CurrentDiffResults;
+            }
+
             // Start the actual document diffing on another thread.
             var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
             var diff = await Task.Run(() => diffBuilder.ComputeDiffs(leftText, rightText));
+            sessionState_.SectionDiffState.CurrentDiffResults = diff;
+            sessionState_.SectionDiffState.CurrentDiffSettings = App.Settings.DiffSettings;
+            return diff;
+        }
+
+        private bool CanReuseSectionDiffs(IRTextSection newLeftSection, IRTextSection newRightSection) {
+            // Check if the text of the two sections is the same
+            // as the ones being currently compared.
+            if (sessionState_.SectionDiffState.CurrentDiffResults == null ||
+                sessionState_.SectionDiffState.CurrentDiffSettings == null) {
+                return false;
+            }
+
+            if (!sessionState_.SectionDiffState.CurrentDiffSettings.Equals(App.Settings.DiffSettings)) {
+                return false;
+            }
+
+            return !newLeftSection.IsSectionTextDifferent(sessionState_.SectionDiffState.LeftSection) && 
+                   !newRightSection.IsSectionTextDifferent(sessionState_.SectionDiffState.RightSection);
+        }
+
+        private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, 
+                                      string leftText, string rightText, 
+                                      IRTextSection newLeftSection = null,
+                                      IRTextSection newRightSection = null) {
+            var diff = await ComputeSectionDiffs(leftText, rightText, newLeftSection, newRightSection);
 
             // Create the diff filter that will post-process the diff results.
             var leftDiffStats = new DiffStatistics();
@@ -356,7 +389,7 @@ namespace IRExplorerUI {
             newLeftSection ??= sessionState_.SectionDiffState.LeftSection;
             newRightSection ??= sessionState_.SectionDiffState.RightSection;
             sessionState_.SectionDiffState.UpdateResults(leftDiffResult, newLeftSection,
-                                                         rightDiffResult, newRightSection);
+                                                    rightDiffResult, newRightSection);
 
             // The UI-thread dependent work.
             var leftDocumentHost = FindDocumentHost(leftDocument);
@@ -482,6 +515,7 @@ namespace IRExplorerUI {
                 (rightText, newRightSection) =
                     await SwitchOtherDiffedDocumentSide(section, sessionState_.SectionDiffState.RightDocument.Section,
                                                         sessionState_.DiffDocument);
+                newRightSection ??= sessionState_.SectionDiffState.RightDocument.Section;
             }
             else if (document == sessionState_.SectionDiffState.RightDocument) {
                 var result = await Task.Run(() => LoadAndParseSection(section));
@@ -491,6 +525,7 @@ namespace IRExplorerUI {
                 (leftText, newLeftSection) =
                     await SwitchOtherDiffedDocumentSide(section, sessionState_.SectionDiffState.LeftDocument.Section,
                                                         sessionState_.MainDocument);
+                newLeftSection ??= sessionState_.SectionDiffState.LeftDocument.Section;
             }
             else {
                 // Document is not part of the diff set.
@@ -499,23 +534,36 @@ namespace IRExplorerUI {
 
             var leftDocument = sessionState_.SectionDiffState.LeftDocument;
             var rightDocument = sessionState_.SectionDiffState.RightDocument;
-
-            if (newLeftSection != null) {
-                UpdateUIAfterSectionSwitch(newLeftSection, leftDocument);
-            }
-
-            if (newRightSection != null) {
-                UpdateUIAfterSectionSwitch(newRightSection, rightDocument);
-            }
-
             await EnableDocumentDiffState(sessionState_.SectionDiffState);
-            await DiffDocuments(leftDocument.TextView, rightDocument.TextView, 
-                                leftText, rightText,
-                                newLeftSection, newRightSection);
+
+            if (newLeftSection.IsSectionTextDifferent(newRightSection)) {
+                if (newLeftSection != null) {
+                    UpdateUIAfterSectionSwitch(newLeftSection, leftDocument);
+                }
+
+                if (newRightSection != null) {
+                    UpdateUIAfterSectionSwitch(newRightSection, rightDocument);
+                }
+
+                await DiffDocuments(leftDocument.TextView, rightDocument.TextView,
+                                  leftText, rightText,
+                                  newLeftSection, newRightSection);
+            }
+            else {
+                HandleNoDiffDocuments(leftDocument.TextView, rightDocument.TextView);
+            }
+
             if (sessionState_.SectionDiffState.PassOutputVisible) {
                 await DiffDocumentPassOutput(leftDocument.TextView, rightDocument.TextView,
                                              sessionState_.SectionDiffState.PassOutputShowBefore);
             }
+        }
+
+        private void HandleNoDiffDocuments(IRDocument leftDocument, IRDocument rightDocument) {
+            // No diffs, don't run the differ.
+            leftDocument.RemoveDiffTextSegments();
+            rightDocument.RemoveDiffTextSegments();
+            UpdateDiffStatus(new DiffStatistics());
         }
 
         private async Task<Tuple<string, IRTextSection>>

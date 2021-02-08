@@ -67,6 +67,7 @@ namespace IRExplorerUI {
     public class IRDocument : TextEditor, INotifyPropertyChanged {
         private const float ParentStyleLightAdjustment = 1.20f;
         private const int DefaultMaxExpressionLevel = 4;
+        private const int ExpressionLevelIncrement = 2;
 
         private static DocumentActionKind[] AutomationActions = {
             DocumentActionKind.SelectElement,
@@ -1834,7 +1835,7 @@ namespace IRExplorerUI {
 
             // Each expansion of the same element doubles the recursion depth.
             if (currentExprElement_ == operand) {
-                currentExprLevel_ *= 2;
+                currentExprLevel_ += ExpressionLevelIncrement;
             }
             else {
                 currentExprElement_ = operand;
@@ -2014,7 +2015,7 @@ namespace IRExplorerUI {
 
             // Each expansion of the same element doubles the recursion depth.
             if (currentExprElement_ == element) {
-                currentExprLevel_ *= 2;
+                currentExprLevel_ += ExpressionLevelIncrement;
             }
             else {
                 currentExprElement_ = element;
@@ -2085,7 +2086,8 @@ namespace IRExplorerUI {
         }
 
         private void ResetExpressionLevel(IRElement element = null) {
-            if (element == null || element != currentExprElement_) {
+            if (element == null || element != currentExprElement_ || 
+                 !Utils.IsControlModifierActive()) {
                 currentExprElement_ = null;
                 currentExprLevel_ = 0;
             }
@@ -3168,6 +3170,11 @@ namespace IRExplorerUI {
         public void AddDiffTextSegments(List<DiffTextSegment> segments) {
             diffSegments_ = segments;
             diffHighlighter_.Add(segments);
+        }
+
+        public void RemoveDiffTextSegments() {
+            diffHighlighter_.Clear();
+            UpdateHighlighting();
         }
 
         public void StartDiffSegmentAdding() {

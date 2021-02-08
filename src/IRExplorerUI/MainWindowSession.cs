@@ -371,6 +371,13 @@ namespace IRExplorerUI {
             try {
                 var result = new LoadedDocument(path, id);
                 result.Loader = new DocumentSectionLoader(path, compilerInfo_.IR);
+                var sw = Stopwatch.StartNew();
+                result.Loader.SectionPreprocessingCompleted += (sender, b) => {
+                    Dispatcher.Invoke(() => {
+                        SetOptionalStatus($"Prep done in {sw.ElapsedMilliseconds}");
+                    });
+                };
+
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
@@ -962,9 +969,10 @@ namespace IRExplorerUI {
             Title = $"IR Explorer - Loading {documentTitle}";
             Utils.DisableControl(DockManager, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
+            DocumentLoadProgressBar.Value = 0;
             documentLoadStartTime_ = DateTime.UtcNow;
-            loadingDocuments_ = true;
             lastDocumentLoadTime_ = DateTime.UtcNow;
+            loadingDocuments_ = true;
         }
 
         private void UpdateUIAfterLoadDocument() {

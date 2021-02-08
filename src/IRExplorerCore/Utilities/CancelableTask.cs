@@ -41,6 +41,7 @@ namespace IRExplorerCore {
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
         }
 
+        public CancellationToken Token => cancelToken_;
         public bool IsCanceled => cancelToken_.IsCancellationRequested;
 
         public void Dispose() {

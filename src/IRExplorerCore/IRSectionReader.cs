@@ -15,10 +15,22 @@ namespace IRExplorerCore {
         public long TotalBytes { get; set; }
     }
 
+    public class SectionReaderText {
+        public SectionReaderText(IRPassOutput output, List<string> textLines) {
+            Output = output;
+            TextLines = textLines;
+        }
+
+        public IRPassOutput Output { get; set; }
+        public List<string> TextLines { get; set; }
+    }
+
     public delegate void ProgressInfoHandler(IRSectionReader reader, SectionReaderProgressInfo info);
+    public delegate void SectionTextHandler(IRSectionReader reader, SectionReaderText info);
 
     public interface IRSectionReader {
-        IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler);
+        IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler,
+                                    SectionTextHandler sectionTextHandler = null);
         string GetSectionText(IRTextSection section);
         List<string> GetSectionTextLines(IRTextSection section);
         string GetPassOutputText(IRPassOutput output);

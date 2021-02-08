@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using DiffPlex.DiffBuilder.Model;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -40,6 +41,8 @@ namespace IRExplorerUI {
         public IRDocumentHost IgnoreNextScrollEventDocument { get; set; }
         public DiffMarkingResult LeftDiffResults { get; set; }
         public DiffMarkingResult RightDiffResults { get; set; }
+        public SideBySideDiffModel CurrentDiffResults { get; set; }
+        public DiffSettings CurrentDiffSettings { get; set; }
         public bool PassOutputVisible { get; set; }
         public bool PassOutputShowBefore { get; set; }
 
@@ -58,6 +61,8 @@ namespace IRExplorerUI {
             LeftDocument = RightDocument = null;
             LeftSection = RightSection = null;
             IgnoreNextScrollEventDocument = null;
+            CurrentDiffResults = null;
+            CurrentDiffSettings = null;
         }
 
         public bool IsDiffDocument(IRDocumentHost docHost) {

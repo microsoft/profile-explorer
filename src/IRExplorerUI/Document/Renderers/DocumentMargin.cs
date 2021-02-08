@@ -37,6 +37,7 @@ namespace IRExplorerUI {
         public Rect PinButtonBounds { get; set; }
         public Rect RemoveButtonBounds { get; set; }
         public bool IsHovered { get; set; }
+        public bool IsTextHovered { get; set; }
         public bool IsNearby { get; set; }
         public object Tag { get; set; }
 
@@ -76,6 +77,7 @@ namespace IRExplorerUI {
     public partial class DocumentMargin : AbstractMargin {
         private const int NearbyBookmarkDistance = 100;
         private const int NearbyBookmarkExtraWidth = 16;
+        private const double HoveredPinnedBookmarkOpacity = 0.2;
 
         private const int ButtonSectionWidth = 32;
         private const int ButtonTextPadding = 8;
@@ -292,16 +294,22 @@ namespace IRExplorerUI {
         private void HandleMouseMoved(Point point) {
             // Test only with visible bookmarks.
             BookmarkSegment newHoveredBookmark = null;
+            bool newTextHoveredBookmark = false;
             bool needsRedrawing = false;
 
             if (DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
                 foreach (var segment in bookmarkSegments_.FindOverlappingSegments(
                     viewStart, viewEnd - viewStart)) {
                     if (newHoveredBookmark == null) {
-                        if (segment.Bounds.Contains(point) ||
-                            segment.PinButtonBounds.Contains(point) ||
+                        if (segment.PinButtonBounds.Contains(point) ||
                             segment.RemoveButtonBounds.Contains(point)) {
                             newHoveredBookmark = segment;
+                            newTextHoveredBookmark = false;
+                            continue;
+                        }
+                        else if (segment.Bounds.Contains(point)) {
+                            newHoveredBookmark = segment;
+                            newTextHoveredBookmark = true;
                             continue;
                         }
                     }
@@ -327,13 +335,15 @@ namespace IRExplorerUI {
             }
 
             if (newHoveredBookmark != null) {
-                if (newHoveredBookmark != hoveredBookmark_) {
+                if (newHoveredBookmark != hoveredBookmark_ ||
+                    hoveredBookmark_.IsTextHovered != newTextHoveredBookmark) {
                     // Replace hovered bookmark.
                     if (hoveredBookmark_ != null) {
                         UnselectHoveredBookmark();
                     }
 
                     newHoveredBookmark.IsHovered = true;
+                    newHoveredBookmark.IsTextHovered = newTextHoveredBookmark;
                     hoveredBookmark_ = newHoveredBookmark;
                     needsRedrawing = true;
                 }
@@ -345,8 +355,7 @@ namespace IRExplorerUI {
                     needsRedrawing = true;
                 }
             }
-            else if (hoveredBookmark_ != null &&
-                     !(hoveredBookmark_.IsSelected || hoveredBookmark_.IsPinned)) {
+            else if (hoveredBookmark_ != null) {
                 UnselectHoveredBookmark();
                 needsRedrawing = true;
             }
@@ -428,6 +437,7 @@ namespace IRExplorerUI {
         private void UnselectHoveredBookmark() {
             if (hoveredBookmark_ != null) {
                 hoveredBookmark_.IsHovered = false;
+                hoveredBookmark_.IsTextHovered = false;
                 hoveredBookmark_ = null;
             }
         }
@@ -590,10 +600,17 @@ namespace IRExplorerUI {
                 //        drawingContext.DrawText(text, new Point(4, y));
                 //    }
                 //}
+                bool popOpacity = false;
 
                 if (segment.HasText && segment.IsExpanded) {
                     double baseWidth = RenderSize.Width + ButtonSectionWidth;
                     double fontSize = App.Settings.DocumentSettings.FontSize;
+
+                    //? TODO: Add option to control little opacity on hover
+                    if (segment.IsPinned && segment.IsTextHovered) {
+                        drawingContext.PushOpacity(HoveredPinnedBookmarkOpacity);
+                        popOpacity = true;
+                    }
 
                     if (segment.Tag is RemarkLineGroup remarkGroup) {
                         double maxTextWidth = 0;
@@ -610,7 +627,7 @@ namespace IRExplorerUI {
                             }
 
                             var text = DocumentUtils.CreateFormattedText(this, remark.RemarkText, DefaultFont, fontSize,
-                                                                         Brushes.Black, fontWeight);
+                                Brushes.Black, fontWeight);
                             textSegments.Add(text);
                             maxTextWidth = Math.Max(maxTextWidth, text.Width);
                             index++;
@@ -621,13 +638,14 @@ namespace IRExplorerUI {
                         foreach (var remark in remarkGroup.Remarks) {
                             var remarkColor = remark.Category.MarkColor == Colors.Black ||
                                               remark.Category.MarkColor == Colors.Transparent
-                                              ? backgroundBrush_.Color
-                                              : remark.Category.MarkColor;
+                                ? backgroundBrush_.Color
+                                : remark.Category.MarkColor;
                             var remarkBrush = ColorBrushes.GetBrush(remarkColor);
                             var text = textSegments[index];
                             double offsetY = y + (index - leaderIndex) * lineHeight;
 
-                            var remarkBounds = Utils.SnapRectToPixels(0, offsetY - 1, maxTextWidth + baseWidth + 2 * ButtonTextPadding, lineHeight);
+                            var remarkBounds = Utils.SnapRectToPixels(0, offsetY - 1,
+                                maxTextWidth + baseWidth + 2 * ButtonTextPadding, lineHeight);
                             drawingContext.DrawRectangle(remarkBrush, style.Border, remarkBounds);
                             drawingContext.DrawText(text, new Point(baseWidth + ButtonTextPadding, offsetY - 1));
 
@@ -639,12 +657,13 @@ namespace IRExplorerUI {
                         }
                     }
                     else {
-                        var text = DocumentUtils.CreateFormattedText(this, segment.Bookmark.Text, DefaultFont, fontSize,
-                                                       Brushes.Black);
+                        var text = DocumentUtils.CreateFormattedText(this, segment.Bookmark.Text, DefaultFont, fontSize, Brushes.Black);
                         bounds = Utils.SnapRectToPixels(0, y - 1, text.Width + baseWidth + 2 * ButtonTextPadding, lineHeight);
                         drawingContext.DrawRectangle(style.BackColor, style.Border, bounds);
                         drawingContext.DrawText(text, new Point(baseWidth + ButtonTextPadding, y));
                     }
+
+                    
                 }
                 else {
                     double nearbyExtraWidth = segment.IsNearby || segment.IsExpanded ? NearbyBookmarkExtraWidth : 0;
@@ -666,6 +685,10 @@ namespace IRExplorerUI {
 
                     pinBounds = DrawBookmarkButton(pinIcon_, buttonBounds, pinStyle, drawingContext,
                                                    removeBounds.Width);
+                }
+                
+                if (popOpacity) {
+                    drawingContext.Pop();
                 }
 
                 segment.Bounds = bounds; // Update bounds for later hit testing.
