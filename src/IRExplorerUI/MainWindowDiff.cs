@@ -292,16 +292,12 @@ namespace IRExplorerUI {
             await EnableDocumentDiffState(diffState);
             var leftDocument = diffState.LeftDocument.TextView;
             var rightDocument = diffState.RightDocument.TextView;
-
-            if (leftDocument.Section.IsSectionTextDifferent(rightDocument.Section)) {
-                var leftText = await GetSectionTextAsync(leftDocument.Section);
-                var rightText = await GetSectionTextAsync(rightDocument.Section);
-                await DiffDocuments(leftDocument, rightDocument, leftText, rightText);
-            }
-            else {
-                HandleNoDiffDocuments(leftDocument, rightDocument);
-            }
-
+            
+            var leftText = await GetSectionTextAsync(leftDocument.Section);
+            var rightText = await GetSectionTextAsync(rightDocument.Section);
+            await DiffDocuments(leftDocument, rightDocument, leftText, rightText,
+                              leftDocument.Section, rightDocument.Section);
+            
             if (diffState.PassOutputVisible) {
                 await DiffDocumentPassOutput(leftDocument, rightDocument, 
                                              diffState.PassOutputShowBefore);
@@ -323,6 +319,17 @@ namespace IRExplorerUI {
             return Task.Run(() => {
                 var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
                                                    isRightDoc, diffStats);
+                diffUpdater.ReparseDiffedFunction(result, section);
+                return result;
+            });
+        }
+
+        private Task<DiffMarkingResult> MarkIdenticalSectionDiffs(IRTextSection section, string text,
+                                                            IDiffOutputFilter diffFilter) {
+            var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
+
+            return Task.Run(() => {
+                var result = diffUpdater.CreateNoDiffDocument(text);
                 diffUpdater.ReparseDiffedFunction(result, section);
                 return result;
             });
@@ -363,37 +370,52 @@ namespace IRExplorerUI {
                                       string leftText, string rightText, 
                                       IRTextSection newLeftSection = null,
                                       IRTextSection newRightSection = null) {
-            var diff = await ComputeSectionDiffs(leftText, rightText, newLeftSection, newRightSection);
-
-            // Create the diff filter that will post-process the diff results.
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
+            DiffMarkingResult leftDiffResult;
+            DiffMarkingResult rightDiffResult;
+
+            // Create the diff filter that will post-process the diff results.
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
             diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
-            // Apply the diff results on the left and right documents in parallel.
-            // This will produce two AvalonEdit documents that will be installed 
-            // in the doc. hosts once back on the UI thread.
-            var leftMarkTask = MarkSectionDiffs(leftDocument.Section, leftText, rightText, 
-                                                diff.OldText, diff.NewText,
-                                                false, diffFilter, leftDiffStats);
-            var rightMarkTask = MarkSectionDiffs(rightDocument.Section, leftText, rightText, 
-                                                 diff.NewText, diff.OldText,
-                                                 true, diffFilter, rightDiffStats);
+            // Fairly often the text is identical, don't do the diffing for such cases.
+            // Also frequen is to have different text, but it is on both left/right sides
+            // identical to the previous sections - in this case the diff results are reused.
+            if (newLeftSection.IsSectionTextDifferent(newRightSection)) {
+                var diff = await ComputeSectionDiffs(leftText, rightText, newLeftSection, newRightSection);
 
-            await Task.WhenAll(leftMarkTask, rightMarkTask);
-            var leftDiffResult = await leftMarkTask;
-            var rightDiffResult = await rightMarkTask;
+                // Apply the diff results on the left and right documents in parallel.
+                // This will produce two AvalonEdit documents that will be installed 
+                // in the doc. hosts once back on the UI thread.
+                var leftMarkTask = MarkSectionDiffs(newLeftSection, leftText, rightText,
+                    diff.OldText, diff.NewText,
+                    false, diffFilter, leftDiffStats);
+                var rightMarkTask = MarkSectionDiffs(newRightSection, leftText, rightText,
+                    diff.NewText, diff.OldText,
+                    true, diffFilter, rightDiffStats);
+
+                await Task.WhenAll(leftMarkTask, rightMarkTask);
+                leftDiffResult = await leftMarkTask;
+                rightDiffResult = await rightMarkTask;
+            }
+            else {
+                var leftMarkTask = MarkIdenticalSectionDiffs(newLeftSection, leftText, diffFilter);
+                var rightMarkTask = MarkIdenticalSectionDiffs(newRightSection, rightText, diffFilter);
+
+                await Task.WhenAll(leftMarkTask, rightMarkTask);
+                leftDiffResult = await leftMarkTask;
+                rightDiffResult = await rightMarkTask;
+            }
 
             // Update the diff session state.
-            newLeftSection ??= sessionState_.SectionDiffState.LeftSection;
-            newRightSection ??= sessionState_.SectionDiffState.RightSection;
             sessionState_.SectionDiffState.UpdateResults(leftDiffResult, newLeftSection,
                                                     rightDiffResult, newRightSection);
 
             // The UI-thread dependent work.
             var leftDocumentHost = FindDocumentHost(leftDocument);
             var rightDocumentHost = FindDocumentHost(rightDocument);
+
             NotifyPanelsOfSectionUnload(leftDocument.Section, leftDocumentHost, true);
             NotifyPanelsOfSectionUnload(rightDocument.Section, rightDocumentHost, true);
 
@@ -536,22 +558,17 @@ namespace IRExplorerUI {
             var rightDocument = sessionState_.SectionDiffState.RightDocument;
             await EnableDocumentDiffState(sessionState_.SectionDiffState);
 
-            if (newLeftSection.IsSectionTextDifferent(newRightSection)) {
-                if (newLeftSection != null) {
-                    UpdateUIAfterSectionSwitch(newLeftSection, leftDocument);
-                }
-
-                if (newRightSection != null) {
-                    UpdateUIAfterSectionSwitch(newRightSection, rightDocument);
-                }
-
-                await DiffDocuments(leftDocument.TextView, rightDocument.TextView,
-                                  leftText, rightText,
-                                  newLeftSection, newRightSection);
+            if (newLeftSection != null) {
+                UpdateUIAfterSectionSwitch(newLeftSection, leftDocument);
             }
-            else {
-                HandleNoDiffDocuments(leftDocument.TextView, rightDocument.TextView);
+
+            if (newRightSection != null) {
+                UpdateUIAfterSectionSwitch(newRightSection, rightDocument);
             }
+
+            await DiffDocuments(leftDocument.TextView, rightDocument.TextView,
+                              leftText, rightText,
+                              newLeftSection, newRightSection);
 
             if (sessionState_.SectionDiffState.PassOutputVisible) {
                 await DiffDocumentPassOutput(leftDocument.TextView, rightDocument.TextView,

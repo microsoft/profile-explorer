@@ -44,6 +44,17 @@ namespace IRExplorerUI.Diff {
             ignoredDiffLetters_ = diffFilter_.IgnoredDiffLetters;
         }
 
+        public DiffMarkingResult CreateNoDiffDocument(string text) {
+            var document = new TextDocument(new StringTextSource(text));
+            document.SetOwnerThread(Thread.CurrentThread);
+
+            var result = new DiffMarkingResult(document);
+            result.DiffText = text;
+
+            document.SetOwnerThread(null);
+            return result;
+        }
+
         public DiffMarkingResult MarkDiffs(string text, string otherText,
                                            DiffPaneModel diff, DiffPaneModel otherDiff,
                                            bool isRightDoc, DiffStatistics diffStats,
