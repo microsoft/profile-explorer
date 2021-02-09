@@ -22,6 +22,9 @@ namespace IRExplorerUI {
         [ProtoMember(13)] public bool FunctionSearchCaseSensitive { get; set; }
         [ProtoMember(14)] public bool SectionSearchCaseSensitive { get; set; }
 
+        [ProtoMember(15)] public bool MarkSectionsIdenticalToPrevious { get; set; }
+        [ProtoMember(16)] public bool LowerIdenticalToPreviousOpacity { get; set; }
+
         public override void Reset() {
             ColorizeSectionNames = true;
             ShowSectionSeparators = true;
@@ -31,6 +34,8 @@ namespace IRExplorerUI {
             MarkNoDiffSectionGroups = false;
             FunctionSearchCaseSensitive = false;
             SectionSearchCaseSensitive = false;
+            MarkSectionsIdenticalToPrevious = true;
+            LowerIdenticalToPreviousOpacity = true;
             NewSectionColor = Utils.ColorFromString("#007200");
             MissingSectionColor = Utils.ColorFromString("#BB0025");
             ChangedSectionColor = Utils.ColorFromString("#DE8000");
@@ -51,6 +56,8 @@ namespace IRExplorerUI {
                    IndentationAmount == settings.IndentationAmount &&
                    FunctionSearchCaseSensitive == settings.FunctionSearchCaseSensitive &&
                    SectionSearchCaseSensitive == settings.SectionSearchCaseSensitive &&
+                   LowerIdenticalToPreviousOpacity == settings.LowerIdenticalToPreviousOpacity &&
+                   MarkSectionsIdenticalToPrevious == settings.MarkSectionsIdenticalToPrevious &&
                    NewSectionColor.Equals(settings.NewSectionColor) &&
                    MissingSectionColor.Equals(settings.MissingSectionColor) &&
                    ChangedSectionColor.Equals(settings.ChangedSectionColor);

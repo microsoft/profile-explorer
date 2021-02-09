@@ -44,7 +44,7 @@
 
             <CheckBox
                 Name="IndentationCheckbox"
-                Margin="0,0,0,2"
+                Margin="0,2,0,2"
                 Content="Use indentation for nested section names"
                 IsChecked="{Binding UseNameIndentation, Mode=TwoWay}"
                 ToolTip="Show section names indentend based on the parent/child relationship" />
@@ -66,17 +66,24 @@
                 IsChecked="{Binding ShowSectionSeparators, Mode=TwoWay}"
                 ToolTip="Show before/after section separator lines for groups of sections" />
 
+
             <CheckBox
-                Margin="0,0,0,2"
+                x:Name="IdenticalToPreviousCheckbox"
+                Margin="0,2,0,2"
+                Content="Mark sections identical to previous"
+                IsChecked="{Binding MarkSectionsIdenticalToPrevious, Mode=TwoWay}"
+                ToolTip="Identify sequences of sections with no changes in the IR compared to previous one" />
+            <CheckBox
+                Margin="20,2,0,2"
+                Content="Lower text opacity for identical sections"
+                IsChecked="{Binding LowerIdenticalToPreviousOpacity, Mode=TwoWay}"
+                IsEnabled="{Binding ElementName=IdenticalToPreviousCheckbox, Path=IsChecked}"
+                ToolTip="Make the section name semi-transparent if it's identical to the previous one" />
+            <CheckBox
+                Margin="0,2,0,2"
                 Content="Mark sections with annotations"
                 IsChecked="{Binding MarkAnnotatedSections, Mode=TwoWay}"
                 ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" />
-            <CheckBox
-                Margin="0,0,0,2"
-                Content="Mark groups of sections with no changes"
-                IsChecked="{Binding MarkNoDiffSectionGroups, Mode=TwoWay}"
-                IsEnabled="False"
-                ToolTip="Identify sequences of sections with no changes and group them together" />
             <Separator Margin="0,4,0,4" />
 
             <TextBlock FontWeight="DemiBold" Text="List Filtering" />
@@ -85,7 +92,7 @@
                 Content="Use case-sensitive function name search"
                 IsChecked="{Binding FunctionSearchCaseSensitive, Mode=TwoWay}" />
             <CheckBox
-                Margin="0,0,0,2"
+                Margin="0,2,0,2"
                 Content="Use case-sensitive section name search"
                 IsChecked="{Binding SectionSearchCaseSensitive, Mode=TwoWay}" />
 

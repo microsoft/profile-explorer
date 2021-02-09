@@ -51,6 +51,14 @@
             </Style.Triggers>
         </Style>
 
+        <Style x:Key="IconDifferentFromPrevious" TargetType="Image">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Path=IsDiffFromPrevious}" Value="False">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="IconSelected" TargetType="Image">
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Path=IsSelected}" Value="False">
@@ -291,7 +299,7 @@
                         <Image Source="{StaticResource SearchIcon}" />
                         <Grid Height="24">
                             <TextBox
-                                Name="SectionFilter"
+                                x:Name="SectionFilter"
                                 Width="200"
                                 Margin="4,0,0,0"
                                 HorizontalAlignment="Center"
@@ -329,12 +337,17 @@
                         <Separator />
 
                         <ToggleButton
-                            x:Name="FilterTagged"
-                            Checked="FilterTagged_Checked"
+                            IsChecked="{Binding FilterTagged}"
                             TabIndex="2"
-                            ToolTip="Show only sections with a tag"
-                            Unchecked="FilterTagged_Unchecked">
+                            ToolTip="Show only sections with a tag">
                             <Image Source="{StaticResource TagIcon}" />
+                        </ToggleButton>
+
+                        <ToggleButton
+                            IsChecked="{Binding FilterDiffFromPrevious}"
+                            TabIndex="2"
+                            ToolTip="Show only sections that are different from the previous one">
+                            <Image Source="{StaticResource EyeIcon}" />
                         </ToggleButton>
                         <Separator />
 
@@ -480,6 +493,11 @@
                                             <Image
                                                 Width="16"
                                                 Height="16"
+                                                Source="{StaticResource DotIconTransparent}"
+                                                Style="{StaticResource IconDifferentFromPrevious}" />
+                                            <Image
+                                                Width="16"
+                                                Height="16"
                                                 Source="{StaticResource TagIcon}"
                                                 Style="{StaticResource IconTagged}" />
                                         </StackPanel>
@@ -503,6 +521,15 @@
                             <DataTrigger Binding="{Binding Path=IsSelected}" Value="True">
                                 <Setter Property="FontWeight" Value="Bold" />
                             </DataTrigger>
+
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding Path=IsDiffFromPrevious}" Value="False" />
+                                    <Condition Binding="{Binding Path=LowerIdenticalToPreviousOpacity}" Value="True" />
+                                    <Condition Binding="{Binding Path=IsSelected}" Value="False" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Opacity" Value="0.7" />
+                            </MultiDataTrigger>
 
                             <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
                                 <Setter Property="Foreground" Value="{Binding Path=TextColor}" />

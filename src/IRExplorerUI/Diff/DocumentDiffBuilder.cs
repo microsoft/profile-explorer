@@ -79,15 +79,15 @@ namespace IRExplorerUI {
 
         public async Task<List<DocumentDiffResult>> ComputeSectionDiffs(
             List<Tuple<IRTextSection, IRTextSection>> comparedSections, IRTextSectionLoader leftDocLoader,
-            IRTextSectionLoader rightDocLoader) {
+            IRTextSectionLoader rightDocLoader, bool quickMode) {
+            //? TODO: Use a "max threads" setting
             int maxConcurrency = Math.Min(16, Environment.ProcessorCount);
             var tasks = new Task<DocumentDiffResult>[comparedSections.Count];
 
             leftDocLoader.SuspendCaching();
             rightDocLoader.SuspendCaching();
             await Task.Run(() => ComputeSectionDiffsImpl(comparedSections, leftDocLoader, rightDocLoader,
-                                                         tasks, maxConcurrency));
-
+                                                         tasks, quickMode, maxConcurrency));
             var results = new List<DocumentDiffResult>(tasks.Length);
 
             foreach (var task in tasks) {
@@ -99,9 +99,12 @@ namespace IRExplorerUI {
             return results;
         }
 
+        //? flag for quick mode that throws away diffs
+        //? if no diffs needed, use SHA
+        //? - quick diff can also use just text or signature check!
         private async Task ComputeSectionDiffsImpl(
             List<Tuple<IRTextSection, IRTextSection>> comparedSections, IRTextSectionLoader leftDocLoader,
-            IRTextSectionLoader rightDocLoader, Task<DocumentDiffResult>[] tasks, int maxConcurrency) {
+            IRTextSectionLoader rightDocLoader, Task<DocumentDiffResult>[] tasks, bool quickMode, int maxConcurrency) {
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);
             int index = 0;
 
@@ -112,12 +115,26 @@ namespace IRExplorerUI {
 
                 tasks[index++] = Task.Run(() => {
                     try {
-                        //? TODO: Check SHA first, then compare text if no SHA
-                        string leftText = leftDocLoader.GetSectionText(leftSection, false);
-                        string rightText = rightDocLoader.GetSectionText(rightSection, false);
-                        var diffs = ComputeInternalDiffs(leftText, rightText);
-                        bool hasDiffs = HasDiffs(diffs);
-                        return new DocumentDiffResult(leftSection, rightSection, diffs, hasDiffs);
+                        if (quickMode) {
+                            if(leftDocLoader.SectionSignaturesComputed &&
+                               rightDocLoader.SectionSignaturesComputed) {
+                                bool hasDiffs = leftSection.IsSectionTextDifferent(rightSection);
+                                return new DocumentDiffResult(leftSection, rightSection, null, hasDiffs);
+                            }
+                            else {
+                                string leftText = leftDocLoader.GetSectionText(leftSection, false);
+                                string rightText = rightDocLoader.GetSectionText(rightSection, false);
+                                bool hasDiffs = !leftText.Equals(rightText, StringComparison.Ordinal);
+                                return new DocumentDiffResult(leftSection, rightSection, null, hasDiffs);
+                            }
+                        }
+                        else {
+                            string leftText = leftDocLoader.GetSectionText(leftSection, false);
+                            string rightText = rightDocLoader.GetSectionText(rightSection, false);
+                            var diffs = ComputeInternalDiffs(leftText, rightText);
+                            bool hasDiffs = HasDiffs(diffs);
+                            return new DocumentDiffResult(leftSection, rightSection, diffs, hasDiffs);
+                        }
                     }
                     finally {
                         concurrencySemaphore.Release();
