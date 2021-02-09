@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
@@ -30,17 +31,20 @@ namespace IRExplorerCore {
         protected ICompilerIRInfo irInfo_;
         protected bool cacheEnabled_;
         protected object lockObject_;
+        protected long sectionPreprocessingCompleted_;
 
         public event EventHandler<bool> SectionPreprocessingCompleted;
 
         protected void NotifySectionPreprocessingCompleted(bool canceled) {
-            SectionPreprocessingCompleted(this, canceled);
+            Interlocked.Exchange(ref sectionPreprocessingCompleted_, 1);
+            SectionPreprocessingCompleted?.Invoke(this, canceled);
         }
 
         protected void Initialize(ICompilerIRInfo irInfo, bool cacheEnabled) {
             irInfo_ = irInfo;
             cacheEnabled_ = cacheEnabled;
             lockObject_ = new object();
+            sectionPreprocessingCompleted_ = 0;
 
             if (cacheEnabled) {
                 sectionCache_ = new Dictionary<IRTextSection, ParsedIRTextSection>();
@@ -51,6 +55,8 @@ namespace IRExplorerCore {
             var errorHandler = irInfo_.CreateParsingErrorHandler();
             return (irInfo_.CreateSectionParser(errorHandler), errorHandler);
         }
+
+        public bool SectionSignaturesComputed => Interlocked.Read(ref sectionPreprocessingCompleted_) != 0;
 
         public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
         public abstract string GetDocumentOutputText();

@@ -408,11 +408,6 @@
                                             <Image
                                                 Width="16"
                                                 Height="16"
-                                                Source="{StaticResource TagIcon}"
-                                                Style="{StaticResource IconTagged}" />
-                                            <Image
-                                                Width="16"
-                                                Height="16"
                                                 Source="{StaticResource DockRightIcon}"
                                                 Style="{StaticResource IconSelected}" />
 
@@ -463,6 +458,31 @@
                                         BorderBrush="{Binding BorderBrush}"
                                         BorderThickness="{Binding BorderThickness}">
                                         <TextBlock Margin="6,2,6,2" Text="{Binding BlockCountString}" />
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <GridViewColumn Width="40">
+                            <GridViewColumnHeader Content="Flags" />
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border
+                                        Margin="-6,-2,-6,-2"
+                                        BorderBrush="{Binding BorderBrush}"
+                                        BorderThickness="{Binding BorderThickness}">
+                                        <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
+                                            <Image
+                                                Width="16"
+                                                Height="16"
+                                                Source="{StaticResource TagIcon}"
+                                                Style="{StaticResource IconTagged}" />
+                                        </StackPanel>
                                     </Border>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>

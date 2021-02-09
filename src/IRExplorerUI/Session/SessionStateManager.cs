@@ -251,6 +251,11 @@ namespace IRExplorerUI {
             return documents_.Find(item => item.Summary == summary);
         }
 
+        public bool AreSectionSignaturesComputed(IRTextSection section) {
+            var loadedDoc = FindLoadedDocument(section);
+            return loadedDoc?.Loader.SectionSignaturesComputed ?? false;
+        }
+
         public void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section) {
             if (section == null) {
                 globalPanelStates_[panel.PanelKind] = stateObject;

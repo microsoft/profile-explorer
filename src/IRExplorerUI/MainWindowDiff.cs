@@ -350,6 +350,15 @@ namespace IRExplorerUI {
             return diff;
         }
 
+        private bool IsSectionTextDifferent(IRTextSection sectionA, IRTextSection sectionB) {
+            if (!sessionState_.AreSectionSignaturesComputed(sectionA) ||
+                !sessionState_.AreSectionSignaturesComputed(sectionB)) {
+                return true;
+            }
+
+            return sectionA.IsSectionTextDifferent(sectionB);
+        }
+
         private bool CanReuseSectionDiffs(IRTextSection newLeftSection, IRTextSection newRightSection) {
             // Check if the text of the two sections is the same
             // as the ones being currently compared.
@@ -362,8 +371,8 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            return !newLeftSection.IsSectionTextDifferent(sessionState_.SectionDiffState.LeftSection) && 
-                   !newRightSection.IsSectionTextDifferent(sessionState_.SectionDiffState.RightSection);
+            return !IsSectionTextDifferent(newLeftSection, sessionState_.SectionDiffState.LeftSection) && 
+                   !IsSectionTextDifferent(newRightSection, sessionState_.SectionDiffState.RightSection);
         }
 
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, 
@@ -382,7 +391,7 @@ namespace IRExplorerUI {
             // Fairly often the text is identical, don't do the diffing for such cases.
             // Also frequen is to have different text, but it is on both left/right sides
             // identical to the previous sections - in this case the diff results are reused.
-            if (newLeftSection.IsSectionTextDifferent(newRightSection)) {
+            if(IsSectionTextDifferent(newLeftSection, newRightSection)) {
                 var diff = await ComputeSectionDiffs(leftText, rightText, newLeftSection, newRightSection);
 
                 // Apply the diff results on the left and right documents in parallel.
