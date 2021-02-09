@@ -474,7 +474,7 @@ namespace IRExplorerUI {
                         var func = sessionState_.MainDocument.Summary.FindFunction(funcName);
 
                         if (func != null) {
-                            SectionPanel.SelectFunction(func);
+                            await SectionPanel.SelectFunction(func);
 
                             if (args.Length >= 7) {
                                 if (args[5].EndsWith("section")) {

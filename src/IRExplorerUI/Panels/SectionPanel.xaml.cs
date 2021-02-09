@@ -19,6 +19,7 @@ using Microsoft.Win32;
 using System.IO;
 using System.Diagnostics;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace IRExplorerUI {
     public static class Command {
@@ -173,6 +174,15 @@ namespace IRExplorerUI {
             }
         }
 
+        private bool isDiffFromPrevious_;
+        public bool IsDiffFromPrevious {
+            get => isDiffFromPrevious_;
+            set {
+                isDiffFromPrevious_ = value;
+                OnPropertyChange(nameof(IsDiffFromPrevious));
+            }
+        }
+
         public bool IsSelected {
             get => isSelected_;
             set {
@@ -182,6 +192,7 @@ namespace IRExplorerUI {
         }
 
         private bool isMarked_;
+
         public bool IsMarked {
             get => isMarked_;
             set {
@@ -201,6 +212,7 @@ namespace IRExplorerUI {
 
         public Brush TextColor { get; set; }
         public Brush BackColor { get; set; }
+        public bool LowerIdenticalToPreviousOpacity { get; set; }
 
         public string NumberString => Section != null ? Section.Number.ToString() : "";
         public string BlockCountString => Section != null ? Section.BlockCount.ToString() : "";
@@ -379,6 +391,30 @@ namespace IRExplorerUI {
             }
         }
 
+        private bool filterTagged_;
+        public bool FilterTagged {
+            get => filterTagged_;
+            set {
+                if (filterTagged_ != value) {
+                    filterTagged_ = value;
+                    OnPropertyChange(nameof(FilterTagged));
+                    RefreshSectionList();
+                }
+            }
+        }
+
+        private bool filterDiffFromPrevious_;
+        public bool FilterDiffFromPrevious {
+            get => filterDiffFromPrevious_;
+            set {
+                if (filterDiffFromPrevious_ != value) {
+                    filterDiffFromPrevious_ = value;
+                    OnPropertyChange(nameof(FilterDiffFromPrevious));
+                    RefreshSectionList();
+                }
+            }
+        }
+
         public IRTextSummary Summary {
             get => summary_;
             set {
@@ -502,7 +538,7 @@ namespace IRExplorerUI {
 
         public void SelectSection(IRTextSection section, bool focus = true, bool force = false) {
             UpdateSectionListBindings(section.ParentFunction, force);
-            var sectionEx = sections_.Find(item => item.Section == section);
+            var sectionEx = GetSectionExtension(section);
             SectionList.SelectedItem = sectionEx;
 
             if (sectionEx != null) {
@@ -549,7 +585,7 @@ namespace IRExplorerUI {
             SectionListScrollChanged?.Invoke(this, e.VerticalOffset);
         }
 
-        private void UpdateFunctionListBindings() {
+        private async Task UpdateFunctionListBindings() {
             if (summary_ == null) {
                 otherSummary_ = null;
                 currentFunction_ = null;
@@ -611,7 +647,7 @@ namespace IRExplorerUI {
             }
 
             if (summary_.Functions.Count == 1) {
-                SelectFunction(summary_.Functions[0]);
+                await SelectFunction(summary_.Functions[0]);
             }
         }
 
@@ -642,7 +678,6 @@ namespace IRExplorerUI {
 
             currentFunction_ = function;
             FunctionList.SelectedItem = function;
-
             Sections = CreateSectionsExtension();
             FunctionSwitched?.Invoke(this, currentFunction_);
         }
@@ -690,6 +725,8 @@ namespace IRExplorerUI {
                 }
 
                 sectionEx.SectionDiffKind = DiffKind.None;
+                sectionEx.LowerIdenticalToPreviousOpacity = sectionIndex > 0 &&
+                    sectionSettings_.LowerIdenticalToPreviousOpacity;
                 sectionIndex++;
             }
 
@@ -761,7 +798,11 @@ namespace IRExplorerUI {
                 return true;
             }
 
-            if (FilterTagged.IsChecked.HasValue && FilterTagged.IsChecked.Value && !section.IsTagged) {
+            if (FilterTagged && !section.IsTagged) {
+                return false;
+            }
+
+            if (FilterDiffFromPrevious && !section.IsDiffFromPrevious) {
                 return false;
             }
 
@@ -904,9 +945,9 @@ namespace IRExplorerUI {
             ((ListCollectionView)FunctionList.ItemsSource).Refresh();
         }
 
-        private void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+        private async void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (e.AddedItems.Count == 1) {
-                UpdateSectionListBindings(((IRTextFunctionEx)FunctionList.SelectedItem).Function);
+                await SelectFunction(((IRTextFunctionEx)FunctionList.SelectedItem).Function);
             }
         }
 
@@ -988,15 +1029,7 @@ namespace IRExplorerUI {
         public void SwitchToSection(IRTextSection section, IRDocumentHost targetDocument = null) {
             SwitchToSection(Sections.Find(item => item.Section == section), targetDocument);
         }
-
-        private void FilterTagged_Checked(object sender, RoutedEventArgs e) {
-            ((ListCollectionView)SectionList.ItemsSource).Refresh();
-        }
-
-        private void FilterTagged_Unchecked(object sender, RoutedEventArgs e) {
-            ((ListCollectionView)SectionList.ItemsSource).Refresh();
-        }
-
+        
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = true;
             e.Handled = true;
@@ -1209,6 +1242,31 @@ namespace IRExplorerUI {
             }
         }
 
+        private async Task ComputeConsecutiveSectionDiffs() {
+            if(!sectionSettings_.MarkSectionsIdenticalToPrevious || sections_.Count < 2) {
+                return;
+            }
+
+            var comparedSections = new List<Tuple<IRTextSection, IRTextSection>>();
+
+            for (int i = 1; i < sections_.Count; i++) {
+                comparedSections.Add(new Tuple<IRTextSection, IRTextSection>(
+                    sections_[i - 1].Section, sections_[i].Section));
+            }
+
+            //? TODO: Pass the LoadedDocument to the panel, not Summary.
+            var loader = Session.SessionState.FindLoadedDocument(Summary).Loader;
+            var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
+            var results = await diffBuilder.ComputeSectionDiffs(comparedSections, loader, loader, true);
+            
+            foreach (var result in results) {
+                if (result.HasDiffs) {
+                    var diffSection = GetSectionExtension(result.RightSection);
+                    diffSection.IsDiffFromPrevious = true;
+                }
+            }
+        }
+
         #region IToolPanel
 
         public override ToolPanelKind PanelKind => ToolPanelKind.Section;
@@ -1235,7 +1293,7 @@ namespace IRExplorerUI {
             return sectionExtMap_[section];
         }
 
-        public override void OnSessionStart() {
+        public override async void OnSessionStart() {
             base.OnSessionStart();
             var data = Session.LoadPanelState(this, null);
 
@@ -1251,7 +1309,7 @@ namespace IRExplorerUI {
 
                 if (state.SelectedFunctionNumber > 0 &&
                     state.SelectedFunctionNumber < summary_.Functions.Count) {
-                    SelectFunction(summary_.Functions[state.SelectedFunctionNumber]);
+                    await SelectFunction(summary_.Functions[state.SelectedFunctionNumber]);
                     BringIntoViewSelectedListItem(FunctionList, false);
                 }
             }
@@ -1261,13 +1319,15 @@ namespace IRExplorerUI {
             SectionFilter.Text = "";
         }
 
-        public void SelectFunction(IRTextFunction function) {
+        public async Task SelectFunction(IRTextFunction function) {
             if (function == currentFunction_ ||
                 function.ParentSummary != Summary) {
                 return;
             }
 
             UpdateSectionListBindings(function);
+            await ComputeConsecutiveSectionDiffs();
+
             FunctionList.SelectedItem = function;
             FunctionList.ScrollIntoView(FunctionList.SelectedItem);
             RefreshSectionList();
@@ -1336,11 +1396,11 @@ namespace IRExplorerUI {
             optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
         }
 
-        private void OptionsPanel_PanelClosed(object sender, EventArgs e) {
-            CloseOptionsPanel();
+        private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {
+            await CloseOptionsPanel();
         }
 
-        private void CloseOptionsPanel() {
+        private async Task CloseOptionsPanel() {
             if (!optionsPanelVisible_) {
                 return;
             }
@@ -1351,13 +1411,13 @@ namespace IRExplorerUI {
             optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
 
             var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
-            HandleNewDiffSettings(newSettings, true);
+            await HandleNewDiffSettings(newSettings, true);
 
             optionsPanelWindow_ = null;
             optionsPanelVisible_ = false;
         }
 
-        private void HandleNewDiffSettings(SectionSettings newSettings, bool commit) {
+        private async Task HandleNewDiffSettings(SectionSettings newSettings, bool commit) {
             if (commit) {
                 App.Settings.SectionSettings = newSettings;
                 App.SaveApplicationSettings();
@@ -1371,6 +1431,7 @@ namespace IRExplorerUI {
             sectionSettings_ = newSettings;
             UpdateSectionListBindings(currentFunction_, true);
             RefreshSectionList();
+            await ComputeConsecutiveSectionDiffs();
         }
 
         private async void CopySectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {

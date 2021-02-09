@@ -151,7 +151,7 @@ namespace IRExplorerUI {
             var otherFunc = otherPanel.Summary.FindFunction(func.Name);
 
             if (otherFunc != null) {
-                otherPanel.SelectFunction(otherFunc);
+                await otherPanel.SelectFunction(otherFunc);
                 await ComputePanelSectionDiff();
             }
         }
@@ -237,9 +237,9 @@ namespace IRExplorerUI {
             SelectSectionPanel(section).SelectSection(section, focus);
         }
 
-        public void SelectFunction(IRTextFunction function) {
-            MainPanel.SelectFunction(function);
-            DiffPanel.SelectFunction(function);
+        public async Task SelectFunction(IRTextFunction function) {
+            await MainPanel.SelectFunction(function);
+            await DiffPanel.SelectFunction(function);
         }
 
         public void DiffSelectedSection() {
@@ -380,7 +380,7 @@ namespace IRExplorerUI {
             var diffLoader = Session.SessionState.FindLoadedDocument(DiffPanel.Summary).Loader;
 
             var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
-            return await diffBuilder.ComputeSectionDiffs(comparedSections, baseLoader, diffLoader);
+            return await diffBuilder.ComputeSectionDiffs(comparedSections, baseLoader, diffLoader, true);
         }
 
         public override void OnSessionStart() {

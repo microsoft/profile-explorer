@@ -598,7 +598,7 @@ namespace IRExplorerUI {
             if (sessionState_.DiffDocument != null) {
                 // When two documents are compared, try to pick 
                 // the other section from that other document.
-                var diffSection = FindDiffDocumentSection(section, otherDocument);
+                var diffSection = await FindDiffDocumentSection(section, otherDocument);
 
                 if (diffSection != null) {
                     var result = await Task.Run(() => LoadAndParseSection(diffSection));
@@ -615,8 +615,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private IRTextSection FindDiffDocumentSection(IRTextSection section, LoadedDocument diffDoc) {
-            SectionPanel.SelectFunction(section.ParentFunction);
+        private async Task<IRTextSection> FindDiffDocumentSection(IRTextSection section, LoadedDocument diffDoc) {
+            await SectionPanel.SelectFunction(section.ParentFunction);
             return SectionPanel.FindDiffDocumentSection(section);
         }
 
