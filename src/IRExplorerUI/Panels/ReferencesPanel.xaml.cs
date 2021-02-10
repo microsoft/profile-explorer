@@ -36,12 +36,17 @@ namespace IRExplorerUI {
     }
 
     public class ReferenceInfo {
-        public ReferenceInfo(int index, Reference info, TextBlock preview, string previewText) {
+        public ReferenceInfo(int index, OperandIR operand, Reference info, string documentText) {
             Index = index;
             Info = info;
-            Preview = preview;
-            PreviewText = previewText;
+            operand_ = operand;
+            documentText_ = documentText;
         }
+
+        private OperandIR operand_;
+        private string documentText_;
+        private string previewText_;
+        private TextBlock preview_;
 
         public Reference Info { get; set; }
         public int Index { get; set; }
@@ -60,8 +65,119 @@ namespace IRExplorerUI {
             }
         }
 
-        public TextBlock Preview { get; }
-        public string PreviewText { get; }
+        public TextBlock Preview {
+            get {
+                CreateOnDemandPreview();
+                return preview_;
+            }
+        }
+
+        public string PreviewText {
+            get {
+                CreateOnDemandPreview();
+                return previewText_;
+            }
+        }
+
+        private void CreateOnDemandPreview() {
+            if (preview_ == null) {
+                (preview_, previewText_) = CreatePreviewTextBlock(operand_, Info, documentText_);
+            }
+        }
+
+        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
+
+        private static (TextBlock, string) 
+            CreatePreviewTextBlock(OperandIR operand, Reference reference, string documentText) {
+            // Mark every instance of the symbol name in the preview text (usually an instr).
+            string text = FindPreviewText(reference, documentText);
+            string symbolName = ReferenceFinder.GetSymbolName(operand);
+            int index = 0;
+            var textBlock = new TextBlock();
+            textBlock.FontFamily = PreviewFont;
+            textBlock.Foreground = Brushes.Black;
+            textBlock.Margin = new Thickness(0, 2, 0, 0);
+
+            while (index < text.Length) {
+                int symbolIndex = text.IndexOf(symbolName, index, StringComparison.Ordinal);
+
+                if (symbolIndex == -1) {
+                    break;
+                }
+
+                // Append any text before the symbol name.
+                if (index < symbolIndex) {
+                    textBlock.Inlines.Add(text.Substring(index, symbolIndex - index));
+                }
+
+                textBlock.Inlines.Add(new Run(symbolName) {
+                    FontWeight = FontWeights.Bold
+                });
+
+                index = symbolIndex + symbolName.Length;
+            }
+
+            // Append remaining text at the end.
+            if (index < text.Length) {
+                textBlock.Inlines.Add(text.Substring(index, text.Length - index));
+            }
+
+            return (textBlock, text);
+        }
+
+        private static string FindPreviewText(Reference reference, string documentText) {
+            var instr = reference.Element.ParentInstruction;
+            string text = "";
+
+            if (instr != null) {
+                text = instr.GetText(documentText).ToString();
+            }
+            else {
+                if (reference.Element is OperandIR op) {
+                    // This is usually a parameter.
+                    text = op.GetText(documentText).ToString();
+                }
+                else {
+                    return "";
+                }
+            }
+
+            int start = 0;
+            int length = text.Length;
+
+            if (instr != null && instr.Destinations.Count > 0) {
+                var firstDest = instr.Destinations[0];
+                start = firstDest.TextLocation.Offset - instr.TextLocation.Offset;
+                start = Math.Max(0, start); //? TODO: Workaround for offset not being right
+            }
+
+            if (instr != null && instr.Sources.Count > 0) {
+                var lastSource = instr.Sources.FindLast(s => s.TextLocation.Offset != 0);
+
+                if (lastSource != null) {
+                    length = lastSource.TextLocation.Offset -
+                             instr.TextLocation.Offset +
+                             lastSource.TextLength;
+
+                    if (length <= 0) {
+                        length = text.Length;
+                    }
+
+                    length = Math.Min(text.Length, length); //? TODO: Workaround for offset not being right
+                }
+            }
+
+            if (start != 0 || length > 0) {
+                int actualLength = Math.Min(length - start, text.Length - start);
+
+                if (actualLength > 0) {
+                    text = text.Substring(start, actualLength);
+                }
+            }
+
+            return text.RemoveNewLines();
+        }
+
     }
 
     [ProtoContract]
@@ -82,9 +198,7 @@ namespace IRExplorerUI {
     }
 
     public partial class ReferencesPanel : ToolPanelControl, INotifyPropertyChanged {
-        private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
         private string documentText_;
-
         private IRElement element_;
         private ReferenceKind filterKind_;
         private bool ignoreNextElement_;
@@ -189,96 +303,6 @@ namespace IRExplorerUI {
             }
         }
 
-        private (TextBlock, string) CreatePreviewTextBlock(OperandIR operand, Reference reference) {
-            // Mark every instance of the symbol name in the preview text (usually an instr).
-            string text = FindPreviewText(reference);
-            string symbolName = ReferenceFinder.GetSymbolName(operand);
-            int index = 0;
-            var textBlock = new TextBlock();
-            textBlock.FontFamily = PreviewFont;
-            textBlock.Foreground = Brushes.Black;
-            textBlock.Margin = new Thickness(0, 2, 0, 0);
-
-            while (index < text.Length) {
-                int symbolIndex = text.IndexOf(symbolName, index, StringComparison.Ordinal);
-
-                if (symbolIndex == -1) {
-                    break;
-                }
-
-                // Append any text before the symbol name.
-                if (index < symbolIndex) {
-                    textBlock.Inlines.Add(text.Substring(index, symbolIndex - index));
-                }
-
-                textBlock.Inlines.Add(new Run(symbolName) {
-                    FontWeight = FontWeights.Bold
-                });
-
-                index = symbolIndex + symbolName.Length;
-            }
-
-            // Append remaining text at the end.
-            if (index < text.Length) {
-                textBlock.Inlines.Add(text.Substring(index, text.Length - index));
-            }
-
-            return (textBlock, text);
-        }
-
-        private string FindPreviewText(Reference reference) {
-            var instr = reference.Element.ParentInstruction;
-            string text = "";
-
-            if (instr != null) {
-                text = instr.GetText(documentText_).ToString();
-            }
-            else {
-                if (reference.Element is OperandIR op) {
-                    // This is usually a parameter.
-                    text = op.GetText(documentText_).ToString();
-                }
-                else {
-                    return "";
-                }
-            }
-
-            int start = 0;
-            int length = text.Length;
-
-            if (instr != null && instr.Destinations.Count > 0) {
-                var firstDest = instr.Destinations[0];
-                start = firstDest.TextLocation.Offset - instr.TextLocation.Offset;
-                start = Math.Max(0, start); //? TODO: Workaround for offset not being right
-            }
-
-            if (instr != null && instr.Sources.Count > 0) {
-                var lastSource = instr.Sources.FindLast(s => s.TextLocation.Offset != 0);
-
-                if (lastSource != null) {
-                    length = lastSource.TextLocation.Offset -
-                             instr.TextLocation.Offset +
-                             lastSource.TextLength;
-
-                    if (length <= 0) {
-                        length = text.Length;
-                    }
-
-                    length = Math.Min(text.Length, length); //? TODO: Workaround for offset not being right
-                }
-            }
-
-            if (start != 0 || length > 0) {
-                int actualLength = Math.Min(length - start, text.Length - start);
-
-                if (actualLength > 0) {
-                    text = text.Substring(start, actualLength);
-                }
-            }
-
-            return text.RemoveNewLines();
-        }
-
         private bool FilterReferenceList(object value) {
             var refInfo = value as ReferenceInfo;
             return filterKind_.HasFlag(refInfo.Info.Kind);
@@ -317,8 +341,7 @@ namespace IRExplorerUI {
             operandRefs.Sort((a, b) => a.Element.TextLocation.Offset - b.Element.TextLocation.Offset);
 
             foreach (var reference in operandRefs) {
-                (var preview, string previewText) = CreatePreviewTextBlock(operand, reference);
-                referenceList_.Add(new ReferenceInfo(index, reference, preview, previewText));
+                referenceList_.Add(new ReferenceInfo(index, operand, reference, documentText_));
                 index++;
 
                 switch (reference.Kind) {
