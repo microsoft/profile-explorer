@@ -111,7 +111,7 @@ namespace IRExplorerUI {
                     OnPropertyChange(nameof(ShowStore));
                     OnPropertyChange(nameof(ShowAddress));
                     OnPropertyChange(nameof(ShowSSA));
-                    referenceListView_.Refresh();
+                    referenceListView_?.Refresh();
                 }
             }
         }
