@@ -7,13 +7,17 @@ using Microsoft.Windows.EventTracing;
 using Microsoft.Windows.EventTracing.Cpu;
 using Microsoft.Windows.EventTracing.Symbols;
 using IRExplorerCore;
+using IRExplorerCore.IR;
+using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI.Utilities {
     public class ProfileData {
         private IRTextSummary summary_;
+        private IRTextSectionLoader loader_;
 
-        public ProfileData(IRTextSummary summary) {
+        public ProfileData(IRTextSummary summary, IRTextSectionLoader docLoader) {
             summary_ = summary;
+            loader_ = docLoader;
             FunctionProfiles = new Dictionary<IRTextFunction, FunctionProfileData>();
             TotalWeight = TimeSpan.Zero;
         }
@@ -25,7 +29,8 @@ namespace IRExplorerUI.Utilities {
             return (double)weight.Ticks / (double)TotalWeight.Ticks;
         }
 
-        public async Task<bool> LoadTrace(string tracePath, string imageName, string symbolPath) {
+        public async Task<bool> LoadTrace(string tracePath, string imageName, string symbolPath,
+                                        bool markInlinedFunctions) {
             try {
                 // Extract just the file name.
                 imageName = Path.GetFileNameWithoutExtension(imageName);
@@ -76,18 +81,40 @@ namespace IRExplorerUI.Utilities {
                             }
 
                             foreach (var textFunction in functs) {
-                                if (!FunctionProfiles.TryGetValue(textFunction, out var profile)) {
-                                    profile = new FunctionProfileData(symbol.SourceFileName);
-                                    FunctionProfiles[textFunction] = profile;
-
-                                }
-
+                                var profile = GetOrCreateFunctionProfile(textFunction, symbol.SourceFileName);
                                 var rva = frame.Address;
                                 var functionRVA = symbol.AddressRange.BaseAddress;
                                 var offset = rva.Value - functionRVA.Value;
                                 profile.AddInstructionSample(offset, sample.Weight.TimeSpan);
                                 profile.AddLineSample(symbol.SourceLineNumber, sample.Weight.TimeSpan);
                                 profile.Weight += sample.Weight.TimeSpan;
+
+                                if (markInlinedFunctions && textFunction.Sections.Count > 0) {
+                                    // Load current function.
+                                    var result = loader_.LoadSection(textFunction.Sections[^1]);
+                                    var metadataTag = result.Function.GetTag<AddressMetadataTag>();
+                                    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+
+                                    // Try to find instr. referenced by RVA, then go over all inlinees.
+                                    if (hasInstrOffsetMetadata &&
+                                        metadataTag.OffsetToElementMap.TryGetValue(offset, out var rvaInstr)) {
+                                        var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
+
+                                        if (lineInfo != null && lineInfo.HasInlinees) {
+                                            // For each inlinee, add the sample to its line.
+                                            foreach (var inlinee in lineInfo.Inlinees) {
+                                                var inlineeTextFunc = summary_.FindFunction(inlinee.Function);
+
+                                                if (inlineeTextFunc != null) {
+                                                    //? TODO: Inlinee can be in another source file
+                                                    var inlineeProfile = GetOrCreateFunctionProfile(inlineeTextFunc, symbol.SourceFileName);
+                                                    inlineeProfile.AddLineSample(inlinee.Line, sample.Weight.TimeSpan);
+                                                    inlineeProfile.Weight += sample.Weight.TimeSpan;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
 
                             TotalWeight += sample.Weight.TimeSpan;
@@ -96,12 +123,13 @@ namespace IRExplorerUI.Utilities {
                         else {
                             Trace.WriteLine("Could not find debug info for\n");
                             Trace.WriteLine($"   image: {frame.Image.FileName}");
-                            Trace.WriteLine($"   pdb path: {frame.Image.Pdb.Path}");
-                            Trace.WriteLine($"   pdb loaded: {frame.Image.Pdb.IsLoaded}");
-                            Trace.WriteLine($"   pdb id: {frame.Image.Pdb.Id}");
                             Trace.Flush();
                         }
                     }
+                }
+
+                if (markInlinedFunctions) {
+                    loader_.ResetCache();
                 }
             }
             catch (Exception ex) {
@@ -111,6 +139,15 @@ namespace IRExplorerUI.Utilities {
             }
 
             return true;
+        }
+
+        private FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction textFunction, string sourceFile) {
+            if (!FunctionProfiles.TryGetValue(textFunction, out var profile)) {
+                profile = new FunctionProfileData(sourceFile);
+                FunctionProfiles[textFunction] = profile;
+            }
+
+            return profile;
         }
     }
 }

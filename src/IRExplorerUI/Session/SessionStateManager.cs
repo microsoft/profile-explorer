@@ -352,7 +352,7 @@ namespace IRExplorerUI {
                 state.OpenSections.Add(CreateOpenSectionState(docHost.DocumentHost.Section));
             }
 
-            if (SectionDiffState.IsEnabled) {
+            if (SectionDiffState.IsEnabled && SectionDiffState.IsChangeCompleted) {
                 state.SectionDiffState.IsEnabled = true;
                 state.SectionDiffState.LeftSection = CreateOpenSectionState(SectionDiffState.LeftSection);
                 state.SectionDiffState.RightSection = CreateOpenSectionState(SectionDiffState.RightSection);

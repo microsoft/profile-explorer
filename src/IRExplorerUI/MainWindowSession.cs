@@ -1081,7 +1081,7 @@ namespace IRExplorerUI {
             }
 
             sessionState_.IsAutoSaveEnabled = true;
-            autoSaveTimer_ = new DispatcherTimer { Interval = TimeSpan.FromSeconds(300) };
+            autoSaveTimer_ = new DispatcherTimer { Interval = TimeSpan.FromSeconds(10) };
             autoSaveTimer_.Tick += async delegate { await AutoSaveSession().ConfigureAwait(false); };
             autoSaveTimer_.Start();
         }

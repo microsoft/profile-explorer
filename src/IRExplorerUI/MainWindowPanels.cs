@@ -305,7 +305,6 @@ namespace IRExplorerUI {
 
                 if (document.Section != null) {
                     var docInfo = sessionState_.FindLoadedDocument(document.Section);
-                    SectionPanel.MainSummary = docInfo.Summary;
                     SectionPanel.SelectSection(document.Section, false);
                     NotifyPanelsOfSectionLoad(document.Section, document, false);
                 }

@@ -951,11 +951,13 @@ namespace IRExplorerUI {
 
             if (result.HasValue && result.Value) {
                 SetOptionalStatus("Loading profile data...");
-                profileData_ = new ProfileData(MainDocumentSummary);
+                var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
+                profileData_ = new ProfileData(MainDocumentSummary, loadedDoc.Loader);
+                bool markInlinedFunctions = true;
 
                 if (!await profileData_.LoadTrace(window.ProfileFilePath, 
-                                        window.BinaryFilePath, 
-                                        window.DebugFilePath)) {
+                                        window.BinaryFilePath, window.DebugFilePath,
+                                        markInlinedFunctions)) {
                     profileData_ = null;
 
                     MessageBox.Show("Failed to load profile data");

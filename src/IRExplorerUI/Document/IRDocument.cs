@@ -2364,9 +2364,11 @@ namespace IRExplorerUI {
             // reappears once LateLoadSectionSetup reinstalls the block folding.
             await ComputeElementListsAsync();
 
-            // Take ownership of the text document.
             // Remove the current block folding since it's bound to the current text area.
             UninstallBlockFolding();
+            ClearTemporaryHighlighting();
+
+            // Take ownership of the text document.
             diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
             Document = diffResult.DiffDocument;
 

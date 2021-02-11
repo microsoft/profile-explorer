@@ -201,35 +201,8 @@ namespace IRExplorerUI {
             var function = Session.CurrentDocument.Function;
             var metadataTag = function.GetTag<AddressMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+            bool markedInstrs = false;
 
-            foreach (var pair in profile.SourceLineWeight) {
-                int sourceLine = pair.Key;
-                double weightPercentage = profile.ScaleWeight(pair.Value);
-                int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
-                var color = colors[colorIndex];
-                var style = new HighlightingStyle(colors[colorIndex]);
-
-                if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
-                    continue;
-                }
-
-                var documentLine = TextView.Document.GetLineByNumber(sourceLine);
-                var location = new TextLocation(documentLine.Offset, sourceLine, 0);
-                var element = new IRElement(location, documentLine.Length);
-                element.Id = nextElementId.NextOperand();
-
-                var group = new HighlightedGroup(style);
-                group.Add(element);
-                profileMarker_.Add(group);
-
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
-                AddElementOverlay(element, null, 16, 16, tooltip);
-
-                if (!hasInstrOffsetMetadata) {
-                    Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
-                }
-            }
-            
             if (hasInstrOffsetMetadata) {
                 var elements = new List<Tuple<IRElement, TimeSpan>>(profile.InstructionWeight.Count);
 
@@ -269,14 +242,43 @@ namespace IRExplorerUI {
                         icon = IconDrawing.FromIconResource("DotIcon");
                         textColor = Brushes.DarkRed;
                     }
-                    
-                    var overlay = Session.CurrentDocument.AddIconElementOverlay(element, icon, 16,16, tooltip);
+
+                    var overlay = Session.CurrentDocument.AddIconElementOverlay(element, icon, 16, 16, tooltip);
                     overlay.IsToolTipPinned = isPinned;
                     overlay.TextColor = textColor;
+                    markedInstrs = true;
                     index++;
                 }
             }
 
+            foreach (var pair in profile.SourceLineWeight) {
+                int sourceLine = pair.Key;
+                double weightPercentage = profile.ScaleWeight(pair.Value);
+                int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+                var color = colors[colorIndex];
+                var style = new HighlightingStyle(colors[colorIndex]);
+
+                if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
+                    continue;
+                }
+
+                var documentLine = TextView.Document.GetLineByNumber(sourceLine);
+                var location = new TextLocation(documentLine.Offset, sourceLine, 0);
+                var element = new IRElement(location, documentLine.Length);
+                element.Id = nextElementId.NextOperand();
+
+                var group = new HighlightedGroup(style);
+                group.Add(element);
+                profileMarker_.Add(group);
+
+                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
+                AddElementOverlay(element, null, 16, 16, tooltip);
+
+                if (!hasInstrOffsetMetadata || !markedInstrs) {
+                    Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
+                }
+            }
+            
             UpdateHighlighting();
         }
 

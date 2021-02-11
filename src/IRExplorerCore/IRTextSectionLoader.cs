@@ -102,6 +102,16 @@ namespace IRExplorerCore {
             cacheEnabled_ = true;
         }
 
+        public void ResetCache() {
+            if (!cacheEnabled_) {
+                return;
+            }
+
+            lock (lockObject_) {
+                sectionCache_.Clear();
+            }
+        }
+
         #region IDisposable Support
 
         protected bool disposed_;

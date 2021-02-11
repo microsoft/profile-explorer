@@ -377,8 +377,8 @@ namespace IRExplorerUI {
 
         private async Task DiffDocuments(IRDocument leftDocument, IRDocument rightDocument, 
                                       string leftText, string rightText, 
-                                      IRTextSection newLeftSection = null,
-                                      IRTextSection newRightSection = null) {
+                                      IRTextSection newLeftSection,
+                                      IRTextSection newRightSection) {
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
             DiffMarkingResult leftDiffResult;

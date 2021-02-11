@@ -34,6 +34,7 @@ namespace IRExplorerUI {
         }
 
         public bool IsEnabled { get; set; }
+        public bool IsChangeCompleted { get; set; }
         public IRDocumentHost LeftDocument { get; set; }
         public IRDocumentHost RightDocument { get; set; }
         public IRTextSection LeftSection { get; set; }
@@ -50,10 +51,12 @@ namespace IRExplorerUI {
             // If a diff-mode change is in progress, wait until it's done.
             await DiffModeChangeCompleted.AsTask();
             DiffModeChangeCompleted.Reset();
+            IsChangeCompleted = false;
         }
 
         public void EndModeChange() {
             DiffModeChangeCompleted.Set();
+            IsChangeCompleted = true;
         }
 
         public void End() {
