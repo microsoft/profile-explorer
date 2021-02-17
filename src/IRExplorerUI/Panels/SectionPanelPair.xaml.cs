@@ -356,6 +356,9 @@ namespace IRExplorerUI {
                     newDiffList.Add(new IRTextSectionEx(null, DiffKind.Placeholder, "", index++));
                     x--;
                 }
+                else {
+                    Debug.Assert(false);
+                }
             }
 
             newBaseList.Reverse();

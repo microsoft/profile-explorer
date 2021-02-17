@@ -393,7 +393,7 @@ namespace IRExplorerUI {
                         $" ({debugCurrentStackFrame_.Function}:{debugCurrentStackFrame_.LineNumber})";
                 }
 
-                var section = new IRTextSection(debugFunction_, (ulong)debugSectionId_, debugSectionId_,
+                var section = new IRTextSection(debugFunction_, (ulong)debugSectionId_, debugSectionId_ + 1,
                                                 sectionName, new IRPassOutput(0, 0, 0, 0));
 
                 string filteredText = ExtractLineMetadata(section, e.Text);

@@ -88,7 +88,7 @@ namespace IRExplorerCmd {
         public DiffModeInfo DiffModeInfo => null;
         public IRTextSummary MainDocumentSummary => mainDocument_?.Summary;
         public IRTextSummary DiffDocumentSummary => diffDocument_?.Summary;
-        public ProfileData ProfileData => throw new NotImplementedException();
+        public ETWProfileDataProvider ProfileData => throw new NotImplementedException();
 
         public Task<string> GetSectionTextAsync(IRTextSection section, IRDocument targetDiffDocument = null) {
             var docInfo = sessionState_.FindLoadedDocument(section);

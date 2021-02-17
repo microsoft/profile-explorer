@@ -11,11 +11,11 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI.Utilities {
-    public class ProfileData {
+    public class ETWProfileDataProvider {
         private IRTextSummary summary_;
         private IRTextSectionLoader loader_;
 
-        public ProfileData(IRTextSummary summary, IRTextSectionLoader docLoader) {
+        public ETWProfileDataProvider(IRTextSummary summary, IRTextSectionLoader docLoader) {
             summary_ = summary;
             loader_ = docLoader;
             FunctionProfiles = new Dictionary<IRTextFunction, FunctionProfileData>();

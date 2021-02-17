@@ -40,6 +40,8 @@
         <CommandBinding Command="local:Command.SaveAllSectionText" Executed="SaveAllSectionTextExecuted" />
         <CommandBinding Command="local:Command.DisplayCallGraph" Executed="DisplayCallGraphExecuted" />
         <CommandBinding Command="local:Command.DisplayPartialCallGraph" Executed="DisplayPartialCallGraphExecuted" />
+        <CommandBinding Command="local:Command.CopyFunctionName" Executed="CopyFunctionNameExecuted" />
+        <CommandBinding Command="local:Command.CopyDemangledFunctionName" Executed="CopyDemangledFunctionNameExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <local:ToolPanelControl.Resources>
@@ -134,7 +136,6 @@
                             IsHitTestVisible="False"
                             Text="Search functions"
                             Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
-
                     </Grid>
 
                     <Button
@@ -185,6 +186,28 @@
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
+                        <GridViewColumn Width="200">
+                            <GridViewColumnHeader
+                                x:Name="AlternateNameColumnHeader"
+                                local:GridViewBehaviors.CollapseableColumn="True"
+                                Click="FunctionGridViewColumnHeader_Click"
+                                Content="Demangled Name"
+                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border HorizontalAlignment="Stretch">
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                         <GridViewColumn Width="100">
                             <GridViewColumnHeader
                                 x:Name="OptionalColumnHeader"
@@ -222,6 +245,18 @@
                             CommandTarget="{Binding ElementName=SectionList}"
                             Header="Save All Sections Text"
                             ToolTip="Save the text (IR) of all sections for the selected function to a file" />
+                        <MenuItem
+                            Command="local:Command.CopyFunctionName"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Copy Function Name"
+                            ToolTip="Copy the function name to the clipboard" />
+                        <MenuItem
+                            Command="local:Command.CopyDemangledFunctionName"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Copy Demangled Function Name"
+                            ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
                     </ContextMenu>
                 </ListView.ContextMenu>
             </ListView>
@@ -736,6 +771,30 @@
                         CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
                         CommandTarget="{Binding ElementName=SectionList}"
                         Modifiers="Ctrl" />
+                    <KeyBinding
+                        Key="C"
+                        Command="local:Command.CopyFunctionName"
+                        CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
+                        CommandTarget="{Binding ElementName=SectionList}"
+                        Modifiers="Ctrl" />
+                    <KeyBinding
+                        Key="C"
+                        Command="local:Command.CopyDemangledFunctionName"
+                        CommandParameter="{Binding ElementName=SectionList, Path=SelectedItem}"
+                        CommandTarget="{Binding ElementName=SectionList}"
+                        Modifiers="Ctrl+Shift" />
+                    <KeyBinding
+                        Key="C"
+                        Command="local:Command.CopyFunctionName"
+                        CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
+                        CommandTarget="{Binding ElementName=FunctionList}"
+                        Modifiers="Ctrl" />
+                    <KeyBinding
+                        Key="C"
+                        Command="local:Command.CopyDemangledFunctionName"
+                        CommandParameter="{Binding ElementName=FunctionList, Path=SelectedItem}"
+                        CommandTarget="{Binding ElementName=FunctionList}"
+                        Modifiers="Ctrl+Shift" />
                 </ListView.InputBindings>
             </ListView>
 

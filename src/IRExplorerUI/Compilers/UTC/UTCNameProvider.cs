@@ -3,6 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Text;
+using System.Windows;
 using IRExplorerCore;
 
 namespace IRExplorerUI.UTC {
@@ -26,6 +30,7 @@ namespace IRExplorerUI.UTC {
     }
 
     class UTCNameProvider : INameProvider {
+        private const int MaxDemangledFunctionNameLength = 8192;
         private static List<FilteredSectionName> sectionNameFilters_;
 
         static UTCNameProvider() {
@@ -95,6 +100,31 @@ namespace IRExplorerUI.UTC {
             }
 
             return sectionName;
+        }
+
+        public string GetFunctionName(IRTextFunction function) {
+            return function.Name;
+        }
+
+        public string GetDemangledFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {
+            var sb = new StringBuilder(MaxDemangledFunctionNameLength);
+            NativeMethods.UnDecorateFlags flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
+            
+            if (options.HasFlag(FunctionNameDemanglingOptions.OnlyName)) {
+                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NAME_ONLY;
+            }
+
+            if (options.HasFlag(FunctionNameDemanglingOptions.NoSpecialKeywords)) {
+                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_MS_KEYWORDS;
+                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_MS_THISTYPE;
+            }
+
+            if (options.HasFlag(FunctionNameDemanglingOptions.NoReturnType)) {
+                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_FUNCTION_RETURNS;
+            }
+
+            NativeMethods.UnDecorateSymbolName(function.Name, sb, MaxDemangledFunctionNameLength, flags);
+            return sb.ToString();
         }
     }
 }

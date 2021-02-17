@@ -941,8 +941,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private ProfileData profileData_;
-        public ProfileData ProfileData => profileData_;
+        private ETWProfileDataProvider profileData_;
+        public ETWProfileDataProvider ProfileData => profileData_;
 
         private async void MenuItem_OnClick(object sender, RoutedEventArgs e) {
             var window = new ProfileLoadWindow();
@@ -952,7 +952,7 @@ namespace IRExplorerUI {
             if (result.HasValue && result.Value) {
                 SetOptionalStatus("Loading profile data...");
                 var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-                profileData_ = new ProfileData(MainDocumentSummary, loadedDoc.Loader);
+                profileData_ = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader);
                 bool markInlinedFunctions = true;
 
                 if (!await profileData_.LoadTrace(window.ProfileFilePath, 
