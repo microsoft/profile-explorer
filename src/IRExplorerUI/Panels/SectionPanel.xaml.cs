@@ -713,6 +713,8 @@ namespace IRExplorerUI {
                     funcEx.OptionalData = 0.0;
                 }
             }
+
+            functionSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
         }
 
         private async Task UpdateFunctionListBindings() {
@@ -746,12 +748,6 @@ namespace IRExplorerUI {
             functionFilter.Filter = FilterFunctionList;
             FunctionList.ItemsSource = functionFilter;
             SectionList.ItemsSource = null;
-
-            // if (profile != null) {
-            //     //? TODO: HACK, introduce function to sort in a certain way
-            //     FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
-            //     FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
-            // }
 
             if (summary_.Functions.Count == 1) {
                 await SelectFunction(summary_.Functions[0]);
