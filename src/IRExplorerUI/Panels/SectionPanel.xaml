@@ -165,10 +165,7 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
-                            <GridViewColumnHeader
-                                x:Name="FunctionColumnHeader"
-                                Click="FunctionGridViewColumnHeader_Click"
-                                Content="Function" />
+                            <GridViewColumnHeader x:Name="FunctionColumnHeader" Content="Function" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -176,10 +173,7 @@
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
                         <GridViewColumn Width="50" DisplayMemberBinding="{Binding SectionCount}">
-                            <GridViewColumnHeader
-                                x:Name="SectionsColumnHeader"
-                                Click="FunctionGridViewColumnHeader_Click"
-                                Content="Sections" />
+                            <GridViewColumnHeader x:Name="SectionsColumnHeader" Content="Sections" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -190,7 +184,6 @@
                             <GridViewColumnHeader
                                 x:Name="AlternateNameColumnHeader"
                                 local:GridViewBehaviors.CollapseableColumn="True"
-                                Click="FunctionGridViewColumnHeader_Click"
                                 Content="Demangled Name"
                                 Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
 
@@ -212,7 +205,6 @@
                             <GridViewColumnHeader
                                 x:Name="OptionalColumnHeader"
                                 local:GridViewBehaviors.CollapseableColumn="True"
-                                Click="FunctionGridViewColumnHeader_Click"
                                 Content="{Binding OptionalDataColumnName}"
                                 Visibility="{Binding OptionalDataColumnVisible, Converter={StaticResource BoolToVisibility}}" />
 
@@ -437,10 +429,7 @@
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="50">
-                            <GridViewColumnHeader
-                                x:Name="NumberColumnHeader"
-                                Click="GridViewColumnHeader_Click"
-                                Content="#" />
+                            <GridViewColumnHeader x:Name="NumberColumnHeader" Content="#" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -467,10 +456,7 @@
                         </GridViewColumn>
 
                         <GridViewColumn Width="280">
-                            <GridViewColumnHeader
-                                x:Name="NameColumnHeader"
-                                Click="GridViewColumnHeader_Click"
-                                Content="Section" />
+                            <GridViewColumnHeader x:Name="NameColumnHeader" Content="Section" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -492,7 +478,6 @@
                             <GridViewColumnHeader
                                 x:Name="BlocksColumnHeader"
                                 Width="50"
-                                Click="GridViewColumnHeader_Click"
                                 Content="Blocks" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">

@@ -265,6 +265,19 @@ namespace IRExplorerUI {
         }
     }
 
+    public enum SectionFieldKind {
+        Number,
+        Name,
+        Blocks
+    }
+
+    public enum FunctionFieldKind {
+        Name,
+        AlternateName,
+        Sections,
+        Optional
+    }
+
     [ProtoContract]
     public class SectionPanelState {
         [ProtoMember(1)]
@@ -299,19 +312,20 @@ namespace IRExplorerUI {
         private bool syncDiffedDocuments_;
         private bool isFunctionListVisible_;
 
-        private SortAdorner listViewSortAdorner;
-        private GridViewColumnHeader listViewSortCol;
-
-        private SortAdorner functionListViewSortAdorner;
-        private GridViewColumnHeader functionListViewSortCol;
-        
+        private SectionSettings sectionSettings_;
+        private IRTextSummary summary_;
         private IRTextSummary otherSummary_;
-        private bool sectionExtensionComputed_;
-        private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
         private List<IRTextSectionEx> sections_;
 
+        private bool sectionExtensionComputed_;
+        private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
         private ScrollViewer sectionsScrollViewer_;
-        private IRTextSummary summary_;
+
+        private OptionsPanelHostWindow optionsPanelWindow_;
+        private bool optionsPanelVisible_;
+
+        private GridViewColumnSorter<FunctionFieldKind> functionSorter_;
+        private GridViewColumnSorter<SectionFieldKind> sectionSorter_;
 
         public SectionPanel() {
             InitializeComponent();
@@ -322,6 +336,69 @@ namespace IRExplorerUI {
             SyncDiffedDocuments = true;
             MainGrid.DataContext = this;
             sectionSettings_ = App.Settings.SectionSettings;
+
+            functionSorter_ = 
+                new GridViewColumnSorter<FunctionFieldKind>(FunctionList,
+                name => name switch {
+                    "FunctionColumnHeader" => FunctionFieldKind.Name,
+                    "AlternateNameColumnHeader" => FunctionFieldKind.AlternateName,
+                    "SectionsColumnHeader" => FunctionFieldKind.Sections,
+                    "OptionalColumnHeader" => FunctionFieldKind.Optional
+                }, 
+                (x, y, field, direction) => {
+                    var sectionX = x as IRTextFunctionEx;
+                    var sectionY = y as IRTextFunctionEx;
+
+                    switch (field) {
+                        case FunctionFieldKind.Sections: {
+                            int result = sectionY.SectionCount - sectionX.SectionCount;
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.Name: {
+                            int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.AlternateName: {
+                            int result = string.Compare(sectionY.AlternateName, sectionX.AlternateName, StringComparison.Ordinal);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.Optional: {
+                            int result = ((double)sectionY.OptionalData).CompareTo((double)sectionX.OptionalData);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                });
+
+            sectionSorter_ =
+                new GridViewColumnSorter<SectionFieldKind>(SectionList,
+                name => name switch {
+                    "NumberColumnHeader" => SectionFieldKind.Number,
+                    "NameColumnHeader" => SectionFieldKind.Name,
+                    "BlocksColumnHeader" => SectionFieldKind.Blocks,
+                },
+                (x, y, field, direction) => {
+                    var sectionX = x as IRTextSectionEx;
+                    var sectionY = y as IRTextSectionEx;
+
+                    switch (field) {
+                        case SectionFieldKind.Number: {
+                            int result = sectionY.Number - sectionX.Number;
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case SectionFieldKind.Name: {
+                            int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case SectionFieldKind.Blocks: {
+                            int result = sectionY.BlockCount - sectionX.BlockCount;
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                });
         }
 
         public bool BottomSectionToolbar {
@@ -1086,80 +1163,7 @@ namespace IRExplorerUI {
             SwitchToSection(1);
             e.Handled = true;
         }
-
-        private void GridViewColumnHeader_Click(object sender, RoutedEventArgs e) {
-            var column = sender as GridViewColumnHeader;
-
-            if (listViewSortCol != null) {
-                AdornerLayer.GetAdornerLayer(listViewSortCol)?.Remove(listViewSortAdorner);
-            }
-
-            var sortingDirection = ListSortDirection.Ascending;
-
-            if (listViewSortCol == column && listViewSortAdorner.Direction == sortingDirection) {
-                sortingDirection = ListSortDirection.Descending;
-            }
-
-            listViewSortCol = column;
-            listViewSortAdorner = new SortAdorner(listViewSortCol, sortingDirection);
-            AdornerLayer.GetAdornerLayer(listViewSortCol)?.Add(listViewSortAdorner);
-            SectionSorter.FieldKind sortingField;
-
-            if (sender == NumberColumnHeader) {
-                sortingField = SectionSorter.FieldKind.Number;
-            }
-            else if (sender == BlocksColumnHeader) {
-                sortingField = SectionSorter.FieldKind.Blocks;
-            }
-            else {
-                sortingField = SectionSorter.FieldKind.Name;
-            }
-
-            if (!(SectionList.ItemsSource is ListCollectionView view)) {
-                return; // No function selected yet.
-            }
-
-            view.CustomSort = new SectionSorter(sortingField, sortingDirection);
-            SectionList.Items.Refresh();
-        }
-
-        private void FunctionGridViewColumnHeader_Click(object sender, RoutedEventArgs e) {
-            var column = sender as GridViewColumnHeader;
-
-            if (functionListViewSortCol != null) {
-                AdornerLayer.GetAdornerLayer(functionListViewSortCol)?.Remove(functionListViewSortAdorner);
-            }
-
-            var sortingDirection = ListSortDirection.Ascending;
-
-            if (functionListViewSortCol == column && functionListViewSortAdorner.Direction == sortingDirection) {
-                sortingDirection = ListSortDirection.Descending;
-            }
-
-            functionListViewSortCol = column;
-            functionListViewSortAdorner = new SortAdorner(functionListViewSortCol, sortingDirection);
-            AdornerLayer.GetAdornerLayer(functionListViewSortCol)?.Add(functionListViewSortAdorner);
-            FunctionSorter.FieldKind sortingField;
-
-            if (sender == FunctionColumnHeader) {
-                sortingField = FunctionSorter.FieldKind.Name;
-            }
-            else if (sender == SectionsColumnHeader) {
-                sortingField = FunctionSorter.FieldKind.Sections;
-            }
-            else {
-                sortingField = FunctionSorter.FieldKind.Optional;
-            }
-
-            if (!(FunctionList.ItemsSource is ListCollectionView view)) {
-                return; // No function selected yet.
-            }
-
-            view.CustomSort = new FunctionSorter(sortingField, sortingDirection);
-            FunctionList.Items.Refresh();
-        }
-
-
+        
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
             Utils.PatchToolbarStyle(sender as ToolBar);
         }
@@ -1167,87 +1171,6 @@ namespace IRExplorerUI {
         public void ScrollSectionList(double offset) {
             RegisterSectionListScrollEvent();
             sectionsScrollViewer_?.ScrollToVerticalOffset(offset);
-        }
-
-        private sealed class SectionSorter : IComparer {
-            public enum FieldKind {
-                Number,
-                Name,
-                Blocks
-            }
-
-            private ListSortDirection direction_;
-            private FieldKind sortingField_;
-
-            public SectionSorter(FieldKind sortingField, ListSortDirection direction) {
-                sortingField_ = sortingField;
-                direction_ = direction;
-            }
-
-            public int Compare(object x, object y) {
-                var sectionX = x as IRTextSectionEx;
-                var sectionY = y as IRTextSectionEx;
-
-                switch (sortingField_) {
-                    case FieldKind.Number: {
-                        int result = sectionY.Number - sectionX.Number;
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
-                    case FieldKind.Name: {
-                        int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
-                    case FieldKind.Blocks: {
-                        int result = sectionY.BlockCount - sectionX.BlockCount;
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-
-                return 0;
-            }
-        }
-
-
-        private sealed class FunctionSorter : IComparer {
-            public enum FieldKind {
-                Name,
-                Sections,
-                Optional
-            }
-
-            private ListSortDirection direction_;
-            private FieldKind sortingField_;
-
-            public FunctionSorter(FieldKind sortingField, ListSortDirection direction) {
-                sortingField_ = sortingField;
-                direction_ = direction;
-            }
-
-            public int Compare(object x, object y) {
-                var sectionX = x as IRTextFunctionEx;
-                var sectionY = y as IRTextFunctionEx;
-
-                switch (sortingField_) {
-                    case FieldKind.Sections: {
-                        int result = sectionY.SectionCount - sectionX.SectionCount;
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
-                    case FieldKind.Name: {
-                        int result = string.Compare(sectionY.Name, sectionX.Name, StringComparison.Ordinal);
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
-                    case FieldKind.Optional: {
-                        int result = ((double)sectionY.OptionalData).CompareTo((double)sectionX.OptionalData);
-                        return direction_ == ListSortDirection.Ascending ? -result : result;
-                    }
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                }
-
-                return 0;
-            }
         }
 
         private async Task ComputeConsecutiveSectionDiffs() {
@@ -1366,11 +1289,7 @@ namespace IRExplorerUI {
         }
 
         #endregion
-
-        private OptionsPanelHostWindow optionsPanelWindow_;
-        private bool optionsPanelVisible_;
-        private SectionSettings sectionSettings_;
-
+        
         private void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
             if (optionsPanelVisible_) {
                 CloseOptionsPanel();
