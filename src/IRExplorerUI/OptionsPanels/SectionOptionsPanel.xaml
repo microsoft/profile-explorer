@@ -86,6 +86,19 @@
                 ToolTip="Tag sections that have highlighted IR, bookmarks and other annotations" />
             <Separator Margin="0,4,0,4" />
 
+            <TextBlock FontWeight="DemiBold" Text="Function List" />
+            <CheckBox
+                Margin="0,4,0,2"
+                Content="Show demangled function names"
+                IsChecked="{Binding ShowDemangledNames, Mode=TwoWay}"
+                ToolTip="Show an extra column with the C/C++ demangled (undecorated) function names" />
+            <CheckBox
+                Margin="0,2,0,2"
+                Content="Use simplified demangling"
+                IsChecked="{Binding DemangleOnlyNames, Mode=TwoWay}"
+                ToolTip="Demangle only the scope and function name" />
+            <Separator Margin="0,4,0,4" />
+
             <TextBlock FontWeight="DemiBold" Text="List Filtering" />
             <CheckBox
                 Margin="0,4,0,2"
@@ -98,7 +111,6 @@
 
             <Separator Margin="0,4,0,4" />
             <TextBlock FontWeight="DemiBold" Text="Document Diffs" />
-
 
             <Grid Margin="0,4,0,0">
                 <Grid.ColumnDefinitions>

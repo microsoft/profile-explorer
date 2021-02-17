@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
@@ -32,6 +33,7 @@ namespace IRExplorerUI {
             }
         }
 
+        private Dictionary<T, GridViewColumnHeader> fieldColumnMap_;
         private ColumnFieldMappingDelegate fieldMapping_;
         private ValueCompareDelegate valueComparer_;
         private SortAdorner sortAdorner_;
@@ -43,6 +45,7 @@ namespace IRExplorerUI {
             listView_ = listView;
             fieldMapping_ = fieldMapping;
             valueComparer_ = valueComparer;
+            fieldColumnMap_ = new Dictionary<T, GridViewColumnHeader>();
 
             var gridView = listView.View as GridView;
             Debug.Assert(gridView != null);
@@ -50,8 +53,17 @@ namespace IRExplorerUI {
             foreach (var column in gridView.Columns) {
                 if (column.Header is GridViewColumnHeader header) {
                     header.Click += ColumnHeader_Click;
+
+                    Debug.Assert(!string.IsNullOrEmpty(header.Name));
+                    T field = fieldMapping_(header.Name);
+                    fieldColumnMap_[field] = header;
                 }
             }
+        }
+
+        public void SortByField(T field, ListSortDirection direction = ListSortDirection.Ascending) {
+            var column = fieldColumnMap_[field];
+            SortColumn(column, direction, field);
         }
 
         void ColumnHeader_Click(object sender, RoutedEventArgs e) {
@@ -60,22 +72,30 @@ namespace IRExplorerUI {
             }
 
             var sortingDirection = ListSortDirection.Ascending;
-            var column = sender as GridViewColumnHeader;
-            Debug.Assert(column != null);
+            var header = sender as GridViewColumnHeader;
+            Debug.Assert(header != null);
+            Debug.Assert(!string.IsNullOrEmpty(header.Name));
 
-            if (sortColumn_ == column && sortAdorner_.Direction == sortingDirection) {
+            // Invert direction if the same column is clicked.
+            if (sortColumn_ == header && sortAdorner_.Direction == sortingDirection) {
                 sortingDirection = ListSortDirection.Descending;
             }
 
+            // Map from the column name to the enum value.
+            T sortField = fieldMapping_(header.Name);
+            SortColumn(header, sortingDirection, sortField);
+        }
+
+        private void SortColumn(GridViewColumnHeader column, 
+                                ListSortDirection sortingDirection, T sortField) {
             sortColumn_ = column;
             sortAdorner_ = new SortAdorner(sortColumn_, sortingDirection);
             AdornerLayer.GetAdornerLayer(sortColumn_)?.Add(sortAdorner_);
 
             if (!(listView_.ItemsSource is ListCollectionView view)) {
-                return; // No function selected yet.
+                return;
             }
 
-            T sortField = fieldMapping_(column.Name);
             view.CustomSort = new ValueComparer(sortField, sortingDirection, valueComparer_);
             listView_.Items.Refresh();
         }
