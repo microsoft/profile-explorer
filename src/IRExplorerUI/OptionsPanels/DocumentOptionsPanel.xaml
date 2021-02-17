@@ -233,7 +233,7 @@
                 IsChecked="{Binding Path=ShowInfoOnHover, Mode=TwoWay}" />
             <CheckBox
                 Margin="20,2,0,2"
-                Content="Only when the Ctrl/Alt/Shift key is pressed"
+                Content="Only when the Alt key is pressed"
                 IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
                 IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
 
@@ -244,7 +244,7 @@
                 IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
             <CheckBox
                 Margin="20,2,0,2"
-                Content="Only when the Ctrl/Alt/Shift key is pressed"
+                Content="Only when the Alt key is pressed"
                 IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
                 IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
             <Separator Margin="0,4,0,4" />

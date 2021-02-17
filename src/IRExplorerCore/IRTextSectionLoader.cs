@@ -45,10 +45,7 @@ namespace IRExplorerCore {
             cacheEnabled_ = cacheEnabled;
             lockObject_ = new object();
             sectionPreprocessingCompleted_ = 0;
-
-            if (cacheEnabled) {
-                sectionCache_ = new Dictionary<IRTextSection, ParsedIRTextSection>();
-            }
+            sectionCache_ = new Dictionary<IRTextSection, ParsedIRTextSection>();
         }
 
         protected (IRSectionParser, IRParsingErrorHandler) InitializeParser() {

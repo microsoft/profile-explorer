@@ -8,6 +8,10 @@ namespace IRExplorerUI.Utilities {
         public Dictionary<int, TimeSpan> SourceLineWeight { get; set; }
         public Dictionary<long, TimeSpan> InstructionWeight { get; set; }
 
+        //? TODO
+        //? - have both inclusive/exclusive sample info
+        //? - save unique stacks with inclusive samples for each frame
+
         public FunctionProfileData(string filePath) {
             SourceFilePath = filePath;
             Weight = TimeSpan.Zero;

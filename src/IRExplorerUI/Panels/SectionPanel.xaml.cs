@@ -61,6 +61,10 @@ namespace IRExplorerUI {
            new RoutedUICommand("Untitled", "DisplayCallGraph", typeof(SectionPanel));
         public static readonly RoutedUICommand DisplayPartialCallGraph =
            new RoutedUICommand("Untitled", "DisplayPartialCallGraph", typeof(SectionPanel));
+        public static readonly RoutedUICommand CopyFunctionName =
+            new RoutedUICommand("Untitled", "CopyFunctionName", typeof(SectionPanel));
+        public static readonly RoutedUICommand CopyDemangledFunctionName =
+            new RoutedUICommand("Untitled", "CopyDemangledFunctionName", typeof(SectionPanel));
     }
     
     public enum OpenSectionKind {
@@ -237,6 +241,7 @@ namespace IRExplorerUI {
         public IRTextFunction Function { get; set; }
         public object OptionalData { get; set; }
         public string OptionalDataText { get; set; }
+        public string AlternateName { get; set; }
 
         private bool isMarked_;
         public bool IsMarked {
@@ -458,6 +463,17 @@ namespace IRExplorerUI {
             }
         }
 
+        private bool alternateNameColumnVisible_;
+        public bool AlternateNameColumnVisible {
+            get => alternateNameColumnVisible_;
+            set {
+                if (alternateNameColumnVisible_ != value) {
+                    alternateNameColumnVisible_ = value;
+                    OnPropertyChange(nameof(AlternateNameColumnVisible));
+                }
+            }
+        }
+
         public IRTextFunction CurrentFunction => currentFunction_;
         public bool HasAnnotatedSections => annotatedSections_.Count > 0;
         public ICompilerInfoProvider CompilerInfo { get; set; }
@@ -585,70 +601,96 @@ namespace IRExplorerUI {
             SectionListScrollChanged?.Invoke(this, e.VerticalOffset);
         }
 
+        private void SetDemangledFunctionNames(List<IRTextFunctionEx> functions) {
+            var nameProvider = Session.CompilerInfo.NameProvider;
+            var demanglingOptions = sectionSettings_.DemanglingOptions;
+
+            foreach (var funcEx in functions) {
+                funcEx.AlternateName = nameProvider.GetDemangledFunctionName(funcEx.Function, demanglingOptions);
+            }
+
+            AlternateNameColumnVisible = true;
+        }
+
+        private void SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
+            var profile = Session.ProfileData;
+            List<Color> colors = null;
+            const int lightSteps = 10;
+
+            OptionalDataColumnVisible = true;
+            OptionalDataColumnName = "Timing";
+            colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
+
+            foreach (var funcEx in functions) {
+                if (profile.FunctionProfiles.TryGetValue(funcEx.Function, out var funcProfile)) {
+                    double weightPercentage = profile.ScaleFunctionWeight(funcProfile.Weight);
+                    funcEx.OptionalData = weightPercentage;
+                    funcEx.OptionalDataText =
+                        $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
+                    int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+
+                    Debug.Assert(colors != null);
+                    funcEx.BackColor = ColorBrushes.GetBrush(colors[colorIndex]);
+                }
+                else {
+                    funcEx.OptionalData = 0.0;
+                }
+            }
+        }
+
         private async Task UpdateFunctionListBindings() {
             if (summary_ == null) {
-                otherSummary_ = null;
-                currentFunction_ = null;
-                sections_.Clear();
-                sectionExtMap_.Clear();
-                annotatedSections_.Clear();
-                SectionList.ItemsSource = null;
-                FunctionList.ItemsSource = null;
-                SectionList.UpdateLayout();
-                FunctionList.UpdateLayout();
+                ResetSectionPanel();
                 return;
             }
 
             SetupSectionExtension();
             
-            var profile = Session.ProfileData;
-            List<Color> colors = null;
-            int lightSteps = 10; // 1,1,0.5 is red
-
-            if (profile != null) {
-                OptionalDataColumnVisible = true;
-                OptionalDataColumnName = "Timing";
-                colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
-            }
-
+            // Create for each function a wrapper with more properties for the UI.
             int index = 0;
             var functionsEx = new List<IRTextFunctionEx>();
 
             foreach (var func in summary_.Functions) {
                 var funcEx = new IRTextFunctionEx(func, index++);
                 functionsEx.Add(funcEx);
-
-                if (profile != null) {
-                    if (profile.FunctionProfiles.TryGetValue(func, out var funcProfile)) {
-                        double weightPercentage = profile.ScaleFunctionWeight(funcProfile.Weight);
-                        funcEx.OptionalData = weightPercentage;
-                        funcEx.OptionalDataText =
-                            $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
-                        int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
-
-                        Debug.Assert(colors != null);
-                        funcEx.BackColor = ColorBrushes.GetBrush(colors[colorIndex]);
-                    }
-                    else {
-                        funcEx.OptionalData = 0.0;
-                    }
-                }
             }
 
+            // Attach additional data to the UI.
+            if (sectionSettings_.ShowDemangledNames) {
+                SetDemangledFunctionNames(functionsEx);
+            }
+
+            if(Session.ProfileData != null) {
+                SetFunctionProfileInfo(functionsEx);
+            }
+
+            // Set up the filter used to search the list.
             var functionFilter = new ListCollectionView(functionsEx);
             functionFilter.Filter = FilterFunctionList;
             FunctionList.ItemsSource = functionFilter;
             SectionList.ItemsSource = null;
 
-            if (profile != null) {
-                //? TODO: HACK, introduce function to sort in a certain way
-                FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
-                FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
-            }
+            // if (profile != null) {
+            //     //? TODO: HACK, introduce function to sort in a certain way
+            //     FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
+            //     FunctionGridViewColumnHeader_Click(OptionalColumnHeader, null);
+            // }
 
             if (summary_.Functions.Count == 1) {
                 await SelectFunction(summary_.Functions[0]);
             }
+        }
+
+        private void ResetSectionPanel() {
+            otherSummary_ = null;
+            currentFunction_ = null;
+            sections_.Clear();
+            sectionExtMap_.Clear();
+            annotatedSections_.Clear();
+            SectionList.ItemsSource = null;
+            FunctionList.ItemsSource = null;
+            SectionList.UpdateLayout();
+            FunctionList.UpdateLayout();
         }
 
         private void SetupSectionExtension() {
@@ -1208,50 +1250,28 @@ namespace IRExplorerUI {
             }
         }
 
-
-        public sealed class SortAdorner : Adorner {
-            private static Geometry ascGeometry = Geometry.Parse("M 0 4 L 3.5 0 L 7 4 Z");
-
-            private static Geometry descGeometry = Geometry.Parse("M 0 0 L 3.5 4 L 7 0 Z");
-
-            public SortAdorner(UIElement element, ListSortDirection dir) : base(element) {
-                Direction = dir;
-            }
-
-            public ListSortDirection Direction { get; private set; }
-
-            protected override void OnRender(DrawingContext drawingContext) {
-                base.OnRender(drawingContext);
-
-                if (AdornedElement.RenderSize.Width < 20) {
-                    return;
-                }
-
-                var transform = new TranslateTransform(AdornedElement.RenderSize.Width - 15,
-                                                       (AdornedElement.RenderSize.Height - 5) / 2);
-
-                drawingContext.PushTransform(transform);
-                var geometry = ascGeometry;
-
-                if (Direction == ListSortDirection.Descending) {
-                    geometry = descGeometry;
-                }
-
-                drawingContext.DrawGeometry(Brushes.Black, null, geometry);
-                drawingContext.Pop();
-            }
-        }
-
         private async Task ComputeConsecutiveSectionDiffs() {
             if(!sectionSettings_.MarkSectionsIdenticalToPrevious || sections_.Count < 2) {
                 return;
             }
 
+            // Make a list of all section pairs like [i - 1, i] and diff each one.
+            // Note that when comparing two documents side-by-side, some of the sections
+            // may be placeholders that don't have a real section behind, those must be ignored.
             var comparedSections = new List<Tuple<IRTextSection, IRTextSection>>();
+            int prevIndex = -1;
 
-            for (int i = 1; i < sections_.Count; i++) {
-                comparedSections.Add(new Tuple<IRTextSection, IRTextSection>(
-                    sections_[i - 1].Section, sections_[i].Section));
+            for (int i = 0; i < sections_.Count; i++) {
+                if (sections_[i].Section == null) {
+                    continue;
+                }
+
+                if (prevIndex != -1) {
+                    comparedSections.Add(new Tuple<IRTextSection, IRTextSection>(
+                        sections_[prevIndex].Section, sections_[i].Section));
+                }
+
+                prevIndex = i;
             }
 
             //? TODO: Pass the LoadedDocument to the panel, not Summary.
@@ -1491,10 +1511,40 @@ namespace IRExplorerUI {
             }
         }
 
+        private void CopyFunctionNameExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var func = GetSelectedFunction(e);
+
+            if (func != null) {
+                var text = Session.CompilerInfo.NameProvider.GetFunctionName(func);
+                Clipboard.SetText(text);
+            }
+        }
+        
+        private void CopyDemangledFunctionNameExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var func = GetSelectedFunction(e);
+
+            if (func != null) {
+                var options = FunctionNameDemanglingOptions.Default;
+                var text = Session.CompilerInfo.NameProvider.GetDemangledFunctionName(func, options);
+                Clipboard.SetText(text);
+            }
+        }
+
         private async void DisplayCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (e.Parameter is IRTextSectionEx sectionEx) {
                 DisplayCallGraph?.Invoke(this, new DisplayCallGraphEventArgs(Summary, sectionEx.Section, false));
             }
+        }
+
+        private IRTextFunction GetSelectedFunction(ExecutedRoutedEventArgs e) {
+            if (e.Parameter is IRTextFunctionEx funcEx) {
+                return funcEx.Function;
+            }
+            else if (e.Parameter is IRTextSectionEx sectionEx) {
+                return sectionEx.Section.ParentFunction;
+            }
+
+            return null;
         }
 
         private async void DisplayPartialCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {

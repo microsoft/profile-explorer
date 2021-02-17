@@ -32,7 +32,7 @@ namespace IRExplorerUI {
 
         IRTextSummary MainDocumentSummary { get; }
         IRTextSummary DiffDocumentSummary { get; }
-        ProfileData ProfileData { get; }
+        ETWProfileDataProvider ProfileData { get; }
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
         IRDocument FindAssociatedDocument(IToolPanel panel);

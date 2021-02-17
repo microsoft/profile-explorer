@@ -1,4 +1,5 @@
-﻿using System.Windows.Media;
+﻿using System;
+using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -24,6 +25,20 @@ namespace IRExplorerUI {
 
         [ProtoMember(15)] public bool MarkSectionsIdenticalToPrevious { get; set; }
         [ProtoMember(16)] public bool LowerIdenticalToPreviousOpacity { get; set; }
+        [ProtoMember(17)] public bool ShowDemangledNames { get; set; }
+        [ProtoMember(18)] public bool DemangleOnlyNames { get; set; }
+
+        public FunctionNameDemanglingOptions DemanglingOptions {
+            get {
+                var options = FunctionNameDemanglingOptions.Default;
+
+                if (DemangleOnlyNames) {
+                    options |= FunctionNameDemanglingOptions.OnlyName;
+                }
+
+                return options;
+            }
+        }
 
         public override void Reset() {
             ColorizeSectionNames = true;
@@ -60,7 +75,9 @@ namespace IRExplorerUI {
                    MarkSectionsIdenticalToPrevious == settings.MarkSectionsIdenticalToPrevious &&
                    NewSectionColor.Equals(settings.NewSectionColor) &&
                    MissingSectionColor.Equals(settings.MissingSectionColor) &&
-                   ChangedSectionColor.Equals(settings.ChangedSectionColor);
+                   ChangedSectionColor.Equals(settings.ChangedSectionColor) &&
+                   ShowDemangledNames == settings.ShowDemangledNames &&
+                   DemangleOnlyNames == settings.DemangleOnlyNames;
         }
     }
 }

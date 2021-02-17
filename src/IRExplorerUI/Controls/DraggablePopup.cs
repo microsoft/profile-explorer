@@ -26,10 +26,7 @@ namespace IRExplorerUI.Controls {
         public event EventHandler PopupClosed;
         public event EventHandler PopupDetached;
 
-        public Thumb Thumb { get; private set; } = new Thumb {
-            Width = 0,
-            Height = 0,
-        };
+        public Thumb Thumb { get; private set; } = new Thumb {Width = 0, Height = 0,};
 
         public void UpdatePosition(Point position, UIElement referenceElement) {
             // Due to various DPI settings, the Window coordinates needs
@@ -50,7 +47,7 @@ namespace IRExplorerUI.Controls {
         }
 
         public void Initialize(Point position, double width, double height,
-                               UIElement referenceElement) {
+            UIElement referenceElement) {
             UpdatePosition(position, referenceElement);
             UpdateSize(width, height);
         }
@@ -69,7 +66,13 @@ namespace IRExplorerUI.Controls {
             PopupClosed?.Invoke(this, null);
         }
 
-        public IntPtr PopupHandle => ((HwndSource)PresentationSource.FromVisual(Child)).Handle;
+        public IntPtr PopupHandle {
+            get {
+                var source = PresentationSource.FromVisual(Child) as HwndSource;
+                return source?.Handle ?? IntPtr.Zero;
+            }
+        }
+
         public bool IsDetached => isDetached_;
 
         public void BringToFront() {
@@ -80,7 +83,6 @@ namespace IRExplorerUI.Controls {
             }
 
             NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOPMOST, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
-//            NativeMethods.SetForegroundWindow(PopupHandle);
         }
 
         public void SendToBack() {
@@ -90,8 +92,6 @@ namespace IRExplorerUI.Controls {
                 return;
             }
 
-            //NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_BOTTOM, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
-            //NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOP, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
             NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_NOTOPMOST, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
         }
 
