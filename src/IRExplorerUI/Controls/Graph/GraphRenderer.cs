@@ -137,7 +137,7 @@ namespace IRExplorerUI {
         }
 
         private void DrawNodeBoundingBoxes() {
-            var pen = Pens.GetPen(Colors.Gray, DefaultEdgeThickness);
+            var pen = ColorPens.GetPen(Colors.Gray, DefaultEdgeThickness);
 
             foreach (var group in graph_.DataNodeGroupsMap) {
                 var boundingBox = ComputeBoundingBox(group.Value);
@@ -172,9 +172,6 @@ namespace IRExplorerUI {
             foreach (var element in nodeElements) {
                 if(!graph_.DataNodeMap.ContainsKey(element)) {
                     Trace.TraceError($"ComputeBoundingBox element not in node map: {element}");
-#if DEBUG
-                    Utils.WaitForDebugger(true);
-#endif
                     continue;
                 }
 
@@ -205,6 +202,7 @@ namespace IRExplorerUI {
 
             foreach (var node in graph_.Nodes) {
                 if (node == null) {
+                    Trace.TraceError($"DrawNodes element null node");
                     continue; //? TODO: Investigate
                 }
 

@@ -235,7 +235,7 @@ namespace IRExplorerUI.Compilers.UTC {
 
         private void MarkAllSymbols(FunctionIR func, string interfSymbol, BlockIR queryBlock,
                                     MarkingScope markingScope, HighlighingType highlightingType, bool showArrows) {
-            var instrStyle = new HighlightingStyle(Brushes.Transparent, Pens.GetPen(Colors.Gray));
+            var instrStyle = new HighlightingStyle(Brushes.Transparent, ColorPens.GetPen(Colors.Gray));
 
             foreach (var elem in func.AllElements) {
                 if (elem is OperandIR op && 
@@ -252,7 +252,7 @@ namespace IRExplorerUI.Compilers.UTC {
         private void MarkAllIndirections(FunctionIR func, int interfPas, BlockIR queryBlock,
                                          MarkingScope markingScope, HighlighingType highlightingType, bool showArrows) {
             var document = Session.CurrentDocument;
-            var instrStyle = new HighlightingStyle(Brushes.Transparent, Pens.GetBoldPen(Colors.Gray));
+            var instrStyle = new HighlightingStyle(Brushes.Transparent, ColorPens.GetBoldPen(Colors.Gray));
 
             foreach (var element in func.AllElements) {
                 if (!(element is OperandIR op)) {
@@ -285,8 +285,8 @@ namespace IRExplorerUI.Compilers.UTC {
             document.MarkElementAppend(op.ParentTuple, instrStyle, highlightingType, false);
 
             if (showArrows) {
-                var style = op.IsDestinationOperand ? new HighlightingStyle(Colors.DarkRed, Pens.GetDashedPen(Colors.DarkRed, DashStyles.Dash, 1.5)) :
-                                                      new HighlightingStyle(Colors.DarkBlue, Pens.GetDashedPen(Colors.DarkBlue, DashStyles.Dash, 1.5));
+                var style = op.IsDestinationOperand ? new HighlightingStyle(Colors.DarkRed, ColorPens.GetDashedPen(Colors.DarkRed, DashStyles.Dash, 1.5)) :
+                                                      new HighlightingStyle(Colors.DarkBlue, ColorPens.GetDashedPen(Colors.DarkBlue, DashStyles.Dash, 1.5));
                 document.AddConnectedElement(op, style);
             }
         }

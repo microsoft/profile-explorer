@@ -156,7 +156,7 @@ namespace IRExplorerUI {
             //? TODO: Expose as option
             definitionStyle_ = new PairHighlightingStyle {
                 ParentStyle = new HighlightingStyle(Color.FromRgb(255, 215, 191)),
-                ChildStyle = new HighlightingStyle(Color.FromRgb(255, 197, 163), Pens.GetBoldPen(Colors.Black))
+                ChildStyle = new HighlightingStyle(Color.FromRgb(255, 197, 163), ColorPens.GetBoldPen(Colors.Black))
             };
 
             expressionOperandStyle_ = DefaultHighlightingStyles.StyleSet;
@@ -229,7 +229,7 @@ namespace IRExplorerUI {
         }
 
         private void SetupStyles() {
-            var borderPen = Pens.GetBoldPen(settings_.BorderColor);
+            var borderPen = ColorPens.GetBoldPen(settings_.BorderColor);
             selectedStyle_ ??= new HighlightingStyle();
             selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
             selectedStyle_.Border = borderPen;
@@ -237,7 +237,7 @@ namespace IRExplorerUI {
             selectedBlockStyle_.BackColor = ColorBrushes.GetBrush(Colors.Transparent);
 
             selectedBlockStyle_.Border =
-                Pens.GetPen(ColorUtils.AdjustLight(settings_.SelectedValueColor, 0.75f), 2);
+                ColorPens.GetPen(ColorUtils.AdjustLight(settings_.SelectedValueColor, 0.75f), 2);
 
             ssaUserStyle_ ??= new PairHighlightingStyle();
 
@@ -873,7 +873,7 @@ namespace IRExplorerUI {
         }
 
         public void MarkTextRange(int offset, int length, Color color) {
-            var style = new HighlightingStyle(color, Pens.GetPen(Colors.DarkGray));
+            var style = new HighlightingStyle(color, ColorPens.GetPen(Colors.DarkGray));
             var element = CreateDummyElement(offset, length);
             var group = new HighlightedGroup(element, style);
             markedHighlighter_.Add(group);
@@ -887,7 +887,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var style = new HighlightingStyle(color, Pens.GetPen(Colors.DarkGray));
+            var style = new HighlightingStyle(color, ColorPens.GetPen(Colors.DarkGray));
             searchResultMap_ = new Dictionary<TextSearchResult, IRElement>();
             searchResultsGroup_ = new HighlightedGroup(style);
 
@@ -922,7 +922,7 @@ namespace IRExplorerUI {
                 searchResultsGroup_.Add(currentSearchResultGroup_.Elements[0]);
             }
 
-            var style = new HighlightingStyle(color, Pens.GetPen(Colors.Black));
+            var style = new HighlightingStyle(color, ColorPens.GetPen(Colors.Black));
             currentSearchResultGroup_ = new HighlightedGroup(style);
             var element = searchResultMap_[result];
             searchResultsGroup_.Remove(element);
@@ -1279,7 +1279,7 @@ namespace IRExplorerUI {
             var barElement = FindMarkerBarlElement(position);
 
             if (barElement != null && barElement.HandlesInput) {
-                barElement.Style.Border = Pens.GetBoldPen(Colors.Black);
+                barElement.Style.Border = ColorPens.GetBoldPen(Colors.Black);
                 hoveredBarElement_ = barElement;
                 needsRendering = true;
                 ShowTooltip(barElement.Element, true);
@@ -1579,16 +1579,16 @@ namespace IRExplorerUI {
             return reference.Kind switch
             {
                 ReferenceKind.Address => new PairHighlightingStyle {
-                    ChildStyle = new HighlightingStyle("#FF9090", Pens.GetBoldPen(Colors.DarkRed)),
+                    ChildStyle = new HighlightingStyle("#FF9090", ColorPens.GetBoldPen(Colors.DarkRed)),
                     ParentStyle = new HighlightingStyle("#FFC9C9")
                 },
                 ReferenceKind.Load => new PairHighlightingStyle {
-                    ChildStyle = new HighlightingStyle("#BDBAEC", Pens.GetPen(Colors.DarkBlue)),
+                    ChildStyle = new HighlightingStyle("#BDBAEC", ColorPens.GetPen(Colors.DarkBlue)),
                     ParentStyle = new HighlightingStyle("#D9D8F4")
                 },
                 ReferenceKind.Store => ssaUserStyle_,
                 ReferenceKind.SSA => new PairHighlightingStyle {
-                    ChildStyle = new HighlightingStyle("#BAD6EC", Pens.GetPen(Colors.DarkBlue)),
+                    ChildStyle = new HighlightingStyle("#BAD6EC", ColorPens.GetPen(Colors.DarkBlue)),
                     ParentStyle = new HighlightingStyle("#D8E9F4")
                 },
                 _ => throw new InvalidOperationException("Unknown ReferenceKind")
@@ -2102,7 +2102,7 @@ namespace IRExplorerUI {
             //? TODO: Implement arrows - either to all uses, or just ones outside view
             // overlayRenderer_.SetRootElement(op, new HighlightingStyle(Colors.Black));
             // overlayRendererConnectedTemporarely_ = highlighter.Type != HighlighingType.Marked;
-            // var arrowStyle = new HighlightingStyle(Colors.DarkGreen, Pens.GetDashedPen(Colors.DarkGreen, DashStyles.Dash, 1.5));
+            // var arrowStyle = new HighlightingStyle(Colors.DarkGreen, ColorPens.GetDashedPen(Colors.DarkGreen, DashStyles.Dash, 1.5));
 
             foreach (var use in useList) {
                 useGroup.Add(use);
@@ -3221,11 +3221,11 @@ namespace IRExplorerUI {
 
                 Color borderColor = Colors.Black;
                 double borderWeight = Math.Max(2, remark.Category.TextMarkBorderWeight);
-                return new HighlightingStyle(backColor, Pens.GetPen(borderColor, borderWeight));
+                return new HighlightingStyle(backColor, ColorPens.GetPen(borderColor, borderWeight));
             }
 
             return new HighlightingStyle(remark.Category.MarkColor,
-                                         Pens.GetPen(remark.Category.TextMarkBorderColor,
+                                         ColorPens.GetPen(remark.Category.TextMarkBorderColor,
                                                      remark.Category.TextMarkBorderWeight));
         }
 

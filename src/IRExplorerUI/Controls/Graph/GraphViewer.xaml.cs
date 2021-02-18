@@ -17,8 +17,8 @@ namespace IRExplorerUI {
     ///     Interaction logic for GraphViewer.xaml
     /// </summary>
     public partial class GraphViewer : FrameworkElement {
-        public static Pen DefaultPen = Pens.GetPen(Colors.Black, 0.025);
-        public static Pen DefaultBoldPen = Pens.GetPen(Colors.Black, 0.06);
+        public static Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
+        public static Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, 0.06);
         private readonly double GraphMargin = 0.15;
 
         private readonly double ScaleFactor = 50;
@@ -34,14 +34,14 @@ namespace IRExplorerUI {
         private HighlightingStyleCyclingCollection nodeStyles_;
 
         //? TODO: Allow color change
-        private Pen predecessorNodeBorder_ = Pens.GetPen("#6927CC", 0.05);
+        private Pen predecessorNodeBorder_ = ColorPens.GetPen("#6927CC", 0.05);
         private Dictionary<GraphNode, HighlightingStyle> selectedNodes_;
 
         private HighlightingStyle selectedNodeStyle =
             new HighlightingStyle(Color.FromRgb(174, 220, 244), DefaultBoldPen);
 
         private GraphSettings settings_;
-        private Pen successorNodeBorder_ = Pens.GetPen("#008230", 0.05);
+        private Pen successorNodeBorder_ = ColorPens.GetPen("#008230", 0.05);
         private double zoomLevel_ = 0.5;
         private ICompilerInfoProvider compilerInfo_;
 

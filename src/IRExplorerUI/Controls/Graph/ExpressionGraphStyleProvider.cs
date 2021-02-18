@@ -40,46 +40,46 @@ namespace IRExplorerUI {
             defaultNodeBackground_ = ColorBrushes.GetBrush(options.NodeColor);
 
             defaultNodeStyle_ = new HighlightingStyle(defaultNodeBackground_,
-                                                      Pens.GetPen(options.NodeBorderColor,
+                                                      ColorPens.GetPen(options.NodeBorderColor,
                                                                   DefaultEdgeThickness));
 
             copyNodeStyle_ = new HighlightingStyle(options.CopyInstructionNodeColor,
-                                                   Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                   ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             phiNodeStyle_ = new HighlightingStyle(options.PhiInstructionNodeColor,
-                                                  Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                  ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             unaryNodeStyle_ = new HighlightingStyle(options.UnaryInstructionNodeColor,
-                                                    Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                    ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             binaryNodeStyle_ = new HighlightingStyle(options.BinaryInstructionNodeColor,
-                                                     Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                     ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             callNodeStyle_ = new HighlightingStyle(options.CallInstructionNodeColor,
-                                                     Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                     ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             loadNodeStyle_ = new HighlightingStyle(options.LoadStoreInstructionNodeColor,
-                                                   Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                   ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             binaryNodeStyle_ = new HighlightingStyle(options.BinaryInstructionNodeColor,
-                                                     Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                     ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             operandNodeStyle_ =
-                new HighlightingStyle(options.OperandNodeColor, Pens.GetPen(options.NodeBorderColor, 0.035));
+                new HighlightingStyle(options.OperandNodeColor, ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             numberOperandNodeStyle_ =
                 new HighlightingStyle(options.NumberOperandNodeColor,
-                                      Pens.GetPen(options.NodeBorderColor, 0.035));
+                                      ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             addressOperandNodeStyle_ =
                 new HighlightingStyle(options.AddressOperandNodeColor,
-                                      Pens.GetPen(options.NodeBorderColor, 0.035));
+                                      ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
             indirectOperandNodeStyle_ = new HighlightingStyle(options.IndirectionOperandNodeColor,
-                                                              Pens.GetPen(options.NodeBorderColor, 0.035));
+                                                              ColorPens.GetPen(options.NodeBorderColor, 0.035));
 
-            edgeStyle_ = Pens.GetPen(options.EdgeColor, DefaultEdgeThickness);
-            loopEdgeStyle_ = Pens.GetPen(options.LoopPhiBackedgeColor, BoldEdgeThickness);
+            edgeStyle_ = ColorPens.GetPen(options.EdgeColor, DefaultEdgeThickness);
+            loopEdgeStyle_ = ColorPens.GetPen(options.LoopPhiBackedgeColor, BoldEdgeThickness);
         }
 
         public HighlightingStyle GetDefaultNodeStyle() {

@@ -252,7 +252,7 @@ namespace IRExplorerUI {
 
                 await Dispatcher.BeginInvoke((Action)(() => {
                     ClearSyntaxErrorHighlighting();
-                    var group = new HighlightedGroup(new HighlightingStyle(Colors.Red, 0.1, Pens.GetPen(Colors.Red)));
+                    var group = new HighlightedGroup(new HighlightingStyle(Colors.Red, 0.1, ColorPens.GetPen(Colors.Red)));
 
                     foreach (var error in errors) {
                         if (error.Location.SourceSpan.Length > 0) {

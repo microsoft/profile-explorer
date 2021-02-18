@@ -26,14 +26,14 @@ namespace IRExplorerUI {
             defaultTextColor_ = ColorBrushes.GetBrush(Colors.Black);
             defaultNodeBackground_ = ColorBrushes.GetBrush(Colors.Gainsboro);
             defaultNodeStyle_ = new HighlightingStyle(defaultNodeBackground_,
-                                                      Pens.GetPen(Colors.DimGray, DefaultEdgeThickness));
+                                                      ColorPens.GetPen(Colors.DimGray, DefaultEdgeThickness));
             leafNodeStyle_ = new HighlightingStyle(ColorBrushes.GetBrush(Colors.LightBlue),
-                                                      Pens.GetPen(Colors.DimGray, DefaultEdgeThickness));
+                                                      ColorPens.GetPen(Colors.DimGray, DefaultEdgeThickness));
             entryNodeStyle_ = new HighlightingStyle(ColorBrushes.GetBrush(Colors.LightGreen),
-                                                      Pens.GetPen(Colors.DimGray, BoldEdgeThickness));
+                                                      ColorPens.GetPen(Colors.DimGray, BoldEdgeThickness));
             externalNodeStyle_ = new HighlightingStyle(ColorBrushes.GetBrush(Colors.Moccasin),
-                                                      Pens.GetPen(Colors.DimGray, DefaultEdgeThickness));
-            edgeStyle_ = Pens.GetPen(Colors.DarkBlue, DefaultEdgeThickness);
+                                                      ColorPens.GetPen(Colors.DimGray, DefaultEdgeThickness));
+            edgeStyle_ = ColorPens.GetPen(Colors.DarkBlue, DefaultEdgeThickness);
         }
 
         public Brush GetDefaultNodeBackground() {
@@ -70,7 +70,7 @@ namespace IRExplorerUI {
                 var background = graphTag.BackgroundColor ?? Colors.Gainsboro;
                 var borderColor = graphTag.BorderColor ?? Colors.DimGray;
                 var borderThickness = graphTag.BorderThickness != 0 ? graphTag.BorderThickness : DefaultEdgeThickness;
-                return new HighlightingStyle(background, Pens.GetPen(borderColor, borderThickness));
+                return new HighlightingStyle(background, ColorPens.GetPen(borderColor, borderThickness));
             }
 
             if (callNode.IsExternal) {

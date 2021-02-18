@@ -39,38 +39,38 @@ namespace IRExplorerUI {
             defaultNodeBackground_ = ColorBrushes.GetBrush(options.NodeColor);
 
             defaultNodeStyle_ = new HighlightingStyle(defaultNodeBackground_,
-                                                      Pens.GetPen(options.NodeBorderColor,
+                                                      ColorPens.GetPen(options.NodeBorderColor,
                                                                   DefaultEdgeThickness));
 
             branchBlockStyle_ =
                 new HighlightingStyle(defaultNodeBackground_,
-                                      Pens.GetPen(options.BranchNodeBorderColor, 0.035));
+                                      ColorPens.GetPen(options.BranchNodeBorderColor, 0.035));
 
             switchBlockStyle_ =
                 new HighlightingStyle(defaultNodeBackground_,
-                                      Pens.GetPen(options.SwitchNodeBorderColor, 0.035));
+                                      ColorPens.GetPen(options.SwitchNodeBorderColor, 0.035));
 
             loopBackedgeBlockStyle_ = new HighlightingStyle(defaultNodeBackground_,
-                                                            Pens.GetPen(
+                                                            ColorPens.GetPen(
                                                                 options.LoopNodeBorderColor,
                                                                 BoldEdgeThickness));
 
             returnBlockStyle_ = new HighlightingStyle(defaultNodeBackground_,
-                                                      Pens.GetPen(options.ReturnNodeBorderColor,
+                                                      ColorPens.GetPen(options.ReturnNodeBorderColor,
                                                                   BoldEdgeThickness));
 
             emptyBlockStyle_ = new HighlightingStyle(Colors.Gainsboro,
-                                                     Pens.GetPen(options.NodeBorderColor,
+                                                     ColorPens.GetPen(options.NodeBorderColor,
                                                                  DefaultEdgeThickness));
 
-            edgeStyle_ = Pens.GetPen(options.EdgeColor, DefaultEdgeThickness);
-            branchEdgeStyle_ = Pens.GetPen(options.BranchNodeBorderColor, BoldEdgeThickness);
-            loopEdgeStyle_ = Pens.GetPen(options.LoopNodeBorderColor, BoldEdgeThickness);
+            edgeStyle_ = ColorPens.GetPen(options.EdgeColor, DefaultEdgeThickness);
+            branchEdgeStyle_ = ColorPens.GetPen(options.BranchNodeBorderColor, BoldEdgeThickness);
+            loopEdgeStyle_ = ColorPens.GetPen(options.LoopNodeBorderColor, BoldEdgeThickness);
 
             immDomEdgeStyle_ =
-                Pens.GetDashedPen(options.DominatorEdgeColor, DashStyles.Dot, DashedEdgeThickness);
+                ColorPens.GetDashedPen(options.DominatorEdgeColor, DashStyles.Dot, DashedEdgeThickness);
 
-            returnEdgeStyle_ = Pens.GetPen(options.ReturnNodeBorderColor, DefaultEdgeThickness);
+            returnEdgeStyle_ = ColorPens.GetPen(options.ReturnNodeBorderColor, DefaultEdgeThickness);
 
             if (options.MarkLoopBlocks) {
                 loopBlockStyles_ = new List<HighlightingStyle>();
@@ -78,7 +78,7 @@ namespace IRExplorerUI {
                 foreach (var color in options.LoopNodeColors) {
                     loopBlockStyles_.Add(
                         new HighlightingStyle(
-                            color, Pens.GetPen(options.NodeBorderColor, DefaultEdgeThickness)));
+                            color, ColorPens.GetPen(options.NodeBorderColor, DefaultEdgeThickness)));
                 }
             }
         }

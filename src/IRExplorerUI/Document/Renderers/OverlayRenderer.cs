@@ -250,7 +250,7 @@ namespace IRExplorerUI.Document {
 
             double dotSize = 3;
             var dotBackground = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 255);
-            var dotPen = Pens.GetTransparentPen(Colors.DarkRed, 255);
+            var dotPen = ColorPens.GetTransparentPen(Colors.DarkRed, 255);
             bool first = true;
 
             // Draw extra annotations for remarks in the same context.
@@ -280,8 +280,8 @@ namespace IRExplorerUI.Document {
                     controlPoint = new Point(Math.Clamp(controlPoint.X, 0, Width), controlPoint.Y);
                 }
 
-                //overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), startPoint, middlePoint);
-                //overlayDC.DrawLine(Pens.GetPen(Colors.Green, 2), middlePoint, endPoint);
+                //overlayDC.DrawLine(ColorPens.GetPen(Colors.Green, 2), startPoint, middlePoint);
+                //overlayDC.DrawLine(ColorPens.GetPen(Colors.Green, 2), middlePoint, endPoint);
 
                 var startOrientation = FindArrowOrientation(new Point[] { edgeEndPoint, edgeStartPoint, controlPoint }, out var _);
                 var orientation = FindArrowOrientation(new Point[] { edgeStartPoint, controlPoint, edgeEndPoint }, out var _);
@@ -301,8 +301,8 @@ namespace IRExplorerUI.Document {
                 //edgeSC.BeginFigure(startPoint, false, false);
                 //edgeSC.LineTo(endPoint, true, false);
 
-                // overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), startPoint, endPoint);
-                //overlayDC.DrawLine(Pens.GetPen(Colors.Red, 2), point, point2);
+                // overlayDC.DrawLine(ColorPens.GetPen(Colors.Red, 2), startPoint, endPoint);
+                //overlayDC.DrawLine(ColorPens.GetPen(Colors.Red, 2), point, point2);
 
                 // overlayDC.DrawEllipse(connectedElement.Style.BackColor, connectedElement.Style.Border, endPoint, dotSize, dotSize);
 
@@ -507,7 +507,7 @@ namespace IRExplorerUI.Document {
                         //    label += $", {notesTag.Notes[0]}";
                         //}
 
-                        var pen = group.Border ?? Pens.GetPen(Colors.Gray);
+                        var pen = group.Border ?? ColorPens.GetPen(Colors.Gray);
                         var text = DocumentUtils.CreateFormattedText(textView, label, DefaultFont,
                                                                      fontSize, Brushes.Black);
                         drawingContext.DrawRectangle(group.BackColor, pen,

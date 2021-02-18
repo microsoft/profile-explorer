@@ -240,7 +240,7 @@ namespace IRExplorerUI {
         }
 
         public static implicit operator Pen(PenSurrogate value) {
-            return Pens.GetPen(value.Brush, value.Thickness);
+            return ColorPens.GetPen(value.Brush, value.Thickness);
         }
     }
 

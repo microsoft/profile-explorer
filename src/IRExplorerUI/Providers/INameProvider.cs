@@ -14,6 +14,8 @@ namespace IRExplorerUI {
     }
 
     public interface INameProvider {
+        bool IsDemanglingSupported { get; }
+        FunctionNameDemanglingOptions DemanglingOptions { get; }
         string GetSectionName(IRTextSection section, bool includeNumber = false);
         string GetFunctionName(IRTextFunction function);
         string GetDemangledFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options);

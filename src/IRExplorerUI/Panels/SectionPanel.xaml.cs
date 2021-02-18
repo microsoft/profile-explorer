@@ -324,8 +324,8 @@ namespace IRExplorerUI {
         private OptionsPanelHostWindow optionsPanelWindow_;
         private bool optionsPanelVisible_;
 
-        private GridViewColumnSorter<FunctionFieldKind> functionSorter_;
-        private GridViewColumnSorter<SectionFieldKind> sectionSorter_;
+        private GridViewColumnValueSorter<FunctionFieldKind> functionValueSorter_;
+        private GridViewColumnValueSorter<SectionFieldKind> sectionValueSorter_;
 
         public SectionPanel() {
             InitializeComponent();
@@ -337,8 +337,8 @@ namespace IRExplorerUI {
             MainGrid.DataContext = this;
             sectionSettings_ = App.Settings.SectionSettings;
 
-            functionSorter_ = 
-                new GridViewColumnSorter<FunctionFieldKind>(FunctionList,
+            functionValueSorter_ = 
+                new GridViewColumnValueSorter<FunctionFieldKind>(FunctionList,
                 name => name switch {
                     "FunctionColumnHeader" => FunctionFieldKind.Name,
                     "AlternateNameColumnHeader" => FunctionFieldKind.AlternateName,
@@ -371,8 +371,8 @@ namespace IRExplorerUI {
                     }
                 });
 
-            sectionSorter_ =
-                new GridViewColumnSorter<SectionFieldKind>(SectionList,
+            sectionValueSorter_ =
+                new GridViewColumnValueSorter<SectionFieldKind>(SectionList,
                 name => name switch {
                     "NumberColumnHeader" => SectionFieldKind.Number,
                     "NameColumnHeader" => SectionFieldKind.Name,
@@ -680,7 +680,13 @@ namespace IRExplorerUI {
 
         private void SetDemangledFunctionNames(List<IRTextFunctionEx> functions) {
             var nameProvider = Session.CompilerInfo.NameProvider;
-            var demanglingOptions = sectionSettings_.DemanglingOptions;
+
+            if (!sectionSettings_.ShowDemangledNames || !nameProvider.IsDemanglingSupported) {
+                AlternateNameColumnVisible = false;
+                return;
+            }
+
+            var demanglingOptions = nameProvider.DemanglingOptions;
 
             foreach (var funcEx in functions) {
                 funcEx.AlternateName = nameProvider.GetDemangledFunctionName(funcEx.Function, demanglingOptions);
@@ -691,6 +697,12 @@ namespace IRExplorerUI {
 
         private void SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
             var profile = Session.ProfileData;
+
+            if (profile == null) {
+                OptionalDataColumnVisible = false;
+                return;
+            }
+
             List<Color> colors = null;
             const int lightSteps = 10;
 
@@ -714,7 +726,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            functionSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
+            functionValueSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
         }
 
         private async Task UpdateFunctionListBindings() {
@@ -735,13 +747,8 @@ namespace IRExplorerUI {
             }
 
             // Attach additional data to the UI.
-            if (sectionSettings_.ShowDemangledNames) {
-                SetDemangledFunctionNames(functionsEx);
-            }
-
-            if(Session.ProfileData != null) {
-                SetFunctionProfileInfo(functionsEx);
-            }
+            SetDemangledFunctionNames(functionsEx);
+            SetFunctionProfileInfo(functionsEx);
 
             // Set up the filter used to search the list.
             var functionFilter = new ListCollectionView(functionsEx);
@@ -891,6 +898,14 @@ namespace IRExplorerUI {
             var functionEx = (IRTextFunctionEx)value;
             var function = functionEx.Function;
 
+            // Don't filter with less than 2 letters.
+            //? TODO: FunctionFilter change should rather set a property with the trimmed text
+            string text = FunctionFilter.Text.Trim();
+
+            if (text.Length < 2) {
+                return true;
+            }
+
             // In two-document diff mode, show only functions
             // that are common in the two summaries.
             if (otherSummary_ != null) {
@@ -899,11 +914,21 @@ namespace IRExplorerUI {
                 }
             }
 
-            string text = FunctionFilter.Text.Trim();
-            return text.Length <= 0 ||
-                (App.Settings.SectionSettings.FunctionSearchCaseSensitive ?
-                function.Name.Contains(text, StringComparison.Ordinal) :
-                function.Name.Contains(text, StringComparison.OrdinalIgnoreCase));
+            // Search the function name.
+            if ((App.Settings.SectionSettings.FunctionSearchCaseSensitive
+                ? function.Name.Contains(text, StringComparison.Ordinal)
+                : function.Name.Contains(text, StringComparison.OrdinalIgnoreCase))) {
+                return true;
+            }
+
+            // Search the demangled name.
+            if (!string.IsNullOrEmpty(functionEx.AlternateName)) {
+                return (App.Settings.SectionSettings.FunctionSearchCaseSensitive
+                    ? functionEx.AlternateName.Contains(text, StringComparison.Ordinal)
+                    : functionEx.AlternateName.Contains(text, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return false;
         }
 
         private bool FilterSectionList(object value) {
@@ -1318,13 +1343,13 @@ namespace IRExplorerUI {
 
         private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
             var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
-            HandleNewDiffSettings(newSettings, false);
+            HandleNewSettings(newSettings, false);
             optionsPanelWindow_.Settings = null;
             optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
         }
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
-            HandleNewDiffSettings(new SectionSettings(), true);
+            HandleNewSettings(new SectionSettings(), true);
 
             //? TODO: Setting to null should be part of OptionsPanelBase and remove it in all places
             optionsPanelWindow_.Settings = null;
@@ -1346,13 +1371,13 @@ namespace IRExplorerUI {
             optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
 
             var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
-            await HandleNewDiffSettings(newSettings, true);
+            await HandleNewSettings(newSettings, true);
 
             optionsPanelWindow_ = null;
             optionsPanelVisible_ = false;
         }
 
-        private async Task HandleNewDiffSettings(SectionSettings newSettings, bool commit) {
+        private async Task HandleNewSettings(SectionSettings newSettings, bool commit) {
             if (commit) {
                 App.Settings.SectionSettings = newSettings;
                 App.SaveApplicationSettings();
@@ -1362,8 +1387,14 @@ namespace IRExplorerUI {
                 return;
             }
 
+            bool updateFunctionList = newSettings.HasFunctionListChanges(sectionSettings_);
             App.Settings.SectionSettings = newSettings;
             sectionSettings_ = newSettings;
+
+            if (updateFunctionList) {
+                await UpdateFunctionListBindings();
+            }
+
             UpdateSectionListBindings(currentFunction_, true);
             RefreshSectionList();
             await ComputeConsecutiveSectionDiffs();

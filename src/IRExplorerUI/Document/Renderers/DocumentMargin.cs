@@ -87,22 +87,22 @@ namespace IRExplorerUI {
 
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
         private static readonly HighlightingStyle defaultBookmarkStyle_ =
-            new HighlightingStyle(Colors.LemonChiffon, Pens.GetPen(Colors.Silver));
+            new HighlightingStyle(Colors.LemonChiffon, ColorPens.GetPen(Colors.Silver));
 
         private static readonly HighlightingStyle selectedBookmarkStyle_ =
-            new HighlightingStyle(Colors.PeachPuff, Pens.GetPen(Colors.Black));
+            new HighlightingStyle(Colors.PeachPuff, ColorPens.GetPen(Colors.Black));
 
         private static readonly HighlightingStyle pinnedBookmarkStyle_ =
-            new HighlightingStyle(Colors.PapayaWhip, Pens.GetPen(Colors.Black));
+            new HighlightingStyle(Colors.PapayaWhip, ColorPens.GetPen(Colors.Black));
 
         private static readonly HighlightingStyle pinButtonStyle_ =
-            new HighlightingStyle(Colors.Silver, Pens.GetPen(Colors.Black));
+            new HighlightingStyle(Colors.Silver, ColorPens.GetPen(Colors.Black));
 
         private static readonly HighlightingStyle hoverBookmarkStyle_ =
-            new HighlightingStyle(Colors.LightBlue, Pens.GetPen(Colors.Gray));
+            new HighlightingStyle(Colors.LightBlue, ColorPens.GetPen(Colors.Gray));
 
         private static readonly HighlightingStyle nearbyBookmarkStyle_ =
-            new HighlightingStyle(Colors.LightBlue, Pens.GetPen(Colors.Silver));
+            new HighlightingStyle(Colors.LightBlue, ColorPens.GetPen(Colors.Silver));
         private SolidColorBrush backgroundBrush_;
 
         private HashSet<IRElement> blockElements_;

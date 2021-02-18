@@ -62,10 +62,10 @@ namespace IRExplorerUI {
         public DiffLineHighlighter() {
             segments_ = new TextSegmentCollection<DiffTextSegment>();
             placeholderPen_ = null;
-            deletionPen_ = Pens.GetPen(App.Settings.DiffSettings.DeletionBorderColor);
-            insertionPen_ = Pens.GetPen(App.Settings.DiffSettings.InsertionBorderColor);
-            modificationPen_ = Pens.GetPen(App.Settings.DiffSettings.ModificationBorderColor);
-            minorModificationPen_ = Pens.GetPen(App.Settings.DiffSettings.MinorModificationBorderColor);
+            deletionPen_ = ColorPens.GetPen(App.Settings.DiffSettings.DeletionBorderColor);
+            insertionPen_ = ColorPens.GetPen(App.Settings.DiffSettings.InsertionBorderColor);
+            modificationPen_ = ColorPens.GetPen(App.Settings.DiffSettings.ModificationBorderColor);
+            minorModificationPen_ = ColorPens.GetPen(App.Settings.DiffSettings.MinorModificationBorderColor);
             insertionBrush_ = ColorBrushes.GetBrush(App.Settings.DiffSettings.InsertionColor);
             deletionBrush_ = ColorBrushes.GetBrush(App.Settings.DiffSettings.DeletionColor);
             modificationBrush_ = ColorBrushes.GetBrush(App.Settings.DiffSettings.ModificationColor);

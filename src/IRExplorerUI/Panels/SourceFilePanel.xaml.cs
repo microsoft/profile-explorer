@@ -41,7 +41,7 @@ namespace IRExplorerUI {
             profileMarker_ = new ElementHighlighter(HighlighingType.Marked);
             TextView.TextArea.TextView.BackgroundRenderers.Add(profileMarker_);
             TextView.TextArea.TextView.BackgroundRenderers.Add(
-                new CurrentLineHighlighter(TextView, lineBrush, Pens.GetPen(Colors.Gray)));
+                new CurrentLineHighlighter(TextView, lineBrush, ColorPens.GetPen(Colors.Gray)));
 
             // Create the overlay and place it on top of the text.
             overlayRenderer_ = new OverlayRenderer(profileMarker_);

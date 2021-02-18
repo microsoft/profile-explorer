@@ -43,6 +43,9 @@ namespace IRExplorerUI.UTC {
                 new FilteredSectionName("tuples after", FilteredSectionNameKind.RemoveSubstring));
         }
 
+        public bool IsDemanglingSupported => true;
+        public FunctionNameDemanglingOptions DemanglingOptions => App.Settings.SectionSettings.DemanglingOptions;
+
         public string GetSectionName(IRTextSection section, bool includeNumber) {
             string sectionName = section.Name;
 
@@ -109,7 +112,8 @@ namespace IRExplorerUI.UTC {
         public string GetDemangledFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {
             var sb = new StringBuilder(MaxDemangledFunctionNameLength);
             NativeMethods.UnDecorateFlags flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
-            
+            flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS;
+
             if (options.HasFlag(FunctionNameDemanglingOptions.OnlyName)) {
                 flags |= NativeMethods.UnDecorateFlags.UNDNAME_NAME_ONLY;
             }

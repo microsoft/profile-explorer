@@ -19,7 +19,7 @@ namespace IRExplorerUI {
                 borderPen_ = borderPen;
             }
             else {
-                borderPen_ = Pens.GetPen(Colors.Gray);
+                borderPen_ = ColorPens.GetPen(Colors.Gray);
             }
 
             if (backgroundBrush != null) {
