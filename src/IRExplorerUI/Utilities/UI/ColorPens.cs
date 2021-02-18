@@ -6,12 +6,12 @@ using System.Collections.Generic;
 using System.Windows.Media;
 
 namespace IRExplorerUI {
-    public static class Pens {
+    public static class ColorPens {
         private static readonly double BoldPenThickness = 1.5;
         private static readonly Dictionary<Tuple<Color, double>, Pen> pens_;
         private static readonly Dictionary<Tuple<Color, double, DashStyle>, Pen> dashedPens_;
 
-        static Pens() {
+        static ColorPens() {
             pens_ = new Dictionary<Tuple<Color, double>, Pen>();
             dashedPens_ = new Dictionary<Tuple<Color, double, DashStyle>, Pen>();
         }

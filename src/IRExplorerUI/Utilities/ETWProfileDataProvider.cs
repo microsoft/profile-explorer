@@ -11,6 +11,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI.Utilities {
+    //? TODO: Add interface
     public class ETWProfileDataProvider {
         private IRTextSummary summary_;
         private IRTextSectionLoader loader_;

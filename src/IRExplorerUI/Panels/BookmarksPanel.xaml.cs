@@ -105,7 +105,7 @@ namespace IRExplorerUI {
 
         private void MarkBookmarkExecuted(object sender, ExecutedRoutedEventArgs e) {
             SetSelectedBookmarkStyle(Utils.GetSelectedColorStyle(e.Parameter as SelectedColorEventArgs,
-                                                                 Pens.GetPen(Colors.Silver)));
+                                                                 ColorPens.GetPen(Colors.Silver)));
         }
 
         private void UnmarkBookmarkExecuted(object sender, ExecutedRoutedEventArgs e) {

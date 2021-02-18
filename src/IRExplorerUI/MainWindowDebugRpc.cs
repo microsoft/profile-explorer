@@ -166,10 +166,10 @@ namespace IRExplorerUI {
 
                     AppendNotesTag(element, e.Label);
                     var style = new PairHighlightingStyle();
-                    style.ParentStyle = new HighlightingStyle(Colors.Transparent, Pens.GetPen(Colors.Purple));
+                    style.ParentStyle = new HighlightingStyle(Colors.Transparent, ColorPens.GetPen(Colors.Purple));
 
                     style.ChildStyle = new HighlightingStyle(Colors.LightPink,
-                                                             Pens.GetPen(Colors.MediumVioletRed));
+                                                             ColorPens.GetPen(Colors.MediumVioletRed));
 
                     var actionKind = CommandToAction(e.Command);
 
@@ -254,14 +254,14 @@ namespace IRExplorerUI {
             return elementIteratorId.ElementKind switch
             {
                 IRElementKind.Instruction => new HighlightingStyle(
-                    Colors.LightBlue, Pens.GetPen(Colors.MediumBlue)),
+                    Colors.LightBlue, ColorPens.GetPen(Colors.MediumBlue)),
                 IRElementKind.Operand => new HighlightingStyle(Colors.PeachPuff,
-                                                               Pens.GetPen(Colors.SaddleBrown)),
+                                                               ColorPens.GetPen(Colors.SaddleBrown)),
                 IRElementKind.User => new HighlightingStyle(Utils.ColorFromString("#EFBEE6"),
-                                                            Pens.GetPen(Colors.Purple)),
+                                                            ColorPens.GetPen(Colors.Purple)),
                 IRElementKind.UserParent =>
-                new HighlightingStyle(Colors.Lavender, Pens.GetPen(Colors.Purple)),
-                IRElementKind.Block => new HighlightingStyle(Colors.LightBlue, Pens.GetPen(Colors.LightBlue)),
+                new HighlightingStyle(Colors.Lavender, ColorPens.GetPen(Colors.Purple)),
+                IRElementKind.Block => new HighlightingStyle(Colors.LightBlue, ColorPens.GetPen(Colors.LightBlue)),
                 _ => new HighlightingStyle(Colors.Gray)
             };
         }

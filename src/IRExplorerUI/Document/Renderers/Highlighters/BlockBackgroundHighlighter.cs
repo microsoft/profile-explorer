@@ -21,7 +21,7 @@ namespace IRExplorerUI {
             oddBlockBrush_ = ColorBrushes.GetBrush(oddBlockColor);
 
             if (showSeparatorLine) {
-                blockSeparatorPen_ = Pens.GetPen(separatorLineColor);
+                blockSeparatorPen_ = ColorPens.GetPen(separatorLineColor);
             }
         }
 

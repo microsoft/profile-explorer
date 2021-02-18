@@ -12,19 +12,19 @@ namespace IRExplorerUI {
             StyleSet = new HighlightingStyleCollection();
 
             StyleSet.Styles.Add(
-                new HighlightingStyle(Color.FromRgb(254, 202, 165), Pens.GetPen(Colors.Gray)));
+                new HighlightingStyle(Color.FromRgb(254, 202, 165), ColorPens.GetPen(Colors.Gray)));
 
             StyleSet.Styles.Add(
-                new HighlightingStyle(Color.FromRgb(232, 254, 165), Pens.GetPen(Colors.Gray)));
+                new HighlightingStyle(Color.FromRgb(232, 254, 165), ColorPens.GetPen(Colors.Gray)));
 
             StyleSet.Styles.Add(
-                new HighlightingStyle(Color.FromRgb(173, 254, 165), Pens.GetPen(Colors.Gray)));
+                new HighlightingStyle(Color.FromRgb(173, 254, 165), ColorPens.GetPen(Colors.Gray)));
 
             StyleSet.Styles.Add(
-                new HighlightingStyle(Color.FromRgb(165, 180, 254), Pens.GetPen(Colors.Gray)));
+                new HighlightingStyle(Color.FromRgb(165, 180, 254), ColorPens.GetPen(Colors.Gray)));
 
             StyleSet.Styles.Add(
-                new HighlightingStyle(Color.FromRgb(254, 165, 187), Pens.GetPen(Colors.Gray)));
+                new HighlightingStyle(Color.FromRgb(254, 165, 187), ColorPens.GetPen(Colors.Gray)));
 
             LightStyleSet = new HighlightingStyleCollection();
             LightStyleSet.Styles.Add(new HighlightingStyle(Color.FromRgb(253, 231, 216)));

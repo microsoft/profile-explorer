@@ -27,6 +27,8 @@ namespace IRExplorerUI {
         [ProtoMember(16)] public bool LowerIdenticalToPreviousOpacity { get; set; }
         [ProtoMember(17)] public bool ShowDemangledNames { get; set; }
         [ProtoMember(18)] public bool DemangleOnlyNames { get; set; }
+        [ProtoMember(19)] public bool DemangleNoReturnType { get; set; }
+        [ProtoMember(20)] public bool DemangleNoSpecialKeywords { get; set; }
 
         public FunctionNameDemanglingOptions DemanglingOptions {
             get {
@@ -36,8 +38,23 @@ namespace IRExplorerUI {
                     options |= FunctionNameDemanglingOptions.OnlyName;
                 }
 
+                if (DemangleNoReturnType) {
+                    options |= FunctionNameDemanglingOptions.NoReturnType;
+                }
+
+                if (DemangleNoSpecialKeywords) {
+                    options |= FunctionNameDemanglingOptions.NoSpecialKeywords;
+                }
+
                 return options;
             }
+        }
+
+        public bool HasFunctionListChanges(SectionSettings other) {
+            return ShowDemangledNames != other.ShowDemangledNames ||
+                   DemangleOnlyNames != other.DemangleOnlyNames ||
+                   DemangleNoReturnType != other.DemangleNoReturnType ||
+                   DemangleNoSpecialKeywords != other.DemangleNoSpecialKeywords;
         }
 
         public override void Reset() {
@@ -51,6 +68,8 @@ namespace IRExplorerUI {
             SectionSearchCaseSensitive = false;
             MarkSectionsIdenticalToPrevious = true;
             LowerIdenticalToPreviousOpacity = true;
+            DemangleNoSpecialKeywords = true;
+            DemangleNoReturnType = true;
             NewSectionColor = Utils.ColorFromString("#007200");
             MissingSectionColor = Utils.ColorFromString("#BB0025");
             ChangedSectionColor = Utils.ColorFromString("#DE8000");
@@ -77,7 +96,9 @@ namespace IRExplorerUI {
                    MissingSectionColor.Equals(settings.MissingSectionColor) &&
                    ChangedSectionColor.Equals(settings.ChangedSectionColor) &&
                    ShowDemangledNames == settings.ShowDemangledNames &&
-                   DemangleOnlyNames == settings.DemangleOnlyNames;
+                   DemangleOnlyNames == settings.DemangleOnlyNames &&
+                   DemangleNoReturnType == settings.DemangleNoReturnType &&
+                   DemangleNoSpecialKeywords == settings.DemangleNoSpecialKeywords;
         }
     }
 }
