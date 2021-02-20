@@ -128,10 +128,6 @@ namespace IRExplorerUI.OptionsPanels {
             SetCheckboxesState(kindCheckboxes_, false);
         }
 
-        private void EditButton_Click(object sender, RoutedEventArgs e) {
-            ShowDefinitionEditor(RemarkValueManager.ValueType.Highlight, "Remark categories");
-        }
-
         private void ShowDefinitionEditor(RemarkValueManager.ValueType valueType, string title) {
             var valueManager = new RemarkValueManager(valueType, compilerInfo_);
             valueManager.ValueChanged += (sender, e) => {
@@ -156,6 +152,18 @@ namespace IRExplorerUI.OptionsPanels {
 
         private void ReloadButton_Click(object sender, RoutedEventArgs e) {
             PopulateCategoryList();
+        }
+
+        private void EditButton_Click(object sender, RoutedEventArgs e) {
+            ShowDefinitionEditor(RemarkValueManager.ValueType.Category, "Remark categories");
+        }
+
+        private void EditBoundaryButton_OnClick(object sender, RoutedEventArgs e) {
+            ShowDefinitionEditor(RemarkValueManager.ValueType.Boundary, "Remark section boundaries");
+        }
+
+        private void HighlightEditButton_OnClick(object sender, RoutedEventArgs e) {
+            ShowDefinitionEditor(RemarkValueManager.ValueType.Highlight, "Remark panel text highlighting");
         }
     }
 }

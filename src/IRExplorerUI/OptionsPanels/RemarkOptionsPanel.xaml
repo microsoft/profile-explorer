@@ -6,14 +6,14 @@
     xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-    d:DesignHeight="480"
+    d:DesignHeight="580"
     d:DesignWidth="330"
     mc:Ignorable="d">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="142" />
+            <RowDefinition Height="148" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="145" />
+            <RowDefinition Height="200" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="4,4,4,4">
@@ -64,7 +64,7 @@
             </StackPanel>
         </Grid>
 
-        <Grid Grid.Row="1" Margin="4,8,4,4">
+        <Grid Grid.Row="1" Margin="4,4,4,4">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="124" />
                 <ColumnDefinition Width="1" />
@@ -160,26 +160,6 @@
                         <Image Source="{DynamicResource ClearIcon}" />
                     </Button>
 
-                    <Button
-                        Name="EditButton"
-                        Width="20"
-                        Height="20"
-                        VerticalAlignment="Top"
-                        BorderBrush="{x:Null}"
-                        Click="EditButton_Click"
-                        ToolTip="Edit remark definition file (JSON format)">
-                        <Image Source="{DynamicResource EditIcon}" />
-                    </Button>
-                    <Button
-                        Name="ReloadButton"
-                        Width="20"
-                        Height="20"
-                        VerticalAlignment="Top"
-                        BorderBrush="{x:Null}"
-                        Click="ReloadButton_Click"
-                        ToolTip="Reload the remark definitions">
-                        <Image Source="{DynamicResource ReloadIcon}" />
-                    </Button>
                 </StackPanel>
                 <ScrollViewer
                     Grid.Row="0"
@@ -194,9 +174,43 @@
             </StackPanel>
         </Grid>
 
+        <StackPanel>
+            <Separator Margin="0,0,0,4" />
+        </StackPanel>
+
         <Grid Grid.Row="2" Margin="4,4,4,4">
             <StackPanel>
+                <Separator Margin="0,0,0,4" />
+                <TextBlock
+                    Margin="0,0,0,4"
+                    FontWeight="DemiBold"
+                    Text="Remark Definitions" />
+                <StackPanel Margin="0,4,0,8" Orientation="Horizontal">
+                    <Button
+                        Name="EditButton"
+                        Width="90"
+                        Height="20"
+                        BorderBrush="{x:Null}"
+                        Click="EditButton_Click"
+                        Content="Categories" />
+                    <Button
+                        Name="EditBoundaryButton"
+                        Width="90"
+                        Height="20"
+                        Margin="4,0,0,0"
+                        BorderBrush="{x:Null}"
+                        Click="EditBoundaryButton_OnClick"
+                        Content="Boundaries" />
 
+                    <Button
+                        Name="HighlightEditButton"
+                        Width="120"
+                        Height="20"
+                        Margin="4,0,0,0"
+                        BorderBrush="{x:Null}"
+                        Click="HighlightEditButton_OnClick"
+                        Content="Text Highlighting" />
+                </StackPanel>
                 <Separator Margin="0,0,0,4" />
                 <TextBlock
                     Margin="0,0,0,4"
