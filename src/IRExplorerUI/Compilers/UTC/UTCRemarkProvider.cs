@@ -104,10 +104,16 @@ namespace IRExplorerUI.UTC {
         public string SettingsFilePath => App.GetRemarksDefinitionFilePath("utc");
 
         public bool SaveSettings() {
-            return false;
+            var serializer = new RemarksDefinitionSerializer();
+            var settingsPath = App.GetRemarksDefinitionFilePath("utc");
+            return serializer.Save(categories_, boundaries_, highlighting_, settingsPath);
         }
 
         public bool LoadSettings() {
+            if (settingsLoaded_) {
+                return true;
+            }
+
             var serializer = new RemarksDefinitionSerializer();
             var settingsPath = App.GetRemarksDefinitionFilePath("utc");
 
@@ -136,33 +142,18 @@ namespace IRExplorerUI.UTC {
         }
 
         public List<RemarkCategory> RemarkCategories {
-            get {
-                if (LoadSettings()) {
-                    return categories_;
-                }
-
-                return null;
-            }
+            get => categories_;
+            set => categories_ = value;
         }
 
         public List<RemarkSectionBoundary> RemarkSectionBoundaries {
-            get {
-                if (LoadSettings()) {
-                    return boundaries_;
-                }
-
-                return null;
-            }
+            get => boundaries_;
+            set => boundaries_ = value;
         }
 
         public List<RemarkTextHighlighting> RemarkTextHighlighting {
-            get {
-                if (LoadSettings()) {
-                    return highlighting_;
-                }
-
-                return null;
-            }
+            get => highlighting_;
+            set => highlighting_ = value;
         }
 
         public List<Remark> ExtractRemarks(string text, FunctionIR function, IRTextSection section,

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
@@ -12,8 +13,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DiffPlex.Model;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerUI.OptionsPanels;
 
 namespace IRExplorerUI.Controls {
     public partial class PropertyEditorPopup : DraggablePopup, INotifyPropertyChanged {
@@ -33,7 +36,32 @@ namespace IRExplorerUI.Controls {
             Editor.ValueManager = valueManager;
         }
 
+        public static PropertyEditorPopup 
+            ShowOverPanel(OptionsPanelBase panel, PropertyValueManager valueManager, 
+                          string title, double width, double height) {
+            if (panel.Parent is OptionsPanelHostWindow popup) {
+                popup.StaysOpen = true;
+            }
+
+            var position = panel.ParentPosition;
+            var editorPopup = new PropertyEditorPopup(valueManager, position, width, height, null);
+            editorPopup.PanelTitle = title;
+            editorPopup.StaysOpen = true;
+            editorPopup.IsOpen = true;
+
+            editorPopup.PopupClosed += (sender, e) => {
+                if (panel.Parent is OptionsPanelHostWindow popup) {
+                    popup.StaysOpen = false;
+                }
+
+                editorPopup.IsOpen = false;
+            };
+
+            return editorPopup;
+        }
+
         public PropertyValueManager ValueManager => valueManager_;
+        public List<object> Values => Editor.Values;
 
         public string PanelTitle {
             get => valueManager_.EditorTitle;
@@ -50,7 +78,6 @@ namespace IRExplorerUI.Controls {
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e) {
-            valueManager_.SaveValues(Editor.Values);
             ClosePopup();
         }
     }

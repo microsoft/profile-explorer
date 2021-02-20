@@ -17,6 +17,7 @@
     <ContentControl Style="{DynamicResource FlatControlStyle}">
         <Border
             Margin="0,0,6,6"
+            VerticalAlignment="Stretch"
             Background="{DynamicResource WindowBackgroundBrush}"
             BorderBrush="{DynamicResource ButtonBorderBrush}"
             BorderThickness="1,1,1,1">
@@ -28,7 +29,7 @@
                     ShadowDepth="2"
                     Color="#FF929292" />
             </Border.Effect>
-            <Grid>
+            <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="20" />
@@ -67,7 +68,10 @@
                 <controls:PropertyEditor
                     x:Name="Editor"
                     Grid.Row="1"
-                    Grid.ColumnSpan="3" />
+                    Grid.Column="0"
+                    Grid.ColumnSpan="3"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch" />
 
                 <controls:ResizeGrip
                     x:Name="PanelResizeGrip"

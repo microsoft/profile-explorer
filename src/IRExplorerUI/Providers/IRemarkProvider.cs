@@ -34,11 +34,11 @@ namespace IRExplorerUI {
 
         bool SaveSettings();
         bool LoadSettings();
-        List<RemarkCategory> RemarkCategories { get; }
+        List<RemarkCategory> RemarkCategories { get; set; }
 
-        List<RemarkSectionBoundary> RemarkSectionBoundaries { get; }
+        List<RemarkSectionBoundary> RemarkSectionBoundaries { get; set; }
 
-        List<RemarkTextHighlighting> RemarkTextHighlighting { get; }
+        List<RemarkTextHighlighting> RemarkTextHighlighting { get; set; }
 
         List<IRTextSection> GetSectionList(IRTextSection currentSection, int maxDepth, bool stopAtSectionBoundaries);
 

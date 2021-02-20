@@ -15,7 +15,10 @@
             <ColumnDefinition Width="2" />
             <ColumnDefinition Width="2*" />
         </Grid.ColumnDefinitions>
-        <DockPanel Grid.Column="0" LastChildFill="True">
+        <DockPanel
+            Grid.Column="0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch">
             <ToolBarTray
                 Height="28"
                 HorizontalAlignment="Stretch"
@@ -60,6 +63,7 @@
                 Background="{DynamicResource DataGridBackgroundBrush}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
+                DockPanel.Dock="Bottom"
                 SelectionChanged="ValueList_OnSelectionChanged">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="{x:Type ListViewItem}">
@@ -75,7 +79,12 @@
                 </ListView.ItemContainerStyle>
             </ListView>
         </DockPanel>
-        <GridSplitter Grid.Column="1" />
+        <GridSplitter
+            Grid.Column="1"
+            Width="2"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="{DynamicResource BackgroundColor5Brush}" />
         <xctk:PropertyGrid
             x:Name="Editor"
             Grid.Column="2"

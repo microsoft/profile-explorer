@@ -68,6 +68,7 @@ namespace IRExplorerUI.Controls {
             values_.Insert(index, value);
             valuesView_.Insert(index, value);
             ValueList.SelectedItem = value;
+            ValueList.ScrollIntoView(value);
             valueManager_.HasChanges = true;
         }
 

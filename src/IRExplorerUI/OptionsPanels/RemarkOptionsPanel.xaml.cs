@@ -6,11 +6,9 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI.OptionsPanels {
-    /// <summary>
-    /// Interaction logic for RemarkOptionsPanel.xaml
-    /// </summary>
     public partial class RemarkOptionsPanel : OptionsPanelBase {
         public const double DefaultHeight = 480;
         public const double MinimumHeight = 300;
@@ -18,8 +16,12 @@ namespace IRExplorerUI.OptionsPanels {
         public const double MinimumWidth = 350;
         public const double LeftMargin = 200;
 
-        public RemarkOptionsPanel() {
+        private ICompilerInfoProvider compilerInfo_;
+
+        public RemarkOptionsPanel(ICompilerInfoProvider compilerInfo) {
             InitializeComponent();
+            compilerInfo_ = compilerInfo;
+
             PreviewMouseUp += RemarkOptionsPanel_PreviewMouseUp;
             PreviewKeyUp += RemarkOptionsPanel_PreviewKeyUp;
 
@@ -127,8 +129,21 @@ namespace IRExplorerUI.OptionsPanels {
         }
 
         private void EditButton_Click(object sender, RoutedEventArgs e) {
-            var settingsPath = App.GetRemarksDefinitionFilePath(App.Session.CompilerInfo.CompilerIRName);
-            App.LaunchSettingsFileEditor(settingsPath);
+            ShowDefinitionEditor(RemarkValueManager.ValueType.Highlight, "Remark categories");
+        }
+
+        private void ShowDefinitionEditor(RemarkValueManager.ValueType valueType, string title) {
+            var valueManager = new RemarkValueManager(valueType, compilerInfo_);
+            valueManager.ValueChanged += (sender, e) => {
+                NotifySettingsChanged(true);
+            };
+
+            var editorPopup = PropertyEditorPopup.ShowOverPanel(this, valueManager, title, 600, 400);
+            editorPopup.Closed += (sender, args) => {
+                if (valueManager.HasChanges) {
+                    valueManager.SaveValues(editorPopup.Values);
+                }
+            };
         }
 
         private void SetAllCategoryCheckboxesButton_Click(object sender, RoutedEventArgs e) {

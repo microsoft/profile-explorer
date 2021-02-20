@@ -1178,7 +1178,7 @@ namespace IRExplorerUI {
                     Math.Min(TextView.ActualHeight, RemarkOptionsPanel.DefaultHeight));
             var position = TextView.PointToScreen(new Point(RemarkOptionsPanel.LeftMargin, 0));
 
-            remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(),
+            remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(Session.CompilerInfo),
                                                                    position, width, height, this);
             remarkOptionsPanelWindow_.PanelClosed += RemarkOptionsPanel_PanelClosed;
             remarkOptionsPanelWindow_.PanelReset += RemarkOptionsPanel_PanelReset;
