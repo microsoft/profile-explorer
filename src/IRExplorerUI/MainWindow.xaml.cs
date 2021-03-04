@@ -42,6 +42,7 @@ using System.Threading.Tasks;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Utilities;
 using AvalonDock.Layout.Serialization;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -645,10 +646,10 @@ namespace IRExplorerUI {
 
             if (sessionState_.SectionDiffState.IsEnabled) {
                 if(sessionState_.SectionDiffState.LeftDocument == document) {
-                    return $"{title} (Base)";
+                    return $"Base: {title}";
                 }
                 else if(sessionState_.SectionDiffState.RightDocument == document) {
-                    return $"{title} (Diff)";
+                    return $"Diff: {title}";
                 }
             }
 

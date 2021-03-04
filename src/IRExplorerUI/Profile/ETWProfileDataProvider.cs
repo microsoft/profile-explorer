@@ -10,7 +10,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 
-namespace IRExplorerUI.Utilities {
+namespace IRExplorerUI.Profile {
     //? TODO: Add interface
     public class ETWProfileDataProvider {
         private IRTextSummary summary_;

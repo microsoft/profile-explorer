@@ -154,6 +154,7 @@ namespace IRExplorerUI {
                 return;
             }
 
+            //? TODO: This can be another race condition, it should wait for the IR to be set
             if (addressTag_ == null) {
                 return;
             }
@@ -284,13 +285,20 @@ namespace IRExplorerUI {
                         activeDoc.TextView.HighlightElement(element, HighlighingType.Selected);
                     }
                     else {
-                        if (debugCurrentStackFrame_ != null) {
-                            var style = DefaultHighlightingStyles.StyleSet.ForIndex(debugCurrentStackFrame_.LineNumber);
-                            activeDoc.TextView.MarkElement(element, style);
+                        HighlightingStyle style;
+
+                        if (e.Color.IsValidRGBColor()) {
+                            style = new HighlightingStyle(e.Color.ToColor());
+                        }
+                        else if (debugCurrentStackFrame_ != null) {
+                            // Pick a color based on the source line number.
+                            style = DefaultHighlightingStyles.StyleSet.ForIndex(debugCurrentStackFrame_.LineNumber);
                         }
                         else {
-                            activeDoc.TextView.MarkElement(element, Colors.Gray);
+                            style = new HighlightingStyle(Colors.Gray);
                         }
+
+                        activeDoc.TextView.MarkElement(element, style);
                     }
 
                     activeDoc.TextView.BringElementIntoView(element);

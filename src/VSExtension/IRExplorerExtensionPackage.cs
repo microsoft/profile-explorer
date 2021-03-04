@@ -2,11 +2,13 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Input;
 using EnvDTE;
 using EnvDTE80;
+using IRExplorerCore.Lexer;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Constants = Microsoft.VisualStudio.Shell.Interop.Constants;
@@ -168,6 +170,38 @@ namespace IRExplorerExtension {
             e.Handled = handled;
         }
 
+        private static List<Token> TokenizeString(string value) {
+            var lexer = new Lexer(value);
+            var tokens = new List<Token>();
+
+            while (true) {
+                var token = lexer.NextToken();
+
+                if (token.IsLineEnd() || token.IsEOF()) {
+                    break;
+                }
+
+                tokens.Add(token);
+            }
+
+            return tokens;
+        }
+
+        int FindEqualsOnRight(List<Token> tokens, int i) {
+            for (i = i + 1; i < tokens.Count; i++) {
+                if (tokens[i].Kind == TokenKind.Equal) {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        //? keep stack, restore vars
+        //?   also show local vars, maybe with arrows
+        //?   as a sidebar on the right, pointing to the tuples?
+        private Dictionary<long, long> funcVariables_;
+
         private void DebuggerEvents_OnEnterBreakMode(dbgEventReason Reason,
                                                      ref dbgExecutionAction ExecutionAction) {
             if (!ClientInstance.IsEnabled) {
@@ -186,8 +220,23 @@ namespace IRExplorerExtension {
 
             switch (Reason) {
                 case dbgEventReason.dbgEventReasonStep: {
-                        //var textLine = GetCurrentTextLine();
-                        //Debug.WriteLine("Current line: " + textLine);
+                        var textLine = GetCurrentTextLine();
+                        Logger.Log("Current line: " + textLine);
+
+                        AutoMarkVariables(textLine);
+
+                        var prevTextLine = GetPreviousTextLine();
+
+                        if (!string.IsNullOrEmpty(prevTextLine)) {
+                            AutoMarkVariables(prevTextLine);
+                        }
+
+                        var locals = DebuggerInstance.GetLocalVariables();
+
+                        foreach (var localVar in locals) {
+                            Logger.Log($"Local var: {localVar}");
+                        }
+
                         JoinableTaskFactory.Run(() => ClientInstance.UpdateCurrentStackFrame());
                         JoinableTaskFactory.Run(() => ClientInstance.UpdateIR());
 
@@ -214,6 +263,76 @@ namespace IRExplorerExtension {
                         //}
                         break;
                     }
+            }
+        }
+
+        private void AutoMarkVariables(string textLine) {
+            var tokens = TokenizeString(textLine);
+
+            for (int i = 0; i < tokens.Count; i++) {
+                if (tokens[i].IsIdentifier()) {
+                    var name = tokens[i].Data.ToString();
+                    bool isSource = false;
+
+                    if (DebuggerInstance.IsReservedKeyword(name)) {
+                        Logger.Log($"< reserved: {name}");
+                        continue;
+                    }
+
+                    if (FindEqualsOnRight(tokens, i) != -1) {
+                        Logger.Log($"Dest: {name}");
+                    }
+                    else {
+                        Logger.Log($"Source: {name}");
+                        isSource = true;
+                    }
+
+                    var variable = DebuggerExpression.Create(
+                        new TextLineInfo(textLine, 0, tokens[i].Location.Offset,
+                            tokens[i].Location.Offset));
+                    bool temporary = false;
+                    var sourceColor = new RGBColor() {R = 100, G = 255, B = 255};
+                    var destColor = new RGBColor() { R = 255, G = 255, B = 100 };
+
+                    if (variable != null) {
+                        long elementAddress = DebuggerInstance.ReadElementAddress(variable);
+                        Logger.Log($"Mark references for {elementAddress:x}: {variable}");
+
+                        if (elementAddress == 0) {
+                            continue;
+                        }
+
+                        funcVariables_ ??= new Dictionary<long, long>();
+                        long varAddress = DebuggerInstance.GetVariableAddress(variable);
+
+                        // Unmark previous pointed element.
+                        if (varAddress != 0 &&
+                            funcVariables_.TryGetValue(varAddress, out var currentElementAddress) &&
+                            currentElementAddress != elementAddress) {
+                            ClientInstance.RunClientCommand(
+                                () => ClientInstance.debugClient_.ExecuteCommand(new ElementCommandRequest {
+                                    Command = ElementCommand.ClearMarker,
+                                    ElementAddress = currentElementAddress,
+                                })).Wait();
+                        }
+
+                        funcVariables_[varAddress] = elementAddress;
+
+                        //? use  a list of common types to exclude
+                        //? - when entering a calee, make caller vars translucent, then back to 100% on return
+                        //? - if new IR version created, copy over the markers
+
+                        ClientInstance.RunClientCommand(
+                            () => ClientInstance.debugClient_.MarkElement(new MarkElementRequest {
+                                ElementAddress = elementAddress,
+                                Label = variable,
+                                Color = isSource ? sourceColor : destColor,
+                                Highlighting = temporary
+                                    ? HighlightingType.Temporary
+                                    : HighlightingType.Permanent
+                            })).Wait();
+                    }
+                }
             }
         }
 
@@ -259,10 +378,26 @@ namespace IRExplorerExtension {
             var textDocument = (TextDocument)dte_.ActiveDocument.Object("TextDocument");
             var selection = textDocument.Selection;
             var activePoint = selection.ActivePoint;
-            int lineOffset = activePoint.LineCharOffset - 1;
 
             return activePoint.CreateEditPoint()
                               .GetLines(activePoint.Line, activePoint.Line + 1);
+        }
+
+        private string GetPreviousTextLine() {
+            if (dte_.ActiveDocument == null) {
+                return "";
+            }
+
+            var textDocument = (TextDocument)dte_.ActiveDocument.Object("TextDocument");
+            var selection = textDocument.Selection;
+            var activePoint = selection.ActivePoint;
+
+            if (activePoint.Line == 0) {
+                return null;
+            }
+
+            return activePoint.CreateEditPoint()
+                .GetLines(activePoint.Line - 1, activePoint.Line);
         }
 
         #endregion

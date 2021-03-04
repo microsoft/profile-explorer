@@ -10,6 +10,7 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Query;
 using IRExplorerCore.Graph;
+using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
