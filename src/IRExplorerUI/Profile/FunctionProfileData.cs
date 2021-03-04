@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace IRExplorerUI.Utilities {
+namespace IRExplorerUI.Profile {
     public class FunctionProfileData {
         public string SourceFilePath { get; set; }
         public TimeSpan Weight { get; set; }
         public Dictionary<int, TimeSpan> SourceLineWeight { get; set; }
         public Dictionary<long, TimeSpan> InstructionWeight { get; set; }
+        public Dictionary<long, TimeSpan> BlockWeight { get; set; }
 
         //? TODO
         //? - have both inclusive/exclusive sample info
@@ -17,6 +18,7 @@ namespace IRExplorerUI.Utilities {
             Weight = TimeSpan.Zero;
             SourceLineWeight = new Dictionary<int, TimeSpan>();
             InstructionWeight = new Dictionary<long, TimeSpan>();
+            BlockWeight = new Dictionary<long, TimeSpan>();
         }
 
         public void AddLineSample(int sourceLine, TimeSpan weight) {
@@ -41,4 +43,6 @@ namespace IRExplorerUI.Utilities {
             return (double)weight.Ticks / (double)Weight.Ticks;
         }
     }
+
+    // ProfileTag - attach profile data to instr/block
 }

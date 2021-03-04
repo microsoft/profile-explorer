@@ -14,6 +14,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Document;
+using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 using Microsoft.Win32;
 using Color = System.Windows.Media.Color;

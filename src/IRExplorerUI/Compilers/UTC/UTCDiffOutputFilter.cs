@@ -57,12 +57,14 @@ namespace IRExplorerUI.UTC {
                      IsEHRegionAnnotation(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
                 return DiffKind.MinorModification;
             }
-            //? TODO: Doesn't always mark line numbers, and for calls it can mark
-            //? diffs after the opcode as comments for OPCALL(#ID) ...
-            //else if (IsCommentText(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeDocumentText) ||
-            //         IsCommentText(afterText, afterLeftStopIndex, afterRightStopIndex, afterDocumentText)) {
-            //    return DiffKind.MinorModification;
-            //}
+            else if (IsCommentText(beforeText, beforeLeftStopIndex, beforeRightStopIndex, beforeLineText) ||
+                     IsCommentText(afterText, afterLeftStopIndex, afterRightStopIndex, afterLineText)) {
+                //? TODO: Doesn't always mark line numbers, and for calls it can mark
+                //? diffs after the opcode as comments for OPCALL(#ID) ...
+                return !beforeLineText.Contains("OPCALL", StringComparison.Ordinal) &&
+                       !afterLineText.Contains("OPCALL", StringComparison.Ordinal) ?
+                        DiffKind.MinorModification : DiffKind.Modification;
+            }
 
             return DiffKind.Modification;
         }
@@ -230,10 +232,17 @@ namespace IRExplorerUI.UTC {
                 return diffText;
             }
 
+            // Sometimes the diff starts with one of the stop letters, which should not
+            // be included in the diff, just skip over it.
+            while (lineOffset < lineText.Length - 1 &&
+                   Array.IndexOf(ExpansionStopLetters, lineText[lineOffset]) != -1) {
+                lineOffset++;
+            }
+
             // Expand left/right as long no end marker letters are found.
             int left = lineOffset;
             int right = lineOffset;
-
+            
             while (left > 0) {
                 if (Array.IndexOf(ExpansionStopLetters, lineText[left - 1]) != -1) {
                     break;

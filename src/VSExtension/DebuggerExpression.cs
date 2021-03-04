@@ -11,7 +11,6 @@ namespace IRExplorerExtension {
         private static List<Token> TokenizeString(string value) {
             var lexer = new Lexer(value);
             var tokens = new List<Token>();
-            int tokenCount = 0;
 
             while (true) {
                 var token = lexer.NextToken();
