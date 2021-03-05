@@ -5,7 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms.VisualStyles;
 using System.Windows.Input;
+using System.Windows.Media;
 using EnvDTE;
 using EnvDTE80;
 using IRExplorerCore.Lexer;
@@ -189,8 +191,21 @@ namespace IRExplorerExtension {
 
         int FindEqualsOnRight(List<Token> tokens, int i) {
             for (i = i + 1; i < tokens.Count; i++) {
-                if (tokens[i].Kind == TokenKind.Equal) {
-                    return i;
+                switch(tokens[i].Kind) {
+                    case TokenKind.Equal: {
+                        if (i < tokens.Count - 1 &&
+                            tokens[i + 1].Kind == TokenKind.Equal) {
+                            return -1; // instr == otherInstr
+                        }
+
+                        return i;
+                    }
+                    case TokenKind.CloseParen:
+                    case TokenKind.CloseCurly:
+                    case TokenKind.CloseSquare:
+                    case TokenKind.Exclamation: {
+                        return -1; // TU_OPCODE(instr) = ..., instr not a dest here
+                    }
                 }
             }
 
@@ -200,7 +215,16 @@ namespace IRExplorerExtension {
         //? keep stack, restore vars
         //?   also show local vars, maybe with arrows
         //?   as a sidebar on the right, pointing to the tuples?
-        private Dictionary<long, long> funcVariables_;
+        private Dictionary<long, Tuple<long, int>> funcVariables_;
+        private string prevTextLine_;
+        private string olderTextLine_;
+        private int version_;
+
+        enum LineType {
+            Current,
+            Previous,
+            Older
+        }
 
         private void DebuggerEvents_OnEnterBreakMode(dbgEventReason Reason,
                                                      ref dbgExecutionAction ExecutionAction) {
@@ -220,22 +244,31 @@ namespace IRExplorerExtension {
 
             switch (Reason) {
                 case dbgEventReason.dbgEventReasonStep: {
+                        funcVariables_ ??= new Dictionary<long, Tuple<long, int>>();
+
                         var textLine = GetCurrentTextLine();
                         Logger.Log("Current line: " + textLine);
 
-                        AutoMarkVariables(textLine);
-
-                        var prevTextLine = GetPreviousTextLine();
-
-                        if (!string.IsNullOrEmpty(prevTextLine)) {
-                            AutoMarkVariables(prevTextLine);
+                        if (!string.IsNullOrEmpty(prevTextLine_)) {
+                            AutoMarkVariables(prevTextLine_, LineType.Previous);
                         }
 
-                        var locals = DebuggerInstance.GetLocalVariables();
+                        AutoMarkVariables(textLine, LineType.Current);
 
-                        foreach (var localVar in locals) {
-                            Logger.Log($"Local var: {localVar}");
+
+                        if (!string.IsNullOrEmpty(olderTextLine_)) {
+                            AutoMarkVariables(olderTextLine_, LineType.Older);
                         }
+
+                        olderTextLine_ = prevTextLine_;
+                        prevTextLine_ = textLine;
+                        version_++;
+
+                        //var locals = DebuggerInstance.GetLocalVariables();
+
+                        //foreach (var localVar in locals) {
+                        //    Logger.Log($"Local var: {localVar}");
+                        //}
 
                         JoinableTaskFactory.Run(() => ClientInstance.UpdateCurrentStackFrame());
                         JoinableTaskFactory.Run(() => ClientInstance.UpdateIR());
@@ -266,7 +299,12 @@ namespace IRExplorerExtension {
             }
         }
 
-        private void AutoMarkVariables(string textLine) {
+        private void AutoMarkVariables(string textLine, LineType lineType) {
+            //? Make configurable
+            var defaultColor = new RGBColor() { R = 153, G = 204, B = 255 };
+            var destColor = new RGBColor() { R = 255, G = 153, B = 153 };
+            var sourceColor = new RGBColor() { R = 153, G = 255, B = 153 };
+
             var tokens = TokenizeString(textLine);
 
             for (int i = 0; i < tokens.Count; i++) {
@@ -287,12 +325,14 @@ namespace IRExplorerExtension {
                         isSource = true;
                     }
 
+                    if (isSource && lineType == LineType.Older ||
+                        !isSource && lineType == LineType.Current) {
+                        continue;
+                    }
+
                     var variable = DebuggerExpression.Create(
                         new TextLineInfo(textLine, 0, tokens[i].Location.Offset,
                             tokens[i].Location.Offset));
-                    bool temporary = false;
-                    var sourceColor = new RGBColor() {R = 100, G = 255, B = 255};
-                    var destColor = new RGBColor() { R = 255, G = 255, B = 100 };
 
                     if (variable != null) {
                         long elementAddress = DebuggerInstance.ReadElementAddress(variable);
@@ -302,34 +342,58 @@ namespace IRExplorerExtension {
                             continue;
                         }
 
-                        funcVariables_ ??= new Dictionary<long, long>();
                         long varAddress = DebuggerInstance.GetVariableAddress(variable);
 
                         // Unmark previous pointed element.
+                        //? If another var points to it, shouldn't be removed
                         if (varAddress != 0 &&
-                            funcVariables_.TryGetValue(varAddress, out var currentElementAddress) &&
-                            currentElementAddress != elementAddress) {
-                            ClientInstance.RunClientCommand(
-                                () => ClientInstance.debugClient_.ExecuteCommand(new ElementCommandRequest {
-                                    Command = ElementCommand.ClearMarker,
-                                    ElementAddress = currentElementAddress,
-                                })).Wait();
+                            funcVariables_.TryGetValue(varAddress, out var markedVarInfo)) {
+                            if (markedVarInfo.Item1 == elementAddress &&
+                                markedVarInfo.Item2 < version_) {
+                                bool usedByOthers = false;
+
+                                foreach (var varInfo in funcVariables_.Values) {
+                                    if(varInfo != markedVarInfo && varInfo.Item1 == elementAddress) {
+                                        usedByOthers = true;
+                                        break;
+                                    }
+                                }
+
+                                if (!usedByOthers) {
+                                    ClientInstance.RunClientCommand(
+                                        () => ClientInstance.debugClient_.ExecuteCommand(new ElementCommandRequest {
+                                            Command = ElementCommand.ClearMarker, ElementAddress = markedVarInfo.Item1,
+                                        })).Wait();
+                                }
+                            }
                         }
 
-                        funcVariables_[varAddress] = elementAddress;
+                        funcVariables_[varAddress] = new Tuple<long, int>(elementAddress, version_);
 
                         //? use  a list of common types to exclude
                         //? - when entering a calee, make caller vars translucent, then back to 100% on return
                         //? - if new IR version created, copy over the markers
+                        RGBColor markerColor;
+
+                        if(lineType == LineType.Previous) {
+                            if (isSource) {
+                                markerColor = defaultColor;
+                            }
+                            else markerColor = destColor;
+                        }
+                        else if (lineType == LineType.Older) {
+                            markerColor = defaultColor;
+                        }
+                        else {
+                                markerColor = sourceColor;
+                        }
 
                         ClientInstance.RunClientCommand(
                             () => ClientInstance.debugClient_.MarkElement(new MarkElementRequest {
                                 ElementAddress = elementAddress,
                                 Label = variable,
-                                Color = isSource ? sourceColor : destColor,
-                                Highlighting = temporary
-                                    ? HighlightingType.Temporary
-                                    : HighlightingType.Permanent
+                                Color = markerColor,
+                                Highlighting= HighlightingType.Permanent
                             })).Wait();
                     }
                 }
