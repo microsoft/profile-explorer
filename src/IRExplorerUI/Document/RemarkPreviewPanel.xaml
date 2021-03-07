@@ -329,7 +329,9 @@
                 MouseDoubleClick="RemarkList_MouseDoubleClick"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                SelectionChanged="RemarkList_SelectionChanged">
+                SelectionChanged="RemarkList_SelectionChanged"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn>

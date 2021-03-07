@@ -108,6 +108,10 @@ namespace IRExplorerUI.UTC {
         }
 
         public bool LoadSettings() {
+            if (settingsLoaded_) {
+                return true;
+            }
+
             var serializer = new RemarksDefinitionSerializer();
             var settingsPath = App.GetRemarksDefinitionFilePath("utc");
 
