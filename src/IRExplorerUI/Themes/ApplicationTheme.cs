@@ -51,6 +51,10 @@ namespace IRExplorerUI {
             themeDelegate_ = themeDelegate;
         }
 
+        public static ApplicationTheme GetBuiltinTheme(ApplicationThemeKind kind) {
+            return Themes.Find((theme) => theme.Kind == kind);
+        }
+
         public ApplicationThemeKind Kind { get; set; }
         public string Name { get; set; }
         public string ResourcesUri { get; set; }
@@ -58,6 +62,10 @@ namespace IRExplorerUI {
 
         public Theme GetDockPanelTheme() {
             return themeDelegate_();
+        }
+
+        public override string ToString() {
+            return Name;
         }
 
         protected bool Equals(ApplicationTheme other) {

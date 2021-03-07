@@ -57,7 +57,7 @@
     <SolidColorBrush x:Key="TextBoxDisabledForegroundBrush" Color="{DynamicResource ForegroundColor3}" />
 
     <!--  ComboBox  -->
-    <SolidColorBrush x:Key="ComboBoxNonEditableBackgroundBrush" Color="{DynamicResource BackgroundColor5}" />
+    <SolidColorBrush x:Key="ComboBoxNonEditableBackgroundBrush" Color="{DynamicResource BackgroundColor4}" />
     <SolidColorBrush x:Key="ComboBoxNonEditableBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="ComboBoxNonEditableHoverBackgroundBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="ComboBoxNonEditableDisabledBackgroundBrush" Color="Transparent" />
@@ -71,7 +71,7 @@
     <SolidColorBrush x:Key="ComboBoxButtonDisabledBackgroundBrush" Color="Transparent" />
     <SolidColorBrush x:Key="ComboBoxButtonDisabledBorderBrush" Color="{DynamicResource BackgroundColor5}" />
     <SolidColorBrush x:Key="ComboBoxButtonDisabledForegroundBrush" Color="{DynamicResource ForegroundColor3}" />
-    <SolidColorBrush x:Key="ComboBoxListBackgroundBrush" Color="{DynamicResource BackgroundColor2}" />
+    <SolidColorBrush x:Key="ComboBoxListBackgroundBrush" Color="{DynamicResource BackgroundColor4}" />
     <SolidColorBrush x:Key="ComboBoxListBorderBrush" Color="{DynamicResource BackgroundColor6}" />
 
     <!--  ValidationErrorOverlay  -->
@@ -141,7 +141,7 @@
     <SolidColorBrush x:Key="ToggleButtonBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="ToggleButtonHoverBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="ToggleButtonCheckedBrush" Color="{DynamicResource SelectionColor2}" />
-    <SolidColorBrush x:Key="ToggleButtonCheckedBorderBrush" Color="{DynamicResource SelectionColor1}" />
+    <SolidColorBrush x:Key="ToggleButtonCheckedBorderBrush" Color="{DynamicResource BackgroundColor6}" />
     <SolidColorBrush x:Key="SeparatorBrush" Color="{DynamicResource BackgroundColor7}" />
     <SolidColorBrush x:Key="AccentBackgroundBrush" Color="{DynamicResource SelectionColor1}" />
     <SolidColorBrush x:Key="AccentBackgroundBrush2" Color="{DynamicResource SelectionColor2}" />
@@ -152,7 +152,7 @@
     <SolidColorBrush x:Key="SliderBackgroundBrush" Color="{DynamicResource ForegroundColor3}" />
     <SolidColorBrush x:Key="SliderHoverBackgroundBrush" Color="{DynamicResource ForegroundColor2}" />
     <SolidColorBrush x:Key="SliderDisabledBackgroundBrush" Color="{DynamicResource BackgroundColor6}" />
-    <SolidColorBrush x:Key="SliderBorderBrush" Color="{DynamicResource BackgroundColor6}" />
+    <SolidColorBrush x:Key="SliderBorderBrush" Color="{DynamicResource BackgroundColor7}" />
     <SolidColorBrush x:Key="SliderTrackBrush" Color="{DynamicResource ForegroundColor4}" />
 
     <SolidColorBrush x:Key="ExpanderArrowBrush" Color="{DynamicResource ForegroundColor3}" />

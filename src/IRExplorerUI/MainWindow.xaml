@@ -617,12 +617,7 @@
             VerticalAlignment="Stretch"
             Panel.ZIndex="0"
             AllowMixedOrientation="True"
-            AutomationProperties.AutomationId="AutoDockManager"
-            Theme="{Binding ElementName=ThemeCombobox, Path=SelectedItem.Tag}">
-            <!--<avalonDock:DockingManager.Theme>
-                <avalonDock:Vs2013LightTheme />
-            </avalonDock:DockingManager.Theme>-->
-
+            AutomationProperties.AutomationId="AutoDockManager">
             <!--<avalonDock:DockingManager.DocumentHeaderTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -916,28 +911,7 @@
                 Padding="2,0,5,0"
                 VerticalAlignment="Center"
                 VerticalContentAlignment="Center"
-                FontSize="11"
-                SelectedIndex="1">
-                <ComboBox.Resources>
-                    <Style TargetType="ComboBoxItem">
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                    </Style>
-                </ComboBox.Resources>
-                <ComboBoxItem Content="Light">
-                    <ComboBoxItem.Tag>
-                        <avalonDock:Vs2013LightTheme />
-                    </ComboBoxItem.Tag>
-                </ComboBoxItem>
-                <ComboBoxItem Content="Dark">
-                    <ComboBoxItem.Tag>
-                        <avalonDock:Vs2013DarkTheme />
-                    </ComboBoxItem.Tag>
-                </ComboBoxItem>
-                <ComboBoxItem Content="Blue">
-                    <ComboBoxItem.Tag>
-                        <avalonDock:Vs2013BlueTheme />
-                    </ComboBoxItem.Tag>
-                </ComboBoxItem>
+                FontSize="11">
             </ComboBox>
 
             <ToggleButton

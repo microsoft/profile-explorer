@@ -66,6 +66,8 @@ namespace IRExplorerUI {
         [ProtoMember(15)]
         public ReferenceSettings ReferenceSettings;
 
+        [ProtoMember(16)] public ApplicationThemeKind ThemeKind;
+
         public ApplicationSettings() {
             Reset();
         }
@@ -81,7 +83,7 @@ namespace IRExplorerUI {
             SectionSettings.Reset();
             ReferenceSettings.Reset();
             AutoReloadDocument = true;
-            ThemeIndex = 2; // Blue theme.
+            ThemeKind = ApplicationThemeKind.Gray;
         }
 
         public void LoadThemeSettings() {

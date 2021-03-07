@@ -412,7 +412,7 @@ namespace IRExplorerUI {
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e) {
-            App.ReloadThemeStyle();
+            SetupThemes();
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
             SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;
@@ -719,26 +719,33 @@ namespace IRExplorerUI {
 
         private void MenuItem_Click(object sender, RoutedEventArgs e) {
             //throw new InvalidOperationException("Crash Handler test assert");
-            
-            if (App.Theme.Kind == ApplicationThemeKind.Light) {
-                SwitchTheme(ApplicationTheme.Dark);
-            }
-            else {
-                SwitchTheme(ApplicationTheme.Light);
-            }
         }
 
-        private void SwitchTheme(ApplicationTheme theme) {
-            //? TODO: 
-            //? - use themes in main window combobox
-            //? - send OnThemeChanged to all docs
+        private void SetupThemes() {
+            var theme = SwitchTheme(App.Settings.ThemeKind, false);
+            ThemeCombobox.ItemsSource = new ListCollectionView(ApplicationTheme.Themes);
+            ThemeCombobox.SelectedItem = theme;
+            ThemeCombobox.SelectionChanged += (sender, e) => {
+                SwitchTheme((ApplicationTheme)e.AddedItems[0], true);
+            };
+        }
 
+        private ApplicationTheme SwitchTheme(ApplicationThemeKind themeKind, bool reloadSettings) {
+            return SwitchTheme(ApplicationTheme.GetBuiltinTheme(themeKind), reloadSettings);
+        }
+
+        private ApplicationTheme SwitchTheme(ApplicationTheme theme, bool reloadSettings) {
             App.SwitchTheme(theme);
             DockManager.Theme = theme.GetDockPanelTheme();
 
-            CompilerInfo.ReloadSettings();
-            ForEachPanel((panel) => panel.OnThemeChanged());
+            if (reloadSettings) {
+                CompilerInfo.ReloadSettings();
+                
+                //? TODO: send OnThemeChanged to all docs
+                ForEachPanel((panel) => panel.OnThemeChanged());
+            }
 
+            return theme;
         }
 
         private async Task DisplayCallGraph(IRTextSummary summary, IRTextSection section, 

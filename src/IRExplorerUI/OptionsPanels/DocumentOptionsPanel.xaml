@@ -106,6 +106,8 @@
                             VerticalAlignment="Center"
                             Text="Font size" />
                         <xctk:DoubleUpDown
+                            Background="{DynamicResource TextBoxBackgroundBrush}"
+                            Foreground="{DynamicResource TextBoxForegroundBrush}"
                             Margin="4,0,0,0"
                             Maximum="36.0"
                             Minimum="5.0"

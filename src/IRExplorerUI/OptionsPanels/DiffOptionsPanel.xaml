@@ -106,7 +106,6 @@
 
             <TextBlock FontWeight="DemiBold" Text="Diffs Style" />
             <StackPanel Margin="0,4,0,0" Orientation="Vertical">
-
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="70" />
@@ -325,7 +324,9 @@
                             x:Name="ExternalAppPathTextbox"
                             Height="20"
                             Margin="8,0,62,0"
-                            BorderBrush="{DynamicResource ToggleButtonBorderBrush}"
+                            Background="{DynamicResource TextBoxBackgroundBrush}"
+                            Foreground="{DynamicResource TextBoxForegroundBrush}"
+                            BorderBrush="{DynamicResource TextBoxBorderBrush}"
                             IsEnabled="{Binding ElementName=ExternalDiffRadioButton, Path=IsChecked}"
                             Text="{Binding ExternalDiffAppPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         <Button

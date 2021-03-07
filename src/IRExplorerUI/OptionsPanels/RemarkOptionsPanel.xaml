@@ -13,7 +13,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="148" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="200" />
+            <RowDefinition Height="210" />
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0" Margin="4,4,4,4">
@@ -35,6 +35,8 @@
                         VerticalAlignment="Center"
                         Text="History depth" />
                     <xctk:IntegerUpDown
+                        Background="{DynamicResource TextBoxBackgroundBrush}"
+                        Foreground="{DynamicResource TextBoxForegroundBrush}"
                         Margin="0,0,8,0"
                         IsEnabled="{Binding ElementName=PreviousSectionsCheckbox, Path=IsChecked}"
                         Maximum="16"
@@ -190,7 +192,6 @@
                         Name="EditButton"
                         Width="90"
                         Height="20"
-                        BorderBrush="{x:Null}"
                         Click="EditButton_Click"
                         Content="Categories" />
                     <Button
@@ -198,7 +199,6 @@
                         Width="90"
                         Height="20"
                         Margin="4,0,0,0"
-                        BorderBrush="{x:Null}"
                         Click="EditBoundaryButton_OnClick"
                         Content="Boundaries" />
 
@@ -207,7 +207,6 @@
                         Width="120"
                         Height="20"
                         Margin="4,0,0,0"
-                        BorderBrush="{x:Null}"
                         Click="HighlightEditButton_OnClick"
                         Content="Text Highlighting" />
                 </StackPanel>

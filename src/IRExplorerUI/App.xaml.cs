@@ -89,14 +89,14 @@ namespace IRExplorerUI {
 
         public static void SwitchTheme(ApplicationTheme theme) {
             Theme = theme;
+            Settings.ThemeKind = theme.Kind;
             Settings.LoadThemeSettings();
             cachedSyntaxHighlightinFiles_ = null;
 
             var dict = Application.Current.Resources.MergedDictionaries;
             dict.RemoveAt(0);
             dict.Insert(0, new ResourceDictionary() {Source = new Uri(theme.ResourcesUri, UriKind.Relative)});
-
-            //? TODO: Notify panels and documents about change
+            ReloadThemeStyle();
         }
 
         private static bool CreateSettingsDirectory() {

@@ -15,14 +15,19 @@ namespace IRExplorerUI {
     public enum TextSearchKind {
         [Description("Case sensitive")]
         Default = 1 << 0, // Case sensitive
+
         [Description("Case insensitive")]
         CaseInsensitive = 1 << 1,
+        
         [Description("Regex")]
         Regex = 1 << 2,
+        
         [Browsable(false)]
         WholeWord = 1 << 3,
+        
         [Description("Case sensitive, whole word")]
         CaseSensitiveWholeWord = Default | WholeWord,
+
         [Description("Case insensitive, whole word")]
         CaseInsensitiveWholeWord = CaseInsensitive | WholeWord
     }

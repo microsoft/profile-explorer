@@ -199,9 +199,6 @@
             <Trigger Property="IsSelectionRangeEnabled" Value="true">
                 <Setter TargetName="PART_SelectionRange" Property="Visibility" Value="Visible" />
             </Trigger>
-            <Trigger Property="IsKeyboardFocused" Value="true">
-                <Setter TargetName="Thumb" Property="Foreground" Value="Blue" />
-            </Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>
 
@@ -372,9 +369,6 @@
             </Trigger>
             <Trigger Property="IsSelectionRangeEnabled" Value="true">
                 <Setter TargetName="PART_SelectionRange" Property="Visibility" Value="Visible" />
-            </Trigger>
-            <Trigger Property="IsKeyboardFocused" Value="true">
-                <Setter TargetName="Thumb" Property="Foreground" Value="Blue" />
             </Trigger>
         </ControlTemplate.Triggers>
     </ControlTemplate>

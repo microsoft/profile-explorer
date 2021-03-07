@@ -13,8 +13,8 @@
     <Color x:Key="ForegroundColor2">#252525</Color>
     <Color x:Key="ForegroundColor1">#101010</Color>
 
-    <Color x:Key="SelectionColor1">#B7D5F4</Color>
-    <Color x:Key="SelectionColor2">#B2D8FF</Color>
+    <Color x:Key="SelectionColor1">#CCE8FF</Color>
+    <Color x:Key="SelectionColor2">#90C8F6</Color>
     <Color x:Key="HighlightColor1">#FFF7D6</Color>
     <Color x:Key="HighlightColor2">#ECFFE5</Color>
     <Color x:Key="MenuHighlightColor">#B2D8FF</Color>
