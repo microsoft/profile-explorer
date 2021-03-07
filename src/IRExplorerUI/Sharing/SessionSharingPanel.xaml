@@ -51,17 +51,19 @@
                     BorderBrush="{DynamicResource ButtonBorderBrush}"
                     IsIndeterminate="True"
                     Visibility="Hidden" />
-                <DockPanel Margin="0,4,0,0">
+                <StackPanel Margin="0,4,0,0" 
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal">
                     <Button
                         x:Name="ShareButton"
                         Width="90"
                         Height="24"
+                        Margin="0,0,4,0"
                         Padding="4,1,4,1"
                         HorizontalAlignment="Left"
                         Background="{DynamicResource HighlightColor1Brush}"
                         Click="ShareButton_Click"
                         Content="Share Session"
-                        DockPanel.Dock="Left"
                         TabIndex="2" />
                     <Button
                         x:Name="OpenButton"
@@ -71,9 +73,8 @@
                         HorizontalAlignment="Right"
                         Click="OpenButton_Click"
                         Content="Open Session"
-                        DockPanel.Dock="Right"
                         TabIndex="3" />
-                </DockPanel>
+                </StackPanel>
             </StackPanel>
         </Border>
     </ContentControl>
