@@ -4,8 +4,11 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Windows.Media;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace IRExplorerUI {
+    [CategoryOrder("Text", 1)]
+    [CategoryOrder("Style", 2)]
     public class MarkedSectionName {
         public MarkedSectionName() { }
 

@@ -410,7 +410,7 @@ namespace IRExplorerUI {
 
             var result = GetSyntaxHighlightingFileInfo(docSettings.SyntaxHighlightingName,
                                                        Session.CompilerInfo.CompilerIRName);
-            if (result == null && !hadCustomFile) {
+            if (result == null && hadCustomFile) {
                 // File not found for some reason, fall back to internal one.
                 return Session.CompilerInfo.DefaultSyntaxHighlightingFile;
             }
@@ -447,16 +447,6 @@ namespace IRExplorerUI {
                 string path = GetSettingsFilePath();
                 var data = File.ReadAllBytes(path);
                 Settings = StateSerializer.Deserialize<ApplicationSettings>(data);
-
-                // Do some basic sanity checks in case the settings file is incompatible.
-                if (Settings.RecentFiles == null) {
-                    Settings.RecentFiles = new List<string>();
-                }
-
-                if (Settings.RecentComparedFiles == null) {
-                    Settings.RecentComparedFiles = new List<Tuple<string, string>>();
-                }
-
                 return true;
             }
             catch (Exception ex) {

@@ -125,7 +125,7 @@
     <SolidColorBrush x:Key="DataGridDisabledForegroundBrush" Color="{DynamicResource ForegroundColor3}" />
 
     <!--  ScrollBar  -->
-    <SolidColorBrush x:Key="ScrollBarBackgroundBrush" Color="{DynamicResource BackgroundColor3}" />
+    <SolidColorBrush x:Key="ScrollBarBackgroundBrush" Color="{DynamicResource BackgroundColor5}" />
     <SolidColorBrush x:Key="ScrollBarForegroundBrush" Color="{DynamicResource ForegroundColor4}" />
     <SolidColorBrush x:Key="ScrollBarHoverForegroundBrush" Color="{DynamicResource ForegroundColor3}" />
     <SolidColorBrush x:Key="ScrollBarDisabledForegroundBrush" Color="{DynamicResource ForegroundColor4}" />

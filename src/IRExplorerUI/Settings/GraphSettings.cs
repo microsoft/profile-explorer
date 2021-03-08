@@ -5,6 +5,10 @@ using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI {
+    public class GraphColors {
+        
+    }
+    
     [ProtoContract(SkipConstructor = true)]
     [ProtoInclude(100, typeof(FlowGraphSettings))]
     [ProtoInclude(200, typeof(ExpressionGraphSettings))]

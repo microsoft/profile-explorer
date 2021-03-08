@@ -81,7 +81,7 @@ namespace IRExplorerUI.Controls {
             }
 
             NativeMethods.SetWindowPos(PopupHandle, NativeMethods.HWND_TOPMOST, rect.Left, rect.Top, (int)Width, (int)Height, NativeMethods.TOPMOST_FLAGS);
-//            NativeMethods.SetForegroundWindow(PopupHandle);
+            NativeMethods.SetForegroundWindow(PopupHandle);
         }
 
         public void SendToBack() {

@@ -5,6 +5,7 @@ using System;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Windows.Media;
+using Xceed.Wpf.Toolkit.PropertyGrid.Attributes;
 
 namespace IRExplorerUI {
     [Flags]
@@ -19,21 +20,8 @@ namespace IRExplorerUI {
         Analysis
     }
     
-    //? TODO: Sorting categories hack
-    // https://stackoverflow.com/questions/823327/how-can-i-customize-category-sorting-on-a-propertygrid
-    // public class CustomSortedCategoryAttribute : CategoryAttribute
-    // {
-    //     private const char NonPrintableChar = '\t';
-    //
-    //     public CustomSortedCategoryAttribute(   string category,
-    //         ushort categoryPos,
-    //         ushort totalCategories)
-    //         : base(category.PadLeft(category.Length + (totalCategories - categoryPos),
-    //             CustomSortedCategoryAttribute.NonPrintableChar))
-    //     {
-    //     }
-    // }
-    
+    [CategoryOrder("Text", 1)]
+    [CategoryOrder("Style", 2)]
     public class RemarkCategory {
         public RemarkKind Kind { get; set; }
         public string Title { get; set; } // VN,CE/BE/ALIAS, etc
