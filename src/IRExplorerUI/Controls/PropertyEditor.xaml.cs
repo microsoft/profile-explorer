@@ -42,15 +42,13 @@ namespace IRExplorerUI.Controls {
         public List<object> Values {
             get => values_;
             set {
-                if (value != values_) {
-                    //? TODO: Use GetValueName
-                    values_ = value;
-                    valuesView_ = new ObservableCollectionRefresh<object>(values_);
-                    ValueList.ItemsSource = valuesView_;
+                //? TODO: Use GetValueName
+                values_ = value != null ? value : new List<object>();
+                valuesView_ = new ObservableCollectionRefresh<object>(values_);
+                ValueList.ItemsSource = valuesView_;
 
-                    if (values_.Count > 0) {
-                        ValueList.SelectedItem = values_[0];
-                    }
+                if (values_.Count > 0) {
+                    ValueList.SelectedItem = values_[0];
                 }
             }
         }

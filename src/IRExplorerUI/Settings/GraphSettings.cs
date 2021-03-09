@@ -1,12 +1,36 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI {
+    [ProtoContract(SkipConstructor = true)]
     public class GraphColors {
+        public GraphColors() {
+            //? TODO: Set default dark theme colors
+            BackgroundColor = Utils.ColorFromString("#EFECE2");
+            TextColor = Colors.Black;
+            EdgeColor = Colors.Black;
+            NodeColor = Utils.ColorFromString("#CBCBCB");
+            NodeBorderColor = Utils.ColorFromString("#000000");
+        }
         
+        [ProtoMember(1)] public Color BackgroundColor { get; set; }
+        [ProtoMember(2)] public Color TextColor { get; set; }
+        [ProtoMember(3)] public Color NodeColor { get; set; }
+        [ProtoMember(4)] public Color NodeBorderColor { get; set; }
+        [ProtoMember(5)] public Color EdgeColor { get; set; }   
+        
+        public override bool Equals(object obj) {
+            return obj is GraphColors options &&
+                   TextColor.Equals(options.TextColor) &&
+                   EdgeColor.Equals(options.EdgeColor) &&
+                   NodeColor.Equals(options.NodeColor) &&
+                   NodeBorderColor.Equals(options.NodeBorderColor) &&
+                   BackgroundColor.Equals(options.BackgroundColor);
+        }
     }
     
     [ProtoContract(SkipConstructor = true)]
@@ -35,17 +59,37 @@ namespace IRExplorerUI {
 
         [ProtoMember(9)] public bool HighlightConnectedNodesOnSelection { get; set; }
 
-        [ProtoMember(10)] public Color BackgroundColor { get; set; }
+        public Color BackgroundColor {
+            get => currentThemeColors_.BackgroundColor;
+            set => currentThemeColors_.BackgroundColor = value;
+        }
 
-        [ProtoMember(11)] public Color TextColor { get; set; }
+        public Color TextColor {
+            get => currentThemeColors_.TextColor;
+            set => currentThemeColors_.TextColor = value;
+        }
+        
+        public Color NodeColor {
+            get => currentThemeColors_.NodeColor;
+            set => currentThemeColors_.NodeColor = value;
+        }
+        
+        public Color NodeBorderColor {
+            get => currentThemeColors_.NodeBorderColor;
+            set => currentThemeColors_.NodeBorderColor = value;
+        }
+        
+        public Color EdgeColor {
+            get => currentThemeColors_.EdgeColor;
+            set => currentThemeColors_.EdgeColor = value;
+        }
 
-        [ProtoMember(12)] public Color NodeColor { get; set; }
-
-        [ProtoMember(13)] public Color NodeBorderColor { get; set; }
-
-        [ProtoMember(14)] public Color EdgeColor { get; set; }
-
+        [ProtoMember(18)]
+        private Dictionary<ApplicationThemeKind, GraphColors> themeColors_;
+        private GraphColors currentThemeColors_;
+        
         public override void Reset() {
+            LoadThemeSettingsImpl();
             SyncSelectedNodes = true;
             SyncMarkedNodes = true;
             BringNodesIntoView = true;
@@ -54,19 +98,27 @@ namespace IRExplorerUI {
             ColorizeEdges = true;
             HighlightConnectedNodesOnHover = true;
             HighlightConnectedNodesOnSelection = true;
-            BackgroundColor = Utils.ColorFromString("#EFECE2");
-            TextColor = Colors.Black;
-            EdgeColor = Colors.Black;
-            NodeColor = Utils.ColorFromString("#CBCBCB");
-            NodeBorderColor = Utils.ColorFromString("#000000");
+        }
+
+        protected virtual void LoadThemeSettingsImpl() {
+            themeColors_ ??= new Dictionary<ApplicationThemeKind, GraphColors>();
+
+            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
+                colors = new GraphColors();
+                themeColors_[App.Theme.Kind] = colors;
+            }
+
+            currentThemeColors_ = colors;
+        }
+
+        [ProtoAfterDeserialization]
+        public void LoadThemeSettings() {
+            LoadThemeSettingsImpl();
         }
 
         public override bool Equals(object obj) {
             return obj is GraphSettings options &&
-                   TextColor.Equals(options.TextColor) &&
-                   EdgeColor.Equals(options.EdgeColor) &&
-                   NodeColor.Equals(options.NodeColor) &&
-                   NodeBorderColor.Equals(options.NodeBorderColor) &&
+                   Utils.AreEqual(themeColors_, options.themeColors_) &&
                    SyncSelectedNodes == options.SyncSelectedNodes &&
                    SyncMarkedNodes == options.SyncMarkedNodes &&
                    BringNodesIntoView == options.BringNodesIntoView &&
@@ -75,8 +127,7 @@ namespace IRExplorerUI {
                    ColorizeNodes == options.ColorizeNodes &&
                    ColorizeEdges == options.ColorizeEdges &&
                    HighlightConnectedNodesOnHover == options.HighlightConnectedNodesOnHover &&
-                   HighlightConnectedNodesOnSelection == options.HighlightConnectedNodesOnSelection &&
-                   BackgroundColor.Equals(options.BackgroundColor);
+                   HighlightConnectedNodesOnSelection == options.HighlightConnectedNodesOnSelection;
         }
     }
 }
