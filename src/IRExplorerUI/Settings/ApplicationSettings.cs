@@ -67,7 +67,18 @@ namespace IRExplorerUI {
         public ReferenceSettings ReferenceSettings;
 
         [ProtoMember(16)] public ApplicationThemeKind ThemeKind;
+        
+        [ProtoMember(17)] Dictionary<ApplicationThemeKind, ThemeColors> CustomThemes;
 
+        private ThemeColors GetOrCreateTheme(ApplicationThemeKind themeKind) {
+            if (!CustomThemes.TryGetValue(themeKind, out var theme)) {
+                theme = new ThemeColors();
+                CustomThemes[themeKind] = theme;
+            }
+
+            return theme;
+        }
+        
         public ApplicationSettings() {
             Reset();
         }
@@ -86,12 +97,17 @@ namespace IRExplorerUI {
             ThemeKind = ApplicationThemeKind.Gray;
         }
 
-        public void LoadThemeSettings() {
+        public void LoadThemeSettings(ApplicationThemeKind themeKind, ThemeColors defaultTheme) {
             //? TODO: Reload settings for other panels
+            ThemeKind = themeKind;
             DocumentSettings.LoadThemeSettings();
             SectionSettings.LoadThemeSettings();
             ReferenceSettings.LoadThemeSettings();
 
+            var theme = GetOrCreateTheme(themeKind);
+            theme.DefaultTheme = defaultTheme;
+            FlowGraphSettings.SwitchTheme(theme);
+            
             foreach (var pair in LightDocumentSettings) {
                 pair.Value.LoadThemeSettings();
             }
@@ -111,6 +127,7 @@ namespace IRExplorerUI {
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
             LightDocumentSettings ??= new Dictionary<ToolPanelKind, LightDocumentSettings>();
             ReferenceSettings ??= new ReferenceSettings();
+            CustomThemes ??= new Dictionary<ApplicationThemeKind, ThemeColors>();
         }
 
         public void AddRecentFile(string path) {

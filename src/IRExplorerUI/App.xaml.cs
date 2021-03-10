@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Xml;
+using Microsoft.Extensions.Azure;
 
 namespace IRExplorerUI {
     public class SyntaxFileInfo {
@@ -82,15 +83,16 @@ namespace IRExplorerUI {
         private const string DocumentationLocation = @"https://irexplorer.z5.web.core.windows.net/";
 
         private static List<SyntaxFileInfo> cachedSyntaxHighlightinFiles_;
+        private static Dictionary<ApplicationThemeKind, ThemeColors> defaultThemes_;
 
         static App() {
             Theme = ApplicationTheme.Dark;
+            RegisterSettingsThemes();
         }
 
         public static void SwitchTheme(ApplicationTheme theme) {
             Theme = theme;
-            Settings.ThemeKind = theme.Kind;
-            Settings.LoadThemeSettings();
+            Settings.LoadThemeSettings(theme.Kind, GetDefaultSettingsTheme(theme.Kind));
             cachedSyntaxHighlightinFiles_ = null;
 
             var dict = Application.Current.Resources.MergedDictionaries;
@@ -99,6 +101,29 @@ namespace IRExplorerUI {
             ReloadThemeStyle();
         }
 
+        public static void RegisterSettingsThemes() {
+            defaultThemes_ = new Dictionary<ApplicationThemeKind, ThemeColors>();
+            RegisterSettingsThemes(ApplicationThemeKind.Light);
+            RegisterSettingsThemes(ApplicationThemeKind.Gray);
+            RegisterSettingsThemes(ApplicationThemeKind.Dark);
+            RegisterSettingsThemes(ApplicationThemeKind.Blue);
+        }
+        
+        public static void RegisterSettingsThemes(ApplicationThemeKind themeKind) {
+            var theme = new ThemeColors();
+            defaultThemes_[themeKind] = theme;
+            
+            theme.AddColorSet(FlowGraphSettings.CreateDefaultThemeColors(themeKind));
+        }
+
+        public static ThemeColors GetDefaultSettingsTheme(ApplicationThemeKind themeKind) {
+            if (defaultThemes_.TryGetValue(themeKind, out var theme)) {
+                return theme;
+            }
+
+            return null;
+        }
+        
         private static bool CreateSettingsDirectory() {
             try {
                 string path = GetSettingsDirectoryPath();
