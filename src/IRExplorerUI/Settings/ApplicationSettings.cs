@@ -7,18 +7,6 @@ using IRExplorerUI.Query;
 using ProtoBuf;
 
 namespace IRExplorerUI {
-    public class SettingsBase {
-        public virtual void Reset() { }
-
-        public virtual SettingsBase Clone() {
-            throw new NotImplementedException();
-        }
-
-        public virtual bool HasChanges(SettingsBase other) {
-            return !other.Equals(this);
-        }
-    }
-
     [ProtoContract(SkipConstructor = true)]
     public class ApplicationSettings {
         [ProtoMember(1)]
@@ -66,9 +54,11 @@ namespace IRExplorerUI {
         [ProtoMember(15)]
         public ReferenceSettings ReferenceSettings;
 
-        [ProtoMember(16)] public ApplicationThemeKind ThemeKind;
+        [ProtoMember(16)]
+        public ApplicationThemeKind ThemeKind;
         
-        [ProtoMember(17)] Dictionary<ApplicationThemeKind, ThemeColors> CustomThemes;
+        [ProtoMember(17)] 
+        public Dictionary<ApplicationThemeKind, ThemeColors> CustomThemes;
 
         private ThemeColors GetOrCreateTheme(ApplicationThemeKind themeKind) {
             if (!CustomThemes.TryGetValue(themeKind, out var theme)) {
@@ -77,6 +67,12 @@ namespace IRExplorerUI {
             }
 
             return theme;
+        }
+        
+        public void ResetSettingsTheme(Guid settingsId) {
+            foreach(var theme in CustomThemes.Values) {
+                theme.RemoveColorSet(settingsId);
+            }
         }
         
         public ApplicationSettings() {
@@ -100,16 +96,18 @@ namespace IRExplorerUI {
         public void LoadThemeSettings(ApplicationThemeKind themeKind, ThemeColors defaultTheme) {
             //? TODO: Reload settings for other panels
             ThemeKind = themeKind;
-            DocumentSettings.LoadThemeSettings();
-            SectionSettings.LoadThemeSettings();
-            ReferenceSettings.LoadThemeSettings();
+            // DocumentSettings.LoadThemeSettings();
+            // SectionSettings.LoadThemeSettings();
+            // ReferenceSettings.LoadThemeSettings();
 
             var theme = GetOrCreateTheme(themeKind);
             theme.DefaultTheme = defaultTheme;
-            FlowGraphSettings.SwitchTheme(theme);
+            
+            // Pass ThemeColors, it picks up the settings theme using Id OR the default one
+            // TODO FlowGraphSettings.SwitchTheme(theme);
             
             foreach (var pair in LightDocumentSettings) {
-                pair.Value.LoadThemeSettings();
+                //pair.Value.LoadThemeSettings();
             }
         }
 

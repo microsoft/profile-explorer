@@ -570,8 +570,6 @@ namespace IRExplorerUI {
             return info;
         }
 
-        
-
         public static bool AreEqual<TKey, TValue>(Dictionary<TKey, TValue> first, Dictionary<TKey, TValue> second) {
             if (first == second)
                 return true;

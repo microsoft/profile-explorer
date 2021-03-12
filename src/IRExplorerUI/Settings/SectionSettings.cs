@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Windows.Media;
 using ProtoBuf;
 
@@ -37,6 +38,9 @@ namespace IRExplorerUI {
 
     [ProtoContract(SkipConstructor = true)]
     public class SectionSettings : SettingsBase {
+        static readonly Guid Id = new Guid("F3A2F54B-C96E-43E0-9D74-42F2A9D031E8");
+        private ThemeColorSet theme_;
+        
         public SectionSettings() {
             Reset();
         }
@@ -71,7 +75,6 @@ namespace IRExplorerUI {
         private SectionColors currentThemeColors_;
 
         public override void Reset() {
-            LoadThemeSettings();
             ColorizeSectionNames = true;
             ShowSectionSeparators = true;
             UseNameIndentation = true;
@@ -80,18 +83,6 @@ namespace IRExplorerUI {
             MarkNoDiffSectionGroups = false;
             FunctionSearchCaseSensitive = false;
             SectionSearchCaseSensitive = false;
-        }
-
-        [ProtoAfterDeserialization]
-        public void LoadThemeSettings() {
-            themeColors_ ??= new Dictionary<ApplicationThemeKind, SectionColors>();
-
-            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
-                colors = new SectionColors();
-                themeColors_[App.Theme.Kind] = colors;
-            }
-
-            currentThemeColors_ = colors;
         }
 
         public override SettingsBase Clone() {

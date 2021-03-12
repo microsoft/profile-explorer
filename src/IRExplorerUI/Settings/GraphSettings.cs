@@ -1,44 +1,32 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using ProtoBuf;
 
 namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
-    public class GraphColors {
-        public GraphColors() {
-            //? TODO: Set default dark theme colors
-            BackgroundColor = Utils.ColorFromString("#EFECE2");
-            TextColor = Colors.Black;
-            EdgeColor = Colors.Black;
-            NodeColor = Utils.ColorFromString("#CBCBCB");
-            NodeBorderColor = Utils.ColorFromString("#000000");
-        }
-        
-        [ProtoMember(1)] public Color BackgroundColor { get; set; }
-        [ProtoMember(2)] public Color TextColor { get; set; }
-        [ProtoMember(3)] public Color NodeColor { get; set; }
-        [ProtoMember(4)] public Color NodeBorderColor { get; set; }
-        [ProtoMember(5)] public Color EdgeColor { get; set; }   
-        
-        public override bool Equals(object obj) {
-            return obj is GraphColors options &&
-                   TextColor.Equals(options.TextColor) &&
-                   EdgeColor.Equals(options.EdgeColor) &&
-                   NodeColor.Equals(options.NodeColor) &&
-                   NodeBorderColor.Equals(options.NodeBorderColor) &&
-                   BackgroundColor.Equals(options.BackgroundColor);
-        }
-    }
-    
-    [ProtoContract(SkipConstructor = true)]
     [ProtoInclude(100, typeof(FlowGraphSettings))]
     [ProtoInclude(200, typeof(ExpressionGraphSettings))]
     public class GraphSettings : SettingsBase {
+        private ThemeColorSet theme_;
+        
         public GraphSettings() {
             Reset();
+        }
+
+        public static ThemeColorSet CreateDefaultThemeColors(ApplicationThemeKind themeKind) {
+            var theme = new ThemeColorSet(Guid.Empty) {
+                {nameof(BackgroundColor), Utils.ColorFromString("#F4F4F4")},
+                {nameof(TextColor), Colors.Black},
+                {nameof(EdgeColor), Colors.Black},
+                {nameof(NodeColor), Utils.ColorFromString("#CBCBCB")},
+                {nameof(NodeBorderColor), Colors.Black},
+            };
+            
+            return theme;
         }
 
         [ProtoMember(1)] public bool SyncSelectedNodes { get; set; }
@@ -58,38 +46,33 @@ namespace IRExplorerUI {
         [ProtoMember(8)] public bool HighlightConnectedNodesOnHover { get; set; }
 
         [ProtoMember(9)] public bool HighlightConnectedNodesOnSelection { get; set; }
-
+        
         public Color BackgroundColor {
-            get => currentThemeColors_.BackgroundColor;
-            set => currentThemeColors_.BackgroundColor = value;
+            get => theme_[nameof(BackgroundColor)];
+            set => theme_[nameof(BackgroundColor)] = value;
         }
 
         public Color TextColor {
-            get => currentThemeColors_.TextColor;
-            set => currentThemeColors_.TextColor = value;
-        }
-        
-        public Color NodeColor {
-            get => currentThemeColors_.NodeColor;
-            set => currentThemeColors_.NodeColor = value;
-        }
-        
-        public Color NodeBorderColor {
-            get => currentThemeColors_.NodeBorderColor;
-            set => currentThemeColors_.NodeBorderColor = value;
-        }
-        
-        public Color EdgeColor {
-            get => currentThemeColors_.EdgeColor;
-            set => currentThemeColors_.EdgeColor = value;
+            get => theme_[nameof(TextColor)];
+            set => theme_[nameof(TextColor)] = value;
         }
 
-        [ProtoMember(18)]
-        private Dictionary<ApplicationThemeKind, GraphColors> themeColors_;
-        private GraphColors currentThemeColors_;
-        
+        public Color NodeColor {
+            get => theme_[nameof(NodeColor)];
+            set => theme_[nameof(NodeColor)] = value;
+        }
+
+        public Color NodeBorderColor {
+            get => theme_[nameof(NodeBorderColor)];
+            set => theme_[nameof(NodeBorderColor)] = value;
+        }
+
+        public Color EdgeColor {
+            get => theme_[nameof(EdgeColor)];
+            set => theme_[nameof(EdgeColor)] = value;
+        }
+
         public override void Reset() {
-            LoadThemeSettingsImpl();
             SyncSelectedNodes = true;
             SyncMarkedNodes = true;
             BringNodesIntoView = true;
@@ -100,25 +83,8 @@ namespace IRExplorerUI {
             HighlightConnectedNodesOnSelection = true;
         }
 
-        protected virtual void LoadThemeSettingsImpl() {
-            themeColors_ ??= new Dictionary<ApplicationThemeKind, GraphColors>();
-
-            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
-                colors = new GraphColors();
-                themeColors_[App.Theme.Kind] = colors;
-            }
-
-            currentThemeColors_ = colors;
-        }
-
-        [ProtoAfterDeserialization]
-        public void LoadThemeSettings() {
-            LoadThemeSettingsImpl();
-        }
-
         public override bool Equals(object obj) {
             return obj is GraphSettings options &&
-                   Utils.AreEqual(themeColors_, options.themeColors_) &&
                    SyncSelectedNodes == options.SyncSelectedNodes &&
                    SyncMarkedNodes == options.SyncMarkedNodes &&
                    BringNodesIntoView == options.BringNodesIntoView &&

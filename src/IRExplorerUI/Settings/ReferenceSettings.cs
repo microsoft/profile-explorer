@@ -46,6 +46,9 @@ namespace IRExplorerUI {
 
     [ProtoContract(SkipConstructor = true)]
     public class ReferenceSettings : SettingsBase, INotifyPropertyChanged {
+        static readonly Guid Id = new Guid("9DF53096-9446-4174-B3AD-AD7D1632B3CE");
+        private ThemeColorSet theme_;
+        
         public ReferenceSettings() {
             Reset();
         }
@@ -77,21 +80,8 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
 
         public override void Reset() {
-            LoadThemeSettings();
             ShowPreviewPopup = true;
             ShowOnlySSA = true;
-        }
-
-        [ProtoAfterDeserialization]
-        public void LoadThemeSettings() {
-            themeColors_ ??= new Dictionary<ApplicationThemeKind, ReferenceColors>();
-
-            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
-                colors = new ReferenceColors();
-                themeColors_[App.Theme.Kind] = colors;
-            }
-
-            currentThemeColors_ = colors;
         }
 
         public override SettingsBase Clone() {

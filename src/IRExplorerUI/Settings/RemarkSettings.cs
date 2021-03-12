@@ -1,12 +1,16 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using ProtoBuf;
 
 namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
     public class RemarkSettings : SettingsBase {
+        static readonly Guid Id = new Guid("A2703D6B-622D-4D9D-B55E-DEB6A887979F");
+        private ThemeColorSet theme_;
+        
         public RemarkSettings() {
             Reset();
         }

@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using IRExplorerCore.Graph;
@@ -55,6 +56,9 @@ namespace IRExplorerUI {
 
     [ProtoContract(SkipConstructor = true)]
     public class ExpressionGraphSettings : GraphSettings {
+        static readonly Guid Id = new Guid("CFB3B2C1-4734-4F9B-9FC8-1C166A0FE20C");
+        private ThemeColorSet theme_;
+        
         public ExpressionGraphSettings() {
             Reset();
         }
@@ -129,18 +133,6 @@ namespace IRExplorerUI {
         private Dictionary<ApplicationThemeKind, ExpressionGraphColors> themeColors_;
         private ExpressionGraphColors currentThemeColors_;
         
-        protected override void LoadThemeSettingsImpl() {
-            base.LoadThemeSettingsImpl();
-            themeColors_ ??= new Dictionary<ApplicationThemeKind, ExpressionGraphColors>();
-
-            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
-                colors = new ExpressionGraphColors();
-                themeColors_[App.Theme.Kind] = colors;
-            }
-
-            currentThemeColors_ = colors;
-        }
-
         public ExpressionGraphPrinterOptions GetGraphPrinterOptions() {
             return new ExpressionGraphPrinterOptions {
                 PrintVariableNames = PrintVariableNames,
@@ -154,7 +146,6 @@ namespace IRExplorerUI {
 
         public override void Reset() {
             base.Reset();
-            LoadThemeSettingsImpl();
             PrintVariableNames = true;
             PrintSSANumbers = true;
             GroupInstructions = true;

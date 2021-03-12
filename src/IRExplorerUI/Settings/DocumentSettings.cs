@@ -78,6 +78,9 @@ namespace IRExplorerUI {
 
     [ProtoContract(SkipConstructor = true)]
     public class DocumentSettings : SettingsBase, INotifyPropertyChanged {
+        static readonly Guid Id = new Guid("F83ECF43-E4F5-4662-B6E6-C8A11EC5A437");
+        private ThemeColorSet theme_;
+        
         public DocumentSettings() {
             Reset();
         }
@@ -177,7 +180,6 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
 
         public override void Reset() {
-            LoadThemeSettings();
             ShowBlockSeparatorLine = true;
             FontName = "Consolas";
             FontSize = 12;
@@ -198,18 +200,6 @@ namespace IRExplorerUI {
         public override SettingsBase Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<DocumentSettings>(serialized);
-        }
-
-        [ProtoAfterDeserialization]
-        public void LoadThemeSettings() {
-            themeColors_ ??= new Dictionary<ApplicationThemeKind, DocumentColors>();
-
-            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
-                colors = new DocumentColors();
-                themeColors_[App.Theme.Kind] = colors;
-            }
-
-            currentThemeColors_ = colors;
         }
 
         public override bool Equals(object obj) {

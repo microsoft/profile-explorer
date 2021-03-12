@@ -54,6 +54,9 @@ namespace IRExplorerUI {
 
     [ProtoContract(SkipConstructor = true)]
     public class LightDocumentSettings : SettingsBase, INotifyPropertyChanged {
+        static readonly Guid Id = new Guid("47011784-DD41-46B3-B4E8-D71DE1099CA2");
+        private ThemeColorSet theme_;
+        
         public LightDocumentSettings() {
             Reset();
         }
@@ -98,25 +101,12 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
 
         public override void Reset() {
-            LoadThemeSettings();
             FontName = "Consolas";
             FontSize = 12;
             HighlightIRElements = true;
             ShowLineNumbers = true;
             WordWrap = false;
             SyncStyleWithDocument = true;
-        }
-
-        [ProtoAfterDeserialization]
-        public void LoadThemeSettings() {
-            themeColors_ ??= new Dictionary<ApplicationThemeKind, LightDocumentColors>();
-
-            if (!themeColors_.TryGetValue(App.Theme.Kind, out var colors)) {
-                colors = new LightDocumentColors();
-                themeColors_[App.Theme.Kind] = colors;
-            }
-
-            currentThemeColors_ = colors;
         }
 
         public override SettingsBase Clone() {

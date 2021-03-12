@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Windows.Media;
 using IRExplorerUI.Diff;
 using ProtoBuf;
@@ -6,6 +7,9 @@ using ProtoBuf;
 namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
     public class DiffSettings : SettingsBase {
+        static readonly Guid Id = new Guid("482609AA-2F1D-4359-BE94-1909C9BA81E2");
+        private ThemeColorSet theme_;
+        
         public DiffSettings() {
             Reset();
         }

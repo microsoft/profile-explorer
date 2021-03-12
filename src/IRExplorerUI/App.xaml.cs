@@ -646,5 +646,9 @@ namespace IRExplorerUI {
                 HighlightBackgroundBrush = App.Current.Resources["HighlightColor1Brush"] as Brush,
             };
         }
+
+        public static void ResetSettingsTheme(Guid id) {
+            Settings.ResetSettingsTheme(id);
+        }
     }
 }

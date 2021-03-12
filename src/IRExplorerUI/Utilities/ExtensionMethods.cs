@@ -163,5 +163,36 @@ namespace IRExplorerUI {
 
             return offsetList;
         }
+        
+        public static Dictionary<TKey, TValue> 
+            CombineWith<TKey, TValue>(this Dictionary<TKey, TValue> dict, 
+                                      Dictionary<TKey, TValue> other) where TKey:class {
+            foreach (var pair in other) {
+                dict[pair.Key] = pair.Value;
+            }
+
+            return dict;
+        }
+        
+        public static bool IsEqual<TKey, TValue>(this Dictionary<TKey, TValue> first, Dictionary<TKey, TValue> second) {
+            if (first == second)
+                return true;
+            if ((first == null) || (second == null))
+                return false;
+            if (first.Count != second.Count)
+                return false;
+
+            var valueComparer = EqualityComparer<TValue>.Default;
+
+            foreach (var kvp in first) {
+                TValue value2;
+                if (!second.TryGetValue(kvp.Key, out value2))
+                    return false;
+                if (!valueComparer.Equals(kvp.Value, value2))
+                    return false;
+            }
+
+            return true;
+        }
     }
 }
