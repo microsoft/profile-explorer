@@ -946,31 +946,25 @@ namespace IRExplorerUI {
         public ETWProfileDataProvider ProfileData => profileData_;
 
         private async void MenuItem_OnClick(object sender, RoutedEventArgs e) {
-            var window = new ProfileLoadWindow();
+            var window = new ProfileLoadWindow(this);
             window.Owner = this;
             var result = window.ShowDialog();
 
             if (result.HasValue && result.Value) {
-                SetOptionalStatus("Loading profile data...");
-                var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-                profileData_ = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader);
-                bool markInlinedFunctions = true;
-
-                if (!await profileData_.LoadTrace(window.ProfileFilePath, 
-                                        window.BinaryFilePath, window.DebugFilePath,
-                                        markInlinedFunctions)) {
-                    profileData_ = null;
-
-                    MessageBox.Show("Failed to load profile data");
-                    SetOptionalStatus("");
-                    return;
-                }
-                else {
-                    SectionPanel.MainSummary = null;
-                    SectionPanel.MainSummary = MainDocumentSummary;
-                    SetOptionalStatus("Profile data loaded");
-                }
+                SectionPanel.RefreshMainSummary(MainDocumentSummary);
+                SetOptionalStatus("Profile data loaded");
             }
+        }
+
+        public Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
+                                        ProfileLoadProgressHandler progressCallback) {
+            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
+            profileData_ = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader);
+            bool markInlinedFunctions = true;
+
+            return profileData_.LoadTrace(profileFilePath,
+                binaryFilePath, debugFilePath,
+                markInlinedFunctions, progressCallback);
         }
     }
 }

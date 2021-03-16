@@ -5,9 +5,9 @@
 		<TargetFramework>net5.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
-		<AssemblyVersion>0.7.6.0</AssemblyVersion>
-		<FileVersion>0.7.6.0</FileVersion>
-		<Version>0.7.6</Version>
+		<AssemblyVersion>0.7.7.0</AssemblyVersion>
+		<FileVersion>0.7.7.0</FileVersion>
+		<Version>0.7.7</Version>
 		<Authors></Authors>
 		<Company>Microsoft Corporation</Company>
 		<Product>IR Explorer</Product>
@@ -89,7 +89,7 @@
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.5.0" />
+		<PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.6.1" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
 		<PackageReference Include="protobuf-net" Version="3.0.62" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
@@ -214,8 +214,5 @@
 		</Page>
 	</ItemGroup>
 
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-		<Exec Command="copy /y $(SolutionDir)..\resources\*.xshd $(TargetDir)&#xD;&#xA;copy /y $(SolutionDir)..\resources\*.xml $(TargetDir)&#xD;&#xA;mkdir -p $(TargetDir)themes&#xD;&#xA;copy /y $(SolutionDir)..\resources\themes\*.xshd $(TargetDir)themes&#xD;&#xA;mkdir -p $(TargetDir)utc&#xD;&#xA;copy /y $(SolutionDir)..\resources\utc\*.json $(TargetDir)utc&#xD;&#xA;copy /y $(SolutionDir)..\resources\utc\*.xshd $(TargetDir)utc&#xD;&#xA;copy /y $(SolutionDir)..\resources\scripts\*.cs $(TargetDir)utc&#xD;&#xA;mkdir -p $(TargetDir)llvm&#xD;&#xA;copy /y $(SolutionDir)..\resources\llvm\*.json $(TargetDir)llvm&#xD;&#xA;copy /y $(SolutionDir)..\resources\llvm\*.xshd $(TargetDir)llvm" />
-	</Target>
 
 </Project>
