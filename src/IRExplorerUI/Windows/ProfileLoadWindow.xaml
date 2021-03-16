@@ -20,7 +20,7 @@
             <RowDefinition Height="48" />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="115" />
+            <ColumnDefinition Width="250" />
             <ColumnDefinition />
         </Grid.ColumnDefinitions>
 
@@ -105,12 +105,21 @@
 
 
         <StackPanel
+            x:Name="LoadProgressPanel"
             Grid.Row="1"
             Grid.Column="0"
-            Width="72"
-            Margin="16,4,0,16"
+            Width="200"
+            Margin="16,4,0,8"
             HorizontalAlignment="Left"
-            Orientation="Horizontal" />
+            Visibility="Hidden">
+            <ProgressBar
+                x:Name="LoadProgressBar"
+                Width="200"
+                Height="20"
+                Maximum="100"
+                Value="40" />
+            <TextBlock x:Name="LoadProgressLabel" Text="100%" />
+        </StackPanel>
 
         <StackPanel
             Grid.Row="1"
@@ -123,6 +132,7 @@
                 Height="24"
                 Margin="0,0,4,0"
                 Padding="4,1,4,1"
+                VerticalAlignment="Top"
                 Click="CancelButton_Click"
                 Content="Cancel"
                 TabIndex="4" />
@@ -130,6 +140,7 @@
                 x:Name="UpdateButton"
                 Height="24"
                 Padding="4,1,4,1"
+                VerticalAlignment="Top"
                 Background="#FFFCF4CC"
                 Click="UpdateButton_Click"
                 Content="Load Profile"

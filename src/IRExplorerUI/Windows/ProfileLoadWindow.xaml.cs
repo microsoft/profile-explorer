@@ -4,34 +4,52 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Win32;
 
 namespace IRExplorerUI {
     public partial class ProfileLoadWindow : Window {
-        public ProfileLoadWindow() {
+        public ProfileLoadWindow(ISession session) {
             InitializeComponent();
             DataContext = this;
+            Session = session;
         }
 
+        public ISession Session { get; set; }
         public string ProfileFilePath { get; set; }
         public string BinaryFilePath { get; set; }
         public string DebugFilePath { get; set; }
 
-        private void UpdateButton_Click(object sender, RoutedEventArgs e) {
+        private async void UpdateButton_Click(object sender, RoutedEventArgs e) {
             ProfileFilePath = ProfileAutocompleteBox.Text.Trim();
             BinaryFilePath = BinaryAutocompleteBox.Text.Trim();
             DebugFilePath = DebugAutocompleteBox.Text.Trim();
-            OpenFiles();
+            await OpenFiles();
         }
 
-        private void OpenFiles() {
+        private async Task OpenFiles() {
             if (ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile") &&
                 //ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
                 ValidateFilePath(BinaryFilePath, DebugAutocompleteBox, "debug")) {
-                DialogResult = true;
-                Close();
+
+                if (await Session.LoadProfileData(ProfileFilePath, BinaryFilePath, DebugFilePath, progressInfo => {
+                    Dispatcher.BeginInvoke((Action)(() => {
+                        LoadProgressPanel.Visibility = Visibility.Visible;
+                        LoadProgressBar.Maximum = progressInfo.Total;
+                        LoadProgressBar.Value = progressInfo.Current;
+                        LoadProgressLabel.Text =
+                            progressInfo.IsLoadingSymbols ? $"Loading symbols..." : $"Loading trace...";
+                    }));
+                })) {
+                    DialogResult = true;
+                    Close();
+                }
+                else {
+                    MessageBox.Show($"Filed to load profile file {ProfileFilePath}", "Compiler Studio",
+                                    MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                }
             }
         }
 

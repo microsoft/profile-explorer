@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Windows.EventTracing;
 using Microsoft.Windows.EventTracing.Cpu;
@@ -11,8 +13,50 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI.Profile {
+    public class ProfileLoadProgress {
+        public ProfileLoadProgress(bool isLoadingSymbols) {
+            IsLoadingSymbols = isLoadingSymbols;
+        }
+
+        public int Total { get; set; }
+        public int Current { get; set; }
+        public bool IsLoadingSymbols { get; set; }
+    }
+
+    public delegate void ProfileLoadProgressHandler(ProfileLoadProgress info);
+
     //? TODO: Add interface
     public class ETWProfileDataProvider {
+        class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
+            private ProfileLoadProgressHandler callback_;
+
+            public ProcessProgressTracker(ProfileLoadProgressHandler callback) {
+                callback_ = callback;
+            }
+
+            public void Report(TraceProcessingProgress value) {
+                callback_?.Invoke(new ProfileLoadProgress(false) {
+                    Total = value.TotalPasses,
+                    Current = value.CurrentPass
+                });
+            }
+        }
+
+        class SymbolProgressTracker : IProgress<SymbolLoadingProgress> {
+            private ProfileLoadProgressHandler callback_;
+
+            public SymbolProgressTracker(ProfileLoadProgressHandler callback) {
+                callback_ = callback;
+            }
+
+            public void Report(SymbolLoadingProgress value) {
+                callback_?.Invoke(new ProfileLoadProgress(false) {
+                    Total = value.ImagesTotal,
+                    Current = value.ImagesProcessed
+                });
+            }
+        }
+
         private IRTextSummary summary_;
         private IRTextSectionLoader loader_;
 
@@ -31,103 +75,127 @@ namespace IRExplorerUI.Profile {
         }
 
         public async Task<bool> LoadTrace(string tracePath, string imageName, string symbolPath,
-                                        bool markInlinedFunctions) {
+                                        bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback) {
             try {
                 // Extract just the file name.
                 imageName = Path.GetFileNameWithoutExtension(imageName);
+                //symbolPath = Path.GetDirectoryName(symbolPath);
 
-                using var trace = TraceProcessor.Create(tracePath);
-                IPendingResult<ISymbolDataSource> pendingSymbolData = trace.UseSymbols();
-                IPendingResult<ICpuSampleDataSource> pendingCpuSamplingData = trace.UseCpuSamplingData();
+                //var settings = new TraceProcessorSettings {
+                //    AllowLostEvents = true
+                //};
 
-                trace.Process();
+                // The entire ETW processing must be done on the same thread.
+                await Task.Run(async () => {
+                    using var trace = TraceProcessor.Create(tracePath);
+                    IPendingResult<ISymbolDataSource> pendingSymbolData = trace.UseSymbols();
+                    IPendingResult<ICpuSampleDataSource> pendingCpuSamplingData = trace.UseCpuSamplingData();
 
-                // Load symbols.
-                ISymbolDataSource symbolData = pendingSymbolData.Result;
-                ICpuSampleDataSource cpuSamplingData = pendingCpuSamplingData.Result;
-                await symbolData.LoadSymbolsAsync(SymCachePath.Automatic, new RawSymbolPath(symbolPath));
+                    //await Task.Run(() => trace.Process(new ProcessProgressTracker(progressCallback)));
+                    trace.Process(new ProcessProgressTracker(progressCallback));
 
-                foreach (var sample in cpuSamplingData.Samples) {
-                    if (sample.IsExecutingDeferredProcedureCall == true || 
-                        sample.IsExecutingInterruptServicingRoutine == true) {
-                        continue;
-                    }
+                    // Load symbols.
+                    ISymbolDataSource symbolData = pendingSymbolData.Result;
+                    ICpuSampleDataSource cpuSamplingData = pendingCpuSamplingData.Result;
+                    await symbolData.LoadSymbolsAsync(SymCachePath.Automatic, new RawSymbolPath(symbolPath),
+                        new SymbolProgressTracker(progressCallback));
+                    int index = 0;
 
-                    if (!sample.Process.ImageName.Contains(imageName, StringComparison.OrdinalIgnoreCase) ||
-                        sample.Stack == null) {
-                        continue;
-                    }
+                    foreach (var sample in cpuSamplingData.Samples) {
+                        index++;
 
-                    //? TODO: parallel
-                    foreach (var frame in sample.Stack.Frames) {
-                        // Ignore samples targeting other images loaded in the process.
-                        if (frame.Image == null ||
-                            !frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                        if (index % 100 == 0) {
+                            progressCallback?.Invoke(new ProfileLoadProgress(false) {
+                                Total = cpuSamplingData.Samples.Count, Current = index
+                            });
+                            Thread.Sleep(10);
+
+                        }
+
+                        if (sample.IsExecutingDeferredProcedureCall == true ||
+                            sample.IsExecutingInterruptServicingRoutine == true) {
                             continue;
                         }
 
-                        var symbol = frame.Symbol;
 
-                        if (symbol != null) {
-                            //? TODO: FunctionName is unmangled, summary has mangled names
-                            List<IRTextFunction> functs = null;
+                        if (!sample.Process.ImageName.Contains(imageName, StringComparison.OrdinalIgnoreCase) ||
+                            sample.Stack == null) {
+                            continue;
+                        }
 
-                            if (symbol.FunctionName.Contains("::")) {
-                                //? TODO: Hacky way of dealing with manged C++ names
-                                var parts = symbol.FunctionName.Split("::", StringSplitOptions.RemoveEmptyEntries);
-                                functs = summary_.FindAllFunctions(parts);
+                        //? TODO: parallel
+                        foreach (var frame in sample.Stack.Frames) {
+                            // Ignore samples targeting other images loaded in the process.
+                            if (frame.Image == null ||
+                                !frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                                continue;
                             }
-                            else {
-                                functs = summary_.FindAllFunctions(symbol.FunctionName);
-                            }
 
-                            foreach (var textFunction in functs) {
-                                var profile = GetOrCreateFunctionProfile(textFunction, symbol.SourceFileName);
-                                var rva = frame.Address;
-                                var functionRVA = symbol.AddressRange.BaseAddress;
-                                var offset = rva.Value - functionRVA.Value;
-                                profile.AddInstructionSample(offset, sample.Weight.TimeSpan);
-                                profile.AddLineSample(symbol.SourceLineNumber, sample.Weight.TimeSpan);
-                                profile.Weight += sample.Weight.TimeSpan;
+                            var symbol = frame.Symbol;
 
-                                if (markInlinedFunctions && textFunction.Sections.Count > 0) {
-                                    // Load current function.
-                                    var result = loader_.LoadSection(textFunction.Sections[^1]);
-                                    var metadataTag = result.Function.GetTag<AddressMetadataTag>();
-                                    bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+                            if (symbol != null) {
+                                //? TODO: FunctionName is unmangled, summary has mangled names
+                                List<IRTextFunction> functs = null;
 
-                                    // Try to find instr. referenced by RVA, then go over all inlinees.
-                                    if (hasInstrOffsetMetadata &&
-                                        metadataTag.OffsetToElementMap.TryGetValue(offset, out var rvaInstr)) {
-                                        var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
+                                if (symbol.FunctionName.Contains("::")) {
+                                    //? TODO: Hacky way of dealing with manged C++ names
+                                    var parts = symbol.FunctionName.Split("::", StringSplitOptions.RemoveEmptyEntries);
+                                    functs = summary_.FindAllFunctions(parts);
+                                }
+                                else {
+                                    functs = summary_.FindAllFunctions(symbol.FunctionName);
+                                }
 
-                                        if (lineInfo != null && lineInfo.HasInlinees) {
-                                            // For each inlinee, add the sample to its line.
-                                            foreach (var inlinee in lineInfo.Inlinees) {
-                                                var inlineeTextFunc = summary_.FindFunction(inlinee.Function);
+                                foreach (var textFunction in functs) {
+                                    var profile = GetOrCreateFunctionProfile(textFunction, symbol.SourceFileName);
+                                    var rva = frame.Address;
+                                    var functionRVA = symbol.AddressRange.BaseAddress;
+                                    var offset = rva.Value - functionRVA.Value;
+                                    profile.AddInstructionSample(offset, sample.Weight.TimeSpan);
+                                    profile.AddLineSample(symbol.SourceLineNumber, sample.Weight.TimeSpan);
+                                    profile.Weight += sample.Weight.TimeSpan;
 
-                                                if (inlineeTextFunc != null) {
-                                                    //? TODO: Inlinee can be in another source file
-                                                    var inlineeProfile = GetOrCreateFunctionProfile(inlineeTextFunc, symbol.SourceFileName);
-                                                    inlineeProfile.AddLineSample(inlinee.Line, sample.Weight.TimeSpan);
-                                                    inlineeProfile.Weight += sample.Weight.TimeSpan;
+                                    if (markInlinedFunctions && textFunction.Sections.Count > 0) {
+                                        // Load current function.
+                                        var result = loader_.LoadSection(textFunction.Sections[^1]);
+                                        var metadataTag = result.Function.GetTag<AddressMetadataTag>();
+                                        bool hasInstrOffsetMetadata =
+                                            metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+
+                                        // Try to find instr. referenced by RVA, then go over all inlinees.
+                                        if (hasInstrOffsetMetadata &&
+                                            metadataTag.OffsetToElementMap.TryGetValue(offset, out var rvaInstr)) {
+                                            var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
+
+                                            if (lineInfo != null && lineInfo.HasInlinees) {
+                                                // For each inlinee, add the sample to its line.
+                                                foreach (var inlinee in lineInfo.Inlinees) {
+                                                    var inlineeTextFunc = summary_.FindFunction(inlinee.Function);
+
+                                                    if (inlineeTextFunc != null) {
+                                                        //? TODO: Inlinee can be in another source file
+                                                        var inlineeProfile = GetOrCreateFunctionProfile(inlineeTextFunc,
+                                                            symbol.SourceFileName);
+                                                        inlineeProfile.AddLineSample(inlinee.Line,
+                                                            sample.Weight.TimeSpan);
+                                                        inlineeProfile.Weight += sample.Weight.TimeSpan;
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
 
-                            TotalWeight += sample.Weight.TimeSpan;
-                            break;
-                        }
-                        else {
-                            Trace.WriteLine("Could not find debug info for\n");
-                            Trace.WriteLine($"   image: {frame.Image.FileName}");
-                            Trace.Flush();
+                                TotalWeight += sample.Weight.TimeSpan;
+                                break;
+                            }
+                            else {
+                                Trace.WriteLine("Could not find debug info for image: {frame.Image.FileName}");
+                            }
                         }
                     }
-                }
+
+                });
 
                 if (markInlinedFunctions) {
                     loader_.ResetCache();
@@ -135,7 +203,7 @@ namespace IRExplorerUI.Profile {
             }
             catch (Exception ex) {
                 Trace.WriteLine($"Exception loading profile: {ex.Message}");
-                Trace.Flush();
+                //Trace.Flush();
                 return false;
             }
 

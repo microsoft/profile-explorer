@@ -79,6 +79,9 @@ namespace IRExplorerUI {
         Task<bool> SaveSessionDocument(string filePath);
         Task<bool> OpenSessionDocument(string filePath);
 
+        Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
+                                ProfileLoadProgressHandler progressCallback);
+
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
     }
