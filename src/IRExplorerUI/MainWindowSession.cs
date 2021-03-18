@@ -22,6 +22,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Profile;
 using Microsoft.Win32;
 using IRExplorerUI.Query;
 
@@ -129,6 +130,15 @@ namespace IRExplorerUI {
                     var panelInfo = FindActivePanel(panelState.Item2.PanelKind);
                     sessionState_.SavePanelState(panelState.Item2.StateObject, panelInfo.Panel, section);
                 }
+
+
+                // Restore profile info.
+                if (state.ProfileState != null) {
+                    //? TODO: Support diff profile data providers
+                    //? Profile data should be per-document, not global for section
+                    var loader = idToDocumentMap[docState.Id].Loader;
+                    sessionState_.ProfileData = ProfileData.Deserialize(state.ProfileState, summary);
+                }
             }
 
             foreach (var panelState in state.GlobalPanelStates) {
@@ -138,9 +148,10 @@ namespace IRExplorerUI {
 
             await SetupSectionPanel();
             NotifyPanelsOfSessionStart();
-            var idToDocumentHostMap = new Dictionary<Guid, IRDocumentHost>();
 
             // Reload sections left open.
+            var idToDocumentHostMap = new Dictionary<Guid, IRDocumentHost>();
+
             foreach (var openSection in state.OpenSections) {
                 var loadedDoc = idToDocumentMap[openSection.DocumentId];
                 var section = loadedDoc.Summary.GetSectionWithId(openSection.SectionId);

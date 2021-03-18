@@ -711,7 +711,9 @@ namespace IRExplorerUI {
             colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
 
             foreach (var funcEx in functions) {
-                if (profile.FunctionProfiles.TryGetValue(funcEx.Function, out var funcProfile)) {
+                var funcProfile = profile.GetFunctionProfile(funcEx.Function);
+
+                if(funcProfile != null) {
                     double weightPercentage = profile.ScaleFunctionWeight(funcProfile.Weight);
                     funcEx.OptionalData = weightPercentage;
                     funcEx.OptionalDataText =
@@ -746,15 +748,15 @@ namespace IRExplorerUI {
                 functionsEx.Add(funcEx);
             }
 
-            // Attach additional data to the UI.
-            SetDemangledFunctionNames(functionsEx);
-            SetFunctionProfileInfo(functionsEx);
-
             // Set up the filter used to search the list.
             var functionFilter = new ListCollectionView(functionsEx);
             functionFilter.Filter = FilterFunctionList;
             FunctionList.ItemsSource = functionFilter;
             SectionList.ItemsSource = null;
+
+            // Attach additional data to the UI.
+            SetDemangledFunctionNames(functionsEx);
+            SetFunctionProfileInfo(functionsEx);
 
             if (summary_.Functions.Count == 1) {
                 await SelectFunction(summary_.Functions[0]);

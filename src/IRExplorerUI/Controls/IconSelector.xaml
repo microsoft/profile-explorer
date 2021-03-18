@@ -48,7 +48,7 @@
                 BorderThickness="0"
                 PreviewMouseUp="Button_MouseUp"
                 Tag="StarIconColor">
-                <Image Source="{StaticResource StarIconColor}" />
+                <Image Source="{StaticResource StarIconYellow}" />
             </Button>
 
             <Button

@@ -39,21 +39,19 @@ namespace IRExplorerUI {
         public int Version { get; set; }
 
         public byte[] SaveState(FunctionIR function) {
-            var bookmarkState = new BookmarkManagerState();
-            bookmarkState.Bookmarks = bookmarks_.CloneList();
+            var bookmarkState = new BookmarkManagerState {
+                Bookmarks = bookmarks_.CloneList(),
+                ElementBookmarkMap = elementBookmarkMap_?.ToList<IRElement, IRElementReference, Bookmark>(),
+                NextIndex = nextIndex_,
+                SelectedIndex = selectedIndex_
+            };
 
-            bookmarkState.ElementBookmarkMap =
-                elementBookmarkMap_?.ToList<IRElement, IRElementReference, Bookmark>();
-
-            bookmarkState.NextIndex = nextIndex_;
-            bookmarkState.SelectedIndex = selectedIndex_;
             return StateSerializer.Serialize(bookmarkState, function);
         }
 
         public void LoadState(byte[] data, FunctionIR function) {
             var bookmarkState = StateSerializer.Deserialize<BookmarkManagerState>(data, function);
             bookmarks_ = bookmarkState.Bookmarks ?? new List<Bookmark>();
-
             elementBookmarkMap_ =
                 bookmarkState.ElementBookmarkMap?.ToDictionary<IRElementReference, IRElement, Bookmark>() ??
                 new Dictionary<IRElement, Bookmark>();
