@@ -355,10 +355,18 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
-    <DrawingImage x:Key="StarIconColor">
+    <DrawingImage x:Key="StarIconYellow">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H14 V0 H0 Z">
                 <GeometryDrawing Brush="#E0AC00" Geometry="F0 M14,16z M0,0z M14,6L9.1,5.36 7,1 4.9,5.36 0,6 3.6,9.26 2.67,14 7,11.67 11.33,14 10.4,9.26 14,6z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="StarIconRed">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H14 V0 H0 Z">
+                <GeometryDrawing Brush="#CC0000" Geometry="F0 M14,16z M0,0z M14,6L9.1,5.36 7,1 4.9,5.36 0,6 3.6,9.26 2.67,14 7,11.67 11.33,14 10.4,9.26 14,6z" />
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>

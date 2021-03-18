@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -17,6 +18,7 @@ using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 using Microsoft.Win32;
+using Microsoft.Windows.EventTracing;
 using Color = System.Windows.Media.Color;
 using TimeSpan = System.TimeSpan;
 
@@ -33,6 +35,8 @@ namespace IRExplorerUI {
         private string currentFilePath_;
         private ElementHighlighter profileMarker_;
         private OverlayRenderer overlayRenderer_;
+        private bool hasProfileInfo_;
+        private int hottestSourceLine_;
 
         public SourceFilePanel() {
             InitializeComponent();
@@ -92,16 +96,18 @@ namespace IRExplorerUI {
             return null;
         }
 
-        private async Task LoadSourceFile(string path) {
+        private async Task<bool> LoadSourceFile(string path) {
             try {
                 string text = await File.ReadAllTextAsync(path);
                 TextView.Text = text;
                 PathTextbox.Text = path;
-                fileLoaded_ = true;
                 currentFilePath_ = path;
+                fileLoaded_ = true;
+                return true;
             }
-            catch (Exception) {
-                TextView.Text = "Failed to load source file!";
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to load source file {path}: {ex.Message}");
+                return false;
             }
         }
 
@@ -109,7 +115,9 @@ namespace IRExplorerUI {
             string path = BrowseSourceFile();
 
             if (path != null) {
-                await LoadSourceFile(path);
+                if(!await LoadSourceFile(path)) {
+                    TextView.Text = $"Failed to load source file {path}!";
+                }
             }
         }
 
@@ -119,27 +127,39 @@ namespace IRExplorerUI {
         public override HandledEventKind HandledEvents => HandledEventKind.ElementSelection;
 
         public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+            base.OnDocumentSectionLoaded(section, document);
             section_ = section;
-            var profile = FindFunctionProfile(section.ParentFunction);
+
+            // Check if there is profile info.
+            var profile = Session.ProfileData?.GetFunctionProfile(section_.ParentFunction);
 
             if (profile != null) {
                 if (!string.IsNullOrEmpty(profile.SourceFilePath)) {
                     // Load new source file.
-                    if (profile.SourceFilePath != currentFilePath_) {
-                        await LoadSourceFile(profile.SourceFilePath);
+                    //? TODO: Scroll down to the start of the func
+                    //? Could have an option to scroll to hottest part
+                    if (await LoadSourceFile(profile.SourceFilePath)) {
+                        await AnnotateProfilerData(profile);
                     }
-
-                    await AnnotateProfilerData();
+                    else {
+                        TextView.Text = $"Failed to load profile source file {profile.SourceFilePath}!";
+                    }
+                }
+                else {
+                    TextView.Text = $"No source file available";
                 }
             }
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            base.OnDocumentSectionUnloaded(section, document);
             ResetSelectedLine();
 
             overlayRenderer_.Clear();
             profileMarker_.Clear();
             section_ = null;
+            fileLoaded_ = false;
+            hasProfileInfo_ = false;
         }
 
         private void ResetSelectedLine() {
@@ -157,14 +177,18 @@ namespace IRExplorerUI {
             var tag = instr?.GetTag<SourceLocationTag>();
 
             if (tag != null && tag.Line >= 0 && tag.Line <= TextView.Document.LineCount) {
-                var documentLine = TextView.Document.GetLineByNumber(tag.Line);
+                ScrollToLine(tag.Line);
+            }
+        }
 
-                if (documentLine.LineNumber != selectedLine_) {
-                    selectedLine_ = documentLine.LineNumber;
-                    ignoreNextCaretEvent_ = true;
-                    TextView.CaretOffset = documentLine.Offset;
-                    TextView.ScrollToLine(tag.Line);
-                }
+        private void ScrollToLine(int line) {
+            var documentLine = TextView.Document.GetLineByNumber(line);
+
+            if (documentLine.LineNumber != selectedLine_) {
+                selectedLine_ = documentLine.LineNumber;
+                ignoreNextCaretEvent_ = true;
+                TextView.CaretOffset = documentLine.Offset;
+                TextView.ScrollToLine(line);
             }
         }
 
@@ -177,26 +201,12 @@ namespace IRExplorerUI {
 
         #endregion
 
-      
-        private FunctionProfileData FindFunctionProfile(IRTextFunction function) {
-            var data = Session.ProfileData;
+        private async Task AnnotateProfilerData(FunctionProfileData profile) {
+            hasProfileInfo_ = true;
 
-            if (data != null && data.FunctionProfiles.TryGetValue(function, out var profile)) {
-                return profile;
-            }
-
-            return null;
-        }
-
-        private async Task AnnotateProfilerData() {
-            var profile = FindFunctionProfile(section_.ParentFunction);
-
-            if (profile == null) {
-                return;
-            }
-
+            double weightCutoff = 0.003;
             int lightSteps = 10; // 1,1,0.5 is red
-            var colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
+            var colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
             var nextElementId = new IRElementId();
 
             var function = Session.CurrentDocument.Function;
@@ -219,23 +229,30 @@ namespace IRExplorerUI {
                 foreach (var pair in elements) {
                     var element = pair.Item1;
                     double weightPercentage = profile.ScaleWeight(pair.Item2);
+
+                    if(weightPercentage < weightCutoff) {
+                        continue;
+                    }
+
+                    Trace.WriteLine($"Accept {weightPercentage} as {pair.Item2.TotalMilliseconds}");
                     int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
                     var color = colors[colorIndex];
-
+                    
                     var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
                     Session.CurrentDocument.MarkElement(element, color);
+
 
                     IconDrawing icon = null;
                     bool isPinned = false;
                     Brush textColor;
 
                     if (index == 0) {
-                        icon = IconDrawing.FromIconResource("WarningIconColor");
+                        icon = IconDrawing.FromIconResource("StarIconRed");
                         textColor = Brushes.DarkRed;
                         isPinned = true;
                     }
                     else if (index <= 3) {
-                        icon = IconDrawing.FromIconResource("StarIconColor");
+                        icon = IconDrawing.FromIconResource("StarIconYellow");
                         textColor = Brushes.DarkRed;
                         isPinned = true;
                     }
@@ -252,17 +269,41 @@ namespace IRExplorerUI {
                 }
             }
 
+            var lines = new List<Tuple<int, TimeSpan>>(profile.SourceLineWeight.Count);
+
             foreach (var pair in profile.SourceLineWeight) {
-                int sourceLine = pair.Key;
-                double weightPercentage = profile.ScaleWeight(pair.Value);
+                lines.Add(new Tuple<int, TimeSpan>(pair.Key, pair.Value));
+            }
+
+            lines.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+            int lineIndex = 0;
+
+            foreach (var pair in lines) {
+                int sourceLine = pair.Item1;
+                double weightPercentage = profile.ScaleWeight(pair.Item2);
+
+                // if (weightPercentage < weightCutoff) {
+                //     continue;
+                // }
+
                 int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
                 var color = colors[colorIndex];
                 var style = new HighlightingStyle(colors[colorIndex]);
 
-                if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
+                if (sourceLine <= 0 || sourceLine > TextView.Document.LineCount) {
                     continue;
                 }
 
+                IconDrawing icon = null;
+
+                if (lineIndex == 0) {
+                    icon = IconDrawing.FromIconResource("StarIconRed");
+                    hottestSourceLine_ = sourceLine;
+                }
+                else if (lineIndex <= 3) {
+                    icon = IconDrawing.FromIconResource("StarIconYellow");
+                }
+                
                 var documentLine = TextView.Document.GetLineByNumber(sourceLine);
                 var location = new TextLocation(documentLine.Offset, sourceLine, 0);
                 var element = new IRElement(location, documentLine.Length);
@@ -271,9 +312,10 @@ namespace IRExplorerUI {
                 var group = new HighlightedGroup(style);
                 group.Add(element);
                 profileMarker_.Add(group);
+                lineIndex++;
 
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
-                AddElementOverlay(element, null, 16, 16, tooltip);
+                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
+                AddElementOverlay(element, icon, 16, 16, tooltip);
 
                 if (!hasInstrOffsetMetadata || !markedInstrs) {
                     Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
@@ -300,6 +342,12 @@ namespace IRExplorerUI {
 
         private void UpdateHighlighting() {
             TextView.TextArea.TextView.Redraw();
+        }
+
+        private void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
+            if(hasProfileInfo_) {
+                ScrollToLine(hottestSourceLine_);
+            }
         }
     }
 }

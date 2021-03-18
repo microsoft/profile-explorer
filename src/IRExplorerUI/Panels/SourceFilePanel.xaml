@@ -51,13 +51,14 @@
                         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
                     <Button Click="Button_Click" ToolTip="Select source file">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource FolderIcon}" />
-                            <TextBlock Margin="4,0,0,0" Text="Browse..." />
-                        </StackPanel>
+                        <Image Source="{StaticResource FolderIcon}" />
                     </Button>
                     <Button ToolTip="Reload source file">
                         <Image Source="{StaticResource ReloadIcon}" />
+                    </Button>
+                    <Separator />
+                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
+                        <Image Source="{StaticResource StarIcon}" />
                     </Button>
                 </ToolBar>
             </ToolBarTray>

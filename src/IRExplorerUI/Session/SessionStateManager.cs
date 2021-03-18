@@ -8,6 +8,7 @@ using AvalonDock.Layout;
 using ICSharpCode.AvalonEdit.Document;
 using IRExplorerCore;
 using IRExplorerCore.IR;
+using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -46,6 +47,7 @@ namespace IRExplorerUI {
 
         public PanelObjectPairState() { }
 
+        //? TODO: state objects should be just byte[] everywhere
         public PanelObjectPairState(ToolPanelKind panelKind, object stateObject) {
             PanelKind = panelKind;
             StateObject = stateObject as byte[];
@@ -85,6 +87,8 @@ namespace IRExplorerUI {
         public Guid DiffDocumentId;
         [ProtoMember(8)]
         public DiffModeState SectionDiffState;
+        [ProtoMember(9)]
+        public byte[] ProfileState;
 
         public SessionState() {
             Documents = new List<LoadedDocumentState>();
@@ -202,6 +206,7 @@ namespace IRExplorerUI {
         public LoadedDocument MainDocument { get; set; }
         public LoadedDocument DiffDocument { get; set; }
         public List<DocumentHostInfo> DocumentHosts { get; set; }
+        public ProfileData ProfileData { get; set; }
 
         public DiffModeInfo SectionDiffState { get; set; }
         public bool NotifiedSessionStart { get; set; }
@@ -356,6 +361,10 @@ namespace IRExplorerUI {
                 state.SectionDiffState.IsEnabled = true;
                 state.SectionDiffState.LeftSection = CreateOpenSectionState(SectionDiffState.LeftSection);
                 state.SectionDiffState.RightSection = CreateOpenSectionState(SectionDiffState.RightSection);
+            }
+
+            if(ProfileData != null) {
+                state.ProfileState = ProfileData.Serialize();
             }
 
             return Task.Run(() => {

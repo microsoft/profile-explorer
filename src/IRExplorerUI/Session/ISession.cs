@@ -33,7 +33,7 @@ namespace IRExplorerUI {
 
         IRTextSummary MainDocumentSummary { get; }
         IRTextSummary DiffDocumentSummary { get; }
-        ETWProfileDataProvider ProfileData { get; }
+        ProfileData ProfileData { get; }
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
         IRDocument FindAssociatedDocument(IToolPanel panel);
@@ -80,7 +80,8 @@ namespace IRExplorerUI {
         Task<bool> OpenSessionDocument(string filePath);
 
         Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
-                                ProfileLoadProgressHandler progressCallback);
+                                ProfileLoadProgressHandler progressCallback,
+                                CancelableTask cancelableTask);
 
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);

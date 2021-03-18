@@ -145,11 +145,13 @@ namespace IRExplorerCore.Analysis {
     }
 
     public class CallGraphEventArgs : EventArgs {
-        public CallGraphEventArgs(FunctionIR function, CallGraphNode functionNode) {
+        public CallGraphEventArgs(IRTextFunction textFunction, FunctionIR function, CallGraphNode functionNode) {
+            TextFunction = textFunction;
             Function = function;
             FunctionNode = functionNode;
         }
 
+        public IRTextFunction TextFunction { get; set; }
         public FunctionIR Function { get; set; }
         public CallGraphNode FunctionNode { get; set; }
     }
@@ -225,7 +227,7 @@ namespace IRExplorerCore.Analysis {
                 // Notify client about the node being created and function IR being available,
                 // can be used to add extra annotation tags on the node without having
                 // to reparse the functions later.
-                CallGraphNodeCreated?.Invoke(this, new CallGraphEventArgs(funcIR, funcNode));
+                CallGraphNodeCreated?.Invoke(this, new CallGraphEventArgs(func, funcIR, funcNode));
 
                 foreach (var instr in funcIR.AllInstructions) {
                     if (irInfo_.IsCallInstruction(instr)) {

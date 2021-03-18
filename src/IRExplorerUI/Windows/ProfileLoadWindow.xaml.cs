@@ -7,14 +7,23 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using IRExplorerCore;
+using IRExplorerUI.Profile;
 using Microsoft.Win32;
 
 namespace IRExplorerUI {
     public partial class ProfileLoadWindow : Window {
+        private CancelableTaskInstance loadTask_;
+
         public ProfileLoadWindow(ISession session) {
             InitializeComponent();
             DataContext = this;
             Session = session;
+            loadTask_ = new CancelableTaskInstance();
+
+            ProfileAutocompleteBox.Text = @"E:\spec\leela3.etl";
+            BinaryAutocompleteBox.Text = @"leela_s_base.msvc-diff";
+            DebugAutocompleteBox.Text = @"E:\spec\leela_s.pdb";
         }
 
         public ISession Session { get; set; }
@@ -32,17 +41,25 @@ namespace IRExplorerUI {
         private async Task OpenFiles() {
             if (ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile") &&
                 //ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
-                ValidateFilePath(BinaryFilePath, DebugAutocompleteBox, "debug")) {
+                ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug")) {
+
+                //? TODO: Disable buttons
+                //? Add cancel button
+                var task = loadTask_.CreateTask();
 
                 if (await Session.LoadProfileData(ProfileFilePath, BinaryFilePath, DebugFilePath, progressInfo => {
                     Dispatcher.BeginInvoke((Action)(() => {
                         LoadProgressPanel.Visibility = Visibility.Visible;
                         LoadProgressBar.Maximum = progressInfo.Total;
                         LoadProgressBar.Value = progressInfo.Current;
-                        LoadProgressLabel.Text =
-                            progressInfo.IsLoadingSymbols ? $"Loading symbols..." : $"Loading trace...";
+
+                        LoadProgressLabel.Text = progressInfo.Stage switch {
+                            ProfileLoadStage.TraceLoading => "Loading trace",
+                            ProfileLoadStage.TraceProcessing => "Processing trace",
+                            ProfileLoadStage.SymbolLoading => "Loading symbols",
+                        };
                     }));
-                })) {
+                }, task)) {
                     DialogResult = true;
                     Close();
                 }

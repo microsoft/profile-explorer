@@ -6,22 +6,25 @@ using System.Collections.Generic;
 
 namespace IRExplorerCore {
     public class IRTextSummary {
-        private Dictionary<string, IRTextFunction> functionMap_;
-        private ulong nextSectionId_;
+        private Dictionary<string, IRTextFunction> functionNameMap_;
+        private Dictionary<int, IRTextFunction> functionMap_;
         private Dictionary<ulong, IRTextSection> sectionMap_;
+        private ulong nextSectionId_;
 
         public List<IRTextFunction> Functions { get; set; }
 
         public IRTextSummary() {
             Functions = new List<IRTextFunction>();
-            functionMap_ = new Dictionary<string, IRTextFunction>();
+            functionNameMap_ = new Dictionary<string, IRTextFunction>();
+            functionMap_ = new Dictionary<int, IRTextFunction>();
             sectionMap_ = new Dictionary<ulong, IRTextSection>();
             nextSectionId_ = 1;
         }
 
         public void AddFunction(IRTextFunction function) {
             Functions.Add(function);
-            functionMap_.Add(function.Name, function);
+            functionNameMap_.Add(function.Name, function);
+            functionMap_.Add(function.Number, function);
             function.ParentSummary = this;
         }
 
@@ -35,8 +38,12 @@ namespace IRExplorerCore {
             return sectionMap_.TryGetValue(id, out var value) ? value : null;
         }
 
+        public IRTextFunction GetFunctionWithId(int id) {
+            return functionMap_.TryGetValue(id, out var result) ? result : null;
+        }
+
         public IRTextFunction FindFunction(string name) {
-            return functionMap_.TryGetValue(name, out var result) ? result : null;
+            return functionNameMap_.TryGetValue(name, out var result) ? result : null;
         }
 
         public List<IRTextFunction> FindAllFunctions(string nameSubstring) {
@@ -56,7 +63,7 @@ namespace IRExplorerCore {
         }
 
         public IRTextFunction FindFunction(IRTextFunction function) {
-            return functionMap_.TryGetValue(function.Name, out var result) ? result : null;
+            return functionNameMap_.TryGetValue(function.Name, out var result) ? result : null;
         }
 
         //? TODO: Compute for each section the SHA256 signature

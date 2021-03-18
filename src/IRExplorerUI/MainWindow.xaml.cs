@@ -724,7 +724,7 @@ namespace IRExplorerUI {
             var loadedDoc = sessionState_.FindLoadedDocument(summary);
             var layoutGraph = await Task.Run(() => 
                 CallGraphUtils.BuildCallGraphLayout(summary, section, loadedDoc,
-                                                    CompilerInfo, buildPartialGraph));
+                                                    CompilerInfo, ProfileData, buildPartialGraph));
             DisplayCallGraph(layoutGraph, section);
         }
 
@@ -942,8 +942,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private ETWProfileDataProvider profileData_;
-        public ETWProfileDataProvider ProfileData => profileData_;
+        public ProfileData ProfileData => sessionState_.ProfileData;
 
         private async void MenuItem_OnClick(object sender, RoutedEventArgs e) {
             var window = new ProfileLoadWindow(this);
@@ -956,15 +955,16 @@ namespace IRExplorerUI {
             }
         }
 
-        public Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
-                                        ProfileLoadProgressHandler progressCallback) {
+        public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
+                                        ProfileLoadProgressHandler progressCallback,
+                                        CancelableTask cancelableTask) {
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-            profileData_ = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader);
+            var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader);
             bool markInlinedFunctions = true;
 
-            return profileData_.LoadTrace(profileFilePath,
-                binaryFilePath, debugFilePath,
-                markInlinedFunctions, progressCallback);
+            sessionState_.ProfileData = await profileData.LoadTrace(profileFilePath, binaryFilePath, debugFilePath,
+                                        markInlinedFunctions, progressCallback, cancelableTask);
+            return sessionState_.ProfileData != null;
         }
     }
 }
