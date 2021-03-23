@@ -109,7 +109,7 @@ namespace IRExplorerUI.UTC {
             return function.Name;
         }
 
-        public string GetDemangledFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {
+        public string DemangleFunctionName(string name, FunctionNameDemanglingOptions options) {
             var sb = new StringBuilder(MaxDemangledFunctionNameLength);
             NativeMethods.UnDecorateFlags flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
             flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS;
@@ -127,8 +127,12 @@ namespace IRExplorerUI.UTC {
                 flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_FUNCTION_RETURNS;
             }
 
-            NativeMethods.UnDecorateSymbolName(function.Name, sb, MaxDemangledFunctionNameLength, flags);
+            NativeMethods.UnDecorateSymbolName(name, sb, MaxDemangledFunctionNameLength, flags);
             return sb.ToString();
+        }
+
+        public string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {
+            return DemangleFunctionName(function.Name, options);
         }
     }
 }

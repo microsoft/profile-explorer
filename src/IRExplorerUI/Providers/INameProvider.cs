@@ -18,7 +18,8 @@ namespace IRExplorerUI {
         FunctionNameDemanglingOptions DemanglingOptions { get; }
         string GetSectionName(IRTextSection section, bool includeNumber = false);
         string GetFunctionName(IRTextFunction function);
-        string GetDemangledFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options);
+        string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options);
+        string DemangleFunctionName(string name, FunctionNameDemanglingOptions options);
 
         // GetBlockName
     }

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Windows.EventTracing;
 using Microsoft.Windows.EventTracing.Cpu;
@@ -42,24 +44,117 @@ namespace IRExplorerUI.Profile {
             }
         }
 
+        private ICompilerInfoProvider compilerInfo_;
         private IRTextSummary summary_;
         private IRTextSectionLoader loader_;
         private ProfileData profileData_;
+        private string cvdumpPath_;
 
-        public ETWProfileDataProvider(IRTextSummary summary, IRTextSectionLoader docLoader) {
+        public ETWProfileDataProvider(IRTextSummary summary, IRTextSectionLoader docLoader,
+                                      ICompilerInfoProvider compilerInfo, string cvdumpPath) {
             summary_ = summary;
             loader_ = docLoader;
+            compilerInfo_ = compilerInfo;
+            cvdumpPath_ = cvdumpPath;
             profileData_ = new ProfileData();
         }
 
+        private new Dictionary<string, IRTextFunction> CreateDemangledNameMapping() {
+            var map = new Dictionary<string, IRTextFunction>();
+
+            foreach (var func in summary_.Functions) {
+                var demangledName = compilerInfo_.NameProvider.DemangleFunctionName(func.Name,
+                    FunctionNameDemanglingOptions.OnlyName |
+                    FunctionNameDemanglingOptions.NoReturnType |
+                    FunctionNameDemanglingOptions.NoSpecialKeywords);
+                map[demangledName] = func;
+            }
+
+            return map;
+        }
+
+        private string RunCvdump(string symbolPath) {
+            var outputText = new StringBuilder(1024 * 32);
+
+            var psi = new ProcessStartInfo("cvdump.exe") {
+                Arguments = $"-p \"{symbolPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardError = false,
+                RedirectStandardOutput = true
+            };
+
+            //? TODO: Put path between " to support whitespace in the path.
+
+            try {
+                using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+
+                process.OutputDataReceived += (sender, e) => {
+                    outputText.AppendLine(e.Data);
+                };
+
+                process.Start();
+                process.BeginOutputReadLine();
+
+                do {
+                    process.WaitForExit(200);
+                } while (!process.HasExited);
+
+                process.CancelOutputRead();
+
+                if (process.ExitCode != 0) {
+                    return null;
+                }
+            }
+            catch (Exception ex) {
+                return null;
+            }
+
+            return outputText.ToString();
+        }
+        
+        private Dictionary<long, IRTextFunction> BuildAddressFunctionMap(string symbolPath) {
+            var map = new Dictionary<long, IRTextFunction>();
+            //var symbolInfo = RunCvdump(symbolPath);
+            var symbolInfo = File.ReadAllText(@"C:\test\results.log");
+
+            if (string.IsNullOrEmpty(symbolInfo)) {
+                return map;
+            }
+            
+            var textLines = symbolInfo.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            var regex = new Regex(@"S_PUB32: \[[0-9A-F]*\:([0-9A-F]*)\], Flags: [0-9A-F]*\, (.*)", RegexOptions.Compiled);
+
+            foreach (var line in textLines) {
+                var result = regex.Matches(line);
+
+                if (result.Count == 0) {
+                    continue;
+                }
+                
+                if (result[0].Groups.Count == 3) {
+                    var address = Convert.ToInt64(result[0].Groups[1].Value, 16);
+                    var funcName = result[0].Groups[2].Value;
+                    var func = summary_.FindFunction(funcName);
+                    
+                    if (func != null) {
+                        map[address] = func;
+                    }
+                }
+            }
+
+            return map;
+        }
+        
         public async Task<ProfileData> 
             LoadTrace(string tracePath, string imageName, string symbolPath,
-                     bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
-                     CancelableTask cancelableTask) {
+                      bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
+                      CancelableTask cancelableTask) {
             try {
                 // Extract just the file name.
                 imageName = Path.GetFileNameWithoutExtension(imageName);
-                
+
+                var addressFuncMap = BuildAddressFunctionMap(symbolPath);
                 
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
@@ -87,10 +182,15 @@ namespace IRExplorerUI.Profile {
                         return false;
                     }
 
+                    
                     int index = 0;
                     var totalSamples = cpuSamplingData.Samples.Count;
                     var prevFuncts = new Dictionary<string, List<IRTextFunction>>();
+                    Dictionary<string,IRTextFunction> demangledFuncNames = null;
 
+                    var stackFuncts = new HashSet<IRTextFunction>();
+                    var stackModules = new HashSet<string>();
+                    
                     //? TODO: parallel
                     foreach (var sample in cpuSamplingData.Samples) {
                         if (sample.IsExecutingDeferredProcedureCall == true ||
@@ -110,91 +210,136 @@ namespace IRExplorerUI.Profile {
                         }
 
                         index++;
-
-                        if (!sample.Process.ImageName.Contains(imageName, StringComparison.OrdinalIgnoreCase) ||
-                            sample.Stack == null) {
+                        
+                        var sampleWeight = sample.Weight.TimeSpan;
+                        var moduleName = sample.Process.ImageName;
+                        
+                        // Consider only the profiled executable.
+                        if (!moduleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
                             continue;
                         }
 
-                        foreach (var frame in sample.Stack.Frames) {
-                            // Ignore samples targeting other images loaded in the process.
-                            if (frame.Image == null ||
-                                !frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
-                                continue;
+                        profileData_.TotalWeight += sampleWeight;
+
+                        if (sample.Stack == null) {
+                            continue;
+                        }
+                        
+                        // Count time in the profile image.
+                        profileData_.ProfileWeight += sampleWeight;
+                        IRTextFunction prevStackFunc = null;
+                        FunctionProfileData prevStackFuncProfile = null;
+
+                        stackFuncts.Clear();
+                        stackModules.Clear();
+                        
+                        var stackFrames = sample.Stack.Frames;
+                        bool isTopFrame = true;
+                        
+                        foreach (var frame in stackFrames) {
+                            // Count exclusive time for each module in the executable. 
+                            if (isTopFrame &&
+                                frame.Symbol?.Image?.FileName != null &&
+                                stackModules.Add(frame.Symbol.Image.FileName)) {
+                                profileData_.AddModuleSample(frame.Symbol.Image.FileName, sampleWeight);
                             }
 
+                            // Ignore samples targeting modules loaded in the executable that are not it.
+                            if (frame.Image == null) {
+                                continue;
+                            }
+                            
+                            if (!frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                                continue;
+                            }
+                            
                             var symbol = frame.Symbol;
+                            
+                            if (symbol == null) {
+                                Trace.WriteLine($"Could not find debug info for image: {frame.Image.FileName}");
+                                continue;
+                            }
+                            
+                            // Search for a function with the matching demangled name.
+                            var funcName = symbol.FunctionName;
+                            var funcAddress = symbol.AddressRange.BaseAddress.Value -
+                                              symbol.Image.AddressRange.BaseAddress.Value;
+                            funcAddress -= 4096; // An extra page size is always added...
 
-                            if (symbol != null) {
-                                //? TODO: FunctionName is unmangled, summary has mangled names
-                                List<IRTextFunction> functs = null;
-                                var funcName = symbol.FunctionName;
-
-                                if (funcName.Contains("::")) {
-                                    //? TODO: Hacky way of dealing with manged C++ names
-                                    var parts = funcName.Split("::", StringSplitOptions.RemoveEmptyEntries);
-
-                                    if (!prevFuncts.TryGetValue(funcName, out functs)) {
-                                        functs = summary_.FindAllFunctions(parts);
-                                        prevFuncts[funcName] = functs;
-                                    }
+                            // Try to use the precise address -> function mapping from cvdump.
+                            //? Extract and make dummy func if missing
+                            if (!addressFuncMap.TryGetValue(funcAddress, out var textFunction)) {
+                                if (addressFuncMap.Count != 0) {
+                                    continue;
                                 }
-                                else {
-                                    // Avoid linear search
-                                    if (!prevFuncts.TryGetValue(funcName, out functs)) {
-                                        functs = summary_.FindAllFunctions(funcName);
-                                        prevFuncts[funcName] = functs;
-                                    }
+                                
+                                if (demangledFuncNames == null) {
+                                    demangledFuncNames = CreateDemangledNameMapping();
                                 }
+                                
+                                if (!demangledFuncNames.TryGetValue(funcName, out textFunction)) {
+                                    //? TODO: For external functs that don't have IR, record the timing somehow
+                                    //? - maybe create a dummy func for it
+                                    continue;
+                                }
+                            }
 
-                                var sampleWeight = sample.Weight.TimeSpan;
+                            var profile = profileData_.GetOrCreateFunctionProfile(textFunction, symbol.SourceFileName);
+                            var rva = frame.Address;
+                            var functionRVA = symbol.AddressRange.BaseAddress;
+                            var offset = rva.Value - functionRVA.Value;
 
-                                foreach (var textFunction in functs) {
-                                    var profile = profileData_.GetOrCreateFunctionProfile(textFunction, symbol.SourceFileName);
-                                    var rva = frame.Address;
-                                    var functionRVA = symbol.AddressRange.BaseAddress;
-                                    var offset = rva.Value - functionRVA.Value;
-                                    profile.AddInstructionSample(offset, sampleWeight);
-                                    profile.AddLineSample(symbol.SourceLineNumber, sampleWeight);
-                                    profile.Weight += sampleWeight;
+                            // Don't count the inclusive time for recursive functions multiple times.
+                            if (stackFuncts.Add(textFunction)) {
+                                profile.AddInstructionSample(offset, sampleWeight);
+                                profile.AddLineSample(symbol.SourceLineNumber, sampleWeight);
+                                profile.Weight += sampleWeight;
+                            }
 
-                                    if (markInlinedFunctions && textFunction.Sections.Count > 0) {
-                                        // Load current function.
-                                        var result = loader_.LoadSection(textFunction.Sections[^1]);
-                                        var metadataTag = result.Function.GetTag<AddressMetadataTag>();
-                                        bool hasInstrOffsetMetadata =
-                                            metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+                            // Count the exclusive time for the top frame function.
+                            if (isTopFrame) {
+                                profile.ExclusiveWeight += sampleWeight;
+                            }
 
-                                        // Try to find instr. referenced by RVA, then go over all inlinees.
-                                        if (hasInstrOffsetMetadata &&
-                                            metadataTag.OffsetToElementMap.TryGetValue(offset, out var rvaInstr)) {
-                                            var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
+                            if (prevStackFunc != null) {
+                                prevStackFuncProfile.AddChildSample(textFunction, sampleWeight);
+                            }
+                            
+                            markInlinedFunctions = false;
+                            
+                            if (markInlinedFunctions && textFunction.Sections.Count > 0) {
+                                // Load current function.
+                                var result = loader_.LoadSection(textFunction.Sections[^1]);
+                                var metadataTag = result.Function.GetTag<AddressMetadataTag>();
+                                bool hasInstrOffsetMetadata =
+                                    metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
-                                            if (lineInfo != null && lineInfo.HasInlinees) {
-                                                // For each inlinee, add the sample to its line.
-                                                foreach (var inlinee in lineInfo.Inlinees) {
-                                                    var inlineeTextFunc = summary_.FindFunction(inlinee.Function);
+                                // Try to find instr. referenced by RVA, then go over all inlinees.
+                                if (hasInstrOffsetMetadata &&
+                                    metadataTag.OffsetToElementMap.TryGetValue(offset, out var rvaInstr)) {
+                                    var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
 
-                                                    if (inlineeTextFunc != null) {
-                                                        //? TODO: Inlinee can be in another source file
-                                                        var inlineeProfile = profileData_.GetOrCreateFunctionProfile(inlineeTextFunc,
-                                                            symbol.SourceFileName);
-                                                        inlineeProfile.AddLineSample(inlinee.Line,
-                                                            sampleWeight);
-                                                        inlineeProfile.Weight += sampleWeight;
-                                                    }
-                                                }
+                                    if (lineInfo != null && lineInfo.HasInlinees) {
+                                        // For each inlinee, add the sample to its line.
+                                        foreach (var inlinee in lineInfo.Inlinees) {
+                                            var inlineeTextFunc = summary_.FindFunction(inlinee.Function);
+
+                                            if (inlineeTextFunc != null) {
+                                                //? TODO: Inlinee can be in another source file
+                                                var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
+                                                                        inlineeTextFunc, symbol.SourceFileName);
+                                                inlineeProfile.AddLineSample(inlinee.Line,
+                                                    sampleWeight);
+                                                inlineeProfile.Weight += sampleWeight;
                                             }
                                         }
                                     }
                                 }
+                            }
 
-                                profileData_.TotalWeight += sampleWeight;
-                                break;
-                            }
-                            else {
-                                Trace.WriteLine($"Could not find debug info for image: {frame.Image.FileName}");
-                            }
+                            isTopFrame = false;
+                            prevStackFunc = textFunction;
+                            prevStackFuncProfile = profile;
                         }
                     }
 
