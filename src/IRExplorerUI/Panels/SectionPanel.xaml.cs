@@ -240,7 +240,9 @@ namespace IRExplorerUI {
         public int Index { get; set; }
         public IRTextFunction Function { get; set; }
         public object OptionalData { get; set; }
+        public object OptionalData2 { get; set; }
         public string OptionalDataText { get; set; }
+        public string OptionalDataText2 { get; set; }
         public string AlternateName { get; set; }
 
         private bool isMarked_;
@@ -254,6 +256,7 @@ namespace IRExplorerUI {
         
         public Brush TextColor { get; set; }
         public Brush BackColor { get; set; }
+        public Brush BackColor2 { get; set; }
 
         public string Name => Function.Name;
         public int SectionCount => Function.SectionCount;
@@ -275,7 +278,8 @@ namespace IRExplorerUI {
         Name,
         AlternateName,
         Sections,
-        Optional
+        Optional,
+        Optional2
     }
 
     [ProtoContract]
@@ -343,7 +347,8 @@ namespace IRExplorerUI {
                     "FunctionColumnHeader" => FunctionFieldKind.Name,
                     "AlternateNameColumnHeader" => FunctionFieldKind.AlternateName,
                     "SectionsColumnHeader" => FunctionFieldKind.Sections,
-                    "OptionalColumnHeader" => FunctionFieldKind.Optional
+                    "OptionalColumnHeader" => FunctionFieldKind.Optional,
+                    "OptionalColumnHeader2" => FunctionFieldKind.Optional2
                 }, 
                 (x, y, field, direction) => {
                     var sectionX = x as IRTextFunctionEx;
@@ -363,7 +368,21 @@ namespace IRExplorerUI {
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         case FunctionFieldKind.Optional: {
-                            int result = ((double)sectionY.OptionalData).CompareTo((double)sectionX.OptionalData);
+                            int result = 0;
+
+                            if (sectionX.OptionalData != null && sectionY.OptionalData != null) {
+                                result = ((double)sectionY.OptionalData).CompareTo((double)sectionX.OptionalData);
+                            }
+
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.Optional2: {
+                            int result = 0;
+
+                            if (sectionX.OptionalData2 != null && sectionY.OptionalData2 != null) {
+                                result = ((double)sectionY.OptionalData2).CompareTo((double)sectionX.OptionalData2);
+                            }
+
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         default:
@@ -539,6 +558,28 @@ namespace IRExplorerUI {
                 }
             }
         }
+        
+        private string optionalDataColumnName2_;
+        public string OptionalDataColumnName2 {
+            get => optionalDataColumnName2_;
+            set {
+                if (optionalDataColumnName2_ != value) {
+                    optionalDataColumnName2_ = value;
+                    OnPropertyChange(nameof(OptionalDataColumnName2));
+                }
+            }
+        }
+        
+        private bool optionalDataColumnVisible2_;
+        public bool OptionalDataColumnVisible2 {
+            get => optionalDataColumnVisible2_;
+            set {
+                if (optionalDataColumnVisible2_ != value) {
+                    optionalDataColumnVisible2_ = value;
+                    OnPropertyChange(nameof(OptionalDataColumnVisible2));
+                }
+            }
+        }
 
         private bool alternateNameColumnVisible_;
         public bool AlternateNameColumnVisible {
@@ -689,7 +730,7 @@ namespace IRExplorerUI {
             var demanglingOptions = nameProvider.DemanglingOptions;
 
             foreach (var funcEx in functions) {
-                funcEx.AlternateName = nameProvider.GetDemangledFunctionName(funcEx.Function, demanglingOptions);
+                funcEx.AlternateName = nameProvider.DemangleFunctionName(funcEx.Function, demanglingOptions);
             }
 
             AlternateNameColumnVisible = true;
@@ -700,14 +741,21 @@ namespace IRExplorerUI {
 
             if (profile == null) {
                 OptionalDataColumnVisible = false;
+                OptionalDataColumnVisible2 = false;
                 return;
             }
 
+            foreach (var pair in profile.ModuleWeights) {
+                Trace.WriteLine($"Module {pair.Key}: {pair.Value}");
+            }
+            
             List<Color> colors = null;
             const int lightSteps = 10;
 
             OptionalDataColumnVisible = true;
-            OptionalDataColumnName = "Timing";
+            OptionalDataColumnName = "Time";
+            OptionalDataColumnVisible2 = true;
+            OptionalDataColumnName2 = "Time with children";
             colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
 
             foreach (var funcEx in functions) {
@@ -715,16 +763,30 @@ namespace IRExplorerUI {
 
                 if(funcProfile != null) {
                     double weightPercentage = profile.ScaleFunctionWeight(funcProfile.Weight);
-                    funcEx.OptionalData = weightPercentage;
-                    funcEx.OptionalDataText =
+                    funcEx.OptionalData2 = weightPercentage;
+                    funcEx.OptionalDataText2 =
                         $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
+                    
+                    double weightPercentage2 = profile.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
+                    funcEx.OptionalData = weightPercentage2;
+                    funcEx.OptionalDataText =
+                        $"{Math.Round(weightPercentage2 * 100, 2)}% ({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2)} ms)";
+                    
                     int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+                    int colorIndex2 = (int)Math.Floor(lightSteps * (1.0 - weightPercentage2));
+
+                    if (colorIndex < 0) {
+                        Trace.WriteLine($"Negative color {colorIndex}");
+                        colorIndex = 0;
+                    }
 
                     Debug.Assert(colors != null);
-                    funcEx.BackColor = ColorBrushes.GetBrush(colors[colorIndex]);
+                    funcEx.BackColor = ColorBrushes.GetBrush(colors[colorIndex2]);
+                    funcEx.BackColor2 = ColorBrushes.GetBrush(colors[colorIndex]);
                 }
                 else {
                     funcEx.OptionalData = 0.0;
+                    funcEx.OptionalData2 = 0.0;
                 }
             }
 
@@ -1473,7 +1535,7 @@ namespace IRExplorerUI {
 
             if (func != null) {
                 var options = FunctionNameDemanglingOptions.Default;
-                var text = Session.CompilerInfo.NameProvider.GetDemangledFunctionName(func, options);
+                var text = Session.CompilerInfo.NameProvider.DemangleFunctionName(func, options);
                 Clipboard.SetText(text);
             }
         }

@@ -10,17 +10,20 @@ namespace IRExplorerUI.Profile {
         public string SourceFilePath { get; set; }
         [ProtoMember(2)]
         public TimeSpan Weight { get; set; }
-        //? TODO: InclusiveWeight, show in CG
         [ProtoMember(3)]
-        public Dictionary<int, TimeSpan> SourceLineWeight { get; set; }
+        public TimeSpan ExclusiveWeight { get; set; }
         [ProtoMember(4)]
-        public Dictionary<long, TimeSpan> InstructionWeight { get; set; }
+        public Dictionary<int, TimeSpan> SourceLineWeight { get; set; }
         [ProtoMember(5)]
+        public Dictionary<long, TimeSpan> InstructionWeight { get; set; }
+        [ProtoMember(6)]
         public Dictionary<long, TimeSpan> BlockWeight { get; set; }
-
+        [ProtoMember(7)]
+        public Dictionary<int, TimeSpan> ChildrenWeights { get; set; }
+        
         //? TODO
-        //? - have both inclusive/exclusive sample info
         //? - save unique stacks with inclusive samples for each frame
+        //? - save list of calees with  their time
 
         public FunctionProfileData(string filePath) {
             SourceFilePath = filePath;
@@ -33,6 +36,7 @@ namespace IRExplorerUI.Profile {
             SourceLineWeight ??= new Dictionary<int, TimeSpan>();
             InstructionWeight ??= new Dictionary<long, TimeSpan>();
             BlockWeight ??= new Dictionary<long, TimeSpan>();
+            ChildrenWeights ??= new Dictionary<int, TimeSpan>();
         }
 
         public void AddLineSample(int sourceLine, TimeSpan weight) {
@@ -53,6 +57,15 @@ namespace IRExplorerUI.Profile {
             }
         }
 
+        public void AddChildSample(IRTextFunction childFunc, TimeSpan weight) {
+            if (ChildrenWeights.TryGetValue(childFunc.Number, out var currentWeight)) {
+                ChildrenWeights[childFunc.Number] = currentWeight + weight;
+            }
+            else {
+                ChildrenWeights[childFunc.Number] = weight;
+            }
+        }
+
         public double ScaleWeight(TimeSpan weight) {
             return (double)weight.Ticks / (double)Weight.Ticks;
         }
@@ -62,34 +75,48 @@ namespace IRExplorerUI.Profile {
         [ProtoContract(SkipConstructor = true)]
         public class ProfileDataState {
             [ProtoMember(1)]
-            public TimeSpan TotalWeight { get; set; }
-
+            public TimeSpan ProfileWeight { get; set; }
+            
             [ProtoMember(2)]
+            public TimeSpan TotalExclusiveWeight { get; set; }
+
+            [ProtoMember(3)]
             public Dictionary<int, FunctionProfileData> FunctionProfiles { get; set; }
 
-            public ProfileDataState(TimeSpan totalWeight) {
-                TotalWeight = totalWeight;
+            public ProfileDataState(TimeSpan profileWeight) {
+                ProfileWeight = profileWeight;
                 FunctionProfiles = new Dictionary<int, FunctionProfileData>();
             }
         }
 
+        public TimeSpan ProfileWeight { get; set; }
         public TimeSpan TotalWeight { get; set; }
         public Dictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
-
-        public ProfileData(TimeSpan totalWeight) : this() {
-            TotalWeight = totalWeight;
+        public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+        
+        public ProfileData(TimeSpan profileWeight) : this() {
+            ProfileWeight = profileWeight;
         }
 
         public ProfileData() {
-            TotalWeight = TimeSpan.Zero;
+            ProfileWeight = TimeSpan.Zero;
             FunctionProfiles = new Dictionary<IRTextFunction, FunctionProfileData>();
+            ModuleWeights = new Dictionary<string, TimeSpan>();
         }
 
+        public void AddModuleSample(string moduleName, TimeSpan weight) {
+            if (ModuleWeights.TryGetValue(moduleName, out var currentWeight)) {
+                ModuleWeights[moduleName] = currentWeight + weight;
+            }
+            else {
+                ModuleWeights[moduleName] = weight;
+            }
+        }
+        
         public double ScaleFunctionWeight(TimeSpan weight) {
-            return (double)weight.Ticks / (double)TotalWeight.Ticks;
+            return (double)weight.Ticks / (double)ProfileWeight.Ticks;
         }
-
-
+        
         public FunctionProfileData GetFunctionProfile(IRTextFunction function) {
             if (FunctionProfiles.TryGetValue(function, out var profile)) {
                 return profile;
@@ -108,7 +135,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public byte[] Serialize() {
-            var profileState = new ProfileDataState(TotalWeight);
+            var profileState = new ProfileDataState(ProfileWeight);
 
             foreach (var pair in FunctionProfiles) {
                 profileState.FunctionProfiles[pair.Key.Number] = pair.Value;
@@ -119,7 +146,7 @@ namespace IRExplorerUI.Profile {
 
         public static ProfileData Deserialize(byte[] data, IRTextSummary summary) {
             var state = StateSerializer.Deserialize<ProfileDataState>(data);
-            var profileData = new ProfileData(state.TotalWeight);
+            var profileData = new ProfileData(state.ProfileWeight);
 
             foreach(var pair in state.FunctionProfiles) {
                 var function = summary.GetFunctionWithId(pair.Key);

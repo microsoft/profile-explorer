@@ -959,7 +959,8 @@ namespace IRExplorerUI {
                                         ProfileLoadProgressHandler progressCallback,
                                         CancelableTask cancelableTask) {
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-            var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader);
+            var cvdumpPath = "";
+            var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader, CompilerInfo, cvdumpPath);
             bool markInlinedFunctions = true;
 
             sessionState_.ProfileData = await profileData.LoadTrace(profileFilePath, binaryFilePath, debugFilePath,

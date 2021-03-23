@@ -984,7 +984,9 @@ namespace IRExplorerUI {
                 bool markExpression = fromUICommand && Utils.IsControlModifierActive();
                 bool markReferences = fromUICommand && Utils.IsShiftModifierActive();
                 AddSelectedElement(element, raiseEvent);
-                HandleElement(element, selectedHighlighter_, markExpression, markReferences);
+
+                var highlighter = Utils.IsAltModifierActive() ? markedHighlighter_ : selectedHighlighter_;
+                HandleElement(element, highlighter, markExpression, markReferences);
 
                 if (fromUICommand) {
                     ignoreNextCaretEvent_ = true;
@@ -1796,6 +1798,10 @@ namespace IRExplorerUI {
                     // Collect the transitive set of users, marking instructions
                     // that depend on the value of this destination operand.
                     ExpandIteratedUseList(op, useList);
+                    handled = true;
+                }
+                else if(markReferences) {
+                    MarkReferences(op, highlighter);
                 }
 
                 if (useList.Count > 0) {
