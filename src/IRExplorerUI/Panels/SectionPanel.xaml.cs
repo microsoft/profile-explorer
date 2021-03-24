@@ -20,6 +20,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
     public static class Command {
@@ -268,6 +269,21 @@ namespace IRExplorerUI {
         }
     }
 
+    public class ModuleEx {
+        public string Name { get; set; }
+        public long Time { get; set; }
+        public string Text { get; set; }
+        public Brush BackColor { get; set; }
+    }
+
+    public class ChildFunctionEx {
+        public IRTextFunction Function { get; set; }
+        public long Time { get; set; }
+        public string Name { get; set; }
+        public string Text { get; set; }
+        public Brush BackColor { get; set; }
+    }
+
     public enum SectionFieldKind {
         Number,
         Name,
@@ -281,7 +297,18 @@ namespace IRExplorerUI {
         Optional,
         Optional2
     }
+    
+    public enum ChildFunctionFieldKind {
+        Name,
+        AlternateName,
+        Time
+    }
 
+    public enum ModuleFieldKind {
+        Name,
+        Time
+    }
+    
     [ProtoContract]
     public class SectionPanelState {
         [ProtoMember(1)]
@@ -323,6 +350,7 @@ namespace IRExplorerUI {
 
         private bool sectionExtensionComputed_;
         private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
+        private Dictionary<IRTextFunction, IRTextFunctionEx> functionExtMap_;
         private ScrollViewer sectionsScrollViewer_;
 
         private OptionsPanelHostWindow optionsPanelWindow_;
@@ -330,11 +358,14 @@ namespace IRExplorerUI {
 
         private GridViewColumnValueSorter<FunctionFieldKind> functionValueSorter_;
         private GridViewColumnValueSorter<SectionFieldKind> sectionValueSorter_;
+        private GridViewColumnValueSorter<ChildFunctionFieldKind> childFunctionValueSorter_;
+        private GridViewColumnValueSorter<ModuleFieldKind> moduleValueSorter_;
 
         public SectionPanel() {
             InitializeComponent();
             sections_ = new List<IRTextSectionEx>();
             sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
+            functionExtMap_ = new Dictionary<IRTextFunction, IRTextFunctionEx>();
             annotatedSections_ = new HashSet<IRTextSectionEx>();
             IsFunctionListVisible = true;
             SyncDiffedDocuments = true;
@@ -371,7 +402,7 @@ namespace IRExplorerUI {
                             int result = 0;
 
                             if (sectionX.OptionalData != null && sectionY.OptionalData != null) {
-                                result = ((double)sectionY.OptionalData).CompareTo((double)sectionX.OptionalData);
+                                result = ((long)sectionY.OptionalData).CompareTo((long)sectionX.OptionalData);
                             }
 
                             return direction == ListSortDirection.Ascending ? -result : result;
@@ -380,7 +411,7 @@ namespace IRExplorerUI {
                             int result = 0;
 
                             if (sectionX.OptionalData2 != null && sectionY.OptionalData2 != null) {
-                                result = ((double)sectionY.OptionalData2).CompareTo((double)sectionX.OptionalData2);
+                                result = ((long)sectionY.OptionalData2).CompareTo((long)sectionX.OptionalData2);
                             }
 
                             return direction == ListSortDirection.Ascending ? -result : result;
@@ -418,6 +449,61 @@ namespace IRExplorerUI {
                             throw new ArgumentOutOfRangeException();
                     }
                 });
+            
+            
+            childFunctionValueSorter_ = 
+                new GridViewColumnValueSorter<ChildFunctionFieldKind>(ChildFunctionList,
+                name => name switch {
+                    "ChildColumnHeader" => ChildFunctionFieldKind.Name,
+                    //"ChildAlternateNameColumnHeader" => ChildFunctionFieldKind.AlternateName,
+                    "ChildTimeColumnHeader" => ChildFunctionFieldKind.Time
+                }, 
+                (x, y, field, direction) => {
+                    var childX = x as ChildFunctionEx;
+                    var childY = y as ChildFunctionEx;
+
+                    switch (field) {
+                        case ChildFunctionFieldKind.Name: {
+                            int result = string.Compare(childY.Name, childX.Name, StringComparison.Ordinal);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        //? TODO: Implement
+                        // case ChildFunctionFieldKind.AlternateName: {
+                        //     int result = string.Compare(sectionY.AlternateName, sectionX.AlternateName, StringComparison.Ordinal);
+                        //     return direction == ListSortDirection.Ascending ? -result : result;
+                        // }
+                        case ChildFunctionFieldKind.Time: {
+                            int result = childY.Time.CompareTo(childX.Time);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
+                });
+            
+            moduleValueSorter_ = 
+                new GridViewColumnValueSorter<ModuleFieldKind>(ModulesList,
+                    name => name switch {
+                        "ModuleColumnHeader" => ModuleFieldKind.Name,
+                        "ModuleTimeColumnHeader" => ModuleFieldKind.Time
+                    }, 
+                    (x, y, field, direction) => {
+                        var moduleX = x as ModuleEx;
+                        var moduleY = y as ModuleEx;
+
+                        switch (field) {
+                            case ModuleFieldKind.Name: {
+                                int result = string.Compare(moduleY.Name, moduleX.Name, StringComparison.Ordinal);
+                                return direction == ListSortDirection.Ascending ? -result : result;
+                            }
+                            case ModuleFieldKind.Time: {
+                                int result = moduleY.Time.CompareTo(moduleX.Time);
+                                return direction == ListSortDirection.Ascending ? -result : result;
+                            }
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                    });
         }
 
         public bool BottomSectionToolbar {
@@ -592,6 +678,66 @@ namespace IRExplorerUI {
             }
         }
 
+        private bool showModules_;
+
+        public bool ShowModules {
+            get => showModules_;
+            set {
+                if (showModules_ != value) {
+                    showModules_ = value;
+                    OnPropertyChange(nameof(ShowModules));
+                    OnPropertyChange(nameof(ShowFunctions));
+                }
+            }
+        }
+
+        public bool ShowFunctions {
+            get => !showModules_;
+            set {
+                if (showModules_ == value) {
+                    showModules_ = !value;
+                    OnPropertyChange(nameof(ShowModules));
+                    OnPropertyChange(nameof(ShowFunctions));
+                }
+            }
+        }
+
+        private bool showChildren_;
+
+        public bool ShowChildren {
+            get => showChildren_;
+            set {
+                if (showChildren_ != value) {
+                    showChildren_ = value;
+                    OnPropertyChange(nameof(ShowSections));
+                    OnPropertyChange(nameof(ShowChildren));
+                }
+            }
+        }
+
+        public bool ShowSections {
+            get => !showChildren_;
+            set {
+                if (showChildren_ == value) {
+                    showChildren_ = !value;
+                    OnPropertyChange(nameof(ShowSections));
+                    OnPropertyChange(nameof(ShowChildren));
+                }
+            }
+        }
+
+        private bool profileControlsVisible_;
+
+        public bool ProfileControlsVisible {
+            get => profileControlsVisible_;
+            set {
+                if (profileControlsVisible_ != value) {
+                    profileControlsVisible_ = value;
+                    OnPropertyChange(nameof(ProfileControlsVisible));
+                }
+            }
+        }
+
         public IRTextFunction CurrentFunction => currentFunction_;
         public bool HasAnnotatedSections => annotatedSections_.Count > 0;
         public ICompilerInfoProvider CompilerInfo { get; set; }
@@ -745,30 +891,45 @@ namespace IRExplorerUI {
                 return;
             }
 
-            foreach (var pair in profile.ModuleWeights) {
-                Trace.WriteLine($"Module {pair.Key}: {pair.Value}");
-            }
-            
-            List<Color> colors = null;
             const int lightSteps = 10;
+            List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
+
+            var modulesEx = new List<ModuleEx>();
+
+            foreach (var pair in profile.ModuleWeights) {
+                var moduleWeight = pair.Value;
+                double weightPercentage = profile.ScaleModuleWeight(pair.Value);
+
+                var moduleInfo = new ModuleEx() {
+                    Name = pair.Key,
+                    Time = moduleWeight.Ticks,
+                    Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(moduleWeight.TotalMilliseconds, 2)} ms)"
+                };
+                modulesEx.Add(moduleInfo);
+            }
+
+            var modulesFilter = new ListCollectionView(modulesEx);
+            //functionFilter.Filter = FilterFunctionList;
+            ModulesList.ItemsSource = modulesFilter;
+            moduleValueSorter_.SortByField(ModuleFieldKind.Time, ListSortDirection.Descending);
 
             OptionalDataColumnVisible = true;
-            OptionalDataColumnName = "Time";
+            OptionalDataColumnName = "Time (self)";
             OptionalDataColumnVisible2 = true;
-            OptionalDataColumnName2 = "Time with children";
-            colors = ColorUtils.MakeColorPallete(1, 1, 0.75f, 0.95f, lightSteps);
+            OptionalDataColumnName2 = "Time (total)";
 
             foreach (var funcEx in functions) {
                 var funcProfile = profile.GetFunctionProfile(funcEx.Function);
 
                 if(funcProfile != null) {
+                    funcEx.OptionalData2 = funcProfile.Weight.Ticks;
                     double weightPercentage = profile.ScaleFunctionWeight(funcProfile.Weight);
-                    funcEx.OptionalData2 = weightPercentage;
                     funcEx.OptionalDataText2 =
                         $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
-                    
+
+                    funcEx.OptionalData = funcProfile.ExclusiveWeight.Ticks;
                     double weightPercentage2 = profile.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
-                    funcEx.OptionalData = weightPercentage2;
+
                     funcEx.OptionalDataText =
                         $"{Math.Round(weightPercentage2 * 100, 2)}% ({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2)} ms)";
                     
@@ -785,12 +946,15 @@ namespace IRExplorerUI {
                     funcEx.BackColor2 = ColorBrushes.GetBrush(colors[colorIndex]);
                 }
                 else {
-                    funcEx.OptionalData = 0.0;
-                    funcEx.OptionalData2 = 0.0;
+                    funcEx.OptionalData = TimeSpan.Zero.Ticks;
+                    funcEx.OptionalData2 = TimeSpan.Zero.Ticks;
                 }
             }
 
             functionValueSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
+            ProfileControlsVisible = true;
+            
+            ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
         }
 
         private async Task UpdateFunctionListBindings() {
@@ -807,6 +971,7 @@ namespace IRExplorerUI {
 
             foreach (var func in summary_.Functions) {
                 var funcEx = new IRTextFunctionEx(func, index++);
+                functionExtMap_[func] = funcEx;
                 functionsEx.Add(funcEx);
             }
 
@@ -1320,7 +1485,7 @@ namespace IRExplorerUI {
         public IRTextSectionEx GetSectionExtension(IRTextSection section) {
             return sectionExtMap_[section];
         }
-
+        
         public override async void OnSessionStart() {
             base.OnSessionStart();
             var data = Session.LoadPanelState(this, null);
@@ -1354,11 +1519,55 @@ namespace IRExplorerUI {
             }
 
             UpdateSectionListBindings(function);
-            await ComputeConsecutiveSectionDiffs();
-
-            FunctionList.SelectedItem = function;
+            var funcEx = functionExtMap_[function];
+            FunctionList.SelectedItem = funcEx;
             FunctionList.ScrollIntoView(FunctionList.SelectedItem);
             RefreshSectionList();
+
+
+            if(profileControlsVisible_) {
+                var funcProfile = Session.ProfileData.GetFunctionProfile(function);
+
+                if(funcProfile != null) {
+                    const int lightSteps = 10;
+                    List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
+                    var childrenEx = new List<ChildFunctionEx>();
+
+                    var selfInfo = CreateChildInfo(function, funcProfile.ExclusiveWeight, funcProfile,colors);
+                    selfInfo.Name = "Self";
+                    childrenEx.Add(selfInfo);
+
+                    foreach (var pair in funcProfile.ChildrenWeights) {
+                        var childFunc = summary_.GetFunctionWithId(pair.Key);
+                        childrenEx.Add(CreateChildInfo(childFunc, pair.Value, funcProfile,colors));
+
+                        //? TODO: Unamngled name, inclusive/exclusive time
+                    }
+
+                    var childrenFilter = new ListCollectionView(childrenEx);
+                    //functionFilter.Filter = FilterFunctionList;
+                    ChildFunctionList.ItemsSource = childrenFilter;
+                    childFunctionValueSorter_.SortByField(ChildFunctionFieldKind.Time, ListSortDirection.Descending);
+                }
+            }
+
+            await ComputeConsecutiveSectionDiffs();
+        }
+
+        private ChildFunctionEx CreateChildInfo(IRTextFunction childFunc, TimeSpan childWeight, FunctionProfileData funcProfile, List<Color> colors) {
+            KeyValuePair<int, TimeSpan> pair;
+            double weightPercentage = funcProfile.ScaleChildWeight(childWeight);
+            int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
+
+            var childInfo = new ChildFunctionEx()
+            {
+                Function = childFunc,
+                Time =  childWeight.Ticks,
+                Name = childFunc.Name,
+                Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
+                BackColor = ColorBrushes.GetBrush(colors[colorIndex])
+            };
+            return childInfo;
         }
 
         public override void OnSessionSave() {
@@ -1570,7 +1779,15 @@ namespace IRExplorerUI {
         private void ResizeFunctionFilter(double width) {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
             //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
-            FunctionFilterGrid.Width = Math.Max(1, width - 60);
+            double defaultSpace = 60;
+            double profileControlsSpace = profileControlsVisible_ ? 200 : 0;
+            FunctionFilterGrid.Width = Math.Max(1, width - defaultSpace - profileControlsSpace);
         }
+        
+        private void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
+            var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
+            SelectFunction(childInfo.Function);
+        }
+
     }
 }

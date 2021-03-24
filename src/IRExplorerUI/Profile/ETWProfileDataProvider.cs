@@ -113,13 +113,15 @@ namespace IRExplorerUI.Profile {
             return outputText.ToString();
         }
         
-        private Dictionary<long, IRTextFunction> BuildAddressFunctionMap(string symbolPath) {
-            var map = new Dictionary<long, IRTextFunction>();
+        private (Dictionary<long, IRTextFunction>, Dictionary<long, string>)
+            BuildAddressFunctionMap(string symbolPath) {
+            var addressFuncMap = new Dictionary<long, IRTextFunction>();
+            var externalsFuncMap = new Dictionary<long, string>();
             //var symbolInfo = RunCvdump(symbolPath);
             var symbolInfo = File.ReadAllText(@"C:\test\results.log");
 
             if (string.IsNullOrEmpty(symbolInfo)) {
-                return map;
+                return (addressFuncMap, externalsFuncMap);
             }
             
             var textLines = symbolInfo.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
@@ -138,12 +140,15 @@ namespace IRExplorerUI.Profile {
                     var func = summary_.FindFunction(funcName);
                     
                     if (func != null) {
-                        map[address] = func;
+                        addressFuncMap[address] = func;
+                    }
+                    else {
+                        externalsFuncMap[address] = funcName;
                     }
                 }
             }
 
-            return map;
+            return (addressFuncMap, externalsFuncMap);
         }
         
         public async Task<ProfileData> 
@@ -154,7 +159,7 @@ namespace IRExplorerUI.Profile {
                 // Extract just the file name.
                 imageName = Path.GetFileNameWithoutExtension(imageName);
 
-                var addressFuncMap = BuildAddressFunctionMap(symbolPath);
+                var (addressFuncMap, externalsFuncMap) = BuildAddressFunctionMap(symbolPath);
                 
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
@@ -186,7 +191,8 @@ namespace IRExplorerUI.Profile {
                     int index = 0;
                     var totalSamples = cpuSamplingData.Samples.Count;
                     var prevFuncts = new Dictionary<string, List<IRTextFunction>>();
-                    Dictionary<string,IRTextFunction> demangledFuncNames = null;
+                    Dictionary<string, IRTextFunction> demangledFuncNames = null;
+                    Dictionary<string, IRTextFunction> externalFuncNames = new Dictionary<string, IRTextFunction>();
 
                     var stackFuncts = new HashSet<IRTextFunction>();
                     var stackModules = new HashSet<string>();
@@ -228,7 +234,6 @@ namespace IRExplorerUI.Profile {
                         // Count time in the profile image.
                         profileData_.ProfileWeight += sampleWeight;
                         IRTextFunction prevStackFunc = null;
-                        FunctionProfileData prevStackFuncProfile = null;
 
                         stackFuncts.Clear();
                         stackModules.Clear();
@@ -246,10 +251,12 @@ namespace IRExplorerUI.Profile {
 
                             // Ignore samples targeting modules loaded in the executable that are not it.
                             if (frame.Image == null) {
+                                prevStackFunc = null;
                                 continue;
                             }
                             
                             if (!frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                                prevStackFunc = null;
                                 continue;
                             }
                             
@@ -257,6 +264,7 @@ namespace IRExplorerUI.Profile {
                             
                             if (symbol == null) {
                                 Trace.WriteLine($"Could not find debug info for image: {frame.Image.FileName}");
+                                prevStackFunc = null;
                                 continue;
                             }
                             
@@ -270,17 +278,30 @@ namespace IRExplorerUI.Profile {
                             //? Extract and make dummy func if missing
                             if (!addressFuncMap.TryGetValue(funcAddress, out var textFunction)) {
                                 if (addressFuncMap.Count != 0) {
-                                    continue;
+                                    // Check if it's a known external function.
+                                    if (!externalsFuncMap.TryGetValue(funcAddress, out var externalFuncName)) {
+                                        prevStackFunc = null;
+                                        continue;
+                                    }
+
+                                    if (!externalFuncNames.TryGetValue(externalFuncName, out textFunction)) {
+                                        // Create a dummy external function that will have no sections. 
+                                        textFunction = new IRTextFunction(externalFuncName);
+                                        summary_.AddFunction(textFunction);
+                                        externalFuncNames[externalFuncName] = textFunction;
+                                    }
                                 }
-                                
-                                if (demangledFuncNames == null) {
-                                    demangledFuncNames = CreateDemangledNameMapping();
-                                }
-                                
-                                if (!demangledFuncNames.TryGetValue(funcName, out textFunction)) {
-                                    //? TODO: For external functs that don't have IR, record the timing somehow
-                                    //? - maybe create a dummy func for it
-                                    continue;
+                                else {
+                                    if (demangledFuncNames == null) {
+                                        demangledFuncNames = CreateDemangledNameMapping();
+                                    }
+
+                                    if (!demangledFuncNames.TryGetValue(funcName, out textFunction)) {
+                                        //? TODO: For external functs that don't have IR, record the timing somehow
+                                        //? - maybe create a dummy func for it
+                                        prevStackFunc = null;
+                                        continue;
+                                    }
                                 }
                             }
 
@@ -294,15 +315,16 @@ namespace IRExplorerUI.Profile {
                                 profile.AddInstructionSample(offset, sampleWeight);
                                 profile.AddLineSample(symbol.SourceLineNumber, sampleWeight);
                                 profile.Weight += sampleWeight;
+
+                                // Add the previous stack frame function as a child.
+                                if (prevStackFunc != null) {
+                                    profile.AddChildSample(prevStackFunc, sampleWeight);
+                                }
                             }
 
                             // Count the exclusive time for the top frame function.
                             if (isTopFrame) {
                                 profile.ExclusiveWeight += sampleWeight;
-                            }
-
-                            if (prevStackFunc != null) {
-                                prevStackFuncProfile.AddChildSample(textFunction, sampleWeight);
                             }
                             
                             markInlinedFunctions = false;
@@ -339,7 +361,6 @@ namespace IRExplorerUI.Profile {
 
                             isTopFrame = false;
                             prevStackFunc = textFunction;
-                            prevStackFuncProfile = profile;
                         }
                     }
 

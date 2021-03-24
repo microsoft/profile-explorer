@@ -67,6 +67,10 @@ namespace IRExplorerUI.Profile {
         }
 
         public double ScaleWeight(TimeSpan weight) {
+            return (double)weight.Ticks / (double)ExclusiveWeight.Ticks;
+        }
+
+        public double ScaleChildWeight(TimeSpan weight) {
             return (double)weight.Ticks / (double)Weight.Ticks;
         }
     }
@@ -116,7 +120,11 @@ namespace IRExplorerUI.Profile {
         public double ScaleFunctionWeight(TimeSpan weight) {
             return (double)weight.Ticks / (double)ProfileWeight.Ticks;
         }
-        
+
+        public double ScaleModuleWeight(TimeSpan weight) {
+            return (double)weight.Ticks / (double)TotalWeight.Ticks;
+        }
+
         public FunctionProfileData GetFunctionProfile(IRTextFunction function) {
             if (FunctionProfiles.TryGetValue(function, out var profile)) {
                 return profile;

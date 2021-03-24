@@ -22,6 +22,7 @@ namespace IRExplorerCore {
         }
 
         public void AddFunction(IRTextFunction function) {
+            function.Number = Functions.Count;
             Functions.Add(function);
             functionNameMap_.Add(function.Name, function);
             functionMap_.Add(function.Number, function);

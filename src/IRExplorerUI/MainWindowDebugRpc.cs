@@ -386,8 +386,7 @@ namespace IRExplorerUI {
                 }
 
                 if (debugFunction_ == null || funcName != debugFunction_.Name) {
-                    int funcNumer = sessionState_.MainDocument.Summary.Functions.Count;
-                    debugFunction_ = new IRTextFunction(funcName, funcNumer);
+                    debugFunction_ = new IRTextFunction(funcName);
                     previousDebugSection_ = null;
                     debugSectionId_ = 0;
                     debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
@@ -397,8 +396,7 @@ namespace IRExplorerUI {
                 string sectionName = $"Version {debugSectionId_ + 1}";
 
                 if (debugCurrentStackFrame_ != null) {
-                    sectionName +=
-                        $" ({debugCurrentStackFrame_.Function}:{debugCurrentStackFrame_.LineNumber})";
+                    sectionName += $" ({debugCurrentStackFrame_.Function}:{debugCurrentStackFrame_.LineNumber})";
                 }
 
                 var section = new IRTextSection(debugFunction_, (ulong)debugSectionId_, debugSectionId_ + 1,

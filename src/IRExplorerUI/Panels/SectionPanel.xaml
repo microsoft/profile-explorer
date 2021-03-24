@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="450"
-    d:DesignWidth="800"
+    d:DesignWidth="1200"
     mc:Ignorable="d">
     <local:ToolPanelControl.CommandBindings>
         <CommandBinding Command="local:Command.ClearTextbox" Executed="ExecuteClearTextbox" />
@@ -105,6 +105,29 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded"
                     SizeChanged="ToolBar_SizeChanged">
+                    <TextBlock
+                        Margin="5,0,0,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Text="Show"
+                        Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                    <ToggleButton
+                        Margin="8,0,0,0"
+                        Padding="4,2,4,2"
+                        HorizontalContentAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Content="Functions"
+                        IsChecked="{Binding ShowFunctions, Mode=TwoWay}"
+                        Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                    <ToggleButton
+                        Margin="-1,0,8,0"
+                        Padding="4,2,4,2"
+                        HorizontalContentAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Content="Modules"
+                        IsChecked="{Binding ShowModules, Mode=TwoWay}"
+                        Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+
                     <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
                     <Grid
                         x:Name="FunctionFilterGrid"
@@ -161,7 +184,8 @@
                 BorderThickness="0,0,0,0"
                 SelectionChanged="FunctionList_SelectionChanged"
                 VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Visibility="{Binding ShowFunctions, Converter={StaticResource BoolToVisibility}}">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
@@ -180,27 +204,7 @@
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
-                        <GridViewColumn Width="200">
-                            <GridViewColumnHeader
-                                x:Name="AlternateNameColumnHeader"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="Demangled Name"
-                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
 
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch">
-                                        <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
-                                    </Border>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
                         <GridViewColumn Width="100">
                             <GridViewColumnHeader
                                 x:Name="OptionalColumnHeader"
@@ -243,6 +247,27 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+                        <GridViewColumn Width="200">
+                            <GridViewColumnHeader
+                                x:Name="AlternateNameColumnHeader"
+                                local:GridViewBehaviors.CollapseableColumn="True"
+                                Content="Demangled Name"
+                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border HorizontalAlignment="Stretch">
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
                     </GridView>
                 </ListView.View>
                 <ListView.ItemContainerStyle>
@@ -270,6 +295,66 @@
                             CommandTarget="{Binding ElementName=SectionList}"
                             Header="Copy Demangled Function Name"
                             ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
+                    </ContextMenu>
+                </ListView.ContextMenu>
+            </ListView>
+
+            <ListView
+                x:Name="ModulesList"
+                Grid.Row="1"
+                Panel.ZIndex="2"
+                AutomationProperties.AutomationId="AutoFunctionList"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                BorderBrush="{x:Null}"
+                BorderThickness="0,0,0,0"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Visibility="{Binding ShowModules, Converter={StaticResource BoolToVisibility}}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
+                            <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                        </GridViewColumn>
+                        <GridViewColumn Width="150">
+                            <GridViewColumnHeader
+                                x:Name="ModuleTimeColumnHeader"
+                                local:GridViewBehaviors.CollapseableColumn="True"
+                                Content="Time" />
+
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding Text}" />
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+                <ListView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem
+                            Command="local:Command.SaveAllSectionText"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Save All Sections Text"
+                            ToolTip="Save the text (IR) of all sections for the selected function to a file" />
                     </ContextMenu>
                 </ListView.ContextMenu>
             </ListView>
@@ -343,6 +428,23 @@
                         VerticalAlignment="Top"
                         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                         Loaded="ToolBar_Loaded">
+
+                        <ToggleButton
+                            Margin="4,0,0,0"
+                            Padding="4,2,4,2"
+                            HorizontalContentAlignment="Stretch"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            Content="Sections"
+                            IsChecked="{Binding ShowSections, Mode=TwoWay}"
+                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <ToggleButton
+                            Margin="-1,0,8,0"
+                            Padding="4,2,4,2"
+                            HorizontalContentAlignment="Stretch"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            Content="Children"
+                            IsChecked="{Binding ShowChildren, Mode=TwoWay}"
+                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
 
                         <Image Source="{StaticResource SearchIcon}" />
                         <Grid Height="24">
@@ -446,7 +548,8 @@
                 BorderThickness="0,0,0,0"
                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
                 VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibility}}">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="50">
@@ -802,6 +905,67 @@
                         CommandTarget="{Binding ElementName=FunctionList}"
                         Modifiers="Ctrl+Shift" />
                 </ListView.InputBindings>
+            </ListView>
+
+            <ListView
+                x:Name="ChildFunctionList"
+                Grid.Row="1"
+                Panel.ZIndex="2"
+                AutomationProperties.AutomationId="AutoFunctionList"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                BorderBrush="{x:Null}"
+                BorderThickness="0,0,0,0"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Visibility="{Binding ShowChildren, Converter={StaticResource BoolToVisibility}}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
+                            <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function (callee)" />
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                        </GridViewColumn>
+                        <GridViewColumn Width="150">
+                            <GridViewColumnHeader
+                                x:Name="ChildTimeColumnHeader"
+                                local:GridViewBehaviors.CollapseableColumn="True"
+                                Content="Time" />
+
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding Text}" />
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+                <ListView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem
+                            Command="local:Command.SaveAllSectionText"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Save All Sections Text"
+                            ToolTip="Save the text (IR) of all sections for the selected function to a file" />
+                    </ContextMenu>
+                </ListView.ContextMenu>
             </ListView>
 
         </Grid>
