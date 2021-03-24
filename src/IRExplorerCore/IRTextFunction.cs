@@ -6,14 +6,13 @@ using System.Collections.Generic;
 namespace IRExplorerCore {
     public class IRTextFunction {
         public List<IRTextSection> Sections { get; }
-        public int Number { get; }
+        public int Number { get; set; }
         public string Name { get; }
         public IRTextSummary ParentSummary { get; set; }
         public int SectionCount => Sections?.Count ?? 0;
 
-        public IRTextFunction(string name, int number) {
+        public IRTextFunction(string name) {
             Name = name;
-            Number = number;
             Sections = new List<IRTextSection>();
         }
 

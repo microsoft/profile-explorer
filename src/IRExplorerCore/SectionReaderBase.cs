@@ -300,7 +300,7 @@ namespace IRExplorerCore {
                 return textFunc;
             }
 
-            textFunc = new IRTextFunction(name, summary_.Functions.Count);
+            textFunc = new IRTextFunction(name);
             summary_.AddFunction(textFunc);
             functionMap_.Add(name, textFunc);
             return textFunc;

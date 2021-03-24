@@ -204,6 +204,13 @@ namespace IRExplorerUI {
         private async Task AnnotateProfilerData(FunctionProfileData profile) {
             hasProfileInfo_ = true;
 
+            Trace.WriteLine($"Children" );
+
+            foreach (var pair in profile.ChildrenWeights) {
+                var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
+                Trace.WriteLine($"Child {child.Name}: {pair.Value}");
+            }
+            
             double weightCutoff = 0.003;
             int lightSteps = 10; // 1,1,0.5 is red
             var colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
@@ -236,6 +243,11 @@ namespace IRExplorerUI {
 
                     Trace.WriteLine($"Accept {weightPercentage} as {pair.Item2.TotalMilliseconds}");
                     int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+                    
+                    if (colorIndex < 0) {
+                        colorIndex = colorIndex;
+                    }
+                    
                     var color = colors[colorIndex];
                     
                     var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
@@ -287,6 +299,11 @@ namespace IRExplorerUI {
                 // }
 
                 int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
+
+                if (colorIndex < 0) {
+                    colorIndex = colorIndex;
+                }
+                
                 var color = colors[colorIndex];
                 var style = new HighlightingStyle(colors[colorIndex]);
 
