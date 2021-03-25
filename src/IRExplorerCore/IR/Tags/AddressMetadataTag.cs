@@ -9,10 +9,12 @@ namespace IRExplorerCore.IR.Tags {
         public AddressMetadataTag() {
             AddressToElementMap = new Dictionary<long, IRElement>();
             OffsetToElementMap = new Dictionary<long, IRElement>();
+            ElementToOffsetMap = new Dictionary<IRElement, long>();
         }
 
         public Dictionary<long, IRElement> AddressToElementMap { get; set; }
         public Dictionary<long, IRElement> OffsetToElementMap { get; set; }
+        public Dictionary<IRElement, long> ElementToOffsetMap { get; set; }
         public string Name => "Address metadata";
         public TaggedObject Owner { get; set; }
 

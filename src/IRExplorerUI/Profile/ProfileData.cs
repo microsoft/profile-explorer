@@ -13,15 +13,15 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(3)]
         public TimeSpan ExclusiveWeight { get; set; }
         [ProtoMember(4)]
-        public Dictionary<int, TimeSpan> SourceLineWeight { get; set; }
+        public Dictionary<int, TimeSpan> SourceLineWeight { get; set; } // Line number mapping
         [ProtoMember(5)]
-        public Dictionary<long, TimeSpan> InstructionWeight { get; set; }
+        public Dictionary<long, TimeSpan> InstructionWeight { get; set; } // Instr. offset mapping
         [ProtoMember(6)]
-        public Dictionary<long, TimeSpan> BlockWeight { get; set; }
+        public Dictionary<long, TimeSpan> BlockWeight { get; set; } // 
         [ProtoMember(7)]
-        public Dictionary<int, TimeSpan> ChildrenWeights { get; set; }
+        public Dictionary<int, TimeSpan> ChildrenWeights { get; set; } // Function ID mapping
 
-        //? TODO: Module ID
+        //? TODO: Module ID referencing ProfileData
         
         //? TODO
         //? - save unique stacks with inclusive samples for each frame

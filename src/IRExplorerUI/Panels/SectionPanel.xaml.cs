@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Text;
 using System.Windows;
@@ -20,6 +21,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
+using Aga.Controls.Tree;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
@@ -276,15 +278,31 @@ namespace IRExplorerUI {
         public Brush BackColor { get; set; }
     }
 
-    public class ChildFunctionEx {
+    public class ChildFunctionEx : ITreeModel {
         public IRTextFunction Function { get; set; }
         public long Time { get; set; }
-        public int Children { get; set; }
         public string Name { get; set; }
         public string AlternateName { get; set; }
         public string Text { get; set; }
         public Brush BackColor { get; set; }
-        public Brush NameBackColor { get; set; }
+        public List<ChildFunctionEx> Children { get; set; }
+        public int ChildCount { get; set; }
+        public bool IsSelf { get; set; }
+
+        public IEnumerable GetChildren(object node) {
+            if (node == null) {
+                return Children;
+            }
+            
+            var parentNode = (ChildFunctionEx)node;
+            return parentNode.Children;
+        }
+
+        public bool HasChildren(object node) {
+            if (node == null) return false;
+            var parentNode = (ChildFunctionEx)node;
+            return parentNode.Children != null && parentNode.Children.Count > 0;
+        }
     }
 
     public enum SectionFieldKind {
@@ -481,7 +499,7 @@ namespace IRExplorerUI {
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         case ChildFunctionFieldKind.Children: {
-                            int result = childY.Children.CompareTo(childX.Children);
+                            int result = childY.ChildCount.CompareTo(childX.ChildCount);
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         default:
@@ -1554,31 +1572,53 @@ namespace IRExplorerUI {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if(funcProfile != null) {
-                    const int lightSteps = 10;
-                    List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
-                    var childrenEx = new List<ChildFunctionEx>();
-
-                    var selfInfo = CreateChildInfo(function, funcProfile.ExclusiveWeight, funcProfile, null, colors);
-                    selfInfo.Name = "Self";
-                    selfInfo.NameBackColor = Brushes.LightGray;
-                    childrenEx.Add(selfInfo);
-
-                    foreach (var pair in funcProfile.ChildrenWeights) {
-                        var childFunc = summary_.GetFunctionWithId(pair.Key);
-                        var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
-                        childrenEx.Add(CreateChildInfo(childFunc, pair.Value, funcProfile, childFuncProfile, colors));
-                    }
-
-                    SetDemangledChildFunctionNames(childrenEx);
-
-                    var childrenFilter = new ListCollectionView(childrenEx);
-                    //functionFilter.Filter = FilterFunctionList;
-                    ChildFunctionList.ItemsSource = childrenFilter;
-                    childFunctionValueSorter_.SortByField(ChildFunctionFieldKind.Time, ListSortDirection.Descending);
+                    //? TODO:SetDemangledChildFunctionNames(childrenEx); - walk tree
+                    //? sorting doesn't work, pre-sort descending
+                    ChildFunctionList.Model = CreateProfileCallTree(function);
                 }
             }
 
             await ComputeConsecutiveSectionDiffs();
+        }
+
+        private ChildFunctionEx CreateProfileCallTree(IRTextFunction function) {
+            var rootNode = new ChildFunctionEx();
+            rootNode.Children = new List<ChildFunctionEx>();
+            CreateProfileCallTree(function, rootNode);
+            return rootNode;
+        }
+
+        private void CreateProfileCallTree(IRTextFunction function, ChildFunctionEx parentNode) {
+            var funcProfile = Session.ProfileData.GetFunctionProfile(function);
+
+            if (funcProfile == null) {
+                return;
+            }
+            
+            //? TODO: Use pallette
+            const int lightSteps = 10;
+            List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
+            
+            
+            var selfInfo = CreateChildInfo(function, funcProfile.ExclusiveWeight, funcProfile, null, colors);
+            selfInfo.Name = "Self";
+            selfInfo.IsSelf = true;
+            parentNode.Children.Add(selfInfo);
+
+            foreach (var pair in funcProfile.ChildrenWeights) {
+                var childFunc = summary_.GetFunctionWithId(pair.Key);
+                var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
+                var childNode = CreateChildInfo(childFunc, pair.Value, funcProfile, childFuncProfile, colors); 
+                parentNode.Children.Add(childNode);
+
+                if (childFuncProfile.ChildrenWeights.Count > 0) {
+                    childNode.Children = new List<ChildFunctionEx>();
+                    CreateProfileCallTree(childFunc, childNode);
+                }
+            }
+            
+            // Sort children, since that is not yet supported by the TreeListView control.
+            parentNode.Children.Sort((a, b) => b.Time.CompareTo(a.Time));
         }
 
         private ChildFunctionEx CreateChildInfo(IRTextFunction childFunc, TimeSpan childWeight, 
@@ -1592,7 +1632,7 @@ namespace IRExplorerUI {
                 Function = childFunc,
                 Time =  childWeight.Ticks,
                 Name = childFunc.Name,
-                Children = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
+                ChildCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
                 Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
                 BackColor = ColorBrushes.GetBrush(colors[colorIndex])
             };
@@ -1814,8 +1854,15 @@ namespace IRExplorerUI {
         }
         
         private void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
+            if (sender is not ListViewItem) {
+                return;
+            }
+            
             var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
-            SelectFunction(childInfo.Function);
+
+            if (!childInfo.IsSelf) {
+                SelectFunction(childInfo.Function);
+            }
         }
 
     }

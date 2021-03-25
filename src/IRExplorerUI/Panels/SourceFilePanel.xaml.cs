@@ -204,7 +204,7 @@ namespace IRExplorerUI {
         private async Task AnnotateProfilerData(FunctionProfileData profile) {
             hasProfileInfo_ = true;
 
-            Trace.WriteLine($"Children" );
+            Trace.WriteLine($"ChildCount" );
 
             foreach (var pair in profile.ChildrenWeights) {
                 var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
@@ -221,12 +221,21 @@ namespace IRExplorerUI {
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
             bool markedInstrs = false;
 
+            var blockWeights = new Dictionary<BlockIR, TimeSpan>();
+            
             if (hasInstrOffsetMetadata) {
                 var elements = new List<Tuple<IRElement, TimeSpan>>(profile.InstructionWeight.Count);
 
                 foreach (var pair in profile.InstructionWeight) {
                     if (metadataTag.OffsetToElementMap.TryGetValue(pair.Key, out var element)) {
                         elements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
+
+                        if (blockWeights.TryGetValue(element.ParentBlock, out var currentWeight)) {
+                            blockWeights[element.ParentBlock] = currentWeight + pair.Value;
+                        }
+                        else {
+                            blockWeights[element.ParentBlock] = pair.Value;
+                        }
                     }
                 }
 
@@ -241,7 +250,6 @@ namespace IRExplorerUI {
                         continue;
                     }
 
-                    Trace.WriteLine($"Accept {weightPercentage} as {pair.Item2.TotalMilliseconds}");
                     int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
                     
                     if (colorIndex < 0) {
@@ -252,7 +260,6 @@ namespace IRExplorerUI {
                     
                     var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
                     Session.CurrentDocument.MarkElement(element, color);
-
 
                     IconDrawing icon = null;
                     bool isPinned = false;
@@ -278,6 +285,21 @@ namespace IRExplorerUI {
                     overlay.TextColor = textColor;
                     markedInstrs = true;
                     index++;
+                }
+                
+                foreach (var pair in blockWeights) {
+                    var element = pair.Key;
+                    double weightPercentage = profile.ScaleWeight(pair.Value);
+
+                    if(weightPercentage < weightCutoff) {
+                        continue;
+                    }
+                    
+                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
+                    var icon = IconDrawing.FromIconResource("DotIconYellow");
+                    var overlay = Session.CurrentDocument.AddIconElementOverlay(element, icon, 16, 16, tooltip);
+                    overlay.IsToolTipPinned = true;
+                    overlay.TextColor = Brushes.DarkRed;
                 }
             }
 

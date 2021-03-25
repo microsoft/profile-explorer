@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
@@ -12,20 +13,43 @@ using IRExplorerUI.Profile;
 using Microsoft.Win32;
 
 namespace IRExplorerUI {
-    public partial class ProfileLoadWindow : Window {
+    public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
+        private bool isLoadingProfile_;
 
         public ProfileLoadWindow(ISession session) {
             InitializeComponent();
             DataContext = this;
             Session = session;
             loadTask_ = new CancelableTaskInstance();
+            
+            ProfileAutocompleteBox.Text = @"E:\spec\leela3.etl";
+            BinaryAutocompleteBox.Text = @"leela_s_base.msvc-diff";
+            DebugAutocompleteBox.Text = @"E:\spec\leela_s.pdb";
         }
 
         public ISession Session { get; set; }
         public string ProfileFilePath { get; set; }
         public string BinaryFilePath { get; set; }
         public string DebugFilePath { get; set; }
+
+        public bool IsLoadingProfile {
+            get => isLoadingProfile_;
+            set {
+                if (isLoadingProfile_ != value) {
+                    isLoadingProfile_ = value;
+                    OnPropertyChange(nameof(IsLoadingProfile));
+                    OnPropertyChange(nameof(InputControlsEnabled));
+                }
+            }
+        }
+
+        public bool InputControlsEnabled => !isLoadingProfile_;
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChange(string propertyname) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        }
 
         private async void UpdateButton_Click(object sender, RoutedEventArgs e) {
             ProfileFilePath = ProfileAutocompleteBox.Text.Trim();
@@ -42,10 +66,10 @@ namespace IRExplorerUI {
                 //? TODO: Disable buttons
                 //? Add cancel button
                 var task = loadTask_.CreateTask();
+                IsLoadingProfile = true;
 
                 if (await Session.LoadProfileData(ProfileFilePath, BinaryFilePath, DebugFilePath, progressInfo => {
                     Dispatcher.BeginInvoke((Action)(() => {
-                        LoadProgressPanel.Visibility = Visibility.Visible;
                         LoadProgressBar.Maximum = progressInfo.Total;
                         LoadProgressBar.Value = progressInfo.Current;
 
@@ -54,6 +78,9 @@ namespace IRExplorerUI {
                             ProfileLoadStage.TraceProcessing => "Processing trace",
                             ProfileLoadStage.SymbolLoading => "Loading symbols",
                         };
+
+                        double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
+                        ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
                     }));
                 }, task)) {
                     DialogResult = true;
@@ -63,6 +90,8 @@ namespace IRExplorerUI {
                     MessageBox.Show($"Filed to load profile file {ProfileFilePath}", "Compiler Studio",
                                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
+
+                IsLoadingProfile = false;
             }
         }
 
@@ -79,10 +108,16 @@ namespace IRExplorerUI {
             return true;
         }
 
-        private void CancelButton_Click(object sender, RoutedEventArgs e) {
+        private async void CancelButton_Click(object sender, RoutedEventArgs e) {
+            if (isLoadingProfile_) {
+                loadTask_.CancelTask();
+                await loadTask_.WaitForTaskAsync();
+            }
+
             DialogResult = false;
             Close();
         }
+
         private void Window_Loaded(object sender, RoutedEventArgs e) {
             ProfileAutocompleteBox.Focus();
         }

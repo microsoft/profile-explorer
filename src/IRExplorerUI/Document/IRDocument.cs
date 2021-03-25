@@ -26,6 +26,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.Graph;
+using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI {
     public enum BringIntoViewStyle {
@@ -1204,13 +1205,19 @@ namespace IRExplorerUI {
             var selectedElement = GetSelectedElement();
 
             if (selectedElement != null) {
-                var bookmark = bookmarks_.AddBookmark(selectedElement);
-                margin_.AddBookmark(bookmark);
-                margin_.SelectBookmark(bookmark);
-                UpdateMargin();
-                UpdateHighlighting();
-                RaiseBookmarkAddedEvent(bookmark);
+                AddBookmark(selectedElement);
             }
+        }
+
+        public void AddBookmark(IRElement selectedElement, string text = null) {
+            var bookmark = bookmarks_.AddBookmark(selectedElement);
+            bookmark.Text = text;
+            
+            margin_.AddBookmark(bookmark);
+            margin_.SelectBookmark(bookmark);
+            UpdateMargin();
+            UpdateHighlighting();
+            RaiseBookmarkAddedEvent(bookmark);
         }
 
         private void AddCommand(RoutedUICommand command, ExecutedRoutedEventHandler handler,
@@ -2984,6 +2991,7 @@ namespace IRExplorerUI {
                 return;
             }
 
+            TextArea.SelectionChanged += TextAreaOnSelectionChanged;
             MouseDown += IRDocument_MouseDown;
             PreviewMouseLeftButtonDown += IRDocument_PreviewMouseLeftButtonDown;
             PreviewMouseRightButtonDown += IRDocument_PreviewMouseRightButtonDown;
@@ -3000,6 +3008,41 @@ namespace IRExplorerUI {
             margin_.BookmarkChanged += Margin__BookmarkChanged;
             eventSetupDone_ = true;
             AllowDrop = true; // Enable drag-and-drop handilng.
+        }
+
+        private void TextAreaOnSelectionChanged(object? sender, EventArgs e) {
+            if (Session.ProfileData == null) {
+                return;
+            }
+
+            var funcProfile = Session.ProfileData.GetFunctionProfile(section_.ParentFunction);
+            var metadataTag = function_.GetTag<AddressMetadataTag>();
+            bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+            
+            if (funcProfile == null || !hasInstrOffsetMetadata) {
+                Session.SetApplicationStatus("");
+                return;
+            }
+            
+            int startLine = TextArea.Selection.StartPosition.Line;
+            int endLine = TextArea.Selection.EndPosition.Line;
+            TimeSpan weightSum = TimeSpan.Zero;
+            
+            foreach (var tuple in tupleElements_) {
+                if (tuple.TextLocation.Line >= startLine &&
+                    tuple.TextLocation.Line <= endLine) {
+
+                    if (metadataTag.ElementToOffsetMap.TryGetValue(tuple, out var offset)) {
+                        if (funcProfile.InstructionWeight.TryGetValue(offset, out var weight)) {
+                            weightSum += weight;
+                        }
+                    }
+                }
+            }
+
+            var weightPercentage = funcProfile.ScaleWeight(weightSum);
+            var text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weightSum.TotalMilliseconds, 2)} ms)";
+            Session.SetApplicationStatus(text, "Sum of selected instructions time");
         }
 
         private void IRDocument_GiveFeedback(object sender, GiveFeedbackEventArgs e) {
