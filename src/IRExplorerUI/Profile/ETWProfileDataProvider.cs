@@ -49,6 +49,11 @@ namespace IRExplorerUI.Profile {
         private IRTextSectionLoader loader_;
         private ProfileData profileData_;
         private string cvdumpPath_;
+        
+        //? TODO: Workaround for crash that happens when the finalizers are run
+        //? and the COM object is released after it looks as being destroyed.
+        // T his will keep it alive during the entire process.
+        private static ITraceProcessor trace; 
 
         public ETWProfileDataProvider(IRTextSummary summary, IRTextSectionLoader docLoader,
                                       ICompilerInfoProvider compilerInfo, string cvdumpPath) {
@@ -76,10 +81,10 @@ namespace IRExplorerUI.Profile {
         private string RunCvdump(string symbolPath) {
             var outputText = new StringBuilder(1024 * 32);
 
-            var psi = new ProcessStartInfo("cvdump.exe") {
+            var psi = new ProcessStartInfo(cvdumpPath_) {
                 Arguments = $"-p \"{symbolPath}\"",
                 UseShellExecute = false,
-                CreateNoWindow = true,
+                CreateNoWindow = false,
                 RedirectStandardError = false,
                 RedirectStandardOutput = true
             };
@@ -117,8 +122,8 @@ namespace IRExplorerUI.Profile {
             BuildAddressFunctionMap(string symbolPath) {
             var addressFuncMap = new Dictionary<long, IRTextFunction>();
             var externalsFuncMap = new Dictionary<long, string>();
-            //var symbolInfo = RunCvdump(symbolPath);
-            var symbolInfo = File.ReadAllText(@"C:\test\results.log");
+            var symbolInfo = RunCvdump(symbolPath);
+            //var symbolInfo = File.ReadAllText(@"C:\test\results.log");
 
             if (string.IsNullOrEmpty(symbolInfo)) {
                 return (addressFuncMap, externalsFuncMap);
@@ -167,7 +172,7 @@ namespace IRExplorerUI.Profile {
                     //    AllowLostEvents = true
                     //};
 
-                    using var trace = TraceProcessor.Create(tracePath);
+                    trace = TraceProcessor.Create(tracePath);
                     IPendingResult<ISymbolDataSource> pendingSymbolData = trace.UseSymbols();
                     IPendingResult<ICpuSampleDataSource> pendingCpuSamplingData = trace.UseCpuSamplingData();
 

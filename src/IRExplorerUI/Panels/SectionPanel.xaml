@@ -920,13 +920,21 @@
                 Visibility="{Binding ShowChildren, Converter={StaticResource BoolToVisibility}}">
                 <ListView.View>
                     <GridView>
-                        <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
+                        <GridViewColumn Width="200">
                             <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function (callee)" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border HorizontalAlignment="Stretch" Background="{Binding NameBackColor}">
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding Name}" />
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                         <GridViewColumn Width="150">
                             <GridViewColumnHeader
@@ -944,6 +952,37 @@
                                 <DataTemplate>
                                     <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
                                         <TextBlock Margin="6,2,6,2" Text="{Binding Text}" />
+                                    </Border>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+
+                        <GridViewColumn DisplayMemberBinding="{Binding Children}">
+                            <GridViewColumnHeader x:Name="ChildCountColumnHeader" Content="Children" />
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                        </GridViewColumn>
+
+                        <GridViewColumn Width="200">
+                            <GridViewColumnHeader
+                                x:Name="ChildAlternateNameColumnHeader"
+                                local:GridViewBehaviors.CollapseableColumn="True"
+                                Content="Demangled Name"
+                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border HorizontalAlignment="Stretch">
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
                                     </Border>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>

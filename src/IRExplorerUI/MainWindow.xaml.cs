@@ -959,7 +959,7 @@ namespace IRExplorerUI {
                                         ProfileLoadProgressHandler progressCallback,
                                         CancelableTask cancelableTask) {
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-            var cvdumpPath = "";
+            var cvdumpPath = "cvdump.exe"; // Expected to be in main directory.
             var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader, CompilerInfo, cvdumpPath);
             bool markInlinedFunctions = true;
 

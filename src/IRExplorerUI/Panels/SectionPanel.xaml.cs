@@ -279,9 +279,12 @@ namespace IRExplorerUI {
     public class ChildFunctionEx {
         public IRTextFunction Function { get; set; }
         public long Time { get; set; }
+        public int Children { get; set; }
         public string Name { get; set; }
+        public string AlternateName { get; set; }
         public string Text { get; set; }
         public Brush BackColor { get; set; }
+        public Brush NameBackColor { get; set; }
     }
 
     public enum SectionFieldKind {
@@ -301,7 +304,8 @@ namespace IRExplorerUI {
     public enum ChildFunctionFieldKind {
         Name,
         AlternateName,
-        Time
+        Time,
+        Children
     }
 
     public enum ModuleFieldKind {
@@ -455,8 +459,9 @@ namespace IRExplorerUI {
                 new GridViewColumnValueSorter<ChildFunctionFieldKind>(ChildFunctionList,
                 name => name switch {
                     "ChildColumnHeader" => ChildFunctionFieldKind.Name,
-                    //"ChildAlternateNameColumnHeader" => ChildFunctionFieldKind.AlternateName,
-                    "ChildTimeColumnHeader" => ChildFunctionFieldKind.Time
+                    "ChildAlternateNameColumnHeader" => ChildFunctionFieldKind.AlternateName,
+                    "ChildTimeColumnHeader" => ChildFunctionFieldKind.Time,
+                    "ChildCountColumnHeader" => ChildFunctionFieldKind.Children
                 }, 
                 (x, y, field, direction) => {
                     var childX = x as ChildFunctionEx;
@@ -467,13 +472,16 @@ namespace IRExplorerUI {
                             int result = string.Compare(childY.Name, childX.Name, StringComparison.Ordinal);
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
-                        //? TODO: Implement
-                        // case ChildFunctionFieldKind.AlternateName: {
-                        //     int result = string.Compare(sectionY.AlternateName, sectionX.AlternateName, StringComparison.Ordinal);
-                        //     return direction == ListSortDirection.Ascending ? -result : result;
-                        // }
+                        case ChildFunctionFieldKind.AlternateName: {
+                             int result = string.Compare(childY.AlternateName, childX.AlternateName, StringComparison.Ordinal);
+                             return direction == ListSortDirection.Ascending ? -result : result;
+                        }
                         case ChildFunctionFieldKind.Time: {
                             int result = childY.Time.CompareTo(childX.Time);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case ChildFunctionFieldKind.Children: {
+                            int result = childY.Children.CompareTo(childX.Children);
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         default:
@@ -866,6 +874,23 @@ namespace IRExplorerUI {
         }
 
         private void SetDemangledFunctionNames(List<IRTextFunctionEx> functions) {
+            var nameProvider = Session.CompilerInfo.NameProvider;
+
+            if (!sectionSettings_.ShowDemangledNames || !nameProvider.IsDemanglingSupported) {
+                AlternateNameColumnVisible = false;
+                return;
+            }
+
+            var demanglingOptions = nameProvider.DemanglingOptions;
+
+            foreach (var funcEx in functions) {
+                funcEx.AlternateName = nameProvider.DemangleFunctionName(funcEx.Function, demanglingOptions);
+            }
+
+            AlternateNameColumnVisible = true;
+        }
+
+        private void SetDemangledChildFunctionNames(List<ChildFunctionEx> functions) {
             var nameProvider = Session.CompilerInfo.NameProvider;
 
             if (!sectionSettings_.ShowDemangledNames || !nameProvider.IsDemanglingSupported) {
@@ -1533,16 +1558,18 @@ namespace IRExplorerUI {
                     List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
                     var childrenEx = new List<ChildFunctionEx>();
 
-                    var selfInfo = CreateChildInfo(function, funcProfile.ExclusiveWeight, funcProfile,colors);
+                    var selfInfo = CreateChildInfo(function, funcProfile.ExclusiveWeight, funcProfile, null, colors);
                     selfInfo.Name = "Self";
+                    selfInfo.NameBackColor = Brushes.LightGray;
                     childrenEx.Add(selfInfo);
 
                     foreach (var pair in funcProfile.ChildrenWeights) {
                         var childFunc = summary_.GetFunctionWithId(pair.Key);
-                        childrenEx.Add(CreateChildInfo(childFunc, pair.Value, funcProfile,colors));
-
-                        //? TODO: Unamngled name, inclusive/exclusive time
+                        var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
+                        childrenEx.Add(CreateChildInfo(childFunc, pair.Value, funcProfile, childFuncProfile, colors));
                     }
+
+                    SetDemangledChildFunctionNames(childrenEx);
 
                     var childrenFilter = new ListCollectionView(childrenEx);
                     //functionFilter.Filter = FilterFunctionList;
@@ -1554,7 +1581,8 @@ namespace IRExplorerUI {
             await ComputeConsecutiveSectionDiffs();
         }
 
-        private ChildFunctionEx CreateChildInfo(IRTextFunction childFunc, TimeSpan childWeight, FunctionProfileData funcProfile, List<Color> colors) {
+        private ChildFunctionEx CreateChildInfo(IRTextFunction childFunc, TimeSpan childWeight, 
+                FunctionProfileData funcProfile, FunctionProfileData childFuncProfile, List<Color> colors) {
             KeyValuePair<int, TimeSpan> pair;
             double weightPercentage = funcProfile.ScaleChildWeight(childWeight);
             int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
@@ -1564,6 +1592,7 @@ namespace IRExplorerUI {
                 Function = childFunc,
                 Time =  childWeight.Ticks,
                 Name = childFunc.Name,
+                Children = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
                 Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
                 BackColor = ColorBrushes.GetBrush(colors[colorIndex])
             };
@@ -1780,7 +1809,7 @@ namespace IRExplorerUI {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
             //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
             double defaultSpace = 60;
-            double profileControlsSpace = profileControlsVisible_ ? 200 : 0;
+            double profileControlsSpace = profileControlsVisible_ ? 180 : 0;
             FunctionFilterGrid.Width = Math.Max(1, width - defaultSpace - profileControlsSpace);
         }
         
