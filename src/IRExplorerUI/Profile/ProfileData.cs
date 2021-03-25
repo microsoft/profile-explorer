@@ -20,6 +20,8 @@ namespace IRExplorerUI.Profile {
         public Dictionary<long, TimeSpan> BlockWeight { get; set; }
         [ProtoMember(7)]
         public Dictionary<int, TimeSpan> ChildrenWeights { get; set; }
+
+        //? TODO: Module ID
         
         //? TODO
         //? - save unique stacks with inclusive samples for each frame

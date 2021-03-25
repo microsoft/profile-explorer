@@ -20,10 +20,6 @@ namespace IRExplorerUI {
             DataContext = this;
             Session = session;
             loadTask_ = new CancelableTaskInstance();
-
-            ProfileAutocompleteBox.Text = @"E:\spec\leela3.etl";
-            BinaryAutocompleteBox.Text = @"leela_s_base.msvc-diff";
-            DebugAutocompleteBox.Text = @"E:\spec\leela_s.pdb";
         }
 
         public ISession Session { get; set; }

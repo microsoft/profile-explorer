@@ -245,7 +245,7 @@ namespace IRExplorerUI {
                     int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
                     
                     if (colorIndex < 0) {
-                        colorIndex = colorIndex;
+                        colorIndex = 0;
                     }
                     
                     var color = colors[colorIndex];
@@ -301,7 +301,7 @@ namespace IRExplorerUI {
                 int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
 
                 if (colorIndex < 0) {
-                    colorIndex = colorIndex;
+                    colorIndex = 0;
                 }
                 
                 var color = colors[colorIndex];
