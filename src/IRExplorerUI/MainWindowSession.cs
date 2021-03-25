@@ -1367,5 +1367,9 @@ namespace IRExplorerUI {
 
             return null;
         }
+
+        public void SetApplicationStatus(string text, string tooltip) {
+            SetOptionalStatus(text, tooltip, Brushes.MediumBlue);
+        }
     }
 }

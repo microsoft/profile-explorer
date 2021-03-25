@@ -651,6 +651,7 @@ namespace IRExplorerCore.UTC {
             }
 
             tag.OffsetToElementMap[offset.Value] = element;
+            tag.ElementToOffsetMap[element] = offset.Value;
         }
 
 

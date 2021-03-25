@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31025.218
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TreeListView", "TreeListView.csproj", "{8B6E1160-E068-4D24-9D23-7ED67430F55D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{8B6E1160-E068-4D24-9D23-7ED67430F55D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B6E1160-E068-4D24-9D23-7ED67430F55D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B6E1160-E068-4D24-9D23-7ED67430F55D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B6E1160-E068-4D24-9D23-7ED67430F55D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EC177709-C492-4EDF-A961-89058FD0B3A6}
+	EndGlobalSection
+EndGlobal

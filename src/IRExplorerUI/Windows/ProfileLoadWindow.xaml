@@ -19,10 +19,6 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="48" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250" />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
 
         <StackPanel
             Grid.Row="0"
@@ -38,6 +34,7 @@
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
                     IsDropDownOpen="True"
+                    IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
                     TabIndex="1" />
@@ -49,6 +46,7 @@
                     HorizontalAlignment="Right"
                     Click="BaseBrowseButton_Click"
                     Content="Browse..."
+                    IsEnabled="{Binding InputControlsEnabled}"
                     TabIndex="9" />
             </Grid>
 
@@ -63,6 +61,7 @@
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
                     IsDropDownOpen="True"
+                    IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
                     TabIndex="2" />
@@ -74,6 +73,7 @@
                     HorizontalAlignment="Right"
                     Click="DiffBrowseButton_Click"
                     Content="Browse..."
+                    IsEnabled="{Binding InputControlsEnabled}"
                     TabIndex="10" />
             </Grid>
 
@@ -88,6 +88,7 @@
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
                     IsDropDownOpen="True"
+                    IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
                     TabIndex="2" />
@@ -99,31 +100,39 @@
                     HorizontalAlignment="Right"
                     Click="DebugBrowseButton_OnClick"
                     Content="Browse..."
+                    IsEnabled="{Binding InputControlsEnabled}"
                     TabIndex="10" />
             </Grid>
         </StackPanel>
 
 
         <StackPanel
-            x:Name="LoadProgressPanel"
             Grid.Row="1"
-            Grid.Column="0"
-            Width="200"
+            Width="250"
             Margin="16,4,0,8"
             HorizontalAlignment="Left"
-            Visibility="Hidden">
+            Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}">
             <ProgressBar
                 x:Name="LoadProgressBar"
-                Width="200"
                 Height="20"
+                HorizontalAlignment="Stretch"
                 Maximum="100"
                 Value="40" />
-            <TextBlock x:Name="LoadProgressLabel" Text="100%" />
+            <DockPanel>
+                <TextBlock
+                    x:Name="LoadProgressLabel"
+                    DockPanel.Dock="Left"
+                    Text="" />
+                <TextBlock
+                    x:Name="ProgressPercentLabel"
+                    HorizontalAlignment="Right"
+                    DockPanel.Dock="Right"
+                    Text="0 %" />
+            </DockPanel>
         </StackPanel>
 
         <StackPanel
             Grid.Row="1"
-            Grid.Column="1"
             Margin="0,4,16,16"
             HorizontalAlignment="Right"
             Orientation="Horizontal">
@@ -137,13 +146,14 @@
                 Content="Cancel"
                 TabIndex="4" />
             <Button
-                x:Name="UpdateButton"
+                x:Name="LoadButton"
                 Height="24"
                 Padding="4,1,4,1"
                 VerticalAlignment="Top"
                 Background="#FFFCF4CC"
                 Click="UpdateButton_Click"
                 Content="Load Profile"
+                IsEnabled="{Binding InputControlsEnabled}"
                 TabIndex="3" />
         </StackPanel>
     </Grid>

@@ -220,8 +220,10 @@ namespace IRExplorerUI.Document {
 
             Tuple<IElementOverlay, IRElement, Rect> hoverSegment = null;
             Tuple<IElementOverlay, IRElement, Rect> selectedSegment = null;
-
+            
             foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+                bool isBlockElement = segment.Element is BlockIR;
+                
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                     foreach (var overlay in segment.Overlays) {
                         // Draw hover/selected overlay last so that it shows up on top
@@ -236,6 +238,12 @@ namespace IRExplorerUI.Document {
                         }
 
                         overlay.Draw(rect, segment.Element, overlayDC);
+                    }
+
+                    // For blocks, consider only the first line, otherwise the overlay
+                    // would be applied to each each tuple in the block.
+                    if (isBlockElement) {
+                        break;
                     }
                 }
             }

@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tree="clr-namespace:Aga.Controls.Tree;assembly=TreeListView"
     d:DesignHeight="450"
     d:DesignWidth="1200"
     mc:Ignorable="d">
@@ -442,7 +443,7 @@
                             Padding="4,2,4,2"
                             HorizontalContentAlignment="Stretch"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            Content="Children"
+                            Content="Call Tree"
                             IsChecked="{Binding ShowChildren, Mode=TwoWay}"
                             Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
 
@@ -907,18 +908,17 @@
                 </ListView.InputBindings>
             </ListView>
 
-            <ListView
+            <tree:TreeList
                 x:Name="ChildFunctionList"
                 Grid.Row="1"
                 Panel.ZIndex="2"
-                AutomationProperties.AutomationId="AutoFunctionList"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                IsTextSearchEnabled="False"
+                SelectionMode="Single"
                 Visibility="{Binding ShowChildren, Converter={StaticResource BoolToVisibility}}">
-                <ListView.View>
+                <tree:TreeList.View>
                     <GridView>
                         <GridViewColumn Width="200">
                             <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function (callee)" />
@@ -930,12 +930,24 @@
 
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch" Background="{Binding NameBackColor}">
-                                        <TextBlock Margin="6,2,6,2" Text="{Binding Name}" />
-                                    </Border>
+                                    <StackPanel Orientation="Horizontal">
+                                        <tree:RowExpander />
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding Name}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="{x:Type TextBlock}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsSelf}" Value="True">
+                                                            <Setter Property="FontWeight" Value="Bold" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
+
                         <GridViewColumn Width="150">
                             <GridViewColumnHeader
                                 x:Name="ChildTimeColumnHeader"
@@ -951,13 +963,23 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
-                                        <TextBlock Margin="6,2,6,2" Text="{Binding Text}" />
+                                        <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="{x:Type TextBlock}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Path=IsSelf}" Value="True">
+                                                            <Setter Property="FontWeight" Value="Bold" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </Border>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
-                        <GridViewColumn DisplayMemberBinding="{Binding Children}">
+                        <GridViewColumn DisplayMemberBinding="{Binding ChildCount}">
                             <GridViewColumnHeader x:Name="ChildCountColumnHeader" Content="Children" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -988,13 +1010,15 @@
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
                     </GridView>
-                </ListView.View>
+                </tree:TreeList.View>
+
                 <ListView.ItemContainerStyle>
                     <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                         <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
                         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     </Style>
                 </ListView.ItemContainerStyle>
+
                 <ListView.ContextMenu>
                     <ContextMenu>
                         <MenuItem
@@ -1005,7 +1029,7 @@
                             ToolTip="Save the text (IR) of all sections for the selected function to a file" />
                     </ContextMenu>
                 </ListView.ContextMenu>
-            </ListView>
+            </tree:TreeList>
 
         </Grid>
 

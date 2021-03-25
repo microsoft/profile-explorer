@@ -1035,6 +1035,7 @@
             <TextBlock
                 x:Name="OptionalStatusText"
                 VerticalAlignment="Center"
+                FontWeight="DemiBold"
                 FontSize="11"
                 Foreground="DarkRed"
                 MouseDown="OptionalStatusText_MouseDown" />
