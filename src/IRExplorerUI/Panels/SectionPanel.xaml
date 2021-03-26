@@ -432,7 +432,7 @@
 
                         <ToggleButton
                             Margin="4,0,0,0"
-                            Padding="4,2,4,2"
+                            Padding="2,2,4,2"
                             HorizontalContentAlignment="Stretch"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             Content="Sections"

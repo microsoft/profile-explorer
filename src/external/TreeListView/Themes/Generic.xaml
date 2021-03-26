@@ -29,22 +29,20 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ToggleButton">
                     <Border
-                        Width="19"
-                        Height="13"
-                        Background="#00FFFFFF">
-                        <Border
-                            Margin="0,4,0,0"
-                            Width="9"
-                            Height="9"
-                            BorderBrush="#444"
-                            BorderThickness="1,1,1,1"
-                            SnapsToDevicePixels="True">
-                            <Path
-                                Name="ExpandPath"
-                                Margin="1,1,1,1"
-                                Data="M0,2L0,3 2,3 2,5 3,5 3,3 5,3 5,2 3,2 3,0 2,0 2,2z"
-                                Fill="#444" />
-                        </Border>
+                        Width="9"
+                        Height="9"
+                        Margin="0,4,0,0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#00FFFFFF"
+                        BorderBrush="#444"
+                        BorderThickness="1,1,1,1"
+                        SnapsToDevicePixels="True">
+                        <Path
+                            Name="ExpandPath"
+                            Margin="1,1,1,1"
+                            Data="M0,2L0,3 2,3 2,5 3,5 3,3 5,3 5,2 3,2 3,0 2,0 2,2z"
+                            Fill="#444" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="ToggleButton.IsChecked" Value="True">
@@ -69,33 +67,16 @@
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type tree:RowExpander}">
                     <Grid SnapsToDevicePixels="true">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" MinWidth="19" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
-                        <Rectangle
-                            x:Name="VerLn"
-                            Grid.RowSpan="2"
-                            Width="1"
-                            Margin="0,-1,0,-1"
-                            Stroke="#66888888"
-                            StrokeThickness="1" />
-
                         <ToggleButton
                             x:Name="Expander"
                             Margin="{Binding Node.Level, Converter={StaticResource LevelToIndentConverter}, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
                             ClickMode="Press"
                             IsChecked="{Binding Node.IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}"
                             Style="{StaticResource ExpandCollapseToggleStyle}"
                             Visibility="{Binding Node.IsExpandable, Converter={StaticResource CanExpandConverter}, RelativeSource={RelativeSource AncestorType={x:Type tree:TreeListItem}}}" />
                     </Grid>
-
-
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

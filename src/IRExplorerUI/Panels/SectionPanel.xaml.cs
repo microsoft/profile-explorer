@@ -908,7 +908,7 @@ namespace IRExplorerUI {
             AlternateNameColumnVisible = true;
         }
 
-        private void SetDemangledChildFunctionNames(List<ChildFunctionEx> functions) {
+        private void SetDemangledChildFunctionNames(ChildFunctionEx func) {
             var nameProvider = Session.CompilerInfo.NameProvider;
 
             if (!sectionSettings_.ShowDemangledNames || !nameProvider.IsDemanglingSupported) {
@@ -916,13 +916,21 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var demanglingOptions = nameProvider.DemanglingOptions;
+            SetDemangledChildFunctionNamesImpl(func, nameProvider);
+            AlternateNameColumnVisible = true;
+        }
 
-            foreach (var funcEx in functions) {
-                funcEx.AlternateName = nameProvider.DemangleFunctionName(funcEx.Function, demanglingOptions);
+        private void SetDemangledChildFunctionNamesImpl(ChildFunctionEx funcEx, INameProvider nameProvider) {
+            if (funcEx.Function != null) {
+                funcEx.AlternateName =
+                    nameProvider.DemangleFunctionName(funcEx.Function, nameProvider.DemanglingOptions);
             }
 
-            AlternateNameColumnVisible = true;
+            if (funcEx.Children != null) {
+                foreach (var child in funcEx.Children) {
+                    SetDemangledChildFunctionNamesImpl(child, nameProvider);
+                }
+            }
         }
 
         private void SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
@@ -1574,7 +1582,9 @@ namespace IRExplorerUI {
                 if(funcProfile != null) {
                     //? TODO:SetDemangledChildFunctionNames(childrenEx); - walk tree
                     //? sorting doesn't work, pre-sort descending
-                    ChildFunctionList.Model = CreateProfileCallTree(function);
+                    var profileCallTree = CreateProfileCallTree(function);
+                    ChildFunctionList.Model = profileCallTree;
+                    SetDemangledChildFunctionNames(profileCallTree);
                 }
             }
 
