@@ -152,7 +152,7 @@
                 <ControlTemplate TargetType="ListBoxItem">
                     <Border
                         Name="Border"
-                        Padding="2"
+                        Padding="1"
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
