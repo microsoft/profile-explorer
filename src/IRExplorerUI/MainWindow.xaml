@@ -333,6 +333,10 @@
                                 Name="LLVMMenuItem"
                                 Click="LLVMMenuItem_Click"
                                 Header="LLVM" />
+                            <MenuItem
+                                Name="ASMMenuItem"
+                                Click="ASMMenuItem_Click"
+                                Header="ASM" />
                         </MenuItem>
                         <Separator />
 
@@ -1035,8 +1039,8 @@
             <TextBlock
                 x:Name="OptionalStatusText"
                 VerticalAlignment="Center"
-                FontWeight="DemiBold"
                 FontSize="11"
+                FontWeight="DemiBold"
                 Foreground="DarkRed"
                 MouseDown="OptionalStatusText_MouseDown" />
 

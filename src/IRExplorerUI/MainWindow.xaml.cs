@@ -34,6 +34,7 @@ using IRExplorerUI.Diff;
 using Microsoft.Win32;
 using IRExplorerUI.Panels;
 using IRExplorerUI.Scripting;
+using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Compilers.UTC;
 using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
@@ -869,6 +870,10 @@ namespace IRExplorerUI {
 
         private void UTCMenuItem_Click(object sender, RoutedEventArgs e) {
             SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
+        }
+
+        private void ASMMenuItem_Click(object sender, RoutedEventArgs e) {
+            SwitchCompilerTarget(new ASMCompilerInfoProvider(this));
         }
 
         private void ShareButton_Click(object sender, RoutedEventArgs e) {

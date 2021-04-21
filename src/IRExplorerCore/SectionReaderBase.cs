@@ -113,6 +113,7 @@ namespace IRExplorerCore {
         // Methods to be implemented by an IR reader implementation.
         protected abstract bool IsSectionStart(string line);
 
+        protected abstract bool SectionStartIsFunctionStart(string line);
 
         protected abstract bool IsFunctionStart(string line);
 
@@ -129,6 +130,8 @@ namespace IRExplorerCore {
         protected abstract bool ShouldSkipOutputLine(string line);
 
         protected abstract bool IsMetadataLine(string line);
+
+        protected abstract bool FunctionEndIsFunctionStart(string line);
 
         protected void MarkPreprocessedLine(int line) {
             hasPreprocessedLines_ = true;
@@ -251,7 +254,15 @@ namespace IRExplorerCore {
             // and build the function -> sections hierarchy.
             ResetAdditionalOutput();
             IRTextSection previousSection = null;
+            Action updateProgress = () => {
+                if (progressHandler != null) {
+                    var info = new SectionReaderProgressInfo(TextOffset(), dataStreamSize_);
+                    progressHandler(this, info);
+                }
+            };
+
             var section = FindNextSection(sectionTextHandler);
+            updateProgress();
 
             while (section != null) {
                 summary_.AddSection(section);
@@ -264,11 +275,7 @@ namespace IRExplorerCore {
                 ResetAdditionalOutput();
                 previousSection = section;
                 section = FindNextSection(sectionTextHandler);
-
-                if (progressHandler != null) {
-                    var info = new SectionReaderProgressInfo(TextOffset(), dataStreamSize_);
-                    progressHandler(this, info);
-                }
+                updateProgress();
             }
 
             if (previousSection != null) {
@@ -446,7 +453,11 @@ namespace IRExplorerCore {
 
             while (true) {
                 long initialOffset = TextOffset();
-                currentLine_ = NextLine();
+                if (currentLine_ == null ||
+                    !IsFunctionEnd(currentLine_) ||
+                    !FunctionEndIsFunctionStart(currentLine_)) {
+                    currentLine_ = NextLine();
+                }
 
                 if (currentLine_ == null) {
                     break;
@@ -469,6 +480,11 @@ namespace IRExplorerCore {
                         continue;
                     }
                 }
+                string funcName = string.Empty;
+
+                if (SectionStartIsFunctionStart(currentLine_)) {
+                    funcName = ExtractFunctionName(currentLine_);
+                }
 
                 // Collect the text lines if the client wants to process
                 // the text while first reading the document.
@@ -486,7 +502,6 @@ namespace IRExplorerCore {
                 // Find the end of the section and extract the function name.
                 long startOffset = hasName ? TextOffset() : initialOffset;
                 long endOffset = startOffset;
-                string funcName = string.Empty;
                 int blockCount = 0;
 
                 // A section can have metadata associated with the previous line.
@@ -497,22 +512,24 @@ namespace IRExplorerCore {
                     currentLine_ = NextLine();
 
                     if (currentLine_ == null) {
+                        sectionEndLine = lineIndex_ + 1;
+                        endOffset = TextOffset();
                         break;
                     }
 
                     if (sectionTextHandler != null) {
-                        sectionLines.Add(currentLine_);
+                        if (!IsFunctionEnd(currentLine_) || !FunctionEndIsFunctionStart(currentLine_)) {
+                            sectionLines.Add(currentLine_);
+                        }
                     }
 
-                    if (IsFunctionStart(currentLine_)) {
+                    if (string.IsNullOrEmpty(funcName) && IsFunctionStart(currentLine_)) {
                         // Extract function name.
-                        if (string.IsNullOrEmpty(funcName)) {
-                            funcName = ExtractFunctionName(currentLine_);
-                        }
+                        funcName = ExtractFunctionName(currentLine_);
                     }
                     else if (IsFunctionEnd(currentLine_)) {
                         // Found function end.
-                        endOffset = TextOffset();
+                        endOffset = FunctionEndIsFunctionStart(currentLine_) ? previousOffset_ : TextOffset();
                         sectionEndLine = lineIndex_ + 1;
                         break;
                     }
@@ -525,7 +542,7 @@ namespace IRExplorerCore {
                         lineMetadata[lineIndex_ - sectionStartLine - metadataLines] = currentLine_;
                         metadataLines++;
                     }
-
+                    currentLine_ = null;
                     lineIndex_++;
                 }
 
@@ -570,6 +587,7 @@ namespace IRExplorerCore {
         }
 
         protected string NextLine(StreamReader reader, bool recordPreviousLines) {
+            previousOffset_ = textOffset_;
             if (!reader.EndOfStream) {
                 string line = PreprocessLine(reader.ReadLine());
 
@@ -597,6 +615,7 @@ namespace IRExplorerCore {
             prevLineCount_++;
         }
         private long textOffset_ = 0;
+        private long previousOffset_ = 0;
 
         protected long TextOffset() => textOffset_;
 
