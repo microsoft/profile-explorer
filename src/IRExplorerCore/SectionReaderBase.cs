@@ -111,42 +111,25 @@ namespace IRExplorerCore {
         }
 
         // Methods to be implemented by an IR reader implementation.
-        protected virtual bool IsSectionStart(string line) {
-            return false;
-        }
+        protected abstract bool IsSectionStart(string line);
 
-        protected virtual bool IsFunctionStart(string line) {
-            return false;
-        }
 
-        protected virtual bool IsFunctionEnd(string line) {
-            return false;
-        }
+        protected abstract bool IsFunctionStart(string line);
 
-        protected virtual bool IsBlockStart(string line) {
-            return false;
-        }
+        protected abstract bool IsFunctionEnd(string line);
 
-        protected virtual string ExtractSectionName(string line) {
-            return "";
-        }
+        protected abstract bool IsBlockStart(string line);
 
-        protected virtual string ExtractFunctionName(string line) {
-            return "";
-        }
+        protected abstract string ExtractSectionName(string line);
 
-        protected virtual string PreprocessLine(string line) {
-            return line;
-        }
+        protected abstract string ExtractFunctionName(string line);
 
-        protected virtual bool ShouldSkipOutputLine(string line) {
-            return false;
-        }
+        protected abstract string PreprocessLine(string line);
 
-        protected virtual bool IsMetadataLine(string line) {
-            return false;
-        }
-        
+        protected abstract bool ShouldSkipOutputLine(string line);
+
+        protected abstract bool IsMetadataLine(string line);
+
         protected void MarkPreprocessedLine(int line) {
             hasPreprocessedLines_ = true;
         }
