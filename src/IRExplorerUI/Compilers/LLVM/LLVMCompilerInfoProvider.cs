@@ -26,6 +26,7 @@ namespace IRExplorerUI.Compilers.LLVM {
 
         public string CompilerIRName => "LLVM";
         public string DefaultSyntaxHighlightingFile => "LLVM";
+        public string OpenFileFilter => "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.irx|IR Explorer Session Files|*.irx|All Files|*.*";
         public ISession Session => session_;
         public ICompilerIRInfo IR => ir_;
         public INameProvider NameProvider => names_;
