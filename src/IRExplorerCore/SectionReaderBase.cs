@@ -412,7 +412,7 @@ namespace IRExplorerCore {
                 optionalOutputNeeded_ = false;
             }
 
-            optionalOutput_.DataEndOffset = TextOffset() - 1;
+            optionalOutput_.DataEndOffset = TextOffset();
             optionalOutput_.EndLine = lineIndex_;
 
             if (!string.IsNullOrWhiteSpace(line)) {
@@ -510,7 +510,7 @@ namespace IRExplorerCore {
                     }
                     else if (IsFunctionEnd(line)) {
                         // Found function end.
-                        endOffset = TextOffset() - 1;
+                        endOffset = TextOffset();
                         sectionEndLine = lineIndex_ + 1;
                         break;
                     }

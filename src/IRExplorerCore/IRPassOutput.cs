@@ -15,8 +15,11 @@ namespace IRExplorerCore
         }
 
         public long DataStartOffset { get; set; }
+        /// <summary>
+        /// One past the end
+        /// </summary>
         public long DataEndOffset { get; set; }
-        public long Size => DataEndOffset - DataStartOffset + 1;
+        public long Size => DataEndOffset - DataStartOffset;
         public int StartLine { get; set; }
         public int EndLine { get; set; }
         public int LineCount => EndLine - StartLine + 1;
