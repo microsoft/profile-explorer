@@ -75,5 +75,7 @@ namespace IRExplorerCore.LLVM {
         protected override bool ShouldSkipOutputLine(string line) {
             return string.IsNullOrWhiteSpace(line);
         }
+
+        protected override bool IsMetadataLine(string line) => false;
     }
 }
