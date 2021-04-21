@@ -83,5 +83,8 @@ namespace IRExplorerCore.UTC {
         protected override bool IsMetadataLine(string line) {
             return line.StartsWith("/// irx:", StringComparison.Ordinal);
         }
+
+        protected override bool FunctionEndIsFunctionStart(string line) => false;
+        protected override bool SectionStartIsFunctionStart(string line) => false;
     }
 }

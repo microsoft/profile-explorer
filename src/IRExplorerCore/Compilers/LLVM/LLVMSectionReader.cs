@@ -77,5 +77,8 @@ namespace IRExplorerCore.LLVM {
         }
 
         protected override bool IsMetadataLine(string line) => false;
+
+        protected override bool FunctionEndIsFunctionStart(string line) => false;
+        protected override bool SectionStartIsFunctionStart(string line) => false;
     }
 }
