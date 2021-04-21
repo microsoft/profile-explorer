@@ -439,30 +439,32 @@ namespace IRExplorerCore {
             hasMetadataLines_ = false;
         }
 
+        private string currentLine_;
+
         private IRTextSection FindNextSection(SectionTextHandler sectionTextHandler) {
             prevLineCount_ = 0;
 
             while (true) {
                 long initialOffset = TextOffset();
-                string line = NextLine();
+                currentLine_ = NextLine();
 
-                if (line == null) {
+                if (currentLine_ == null) {
                     break;
                 }
 
                 // Each section is expected to start with a name,
-                // followed by an ASCII "line", which is searched for here,
+                // followed by an ASCII "currentLine_", which is searched for here,
                 // unless the client indicates that the name may be missing.
                 bool hasName = true;
 
-                if (!IsSectionStart(line)) {
+                if (!IsSectionStart(currentLine_)) {
                     if (!expectSectionHeaders_ &&
-                        (IsFunctionStart(line) || IsBlockStart(line))) {
+                        (IsFunctionStart(currentLine_) || IsBlockStart(currentLine_))) {
                         hasName = false;
                     }
                     else {
-                        // Skip over line.
-                        AddOptionalOutputLine(line, initialOffset);
+                        // Skip over currentLine_.
+                        AddOptionalOutputLine(currentLine_, initialOffset);
                         lineIndex_++;
                         continue;
                     }
@@ -479,7 +481,7 @@ namespace IRExplorerCore {
                 // Go back and find the name of the section.
                 int sectionStartLine = lineIndex_ + (hasName ? 1 : 0);
                 int sectionEndLine = 0;
-                string sectionName = hasName ? ExtractSectionName(line) : string.Empty;
+                string sectionName = hasName ? ExtractSectionName(currentLine_) : string.Empty;
 
                 // Find the end of the section and extract the function name.
                 long startOffset = hasName ? TextOffset() : initialOffset;
@@ -492,35 +494,35 @@ namespace IRExplorerCore {
                 int metadataLines = 0;
 
                 while (true) {
-                    line = NextLine();
+                    currentLine_ = NextLine();
 
-                    if (line == null) {
+                    if (currentLine_ == null) {
                         break;
                     }
 
                     if (sectionTextHandler != null) {
-                        sectionLines.Add(line);
+                        sectionLines.Add(currentLine_);
                     }
 
-                    if (IsFunctionStart(line)) {
+                    if (IsFunctionStart(currentLine_)) {
                         // Extract function name.
                         if (string.IsNullOrEmpty(funcName)) {
-                            funcName = ExtractFunctionName(line);
+                            funcName = ExtractFunctionName(currentLine_);
                         }
                     }
-                    else if (IsFunctionEnd(line)) {
+                    else if (IsFunctionEnd(currentLine_)) {
                         // Found function end.
                         endOffset = TextOffset();
                         sectionEndLine = lineIndex_ + 1;
                         break;
                     }
-                    else if (IsBlockStart(line)) {
+                    else if (IsBlockStart(currentLine_)) {
                         blockCount++;
                     }
-                    else if (IsMetadataLine(line)) {
+                    else if (IsMetadataLine(currentLine_)) {
                         // Add line - metadata mapping to auxiliary table.
                         lineMetadata ??= new Dictionary<int, string>();
-                        lineMetadata[lineIndex_ - sectionStartLine - metadataLines] = line;
+                        lineMetadata[lineIndex_ - sectionStartLine - metadataLines] = currentLine_;
                         metadataLines++;
                     }
 
