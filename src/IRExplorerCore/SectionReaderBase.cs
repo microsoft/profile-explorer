@@ -575,6 +575,7 @@ namespace IRExplorerCore {
                     RecordPreviousLine(line);
                 }
 
+                textOffset_ = ComputeTextOffset(dataReader_);
                 return line;
             }
 
@@ -593,12 +594,11 @@ namespace IRExplorerCore {
             prevLines_[0] = line;
             prevLineCount_++;
         }
+        private long textOffset_ = 0;
 
-        protected long TextOffset() {
-            return TextOffset(dataReader_);
-        }
+        protected long TextOffset() => textOffset_;
 
-        private long TextOffset(StreamReader reader) {
+        private long ComputeTextOffset(StreamReader reader) {
             // This is a hack needed to get the proper offset in the stream, see
             // https://stackoverflow.com/questions/5404267/streamreader-and-seeking
             // Dynamic code generation is used as an efficient way of reading out the private fields.
