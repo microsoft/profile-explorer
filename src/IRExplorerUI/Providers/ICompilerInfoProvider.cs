@@ -22,6 +22,7 @@ namespace IRExplorerUI {
         List<QueryDefinition> BuiltinQueries { get; }
         List<FunctionTaskDefinition> BuiltinFunctionTasks { get; }
         List<FunctionTaskDefinition> ScriptFunctionTasks { get; }
+        string OpenFileFilter { get; }
 
         void ReloadSettings();
 

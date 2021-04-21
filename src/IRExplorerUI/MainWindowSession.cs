@@ -1110,7 +1110,7 @@ namespace IRExplorerUI {
         private string ShowOpenFileDialog() {
             var fileDialog = new OpenFileDialog {
                 DefaultExt = "*.*",
-                Filter = "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.irx|IR Explorer Session Files|*.irx|All Files|*.*"
+                Filter = CompilerInfo.OpenFileFilter
             };
 
             var result = fileDialog.ShowDialog();
