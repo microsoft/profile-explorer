@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+
 namespace IRExplorerCore.IR {
     public static class RegisterTables {
         // Static instances to have the tables built only once.
@@ -91,7 +93,8 @@ namespace IRExplorerCore.IR {
 
         public static RegisterTable SelectRegisterTable(IRMode irMode) => irMode switch {
             IRMode.x86 => x86RegisterTable_,
-            IRMode.ARM64 => arm64RegisterTable_
+            IRMode.ARM64 => arm64RegisterTable_,
+            _ => throw new ArgumentException("invalid valid", nameof(irMode))
         };
     }
 }
