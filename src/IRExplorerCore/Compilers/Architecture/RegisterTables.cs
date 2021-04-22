@@ -1,8 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-using IRExplorerCore.UTC;
-
 namespace IRExplorerCore.IR {
     public static class RegisterTables {
         // Static instances to have the tables built only once.
@@ -91,9 +89,9 @@ namespace IRExplorerCore.IR {
             x86RegisterTable_.AddRegisterAlias("iymm15", "ymm15");
         }
 
-        public static RegisterTable SelectRegisterTable(UTCIRMode irMode) => irMode switch {
-            UTCIRMode.x86 => x86RegisterTable_,
-            UTCIRMode.ARM64 => arm64RegisterTable_
+        public static RegisterTable SelectRegisterTable(IRMode irMode) => irMode switch {
+            IRMode.x86 => x86RegisterTable_,
+            IRMode.ARM64 => arm64RegisterTable_
         };
     }
 }
