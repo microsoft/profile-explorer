@@ -9,13 +9,19 @@ using IRExplorerCore.Lexer;
 namespace IRExplorerCore {
     public class ParserBase {
         protected readonly Lexer.Lexer lexer_ = new Lexer.Lexer();
-        protected Token current_;
+        private Token current_;
+        protected Token Current => current_;
         protected Token previous_;
         private readonly Dictionary<int, BlockIR> blockMap_ = new Dictionary<int, BlockIR>();
         private IRElementId nextElementId_;
         private AddressMetadataTag metadataTag_; // lazy-init
 
         protected AddressMetadataTag MetadataTag => metadataTag_ ??= new AddressMetadataTag();
+
+        private readonly IRParsingErrorHandler errorHandler_;
+
+        private readonly RegisterTable registerTable_;
+        protected RegisterTable RegisterTable => registerTable_;
 
         protected void AddMetadata(FunctionIR function) {
             if (metadataTag_ != null) {
@@ -24,6 +30,15 @@ namespace IRExplorerCore {
         }
 
         protected IRElementId NextElementId => nextElementId_;
+
+        protected ParserBase(IRParsingErrorHandler errorHandler, RegisterTable registerTable) {
+            errorHandler_ = errorHandler;
+            registerTable_ = registerTable;
+        }
+
+        protected void ReportError(TokenKind expectedToken, string message = "") {
+            errorHandler_?.HandleError(Current.Location, expectedToken, Current, message);
+        }
 
         protected virtual void Reset() {
             nextElementId_ = IRElementId.FromLong(0);
