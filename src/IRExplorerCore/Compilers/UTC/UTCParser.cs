@@ -235,7 +235,6 @@ namespace IRExplorerCore.UTC {
         private Dictionary<int, string> lineMetadataMap_;
         private AddressMetadataTag metadataTag_;
         private int nextBlockNumber;
-        private IRElementId nextElementId_;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
         private RegisterTable registerTable_;
 
@@ -249,7 +248,6 @@ namespace IRExplorerCore.UTC {
             blockMap_ = new Dictionary<int, BlockIR>();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
-            lexer_ = new Lexer.Lexer();
             operandPool_ = new IRObjectPool<OperandIR>(64);
         }
 
@@ -290,23 +288,23 @@ namespace IRExplorerCore.UTC {
 
         public void Initialize(string text) {
             Reset();
-            lexer_.Initialize(text);
+            base.Initialize(text);
             SkipToken(); // Get first token.
         }
 
         public void Initialize(ReadOnlyMemory<char> text) {
             Reset();
-            lexer_.Initialize(text);
+            base.Initialize(text);
             SkipToken(); // Get first token.
         }
 
-        private void Reset() {
+        protected override void Reset() {
+            base.Reset();
             blockMap_.Clear();
             labelMap_.Clear();
             ssaDefinitionMap_.Clear();
             metadataTag_ = null;
             nextBlockNumber = 0;
-            nextElementId_ = IRElementId.FromLong(0);
         }
 
         //? TODO: Handle SWITCH
@@ -365,7 +363,7 @@ namespace IRExplorerCore.UTC {
                 return block;
             }
 
-            var newBlock = new BlockIR(nextElementId_, blockNumber, function);
+            var newBlock = new BlockIR(NextElementId, blockNumber, function);
             blockMap_[blockNumber] = newBlock;
             return newBlock;
         }
@@ -397,7 +395,7 @@ namespace IRExplorerCore.UTC {
                 return label;
             }
 
-            label = new BlockLabelIR(nextElementId_, name, parent);
+            label = new BlockLabelIR(NextElementId, name, parent);
 
             if (parent != null) {
                 SetTextRange(label);
@@ -599,7 +597,7 @@ namespace IRExplorerCore.UTC {
             }
 
             var block = GetOrCreateBlock(blockNumber, function);
-            block.Id = nextElementId_.NewBlock(blockNumber);
+            block.Id = NextElementId.NewBlock(blockNumber);
 
             if (cfgAvailable) {
                 // Parse the list of predecessor and successor blocks
@@ -741,7 +739,7 @@ namespace IRExplorerCore.UTC {
                     }
                     case Keyword.Pragma: {
                         SkipToLineEnd();
-                        tuple = new TupleIR(nextElementId_, TupleKind.Metadata, parent);
+                        tuple = new TupleIR(NextElementId, TupleKind.Metadata, parent);
                         stop = true;
                         break;
                     }
@@ -978,7 +976,7 @@ namespace IRExplorerCore.UTC {
                 return null;
             }
 
-            var entry = new TupleIR(nextElementId_, TupleKind.Metadata, entryBlock);
+            var entry = new TupleIR(NextElementId, TupleKind.Metadata, entryBlock);
             var function = entryBlock.Parent;
             function.Name = TokenString();
             SkipToken();
@@ -1009,7 +1007,7 @@ namespace IRExplorerCore.UTC {
 
         private InstructionIR ParseInstruction(BlockIR parent) {
             // instr = [opList =] OPCODE [.type] opList
-            var instr = new InstructionIR(nextElementId_, InstructionKind.Other, parent);
+            var instr = new InstructionIR(NextElementId, InstructionKind.Other, parent);
 
             // Some instrs. don't have a dest. list and start directly with the opcode.
             if (!IsOpcode() && !ParseOperandList(instr, true, instr.Destinations)) {
@@ -1117,7 +1115,7 @@ namespace IRExplorerCore.UTC {
                     var pasTag = ParsePointsAtSet();
                     TryParseType(); // A type can also follow a PAS.
 
-                    operand = CreateOperand(nextElementId_, OperandKind.Other,
+                    operand = CreateOperand(NextElementId, OperandKind.Other,
                                             TypeIR.GetUnknown(), parent);
                     if (pasTag != null) {
                         operand.AddTag(pasTag);
@@ -1182,7 +1180,7 @@ namespace IRExplorerCore.UTC {
                 }
             }
 
-            var operand = CreateOperand(nextElementId_, OperandKind.Indirection,
+            var operand = CreateOperand(NextElementId, OperandKind.Indirection,
                                         TypeIR.GetUnknown(), parent);
             operand.Value = baseOp;
 
@@ -1292,7 +1290,7 @@ namespace IRExplorerCore.UTC {
             }
 
             var type = TryParseType();
-            var operand = CreateOperand(nextElementId_, opKind, type, parent);
+            var operand = CreateOperand(NextElementId, opKind, type, parent);
             operand.Value = opValue;
             SetTextRange(operand, startToken);
             return operand;
@@ -1403,7 +1401,7 @@ namespace IRExplorerCore.UTC {
                 opKind = OperandKind.Temporary;
             }
 
-            var operand = CreateOperand(nextElementId_, opKind, TypeIR.GetUnknown(), parent);
+            var operand = CreateOperand(NextElementId, opKind, TypeIR.GetUnknown(), parent);
             operand.Value = opName;
 
             // After lowering, registers can appear without without a symbol name,
