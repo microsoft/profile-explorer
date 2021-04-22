@@ -8,9 +8,24 @@ using IRExplorerCore.Lexer;
 
 namespace IRExplorerCore {
     public class ParserBase {
-        protected Lexer.Lexer lexer_;
+        protected readonly Lexer.Lexer lexer_ = new Lexer.Lexer();
         protected Token current_;
         protected Token previous_;
+        private IRElementId nextElementId_;
+
+        protected IRElementId NextElementId => nextElementId_;
+
+        protected virtual void Reset() {
+            nextElementId_ = IRElementId.FromLong(0);
+        }
+
+        protected virtual void Initialize(string text) {
+            lexer_.Initialize(text);
+        }
+
+        protected virtual void Initialize(ReadOnlyMemory<char> text) {
+            lexer_.Initialize(text);
+        }
 
         public bool IsDone() {
             return current_.IsEOF();
