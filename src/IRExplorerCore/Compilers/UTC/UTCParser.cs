@@ -228,19 +228,16 @@ namespace IRExplorerCore.UTC {
             TokenKind.Tilde, TokenKind.LineEnd
         };
 
-        private ParsingErrorHandler errorHandler_;
         private Dictionary<string, BlockLabelIR> labelMap_;
         private Dictionary<int, string> lineMetadataMap_;
         private int nextBlockNumber;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
-        private RegisterTable registerTable_;
 
         public UTCParser(ParsingErrorHandler errorHandler,
                          Dictionary<int, string> lineMetadata,
-                         RegisterTable registerTable = null) {
-            errorHandler_ = errorHandler;
+                         RegisterTable registerTable = null)
+            : base(errorHandler, registerTable) {
             lineMetadataMap_ = lineMetadata;
-            registerTable_ = registerTable;
 
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
@@ -315,7 +312,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private FunctionIR ParseFunction() {
-            var startToken = current_;
+            var startToken = Current;
             var function = new FunctionIR();
 
             // Sometimes there is whitespace before the first block, ignore.
@@ -546,7 +543,7 @@ namespace IRExplorerCore.UTC {
 
 
         private BlockIR ParseBlock(FunctionIR function) {
-            var startToken = current_;
+            var startToken = Current;
             bool cfgAvailable = true;
 
             // For vectorizer output, one or more blocks can be found
@@ -694,7 +691,7 @@ namespace IRExplorerCore.UTC {
             TupleIR tuple = null;
             bool stop = false;
             bool sawEHAttribute = false;
-            var startToken = current_;
+            var startToken = Current;
 
             while (!stop && !IsEOF()) {
                 switch (TokenKeyword()) {
@@ -915,7 +912,7 @@ namespace IRExplorerCore.UTC {
                 NextTokenIs(TokenKind.Colon) &&
                 !NextAfterTokenIs(TokenKind.Number)) {
                 // label: definition
-                var startToken = current_;
+                var startToken = Current;
                 var label = GetOrCreateLabel(TokenData(), parent);
                 SkipToken(); // string
                 SkipToken(); // :
@@ -945,7 +942,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private TupleIR ParseEntry(BlockIR entryBlock) {
-            var startToken = current_;
+            var startToken = Current;
             SkipToken(); // ENTRY
 
             // There can be various attributes before the name, ignore.
@@ -1031,7 +1028,7 @@ namespace IRExplorerCore.UTC {
             }
 
             instr.OpcodeText = TokenData();
-            instr.OpcodeLocation = current_.Location;
+            instr.OpcodeLocation = Current.Location;
             SkipToken();
 
             // Opcode can be followed by type and other attributes, ignore.
@@ -1148,7 +1145,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private OperandIR ParseIndirection(TupleIR parent) {
-            var startToken = current_;
+            var startToken = Current;
             SkipToken();
             var baseOp = ParseOperand(parent, true);
 
@@ -1227,7 +1224,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private OperandIR ParseNumber(TupleIR parent) {
-            var startToken = current_;
+            var startToken = Current;
             var opKind = OperandKind.Other;
             object opValue = null;
             bool isNegated = false;
@@ -1389,7 +1386,7 @@ namespace IRExplorerCore.UTC {
             // check if the variable represents a register.
             ParseRegister(operand);
 
-            var startToken = current_;
+            var startToken = Current;
             SkipToken();
 
             // Handle lambda names that appear as long identifiers with < > like
@@ -1466,12 +1463,12 @@ namespace IRExplorerCore.UTC {
         }
 
         private void ParseRegister(OperandIR operand) {
-            if(registerTable_ == null) {
+            if(RegisterTable == null) {
                 return;
             }
 
             if(IsIdentifier() || IsKeyword(Keyword.CC)) {
-                var register = registerTable_.GetRegister(TokenString());
+                var register = RegisterTable.GetRegister(TokenString());
 
                 if(register != null) {
                     operand.AddTag(new RegisterTag(register, operand));
@@ -1613,12 +1610,8 @@ namespace IRExplorerCore.UTC {
             return type;
         }
 
-        private void ReportError(TokenKind expectedToken, string message = "") {
-            errorHandler_?.HandleError(current_.Location, expectedToken, current_, message);
-        }
-
         private Keyword TokenKeyword() {
-            if (current_.IsIdentifier()) {
+            if (Current.IsIdentifier()) {
                 if(keywordTrie_.TryGetValue(TokenStringData(), out var keyword)) {
                     return keyword;
                 }
