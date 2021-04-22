@@ -11,12 +11,24 @@ namespace IRExplorerCore {
         protected readonly Lexer.Lexer lexer_ = new Lexer.Lexer();
         protected Token current_;
         protected Token previous_;
+        private readonly Dictionary<int, BlockIR> blockMap_ = new Dictionary<int, BlockIR>();
         private IRElementId nextElementId_;
+        private AddressMetadataTag metadataTag_; // lazy-init
+
+        protected AddressMetadataTag MetadataTag => metadataTag_ ??= new AddressMetadataTag();
+
+        protected void AddMetadata(FunctionIR function) {
+            if (metadataTag_ != null) {
+                function.AddTag(metadataTag_);
+            }
+        }
 
         protected IRElementId NextElementId => nextElementId_;
 
         protected virtual void Reset() {
             nextElementId_ = IRElementId.FromLong(0);
+            blockMap_.Clear();
+            metadataTag_ = null;
         }
 
         protected virtual void Initialize(string text) {
@@ -33,6 +45,16 @@ namespace IRExplorerCore {
 
         public void SkipCurrentToken() {
             SkipToken();
+        }
+
+        protected BlockIR GetOrCreateBlock(int blockNumber, FunctionIR function) {
+            if (blockMap_.TryGetValue(blockNumber, out var block)) {
+                return block;
+            }
+
+            var newBlock = new BlockIR(NextElementId, blockNumber, function);
+            blockMap_[blockNumber] = newBlock;
+            return newBlock;
         }
 
         protected int LocationDistance(Token startToken) {

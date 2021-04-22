@@ -228,12 +228,9 @@ namespace IRExplorerCore.UTC {
             TokenKind.Tilde, TokenKind.LineEnd
         };
 
-        private Dictionary<int, BlockIR> blockMap_;
-
         private ParsingErrorHandler errorHandler_;
         private Dictionary<string, BlockLabelIR> labelMap_;
         private Dictionary<int, string> lineMetadataMap_;
-        private AddressMetadataTag metadataTag_;
         private int nextBlockNumber;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
         private RegisterTable registerTable_;
@@ -245,7 +242,6 @@ namespace IRExplorerCore.UTC {
             lineMetadataMap_ = lineMetadata;
             registerTable_ = registerTable;
 
-            blockMap_ = new Dictionary<int, BlockIR>();
             labelMap_ = new Dictionary<string, BlockLabelIR>();
             ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
             operandPool_ = new IRObjectPool<OperandIR>(64);
@@ -300,10 +296,8 @@ namespace IRExplorerCore.UTC {
 
         protected override void Reset() {
             base.Reset();
-            blockMap_.Clear();
             labelMap_.Clear();
             ssaDefinitionMap_.Clear();
-            metadataTag_ = null;
             nextBlockNumber = 0;
         }
 
@@ -314,9 +308,7 @@ namespace IRExplorerCore.UTC {
             var function = ParseFunction();
 
             if (function != null) {
-                if (metadataTag_!= null) {
-                    function.AddTag(metadataTag_);
-                }
+                AddMetadata(function);
             }
 
             return function;
@@ -356,16 +348,6 @@ namespace IRExplorerCore.UTC {
 
             SetTextRange(function, startToken);
             return function;
-        }
-
-        private BlockIR GetOrCreateBlock(int blockNumber, FunctionIR function) {
-            if (blockMap_.TryGetValue(blockNumber, out var block)) {
-                return block;
-            }
-
-            var newBlock = new BlockIR(NextElementId, blockNumber, function);
-            blockMap_[blockNumber] = newBlock;
-            return newBlock;
         }
 
         private BlockLabelIR GetOrCreateLabel(ReadOnlyMemory<char> name, BlockIR parent = null) {
@@ -452,8 +434,7 @@ namespace IRExplorerCore.UTC {
                 lineMetadataMap_.TryGetValue(lineNumber, out string metadata)) {
                 var metadataParser = new UTCParser(null, null);
                 metadataParser.Initialize(metadata);
-                metadataTag_ ??= new AddressMetadataTag();
-                metadataParser.ParseMetadata(element, metadataTag_);
+                metadataParser.ParseMetadata(element, MetadataTag);
             }
         }
 
