@@ -118,10 +118,10 @@ namespace IRExplorerUI.Compilers.UTC {
 
             if (!string.IsNullOrEmpty(path) && 
                 path.Contains("arm64", StringComparison.OrdinalIgnoreCase)) {
-                ir_.IRMode = UTCIRMode.ARM64;
+                ir_.IRMode = IRMode.ARM64;
             }
             else {
-                ir_.IRMode = UTCIRMode.x86;
+                ir_.IRMode = IRMode.x86;
             }
         }
     }

@@ -8,13 +8,8 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.UTC {
-    public enum UTCIRMode {
-        x86,
-        ARM64
-    }
-
     public class UTCCompilerIRInfo : ICompilerIRInfo {
-        public UTCIRMode IRMode { get; set; }
+        public IRMode IRMode { get; set; }
 
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders) {
             return new UTCSectionReader(filePath, expectSectionHeaders);

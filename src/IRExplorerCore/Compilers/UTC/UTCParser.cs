@@ -19,9 +19,9 @@ namespace IRExplorerCore.UTC {
     public sealed class UTCSectionParser : IRSectionParser {
         private ParsingErrorHandler errorHandler_;
         private UTCParser parser_;
-        private UTCIRMode irMode_;
+        private IRMode irMode_;
 
-        public UTCSectionParser(UTCIRMode irMode, ParsingErrorHandler errorHandler = null) {
+        public UTCSectionParser(IRMode irMode, ParsingErrorHandler errorHandler = null) {
             irMode_ = irMode;
 
             if (errorHandler != null) {
