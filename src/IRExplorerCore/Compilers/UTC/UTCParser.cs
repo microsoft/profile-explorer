@@ -413,11 +413,7 @@ namespace IRExplorerCore.UTC {
 
         private long? ParseInt64() {
             if (!TokenLongIntNumber(out long value)) {
-                // Try to parse again as a HEX int.
-                try {
-                    value = Convert.ToInt64(TokenStringData().ToString(), 16);
-                }
-                catch (Exception) {
+                if (!TokenLongHexNumber(out value)) {
                     return null;
                 }
             }
@@ -471,7 +467,7 @@ namespace IRExplorerCore.UTC {
         private void ParseAddressMetadata(IRElement element, AddressMetadataTag tag) {
             // irx::address INSTR_ADDRESS; DEST1 DESTn; SRC1 SRCn
             SkipToken(); // address
-            long? address = ParseInt64();
+            long? address = ParseHexAddress();
 
             if (!address.HasValue || 
                !(element is InstructionIR instr)) {
