@@ -65,11 +65,10 @@ namespace IRExplorerCoreTests {
 
         [TestMethod]
         public void RandomStringEnumTest() {
-            for (int length = 1; length < 100; length++) {
+            for (int length = 1; length < 102; length+=20) {
                 var trie = new StringTrie<TestEnum>();
                 var values = new Dictionary<string, TestEnum>();
                 var random = new Random(31);
-
                 for (int i = 0; i < 1000; i++) {
                     var key = GenerateRandomString(length, random);
                     var value = GenerateRandomEnum<TestEnum>(random);
