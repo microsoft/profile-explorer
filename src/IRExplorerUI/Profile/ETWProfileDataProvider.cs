@@ -185,7 +185,7 @@ namespace IRExplorerUI.Profile {
                     // Load symbols.
                     ISymbolDataSource symbolData = pendingSymbolData.Result;
                     ICpuSampleDataSource cpuSamplingData = pendingCpuSamplingData.Result;
-                    await symbolData.LoadSymbolsAsync(SymCachePath.Automatic, new RawSymbolPath(symbolPath),
+                    await symbolData.LoadSymbolsAsync(SymCachePath.Automatic, new RawSymbolPath(new FileInfo(symbolPath).DirectoryName),
                         new SymbolProgressTracker(progressCallback));
 
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
