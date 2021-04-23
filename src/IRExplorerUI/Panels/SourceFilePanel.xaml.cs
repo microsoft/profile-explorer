@@ -27,6 +27,7 @@ namespace IRExplorerUI {
     ///     Interaction logic for SectionPanel.xaml
     /// </summary>
     public partial class SourceFilePanel : ToolPanelControl {
+        private SourceFileMapper sourceFileMapper_ = new SourceFileMapper();
         private IRTextSection section_;
         private IRElement element_;
         private bool fileLoaded_;
@@ -82,9 +83,14 @@ namespace IRExplorerUI {
             Utils.PatchToolbarStyle(sender as ToolBar);
         }
 
-        private string BrowseSourceFile() {
+        private string BrowseSourceFile() => BrowseSourceFile(
+            filter: "C/C++ source files|*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.hxx;*.hh|All Files|*.*",
+            title: string.Empty);
+
+        private string BrowseSourceFile(string filter, string title) {
             var fileDialog = new OpenFileDialog {
-                Filter = "C/C++ source files|*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.hxx;*.hh|All Files|*.*"
+                Filter = filter,
+                Title = title
             };
 
             var result = fileDialog.ShowDialog();
@@ -135,10 +141,14 @@ namespace IRExplorerUI {
 
             if (profile != null) {
                 if (!string.IsNullOrEmpty(profile.SourceFilePath)) {
+                    var sourceFilePath = profile.SourceFilePath;
+                    var mappedSourceFilePath = sourceFileMapper_.Map(sourceFilePath, () => BrowseSourceFile(
+                            filter: $"Source File|{Path.GetFileName(sourceFilePath)}",
+                            title: $"Open ${sourceFilePath}"));
                     // Load new source file.
                     //? TODO: Scroll down to the start of the func
                     //? Could have an option to scroll to hottest part
-                    if (await LoadSourceFile(profile.SourceFilePath)) {
+                    if (await LoadSourceFile(mappedSourceFilePath)) {
                         await AnnotateProfilerData(profile);
                     }
                     else {
