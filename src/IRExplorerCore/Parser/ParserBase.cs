@@ -94,6 +94,27 @@ namespace IRExplorerCore {
                                  NumberFormatInfo.InvariantInfo, out value);
         }
 
+        protected long? ParseHexAddress() {
+            if (TokenLongHexNumber(out long value)) {
+                SkipToken();
+                return value;
+            }
+            return null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected bool TokenLongHexNumber(out long value) {
+            // Try to parse again as a HEX int.
+            try {
+                value = Convert.ToInt64(TokenStringData().ToString(), 16);
+                return true;
+            }
+            catch (Exception) {
+                value = 0;
+                return false;
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool TokenFloatNumber(out double value) {
             return double.TryParse(TokenStringData(), out value);
