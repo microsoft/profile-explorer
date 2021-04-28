@@ -211,6 +211,20 @@ namespace IRExplorerUI {
 
         #endregion
 
+        private bool TryFindElementForOffset(AddressMetadataTag metadataTag, long offset, out IRElement element) {
+            int multiplier = 1;
+            var offsetData = Session.CompilerInfo.IR.InstrOffsetData;
+
+            do {
+                if (metadataTag.OffsetToElementMap.TryGetValue(offset - multiplier * offsetData.OffsetAdjustIncrement, out element)) {
+                    return true;
+                }
+                ++multiplier;
+            } while (multiplier * offsetData.OffsetAdjustIncrement < offsetData.MaxOffsetAdjust);
+
+            return false;
+        }
+
         private async Task AnnotateProfilerData(FunctionProfileData profile) {
             hasProfileInfo_ = true;
 
@@ -237,7 +251,7 @@ namespace IRExplorerUI {
                 var elements = new List<Tuple<IRElement, TimeSpan>>(profile.InstructionWeight.Count);
 
                 foreach (var pair in profile.InstructionWeight) {
-                    if (metadataTag.OffsetToElementMap.TryGetValue(pair.Key, out var element)) {
+                    if (TryFindElementForOffset(metadataTag, pair.Key, out var element)) {
                         elements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
 
                         if (blockWeights.TryGetValue(element.ParentBlock, out var currentWeight)) {

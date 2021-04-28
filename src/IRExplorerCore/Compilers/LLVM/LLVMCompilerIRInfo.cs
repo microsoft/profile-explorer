@@ -8,6 +8,9 @@ using IRExplorerCore.IR;
 namespace IRExplorerCore.LLVM {
     public class LLVMCompilerIRInfo : ICompilerIRInfo {
         public IRMode IRMode { get; set; }
+
+        public InstrOffsetData InstrOffsetData => InstrOffsetData.VariableSize(1, 16);
+
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders) {
             return new LLVMSectionReader(filePath, expectSectionHeaders);
         }
