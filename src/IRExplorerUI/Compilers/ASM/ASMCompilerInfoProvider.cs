@@ -28,7 +28,7 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
-            return null;
+            return new ASMIRSectionParser(IRMode, errorHandler);
         }
 
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true) {
@@ -96,7 +96,8 @@ namespace IRExplorerUI.Compilers.ASM {
         public string CompilerIRName => "ASM";
 
         public string OpenFileFilter => "Asm Files|*.asm|All Files|*.*";
-        public string DefaultSyntaxHighlightingFile => throw new NotImplementedException();
+
+        public string DefaultSyntaxHighlightingFile => "ASM";
 
         public ISession Session => session_;
 
