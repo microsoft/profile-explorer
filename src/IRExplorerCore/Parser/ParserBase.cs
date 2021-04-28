@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -38,6 +39,11 @@ namespace IRExplorerCore {
 
         protected void ReportError(TokenKind expectedToken, string message = "") {
             errorHandler_?.HandleError(Current.Location, expectedToken, Current, message);
+        }
+
+        protected void ReportErrorAndSkipLine(TokenKind expectedToken, string message) {
+            ReportError(expectedToken, message);
+            SkipToLineStart();
         }
 
         protected virtual void Reset() {
@@ -142,8 +148,8 @@ namespace IRExplorerCore {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        protected bool ExpectAndSkipToken(TokenKind kind) {
-            if (current_.Kind == kind) {
+        protected bool ExpectAndSkipToken(params TokenKind[] kind) {
+            if (kind.Contains(current_.Kind)) {
                 SkipToken();
                 return true;
             }
@@ -284,9 +290,9 @@ namespace IRExplorerCore {
             element.SetTextRange(startToken.Location, distance);
         }
 
-        protected void SetTextRange(IRElement element, Token startToken, Token endToken) {
+        protected void SetTextRange(IRElement element, Token startToken, Token endToken, int adjustment = 0) {
             int distance = Math.Max(0, endToken.Location.Offset - 
-                                       startToken.Location.Offset + endToken.Length);
+                                       startToken.Location.Offset + endToken.Length - adjustment);
             element.SetTextRange(startToken.Location, distance);
         }
 
