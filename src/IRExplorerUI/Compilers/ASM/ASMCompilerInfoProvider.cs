@@ -16,6 +16,11 @@ namespace IRExplorerUI.Compilers.ASM {
     internal class ASMCompilerIRInfo : ICompilerIRInfo {
         public IRMode IRMode { get; set; }
 
+        public InstrOffsetData InstrOffsetData => IRMode switch {
+            IRMode.ARM64 => InstrOffsetData.ConstantSize(4),
+            _ => InstrOffsetData.VariableSize(1, 16),
+        };
+
         public IRParsingErrorHandler CreateParsingErrorHandler() => new ParsingErrorHandler();
 
         public IReachableReferenceFilter CreateReferenceFilter(FunctionIR function) {
