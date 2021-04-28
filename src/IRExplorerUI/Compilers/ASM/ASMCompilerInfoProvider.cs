@@ -14,6 +14,8 @@ using System;
 namespace IRExplorerUI.Compilers.ASM {
 
     internal class ASMCompilerIRInfo : ICompilerIRInfo {
+        public IRMode IRMode { get; set; }
+
         public IRParsingErrorHandler CreateParsingErrorHandler() => new ParsingErrorHandler();
 
         public IReachableReferenceFilter CreateReferenceFilter(FunctionIR function) {
@@ -78,9 +80,12 @@ namespace IRExplorerUI.Compilers.ASM {
         private readonly UTCNameProvider names_ = new UTCNameProvider();
         private readonly UTCSectionStyleProvider styles_ = new UTCSectionStyleProvider();
         private readonly UTCRemarkProvider remarks_;
+        private readonly ASMCompilerIRInfo ir_;
+
         public ASMCompilerInfoProvider(ISession session) {
             session_ = session;
             remarks_ = new UTCRemarkProvider(this);
+            ir_ = new ASMCompilerIRInfo();
         }
 
         public string CompilerIRName => "ASM";
@@ -90,7 +95,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public ISession Session => session_;
 
-        public ICompilerIRInfo IR => new ASMCompilerIRInfo();
+        public ICompilerIRInfo IR => ir_;
 
         public INameProvider NameProvider => names_;
 
@@ -117,6 +122,7 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         public void ReloadSettings() {
+            IRModeUtilities.SetIRModeFromSettings(ir_);
         }
     }
 }
