@@ -6,6 +6,7 @@ using IRExplorerCore.Analysis;
 
 namespace IRExplorerCore {
     public interface ICompilerIRInfo {
+        IRMode IRMode { get; set; }
         IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true);
         IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders = true);
         IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler);
