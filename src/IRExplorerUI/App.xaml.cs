@@ -71,6 +71,7 @@ namespace IRExplorerUI {
 
                 InitializeSettingsFilesDirectory("utc");
                 InitializeSettingsFilesDirectory("llvm");
+                InitializeSettingsFilesDirectory("ASM");
                 InitializeSettingsFilesDirectory("scripts");
                 InitializeSettingsFilesDirectory("themes");
                 return true;
@@ -324,9 +325,7 @@ namespace IRExplorerUI {
                 foreach (var file in files) {
                     var destFile = GetCompilerSettingsFilePath(Path.GetFileName(file), directory);
 
-                    if (!File.Exists(destFile)) {
-                        File.Copy(file, destFile);
-                    }
+                    File.Copy(file, destFile, overwrite: true);
                 }
 
                 return true;
