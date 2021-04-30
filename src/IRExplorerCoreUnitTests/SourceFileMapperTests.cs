@@ -81,5 +81,30 @@ namespace IRExplorerCoreTests {
                 return "";
             }));
         }
+
+        [TestMethod]
+        public void ResultIsNullWhenLookupIsCanceled()
+        {
+            var mapper = new SourceFileMapper();
+            Assert.IsNull(mapper.Map(@"c:\path\to\file.txt", () => null));
+        }
+
+        [TestMethod]
+        public void Map_RetriesNextTimeWhenLookupWasCanceled()
+        {
+            var mapper = new SourceFileMapper();
+            var called = false;
+            const string path = @"c:\path\to\file.txt";
+            const string expectedResult = @"c:\mapped\path\to\file.txt";
+
+            // prime with canceled result
+            mapper.Map(path, () => null);
+
+            Assert.AreEqual(expectedResult, mapper.Map(path, () => {
+                called = true;
+                return expectedResult;
+            }));
+            Assert.IsTrue(called);
+        }
     }
 }
