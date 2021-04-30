@@ -1044,6 +1044,7 @@ namespace IRExplorerUI {
         private void ResetSectionPanel() {
             otherSummary_ = null;
             currentFunction_ = null;
+            ProfileControlsVisible = false;
             sections_.Clear();
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
