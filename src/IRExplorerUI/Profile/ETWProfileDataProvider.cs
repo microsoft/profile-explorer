@@ -11,8 +11,80 @@ using Microsoft.Windows.EventTracing.Symbols;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using System.Linq;
+using System.Threading;
 
 namespace IRExplorerUI.Profile {
+    class PdbParser {
+        private readonly string cvdumpPath_;
+        private readonly Regex localProcRegex = new Regex(@"S_LPROC32: \[[0-9A-F]*\:([0-9A-F]*)\], .*, (.*)", RegexOptions.Compiled);
+        private readonly Regex pub32ProcRegex = new Regex(@"S_PUB32: \[[0-9A-F]*\:([0-9A-F]*)\], Flags: [0-9A-F]*\, (.*)", RegexOptions.Compiled);
+
+        public PdbParser(string cvdumpPath) {
+            cvdumpPath_ = cvdumpPath;
+        }
+
+        public IEnumerable<(string, long)> Parse(string symbolPath) {
+            var allText = RunCvdump(symbolPath);
+            var textLines = allText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var line in textLines) {
+                var matches = pub32ProcRegex.Matches(line);
+
+                if (matches.Count == 0) {
+                    matches = localProcRegex.Matches(line);
+                    if (matches.Count == 0) {
+                        continue;
+                    }
+                }
+
+                var address = Convert.ToInt64(matches[0].Groups[1].Value, 16);
+                var funcName = matches[0].Groups[2].Value;
+                yield return (funcName, address);
+            }
+        }
+
+
+        private string RunCvdump(string symbolPath) {
+            var outputText = new StringBuilder(1024 * 32);
+
+            var psi = new ProcessStartInfo(cvdumpPath_) {
+                Arguments = $"-p -s \"{symbolPath}\"",
+                UseShellExecute = false,
+                CreateNoWindow = false,
+                RedirectStandardError = false,
+                RedirectStandardOutput = true
+            };
+
+            //? TODO: Put path between " to support whitespace in the path.
+
+            try {
+                using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
+
+                process.OutputDataReceived += (sender, e) => {
+                    outputText.AppendLine(e.Data);
+                };
+
+                process.Start();
+                process.BeginOutputReadLine();
+
+                do {
+                    process.WaitForExit(200);
+                } while (!process.HasExited);
+
+                process.CancelOutputRead();
+
+                if (process.ExitCode != 0) {
+                    return null;
+                }
+            }
+            catch (Exception ex) {
+                return null;
+            }
+
+            return outputText.ToString();
+        }
+    }
+
     public class ETWProfileDataProvider : IProfileDataProvider {
         class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
             private ProfileLoadProgressHandler callback_;
@@ -48,7 +120,7 @@ namespace IRExplorerUI.Profile {
         private IRTextSummary summary_;
         private IRTextSectionLoader loader_;
         private ProfileData profileData_;
-        private string cvdumpPath_;
+        private PdbParser pdbParser_;
         
         //? TODO: Workaround for crash that happens when the finalizers are run
         //? and the COM object is released after it looks as being destroyed.
@@ -60,7 +132,7 @@ namespace IRExplorerUI.Profile {
             summary_ = summary;
             loader_ = docLoader;
             compilerInfo_ = compilerInfo;
-            cvdumpPath_ = cvdumpPath;
+            pdbParser_ = new PdbParser(cvdumpPath);
             profileData_ = new ProfileData();
         }
 
@@ -78,78 +150,17 @@ namespace IRExplorerUI.Profile {
             return map;
         }
 
-        private string RunCvdump(string symbolPath) {
-            var outputText = new StringBuilder(1024 * 32);
-
-            var psi = new ProcessStartInfo(cvdumpPath_) {
-                Arguments = $"-p \"{symbolPath}\"",
-                UseShellExecute = false,
-                CreateNoWindow = false,
-                RedirectStandardError = false,
-                RedirectStandardOutput = true
-            };
-
-            //? TODO: Put path between " to support whitespace in the path.
-
-            try {
-                using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-
-                process.OutputDataReceived += (sender, e) => {
-                    outputText.AppendLine(e.Data);
-                };
-
-                process.Start();
-                process.BeginOutputReadLine();
-
-                do {
-                    process.WaitForExit(200);
-                } while (!process.HasExited);
-
-                process.CancelOutputRead();
-
-                if (process.ExitCode != 0) {
-                    return null;
-                }
-            }
-            catch (Exception ex) {
-                return null;
-            }
-
-            return outputText.ToString();
-        }
-        
         private (Dictionary<long, IRTextFunction>, Dictionary<long, string>)
             BuildAddressFunctionMap(string symbolPath) {
             var addressFuncMap = new Dictionary<long, IRTextFunction>();
             var externalsFuncMap = new Dictionary<long, string>();
-            var symbolInfo = RunCvdump(symbolPath);
-            //var symbolInfo = File.ReadAllText(@"C:\test\results.log");
-
-            if (string.IsNullOrEmpty(symbolInfo)) {
-                return (addressFuncMap, externalsFuncMap);
-            }
-            
-            var textLines = symbolInfo.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-            var regex = new Regex(@"S_PUB32: \[[0-9A-F]*\:([0-9A-F]*)\], Flags: [0-9A-F]*\, (.*)", RegexOptions.Compiled);
-
-            foreach (var line in textLines) {
-                var result = regex.Matches(line);
-
-                if (result.Count == 0) {
-                    continue;
+            foreach(var (funcName, address) in pdbParser_.Parse(symbolPath)) {
+                var func = summary_.FindFunction(funcName);
+                if (func != null) {
+                    addressFuncMap[address] = func;
                 }
-                
-                if (result[0].Groups.Count == 3) {
-                    var address = Convert.ToInt64(result[0].Groups[1].Value, 16);
-                    var funcName = result[0].Groups[2].Value;
-                    var func = summary_.FindFunction(funcName);
-                    
-                    if (func != null) {
-                        addressFuncMap[address] = func;
-                    }
-                    else {
-                        externalsFuncMap[address] = funcName;
-                    }
+                else {
+                    externalsFuncMap[address] = funcName;
                 }
             }
 
@@ -165,7 +176,11 @@ namespace IRExplorerUI.Profile {
                 imageName = Path.GetFileNameWithoutExtension(imageName);
 
                 var (addressFuncMap, externalsFuncMap) = BuildAddressFunctionMap(symbolPath);
-                
+                // If we have no functions from the pdb, there's nothing more to do
+                if (addressFuncMap.Count == 0) {
+                    return null;
+                }
+
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
                     //var settings = new TraceProcessorSettings {
@@ -196,7 +211,8 @@ namespace IRExplorerUI.Profile {
                     int index = 0;
                     var totalSamples = cpuSamplingData.Samples.Count;
                     var prevFuncts = new Dictionary<string, List<IRTextFunction>>();
-                    Dictionary<string, IRTextFunction> demangledFuncNames = null;
+                    var demangledFuncNames = new Lazy<Dictionary<string, IRTextFunction>>(CreateDemangledNameMapping, LazyThreadSafetyMode.None);
+
                     Dictionary<string, IRTextFunction> externalFuncNames = new Dictionary<string, IRTextFunction>();
 
                     var stackFuncts = new HashSet<IRTextFunction>();
@@ -282,7 +298,9 @@ namespace IRExplorerUI.Profile {
                             // Try to use the precise address -> function mapping from cvdump.
                             //? Extract and make dummy func if missing
                             if (!addressFuncMap.TryGetValue(funcAddress, out var textFunction)) {
-                                if (addressFuncMap.Count != 0) {
+                                if (!demangledFuncNames.Value.TryGetValue(funcName, out textFunction)) {
+                                    //? TODO: For external functs that don't have IR, record the timing somehow
+                                    //? - maybe create a dummy func for it
                                     // Check if it's a known external function.
                                     if (!externalsFuncMap.TryGetValue(funcAddress, out var externalFuncName)) {
                                         prevStackFunc = null;
@@ -294,18 +312,6 @@ namespace IRExplorerUI.Profile {
                                         textFunction = new IRTextFunction(externalFuncName);
                                         summary_.AddFunction(textFunction);
                                         externalFuncNames[externalFuncName] = textFunction;
-                                    }
-                                }
-                                else {
-                                    if (demangledFuncNames == null) {
-                                        demangledFuncNames = CreateDemangledNameMapping();
-                                    }
-
-                                    if (!demangledFuncNames.TryGetValue(funcName, out textFunction)) {
-                                        //? TODO: For external functs that don't have IR, record the timing somehow
-                                        //? - maybe create a dummy func for it
-                                        prevStackFunc = null;
-                                        continue;
                                     }
                                 }
                             }
