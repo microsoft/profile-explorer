@@ -142,13 +142,15 @@ namespace IRExplorerUI {
             if (profile != null) {
                 if (!string.IsNullOrEmpty(profile.SourceFilePath)) {
                     var sourceFilePath = profile.SourceFilePath;
-                    var mappedSourceFilePath = sourceFileMapper_.Map(sourceFilePath, () => BrowseSourceFile(
-                            filter: $"Source File|{Path.GetFileName(sourceFilePath)}",
-                            title: $"Open ${sourceFilePath}"));
+                    var mappedSourceFilePath = File.Exists(sourceFilePath) ?
+                            sourceFilePath :
+                            sourceFileMapper_.Map(sourceFilePath, () => BrowseSourceFile(
+                                filter: $"Source File|{Path.GetFileName(sourceFilePath)}",
+                                title: $"Open {sourceFilePath}"));
                     // Load new source file.
                     //? TODO: Scroll down to the start of the func
                     //? Could have an option to scroll to hottest part
-                    if (await LoadSourceFile(mappedSourceFilePath)) {
+                    if (mappedSourceFilePath != null && await LoadSourceFile(mappedSourceFilePath)) {
                         await AnnotateProfilerData(profile);
                     }
                     else {
