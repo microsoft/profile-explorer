@@ -12,7 +12,9 @@ namespace IRExplorerCore {
                 return result;
             }
             result = lookup();
-            UpdateMap(sourceFile, result);
+            if (result != null) {
+                UpdateMap(sourceFile, result);
+            }
             return result;
         }
 
