@@ -10,7 +10,7 @@
 
 [Setup]
 AppName=IR Explorer
-AppVersion=0.6.5
+AppVersion=0.7.9
 WizardStyle=modern
 DefaultDirName={autopf}\IR Explorer
 DefaultGroupName=IR Explorer
@@ -28,7 +28,7 @@ Root: HKCR; Subkey: "{#MyAppName}\DefaultIcon";             ValueData: "{app}\{#
 Root: HKCR; Subkey: "{#MyAppName}\shell\open\command";  ValueData: """{app}\{#MyAppExeName}"" ""%1""";  ValueType: string;  ValueName: ""
 
 [Files]
-Source: "c:\ir-explorer\publish\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: "d:\ir-explorer\publish\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\IR Explorer"; Filename: "{app}\irexplorer.exe"
