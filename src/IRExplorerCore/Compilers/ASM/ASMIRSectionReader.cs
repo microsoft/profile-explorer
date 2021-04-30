@@ -34,7 +34,7 @@ namespace IRExplorerCore.ASM {
 
         protected override string PreprocessLine(string line) => line;
 
-        protected override bool ShouldSkipOutputLine(string line) => throw new NotImplementedException();
+        protected override bool ShouldSkipOutputLine(string line) => string.IsNullOrEmpty(line);
 
         protected override bool FunctionEndIsFunctionStart(string line) => !string.IsNullOrEmpty(line);
         protected override bool SectionStartIsFunctionStart(string line) => true;
