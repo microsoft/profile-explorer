@@ -86,6 +86,10 @@ namespace IRExplorerCore.UTC {
             return opIndex < block.Predecessors.Count ? block.Predecessors[opIndex] : null;
         }
 
+        public bool IsNOP(InstructionIR instr) {
+            throw new NotImplementedException();
+        }
+
         public IRElement SkipCopyInstruction(InstructionIR instr) {
             if (!instr.OpcodeIs(UTCOpcode.OPASSIGN)) {
                 return null;

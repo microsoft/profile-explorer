@@ -79,7 +79,7 @@ namespace IRExplorerUI {
 
     public partial class MainWindow : Window, ISession {
         private LayoutDocumentPane activeDocumentPanel_;
-        private AddressMetadataTag addressTag_;
+        private AssemblyMetadataTag addressTag_;
         private bool appIsActivated_;
         private DispatcherTimer autoSaveTimer_;
         private Dictionary<string, DateTime> changedDocuments_;

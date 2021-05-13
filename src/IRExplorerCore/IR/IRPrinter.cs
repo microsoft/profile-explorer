@@ -48,6 +48,11 @@ namespace IRExplorerCore.IR {
 
         private void PrintBlock(BlockIR block) {
             builder_.Append($"block {block.Number}:");
+
+            builder_.Append(" P");
+            block.Predecessors.ForEach((p) => builder_.Append($" {p.Number}"));
+            builder_.Append(", S");
+            block.Successors.ForEach((p) => builder_.Append($" {p.Number}"));
             builder_.AppendLine();
 
             foreach (var tuple in block.Tuples) {

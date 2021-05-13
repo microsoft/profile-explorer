@@ -15,12 +15,12 @@ namespace IRExplorerCore.ASM {
         }
 
         public FunctionIR ParseSection(IRTextSection section, string sectionText) => new ASMParser(
-                errorHandler_,
+                irMode_, errorHandler_,
                 RegisterTables.SelectRegisterTable(irMode_),
                 sectionText).Parse();
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) => new ASMParser(
-                errorHandler_,
+                irMode_, errorHandler_,
                 RegisterTables.SelectRegisterTable(irMode_),
                 sectionText).Parse();
 

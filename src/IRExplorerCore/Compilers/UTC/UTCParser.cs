@@ -236,7 +236,7 @@ namespace IRExplorerCore.UTC {
         public UTCParser(ParsingErrorHandler errorHandler,
                          Dictionary<int, string> lineMetadata,
                          RegisterTable registerTable = null)
-            : base(errorHandler, registerTable) {
+            : base(IRMode.x86, errorHandler, registerTable) {
             lineMetadataMap_ = lineMetadata;
 
             labelMap_ = new Dictionary<string, BlockLabelIR>();
@@ -431,7 +431,7 @@ namespace IRExplorerCore.UTC {
             }
         }
 
-        private void ParseMetadata(IRElement element, AddressMetadataTag tag) {
+        private void ParseMetadata(IRElement element, AssemblyMetadataTag tag) {
             // Metadata starts with /// followed by irx:metadata_type
             if (!TokenIs(TokenKind.Div) || 
                 !NextTokenIs(TokenKind.Div) || 
@@ -464,7 +464,7 @@ namespace IRExplorerCore.UTC {
             SkipToLineStart();
         }
 
-        private void ParseAddressMetadata(IRElement element, AddressMetadataTag tag) {
+        private void ParseAddressMetadata(IRElement element, AssemblyMetadataTag tag) {
             // irx::address INSTR_ADDRESS; DEST1 DESTn; SRC1 SRCn
             SkipToken(); // address
             long? address = ParseHexAddress();
@@ -511,7 +511,7 @@ namespace IRExplorerCore.UTC {
             }
         }
 
-        private void ParseOffsetMetadata(IRElement element, AddressMetadataTag tag) {
+        private void ParseOffsetMetadata(IRElement element, AssemblyMetadataTag tag) {
             // irx::offset INSTR_ADDRESS; OFFSET
             SkipToken(); // offset
             long? address = ParseInt64();
@@ -571,7 +571,6 @@ namespace IRExplorerCore.UTC {
             }
 
             var block = GetOrCreateBlock(blockNumber, function);
-            block.Id = NextElementId.NewBlock(blockNumber);
 
             if (cfgAvailable) {
                 // Parse the list of predecessor and successor blocks

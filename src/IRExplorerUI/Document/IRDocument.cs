@@ -3016,7 +3016,7 @@ namespace IRExplorerUI {
             }
 
             var funcProfile = Session.ProfileData.GetFunctionProfile(section_.ParentFunction);
-            var metadataTag = function_.GetTag<AddressMetadataTag>();
+            var metadataTag = function_.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
             
             if (funcProfile == null || !hasInstrOffsetMetadata) {

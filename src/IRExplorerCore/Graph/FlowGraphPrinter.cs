@@ -64,8 +64,8 @@ nslimit=2;
                 }
             }
 
-            string domEdges = PrintDominatorEdges(DominatorAlgorithmOptions.Dominators);
-            builder.AppendLine(domEdges);
+            //string domEdges = PrintDominatorEdges(DominatorAlgorithmOptions.Dominators);
+            //builder.AppendLine(domEdges);
         }
 
         private string PrintDominatorEdges(DominatorAlgorithmOptions options) {

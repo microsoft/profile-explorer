@@ -213,7 +213,7 @@ namespace IRExplorerUI {
 
         #endregion
 
-        private bool TryFindElementForOffset(AddressMetadataTag metadataTag, long offset, out IRElement element) {
+        private bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset, out IRElement element) {
             int multiplier = 1;
             var offsetData = Session.CompilerInfo.IR.InstrOffsetData;
 
@@ -243,7 +243,7 @@ namespace IRExplorerUI {
             var nextElementId = new IRElementId();
 
             var function = Session.CurrentDocument.Function;
-            var metadataTag = function.GetTag<AddressMetadataTag>();
+            var metadataTag = function.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
             bool markedInstrs = false;
 

@@ -5,16 +5,20 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace IRExplorerCore.IR.Tags {
-    public class AddressMetadataTag : ITag {
-        public AddressMetadataTag() {
+    public class AssemblyMetadataTag : ITag {
+        public AssemblyMetadataTag() {
             AddressToElementMap = new Dictionary<long, IRElement>();
             OffsetToElementMap = new Dictionary<long, IRElement>();
             ElementToOffsetMap = new Dictionary<IRElement, long>();
+            ElementSizeMap = new Dictionary<IRElement, int>();
         }
 
         public Dictionary<long, IRElement> AddressToElementMap { get; set; }
         public Dictionary<long, IRElement> OffsetToElementMap { get; set; }
         public Dictionary<IRElement, long> ElementToOffsetMap { get; set; }
+        public Dictionary<IRElement, int> ElementSizeMap { get; set; }
+        public long FunctionSize { get; set; }
+
         public string Name => "Address metadata";
         public TaggedObject Owner { get; set; }
 
