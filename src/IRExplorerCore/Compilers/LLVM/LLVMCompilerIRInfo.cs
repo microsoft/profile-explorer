@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Diagnostics;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
@@ -57,6 +58,10 @@ namespace IRExplorerCore.LLVM {
 
         public bool IsPhiInstruction(InstructionIR instr) {
             return false;
+        }
+
+        public bool IsNOP(InstructionIR instr) {
+            throw new NotImplementedException();
         }
 
         public BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex) {

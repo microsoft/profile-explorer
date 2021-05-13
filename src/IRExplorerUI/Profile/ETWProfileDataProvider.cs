@@ -343,7 +343,7 @@ namespace IRExplorerUI.Profile {
                             if (markInlinedFunctions && textFunction.Sections.Count > 0) {
                                 // Load current function.
                                 var result = loader_.LoadSection(textFunction.Sections[^1]);
-                                var metadataTag = result.Function.GetTag<AddressMetadataTag>();
+                                var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
                                 bool hasInstrOffsetMetadata =
                                     metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 

@@ -8,14 +8,17 @@ namespace IRExplorerCore {
     public class InstrOffsetData {
         public int OffsetAdjustIncrement { get; private set; }
         public int MaxOffsetAdjust { get; private set; }
+
         public static InstrOffsetData PointsToNextInstr() => new InstrOffsetData() {
             OffsetAdjustIncrement = 0,
             MaxOffsetAdjust = 0
         };
+
         public static InstrOffsetData ConstantSize(int size) => new InstrOffsetData() {
             OffsetAdjustIncrement = size,
             MaxOffsetAdjust = size
         };
+
         public static InstrOffsetData VariableSize(int minSize, int maxSize) => new InstrOffsetData() {
             OffsetAdjustIncrement = minSize,
             MaxOffsetAdjust = maxSize
@@ -36,6 +39,7 @@ namespace IRExplorerCore {
         bool IsCallInstruction(InstructionIR instr);
         bool IsIntrinsicCallInstruction(InstructionIR instr);
         bool IsPhiInstruction(InstructionIR instr);
+        bool IsNOP(InstructionIR instr);
         BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex);
         IRElement SkipCopyInstruction(InstructionIR instr);
         OperandIR GetCallTarget(InstructionIR instr);

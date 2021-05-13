@@ -627,7 +627,7 @@ namespace IRExplorerUI {
 
             if (parsedSection.Function != null) {
                 compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
-                addressTag_ = parsedSection.Function.GetTag<AddressMetadataTag>();
+                addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
             }
 
             return parsedSection;

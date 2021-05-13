@@ -15,10 +15,11 @@ namespace IRExplorerCore {
         protected Token previous_;
         private readonly Dictionary<int, BlockIR> blockMap_ = new Dictionary<int, BlockIR>();
         private IRElementId nextElementId_;
-        private AddressMetadataTag metadataTag_; // lazy-init
+        private AssemblyMetadataTag metadataTag_; // lazy-init
 
-        protected AddressMetadataTag MetadataTag => metadataTag_ ??= new AddressMetadataTag();
+        protected AssemblyMetadataTag MetadataTag => metadataTag_ ??= new AssemblyMetadataTag();
 
+        protected IRMode irMode_;
         private readonly IRParsingErrorHandler errorHandler_;
 
         private readonly RegisterTable registerTable_;
@@ -32,7 +33,8 @@ namespace IRExplorerCore {
 
         protected IRElementId NextElementId => nextElementId_;
 
-        protected ParserBase(IRParsingErrorHandler errorHandler, RegisterTable registerTable) {
+        protected ParserBase(IRMode irMode, IRParsingErrorHandler errorHandler, RegisterTable registerTable) {
+            irMode_ = irMode;
             errorHandler_ = errorHandler;
             registerTable_ = registerTable;
         }
@@ -73,7 +75,8 @@ namespace IRExplorerCore {
                 return block;
             }
 
-            var newBlock = new BlockIR(NextElementId, blockNumber, function);
+            var blockId = NextElementId.NewBlock(blockNumber);
+            var newBlock = new BlockIR(blockId, blockNumber, function);
             blockMap_[blockNumber] = newBlock;
             return newBlock;
         }
@@ -233,6 +236,11 @@ namespace IRExplorerCore {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool IsComma() {
             return current_.Kind == TokenKind.Comma;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected bool IsColon() {
+            return current_.Kind == TokenKind.Colon;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
