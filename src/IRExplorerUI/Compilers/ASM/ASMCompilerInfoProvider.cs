@@ -40,11 +40,11 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public IRRemarkProvider RemarkProvider => remarks_;
 
-        public List<QueryDefinition> BuiltinQueries => throw new NotImplementedException();
+        public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>();
 
-        public List<FunctionTaskDefinition> BuiltinFunctionTasks => throw new NotImplementedException();
+        public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>();
 
-        public List<FunctionTaskDefinition> ScriptFunctionTasks => throw new NotImplementedException();
+        public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
 
         public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
             return true;

@@ -8,6 +8,34 @@ using IRExplorerCore.Analysis;
 
 namespace IRExplorerCore.ASM {
     public sealed class ASMParser : ParserBase {
+        enum Keyword {
+            None,
+            Byte,
+            Word,
+            Dword,
+            Qword,
+            Ptr,
+            Hex
+        }
+
+        private static Dictionary<string, Keyword> keywordMap_ =
+            new Dictionary<string, Keyword> {
+                {"byte", Keyword.Byte},
+                {"word", Keyword.Word},
+                {"dword", Keyword.Dword},
+                {"qword", Keyword.Qword},
+                {"ptr", Keyword.Ptr},
+                {"BYTE", Keyword.Byte},
+                {"WORD", Keyword.Word},
+                {"DWORD", Keyword.Dword},
+                {"QWORD", Keyword.Qword},
+                {"PTR", Keyword.Ptr},
+                {"h", Keyword.Hex},
+                {"H", Keyword.Hex},
+            };
+
+        static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
+
         private long? initialAddress_;
         private bool makeNewBlock_;
         private bool connectNewBlock_;
@@ -201,16 +229,21 @@ namespace IRExplorerCore.ASM {
                     connectNewBlock_ = false;
                 }
 
+                SkipToken(); // Skip opcode.
+
                 if (isJump) {
                     // Connect the block with the jump target.
-                    SkipToken();
-
                     if (Current.Kind == TokenKind.Number) {
                         long? targetAddress = ParseHexAddress();
                         var targetBlock = GetOrCreateBlock(targetAddress.Value, block.ParentFunction);
                         ConnectBlocks(block, targetBlock);
                         referencedBlocks_.Add(targetBlock);
                     }
+                }
+                else {
+                    ParseOperandList(instr, instr.Sources);
+
+                    //? TODO: OPEQ add first source as dest
                 }
             }
 
@@ -226,6 +259,174 @@ namespace IRExplorerCore.ASM {
             SkipToLineEnd();
             SetTextRange(instr, startToken, Current, adjustment: 1);
             return isJump;
+        }
+
+        private bool ParseOperandList(InstructionIR instr, List<OperandIR> list) {
+            while (!IsLineEnd()) {
+                var operand = ParseOperand(instr, false);
+
+                if (operand == null) {
+                    return false;
+                }
+
+                operand.Role = OperandRole.Source;
+                list.Add(operand);
+
+                if (IsComma()) {
+                    SkipToken(); // More operands after ,
+                }
+                else {
+                    break;
+                }
+            }
+
+            return true;
+        }
+
+
+        private OperandIR ParseOperand(TupleIR parent, bool isIndirBaseOp = false,
+                                      bool isBlockLabelRef = false,
+                                      bool disableSkipToNext = false) {
+            SkipKeywords(); // Skip DWORD PTR, etc.
+            OperandIR operand = null;
+
+            // operand = varOp | intOp | floatOp | | addressOp | indirOp | labelOp | pasOp
+            if (IsIdentifier()) {
+                // Variable/temporary.
+                //? TODO: If it starts with @ it's address
+                operand = ParseVariableOperand(parent, isIndirBaseOp);
+            }
+            else if (IsNumber() || TokenIs(TokenKind.Minus)) { // int/float const
+                operand = ParseNumber(parent);
+            }
+            else if (TokenIs(TokenKind.OpenSquare)) { // [indir]
+                if (isIndirBaseOp) {
+                    ReportError(TokenKind.OpenSquare, "Failed ParseOperand nested INDIR");
+                    return null; // Nested [indir] not allowed.
+                }
+
+                operand = ParseIndirection(parent);
+            }
+
+            SkipToNextOperand();
+            return operand;
+        }
+
+        private OperandIR ParseNumber(TupleIR parent) {
+            var startToken = Current;
+            var opKind = OperandKind.Other;
+            object opValue = null;
+            bool isNegated = false;
+
+            if (TokenIs(TokenKind.Minus)) {
+                SkipToken();
+                isNegated = true;
+            }
+
+            if (TokenLongHexNumber(out long intValue)) {
+                // intConst = DECIMAL [(0xHEX)] [.type]
+                SkipToken();
+                opKind = OperandKind.IntConstant;
+
+                unchecked {
+                    opValue = isNegated ? -intValue : intValue;
+                }
+
+                SkipKeyword(Keyword.Hex); // Skip optional h suffix.
+            }
+            else {
+                ReportError(TokenKind.Number, "Failed ParseNumber");
+                return null;
+            }
+
+            var type = TypeIR.GetUnknown();
+            var operand = CreateOperand(NextElementId, opKind, type, parent);
+            operand.Value = opValue;
+            SetTextRange(operand, startToken);
+            return operand;
+        }
+
+        private OperandIR ParseVariableOperand(TupleIR parent, bool isIndirBaseOp = false) {
+            // Save variable name.
+            var opName = TokenData();
+            var operand = CreateOperand(NextElementId, OperandKind.Variable, TypeIR.GetUnknown(), parent);
+            operand.Value = opName;
+
+            // Try to associate with a register.
+            var register = RegisterTable.GetRegister(TokenString());
+
+            if (register != null) {
+                operand.AddTag(new RegisterTag(register, operand));
+            }
+
+            var startToken = Current;
+            SkipToken();
+            SetTextRange(operand, startToken);
+            return operand;
+        }
+
+        private OperandIR ParseIndirection(TupleIR parent) {
+            var startToken = Current;
+            SkipToken();
+            var baseOp = ParseOperand(parent, true);
+
+            // After lowering, indirections can have multiple operands
+            // like [base+index+offset].
+            //? TODO: Save the extra ops
+            while (!TokenIs(TokenKind.CloseSquare)) {
+                // Skip over + or *.
+                SkipToNextOperand();
+                ExpectAndSkipToken(TokenKind.Plus, TokenKind.Star);
+
+                if (ParseOperand(parent, true) == null) {
+                    break;
+                }
+                
+                //? TODO: Add to list - maybe introduce IndirectOperand
+            }
+
+            var operand = CreateOperand(NextElementId, OperandKind.Indirection,
+                                        TypeIR.GetUnknown(), parent);
+            operand.Value = baseOp;
+
+            if (!ExpectAndSkipToken(TokenKind.CloseSquare)) {
+                ReportError(TokenKind.CloseSquare, "Failed ParseIndirection");
+                return null;
+            }
+
+            SetTextRange(operand, startToken);
+            return operand;
+        }
+
+        private void SkipToNextOperand() {
+            while (!(TokenIs(TokenKind.Comma) || IsLineEnd())) {
+                if (TokenIs(TokenKind.OpenParen)) {
+                    SkipAfterToken(TokenKind.CloseParen);
+                }
+                else if (TokenIs(TokenKind.OpenCurly)) {
+                    SkipAfterToken(TokenKind.CloseCurly);
+                }
+                else if (TokenIs(TokenKind.Less)) {
+                    SkipAfterToken(TokenKind.Greater);
+                }
+                else {
+                    break;
+                }
+            }
+        }
+
+        private OperandIR CreateOperand(IRElementId elementId, OperandKind kind,
+                                        TypeIR type, TupleIR parent) {
+#if USE_POOL
+            var op = operandPool_.Get();
+            op.Id = elementId.NextOperand();
+            op.Kind = kind;
+            op.Type = type;
+            op.Parent = parent;
+            return op;
+#else
+            return new OperandIR(elementId, kind, type, parent);
+#endif
         }
 
         private int CountInstructionBytes(int instrSize) {
@@ -251,6 +452,32 @@ namespace IRExplorerCore.ASM {
             }
 
             return InstructionKind.Other;
+        }
+
+        private Keyword TokenKeyword() {
+            if (Current.IsIdentifier()) {
+                if (keywordTrie_.TryGetValue(TokenStringData(), out var keyword)) {
+                    return keyword;
+                }
+            }
+
+            return Keyword.None;
+        }
+
+        private bool IsKeyword() {
+            return TokenKeyword() != Keyword.None;
+        }
+
+        private void SkipKeyword(Keyword kind) {
+            if(TokenKeyword() == kind) {
+                SkipToken();
+            }
+        }
+
+        private void SkipKeywords() {
+            while(IsKeyword()) {
+                SkipToken();
+            }
         }
     }
 }

@@ -19,7 +19,8 @@ namespace IRExplorerCore.ASM {
         public IRParsingErrorHandler CreateParsingErrorHandler() => new ParsingErrorHandler();
 
         public IReachableReferenceFilter CreateReferenceFilter(FunctionIR function) {
-            throw new NotImplementedException();
+            //? TODO: Use UTCReferenceFilter, make a DefaultReachabilityFilter out of it
+            return null;
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
@@ -35,47 +36,47 @@ namespace IRExplorerCore.ASM {
         }
 
         public OperandIR GetCallTarget(InstructionIR instr) {
-            throw new NotImplementedException();
+            return null;
         }
 
         public BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex) {
-            throw new NotImplementedException();
+            return null;
         }
 
         public bool IsCallInstruction(InstructionIR instr) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool IsCopyInstruction(InstructionIR instr) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool IsIntrinsicCallInstruction(InstructionIR instr) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool IsLoadInstruction(InstructionIR instr) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool IsPhiInstruction(InstructionIR instr) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool IsStoreInstruction(InstructionIR instr) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool IsNOP(InstructionIR instr) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck) {
-            throw new NotImplementedException();
+            return false;
         }
 
         public IRElement SkipCopyInstruction(InstructionIR instr) {
-            throw new NotImplementedException();
+            return instr;
         }
     }
 }
