@@ -41,8 +41,9 @@ namespace IRExplorerCore.ASM {
         private bool connectNewBlock_;
         private InstructionIR previousInstr_;
         private Dictionary<long, int> addressToBlockNumberMap_;
+        private Dictionary<long, Tuple<TextLocation, int>> potentialLabelMap_;
         private HashSet<BlockIR> comittedBlocks_;
-        private HashSet<BlockIR> referencedBlocks_;
+        private Dictionary<BlockIR, long> referencedBlocks_;
 
         public ASMParser(IRMode irMode, IRParsingErrorHandler errorHandler,
                          RegisterTable registerTable,
@@ -73,8 +74,9 @@ namespace IRExplorerCore.ASM {
             base.Reset();
             makeNewBlock_ = true;
             addressToBlockNumberMap_ = new Dictionary<long, int>();
+            potentialLabelMap_ = new Dictionary<long, Tuple<TextLocation, int>>();
             comittedBlocks_ = new HashSet<BlockIR>();
-            referencedBlocks_ = new HashSet<BlockIR>();
+            referencedBlocks_ = new Dictionary<BlockIR, long>();
         }
 
         private int GetBlockNumber(long address) {
@@ -92,6 +94,15 @@ namespace IRExplorerCore.ASM {
             return base.GetOrCreateBlock(number, function);
         }
 
+        private BlockLabelIR GetOrCreateBlockLabel(BlockIR block) {
+            // Create a dummy label to be set later when parsing the block.
+            if (block.Label == null) {
+                block.Label = new BlockLabelIR(NextElementId, ReadOnlyMemory<char>.Empty, block);
+            }
+            
+            return block.Label;
+        }
+
         public FunctionIR Parse() {
             var function = new FunctionIR();
             Token startElement = default;
@@ -103,11 +114,11 @@ namespace IRExplorerCore.ASM {
                     if (Current.Kind == TokenKind.Number &&
                         NextTokenIs(TokenKind.Colon) &&
                         TokenLongHexNumber(out long address)) {
-                        if (block != null) {
-                            
-                        }
-                        
                         var newBlock = GetOrCreateBlock(address, function);
+                        var blockLabel = GetOrCreateBlockLabel(newBlock);
+
+                        blockLabel.TextLocation = Current.Location;
+                        blockLabel.TextLength = Current.Length;
 
                         if (block != null && connectNewBlock_) {
                             ConnectBlocks(block, newBlock);
@@ -136,9 +147,15 @@ namespace IRExplorerCore.ASM {
             }
 
             // Add any remaining block referenced by jumps.
-            foreach(var refBlock in referencedBlocks_) {
-                if(!comittedBlocks_.Contains(refBlock)) {
-                    function.Blocks.Add(refBlock);
+            foreach(var pair in referencedBlocks_) {
+                if(!comittedBlocks_.Contains(pair.Key)) { 
+                    if(potentialLabelMap_.TryGetValue(pair.Value, out var location)) {
+                        var label = GetOrCreateBlockLabel(pair.Key);
+                        label.TextLocation = location.Item1;
+                        label.TextLength = location.Item2;
+                    }
+
+                    function.Blocks.Add(pair.Key);
                 }
             }
 
@@ -166,18 +183,16 @@ namespace IRExplorerCore.ASM {
 
         private bool ParseLine(BlockIR block) {
             var startToken = Current;
-            bool isJump = false;
 
-            if (Current.Kind != TokenKind.Number) {
+            if (Current.Kind != TokenKind.Number ||
+                !TokenLongHexNumber(out var address)) {
                 ReportErrorAndSkipLine(TokenKind.Number, "Expected line to start with an address");
                 return false;
             }
 
-            long? address = ParseHexAddress();
-            if (!address.HasValue) {
-                ReportErrorAndSkipLine(TokenKind.Number, "Expected line to start with an address");
-                return false;
-            }
+            // Record address to be used for jump in the middle of blocks.
+            potentialLabelMap_[address] = new Tuple<TextLocation, int>(Current.Location, Current.Length);
+            SkipToken();
 
             if (!ExpectAndSkipToken(TokenKind.Colon)) {
                 // Instrs. with more than 6 bytes extend on multiple lines.
@@ -196,6 +211,7 @@ namespace IRExplorerCore.ASM {
 
             // Skip over the list of instruction bytecodes.
             int instrSize = 0;
+            bool isJump = false;
             instrSize = CountInstructionBytes(instrSize);
 
             var instr = new InstructionIR(NextElementId, InstructionKind.Other, block);
@@ -230,28 +246,35 @@ namespace IRExplorerCore.ASM {
                 }
 
                 SkipToken(); // Skip opcode.
+                ParseOperandList(instr, instr.Sources);
 
                 if (isJump) {
                     // Connect the block with the jump target.
-                    if (Current.Kind == TokenKind.Number) {
-                        long? targetAddress = ParseHexAddress();
-                        var targetBlock = GetOrCreateBlock(targetAddress.Value, block.ParentFunction);
+                    if (instr.Sources.Count > 0 &&
+                        instr.Sources[0].IsIntConstant) {
+                        var targetAddress = instr.Sources[0].IntValue;
+                        var targetBlock = GetOrCreateBlock(targetAddress, block.ParentFunction);
                         ConnectBlocks(block, targetBlock);
-                        referencedBlocks_.Add(targetBlock);
+                        referencedBlocks_[targetBlock] = targetAddress;
+
+                        instr.Sources[0].Kind = OperandKind.LabelAddress;
+                        instr.Sources[0].Value = GetOrCreateBlockLabel(targetBlock);
                     }
                 }
                 else {
-                    ParseOperandList(instr, instr.Sources);
+                    if(instr.Sources.Count > 0) {
+                        instr.Destinations.Add(instr.Sources[0]);
+                    }
 
                     //? TODO: OPEQ add first source as dest
                 }
             }
 
             // Set the size of the previous instruction.
-            initialAddress_ ??= address.Value;
-            var offset = address.Value - initialAddress_.Value;
+            initialAddress_ ??= address;
+            var offset = address - initialAddress_.Value;
 
-            MetadataTag.AddressToElementMap[address.Value] = instr;
+            MetadataTag.AddressToElementMap[address] = instr;
             MetadataTag.OffsetToElementMap[offset] = instr;
             MetadataTag.ElementToOffsetMap[instr] = offset;
             MetadataTag.ElementSizeMap[instr] = instrSize;
