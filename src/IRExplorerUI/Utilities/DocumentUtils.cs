@@ -104,8 +104,11 @@ namespace IRExplorerUI.Utilities {
             if (settings.FilterSourceDefinitions ||
                 settings.FilterDestinationUses) {
                 filter = irInfo.CreateReferenceFilter(function);
-                filter.FilterUses = settings.FilterDestinationUses;
-                filter.FilterDefinitions = settings.FilterSourceDefinitions;
+
+                if (filter != null) {
+                    filter.FilterUses = settings.FilterDestinationUses;
+                    filter.FilterDefinitions = settings.FilterSourceDefinitions;
+                }
             }
 
             return new ReferenceFinder(function, irInfo, filter);
