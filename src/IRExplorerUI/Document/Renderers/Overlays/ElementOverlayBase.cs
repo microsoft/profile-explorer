@@ -138,7 +138,7 @@ namespace IRExplorerUI.Document {
 
             if (UseToolTipBackground) {
                 // Draw a rectangle covering both the icon and tooltip.
-                var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * MarginX + 2 * Padding, 0);
+                var rect = Utils.SnapRectToPixels(elementRect, MarginX, 0, text.Width + 2 * Padding, 0);
                 drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, CurrentBorder, rect);
             }
 
@@ -148,7 +148,7 @@ namespace IRExplorerUI.Document {
 
         protected double ComputePositionX(Rect rect) {
             if (AlignmentX == HorizontalAlignment.Left) {
-                return Utils.SnapToPixels(rect.Left - ActualWidth - MarginX);
+                return Utils.SnapToPixels(rect.Left - ActualWidth + MarginX);
             }
             else if(AlignmentX == HorizontalAlignment.Right) {
                 return Utils.SnapToPixels(rect.Right + MarginX);

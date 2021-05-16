@@ -111,6 +111,10 @@ namespace IRExplorerUI.Compilers.UTC {
             return true;
         }
 
+        public bool HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
+            return true;
+        }
+
         public void ReloadSettings() {
             IRModeUtilities.SetIRModeFromSettings(ir_);
         }

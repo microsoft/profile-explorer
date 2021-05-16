@@ -56,6 +56,15 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsLoadInstruction(InstructionIR instr) {
+            switch (IRMode) {
+                case IRMode.x86: {
+                    return instr.Sources.Find((op) => op.IsIndirection) != null;
+                }
+                case IRMode.ARM64: {
+                    break; //? TODO
+                }
+            }
+
             return false;
         }
 
@@ -64,6 +73,15 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsStoreInstruction(InstructionIR instr) {
+            switch (IRMode) {
+                case IRMode.x86: {
+                    return instr.Destinations.Count > 0 &&
+                           instr.Destinations[0].IsIndirection;
+                }
+                case IRMode.ARM64: {
+                    break; //? TODO
+                }
+            }
             return false;
         }
 
@@ -77,6 +95,10 @@ namespace IRExplorerCore.ASM {
 
         public IRElement SkipCopyInstruction(InstructionIR instr) {
             return instr;
+        }
+
+        public InstructionIR GetTransferInstruction(BlockIR block) {
+            return (block.Tuples.Count > 0 ? block.Tuples[^1] : null) as InstructionIR;
         }
     }
 }

@@ -132,5 +132,16 @@ namespace IRExplorerCore.UTC {
                    UTCParser.IsTemporary(opB.NameValue.Span, out var opBId) &&
                    opAId == opBId;
         }
+
+        public InstructionIR GetTransferInstruction(BlockIR block) {
+            foreach(var tuple in block.TuplesBack) {
+                if(tuple is InstructionIR instr &&
+                    (instr.IsBranch || instr.IsSwitch || instr.IsReturn)) {
+                    return instr;
+                }
+            }
+
+            return null;
+        }
     }
 }

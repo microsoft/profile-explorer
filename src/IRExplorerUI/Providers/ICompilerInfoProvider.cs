@@ -27,6 +27,7 @@ namespace IRExplorerUI {
         void ReloadSettings();
 
         bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
+        bool HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section);
         IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
         IDiffOutputFilter CreateDiffOutputFilter();
     }

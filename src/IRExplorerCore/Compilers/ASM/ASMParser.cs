@@ -109,7 +109,7 @@ namespace IRExplorerCore.ASM {
             BlockIR block = null;
 
             while (!IsEOF()) {
-                if(makeNewBlock_) {
+                if (makeNewBlock_) {
                     // Make a new block.
                     if (Current.Kind == TokenKind.Number &&
                         NextTokenIs(TokenKind.Colon) &&
@@ -135,7 +135,7 @@ namespace IRExplorerCore.ASM {
                 }
 
                 //Trace.WriteLine($"{Current.Kind}: {Current.Data}");
-                if(ParseLine(block)) {
+                if (ParseLine(block)) {
                     SetTextRange(block, startElement, previous_);
                 }
 
@@ -146,17 +146,15 @@ namespace IRExplorerCore.ASM {
                 SetTextRange(block, startElement, Current);
             }
 
-            // Add any remaining block referenced by jumps.
-            foreach(var pair in referencedBlocks_) {
-                if(!comittedBlocks_.Contains(pair.Key)) { 
-                    if(potentialLabelMap_.TryGetValue(pair.Value, out var location)) {
-                        var label = GetOrCreateBlockLabel(pair.Key);
-                        label.TextLocation = location.Item1;
-                        label.TextLength = location.Item2;
-                    }
+            FixBlockReferences(function);
+            AssignBlockNumbers(function);
+            AddMetadata(function);
+            return function;
+        }
 
-                    function.Blocks.Add(pair.Key);
-                }
+        private void AssignBlockNumbers(FunctionIR function) {
+            if(function.Blocks.Count == 0) {
+                return;
             }
 
             // Renumber blocks to follow text order.
@@ -168,8 +166,88 @@ namespace IRExplorerCore.ASM {
                 return true;
             });
 
-            AddMetadata(function);
-            return function;
+            // The last block (after RET) is usually unreachable, remove it.
+            if(function.ExitBlock.Predecessors.Count == 0) {
+                function.Blocks.Remove(function.ExitBlock);
+            }
+        }
+
+        private void FixBlockReferences(FunctionIR function) {
+            // Add any remaining block referenced by jumps.
+            foreach (var pair in referencedBlocks_) {
+                var refBlock = pair.Key;
+                var refAddress = pair.Value;
+
+                if (comittedBlocks_.Contains(refBlock)) {
+                    continue;
+                }
+
+                // Found a referenced label, but there is no block created for it.
+                // This happens when there is no jump/branch before the label.
+                bool blockAdded = false;
+
+                if (potentialLabelMap_.TryGetValue(refAddress, out var location)) {
+                    var label = GetOrCreateBlockLabel(refBlock);
+                    label.TextLocation = location.Item1;
+                    label.TextLength = location.Item2;
+                    refBlock.TextLocation = location.Item1;
+
+                    // Check if there is an overlapping block and split it at the label,
+                    // move the tuples following the label to the new block.
+                    for (int i = 0; i < function.Blocks.Count; i++) {
+                        var otherBlock = function.Blocks[i];
+
+                        if(otherBlock == refBlock) {
+                            continue;
+                        }
+
+                        if (otherBlock.TextLocation.Offset <= location.Item1.Offset &&
+                            otherBlock.TextLocation.Offset + otherBlock.TextLength > location.Item1.Offset) {
+                            var offsetDiff = location.Item1.Offset - otherBlock.TextLocation.Offset;
+                            refBlock.TextLength = otherBlock.TextLength - offsetDiff;
+                            otherBlock.TextLength = offsetDiff - 1;
+
+                            // Move sucessor blocks from otherBlock to refBlock.
+                            foreach(var succBlock in otherBlock.Successors) {
+                                refBlock.Successors.Add(succBlock);
+                                succBlock.Predecessors.Remove(otherBlock);
+                                succBlock.Predecessors.Add(refBlock);
+                            }
+
+                            otherBlock.Successors.Clear();
+                            ConnectBlocks(otherBlock, refBlock);
+
+                            // Move the tuples to the new block.
+                            int splitIndex = 0;
+                            int copiedTuples = 0;
+
+                            for (; splitIndex < otherBlock.Tuples.Count; splitIndex++) {
+                                var tuple = otherBlock.Tuples[splitIndex];
+
+                                if (tuple.TextLocation.Offset >= location.Item1.Offset) {
+                                    refBlock.Tuples.Add(tuple);
+                                    copiedTuples++;
+                                }
+                            }
+
+                            if (copiedTuples > 0) {
+                                otherBlock.Tuples.RemoveRange(otherBlock.Tuples.Count - copiedTuples, copiedTuples);
+                            }
+
+                            // Add block after the other one.
+                            function.Blocks.Insert(i + 1, refBlock);
+                            blockAdded = true;
+                            break;
+                        }
+                    }
+
+                    comittedBlocks_.Add(refBlock);
+                }
+
+                if (!blockAdded) {
+                    function.Blocks.Add(refBlock);
+                }
+            }
         }
 
         private void ConnectBlocks(BlockIR block, BlockIR newBlock) {
