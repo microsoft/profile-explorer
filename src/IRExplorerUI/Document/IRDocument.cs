@@ -1744,6 +1744,23 @@ namespace IRExplorerUI {
             else if (element is InstructionIR instr) {
                 highlighted = HandleInstructionElement(instr, highlighter, markExpression, ref action);
             }
+            else if(element is BlockLabelIR blockLabel) {
+                var group = new HighlightedGroup(ssaDefinitionStyle_.ChildStyle);
+                var block = blockLabel.Parent;
+
+                foreach(var predBlock in block.Predecessors) {
+                    var branchInstr = Session.CompilerInfo.IR.GetTransferInstruction(predBlock);
+
+                    if(branchInstr != null) {
+                        group.Add(branchInstr);
+                        RaiseElementHighlightingEvent(branchInstr, group, highlighter.Type, action);
+                    }
+                }
+
+                group.Add(blockLabel);
+                RaiseElementHighlightingEvent(blockLabel, group, highlighter.Type, action);
+                highlighter.Add(group);
+            }
 
             if (!highlighted) {
                 HandleOtherElement(element, highlighter, action);
@@ -2266,7 +2283,7 @@ namespace IRExplorerUI {
             NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
             duringSectionLoading_ = false;
 
-            //? Check if other functions have marked elements
+            //? Check if other sections have marked elements and try to mark same ones
             //!  - session can be queried
             //!  - load func and deserialize state object
             //!    - for each marker/bookmark, use FindEquivalentValue
@@ -2274,6 +2291,9 @@ namespace IRExplorerUI {
             //var other = Session.GetNextSection(section_);
             //if (other != null)
             //    CloneOtherSectionAnnotations(other);
+
+            // Do compiler-specifiec document work.
+            Session.CompilerInfo.HandleLoadedDocument(this, function_, section_);       
         }
 
         private void CloneOtherSectionAnnotations(IRTextSection otherSection) {
@@ -2344,6 +2364,10 @@ namespace IRExplorerUI {
             // Add the elements from the entire function.
             foreach (var block in function_.Blocks) {
                 blockElements_.Add(block);
+
+                if(block.Label != null) {
+                    operandElements_.Add(block.Label);
+                }
 
                 foreach (var tuple in block.Tuples) {
                     tupleElements_.Add(tuple);
@@ -3180,10 +3204,11 @@ namespace IRExplorerUI {
 
             if (overlayRenderer_ != null) {
                 TextArea.TextView.BackgroundRenderers.Remove(overlayRenderer_);
+                TextArea.TextView.Layers.Remove(overlayRenderer_);
             }
 
             // Create the overlay and place it on top of the text.
-            overlayRenderer_ = new OverlayRenderer(markedHighlighter_);
+            overlayRenderer_ ??= new OverlayRenderer(markedHighlighter_);
             TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
 

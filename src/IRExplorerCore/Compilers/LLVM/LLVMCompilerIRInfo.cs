@@ -75,5 +75,9 @@ namespace IRExplorerCore.LLVM {
         public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck) {
             return false;
         }
+
+        public InstructionIR GetTransferInstruction(BlockIR block) {
+            return null;
+        }
     }
 }

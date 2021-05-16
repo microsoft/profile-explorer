@@ -43,6 +43,7 @@ namespace IRExplorerCore {
         BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex);
         IRElement SkipCopyInstruction(InstructionIR instr);
         OperandIR GetCallTarget(InstructionIR instr);
+        InstructionIR GetTransferInstruction(BlockIR block);
 
         bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck);
     }

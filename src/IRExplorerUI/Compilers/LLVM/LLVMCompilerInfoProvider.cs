@@ -51,6 +51,10 @@ namespace IRExplorerUI.Compilers.LLVM {
             return true;
         }
 
+        public bool HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
+            return true;
+        }
+
         public void ReloadSettings() {
         }
     }
