@@ -23,4 +23,22 @@ namespace IRExplorerUI.Diff {
                                           string beforeDocumentText, string afterDocumentText);
         AdjustedDiffPiece AdjustChange(DiffPiece change, int offset, int lineOffset, string lineText);
     }
+
+    public class BasicDiffOutputFilter : IDiffOutputFilter {
+        public char[] IgnoredDiffLetters => new char[] {
+            '(', ')', ',', '.', ';', ':', '|', '{', '}', '!', ' ', '\t'
+        };
+
+        public AdjustedDiffPiece AdjustChange(DiffPiece change, int offset, int lineOffset, string lineText) {
+            return new AdjustedDiffPiece(offset, lineOffset);
+        }
+
+        public DiffKind EstimateModificationType(DiffPiece before, DiffPiece after, int beforeOffset, int afterOffset, string beforeDocumentText, string afterDocumentText) {
+            return DiffKind.Modification;
+        }
+
+        public void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo) {
+            
+        }
+    }
 }

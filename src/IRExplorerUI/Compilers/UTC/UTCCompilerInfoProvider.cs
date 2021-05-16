@@ -47,7 +47,7 @@ namespace IRExplorerUI.Compilers.UTC {
         public IRRemarkProvider RemarkProvider => remarks_;
 
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
-            return new BaseBlockFoldingStrategy(function);
+            return new BasicBlockFoldingStrategy(function);
         }
 
         public IDiffOutputFilter CreateDiffOutputFilter() {

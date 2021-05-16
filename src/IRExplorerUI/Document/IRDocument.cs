@@ -1745,26 +1745,38 @@ namespace IRExplorerUI {
                 highlighted = HandleInstructionElement(instr, highlighter, markExpression, ref action);
             }
             else if(element is BlockLabelIR blockLabel) {
-                var group = new HighlightedGroup(ssaDefinitionStyle_.ChildStyle);
-                var block = blockLabel.Parent;
-
-                foreach(var predBlock in block.Predecessors) {
-                    var branchInstr = Session.CompilerInfo.IR.GetTransferInstruction(predBlock);
-
-                    if(branchInstr != null) {
-                        group.Add(branchInstr);
-                        RaiseElementHighlightingEvent(branchInstr, group, highlighter.Type, action);
-                    }
-                }
-
-                group.Add(blockLabel);
-                RaiseElementHighlightingEvent(blockLabel, group, highlighter.Type, action);
-                highlighter.Add(group);
+                highlighted = HandleBlockLabel(highlighter, action, blockLabel);
             }
 
             if (!highlighted) {
                 HandleOtherElement(element, highlighter, action);
             }
+        }
+
+        private bool HandleBlockLabel(ElementHighlighter highlighter, HighlightingEventAction action, BlockLabelIR blockLabel) {
+            var block = blockLabel.Parent;
+
+            if (block.Predecessors.Count == 0) {
+                return false;
+            }
+
+            // Mark all branches referencing the label.
+            var group = new HighlightedGroup(ssaDefinitionStyle_.ChildStyle);
+
+            foreach (var predBlock in block.Predecessors) {
+                var branchInstr = Session.CompilerInfo.IR.GetTransferInstruction(predBlock);
+
+                if (branchInstr != null) {
+                    group.Add(branchInstr);
+                    RaiseElementHighlightingEvent(branchInstr, group, highlighter.Type, action);
+                }
+            }
+
+            // Mark the label itself.
+            group.Add(blockLabel);
+            RaiseElementHighlightingEvent(blockLabel, group, highlighter.Type, action);
+            highlighter.Add(group);
+            return true;
         }
 
         private bool HandleInstructionElement(InstructionIR instr, ElementHighlighter highlighter,
@@ -2275,6 +2287,7 @@ namespace IRExplorerUI {
             actionUndoStack_.Clear();
             SetupBlockHighlighter();
             SetupBlockFolding();
+            ClearElementOverlays();
 
             CreateRightMarkerMargin();
             MarkLoopBlocks();
@@ -2293,7 +2306,7 @@ namespace IRExplorerUI {
             //    CloneOtherSectionAnnotations(other);
 
             // Do compiler-specifiec document work.
-            Session.CompilerInfo.HandleLoadedDocument(this, function_, section_);       
+            Session.CompilerInfo.HandleLoadedDocument(this, function_, section_);
         }
 
         private void CloneOtherSectionAnnotations(IRTextSection otherSection) {
@@ -2401,15 +2414,15 @@ namespace IRExplorerUI {
             // reappears once LateLoadSectionSetup reinstalls the block folding.
             await ComputeElementListsAsync();
 
-            // Remove the current block folding since it's bound to the current text area.
-            UninstallBlockFolding();
-            ClearTemporaryHighlighting();
-
             // Take ownership of the text document.
             diffResult.DiffDocument.SetOwnerThread(Thread.CurrentThread);
             Document = diffResult.DiffDocument;
 
+            // Remove the current block folding since it's bound to the current text area.
+            UninstallBlockFolding();
+            ClearTemporaryHighlighting();
             LateLoadSectionSetup(null);
+
             AddDiffTextSegments(diffResult.DiffSegments);
             AllDiffSegmentsAdded();
         }
@@ -2800,7 +2813,21 @@ namespace IRExplorerUI {
 
         private void PopulateMarkerBarForElementOverlays(int startY, double width,
                                                          double height, double dotSize) {
-            overlayRenderer_.ForEachElementOverlay((element, overlay) => {
+            overlayRenderer_.ForEachElementOverlay((element, overlaySegment) => {
+                // Only consider elements with overlays that should appear on the marker bar.
+                bool showOnMarkerBar = false;
+
+                foreach(var overlay in overlaySegment.Overlays) {
+                    if(overlay.ShowOnMarkerBar) {
+                        showOnMarkerBar = true;
+                        break;
+                    }
+                }
+
+                if(!showOnMarkerBar) {
+                    return;
+                }
+
                 double y = (double)element.TextLocation.Line / LineCount * height;
                 var brush = Brushes.Blue;
                 var color = ColorUtils.IncreaseSaturation(brush.Color);

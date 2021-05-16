@@ -49,11 +49,8 @@ namespace IRExplorerUI.Document {
         }
 
         public class IROverlaySegment : IRSegment {
-            public IROverlaySegment(IRElement element) : base(element) {
+            public IROverlaySegment(IRElement element, IElementOverlay overlay) : base(element) {
                 Overlays = new List<IElementOverlay>();
-            }
-
-            public IROverlaySegment(IRElement element, IElementOverlay overlay) : this(element) {
                 Overlays.Add(overlay);
             }
 

@@ -21,6 +21,7 @@ namespace IRExplorerUI.Document {
         Size Size { get; }
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
+        public bool ShowOnMarkerBar { get; set; }
         public void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
 
         public bool CheckIsMouseOver(Point point);
