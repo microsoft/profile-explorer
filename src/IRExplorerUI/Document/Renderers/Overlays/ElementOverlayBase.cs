@@ -67,25 +67,27 @@ namespace IRExplorerUI.Document {
         [ProtoMember(15)]
         public bool IsToolTipPinned { get; set; }
         [ProtoMember(16)]
-        public double DefaultOpacity { get; set; }
+        public bool ShowOnMarkerBar { get; set; }
         [ProtoMember(17)]
+        public double DefaultOpacity { get; set; }
+        [ProtoMember(18)]
         public double MouseOverOpacity { get; set; }
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
         public Rect Bounds { get; set; }
-        [ProtoMember(18)]
-        public Brush Background { get; set; }
         [ProtoMember(19)]
-        public Brush SelectedBackground { get; set; }
+        public Brush Background { get; set; }
         [ProtoMember(20)]
-        public Pen Border { get; set; }
+        public Brush SelectedBackground { get; set; }
         [ProtoMember(21)]
-        public Brush TextColor { get; set; }
+        public Pen Border { get; set; }
         [ProtoMember(22)]
-        public Brush SelectedTextColor { get; set; }
+        public Brush TextColor { get; set; }
         [ProtoMember(23)]
-        public int TextSize { get; set; }
+        public Brush SelectedTextColor { get; set; }
         [ProtoMember(24)]
+        public int TextSize { get; set; }
+        [ProtoMember(25)]
         public FontWeight TextWeight { get; set; }
         protected double ActualWidth => Width + 2 * Padding;
         protected double ActualHeight => Height + 2 * Padding;

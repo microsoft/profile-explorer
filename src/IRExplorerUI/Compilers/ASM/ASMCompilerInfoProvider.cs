@@ -53,11 +53,11 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         public IDiffOutputFilter CreateDiffOutputFilter() {
-            throw new NotImplementedException();
+            return new BasicDiffOutputFilter();
         }
 
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
-            return new BaseBlockFoldingStrategy(function);
+            return new BasicBlockFoldingStrategy(function);
         }
 
         public bool HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
@@ -69,23 +69,17 @@ namespace IRExplorerUI.Compilers.ASM {
             foreach (var block in function.Blocks) {
                 if (block.Tuples.Count > 0) {
                     var firstTuple = block.Tuples[0];
-                    var icon = IconDrawing.FromIconResource("DotIcon");
                     var tooltip = $"B{block.Number}";
-                    var overlay = Session.CurrentDocument.AddIconElementOverlay(firstTuple, null, 0, overlayHeight, tooltip);
+                    var overlay = document.AddIconElementOverlay(firstTuple, null, 0, overlayHeight, tooltip,
+                                                                 HorizontalAlignment.Left, VerticalAlignment.Center, -6, -1);
+                    overlay.ShowOnMarkerBar = false;
                     overlay.IsToolTipPinned = true;
-
-                    var background = (block.Number & 1) == 1 ? settings.AlternateBackgroundColor : settings.BackgroundColor;
-                    overlay.Background = ColorBrushes.GetBrush(background);
                     overlay.DefaultOpacity = 1;
                     overlay.TextWeight = FontWeights.DemiBold;
-                    overlay.TextColor = Brushes.Blue;
-                    overlay.Padding = 2;
-                    overlay.AlignmentX = HorizontalAlignment.Left;
-                    overlay.AlignmentY = VerticalAlignment.Center;
+                    overlay.TextColor = Brushes.DarkBlue;
                     overlay.ShowBackgroundOnMouseOverOnly = false;
                     overlay.UseToolTipBackground = true;
-                    overlay.MarginX = -6;
-                    overlay.MarginY = -1;
+                    overlay.Padding = 2;
                 }
             }
 

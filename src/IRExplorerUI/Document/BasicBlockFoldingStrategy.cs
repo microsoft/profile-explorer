@@ -12,8 +12,8 @@ namespace IRExplorerUI {
         public void UpdateFoldings(FoldingManager manager, TextDocument document);
     }
 
-    public sealed class BaseBlockFoldingStrategy : IBlockFoldingStrategy {
-        public BaseBlockFoldingStrategy(FunctionIR function) {
+    public sealed class BasicBlockFoldingStrategy : IBlockFoldingStrategy {
+        public BasicBlockFoldingStrategy(FunctionIR function) {
             Function = function;
         }
 
