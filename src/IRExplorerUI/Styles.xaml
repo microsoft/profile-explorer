@@ -4,6 +4,10 @@
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:utils="clr-namespace:IRExplorerUI.Utilities">
 
+    <Style x:Key="ListViewHeaderStyle" TargetType="{x:Type GridViewColumnHeader}">
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+    </Style>
+
     <Style x:Key="HoverUnderlineStyle" TargetType="TextBlock">
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">

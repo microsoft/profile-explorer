@@ -44,6 +44,14 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsCallInstruction(InstructionIR instr) {
+            switch (IRMode) {
+                case IRMode.x86: {
+                    return instr.OpcodeText.Span == "CALL".AsSpan();
+                }
+                case IRMode.ARM64: {
+                    return instr.OpcodeText.Span == "BL".AsSpan();
+                }
+            }
             return false;
         }
 

@@ -49,10 +49,6 @@ namespace IRExplorerCore.ASM {
                          RegisterTable registerTable,
                          ReadOnlyMemory<char> sectionText)
             : base(irMode, errorHandler, registerTable) {
-
-            Trace.WriteLine("About to parse this:");
-            Trace.WriteLine(sectionText);
-
             Initialize(sectionText);
             SkipToken();
         }
@@ -61,10 +57,6 @@ namespace IRExplorerCore.ASM {
             RegisterTable registerTable,
             string sectionText)
             : base(irMode, errorHandler, registerTable) {
-            
-            Trace.WriteLine("About to parse this:");
-            Trace.WriteLine(sectionText);
-
             Reset();
             Initialize(sectionText);
             SkipToken();
@@ -134,7 +126,6 @@ namespace IRExplorerCore.ASM {
                     connectNewBlock_ = false;
                 }
 
-                //Trace.WriteLine($"{Current.Kind}: {Current.Data}");
                 if (ParseLine(block)) {
                     SetTextRange(block, startElement, previous_);
                 }
@@ -280,6 +271,7 @@ namespace IRExplorerCore.ASM {
                     int prevInstrSize = 1;
                     prevInstrSize = CountInstructionBytes(prevInstrSize);
                     MetadataTag.ElementSizeMap[previousInstr_] += prevInstrSize;
+                    MetadataTag.FunctionSize += prevInstrSize;
                     return false;
                 }
 
@@ -356,6 +348,7 @@ namespace IRExplorerCore.ASM {
             MetadataTag.OffsetToElementMap[offset] = instr;
             MetadataTag.ElementToOffsetMap[instr] = offset;
             MetadataTag.ElementSizeMap[instr] = instrSize;
+            MetadataTag.FunctionSize += instrSize;
 
             SkipToLineEnd();
             SetTextRange(instr, startToken, Current, adjustment: 1);
