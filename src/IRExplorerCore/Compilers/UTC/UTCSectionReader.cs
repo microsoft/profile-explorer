@@ -56,8 +56,8 @@ namespace IRExplorerCore.UTC {
         }
 
         protected override string PreprocessLine(string line) {
-            // Sometimes a line starts with a number followed by > like
-            // 32>actual line text, keep only the text following the >.
+            // Convert "DDD>actual line text" -> "actual line text"
+            // Convert "DDD: actual line text" -> "actual line text"
             if (string.IsNullOrEmpty(line) || !char.IsDigit(line[0])) {
                 return line;
             }
@@ -66,6 +66,10 @@ namespace IRExplorerCore.UTC {
                 if (line[i] == '>') {
                     MarkPreprocessedLine(i);
                     return line.Substring(i + 1);
+                }
+                else if (line[i] == ':') {
+                    MarkPreprocessedLine(i);
+                    return line.Substring(i + 2);
                 }
                 else if (!char.IsDigit(line[i])) {
                     break;
