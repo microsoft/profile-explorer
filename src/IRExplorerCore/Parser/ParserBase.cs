@@ -112,10 +112,54 @@ namespace IRExplorerCore {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsHexLetter(char c) {
+            return ((c >= '0' && c <= '9') ||
+                 (c >= 'a' && c <= 'f') ||
+                 (c >= 'A' && c <= 'F'));
+        }
+
+        private bool IsHexNumber(ReadOnlySpan<char> span) {
+            for (int i = 0; i < span.Length; i++) {
+                if (!IsHexLetter(span[i])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        protected bool SkipHexNumber() {
+            if(!IsNumber() && !IsIdentifier()) {
+                return false;
+            }
+
+            if(IsHexNumber(TokenData().Span)) {
+                SkipToken();
+                return true;
+            }
+
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool TokenLongHexNumber(out long value) {
+            if (!IsNumber() && !IsIdentifier()) {
+                value = 0;
+                return false;
+            }
+
             // Try to parse again as a HEX int.
+            // Since a parsing failure is very expensive, first check if the token
+            // could be a hex value and reject it early if it cannot be.
             try {
-                value = Convert.ToInt64(TokenStringData().ToString(), 16);
+                var data = TokenData();
+                
+                if(!IsHexNumber(data.Span)) {
+                    value = 0;
+                    return false;
+                }
+
+                value = Convert.ToInt64(TokenString(), 16);
                 return true;
             }
             catch (Exception) {
