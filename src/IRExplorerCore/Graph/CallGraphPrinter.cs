@@ -16,8 +16,8 @@ namespace IRExplorerCore.Graph {
 
     public class CallGraphPrinter : GraphVizPrinter {
         private const int ExternalNodeId = -1;
-        private const int LargeGraphThresholdMin = 500;
-        private const int LargeGraphThresholdMax = 1000;
+        private const int LargeGraphThresholdMin = 100;
+        private const int LargeGraphThresholdMax = 500;
 
         private const string StraightLinesSettings = @"
 splines = ortho;
@@ -70,7 +70,7 @@ nslimit=1;
             // Increase the vertical distance between nodes the more there are
             // to make the graph somewhat easier to read.
             int nodeCount = callGraph_.FunctionNodes.Count;
-            double verticalDistance = Math.Min(8, 0.8 * Math.Log(nodeCount));
+            double verticalDistance = Math.Clamp(0.5 * Math.Log(nodeCount), 0.5, 2);
             text = $"{text}\nranksep ={verticalDistance};\n";
 
             int edgeCount = EstimateEdgeCount();
@@ -109,8 +109,8 @@ nslimit=1;
             double verticalMargin = 0.1;
             string label = node.FunctionName;
 
-            if (label.Length > 20) {
-                label = $"{label.Substring(0, 18)}...";
+            if (label.Length > 25) {
+                label = $"{label.Substring(0, 22)}...";
             }
 
             // Increase node weight so that text fits completely.

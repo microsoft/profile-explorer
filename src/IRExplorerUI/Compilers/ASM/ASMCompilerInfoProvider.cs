@@ -9,6 +9,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.ASM;
 using System;
+using System.Text;
 using System.Windows;
 using System.Windows.Media;
 
@@ -52,6 +53,10 @@ namespace IRExplorerUI.Compilers.ASM {
             return true;
         }
 
+        public IDiffInputFilter CreateDiffInputFilter() {
+            return new ASMDiffInputFilter();
+        }
+
         public IDiffOutputFilter CreateDiffOutputFilter() {
             return new BasicDiffOutputFilter();
         }
@@ -88,6 +93,64 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public void ReloadSettings() {
             IRModeUtilities.SetIRModeFromSettings(ir_);
+        }
+    }
+
+    public class ASMDiffInputFilter : IDiffInputFilter {
+        public char[] AcceptedLetters => new char[] {
+            'A', 'B', 'C', 'D', 'E', 'F',
+            'a', 'b', 'c', 'd', 'e', 'f'
+        };
+
+        public string FilterInputText(string text) {
+            var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var builder = new StringBuilder(lines.Length);
+
+            foreach (var line in lines) {
+                var newLine = line;
+                int index = line.IndexOf(':');
+
+                if (index != -1) {
+                    bool isAddress = true;
+
+                    for (int i = 0; i < index; i++) {
+                        var letter = line[i];
+                        if (!(Char.IsWhiteSpace(letter) || Char.IsDigit(letter) ||
+                              Array.IndexOf(AcceptedLetters, letter) != -1)) {
+                            isAddress = false;
+                            break;
+                        }
+                    }
+
+                    if (isAddress) {
+                        // Skip over the bytecodes found before the opcode.
+                        int startIndex = index;
+
+                        for (index = index + 1; index < line.Length; index++) {
+                            var letter = line[index];
+                            if (!(Char.IsWhiteSpace(letter) || Char.IsDigit(letter) ||
+                                  Array.IndexOf(AcceptedLetters, letter) != -1)) {
+                                break;
+                            }
+                        }
+
+                        // Move back before the opcode starts.
+                        while(index > startIndex && !Char.IsWhiteSpace(line[index - 1])) {
+                            index--;
+                        }
+
+                        newLine = line.Substring(index).PadLeft(line.Length, '#');
+                    }
+                }
+                
+                builder.AppendLine(newLine);
+            }
+
+            return builder.ToString();
+        }
+
+        public void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo) {
+            
         }
     }
 }

@@ -385,14 +385,27 @@ namespace IRExplorerUI {
             DiffMarkingResult rightDiffResult;
 
             // Create the diff filter that will post-process the diff results.
+            var diffInputFilter = compilerInfo_.CreateDiffInputFilter();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
-            diffFilter.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
+            diffInputFilter?.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
+            diffFilter?.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
             // Fairly often the text is identical, don't do the diffing for such cases.
             // Also frequen is to have different text, but it is on both left/right sides
             // identical to the previous sections - in this case the diff results are reused.
             if(IsSectionTextDifferent(newLeftSection, newRightSection)) {
-                var diff = await ComputeSectionDiffs(leftText, rightText, newLeftSection, newRightSection);
+                var leftDiffText = leftText;
+                var rightDiffText = rightText;
+
+                if (diffInputFilter != null) {
+                    leftDiffText = diffInputFilter.FilterInputText(leftText);
+                    rightDiffText = diffInputFilter.FilterInputText(rightText);
+
+                    leftText = leftDiffText;
+                    rightText = rightDiffText;
+                }
+
+                var diff = await ComputeSectionDiffs(leftDiffText, rightDiffText, newLeftSection, newRightSection);
 
                 // Apply the diff results on the left and right documents in parallel.
                 // This will produce two AvalonEdit documents that will be installed 

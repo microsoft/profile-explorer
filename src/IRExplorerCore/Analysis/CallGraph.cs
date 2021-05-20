@@ -77,6 +77,15 @@ namespace IRExplorerCore.Analysis {
             Callers.Add(callsite);
         }
 
+        public CallGraphNode FindCallee(string name) {
+            var result = Callees.Find((c) => c.Target != null && c.Target.FunctionName.Equals(name, StringComparison.Ordinal));
+            return result?.Target;
+        }
+
+        public CallGraphNode FindCallee(CallGraphNode node) {
+            return FindCallee(node.FunctionName);
+        }
+
         public override bool Equals(object obj) {
             return obj is CallGraphNode node &&
                    Number == node.Number &&
@@ -233,8 +242,18 @@ namespace IRExplorerCore.Analysis {
                     if (irInfo_.IsCallInstruction(instr)) {
                         var callTarget = irInfo_.GetCallTarget(instr);
 
-                        if (callTarget != null && callTarget.IsAddress) {
-                            var calleeFuncName = callTarget.Name;
+                        if (callTarget != null) {
+                            // Extract target name.
+                            string calleeFuncName = "[INDIRECT]";
+
+                            if (callTarget.HasName) {
+                                calleeFuncName = callTarget.Name;
+                            }
+                            else if (callTarget.IsIntConstant) {
+                                calleeFuncName = $"0x{callTarget.IntValue:X}";
+                            }
+
+                            // Make node and enqueue it for the recursive processing.
                             var calleeNode = GetOrCreateNode(calleeFuncName);
 
                             var callsite = new CallSite(instr, calleeNode, funcNode);
@@ -295,7 +314,11 @@ namespace IRExplorerCore.Analysis {
             var section = func.FindSection(sectionName);
 
             if (section == null) {
-                return null;
+                if (func.SectionCount != 1) {
+                    return null;
+                }
+
+                section = func.Sections[0];
             }
 
             var loadedDoc = loader_.LoadSection(section);

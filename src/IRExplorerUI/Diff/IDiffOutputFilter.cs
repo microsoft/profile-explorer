@@ -24,6 +24,11 @@ namespace IRExplorerUI.Diff {
         AdjustedDiffPiece AdjustChange(DiffPiece change, int offset, int lineOffset, string lineText);
     }
 
+    public interface IDiffInputFilter {
+        void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo);
+        string FilterInputText(string text);
+    }
+
     public class BasicDiffOutputFilter : IDiffOutputFilter {
         public char[] IgnoredDiffLetters => new char[] {
             '(', ')', ',', '.', ';', ':', '|', '{', '}', '!', ' ', '\t'

@@ -967,6 +967,9 @@ namespace IRExplorerUI {
                 HideGraph();
                 return;
             }
+            else if (PanelKind == ToolPanelKind.CallGraph) {
+                return;
+            }
 
             if (section != null && section != previousSection) {
                 // User switched between two sections, reload the proper graph.

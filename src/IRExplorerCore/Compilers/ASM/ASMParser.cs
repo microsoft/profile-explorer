@@ -540,7 +540,9 @@ namespace IRExplorerCore.ASM {
                     break; 
                 }
                 case IRMode.ARM64: {
-                    //? TODO
+                    if (ARMOpcodes.GetOpcodeInfo(opcode, out var info)) {
+                        return info.Kind;
+                    }
                     break;
                 }
             }

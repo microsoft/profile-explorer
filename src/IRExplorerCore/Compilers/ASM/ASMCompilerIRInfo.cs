@@ -36,6 +36,10 @@ namespace IRExplorerCore.ASM {
         }
 
         public OperandIR GetCallTarget(InstructionIR instr) {
+            if (instr.IsCall && instr.Sources.Count > 0) {
+                return instr.Sources[0];
+            }
+
             return null;
         }
 
@@ -44,15 +48,7 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsCallInstruction(InstructionIR instr) {
-            switch (IRMode) {
-                case IRMode.x86: {
-                    return instr.OpcodeText.Span == "CALL".AsSpan();
-                }
-                case IRMode.ARM64: {
-                    return instr.OpcodeText.Span == "BL".AsSpan();
-                }
-            }
-            return false;
+            return instr.IsCall;
         }
 
         public bool IsCopyInstruction(InstructionIR instr) {
@@ -69,7 +65,8 @@ namespace IRExplorerCore.ASM {
                     return instr.Sources.Find((op) => op.IsIndirection) != null;
                 }
                 case IRMode.ARM64: {
-                    break; //? TODO
+                    //? TODO:
+                    return instr.Sources.Find((op) => op.IsIndirection) != null;
                 }
             }
 
@@ -87,7 +84,9 @@ namespace IRExplorerCore.ASM {
                            instr.Destinations[0].IsIndirection;
                 }
                 case IRMode.ARM64: {
-                    break; //? TODO
+                    //? TODO
+                    return instr.Destinations.Count > 0 &&
+                           instr.Destinations[0].IsIndirection;
                 }
             }
             return false;

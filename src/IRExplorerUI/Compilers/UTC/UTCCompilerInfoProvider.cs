@@ -50,6 +50,10 @@ namespace IRExplorerUI.Compilers.UTC {
             return new BasicBlockFoldingStrategy(function);
         }
 
+        public IDiffInputFilter CreateDiffInputFilter() {
+            return null;
+        }
+
         public IDiffOutputFilter CreateDiffOutputFilter() {
             return new UTCDiffOutputFilter();
         }
