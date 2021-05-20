@@ -52,16 +52,33 @@ namespace IRExplorerUI {
 
             foreach (var column in gridView.Columns) {
                 if (column.Header is GridViewColumnHeader header) {
-                    header.Click += ColumnHeader_Click;
-
-                    // If there is no name, the mapping is checked later
-                    // since it may be an optional column.
-                    if (!string.IsNullOrEmpty(header.Name)) {
-                        T field = fieldMapping_(header.Name);
-                        fieldColumnMap_[field] = header;
-                    }
+                    RegisterColumnHeader(header);
                 }
             }
+        }
+
+        public void RegisterColumnHeader(GridViewColumnHeader header) {
+            header.Click += ColumnHeader_Click;
+
+            // If there is no name, the mapping is checked later
+            // since it may be an optional column.
+            if (!string.IsNullOrEmpty(header.Name)) {
+                T field = fieldMapping_(header.Name);
+                fieldColumnMap_[field] = header;
+            }
+        }
+
+        public void UnregisterColumnHeader(GridViewColumnHeader header) {
+            if (header == null) {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(header.Name)) {
+                T field = fieldMapping_(header.Name);
+                fieldColumnMap_.Remove(field);
+            }
+
+            header.Click -= ColumnHeader_Click;
         }
 
         public void SortByField(T field, ListSortDirection direction = ListSortDirection.Ascending) {
@@ -83,7 +100,7 @@ namespace IRExplorerUI {
             SortColumn(column, direction, field);
         }
 
-        void ColumnHeader_Click(object sender, RoutedEventArgs e) {
+        private void ColumnHeader_Click(object sender, RoutedEventArgs e) {
             if (sortColumn_ != null) {
                 AdornerLayer.GetAdornerLayer(sortColumn_)?.Remove(sortAdorner_);
             }

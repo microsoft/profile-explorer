@@ -2996,16 +2996,10 @@ namespace IRExplorerUI {
         public void SetCaretAtElement(IRElement element) {
             SetCaretAtOffset(element.TextLocation.Offset);
         }
-
+        
         public void SetCaretAtOffset(int offset) {
-            ignoreNextCaretEvent_ = true;
-            TextArea.Caret.Offset = offset;
-        }
-
-        public void TrySetCaretAtOffset(int offset) {
-            ignoreNextCaretEvent_ = true;
-
             if (offset < Document.TextLength) {
+                ignoreNextCaretEvent_ = true;
                 TextArea.Caret.Offset = offset;
             }
         }

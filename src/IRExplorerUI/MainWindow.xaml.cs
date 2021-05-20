@@ -384,6 +384,7 @@ namespace IRExplorerUI {
         private async Task ShowSectionPanelDiffs(LoadedDocument result) {
             SectionPanel.DiffSummary = result.Summary;
             SectionPanel.DiffTitle = result.FileName;
+            await SectionPanel.AnalyzeDocumentDiffs();
             await SectionPanel.RefreshDocumentsDiff();
         }
 
@@ -405,7 +406,7 @@ namespace IRExplorerUI {
             }
             else if (sessionState_.Documents.Count == 2) {
                 title +=
-                    $" - Diff: {sessionState_.Documents[0].FilePath}  |  {sessionState_.Documents[1].FilePath}";
+                    $" - Base: {sessionState_.Documents[0].FilePath}  | Diff: {sessionState_.Documents[1].FilePath}";
             }
 
             Title = title;

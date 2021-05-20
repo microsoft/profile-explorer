@@ -103,6 +103,7 @@ namespace IRExplorerUI {
         //? if no diffs needed, use SHA
         //? - quick diff can also use just text or signature check!
         private async Task ComputeSectionDiffsImpl(
+            //? TODO: Can switch to ConcurrentExclusiveSchedulerPair
             List<Tuple<IRTextSection, IRTextSection>> comparedSections, IRTextSectionLoader leftDocLoader,
             IRTextSectionLoader rightDocLoader, Task<DocumentDiffResult>[] tasks, bool quickMode, int maxConcurrency) {
             using var concurrencySemaphore = new SemaphoreSlim(maxConcurrency);

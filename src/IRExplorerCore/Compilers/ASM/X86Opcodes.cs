@@ -40,7 +40,8 @@ namespace IRExplorerCore.ASM {
         JNP,
         JPO,
         JCXZ,
-        JECXZ
+        JECXZ,
+        CALL,
     }
 
     public struct x86OpcodeInfo {
@@ -58,7 +59,7 @@ namespace IRExplorerCore.ASM {
             new Dictionary<string, x86OpcodeInfo> {
                 {"JMP", new x86OpcodeInfo(x86Opcode.JMP, InstructionKind.Goto)},
                 {"RET", new x86OpcodeInfo(x86Opcode.RET, InstructionKind.Return)},
-                {"OPARG", new x86OpcodeInfo(x86Opcode.JO, InstructionKind.Branch)},
+                {"JO", new x86OpcodeInfo(x86Opcode.JO, InstructionKind.Branch)},
                 {"JNO", new x86OpcodeInfo(x86Opcode.JNO, InstructionKind.Branch)},
                 {"JS", new x86OpcodeInfo(x86Opcode.JS, InstructionKind.Branch)},
                 {"JNS", new x86OpcodeInfo(x86Opcode.JNS, InstructionKind.Branch)},
@@ -90,6 +91,7 @@ namespace IRExplorerCore.ASM {
                 {"JPO", new x86OpcodeInfo(x86Opcode.JPO, InstructionKind.Branch)},
                 {"JCXZ", new x86OpcodeInfo(x86Opcode.JCXZ, InstructionKind.Branch)},
                 {"JECXZ", new x86OpcodeInfo(x86Opcode.JECXZ, InstructionKind.Branch)},
+                {"CALL", new x86OpcodeInfo(x86Opcode.CALL, InstructionKind.Call)},
             };
 
         private static readonly StringTrie<x86OpcodeInfo> opcodesTrie_ = new StringTrie<x86OpcodeInfo>(opcodes_);

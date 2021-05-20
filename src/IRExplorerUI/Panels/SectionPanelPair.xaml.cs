@@ -75,6 +75,9 @@ namespace IRExplorerUI {
                         DiffPanel.IsDiffModeEnabled = true;
                         DiffPanel.Visibility = Visibility.Visible;
                         MainPanel.OtherSummary = value;
+
+                        DiffPanel.FunctionPartVisible = false;
+                        DiffPanel.OtherSummary = MainSummary;
                         diffModeEnabled_ = true;
                     }
                     else if (value == null) {
@@ -398,6 +401,32 @@ namespace IRExplorerUI {
         public override void OnSessionEnd() {
             DiffSummary = null;
             MainSummary = null;
+        }
+
+        public async Task AnalyzeDocumentDiffs() {
+            await MainPanel.StatisticsTask.WaitForTaskAsync();
+            await DiffPanel.StatisticsTask.WaitForTaskAsync();
+
+            foreach (var function in MainSummary.Functions) {
+                var functionEx = MainPanel.GetFunctionExtension(function);
+
+                if (functionEx.IsDeletionDiff || functionEx.IsInsertionDiff) {
+                    continue;
+                }
+
+                var otherFunctionEx = DiffPanel.GetFunctionExtension(function);
+
+                if (functionEx.Statistics == null || otherFunctionEx.Statistics == null) {
+                    continue;
+                }
+
+                if (functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics)) {
+                    functionEx.FunctionDiffKind = DiffKind.Modification;
+                }
+            }
+
+            MainPanel.AddStatisticsFunctionListColumns(true, " (D)", " delta", 55);
+            MainPanel.RefreshFunctionList();
         }
     }
 }

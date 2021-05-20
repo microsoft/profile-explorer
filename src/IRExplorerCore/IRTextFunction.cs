@@ -40,5 +40,14 @@ namespace IRExplorerCore {
         public List<IRTextSection> FindAllSections(string nameSubstring) {
             return Sections.FindAll((section) => section.Name.Contains(nameSubstring));
         }
+
+        public override bool Equals(object obj) {
+            return obj is IRTextFunction function &&
+                   Name == function.Name;
+        }
+
+        public override int GetHashCode() {
+            return System.HashCode.Combine(Name);
+        }
     }
 }

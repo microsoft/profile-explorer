@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
+using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Utilities {
@@ -42,8 +43,8 @@ namespace IRExplorerUI.Utilities {
             var cg = new CallGraph(summary, loadedDocument.Loader, compilerInfo.IR);
             cg.CallGraphNodeCreated += (sender, e) => {
                 //? TODO: Should be customizable through a script
-
-                var funcProfile = profileData.GetFunctionProfile(e.TextFunction);
+               
+                var funcProfile = profileData?.GetFunctionProfile(e.TextFunction);
 
                 if (funcProfile != null) {
                     double weightPercentage = profileData.ScaleFunctionWeight(funcProfile.Weight);
@@ -52,7 +53,17 @@ namespace IRExplorerUI.Utilities {
                     int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
                     e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap(colorIndex, 10));
                     e.FunctionNode.GetOrAddTag<GraphNodeTag>().Label = tooltip;
+                }
 
+                var metadataTag = e.Function.GetTag<AssemblyMetadataTag>();
+
+                if (metadataTag != null) {
+                    int instrCount = metadataTag.ElementSizeMap.Count;
+                    var tooltip = $"{instrCount} instr\n{metadataTag.FunctionSize} b";
+
+                    int colorIndex = (int)Math.Clamp(Math.Log2(instrCount), 0, 10);
+                    e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap(colorIndex, 10));
+                    e.FunctionNode.GetOrAddTag<GraphNodeTag>().Label = tooltip;
                 }
 
                 //int instrs = e.Function.InstructionCount;

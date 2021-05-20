@@ -36,6 +36,10 @@ namespace IRExplorerUI.Compilers.LLVM {
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             return new BasicBlockFoldingStrategy(function);
         }
+        
+        public IDiffInputFilter CreateDiffInputFilter() {
+            return null;
+        }
 
         public IDiffOutputFilter CreateDiffOutputFilter() {
             return new UTCDiffOutputFilter();
