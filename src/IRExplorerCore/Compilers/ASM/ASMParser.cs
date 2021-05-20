@@ -524,7 +524,7 @@ namespace IRExplorerCore.ASM {
         }
 
         private int CountInstructionBytes(int instrSize) {
-            while (ParseHexAddress().HasValue) {
+            while (SkipHexNumber()) {
                 instrSize++;
             }
 
