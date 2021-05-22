@@ -273,11 +273,13 @@ namespace IRExplorerUI.Profile {
                             // Ignore samples targeting modules loaded in the executable that are not it.
                             if (frame.Image == null) {
                                 prevStackFunc = null;
+                                isTopFrame = false;
                                 continue;
                             }
                             
                             if (!frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
                                 prevStackFunc = null;
+                                isTopFrame = false;
                                 continue;
                             }
                             
@@ -286,6 +288,7 @@ namespace IRExplorerUI.Profile {
                             if (symbol == null) {
                                 Trace.WriteLine($"Could not find debug info for image: {frame.Image.FileName}");
                                 prevStackFunc = null;
+                                isTopFrame = false;
                                 continue;
                             }
                             
@@ -304,6 +307,7 @@ namespace IRExplorerUI.Profile {
                                     // Check if it's a known external function.
                                     if (!externalsFuncMap.TryGetValue(funcAddress, out var externalFuncName)) {
                                         prevStackFunc = null;
+                                        isTopFrame = false;
                                         continue;
                                     }
 

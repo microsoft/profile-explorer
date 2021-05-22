@@ -27,7 +27,8 @@ namespace IRExplorerCore.ASM {
         BLT,
         BGT,
         BLE,
-        BAL
+        BAL,
+        TBNZ
     }
 
     public struct ARMOpcodeInfo {
@@ -62,6 +63,7 @@ namespace IRExplorerCore.ASM {
                 {"BGT", new ARMOpcodeInfo(ARMOpcode.BGT, InstructionKind.Branch)},
                 {"BLE", new ARMOpcodeInfo(ARMOpcode.BLE, InstructionKind.Branch)},
                 {"BAL", new ARMOpcodeInfo(ARMOpcode.BAL, InstructionKind.Branch)},
+                {"TBNZ", new ARMOpcodeInfo(ARMOpcode.TBNZ, InstructionKind.Branch)},
                 {"BL", new ARMOpcodeInfo(ARMOpcode.BL, InstructionKind.Call)},
                 {"BLX", new ARMOpcodeInfo(ARMOpcode.BLX, InstructionKind.Call)},
             };
