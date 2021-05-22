@@ -114,8 +114,9 @@ namespace IRExplorerCore {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsHexLetter(char c) {
             return ((c >= '0' && c <= '9') ||
-                 (c >= 'a' && c <= 'f') ||
-                 (c >= 'A' && c <= 'F'));
+                 (c >= 'a' && c <= 'f')  ||
+                 (c >= 'A' && c <= 'F')) ||
+                   c == 'x' || c == 'X';
         }
 
         private bool IsHexNumber(ReadOnlySpan<char> span) {

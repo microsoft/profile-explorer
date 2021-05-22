@@ -377,7 +377,6 @@ namespace IRExplorerCore.ASM {
             return true;
         }
 
-
         private OperandIR ParseOperand(TupleIR parent, bool isIndirBaseOp = false,
                                       bool isBlockLabelRef = false,
                                       bool disableSkipToNext = false) {
@@ -390,7 +389,7 @@ namespace IRExplorerCore.ASM {
                 //? TODO: If it starts with @ it's address
                 operand = ParseVariableOperand(parent, isIndirBaseOp);
             }
-            else if (IsNumber() || TokenIs(TokenKind.Minus)) { // int/float const
+            else if (IsNumber() || TokenIs(TokenKind.Minus) || TokenIs(TokenKind.Hash)) { // int/float const
                 operand = ParseNumber(parent);
             }
             else if (TokenIs(TokenKind.OpenSquare)) { // [indir]
@@ -411,6 +410,11 @@ namespace IRExplorerCore.ASM {
             var opKind = OperandKind.Other;
             object opValue = null;
             bool isNegated = false;
+
+            // ARM64 assembly can have a # in front of a number like in #0x30.
+            if (TokenIs(TokenKind.Hash)) {
+                SkipToken();
+            }
 
             if (TokenIs(TokenKind.Minus)) {
                 SkipToken();
@@ -470,7 +474,7 @@ namespace IRExplorerCore.ASM {
             while (!TokenIs(TokenKind.CloseSquare)) {
                 // Skip over + or *.
                 SkipToNextOperand();
-                ExpectAndSkipToken(TokenKind.Plus, TokenKind.Star);
+                ExpectAndSkipToken(TokenKind.Plus, TokenKind.Star, TokenKind.Comma);
 
                 if (ParseOperand(parent, true) == null) {
                     break;
@@ -524,6 +528,12 @@ namespace IRExplorerCore.ASM {
         }
 
         private int CountInstructionBytes(int instrSize) {
+            // For ARM64, the bytecodes are not found in the assembly listing
+            // and each instruction is 4 bytes.
+            if (irMode_ == IRMode.ARM64) {
+                return 4;
+            }
+
             while (SkipHexNumber()) {
                 instrSize++;
             }

@@ -36,7 +36,7 @@ namespace IRExplorerCore.ASM {
         }
 
         public OperandIR GetCallTarget(InstructionIR instr) {
-            if (instr.IsCall && instr.Sources.Count > 0) {
+            if (IsCallInstruction(instr) && instr.Sources.Count > 0) {
                 return instr.Sources[0];
             }
 
@@ -48,7 +48,8 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsCallInstruction(InstructionIR instr) {
-            return instr.IsCall;
+            return instr.IsCall ||
+                   instr.IsBranch && instr.Sources.Count > 0 && instr.Sources[0].IsAddress;
         }
 
         public bool IsCopyInstruction(InstructionIR instr) {
