@@ -275,6 +275,14 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
+        public CallGraphNode FindNode(IRTextFunction function) {
+            if (funcToNodeMap_.TryGetValue(function, out var node)) {
+                return node;
+            }
+
+            return null;
+        }
+
         private CallGraphNode GetOrCreateNode(IRTextFunction func) {
             return GetOrCreateNode(func.Name);
         }
