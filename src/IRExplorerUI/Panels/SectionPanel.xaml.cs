@@ -807,8 +807,18 @@ namespace IRExplorerUI {
             }
         }
 
-        private bool showModules_;
+        private bool childTimeColumnVisible_;
+        public bool ChildTimeColumnVisible {
+            get => childTimeColumnVisible_;
+            set {
+                if (childTimeColumnVisible_ != value) {
+                    childTimeColumnVisible_ = value;
+                    OnPropertyChange(nameof(ChildTimeColumnVisible));
+                }
+            }
+        }
 
+        private bool showModules_;
         public bool ShowModules {
             get => showModules_;
             set {
@@ -856,13 +866,23 @@ namespace IRExplorerUI {
         }
 
         private bool profileControlsVisible_;
-
         public bool ProfileControlsVisible {
             get => profileControlsVisible_;
             set {
                 if (profileControlsVisible_ != value) {
                     profileControlsVisible_ = value;
                     OnPropertyChange(nameof(ProfileControlsVisible));
+                }
+            }
+        }
+
+        private bool functionModuleControlsVisible_;
+        public bool FunctionModuleControlsVisible {
+            get => functionModuleControlsVisible_;
+            set {
+                if (functionModuleControlsVisible_ != value) {
+                    functionModuleControlsVisible_ = value;
+                    OnPropertyChange(nameof(FunctionModuleControlsVisible));
                 }
             }
         }
@@ -1106,6 +1126,7 @@ namespace IRExplorerUI {
 
             functionValueSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
             ProfileControlsVisible = true;
+            FunctionModuleControlsVisible = true;
             
             ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
         }
@@ -1178,6 +1199,7 @@ namespace IRExplorerUI {
             otherSummary_ = null;
             currentFunction_ = null;
             ProfileControlsVisible = false;
+            FunctionModuleControlsVisible = false;
             sections_.Clear();
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
@@ -1705,22 +1727,23 @@ namespace IRExplorerUI {
             FunctionList.ScrollIntoView(FunctionList.SelectedItem);
             RefreshSectionList();
 
-
+            //? TODO: A way to switch between the two modes?
             if(profileControlsVisible_ && Session.ProfileData != null) {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if(funcProfile != null) {
-                    //? TODO:SetDemangledChildFunctionNames(childrenEx); - walk tree
-                    //? sorting doesn't work, pre-sort descending
                     var profileCallTree = CreateProfileCallTree(function);
                     ChildFunctionList.Model = profileCallTree;
+                    ChildTimeColumnVisible = true;
                     SetDemangledChildFunctionNames(profileCallTree);
                 }
             }
-
-            var callTree = CreateCallTree(function);
-            ChildFunctionList.Model = callTree;
-            // SetDemangledChildFunctionNames(profileCallTree);
+            else {
+                var callTree = CreateCallTree(function);
+                ChildFunctionList.Model = callTree;
+                ChildTimeColumnVisible = false;
+                SetDemangledChildFunctionNames(callTree);
+            }
 
             await ComputeConsecutiveSectionDiffs();
         }
@@ -1735,7 +1758,8 @@ namespace IRExplorerUI {
         private (CallGraph, CallGraphNode) GenerateFunctionCallGraph(IRTextSummary summary, IRTextFunction function) {
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             var callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
-            var callGraphNode = callGraph.Execute(function, function.Sections[0]);
+            callGraph.Execute(function.Sections[0]);
+            var callGraphNode = callGraph.FindNode(function);
             return (callGraph, callGraphNode);
         }
 
@@ -1765,11 +1789,32 @@ namespace IRExplorerUI {
                                  HashSet<CallGraphNode> visitedNodes) {
             visitedNodes.Add(node);
 
+            if (node.HasCallers) {
+                //? TODO: Sort on top of the list
+                var callerInfo = CreateCallTreeChild(node, function);
+                callerInfo.Name = "Callers";
+                callerInfo.IsMarked = true;
+                callerInfo.Children = new List<ChildFunctionEx>();
+                parentNode.Children.Add(callerInfo);
+
+                foreach (var callerNode in node.UniqueCallers) {
+                    var callerFunc = summary_.FindFunction(callerNode.FunctionName);
+                    if (callerFunc == null)
+                        continue;
+
+                    var callerNodeEx = CreateCallTreeChild(callerNode, callerFunc);
+                    callerNodeEx.Statistics = GetFunctionStatistics(callerFunc);
+                    callerInfo.Children.Add(callerNodeEx);
+                }
+            }
+
             foreach (var calleeNode in node.UniqueCallees) {
                 var childFunc = summary_.FindFunction(calleeNode.FunctionName);
                 if (childFunc == null) continue;
 
+                // Create node and attach statistics if available.
                 var childNode = CreateCallTreeChild(calleeNode, childFunc);
+                childNode.Statistics = GetFunctionStatistics(childFunc);
                 parentNode.Children.Add(childNode);
 
                 var otherCalleeNode = otherNode?.FindCallee(calleeNode);
@@ -1804,10 +1849,8 @@ namespace IRExplorerUI {
 
             var childInfo = new ChildFunctionEx() {
                 Function = childFunc,
-                Time = instrCount,
                 Name = childNode.FunctionName,
                 ChildCount = childNode.UniqueCalleeCount,
-                Text = instrCount.ToString(),
                 TextColor = Brushes.Black,
                 BackColor = ColorBrushes.GetBrush(Colors.Transparent)
             };
@@ -2075,7 +2118,7 @@ namespace IRExplorerUI {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
             //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
             double defaultSpace = 60;
-            double profileControlsSpace = profileControlsVisible_ ? 180 : 0;
+            double profileControlsSpace = FunctionModuleControlsVisible ? 180 : 0;
             FunctionFilterGrid.Width = Math.Max(1, width - defaultSpace - profileControlsSpace);
         }
         
@@ -2083,11 +2126,14 @@ namespace IRExplorerUI {
             if (sender is not ListViewItem) {
                 return;
             }
-            
+
+            // A double-click on the +/- icon doesn't have select an actual node.
             var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
 
-            if (!childInfo.IsMarked && childInfo.Function != null) {
-                SelectFunction(childInfo.Function);
+            if (childInfo != null) {
+                if (!childInfo.IsMarked && childInfo.Function != null) {
+                    SelectFunction(childInfo.Function);
+                }
             }
         }
 
@@ -2116,6 +2162,7 @@ namespace IRExplorerUI {
             statisticsTask_.CompleteTask(cancelableTask);
 
             AddStatisticsFunctionListColumns(false);
+            AddStatisticsChildFunctionListColumns(false);
             RefreshFunctionList();
         }
 
@@ -2182,18 +2229,26 @@ namespace IRExplorerUI {
 
         private GridViewColumnHeader AddListViewColumn(ListView listView, string bindingValue,
                                string columnTitle, string columnName, string columnTooltip = null,
-                               double columnWidth = double.NaN, IValueConverter valueConverter = null) {
+                               double columnWidth = double.NaN, IValueConverter valueConverter = null, int index = -1) {
             var functionGrid = (GridView)listView.View;
             var columnHeader = new GridViewColumnHeader() {
                 Name = columnName, Content = columnTitle, ToolTip = columnTooltip
             };
 
-            functionGrid.Columns.Add(new GridViewColumn {
+
+            var item = new GridViewColumn {
                 Header = columnHeader,
                 Width = columnWidth,
                 CellTemplate = CreateGridColumnBindingTemplate(bindingValue, valueConverter),
-                HeaderContainerStyle = (Style)Application.Current.FindResource("ListViewHeaderStyle") as Style,
-            });
+                HeaderContainerStyle = (Style)Application.Current.FindResource("ListViewHeaderStyle") as Style
+            };
+
+            if (index != -1) {
+                functionGrid.Columns.Insert(index, item);
+            }
+            else {
+                functionGrid.Columns.Add(item);
+            }
 
             return columnHeader;
         }
@@ -2259,8 +2314,8 @@ namespace IRExplorerUI {
             RemoveStatisticsFunctionListColumns();
             IValueConverter valueConverter = addDiffColumn ? new FunctionDiffValueConverter() : null;
 
-            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, valueConverter));
             functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Instructions", $"Instrs{titleSuffix}", "InstructionsHeader", $"Instruction number{tooltipSuffix}", columnWidth, valueConverter));
+            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, valueConverter));
             functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Loads", $"Loads{titleSuffix}", "LoadsHeader", $"Number of instructions reading memory{tooltipSuffix}", columnWidth, valueConverter));
             functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Stores", $"Stores{titleSuffix}", "StoresHeader", $"Number of instructions writing memory{tooltipSuffix}", columnWidth, valueConverter));
             functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Branches", $"Branches{titleSuffix}", "BranchesHeader", $"Number of branch/jump instructions{tooltipSuffix}", columnWidth, valueConverter));
@@ -2272,14 +2327,11 @@ namespace IRExplorerUI {
                     new FunctionDiffKindConverter()));
             }
         }
-
-        //? set DiffStatistics, update binding here
-        //? filter for new/removed/mod
-        //? 
-
+        
         public void AddStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            //AddListViewColumn(FunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, valueConverter);
-            //AddListViewColumn(FunctionList, "Statistics.Instructions", $"Instrs{titleSuffix}", "InstructionsHeader", $"Instruction number{tooltipSuffix}", columnWidth, valueConverter);
+            RemoveListViewColumn(ChildFunctionList, "ChildTimeColumnHeader");
+            AddListViewColumn(ChildFunctionList, "Statistics.Instructions", $"Instrs{titleSuffix}", "InstructionsHeader", $"Instruction number{tooltipSuffix}", columnWidth, null, 1);
+            AddListViewColumn(ChildFunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, null, 2);
         }
 
         public void RemoveStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
