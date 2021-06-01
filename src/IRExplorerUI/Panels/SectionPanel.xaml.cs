@@ -25,6 +25,8 @@ using Aga.Controls.Tree;
 using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Analysis;
+using Xceed.Wpf.Toolkit;
+using MessageBox = System.Windows.MessageBox;
 
 namespace IRExplorerUI {
     public static class Command {
@@ -248,6 +250,9 @@ namespace IRExplorerUI {
         public int Stores { get; set; }
         public int Branches { get; set; }
         public int Calls { get; set; }
+        public int Callers { get; set; }
+        public int IndirectCalls { get; set; }
+        public int Callees { get; set; }
 
         public bool ComputeDiff(FunctionStatistics other) {
             Size = other.Size - Size;
@@ -256,9 +261,13 @@ namespace IRExplorerUI {
             Stores = other.Stores - Stores;
             Branches = other.Branches - Branches;
             Calls = other.Calls - Calls;
+            Callers = other.Callers - Callers;
+            IndirectCalls = other.IndirectCalls - IndirectCalls;
+            Callees = other.Callees - Callees;
             return Size != 0 || Instructions != 0 ||
-                   Loads != 0 || Stores != 0 || 
-                   Branches != 0 || Calls != 0;
+                   Loads != 0 || Stores != 0 ||
+                   Branches != 0 || Calls != 0 ||
+                   Callers != 0 || IndirectCalls != 0 || Callees != 0;
         }
     }
 
@@ -329,7 +338,7 @@ namespace IRExplorerUI {
         public Brush TextColor { get; set; }
         public Brush BackColor { get; set; }
         public List<ChildFunctionEx> Children { get; set; }
-        public int ChildCount { get; set; }
+        public int DescendantCount { get; set; }
         public bool IsMarked { get; set; }
         public FunctionStatistics Statistics { get; set; }
 
@@ -367,6 +376,9 @@ namespace IRExplorerUI {
         StatisticStores,
         StatisticBranches,
         StatisticCalls,
+        StatisticCallees,
+        StatisticCallers,
+        StatisticIndirectCalls,
         StatisticDiff
     }
     
@@ -464,6 +476,9 @@ namespace IRExplorerUI {
                     "InstructionsHeader" => FunctionFieldKind.StatisticInstructions,
                     "BranchesHeader" => FunctionFieldKind.StatisticBranches,
                     "CallsHeader" => FunctionFieldKind.StatisticCalls,
+                    "CallersHeader" => FunctionFieldKind.StatisticCallers,
+                    "CalleesHeader" => FunctionFieldKind.StatisticCallees,
+                    "IndirectCallsHeader" => FunctionFieldKind.StatisticIndirectCalls,
                     "DiffHeader" => FunctionFieldKind.StatisticDiff
                 }, 
                 (x, y, field, direction) => {
@@ -523,6 +538,18 @@ namespace IRExplorerUI {
                         }
                         case FunctionFieldKind.StatisticCalls: {
                             int result = functionY.Statistics.Calls.CompareTo(functionX.Statistics.Calls);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.StatisticCallees: {
+                            int result = functionY.Statistics.Callees.CompareTo(functionX.Statistics.Callees);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.StatisticCallers: {
+                            int result = functionY.Statistics.Callers.CompareTo(functionX.Statistics.Callers);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.StatisticIndirectCalls: {
+                            int result = functionY.Statistics.IndirectCalls.CompareTo(functionX.Statistics.IndirectCalls);
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         case FunctionFieldKind.StatisticDiff: {
@@ -602,7 +629,7 @@ namespace IRExplorerUI {
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         case ChildFunctionFieldKind.Children: {
-                            int result = childY.ChildCount.CompareTo(childX.ChildCount);
+                            int result = childY.DescendantCount.CompareTo(childX.DescendantCount);
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         default:
@@ -1756,11 +1783,16 @@ namespace IRExplorerUI {
         }
 
         private (CallGraph, CallGraphNode) GenerateFunctionCallGraph(IRTextSummary summary, IRTextFunction function) {
-            var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
-            var callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
-            callGraph.Execute(function.Sections[0]);
+            var callGraph = GenerateCallGraph(summary);
             var callGraphNode = callGraph.FindNode(function);
             return (callGraph, callGraphNode);
+        }
+
+        private CallGraph GenerateCallGraph(IRTextSummary summary) {
+            var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
+            var callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
+            callGraph.Execute();
+            return callGraph;
         }
 
         private ChildFunctionEx CreateCallTree(IRTextFunction function) {
@@ -1794,7 +1826,9 @@ namespace IRExplorerUI {
                 var callerInfo = CreateCallTreeChild(node, function);
                 callerInfo.Name = "Callers";
                 callerInfo.IsMarked = true;
+                callerInfo.Time = Int64.MaxValue; // Ensure it appears on top.
                 callerInfo.Children = new List<ChildFunctionEx>();
+                callerInfo.DescendantCount = node.UniqueCallerCount;
                 parentNode.Children.Add(callerInfo);
 
                 foreach (var callerNode in node.UniqueCallers) {
@@ -1836,7 +1870,12 @@ namespace IRExplorerUI {
             }
 
             // Sort children, since that is not yet supported by the TreeListView control.
-            parentNode.Children.Sort((a, b) => b.Name.CompareTo(a.Name));
+            parentNode.Children.Sort((a, b) => {
+                if (b.Time > a.Time) {
+                    return 1;
+                }
+                return b.Name.CompareTo(a.Name);
+            });
         }
 
         private FunctionStatistics GetFunctionStatistics(IRTextFunction function) {
@@ -1850,7 +1889,7 @@ namespace IRExplorerUI {
             var childInfo = new ChildFunctionEx() {
                 Function = childFunc,
                 Name = childNode.FunctionName,
-                ChildCount = childNode.UniqueCalleeCount,
+                DescendantCount = childNode.UniqueCalleeCount,
                 TextColor = Brushes.Black,
                 BackColor = ColorBrushes.GetBrush(Colors.Transparent)
             };
@@ -1900,7 +1939,7 @@ namespace IRExplorerUI {
                 Function = childFunc,
                 Time =  childWeight.Ticks,
                 Name = childFunc.Name,
-                ChildCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
+                DescendantCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
                 Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
                 TextColor = Brushes.Black,
                 BackColor = ColorBrushes.GetBrush(colors[colorIndex])
@@ -2144,6 +2183,7 @@ namespace IRExplorerUI {
             var tasks = new List<Task>();
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 8);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+            var callGraph = GenerateCallGraph(summary_);
 
             foreach (var function in summary_.Functions) {
                 if (function.SectionCount == 0) {
@@ -2152,7 +2192,7 @@ namespace IRExplorerUI {
 
                 tasks.Add(taskFactory.StartNew(() => {
                     var section = function.Sections[0];
-                    var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader);
+                    var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
                     var functionEx = functionExtMap_[function];
                     functionEx.Statistics = sectionStats;
                 }, cancelableTask.Token));
@@ -2166,7 +2206,8 @@ namespace IRExplorerUI {
             RefreshFunctionList();
         }
 
-        private FunctionStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader) {
+        private FunctionStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader,
+            CallGraph callGraph) {
             var stats = new FunctionStatistics();
             var result = loader.LoadSection(section);
             var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
@@ -2193,14 +2234,26 @@ namespace IRExplorerUI {
                 }
 
                 if(irInfo.IsCallInstruction(instr)) {
+                    if (irInfo.GetCallTarget(instr) == null) {
+                        stats.IndirectCalls++;
+                    }
+                    
                     stats.Calls++;
+                }
+            }
+
+            if (callGraph != null) {
+                var node = callGraph.FindNode(section.ParentFunction);
+
+                if (node != null) {
+                    stats.Callees = node.UniqueCalleeCount;
+                    stats.Callers = node.UniqueCallerCount;
                 }
             }
 
             return stats;
         }
-
-
+        
         private DataTemplate CreateGridColumnBindingTemplate(string propertyName, IValueConverter valueConverter = null) {
             DataTemplate template = new DataTemplate();
             FrameworkElementFactory factory = new FrameworkElementFactory(typeof(TextBlock));
@@ -2280,7 +2333,7 @@ namespace IRExplorerUI {
                         return $"+{intValue}";
                     }
                     else if (intValue == 0) {
-                        return $"  {intValue}";
+                        return $" {intValue}";
                     }
                 }
                 else if (value is long longValue) {
@@ -2300,31 +2353,79 @@ namespace IRExplorerUI {
             }
         }
 
-        private void RemoveStatisticsFunctionListColumns() {
-            functionValueSorter_.UnregisterColumnHeader(RemoveListViewColumn(FunctionList, "SizeHeader"));
-            functionValueSorter_.UnregisterColumnHeader(RemoveListViewColumn(FunctionList, "InstructionsHeader"));
-            functionValueSorter_.UnregisterColumnHeader(RemoveListViewColumn(FunctionList, "LoadsHeader"));
-            functionValueSorter_.UnregisterColumnHeader(RemoveListViewColumn(FunctionList, "StoresHeader"));
-            functionValueSorter_.UnregisterColumnHeader(RemoveListViewColumn(FunctionList, "BranchesHeader"));
-            functionValueSorter_.UnregisterColumnHeader(RemoveListViewColumn(FunctionList, "CallsHeader"));
-            functionValueSorter_.UnregisterColumnHeader(RemoveListViewColumn(FunctionList, "DiffHeader"));
+        private class OptionalColumnInfo {
+            public OptionalColumnInfo(string binding, string title, string name, string tooltip, 
+                IValueConverter converter = null, double width = Double.NaN, bool isVisible = true) {
+                Binding = binding;
+                Name = name;
+                Title = title;
+                Tooltip = tooltip;
+                Width = width;
+                IsVisible = isVisible;
+                Converter = converter;
+            }
+
+            public string Binding { get; set; }
+            public string Name { get; set; }
+            public string Title { get; set; }
+            public string Tooltip { get; set; }
+            public double Width { get; set; }
+            public bool IsVisible { get; set; }
+            public IValueConverter Converter { get; set; }
         }
 
-        public void AddStatisticsFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            RemoveStatisticsFunctionListColumns();
-            IValueConverter valueConverter = addDiffColumn ? new FunctionDiffValueConverter() : null;
+        private static IValueConverter DiffValueConverter = new FunctionDiffValueConverter();
+        private static IValueConverter DiffKindConverter = new FunctionDiffKindConverter();
+        
+        private static OptionalColumnInfo[] StatisticsColumns = new OptionalColumnInfo[] {
+            new OptionalColumnInfo("Statistics.Instructions", "Instrs{0}", "InstructionsHeader", "Instruction number{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.Size", "Size{0}", "SizeHeader", "Function size in bytes{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.Loads", "Loads{0}", "LoadsHeader", "Number of instructions reading memory{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.Stores", "Stores{0}", "StoresHeader", "Number of instructions writing memory{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.Branches", "Branches{0}", "BranchesHeader", "Number of branch/jump instructions{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.Callees", "Callees{0}", "CalleesHeader", "Number of unique called functions{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.Callers", "Callers{0}", "CallersHeader", "Number of unique caller functions{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.Calls", "Calls{0}", "CallsHeader", "Number of call instructions{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.IndirectCalls", "IndirectCalls{0}", "IndirectCallsHeader", "Number of indirect/virtual call instructions{0}", DiffValueConverter),
 
-            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Instructions", $"Instrs{titleSuffix}", "InstructionsHeader", $"Instruction number{tooltipSuffix}", columnWidth, valueConverter));
-            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, valueConverter));
-            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Loads", $"Loads{titleSuffix}", "LoadsHeader", $"Number of instructions reading memory{tooltipSuffix}", columnWidth, valueConverter));
-            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Stores", $"Stores{titleSuffix}", "StoresHeader", $"Number of instructions writing memory{tooltipSuffix}", columnWidth, valueConverter));
-            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Branches", $"Branches{titleSuffix}", "BranchesHeader", $"Number of branch/jump instructions{tooltipSuffix}", columnWidth, valueConverter));
-            functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "Statistics.Calls", $"Calls{titleSuffix}", "CallsHeader", $"Number of call instructions{tooltipSuffix}", columnWidth, valueConverter));
+        };
+        
+        private static OptionalColumnInfo[] StatisticsDiffColumns = new OptionalColumnInfo[] {
+            new OptionalColumnInfo("FunctionDiffKind", $"Diff",
+                "DiffHeader", "Difference kind (only in left/right document or modified)", DiffKindConverter),
+        };
+        
+
+        private void RemoveListViewColumns(ListView listView, OptionalColumnInfo[] columns,
+            IGridViewColumnValueSorter columnSorter = null) {
+            foreach (var column in columns) {
+                var columnHeader = RemoveListViewColumn(listView, column.Name);
+                columnSorter?.UnregisterColumnHeader(columnHeader);
+            }
+        }
+
+        private void AddListViewColumns(ListView listView, OptionalColumnInfo[] columns,
+            IGridViewColumnValueSorter columnSorter = null,
+            string titleSuffix = "", string tooltipSuffix = "", bool useValueConverter = true) {
+            foreach (var column in columns) {
+                if(!column.IsVisible) continue;
+                
+                var columnHeader = AddListViewColumn(listView, column.Binding, 
+                    string.Format(column.Title, titleSuffix), column.Name, 
+                    string.Format(column.Tooltip, tooltipSuffix),
+                    column.Width, useValueConverter ? column.Converter : null);
+                columnSorter?.RegisterColumnHeader(columnHeader);
+            }
+        }
+        
+        public void AddStatisticsFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
+            RemoveListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_);
+            RemoveListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
+
+            AddListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn);
 
             if (addDiffColumn) {
-                functionValueSorter_.RegisterColumnHeader(AddListViewColumn(FunctionList, "FunctionDiffKind", $"Diff",
-                    "DiffHeader", "Difference kind (only in left/right document or modified)", columnWidth,
-                    new FunctionDiffKindConverter()));
+                AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);    
             }
         }
         

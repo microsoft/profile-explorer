@@ -391,7 +391,7 @@ namespace IRExplorerUI {
             diffFilter?.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
             // Fairly often the text is identical, don't do the diffing for such cases.
-            // Also frequen is to have different text, but it is on both left/right sides
+            // Also frequent is to have different text, but it is on both left/right sides
             // identical to the previous sections - in this case the diff results are reused.
             if(IsSectionTextDifferent(newLeftSection, newRightSection)) {
                 var leftDiffText = leftText;
@@ -441,6 +441,18 @@ namespace IRExplorerUI {
             NotifyPanelsOfSectionUnload(leftDocument.Section, leftDocumentHost, true);
             NotifyPanelsOfSectionUnload(rightDocument.Section, rightDocumentHost, true);
 
+            //? TODO: Workaround for some cases where the updated left/right docs
+            //? don't have the same length due to a bug in diff updating.
+            //? Making the docs the same length by appending whitespace prevents other
+            //? problems that usually end up with the application asserting.
+            if (leftDiffResult.DiffText.Length !=
+                rightDiffResult.DiffText.Length) {
+                var length = Math.Max(leftDiffResult.DiffText.Length,
+                                      rightDiffResult.DiffText.Length);
+                leftDiffResult.DiffText = leftDiffResult.DiffText.PadRight(length);
+                rightDiffResult.DiffText = rightDiffResult.DiffText.PadRight(length);
+            }
+            
             await leftDocumentHost.LoadDiffedFunction(leftDiffResult, newLeftSection);
             await rightDocumentHost.LoadDiffedFunction(rightDiffResult, newRightSection);
 

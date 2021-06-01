@@ -156,14 +156,18 @@ namespace IRExplorerUI {
             foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 if (geoBuilder == null) {
                     geoBuilder = new BackgroundGeometryBuilder() {
-                        BorderThickness = 0,
-                        CornerRadius = 0
+                        BorderThickness = 0
                     };
                 }
 
-                foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
-                    var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 1);
-                    geoBuilder.AddRectangle(textView, actualRect);
+                if (segment.Element is BlockIR) {
+                    geoBuilder.AddSegment(textView, segment);
+                }
+                else {
+                    foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
+                        var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 1);
+                        geoBuilder.AddRectangle(textView, actualRect);
+                    }
                 }
             }
 

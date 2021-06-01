@@ -140,6 +140,8 @@ namespace IRExplorerUI {
         private PairHighlightingStyle ssaDefinitionStyle_;
 
         private PairHighlightingStyle ssaUserStyle_;
+        private PairHighlightingStyle iteratedUserStyle_;
+        private PairHighlightingStyle iteratedDefinitionStyle_;
         private List<IRElement> tupleElements_;
 
         private IRElement currentExprElement_;
@@ -231,6 +233,7 @@ namespace IRExplorerUI {
 
         private void SetupStyles() {
             var borderPen = ColorPens.GetBoldPen(settings_.BorderColor);
+            var lightBorderPen = ColorPens.GetTransparentPen(settings_.BorderColor, 150);
             selectedStyle_ ??= new HighlightingStyle();
             selectedStyle_.BackColor = ColorBrushes.GetBrush(settings_.SelectedValueColor);
             selectedStyle_.Border = borderPen;
@@ -241,20 +244,29 @@ namespace IRExplorerUI {
                 ColorPens.GetPen(ColorUtils.AdjustLight(settings_.SelectedValueColor, 0.75f), 2);
 
             ssaUserStyle_ ??= new PairHighlightingStyle();
-
             ssaUserStyle_.ParentStyle.BackColor =
                 ColorBrushes.GetBrush(
                     ColorUtils.AdjustLight(settings_.UseValueColor, ParentStyleLightAdjustment));
 
             ssaUserStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.UseValueColor);
             ssaUserStyle_.ChildStyle.Border = borderPen;
+            
+            iteratedUserStyle_ ??= new PairHighlightingStyle();
+            iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 50);
+            iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 75);
+            iteratedUserStyle_.ChildStyle.Border = lightBorderPen;
+            
             ssaDefinitionStyle_ ??= new PairHighlightingStyle();
-
             ssaDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetBrush(
                 ColorUtils.AdjustLight(settings_.DefinitionValueColor, ParentStyleLightAdjustment));
 
             ssaDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetBrush(settings_.DefinitionValueColor);
             ssaDefinitionStyle_.ChildStyle.Border = borderPen;
+            
+            iteratedDefinitionStyle_ ??= new PairHighlightingStyle();
+            iteratedDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 50);
+            iteratedDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 75);
+            iteratedDefinitionStyle_.ChildStyle.Border = lightBorderPen;
         }
 
         public event EventHandler<DocumentAction> ActionPerformed;
@@ -1807,6 +1819,12 @@ namespace IRExplorerUI {
                 }
             }
 
+            if (settings_.HighlightDestinationUses) {
+                foreach (var destOp in instr.Destinations) {
+                    HandleOperandElement(destOp, highlighter, markExpression, false, action);
+                }
+            }
+            
             return true;
         }
 
@@ -1814,10 +1832,10 @@ namespace IRExplorerUI {
                                           bool markExpression, bool markReferences,
                                           HighlightingEventAction action) {
             if (op.Role == OperandRole.Source) {
-                if (markExpression) {
+                if (markExpression || true) {
                     // Mark an entire SSA def-use expression DAG.
                     HighlightExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
-                    return true;
+                    //return true;
                 }
 
                 // Further handling of sources is done below.
@@ -1828,12 +1846,13 @@ namespace IRExplorerUI {
                 // if not found highlight every load of the same symbol.
                 var refFinder = CreateReferenceFinder();
                 var useList = refFinder.FindAllUses(op);
+                List<IRElement> iteratedUseList = null;
                 bool handled = false;
                 
-                if (markExpression) {
+                if (markExpression || true) {
                     // Collect the transitive set of users, marking instructions
                     // that depend on the value of this destination operand.
-                    ExpandIteratedUseList(op, useList);
+                    iteratedUseList = ExpandIteratedUseList(op, useList);
                     handled = true;
                 }
                 else if(markReferences) {
@@ -1843,6 +1862,10 @@ namespace IRExplorerUI {
                 if (useList.Count > 0) {
                     HighlightUsers(op, useList, highlighter, ssaUserStyle_, action);
                     handled = true;
+
+                    if (iteratedUseList != null && iteratedUseList.Count > 0) {
+                        HighlightUsers(op, iteratedUseList, highlighter, iteratedUserStyle_, action);    
+                    }
                 }
 
                 // If the operand is an indirection, also try to mark 
@@ -1868,7 +1891,7 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private void ExpandIteratedUseList(OperandIR operand, List<IRElement> useList) {
+        private List<IRElement> ExpandIteratedUseList(OperandIR operand, List<IRElement> useList) {
             var handledElements = new HashSet<IRElement>();
 
             foreach (var use in useList) {
@@ -1886,7 +1909,11 @@ namespace IRExplorerUI {
 
             int maxLevel = currentExprLevel_;
             var refFinder = CreateReferenceFinder();
-            ExpandIteratedUseList(useList, handledElements, 0, maxLevel, refFinder);
+            var newUseList = new List<IRElement>(useList);
+            
+            ExpandIteratedUseList(newUseList, handledElements, 0, maxLevel, refFinder);
+            newUseList.RemoveRange(0, useList.Count);
+            return newUseList;
         }
 
         private void ExpandIteratedUseList(List<IRElement> useList, HashSet<IRElement> handledElements, 
@@ -2083,7 +2110,8 @@ namespace IRExplorerUI {
 
             switch (element) {
                 case OperandIR op: {
-                    highlighter.Add(new HighlightedGroup(element, style.ForIndex(styleIndex)));
+                    //highlighter.Add(new HighlightedGroup(element, style.ForIndex(styleIndex)));
+                    highlighter.Add(new HighlightedGroup(element, iteratedDefinitionStyle_.ChildStyle));
 
                     if (level >= maxLevel) {
                         return;
@@ -2092,7 +2120,8 @@ namespace IRExplorerUI {
                     var sourceDefOp = refFinder.FindSingleDefinition(op);
 
                     if (sourceDefOp != null) {
-                        highlighter.Add(new HighlightedGroup(sourceDefOp, style.ForIndex(styleIndex)));
+                        //highlighter.Add(new HighlightedGroup(sourceDefOp, style.ForIndex(styleIndex)));
+                        highlighter.Add(new HighlightedGroup(sourceDefOp, iteratedDefinitionStyle_.ChildStyle));
 
                         if (sourceDefOp.ParentInstruction != null) {
                             HighlightExpression(sourceDefOp.ParentInstruction, parent, handledElements,
@@ -2104,7 +2133,8 @@ namespace IRExplorerUI {
                     break;
                 }
                 case InstructionIR instr: {
-                    highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
+                    //highlighter.Add(new HighlightedGroup(instr, instrStyle.ForIndex(styleIndex)));
+                    highlighter.Add(new HighlightedGroup(instr, iteratedDefinitionStyle_.ParentStyle));
 
                     if (level >= maxLevel) {
                         return;
