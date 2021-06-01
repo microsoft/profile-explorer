@@ -192,13 +192,13 @@ namespace IRExplorerCore.Analysis {
             entryNodes_ = new List<CallGraphNode>();
         }
 
-        public void Execute(IRTextSection section) {
+        public void Execute(IRTextSection section = null) {
             foreach (var func in summary_.Functions) {
                 if (visitedFuncts_.Contains(func)) {
                     continue;
                 }
 
-                BuildCallSubgraph(func, section.Name);
+                BuildCallSubgraph(func, section?.Name);
             }
 
             // Find entry functions.
@@ -209,8 +209,8 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        public CallGraphNode Execute(IRTextFunction startFunction, IRTextSection section) {
-            BuildCallSubgraph(startFunction, section.Name);
+        public CallGraphNode Execute(IRTextFunction startFunction, IRTextSection section = null) {
+            BuildCallSubgraph(startFunction, section?.Name);
             return GetOrCreateNode(startFunction);
         }
 

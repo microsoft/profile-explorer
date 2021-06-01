@@ -85,8 +85,8 @@ namespace IRExplorerUI {
             BlockSeparatorColor = Colors.Silver;
             MarginBackgroundColor = Colors.Gainsboro;
             SelectedValueColor = Utils.ColorFromString("#C5DEEA");
-            DefinitionValueColor = Utils.ColorFromString("#F2E67C");
-            UseValueColor = Utils.ColorFromString("#95DBAD");
+            DefinitionValueColor = Utils.ColorFromString("#EDE4A6");
+            UseValueColor = Utils.ColorFromString("#B7E5C6");
             BorderColor = Colors.Black;
             SyntaxHighlightingName = "";
         }

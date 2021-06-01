@@ -1011,7 +1011,7 @@
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
-                        <GridViewColumn DisplayMemberBinding="{Binding ChildCount}">
+                        <GridViewColumn DisplayMemberBinding="{Binding DescendantCount}">
                             <GridViewColumnHeader x:Name="ChildCountColumnHeader" Content="Children" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">

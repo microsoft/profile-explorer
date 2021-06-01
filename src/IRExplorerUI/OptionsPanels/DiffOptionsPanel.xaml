@@ -46,12 +46,12 @@
                 ToolTip="Considers minor changes in the IR, such as different kinds of temporary variables" />
             <CheckBox
                 Margin="20,4,0,2"
-                Content="Consider changes in temporary variable names"
+                Content="Temporary variable name changes"
                 IsChecked="{Binding FilterTempVariableNames, Mode=TwoWay}"
                 ToolTip="Considers name changes of temporary variables as minor" />
             <CheckBox
                 Margin="20,4,0,2"
-                Content="Consider changes in SSA variable identifiers"
+                Content="SSA variable identifier changes"
                 IsChecked="{Binding FilterSSADefNumbers, Mode=TwoWay}"
                 ToolTip="Consiers changes of SSA variable identifiers (name/number) as minor" />
             <CheckBox

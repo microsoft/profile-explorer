@@ -129,12 +129,18 @@ namespace IRExplorerCore {
             return true;
         }
 
-        protected bool SkipHexNumber() {
+        protected bool SkipHexNumber(int requiredLength = 0) {
             if(!IsNumber() && !IsIdentifier()) {
                 return false;
             }
 
             if(IsHexNumber(TokenData().Span)) {
+                // Check if the number has the required number of digits.
+                if (requiredLength != 0 &&
+                    TokenData().Length != requiredLength) {
+                    return false;
+                }
+                
                 SkipToken();
                 return true;
             }

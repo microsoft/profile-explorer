@@ -12,7 +12,12 @@ using System.Windows.Data;
 using System.Windows.Documents;
 
 namespace IRExplorerUI {
-    class GridViewColumnValueSorter<T> where T : Enum {
+    interface IGridViewColumnValueSorter {
+        void RegisterColumnHeader(GridViewColumnHeader header);
+        void UnregisterColumnHeader(GridViewColumnHeader header);
+    }
+    
+    class GridViewColumnValueSorter<T> : IGridViewColumnValueSorter where T : Enum {
         public delegate int ValueCompareDelegate(object x, object y, T field, ListSortDirection direction);
         public delegate T ColumnFieldMappingDelegate(string columnName);
 

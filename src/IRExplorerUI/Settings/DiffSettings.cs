@@ -57,8 +57,8 @@ namespace IRExplorerUI {
             ModificationBorderColor = Utils.ColorFromString("#ff6f00");
             MinorModificationBorderColor = Utils.ColorFromString("#8F8F8F");
             PlaceholderBorderColor = Colors.DarkGray;
-            InsertionColor = Utils.ColorFromString("#c5e1a5");
-            DeletionColor = Utils.ColorFromString("#FFD6D9");
+            InsertionColor = Utils.ColorFromString("#E2F0D3");
+            DeletionColor = Utils.ColorFromString("#FFE8EA");
             ModificationColor = Utils.ColorFromString("#FFF6D9");
             MinorModificationColor = Utils.ColorFromString("#E1E1E1");
         }

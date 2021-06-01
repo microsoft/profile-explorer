@@ -534,7 +534,7 @@ namespace IRExplorerCore.ASM {
                 return 4;
             }
 
-            while (SkipHexNumber()) {
+            while (SkipHexNumber(2)) { // 2 digits
                 instrSize++;
             }
 

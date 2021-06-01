@@ -563,7 +563,7 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    
+
     <DrawingImage x:Key="DotIconYellow">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H8 V0 H0 Z">
