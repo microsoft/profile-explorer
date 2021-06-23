@@ -48,13 +48,15 @@ namespace IRExplorerCore.Analysis {
     }
 
     public class CallGraphNode : TaggedObject {
+        public IRTextFunction Function { get; set; }
         public string FunctionName { get; set; }
         public int Number { get; set; }
         public List<CallSite> Callers { get; set; }
         public List<CallSite> Callees { get; set; }
         public CallGraphNodeFlags Flags { get;set; }
 
-        public CallGraphNode(string funcName, int number, CallGraphNodeFlags flags) {
+        public CallGraphNode(IRTextFunction function, string funcName, int number, CallGraphNodeFlags flags) {
+            Function = function;
             FunctionName = funcName;
             Number = number;
             Flags = flags;
@@ -296,7 +298,7 @@ namespace IRExplorerCore.Analysis {
                     return externalNode;
                 }
 
-                externalNode = new CallGraphNode(funcName, GetNextCallNodeId(),
+                externalNode = new CallGraphNode(null, funcName, GetNextCallNodeId(),
                                                  CallGraphNodeFlags.External);
                 externalFuncToNodeMap_[funcName] = externalNode;
                 nodes_.Add(externalNode);
@@ -307,7 +309,7 @@ namespace IRExplorerCore.Analysis {
                 return node;
             }
 
-            node = new CallGraphNode(funcName, GetNextCallNodeId(),
+            node = new CallGraphNode(func, funcName, GetNextCallNodeId(),
                                      CallGraphNodeFlags.Internal);
             funcToNodeMap_[func] = node;
             nodes_.Add(node);
@@ -322,7 +324,7 @@ namespace IRExplorerCore.Analysis {
             var section = func.FindSection(sectionName);
 
             if (section == null) {
-                if (func.SectionCount != 1) {
+                if (func.SectionCount == 0) {
                     return null;
                 }
 

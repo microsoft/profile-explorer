@@ -205,7 +205,8 @@ namespace IRExplorerUI {
                     break;
                 }
                 case ToolPanelKind.CallGraph: {
-                    //? TODO: Handle event
+                    var callGraphPanel = panelHost.Panel as CallGraphPanel;
+                    callGraphPanel.GraphViewer.NodeSelected += GraphViewer_NodeSelected;
                     break;
                 }
             }
@@ -233,7 +234,8 @@ namespace IRExplorerUI {
                     break;
                 }
                 case ToolPanelKind.CallGraph: {
-                    //? TODO: Handle event
+                    var callGraphPanel = panelHost.Panel as CallGraphPanel;
+                    callGraphPanel.GraphViewer.NodeSelected -= GraphViewer_NodeSelected;
                     break;
                 }
             }

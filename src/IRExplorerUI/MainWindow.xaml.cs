@@ -739,6 +739,13 @@ namespace IRExplorerUI {
             panel.DisplayGraph(layoutGraph);
         }
 
+        private void GraphViewer_NodeSelected(object sender, TaggedObject e) {
+            var graphNode = e as CallGraphNode;
+
+            if (graphNode != null && graphNode.Function != null) {
+                SectionPanel.SelectFunction(graphNode.Function);
+            }
+        }
 
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {
             CreateDefaultSideBySidePanels();

@@ -181,6 +181,7 @@ namespace IRExplorerUI {
             }
         }
 
+        public event EventHandler<TaggedObject> NodeSelected;
         public event EventHandler<IRElementEventArgs> BlockSelected;
         public event EventHandler<IRElementMarkedEventArgs> BlockMarked;
         public event EventHandler<IRElementMarkedEventArgs> BlockUnmarked;
@@ -191,16 +192,17 @@ namespace IRExplorerUI {
             var graphNode = FindPointedNode(point);
 
             if (graphNode != null) {
-                if (graphNode.NodeInfo.ElementData == null) {
-                    return;
+                if (graphNode.NodeInfo.DataIsElement) {
+                    SelectElement(graphNode.NodeInfo.ElementData);
+                    BlockSelected?.Invoke(this, new IRElementEventArgs {
+                        Element = graphNode.NodeInfo.ElementData
+                    });
+                }
+                else {
+                    NodeSelected?.Invoke(this, graphNode.NodeInfo.Data);
                 }
 
-                SelectElement(graphNode.NodeInfo.ElementData);
                 e.Handled = true;
-
-                BlockSelected?.Invoke(this, new IRElementEventArgs {
-                    Element = graphNode.NodeInfo.ElementData
-                });
             }
         }
 

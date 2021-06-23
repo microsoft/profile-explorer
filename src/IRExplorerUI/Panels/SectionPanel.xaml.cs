@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -22,6 +23,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Threading.Tasks;
 using Aga.Controls.Tree;
+using Grpc.Core;
 using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Analysis;
@@ -243,34 +245,6 @@ namespace IRExplorerUI {
         }
     }
 
-    public class FunctionStatistics {
-        public long Size { get; set; }
-        public int Instructions { get; set; }
-        public int Loads { get; set; }
-        public int Stores { get; set; }
-        public int Branches { get; set; }
-        public int Calls { get; set; }
-        public int Callers { get; set; }
-        public int IndirectCalls { get; set; }
-        public int Callees { get; set; }
-
-        public bool ComputeDiff(FunctionStatistics other) {
-            Size = other.Size - Size;
-            Instructions = other.Instructions - Instructions;
-            Loads = other.Loads - Loads;
-            Stores = other.Stores - Stores;
-            Branches = other.Branches - Branches;
-            Calls = other.Calls - Calls;
-            Callers = other.Callers - Callers;
-            IndirectCalls = other.IndirectCalls - IndirectCalls;
-            Callees = other.Callees - Callees;
-            return Size != 0 || Instructions != 0 ||
-                   Loads != 0 || Stores != 0 ||
-                   Branches != 0 || Calls != 0 ||
-                   Callers != 0 || IndirectCalls != 0 || Callees != 0;
-        }
-    }
-
     public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
         public IRTextFunctionEx(IRTextFunction function, int index) : base(DiffKind.None) {
             Function = function;
@@ -446,6 +420,7 @@ namespace IRExplorerUI {
         private GridViewColumnValueSorter<ChildFunctionFieldKind> childFunctionValueSorter_;
         private GridViewColumnValueSorter<ModuleFieldKind> moduleValueSorter_;
 
+        private ModuleReport moduleReport_;
         private CancelableTaskInstance statisticsTask_;
         public CancelableTaskInstance StatisticsTask => statisticsTask_;
 
@@ -1225,6 +1200,7 @@ namespace IRExplorerUI {
         private void ResetSectionPanel() {
             otherSummary_ = null;
             currentFunction_ = null;
+            moduleReport_ = null;
             ProfileControlsVisible = false;
             FunctionModuleControlsVisible = false;
             sections_.Clear();
@@ -2184,6 +2160,7 @@ namespace IRExplorerUI {
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 8);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
             var callGraph = GenerateCallGraph(summary_);
+            var functionStatMap = new ConcurrentDictionary<IRTextFunction, FunctionStatistics>();
 
             foreach (var function in summary_.Functions) {
                 if (function.SectionCount == 0) {
@@ -2193,14 +2170,21 @@ namespace IRExplorerUI {
                 tasks.Add(taskFactory.StartNew(() => {
                     var section = function.Sections[0];
                     var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
-                    var functionEx = functionExtMap_[function];
-                    functionEx.Statistics = sectionStats;
+                    functionStatMap.TryAdd(function, sectionStats);
                 }, cancelableTask.Token));
             }
-
+            
             await Task.WhenAll(tasks.ToArray());
-            statisticsTask_.CompleteTask(cancelableTask);
 
+            foreach (var pair in functionStatMap) {
+                var functionEx = functionExtMap_[pair.Key];
+                functionEx.Statistics = pair.Value;
+            }
+
+            moduleReport_ = new ModuleReport(functionStatMap);
+            moduleReport_.Generate();
+            statisticsTask_.CompleteTask(cancelableTask);
+            
             AddStatisticsFunctionListColumns(false);
             AddStatisticsChildFunctionListColumns(false);
             RefreshFunctionList();

@@ -43,28 +43,26 @@ namespace IRExplorerUI.Utilities {
             var cg = new CallGraph(summary, loadedDocument.Loader, compilerInfo.IR);
             cg.CallGraphNodeCreated += (sender, e) => {
                 //? TODO: Should be customizable through a script
+                //? and have an option in the UI to pick what to show (profile, func size, script)
                
-                var funcProfile = profileData?.GetFunctionProfile(e.TextFunction);
+                //var funcProfile = profileData?.GetFunctionProfile(e.TextFunction);
 
-                if (funcProfile != null) {
-                    double weightPercentage = profileData.ScaleFunctionWeight(funcProfile.Weight);
-                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
+                //if (funcProfile != null) {
+                //    double weightPercentage = profileData.ScaleFunctionWeight(funcProfile.Weight);
+                //    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
 
-                    int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
-                    e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap(colorIndex, 10));
-                    e.FunctionNode.GetOrAddTag<GraphNodeTag>().Label = tooltip;
-                }
+                //    int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
+                //    e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap(colorIndex, 10));
+                //    e.FunctionNode.GetOrAddTag<GraphNodeTag>().Label = tooltip;
+                //}
 
-                var metadataTag = e.Function.GetTag<AssemblyMetadataTag>();
+                var instrCount = e.Function.InstructionCount;
 
-                if (metadataTag != null) {
-                    int instrCount = metadataTag.ElementSizeMap.Count;
-                    var tooltip = $"{instrCount} instr\n{metadataTag.FunctionSize} b";
+                var tooltip = $"{instrCount} instr";
+                int colorIndex = (int)Math.Clamp(Math.Log2(instrCount), 0, 10);
 
-                    int colorIndex = (int)Math.Clamp(Math.Log2(instrCount), 0, 10);
-                    e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap(colorIndex, 10));
-                    e.FunctionNode.GetOrAddTag<GraphNodeTag>().Label = tooltip;
-                }
+                e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap(colorIndex, 10));
+                e.FunctionNode.GetOrAddTag<GraphNodeTag>().Label = tooltip;
 
                 //int instrs = e.Function.InstructionCount;
                 //
