@@ -560,6 +560,11 @@ namespace IRExplorerUI {
             return CreateNewPanel(kind) as T;
         }
 
+        public void DisplayFloatingPanel(IToolPanel panel) {
+            DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
+            RenameAllPanels();
+        }
+
         private PanelHostInfo DisplayNewPanel(IToolPanel newPanel, IToolPanel relativePanel,
                                               DuplicatePanelKind duplicateKind) {
             var panelHost = AddNewPanel(newPanel);

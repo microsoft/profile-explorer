@@ -41,6 +41,7 @@ namespace IRExplorerUI {
         void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args);
         void BindToDocument(IToolPanel panel, BindMenuItem args);
         void DuplicatePanel(IToolPanel panel, DuplicatePanelKind duplicateKind);
+        void DisplayFloatingPanel(IToolPanel panel);
         void ShowAllReferences(IRElement element, IRDocument document);
         void ShowSSAUses(IRElement element, IRDocument document);
         object LoadDocumentState(IRTextSection section);
