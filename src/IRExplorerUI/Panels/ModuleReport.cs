@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using IRExplorerCore;
 
 namespace IRExplorerUI {
-    public class FunctionStatistics {
+    public class FunctionCodeStatistics {
         public long Size { get; set; }
         public int Instructions { get; set; }
         public int Loads { get; set; }
@@ -16,7 +16,7 @@ namespace IRExplorerUI {
         public int IndirectCalls { get; set; }
         public int Callees { get; set; }
 
-        public bool ComputeDiff(FunctionStatistics other) {
+        public bool ComputeDiff(FunctionCodeStatistics other) {
             Size = other.Size - Size;
             Instructions = other.Instructions - Instructions;
             Loads = other.Loads - Loads;
@@ -32,7 +32,7 @@ namespace IRExplorerUI {
                    Callers != 0 || IndirectCalls != 0 || Callees != 0;
         }
         
-        public void Add(FunctionStatistics other) {
+        public void Add(FunctionCodeStatistics other) {
             Size = other.Size - Size;
             Instructions = other.Instructions + Instructions;
             Loads = other.Loads + Loads;
@@ -57,37 +57,76 @@ namespace IRExplorerUI {
         }
     }
 
-    public class FunctionGroupStatistics {
-        public IDictionary<IRTextFunction, FunctionStatistics> Functions { get; set; }
-        public FunctionStatistics Total { get; set; }
-        public double AverageCalls { get; set; }
-        public double MedianCalls { get; set; }
-        public int MaxCalls { get; set; }
-        public double AverageCallers { get; set; }
-        public double MedianCallers { get; set; }
-        public int MaxCallers { get; set; }
+    public class ValueStatistics {
+        public class Generator {
+            private List<double> values_ = new List<double>();
+            private double total_;
+            private double min_ = double.MaxValue;
+            private double max_ = double.MinValue;
 
-        public FunctionGroupStatistics(IDictionary<IRTextFunction, FunctionStatistics> functions) {
+            public void Add(double value) {
+                values_.Add(value);
+                total_ += value;
+                min_ = Math.Min(min_, value);
+                max_ = Math.Max(max_, value);
+            }
+
+            public ValueStatistics Compute(int count) {
+                var stats = new ValueStatistics();
+
+                if(count == 0 || values_.Count == 0) {
+                    return stats;
+                }
+
+                values_.Sort();
+                stats.Average = total_ / count;
+                stats.Median = values_[values_.Count / 2];
+                stats.Min = min_;
+                stats.Max = max_;
+                return stats;
+            }
+        }
+
+        public double Average { get; set; }
+        public double Median { get; set; }
+        public double Min { get; set; }
+        public double Max { get; set; }
+
+        public override string ToString() {
+            return $"Average: {Average}\n" +
+                   $"Median: {Median}\n" +
+                   $"Min: {Min}\n" +
+                   $"Max: {Max}\n";
+        }
+    }
+
+    public class FunctionGroupStatistics {
+        public IDictionary<IRTextFunction, FunctionCodeStatistics> Functions { get; set; }
+        public FunctionCodeStatistics Total { get; set; }
+        public ValueStatistics Size { get; set; }
+        public ValueStatistics Instructions { get; set; }
+        public ValueStatistics Calls { get; set; }
+        public ValueStatistics Callers { get; set; }
+
+        public FunctionGroupStatistics(IDictionary<IRTextFunction, FunctionCodeStatistics> functions) {
             Functions = functions;
-            Total = new FunctionStatistics();
+            Total = new FunctionCodeStatistics();
         }
         
         public override string ToString() {
             return $"Totals: {Total}\n" +
-                   $"AverageCalls: {AverageCalls}\n" +
-                   $"MedianCalls: {MedianCalls}\n" +
-                   $"MaxCalls: {MaxCalls}\n" +
-                   $"AverageCallers: {AverageCallers}\n" +
-                   $"MedianCallers: {MedianCallers}\n" +
-                   $"MaxCallers: {MaxCallers}\n";
+                   $"Size: {Size}\n" +
+                   $"Instructions: {Instructions}\n" +
+                   $"Calls: {Calls}\n" +
+                   $"Callers: {Callers}\n";
         }
     }
 
     public class ModuleReport {
         public ICollection<IRTextFunction> Functions => StatisticsMap.Keys;
         public int FunctionCount => StatisticsMap.Count;
-        public IDictionary<IRTextFunction, FunctionStatistics> StatisticsMap;
-        public FunctionGroupStatistics Statistics;
+        public IDictionary<IRTextFunction, FunctionCodeStatistics> StatisticsMap { get; set; }
+        public FunctionGroupStatistics Statistics { get; set; }
         
         public List<IRTextFunction> SingleCallerFunctions { get; set; }
         public List<IRTextFunction> LeafFunctions { get; set; }
@@ -96,7 +135,7 @@ namespace IRExplorerUI {
         public Dictionary<int, List<IRTextFunction>> CallersDistribution { get; set; }
 
 
-        public ModuleReport(IDictionary<IRTextFunction, FunctionStatistics> functionStatisticsMap) {
+        public ModuleReport(IDictionary<IRTextFunction, FunctionCodeStatistics> functionStatisticsMap) {
             StatisticsMap = functionStatisticsMap;
             Statistics = new FunctionGroupStatistics(functionStatisticsMap);
             SingleCallerFunctions = new List<IRTextFunction>();
@@ -136,34 +175,29 @@ namespace IRExplorerUI {
         } 
         
         public FunctionGroupStatistics ComputeGroupStatistics(
-            IDictionary<IRTextFunction, FunctionStatistics> values) {
+            IDictionary<IRTextFunction, FunctionCodeStatistics> values) {
             var groupStats = new FunctionGroupStatistics(values);
-            var callCounts = new List<int>();
-            var callerCounts = new List<int>();
+            var calls = new ValueStatistics.Generator();
+            var callers = new ValueStatistics.Generator();
+            var size = new ValueStatistics.Generator();
+            var instrs = new ValueStatistics.Generator();
             int functions = 0;
 
             foreach (var pair in values) {
                 var func = pair.Key;
                 var stats = pair.Value;
                 groupStats.Total.Add(stats);
-                groupStats.MaxCalls = Math.Max(stats.Calls, groupStats.MaxCalls);
-                groupStats.MaxCallers = Math.Max(stats.Callers, groupStats.MaxCallers);
+                calls.Add(stats.Calls);
+                callers.Add(stats.Callers);
+                size.Add(stats.Size);
+                instrs.Add(stats.Instructions);
                 functions++;
             }
-            
-            callCounts.Sort();
-            callerCounts.Sort();
 
-            if (callCounts.Count > 0 && groupStats.Total.Calls > 0) {
-                groupStats.AverageCalls = (double)groupStats.Total.Calls / functions;
-                groupStats.MedianCalls = callCounts[callCounts.Count / 2];
-            }
-            
-            if (callerCounts.Count > 0 && groupStats.Total.Callers > 0) {
-                groupStats.AverageCallers = (double)groupStats.Total.Callers / functions;
-                groupStats.MedianCallers = callerCounts[callerCounts.Count / 2];
-            }
-
+            groupStats.Calls = calls.Compute(functions);
+            groupStats.Callers = callers.Compute(functions);
+            groupStats.Size = size.Compute(functions);
+            groupStats.Instructions = instrs.Compute(functions);
             return groupStats;
         }
 

@@ -249,7 +249,7 @@ namespace IRExplorerUI {
         public IRTextFunctionEx(IRTextFunction function, int index) : base(DiffKind.None) {
             Function = function;
             Index = index;
-            Statistics = new FunctionStatistics();
+            Statistics = new FunctionCodeStatistics();
         }
 
         public int Index { get; set; }
@@ -275,8 +275,8 @@ namespace IRExplorerUI {
 
         public string Name => Function.Name;
         public int SectionCount => Function.SectionCount;
-        public FunctionStatistics Statistics { get; set; }
-        public FunctionStatistics DiffStatistics { get; set; }
+        public FunctionCodeStatistics Statistics { get; set; }
+        public FunctionCodeStatistics DiffStatistics { get; set; }
 
         public DiffKind FunctionDiffKind {
             get => diffKind_;
@@ -314,7 +314,7 @@ namespace IRExplorerUI {
         public List<ChildFunctionEx> Children { get; set; }
         public int DescendantCount { get; set; }
         public bool IsMarked { get; set; }
-        public FunctionStatistics Statistics { get; set; }
+        public FunctionCodeStatistics Statistics { get; set; }
 
         public IEnumerable GetChildren(object node) {
             if (node == null) {
@@ -1854,7 +1854,7 @@ namespace IRExplorerUI {
             });
         }
 
-        private FunctionStatistics GetFunctionStatistics(IRTextFunction function) {
+        private FunctionCodeStatistics GetFunctionStatistics(IRTextFunction function) {
             var functionEx = GetFunctionExtension(function);
             return functionEx.Statistics;
         }
@@ -2160,7 +2160,7 @@ namespace IRExplorerUI {
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 8);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
             var callGraph = GenerateCallGraph(summary_);
-            var functionStatMap = new ConcurrentDictionary<IRTextFunction, FunctionStatistics>();
+            var functionStatMap = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
 
             foreach (var function in summary_.Functions) {
                 if (function.SectionCount == 0) {
@@ -2183,6 +2183,12 @@ namespace IRExplorerUI {
 
             moduleReport_ = new ModuleReport(functionStatMap);
             moduleReport_.Generate();
+
+            var panel = new ModuleReportPanel();
+            panel.DataContext = moduleReport_;
+            Session.DisplayFloatingPanel(panel);
+            
+
             statisticsTask_.CompleteTask(cancelableTask);
             
             AddStatisticsFunctionListColumns(false);
@@ -2190,9 +2196,9 @@ namespace IRExplorerUI {
             RefreshFunctionList();
         }
 
-        private FunctionStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader,
+        private FunctionCodeStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader,
             CallGraph callGraph) {
-            var stats = new FunctionStatistics();
+            var stats = new FunctionCodeStatistics();
             var result = loader.LoadSection(section);
             var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
 
