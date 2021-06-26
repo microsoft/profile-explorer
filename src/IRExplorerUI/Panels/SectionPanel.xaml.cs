@@ -2185,7 +2185,7 @@ namespace IRExplorerUI {
             moduleReport_.Generate();
 
             var panel = new ModuleReportPanel();
-            panel.DataContext = moduleReport_;
+            panel.ShowReport(moduleReport_);
             Session.DisplayFloatingPanel(panel);
             
 

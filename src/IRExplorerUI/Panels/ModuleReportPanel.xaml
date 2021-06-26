@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tree="clr-namespace:Aga.Controls.Tree;assembly=TreeListView"
     d:DesignHeight="450"
     d:DesignWidth="800"
     mc:Ignorable="d">
@@ -58,159 +59,235 @@
                 HasDuplicateButton="False"
                 HasPinButton="False" />
         </DockPanel>
-        <Grid Grid.Row="1" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"  Grid.Row="1">
+        <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <StackPanel>
-                <Expander Header="Summary" IsExpanded="True">
+                <Expander IsExpanded="True">
+                        <Expander.Header>
+                            <TextBlock Text="Summary" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                        </Expander.Header>
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" Margin="4,4,16,4">
+                        <StackPanel Margin="4,4,16,4">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Functions" Width="100"  FontWeight="DemiBold"/>
-                                <TextBlock Text="{Binding FunctionCount}"  FontWeight="DemiBold"/>
+                                <TextBlock Text="Functions" Width="100" Margin="0,0,16,0"/>
+                                <TextBlock Text="{Binding FunctionCount}"/>
                             </StackPanel>
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="Single caller" Width="100"  Margin="16,0,0,0"/>
                                 <TextBlock Text="{Binding SingleCallerFunctions.Count}"/>
-                                <TextBlock Text="{Binding SingleCallerPercentage}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Leafs" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding LeafFunctions.Count}"/>
-                                <TextBlock Text="{Binding LeafPercentage}"/>
-                            </StackPanel>
-                            <Separator Margin="0,4,0,4"/>
+                                    <TextBlock Text="{Binding Path=SingleCallerPercentage, StringFormat=({0:p2})}" Margin="8,0,0,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Leafs" Width="100" Margin="16,0,0,0"/>
+                                    <TextBlock Text="{Binding LeafFunctions.Count}"/>
+                                    <TextBlock Text="{Binding Path=LeafPercentage, StringFormat=({0:p2})}" Margin="8,0,0,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Max depth" Width="100" Margin="16,0,0,0"/>
+                                    <TextBlock Text="{Binding MaxDepth}"/>
+                                </StackPanel>
                             
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Calls per function" MinWidth="100"  FontWeight="DemiBold"/>
+                            <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                <TextBlock Text="Instructions" Width="100"  Margin="0,0,16,0"/>
+                                <TextBlock Text="{Binding Statistics.Total.Instructions}"/>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Average" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Calls.Average}"/>
+                                
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Size" Width="100"   Margin="0,0,16,0"/>
+                                    <TextBlock Text="{Binding Statistics.Total.Size}"/>
+                                </StackPanel>
                             </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Median" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Calls.Median}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Min" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Calls.Min}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Max" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Calls.Max}"/>
-                            </StackPanel>
-                            <Separator Margin="0,4,0,4"/>
-
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Callers per function" MinWidth="100"  FontWeight="DemiBold"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Average" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Callers.Average}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Median" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Callers.Median}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Min" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Callers.Min}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Max" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Callers.Max}"/>
-                            </StackPanel>
-                        </StackPanel>
-
-                        <StackPanel Grid.Column="1" Margin="4">
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Size (total)" Width="100"  FontWeight="DemiBold"/>
-                                <TextBlock Text="{Binding Statistics.Total.Size}"  FontWeight="DemiBold"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <TextBlock Text="Size per function" MinWidth="100" FontWeight="DemiBold"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Average" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Size.Average}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Median" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Size.Median}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Min" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Size.Min}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Max" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Size.Max}"/>
-                            </StackPanel>
-                            <Separator/>
-
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Instructions (total)" Width="100"  FontWeight="DemiBold"/>
-                                <TextBlock Text="{Binding Statistics.Total.Instructions}"  FontWeight="DemiBold"/>
-                            </StackPanel>
-
-                            <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                                <TextBlock Text="Instructions per function" MinWidth="100"  FontWeight="DemiBold"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Average" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Instructions.Average}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Median" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Instructions.Median}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Min" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Instructions.Min}"/>
-                            </StackPanel>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="Max" Width="100" Margin="16,0,0,0"/>
-                                <TextBlock Text="{Binding Statistics.Instructions.Max}"/>
-                            </StackPanel>
-                        </StackPanel>
                     </Grid>
                 </Expander>
-                <Expander Header="Instructions details">
-                    <StackPanel  Margin="4,4,16,4">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Instructions by type (total)" MinWidth="100"/>
+                    <Separator/>
+                    <Expander >
+                        <Expander.Header>
+                            <TextBlock Text="Instructions" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                        </Expander.Header>
+                        <StackPanel  Margin="4,4,16,4">
+                            <local:ValueStatisticPanel DataContext="{Binding Statistics.Instructions}"/>
+                            <Expander Header="Instruction types">
+                                <StackPanel   Margin="4,4,16,4">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Loads" Width="100"  Margin="16,0,0,0"/>
+                                        <TextBlock Text="{Binding Statistics.Total.Loads}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Stores" Width="100"  Margin="16,0,0,0"/>
+                                        <TextBlock Text="{Binding Statistics.Total.Stores}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Branches" Width="100"  Margin="16,0,0,0"/>
+                                        <TextBlock Text="{Binding Statistics.Total.Branches}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Calls" Width="100"  Margin="16,0,0,0"/>
+                                        <TextBlock Text="{Binding Statistics.Total.Calls}"/>
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Indirect calls" Width="100"  Margin="16,0,0,0"/>
+                                        <TextBlock Text="{Binding Statistics.Total.IndirectCalls}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Expander>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Loads" Width="100"  Margin="16,0,0,0"/>
-                            <TextBlock Text="{Binding Statistics.Total.Loads}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Stores" Width="100"  Margin="16,0,0,0"/>
-                            <TextBlock Text="{Binding Statistics.Total.Stores}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Branches" Width="100"  Margin="16,0,0,0"/>
-                            <TextBlock Text="{Binding Statistics.Total.Branches}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Calls" Width="100"  Margin="16,0,0,0"/>
-                            <TextBlock Text="{Binding Statistics.Total.Calls}"/>
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Indirect calls" Width="100"  Margin="16,0,0,0"/>
-                            <TextBlock Text="{Binding Statistics.Total.IndirectCalls}"/>
-                        </StackPanel>
-                    </StackPanel>
                 </Expander>
-                <Expander Header="Size details"/>
-                <Expander Header="Calls details"/>
-                <Expander Header="Callers details"/>
-                <Expander Header="Single caller functions"/>
-                <Expander Header="Leaf functions"/>
+                    <Separator/>
+                    <Expander >
+                        <Expander.Header>
+                            <TextBlock Text="Size" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                        </Expander.Header>
+                        <StackPanel  Margin="4,4,16,4">
+                            <local:ValueStatisticPanel DataContext="{Binding Statistics.Size}"/>
+                        </StackPanel>
+                    </Expander>
+                    <Separator/>
+
+                    <Expander>
+                        <Expander.Header>
+                            <TextBlock Text="Calls" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                        </Expander.Header>
+                        <local:ValueStatisticPanel DataContext="{Binding Statistics.Calls}"/>
+                    </Expander>
+                    <Separator/>
+                
+                    <Expander>
+                        <Expander.Header>
+                            <TextBlock Text="Callers" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                        </Expander.Header>
+                        <local:ValueStatisticPanel DataContext="{Binding Statistics.Callers}"/>
+                    </Expander>
+                    <Separator/>
+
+                    <Expander x:Name="SingleCallerExpander">
+                        <Expander.Header>
+                            <TextBlock Text="Single caller functions" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                        </Expander.Header>
+                        <StackPanel Orientation="Vertical" Margin="16,4,4,4">
+                            <Expander Header="Size details">
+                                <local:ValueStatisticPanel DataContext="{Binding Size}"/>
+                            </Expander>
+                            <Expander Header="Instructions details">
+                                <local:ValueStatisticPanel DataContext="{Binding Instructions}"/>
+                            </Expander>
+                            <Expander Header="Function list">
+                            <ListView
+                x:Name="SingleCallerFunctionList"
+                Grid.Row="1"
+                Panel.ZIndex="2"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                BorderBrush="{x:Null}"
+                BorderThickness="0,0,0,0"
+                IsTextSearchEnabled="False"
+                SelectionMode="Single">
+                            <ListView.View>
+                                <GridView >
+                                    <GridViewColumn Width="200">
+                                        <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function" />
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                    <TextBlock
+                                            Foreground="{Binding TextColor}"
+                                            Text="{Binding Name}">
+                                                    </TextBlock>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn DisplayMemberBinding="{Binding Statistics.Calls}">
+                                        <GridViewColumnHeader x:Name="CallCountColumnHeader" Content="Calls" />
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+                                    </GridViewColumn>
+
+                                        <GridViewColumn DisplayMemberBinding="{Binding Statistics.Callers}">
+                                            <GridViewColumnHeader x:Name="CallerCountColumnHeader" Content="Callers" />
+                                            <GridViewColumn.HeaderContainerStyle>
+                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                </Style>
+                                            </GridViewColumn.HeaderContainerStyle>
+                                        </GridViewColumn>
+
+                                        <GridViewColumn DisplayMemberBinding="{Binding Statistics.Instructions}">
+                                            <GridViewColumnHeader x:Name="InstructionCountColumnHeader" Content="Instrs" />
+                                            <GridViewColumn.HeaderContainerStyle>
+                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                </Style>
+                                            </GridViewColumn.HeaderContainerStyle>
+                                        </GridViewColumn>
+
+                                        <GridViewColumn DisplayMemberBinding="{Binding Statistics.Size}">
+                                            <GridViewColumnHeader x:Name="SizeColumnHeader" Content="Size" />
+                                            <GridViewColumn.HeaderContainerStyle>
+                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                </Style>
+                                            </GridViewColumn.HeaderContainerStyle>
+                                        </GridViewColumn>
+
+                                        <GridViewColumn Width="200">
+                                        <GridViewColumnHeader
+                                x:Name="ChildAlternateNameColumnHeader"
+                                local:GridViewBehaviors.CollapseableColumn="True"
+                                Content="Demangled Name"
+                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border HorizontalAlignment="Stretch">
+                                                    <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+
+                            <ListView.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                                    <!--<EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />-->
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                            </Expander>
+                        </StackPanel>
+                </Expander>
+                    <Separator/>
+            
+                    <Expander x:Name="LeafExpander">
+                        <Expander.Header>
+                            <TextBlock Text="Leaf functions" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                        </Expander.Header>
+                        <StackPanel Orientation="Vertical" Margin="16,4,4,4">
+                            <Expander Header="Size details">
+                                <local:ValueStatisticPanel DataContext="{Binding Size}"/>
+                            </Expander>
+                            <Expander Header="Instructions details">
+                                <local:ValueStatisticPanel DataContext="{Binding Instructions}"/>
+                            </Expander>
+                        </StackPanel>
+                    </Expander>
             </StackPanel>
         </Grid>
+        </ScrollViewer>
     </Grid>
+
 </local:ToolPanelControl>

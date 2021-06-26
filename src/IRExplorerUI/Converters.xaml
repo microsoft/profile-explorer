@@ -14,6 +14,7 @@
         True="Collapsed" />
     <utils:EnumBooleanConverter x:Key="EnumToBool" />
     <utils:BoolToParameterConverter x:Key="BooToParameter" />
+    <utils:DoubleScalingConverter x:Key="DoubleScaling" />
     <utils:TreeViewLineConverter x:Key="LineConverter" />
     <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacity" />
 </ResourceDictionary>
