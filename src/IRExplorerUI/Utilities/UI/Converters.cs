@@ -54,6 +54,16 @@ namespace IRExplorerUI.Utilities {
         }
     }
 
+    class DoubleScalingConverter : IValueConverter {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+            return (double)value * double.Parse((string)parameter);
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+            return null;
+        }
+    }
+
     class TreeViewLineConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) {
             TreeViewItem item = (TreeViewItem)value;

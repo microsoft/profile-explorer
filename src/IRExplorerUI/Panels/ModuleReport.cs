@@ -59,13 +59,13 @@ namespace IRExplorerUI {
 
     public class ValueStatistics {
         public class Generator {
-            private List<double> values_ = new List<double>();
-            private double total_;
-            private double min_ = double.MaxValue;
-            private double max_ = double.MinValue;
+            private List<Tuple<IRTextFunction, long>> values_ = new List<Tuple<IRTextFunction, long>>();
+            private long total_;
+            private long min_ = long.MaxValue;
+            private long max_ = long.MinValue;
 
-            public void Add(double value) {
-                values_.Add(value);
+            public void Add(long value, IRTextFunction func) {
+                values_.Add(new Tuple<IRTextFunction, long>(func, value));
                 total_ += value;
                 min_ = Math.Min(min_, value);
                 max_ = Math.Max(max_, value);
@@ -78,25 +78,73 @@ namespace IRExplorerUI {
                     return stats;
                 }
 
-                values_.Sort();
-                stats.Average = total_ / count;
-                stats.Median = values_[values_.Count / 2];
+                values_.Sort((a, b) => a.Item2.CompareTo(b.Item2));
+                stats.Values = values_;
+                stats.Average = (double)total_ / count;
+                stats.Median = values_[values_.Count / 2].Item2;
                 stats.Min = min_;
                 stats.Max = max_;
                 return stats;
             }
         }
 
+        public class DistributionRange {
+            public int Index { get; set; }
+            public int RangeStart { get; set; }
+            public int RangeEnd { get; set; }
+            public int Count { get; set; }
+            public double Percentage { get; set; }
+            public List<Tuple<IRTextFunction, long>> Values { get; set; }
+
+            public DistributionRange(int index, int rangeStart, int rangeEnd) {
+                Index = index;
+                RangeStart = rangeStart;
+                RangeEnd = rangeEnd;
+                Values = new List<Tuple<IRTextFunction, long>>();
+            }
+        }
+
         public double Average { get; set; }
-        public double Median { get; set; }
-        public double Min { get; set; }
-        public double Max { get; set; }
+        public long Median { get; set; }
+        public long Min { get; set; }
+        public long Max { get; set; }
+        public List<Tuple<IRTextFunction, long>> Values;
 
         public override string ToString() {
             return $"Average: {Average}\n" +
                    $"Median: {Median}\n" +
                    $"Min: {Min}\n" +
                    $"Max: {Max}\n";
+        }
+
+        public List<DistributionRange> ComputeDistribution(int factor) {
+            var list = new List<DistributionRange>();
+            int groupSize = Math.Max(1, (int)Math.Pow(10, Math.Round(Math.Log10(Max)) - factor));
+            var range = new DistributionRange(0, 0, groupSize - 1);
+            int total = 0;
+
+            foreach(var value in Values) {
+                int rangeIndex = (int)(value.Item2 / groupSize);
+
+                if(rangeIndex != range.Index) {
+                    list.Add(range);
+                    range = new DistributionRange(rangeIndex, rangeIndex * groupSize, (rangeIndex + 1) * groupSize - 1);
+                }
+
+                range.Count++;
+                range.Values.Add(value);
+                total++;
+            }
+
+            if(range.Count > 0) {
+                list.Add(range);
+            }
+
+            foreach(var item in list) {
+                item.Percentage = (double)item.Count / total;
+            }
+
+            return list;
         }
     }
 
@@ -133,7 +181,8 @@ namespace IRExplorerUI {
         public Dictionary<int, List<IRTextFunction>> InstructionsDistribution { get; set; }
         public Dictionary<int, List<IRTextFunction>> CallsDistribution { get; set; }
         public Dictionary<int, List<IRTextFunction>> CallersDistribution { get; set; }
-
+        public double SingleCallerPercentage => FunctionCount > 0 ? (double)SingleCallerFunctions.Count / FunctionCount : 0;
+        public double LeafPercentage => FunctionCount > 0 ? (double)LeafFunctions.Count / FunctionCount : 0;
 
         public ModuleReport(IDictionary<IRTextFunction, FunctionCodeStatistics> functionStatisticsMap) {
             StatisticsMap = functionStatisticsMap;
@@ -172,9 +221,20 @@ namespace IRExplorerUI {
 
         public void ComputeStatistics() {
             Statistics = ComputeGroupStatistics(StatisticsMap);
-        } 
-        
+        }
+
         public FunctionGroupStatistics ComputeGroupStatistics(
+            List<IRTextFunction> values) {
+            var dict = new Dictionary<IRTextFunction, FunctionCodeStatistics>();
+
+            foreach(var func in values) {
+                dict[func] = StatisticsMap[func];
+            }
+
+            return ComputeGroupStatistics(dict);
+        }
+
+            public FunctionGroupStatistics ComputeGroupStatistics(
             IDictionary<IRTextFunction, FunctionCodeStatistics> values) {
             var groupStats = new FunctionGroupStatistics(values);
             var calls = new ValueStatistics.Generator();
@@ -187,10 +247,10 @@ namespace IRExplorerUI {
                 var func = pair.Key;
                 var stats = pair.Value;
                 groupStats.Total.Add(stats);
-                calls.Add(stats.Calls);
-                callers.Add(stats.Callers);
-                size.Add(stats.Size);
-                instrs.Add(stats.Instructions);
+                calls.Add(stats.Calls, func);
+                callers.Add(stats.Callers, func);
+                size.Add(stats.Size, func);
+                instrs.Add(stats.Instructions, func);
                 functions++;
             }
 
