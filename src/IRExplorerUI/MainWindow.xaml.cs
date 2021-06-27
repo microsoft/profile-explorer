@@ -734,8 +734,7 @@ namespace IRExplorerUI {
             var panel = new CallGraphPanel(this);
             panel.TitleSuffix = $" - S{section.Number} ({CompilerInfo.NameProvider.GetSectionName(section)})";
 
-            DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
-            RenameAllPanels();
+            DisplayFloatingPanel(panel);
             panel.DisplayGraph(layoutGraph);
         }
 
