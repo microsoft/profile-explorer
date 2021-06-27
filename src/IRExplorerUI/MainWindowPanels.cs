@@ -561,7 +561,10 @@ namespace IRExplorerUI {
         }
 
         public void DisplayFloatingPanel(IToolPanel panel) {
-            DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
+            var panelHost = DisplayNewPanel(panel, null, DuplicatePanelKind.Floating);
+            panelHost.Host.CanClose = true;
+            panelHost.Host.CanAutoHide = false;
+            panelHost.Host.CanHide = false;
             RenameAllPanels();
         }
 
