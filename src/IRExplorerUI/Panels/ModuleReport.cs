@@ -117,9 +117,15 @@ namespace IRExplorerUI {
                    $"Max: {Max}\n";
         }
 
+        public int MaxDistributionFactor => (int)Math.Ceiling(Math.Log10(Max));
+        
+        public int GetGroupSize(int factor) {
+            return Math.Max(1, (int)Math.Pow(10, Math.Round(Math.Log10(Max)) - factor));
+        }
+
         public List<DistributionRange> ComputeDistribution(int factor) {
             var list = new List<DistributionRange>();
-            int groupSize = Math.Max(1, (int)Math.Pow(10, Math.Round(Math.Log10(Max)) - factor));
+            int groupSize = GetGroupSize(factor);
             var range = new DistributionRange(0, 0, groupSize - 1);
             int total = 0;
 

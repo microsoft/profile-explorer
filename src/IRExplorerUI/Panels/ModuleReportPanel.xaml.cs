@@ -32,14 +32,21 @@ namespace IRExplorerUI {
             InitializeComponent();
         }
 
+        //? TODO:
+        //? - use buttons instead of slider
+        //? - show function list on the right side
+        //? - selecting distrib range shows functs
+
         public void ShowReport(ModuleReport report) {
             report_= report;
             DataContext = report;
-
-            SingleCallerFunctionList.ItemsSource = CreateFunctionList(report_.SingleCallerFunctions);
+            
             SingleCallerExpander.DataContext = report.ComputeGroupStatistics(report.SingleCallerFunctions);
-
             LeafExpander.DataContext = report.ComputeGroupStatistics(report.LeafFunctions);
+        }
+
+        private void UpdateFunctionList(List<IRTextFunction> list) {
+            FunctionList.ItemsSource = CreateFunctionList(list);
         }
 
         private ListCollectionView CreateFunctionList(List<IRTextFunction> list) {
@@ -66,5 +73,17 @@ namespace IRExplorerUI {
         public override ToolPanelKind PanelKind => ToolPanelKind.Other;
 
         #endregion
+
+        private void SingleCallListButton_Click(object sender, RoutedEventArgs e) {
+            UpdateFunctionList(report_.SingleCallerFunctions);
+        }
+
+        private void ValueStatisticPanel_RangeSelected(object sender, List<IRTextFunction> e) {
+            UpdateFunctionList(e);
+        }
+
+        private void LeafListButton_Click(object sender, RoutedEventArgs e) {
+            UpdateFunctionList(report_.LeafFunctions);
+        }
     }
 }
