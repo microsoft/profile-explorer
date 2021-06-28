@@ -8,29 +8,34 @@
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
         <StackPanel>
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
                 <TextBlock Text="Average" Width="100"/>
                 <TextBlock Text="{Binding Path=Average, StringFormat=f2}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
                 <TextBlock Text="Median" Width="100"/>
                 <TextBlock Text="{Binding Median}"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal" Margin="4,0,0,0">
                 <TextBlock Text="Min/Max" Width="100"/>
                 <TextBlock Text="{Binding Min}"/>
+                <TextBlock Text="/"/>
+                <TextBlock Text="{Binding Max}"/>
             </StackPanel>
             <Expander Margin="0,4,0,0" Expanded="Expander_Expanded" x:Name="DistributionExpander">
                 <Expander.Header>
                     <DockPanel Width="Auto" HorizontalAlignment="Stretch" LastChildFill="True">
                         <TextBlock Text="Value distribution"/>
-                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="32,0,0,0" Visibility="{Binding IsExpanded, ElementName=DistributionExpander, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="Factor"/>
-                            <Slider  Minimum="0" Maximum="5" Width="50" Margin="4,0,0,0" DockPanel.Dock="Right" ValueChanged="Slider_ValueChanged" IsSnapToTickEnabled="True" TickPlacement="None" AutoToolTipPlacement="BottomRight" SmallChange="1" Value="1"/>
+                        <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" Margin="64,0,0,0" Visibility="{Binding IsExpanded, ElementName=DistributionExpander, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Group size"/>
+                            <Slider x:Name="FactorSlider" Minimum="0" Maximum="5" Width="50" 
+                                    Margin="4,0,0,0" DockPanel.Dock="Right" SmallChange="1" Value="1" ValueChanged="Slider_ValueChanged"/>
+                            <TextBlock x:Name="GroupSizeLabel" Text="1" Margin="8,0,0,0"/>
                         </StackPanel>
                     </DockPanel>
                 </Expander.Header>
                 <ListView
+                    Margin="0,4,0,0"
                 x:Name="DistributionList"
                 Grid.Row="1"
                 Panel.ZIndex="2"
@@ -66,12 +71,12 @@
                                 </GridViewColumn.HeaderContainerStyle>
                             </GridViewColumn>
 
-                            <GridViewColumn Width="250">
+                            <GridViewColumn Width="180">
                                 <GridViewColumnHeader Content="" />
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <Rectangle Fill="IndianRed" Stroke="Black" Height="16" Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=200.0}"/>
+                                            <Rectangle Fill="RoyalBlue" Stroke="Black" Height="16" Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=150.0}"/>
                                             <TextBlock Text="{Binding Path=Percentage, StringFormat=p2}" Margin="4,0,0,0"/>
                                         </StackPanel>
                                     </DataTemplate>
@@ -87,7 +92,7 @@
 
                     <ListView.ItemContainerStyle>
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                            <!--<EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />-->
+                            <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick"/>
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         </Style>
                     </ListView.ItemContainerStyle>
