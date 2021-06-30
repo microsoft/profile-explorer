@@ -13,16 +13,25 @@
     </local:ToolPanelControl.CommandBindings>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="28" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="2"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <DockPanel
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="28" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <DockPanel
             Grid.Row="0"
             HorizontalAlignment="Stretch"
             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
-            <ToolBarTray
+                    <ToolBarTray
                 Grid.Row="0"
                 Grid.Column="2"
                 Height="28"
@@ -30,184 +39,259 @@
                 VerticalAlignment="Top"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                 IsLocked="True">
-                <ToolBar
+                        <ToolBar
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Top"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
 
-                    <ToggleButton
+                            <ToggleButton
                         IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
                         TabIndex="5"
-                        ToolTip="Search output text (Ctrl+F)">
-                        <Image
+                        ToolTip="Show function list">
+                                <Image
                             Width="16"
                             Height="16"
-                            Source="{StaticResource SearchIcon}" />
-                    </ToggleButton>
+                            Source="{StaticResource ListIcon}" />
+                            </ToggleButton>
 
-                </ToolBar>
-            </ToolBarTray>
+                            <ToggleButton
+                        IsChecked="{Binding SearchPanelVisible, Mode=TwoWay}"
+                        TabIndex="5"
+                        ToolTip="Show call graph">
+                                <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource GraphIcon}" />
+                            </ToggleButton>
 
-            <local:PanelToolbarTray
+                        </ToolBar>
+                    </ToolBarTray>
+
+                    <local:PanelToolbarTray
                 DockPanel.Dock="Right"
                 HasDuplicateButton="False"
                 HasPinButton="False" />
-        </DockPanel>
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="2"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+                </DockPanel>
+                
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Column="0" Grid.Row="1">
+                    <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                        <StackPanel>
+                            <Expander IsExpanded="True">
+                                <Expander.Header>
+                                    <TextBlock Text="Summary" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                                </Expander.Header>
+                                <Grid>
+                                    <StackPanel Margin="4,4,16,4">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Instructions" Width="100"  Margin="0,0,16,0" />
+                                            <TextBlock Text="{Binding Statistics.Total.Instructions}" FontWeight="DemiBold"/>
+                                        </StackPanel>
 
-            <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Grid.Column="0">
-                <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
-                    <StackPanel>
-                        <Expander IsExpanded="True">
-                            <Expander.Header>
-                                <TextBlock Text="Summary" FontWeight="DemiBold" Foreground="DarkBlue"/>
-                            </Expander.Header>
-                            <Grid>
-                                <StackPanel Margin="4,4,16,4">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Instructions" Width="100"  Margin="0,0,16,0" />
-                                        <TextBlock Text="{Binding Statistics.Total.Instructions}" FontWeight="DemiBold"/>
-                                    </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Size" Width="100"   Margin="0,0,16,0"/>
+                                            <TextBlock Text="{Binding Statistics.Total.Size}" FontWeight="DemiBold"/>
+                                        </StackPanel>
 
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Size" Width="100"   Margin="0,0,16,0"/>
-                                        <TextBlock Text="{Binding Statistics.Total.Size}" FontWeight="DemiBold"/>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Functions" Width="100" Margin="0,0,16,0"/>
+                                            <TextBlock Text="{Binding FunctionCount}" FontWeight="DemiBold"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Single caller" Width="100"  Margin="16,0,0,0"/>
+                                            <TextBlock Text="{Binding SingleCallerFunctions.Count}"  FontWeight="DemiBold"/>
+                                            <TextBlock Text="{Binding Path=SingleCallerPercentage, StringFormat=({0:p2})}" Margin="8,0,0,0"  FontWeight="DemiBold"/>
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="Leafs" Width="100" Margin="16,0,0,0"/>
+                                            <TextBlock Text="{Binding LeafFunctions.Count}"  FontWeight="DemiBold"/>
+                                            <TextBlock Text="{Binding Path=LeafPercentage, StringFormat=({0:p2})}" Margin="8,0,0,0"  FontWeight="DemiBold"/>
+                                        </StackPanel>
                                     </StackPanel>
-                                    
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Functions" Width="100" Margin="0,0,16,0"/>
-                                        <TextBlock Text="{Binding FunctionCount}" FontWeight="DemiBold"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Single caller" Width="100"  Margin="16,0,0,0"/>
-                                        <TextBlock Text="{Binding SingleCallerFunctions.Count}"  FontWeight="DemiBold"/>
-                                        <TextBlock Text="{Binding Path=SingleCallerPercentage, StringFormat=({0:p2})}" Margin="8,0,0,0"  FontWeight="DemiBold"/>
-                                    </StackPanel>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="Leafs" Width="100" Margin="16,0,0,0"/>
-                                        <TextBlock Text="{Binding LeafFunctions.Count}"  FontWeight="DemiBold"/>
-                                        <TextBlock Text="{Binding Path=LeafPercentage, StringFormat=({0:p2})}" Margin="8,0,0,0"  FontWeight="DemiBold"/>
-                                    </StackPanel>
+                                </Grid>
+                            </Expander>
+                            <Separator/>
+
+                            <Expander x:Name="InstructionsExpander">
+                                <Expander.Header>
+                                    <TextBlock Text="Instructions" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                                </Expander.Header>
+                                <StackPanel  Margin="4,4,16,4">
+                                    <local:ValueStatisticPanel DataContext="{Binding Statistics.Instructions}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                                    <Expander Header="Instruction types">
+                                        <StackPanel   Margin="4,4,16,4">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Loads" Width="100"  Margin="16,0,0,0"/>
+                                                <TextBlock Text="{Binding Statistics.Total.Loads}"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Stores" Width="100"  Margin="16,0,0,0"/>
+                                                <TextBlock Text="{Binding Statistics.Total.Stores}"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Branches" Width="100"  Margin="16,0,0,0"/>
+                                                <TextBlock Text="{Binding Statistics.Total.Branches}"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Calls" Width="100"  Margin="16,0,0,0"/>
+                                                <TextBlock Text="{Binding Statistics.Total.Calls}"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="Indirect calls" Width="100"  Margin="16,0,0,0"/>
+                                                <TextBlock Text="{Binding Statistics.Total.IndirectCalls}"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Expander>
                                 </StackPanel>
+                            </Expander>
+                            <Separator/>
+
+                            <Expander  x:Name="SizeExpander">
+                                <Expander.Header>
+                                    <TextBlock Text="Size" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                                </Expander.Header>
+                                <StackPanel  Margin="4,4,16,4">
+                                    <local:ValueStatisticPanel DataContext="{Binding Statistics.Size}"  RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                                </StackPanel>
+                            </Expander>
+                            <Separator/>
+
+                            <Expander x:Name="CallTreeDepthExpander">
+                                <Expander.Header>
+                                    <TextBlock Text="Call tree depth" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                                </Expander.Header>
+                                <local:ValueStatisticPanel DataContext="{Binding Statistics.Calls}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                            </Expander>
+                            <Separator/>
+
+                            <Expander x:Name="CallsExpander">
+                                <Expander.Header>
+                                    <TextBlock Text="Calls" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                                </Expander.Header>
+                                <local:ValueStatisticPanel DataContext="{Binding Statistics.Calls}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                            </Expander>
+                            <Separator/>
+
+                            <Expander x:Name="CallerExpander">
+                                <Expander.Header>
+                                    <TextBlock Text="Callers" FontWeight="DemiBold" Foreground="DarkBlue"/>
+                                </Expander.Header>
+                                <local:ValueStatisticPanel DataContext="{Binding Statistics.Callers}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                            </Expander>
+                            <Separator/>
+
+                            <Expander x:Name="SingleCallerExpander">
+                                <Expander.Header>
+                                    <DockPanel HorizontalAlignment="Stretch" MinWidth="250" Width="300">
+                                        <TextBlock Text="Single caller functions" FontWeight="DemiBold" Foreground="DarkBlue" VerticalAlignment="Center"/>
+                                        <Button DockPanel.Dock="Right" Content="Functions list" HorizontalAlignment="Right"  VerticalAlignment="Center" Padding="4,2,4,2" x:Name="SingleCallListButton" Click="SingleCallListButton_Click"/>
+                                    </DockPanel>
+                                </Expander.Header>
+                                <StackPanel Orientation="Vertical" Margin="16,4,4,4">
+                                    <Expander Header="Instructions details">
+                                        <local:ValueStatisticPanel DataContext="{Binding Instructions}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                                    </Expander>
+                                    <Separator/>
+
+                                    <Expander Header="Size details" Margin="0,4,0,0">
+                                        <local:ValueStatisticPanel DataContext="{Binding Size}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                                    </Expander>
+                                </StackPanel>
+                            </Expander>
+                            <Separator/>
+
+                            <Expander x:Name="LeafExpander">
+                                <Expander.Header>
+                                    <DockPanel HorizontalAlignment="Stretch" MinWidth="250" Width="300">
+                                        <TextBlock Text="Leaf functions" FontWeight="DemiBold" Foreground="DarkBlue" VerticalAlignment="Center"/>
+                                        <Button DockPanel.Dock="Right" Content="Functions list" HorizontalAlignment="Right"  VerticalAlignment="Center" Padding="4,2,4,2" x:Name="LeafListButton" Click="LeafListButton_Click"/>
+                                    </DockPanel>
+                                </Expander.Header>
+                                <StackPanel Orientation="Vertical" Margin="16,4,4,4">
+                                    <Expander Header="Instructions details">
+                                        <local:ValueStatisticPanel  DataContext="{Binding Instructions}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                                    </Expander>
+                                    <Separator/>
+
+                                    <Expander Header="Size details" Margin="0,4,0,0">
+                                        <local:ValueStatisticPanel DataContext="{Binding Size}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
+                                    </Expander>
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+                    </Grid>
+                </ScrollViewer>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" Width="2"
+HorizontalAlignment="Stretch"
+VerticalAlignment="Stretch"/>
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="28" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <DockPanel Grid.Row="0"
+                    HorizontalAlignment="Stretch"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                    <ToolBarTray Height="28"
+Margin="0,0,24,0"
+HorizontalAlignment="Stretch"
+VerticalAlignment="Top"
+Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+IsLocked="True">
+                        <ToolBar Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
+HorizontalAlignment="Stretch"
+VerticalAlignment="Top"
+Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+                            <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
+                            <Grid
+                        x:Name="FunctionFilterGrid"
+                        Height="24"
+                        HorizontalAlignment="Stretch"
+                        ToolBar.OverflowMode="Never">
+                                <TextBox
+                            Name="FunctionFilter"
+                            Height="24"
+                            Margin="4,0,0,0"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            TextChanged="FunctionFilter_TextChanged"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            ToolTip="Filter function list based on a case-insensitive substring">
+                                    <TextBox.InputBindings>
+                                        <KeyBinding
+                                    Key="Escape"
+                                    Command="local:Command.ClearTextbox"
+                                    CommandParameter="{Binding ElementName=FunctionFilter}" />
+                                    </TextBox.InputBindings>
+
+                                </TextBox>
+                                <TextBlock
+                            Margin="8,4"
+                            Foreground="DimGray"
+                            IsHitTestVisible="False"
+                            Text="Search functions"
+                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
                             </Grid>
-                        </Expander>
-                        <Separator/>
 
-                        <Expander x:Name="InstructionsExpander">
-                            <Expander.Header>
-                                <TextBlock Text="Instructions" FontWeight="DemiBold" Foreground="DarkBlue"/>
-                            </Expander.Header>
-                            <StackPanel  Margin="4,4,16,4">
-                                <local:ValueStatisticPanel DataContext="{Binding Statistics.Instructions}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                                <Expander Header="Instruction types">
-                                    <StackPanel   Margin="4,4,16,4">
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Loads" Width="100"  Margin="16,0,0,0"/>
-                                            <TextBlock Text="{Binding Statistics.Total.Loads}"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Stores" Width="100"  Margin="16,0,0,0"/>
-                                            <TextBlock Text="{Binding Statistics.Total.Stores}"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Branches" Width="100"  Margin="16,0,0,0"/>
-                                            <TextBlock Text="{Binding Statistics.Total.Branches}"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Calls" Width="100"  Margin="16,0,0,0"/>
-                                            <TextBlock Text="{Binding Statistics.Total.Calls}"/>
-                                        </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <TextBlock Text="Indirect calls" Width="100"  Margin="16,0,0,0"/>
-                                            <TextBlock Text="{Binding Statistics.Total.IndirectCalls}"/>
-                                        </StackPanel>
-                                    </StackPanel>
-                                </Expander>
-                            </StackPanel>
-                        </Expander>
-                        <Separator/>
-                        
-                        <Expander  x:Name="SizeExpander">
-                            <Expander.Header>
-                                <TextBlock Text="Size" FontWeight="DemiBold" Foreground="DarkBlue"/>
-                            </Expander.Header>
-                            <StackPanel  Margin="4,4,16,4">
-                                <local:ValueStatisticPanel DataContext="{Binding Statistics.Size}"  RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                            </StackPanel>
-                        </Expander>
-                        <Separator/>
-
-                        <Expander x:Name="CallTreeDepthExpander">
-                            <Expander.Header>
-                                <TextBlock Text="Call tree depth" FontWeight="DemiBold" Foreground="DarkBlue"/>
-                            </Expander.Header>
-                            <local:ValueStatisticPanel DataContext="{Binding Statistics.Calls}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                        </Expander>
-                        <Separator/>
-
-                        <Expander x:Name="CallsExpander">
-                            <Expander.Header>
-                                <TextBlock Text="Calls" FontWeight="DemiBold" Foreground="DarkBlue"/>
-                            </Expander.Header>
-                            <local:ValueStatisticPanel DataContext="{Binding Statistics.Calls}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                        </Expander>
-                        <Separator/>
-
-                        <Expander x:Name="CallerExpander">
-                            <Expander.Header>
-                                <TextBlock Text="Callers" FontWeight="DemiBold" Foreground="DarkBlue"/>
-                            </Expander.Header>
-                            <local:ValueStatisticPanel DataContext="{Binding Statistics.Callers}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                        </Expander>
-                        <Separator/>
-
-                        <Expander x:Name="SingleCallerExpander">
-                            <Expander.Header>
-                                <DockPanel HorizontalAlignment="Stretch" MinWidth="250" Width="300">
-                                <TextBlock Text="Single caller functions" FontWeight="DemiBold" Foreground="DarkBlue" VerticalAlignment="Center"/>
-                                    <Button DockPanel.Dock="Right" Content="Functions list" HorizontalAlignment="Right"  VerticalAlignment="Center" Padding="4,2,4,2" x:Name="SingleCallListButton" Click="SingleCallListButton_Click"/>
-                                </DockPanel>
-                            </Expander.Header>
-                            <StackPanel Orientation="Vertical" Margin="16,4,4,4">
-                                <Expander Header="Instructions details">
-                                    <local:ValueStatisticPanel DataContext="{Binding Instructions}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                                </Expander>
-                                <Expander Header="Size details" Margin="0,4,0,0">
-                                    <local:ValueStatisticPanel DataContext="{Binding Size}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                                </Expander>
-                            </StackPanel>
-                        </Expander>
-                        <Separator/>
-
-                        <Expander x:Name="LeafExpander">
-                            <Expander.Header>
-                                <DockPanel HorizontalAlignment="Stretch" MinWidth="250" Width="300">
-                                    <TextBlock Text="Leaf functions" FontWeight="DemiBold" Foreground="DarkBlue" VerticalAlignment="Center"/>
-                                    <Button DockPanel.Dock="Right" Content="Functions list" HorizontalAlignment="Right"  VerticalAlignment="Center" Padding="4,2,4,2" x:Name="LeafListButton" Click="LeafListButton_Click"/>
-                                </DockPanel>
-                            </Expander.Header>
-                            <StackPanel Orientation="Vertical" Margin="16,4,4,4">
-                                <Expander Header="Instructions details">
-                                    <local:ValueStatisticPanel  DataContext="{Binding Instructions}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                                </Expander>
-
-                                <Expander Header="Size details" Margin="0,4,0,0">
-                                    <local:ValueStatisticPanel DataContext="{Binding Size}" RangeSelected="ValueStatisticPanel_RangeSelected"/>
-                                </Expander>
-                            </StackPanel>
-                        </Expander>
-                    </StackPanel>
-                </Grid>
-            </ScrollViewer>
-
-            <GridSplitter Grid.Column="1" VerticalAlignment="Stretch"/>
-            <ListView
+                            <Button
+                        Command="local:Command.ClearTextbox"
+                        CommandParameter="{Binding ElementName=FunctionFilter}"
+                        ToolBar.OverflowMode="Never"
+                        ToolTip="Reset function filter">
+                                <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource ClearIcon}" />
+                            </Button>
+                        </ToolBar>
+                    </ToolBarTray>
+                </DockPanel>
+                
+                <ListView Grid.Row="1"
                 x:Name="FunctionList"
                 Grid.Column="2"
                 Panel.ZIndex="2"
@@ -215,94 +299,101 @@
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 IsTextSearchEnabled="False"
+                SelectionChanged="FunctionList_SelectionChanged"
                 SelectionMode="Single">
-                <ListView.View>
-                    <GridView >
-                        <GridViewColumn Width="200">
-                            <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="200">
+                                <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
 
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock
                                             Foreground="{Binding TextColor}"
                                             Text="{Binding Name}">
-                                    </TextBlock>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
 
-                        <GridViewColumn DisplayMemberBinding="{Binding Statistics.Instructions}">
-                            <GridViewColumnHeader x:Name="InstructionCountColumnHeader" Content="Instrs" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+                            <GridViewColumn DisplayMemberBinding="{Binding Statistics.Instructions}">
+                                <GridViewColumnHeader x:Name="InstructionCountColumnHeader" Content="Instrs" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                            </GridViewColumn>
 
-                        <GridViewColumn DisplayMemberBinding="{Binding Statistics.Size}">
-                            <GridViewColumnHeader x:Name="SizeColumnHeader" Content="Size" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+                            <GridViewColumn DisplayMemberBinding="{Binding Statistics.Size}">
+                                <GridViewColumnHeader x:Name="SizeColumnHeader" Content="Size" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                            </GridViewColumn>
 
-                        <GridViewColumn DisplayMemberBinding="{Binding Statistics.Calls}">
-                            <GridViewColumnHeader x:Name="CallCountColumnHeader" Content="Calls" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+                            <GridViewColumn DisplayMemberBinding="{Binding Statistics.Calls}">
+                                <GridViewColumnHeader x:Name="CallCountColumnHeader" Content="Calls" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                            </GridViewColumn>
 
-                        <GridViewColumn DisplayMemberBinding="{Binding Statistics.Callers}">
-                            <GridViewColumnHeader x:Name="CallerCountColumnHeader" Content="Callers" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+                            <GridViewColumn DisplayMemberBinding="{Binding Statistics.Callers}">
+                                <GridViewColumnHeader x:Name="CallerCountColumnHeader" Content="Callers" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                            </GridViewColumn>
 
-                        <GridViewColumn Width="200">
-                            <GridViewColumnHeader
+                            <GridViewColumn Width="200">
+                                <GridViewColumnHeader
                                 x:Name="ChildAlternateNameColumnHeader"
                                 local:GridViewBehaviors.CollapseableColumn="True"
                                 Content="Demangled Name"
                                 Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
 
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
 
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch">
-                                        <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
-                                    </Border>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border HorizontalAlignment="Stretch">
+                                            <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
 
-                <ListView.ItemContainerStyle>
-                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <!--<EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />-->
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-            </ListView>
+                    <ListView.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                            <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick"/>
+                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+            </Grid>
+
+            <GridSplitter Grid.Column="3" Width="2"
+HorizontalAlignment="Stretch"
+VerticalAlignment="Stretch"/>
+            <local:CallGraphPanel x:Name="CallGraphView" Grid.Column="4"/>
         </Grid>
         
     </Grid>

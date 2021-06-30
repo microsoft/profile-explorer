@@ -2186,7 +2186,7 @@ namespace IRExplorerUI {
 
             var panel = new ModuleReportPanel();
             panel.TitleSuffix = $"Module function report";
-            panel.ShowReport(moduleReport_);
+            panel.ShowReport(moduleReport_, summary_, Session);
             Session.DisplayFloatingPanel(panel);
             
 

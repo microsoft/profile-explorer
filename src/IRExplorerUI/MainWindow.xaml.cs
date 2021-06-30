@@ -738,12 +738,16 @@ namespace IRExplorerUI {
             panel.DisplayGraph(layoutGraph);
         }
 
-        private void GraphViewer_NodeSelected(object sender, TaggedObject e) {
+        private async void GraphViewer_NodeSelected(object sender, TaggedObject e) {
             var graphNode = e as CallGraphNode;
 
             if (graphNode != null && graphNode.Function != null) {
-                SectionPanel.SelectFunction(graphNode.Function);
+                await SectionPanel.SelectFunction(graphNode.Function);
             }
+        }
+
+        public Task SwitchActiveFunction(IRTextFunction function) {
+            return SectionPanel.SelectFunction(function);
         }
 
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {

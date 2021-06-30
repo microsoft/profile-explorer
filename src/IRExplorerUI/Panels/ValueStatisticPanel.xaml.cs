@@ -45,13 +45,27 @@ namespace IRExplorerUI {
             }
         }
 
-        private void FunctionDoubleClick(object sender, MouseButtonEventArgs e) {
-            var range = ((ListViewItem)sender).Content as ValueStatistics.DistributionRange;
+        private void DistributionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            var range = DistributionList.SelectedItem as ValueStatistics.DistributionRange;
+
+            if (range == null) {
+                return;
+            }
+
             var funcList = new List<IRTextFunction>(range.Values.Count);
-            
-            foreach(var value in range.Values) {
+
+            foreach (var value in range.Values) {
                 funcList.Add(value.Item1);
             }
+
+            range.Values.Sort((a, b) => {
+                var result = a.Item2.CompareTo(b.Item2);
+                if (result != 0) {
+                    return result;
+                }
+
+                return a.Item1.Name.CompareTo(b.Item1.Name);
+            });
 
             RangeSelected?.Invoke(this, funcList);
         }
