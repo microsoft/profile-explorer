@@ -14,6 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using System.Windows.Data;
+using IRExplorerUI.Utilities;
 
 namespace IRExplorerUI {
     public partial class ModuleReportPanel : ToolPanelControl {
@@ -27,6 +28,8 @@ namespace IRExplorerUI {
         }
 
         private ModuleReport report_;
+        private IRTextSummary summary_;
+        private ISession session_;
 
         public ModuleReportPanel() {
             InitializeComponent();
@@ -37,12 +40,17 @@ namespace IRExplorerUI {
         //? - show function list on the right side
         //? - selecting distrib range shows functs
 
-        public void ShowReport(ModuleReport report) {
-            report_= report;
+        public void ShowReport(ModuleReport report, IRTextSummary summary, ISession session) {
+            report_ = report;
+            summary_ = summary;
             DataContext = report;
-            
+            session_ = session;
+
             SingleCallerExpander.DataContext = report.ComputeGroupStatistics(report.SingleCallerFunctions);
             LeafExpander.DataContext = report.ComputeGroupStatistics(report.LeafFunctions);
+
+            CallGraphView.Session = session_;
+            CallGraphView.OnRegisterPanel();
         }
 
         private void UpdateFunctionList(List<IRTextFunction> list) {
@@ -50,9 +58,10 @@ namespace IRExplorerUI {
         }
 
         private ListCollectionView CreateFunctionList(List<IRTextFunction> list) {
+            list.Sort((a, b) => a.Name.CompareTo(b.Name));
             var listEx = new List<FunctionEx>(list.Count);
 
-            foreach(var func in list) {
+            foreach (var func in list) {
                 listEx.Add(new FunctionEx() {
                     Function = func,
                     Name = func.Name,
@@ -60,8 +69,39 @@ namespace IRExplorerUI {
                     Statistics = report_.StatisticsMap[func]
                 });
             }
-            
-            return new ListCollectionView(listEx);
+
+            var listView = new ListCollectionView(listEx);
+            listView.Filter = FilterFunctionList;
+            return listView;
+        }
+
+        private bool FilterFunctionList(object value) {
+            var functionEx = (FunctionEx)value;
+            var function = functionEx.Function;
+
+            // Don't filter with less than 2 letters.
+            //? TODO: FunctionFilter change should rather set a property with the trimmed text
+            string text = FunctionFilter.Text.Trim();
+
+            if (text.Length < 2) {
+                return true;
+            }
+
+            // Search the function name.
+            if ((App.Settings.SectionSettings.FunctionSearchCaseSensitive
+                ? function.Name.Contains(text, StringComparison.Ordinal)
+                : function.Name.Contains(text, StringComparison.OrdinalIgnoreCase))) {
+                return true;
+            }
+
+            // Search the demangled name.
+            if (!string.IsNullOrEmpty(functionEx.AlternateName)) {
+                return (App.Settings.SectionSettings.FunctionSearchCaseSensitive
+                    ? functionEx.AlternateName.Contains(text, StringComparison.Ordinal)
+                    : functionEx.AlternateName.Contains(text, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return false;
         }
 
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -84,6 +124,53 @@ namespace IRExplorerUI {
 
         private void LeafListButton_Click(object sender, RoutedEventArgs e) {
             UpdateFunctionList(report_.LeafFunctions);
+        }
+
+        private async Task DisplayCallGraph(IRTextFunction func) {
+            var loadedDoc = session_.SessionState.FindLoadedDocument(summary_);
+            var section = func.Sections[0];
+            var layoutGraph = await Task.Run(() =>
+                CallGraphUtils.BuildCallGraphLayout(summary_, section, loadedDoc,
+                                                    session_.CompilerInfo, null, true));
+            CallGraphView.DisplayGraph(layoutGraph);
+        }
+
+        private void FunctionFilter_TextChanged(object sender, TextChangedEventArgs e) {
+            RefreshFunctionList();
+        }
+
+        private void RefreshFunctionList() {
+            if (FunctionList.ItemsSource == null) {
+                return;
+            }
+
+            ((ListCollectionView)FunctionList.ItemsSource).Refresh();
+        }
+
+        private async void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            var funcEx = ((ListViewItem)sender).Content as FunctionEx;
+
+            if (funcEx == null) {
+                return;
+            }
+
+            await Session.SwitchActiveFunction(funcEx.Function);
+        }
+
+        private async void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            var funcEx = FunctionList.SelectedItem as FunctionEx;
+
+            if (funcEx == null) {
+                return;
+            }
+
+            var func = funcEx.Function;
+
+            if (func.SectionCount == 0) {
+                return;
+            }
+
+            await DisplayCallGraph(func);
         }
     }
 }

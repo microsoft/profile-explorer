@@ -43,6 +43,7 @@
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 IsTextSearchEnabled="False"
+                    SelectionChanged="DistributionList_SelectionChanged"
                 SelectionMode="Single">
                     <ListView.View>
                         <GridView >
@@ -92,7 +93,6 @@
 
                     <ListView.ItemContainerStyle>
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                            <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick"/>
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                         </Style>
                     </ListView.ItemContainerStyle>
