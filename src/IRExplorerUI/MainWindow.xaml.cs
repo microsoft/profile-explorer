@@ -971,6 +971,10 @@ namespace IRExplorerUI {
             }
         }
 
+        private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
+            SectionPanel.ShowModuleReport();
+        }
+
         public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
                                         ProfileLoadProgressHandler progressCallback,
                                         CancelableTask cancelableTask) {

@@ -148,7 +148,7 @@ namespace IRExplorerUI {
         }
 
         private async void FunctionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            var funcEx = ((ListViewItem)sender).Content as FunctionEx;
+            var funcEx = FunctionList.SelectedItem as FunctionEx;
 
             if (funcEx == null) {
                 return;
@@ -158,7 +158,7 @@ namespace IRExplorerUI {
         }
 
         private async void ListViewItem_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
-            var funcEx = FunctionList.SelectedItem as FunctionEx;
+            var funcEx = ((ListViewItem)sender).Content as FunctionEx;
 
             if (funcEx == null) {
                 return;
