@@ -420,10 +420,11 @@ namespace IRExplorerUI {
         private GridViewColumnValueSorter<ChildFunctionFieldKind> childFunctionValueSorter_;
         private GridViewColumnValueSorter<ModuleFieldKind> moduleValueSorter_;
 
+        private CallGraph callGraph_;
+        private CallGraph otherCallGraph_;
         private ModuleReport moduleReport_;
         private CancelableTaskInstance statisticsTask_;
-        public CancelableTaskInstance StatisticsTask => statisticsTask_;
-
+        private ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics> functionStatMap_;
 
         public SectionPanel() {
             InitializeComponent();
@@ -1193,8 +1194,9 @@ namespace IRExplorerUI {
 
                 SetDemangledFunctionNames(functionsEx);
                 SetFunctionProfileInfo(functionsEx);
-                await ComputeFunctionStatistics();
             }
+
+            await ComputeFunctionStatistics();
         }
 
         private void ResetSectionPanel() {
@@ -1206,6 +1208,10 @@ namespace IRExplorerUI {
             sections_.Clear();
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
+            callGraph_ = null;
+            otherCallGraph_ = null;
+            functionStatMap_ = null;
+
             SectionList.ItemsSource = null;
             FunctionList.ItemsSource = null;
             SectionList.UpdateLayout();
@@ -1219,6 +1225,9 @@ namespace IRExplorerUI {
 
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
+            callGraph_ = null;
+            otherCallGraph_ = null;
+            functionStatMap_ = null;
 
             foreach (var func in summary_.Functions) {
                 int index = 0;
@@ -1735,6 +1744,7 @@ namespace IRExplorerUI {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if(funcProfile != null) {
+                    //? TODO: Make async
                     var profileCallTree = CreateProfileCallTree(function);
                     ChildFunctionList.Model = profileCallTree;
                     ChildTimeColumnVisible = true;
@@ -1742,7 +1752,7 @@ namespace IRExplorerUI {
                 }
             }
             else {
-                var callTree = CreateCallTree(function);
+                var callTree = await Task.Run(() => CreateCallTree(function));
                 ChildFunctionList.Model = callTree;
                 ChildTimeColumnVisible = false;
                 SetDemangledChildFunctionNames(callTree);
@@ -1758,30 +1768,43 @@ namespace IRExplorerUI {
             return rootNode;
         }
 
-        private (CallGraph, CallGraphNode) GenerateFunctionCallGraph(IRTextSummary summary, IRTextFunction function) {
-            var callGraph = GenerateCallGraph(summary);
+        private async Task<(CallGraph, CallGraphNode)> GenerateFunctionCallGraph(IRTextSummary summary, IRTextFunction function) {
+            if(summary != summary_) {
+                Trace.TraceError("BADBAD");
+            }
+
+            var callGraph = await GenerateCallGraph(summary);
             var callGraphNode = callGraph.FindNode(function);
             return (callGraph, callGraphNode);
         }
 
-        private CallGraph GenerateCallGraph(IRTextSummary summary) {
+        private async Task<CallGraph> GenerateCallGraph(IRTextSummary summary) {
+            if(callGraph_ != null) {
+                return callGraph_;
+            }
+
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             var callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
-            callGraph.Execute();
+            
+            await Task.Run(() => callGraph.Execute());
+            loadedDoc.Loader.ResetCache(); // Clean up the cached functs, unlikely to be all needed later.
+
+            // Cache the call graph, can be expensive to compute.
+            callGraph_ = callGraph;
             return callGraph;
         }
 
-        private ChildFunctionEx CreateCallTree(IRTextFunction function) {
+        private async Task<ChildFunctionEx> CreateCallTree(IRTextFunction function) {
             ProfileControlsVisible = true;
 
-            var (_, callGraphNode) = GenerateFunctionCallGraph(function.ParentSummary, function);
+            var (_, callGraphNode) = await GenerateFunctionCallGraph(function.ParentSummary, function);
             CallGraphNode otherNode = null;
 
             if (otherSummary_ != null) {
                 var otherFunction = otherSummary_.FindFunction(function);
 
                 if (otherFunction != null) {
-                    (_, otherNode) = GenerateFunctionCallGraph(otherSummary_, otherFunction);
+                    (_, otherNode) = await GenerateFunctionCallGraph(otherSummary_, otherFunction);
                 }
             }
 
@@ -1847,6 +1870,14 @@ namespace IRExplorerUI {
 
             // Sort children, since that is not yet supported by the TreeListView control.
             parentNode.Children.Sort((a, b) => {
+                // Ensure the callers node is placed first.
+                if(a.IsMarked) {
+                    return -1;
+                }
+                else if(b.IsMarked) {
+                    return 1;
+                }
+
                 if (b.Time > a.Time) {
                     return 1;
                 }
@@ -2157,44 +2188,54 @@ namespace IRExplorerUI {
             using var cancelableTask = statisticsTask_.CreateTask();
 
             var tasks = new List<Task>();
-            var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 8);
+            var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-            var callGraph = GenerateCallGraph(summary_);
-            var functionStatMap = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
+            var callGraph = await GenerateCallGraph(summary_);
+            functionStatMap_ = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
 
             foreach (var function in summary_.Functions) {
                 if (function.SectionCount == 0) {
-                    return;
+                    continue;
                 }
 
                 tasks.Add(taskFactory.StartNew(() => {
                     var section = function.Sections[0];
                     var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
-                    functionStatMap.TryAdd(function, sectionStats);
+                    functionStatMap_.TryAdd(function, sectionStats);
                 }, cancelableTask.Token));
             }
             
             await Task.WhenAll(tasks.ToArray());
 
-            foreach (var pair in functionStatMap) {
+            foreach (var pair in functionStatMap_) {
                 var functionEx = functionExtMap_[pair.Key];
                 functionEx.Statistics = pair.Value;
             }
-
-            moduleReport_ = new ModuleReport(functionStatMap);
-            moduleReport_.Generate();
-
-            var panel = new ModuleReportPanel();
-            panel.TitleSuffix = $"Module function report";
-            panel.ShowReport(moduleReport_, summary_, Session);
-            Session.DisplayFloatingPanel(panel);
-            
 
             statisticsTask_.CompleteTask(cancelableTask);
             
             AddStatisticsFunctionListColumns(false);
             AddStatisticsChildFunctionListColumns(false);
             RefreshFunctionList();
+        }
+
+        public async Task WaitForStatistics() {
+            await statisticsTask_.WaitForTaskAsync();
+        }
+
+        public void ShowModuleReport() {
+            //? TODO: Wait for it to be computed
+            if(functionStatMap_ == null) {
+                return;
+            }
+
+            moduleReport_ = new ModuleReport(functionStatMap_);
+            moduleReport_.Generate();
+
+            var panel = new ModuleReportPanel();
+            panel.TitleSuffix = $"Function report";
+            panel.ShowReport(moduleReport_, summary_, Session);
+            Session.DisplayFloatingPanel(panel);
         }
 
         private FunctionCodeStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader,

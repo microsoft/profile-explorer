@@ -300,7 +300,7 @@ namespace IRExplorerUI {
         public event EventHandler<OpenSectionEventArgs> OpenSection;
         public event EventHandler<DiffModeEventArgs> EnterDiffMode;
         public event EventHandler<bool> SyncDiffedDocumentsChanged;
-		        public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
+        public event EventHandler<DisplayCallGraphEventArgs> DisplayCallGraph;
 
         private (List<IRTextSectionEx>, List<IRTextSectionEx>) ComputeSectionNameListDiff(
             List<IRTextSectionEx> baseList, List<IRTextSectionEx> diffList) {
@@ -404,8 +404,8 @@ namespace IRExplorerUI {
         }
 
         public async Task AnalyzeDocumentDiffs() {
-            await MainPanel.StatisticsTask.WaitForTaskAsync();
-            await DiffPanel.StatisticsTask.WaitForTaskAsync();
+            await MainPanel.WaitForStatistics();
+            await DiffPanel.WaitForStatistics();
 
             foreach (var function in MainSummary.Functions) {
                 var functionEx = MainPanel.GetFunctionExtension(function);
@@ -420,6 +420,12 @@ namespace IRExplorerUI {
                     continue;
                 }
 
+                //var diff = otherFunctionEx.Statistics.Instructions - functionEx.Statistics.Instructions;
+
+                //if(diff < -1000) {
+                //    diff = diff;
+                //}
+
                 if (functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics)) {
                     functionEx.FunctionDiffKind = DiffKind.Modification;
                 }
@@ -427,6 +433,10 @@ namespace IRExplorerUI {
 
             MainPanel.AddStatisticsFunctionListColumns(true, " (D)", " delta", 55);
             MainPanel.RefreshFunctionList();
+        }
+
+        public void ShowModuleReport() {
+            MainPanel.ShowModuleReport();
         }
     }
 }

@@ -33,7 +33,7 @@ namespace IRExplorerUI {
         }
         
         public void Add(FunctionCodeStatistics other) {
-            Size = other.Size - Size;
+            Size = other.Size + Size;
             Instructions = other.Instructions + Instructions;
             Loads = other.Loads + Loads;
             Stores = other.Stores + Stores;

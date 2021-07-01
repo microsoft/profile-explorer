@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using IRExplorerCore.IR;
 
@@ -195,6 +196,7 @@ namespace IRExplorerCore.Analysis {
         }
 
         public void Execute(IRTextSection section = null) {
+            //? TODO: Can be multithreaded, most time spent parsing the functs
             foreach (var func in summary_.Functions) {
                 if (visitedFuncts_.Contains(func)) {
                     continue;
