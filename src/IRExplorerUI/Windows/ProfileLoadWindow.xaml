@@ -110,15 +110,28 @@
             Grid.Row="1"
             Width="250"
             Margin="16,4,0,8"
-            HorizontalAlignment="Left"
-            Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}">
+            HorizontalAlignment="Left">
+            <Button
+                x:Name="RecentButton"
+                Height="24"
+                Width="80"
+                Padding="4,1,4,1"
+                HorizontalAlignment="Left"
+                Click="RecentButton_Click"
+                Content="Recent Files"
+                Visibility="{Binding IsLoadingProfile, Converter={StaticResource InvertedBoolToVisibility}}">
+                <Button.ContextMenu>
+                    <ContextMenu />
+                </Button.ContextMenu>
+            </Button>
             <ProgressBar
                 x:Name="LoadProgressBar"
                 Height="20"
                 HorizontalAlignment="Stretch"
                 Maximum="100"
-                Value="40" />
-            <DockPanel>
+                Value="40" 
+                Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}"/>
+            <DockPanel Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock
                     x:Name="LoadProgressLabel"
                     DockPanel.Dock="Left"

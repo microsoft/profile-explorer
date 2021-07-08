@@ -26,7 +26,7 @@ namespace IRExplorerCore {
     }
 
     public interface ICompilerIRInfo {
-        IRMode IRMode { get; set; }
+        IRMode Mode { get; set; }
         IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true);
         IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders = true);
         IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler);
@@ -43,6 +43,7 @@ namespace IRExplorerCore {
         BlockIR GetIncomingPhiOperandBlock(InstructionIR phiInstr, int opIndex);
         IRElement SkipCopyInstruction(InstructionIR instr);
         OperandIR GetCallTarget(InstructionIR instr);
+        OperandIR GetBranchTarget(InstructionIR instr);
         InstructionIR GetTransferInstruction(BlockIR block);
 
         bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck);

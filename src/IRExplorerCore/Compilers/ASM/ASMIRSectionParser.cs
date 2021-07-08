@@ -6,22 +6,22 @@ using IRExplorerCore.IR;
 namespace IRExplorerCore.ASM {
 
     public sealed class ASMIRSectionParser : IRSectionParser {
-        private readonly IRMode irMode_;
+        private readonly ICompilerIRInfo irInfo_;
         private readonly IRParsingErrorHandler errorHandler_;
 
-        public ASMIRSectionParser(IRMode irMode, IRParsingErrorHandler errorHandler) {
-            irMode_ = irMode;
+        public ASMIRSectionParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler) {
+            irInfo_ = irInfo;
             errorHandler_ = errorHandler;
         }
 
         public FunctionIR ParseSection(IRTextSection section, string sectionText) => new ASMParser(
-                irMode_, errorHandler_,
-                RegisterTables.SelectRegisterTable(irMode_),
+                irInfo_, errorHandler_,
+                RegisterTables.SelectRegisterTable(irInfo_.Mode),
                 sectionText).Parse();
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) => new ASMParser(
-                irMode_, errorHandler_,
-                RegisterTables.SelectRegisterTable(irMode_),
+                irInfo_, errorHandler_,
+                RegisterTables.SelectRegisterTable(irInfo_.Mode),
                 sectionText).Parse();
 
         public void SkipCurrentToken() {

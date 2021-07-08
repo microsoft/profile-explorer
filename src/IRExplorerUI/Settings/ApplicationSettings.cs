@@ -60,6 +60,9 @@ namespace IRExplorerUI {
         [ProtoMember(13)]
         public Dictionary<Guid, byte[]> FunctionTaskOptions;
 
+        [ProtoMember(14)]
+        public List<Tuple<string, string, string>> RecentProfileFiles;
+
         public ApplicationSettings() {
             Reset();
         }
@@ -82,6 +85,7 @@ namespace IRExplorerUI {
             RecentFiles ??= new List<string>();
             RecentTextSearches ??= new List<string>();
             RecentComparedFiles ??= new List<Tuple<string, string>>();
+            RecentProfileFiles ??= new List<Tuple<string, string, string>>();
             DocumentSettings ??= new DocumentSettings();
             FlowGraphSettings ??= new FlowGraphSettings();
             ExpressionGraphSettings ??= new ExpressionGraphSettings();
@@ -154,6 +158,24 @@ namespace IRExplorerUI {
 
         public void ClearRecentComparedFiles() {
             RecentComparedFiles.Clear();
+        }
+
+        public void AddRecentProfileFiles(string profilePath, string binaryPath, string debugPath) {
+            // Keep at most N recent files, and move this one on the top of the list.
+            var pair = new Tuple<string, string, string>(profilePath, binaryPath, debugPath);
+
+            if (RecentProfileFiles.Contains(pair)) {
+                RecentProfileFiles.Remove(pair);
+            }
+            else if (RecentProfileFiles.Count >= 10) {
+                RecentProfileFiles.RemoveAt(RecentProfileFiles.Count - 1);
+            }
+
+            RecentProfileFiles.Insert(0, pair);
+        }
+
+        public void ClearRecentProfileFiles() {
+            RecentProfileFiles.Clear();
         }
 
         public void SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, byte[] data) {

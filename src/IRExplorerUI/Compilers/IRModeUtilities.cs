@@ -13,10 +13,10 @@ namespace IRExplorerUI.Compilers {
 
             if (!string.IsNullOrEmpty(path) &&
                 path.Contains("arm64", StringComparison.OrdinalIgnoreCase)) {
-                ir.IRMode = IRMode.ARM64;
+                ir.Mode = IRMode.ARM64;
             }
             else {
-                ir.IRMode = IRMode.x86;
+                ir.Mode = IRMode.x86_64;
             }
         }
     }

@@ -3,7 +3,7 @@
 
 namespace IRExplorerCore {
     public enum IRMode {
-        x86,
+        x86_64,
         ARM64
     }
 }

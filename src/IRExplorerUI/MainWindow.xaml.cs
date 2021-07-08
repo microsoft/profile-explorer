@@ -884,7 +884,11 @@ namespace IRExplorerUI {
         }
 
         private void ASMMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget(new ASMCompilerInfoProvider(this));
+            SwitchCompilerTarget(new ASMCompilerInfoProvider(IRMode.x86_64, this));
+        }
+
+        private void ARM64ASMMenuItem_Click(object sender, RoutedEventArgs e) {
+            SwitchCompilerTarget(new ASMCompilerInfoProvider(IRMode.ARM64, this));
         }
 
         private void ShareButton_Click(object sender, RoutedEventArgs e) {

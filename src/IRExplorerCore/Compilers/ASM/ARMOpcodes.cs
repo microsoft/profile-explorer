@@ -11,6 +11,7 @@ namespace IRExplorerCore.ASM {
         BL,
         BLX,
         B,
+        BR,
         BEQ,
         BNE,
         BCS,
@@ -28,7 +29,10 @@ namespace IRExplorerCore.ASM {
         BGT,
         BLE,
         BAL,
-        TBNZ
+        TBZ,
+        TBNZ,
+        CBZ,
+        CBNZ
     }
 
     public struct ARMOpcodeInfo {
@@ -45,6 +49,7 @@ namespace IRExplorerCore.ASM {
         private static readonly Dictionary<string, ARMOpcodeInfo> opcodes_ =
             new Dictionary<string, ARMOpcodeInfo> {
                 {"B", new ARMOpcodeInfo(ARMOpcode.B, InstructionKind.Goto)},
+                {"BR", new ARMOpcodeInfo(ARMOpcode.BR, InstructionKind.Goto)},
                 {"RET", new ARMOpcodeInfo(ARMOpcode.RET, InstructionKind.Return)},
                 {"BEQ", new ARMOpcodeInfo(ARMOpcode.BEQ, InstructionKind.Branch)},
                 {"BNE", new ARMOpcodeInfo(ARMOpcode.BNE, InstructionKind.Branch)},
@@ -63,7 +68,10 @@ namespace IRExplorerCore.ASM {
                 {"BGT", new ARMOpcodeInfo(ARMOpcode.BGT, InstructionKind.Branch)},
                 {"BLE", new ARMOpcodeInfo(ARMOpcode.BLE, InstructionKind.Branch)},
                 {"BAL", new ARMOpcodeInfo(ARMOpcode.BAL, InstructionKind.Branch)},
+                {"TBZ", new ARMOpcodeInfo(ARMOpcode.TBZ, InstructionKind.Branch)},
                 {"TBNZ", new ARMOpcodeInfo(ARMOpcode.TBNZ, InstructionKind.Branch)},
+                {"CBZ", new ARMOpcodeInfo(ARMOpcode.CBZ, InstructionKind.Branch)},
+                {"CBNZ", new ARMOpcodeInfo(ARMOpcode.CBNZ, InstructionKind.Branch)},
                 {"BL", new ARMOpcodeInfo(ARMOpcode.BL, InstructionKind.Call)},
                 {"BLX", new ARMOpcodeInfo(ARMOpcode.BLX, InstructionKind.Call)},
             };

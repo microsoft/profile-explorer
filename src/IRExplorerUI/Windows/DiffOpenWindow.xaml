@@ -82,7 +82,7 @@
         <StackPanel
             Grid.Row="1"
             Grid.Column="0"
-            Width="72"
+            Width="80"
             Margin="16,4,0,16"
             HorizontalAlignment="Left"
             Orientation="Horizontal">

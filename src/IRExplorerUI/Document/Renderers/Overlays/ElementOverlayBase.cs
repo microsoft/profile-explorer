@@ -28,6 +28,7 @@ namespace IRExplorerUI.Document {
             MarginY = marginY;
             AlignmentX = alignmentX;
             AlignmentY = alignmentY;
+            DefaultOpacity = 1;
         }
 
         [ProtoMember(1)]

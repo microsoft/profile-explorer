@@ -22,10 +22,6 @@ namespace IRExplorerUI {
             DataContext = this;
             Session = session;
             loadTask_ = new CancelableTaskInstance();
-            
-            ProfileAutocompleteBox.Text = @"E:\spec\leela3.etl";
-            BinaryAutocompleteBox.Text = @"leela_s_base.msvc-diff";
-            DebugAutocompleteBox.Text = @"E:\spec\leela_s.pdb";
         }
 
         public ISession Session { get; set; }
@@ -62,9 +58,9 @@ namespace IRExplorerUI {
             if (ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile") &&
                 //ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
                 ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug")) {
+                App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, DebugFilePath);
 
                 //? TODO: Disable buttons
-                //? Add cancel button
                 var task = loadTask_.CreateTask();
                 IsLoadingProfile = true;
 
@@ -158,6 +154,44 @@ namespace IRExplorerUI {
 
             if (path != null) {
                 DebugAutocompleteBox.Text = path;
+            }
+        }
+
+        private void RecentButton_Click(object sender, RoutedEventArgs e) {
+            var menu = RecentButton.ContextMenu;
+            menu.Items.Clear();
+
+            foreach (var pathPair in App.Settings.RecentProfileFiles) {
+                var item = new MenuItem();
+                item.Header = $"Trace: {pathPair.Item1}\nBinary: {pathPair.Item2}\nDebug: {pathPair.Item3}";
+                item.Tag = pathPair;
+                item.Click += RecentMenuItem_Click;
+                menu.Items.Add(item);
+                menu.Items.Add(new Separator());
+            }
+
+            var clearMenuItem = new MenuItem {
+                Header = "Clear"
+            };
+
+            clearMenuItem.Click += RecentMenuItem_Click;
+            menu.Items.Add(clearMenuItem);
+            menu.IsOpen = true;
+        }
+
+        private async void RecentMenuItem_Click(object sender, RoutedEventArgs e) {
+            RecentButton.ContextMenu.IsOpen = false;
+            var menuItem = sender as MenuItem;
+
+            if (menuItem.Tag == null) {
+                App.Settings.ClearRecentProfileFiles();
+            }
+            else {
+                var pathPair = menuItem.Tag as Tuple<string, string, string>;
+                ProfileFilePath = pathPair.Item1;
+                BinaryFilePath = pathPair.Item2;
+                DebugFilePath = pathPair.Item3;
+                await OpenFiles();
             }
         }
     }
