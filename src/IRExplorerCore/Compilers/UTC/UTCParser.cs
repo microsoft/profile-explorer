@@ -236,7 +236,7 @@ namespace IRExplorerCore.UTC {
         public UTCParser(ParsingErrorHandler errorHandler,
                          Dictionary<int, string> lineMetadata,
                          RegisterTable registerTable = null)
-            : base(IRMode.x86, errorHandler, registerTable) {
+            : base(IRMode.x86_64, errorHandler, registerTable) {
             lineMetadataMap_ = lineMetadata;
 
             labelMap_ = new Dictionary<string, BlockLabelIR>();

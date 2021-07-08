@@ -9,7 +9,7 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerCore.UTC {
     public class UTCCompilerIRInfo : ICompilerIRInfo {
-        public IRMode IRMode { get; set; }
+        public IRMode Mode { get; set; }
 
         public InstrOffsetData InstrOffsetData => InstrOffsetData.PointsToNextInstr();
 
@@ -22,7 +22,7 @@ namespace IRExplorerCore.UTC {
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
-            return new UTCSectionParser(IRMode, (ParsingErrorHandler)errorHandler);
+            return new UTCSectionParser(Mode, (ParsingErrorHandler)errorHandler);
         }
 
         public IRParsingErrorHandler CreateParsingErrorHandler() {
@@ -67,6 +67,15 @@ namespace IRExplorerCore.UTC {
             }
 
             return instr.Sources.Count > 0 ? instr.Sources[0] : null;
+        }
+
+        public OperandIR GetBranchTarget(InstructionIR instr) {
+            if (!(instr.IsBranch || instr.IsGoto) ||
+                  instr.Sources.Count == 0) {
+                return null;
+            }
+
+            return instr.Sources[0];
         }
 
         public bool IsIntrinsicCallInstruction(InstructionIR instr) {

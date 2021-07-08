@@ -8,7 +8,7 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerCore.LLVM {
     public class LLVMCompilerIRInfo : ICompilerIRInfo {
-        public IRMode IRMode { get; set; }
+        public IRMode Mode { get; set; }
 
         public InstrOffsetData InstrOffsetData => InstrOffsetData.VariableSize(1, 16);
 
@@ -49,6 +49,10 @@ namespace IRExplorerCore.LLVM {
         }
 
         public OperandIR GetCallTarget(InstructionIR instr) {
+            return null;
+        }
+
+        public OperandIR GetBranchTarget(InstructionIR instr) {
             return null;
         }
 

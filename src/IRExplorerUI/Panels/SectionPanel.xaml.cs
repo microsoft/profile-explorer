@@ -1749,6 +1749,7 @@ namespace IRExplorerUI {
                     ChildFunctionList.Model = profileCallTree;
                     ChildTimeColumnVisible = true;
                     SetDemangledChildFunctionNames(profileCallTree);
+                    AutoResizeColumns(ChildFunctionList);
                 }
             }
             else {
@@ -1756,15 +1757,17 @@ namespace IRExplorerUI {
                 ChildFunctionList.Model = callTree;
                 ChildTimeColumnVisible = false;
                 SetDemangledChildFunctionNames(callTree);
+                AutoResizeColumns(ChildFunctionList);
             }
 
             await ComputeConsecutiveSectionDiffs();
         }
 
         private ChildFunctionEx CreateProfileCallTree(IRTextFunction function) {
+            var visitedFuncts = new HashSet<IRTextFunction>();
             var rootNode = new ChildFunctionEx();
             rootNode.Children = new List<ChildFunctionEx>();
-            CreateProfileCallTree(function, rootNode);
+            CreateProfileCallTree(function, rootNode, visitedFuncts);
             return rootNode;
         }
 
@@ -1903,7 +1906,9 @@ namespace IRExplorerUI {
             return childInfo;
         }
 
-        private void CreateProfileCallTree(IRTextFunction function, ChildFunctionEx parentNode) {
+        private void CreateProfileCallTree(IRTextFunction function, ChildFunctionEx parentNode, 
+                                           HashSet<IRTextFunction> visitedFuncts) {
+            bool newFunc = visitedFuncts.Add(function);
             var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
             if (funcProfile == null) {
@@ -1919,6 +1924,10 @@ namespace IRExplorerUI {
             selfInfo.IsMarked = true;
             parentNode.Children.Add(selfInfo);
 
+            if(!newFunc) {
+                return;
+            }
+
             foreach (var pair in funcProfile.ChildrenWeights) {
                 var childFunc = summary_.GetFunctionWithId(pair.Key);
                 var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
@@ -1927,7 +1936,7 @@ namespace IRExplorerUI {
 
                 if (childFuncProfile.ChildrenWeights.Count > 0) {
                     childNode.Children = new List<ChildFunctionEx>();
-                    CreateProfileCallTree(childFunc, childNode);
+                    CreateProfileCallTree(childFunc, childNode, visitedFuncts);
                 }
             }
             
@@ -2462,7 +2471,10 @@ namespace IRExplorerUI {
         }
         
         public void AddStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            RemoveListViewColumn(ChildFunctionList, "ChildTimeColumnHeader");
+            if (Session.ProfileData == null) {
+                RemoveListViewColumn(ChildFunctionList, "ChildTimeColumnHeader");
+            }
+
             AddListViewColumn(ChildFunctionList, "Statistics.Instructions", $"Instrs{titleSuffix}", "InstructionsHeader", $"Instruction number{tooltipSuffix}", columnWidth, null, 1);
             AddListViewColumn(ChildFunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, null, 2);
         }
@@ -2470,6 +2482,13 @@ namespace IRExplorerUI {
         public void RemoveStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
             RemoveListViewColumn(FunctionList, "SizeHeader");
             RemoveListViewColumn(FunctionList, "InstructionsHeader");
+        }
+
+        private void AutoResizeColumns(ListView listView) {
+            foreach (GridViewColumn column in ((GridView)listView.View).Columns) {
+                column.Width = 0;
+                column.Width = double.NaN;
+            }
         }
     }
 }

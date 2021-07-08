@@ -44,19 +44,23 @@ namespace IRExplorerCore.ASM {
         private Dictionary<long, Tuple<TextLocation, int>> potentialLabelMap_;
         private HashSet<BlockIR> comittedBlocks_;
         private Dictionary<BlockIR, long> referencedBlocks_;
+        private ICompilerIRInfo irInfo_;
 
-        public ASMParser(IRMode irMode, IRParsingErrorHandler errorHandler,
+        public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
                          RegisterTable registerTable,
                          ReadOnlyMemory<char> sectionText)
-            : base(irMode, errorHandler, registerTable) {
+            : base(irInfo.Mode, errorHandler, registerTable) {
+            irInfo_ = irInfo;
+            Reset();
             Initialize(sectionText);
             SkipToken();
         }
 
-        public ASMParser(IRMode irMode, IRParsingErrorHandler errorHandler,
+        public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
             RegisterTable registerTable,
             string sectionText)
-            : base(irMode, errorHandler, registerTable) {
+            : base(irInfo.Mode, errorHandler, registerTable) {
+            irInfo_ = irInfo;
             Reset();
             Initialize(sectionText);
             SkipToken();
@@ -281,20 +285,33 @@ namespace IRExplorerCore.ASM {
 
             // Skip over the list of instruction bytecodes.
             int instrSize = 0;
-            bool isJump = false;
             instrSize = CountInstructionBytes(instrSize);
+            var (instr, isJump) = ParseInstruction(block);
 
+            // Update metadata.
+            initialAddress_ ??= address;
+            var offset = address - initialAddress_.Value;
+
+            MetadataTag.AddressToElementMap[address] = instr;
+            MetadataTag.OffsetToElementMap[offset] = instr;
+            MetadataTag.ElementToOffsetMap[instr] = offset;
+            MetadataTag.ElementSizeMap[instr] = instrSize;
+            MetadataTag.FunctionSize += instrSize;
+
+            SkipToLineEnd();
+            SetTextRange(instr, startToken, Current, adjustment: 1);
+            return isJump; // A jump ends the current block.
+        }
+
+        private (InstructionIR, bool) ParseInstruction(BlockIR block) {
+            bool isJump = false;
             var instr = new InstructionIR(NextElementId, InstructionKind.Other, block);
             block.Tuples.Add(instr);
             previousInstr_ = instr;
 
             // Extract the opcode.
             if (IsIdentifier()) {
-                //? TODO: Use either x86Opcodes/ARMOpcodes
-                instr.Opcode = TokenString().ToUpperInvariant();
-                instr.OpcodeText = TokenData();
-                instr.OpcodeLocation = Current.Location;
-                instr.Kind = GetInstructionKind((string)instr.Opcode);
+                SetInstructionOpcode(instr);
 
                 if (instr.Kind == InstructionKind.Branch) {
                     instr.Kind = InstructionKind.Branch;
@@ -320,9 +337,10 @@ namespace IRExplorerCore.ASM {
 
                 if (isJump) {
                     // Connect the block with the jump target.
-                    if (instr.Sources.Count > 0 &&
-                        instr.Sources[0].IsIntConstant) {
-                        var targetAddress = instr.Sources[0].IntValue;
+                    var targetOp = irInfo_.GetBranchTarget(instr);
+
+                    if (targetOp != null && targetOp.IsIntConstant) {
+                        var targetAddress = targetOp.IntValue;
                         var targetBlock = GetOrCreateBlock(targetAddress, block.ParentFunction);
                         ConnectBlocks(block, targetBlock);
                         referencedBlocks_[targetBlock] = targetAddress;
@@ -332,7 +350,7 @@ namespace IRExplorerCore.ASM {
                     }
                 }
                 else {
-                    if(instr.Sources.Count > 0) {
+                    if (instr.Sources.Count > 0) {
                         instr.Destinations.Add(instr.Sources[0]);
                     }
 
@@ -340,19 +358,7 @@ namespace IRExplorerCore.ASM {
                 }
             }
 
-            // Set the size of the previous instruction.
-            initialAddress_ ??= address;
-            var offset = address - initialAddress_.Value;
-
-            MetadataTag.AddressToElementMap[address] = instr;
-            MetadataTag.OffsetToElementMap[offset] = instr;
-            MetadataTag.ElementToOffsetMap[instr] = offset;
-            MetadataTag.ElementSizeMap[instr] = instrSize;
-            MetadataTag.FunctionSize += instrSize;
-
-            SkipToLineEnd();
-            SetTextRange(instr, startToken, Current, adjustment: 1);
-            return isJump;
+            return (instr, isJump);
         }
 
         private bool ParseOperandList(InstructionIR instr, List<OperandIR> list) {
@@ -531,33 +537,40 @@ namespace IRExplorerCore.ASM {
             // For ARM64, the bytecodes are not found in the assembly listing
             // and each instruction is 4 bytes.
             if (irMode_ == IRMode.ARM64) {
+                SkipHexNumber(8);
                 return 4;
             }
 
-            while (SkipHexNumber(2)) { // 2 digits
+            while (SkipHexNumber(2)) { // Groups of 2 digits.
                 instrSize++;
             }
 
             return instrSize;
         }
 
-        private InstructionKind GetInstructionKind(string opcode) {
+        private void SetInstructionOpcode(InstructionIR instr) {
+            instr.OpcodeText = TokenData();
+            instr.OpcodeLocation = Current.Location;
+
             switch (irMode_) {
-                case IRMode.x86: {
-                    if (x86Opcodes.GetOpcodeInfo(opcode, out var info)) {
-                        return info.Kind;
+                case IRMode.x86_64: {
+                    if (x86Opcodes.GetOpcodeInfo(instr.OpcodeText, out var info)) {
+                        instr.Opcode = info.Opcode;
+                        instr.Kind = info.Kind;
                     }
                     break; 
                 }
                 case IRMode.ARM64: {
-                    if (ARMOpcodes.GetOpcodeInfo(opcode, out var info)) {
-                        return info.Kind;
+                    if (ARMOpcodes.GetOpcodeInfo(instr.OpcodeText, out var info)) {
+                        instr.Opcode = info.Opcode;
+                        instr.Kind = info.Kind;
                     }
                     break;
                 }
+                default: {
+                    throw new NotImplementedException();
+                }
             }
-
-            return InstructionKind.Other;
         }
 
         private Keyword TokenKeyword() {

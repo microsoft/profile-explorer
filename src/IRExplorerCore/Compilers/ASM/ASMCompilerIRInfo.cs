@@ -9,9 +9,13 @@ using System;
 
 namespace IRExplorerCore.ASM {
     public class ASMCompilerIRInfo : ICompilerIRInfo {
-        public IRMode IRMode { get; set; }
+        public IRMode Mode { get; set; }
 
-        public InstrOffsetData InstrOffsetData => IRMode switch {
+        public ASMCompilerIRInfo(IRMode mode) {
+            Mode = mode;
+        }
+
+        public InstrOffsetData InstrOffsetData => Mode switch {
             IRMode.ARM64 => InstrOffsetData.ConstantSize(4),
             _ => InstrOffsetData.VariableSize(1, 16),
         };
@@ -24,7 +28,7 @@ namespace IRExplorerCore.ASM {
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
-            return new ASMIRSectionParser(IRMode, errorHandler);
+            return new ASMIRSectionParser(this, errorHandler);
         }
 
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true) {
@@ -38,6 +42,47 @@ namespace IRExplorerCore.ASM {
         public OperandIR GetCallTarget(InstructionIR instr) {
             if (IsCallInstruction(instr) && instr.Sources.Count > 0) {
                 return instr.Sources[0];
+            }
+
+            return null;
+        }
+
+        public OperandIR GetBranchTarget(InstructionIR instr) {
+            if(!(instr.IsBranch || instr.IsGoto) || 
+                 instr.Sources.Count == 0) {
+                return null;
+            }
+
+            switch (Mode) {
+                case IRMode.x86_64: {
+                    return instr.Sources[0];
+                }
+                case IRMode.ARM64: {
+                    if(!(instr.Opcode is ARMOpcode)) {
+                        return null;
+                    }
+
+                    switch (instr.OpcodeAs<ARMOpcode>()) {
+                        case ARMOpcode.CBZ:
+                        case ARMOpcode.CBNZ: {
+                            if (instr.Sources.Count == 2) {
+                                return instr.Sources[1];
+                            }
+                            break;
+                        }
+                        case ARMOpcode.TBZ:
+                        case ARMOpcode.TBNZ: {
+                            if (instr.Sources.Count == 3) {
+                                return instr.Sources[2];
+                            }
+                            break;
+                        }
+                        default: {
+                            return instr.Sources[0];
+                        }
+                    }
+                    break;
+                }
             }
 
             return null;
@@ -61,12 +106,12 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsLoadInstruction(InstructionIR instr) {
-            switch (IRMode) {
-                case IRMode.x86: {
+            switch (Mode) {
+                case IRMode.x86_64: {
                     return instr.Sources.Find((op) => op.IsIndirection) != null;
                 }
                 case IRMode.ARM64: {
-                    //? TODO:
+                    //? TODO: Use opcodes like LDP
                     return instr.Sources.Find((op) => op.IsIndirection) != null;
                 }
             }
@@ -79,8 +124,8 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsStoreInstruction(InstructionIR instr) {
-            switch (IRMode) {
-                case IRMode.x86: {
+            switch (Mode) {
+                case IRMode.x86_64: {
                     return instr.Destinations.Count > 0 &&
                            instr.Destinations[0].IsIndirection;
                 }

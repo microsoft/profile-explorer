@@ -230,11 +230,8 @@ namespace IRExplorerUI {
         private async Task AnnotateProfilerData(FunctionProfileData profile) {
             hasProfileInfo_ = true;
 
-            Trace.WriteLine($"ChildCount" );
-
             foreach (var pair in profile.ChildrenWeights) {
                 var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
-                Trace.WriteLine($"Child {child.Name}: {pair.Value}");
             }
             
             double weightCutoff = 0.003;
@@ -304,11 +301,18 @@ namespace IRExplorerUI {
                     else {
                         icon = IconDrawing.FromIconResource("DotIcon");
                         textColor = Brushes.DarkRed;
+                        isPinned = true;
                     }
 
                     var overlay = Session.CurrentDocument.AddIconElementOverlay(element, icon, 16, 16, tooltip);
                     overlay.IsToolTipPinned = isPinned;
                     overlay.TextColor = textColor;
+                    overlay.DefaultOpacity = 1;
+                    overlay.TextWeight = FontWeights.DemiBold;
+                    overlay.TextColor = Brushes.DarkBlue;
+                    overlay.ShowBackgroundOnMouseOverOnly = false;
+                    overlay.UseToolTipBackground = true;
+                    overlay.Padding = 2;
                     markedInstrs = true;
                     index++;
                 }
