@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -66,12 +67,17 @@ namespace IRExplorerCore {
             Build(list);
         }
 
-        public bool TryGetValue(string value, out T outValue) {
+        public bool TryGetValue(string value, out T outValue, bool caseInsensitive = false) {
             int nodeId = 0;
 
             for (int i = 0; i < value.Length; i++) {
                 char letter = value[i];
-                int childId = FindChildForLetter(nodeId, letter);
+
+                if (caseInsensitive) {
+                    letter = char.ToLowerInvariant(letter);
+                }
+
+                int childId = FindChildForLetter(nodeId, letter, caseInsensitive);
 
                 if (childId == -1) {
                     outValue = default(T);
@@ -84,12 +90,17 @@ namespace IRExplorerCore {
             return IsTerminalNode(nodeId, out outValue);
         }
 
-        public bool TryGetValue(ReadOnlySpan<char> value, out T outValue) {
+        public bool TryGetValue(ReadOnlySpan<char> value, out T outValue, bool caseInsensitive = false) {
             int nodeId = 0;
 
             for (int i = 0; i < value.Length; i++) {
                 char letter = value[i];
-                int childId = FindChildForLetter(nodeId, letter);
+
+                if(caseInsensitive) {
+                    letter = char.ToLowerInvariant(letter);
+                }
+
+                int childId = FindChildForLetter(nodeId, letter, caseInsensitive);
 
                 if (childId == -1) {
                     outValue = default(T);
@@ -102,16 +113,16 @@ namespace IRExplorerCore {
             return IsTerminalNode(nodeId, out outValue);
         }
 
-        public bool TryGetValue(ReadOnlyMemory<char> value, out T outValue) {
-            return TryGetValue(value.Span, out outValue);
+        public bool TryGetValue(ReadOnlyMemory<char> value, out T outValue, bool caseInsensitive = false) {
+            return TryGetValue(value.Span, out outValue, caseInsensitive);
         }
 
-        public bool Contains(string value) {
-            return TryGetValue(value, out _);
+        public bool Contains(string value, bool caseInsensitive = false) {
+            return TryGetValue(value, out _, caseInsensitive);
         }
 
-        public bool Contains(ReadOnlyMemory<char> value) {
-            return TryGetValue(value, out _);
+        public bool Contains(ReadOnlyMemory<char> value, bool caseInsensitive = false) {
+            return TryGetValue(value, out _, caseInsensitive);
         }
 
         private int AddNode() {
@@ -162,19 +173,22 @@ namespace IRExplorerCore {
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int FindChildForLetter(int nodeId, char letter) {
+        private int FindChildForLetter(int nodeId, char letter, bool caseInsensitive = false) {
             var childInfo = nodes_[nodeId];
 
             for (int i = 0; i < childInfo.Item2; i++) {
                 var letterInfo = childLetters_[childInfo.Item1 + i];
+
                 if (letterInfo.Item1 == letter) {
+                    return letterInfo.Item2;
+                }
+                else if(caseInsensitive && char.ToLowerInvariant(letterInfo.Item1) == letter) {
                     return letterInfo.Item2;
                 }
             }
 
             return -1;
         }
-
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsTerminalNode(int nodeId, out T value) {

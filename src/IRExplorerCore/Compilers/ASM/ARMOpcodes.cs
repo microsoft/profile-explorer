@@ -79,12 +79,12 @@ namespace IRExplorerCore.ASM {
         private static readonly StringTrie<ARMOpcodeInfo> opcodesTrie_ = new StringTrie<ARMOpcodeInfo>(opcodes_);
 
         public static bool GetOpcodeInfo(string value, out ARMOpcodeInfo info) {
-            return opcodes_.TryGetValue(value, out info);
+            return opcodesTrie_.TryGetValue(value, out info, true);
         }
 
         //? TODO: Needs a TryGetValueUpper that does the value.ToUpper() on each letter
         public static bool GetOpcodeInfo(ReadOnlyMemory<char> value, out ARMOpcodeInfo info) {
-            return opcodesTrie_.TryGetValue(value, out info);
+            return opcodesTrie_.TryGetValue(value, out info, true);
         }
 
         public static bool IsOpcode(string value) {

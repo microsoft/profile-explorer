@@ -336,11 +336,11 @@
                             <MenuItem
                                 Name="ASMMenuItem"
                                 Click="ASMMenuItem_Click"
-                                Header="ASM ( x86/x64 )" />
+                                Header="ASM x86/x64" />
                             <MenuItem
                                 Name="ARM64ASMMenuItem"
                                 Click="ARM64ASMMenuItem_Click"
-                                Header="ASM ( ARM64 )" />
+                                Header="ASM ARM64" />
                         </MenuItem>
                         <Separator />
 

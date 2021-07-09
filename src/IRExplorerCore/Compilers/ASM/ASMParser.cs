@@ -131,6 +131,7 @@ namespace IRExplorerCore.ASM {
                 }
 
                 if (ParseLine(block)) {
+                    // Block ended with this line.
                     SetTextRange(block, startElement, previous_);
                 }
 
