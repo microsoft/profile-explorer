@@ -482,9 +482,7 @@ namespace IRExplorerCore.Analysis {
                 return false;
             }
 
-            if (op.Kind == OperandKind.Variable ||
-                op.Kind == OperandKind.Temporary ||
-                op.Kind == OperandKind.Address) {
+            if (op.HasName) {
                 // Check if symbol names are the same.
                 if (!op.NameValue.Span.Equals(searchedOp.NameValue.Span,
                                               StringComparison.Ordinal)) {
@@ -541,6 +539,7 @@ namespace IRExplorerCore.Analysis {
 
             return true;
         }
+
         private bool AcceptReferenceForSource(IRElement element, IRElement startSourceElement) {
             if (referenceFilter_ != null) {
                 return referenceFilter_.AcceptDefinitionReference(element, startSourceElement);
@@ -548,6 +547,7 @@ namespace IRExplorerCore.Analysis {
 
             return true;
         }
+
         private bool AcceptReferenceForDestination(IRElement element, IRElement startDestElement) {
             if (referenceFilter_ != null) {
                 return referenceFilter_.AcceptUseReference(element, startDestElement);

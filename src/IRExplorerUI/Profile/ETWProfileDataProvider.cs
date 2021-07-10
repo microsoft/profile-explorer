@@ -43,14 +43,13 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-
         private string RunCvdump(string symbolPath) {
             var outputText = new StringBuilder(1024 * 32);
 
             var psi = new ProcessStartInfo(cvdumpPath_) {
                 Arguments = $"-p -s \"{symbolPath}\"",
                 UseShellExecute = false,
-                CreateNoWindow = false,
+                CreateNoWindow = true,
                 RedirectStandardError = false,
                 RedirectStandardOutput = true
             };
@@ -255,6 +254,7 @@ namespace IRExplorerUI.Profile {
                         // Count time in the profile image.
                         profileData_.ProfileWeight += sampleWeight;
                         IRTextFunction prevStackFunc = null;
+                        FunctionProfileData prevStackProfile = null;
 
                         stackFuncts.Clear();
                         stackModules.Clear();
@@ -331,9 +331,11 @@ namespace IRExplorerUI.Profile {
                                 profile.AddLineSample(symbol.SourceLineNumber, sampleWeight);
                                 profile.Weight += sampleWeight;
 
-                                // Add the previous stack frame function as a child.
+                                // Add the previous stack frame function as a child
+                                // and current frame as its parent.
                                 if (prevStackFunc != null) {
                                     profile.AddChildSample(prevStackFunc, sampleWeight);
+                                    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
                                 }
                             }
 
@@ -376,6 +378,7 @@ namespace IRExplorerUI.Profile {
 
                             isTopFrame = false;
                             prevStackFunc = textFunction;
+                            prevStackProfile = profile;
                         }
                     }
 

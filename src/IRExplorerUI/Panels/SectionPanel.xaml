@@ -1053,12 +1053,32 @@
 
                 <ListView.ContextMenu>
                     <ContextMenu>
+                 
                         <MenuItem
+Command="local:Command.SaveAllSectionText"
+CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+CommandTarget="{Binding ElementName=SectionList}"
+Header="Profile-based Call Tree"
+IsCheckable="True"
+IsChecked="{Binding UseProfileCallTree, Mode=TwoWay}"
+ToolTip="Show the call tree derived from runtime profile information" />
+                        <MenuItem
+Command="local:Command.SaveAllSectionText"
+CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+CommandTarget="{Binding ElementName=SectionList}"
+Header="IR Call Tree"
+IsCheckable="True"
+IsChecked="{Binding UseIRCallTree, Mode=TwoWay}"
+ToolTip="Show the call tree derived from the IR" />
+                            <Separator  />
+                        
+                            <MenuItem
                             Command="local:Command.SaveAllSectionText"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                             CommandTarget="{Binding ElementName=SectionList}"
                             Header="Save All Sections Text"
                             ToolTip="Save the text (IR) of all sections for the selected function to a file" />
+
                     </ContextMenu>
                 </ListView.ContextMenu>
             </tree:TreeList>

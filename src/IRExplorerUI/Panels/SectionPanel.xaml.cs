@@ -401,6 +401,7 @@ namespace IRExplorerUI {
         private bool isDiffModeEnabled_;
         private bool syncDiffedDocuments_;
         private bool isFunctionListVisible_;
+        private bool useProfileCallTree_;
 
         private SectionSettings sectionSettings_;
         private IRTextSummary summary_;
@@ -730,6 +731,28 @@ namespace IRExplorerUI {
                     filterDiffFromPrevious_ = value;
                     OnPropertyChange(nameof(FilterDiffFromPrevious));
                     RefreshSectionList();
+                }
+            }
+        }
+
+        public bool UseProfileCallTree {
+            get => useProfileCallTree_;
+            set {
+                if (useProfileCallTree_ != value) {
+                    useProfileCallTree_ = value;
+                    OnPropertyChange(nameof(UseProfileCallTree));
+                    OnPropertyChange(nameof(UseIRCallTree));
+                }
+            }
+        }
+
+        public bool UseIRCallTree {
+            get => !useProfileCallTree_;
+            set {
+                if (useProfileCallTree_ == value) {
+                    useProfileCallTree_ = !value;
+                    OnPropertyChange(nameof(UseProfileCallTree));
+                    OnPropertyChange(nameof(UseIRCallTree));
                 }
             }
         }
@@ -1740,7 +1763,7 @@ namespace IRExplorerUI {
             RefreshSectionList();
 
             //? TODO: A way to switch between the two modes?
-            if(profileControlsVisible_ && Session.ProfileData != null) {
+            if(useProfileCallTree_ && profileControlsVisible_ && Session.ProfileData != null) {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if(funcProfile != null) {
@@ -1829,7 +1852,6 @@ namespace IRExplorerUI {
                 callerInfo.Name = "Callers";
                 callerInfo.IsMarked = true;
                 callerInfo.Time = Int64.MaxValue; // Ensure it appears on top.
-                callerInfo.Children = new List<ChildFunctionEx>();
                 callerInfo.DescendantCount = node.UniqueCallerCount;
                 parentNode.Children.Add(callerInfo);
 
@@ -1901,7 +1923,8 @@ namespace IRExplorerUI {
                 Name = childNode.FunctionName,
                 DescendantCount = childNode.UniqueCalleeCount,
                 TextColor = Brushes.Black,
-                BackColor = ColorBrushes.GetBrush(Colors.Transparent)
+                BackColor = ColorBrushes.GetBrush(Colors.Transparent),
+                Children = new List<ChildFunctionEx>(),
             };
             return childInfo;
         }
@@ -1935,13 +1958,37 @@ namespace IRExplorerUI {
                 parentNode.Children.Add(childNode);
 
                 if (childFuncProfile.ChildrenWeights.Count > 0) {
-                    childNode.Children = new List<ChildFunctionEx>();
                     CreateProfileCallTree(childFunc, childNode, visitedFuncts);
                 }
             }
+
+            var callerInfo = CreateProfileCallTreeChild(function, funcProfile.ExclusiveWeight, funcProfile, null, colors);
+            callerInfo.Name = "Callers";
+            callerInfo.IsMarked = true;
+            parentNode.Children.Add(callerInfo);
+            
+            foreach (var pair in funcProfile.CallerWeights) {
+                var childFunc = summary_.GetFunctionWithId(pair.Key);
+                var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
+                var childNode = CreateProfileCallTreeChild(childFunc, pair.Value, funcProfile, childFuncProfile, colors); 
+                callerInfo.Children.Add(childNode);
+            }
             
             // Sort children, since that is not yet supported by the TreeListView control.
-            parentNode.Children.Sort((a, b) => b.Time.CompareTo(a.Time));
+            parentNode.Children.Sort((a, b) => {
+                // Ensure the callers node is placed first.
+                if (a.IsMarked) {
+                    return -1;
+                }
+                else if (b.IsMarked) {
+                    return 1;
+                }
+
+                if (b.Time > a.Time) {
+                    return 1;
+                }
+                return b.Name.CompareTo(a.Name);
+            });
         }
 
         private ChildFunctionEx CreateProfileCallTreeChild(IRTextFunction childFunc, TimeSpan childWeight, 
@@ -1958,7 +2005,8 @@ namespace IRExplorerUI {
                 DescendantCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
                 Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
                 TextColor = Brushes.Black,
-                BackColor = ColorBrushes.GetBrush(colors[colorIndex])
+                BackColor = ColorBrushes.GetBrush(colors[colorIndex]),
+                Children = new List<ChildFunctionEx>()
             };
             return childInfo;
         }
