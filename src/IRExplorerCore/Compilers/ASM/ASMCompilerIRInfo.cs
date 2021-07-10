@@ -6,6 +6,7 @@ using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
 using IRExplorerCore.Analysis;
 using System;
+using IRExplorerCore.UTC;
 
 namespace IRExplorerCore.ASM {
     public class ASMCompilerIRInfo : ICompilerIRInfo {
@@ -94,7 +95,8 @@ namespace IRExplorerCore.ASM {
 
         public bool IsCallInstruction(InstructionIR instr) {
             return instr.IsCall ||
-                   instr.IsBranch && instr.Sources.Count > 0 && instr.Sources[0].IsAddress;
+                   (instr.IsGoto && instr.Sources.Count > 0 && 
+                    instr.Sources[0].HasName);
         }
 
         public bool IsCopyInstruction(InstructionIR instr) {
@@ -143,7 +145,10 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool OperandsReferenceSameSymbol(OperandIR opA, OperandIR opB, bool exactCheck) {
-            return false;
+            //? TODO: This should do a register check too, ARM64 not implemented
+            return opA.Kind == opB.Kind && 
+                   opA.HasName && opB.HasName &&
+                   opA.NameValue.Span.Equals(opB.NameValue.Span, StringComparison.Ordinal);
         }
 
         public IRElement SkipCopyInstruction(InstructionIR instr) {

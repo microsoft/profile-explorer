@@ -20,6 +20,8 @@ namespace IRExplorerUI.Profile {
         public Dictionary<long, TimeSpan> BlockWeight { get; set; } // 
         [ProtoMember(7)]
         public Dictionary<int, TimeSpan> ChildrenWeights { get; set; } // Function ID mapping
+        [ProtoMember(8)]
+        public Dictionary<int, TimeSpan> CallerWeights { get; set; } // Function ID mapping
 
         //? TODO: Module ID referencing ProfileData
         
@@ -39,6 +41,7 @@ namespace IRExplorerUI.Profile {
             InstructionWeight ??= new Dictionary<long, TimeSpan>();
             BlockWeight ??= new Dictionary<long, TimeSpan>();
             ChildrenWeights ??= new Dictionary<int, TimeSpan>();
+            CallerWeights ??= new Dictionary<int, TimeSpan>();
         }
 
         public void AddLineSample(int sourceLine, TimeSpan weight) {
@@ -65,6 +68,15 @@ namespace IRExplorerUI.Profile {
             }
             else {
                 ChildrenWeights[childFunc.Number] = weight;
+            }
+        }
+        
+        public void AddCallerSample(IRTextFunction callerFunc, TimeSpan weight) {
+            if (CallerWeights.TryGetValue(callerFunc.Number, out var currentWeight)) {
+                CallerWeights[callerFunc.Number] = currentWeight + weight;
+            }
+            else {
+                CallerWeights[callerFunc.Number] = weight;
             }
         }
 

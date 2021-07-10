@@ -163,7 +163,8 @@ namespace IRExplorerCore.ASM {
             });
 
             // The last block (after RET) is usually unreachable, remove it.
-            if(function.ExitBlock.Predecessors.Count == 0) {
+            if (function.EntryBlock != function.ExitBlock &&
+                function.ExitBlock.Predecessors.Count == 0) {
                 function.Blocks.Remove(function.ExitBlock);
             }
         }

@@ -9,7 +9,7 @@ namespace IRExplorerCore.ASM {
     public enum ARMOpcode {
         RET,
         BL,
-        BLX,
+        BLR,
         B,
         BR,
         BEQ,
@@ -73,7 +73,7 @@ namespace IRExplorerCore.ASM {
                 {"CBZ", new ARMOpcodeInfo(ARMOpcode.CBZ, InstructionKind.Branch)},
                 {"CBNZ", new ARMOpcodeInfo(ARMOpcode.CBNZ, InstructionKind.Branch)},
                 {"BL", new ARMOpcodeInfo(ARMOpcode.BL, InstructionKind.Call)},
-                {"BLX", new ARMOpcodeInfo(ARMOpcode.BLX, InstructionKind.Call)},
+                {"BLR", new ARMOpcodeInfo(ARMOpcode.BLR, InstructionKind.Call)},
             };
 
         private static readonly StringTrie<ARMOpcodeInfo> opcodesTrie_ = new StringTrie<ARMOpcodeInfo>(opcodes_);
