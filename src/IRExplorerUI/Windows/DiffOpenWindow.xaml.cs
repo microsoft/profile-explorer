@@ -28,6 +28,8 @@ namespace IRExplorerUI {
             if (ValidateFilePath(BaseFilePath, BaseAutocompleteBox, "base") &&
                 ValidateFilePath(DiffFilePath, DiffAutocompleteBox, "diff")) {
                 App.Settings.AddRecentComparedFiles(BaseFilePath, DiffFilePath);
+                App.SaveApplicationSettings();
+
                 DialogResult = true;
                 Close();
             }

@@ -1774,6 +1774,9 @@ namespace IRExplorerUI {
                     SetDemangledChildFunctionNames(profileCallTree);
                     AutoResizeColumns(ChildFunctionList);
                 }
+                else {
+                    ChildFunctionList.Model = null;
+                }
             }
             else {
                 var callTree = await Task.Run(() => CreateCallTree(function));
@@ -1851,7 +1854,6 @@ namespace IRExplorerUI {
                 var callerInfo = CreateCallTreeChild(node, function);
                 callerInfo.Name = "Callers";
                 callerInfo.IsMarked = true;
-                callerInfo.Time = Int64.MaxValue; // Ensure it appears on top.
                 callerInfo.DescendantCount = node.UniqueCallerCount;
                 parentNode.Children.Add(callerInfo);
 
@@ -1897,14 +1899,17 @@ namespace IRExplorerUI {
             parentNode.Children.Sort((a, b) => {
                 // Ensure the callers node is placed first.
                 if(a.IsMarked) {
-                    return -1;
+                    return 1;
                 }
                 else if(b.IsMarked) {
-                    return 1;
+                    return -1;
                 }
 
                 if (b.Time > a.Time) {
                     return 1;
+                }
+                else if (b.Time < a.Time) {
+                    return -1;
                 }
                 return b.Name.CompareTo(a.Name);
             });
@@ -1978,15 +1983,19 @@ namespace IRExplorerUI {
             parentNode.Children.Sort((a, b) => {
                 // Ensure the callers node is placed first.
                 if (a.IsMarked) {
-                    return -1;
+                    return 1;
                 }
                 else if (b.IsMarked) {
-                    return 1;
+                    return -1;
                 }
 
                 if (b.Time > a.Time) {
                     return 1;
                 }
+                else if (b.Time < a.Time) {
+                    return -1;
+                }
+
                 return b.Name.CompareTo(a.Name);
             });
         }
@@ -2243,7 +2252,8 @@ namespace IRExplorerUI {
         private async Task ComputeFunctionStatistics() {
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary_);
             using var cancelableTask = statisticsTask_.CreateTask();
-
+            Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
+            
             var tasks = new List<Task>();
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
@@ -2274,6 +2284,8 @@ namespace IRExplorerUI {
             AddStatisticsFunctionListColumns(false);
             AddStatisticsChildFunctionListColumns(false);
             RefreshFunctionList();
+
+            Session.SetApplicationProgress(false, double.NaN);
         }
 
         public async Task WaitForStatistics() {
@@ -2520,7 +2532,7 @@ namespace IRExplorerUI {
         
         public void AddStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
             if (Session.ProfileData == null) {
-                RemoveListViewColumn(ChildFunctionList, "ChildTimeColumnHeader");
+                ChildTimeColumnVisible = false;
             }
 
             AddListViewColumn(ChildFunctionList, "Statistics.Instructions", $"Instrs{titleSuffix}", "InstructionsHeader", $"Instruction number{tooltipSuffix}", columnWidth, null, 1);

@@ -88,5 +88,6 @@ namespace IRExplorerUI {
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
         void SetApplicationStatus(string text, string tooltip = "");
+        void SetApplicationProgress(bool visible, double percentage, string title = null);
     }
 }

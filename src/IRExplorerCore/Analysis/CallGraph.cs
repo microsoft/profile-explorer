@@ -8,12 +8,12 @@ namespace IRExplorerCore.Analysis {
     public class CallSite : TaggedObject {
         public ulong CallInstructionId { get; set; }
         public CallGraphNode Target { get; set; }
-        public CallGraphNode Parent { get; set; }
+        public CallGraphNode Source { get; set; }
 
-        public CallSite(ulong callInstrId, CallGraphNode target, CallGraphNode parent) {
+        public CallSite(ulong callInstrId, CallGraphNode target, CallGraphNode source) {
             CallInstructionId = callInstrId;
             Target = target;
-            Parent = parent;
+            Source = source;
         }
 
         public CallSite(InstructionIR callInstr, CallGraphNode target, CallGraphNode parent) :
@@ -24,11 +24,11 @@ namespace IRExplorerCore.Analysis {
             return obj is CallSite site &&
                    CallInstructionId == site.CallInstructionId &&
                    EqualityComparer<CallGraphNode>.Default.Equals(Target, site.Target) &&
-                   EqualityComparer<CallGraphNode>.Default.Equals(Parent, site.Parent);
+                   EqualityComparer<CallGraphNode>.Default.Equals(Source, site.Source);
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(CallInstructionId, Target, Parent);
+            return HashCode.Combine(CallInstructionId, Target, Source);
         }
 
         public static bool operator ==(CallSite left, CallSite right) {
@@ -75,6 +75,10 @@ namespace IRExplorerCore.Analysis {
             Callees.Add(callsite);
         }
 
+        public void AddCallee(CallGraphNode node) {
+            AddCallee(new CallSite(0, node, this));
+        }
+
         public void AddCaller(CallSite callsite) {
             Callers ??= new List<CallSite>();
             Callers.Add(callsite);
@@ -82,6 +86,11 @@ namespace IRExplorerCore.Analysis {
 
         public CallGraphNode FindCallee(string name) {
             var result = Callees.Find((c) => c.Target != null && c.Target.FunctionName.Equals(name, StringComparison.Ordinal));
+            return result?.Target;
+        }
+
+        public CallGraphNode FindCallee(IRTextFunction function) {
+            var result = Callees.Find((c) => c.Target != null && c.Target.Function == function);
             return result?.Target;
         }
 
@@ -105,8 +114,8 @@ namespace IRExplorerCore.Analysis {
                     var nodeSet = new HashSet<CallGraphNode>();
 
                     foreach (var callsite in Callers) {
-                        if (nodeSet.Add(callsite.Parent)) {
-                            yield return callsite.Parent;
+                        if (nodeSet.Add(callsite.Source)) {
+                            yield return callsite.Source;
                         }
                     }
                 }
@@ -184,10 +193,15 @@ namespace IRExplorerCore.Analysis {
 
         public event EventHandler<CallGraphEventArgs> CallGraphNodeCreated;
 
-        public CallGraph(IRTextSummary summary, IRTextSectionLoader loader, ICompilerIRInfo irInfo) {
-            summary_ = summary;
+        public CallGraph(IRTextSummary summary, IRTextSectionLoader loader, ICompilerIRInfo irInfo) : 
+            this(summary) {
             loader_ = loader;
             irInfo_ = irInfo;
+            
+        }
+
+        public CallGraph(IRTextSummary summary) {
+            summary_ = summary;
             nodes_ = new List<CallGraphNode>(summary.Functions.Count);
             funcToNodeMap_ = new Dictionary<IRTextFunction, CallGraphNode>(summary.Functions.Count);
             externalFuncToNodeMap_ = new Dictionary<string, CallGraphNode>();
@@ -287,8 +301,96 @@ namespace IRExplorerCore.Analysis {
             return null;
         }
 
-        private CallGraphNode GetOrCreateNode(IRTextFunction func) {
+        public CallGraphNode GetOrCreateNode(IRTextFunction func) {
             return GetOrCreateNode(func.Name);
+        }
+
+        public delegate bool CallNodeCallback(CallGraphNode node, CallGraph callGraph);
+
+        public void AugmentGraph(CallNodeCallback augmentAction) {
+            foreach (var node in nodes_) {
+                if (node.Function != null) {
+                    augmentAction(node, this);
+                }
+            }
+        }
+
+        public void TrimGraph(List<IRTextFunction> targetFuncts, CallNodeCallback calleeFilter = null) {
+            // Remove all nodes that don't lead to one of the target functions.
+            var visitedNodes = new HashSet<CallGraphNode>();
+            var worklist = new Queue<CallGraphNode>();
+
+            foreach (var func in targetFuncts) {
+                var node = FindNode(func);
+
+                if (node != null) {
+                    worklist.Enqueue(node);
+                }
+            }
+
+            while (worklist.Count != 0) {
+                var node = worklist.Dequeue();
+                visitedNodes.Add(node);
+
+                //? TODO: Should also include caller info from profile
+
+                if (node.HasCallers) {
+                    foreach (var caller in node.Callers) {
+                        if (!visitedNodes.Contains(caller.Source)) {
+                            worklist.Enqueue(caller.Source);
+                        }
+                    }
+                }
+
+                if(node.HasCallees) {
+                    foreach (var calee in node.Callees) {
+                        if (calleeFilter == null || calleeFilter(calee.Target, this)) {
+                            visitedNodes.Add(calee.Target);
+                        }
+                    }
+                }
+            }
+
+            nodes_.Clear();
+            nodes_.AddRange(visitedNodes);
+            var cleanedNodes = new HashSet<CallGraphNode>();
+
+            foreach (var node in nodes_) {
+                TrimNodes(node, visitedNodes, cleanedNodes);
+            }
+
+            entryNodes_.Clear();
+
+            foreach (var node in nodes_) {
+                if (!node.HasCallers) {
+                    entryNodes_.Add(node);
+                }
+            }
+        }
+
+        public void ExpandGraph(List<IRTextFunction> targetFuncts) {
+
+        }
+
+        private void TrimNodes(CallGraphNode node, HashSet<CallGraphNode> visitedNodes,
+                               HashSet<CallGraphNode> cleanedNodes) {
+            cleanedNodes.Add(node);
+
+            if (!node.HasCallees) {
+                return;
+            }
+
+            for(int i = 0; i < node.Callees.Count; i++) {
+                var calleeNode = node.Callees[i].Target;
+
+                if (!visitedNodes.Contains(calleeNode)) {
+                    node.Callees.RemoveAt(i);
+                    i--;
+                }
+                else if(!cleanedNodes.Contains(calleeNode)) {
+                    TrimNodes(calleeNode, visitedNodes, cleanedNodes);
+                }
+            }
         }
 
         private CallGraphNode GetOrCreateNode(string funcName) {

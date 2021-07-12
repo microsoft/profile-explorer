@@ -59,6 +59,7 @@ namespace IRExplorerUI {
                 //ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
                 ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug")) {
                 App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, DebugFilePath);
+                App.SaveApplicationSettings();
 
                 //? TODO: Disable buttons
                 var task = loadTask_.CreateTask();
