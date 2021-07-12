@@ -31,6 +31,8 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public string CompilerIRName => "ASM";
 
+        public string CompilerDisplayName => "ASM " + ir_.Mode.ToString();
+
         public string OpenFileFilter => "Asm Files|*.asm;*.txt;*.log|All Files|*.*";
 
         public string DefaultSyntaxHighlightingFile => "ASM";

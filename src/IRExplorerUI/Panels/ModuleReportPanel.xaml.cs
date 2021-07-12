@@ -131,7 +131,7 @@ namespace IRExplorerUI {
             var section = func.Sections[0];
             var layoutGraph = await Task.Run(() =>
                 CallGraphUtils.BuildCallGraphLayout(summary_, section, loadedDoc,
-                                                    session_.CompilerInfo, null, true));
+                                                    session_.CompilerInfo, true));
             CallGraphView.DisplayGraph(layoutGraph);
         }
 

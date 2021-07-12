@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using IRExplorerCore;
 using IRExplorerUI.Query;
 using ProtoBuf;
 
@@ -62,6 +63,12 @@ namespace IRExplorerUI {
 
         [ProtoMember(14)]
         public List<Tuple<string, string, string>> RecentProfileFiles;
+
+        [ProtoMember(15)]
+        public string DefaultCompilerIR;
+
+        [ProtoMember(16)]
+        public IRMode DefaultIRMode;
 
         public ApplicationSettings() {
             Reset();
@@ -188,6 +195,11 @@ namespace IRExplorerUI {
             }
 
             return null;
+        }
+
+        public void SwitchDefaultCompilerIR(string irName, IRMode irMode) {
+            DefaultCompilerIR = irName;
+            DefaultIRMode = irMode;
         }
     }
 }

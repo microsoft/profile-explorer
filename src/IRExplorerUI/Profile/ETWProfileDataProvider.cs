@@ -273,6 +273,7 @@ namespace IRExplorerUI.Profile {
                             // Ignore samples targeting modules loaded in the executable that are not it.
                             if (frame.Image == null) {
                                 prevStackFunc = null;
+                                prevStackProfile = null;
                                 isTopFrame = false;
                                 continue;
                             }
@@ -299,7 +300,6 @@ namespace IRExplorerUI.Profile {
                             funcAddress -= 4096; // An extra page size is always added...
 
                             // Try to use the precise address -> function mapping from cvdump.
-                            //? Extract and make dummy func if missing
                             if (!addressFuncMap.TryGetValue(funcAddress, out var textFunction)) {
                                 if (!demangledFuncNames.Value.TryGetValue(funcName, out textFunction)) {
                                     //? TODO: For external functs that don't have IR, record the timing somehow
@@ -335,15 +335,19 @@ namespace IRExplorerUI.Profile {
                                 // and current frame as its parent.
                                 if (prevStackFunc != null) {
                                     profile.AddChildSample(prevStackFunc, sampleWeight);
-                                    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
                                 }
                             }
 
+                            if (prevStackFunc != null) {
+                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
+                            }
+                            
                             // Count the exclusive time for the top frame function.
                             if (isTopFrame) {
                                 profile.ExclusiveWeight += sampleWeight;
                             }
                             
+                            //? TODO: Enable after more testing
                             markInlinedFunctions = false;
                             
                             if (markInlinedFunctions && textFunction.Sections.Count > 0) {

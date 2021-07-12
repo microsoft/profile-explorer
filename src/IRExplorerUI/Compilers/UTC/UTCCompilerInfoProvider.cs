@@ -38,6 +38,7 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public string CompilerIRName => "UTC";
+        public string CompilerDisplayName => "UTC";
         public string DefaultSyntaxHighlightingFile => "UTC IR";
         public string OpenFileFilter => "IR Files|*.txt;*.log;*.ir;*.tup;*.out;*.irx|IR Explorer Session Files|*.irx|All Files|*.*";
         public ISession Session => session_;

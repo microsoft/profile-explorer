@@ -14,11 +14,21 @@ namespace IRExplorerUI.Utilities {
         public static Graph BuildCallGraphLayout(IRTextSummary summary, IRTextSection section,
             LoadedDocument loadedDocument,
             ICompilerInfoProvider compilerInfo,
-            ProfileData profileData,
             bool buildPartialGraph) {
             var cg = GenerateCallGraph(summary, section, loadedDocument,
-                                       compilerInfo, profileData, buildPartialGraph);
+                                       compilerInfo, buildPartialGraph);
+            return BuildCallGraphLayout(cg);
+        }
 
+        public static CallGraph BuildCallGraph(IRTextSummary summary, IRTextSection section,
+                                           LoadedDocument loadedDocument,
+                                           ICompilerInfoProvider compilerInfo,
+                                           bool buildPartialGraph = false) {
+            return GenerateCallGraph(summary, section, loadedDocument,
+                                     compilerInfo, buildPartialGraph);
+        }
+
+        public static Graph BuildCallGraphLayout(CallGraph cg) {
             var options = new CallGraphPrinterOptions() {
                 //UseSingleIncomingEdge = true,
                 //UseStraightLines = true,
@@ -38,7 +48,6 @@ namespace IRExplorerUI.Utilities {
         private static CallGraph GenerateCallGraph(IRTextSummary summary, IRTextSection section,
                                                    LoadedDocument loadedDocument,
                                                    ICompilerInfoProvider compilerInfo,
-                                                   ProfileData profileData,
                                                    bool buildPartialGraph) {
             var cg = new CallGraph(summary, loadedDocument.Loader, compilerInfo.IR);
             cg.CallGraphNodeCreated += (sender, e) => {

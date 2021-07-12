@@ -95,7 +95,8 @@ namespace IRExplorerCore.ASM {
 
         public bool IsCallInstruction(InstructionIR instr) {
             return instr.IsCall ||
-                   (instr.IsGoto && instr.Sources.Count > 0 && 
+                   (instr.IsGoto && instr.Sources.Count > 0 &&
+                   !instr.Sources[0].IsLabelAddress &&
                     instr.Sources[0].HasName);
         }
 

@@ -44,6 +44,7 @@ using IRExplorerUI.Scripting;
 using IRExplorerUI.Utilities;
 using AvalonDock.Layout.Serialization;
 using IRExplorerUI.Profile;
+using Microsoft.ApplicationInsights;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -105,11 +106,11 @@ namespace IRExplorerUI {
 
             App.Session = this;
             panelHostSet_ = new Dictionary<ToolPanelKind, List<PanelHostInfo>>();
-            compilerInfo_ = new UTCCompilerInfoProvider(this);
             changedDocuments_ = new Dictionary<string, DateTime>();
             detachedPanels_ = new List<DraggablePopup>();
             lockObject_ = new object();
 
+            SetupCompilerTarget();
             SetupMainWindow();
             SetupGraphLayoutCache();
 
@@ -239,7 +240,7 @@ namespace IRExplorerUI {
             PopulateRecentFilesMenu();
             ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
             DiffModeButton.IsEnabled = false;
-            IRTypeLabel.Content = compilerInfo_.CompilerIRName;
+            IRTypeLabel.Content = compilerInfo_.CompilerDisplayName;
         }
 
         protected override void OnSourceInitialized(EventArgs e) {
@@ -388,13 +389,20 @@ namespace IRExplorerUI {
             await SectionPanel.RefreshDocumentsDiff();
         }
 
-        private void ShowProgressBar() {
+        private void ShowProgressBar(string title) {
             documentLoadProgressVisible_ = true;
             DocumentLoadProgressPanel.Visibility = Visibility.Visible;
+            
+            if (string.IsNullOrEmpty(title)) {
+                title = "Loading";
+            }
+            
+            DocumentLoadLabel.Text = title;
         }
 
         private void HideProgressBar() {
             DocumentLoadProgressPanel.Visibility = Visibility.Collapsed;
+            DocumentLoadProgressBar.IsIndeterminate = false;
             documentLoadProgressVisible_ = false;
         }
 
@@ -726,7 +734,7 @@ namespace IRExplorerUI {
             var loadedDoc = sessionState_.FindLoadedDocument(summary);
             var layoutGraph = await Task.Run(() => 
                 CallGraphUtils.BuildCallGraphLayout(summary, section, loadedDoc,
-                                                    CompilerInfo, ProfileData, buildPartialGraph));
+                                                    CompilerInfo, buildPartialGraph));
             DisplayCallGraph(layoutGraph, section);
         }
 
@@ -876,19 +884,53 @@ namespace IRExplorerUI {
         }
 
         private void LLVMMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget(new LLVMCompilerInfoProvider());
+            SwitchCompilerTarget("LLVM");
         }
 
         private void UTCMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
+            SwitchCompilerTarget("UTC");
         }
 
         private void ASMMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget(new ASMCompilerInfoProvider(IRMode.x86_64, this));
+            SwitchCompilerTarget("ASM", IRMode.x86_64);
         }
 
         private void ARM64ASMMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget(new ASMCompilerInfoProvider(IRMode.ARM64, this));
+            SwitchCompilerTarget("ASM", IRMode.ARM64);
+        }
+
+        private void SetupCompilerTarget() {
+            if(!string.IsNullOrEmpty(App.Settings.DefaultCompilerIR)) {
+                SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
+            }
+            else {
+                SwitchCompilerTarget("UTC");
+            }
+        }
+
+        private void SwitchCompilerTarget(string name, IRMode irMode = IRMode.Default) {
+            //? TODO: Use a list of registered IRs
+            switch (name) {
+                case "UTC": {
+                    SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
+                    break;
+                }
+                case "LLVM": {
+                    SwitchCompilerTarget(new LLVMCompilerInfoProvider());
+                    break;
+                }
+                case "ASM": {
+                    SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
+                    break;
+                }
+                default: {
+                    SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
+                    break;
+                }
+            }
+
+            App.Settings.SwitchDefaultCompilerIR(compilerInfo_.CompilerIRName, irMode);
+            App.SaveApplicationSettings();
         }
 
         private void ShareButton_Click(object sender, RoutedEventArgs e) {
@@ -972,7 +1014,103 @@ namespace IRExplorerUI {
             if (result.HasValue && result.Value) {
                 SectionPanel.RefreshMainSummary(MainDocumentSummary);
                 SetOptionalStatus("Profile data loaded");
+
+                var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
+                var cg = CallGraphUtils.BuildCallGraph(MainDocumentSummary, null, loadedDoc, compilerInfo_);
+                var targetFuncts = new List<IRTextFunction>();
+                var sortedFuncts = ProfileData.GetSortedFunctions();
+
+                foreach(var pair in sortedFuncts) {
+                    var func = pair.Item1;
+                    var funcProfile = pair.Item2;
+
+                    if(funcProfile.Weight.TotalMilliseconds < 500) {
+                        break;
+                    }
+
+                    targetFuncts.Add(func);
+
+                    if(targetFuncts.Count == 10) {
+                        break;
+                    }
+                }
+
+                cg.AugmentGraph(AugmentCallNodeCallback);
+                cg.TrimGraph(targetFuncts, FilterCalleeNodeCallback);
+                List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, 10);
+
+                foreach (var node in cg.FunctionNodes) {
+                    string sizeText = null;
+                    var tag = node.GetTag<GraphNodeTag>();
+
+                    if (tag != null) {
+                        sizeText = tag.Label;
+                    }
+
+                    node.RemoveTag<GraphNodeTag>();
+
+                    if(node.Function == null) {
+                        continue;
+                    }
+
+                    var funcProfile = ProfileData.GetFunctionProfile(node.Function);
+
+                    if (funcProfile != null) {
+                        double weightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.Weight);
+                        var tooltip = $"{Math.Round(weightPercentage * 100, 2)}%  ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
+
+                        if(!string.IsNullOrEmpty(sizeText)) {
+                            tooltip += $"\n{sizeText}";
+                        }
+
+                        int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
+                        node.AddTag(GraphNodeTag.MakeColor(tooltip, colors[colorIndex]));
+                    }
+                }
+
+                var layoutGraph = await Task.Run(() => CallGraphUtils.BuildCallGraphLayout(cg));
+                var panel = new CallGraphPanel(this);
+
+                DisplayFloatingPanel(panel);
+                panel.DisplayGraph(layoutGraph);
             }
+        }
+
+        private bool AugmentCallNodeCallback(CallGraphNode node, CallGraph callGraph) {
+            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
+
+            if(funcProfile == null) {
+                return false;
+            }
+
+            foreach(var pair in funcProfile.ChildrenWeights) {
+                var childFunc = MainDocumentSummary.GetFunctionWithId(pair.Key);
+                if (childFunc == null) {
+                    continue;
+                }
+
+                if(node.FindCallee(childFunc) == null) {
+                    Trace.WriteLine($"Adding {childFunc.Name}");
+                    var childNode = callGraph.GetOrCreateNode(childFunc);
+                    node.AddCallee(childNode);
+                }
+            }
+
+            return false;
+        }
+
+        private bool FilterCalleeNodeCallback(CallGraphNode node, CallGraph callGraph) {
+            if(node.Function == null) {
+                return true;
+            }
+
+            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
+
+            if (funcProfile == null) {
+                return false;
+            }
+
+            return funcProfile.Weight.TotalMilliseconds > 500;
         }
 
         private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {

@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using IRExplorerCore;
+using IRExplorerCore.Analysis;
+using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile {
@@ -22,7 +25,7 @@ namespace IRExplorerUI.Profile {
         public Dictionary<int, TimeSpan> ChildrenWeights { get; set; } // Function ID mapping
         [ProtoMember(8)]
         public Dictionary<int, TimeSpan> CallerWeights { get; set; } // Function ID mapping
-
+        
         //? TODO: Module ID referencing ProfileData
         
         //? TODO
@@ -176,6 +179,12 @@ namespace IRExplorerUI.Profile {
             }
 
             return profileData;
+        }
+
+        public List<Tuple<IRTextFunction, FunctionProfileData>> GetSortedFunctions() {
+            var list = FunctionProfiles.ToList();
+            list.Sort((a, b) => -a.Item2.Weight.CompareTo(b.Item2.Weight));
+            return list;
         }
     }
 }

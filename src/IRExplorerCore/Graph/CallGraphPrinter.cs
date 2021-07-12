@@ -70,7 +70,8 @@ nslimit=1;
             // Increase the vertical distance between nodes the more there are
             // to make the graph somewhat easier to read.
             int nodeCount = callGraph_.FunctionNodes.Count;
-            double verticalDistance = Math.Clamp(0.5 * Math.Log(nodeCount), 0.5, 2);
+            // double verticalDistance = Math.Clamp(0.3 * Math.Log(nodeCount), 0.3, 1);
+            double verticalDistance = 1;
             text = $"{text}\nranksep ={verticalDistance};\n";
 
             int edgeCount = EstimateEdgeCount();

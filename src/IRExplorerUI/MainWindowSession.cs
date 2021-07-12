@@ -334,12 +334,9 @@ namespace IRExplorerUI {
                     if (percentage > 50) {
                         return;
                     }
-
-                    ShowProgressBar();
                 }
 
-                percentage = Math.Max(percentage, DocumentLoadProgressBar.Value);
-                DocumentLoadProgressBar.Value = percentage;
+                SetApplicationProgress(true, percentage);
             }, DispatcherPriority.Render);
         }
 
@@ -1370,6 +1367,24 @@ namespace IRExplorerUI {
 
         public void SetApplicationStatus(string text, string tooltip) {
             SetOptionalStatus(text, tooltip, Brushes.MediumBlue);
+        }
+
+        public void SetApplicationProgress(bool visible, double percentage, string title = null) {
+            if (visible && !documentLoadProgressVisible_) {
+                ShowProgressBar(title);
+            }
+            else if (!visible && documentLoadProgressVisible_) {
+                HideProgressBar();
+            }
+
+            if (double.IsNaN(percentage)) {
+                DocumentLoadProgressBar.IsIndeterminate = true;
+            }
+            else {
+                DocumentLoadProgressBar.IsIndeterminate = false;
+                percentage = Math.Max(percentage, DocumentLoadProgressBar.Value);
+                DocumentLoadProgressBar.Value = percentage;
+            }
         }
     }
 }

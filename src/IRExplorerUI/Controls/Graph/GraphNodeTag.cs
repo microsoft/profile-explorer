@@ -60,6 +60,16 @@ namespace IRExplorerUI {
             };
         }
 
+        public static GraphNodeTag MakeColor(string label, Color backColor, Color? fontColor = null,
+            LabelPlacementKind position = LabelPlacementKind.Bottom) {
+            return new GraphNodeTag() {
+                Label = label,
+                BackgroundColor = backColor,
+                LabelFontColor = fontColor,
+                LabelPlacement = position
+            };
+        }
+
         public static GraphNodeTag MakeHeatMap(long value, long maxValue) {
             return new GraphNodeTag() {
                 BackgroundColor = GetHeatmapColor(value, maxValue)

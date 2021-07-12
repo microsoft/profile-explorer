@@ -1011,14 +1011,15 @@
                 Name="DocumentLoadProgressPanel"
                 Orientation="Horizontal"
                 Visibility="Collapsed">
-                <TextBlock
-                    VerticalAlignment="Center"
-                    FontSize="11"
-                    Text="Loading" />
                 <ProgressBar
                     x:Name="DocumentLoadProgressBar"
-                    Width="100"
-                    Margin="4,0,0,0" />
+                    Width="100"/>
+                <TextBlock
+                    VerticalAlignment="Center"
+                    x:Name="DocumentLoadLabel"
+                    FontSize="11"
+                    Text="Loading"
+                    Margin="4,0,0,0"/>
             </StackPanel>
 
             <Button
