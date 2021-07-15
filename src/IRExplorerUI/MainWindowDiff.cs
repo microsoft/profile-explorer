@@ -26,7 +26,7 @@ namespace IRExplorerUI {
         }
 
         private async Task OpenBaseDiffDocuments() {
-            var openWindow = new DiffOpenWindow();
+            var openWindow = new DiffOpenWindow(this);
             openWindow.Owner = this;
             var result = openWindow.ShowDialog();
 

@@ -3,28 +3,32 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Windows.Media;
 
 namespace IRExplorerUI {
     public static class ColorPens {
         private static readonly double BoldPenThickness = 1.5;
-        private static readonly Dictionary<Tuple<Color, double>, Pen> pens_;
-        private static readonly Dictionary<Tuple<Color, double, DashStyle>, Pen> dashedPens_;
 
-        static ColorPens() {
-            pens_ = new Dictionary<Tuple<Color, double>, Pen>();
-            dashedPens_ = new Dictionary<Tuple<Color, double, DashStyle>, Pen>();
-        }
+        private static ThreadLocal<Dictionary<Tuple<Color, double>, Pen>> pens_ =
+            new ThreadLocal<Dictionary<Tuple<Color, double>, Pen>>(() => {
+                return new Dictionary<Tuple<Color, double>, Pen> ();
+            });
+
+        private static ThreadLocal<Dictionary<Tuple<Color, double, DashStyle>, Pen>> dashedPens_ =
+            new ThreadLocal<Dictionary<Tuple<Color, double, DashStyle>, Pen>>(() => {
+                return new Dictionary<Tuple<Color, double, DashStyle>, Pen>();
+            });
 
         public static Pen GetPen(Color color, double thickness = 1.0) {
             var pair = new Tuple<Color, double>(color, thickness);
 
-            if (pens_.TryGetValue(pair, out var pen)) {
+            if (pens_.Value.TryGetValue(pair, out var pen)) {
                 return pen;
             }
 
             pen = CreatePen(color, thickness);
-            pens_.Add(pair, pen);
+            pens_.Value.Add(pair, pen);
             return pen;
         }
 
@@ -51,12 +55,12 @@ namespace IRExplorerUI {
         public static Pen GetDashedPen(Color color, DashStyle dashStyle, double thickness = 1.0) {
             var pair = new Tuple<Color, double, DashStyle>(color, thickness, dashStyle);
 
-            if (dashedPens_.TryGetValue(pair, out var pen)) {
+            if (dashedPens_.Value.TryGetValue(pair, out var pen)) {
                 return pen;
             }
 
             pen = CreateDashedPen(color, dashStyle, thickness);
-            dashedPens_.Add(pair, pen);
+            dashedPens_.Value.Add(pair, pen);
             return pen;
         }
 

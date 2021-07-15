@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Windows.EventTracing;
 using Microsoft.Windows.EventTracing.Cpu;
@@ -15,75 +13,6 @@ using System.Linq;
 using System.Threading;
 
 namespace IRExplorerUI.Profile {
-    class PdbParser {
-        private readonly string cvdumpPath_;
-        private readonly Regex localProcRegex = new Regex(@"S_LPROC32: \[[0-9A-F]*\:([0-9A-F]*)\], .*, (.*)", RegexOptions.Compiled);
-        private readonly Regex pub32ProcRegex = new Regex(@"S_PUB32: \[[0-9A-F]*\:([0-9A-F]*)\], Flags: [0-9A-F]*\, (.*)", RegexOptions.Compiled);
-
-        public PdbParser(string cvdumpPath) {
-            cvdumpPath_ = cvdumpPath;
-        }
-
-        public IEnumerable<(string, long)> Parse(string symbolPath) {
-            var allText = RunCvdump(symbolPath);
-            var textLines = allText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
-            foreach (var line in textLines) {
-                var matches = pub32ProcRegex.Matches(line);
-
-                if (matches.Count == 0) {
-                    matches = localProcRegex.Matches(line);
-                    if (matches.Count == 0) {
-                        continue;
-                    }
-                }
-
-                var address = Convert.ToInt64(matches[0].Groups[1].Value, 16);
-                var funcName = matches[0].Groups[2].Value;
-                yield return (funcName, address);
-            }
-        }
-
-        private string RunCvdump(string symbolPath) {
-            var outputText = new StringBuilder(1024 * 32);
-
-            var psi = new ProcessStartInfo(cvdumpPath_) {
-                Arguments = $"-p -s \"{symbolPath}\"",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardError = false,
-                RedirectStandardOutput = true
-            };
-
-            //? TODO: Put path between " to support whitespace in the path.
-
-            try {
-                using var process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-
-                process.OutputDataReceived += (sender, e) => {
-                    outputText.AppendLine(e.Data);
-                };
-
-                process.Start();
-                process.BeginOutputReadLine();
-
-                do {
-                    process.WaitForExit(200);
-                } while (!process.HasExited);
-
-                process.CancelOutputRead();
-
-                if (process.ExitCode != 0) {
-                    return null;
-                }
-            }
-            catch (Exception ex) {
-                return null;
-            }
-
-            return outputText.ToString();
-        }
-    }
-
     public class ETWProfileDataProvider : IProfileDataProvider {
         class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
             private ProfileLoadProgressHandler callback_;
@@ -153,8 +82,10 @@ namespace IRExplorerUI.Profile {
             BuildAddressFunctionMap(string symbolPath) {
             var addressFuncMap = new Dictionary<long, IRTextFunction>();
             var externalsFuncMap = new Dictionary<long, string>();
+            
             foreach(var (funcName, address) in pdbParser_.Parse(symbolPath)) {
                 var func = summary_.FindFunction(funcName);
+                
                 if (func != null) {
                     addressFuncMap[address] = func;
                 }

@@ -344,10 +344,12 @@
                         </MenuItem>
                         <Separator />
 
+                        <MenuItem Click="MenuItem_OnClick" Header="Load Profile Data" />
+                        <MenuItem Click="MenuItem_OnClick3" Header="Profile Call Graph" />
+                        <MenuItem Click="MenuItem_OnClick2" Header="Function report" />
+                        <Separator/>
 
                         <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio Extension" />
-                        <MenuItem Click="MenuItem_OnClick" Header="Load Profile Data" />
-                        <MenuItem Click="MenuItem_OnClick2" Header="Function report" />
                         <MenuItem
                             Click="MenuItem_Click_6"
                             Header="Settings"

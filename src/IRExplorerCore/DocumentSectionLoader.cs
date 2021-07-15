@@ -28,7 +28,7 @@ namespace IRExplorerCore {
 
         public DocumentSectionLoader(byte[] textData, ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
-            documentReader_ = irInfo_.CreateSectionReader(textData);
+            documentReader_ = irInfo.CreateSectionReader(textData);
         }
 
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {

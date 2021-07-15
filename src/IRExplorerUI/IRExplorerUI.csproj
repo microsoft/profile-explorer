@@ -57,43 +57,43 @@
 
 	<ItemGroup>
 		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.4" />
-		<PackageReference Include="AvalonEdit" Version="6.1.1" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.7.0" />
-		<PackageReference Include="CS-Script.Core" Version="1.4.2-preview" />
-		<PackageReference Include="DiffPlex" Version="1.6.3" />
+		<PackageReference Include="AvalonEdit" Version="6.1.2.30" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.9.1" />
+		<PackageReference Include="CS-Script.Core" Version="2.0.0" />
+		<PackageReference Include="DiffPlex" Version="1.7.0" />
 		<PackageReference Include="Dirkster.AvalonDock" Version="4.50.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.50.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.50.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2010" Version="4.50.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.50.0" />
-		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.94" />
-		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.85" />
-		<PackageReference Include="Google.Protobuf" Version="3.14.0" />
-		<PackageReference Include="Grpc" Version="2.33.1" />
-		<PackageReference Include="Grpc.Core" Version="2.33.1" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.33.1" />
-		<PackageReference Include="Grpc.Tools" Version="2.33.1">
+		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.97" />
+		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.90" />
+		<PackageReference Include="Google.Protobuf" Version="3.17.3" />
+		<PackageReference Include="Grpc" Version="2.38.1" />
+		<PackageReference Include="Grpc.Core" Version="2.38.1" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.38.1" />
+		<PackageReference Include="Grpc.Tools" Version="2.38.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.16.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.8.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="3.8.0" />
-		<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1">
+		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.0.0-1.final" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.0.0-1.final" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="4.0.0-1.final" />
+		<PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.7.9" />
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="16.8.55">
+		<PackageReference Include="Microsoft.VisualStudio.SDK.Analyzers" Version="16.10.1" />
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.0.17-alpha">
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.6.3" />
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
-		<PackageReference Include="protobuf-net" Version="3.0.62" />
+		<PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.7.3" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+		<PackageReference Include="protobuf-net" Version="3.0.101" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.28" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.34" />
 	</ItemGroup>
 
 	<ItemGroup>

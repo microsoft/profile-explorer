@@ -10,7 +10,10 @@ using Microsoft.Win32;
 
 namespace IRExplorerUI {
     public partial class DiffOpenWindow : Window {
-        public DiffOpenWindow() {
+        public ISession Session { get; set; }
+
+        public DiffOpenWindow(ISession session) {
+            Session = session;
             InitializeComponent();
             DataContext = this;
         }
@@ -113,7 +116,7 @@ namespace IRExplorerUI {
         private string ShowOpenFileDialog() {
             var fileDialog = new OpenFileDialog {
                 DefaultExt = "*.*",
-                Filter = "Log Files|*.txt;*.log;*.ir;*.csf|Compiler Studio Session Files|*.csf|All Files|*.*"
+                Filter = Session.CompilerInfo.OpenFileFilter
             };
 
             var result = fileDialog.ShowDialog();

@@ -48,7 +48,8 @@ namespace IRExplorerCore.ASM {
 
         public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
                          RegisterTable registerTable,
-                         ReadOnlyMemory<char> sectionText)
+                         ReadOnlyMemory<char> sectionText,
+                         Dictionary<long, string> funcAddressMap)
             : base(irInfo.Mode, errorHandler, registerTable) {
             irInfo_ = irInfo;
             Reset();
@@ -58,7 +59,8 @@ namespace IRExplorerCore.ASM {
 
         public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
             RegisterTable registerTable,
-            string sectionText)
+            string sectionText,
+            Dictionary<long, string> funcAddressMap)
             : base(irInfo.Mode, errorHandler, registerTable) {
             irInfo_ = irInfo;
             Reset();

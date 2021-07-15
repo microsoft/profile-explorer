@@ -3,28 +3,28 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using System.Windows.Media;
 
 namespace IRExplorerUI {
     public static class ColorBrushes {
-        private static readonly Dictionary<Color, SolidColorBrush> brushes_;
-
-        static ColorBrushes() {
-            brushes_ = new Dictionary<Color, SolidColorBrush>();
-        }
+       private static ThreadLocal<Dictionary<Color, SolidColorBrush>> brushes_ =
+           new ThreadLocal<Dictionary<Color, SolidColorBrush>>(() => {
+           return new Dictionary<Color, SolidColorBrush>();
+       });
 
         public static SolidColorBrush GetBrush(string colorName) {
             return GetBrush(Utils.ColorFromString(colorName));
         }
 
         public static SolidColorBrush GetBrush(Color color) {
-            if (brushes_.TryGetValue(color, out var brush)) {
+            if (brushes_.Value.TryGetValue(color, out var brush)) {
                 return brush;
             }
 
             brush = new SolidColorBrush(color);
             brush.Freeze();
-            brushes_.Add(color, brush);
+            brushes_.Value.Add(color, brush);
             return brush;
         }
 

@@ -37,8 +37,6 @@
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    IsDropDownOpen="True"
-                    IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
                     TabIndex="1" />
 

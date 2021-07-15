@@ -85,11 +85,19 @@ namespace IRExplorerCore.Analysis {
         }
 
         public CallGraphNode FindCallee(string name) {
+            if (Callees == null) {
+                return null;
+            }
+
             var result = Callees.Find((c) => c.Target != null && c.Target.FunctionName.Equals(name, StringComparison.Ordinal));
             return result?.Target;
         }
 
         public CallGraphNode FindCallee(IRTextFunction function) {
+            if(Callees == null) {
+                return null;
+            }
+
             var result = Callees.Find((c) => c.Target != null && c.Target.Function == function);
             return result?.Target;
         }
@@ -305,17 +313,20 @@ namespace IRExplorerCore.Analysis {
             return GetOrCreateNode(func.Name);
         }
 
-        public delegate bool CallNodeCallback(CallGraphNode node, CallGraph callGraph);
+        public delegate bool CallNodeCallback(CallGraphNode node, CallGraphNode parentNode,
+            CallGraph callGraph, List<IRTextFunction> targetFuncts);
 
         public void AugmentGraph(CallNodeCallback augmentAction) {
             foreach (var node in nodes_) {
                 if (node.Function != null) {
-                    augmentAction(node, this);
+                    augmentAction(node, node, this, null);
                 }
             }
         }
 
-        public void TrimGraph(List<IRTextFunction> targetFuncts, CallNodeCallback calleeFilter = null) {
+        public void TrimGraph(List<IRTextFunction> targetFuncts,
+                              CallNodeCallback callerFilter = null,
+                              CallNodeCallback calleeFilter = null) {
             // Remove all nodes that don't lead to one of the target functions.
             var visitedNodes = new HashSet<CallGraphNode>();
             var worklist = new Queue<CallGraphNode>();
@@ -336,15 +347,17 @@ namespace IRExplorerCore.Analysis {
 
                 if (node.HasCallers) {
                     foreach (var caller in node.Callers) {
-                        if (!visitedNodes.Contains(caller.Source)) {
-                            worklist.Enqueue(caller.Source);
+                        if (callerFilter == null || callerFilter(caller.Source, node, this, targetFuncts)) {
+                            if (!visitedNodes.Contains(caller.Source)) {
+                                worklist.Enqueue(caller.Source);
+                            }
                         }
                     }
                 }
 
                 if(node.HasCallees) {
                     foreach (var calee in node.Callees) {
-                        if (calleeFilter == null || calleeFilter(calee.Target, this)) {
+                        if (calleeFilter == null || calleeFilter(calee.Target, node, this, targetFuncts)) {
                             visitedNodes.Add(calee.Target);
                         }
                     }

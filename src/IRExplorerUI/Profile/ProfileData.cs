@@ -183,7 +183,7 @@ namespace IRExplorerUI.Profile {
 
         public List<Tuple<IRTextFunction, FunctionProfileData>> GetSortedFunctions() {
             var list = FunctionProfiles.ToList();
-            list.Sort((a, b) => -a.Item2.Weight.CompareTo(b.Item2.Weight));
+            list.Sort((a, b) => -a.Item2.ExclusiveWeight.CompareTo(b.Item2.ExclusiveWeight));
             return list;
         }
     }

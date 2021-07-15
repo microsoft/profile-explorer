@@ -1014,69 +1014,83 @@ namespace IRExplorerUI {
             if (result.HasValue && result.Value) {
                 SectionPanel.RefreshMainSummary(MainDocumentSummary);
                 SetOptionalStatus("Profile data loaded");
-
-                var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-                var cg = CallGraphUtils.BuildCallGraph(MainDocumentSummary, null, loadedDoc, compilerInfo_);
-                var targetFuncts = new List<IRTextFunction>();
-                var sortedFuncts = ProfileData.GetSortedFunctions();
-
-                foreach(var pair in sortedFuncts) {
-                    var func = pair.Item1;
-                    var funcProfile = pair.Item2;
-
-                    if(funcProfile.Weight.TotalMilliseconds < 500) {
-                        break;
-                    }
-
-                    targetFuncts.Add(func);
-
-                    if(targetFuncts.Count == 10) {
-                        break;
-                    }
-                }
-
-                cg.AugmentGraph(AugmentCallNodeCallback);
-                cg.TrimGraph(targetFuncts, FilterCalleeNodeCallback);
-                List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, 10);
-
-                foreach (var node in cg.FunctionNodes) {
-                    string sizeText = null;
-                    var tag = node.GetTag<GraphNodeTag>();
-
-                    if (tag != null) {
-                        sizeText = tag.Label;
-                    }
-
-                    node.RemoveTag<GraphNodeTag>();
-
-                    if(node.Function == null) {
-                        continue;
-                    }
-
-                    var funcProfile = ProfileData.GetFunctionProfile(node.Function);
-
-                    if (funcProfile != null) {
-                        double weightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.Weight);
-                        var tooltip = $"{Math.Round(weightPercentage * 100, 2)}%  ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
-
-                        if(!string.IsNullOrEmpty(sizeText)) {
-                            tooltip += $"\n{sizeText}";
-                        }
-
-                        int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
-                        node.AddTag(GraphNodeTag.MakeColor(tooltip, colors[colorIndex]));
-                    }
-                }
-
-                var layoutGraph = await Task.Run(() => CallGraphUtils.BuildCallGraphLayout(cg));
-                var panel = new CallGraphPanel(this);
-
-                DisplayFloatingPanel(panel);
-                panel.DisplayGraph(layoutGraph);
             }
         }
 
-        private bool AugmentCallNodeCallback(CallGraphNode node, CallGraph callGraph) {
+        private async void MenuItem_OnClick3(object sender, RoutedEventArgs e) {
+            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
+            var cg = CallGraphUtils.BuildCallGraph(MainDocumentSummary, null, loadedDoc, compilerInfo_);
+            var targetFuncts = new List<IRTextFunction>();
+            var sortedFuncts = ProfileData.GetSortedFunctions();
+
+            foreach (var pair in sortedFuncts) {
+                var func = pair.Item1;
+                var funcProfile = pair.Item2;
+
+                if (funcProfile.ExclusiveWeight.TotalMilliseconds < 1000) {
+                    break;
+                }
+
+                targetFuncts.Add(func);
+
+                if (targetFuncts.Count == 10) {
+                    break;
+                }
+            }
+
+            cg.AugmentGraph(AugmentCallNodeCallback);
+            cg.TrimGraph(targetFuncts, AugmentCallerNodeCallback, FilterCalleeNodeCallback);
+            List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, 10);
+
+            foreach (var node in cg.FunctionNodes) {
+                string sizeText = null;
+                var tag = node.GetTag<GraphNodeTag>();
+
+                if (tag != null) {
+                    sizeText = tag.Label;
+                }
+
+                node.RemoveTag<GraphNodeTag>();
+
+                if (node.Function == null) {
+                    continue;
+                }
+
+                var funcProfile = ProfileData.GetFunctionProfile(node.Function);
+
+                if (funcProfile != null) {
+                    double weightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
+                    double inclusiveWeightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.Weight);
+                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}%  ({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2)} ms), {Math.Round(inclusiveWeightPercentage * 100, 2)}%";
+
+                    if (!string.IsNullOrEmpty(sizeText)) {
+                        tooltip += $"\n{sizeText}";
+                    }
+
+                    //int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
+                    int colorIndex = sortedFuncts.FindIndex(func => node.Function == func.Item1);
+                    colorIndex = Math.Clamp(colorIndex, 0, 10);
+
+                    node.AddTag(GraphNodeTag.MakeColor(tooltip, colors[colorIndex]));
+                }
+            }
+
+            var layoutGraph = await Task.Run(() => CallGraphUtils.BuildCallGraphLayout(cg));
+            var panel = new CallGraphPanel(this);
+            panel.TitlePrefix = "Profile ";
+
+            DisplayFloatingPanel(panel);
+            panel.DisplayGraph(layoutGraph);
+        }
+
+        private bool AugmentCallerNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
+            List<IRTextFunction> targetFuncts) {
+            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
+            return funcProfile != null;
+        }
+
+        private bool AugmentCallNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
+                                             List<IRTextFunction> targetFuncts) {
             var funcProfile = ProfileData.GetFunctionProfile(node.Function);
 
             if(funcProfile == null) {
@@ -1090,7 +1104,6 @@ namespace IRExplorerUI {
                 }
 
                 if(node.FindCallee(childFunc) == null) {
-                    Trace.WriteLine($"Adding {childFunc.Name}");
                     var childNode = callGraph.GetOrCreateNode(childFunc);
                     node.AddCallee(childNode);
                 }
@@ -1099,18 +1112,21 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private bool FilterCalleeNodeCallback(CallGraphNode node, CallGraph callGraph) {
+        private bool FilterCalleeNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
+                                              List<IRTextFunction> targetFuncts) {
             if(node.Function == null) {
-                return true;
-            }
-
-            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
-
-            if (funcProfile == null) {
                 return false;
             }
 
-            return funcProfile.Weight.TotalMilliseconds > 500;
+            return targetFuncts.Contains(parentNode.Function);
+
+            //var funcProfile = ProfileData.GetFunctionProfile(node.Function);
+
+            //if (funcProfile == null) {
+            //    return false;
+            //}
+
+            //return funcProfile.ExclusiveWeight.TotalMilliseconds > 500;
         }
 
         private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {

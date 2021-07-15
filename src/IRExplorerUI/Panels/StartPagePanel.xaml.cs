@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -89,6 +90,23 @@ namespace IRExplorerUI.Panels {
 
         private void ClearDiffButton_Click(object sender, RoutedEventArgs e) {
             ClearRecentDiffDocuments?.Invoke(this, null);
+        }
+
+        private void TextSearch_Populating(object sender, PopulatingEventArgs e) {
+            var box = (AutoCompleteBox)sender;
+            box.ItemsSource = null;
+            box.ItemsSource = App.Settings.RecentFiles;
+            box.PopulateComplete();
+        }
+
+        private void TextSearch_KeyDown(object sender, KeyEventArgs e) {
+            if(e.Key == Key.Escape) {
+                TextSearch.Text = "";
+            }
+            else if(e.Key == Key.Enter) {
+                RecentFilesListBox.SelectedItem = TextSearch.Text;
+                InvokeOpenRecentDocument();
+            }
         }
     }
 }
