@@ -8,7 +8,8 @@ namespace IRExplorerCore.ASM {
     public sealed class ASMIRSectionParser : IRSectionParser {
         private readonly ICompilerIRInfo irInfo_;
         private readonly IRParsingErrorHandler errorHandler_;
-
+        private Dictionary<long, string> funcAddressMap_;
+        
         public ASMIRSectionParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler) {
             irInfo_ = irInfo;
             errorHandler_ = errorHandler;
@@ -17,12 +18,12 @@ namespace IRExplorerCore.ASM {
         public FunctionIR ParseSection(IRTextSection section, string sectionText) => new ASMParser(
                 irInfo_, errorHandler_,
                 RegisterTables.SelectRegisterTable(irInfo_.Mode),
-                sectionText).Parse();
+                sectionText, funcAddressMap_).Parse();
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) => new ASMParser(
                 irInfo_, errorHandler_,
                 RegisterTables.SelectRegisterTable(irInfo_.Mode),
-                sectionText).Parse();
+                sectionText, funcAddressMap_).Parse();
 
         public void SkipCurrentToken() {
             throw new NotImplementedException();

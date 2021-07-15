@@ -126,6 +126,7 @@ namespace IRExplorerUI {
 
         public bool IsInsertionDiff => diffKind_ == DiffKind.Insertion;
         public bool IsDeletionDiff => diffKind_ == DiffKind.Deletion;
+        public bool IsModificationDiff => diffKind_ == DiffKind.Modification || diffKind_ == DiffKind.MinorModification;
         public bool IsPlaceholderDiff => diffKind_ == DiffKind.Placeholder;
         public bool HasDiffs => diffKind_ == DiffKind.Modification;
 
@@ -532,11 +533,20 @@ namespace IRExplorerUI {
                         case FunctionFieldKind.StatisticDiff: {
                             int result = 0;
                             if (functionY.FunctionDiffKind != functionX.FunctionDiffKind) {
-                                if (functionX.IsDeletionDiff) {
+                                if (functionY.IsDeletionDiff || functionX.IsInsertionDiff) {
                                     result = -1;
                                 }
-                                else if (functionX.IsInsertionDiff) {
+                                else if (functionY.IsInsertionDiff || functionX.IsDeletionDiff) {
                                     result = 1;
+                                }
+                                else if(functionY.IsModificationDiff) {
+                                    return -1;
+                                }
+                                else if(functionX.IsModificationDiff) {
+                                    return 1;
+                                }
+                                else {
+                                    result = string.Compare(functionY.Name, functionX.Name, StringComparison.Ordinal);
                                 }
                             }
                             else {
@@ -1155,6 +1165,7 @@ namespace IRExplorerUI {
             FunctionModuleControlsVisible = true;
             
             ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
+            UseProfileCallTree = true;
         }
 
         private async Task UpdateFunctionListBindings() {
@@ -2250,6 +2261,10 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
+            if(functionStatMap_ != null) {
+                return;
+            }
+
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary_);
             using var cancelableTask = statisticsTask_.CreateTask();
             Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
@@ -2529,8 +2544,10 @@ namespace IRExplorerUI {
                 AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);    
             }
         }
-        
+
         public void AddStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
+            RemoveStatisticsChildFunctionListColumns();
+
             if (Session.ProfileData == null) {
                 ChildTimeColumnVisible = false;
             }
@@ -2539,9 +2556,9 @@ namespace IRExplorerUI {
             AddListViewColumn(ChildFunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, null, 2);
         }
 
-        public void RemoveStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            RemoveListViewColumn(FunctionList, "SizeHeader");
-            RemoveListViewColumn(FunctionList, "InstructionsHeader");
+        public void RemoveStatisticsChildFunctionListColumns() {
+            RemoveListViewColumn(ChildFunctionList, "SizeHeader");
+            RemoveListViewColumn(ChildFunctionList, "InstructionsHeader");
         }
 
         private void AutoResizeColumns(ListView listView) {

@@ -287,7 +287,7 @@ namespace IRExplorerUI {
                     else {
                         HighlightingStyle style;
 
-                        if (e.Color.IsValidRGBColor()) {
+                        if (e.Color != null && e.Color.IsValidRGBColor()) {
                             style = new HighlightingStyle(e.Color.ToColor());
                         }
                         else if (debugCurrentStackFrame_ != null) {

@@ -63,10 +63,7 @@ namespace IRExplorerUI.Document {
                          bool selectTextOnFocus = false) {
             Reset(initialInfo, searchAll);
             selectTextOnFocus_ = selectTextOnFocus;
-
-            if (selectTextOnFocus) {
-                Keyboard.Focus(TextSearch);
-            }
+            Keyboard.Focus(TextSearch);
         }
 
         public void Hide() {

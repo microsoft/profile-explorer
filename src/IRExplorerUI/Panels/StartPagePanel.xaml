@@ -5,9 +5,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI.Panels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:toolkit="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
     d:DesignHeight="450"
     d:DesignWidth="800"
     UseLayoutRounding="True"
+    SnapsToDevicePixels="True"
     mc:Ignorable="d">
     <Border
         Background="#BFD9EFFF"
@@ -74,6 +76,29 @@
                             HorizontalAlignment="Right"
                             DockPanel.Dock="Right"
                             Orientation="Horizontal">
+                            <Image Source="{StaticResource SearchIcon}" ToolTip="Filter text based on a string" />
+                            <toolkit:AutoCompleteBox
+    Name="TextSearch"
+    Width="150"
+    Margin="4,0,2,0"
+    HorizontalAlignment="Center"
+    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+    BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+    FilterMode="ContainsOrdinal"
+    IsDropDownOpen="True"
+    IsTextCompletionEnabled="False"
+    MinimumPrefixLength="1"
+    Populating="TextSearch_Populating"
+    KeyDown="TextSearch_KeyDown"
+    Placeholder="Search recent files"
+    TabIndex="4"
+    Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                <toolkit:AutoCompleteBox.InputBindings>
+                                    <KeyBinding
+            Key="Escape"
+            CommandTarget="{Binding ElementName=SearchPanelControl}" />
+                                </toolkit:AutoCompleteBox.InputBindings>
+                            </toolkit:AutoCompleteBox>
                             <Button
                                 Name="ClearButton"
                                 Width="24"
@@ -82,7 +107,7 @@
                                 Padding="2,2,2,2"
                                 Click="ClearButton_Click"
                                 ToolTip="Clear list of recent files">
-                                <Image Source="{StaticResource RemoveIcon}" UseLayoutRounding="True" />
+                                <Image Source="{StaticResource RemoveIcon}"/>
                             </Button>
                             <Button
                                 x:Name="OpenButton"

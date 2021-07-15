@@ -154,7 +154,7 @@ namespace IRExplorerUI {
 
         protected virtual void Dispose(bool disposing) {
             if (!disposed_) {
-                Loader.Dispose();
+                Loader?.Dispose();
                 Loader = null;
                 Summary = null;
                 disposed_ = true;
