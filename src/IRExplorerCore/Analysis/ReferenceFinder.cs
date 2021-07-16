@@ -523,9 +523,7 @@ namespace IRExplorerCore.Analysis {
         }
 
         public static string GetSymbolName(OperandIR op) {
-            if (op.Kind == OperandKind.Variable ||
-                op.Kind == OperandKind.Temporary ||
-                op.Kind == OperandKind.Address) {
+            if (op.HasName) {
                 return op.NameValue.ToString();
             }
 

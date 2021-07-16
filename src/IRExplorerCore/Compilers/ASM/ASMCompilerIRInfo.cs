@@ -6,7 +6,6 @@ using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
 using IRExplorerCore.Analysis;
 using System;
-using IRExplorerCore.UTC;
 
 namespace IRExplorerCore.ASM {
     public class ASMCompilerIRInfo : ICompilerIRInfo {
@@ -24,8 +23,7 @@ namespace IRExplorerCore.ASM {
         public IRParsingErrorHandler CreateParsingErrorHandler() => new ParsingErrorHandler();
 
         public IReachableReferenceFilter CreateReferenceFilter(FunctionIR function) {
-            //? TODO: Use UTCReferenceFilter, make a DefaultReachabilityFilter out of it
-            return null;
+            return new CFGReachabilityReferenceFilter(function);
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {

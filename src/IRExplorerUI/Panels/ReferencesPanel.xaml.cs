@@ -93,10 +93,16 @@ namespace IRExplorerUI {
             string text = FindPreviewText(reference, documentText);
             string symbolName = ReferenceFinder.GetSymbolName(operand);
             int index = 0;
+            
             var textBlock = new TextBlock();
             textBlock.FontFamily = PreviewFont;
             textBlock.Foreground = Brushes.Black;
             textBlock.Margin = new Thickness(0, 2, 0, 0);
+
+            if (string.IsNullOrEmpty(symbolName)) {
+                textBlock.Inlines.Add(text);
+                return (textBlock, text);
+            }
 
             while (index < text.Length) {
                 int symbolIndex = text.IndexOf(symbolName, index, StringComparison.Ordinal);

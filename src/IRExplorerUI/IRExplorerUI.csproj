@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net5.0-windows</TargetFramework>
+		<TargetFramework>net6.0-windows7.0</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
 		<AssemblyVersion>0.7.9.0</AssemblyVersion>
@@ -57,10 +57,10 @@
 
 	<ItemGroup>
 		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.4" />
-		<PackageReference Include="AvalonEdit" Version="6.1.1" />
+		<PackageReference Include="AvalonEdit" Version="6.1.2.30" />
 		<PackageReference Include="Azure.Storage.Blobs" Version="12.7.0" />
 		<PackageReference Include="CS-Script.Core" Version="1.4.2-preview" />
-		<PackageReference Include="DiffPlex" Version="1.6.3" />
+		<PackageReference Include="DiffPlex" Version="1.7.0" />
 		<PackageReference Include="Dirkster.AvalonDock" Version="4.50.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.Aero" Version="4.50.0" />
 		<PackageReference Include="Dirkster.AvalonDock.Themes.Metro" Version="4.50.0" />
@@ -68,11 +68,11 @@
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.50.0" />
 		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.94" />
 		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.85" />
-		<PackageReference Include="Google.Protobuf" Version="3.14.0" />
-		<PackageReference Include="Grpc" Version="2.33.1" />
-		<PackageReference Include="Grpc.Core" Version="2.33.1" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.33.1" />
-		<PackageReference Include="Grpc.Tools" Version="2.33.1">
+		<PackageReference Include="Google.Protobuf" Version="3.17.3" />
+		<PackageReference Include="Grpc" Version="2.39.0-pre1" />
+		<PackageReference Include="Grpc.Core" Version="2.39.0-pre1" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.39.0-pre1" />
+		<PackageReference Include="Grpc.Tools" Version="2.39.0-pre1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
@@ -89,11 +89,11 @@
 		  <PrivateAssets>all</PrivateAssets>
 		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.6.3" />
-		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.19" />
-		<PackageReference Include="protobuf-net" Version="3.0.62" />
+		<PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.7.4" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+		<PackageReference Include="protobuf-net" Version="3.0.101" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
-		<PackageReference Include="HtmlAgilityPack" Version="1.11.28" />
+		<PackageReference Include="HtmlAgilityPack" Version="1.11.34" />
 	</ItemGroup>
 
 	<ItemGroup>
