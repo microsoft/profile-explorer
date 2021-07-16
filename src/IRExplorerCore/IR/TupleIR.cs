@@ -20,9 +20,9 @@ namespace IRExplorerCore.IR {
             Parent = parent;
         }
 
-        public TupleKind Kind { get; set; }
         public BlockIR Parent { get; set; }
         public int IndexInBlock { get; set; }
+        public TupleKind Kind { get; set; }
 
         public bool IsInstruction => Kind == TupleKind.Instruction;
         public bool IsLabel => Kind == TupleKind.Label;

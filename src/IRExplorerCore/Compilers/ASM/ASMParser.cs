@@ -310,6 +310,7 @@ namespace IRExplorerCore.ASM {
         private (InstructionIR, bool) ParseInstruction(BlockIR block) {
             bool isJump = false;
             var instr = new InstructionIR(NextElementId, InstructionKind.Other, block);
+            instr.IndexInBlock = block.Tuples.Count;
             block.Tuples.Add(instr);
             previousInstr_ = instr;
 
