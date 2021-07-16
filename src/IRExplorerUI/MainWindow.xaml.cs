@@ -344,9 +344,9 @@ namespace IRExplorerUI {
             DevMenuStartupTime.Header = $"Startup time: {time.TotalMilliseconds} ms";
 
             DelayedAction.StartNew(TimeSpan.FromSeconds(30), () => {
-                Dispatcher.BeginInvoke(() =>
+                Dispatcher.BeginInvoke(new Action(() =>
                     CheckForUpdate()
-                );
+                ));
             });
 
           

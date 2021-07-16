@@ -305,7 +305,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            Dispatcher.BeginInvoke(() => {
+            Dispatcher.BeginInvoke(new Action(() => {
                 if (!loadingDocuments_) {
                     // It can happen that this code on the dispatchers runs after
                     // the document has already been loaded, so just ignore the events.
@@ -337,7 +337,7 @@ namespace IRExplorerUI {
                 }
 
                 SetApplicationProgress(true, percentage);
-            }, DispatcherPriority.Render);
+            }), DispatcherPriority.Render);
         }
 
         private async Task SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
@@ -1005,7 +1005,7 @@ namespace IRExplorerUI {
 
             if (appIsActivated_) {
                 // The event doesn't run on the main thread, redirect.
-                await Dispatcher.BeginInvoke(async () => {
+                await Dispatcher.BeginInvoke(new Action(async () => {
                     if (eventTime < lastDocumentLoadTime_ ||
                         eventTime < lastDocumentReloadQueryTime_) {
                         return; // Event happened before the last document reload, ignore.
@@ -1014,7 +1014,7 @@ namespace IRExplorerUI {
                     if (ShowDocumentReloadQuery(loadedDoc.FilePath)) {
                         await ReloadDocument(loadedDoc.FilePath);
                     }
-                });
+                }));
             }
             else {
                 // Queue for later, when the application gets focus back.
