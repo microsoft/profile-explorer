@@ -113,7 +113,6 @@ namespace IRExplorerUI.Compilers.ASM {
                 var weight = blockWeights[i].Item2;
                 double weightPercentage = profile.ScaleWeight(weight);
 
-
                 //? TODO: Configurable
                 IconDrawing icon = null;
                 bool markOnFlowGraph = false;
@@ -133,6 +132,10 @@ namespace IRExplorerUI.Compilers.ASM {
                 var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
                 blockOverlays.Add(new Tuple<IRElement, IconDrawing, string>(element, icon, tooltip));
                 document.MarkBlock(element, options_.PickColorForWeight(weightPercentage), markOnFlowGraph);
+
+                if (weightPercentage > options_.ElementWeightCutoff) {
+                    element.AddTag(GraphNodeTag.MakeLabel($"{Math.Round(weightPercentage * 100, 2)}%"));
+                }
             }
 
             var blockOverlayList = document.AddIconElementOverlays(blockOverlays);
