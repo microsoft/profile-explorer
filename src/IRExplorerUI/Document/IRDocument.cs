@@ -2812,7 +2812,7 @@ namespace IRExplorerUI {
 
                 foreach (var segment in blockGroup.Segments) {
                     int startLine = Document.GetLineByOffset(segment.StartOffset).LineNumber;
-                    int endLine = Document.GetLineByOffset(segment.EndOffset).LineNumber;
+                    int endLine = Document.GetLineByOffset(segment.EndOffset - 1).LineNumber;
                     int lineSpan = endLine - startLine + 1;
                     double y = Math.Floor((double)startLine / LineCount * height);
                     double lineHeight = Math.Ceiling(Math.Max(1, (double)lineSpan / LineCount * height));
@@ -3604,7 +3604,7 @@ namespace IRExplorerUI {
         }
 
         public IconElementOverlay AddIconElementOverlay(IRElement element, IconDrawing icon,
-                                          double width = 16, double height = 16, string toolTip = "",
+                                          double width = 16, double height = 0, string toolTip = "",
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
                                           double marginX = 8, double marginY = 4) {
@@ -3630,7 +3630,7 @@ namespace IRExplorerUI {
         }
 
         public List<IconElementOverlay> AddIconElementOverlays(IEnumerable<Tuple<IRElement, IconDrawing, string>> overlays,
-                                  double width = 16, double height = 16,
+                                  double width = 16, double height = 0,
                                   HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                   VerticalAlignment alignmentY = VerticalAlignment.Center,
                                   double marginX = 8, double marginY = 4) {

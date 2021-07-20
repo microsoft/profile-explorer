@@ -104,15 +104,20 @@ namespace IRExplorerUI.Profile {
             try {
                 // Extract just the file name.
                 imageName = Path.GetFileNameWithoutExtension(imageName);
-
-                var (addressFuncMap, externalsFuncMap) = BuildAddressFunctionMap(symbolPath);
-                // If we have no functions from the pdb, there's nothing more to do
-                if (addressFuncMap.Count == 0) {
-                    return null;
-                }
-
+               
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
+                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
+                    var (addressFuncMap, externalsFuncMap) = BuildAddressFunctionMap(symbolPath);
+                    
+                    if (addressFuncMap.Count == 0) {
+                        return false; // If we have no functions from the pdb, there's nothing more to do.
+                    }
+
+                    if (cancelableTask != null && cancelableTask.IsCanceled) {
+                        return false;
+                    }
+
                     //var settings = new TraceProcessorSettings {
                     //    AllowLostEvents = true
                     //};

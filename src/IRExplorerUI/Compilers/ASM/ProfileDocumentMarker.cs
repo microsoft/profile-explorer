@@ -20,20 +20,28 @@ namespace IRExplorerUI.Compilers.ASM {
         public double ElementWeightCutoff { get; set; }
         public double LineWeightCutoff {  get; set; }
         public Brush ElementOverlayTextColor { get; set; }
+        public Brush HotElementOverlayTextColor { get; set; }
         public Brush BlockOverlayTextColor { get; set; }
+        public Brush HotBlockOverlayTextColor { get; set; }
         public Brush ElementOverlayBackColor { get; set; }
+        public Brush HotElementOverlayBackColor { get; set; }
         public Brush BlockOverlayBackColor { get; set; }
+        public Brush HotBlockOverlayBackColor { get; set; }
         public List<Color> ColorPalette { get; set; }
 
         public static ProfileDocumentMarkerOptions Default() {
             return new ProfileDocumentMarkerOptions() {
                 VirtualColumnPosition = 450,
-                ElementWeightCutoff = 0.001, // 0.1%
+                ElementWeightCutoff = 0.003, // 0.3%
                 LineWeightCutoff = 0.005, // 0.5%,
-                ElementOverlayTextColor = Brushes.DarkRed,
+                ElementOverlayTextColor = Brushes.Black,
+                HotElementOverlayTextColor = Brushes.DarkRed,
                 ElementOverlayBackColor = Brushes.Transparent,
+                HotElementOverlayBackColor = Brushes.AntiqueWhite,
                 BlockOverlayTextColor = Brushes.DarkBlue,
-                BlockOverlayBackColor = Brushes.LightGoldenrodYellow,
+                HotBlockOverlayTextColor = Brushes.DarkRed,
+                BlockOverlayBackColor = Brushes.AliceBlue,
+                HotBlockOverlayBackColor = Brushes.AntiqueWhite,
                 ColorPalette = ColorUtils.MakeColorPallete(1, 1, 0.80f, 0.95f, 10) // 10 steps, red
             };
         }
@@ -99,22 +107,24 @@ namespace IRExplorerUI.Compilers.ASM {
                                         FunctionProfileData profile, IRDocument document) {
             document.SuspendUpdate();
             var blockOverlays = new List<Tuple<IRElement, IconDrawing, string>>(blockWeights.Count);
-            int index = 0;
 
-            foreach (var pair in blockWeights) {
-                var element = pair.Item1;
-                var weight = pair.Item2;
+            for(int i = 0; i < blockWeights.Count; i++) {
+                var element = blockWeights[i].Item1;
+                var weight = blockWeights[i].Item2;
                 double weightPercentage = profile.ScaleWeight(weight);
-                document.MarkBlock(element, options_.PickColorForWeight(weightPercentage));
+
 
                 //? TODO: Configurable
                 IconDrawing icon = null;
+                bool markOnFlowGraph = false;
 
-                if (index == 0) {
+                if (i == 0) {
                     icon = IconDrawing.FromIconResource("DotIconRed");
+                    markOnFlowGraph = true;
                 }
-                else if (index <= 2) {
+                else if (i <= 2) {
                     icon = IconDrawing.FromIconResource("DotIconYellow");
+                    markOnFlowGraph = true;
                 }
                 else {
                     icon = IconDrawing.FromIconResource("DotIcon");
@@ -122,19 +132,28 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
                 blockOverlays.Add(new Tuple<IRElement, IconDrawing, string>(element, icon, tooltip));
-                index++;
+                document.MarkBlock(element, options_.PickColorForWeight(weightPercentage), markOnFlowGraph);
             }
 
             var blockOverlayList = document.AddIconElementOverlays(blockOverlays);
 
-            foreach (var overlay in blockOverlayList) {
+            for(int i = 0; i < blockOverlayList.Count; i++) {
+                var overlay = blockOverlayList[i];
                 overlay.IsToolTipPinned = true;
-                overlay.TextColor = options_.BlockOverlayTextColor;
-                overlay.Background = options_.BlockOverlayBackColor;
                 overlay.UseToolTipBackground = true;
                 overlay.ShowBackgroundOnMouseOverOnly = false;
                 overlay.AlignmentX = HorizontalAlignment.Left;
                 overlay.MarginX = 48;
+
+                if (i <= 2) {
+                    overlay.TextColor = options_.HotBlockOverlayTextColor;
+                    overlay.TextWeight = FontWeights.Bold;
+                    overlay.Background = options_.HotBlockOverlayBackColor;
+                }
+                else {
+                    overlay.TextColor = options_.BlockOverlayTextColor;
+                    overlay.Background = options_.BlockOverlayBackColor;
+                }
             }
 
             document.ResumeUpdate();
@@ -144,35 +163,53 @@ namespace IRExplorerUI.Compilers.ASM {
                                           FunctionProfileData profile, IRDocument document) {
             var elementColorPairs = new List<Tuple<IRElement, Color>>(elements.Count);
             var elementOverlays = new List<Tuple<IRElement, IconDrawing, string>>(elements.Count);
-            int index = 0;
 
-            foreach (var pair in elements) {
-                var element = pair.Item1;
-                double weightPercentage = profile.ScaleWeight(pair.Item2);
-                var color = options_.PickColorForWeight(weightPercentage);
+            for(int i = 0; i < elements.Count; i++) {
+                var element = elements[i].Item1;
+                var weight = elements[i].Item2;
+                double weightPercentage = profile.ScaleWeight(weight);
+                Color color;
+
+                if (weightPercentage < options_.ElementWeightCutoff) {
+                    color = Colors.Transparent;
+                }
+                else {
+                    color = options_.PickColorForWeight(weightPercentage);
+                }
+
                 elementColorPairs.Add(new Tuple<IRElement, Color>(element, color));
 
                 //? TODO: Configurable
                 IconDrawing icon = null;
 
-                if (index == 0) {
+                if (i == 0) {
                     icon = IconDrawing.FromIconResource("DotIconRed");
                 }
-                else if (index <= 2) {
+                else if (i <= 2) {
                     icon = IconDrawing.FromIconResource("DotIconYellow");
                 }
 
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
+                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
                 elementOverlays.Add(new Tuple<IRElement, IconDrawing, string>(element, icon, tooltip));
-                index++;
             }
 
             var elementOverlayList = document.AddIconElementOverlays(elementOverlays);
 
-            foreach (var overlay in elementOverlayList) {
+            for(int i = 0; i < elementOverlayList.Count; i++) {
+                var overlay = elementOverlayList[i];
                 overlay.IsToolTipPinned = true;
-                overlay.TextColor = options_.ElementOverlayTextColor;
-                overlay.Background ??= options_.ElementOverlayBackColor;
+
+                if (i <= 2) {
+                    overlay.TextColor = options_.HotElementOverlayTextColor;
+                    overlay.UseToolTipBackground = true;
+                    overlay.Background = options_.HotElementOverlayBackColor;
+                    overlay.TextWeight = FontWeights.Bold;
+                }
+                else {
+                    overlay.TextColor = options_.ElementOverlayTextColor;
+                    overlay.Background = options_.ElementOverlayBackColor;
+                }
+
                 overlay.VirtualColumn = options_.VirtualColumnPosition;
             }
 

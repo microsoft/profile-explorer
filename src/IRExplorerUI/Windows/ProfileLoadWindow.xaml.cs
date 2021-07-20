@@ -48,13 +48,14 @@ namespace IRExplorerUI {
         }
 
         private async void UpdateButton_Click(object sender, RoutedEventArgs e) {
-            ProfileFilePath = ProfileAutocompleteBox.Text.Trim();
-            BinaryFilePath = BinaryAutocompleteBox.Text.Trim();
-            DebugFilePath = DebugAutocompleteBox.Text.Trim();
             await OpenFiles();
         }
 
         private async Task OpenFiles() {
+            ProfileFilePath = ProfileAutocompleteBox.Text.Trim();
+            BinaryFilePath = BinaryAutocompleteBox.Text.Trim();
+            DebugFilePath = DebugAutocompleteBox.Text.Trim();
+
             if (ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile") &&
                 //ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
                 ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug")) {
@@ -76,8 +77,14 @@ namespace IRExplorerUI {
                             ProfileLoadStage.SymbolLoading => "Loading symbols",
                         };
 
-                        double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
-                        ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
+                        if (progressInfo.Total != 0) {
+                            double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
+                            ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
+                            LoadProgressBar.IsIndeterminate = false;
+                        }
+                        else {
+                            LoadProgressBar.IsIndeterminate = true;
+                        }
                     }));
                 }, task)) {
                     DialogResult = true;
@@ -192,6 +199,7 @@ namespace IRExplorerUI {
                 ProfileAutocompleteBox.Text = pathPair.Item1;
                 BinaryAutocompleteBox.Text = pathPair.Item2;
                 DebugAutocompleteBox.Text = pathPair.Item3;
+                await OpenFiles();
             }
         }
     }
