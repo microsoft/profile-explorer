@@ -189,10 +189,9 @@ namespace IRExplorerUI {
             }
             else {
                 var pathPair = menuItem.Tag as Tuple<string, string, string>;
-                ProfileFilePath = pathPair.Item1;
-                BinaryFilePath = pathPair.Item2;
-                DebugFilePath = pathPair.Item3;
-                await OpenFiles();
+                ProfileAutocompleteBox.Text = pathPair.Item1;
+                BinaryAutocompleteBox.Text = pathPair.Item2;
+                DebugAutocompleteBox.Text = pathPair.Item3;
             }
         }
     }

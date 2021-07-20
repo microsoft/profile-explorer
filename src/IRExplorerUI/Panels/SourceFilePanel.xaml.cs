@@ -213,20 +213,6 @@ namespace IRExplorerUI {
 
         #endregion
 
-        private bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset, out IRElement element) {
-            int multiplier = 1;
-            var offsetData = Session.CompilerInfo.IR.InstrOffsetData;
-
-            do {
-                if (metadataTag.OffsetToElementMap.TryGetValue(offset - multiplier * offsetData.OffsetAdjustIncrement, out element)) {
-                    return true;
-                }
-                ++multiplier;
-            } while (multiplier * offsetData.OffsetAdjustIncrement < offsetData.MaxOffsetAdjust);
-
-            return false;
-        }
-
         private async Task AnnotateProfilerData(FunctionProfileData profile) {
             hasProfileInfo_ = true;
 
@@ -234,7 +220,6 @@ namespace IRExplorerUI {
                 var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
             }
             
-            double weightCutoff = 0.003;
             int lightSteps = 10; // 1,1,0.5 is red
             var colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
             var nextElementId = new IRElementId();
@@ -242,97 +227,6 @@ namespace IRExplorerUI {
             var function = Session.CurrentDocument.Function;
             var metadataTag = function.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
-            bool markedInstrs = false;
-
-            var blockWeights = new Dictionary<BlockIR, TimeSpan>();
-            
-            if (hasInstrOffsetMetadata) {
-                var elements = new List<Tuple<IRElement, TimeSpan>>(profile.InstructionWeight.Count);
-
-                foreach (var pair in profile.InstructionWeight) {
-                    if (TryFindElementForOffset(metadataTag, pair.Key, out var element)) {
-                        elements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
-
-                        if (blockWeights.TryGetValue(element.ParentBlock, out var currentWeight)) {
-                            blockWeights[element.ParentBlock] = currentWeight + pair.Value;
-                        }
-                        else {
-                            blockWeights[element.ParentBlock] = pair.Value;
-                        }
-                    }
-                }
-
-                elements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-                int index = 0;
-
-                foreach (var pair in elements) {
-                    var element = pair.Item1;
-                    double weightPercentage = profile.ScaleWeight(pair.Item2);
-
-                    if(weightPercentage < weightCutoff) {
-                        continue;
-                    }
-
-                    int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
-                    
-                    if (colorIndex < 0) {
-                        colorIndex = 0;
-                    }
-                    
-                    var color = colors[colorIndex];
-                    
-                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
-                    Session.CurrentDocument.MarkElement(element, color);
-
-                    IconDrawing icon = null;
-                    bool isPinned = false;
-                    Brush textColor;
-
-                    if (index == 0) {
-                        icon = IconDrawing.FromIconResource("StarIconRed");
-                        textColor = Brushes.DarkRed;
-                        isPinned = true;
-                    }
-                    else if (index <= 3) {
-                        icon = IconDrawing.FromIconResource("StarIconYellow");
-                        textColor = Brushes.DarkRed;
-                        isPinned = true;
-                    }
-                    else {
-                        icon = IconDrawing.FromIconResource("DotIcon");
-                        textColor = Brushes.DarkRed;
-                        isPinned = true;
-                    }
-
-                    var overlay = Session.CurrentDocument.AddIconElementOverlay(element, icon, 16, 16, tooltip);
-                    overlay.IsToolTipPinned = isPinned;
-                    overlay.TextColor = textColor;
-                    overlay.DefaultOpacity = 1;
-                    overlay.TextWeight = FontWeights.DemiBold;
-                    overlay.TextColor = Brushes.DarkBlue;
-                    overlay.ShowBackgroundOnMouseOverOnly = false;
-                    overlay.UseToolTipBackground = true;
-                    overlay.Padding = 2;
-                    markedInstrs = true;
-                    index++;
-                }
-                
-                foreach (var pair in blockWeights) {
-                    var element = pair.Key;
-                    double weightPercentage = profile.ScaleWeight(pair.Value);
-
-                    if(weightPercentage < weightCutoff) {
-                        continue;
-                    }
-                    
-                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Value.TotalMilliseconds, 2)} ms)";
-                    var icon = IconDrawing.FromIconResource("DotIconYellow");
-                    var overlay = Session.CurrentDocument.AddIconElementOverlay(element, icon, 16, 16, tooltip);
-                    overlay.IsToolTipPinned = true;
-                    overlay.TextColor = Brushes.DarkRed;
-                }
-            }
-
             var lines = new List<Tuple<int, TimeSpan>>(profile.SourceLineWeight.Count);
 
             foreach (var pair in profile.SourceLineWeight) {
@@ -385,10 +279,6 @@ namespace IRExplorerUI {
 
                 var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
                 AddElementOverlay(element, icon, 16, 16, tooltip);
-
-                if (!hasInstrOffsetMetadata || !markedInstrs) {
-                    Session.CurrentDocument.MarkElementsOnSourceLine(sourceLine, color);
-                }
             }
             
             UpdateHighlighting();

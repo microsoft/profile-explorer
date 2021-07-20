@@ -39,6 +39,10 @@ namespace IRExplorerUI.Utilities {
             var result = printer.PrintGraph();
             var graphText = printer.CreateGraph(result, new CancelableTask());
 
+            if (string.IsNullOrEmpty(graphText)) {
+                return new Graph(GraphKind.CallGraph);
+            }
+
             var graphReader = new GraphvizReader(GraphKind.CallGraph, graphText, printer.CreateNodeDataMap());
             var layoutGraph = graphReader.ReadGraph();
             layoutGraph.GraphOptions = options;

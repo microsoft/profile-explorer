@@ -28,18 +28,17 @@ namespace IRExplorerUI.Document {
                       string toolTip = "", 
                       HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                       VerticalAlignment alignmentY = VerticalAlignment.Center,
-                      double marginX = 4, double marginY = 2) {
+                      double marginX = 4, double marginY = 4) {
             return new IconElementOverlay(icon, width, height, toolTip, alignmentX, alignmentY,
                                           marginX, marginY) {
                 Background = backColor,
                 SelectedBackground = selectedBackColor,
                 Border = border,
-                ShowBackgroundOnMouseOverOnly = false,
+                ShowBackgroundOnMouseOverOnly = true,
                 ShowBorderOnMouseOverOnly = true,
                 ShowToolTipOnMouseOverOnly = true,
                 UseToolTipBackground = true,
-                DefaultOpacity = 0.7,
-                Padding = 1,
+                Padding = 2,
                 AllowToolTipEditing = true,
             };
         }
@@ -57,11 +56,11 @@ namespace IRExplorerUI.Document {
             if (ShowToolTip) {
                 DrawToolTip(Bounds, opacity, drawingContext);
             }
-            else if(ShowBackground) {
-                DrawBackground(Bounds, opacity, drawingContext);
-            }
 
-            Icon?.Draw(x + Padding, y + Padding, Height, Width, opacity, drawingContext);
+            if (Icon != null) {
+                DrawBackground(Bounds, opacity, drawingContext);
+                Icon.Draw(x + Padding, y + Padding, Height, Width, opacity, drawingContext);
+            }
         }
     }
 }
