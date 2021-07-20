@@ -16,23 +16,18 @@ namespace IRExplorerCore.Graph {
 
     public class CallGraphPrinter : GraphVizPrinter {
         private const int ExternalNodeId = -1;
-        private const int LargeGraphThresholdMin = 100;
-        private const int LargeGraphThresholdMax = 500;
+        private const int LargeGraphThresholdMin = 200;
 
         private const string StraightLinesSettings = @"
 splines = ortho;
 concentrate = true;
             ";
         private const string LargeGraphSettings = @"
+splines = ortho;
+concentrate = true;
 maxiter=4;
 mclimit=2;
 nslimit=2;
-        ";
-
-        private const string HugeGraphSettings = @"
-maxiter=2;
-mclimit=1;
-nslimit=1;
         ";
 
         private CallGraphPrinterOptions options_;
@@ -76,13 +71,7 @@ nslimit=1;
 
             int edgeCount = EstimateEdgeCount();
             int elements = Math.Max(edgeCount, nodeCount);
-
-            if (elements > LargeGraphThresholdMin) {
-                return elements < LargeGraphThresholdMax ? 
-                    $"{text}{LargeGraphSettings}" : $"{text}{HugeGraphSettings}";
-            }
-
-            return text;
+            return elements > LargeGraphThresholdMin ? $"{text}{LargeGraphSettings}" : text;
         }
 
         protected override void PrintGraph(StringBuilder builder) {

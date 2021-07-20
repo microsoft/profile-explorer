@@ -260,6 +260,8 @@ namespace IRExplorerUI {
         public string OptionalDataText { get; set; }
         public string OptionalDataText2 { get; set; }
         public string AlternateName { get; set; }
+        public double ExclusivePercentage { get; set; }
+        public double InclusivePercentage { get; set; }
 
         private bool isMarked_;
         public bool IsMarked {
@@ -316,6 +318,7 @@ namespace IRExplorerUI {
         public int DescendantCount { get; set; }
         public bool IsMarked { get; set; }
         public FunctionCodeStatistics Statistics { get; set; }
+        public double Percentage { get; set; }
 
         public IEnumerable GetChildren(object node) {
             if (node == null) {
@@ -673,9 +676,17 @@ namespace IRExplorerUI {
                     if (isFunctionListVisible_) {
                         FunctionList.Visibility = Visibility.Visible;
                         FunctionToolbarTray.Visibility = Visibility.Visible;
-                        MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
-                        MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
-                        MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
+
+                        if (profileControlsVisible_) {
+                            MainGrid.ColumnDefinitions[0].Width = new GridLength(5, GridUnitType.Star);
+                            MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
+                            MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
+                        }
+                        else {
+                            MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+                            MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
+                            MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
+                        }
                     }
                     else {
                         FunctionList.Visibility = Visibility.Collapsed;
@@ -1133,14 +1144,13 @@ namespace IRExplorerUI {
                 if(funcProfile != null) {
                     funcEx.OptionalData2 = funcProfile.Weight.Ticks;
                     double weightPercentage = profile.ScaleFunctionWeight(funcProfile.Weight);
-                    funcEx.OptionalDataText2 =
-                        $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
-
+                    funcEx.InclusivePercentage = weightPercentage;
+                    funcEx.OptionalDataText2 = $"({Math.Round(funcProfile.Weight.TotalMilliseconds, 2):#,#} ms)";
                     funcEx.OptionalData = funcProfile.ExclusiveWeight.Ticks;
+                    
                     double weightPercentage2 = profile.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
-
-                    funcEx.OptionalDataText =
-                        $"{Math.Round(weightPercentage2 * 100, 2)}% ({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2)} ms)";
+                    funcEx.ExclusivePercentage = weightPercentage2;
+                    funcEx.OptionalDataText = $"({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2):#,#} ms)";
                     
                     int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
                     int colorIndex2 = (int)Math.Floor(lightSteps * (1.0 - weightPercentage2));
@@ -1163,7 +1173,10 @@ namespace IRExplorerUI {
             functionValueSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
             ProfileControlsVisible = true;
             FunctionModuleControlsVisible = true;
-            
+            IsFunctionListVisible = false;
+            IsFunctionListVisible = true;
+
+
             ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
             UseProfileCallTree = true;
         }
@@ -1978,7 +1991,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            var callerInfo = CreateProfileCallTreeChild(function, funcProfile.ExclusiveWeight, funcProfile, null, colors);
+            var callerInfo = CreateProfileCallTreeChild(function, TimeSpan.Zero, funcProfile, null, colors);
             callerInfo.Name = "Callers";
             callerInfo.IsMarked = true;
             parentNode.Children.Add(callerInfo);
@@ -2016,16 +2029,19 @@ namespace IRExplorerUI {
             KeyValuePair<int, TimeSpan> pair;
             double weightPercentage = funcProfile.ScaleChildWeight(childWeight);
             int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
+            colorIndex = Math.Clamp(colorIndex, 0, colors.Count - 1);
+            bool isEmpty = childWeight.Ticks == 0;
 
             var childInfo = new ChildFunctionEx()
             {
                 Function = childFunc,
                 Time =  childWeight.Ticks,
                 Name = childFunc.Name,
+                Percentage = weightPercentage,
                 DescendantCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
-                Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
+                Text = isEmpty ? "" :  $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
                 TextColor = Brushes.Black,
-                BackColor = ColorBrushes.GetBrush(colors[colorIndex]),
+                BackColor = isEmpty ? Brushes.Transparent : ColorBrushes.GetBrush(colors[colorIndex]),
                 Children = new List<ChildFunctionEx>()
             };
             return childInfo;

@@ -206,7 +206,7 @@
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="100">
+                        <GridViewColumn Width="150">
                             <GridViewColumnHeader
                                 x:Name="OptionalColumnHeader"
                                 local:GridViewBehaviors.CollapseableColumn="True"
@@ -221,13 +221,15 @@
 
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
-                                        <TextBlock Margin="6,2,6,2" Text="{Binding OptionalDataText}" />
-                                    </Border>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor}">
+                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=120.0}"/>
+                                        <TextBlock Text="{Binding Path=ExclusivePercentage, StringFormat=p2}" Margin="4,0,0,0"/>
+                                        <TextBlock Text="{Binding OptionalDataText2}"  Margin="6,0,0,0"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Width="100">
+                        <GridViewColumn Width="150">
                             <GridViewColumnHeader
                                 x:Name="OptionalColumnHeader2"
                                 local:GridViewBehaviors.CollapseableColumn="True"
@@ -242,9 +244,11 @@
 
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
-                                        <TextBlock Margin="6,2,6,2" Text="{Binding OptionalDataText2}" />
-                                    </Border>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor2}">
+                                        <Rectangle Fill="RoyalBlue" Stroke="Black" Height="16" Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=120.0}"/>
+                                        <TextBlock Text="{Binding Path=InclusivePercentage, StringFormat=p2}" Margin="4,0,0,0"/>
+                                        <TextBlock Text="{Binding OptionalDataText2}"  Margin="6,0,0,0"/>
+                                    </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
@@ -994,19 +998,20 @@
 
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor}">
+                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=120.0}"/>
                                         <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
                                             <TextBlock.Style>
                                                 <Style TargetType="{x:Type TextBlock}">
                                                     <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding Path=IsSelf}" Value="True">
+                                                        <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
                                                             <Setter Property="FontWeight" Value="Bold" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </TextBlock.Style>
                                         </TextBlock>
-                                    </Border>
+                                    </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>

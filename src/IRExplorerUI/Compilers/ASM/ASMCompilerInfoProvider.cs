@@ -85,6 +85,12 @@ namespace IRExplorerUI.Compilers.ASM {
                     overlay.DefaultOpacity = 1;
                     overlay.TextWeight = FontWeights.DemiBold;
                     overlay.TextColor = Brushes.DarkBlue;
+
+                    var backColor = block.Number % 2 == 0 ?
+                        App.Settings.DocumentSettings.BackgroundColor :
+                        App.Settings.DocumentSettings.AlternateBackgroundColor;
+                    overlay.Background = ColorBrushes.GetBrush(backColor);
+
                     overlay.ShowBackgroundOnMouseOverOnly = false;
                     overlay.UseToolTipBackground = true;
                     overlay.Padding = 2;

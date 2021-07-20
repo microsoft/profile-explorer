@@ -97,6 +97,8 @@ namespace IRExplorerUI.Document {
         [ProtoMember(26)]
         public double VirtualColumn { get; set; }
 
+        private Rect tooltipBounds_;
+
         protected double ActualWidth => Width + 2 * Padding;
         protected double ActualHeight => Height + 2 * Padding;
         protected virtual bool ShowToolTip => !string.IsNullOrEmpty(ToolTip) &&
@@ -109,7 +111,7 @@ namespace IRExplorerUI.Document {
         public abstract void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
 
         protected void DrawBackground(Rect elementRect, double opacity, DrawingContext drawingContext) {
-            if (ShowBackground || ShowBorder) {
+            if ((ShowBackground || ShowBorder) && !(ShowToolTip && UseToolTipBackground)) {
                 drawingContext.PushOpacity(opacity);
                 drawingContext.DrawRectangle(CurrentBackgroundBrush, CurrentBorder, elementRect);
                 drawingContext.Pop();
@@ -145,12 +147,13 @@ namespace IRExplorerUI.Document {
                                                         ActiveTextBrush, TextWeight);
             double textX = elementRect.Right + Padding;
             double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
+            tooltipBounds_ = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * Padding, 0);
+
             drawingContext.PushOpacity(opacity);
 
             if (UseToolTipBackground) {
                 // Draw a rectangle covering both the icon and tooltip.
-                var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * Padding, 0);
-                drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, CurrentBorder, rect);
+                drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, CurrentBorder, tooltipBounds_);
             }
 
             drawingContext.DrawText(text, Utils.SnapPointToPixels(textX, textY));
@@ -169,20 +172,33 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        protected double ComputeHeight(Rect rect) {
+            if(Height > 0) {
+                return ActualHeight;
+            }
+
+            return rect.Height;
+        }
+
         protected double ComputePositionY(Rect rect) {
             if (AlignmentY == VerticalAlignment.Top) {
-                return Utils.SnapToPixels(rect.Top - ActualHeight - MarginY);
+                return Utils.SnapToPixels(rect.Top - ComputeHeight(rect) - MarginY);
             }
             else if(AlignmentY == VerticalAlignment.Bottom) {
                 return Utils.SnapToPixels(rect.Right + MarginX);
             }
             else {
-                return Utils.SnapToPixels(rect.Top + (rect.Height - ActualHeight) / 2);
+                return Utils.SnapToPixels(rect.Top + (rect.Height - ComputeHeight(rect)) / 2);
             }
         }
 
         public virtual bool CheckIsMouseOver(Point point) {
             IsMouseOver = Bounds.Contains(point);
+            
+            if(!IsMouseOver && ShowToolTip) {
+                IsMouseOver = tooltipBounds_.Contains(point);
+            }
+
             return IsMouseOver;
         }
 

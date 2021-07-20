@@ -14,6 +14,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
@@ -219,9 +220,8 @@ namespace IRExplorerUI {
             foreach (var pair in profile.ChildrenWeights) {
                 var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
             }
-            
-            int lightSteps = 10; // 1,1,0.5 is red
-            var colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, lightSteps);
+
+            var options = ProfileDocumentMarkerOptions.Default();
             var nextElementId = new IRElementId();
 
             var function = Session.CurrentDocument.Function;
@@ -238,33 +238,22 @@ namespace IRExplorerUI {
 
             foreach (var pair in lines) {
                 int sourceLine = pair.Item1;
-                double weightPercentage = profile.ScaleWeight(pair.Item2);
-
-                // if (weightPercentage < weightCutoff) {
-                //     continue;
-                // }
-
-                int colorIndex = (int)Math.Floor(lightSteps * (1.0 - weightPercentage));
-
-                if (colorIndex < 0) {
-                    colorIndex = 0;
-                }
-                
-                var color = colors[colorIndex];
-                var style = new HighlightingStyle(colors[colorIndex]);
 
                 if (sourceLine <= 0 || sourceLine > TextView.Document.LineCount) {
                     continue;
                 }
 
+                double weightPercentage = profile.ScaleWeight(pair.Item2);
+                var color = options.PickColorForWeight(weightPercentage);
+                var style = new HighlightingStyle(color);
                 IconDrawing icon = null;
 
                 if (lineIndex == 0) {
-                    icon = IconDrawing.FromIconResource("StarIconRed");
+                    icon = IconDrawing.FromIconResource("DotIconRed");
                     hottestSourceLine_ = sourceLine;
                 }
                 else if (lineIndex <= 3) {
-                    icon = IconDrawing.FromIconResource("StarIconYellow");
+                    icon = IconDrawing.FromIconResource("DotIconYellow");
                 }
                 
                 var documentLine = TextView.Document.GetLineByNumber(sourceLine);
@@ -275,26 +264,35 @@ namespace IRExplorerUI {
                 var group = new HighlightedGroup(style);
                 group.Add(element);
                 profileMarker_.Add(group);
-                lineIndex++;
 
                 var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
-                AddElementOverlay(element, icon, 16, 16, tooltip);
+                AddElementOverlay(element, icon, lineIndex, 16, 16, tooltip, options);
+                lineIndex++;
             }
-            
+
             UpdateHighlighting();
+            ScrollToLine(hottestSourceLine_);
         }
 
-        public void AddElementOverlay(IRElement element, IconDrawing icon,
-            double width, double height, string toolTip = "",
-            HorizontalAlignment alignmentX = HorizontalAlignment.Right,
-            VerticalAlignment alignmentY = VerticalAlignment.Center,
-            double marginX = 8, double marginY = 2) {
-            // Pick a background color that matches the one used for the entire block.
+        public void AddElementOverlay(IRElement element, IconDrawing icon, int index,
+                                    double width, double height, string toolTip,
+                                    ProfileDocumentMarkerOptions options,
+                                    HorizontalAlignment alignmentX = HorizontalAlignment.Right,
+                                    VerticalAlignment alignmentY = VerticalAlignment.Center,
+                                    double marginX = 8, double marginY = 2) {
             var overlay = IconElementOverlay.CreateDefault(icon, width, height,
-                Brushes.Transparent, Brushes.Transparent, null,
-                toolTip, alignmentX, alignmentY, marginX, marginY);
+                                                            Brushes.Transparent, Brushes.Transparent, null,
+                                                            toolTip, alignmentX, alignmentY, marginX, marginY);
             overlay.IsToolTipPinned = true;
-            overlay.TextColor = Brushes.DarkRed;
+
+            if (index <= 2) {
+                overlay.TextColor = options.HotBlockOverlayTextColor;
+                overlay.TextWeight = FontWeights.Bold;
+            }
+            else {
+                overlay.TextColor = options.BlockOverlayTextColor;
+            }
+
             overlayRenderer_.AddElementOverlay(element, overlay);
         }
 
