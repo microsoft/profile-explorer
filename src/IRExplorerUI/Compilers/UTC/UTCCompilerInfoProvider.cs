@@ -121,7 +121,17 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public void ReloadSettings() {
-            IRModeUtilities.SetIRModeFromSettings(ir_);
+            // Set the IR parsing mode (target architecture)
+            // based on the syntax highlighting file selected.
+            var path = App.GetSyntaxHighlightingFilePath();
+
+            if (!string.IsNullOrEmpty(path) &&
+                path.Contains("arm64", StringComparison.OrdinalIgnoreCase)) {
+                ir_.Mode = IRMode.ARM64;
+            }
+            else {
+                ir_.Mode = IRMode.x86_64;
+            }
         }
     }
 }

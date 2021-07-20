@@ -32,7 +32,7 @@ namespace IRExplorerCore {
         IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler);
         IRParsingErrorHandler CreateParsingErrorHandler();
         IReachableReferenceFilter CreateReferenceFilter(FunctionIR function);
-        InstrOffsetData InstrOffsetData { get; }
+        InstrOffsetData InstructionOffsetData { get; }
         bool IsCopyInstruction(InstructionIR instr);
         bool IsLoadInstruction(InstructionIR instr);
         bool IsStoreInstruction(InstructionIR instr);

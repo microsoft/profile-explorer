@@ -15,7 +15,7 @@ namespace IRExplorerCore.ASM {
             Mode = mode;
         }
 
-        public InstrOffsetData InstrOffsetData => Mode switch {
+        public InstrOffsetData InstructionOffsetData => Mode switch {
             IRMode.ARM64 => InstrOffsetData.ConstantSize(4),
             _ => InstrOffsetData.VariableSize(1, 16),
         };

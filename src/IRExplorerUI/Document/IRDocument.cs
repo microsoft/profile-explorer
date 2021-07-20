@@ -143,6 +143,7 @@ namespace IRExplorerUI {
         private PairHighlightingStyle iteratedUserStyle_;
         private PairHighlightingStyle iteratedDefinitionStyle_;
         private List<IRElement> tupleElements_;
+        private bool updateSuspended_;
 
         private IRElement currentExprElement_;
         private int currentExprStyleIndex_;
@@ -780,13 +781,21 @@ namespace IRExplorerUI {
         //    }
         //}
 
-        public void MarkBlock(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
-            Trace.TraceInformation(
-                $"Document {ObjectTracker.Track(this)}: Mark block {((BlockIR)element).Number}");
+        public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true) {
+            var style = new HighlightingStyle(selectedColor, null);
+            MarkBlock(element, style, raiseEvent);
+        }
 
+        public void MarkBlock(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
             var group = new HighlightedGroup(element, style);
             margin_.AddBlock(group);
-            RecordReversibleAction(DocumentActionKind.MarkElement, element);
+
+            if (raiseEvent) {
+                Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark block {((BlockIR)element).Number}");
+                RecordReversibleAction(DocumentActionKind.MarkElement, element);
+            }
+
+            ClearTemporaryHighlighting();
             UpdateMargin();
             UpdateHighlighting();
 
@@ -801,11 +810,47 @@ namespace IRExplorerUI {
             MarkElement(element, style, raiseEvent);
         }
 
-        public void MarkElement(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
-            Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
-            RecordReversibleAction(DocumentActionKind.MarkElement, element);
+        public void MarkElements(IEnumerable<IRElement> elements, Color selectedColor) {
+            var style = new HighlightingStyle(selectedColor, null);
+            var group = new HighlightedGroup(style);
+            group.AddRange(elements);
+
+            ClearTemporaryHighlighting();
+            markedHighlighter_.Add(group);
+            UpdateHighlighting();
+        }
+
+        public void MarkElements(IEnumerable<Tuple<IRElement, Color>> elementColorPairs) {
+            var colorGroupMap = new Dictionary<Color, HighlightedGroup>();
             ClearTemporaryHighlighting();
 
+            foreach (var pair in elementColorPairs) {
+                var element = pair.Item1;
+                var color = pair.Item2;
+
+                if(!colorGroupMap.TryGetValue(color, out var group)) {
+                    var style = new HighlightingStyle(color, null);
+                    group = new HighlightedGroup(style);
+                    colorGroupMap[color] = group;
+                }
+
+                group.Add(element);
+            }
+
+            foreach(var pair in colorGroupMap) {
+                markedHighlighter_.Add(pair.Value);
+            }
+
+            UpdateHighlighting();
+        }
+
+        public void MarkElement(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
+            if (raiseEvent) {
+                Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark element {element.Id}");
+                RecordReversibleAction(DocumentActionKind.MarkElement, element);
+            }
+
+            ClearTemporaryHighlighting();
             var group = new HighlightedGroup(element, style);
             markedHighlighter_.Remove(element);
             markedHighlighter_.Add(group);
@@ -3559,24 +3604,45 @@ namespace IRExplorerUI {
         }
 
         public IconElementOverlay AddIconElementOverlay(IRElement element, IconDrawing icon,
-                                          double width, double height, string toolTip = "",
+                                          double width = 16, double height = 16, string toolTip = "",
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
-                                          double marginX = 8, double marginY = 2) {
-            // Pick a background color that matches the one used for the entire block.
-            var backColor = element.ParentBlock.Number % 2 == 0 ?
-                           settings_.BackgroundColor :
-                           settings_.AlternateBackgroundColor;
-            var overlay = IconElementOverlay.CreateDefault(icon, width, height, 
-                                                       ColorBrushes.GetBrush(backColor),
+                                          double marginX = 8, double marginY = 4) {
+            var overlay = AddIconElementOveralyImpl(element, icon, width, height, toolTip, 
+                                                    alignmentX, alignmentY, marginX, marginY);
+            UpdateHighlighting();
+            return overlay;
+        }
+
+        private IconElementOverlay AddIconElementOveralyImpl(IRElement element, IconDrawing icon,
+                                                             double width, double height, string toolTip, 
+                                                             HorizontalAlignment alignmentX, VerticalAlignment alignmentY, 
+                                                             double marginX, double marginY) {
+            var overlay = IconElementOverlay.CreateDefault(icon, width, height,
+                                                       Brushes.Transparent,
                                                        selectedStyle_.BackColor,
                                                        selectedStyle_.Border,
                                                        toolTip, alignmentX, alignmentY,
                                                        marginX, marginY);
             SetupElementOverlayEvents(overlay);
             overlayRenderer_.AddElementOverlay(element, overlay);
-            UpdateHighlighting();
             return overlay;
+        }
+
+        public List<IconElementOverlay> AddIconElementOverlays(IEnumerable<Tuple<IRElement, IconDrawing, string>> overlays,
+                                  double width = 16, double height = 16,
+                                  HorizontalAlignment alignmentX = HorizontalAlignment.Right,
+                                  VerticalAlignment alignmentY = VerticalAlignment.Center,
+                                  double marginX = 8, double marginY = 4) {
+            var list = new List<IconElementOverlay>();
+
+            foreach (var overlay in overlays) {
+                list.Add(AddIconElementOveralyImpl(overlay.Item1, overlay.Item2, width, height, overlay.Item3,
+                                                   alignmentX, alignmentY, marginX, marginY));
+            }
+
+            UpdateHighlighting();
+            return list;
         }
 
         private void SetupElementOverlayEvents(IElementOverlay overlay) {
@@ -3585,7 +3651,8 @@ namespace IRExplorerUI {
         }
 
         private void ElementOverlay_OnClick(object sender, MouseEventArgs e) {
-            
+            var overlay = (IElementOverlay) sender;
+            SelectElement(overlay.Element);
         }
 
         private void ElementOverlay_OnKeyPress(object sender, KeyEventArgs e) {
@@ -3609,7 +3676,20 @@ namespace IRExplorerUI {
             DiffModeEnabled = false;
         }
 
+        public void SuspendUpdate() {
+            updateSuspended_ = true;
+        }
+
+        public void ResumeUpdate() {
+            updateSuspended_ = false;
+            UpdateHighlighting();
+        }
+
         private void UpdateHighlighting() {
+            if(updateSuspended_) {
+                return;
+            }
+
             PopulateMarkerBar();
             TextArea.TextView.Redraw();
         }

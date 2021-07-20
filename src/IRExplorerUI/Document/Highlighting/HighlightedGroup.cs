@@ -26,6 +26,10 @@ namespace IRExplorerUI {
             Elements.Add(element);
         }
 
+        public void AddRange(IEnumerable<IRElement> elements) {
+            Elements.AddRange(elements);
+        }
+
         public void AddFront(IRElement element) {
             Elements.Insert(0, element);
         }

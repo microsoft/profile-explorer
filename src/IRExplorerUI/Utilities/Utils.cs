@@ -568,27 +568,6 @@ namespace IRExplorerUI {
             return info;
         }
 
-        public static bool AreEqual<TKey, TValue>(Dictionary<TKey, TValue> first, Dictionary<TKey, TValue> second) {
-            if (first == second)
-                return true;
-            if ((first == null) || (second == null))
-                return false;
-            if (first.Count != second.Count)
-                return false;
-
-            var valueComparer = EqualityComparer<TValue>.Default;
-
-            foreach (var kvp in first) {
-                TValue value2;
-                if (!second.TryGetValue(kvp.Key, out value2))
-                    return false;
-                if (!valueComparer.Equals(kvp.Value, value2))
-                    return false;
-            }
-
-            return true;
-        }
-
         public static string GetApplicationPath() {
             return Process.GetCurrentProcess().MainModule.FileName;
         }

@@ -120,7 +120,7 @@ namespace IRExplorerUI {
                    Analysis == state.Analysis &&
                    Optimization == state.Optimization &&
                    HasCategoryFilters == state.HasCategoryFilters &&
-                   Utils.AreEqual(CategoryFilter, state.CategoryFilter);
+                   CategoryFilter.AreEqual(state.CategoryFilter);
         }
     }
 }

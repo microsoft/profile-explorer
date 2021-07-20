@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -51,6 +52,7 @@ namespace IRExplorerUI.Document {
         [ProtoMember(7)]
         public double Padding { get; set; }
         public Size Size => new Size(ActualWidth, ActualHeight);
+
         [ProtoMember(8)]
         public HorizontalAlignment AlignmentX { get; set; }
         [ProtoMember(9)]
@@ -73,9 +75,11 @@ namespace IRExplorerUI.Document {
         public double DefaultOpacity { get; set; }
         [ProtoMember(18)]
         public double MouseOverOpacity { get; set; }
+
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
         public Rect Bounds { get; set; }
+
         [ProtoMember(19)]
         public Brush Background { get; set; }
         [ProtoMember(20)]
@@ -90,12 +94,16 @@ namespace IRExplorerUI.Document {
         public int TextSize { get; set; }
         [ProtoMember(25)]
         public FontWeight TextWeight { get; set; }
+        [ProtoMember(26)]
+        public double VirtualColumn { get; set; }
+
         protected double ActualWidth => Width + 2 * Padding;
         protected double ActualHeight => Height + 2 * Padding;
         protected virtual bool ShowToolTip => !string.IsNullOrEmpty(ToolTip) &&
                                              (!ShowToolTipOnMouseOverOnly || 
                                               IsToolTipPinned || IsMouseOver || IsSelected);
-        protected virtual bool ShowBackground => !ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected;
+        protected virtual bool ShowBackground => (Width > 0 && Height > 0) &&
+                                                 (!ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected);
         protected virtual bool ShowBorder => !ShowBorderOnMouseOverOnly || IsMouseOver || IsSelected;
 
         public abstract void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
@@ -135,13 +143,13 @@ namespace IRExplorerUI.Document {
             
             var text = DocumentUtils.CreateFormattedText(host, ToolTip, DefaultFont, fontSize,
                                                         ActiveTextBrush, TextWeight);
-            double textX = elementRect.Right + MarginX;
+            double textX = elementRect.Right + Padding;
             double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
             drawingContext.PushOpacity(opacity);
 
             if (UseToolTipBackground) {
                 // Draw a rectangle covering both the icon and tooltip.
-                var rect = Utils.SnapRectToPixels(elementRect, MarginX, 0, text.Width + 2 * Padding, 0);
+                var rect = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * Padding, 0);
                 drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, CurrentBorder, rect);
             }
 
@@ -154,7 +162,7 @@ namespace IRExplorerUI.Document {
                 return Utils.SnapToPixels(rect.Left - ActualWidth + MarginX);
             }
             else if(AlignmentX == HorizontalAlignment.Right) {
-                return Utils.SnapToPixels(rect.Right + MarginX);
+                return Utils.SnapToPixels(Math.Max(VirtualColumn, rect.Right + MarginX));
             }
             else {
                 return Utils.SnapToPixels(rect.Left + (rect.Width - ActualWidth) / 2);

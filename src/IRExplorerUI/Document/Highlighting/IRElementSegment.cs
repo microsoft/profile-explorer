@@ -35,10 +35,6 @@ namespace IRExplorerUI {
             SavesStateToFile = saveToFile;
 
             foreach (var element in Group.Elements) {
-                if (element == null) {
-                    throw new NullReferenceException("Element is null");
-                }
-
                 Add(element);
             }
         }

@@ -100,8 +100,7 @@ namespace IRExplorerUI {
             return list;
         }
 
-        public static List<Tuple<K, V>> ToList<K, V>(this IDictionary<K, V> dict)
-            where K : class where V : class {
+        public static List<Tuple<K, V>> ToList<K, V>(this IDictionary<K, V> dict) {
             var list = new List<Tuple<K, V>>(dict.Count);
 
             foreach (var item in dict) {
@@ -169,6 +168,28 @@ namespace IRExplorerUI {
 
         public static Color ToColor(this RGBColor color) {
             return Color.FromRgb((byte)color.R, (byte)color.G, (byte)color.B);
+        }
+
+        public static bool AreEqual<TKey, TValue>(this Dictionary<TKey, TValue> first, 
+                                                  Dictionary<TKey, TValue> second) {
+            if (first == second)
+                return true;
+            if ((first == null) || (second == null))
+                return false;
+            if (first.Count != second.Count)
+                return false;
+
+            var valueComparer = EqualityComparer<TValue>.Default;
+
+            foreach (var kvp in first) {
+                TValue value2;
+                if (!second.TryGetValue(kvp.Key, out value2))
+                    return false;
+                if (!valueComparer.Equals(kvp.Value, value2))
+                    return false;
+            }
+
+            return true;
         }
     }
 }
