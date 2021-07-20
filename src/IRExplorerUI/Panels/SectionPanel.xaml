@@ -222,7 +222,7 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor}">
-                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=120.0}"/>
+                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"/>
                                         <TextBlock Text="{Binding Path=ExclusivePercentage, StringFormat=p2}" Margin="4,0,0,0"/>
                                         <TextBlock Text="{Binding OptionalDataText2}"  Margin="6,0,0,0"/>
                                     </StackPanel>
@@ -245,7 +245,7 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor2}">
-                                        <Rectangle Fill="RoyalBlue" Stroke="Black" Height="16" Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=120.0}"/>
+                                        <Rectangle Fill="RoyalBlue" Stroke="Black" Height="16" Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"/>
                                         <TextBlock Text="{Binding Path=InclusivePercentage, StringFormat=p2}" Margin="4,0,0,0"/>
                                         <TextBlock Text="{Binding OptionalDataText2}"  Margin="6,0,0,0"/>
                                     </StackPanel>
@@ -999,7 +999,7 @@
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor}">
-                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=120.0}"/>
+                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"/>
                                         <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
                                             <TextBlock.Style>
                                                 <Style TargetType="{x:Type TextBlock}">
