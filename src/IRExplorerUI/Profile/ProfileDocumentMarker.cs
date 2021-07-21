@@ -29,8 +29,10 @@ namespace IRExplorerUI.Compilers.ASM {
         public Brush HotBlockOverlayBackColor { get; set; }
         public List<Color> ColorPalette { get; set; }
 
-        public static ProfileDocumentMarkerOptions Default() {
-            return new ProfileDocumentMarkerOptions() {
+        private static ProfileDocumentMarkerOptions defaultInstance_;
+
+        static ProfileDocumentMarkerOptions() {
+            defaultInstance_ = new ProfileDocumentMarkerOptions() {
                 VirtualColumnPosition = 450,
                 ElementWeightCutoff = 0.003, // 0.3%
                 LineWeightCutoff = 0.005, // 0.5%,
@@ -46,10 +48,16 @@ namespace IRExplorerUI.Compilers.ASM {
             };
         }
 
+        public static ProfileDocumentMarkerOptions Default => defaultInstance_;
+
         public Color PickColorForWeight(double weightPercentage) {
             int colorIndex = (int)Math.Floor(ColorPalette.Count * (1.0 - weightPercentage));
             colorIndex = Math.Clamp(colorIndex, 0, ColorPalette.Count - 1);
             return ColorPalette[colorIndex];
+        }
+
+        public Brush PickBrushForWeight(double weightPercentage) {
+            return ColorBrushes.GetBrush(PickColorForWeight(weightPercentage));
         }
     }
 

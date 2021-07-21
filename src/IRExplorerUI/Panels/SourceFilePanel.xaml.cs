@@ -221,7 +221,7 @@ namespace IRExplorerUI {
                 var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
             }
 
-            var options = ProfileDocumentMarkerOptions.Default();
+            var markerOptions = ProfileDocumentMarkerOptions.Default;
             var nextElementId = new IRElementId();
 
             var function = Session.CurrentDocument.Function;
@@ -244,7 +244,7 @@ namespace IRExplorerUI {
                 }
 
                 double weightPercentage = profile.ScaleWeight(pair.Item2);
-                var color = options.PickColorForWeight(weightPercentage);
+                var color = markerOptions.PickColorForWeight(weightPercentage);
                 var style = new HighlightingStyle(color);
                 IconDrawing icon = null;
 
@@ -266,7 +266,7 @@ namespace IRExplorerUI {
                 profileMarker_.Add(group);
 
                 var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
-                AddElementOverlay(element, icon, lineIndex, 16, 16, tooltip, options);
+                AddElementOverlay(element, icon, lineIndex, 16, 16, tooltip, markerOptions);
                 lineIndex++;
             }
 

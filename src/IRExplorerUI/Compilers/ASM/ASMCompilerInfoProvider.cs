@@ -101,7 +101,7 @@ namespace IRExplorerUI.Compilers.ASM {
             var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
             if(profile != null) {
-                var markerOptions = ProfileDocumentMarkerOptions.Default();
+                var markerOptions = ProfileDocumentMarkerOptions.Default;
                 var profileMarker = new ProfileDocumentMarker(markerOptions, ir_);
                 profileMarker.Mark(document, profile, function);
             }
