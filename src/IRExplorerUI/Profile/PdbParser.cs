@@ -78,10 +78,12 @@ namespace IRExplorerUI.Profile {
                 process.CancelOutputRead();
 
                 if (process.ExitCode != 0) {
+                    Trace.TraceError($"Bad cvdump exit code: {process.ExitCode}");
                     return null;
                 }
             }
             catch (Exception ex) {
+                Trace.TraceError($"Error running cvdump: {ex.Message}");
                 return null;
             }
 

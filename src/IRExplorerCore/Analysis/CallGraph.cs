@@ -63,6 +63,7 @@ namespace IRExplorerCore.Analysis {
             Flags = flags;
         }
 
+        public bool HasKnownTarget => Function != null;
         public bool HasCallers => Callers != null && Callers.Count > 0;
         public bool HasCallees => Callees != null && Callees.Count > 0;
         public bool IsLeafFunction => !HasCallees;

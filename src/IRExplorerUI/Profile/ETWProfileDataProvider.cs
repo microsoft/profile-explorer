@@ -107,22 +107,16 @@ namespace IRExplorerUI.Profile {
                
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
+                    // Start getting the function address data while the trace is loading.
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-                    var (addressFuncMap, externalsFuncMap) = BuildAddressFunctionMap(symbolPath);
-                    
-                    if (addressFuncMap.Count == 0) {
-                        return false; // If we have no functions from the pdb, there's nothing more to do.
-                    }
+                    var debugTask = Task.Run(() => BuildAddressFunctionMap(symbolPath));
 
-                    if (cancelableTask != null && cancelableTask.IsCanceled) {
-                        return false;
-                    }
+                    // Load the trace.
+                    var settings = new TraceProcessorSettings {
+                        AllowLostEvents = true
+                    };
 
-                    //var settings = new TraceProcessorSettings {
-                    //    AllowLostEvents = true
-                    //};
-
-                    trace = TraceProcessor.Create(tracePath);
+                    trace = TraceProcessor.Create(tracePath, settings);
                     IPendingResult<ISymbolDataSource> pendingSymbolData = trace.UseSymbols();
                     IPendingResult<ICpuSampleDataSource> pendingCpuSamplingData = trace.UseCpuSamplingData();
 
@@ -142,7 +136,14 @@ namespace IRExplorerUI.Profile {
                         return false;
                     }
 
-                    
+                    // Wait for the function address data to be ready.
+                    var (addressFuncMap, externalsFuncMap) = await debugTask;
+
+                    if (addressFuncMap.Count == 0) {
+                        return false; // If we have no functions from the pdb, there's nothing more to do.
+                    }
+
+                    // Process the samples.
                     int index = 0;
                     var totalSamples = cpuSamplingData.Samples.Count;
                     var prevFuncts = new Dictionary<string, List<IRTextFunction>>();
@@ -333,7 +334,7 @@ namespace IRExplorerUI.Profile {
                 return result ? profileData_ : null;
             }
             catch (Exception ex) {
-                Trace.WriteLine($"Exception loading profile: {ex.Message}");
+                Trace.TraceError($"Exception loading profile: {ex.Message}");
                 return null;
             }
         }
