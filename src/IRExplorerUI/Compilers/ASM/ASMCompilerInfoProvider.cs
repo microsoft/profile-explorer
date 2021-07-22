@@ -54,6 +54,16 @@ namespace IRExplorerUI.Compilers.ASM {
         public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
 
         public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
+            //? TODO: Read PDB
+            //? needs integration with doc loader
+            //? extract source file for func def
+            var debugFile = @"E:\spec\spec2017\benchspec\leela\default\build_base_msvc-diff.0000\leela_s.pdb";
+            using var debugInfo = new DebugInfoProvider();
+
+            if(debugInfo.LoadDebugInfo(debugFile)) {
+                debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
+            }
+
             return true;
         }
 

@@ -8,6 +8,7 @@ using System.IO;
 using System.Text;
 using System.Windows;
 using IRExplorerCore;
+using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.UTC {
     public enum FilteredSectionNameKind {
@@ -30,7 +31,6 @@ namespace IRExplorerUI.UTC {
     }
 
     class UTCNameProvider : INameProvider {
-        private const int MaxDemangledFunctionNameLength = 8192;
         private static List<FilteredSectionName> sectionNameFilters_;
 
         static UTCNameProvider() {
@@ -110,25 +110,7 @@ namespace IRExplorerUI.UTC {
         }
 
         public string DemangleFunctionName(string name, FunctionNameDemanglingOptions options) {
-            var sb = new StringBuilder(MaxDemangledFunctionNameLength);
-            NativeMethods.UnDecorateFlags flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
-            flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS;
-
-            if (options.HasFlag(FunctionNameDemanglingOptions.OnlyName)) {
-                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NAME_ONLY;
-            }
-
-            if (options.HasFlag(FunctionNameDemanglingOptions.NoSpecialKeywords)) {
-                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_MS_KEYWORDS;
-                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_MS_THISTYPE;
-            }
-
-            if (options.HasFlag(FunctionNameDemanglingOptions.NoReturnType)) {
-                flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_FUNCTION_RETURNS;
-            }
-
-            NativeMethods.UnDecorateSymbolName(name, sb, MaxDemangledFunctionNameLength, flags);
-            return sb.ToString();
+            return DebugInfoProvider.DemangleFunctionName(name, options);
         }
 
         public string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {

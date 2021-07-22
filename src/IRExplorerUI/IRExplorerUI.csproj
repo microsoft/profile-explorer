@@ -104,6 +104,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Reference Include="Dia2Lib">
+	    <HintPath>..\external\Dia2Lib.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
+	<ItemGroup>
 		<Resource Include="refresh.png" />
 	</ItemGroup>
 
