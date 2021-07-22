@@ -1794,6 +1794,8 @@ namespace IRExplorerUI {
             else {
                 var callTree = await Task.Run(() => CreateCallTree(function));
                 ChildFunctionList.Model = callTree;
+
+                ProfileControlsVisible = true; //? TODO: Shouldn't show modules
                 ChildTimeColumnVisible = false;
                 SetDemangledChildFunctionNames(callTree);
                 AutoResizeColumns(ChildFunctionList);
