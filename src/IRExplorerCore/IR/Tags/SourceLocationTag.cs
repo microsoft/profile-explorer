@@ -25,11 +25,16 @@ namespace IRExplorerCore.IR {
             Line = line;
             Column = column;
         }
-
+        
+        public List<InlineeSourceLocation> Inlinees { get; set; }
         public int Line { get; set; }
         public int Column { get; set; }
-        public List<InlineeSourceLocation> Inlinees { get; set; }
         public bool HasInlinees => Inlinees != null && Inlinees.Count > 0;
+
+        public void AddInlinee(string function, int line, int column) {
+            Inlinees ??= new List<InlineeSourceLocation>();
+            Inlinees.Add(new InlineeSourceLocation(function, line, column));
+        }
 
         public string Name => "Source location";
         public TaggedObject Owner { get; set; }

@@ -14,6 +14,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
@@ -35,6 +36,7 @@ namespace IRExplorerUI {
         private bool ignoreNextCaretEvent_;
         private int selectedLine_;
         private string currentFilePath_;
+        private string initialFilePath_;
         private ElementHighlighter profileMarker_;
         private OverlayRenderer overlayRenderer_;
         private bool hasProfileInfo_;
@@ -68,9 +70,9 @@ namespace IRExplorerUI {
         private void HighlightElementsOnSelectedLine() {
             var line = TextView.Document.GetLineByOffset(TextView.CaretOffset);
 
-            if (line != null && Session.CurrentDocument != null) {
+            if (line != null && Document != null) {
                 selectedLine_ = line.LineNumber;
-                Session.CurrentDocument.SelectElementsOnSourceLine(line.LineNumber);
+                Document.SelectElementsOnSourceLine(line.LineNumber);
             }
         }
 
@@ -103,13 +105,15 @@ namespace IRExplorerUI {
             return null;
         }
 
-        private async Task<bool> LoadSourceFile(string path) {
+        private async Task<bool> LoadSourceFileImpl(string path, int sourceStartLine) {
             try {
                 string text = await File.ReadAllTextAsync(path);
                 TextView.Text = text;
                 PathTextbox.Text = path;
                 currentFilePath_ = path;
                 fileLoaded_ = true;
+
+                ScrollToLine(sourceStartLine);
                 return true;
             }
             catch (Exception ex) {
@@ -142,25 +146,55 @@ namespace IRExplorerUI {
 
             if (profile != null) {
                 if (!string.IsNullOrEmpty(profile.SourceFilePath)) {
-                    var sourceFilePath = profile.SourceFilePath;
-                    var mappedSourceFilePath = File.Exists(sourceFilePath) ?
-                            sourceFilePath :
-                            sourceFileMapper_.Map(sourceFilePath, () => BrowseSourceFile(
-                                filter: $"Source File|{Path.GetFileName(sourceFilePath)}",
-                                title: $"Open {sourceFilePath}"));
-                    // Load new source file.
-                    //? TODO: Scroll down to the start of the func
-                    //? Could have an option to scroll to hottest part
-                    if (mappedSourceFilePath != null && await LoadSourceFile(mappedSourceFilePath)) {
+                    initialFilePath_ = profile.SourceFilePath;
+
+                    if(await LoadSourceFile(profile.SourceFilePath)) {
                         await AnnotateProfilerData(profile);
                     }
-                    else {
-                        TextView.Text = $"Failed to load profile source file {profile.SourceFilePath}!";
+                }
+            }
+
+            if (!fileLoaded_) {
+                var debugFile = @"E:\spec\spec2017\benchspec\leela\default\build_base_msvc-diff.0000\leela_s.pdb";
+                using var debugInfo = new DebugInfoProvider();
+
+                if (debugInfo.LoadDebugInfo(debugFile)) {
+                    var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(section_.ParentFunction);
+
+                    if (!string.IsNullOrEmpty(sourceFilePath)) {
+                        initialFilePath_ = sourceFilePath;
+                        await LoadSourceFile(sourceFilePath, sourceStartLine);
                     }
                 }
-                else {
-                    TextView.Text = $"No source file available";
-                }
+            }
+
+            if(!fileLoaded_) {
+                TextView.Text = $"No source file available";
+            }
+        }
+
+        private async Task<bool> LoadSourceFile(string sourceFilePath, int sourceStartLine = -1) {
+            if (fileLoaded_ && currentFilePath_ == sourceFilePath) {
+                return true;
+            }
+
+            string mappedSourceFilePath;
+
+            if (File.Exists(sourceFilePath)) {
+                mappedSourceFilePath = sourceFilePath;
+            }
+            else {
+                mappedSourceFilePath = sourceFileMapper_.Map(sourceFilePath, () => 
+                    BrowseSourceFile(filter: $"Source File|{Path.GetFileName(sourceFilePath)}",
+                                     title: $"Open {sourceFilePath}"));
+            }
+
+            if (mappedSourceFilePath != null && await LoadSourceFileImpl(mappedSourceFilePath, sourceStartLine)) {
+                return true;
+            }
+            else {
+                TextView.Text = $"Failed to load profile source file {sourceFilePath}!";
+                return false;
             }
         }
 
@@ -180,7 +214,7 @@ namespace IRExplorerUI {
             element_ = null;
         }
 
-        public override void OnElementSelected(IRElementEventArgs e) {
+        public override async void OnElementSelected(IRElementEventArgs e) {
             if (!fileLoaded_ || e.Element == element_) {
                 return;
             }
@@ -189,12 +223,26 @@ namespace IRExplorerUI {
             var instr = element_.ParentInstruction;
             var tag = instr?.GetTag<SourceLocationTag>();
 
-            if (tag != null && tag.Line >= 0 && tag.Line <= TextView.Document.LineCount) {
+            if (tag != null) {
+                if (tag.HasInlinees) {
+                    var last = tag.Inlinees[^1];
+
+                    if(await LoadSourceFile(last.Function)) {
+                        ScrollToLine(last.Line);
+                        return;
+                    }
+                }
+
+                await LoadSourceFile(initialFilePath_);
                 ScrollToLine(tag.Line);
             }
         }
 
         private void ScrollToLine(int line) {
+            if (line < 0 || line >= TextView.Document.LineCount) {
+                return;
+            }
+
             var documentLine = TextView.Document.GetLineByNumber(line);
 
             if (documentLine.LineNumber != selectedLine_) {
@@ -224,9 +272,7 @@ namespace IRExplorerUI {
             var markerOptions = ProfileDocumentMarkerOptions.Default;
             var nextElementId = new IRElementId();
 
-            var function = Session.CurrentDocument.Function;
-            var metadataTag = function.GetTag<AssemblyMetadataTag>();
-            bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+            var function = Document.Function;
             var lines = new List<Tuple<int, TimeSpan>>(profile.SourceLineWeight.Count);
 
             foreach (var pair in profile.SourceLineWeight) {

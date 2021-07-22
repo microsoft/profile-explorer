@@ -30,7 +30,6 @@ namespace IRExplorerUI.Profile {
         
         //? TODO
         //? - save unique stacks with inclusive samples for each frame
-        //? - save list of calees with  their time
 
         public FunctionProfileData(string filePath) {
             SourceFilePath = filePath;

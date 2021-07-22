@@ -344,8 +344,6 @@ namespace IRExplorerCore.Analysis {
                 var node = worklist.Dequeue();
                 visitedNodes.Add(node);
 
-                //? TODO: Should also include caller info from profile
-
                 if (node.HasCallers) {
                     foreach (var caller in node.Callers) {
                         if (callerFilter == null || callerFilter(caller.Source, node, this, targetFuncts)) {
@@ -380,10 +378,6 @@ namespace IRExplorerCore.Analysis {
                     entryNodes_.Add(node);
                 }
             }
-        }
-
-        public void ExpandGraph(List<IRTextFunction> targetFuncts) {
-
         }
 
         private void TrimNodes(CallGraphNode node, HashSet<CallGraphNode> visitedNodes,
