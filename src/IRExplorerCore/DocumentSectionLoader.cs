@@ -94,6 +94,7 @@ namespace IRExplorerCore {
             lock (lockObject_) {
                 if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var cachedResult)) {
                     //Trace.TraceInformation($"Section loader {ObjectTracker.Track(this)}: found in cache");
+                    cachedResult.IsCached = true;
                     return cachedResult;
                 }
             }

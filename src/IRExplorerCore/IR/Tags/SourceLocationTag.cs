@@ -7,13 +7,15 @@ using System.Text;
 
 namespace IRExplorerCore.IR {
     public class InlineeSourceLocation {
-        public InlineeSourceLocation(string function, int line, int column) {
+        public InlineeSourceLocation(string function, string filePath, int line, int column) {
             Function = function;
+            FilePath = filePath;
             Line = line;
             Column = column;
         }
 
         public string Function { get; set; }
+        public string FilePath { get; set; }
         public int Line { get; set; }
         public int Column { get; set; }
     }
@@ -31,9 +33,9 @@ namespace IRExplorerCore.IR {
         public int Column { get; set; }
         public bool HasInlinees => Inlinees != null && Inlinees.Count > 0;
 
-        public void AddInlinee(string function, int line, int column) {
+        public void AddInlinee(string function, string filePath, int line, int column) {
             Inlinees ??= new List<InlineeSourceLocation>();
-            Inlinees.Add(new InlineeSourceLocation(function, line, column));
+            Inlinees.Add(new InlineeSourceLocation(function, filePath, line, column));
         }
 
         public string Name => "Source location";

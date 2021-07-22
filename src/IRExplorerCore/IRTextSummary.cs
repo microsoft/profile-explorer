@@ -47,6 +47,18 @@ namespace IRExplorerCore {
             return functionNameMap_.TryGetValue(name, out var result) ? result : null;
         }
 
+        public delegate bool FunctionNameMatchDelegate(string name);
+
+        public IRTextFunction FindFunction(FunctionNameMatchDelegate matchCheck) {
+            foreach(var function in Functions) {
+                if(matchCheck(function.Name)) {
+                    return function;
+                }
+            }
+
+            return null;
+        }
+
         public List<IRTextFunction> FindAllFunctions(string nameSubstring) {
             return Functions.FindAll((func) => func.Name.Contains(nameSubstring, StringComparison.Ordinal));
         }

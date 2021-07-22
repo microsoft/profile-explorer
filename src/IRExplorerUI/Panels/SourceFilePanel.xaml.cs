@@ -141,15 +141,27 @@ namespace IRExplorerUI {
             base.OnDocumentSectionLoaded(section, document);
             section_ = section;
 
+            if (!await LoadSourceFileForFunction(section_.ParentFunction)) {
+                TextView.Text = $"No source file available";
+            }
+            else {
+                ScrollToLine(hottestSourceLine_);
+            }
+        }
+
+        private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {
+            fileLoaded_ = false;
+
             // Check if there is profile info.
-            var profile = Session.ProfileData?.GetFunctionProfile(section_.ParentFunction);
+            var profile = Session.ProfileData?.GetFunctionProfile(function);
 
             if (profile != null) {
                 if (!string.IsNullOrEmpty(profile.SourceFilePath)) {
                     initialFilePath_ = profile.SourceFilePath;
 
-                    if(await LoadSourceFile(profile.SourceFilePath)) {
+                    if (await LoadSourceFile(profile.SourceFilePath)) {
                         await AnnotateProfilerData(profile);
+                        return true;
                     }
                 }
             }
@@ -159,7 +171,7 @@ namespace IRExplorerUI {
                 using var debugInfo = new DebugInfoProvider();
 
                 if (debugInfo.LoadDebugInfo(debugFile)) {
-                    var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(section_.ParentFunction);
+                    var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(function);
 
                     if (!string.IsNullOrEmpty(sourceFilePath)) {
                         initialFilePath_ = sourceFilePath;
@@ -168,9 +180,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            if(!fileLoaded_) {
-                TextView.Text = $"No source file available";
-            }
+            return fileLoaded_;
         }
 
         private async Task<bool> LoadSourceFile(string sourceFilePath, int sourceStartLine = -1) {
@@ -178,6 +188,7 @@ namespace IRExplorerUI {
                 return true;
             }
 
+            fileLoaded_ = false;
             string mappedSourceFilePath;
 
             if (File.Exists(sourceFilePath)) {
@@ -201,11 +212,14 @@ namespace IRExplorerUI {
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
             base.OnDocumentSectionUnloaded(section, document);
             ResetSelectedLine();
-
-            overlayRenderer_.Clear();
-            profileMarker_.Clear();
+            ResetProfileMarking();
             section_ = null;
             fileLoaded_ = false;
+        }
+
+        private void ResetProfileMarking() {
+            overlayRenderer_.Clear();
+            profileMarker_.Clear();
             hasProfileInfo_ = false;
         }
 
@@ -225,17 +239,40 @@ namespace IRExplorerUI {
 
             if (tag != null) {
                 if (tag.HasInlinees) {
-                    var last = tag.Inlinees[^1];
+                    var last = tag.Inlinees[0];
 
-                    if(await LoadSourceFile(last.Function)) {
-                        ScrollToLine(last.Line);
+                    if(await LoadInlineeSourceFile(last)) {
                         return;
                     }
                 }
 
-                await LoadSourceFile(initialFilePath_);
+                await LoadSourceFileForFunction(section_.ParentFunction);
                 ScrollToLine(tag.Line);
             }
+        }
+
+        public async Task<bool> LoadInlineeSourceFile(InlineeSourceLocation inlinee) {
+            var summary = section_.ParentFunction.ParentSummary;
+            var inlineeFunc = summary.FindFunction((funcName) => {
+                var demangledName = DebugInfoProvider.DemangleFunctionName(funcName);
+                return demangledName == inlinee.Function;
+            });
+
+            bool fileLoaded = false;
+
+            if (inlineeFunc != null) {
+                fileLoaded = await LoadSourceFileForFunction(inlineeFunc);
+            }
+
+            if (!fileLoaded) {
+                fileLoaded = await LoadSourceFile(inlinee.FilePath);
+            }
+
+            if (fileLoaded) {
+                ScrollToLine(inlinee.Line);
+            }
+
+            return fileLoaded;
         }
 
         private void ScrollToLine(int line) {
@@ -263,7 +300,7 @@ namespace IRExplorerUI {
         #endregion
 
         private async Task AnnotateProfilerData(FunctionProfileData profile) {
-            hasProfileInfo_ = true;
+            ResetProfileMarking();
 
             foreach (var pair in profile.ChildrenWeights) {
                 var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
@@ -271,8 +308,6 @@ namespace IRExplorerUI {
 
             var markerOptions = ProfileDocumentMarkerOptions.Default;
             var nextElementId = new IRElementId();
-
-            var function = Document.Function;
             var lines = new List<Tuple<int, TimeSpan>>(profile.SourceLineWeight.Count);
 
             foreach (var pair in profile.SourceLineWeight) {
@@ -317,7 +352,7 @@ namespace IRExplorerUI {
             }
 
             UpdateHighlighting();
-            ScrollToLine(hottestSourceLine_);
+            hasProfileInfo_ = true;
         }
 
         public void AddElementOverlay(IRElement element, IconDrawing icon, int index,

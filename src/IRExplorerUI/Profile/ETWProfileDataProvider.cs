@@ -11,6 +11,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using System.Linq;
 using System.Threading;
+using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
     public class ETWProfileDataProvider : IProfileDataProvider {
@@ -102,11 +103,20 @@ namespace IRExplorerUI.Profile {
                       bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
                       CancelableTask cancelableTask) {
             try {
+                loader_.ResetCache();
+
                 // Extract just the file name.
                 imageName = Path.GetFileNameWithoutExtension(imageName);
                
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
+
+                    var debugFile = @"E:\spec\spec2017\benchspec\leela\default\build_base_msvc-diff.0000\leela_s.pdb";
+                    using var debugInfo = new DebugInfoProvider();
+                    bool hasDebugInfo = debugInfo.LoadDebugInfo(debugFile);
+
+                    var unmangledMap = BuildUnmangledFunctionNameMap();
+
                     // Start getting the function address data while the trace is loading.
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
                     var debugTask = Task.Run(() => BuildAddressFunctionMap(symbolPath));
@@ -285,7 +295,7 @@ namespace IRExplorerUI.Profile {
                             }
                             
                             //? TODO: Enable after more testing
-                            markInlinedFunctions = false;
+                            markInlinedFunctions = true;
                             
                             if (markInlinedFunctions && textFunction.Sections.Count > 0) {
                                 // Load current function.
@@ -293,6 +303,12 @@ namespace IRExplorerUI.Profile {
                                 var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
                                 bool hasInstrOffsetMetadata =
                                     metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+
+                                if (hasInstrOffsetMetadata && !result.IsCached) {
+                                    if(hasDebugInfo) {
+                                        debugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
+                                    }
+                                }
 
                                 // Try to find instr. referenced by RVA, then go over all inlinees.
                                 if (hasInstrOffsetMetadata &&
@@ -302,16 +318,17 @@ namespace IRExplorerUI.Profile {
                                     if (lineInfo != null && lineInfo.HasInlinees) {
                                         // For each inlinee, add the sample to its line.
                                         foreach (var inlinee in lineInfo.Inlinees) {
-                                            var inlineeTextFunc = summary_.FindFunction(inlinee.Function);
-
-                                            if (inlineeTextFunc != null) {
-                                                //? TODO: Inlinee can be in another source file
-                                                var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
-                                                                        inlineeTextFunc, symbol.SourceFileName);
-                                                inlineeProfile.AddLineSample(inlinee.Line,
-                                                    sampleWeight);
-                                                inlineeProfile.Weight += sampleWeight;
+                                            if(!unmangledMap.TryGetValue(inlinee.Function, out var inlineeTextFunc)) { 
+                                                inlineeTextFunc = new IRTextFunction(inlinee.Function);
+                                                summary_.AddFunction(inlineeTextFunc);
+                                                unmangledMap[inlinee.Function] = inlineeTextFunc;
                                             }
+
+                                            var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
+                                                                    inlineeTextFunc, inlinee.FilePath);
+                                            inlineeProfile.AddLineSample(inlinee.Line, sampleWeight);
+                                            inlineeProfile.Weight += sampleWeight;
+                                            inlineeProfile.ExclusiveWeight += sampleWeight;
                                         }
                                     }
                                 }
@@ -337,6 +354,17 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceError($"Exception loading profile: {ex.Message}");
                 return null;
             }
+        }
+
+        private Dictionary<string, IRTextFunction> BuildUnmangledFunctionNameMap() {
+            var map = new Dictionary<string, IRTextFunction>(summary_.Functions.Count);
+
+            foreach (var function in summary_.Functions) {
+                var unmangledName = DebugInfoProvider.DemangleFunctionName(function.Name);
+                map[unmangledName] = function;
+            }
+
+            return map;
         }
     }
 }
