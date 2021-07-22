@@ -2792,6 +2792,11 @@ namespace IRExplorerUI {
             highlighter.ForEachStyledElement((element, style) => {
                 double y = (double)element.TextLocation.Line / LineCount * height;
                 var brush = style.BackColor as SolidColorBrush;
+
+                if(brush.Color == Colors.Transparent) {
+                    return;
+                }
+
                 var color = ColorUtils.IncreaseSaturation(brush.Color);
                 var elementVisual = new Rect(0, startY + y, width, dotSize);
                 var barStyle = new HighlightingStyle(color);

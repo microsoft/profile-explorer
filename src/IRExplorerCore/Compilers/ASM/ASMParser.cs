@@ -260,9 +260,10 @@ namespace IRExplorerCore.ASM {
 
         private bool ParseLine(BlockIR block) {
             var startToken = Current;
+            long address = 0;
 
-            if (Current.Kind != TokenKind.Number ||
-                !TokenLongHexNumber(out var address)) {
+            if (!(IsNumber() || IsIdentifier()) ||
+                !TokenLongHexNumber(out address)) {
                 ReportErrorAndSkipLine(TokenKind.Number, "Expected line to start with an address");
                 return false;
             }
@@ -319,19 +320,16 @@ namespace IRExplorerCore.ASM {
                 SetInstructionOpcode(instr);
 
                 if (instr.Kind == InstructionKind.Branch) {
-                    instr.Kind = InstructionKind.Branch;
                     isJump = true;
                     makeNewBlock_ = true;
                     connectNewBlock_ = true; // Fall-through.
                 }
                 else if (instr.Kind == InstructionKind.Goto) {
-                    instr.Kind = InstructionKind.Goto;
                     isJump = true;
                     makeNewBlock_ = true;
                     connectNewBlock_ = false;
                 }
                 else if (instr.Kind == InstructionKind.Return) {
-                    instr.Kind = InstructionKind.Return;
                     isJump = true;
                     makeNewBlock_ = true;
                     connectNewBlock_ = false;
