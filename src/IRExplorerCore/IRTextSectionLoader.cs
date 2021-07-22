@@ -8,18 +8,19 @@ using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
     public class ParsedIRTextSection {
-        public IRTextSection Section;
+        public IRTextSection Section { get; set; }
+        public string Text { get; set; }
+        public FunctionIR Function { get; set; }
+        public List<IRParsingError> ParsingErrors { get; set; }
+        public bool IsCached { get; set; }
+
+        public bool HadParsingErrors => ParsingErrors != null && ParsingErrors.Count > 0;
 
         public ParsedIRTextSection(IRTextSection section, string text, FunctionIR function) {
             Section = section;
             Text = text;
             Function = function;
         }
-
-        public string Text { get; set; }
-        public FunctionIR Function { get; set; }
-        public List<IRParsingError> ParsingErrors { get; set; }
-        public bool HadParsingErrors => ParsingErrors != null && ParsingErrors.Count > 0;
 
         public override string ToString() {
             return Section.ToString();

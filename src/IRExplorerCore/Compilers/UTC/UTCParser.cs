@@ -879,7 +879,7 @@ namespace IRExplorerCore.UTC {
                         }
 
                         var inlineeName = TokenString();
-                        tag.AddInlinee(inlineeName, lastLineNumber, 0);
+                        tag.AddInlinee(inlineeName, null, lastLineNumber, 0);
                         SkipToken();
                         
                         if (!ExpectAndSkipToken(TokenKind.CloseParen)) {

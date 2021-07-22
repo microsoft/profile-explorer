@@ -15,6 +15,7 @@ namespace IRExplorerUI.Compilers {
     //? https://stackoverflow.com/questions/34960989/how-can-i-hide-dll-registration-message-window-in-my-application
     
     //? Merge with PDB cvdump reader for ETW
+    //? TODO: Move global symbol load as member done once
 
     public class DebugInfoProvider : IDisposable {
         private IDiaDataSource diaSource_;
@@ -35,13 +36,17 @@ namespace IRExplorerUI.Compilers {
         }
 
         public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
+            return AnnotateSourceLocations(function, textFunc.Name);
+        }
+
+        public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
             var metadataTag = function.GetTag<AssemblyMetadataTag>();
 
             if(metadataTag == null) {
                 return false;
             }
 
-            var funcSymbol = FindFunction(textFunc.Name);
+            var funcSymbol = FindFunction(functionName);
 
             if (funcSymbol == null) {
                 return false;
@@ -59,7 +64,11 @@ namespace IRExplorerUI.Compilers {
         }
 
         public (string, int) FindFunctionSourceFilePath(IRTextFunction textFunc) {
-            var funcSymbol = FindFunction(textFunc.Name);
+            return FindFunctionSourceFilePath(textFunc.Name);
+        }
+        
+        public (string, int) FindFunctionSourceFilePath(string functionName) {
+            var funcSymbol = FindFunction(functionName);
 
             if (funcSymbol == null) {
                 return (null, 0);
@@ -102,10 +111,6 @@ namespace IRExplorerUI.Compilers {
                     locationTag.Line = (int)lineNumber.lineNumber;
                     locationTag.Column = (int)lineNumber.columnNumber;
 
-
-
-
-
                     funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
 
                     foreach (IDiaSymbol inlineFrame in inlineeFrameEnum) {
@@ -118,8 +123,10 @@ namespace IRExplorerUI.Compilers {
                                 break;
                             }
 
-                            locationTag.AddInlinee(inlineeLineNumber.sourceFile.fileName,
-                                                   (int)inlineeLineNumber.lineNumber,
+                            session_.findSymbolByRVA(inlineeLineNumber.relativeVirtualAddress, SymTagEnum.SymTagFunction, out var inlineeSymbol);
+
+                            locationTag.AddInlinee(inlineFrame.name, inlineeLineNumber.sourceFile.fileName,
+                                                   (int)inlineeLineNumber.lineNumber + 1,
                                                    (int)inlineeLineNumber.columnNumber);
                         }
                     }
@@ -170,7 +177,8 @@ namespace IRExplorerUI.Compilers {
 
         private const int MaxDemangledFunctionNameLength = 8192;
         
-        public static string DemangleFunctionName(string name, FunctionNameDemanglingOptions options) {
+        public static string DemangleFunctionName(string name, FunctionNameDemanglingOptions options =
+                FunctionNameDemanglingOptions.Default) {
             var sb = new StringBuilder(MaxDemangledFunctionNameLength);
             NativeMethods.UnDecorateFlags flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
             flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS;
@@ -192,7 +200,8 @@ namespace IRExplorerUI.Compilers {
             return sb.ToString();
         }
 
-        public static string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {
+        public static string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options =
+                FunctionNameDemanglingOptions.Default) {
             return DemangleFunctionName(function.Name, options);
         }
 
