@@ -251,6 +251,11 @@ namespace IRExplorerUI {
             }
         }
 
+        //? TODO: Option to stop before STL functs (just my code like)
+
+        //? TODO: Select source line must go through inlinee mapping to select proper asm 
+        //     all instrs that have the line on the inlinee list for this func
+
         public async Task<bool> LoadInlineeSourceFile(InlineeSourceLocation inlinee) {
             var summary = section_.ParentFunction.ParentSummary;
             var inlineeFunc = summary.FindFunction((funcName) => {
@@ -280,7 +285,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var documentLine = TextView.Document.GetLineByNumber(line);
+            var documentLine = TextView.Document.GetLineByNumber(line + 1);
 
             if (documentLine.LineNumber != selectedLine_) {
                 selectedLine_ = documentLine.LineNumber;
@@ -320,7 +325,7 @@ namespace IRExplorerUI {
             foreach (var pair in lines) {
                 int sourceLine = pair.Item1;
 
-                if (sourceLine <= 0 || sourceLine > TextView.Document.LineCount) {
+                if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
                     continue;
                 }
 
@@ -337,7 +342,7 @@ namespace IRExplorerUI {
                     icon = IconDrawing.FromIconResource("DotIconYellow");
                 }
                 
-                var documentLine = TextView.Document.GetLineByNumber(sourceLine);
+                var documentLine = TextView.Document.GetLineByNumber(sourceLine + 1);
                 var location = new TextLocation(documentLine.Offset, sourceLine, 0);
                 var element = new IRElement(location, documentLine.Length);
                 element.Id = nextElementId.NextOperand();

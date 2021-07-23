@@ -16,6 +16,8 @@ namespace IRExplorerUI.Compilers {
     
     //? Merge with PDB cvdump reader for ETW
     //? TODO: Move global symbol load as member done once
+    //? Use for-each iterators
+    //? Free more COM
 
     public class DebugInfoProvider : IDisposable {
         private IDiaDataSource diaSource_;
@@ -98,7 +100,7 @@ namespace IRExplorerUI.Compilers {
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, uint instrLength,
                                                        IDiaSymbol funcSymbol) {
             try {
-                session_.findLinesByRVA(instrRVA, instrLength, out var lineEnum);
+                session_.findLinesByRVA(instrRVA, 0, out var lineEnum);
 
                 while(true) {
                     lineEnum.Next(1, out var lineNumber, out var retrieved);
@@ -126,7 +128,7 @@ namespace IRExplorerUI.Compilers {
                             session_.findSymbolByRVA(inlineeLineNumber.relativeVirtualAddress, SymTagEnum.SymTagFunction, out var inlineeSymbol);
 
                             locationTag.AddInlinee(inlineFrame.name, inlineeLineNumber.sourceFile.fileName,
-                                                   (int)inlineeLineNumber.lineNumber + 1,
+                                                   (int)inlineeLineNumber.lineNumber,
                                                    (int)inlineeLineNumber.columnNumber);
                         }
                     }
