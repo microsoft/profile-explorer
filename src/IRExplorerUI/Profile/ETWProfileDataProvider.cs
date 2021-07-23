@@ -14,7 +14,7 @@ using System.Threading;
 using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
-    public class ETWProfileDataProvider : IProfileDataProvider {
+    public class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
             private ProfileLoadProgressHandler callback_;
 
@@ -50,7 +50,9 @@ namespace IRExplorerUI.Profile {
         private IRTextSectionLoader loader_;
         private ProfileData profileData_;
         private PdbParser pdbParser_;
-        
+        private DebugInfoProvider debugInfo_;
+        private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
+
         //? TODO: Workaround for crash that happens when the finalizers are run
         //? and the COM object is released after it looks as being destroyed.
         // T his will keep it alive during the entire process.
@@ -110,16 +112,10 @@ namespace IRExplorerUI.Profile {
                
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
-
-                    var debugFile = @"E:\spec\spec2017\benchspec\leela\default\build_base_msvc-diff.0000\leela_s.pdb";
-                    using var debugInfo = new DebugInfoProvider();
-                    bool hasDebugInfo = debugInfo.LoadDebugInfo(debugFile);
-
-                    var unmangledMap = BuildUnmangledFunctionNameMap();
-
                     // Start getting the function address data while the trace is loading.
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-                    var debugTask = Task.Run(() => BuildAddressFunctionMap(symbolPath));
+                    var funcAddressTask = Task.Run(() => BuildAddressFunctionMap(symbolPath));
+                    var debugInfoTask = Task.Run(() => SetupDebugInfo(symbolPath));
 
                     // Load the trace.
                     var settings = new TraceProcessorSettings {
@@ -147,7 +143,8 @@ namespace IRExplorerUI.Profile {
                     }
 
                     // Wait for the function address data to be ready.
-                    var (addressFuncMap, externalsFuncMap) = await debugTask;
+                    var (addressFuncMap, externalsFuncMap) = await funcAddressTask;
+                    bool hasDebugInfo = await debugInfoTask;
 
                     if (addressFuncMap.Count == 0) {
                         return false; // If we have no functions from the pdb, there's nothing more to do.
@@ -171,7 +168,7 @@ namespace IRExplorerUI.Profile {
                             continue;
                         }
 
-                        if (index % 1000 == 0) {
+                        if (index % 10000 == 0) {
                             if (cancelableTask != null && cancelableTask.IsCanceled) {
                                 return false;
                             }
@@ -208,7 +205,7 @@ namespace IRExplorerUI.Profile {
                         
                         var stackFrames = sample.Stack.Frames;
                         bool isTopFrame = true;
-                        
+
                         foreach (var frame in stackFrames) {
                             // Count exclusive time for each module in the executable. 
                             if (isTopFrame &&
@@ -294,44 +291,10 @@ namespace IRExplorerUI.Profile {
                                 profile.ExclusiveWeight += sampleWeight;
                             }
                             
-                            //? TODO: Enable after more testing
-                            markInlinedFunctions = true;
-                            
-                            if (markInlinedFunctions && textFunction.Sections.Count > 0) {
-                                // Load current function.
-                                var result = loader_.LoadSection(textFunction.Sections[^1]);
-                                var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
-                                bool hasInstrOffsetMetadata =
-                                    metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
-
-                                if (hasInstrOffsetMetadata && !result.IsCached) {
-                                    if(hasDebugInfo) {
-                                        debugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
-                                    }
-                                }
-
-                                // Try to find instr. referenced by RVA, then go over all inlinees.
-                                if (hasInstrOffsetMetadata &&
-                                    metadataTag.OffsetToElementMap.TryGetValue(offset, out var rvaInstr)) {
-                                    var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
-
-                                    if (lineInfo != null && lineInfo.HasInlinees) {
-                                        // For each inlinee, add the sample to its line.
-                                        foreach (var inlinee in lineInfo.Inlinees) {
-                                            if(!unmangledMap.TryGetValue(inlinee.Function, out var inlineeTextFunc)) { 
-                                                inlineeTextFunc = new IRTextFunction(inlinee.Function);
-                                                summary_.AddFunction(inlineeTextFunc);
-                                                unmangledMap[inlinee.Function] = inlineeTextFunc;
-                                            }
-
-                                            var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
-                                                                    inlineeTextFunc, inlinee.FilePath);
-                                            inlineeProfile.AddLineSample(inlinee.Line, sampleWeight);
-                                            inlineeProfile.Weight += sampleWeight;
-                                            inlineeProfile.ExclusiveWeight += sampleWeight;
-                                        }
-                                    }
-                                }
+                            // Try to map the sample to all the inlined functions.
+                            if (markInlinedFunctions && hasDebugInfo && 
+                                textFunction.Sections.Count > 0) {
+                                ProcessInlineeSample(sampleWeight, offset, textFunction);
                             }
 
                             isTopFrame = false;
@@ -348,11 +311,54 @@ namespace IRExplorerUI.Profile {
                     loader_.ResetCache();
                 }
 
+                trace.Dispose();
                 return result ? profileData_ : null;
             }
             catch (Exception ex) {
                 Trace.TraceError($"Exception loading profile: {ex.Message}");
                 return null;
+            }
+        }
+
+        private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset, 
+                                          IRTextFunction textFunction) {
+            // Load current function.
+            var result = loader_.LoadSection(textFunction.Sections[^1]);
+            var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
+            bool hasInstrOffsetMetadata =
+                metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+
+            if (hasInstrOffsetMetadata && !result.IsCached) {
+                // Add source location info only once, can be slow.
+                debugInfo_.AnnotateSourceLocations(result.Function, textFunction.Name);
+            }
+
+            // Try to find instr. referenced by RVA, then go over all inlinees.
+            if (!hasInstrOffsetMetadata ||
+                !metadataTag.OffsetToElementMap.TryGetValue(sampleOffset, out var rvaInstr)) {
+                return;
+            }
+
+            var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
+
+            if (lineInfo == null || !lineInfo.HasInlinees) {
+                return;
+            }
+
+            // For each inlinee, add the sample to its line.
+            foreach (var inlinee in lineInfo.Inlinees) {
+                if (!unmangledFuncNamesMap_.TryGetValue(inlinee.Function, out var inlineeTextFunc)) {
+                    // The function may have been inlined at all call sites
+                    // and not be found in the binary, make a dummy func. for it.
+                    inlineeTextFunc = new IRTextFunction(inlinee.Function);
+                    summary_.AddFunction(inlineeTextFunc);
+                    unmangledFuncNamesMap_[inlinee.Function] = inlineeTextFunc;
+                }
+
+                var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
+                                        inlineeTextFunc, inlinee.FilePath);
+                inlineeProfile.AddLineSample(inlinee.Line, sampleWeight);
+                inlineeProfile.Weight += sampleWeight;
             }
         }
 
@@ -365,6 +371,16 @@ namespace IRExplorerUI.Profile {
             }
 
             return map;
+        }
+
+        private bool SetupDebugInfo(string symbolPath) {
+            unmangledFuncNamesMap_ = BuildUnmangledFunctionNameMap();
+            debugInfo_ = new DebugInfoProvider();
+            return debugInfo_.LoadDebugInfo(symbolPath);
+        }
+
+        public void Dispose() {
+            debugInfo_?.Dispose();
         }
     }
 }

@@ -60,6 +60,7 @@
                     <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
                         <Image Source="{StaticResource StarIcon}" />
                     </Button>
+                    <ComboBox Name="InlineeCombobox" MaxWidth="300" Width="200" DisplayMemberPath="Function" SelectedValue="Function" SelectionChanged="InlineeCombobox_SelectionChanged"/>
                 </ToolBar>
             </ToolBarTray>
             <local:PanelToolbarTray

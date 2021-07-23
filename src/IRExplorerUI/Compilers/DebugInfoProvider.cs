@@ -58,8 +58,7 @@ namespace IRExplorerUI.Compilers {
 
             foreach (var pair in metadataTag.OffsetToElementMap) {
                 uint instrRVA = funcRVA + (uint)pair.Key;
-                uint instrLength = (uint)metadataTag.ElementSizeMap[pair.Value];
-                AnnotateInstructionSourceLocation(pair.Value, instrRVA, instrLength, funcSymbol);
+                AnnotateInstructionSourceLocation(pair.Value, instrRVA, funcSymbol);
             }
 
             return true;
@@ -87,18 +86,18 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var sourceFile = lineNumber.sourceFile;
-                    return (sourceFile.fileName, (int)lineNumber.lineNumber);
+                    return (sourceFile.fileName, (int)lineNumber.lineNumber - 1);
                 }
             }
             catch (Exception ex) {
+                Trace.TraceError($"Failed to get source file for {functionName}: {ex.Message}");
                 return (null, 0);
             }
 
             return (null, 0);
         }
 
-        private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, uint instrLength,
-                                                       IDiaSymbol funcSymbol) {
+        private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {
             try {
                 session_.findLinesByRVA(instrRVA, 0, out var lineEnum);
 
@@ -110,7 +109,7 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var locationTag = instr.GetOrAddTag<SourceLocationTag>();
-                    locationTag.Line = (int)lineNumber.lineNumber;
+                    locationTag.Line = (int)lineNumber.lineNumber - 1;
                     locationTag.Column = (int)lineNumber.columnNumber;
 
                     funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
@@ -125,10 +124,8 @@ namespace IRExplorerUI.Compilers {
                                 break;
                             }
 
-                            session_.findSymbolByRVA(inlineeLineNumber.relativeVirtualAddress, SymTagEnum.SymTagFunction, out var inlineeSymbol);
-
                             locationTag.AddInlinee(inlineFrame.name, inlineeLineNumber.sourceFile.fileName,
-                                                   (int)inlineeLineNumber.lineNumber,
+                                                   (int)inlineeLineNumber.lineNumber - 1,
                                                    (int)inlineeLineNumber.columnNumber);
                         }
                     }
@@ -136,6 +133,7 @@ namespace IRExplorerUI.Compilers {
                 }
             }
             catch (Exception ex) {
+                Trace.TraceError($"Failed to get source lines for {funcSymbol.name}: {ex.Message}");
                 return false;
             }
 

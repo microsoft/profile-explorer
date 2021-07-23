@@ -83,7 +83,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public double ScaleWeight(TimeSpan weight) {
-            return (double)weight.Ticks / (double)ExclusiveWeight.Ticks;
+            return (double)weight.Ticks / (double)Weight.Ticks;
         }
 
         public double ScaleChildWeight(TimeSpan weight) {

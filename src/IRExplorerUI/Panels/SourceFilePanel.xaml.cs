@@ -8,6 +8,7 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
@@ -41,6 +42,7 @@ namespace IRExplorerUI {
         private OverlayRenderer overlayRenderer_;
         private bool hasProfileInfo_;
         private int hottestSourceLine_;
+        private InlineeSourceLocation currentInlinee_;
 
         public SourceFilePanel() {
             InitializeComponent();
@@ -211,10 +213,15 @@ namespace IRExplorerUI {
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
             base.OnDocumentSectionUnloaded(section, document);
+            ResetState();
+        }
+
+        private void ResetState() {
             ResetSelectedLine();
             ResetProfileMarking();
             section_ = null;
             fileLoaded_ = false;
+            currentInlinee_ = null;
         }
 
         private void ResetProfileMarking() {
@@ -240,8 +247,10 @@ namespace IRExplorerUI {
             if (tag != null) {
                 if (tag.HasInlinees) {
                     var last = tag.Inlinees[0];
+                    InlineeCombobox.ItemsSource = new ListCollectionView(tag.Inlinees);
+                    InlineeCombobox.SelectedItem = last;
 
-                    if(await LoadInlineeSourceFile(last)) {
+                    if (await LoadInlineeSourceFile(last)) {
                         return;
                     }
                 }
@@ -257,7 +266,13 @@ namespace IRExplorerUI {
         //     all instrs that have the line on the inlinee list for this func
 
         public async Task<bool> LoadInlineeSourceFile(InlineeSourceLocation inlinee) {
+            if(inlinee == currentInlinee_) {
+                return true;
+            }
+
+            // Try to load the profile info of the inlinee.
             var summary = section_.ParentFunction.ParentSummary;
+
             var inlineeFunc = summary.FindFunction((funcName) => {
                 var demangledName = DebugInfoProvider.DemangleFunctionName(funcName);
                 return demangledName == inlinee.Function;
@@ -277,6 +292,7 @@ namespace IRExplorerUI {
                 ScrollToLine(inlinee.Line);
             }
 
+            currentInlinee_ = inlinee;
             return fileLoaded;
         }
 
@@ -297,9 +313,8 @@ namespace IRExplorerUI {
 
         public override void OnSessionEnd() {
             base.OnSessionEnd();
-            ResetSelectedLine();
+            ResetState();
             TextView.Text = "";
-            fileLoaded_ = false;
         }
 
         #endregion
@@ -390,6 +405,13 @@ namespace IRExplorerUI {
         private void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
             if(hasProfileInfo_) {
                 ScrollToLine(hottestSourceLine_);
+            }
+        }
+
+        private async void InlineeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (e.AddedItems.Count == 1) {
+                var inlinee = (InlineeSourceLocation)e.AddedItems[0];
+                await LoadInlineeSourceFile(inlinee);
             }
         }
     }
