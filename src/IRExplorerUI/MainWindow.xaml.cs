@@ -1138,7 +1138,7 @@ namespace IRExplorerUI {
                                         CancelableTask cancelableTask) {
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
             var cvdumpPath = "cvdump.exe"; // Expected to be in main directory.
-            var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader, CompilerInfo, cvdumpPath);
+            using var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader, CompilerInfo, cvdumpPath);
             bool markInlinedFunctions = true;
 
             sessionState_.ProfileData = await profileData.LoadTrace(profileFilePath, binaryFilePath, debugFilePath,
