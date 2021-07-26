@@ -87,11 +87,11 @@ namespace IRExplorerUI.Compilers.ASM {
             foreach (var block in function.Blocks) {
                 if (block.Tuples.Count > 0) {
                     var firstTuple = block.Tuples[0];
-                    var tooltip = $"B{block.Number}";
-                    var overlay = document.AddIconElementOverlay(firstTuple, null, 0, overlayHeight, tooltip,
+                    var label = $"B{block.Number}";
+                    var overlay = document.AddIconElementOverlay(firstTuple, null, 0, overlayHeight, label, null,
                                                                  HorizontalAlignment.Left, VerticalAlignment.Center, -6, -1);
                     overlay.ShowOnMarkerBar = false;
-                    overlay.IsToolTipPinned = true;
+                    overlay.IsLabelPinned = true;
                     overlay.DefaultOpacity = 1;
                     overlay.TextWeight = FontWeights.DemiBold;
                     overlay.TextColor = Brushes.DarkBlue;
@@ -102,7 +102,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     overlay.Background = ColorBrushes.GetBrush(backColor);
 
                     overlay.ShowBackgroundOnMouseOverOnly = false;
-                    overlay.UseToolTipBackground = true;
+                    overlay.UseLabelBackground = true;
                     overlay.Padding = 2;
                 }
             }

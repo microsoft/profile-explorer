@@ -69,6 +69,7 @@ namespace IRExplorerUI.Document {
         private TextSegmentCollection<IROverlaySegment> overlaySegments_;
         private IElementOverlay hoveredOverlay_;
         private IElementOverlay selectedOverlay_;
+        private ToolTip hoverTooltip_;
 
         public OverlayRenderer(ElementHighlighter highlighter) {
             overlaySegments_ = new TextSegmentCollection<IROverlaySegment>();
@@ -76,6 +77,7 @@ namespace IRExplorerUI.Document {
             SnapsToDevicePixels = true;
             IsHitTestVisible = true;
             Background = Brushes.Transparent; // Needed for mouse events to fire...
+            MouseLeave += OverlayRenderer_MouseLeave;
             //PreviewMouseMove += OverlayRenderer_PreviewMouseMove;
             //PreviewMouseLeftButtonDown += OverlayRenderer_PreviewMouseLeftButtonDown;
             highlighter_ = highlighter;
@@ -217,24 +219,32 @@ namespace IRExplorerUI.Document {
 
             Tuple<IElementOverlay, IRElement, Rect> hoverSegment = null;
             Tuple<IElementOverlay, IRElement, Rect> selectedSegment = null;
-            
+            IElementOverlay hoverPrevOverlay = null;
+            IElementOverlay selectedPrevOverlay = null;
+
             foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 bool isBlockElement = segment.Element is BlockIR;
-                
+                IElementOverlay prevOverlay = null;
+
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                     foreach (var overlay in segment.Overlays) {
                         // Draw hover/selected overlay last so that it shows up on top
                         // in case there is some overlap between overlays.
                         if (overlay == hoveredOverlay_) {
                             hoverSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
+                            hoverPrevOverlay = prevOverlay;
+                            prevOverlay = overlay;
                             continue;
                         }
                         else if (overlay == selectedOverlay_) {
                             selectedSegment = new Tuple<IElementOverlay, IRElement, Rect>(overlay, segment.Element, rect);
+                            selectedPrevOverlay = prevOverlay;
+                            prevOverlay = overlay;
                             continue;
                         }
 
-                        overlay.Draw(rect, segment.Element, overlayDC);
+                        overlay.Draw(rect, segment.Element, prevOverlay, overlayDC);
+                        prevOverlay = overlay;
                     }
 
                     // For blocks, consider only the first line, otherwise the overlay
@@ -245,12 +255,12 @@ namespace IRExplorerUI.Document {
                 }
             }
 
-            if(selectedSegment != null) {
-                selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, overlayDC);
+            if (selectedSegment != null) {
+                selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, hoverPrevOverlay, overlayDC);
             }
 
             if (hoverSegment != null) {
-                hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, overlayDC);
+                hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, selectedPrevOverlay, overlayDC);
             }
 
             double dotSize = 3;
@@ -326,6 +336,29 @@ namespace IRExplorerUI.Document {
 
             overlayDC.Close();
             Add(visual);
+
+            if (hoverSegment != null) {
+                ShowTooltip(hoverSegment.Item1);
+            }
+        }
+
+        private void ShowTooltip(IElementOverlay overlay) {
+            if (!(overlay is ElementOverlayBase elementOverlay) || !elementOverlay.HasToolTip) {
+                return;
+            }
+
+            HideTooltip();
+            hoverTooltip_ = new ToolTip();
+            hoverTooltip_.Content = elementOverlay.ToolTip;
+            hoverTooltip_.FontFamily = new FontFamily("Consolas");
+            hoverTooltip_.IsOpen = true;
+        }
+
+        private void HideTooltip() {
+            if (hoverTooltip_ != null) {
+                hoverTooltip_.IsOpen = false;
+                hoverTooltip_ = null;
+            }
         }
 
         private void DrawEdgeArrow(Point[] tempPoints, StreamGeometryContext sc) {
@@ -408,6 +441,7 @@ namespace IRExplorerUI.Document {
                     hoveredOverlay_ = hoverOverlay;
                 }
 
+                HideTooltip();
                 TextView.Redraw();
             }
         }
@@ -552,6 +586,10 @@ namespace IRExplorerUI.Document {
             }
 
             Version++;
+        }
+
+        private void OverlayRenderer_MouseLeave(object sender, MouseEventArgs e) {
+            HideTooltip();
         }
     }
 }

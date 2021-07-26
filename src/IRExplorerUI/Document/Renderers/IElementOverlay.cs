@@ -19,10 +19,12 @@ namespace IRExplorerUI.Document {
         public double MarginY { get; }
         public double Padding { get; }
         Size Size { get; }
+        Rect Bounds { get; }
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
         public bool ShowOnMarkerBar { get; set; }
-        public void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
+        public void Draw(Rect elementRect, IRElement element,
+                         IElementOverlay previousOverlay, DrawingContext drawingContext);
 
         public bool CheckIsMouseOver(Point point);
         public bool MouseClicked(MouseEventArgs e);

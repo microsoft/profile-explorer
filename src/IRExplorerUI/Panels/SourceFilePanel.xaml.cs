@@ -254,6 +254,9 @@ namespace IRExplorerUI {
                         return;
                     }
                 }
+                else {
+                    InlineeCombobox.ItemsSource = null;
+                }
 
                 await LoadSourceFileForFunction(section_.ParentFunction);
                 ScrollToLine(tag.Line);
@@ -376,15 +379,15 @@ namespace IRExplorerUI {
         }
 
         public void AddElementOverlay(IRElement element, IconDrawing icon, int index,
-                                    double width, double height, string toolTip,
+                                    double width, double height, string label,
                                     ProfileDocumentMarkerOptions options,
                                     HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                     VerticalAlignment alignmentY = VerticalAlignment.Center,
                                     double marginX = 8, double marginY = 2) {
             var overlay = IconElementOverlay.CreateDefault(icon, width, height,
                                                             Brushes.Transparent, Brushes.Transparent, null,
-                                                            toolTip, alignmentX, alignmentY, marginX, marginY);
-            overlay.IsToolTipPinned = true;
+                                                            label, null, alignmentX, alignmentY, marginX, marginY);
+            overlay.IsLabelPinned = true;
 
             if (index <= 2) {
                 overlay.TextColor = options.HotBlockOverlayTextColor;

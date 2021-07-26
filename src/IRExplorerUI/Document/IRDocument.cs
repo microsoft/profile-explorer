@@ -3125,6 +3125,7 @@ namespace IRExplorerUI {
             PreviewMouseHoverStopped += IRDocument_PreviewMouseHoverStopped;
             PreviewMouseDoubleClick += IRDocument_PreviewMouseDoubleClick;
             PreviewMouseMove += IRDocument_PreviewMouseMove;
+            MouseLeave += IRDocument_MouseLeave;
             Drop += IRDocument_Drop;
             DragOver += IRDocument_DragOver;
             GiveFeedback += IRDocument_GiveFeedback;
@@ -3133,6 +3134,10 @@ namespace IRExplorerUI {
             margin_.BookmarkChanged += Margin__BookmarkChanged;
             eventSetupDone_ = true;
             AllowDrop = true; // Enable drag-and-drop handilng.
+        }
+
+        private void IRDocument_MouseLeave(object sender, MouseEventArgs e) {
+            HideTemporaryUI();
         }
 
         private void TextAreaOnSelectionChanged(object? sender, EventArgs e) {
@@ -3609,32 +3614,43 @@ namespace IRExplorerUI {
         }
 
         public IconElementOverlay AddIconElementOverlay(IRElement element, IconDrawing icon,
-                                          double width = 16, double height = 0, string toolTip = "",
+                                          double width = 16, double height = 0, 
+                                          string label = "", string tooltip = "",
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
                                           double marginX = 8, double marginY = 4) {
-            var overlay = AddIconElementOveralyImpl(element, icon, width, height, toolTip, 
+            var overlay = AddIconElementOveralyImpl(element, icon, width, height, label, tooltip,
                                                     alignmentX, alignmentY, marginX, marginY);
             UpdateHighlighting();
             return overlay;
         }
 
         private IconElementOverlay AddIconElementOveralyImpl(IRElement element, IconDrawing icon,
-                                                             double width, double height, string toolTip, 
+                                                             double width, double height, string label, string tooltip,
                                                              HorizontalAlignment alignmentX, VerticalAlignment alignmentY, 
                                                              double marginX, double marginY) {
             var overlay = IconElementOverlay.CreateDefault(icon, width, height,
                                                        Brushes.Transparent,
                                                        selectedStyle_.BackColor,
                                                        selectedStyle_.Border,
-                                                       toolTip, alignmentX, alignmentY,
+                                                       label, tooltip, 
+                                                       alignmentX, alignmentY,
                                                        marginX, marginY);
             SetupElementOverlayEvents(overlay);
             overlayRenderer_.AddElementOverlay(element, overlay);
             return overlay;
         }
 
-        public List<IconElementOverlay> AddIconElementOverlays(IEnumerable<Tuple<IRElement, IconDrawing, string>> overlays,
+        public IconElementOverlay AddIconElementOverlay(IconElementOverlayData overlay,
+                                                        double width, double height, 
+                                                        HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
+                                                        double marginX, double marginY) {
+            return AddIconElementOveralyImpl(overlay.Element, overlay.Icon, width, height,
+                                             overlay.Label, overlay.Tooltip, 
+                                             alignmentX, alignmentY, marginX, marginY);
+        }
+
+        public List<IconElementOverlay> AddIconElementOverlays(IEnumerable<IconElementOverlayData> overlays,
                                   double width = 16, double height = 0,
                                   HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                   VerticalAlignment alignmentY = VerticalAlignment.Center,
@@ -3642,8 +3658,7 @@ namespace IRExplorerUI {
             var list = new List<IconElementOverlay>();
 
             foreach (var overlay in overlays) {
-                list.Add(AddIconElementOveralyImpl(overlay.Item1, overlay.Item2, width, height, overlay.Item3,
-                                                   alignmentX, alignmentY, marginX, marginY));
+                list.Add(AddIconElementOverlay(overlay, width, height, alignmentX, alignmentY, marginX, marginY));
             }
 
             UpdateHighlighting();
