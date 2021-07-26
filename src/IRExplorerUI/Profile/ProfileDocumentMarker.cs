@@ -13,6 +13,8 @@ using System.Windows;
 using System.Windows.Media;
 using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Document;
+using System.Windows.Documents;
 
 namespace IRExplorerUI.Compilers.ASM {
     public class ProfileDocumentMarkerOptions {
@@ -21,8 +23,10 @@ namespace IRExplorerUI.Compilers.ASM {
         public double LineWeightCutoff {  get; set; }
         public Brush ElementOverlayTextColor { get; set; }
         public Brush HotElementOverlayTextColor { get; set; }
+        public Brush InlineeOverlayTextColor { get; set; }
         public Brush BlockOverlayTextColor { get; set; }
         public Brush HotBlockOverlayTextColor { get; set; }
+        public Brush InlineeOverlayBackColor { get; set; }
         public Brush ElementOverlayBackColor { get; set; }
         public Brush HotElementOverlayBackColor { get; set; }
         public Brush BlockOverlayBackColor { get; set; }
@@ -36,7 +40,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 VirtualColumnPosition = 450,
                 ElementWeightCutoff = 0.003, // 0.3%
                 LineWeightCutoff = 0.005, // 0.5%,
-                ElementOverlayTextColor = Brushes.Black,
+                ElementOverlayTextColor = Brushes.DarkBlue,
                 HotElementOverlayTextColor = Brushes.DarkRed,
                 ElementOverlayBackColor = Brushes.Transparent,
                 HotElementOverlayBackColor = Brushes.AntiqueWhite,
@@ -44,6 +48,8 @@ namespace IRExplorerUI.Compilers.ASM {
                 HotBlockOverlayTextColor = Brushes.DarkRed,
                 BlockOverlayBackColor = Brushes.AliceBlue,
                 HotBlockOverlayBackColor = Brushes.AntiqueWhite,
+                InlineeOverlayTextColor = Brushes.DarkGreen,
+                InlineeOverlayBackColor = Brushes.Transparent,
                 ColorPalette = ColorUtils.MakeColorPallete(1, 1, 0.80f, 0.95f, 10) // 10 steps, red
             };
         }
@@ -114,7 +120,7 @@ namespace IRExplorerUI.Compilers.ASM {
         private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, 
                                         FunctionProfileData profile, IRDocument document) {
             document.SuspendUpdate();
-            var blockOverlays = new List<Tuple<IRElement, IconDrawing, string>>(blockWeights.Count);
+            var blockOverlays = new List<IconElementOverlayData>(blockWeights.Count);
 
             for(int i = 0; i < blockWeights.Count; i++) {
                 var element = blockWeights[i].Item1;
@@ -138,7 +144,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
 
                 var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
-                blockOverlays.Add(new Tuple<IRElement, IconDrawing, string>(element, icon, tooltip));
+                blockOverlays.Add(new IconElementOverlayData(element, icon, tooltip));
                 document.MarkBlock(element, options_.PickColorForWeight(weightPercentage), markOnFlowGraph);
 
                 if (weightPercentage > options_.ElementWeightCutoff) {
@@ -150,8 +156,8 @@ namespace IRExplorerUI.Compilers.ASM {
 
             for(int i = 0; i < blockOverlayList.Count; i++) {
                 var overlay = blockOverlayList[i];
-                overlay.IsToolTipPinned = true;
-                overlay.UseToolTipBackground = true;
+                overlay.IsLabelPinned = true;
+                overlay.UseLabelBackground = true;
                 overlay.ShowBackgroundOnMouseOverOnly = false;
                 overlay.AlignmentX = HorizontalAlignment.Left;
                 overlay.MarginX = 48;
@@ -173,9 +179,10 @@ namespace IRExplorerUI.Compilers.ASM {
         private void MarkProfiledElements(List<Tuple<IRElement, TimeSpan>> elements,
                                           FunctionProfileData profile, IRDocument document) {
             var elementColorPairs = new List<Tuple<IRElement, Color>>(elements.Count);
-            var elementOverlays = new List<Tuple<IRElement, IconDrawing, string>>(elements.Count);
+            var elementOverlays = new List<IconElementOverlayData>(elements.Count);
+            var inlineeOverlays = new List<IconElementOverlayData>(elements.Count);
 
-            for(int i = 0; i < elements.Count; i++) {
+            for (int i = 0; i < elements.Count; i++) {
                 var element = elements[i].Item1;
                 var weight = elements[i].Item2;
                 double weightPercentage = profile.ScaleWeight(weight);
@@ -200,19 +207,45 @@ namespace IRExplorerUI.Compilers.ASM {
                     icon = IconDrawing.FromIconResource("DotIconYellow");
                 }
 
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
-                elementOverlays.Add(new Tuple<IRElement, IconDrawing, string>(element, icon, tooltip));
+                var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
+                elementOverlays.Add(new IconElementOverlayData (element, icon, label));
+
+                var tag = element.GetTag<SourceLocationTag>();
+
+                if (tag != null && tag.HasInlinees) {
+                    var sb = new StringBuilder();
+                    var tooltipSb = new StringBuilder();
+
+                    for(int k = 0; k < tag.Inlinees.Count; k++) {
+                        var inlinee = tag.Inlinees[k];
+                        var inlineeName = DebugInfoProvider.DemangleFunctionName(inlinee.Function, FunctionNameDemanglingOptions.OnlyName);
+                        sb.AppendFormat("{0}:{1}", inlineeName, tag.Inlinees[k].Line);
+                        AppendInlineeTooltip(inlineeName, inlinee.Line, k, tooltipSb);
+                        tooltipSb.AppendLine();
+
+                        if (k != tag.Inlinees.Count - 1) {
+                            sb.Append("  |  ");
+                        }
+                    }
+
+                    var funcName = DebugInfoProvider.DemangleFunctionName(document.Section.ParentFunction.Name,
+                                                                          FunctionNameDemanglingOptions.OnlyName);
+                    AppendInlineeTooltip(funcName, tag.Line, tag.Inlinees.Count, tooltipSb);
+                    inlineeOverlays.Add(new IconElementOverlayData(element, null, sb.ToString(), tooltipSb.ToString()));
+                }
+
             }
 
             var elementOverlayList = document.AddIconElementOverlays(elementOverlays);
+            var inlineeOverlayList = document.AddIconElementOverlays(inlineeOverlays);
 
             for(int i = 0; i < elementOverlayList.Count; i++) {
                 var overlay = elementOverlayList[i];
-                overlay.IsToolTipPinned = true;
+                overlay.IsLabelPinned = true;
 
                 if (i <= 2) {
                     overlay.TextColor = options_.HotElementOverlayTextColor;
-                    overlay.UseToolTipBackground = true;
+                    overlay.UseLabelBackground = true;
                     overlay.Background = options_.HotElementOverlayBackColor;
                     overlay.TextWeight = FontWeights.Bold;
                 }
@@ -224,7 +257,22 @@ namespace IRExplorerUI.Compilers.ASM {
                 overlay.VirtualColumn = options_.VirtualColumnPosition;
             }
 
+            foreach(var overlay in inlineeOverlayList) {
+                overlay.VirtualColumn = options_.VirtualColumnPosition + 150;
+                overlay.TextColor = options_.InlineeOverlayTextColor;
+                overlay.Background = options_.ElementOverlayBackColor;
+                overlay.IsLabelPinned = true;
+            }
+
             document.MarkElements(elementColorPairs);
+        }
+
+        private void AppendInlineeTooltip(string inlineeName, int inlineeLine, int index, StringBuilder tooltipSb) {
+            for (int column = 0; column < index * 4; column++) {
+                tooltipSb.Append(' ');
+            }
+
+            tooltipSb.AppendFormat("{0}:{1}", inlineeName, inlineeLine);
         }
 
         private void MarkProfiledLines(FunctionProfileData profile, IRDocument document) {

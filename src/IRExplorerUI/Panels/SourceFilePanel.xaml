@@ -45,7 +45,7 @@
                         Text="Path" />
                     <TextBox
                         Name="PathTextbox"
-                        Width="400"
+                        Width="200"
                         Margin="4,0,0,0"
                         HorizontalAlignment="Center"
                         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
@@ -61,6 +61,12 @@
                         <Image Source="{StaticResource StarIcon}" />
                     </Button>
                     <ComboBox Name="InlineeCombobox" MaxWidth="300" Width="200" DisplayMemberPath="Function" SelectedValue="Function" SelectionChanged="InlineeCombobox_SelectionChanged"/>
+                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
+                        <Image Source="{StaticResource LeftArrowIcon}" />
+                    </Button>
+                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
+                        <Image Source="{StaticResource RightArrowIcon}" />
+                    </Button>
                 </ToolBar>
             </ToolBarTray>
             <local:PanelToolbarTray

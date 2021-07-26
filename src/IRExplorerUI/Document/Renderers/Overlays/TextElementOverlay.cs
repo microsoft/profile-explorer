@@ -13,13 +13,11 @@ namespace IRExplorerUI.Document {
                                   HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                   VerticalAlignment alignmentY = VerticalAlignment.Center,
                                   string toolTip = "") :
-            base(width, height, marginX, marginY, alignmentX, alignmentY, toolTip) {
-            Text = text;
+            base(width, height, marginX, marginY, alignmentX, alignmentY, text, toolTip) {
         }
 
-        public string Text { get; set; }
-
-        public override void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext) {
+        public override void Draw(Rect elementRect, IRElement element,
+                                  IElementOverlay previousOverlay, DrawingContext drawingContext) {
             
         }
     }

@@ -13,6 +13,8 @@ namespace IRExplorerUI.Document {
     [ProtoContract(SkipConstructor = true)]
     [ProtoInclude(200, typeof(IconElementOverlay))]
     public abstract class ElementOverlayBase : IElementOverlay {
+        private Rect labelBounds_;
+
         protected ElementOverlayBase() {
             // Used for deserialization.
         }
@@ -21,8 +23,9 @@ namespace IRExplorerUI.Document {
                                   double marginX, double marginY, 
                                   HorizontalAlignment alignmentX,
                                   VerticalAlignment alignmentY,
-                                  string toolTip) {
-            ToolTip = toolTip;
+                                  string label, string tooltip) {
+            Label = label;
+            ToolTip = tooltip;
             Width = width;
             Height = height;
             MarginX = marginX;
@@ -40,7 +43,7 @@ namespace IRExplorerUI.Document {
         }
 
         [ProtoMember(2)]
-        public string ToolTip { get; set; }
+        public string Label { get; set; }
         [ProtoMember(3)]
         public double Width { get; set; }
         [ProtoMember(4)]
@@ -62,13 +65,13 @@ namespace IRExplorerUI.Document {
         [ProtoMember(11)]
         public bool ShowBorderOnMouseOverOnly { get; set; }
         [ProtoMember(12)]
-        public bool ShowToolTipOnMouseOverOnly { get; set; }
+        public bool ShowLabelOnMouseOverOnly { get; set; }
         [ProtoMember(13)]
-        public bool UseToolTipBackground { get; set; }
+        public bool UseLabelBackground { get; set; }
         [ProtoMember(14)]
-        public bool AllowToolTipEditing { get; set; }
+        public bool AllowLabelEditing { get; set; }
         [ProtoMember(15)]
-        public bool IsToolTipPinned { get; set; }
+        public bool IsLabelPinned { get; set; }
         [ProtoMember(16)]
         public bool ShowOnMarkerBar { get; set; }
         [ProtoMember(17)]
@@ -79,6 +82,8 @@ namespace IRExplorerUI.Document {
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
         public Rect Bounds { get; set; }
+        public bool HasLabel => !string.IsNullOrEmpty(Label);
+        public bool HasToolTip => !string.IsNullOrEmpty(ToolTip);
 
         [ProtoMember(19)]
         public Brush Background { get; set; }
@@ -96,22 +101,26 @@ namespace IRExplorerUI.Document {
         public FontWeight TextWeight { get; set; }
         [ProtoMember(26)]
         public double VirtualColumn { get; set; }
-
-        private Rect tooltipBounds_;
+        [ProtoMember(27)]
+        public string ToolTip { get; set; }
 
         protected double ActualWidth => Width + 2 * Padding;
         protected double ActualHeight => Height + 2 * Padding;
-        protected virtual bool ShowToolTip => !string.IsNullOrEmpty(ToolTip) &&
-                                             (!ShowToolTipOnMouseOverOnly || 
-                                              IsToolTipPinned || IsMouseOver || IsSelected);
+        
+        protected virtual bool ShowLabel => !string.IsNullOrEmpty(Label) &&
+                                             (!ShowLabelOnMouseOverOnly || 
+                                              IsLabelPinned || IsMouseOver || IsSelected);
+        
         protected virtual bool ShowBackground => (Width > 0 && Height > 0) &&
                                                  (!ShowBackgroundOnMouseOverOnly || IsMouseOver || IsSelected);
+        
         protected virtual bool ShowBorder => !ShowBorderOnMouseOverOnly || IsMouseOver || IsSelected;
 
-        public abstract void Draw(Rect elementRect, IRElement element, DrawingContext drawingContext);
+        public abstract void Draw(Rect elementRect, IRElement element,
+                                  IElementOverlay previousOverlay, DrawingContext drawingContext);
 
         protected void DrawBackground(Rect elementRect, double opacity, DrawingContext drawingContext) {
-            if ((ShowBackground || ShowBorder) && !(ShowToolTip && UseToolTipBackground)) {
+            if ((ShowBackground || ShowBorder) && !(ShowLabel && UseLabelBackground)) {
                 drawingContext.PushOpacity(opacity);
                 drawingContext.DrawRectangle(CurrentBackgroundBrush, CurrentBorder, elementRect);
                 drawingContext.Pop();
@@ -122,7 +131,7 @@ namespace IRExplorerUI.Document {
                                                         SelectedBackground : Background;
         protected virtual Pen CurrentBorder => !ShowBorderOnMouseOverOnly || IsSelected || IsMouseOver ?
                                             Border : null;
-        protected virtual Brush CurrentToolTipBackgroundBrush => Background == null || 
+        protected virtual Brush CurrentLabelBackgroundBrush => Background == null || 
                                                           (IsSelected && SelectedBackground != null) ?
                                                            SelectedBackground : Background;
 
@@ -139,33 +148,41 @@ namespace IRExplorerUI.Document {
         public event MouseEventHandler OnClick;
         public event KeyEventHandler OnKeyPress;
 
-        protected void DrawToolTip(Rect elementRect, double opacity, DrawingContext drawingContext) {
+        protected Rect DrawLabel(Rect elementRect, double opacity, DrawingContext drawingContext) {
             var host = App.Current.MainWindow; // Used to get DPI.
             double fontSize = TextSize != 0 ? TextSize : App.Settings.DocumentSettings.FontSize;
             
-            var text = DocumentUtils.CreateFormattedText(host, ToolTip, DefaultFont, fontSize,
+            var text = DocumentUtils.CreateFormattedText(host, Label, DefaultFont, fontSize,
                                                         ActiveTextBrush, TextWeight);
             double textX = elementRect.Right + Padding;
             double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
-            tooltipBounds_ = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * Padding, 0);
+            labelBounds_ = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * Padding, 0);
 
             drawingContext.PushOpacity(opacity);
 
-            if (UseToolTipBackground) {
-                // Draw a rectangle covering both the icon and tooltip.
-                drawingContext.DrawRectangle(CurrentToolTipBackgroundBrush, CurrentBorder, tooltipBounds_);
+            if (UseLabelBackground) {
+                // Draw a rectangle covering both the icon and label.
+                drawingContext.DrawRectangle(CurrentLabelBackgroundBrush, CurrentBorder, labelBounds_);
             }
 
             drawingContext.DrawText(text, Utils.SnapPointToPixels(textX, textY));
             drawingContext.Pop();
+            return labelBounds_;
         }
 
-        protected double ComputePositionX(Rect rect) {
+        protected double ComputePositionX(Rect rect, IElementOverlay previousOveraly) {
             if (AlignmentX == HorizontalAlignment.Left) {
                 return Utils.SnapToPixels(rect.Left - ActualWidth + MarginX);
             }
             else if(AlignmentX == HorizontalAlignment.Right) {
-                return Utils.SnapToPixels(Math.Max(VirtualColumn, rect.Right + MarginX));
+                double rightEdgeX = rect.Right;
+
+                if(previousOveraly != null) {
+                    // Align to the right of the previous overlay.
+                    rightEdgeX = previousOveraly.Bounds.Right;
+                }
+
+                return Utils.SnapToPixels(Math.Max(VirtualColumn, rightEdgeX + MarginX));
             }
             else {
                 return Utils.SnapToPixels(rect.Left + (rect.Width - ActualWidth) / 2);
@@ -180,7 +197,7 @@ namespace IRExplorerUI.Document {
             return rect.Height;
         }
 
-        protected double ComputePositionY(Rect rect) {
+        protected double ComputePositionY(Rect rect, IElementOverlay previousOveraly) {
             if (AlignmentY == VerticalAlignment.Top) {
                 return Utils.SnapToPixels(rect.Top - ComputeHeight(rect) - MarginY);
             }
@@ -195,8 +212,8 @@ namespace IRExplorerUI.Document {
         public virtual bool CheckIsMouseOver(Point point) {
             IsMouseOver = Bounds.Contains(point);
             
-            if(!IsMouseOver && ShowToolTip) {
-                IsMouseOver = tooltipBounds_.Contains(point);
+            if(!IsMouseOver && ShowLabel) {
+                IsMouseOver = labelBounds_.Contains(point);
             }
 
             return IsMouseOver;
@@ -210,7 +227,7 @@ namespace IRExplorerUI.Document {
         public virtual bool KeyPressed(KeyEventArgs e) {
             OnKeyPress?.Invoke(this, e);
 
-            if (!AllowToolTipEditing || !IsSelected) {
+            if (!AllowLabelEditing || !IsSelected) {
                 return e.Handled;
             }
 
@@ -220,32 +237,32 @@ namespace IRExplorerUI.Document {
                 // Append a new letter.
                 string keyString = keyInfo.Letter.ToString();
 
-                if (string.IsNullOrEmpty(ToolTip)) {
-                    ToolTip = keyString;
+                if (string.IsNullOrEmpty(Label)) {
+                    Label = keyString;
                 }
                 else {
-                    ToolTip += keyString;
+                    Label += keyString;
                 }
 
                 return true;
             }
             else if (e.Key == Key.Back) {
                 // Remove last letter.
-                if (!string.IsNullOrEmpty(ToolTip)) {
-                    ToolTip = ToolTip.Substring(0, ToolTip.Length - 1);
+                if (!string.IsNullOrEmpty(Label)) {
+                    Label = Label.Substring(0, Label.Length - 1);
                     return true;
                 }
             }
             else if (e.Key == Key.Delete) {
-                ToolTip = null; // Delete all text.
+                Label = null; // Delete all text.
                 return true;
             }
             else if(e.Key == Key.Enter) {
-                IsToolTipPinned = true;
+                IsLabelPinned = true;
                 return true;
             }
             else if (e.Key == Key.Escape) {
-                IsToolTipPinned = false;
+                IsLabelPinned = false;
                 return true;
             }
 

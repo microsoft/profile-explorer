@@ -12,7 +12,8 @@ using IRExplorerUI.Document;
 namespace IRExplorerUI.Scripting {
     public class IconOverlayInfo {
         public IconDrawing Icon { get; set; }
-        public string Tooltip { get; set; }
+        public string Label { get; set; }
+        public string ToolTip { get; set; }
         public HorizontalAlignment AlignmentX { get; set; }
         public double MarginX { get; set; }
     }
@@ -133,7 +134,7 @@ namespace IRExplorerUI.Scripting {
                 element,
                 new IconOverlayInfo() {
                     Icon = icon,
-                    Tooltip = text,
+                    Label = text,
                     AlignmentX = HorizontalAlignment.Right
                 }));
         }

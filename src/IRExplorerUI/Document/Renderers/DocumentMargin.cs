@@ -377,8 +377,7 @@ namespace IRExplorerUI {
 
             var point = Mouse.GetPosition(this);
 
-            foreach (var segment in bookmarkSegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)
-            ) {
+            foreach (var segment in bookmarkSegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 if (segment.PinButtonBounds.Contains(point)) {
                     return new Tuple<BookmarkSegment, BookmarkSegmentElement>(
                         segment, BookmarkSegmentElement.PinButton);

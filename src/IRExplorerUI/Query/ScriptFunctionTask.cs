@@ -109,7 +109,7 @@ namespace IRExplorerUI.Query {
             foreach (var pair in scriptSession_.IconElementOverlays) {
                 var info = pair.Item2;
                 document.AddIconElementOverlay(pair.Item1, info.Icon, 16, 16, 
-                                               info.Tooltip, info.AlignmentX,
+                                               info.Label, info.ToolTip, info.AlignmentX,
                                                VerticalAlignment.Center, info.MarginX);
             }
 

@@ -8,6 +8,21 @@ using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorerUI.Document {
+    public struct IconElementOverlayData {
+        public IconElementOverlayData(IRElement element, IconDrawing icon, 
+                                      string label = null, string tooltip = null) {
+            Element = element;
+            Icon = icon;
+            Label = label;
+            Tooltip = tooltip;
+        }
+
+        public IRElement Element { get; set; }
+        public IconDrawing Icon { get; set; }
+        public string Label { get; set; }
+        public string Tooltip { get; set; }
+    }
+
     [ProtoContract(SkipConstructor = true)]
     public class IconElementOverlay : ElementOverlayBase {
         public IconElementOverlay() : base() {
@@ -15,31 +30,34 @@ namespace IRExplorerUI.Document {
             return;
         }
 
-        public IconElementOverlay(IconDrawing icon, double width, double height, string toolTip,
-                               HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
-                               double marginX, double marginY) :
-            base(width, height, marginX, marginY, alignmentX, alignmentY, toolTip) {
+        public IconElementOverlay(IconDrawing icon, double width, double height, 
+                                  string label, string tooltip,
+                                  HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
+                                  double marginX, double marginY) :
+            base(width, height, marginX, marginY, alignmentX, alignmentY, label, tooltip) {
             Icon = icon;
         }
 
         public static IconElementOverlay
         CreateDefault(IconDrawing icon, double width, double height,
                       Brush backColor, Brush selectedBackColor, Pen border,
-                      string toolTip = "", 
+                      string label = "", string tooltip = "",
                       HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                       VerticalAlignment alignmentY = VerticalAlignment.Center,
                       double marginX = 4, double marginY = 4, double padding = 1) {
-            return new IconElementOverlay(icon, width, height, toolTip, alignmentX, alignmentY,
+            return new IconElementOverlay(icon, width, height, 
+                                          label, tooltip,
+                                          alignmentX, alignmentY,
                                           marginX, marginY) {
                 Background = backColor,
                 SelectedBackground = selectedBackColor,
                 Border = border,
                 ShowBackgroundOnMouseOverOnly = true,
                 ShowBorderOnMouseOverOnly = true,
-                ShowToolTipOnMouseOverOnly = true,
-                UseToolTipBackground = true,
+                ShowLabelOnMouseOverOnly = true,
+                UseLabelBackground = true,
                 Padding = padding,
-                AllowToolTipEditing = true,
+                AllowLabelEditing = true,
             };
         }
 
@@ -47,14 +65,14 @@ namespace IRExplorerUI.Document {
         public IconDrawing Icon { get; set; }
 
         public override void Draw(Rect elementRect, IRElement element,
-                               DrawingContext drawingContext) {
-            double x = ComputePositionX(elementRect);
-            double y = ComputePositionY(elementRect);
+                                  IElementOverlay previousOverlay, DrawingContext drawingContext) {
+            double x = ComputePositionX(elementRect, previousOverlay);
+            double y = ComputePositionY(elementRect, previousOverlay);
             double opacity = ActiveOpacity;
             Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, 
                                            Math.Max(ActualHeight, elementRect.Height));
-            if (ShowToolTip) {
-                DrawToolTip(Bounds, opacity, drawingContext);
+            if (ShowLabel) {
+                Bounds = DrawLabel(Bounds, opacity, drawingContext);
             }
 
             if (Icon != null) {
