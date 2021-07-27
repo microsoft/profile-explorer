@@ -46,6 +46,8 @@ namespace IRExplorerUI {
 
         public Guid Id { get; set; }
         public string FilePath { get; set; }
+        public string BinaryFilePath { get; set; }
+        public string DebugInfoFilePath { get; set; }
         public IRTextSectionLoader Loader { get; set; }
         public IRTextSummary Summary { get; set; }
         public bool IsDebugDocument { get; set; }
