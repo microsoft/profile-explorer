@@ -74,7 +74,7 @@ namespace IRExplorerUI {
 
             if (line != null && Document != null) {
                 selectedLine_ = line.LineNumber;
-                Document.SelectElementsOnSourceLine(line.LineNumber);
+                Document.SelectElementsOnSourceLine(line.LineNumber - 1, currentInlinee_);
             }
         }
 
@@ -246,21 +246,29 @@ namespace IRExplorerUI {
 
             if (tag != null) {
                 if (tag.HasInlinees) {
-                    var last = tag.Inlinees[0];
-                    InlineeCombobox.ItemsSource = new ListCollectionView(tag.Inlinees);
-                    InlineeCombobox.SelectedItem = last;
-
-                    if (await LoadInlineeSourceFile(last)) {
+                    if(await LoadInlineeSourceFile(tag)) {
                         return;
                     }
                 }
                 else {
-                    InlineeCombobox.ItemsSource = null;
+                    ResetInlinee();
                 }
 
                 await LoadSourceFileForFunction(section_.ParentFunction);
                 ScrollToLine(tag.Line);
             }
+        }
+
+        private async Task<bool> LoadInlineeSourceFile(SourceLocationTag tag) {
+            var last = tag.Inlinees[0];
+            InlineeCombobox.ItemsSource = new ListCollectionView(tag.Inlinees);
+            InlineeCombobox.SelectedItem = last;
+            return await LoadInlineeSourceFile(last);
+        }
+
+        private void ResetInlinee() {
+            InlineeCombobox.ItemsSource = null;
+            currentInlinee_ = null;
         }
 
         //? TODO: Option to stop before STL functs (just my code like)
@@ -343,7 +351,7 @@ namespace IRExplorerUI {
             foreach (var pair in lines) {
                 int sourceLine = pair.Item1;
 
-                if (sourceLine < 0 || sourceLine > TextView.Document.LineCount) {
+                if (sourceLine <= 0 || sourceLine > TextView.Document.LineCount) {
                     continue;
                 }
 
@@ -360,7 +368,7 @@ namespace IRExplorerUI {
                     icon = IconDrawing.FromIconResource("DotIconYellow");
                 }
                 
-                var documentLine = TextView.Document.GetLineByNumber(sourceLine + 1);
+                var documentLine = TextView.Document.GetLineByNumber(sourceLine);
                 var location = new TextLocation(documentLine.Offset, sourceLine, 0);
                 var element = new IRElement(location, documentLine.Length);
                 element.Id = nextElementId.NextOperand();
@@ -415,6 +423,20 @@ namespace IRExplorerUI {
             if (e.AddedItems.Count == 1) {
                 var inlinee = (InlineeSourceLocation)e.AddedItems[0];
                 await LoadInlineeSourceFile(inlinee);
+            }
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e) {
+            if(InlineeCombobox.ItemsSource != null &&
+                InlineeCombobox.SelectedIndex > 0) {
+                InlineeCombobox.SelectedIndex--;
+            }
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e) {
+            if (InlineeCombobox.ItemsSource != null &&
+                InlineeCombobox.SelectedIndex < ((ListCollectionView)InlineeCombobox.ItemsSource).Count - 1) {
+                InlineeCombobox.SelectedIndex++;
             }
         }
     }

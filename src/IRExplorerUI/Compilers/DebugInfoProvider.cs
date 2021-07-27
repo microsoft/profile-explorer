@@ -86,7 +86,7 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var sourceFile = lineNumber.sourceFile;
-                    return (sourceFile.fileName, (int)lineNumber.lineNumber - 1);
+                    return (sourceFile.fileName, (int)lineNumber.lineNumber);
                 }
             }
             catch (Exception ex) {
@@ -109,7 +109,7 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var locationTag = instr.GetOrAddTag<SourceLocationTag>();
-                    locationTag.Line = (int)lineNumber.lineNumber - 1;
+                    locationTag.Line = (int)lineNumber.lineNumber;
                     locationTag.Column = (int)lineNumber.columnNumber;
 
                     funcSymbol.findInlineFramesByRVA(instrRVA, out var inlineeFrameEnum);
@@ -125,7 +125,7 @@ namespace IRExplorerUI.Compilers {
                             }
 
                             locationTag.AddInlinee(inlineFrame.name, inlineeLineNumber.sourceFile.fileName,
-                                                   (int)inlineeLineNumber.lineNumber - 1,
+                                                   (int)inlineeLineNumber.lineNumber,
                                                    (int)inlineeLineNumber.columnNumber);
                         }
                     }

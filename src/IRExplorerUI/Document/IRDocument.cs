@@ -618,18 +618,18 @@ namespace IRExplorerUI {
             HighlightSingleElement(element, GetHighlighter(type));
         }
 
-        public void SelectElementsOnSourceLine(int lineNumber) {
+        public void SelectElementsOnSourceLine(int lineNumber, InlineeSourceLocation inlinee = null) {
             ClearTemporaryHighlighting();
-            MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent, false, true);
-            UpdateHighlighting();
+            MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent, 
+                                     false, true, inlinee);
         }
 
         public void MarkElementsOnSourceLine(int lineNumber, Color selectedColor, bool raiseEvent = true) {
-            MarkElementsOnSourceLine(markedHighlighter_, lineNumber, selectedColor, raiseEvent, false);
+            MarkElementsOnSourceLine(markedHighlighter_, lineNumber, selectedColor, raiseEvent, false, null);
         }
 
         private void MarkElementsOnSourceLine(ElementHighlighter highlighter, int lineNumber, Color selectedColor,
-                                         bool raiseEvent, bool bringIntoView) {
+                                         bool raiseEvent, bool bringIntoView, InlineeSourceLocation inlinee) {
             var style = highlighter == selectedHighlighter_ ? selectedStyle_ : new HighlightingStyle(selectedColor);
             var group = new HighlightedGroup(style);
             IRElement firstTuple = null;
@@ -637,8 +637,21 @@ namespace IRExplorerUI {
             foreach (var block in function_.Blocks) {
                 foreach (var tuple in block.Tuples) {
                     var sourceTag = tuple.GetTag<SourceLocationTag>();
+                    bool found = false;
 
-                    if (sourceTag != null && sourceTag.Line == lineNumber) {
+                    if (sourceTag == null) {
+                        continue;
+                    }
+
+                    if (inlinee == null) {
+                        found = sourceTag.Line == lineNumber;
+                    }
+                    else if(sourceTag.HasInlinees) {
+                        found = sourceTag.Inlinees.Find(item => item.Function == inlinee.Function &&
+                                                        item.Line == lineNumber) != null;
+                    }
+
+                    if (found) {
                         group.Add(tuple);
 
                         if (firstTuple == null) {
@@ -646,7 +659,7 @@ namespace IRExplorerUI {
                         }
 
                         if (raiseEvent) {
-                            RaiseElementHighlightingEvent(tuple, group, highlighter.Type, 
+                            RaiseElementHighlightingEvent(tuple, group, highlighter.Type,
                                 HighlightingEventAction.AppendHighlighting);
                         }
                     }
@@ -659,8 +672,6 @@ namespace IRExplorerUI {
                 if (bringIntoView) {
                     BringElementIntoView(firstTuple);
                 }
-
-                
             }
 
             UpdateHighlighting();

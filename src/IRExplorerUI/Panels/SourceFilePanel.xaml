@@ -60,11 +60,11 @@
                     <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
                         <Image Source="{StaticResource StarIcon}" />
                     </Button>
-                    <ComboBox Name="InlineeCombobox" MaxWidth="300" Width="200" DisplayMemberPath="Function" SelectedValue="Function" SelectionChanged="InlineeCombobox_SelectionChanged"/>
-                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
+                    <ComboBox Name="InlineeCombobox" MaxWidth="300" Width="200" DisplayMemberPath="Function" SelectedValue="Function" SelectionChanged="InlineeCombobox_SelectionChanged" ToolTip="Inlined functions call stack"/>
+                    <Button Click="Button_Click_1" ToolTip="Switch to callee">
                         <Image Source="{StaticResource LeftArrowIcon}" />
                     </Button>
-                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
+                    <Button Click="Button_Click_2"  ToolTip="Switch to caller">
                         <Image Source="{StaticResource RightArrowIcon}" />
                     </Button>
                 </ToolBar>
