@@ -34,8 +34,6 @@ namespace IRExplorerUI {
 
     public class LoadedDocument : IDisposable {
         private FileSystemWatcher documentWatcher_;
-        public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
-        public Dictionary<IRTextSection, object> SectionStates;
 
         public LoadedDocument(string filePath, Guid id) {
             FilePath = filePath;
@@ -51,6 +49,8 @@ namespace IRExplorerUI {
         public IRTextSectionLoader Loader { get; set; }
         public IRTextSummary Summary { get; set; }
         public bool IsDebugDocument { get; set; }
+        public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
+        public Dictionary<IRTextSection, object> SectionStates;
 
         public string FileName {
             get {

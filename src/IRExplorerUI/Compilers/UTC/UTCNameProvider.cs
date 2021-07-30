@@ -110,7 +110,7 @@ namespace IRExplorerUI.UTC {
         }
 
         public string DemangleFunctionName(string name, FunctionNameDemanglingOptions options) {
-            return DebugInfoProvider.DemangleFunctionName(name, options);
+            return PDBDebugInfoProvider.DemangleFunctionName(name, options);
         }
 
         public string DemangleFunctionName(IRTextFunction function, FunctionNameDemanglingOptions options) {
