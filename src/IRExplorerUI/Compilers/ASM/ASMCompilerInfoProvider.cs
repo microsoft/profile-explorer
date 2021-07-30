@@ -14,6 +14,7 @@ using System.Windows;
 using System.Windows.Media;
 using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
+using System.IO;
 
 namespace IRExplorerUI.Compilers.ASM {
     public class ASMCompilerInfoProvider : ICompilerInfoProvider {
@@ -36,6 +37,7 @@ namespace IRExplorerUI.Compilers.ASM {
         public string CompilerDisplayName => "ASM " + ir_.Mode.ToString();
 
         public string OpenFileFilter => "Asm Files|*.asm;*.txt;*.log|All Files|*.*";
+        public string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
 
         public string DefaultSyntaxHighlightingFile => "ASM";
 
@@ -54,14 +56,19 @@ namespace IRExplorerUI.Compilers.ASM {
         public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>();
 
         public bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section) {
-            //? TODO: Read PDB
-            //? needs integration with doc loader
-            //? extract source file for func def
-            var debugFile = @"E:\spec\spec2017\benchspec\leela\default\build_base_msvc-diff.0000\leela_s.pdb";
-            using var debugInfo = new DebugInfoProvider();
+            // Annotate the instructions with debug info (line numbers, source files)
+            // if the debug file is specified and available.
+            var loadedDoc = Session.SessionState.FindLoadedDocument(section);
+            var debugFile = loadedDoc.DebugInfoFilePath;
 
-            if(debugInfo.LoadDebugInfo(debugFile)) {
-                debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
+            if (!string.IsNullOrEmpty(debugFile) &&
+                File.Exists(debugFile)) {
+
+                using var debugInfo = new PDBDebugInfoProvider();
+
+                if (debugInfo.LoadDebugInfo(debugFile)) {
+                    debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
+                }
             }
 
             return true;

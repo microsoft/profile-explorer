@@ -16,6 +16,8 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Document;
 using System.Windows.Documents;
 
+//? TODO: EXTRACT SOURCE LOCATION MARKING TO OWN CLASS NOT PROFILE-DEPENDENT
+
 namespace IRExplorerUI.Compilers.ASM {
     public class ProfileDocumentMarkerOptions {
         public double VirtualColumnPosition { get; set; }
@@ -218,7 +220,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
                     for(int k = 0; k < tag.Inlinees.Count; k++) {
                         var inlinee = tag.Inlinees[k];
-                        var inlineeName = DebugInfoProvider.DemangleFunctionName(inlinee.Function, FunctionNameDemanglingOptions.OnlyName);
+                        var inlineeName = PDBDebugInfoProvider.DemangleFunctionName(inlinee.Function, FunctionNameDemanglingOptions.OnlyName);
                         sb.AppendFormat("{0}:{1}", inlineeName, tag.Inlinees[k].Line);
                         AppendInlineeTooltip(inlineeName, inlinee.Line, k, tooltipSb);
                         tooltipSb.AppendLine();
@@ -228,7 +230,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         }
                     }
 
-                    var funcName = DebugInfoProvider.DemangleFunctionName(document.Section.ParentFunction.Name,
+                    var funcName = PDBDebugInfoProvider.DemangleFunctionName(document.Section.ParentFunction.Name,
                                                                           FunctionNameDemanglingOptions.OnlyName);
                     AppendInlineeTooltip(funcName, tag.Line, tag.Inlinees.Count, tooltipSb);
                     inlineeOverlays.Add(new IconElementOverlayData(element, null, sb.ToString(), tooltipSb.ToString()));

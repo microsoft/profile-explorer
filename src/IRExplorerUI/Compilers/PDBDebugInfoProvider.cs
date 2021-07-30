@@ -11,15 +11,15 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace IRExplorerUI.Compilers {
-    
+
     //? https://stackoverflow.com/questions/34960989/how-can-i-hide-dll-registration-message-window-in-my-application
-    
+
     //? Merge with PDB cvdump reader for ETW
     //? TODO: Move global symbol load as member done once
     //? Use for-each iterators
     //? Free more COM
 
-    public class DebugInfoProvider : IDisposable {
+    public class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
         private IDiaDataSource diaSource_;
         private IDiaSession session_;
 
@@ -44,7 +44,7 @@ namespace IRExplorerUI.Compilers {
         public bool AnnotateSourceLocations(FunctionIR function, string functionName) {
             var metadataTag = function.GetTag<AssemblyMetadataTag>();
 
-            if(metadataTag == null) {
+            if (metadataTag == null) {
                 return false;
             }
 
@@ -67,7 +67,7 @@ namespace IRExplorerUI.Compilers {
         public (string, int) FindFunctionSourceFilePath(IRTextFunction textFunc) {
             return FindFunctionSourceFilePath(textFunc.Name);
         }
-        
+
         public (string, int) FindFunctionSourceFilePath(string functionName) {
             var funcSymbol = FindFunction(functionName);
 
@@ -101,10 +101,10 @@ namespace IRExplorerUI.Compilers {
             try {
                 session_.findLinesByRVA(instrRVA, 0, out var lineEnum);
 
-                while(true) {
+                while (true) {
                     lineEnum.Next(1, out var lineNumber, out var retrieved);
 
-                    if(retrieved == 0) {
+                    if (retrieved == 0) {
                         break;
                     }
 
@@ -129,7 +129,7 @@ namespace IRExplorerUI.Compilers {
                                                    (int)inlineeLineNumber.columnNumber);
                         }
                     }
-                  
+
                 }
             }
             catch (Exception ex) {
@@ -176,7 +176,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         private const int MaxDemangledFunctionNameLength = 8192;
-        
+
         public static string DemangleFunctionName(string name, FunctionNameDemanglingOptions options =
                 FunctionNameDemanglingOptions.Default) {
             var sb = new StringBuilder(MaxDemangledFunctionNameLength);

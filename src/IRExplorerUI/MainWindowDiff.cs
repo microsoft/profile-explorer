@@ -106,7 +106,7 @@ namespace IRExplorerUI {
         }
 
         private async void OpenDiffDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            string filePath = ShowOpenFileDialog();
+            string filePath = ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
 
             if (filePath != null) {
                 bool loaded = await OpenDiffIRDocument(filePath);
@@ -974,12 +974,6 @@ namespace IRExplorerUI {
             document.TextView.SetCaretAtOffset(nextDiff.StartOffset);
             diffResults.CurrentSegmentIndex = index;
         }
-
-        private void CloseDiffDocumentCanExecute(object sender, CanExecuteRoutedEventArgs e) {
-            e.CanExecute = sessionState_ != null && sessionState_.IsInTwoDocumentsDiffMode;
-            e.Handled = true;
-        }
-
 
         public async Task ReloadDiffSettings(DiffSettings newSettings, bool hasHandlingChanges) {
             if (!IsInDiffMode) {

@@ -50,7 +50,7 @@ namespace IRExplorerUI.Profile {
         private IRTextSectionLoader loader_;
         private ProfileData profileData_;
         private PdbParser pdbParser_;
-        private DebugInfoProvider debugInfo_;
+        private IDebugInfoProvider debugInfo_;
         private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
         //? TODO: Workaround for crash that happens when the finalizers are run
@@ -366,7 +366,7 @@ namespace IRExplorerUI.Profile {
             var map = new Dictionary<string, IRTextFunction>(summary_.Functions.Count);
 
             foreach (var function in summary_.Functions) {
-                var unmangledName = DebugInfoProvider.DemangleFunctionName(function.Name);
+                var unmangledName = PDBDebugInfoProvider.DemangleFunctionName(function.Name);
                 map[unmangledName] = function;
             }
 
@@ -375,7 +375,7 @@ namespace IRExplorerUI.Profile {
 
         private bool SetupDebugInfo(string symbolPath) {
             unmangledFuncNamesMap_ = BuildUnmangledFunctionNameMap();
-            debugInfo_ = new DebugInfoProvider();
+            debugInfo_ = new PDBDebugInfoProvider();
             return debugInfo_.LoadDebugInfo(symbolPath);
         }
 

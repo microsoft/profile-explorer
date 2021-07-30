@@ -18,22 +18,34 @@
     mc:Ignorable="d">
     <Window.CommandBindings>
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.FullScreen"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="FullScreenExecuted" />
 
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.OpenDocument"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="OpenDocumentExecuted" />
 
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteDocumentCommand"
+            Command="local:AppCommand.OpenDebug"
+            PreviewCanExecute="CanExecuteDocumentCommand"
+            PreviewExecuted="OpenDebugExecuted" />
+
+        <CommandBinding
+            CanExecute="CanExecuteDiffDocumentCommand"
+            Command="local:AppCommand.OpenDiffDebug"
+            PreviewCanExecute="CanExecuteDiffDocumentCommand"
+            PreviewExecuted="OpenDiffDebugExecuted" />
+
+        <CommandBinding
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.OpenNewDocument"
             Executed="OpenNewDocumentExecuted"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="OpenNewDocumentExecuted" />
 
         <CommandBinding
@@ -72,39 +84,39 @@
             PreviewExecuted="AutoReloadDocumentExecuted" />
 
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.OpenDiffDocument"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="OpenDiffDocumentExecuted" />
 
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.OpenBaseDiffDocuments"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="OpenBaseDiffDocumentsExecuted" />
 
         <CommandBinding
-            CanExecute="CloseDiffDocumentCanExecute"
+            CanExecute="CanExecuteDiffDocumentCommand"
             Command="local:AppCommand.CloseDiffDocument"
-            PreviewCanExecute="CloseDiffDocumentCanExecute"
+            PreviewCanExecute="CanExecuteDiffDocumentCommand"
             PreviewExecuted="CloseDiffDocumentExecuted" />
 
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.ToggleDiffMode"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="ToggleDiffModeExecuted" />
 
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.SwapDiffDocuments"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="SwapDiffDocumentsExecuted" />
 
         <CommandBinding
-            CanExecute="CommandBinding_PreviewCanExecute"
+            CanExecute="CanExecuteAlways"
             Command="local:AppCommand.ShowDocumentSearch"
-            PreviewCanExecute="CommandBinding_PreviewCanExecute"
+            PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="ShowDocumentSearchExecuted" />
     </Window.CommandBindings>
 
@@ -144,9 +156,9 @@
             Command="local:AppCommand.SaveAsDocument"
             Modifiers="Ctrl+Shift" />
 
-        <KeyBinding Key="F6" Command="local:AppCommand.ReloadDocument" />
+        <KeyBinding Key="F5" Command="local:AppCommand.ReloadDocument" />
         <KeyBinding
-            Key="F6"
+            Key="F5"
             Command="local:AppCommand.AutoReloadDocument"
             Modifiers="Ctrl" />
         <KeyBinding Key="F12" Command="local:AppCommand.OpenBaseDiffDocuments" />
@@ -196,7 +208,7 @@
                             Command="local:AppCommand.OpenNewDocument"
                             Header="Open File in _New Window"
                             InputGestureText="Ctrl+Shift+O" />
-
+                        
                         <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
                             <Separator />
                             <MenuItem Click="RecentFilesMenu_Click" Header="Clear" />
@@ -207,15 +219,24 @@
                         <MenuItem Command="local:AppCommand.OpenDiffDocument" Header="Open _Diff File (Ctrl+F12)" />
                         <MenuItem Command="local:AppCommand.CloseDiffDocument" Header="Close Diff File" />
                         <Separator />
+                        
+                        <MenuItem
+                            Command="local:AppCommand.OpenDebug"
+                            Header="_Open Debug File"/>
+                        <MenuItem
+                            Command="local:AppCommand.OpenDiffDebug"
+                            Header="_Open Diff Debug File"/>
+
+                        <Separator />
 
                         <MenuItem
                             Command="local:AppCommand.ReloadDocument"
                             Header="_Reload File"
-                            InputGestureText="F6" />
+                            InputGestureText="F5" />
                         <MenuItem
                             Command="local:AppCommand.AutoReloadDocument"
                             Header="Auto-Reload File on Change"
-                            InputGestureText="Ctrl+F6"
+                            InputGestureText="Ctrl+F5"
                             IsCheckable="True"
                             IsChecked="True" />
                         <Separator />

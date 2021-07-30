@@ -22,6 +22,7 @@ using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 using Microsoft.Win32;
 using Microsoft.Windows.EventTracing;
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 using Color = System.Windows.Media.Color;
 using TimeSpan = System.TimeSpan;
 
@@ -164,20 +165,27 @@ namespace IRExplorerUI {
                     if (await LoadSourceFile(profile.SourceFilePath)) {
                         await AnnotateProfilerData(profile);
                         return true;
-                    }
-                }
+}
+}
             }
 
             if (!fileLoaded_) {
-                var debugFile = @"E:\spec\spec2017\benchspec\leela\default\build_base_msvc-diff.0000\leela_s.pdb";
-                using var debugInfo = new DebugInfoProvider();
+                // Without profile info, try to get the associated source file
+                // from the debug info if specified and available.
+                var loadedDoc = Session.SessionState.FindLoadedDocument(function);
+                var debugFile = loadedDoc.DebugInfoFilePath;
 
-                if (debugInfo.LoadDebugInfo(debugFile)) {
-                    var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(function);
+                if (!string.IsNullOrEmpty(debugFile) &&
+                    File.Exists(debugFile)) {
+                    using var debugInfo = new PDBDebugInfoProvider();
 
-                    if (!string.IsNullOrEmpty(sourceFilePath)) {
-                        initialFilePath_ = sourceFilePath;
-                        await LoadSourceFile(sourceFilePath, sourceStartLine);
+                    if (debugInfo.LoadDebugInfo(debugFile)) {
+                        var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(function);
+
+                        if (!string.IsNullOrEmpty(sourceFilePath)) {
+                            initialFilePath_ = sourceFilePath;
+                            await LoadSourceFile(sourceFilePath, sourceStartLine);
+                        }
                     }
                 }
             }
@@ -285,7 +293,7 @@ namespace IRExplorerUI {
             var summary = section_.ParentFunction.ParentSummary;
 
             var inlineeFunc = summary.FindFunction((funcName) => {
-                var demangledName = DebugInfoProvider.DemangleFunctionName(funcName);
+                var demangledName = PDBDebugInfoProvider.DemangleFunctionName(funcName);
                 return demangledName == inlinee.Function;
             });
 

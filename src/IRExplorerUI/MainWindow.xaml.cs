@@ -54,6 +54,10 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "OpenDocument", typeof(Window));
         public static readonly RoutedUICommand OpenNewDocument =
             new RoutedUICommand("Untitled", "OpenNewDocument", typeof(Window));
+        public static readonly RoutedUICommand OpenDebug =
+            new RoutedUICommand("Untitled", "OpenDebug", typeof(Window));
+        public static readonly RoutedUICommand OpenDiffDebug =
+            new RoutedUICommand("Untitled", "OpenDiffDebug", typeof(Window));
         public static readonly RoutedUICommand CloseDocument =
             new RoutedUICommand("Untitled", "CloseDocument", typeof(Window));
         public static readonly RoutedUICommand SaveDocument =
@@ -646,7 +650,7 @@ namespace IRExplorerUI {
             ShowDocumentSearchPanel();
         }
 
-        private void CommandBinding_PreviewCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+        private void CanExecuteAlways(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = true;
             e.Handled = true;
         }

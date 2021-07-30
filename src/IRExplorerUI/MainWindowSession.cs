@@ -74,8 +74,29 @@ namespace IRExplorerUI {
             await OpenDocument();
         }
 
+        private void OpenDebugExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var file = ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb");
+
+            if (file != null) {
+                sessionState_.MainDocument.DebugInfoFilePath = file;
+            }
+        }
+
+        private void OpenDiffDebugExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var file = ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb");
+
+            if (file != null) {
+                sessionState_.DiffDocument.DebugInfoFilePath = file;
+            }
+        }
+
+        private void CanExecuteDiffDocumentCommand(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = sessionState_ != null && sessionState_.IsInTwoDocumentsDiffMode;
+            e.Handled = true;
+        }
+
         private async Task OpenDocument() {
-            string filePath = ShowOpenFileDialog();
+            string filePath = ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
 
             if (filePath != null) {
                 await OpenDocument(filePath);
@@ -1104,10 +1125,10 @@ namespace IRExplorerUI {
             Trace.TraceInformation($"Auto-saved session: {saved}");
         }
 
-        private string ShowOpenFileDialog() {
+        private string ShowOpenFileDialog(string filter, string defaultExtension = "*.*") {
             var fileDialog = new OpenFileDialog {
-                DefaultExt = "*.*",
-                Filter = CompilerInfo.OpenFileFilter
+                DefaultExt = defaultExtension,
+                Filter = filter
             };
 
             var result = fileDialog.ShowDialog();
@@ -1120,7 +1141,7 @@ namespace IRExplorerUI {
         }
 
         private void OpenNewDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            string filePath = ShowOpenFileDialog();
+            string filePath = ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
 
             if (filePath != null) {
                 if (!Utils.StartNewApplicationInstance(filePath)) {

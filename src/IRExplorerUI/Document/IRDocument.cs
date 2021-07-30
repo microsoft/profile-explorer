@@ -254,7 +254,7 @@ namespace IRExplorerUI {
             
             iteratedUserStyle_ ??= new PairHighlightingStyle();
             iteratedUserStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 0);
-            iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 75);
+            iteratedUserStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.UseValueColor, 50);
             iteratedUserStyle_.ChildStyle.Border = lightBorderPen;
             
             ssaDefinitionStyle_ ??= new PairHighlightingStyle();
@@ -266,7 +266,7 @@ namespace IRExplorerUI {
             
             iteratedDefinitionStyle_ ??= new PairHighlightingStyle();
             iteratedDefinitionStyle_.ParentStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 0);
-            iteratedDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 75);
+            iteratedDefinitionStyle_.ChildStyle.BackColor = ColorBrushes.GetTransparentBrush(settings_.DefinitionValueColor, 50);
             iteratedDefinitionStyle_.ChildStyle.Border = lightBorderPen;
         }
 
