@@ -214,8 +214,8 @@ namespace IRExplorerUI.UTC {
             // the \r \n is needed to get the proper document offset.
             int newLineLength = Environment.NewLine.Length;
             int lineStartOffset = 0;
-            var lineParser = new UTCParser(null, null);
-            var parser = new UTCParser(null, null);
+            var lineParser = UTCParser.CreateRemarkParser();
+            var parser = UTCParser.CreateRemarkParser();
 
             //? TODO: For many lines, must be split in chunks and parallelized,
             //? it can take 5-7s even on 30-40k instruction functs, which is not that uncommon...

@@ -688,5 +688,18 @@ namespace IRExplorerUI {
 
             Debugger.Break();
         }
+
+        public static string TryGetFileName(string path) {
+            try {
+                if (string.IsNullOrEmpty(path)) {
+                    return null;
+                }
+
+                return Path.GetFileName(path);
+            }
+            catch (Exception ex) {
+                return null;
+            }
+        }
     }
 }

@@ -86,7 +86,7 @@ namespace IRExplorerUI {
             header.Click -= ColumnHeader_Click;
         }
 
-        public void SortByField(T field, ListSortDirection direction = ListSortDirection.Ascending) {
+        public void SortByField(T field, ListSortDirection direction = ListSortDirection.Descending) {
             if (!fieldColumnMap_.TryGetValue(field, out var column)) {
                 // Field may be associated with a column added later.
                 var gridView = listView_.View as GridView;
@@ -110,14 +110,14 @@ namespace IRExplorerUI {
                 AdornerLayer.GetAdornerLayer(sortColumn_)?.Remove(sortAdorner_);
             }
 
-            var sortingDirection = ListSortDirection.Ascending;
+            var sortingDirection = ListSortDirection.Descending;
             var header = sender as GridViewColumnHeader;
             Debug.Assert(header != null);
             Debug.Assert(!string.IsNullOrEmpty(header.Name));
 
             // Invert direction if the same column is clicked.
             if (sortColumn_ == header && sortAdorner_.Direction == sortingDirection) {
-                sortingDirection = ListSortDirection.Descending;
+                sortingDirection = ListSortDirection.Ascending;
             }
 
             // Map from the column name to the enum value.

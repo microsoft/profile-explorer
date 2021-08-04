@@ -19,10 +19,10 @@ namespace IRExplorerCore.UTC {
     public sealed class UTCSectionParser : IRSectionParser {
         private ParsingErrorHandler errorHandler_;
         private UTCParser parser_;
-        private IRMode irMode_;
+        private ICompilerIRInfo irInfo_;
 
-        public UTCSectionParser(IRMode irMode, ParsingErrorHandler errorHandler = null) {
-            irMode_ = irMode;
+        public UTCSectionParser(ICompilerIRInfo irInfo, ParsingErrorHandler errorHandler = null) {
+            irInfo_ = irInfo;
 
             if (errorHandler != null) {
                 errorHandler_ = errorHandler;
@@ -31,19 +31,19 @@ namespace IRExplorerCore.UTC {
         }
 
         public FunctionIR ParseSection(IRTextSection section, string sectionText) {
-            parser_ = new UTCParser(errorHandler_, section?.LineMetadata, SelectRegisterTable());
+            parser_ = new UTCParser(irInfo_, errorHandler_, section, section?.LineMetadata, SelectRegisterTable());
             parser_.Initialize(sectionText);
             return parser_.Parse();
         }
 
         public FunctionIR ParseSection(IRTextSection section, ReadOnlyMemory<char> sectionText) {
-            parser_ = new UTCParser(errorHandler_, section?.LineMetadata, SelectRegisterTable());
+            parser_ = new UTCParser(irInfo_, errorHandler_, section, section?.LineMetadata, SelectRegisterTable());
             parser_.Initialize(sectionText);
             return parser_.Parse();
         }
 
         private RegisterTable SelectRegisterTable() {
-            return RegisterTables.SelectRegisterTable(irMode_);
+            return RegisterTables.SelectRegisterTable(irInfo_.Mode);
         }
 
         public void SkipCurrentToken() {
@@ -230,18 +230,22 @@ namespace IRExplorerCore.UTC {
 
         private Dictionary<string, BlockLabelIR> labelMap_;
         private Dictionary<int, string> lineMetadataMap_;
-        private int nextBlockNumber;
         private Dictionary<int, SSADefinitionTag> ssaDefinitionMap_;
+        private int nextBlockNumber;
 
-        public UTCParser(ParsingErrorHandler errorHandler,
+        public UTCParser(ICompilerIRInfo irInfo, ParsingErrorHandler errorHandler,
+                         IRTextSection section,
                          Dictionary<int, string> lineMetadata,
                          RegisterTable registerTable = null)
-            : base(IRMode.x86_64, errorHandler, registerTable) {
+            : base(irInfo, errorHandler, registerTable, section) {
             lineMetadataMap_ = lineMetadata;
-
-            labelMap_ = new Dictionary<string, BlockLabelIR>();
-            ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
+#if USE_POOL
             operandPool_ = new IRObjectPool<OperandIR>(64);
+#endif
+        }
+
+        public static UTCParser CreateRemarkParser() {
+            return new UTCParser(null, null, null, null);
         }
 
         //? TODO: Move to a base class that supports pooling.
@@ -273,12 +277,6 @@ namespace IRExplorerCore.UTC {
 #endif
         }
 
-        public UTCParser(string text, ParsingErrorHandler errorHandler,
-                         Dictionary<int, string> lineMetadata) : 
-            this(errorHandler, lineMetadata) {
-            Initialize(text);
-        }
-
         public void Initialize(string text) {
             Reset();
             base.Initialize(text);
@@ -293,8 +291,8 @@ namespace IRExplorerCore.UTC {
 
         protected override void Reset() {
             base.Reset();
-            labelMap_.Clear();
-            ssaDefinitionMap_.Clear();
+            labelMap_ = new Dictionary<string, BlockLabelIR>();
+            ssaDefinitionMap_ = new Dictionary<int, SSADefinitionTag>();
             nextBlockNumber = 0;
         }
 
@@ -312,8 +310,8 @@ namespace IRExplorerCore.UTC {
         }
 
         private FunctionIR ParseFunction() {
-            var startToken = Current;
-            var function = new FunctionIR();
+            var startToken = current_;
+            var function = new FunctionIR(section_.ParentFunction.Name);
 
             // Sometimes there is whitespace before the first block, ignore.
             SkipToNextBlock();
@@ -425,7 +423,7 @@ namespace IRExplorerCore.UTC {
         private void ParseMetadata(IRElement element, int lineNumber) {
             if (lineMetadataMap_ != null &&
                 lineMetadataMap_.TryGetValue(lineNumber, out string metadata)) {
-                var metadataParser = new UTCParser(null, null);
+                var metadataParser = new UTCParser(null, null, null, null);
                 metadataParser.Initialize(metadata);
                 metadataParser.ParseMetadata(element, MetadataTag);
             }
@@ -539,7 +537,7 @@ namespace IRExplorerCore.UTC {
 
 
         private BlockIR ParseBlock(FunctionIR function) {
-            var startToken = Current;
+            var startToken = current_;
             bool cfgAvailable = true;
 
             // For vectorizer output, one or more blocks can be found
@@ -686,7 +684,7 @@ namespace IRExplorerCore.UTC {
             TupleIR tuple = null;
             bool stop = false;
             bool sawEHAttribute = false;
-            var startToken = Current;
+            var startToken = current_;
 
             while (!stop && !IsEOF()) {
                 switch (TokenKeyword()) {
@@ -904,7 +902,7 @@ namespace IRExplorerCore.UTC {
                 NextTokenIs(TokenKind.Colon) &&
                 !NextAfterTokenIs(TokenKind.Number)) {
                 // label: definition
-                var startToken = Current;
+                var startToken = current_;
                 var label = GetOrCreateLabel(TokenData(), parent);
                 SkipToken(); // string
                 SkipToken(); // :
@@ -934,7 +932,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private TupleIR ParseEntry(BlockIR entryBlock) {
-            var startToken = Current;
+            var startToken = current_;
             SkipToken(); // ENTRY
 
             // There can be various attributes before the name, ignore.
@@ -1020,7 +1018,7 @@ namespace IRExplorerCore.UTC {
             }
 
             instr.OpcodeText = TokenData();
-            instr.OpcodeLocation = Current.Location;
+            instr.OpcodeLocation = current_.Location;
             SkipToken();
 
             // Opcode can be followed by type and other attributes, ignore.
@@ -1137,7 +1135,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private OperandIR ParseIndirection(TupleIR parent) {
-            var startToken = Current;
+            var startToken = current_;
             SkipToken();
             var baseOp = ParseOperand(parent, true);
 
@@ -1216,7 +1214,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private OperandIR ParseNumber(TupleIR parent) {
-            var startToken = Current;
+            var startToken = current_;
             var opKind = OperandKind.Other;
             object opValue = null;
             bool isNegated = false;
@@ -1378,7 +1376,7 @@ namespace IRExplorerCore.UTC {
             // check if the variable represents a register.
             ParseRegister(operand);
 
-            var startToken = Current;
+            var startToken = current_;
             SkipToken();
 
             // Handle lambda names that appear as long identifiers with < > like
@@ -1603,7 +1601,7 @@ namespace IRExplorerCore.UTC {
         }
 
         private Keyword TokenKeyword() {
-            if (Current.IsIdentifier()) {
+            if (current_.IsIdentifier()) {
                 if(keywordTrie_.TryGetValue(TokenStringData(), out var keyword)) {
                     return keyword;
                 }

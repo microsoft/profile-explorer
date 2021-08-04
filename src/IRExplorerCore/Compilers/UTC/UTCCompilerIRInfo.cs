@@ -22,7 +22,7 @@ namespace IRExplorerCore.UTC {
         }
 
         public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
-            return new UTCSectionParser(Mode, (ParsingErrorHandler)errorHandler);
+            return new UTCSectionParser(this, (ParsingErrorHandler)errorHandler);
         }
 
         public IRParsingErrorHandler CreateParsingErrorHandler() {
