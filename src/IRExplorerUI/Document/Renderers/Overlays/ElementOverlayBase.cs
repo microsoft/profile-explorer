@@ -129,18 +129,17 @@ namespace IRExplorerUI.Document {
 
         protected virtual Brush CurrentBackgroundBrush => IsSelected && SelectedBackground != null ?
                                                         SelectedBackground : Background;
-        protected virtual Pen CurrentBorder => !ShowBorderOnMouseOverOnly || IsSelected || IsMouseOver ?
-                                            Border : null;
+        protected virtual Pen CurrentBorder => ShowBorder ? Border : null;
         protected virtual Brush CurrentLabelBackgroundBrush => Background == null || 
                                                           (IsSelected && SelectedBackground != null) ?
                                                            SelectedBackground : Background;
 
         protected virtual Brush ActiveTextBrush => IsSelected && SelectedTextColor != null ?
-                   SelectedTextColor : (TextColor ?? Brushes.Black);
+                                                   SelectedTextColor : (TextColor ?? Brushes.Black);
 
         protected virtual double ActiveOpacity => (IsMouseOver || IsSelected) ?
-            (MouseOverOpacity > 0 ? MouseOverOpacity : 1.0) :
-            (DefaultOpacity > 0 ? DefaultOpacity : 1.0);
+                                                  (MouseOverOpacity > 0 ? MouseOverOpacity : 1.0) :
+                                                  (DefaultOpacity > 0 ? DefaultOpacity : 1.0);
 
        
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
@@ -154,9 +153,10 @@ namespace IRExplorerUI.Document {
             
             var text = DocumentUtils.CreateFormattedText(host, Label, DefaultFont, fontSize,
                                                         ActiveTextBrush, TextWeight);
-            double textX = elementRect.Right + Padding;
+            double textX = elementRect.Left + Padding;
             double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
-            labelBounds_ = Utils.SnapRectToPixels(elementRect, 0, 0, text.Width + 2 * Padding, 0);
+            double width = Math.Max(elementRect.Width, text.Width + 2 * Padding);
+            labelBounds_ = Utils.SnapRectToPixels(elementRect.X, elementRect.Y, width, elementRect.Height);
 
             drawingContext.PushOpacity(opacity);
 

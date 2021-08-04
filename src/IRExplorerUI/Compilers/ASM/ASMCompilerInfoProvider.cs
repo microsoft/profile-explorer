@@ -114,13 +114,17 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
             }
 
+            var markerOptions = ProfileDocumentMarkerOptions.Default;
+            var sourceMarker = new SourceDocumentMarker(markerOptions, ir_);
+            sourceMarker.Mark(document, function);
+
             // Check if there is profile info.
             var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
 
             if(profile != null) {
-                var markerOptions = ProfileDocumentMarkerOptions.Default;
-                var profileMarker = new ProfileDocumentMarker(markerOptions, ir_);
-                profileMarker.Mark(document, profile, function);
+                var profileOptions = ProfileDocumentMarkerOptions.Default;
+                var profileMarker = new ProfileDocumentMarker(profile, profileOptions, ir_);
+                profileMarker.Mark(document, function);
             }
 
             return true;

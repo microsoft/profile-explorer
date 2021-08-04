@@ -8,13 +8,13 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.ASM;
 using System;
-using System.Text;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Document;
 using System.Windows.Documents;
+using System.IO;
 
 //? TODO: EXTRACT SOURCE LOCATION MARKING TO OWN CLASS NOT PROFILE-DEPENDENT
 
@@ -70,27 +70,29 @@ namespace IRExplorerUI.Compilers.ASM {
     }
 
     public class ProfileDocumentMarker {
+        private FunctionProfileData profile_;
         private ProfileDocumentMarkerOptions options_;
         private ICompilerIRInfo ir_;
-        
-        public ProfileDocumentMarker(ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
+
+        public ProfileDocumentMarker(FunctionProfileData profile, ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
+            profile_ = profile;
             options_ = options;
             ir_ = ir;
         }
 
-        public void Mark(IRDocument document, FunctionProfileData profile, FunctionIR function) {
+        public void Mark(IRDocument document, FunctionIR function) {
             var metadataTag = function.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
             if (hasInstrOffsetMetadata) {
-                var (elementWeights, blockWeights) = CollectProfiledElements(profile, metadataTag);
+                var (elementWeights, blockWeights) = CollectProfiledElements(profile_, metadataTag);
 
-                MarkProfiledElements(elementWeights, profile, document);
-                MarkProfiledBlocks(blockWeights, profile, document);
+                MarkProfiledElements(elementWeights, document);
+                MarkProfiledBlocks(blockWeights, document);
             }
 
             if (!hasInstrOffsetMetadata) {
-                MarkProfiledLines(profile, document);
+                MarkProfiledLines(document);
             }
         }
 
@@ -119,15 +121,14 @@ namespace IRExplorerUI.Compilers.ASM {
             return (elements, blockWeights);
         }
 
-        private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, 
-                                        FunctionProfileData profile, IRDocument document) {
+        private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, IRDocument document) {
             document.SuspendUpdate();
             var blockOverlays = new List<IconElementOverlayData>(blockWeights.Count);
 
             for(int i = 0; i < blockWeights.Count; i++) {
                 var element = blockWeights[i].Item1;
                 var weight = blockWeights[i].Item2;
-                double weightPercentage = profile.ScaleWeight(weight);
+                double weightPercentage = profile_.ScaleWeight(weight);
 
                 //? TODO: Configurable
                 IconDrawing icon = null;
@@ -178,16 +179,14 @@ namespace IRExplorerUI.Compilers.ASM {
             document.ResumeUpdate();
         }
 
-        private void MarkProfiledElements(List<Tuple<IRElement, TimeSpan>> elements,
-                                          FunctionProfileData profile, IRDocument document) {
+        private void MarkProfiledElements(List<Tuple<IRElement, TimeSpan>> elements, IRDocument document) {
             var elementColorPairs = new List<Tuple<IRElement, Color>>(elements.Count);
             var elementOverlays = new List<IconElementOverlayData>(elements.Count);
-            var inlineeOverlays = new List<IconElementOverlayData>(elements.Count);
 
             for (int i = 0; i < elements.Count; i++) {
                 var element = elements[i].Item1;
                 var weight = elements[i].Item2;
-                double weightPercentage = profile.ScaleWeight(weight);
+                double weightPercentage = profile_.ScaleWeight(weight);
                 Color color;
 
                 if (weightPercentage < options_.ElementWeightCutoff) {
@@ -211,35 +210,9 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
                 elementOverlays.Add(new IconElementOverlayData (element, icon, label));
-
-                var tag = element.GetTag<SourceLocationTag>();
-
-                if (tag != null && tag.HasInlinees) {
-                    var sb = new StringBuilder();
-                    var tooltipSb = new StringBuilder();
-
-                    for(int k = 0; k < tag.Inlinees.Count; k++) {
-                        var inlinee = tag.Inlinees[k];
-                        var inlineeName = PDBDebugInfoProvider.DemangleFunctionName(inlinee.Function, FunctionNameDemanglingOptions.OnlyName);
-                        sb.AppendFormat("{0}:{1}", inlineeName, tag.Inlinees[k].Line);
-                        AppendInlineeTooltip(inlineeName, inlinee.Line, k, tooltipSb);
-                        tooltipSb.AppendLine();
-
-                        if (k != tag.Inlinees.Count - 1) {
-                            sb.Append("  |  ");
-                        }
-                    }
-
-                    var funcName = PDBDebugInfoProvider.DemangleFunctionName(document.Section.ParentFunction.Name,
-                                                                          FunctionNameDemanglingOptions.OnlyName);
-                    AppendInlineeTooltip(funcName, tag.Line, tag.Inlinees.Count, tooltipSb);
-                    inlineeOverlays.Add(new IconElementOverlayData(element, null, sb.ToString(), tooltipSb.ToString()));
-                }
-
             }
 
             var elementOverlayList = document.AddIconElementOverlays(elementOverlays);
-            var inlineeOverlayList = document.AddIconElementOverlays(inlineeOverlays);
 
             for(int i = 0; i < elementOverlayList.Count; i++) {
                 var overlay = elementOverlayList[i];
@@ -259,28 +232,13 @@ namespace IRExplorerUI.Compilers.ASM {
                 overlay.VirtualColumn = options_.VirtualColumnPosition;
             }
 
-            foreach(var overlay in inlineeOverlayList) {
-                overlay.VirtualColumn = options_.VirtualColumnPosition + 150;
-                overlay.TextColor = options_.InlineeOverlayTextColor;
-                overlay.Background = options_.ElementOverlayBackColor;
-                overlay.IsLabelPinned = true;
-            }
-
             document.MarkElements(elementColorPairs);
         }
 
-        private void AppendInlineeTooltip(string inlineeName, int inlineeLine, int index, StringBuilder tooltipSb) {
-            for (int column = 0; column < index * 4; column++) {
-                tooltipSb.Append(' ');
-            }
+        private void MarkProfiledLines(IRDocument document) {
+            var lines = new List<Tuple<int, TimeSpan>>(profile_.SourceLineWeight.Count);
 
-            tooltipSb.AppendFormat("{0}:{1}", inlineeName, inlineeLine);
-        }
-
-        private void MarkProfiledLines(FunctionProfileData profile, IRDocument document) {
-            var lines = new List<Tuple<int, TimeSpan>>(profile.SourceLineWeight.Count);
-
-            foreach (var pair in profile.SourceLineWeight) {
+            foreach (var pair in profile_.SourceLineWeight) {
                 lines.Add(new Tuple<int, TimeSpan>(pair.Key, pair.Value));
             }
 
@@ -288,7 +246,7 @@ namespace IRExplorerUI.Compilers.ASM {
             document.SuspendUpdate();
 
             foreach (var pair in lines) {
-                double weightPercentage = profile.ScaleWeight(pair.Item2);
+                double weightPercentage = profile_.ScaleWeight(pair.Item2);
 
                 if (weightPercentage < options_.LineWeightCutoff) {
                     continue;

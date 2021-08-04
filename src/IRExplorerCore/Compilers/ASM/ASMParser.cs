@@ -44,14 +44,11 @@ namespace IRExplorerCore.ASM {
         private Dictionary<long, Tuple<TextLocation, int>> potentialLabelMap_;
         private HashSet<BlockIR> comittedBlocks_;
         private Dictionary<BlockIR, long> referencedBlocks_;
-        private ICompilerIRInfo irInfo_;
 
         public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
                          RegisterTable registerTable,
-                         ReadOnlyMemory<char> sectionText,
-                         Dictionary<long, string> funcAddressMap)
-            : base(irInfo.Mode, errorHandler, registerTable) {
-            irInfo_ = irInfo;
+                         ReadOnlyMemory<char> sectionText, IRTextSection section)
+            : base(irInfo, errorHandler, registerTable, section) {
             Reset();
             Initialize(sectionText);
             SkipToken();
@@ -59,10 +56,8 @@ namespace IRExplorerCore.ASM {
 
         public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
             RegisterTable registerTable,
-            string sectionText,
-            Dictionary<long, string> funcAddressMap)
-            : base(irInfo.Mode, errorHandler, registerTable) {
-            irInfo_ = irInfo;
+            string sectionText, IRTextSection section)
+            : base(irInfo, errorHandler, registerTable, section) {
             Reset();
             Initialize(sectionText);
             SkipToken();
@@ -102,21 +97,21 @@ namespace IRExplorerCore.ASM {
         }
 
         public FunctionIR Parse() {
-            var function = new FunctionIR();
+            var function = new FunctionIR(section_.ParentFunction.Name);
             Token startElement = default;
             BlockIR block = null;
 
             while (!IsEOF()) {
                 if (makeNewBlock_) {
                     // Make a new block.
-                    if (Current.Kind == TokenKind.Number &&
+                    if (current_.Kind == TokenKind.Number &&
                         NextTokenIs(TokenKind.Colon) &&
                         TokenLongHexNumber(out long address)) {
                         var newBlock = GetOrCreateBlock(address, function);
                         var blockLabel = GetOrCreateBlockLabel(newBlock);
 
-                        blockLabel.TextLocation = Current.Location;
-                        blockLabel.TextLength = Current.Length;
+                        blockLabel.TextLocation = current_.Location;
+                        blockLabel.TextLength = current_.Length;
 
                         if (block != null && connectNewBlock_) {
                             ConnectBlocks(block, newBlock);
@@ -125,7 +120,7 @@ namespace IRExplorerCore.ASM {
                         function.Blocks.Add(newBlock);
                         comittedBlocks_.Add(newBlock);
                         block = newBlock;
-                        startElement = Current;
+                        startElement = current_;
                     }
 
                     makeNewBlock_ = false;
@@ -141,7 +136,7 @@ namespace IRExplorerCore.ASM {
             }
 
             if (block != null) {
-                SetTextRange(block, startElement, Current);
+                SetTextRange(block, startElement, current_);
             }
 
             FixBlockReferences(function);
@@ -259,7 +254,7 @@ namespace IRExplorerCore.ASM {
         }
 
         private bool ParseLine(BlockIR block) {
-            var startToken = Current;
+            var startToken = current_;
             long address = 0;
 
             if (!(IsNumber() || IsIdentifier()) ||
@@ -269,7 +264,7 @@ namespace IRExplorerCore.ASM {
             }
 
             // Record address to be used for jump in the middle of blocks.
-            potentialLabelMap_[address] = new Tuple<TextLocation, int>(Current.Location, Current.Length);
+            potentialLabelMap_[address] = new Tuple<TextLocation, int>(current_.Location, current_.Length);
             SkipToken();
 
             if (!ExpectAndSkipToken(TokenKind.Colon)) {
@@ -304,7 +299,7 @@ namespace IRExplorerCore.ASM {
             MetadataTag.FunctionSize += instrSize;
 
             SkipToLineEnd();
-            SetTextRange(instr, startToken, Current, adjustment: 1);
+            SetTextRange(instr, startToken, current_, adjustment: 1);
             return isJump; // A jump ends the current block.
         }
 
@@ -415,7 +410,7 @@ namespace IRExplorerCore.ASM {
         }
 
         private OperandIR ParseNumber(TupleIR parent) {
-            var startToken = Current;
+            var startToken = current_;
             var opKind = OperandKind.Other;
             object opValue = null;
             bool isNegated = false;
@@ -466,14 +461,14 @@ namespace IRExplorerCore.ASM {
                 operand.AddTag(new RegisterTag(register, operand));
             }
 
-            var startToken = Current;
+            var startToken = current_;
             SkipToken();
             SetTextRange(operand, startToken);
             return operand;
         }
 
         private OperandIR ParseIndirection(TupleIR parent) {
-            var startToken = Current;
+            var startToken = current_;
             SkipToken();
             var baseOp = ParseOperand(parent, true);
 
@@ -539,7 +534,7 @@ namespace IRExplorerCore.ASM {
         private int CountInstructionBytes(int instrSize) {
             // For ARM64, the bytecodes are not found in the assembly listing
             // and each instruction is 4 bytes.
-            if (irMode_ == IRMode.ARM64) {
+            if (irInfo_.Mode == IRMode.ARM64) {
                 SkipHexNumber(8);
                 return 4;
             }
@@ -553,9 +548,9 @@ namespace IRExplorerCore.ASM {
 
         private void SetInstructionOpcode(InstructionIR instr) {
             instr.OpcodeText = TokenData();
-            instr.OpcodeLocation = Current.Location;
+            instr.OpcodeLocation = current_.Location;
 
-            switch (irMode_) {
+            switch (irInfo_.Mode) {
                 case IRMode.x86_64: {
                     if (x86Opcodes.GetOpcodeInfo(instr.OpcodeText, out var info)) {
                         instr.Opcode = info.Opcode;
@@ -577,7 +572,7 @@ namespace IRExplorerCore.ASM {
         }
 
         private Keyword TokenKeyword() {
-            if (Current.IsIdentifier()) {
+            if (current_.IsIdentifier()) {
                 if (keywordTrie_.TryGetValue(TokenStringData(), out var keyword)) {
                     return keyword;
                 }

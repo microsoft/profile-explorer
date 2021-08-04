@@ -9,21 +9,18 @@ using IRExplorerCore.Lexer;
 
 namespace IRExplorerCore {
     public class ParserBase {
+        protected ICompilerIRInfo irInfo_;
         protected readonly Lexer.Lexer lexer_ = new Lexer.Lexer();
-        private Token current_;
-        protected Token Current => current_;
+        protected Token current_;
         protected Token previous_;
-        private readonly Dictionary<int, BlockIR> blockMap_ = new Dictionary<int, BlockIR>();
         private IRElementId nextElementId_;
-        private AssemblyMetadataTag metadataTag_; // lazy-init
-
-        protected AssemblyMetadataTag MetadataTag => metadataTag_ ??= new AssemblyMetadataTag();
-
-        protected IRMode irMode_;
+        private readonly Dictionary<int, BlockIR> blockMap_ = new Dictionary<int, BlockIR>();
         private readonly IRParsingErrorHandler errorHandler_;
-
         private readonly RegisterTable registerTable_;
         protected RegisterTable RegisterTable => registerTable_;
+        protected IRTextSection section_;
+        private AssemblyMetadataTag metadataTag_; // Lazy-init.
+        protected AssemblyMetadataTag MetadataTag => metadataTag_ ??= new AssemblyMetadataTag();
 
         protected void AddMetadata(FunctionIR function) {
             if (metadataTag_ != null) {
@@ -33,14 +30,16 @@ namespace IRExplorerCore {
 
         protected IRElementId NextElementId => nextElementId_;
 
-        protected ParserBase(IRMode irMode, IRParsingErrorHandler errorHandler, RegisterTable registerTable) {
-            irMode_ = irMode;
+        protected ParserBase(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler, 
+                             RegisterTable registerTable, IRTextSection section) {
+            irInfo_ = irInfo;
             errorHandler_ = errorHandler;
             registerTable_ = registerTable;
+            section_ = section;
         }
 
         protected void ReportError(TokenKind expectedToken, string message = "") {
-            errorHandler_?.HandleError(Current.Location, expectedToken, Current, message);
+            errorHandler_?.HandleError(current_.Location, expectedToken, current_, message);
         }
 
         protected void ReportErrorAndSkipLine(TokenKind expectedToken, string message) {

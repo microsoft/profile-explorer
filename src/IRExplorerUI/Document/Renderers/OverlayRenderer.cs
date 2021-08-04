@@ -256,16 +256,16 @@ namespace IRExplorerUI.Document {
             }
 
             if (selectedSegment != null) {
-                selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, hoverPrevOverlay, overlayDC);
+                selectedSegment.Item1.Draw(selectedSegment.Item3, selectedSegment.Item2, selectedPrevOverlay, overlayDC);
             }
 
             if (hoverSegment != null) {
-                hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, selectedPrevOverlay, overlayDC);
+                hoverSegment.Item1.Draw(hoverSegment.Item3, hoverSegment.Item2, hoverPrevOverlay, overlayDC);
             }
 
             double dotSize = 3;
-            var dotBackground = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 255);
-            var dotPen = ColorPens.GetTransparentPen(Colors.DarkRed, 255);
+            //var dotBackground = ColorBrushes.GetTransparentBrush(Colors.DarkRed, 255);
+            //var dotPen = ColorPens.GetTransparentPen(Colors.DarkRed, 255);
             bool first = true;
 
             // Draw extra annotations for remarks in the same context.

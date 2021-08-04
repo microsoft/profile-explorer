@@ -10,10 +10,11 @@ namespace IRExplorerCore.IR {
         private int instructionCount_;
         private int tupleCount_;
 
-        public FunctionIR() : base(IRElementId.NewFunctionId()) {
+        public FunctionIR(string name = null) : base(IRElementId.NewFunctionId()) {
             ReturnType = TypeIR.GetUnknown();
             Parameters = new List<OperandIR>();
             Blocks = new List<BlockIR>();
+            Name = name;
         }
 
         public FunctionIR(string name, TypeIR returnType) : this() {

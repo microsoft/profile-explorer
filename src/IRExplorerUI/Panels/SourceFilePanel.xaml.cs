@@ -316,11 +316,11 @@ namespace IRExplorerUI {
         }
 
         private void ScrollToLine(int line) {
-            if (line < 0 || line >= TextView.Document.LineCount) {
+            if (line <= 0 || line > TextView.Document.LineCount) {
                 return;
             }
 
-            var documentLine = TextView.Document.GetLineByNumber(line + 1);
+            var documentLine = TextView.Document.GetLineByNumber(line);
 
             if (documentLine.LineNumber != selectedLine_) {
                 selectedLine_ = documentLine.LineNumber;
