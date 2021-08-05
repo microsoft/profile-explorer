@@ -1152,6 +1152,15 @@ namespace IRExplorerUI {
             }
         }
 
+        private void OpenExecutableExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var openWindow = new ExecutableOpenWindow(this);
+            openWindow.Owner = this;
+            var result = openWindow.ShowDialog();
+
+            if (result.HasValue && result.Value) {
+            }
+        }
+
         private async void CloseDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
             await EndSession(showStartPage: true);
         }

@@ -49,6 +49,13 @@
             PreviewExecuted="OpenNewDocumentExecuted" />
 
         <CommandBinding
+            CanExecute="CanExecuteAlways"
+            Command="local:AppCommand.OpenExecutable"
+            Executed="OpenExecutableExecuted"
+            PreviewCanExecute="CanExecuteAlways"
+            PreviewExecuted="OpenExecutableExecuted" />
+        
+        <CommandBinding
             CanExecute="CanExecuteDocumentCommand"
             Command="local:AppCommand.CloseDocument"
             Executed="CloseDocumentExecuted"
@@ -209,7 +216,7 @@
                             Header="Open File in _New Window"
                             InputGestureText="Ctrl+Shift+O" />
                         <MenuItem
-                            Command="local:AppCommand.OpenNewDocument"
+                            Command="local:AppCommand.OpenExecutable"
                             Header="Open Executable"/>
                         <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
                             <Separator />

@@ -187,11 +187,10 @@ namespace IRExplorerCore.Graph {
                 process.BeginOutputReadLine();
 
                 do {
-                    process.WaitForExit(200);
+                    process.WaitForExit(100);
 
                     if (task.IsCanceled) {
                         Trace.TraceWarning($"Graphviz task {ObjectTracker.Track(task)}: Canceled");
-
                         process.CancelOutputRead();
                         process.Kill();
                         return null;

@@ -58,6 +58,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "OpenDebug", typeof(Window));
         public static readonly RoutedUICommand OpenDiffDebug =
             new RoutedUICommand("Untitled", "OpenDiffDebug", typeof(Window));
+        public static readonly RoutedUICommand OpenExecutable =
+    new RoutedUICommand("Untitled", "OpenExecutable", typeof(Window));
         public static readonly RoutedUICommand CloseDocument =
             new RoutedUICommand("Untitled", "CloseDocument", typeof(Window));
         public static readonly RoutedUICommand SaveDocument =
