@@ -24,7 +24,7 @@
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="2">
-            <TextBlock Margin="16,16,16,0" Text="Profile data file" />
+            <TextBlock Margin="16,8,16,0" Text="Profile data file" />
             <Grid Margin="16,4,16,0">
                 <controls:FileSystemTextBox
                     x:Name="ProfileAutocompleteBox"
