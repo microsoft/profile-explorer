@@ -208,7 +208,9 @@
                             Command="local:AppCommand.OpenNewDocument"
                             Header="Open File in _New Window"
                             InputGestureText="Ctrl+Shift+O" />
-                        
+                        <MenuItem
+                            Command="local:AppCommand.OpenNewDocument"
+                            Header="Open Executable"/>
                         <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
                             <Separator />
                             <MenuItem Click="RecentFilesMenu_Click" Header="Clear" />

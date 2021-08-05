@@ -33,6 +33,7 @@ namespace IRExplorerUI.Document {
             AlignmentX = alignmentX;
             AlignmentY = alignmentY;
             DefaultOpacity = 1;
+            SaveStateToFile = false;
         }
 
         [ProtoMember(1)]
@@ -103,6 +104,8 @@ namespace IRExplorerUI.Document {
         public double VirtualColumn { get; set; }
         [ProtoMember(27)]
         public string ToolTip { get; set; }
+        [ProtoMember(28)]
+        public bool SaveStateToFile { get; set; }
 
         protected double ActualWidth => Width + 2 * Padding;
         protected double ActualHeight => Height + 2 * Padding;
@@ -153,9 +156,9 @@ namespace IRExplorerUI.Document {
             
             var text = DocumentUtils.CreateFormattedText(host, Label, DefaultFont, fontSize,
                                                         ActiveTextBrush, TextWeight);
-            double textX = elementRect.Left + Padding;
+            double textX = elementRect.Left + elementRect.Width + Padding;
             double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
-            double width = Math.Max(elementRect.Width, text.Width + 2 * Padding);
+            double width = elementRect.Width + text.Width + 2 * Padding;
             labelBounds_ = Utils.SnapRectToPixels(elementRect.X, elementRect.Y, width, elementRect.Height);
 
             drawingContext.PushOpacity(opacity);

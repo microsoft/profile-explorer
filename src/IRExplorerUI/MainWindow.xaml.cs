@@ -1123,14 +1123,6 @@ namespace IRExplorerUI {
             }
 
             return targetFuncts.Contains(parentNode.Function);
-
-            //var funcProfile = ProfileData.GetFunctionProfile(node.Function);
-
-            //if (funcProfile == null) {
-            //    return false;
-            //}
-
-            //return funcProfile.ExclusiveWeight.TotalMilliseconds > 500;
         }
 
         private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
@@ -1140,8 +1132,13 @@ namespace IRExplorerUI {
         public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
                                         ProfileLoadProgressHandler progressCallback,
                                         CancelableTask cancelableTask) {
-            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
             var cvdumpPath = "cvdump.exe"; // Expected to be in main directory.
+            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
+
+            if (string.IsNullOrEmpty(loadedDoc.DebugInfoFilePath)) {
+                loadedDoc.DebugInfoFilePath = debugFilePath;
+            }
+
             using var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader, CompilerInfo, cvdumpPath);
             bool markInlinedFunctions = true;
 
