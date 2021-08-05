@@ -165,8 +165,8 @@ namespace IRExplorerUI {
                     if (await LoadSourceFile(profile.SourceFilePath)) {
                         await AnnotateProfilerData(profile);
                         return true;
-}
-}
+                    }
+                }
             }
 
             if (!fileLoaded_) {

@@ -76,7 +76,6 @@
                             HorizontalAlignment="Right"
                             DockPanel.Dock="Right"
                             Orientation="Horizontal">
-                            <Image Source="{StaticResource SearchIcon}" ToolTip="Filter text based on a string" />
                             <toolkit:AutoCompleteBox
     Name="TextSearch"
     Width="150"

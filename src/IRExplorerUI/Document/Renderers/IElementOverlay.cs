@@ -23,6 +23,8 @@ namespace IRExplorerUI.Document {
         public bool IsMouseOver { get; set; }
         public bool IsSelected { get; set; }
         public bool ShowOnMarkerBar { get; set; }
+        public bool SaveStateToFile {  get; set; }
+
         public void Draw(Rect elementRect, IRElement element,
                          IElementOverlay previousOverlay, DrawingContext drawingContext);
 

@@ -53,14 +53,17 @@
                     <Button Click="Button_Click" ToolTip="Select source file">
                         <Image Source="{StaticResource FolderIcon}" />
                     </Button>
-                    <Button ToolTip="Reload source file">
-                        <Image Source="{StaticResource ReloadIcon}" />
-                    </Button>
                     <Separator />
                     <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
                         <Image Source="{StaticResource StarIcon}" />
                     </Button>
-                    <ComboBox Name="InlineeCombobox" MaxWidth="300" Width="200" DisplayMemberPath="Function" SelectedValue="Function" SelectionChanged="InlineeCombobox_SelectionChanged" ToolTip="Inlined functions call stack"/>
+                    <Separator />
+                    <TextBlock Text="Inlinees" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    <ComboBox Name="InlineeCombobox" MaxWidth="300" Width="200" DisplayMemberPath="Function" 
+                              SelectedValue="Function" 
+                              SelectionChanged="InlineeCombobox_SelectionChanged" ToolTip="Inlined functions call stack"
+                              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
                     <Button Click="Button_Click_1" ToolTip="Switch to callee">
                         <Image Source="{StaticResource LeftArrowIcon}" />
                     </Button>

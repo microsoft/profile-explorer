@@ -565,8 +565,17 @@ namespace IRExplorerUI.Document {
             foreach (var pair in overlaySegmentMap_) {
                 //? TODO: Casting to ElementOverlayBase is done to avoid issues when deserializing
                 //? the IElementOverlay objects with protobuf-net.
-                var list = pair.Value.Overlays.ConvertAll<ElementOverlayBase>(item => (ElementOverlayBase)item);
-                state.Overlays.Add(new Tuple<IRElementReference, List<ElementOverlayBase>>(pair.Key, list));
+                var savedOverlays = new List<ElementOverlayBase>();
+
+                foreach (var overlay in pair.Value.Overlays) {
+                    if(overlay.SaveStateToFile) {
+                        savedOverlays.Add((ElementOverlayBase)overlay);
+                    }
+                }
+
+                if (savedOverlays.Count > 0) {
+                    state.Overlays.Add(new Tuple<IRElementReference, List<ElementOverlayBase>>(pair.Key, savedOverlays));
+                }
             }
 
             return state;
