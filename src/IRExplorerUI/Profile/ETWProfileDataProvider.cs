@@ -67,41 +67,16 @@ namespace IRExplorerUI.Profile {
             profileData_ = new ProfileData();
         }
 
-        private new Dictionary<string, IRTextFunction> CreateDemangledNameMapping() {
-            var map = new Dictionary<string, IRTextFunction>();
-
-            foreach (var func in summary_.Functions) {
-                var demangledName = compilerInfo_.NameProvider.DemangleFunctionName(func.Name,
-                    FunctionNameDemanglingOptions.OnlyName |
-                    FunctionNameDemanglingOptions.NoReturnType |
-                    FunctionNameDemanglingOptions.NoSpecialKeywords);
-                map[demangledName] = func;
-            }
-
-            return map;
+        public ProfileData
+        LoadTrace(string tracePath, string imageName, string symbolPath,
+              bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
+              CancelableTask cancelableTask) {
+            return LoadTraceAsync(tracePath, imageName, symbolPath, 
+                                  markInlinedFunctions, progressCallback, cancelableTask).Result;
         }
 
-        private (Dictionary<long, IRTextFunction>, Dictionary<long, string>)
-            BuildAddressFunctionMap(string symbolPath) {
-            var addressFuncMap = new Dictionary<long, IRTextFunction>();
-            var externalsFuncMap = new Dictionary<long, string>();
-            
-            foreach(var (funcName, address) in pdbParser_.Parse(symbolPath)) {
-                var func = summary_.FindFunction(funcName);
-                
-                if (func != null) {
-                    addressFuncMap[address] = func;
-                }
-                else {
-                    externalsFuncMap[address] = funcName;
-                }
-            }
-
-            return (addressFuncMap, externalsFuncMap);
-        }
-        
         public async Task<ProfileData> 
-            LoadTrace(string tracePath, string imageName, string symbolPath,
+            LoadTraceAsync(string tracePath, string imageName, string symbolPath,
                       bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
                       CancelableTask cancelableTask) {
             try {
@@ -360,6 +335,39 @@ namespace IRExplorerUI.Profile {
                 inlineeProfile.AddLineSample(inlinee.Line, sampleWeight);
                 inlineeProfile.Weight += sampleWeight;
             }
+        }
+
+        private new Dictionary<string, IRTextFunction> CreateDemangledNameMapping() {
+            var map = new Dictionary<string, IRTextFunction>();
+
+            foreach (var func in summary_.Functions) {
+                var demangledName = compilerInfo_.NameProvider.DemangleFunctionName(func.Name,
+                    FunctionNameDemanglingOptions.OnlyName |
+                    FunctionNameDemanglingOptions.NoReturnType |
+                    FunctionNameDemanglingOptions.NoSpecialKeywords);
+                map[demangledName] = func;
+            }
+
+            return map;
+        }
+
+        private (Dictionary<long, IRTextFunction>, Dictionary<long, string>)
+            BuildAddressFunctionMap(string symbolPath) {
+            var addressFuncMap = new Dictionary<long, IRTextFunction>();
+            var externalsFuncMap = new Dictionary<long, string>();
+
+            foreach (var (funcName, address) in pdbParser_.Parse(symbolPath)) {
+                var func = summary_.FindFunction(funcName);
+
+                if (func != null) {
+                    addressFuncMap[address] = func;
+                }
+                else {
+                    externalsFuncMap[address] = funcName;
+                }
+            }
+
+            return (addressFuncMap, externalsFuncMap);
         }
 
         private Dictionary<string, IRTextFunction> BuildUnmangledFunctionNameMap() {

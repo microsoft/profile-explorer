@@ -8,6 +8,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
@@ -19,6 +20,7 @@ using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using Microsoft.Win32;
 
 namespace IRExplorerUI {
     static class Utils {
@@ -287,28 +289,11 @@ namespace IRExplorerUI {
                 case BlockIR block:
                     return MakeBlockDescription(block);
                 case InstructionIR instr: {
-                        var builder = new StringBuilder();
-                        bool needsComma = false;
+                    var builder = new StringBuilder();
+                    bool needsComma = false;
 
-                        if (instr.Destinations.Count > 0) {
-                            foreach (var destOp in instr.Destinations) {
-                                if (needsComma) {
-                                    builder.Append(", ");
-                                }
-                                else {
-                                    needsComma = true;
-                                }
-
-                                builder.Append(MakeElementDescription(destOp));
-                            }
-
-                            builder.Append(" = ");
-                        }
-
-                        builder.Append($"{instr.OpcodeText} ");
-                        needsComma = false;
-
-                        foreach (var sourceOp in instr.Sources) {
+                    if (instr.Destinations.Count > 0) {
+                        foreach (var destOp in instr.Destinations) {
                             if (needsComma) {
                                 builder.Append(", ");
                             }
@@ -316,42 +301,59 @@ namespace IRExplorerUI {
                                 needsComma = true;
                             }
 
-                            builder.Append(MakeElementDescription(sourceOp));
+                            builder.Append(MakeElementDescription(destOp));
                         }
 
-                        return builder.ToString();
+                        builder.Append(" = ");
                     }
+
+                    builder.Append($"{instr.OpcodeText} ");
+                    needsComma = false;
+
+                    foreach (var sourceOp in instr.Sources) {
+                        if (needsComma) {
+                            builder.Append(", ");
+                        }
+                        else {
+                            needsComma = true;
+                        }
+
+                        builder.Append(MakeElementDescription(sourceOp));
+                    }
+
+                    return builder.ToString();
+                }
                 case OperandIR op: {
-                        string text = ReferenceFinder.GetSymbolName(op);
+                    string text = ReferenceFinder.GetSymbolName(op);
 
-                        switch (op.Kind) {
-                            case OperandKind.Address:
-                            case OperandKind.LabelAddress: {
-                                    text = $"&{text}";
-                                    break;
-                                }
-                            case OperandKind.Indirection: {
-                                    text = $"[{MakeElementDescription(op.IndirectionBaseValue)}]";
-                                    break;
-                                }
-                            case OperandKind.IntConstant: {
-                                    text = op.IntValue.ToString();
-                                    break;
-                                }
-                            case OperandKind.FloatConstant: {
-                                    text = op.FloatValue.ToString();
-                                    break;
-                                }
+                    switch (op.Kind) {
+                        case OperandKind.Address:
+                        case OperandKind.LabelAddress: {
+                            text = $"&{text}";
+                            break;
                         }
-
-                        var ssaTag = op.GetTag<ISSAValue>();
-
-                        if (ssaTag != null) {
-                            text += $"<{ssaTag.DefinitionId}>";
+                        case OperandKind.Indirection: {
+                            text = $"[{MakeElementDescription(op.IndirectionBaseValue)}]";
+                            break;
                         }
-
-                        return text;
+                        case OperandKind.IntConstant: {
+                            text = op.IntValue.ToString();
+                            break;
+                        }
+                        case OperandKind.FloatConstant: {
+                            text = op.FloatValue.ToString();
+                            break;
+                        }
                     }
+
+                    var ssaTag = op.GetTag<ISSAValue>();
+
+                    if (ssaTag != null) {
+                        text += $"<{ssaTag.DefinitionId}>";
+                    }
+
+                    return text;
+                }
                 default:
                     return element.ToString();
             }
@@ -559,10 +561,10 @@ namespace IRExplorerUI {
                     info.Letter = '*';
                     break;
                 default: {
-                        info.IsLetter = false;
-                        info.Letter = '\x00';
-                        break;
-                    }
+                    info.IsLetter = false;
+                    info.Letter = '\x00';
+                    break;
+                }
             }
 
             return info;
@@ -582,7 +584,7 @@ namespace IRExplorerUI {
             psi.UseShellExecute = true;
 
             try {
-                var process = new Process();
+                using var process = new Process();
                 process.StartInfo = psi;
                 process.Start();
                 return true;
@@ -675,8 +677,8 @@ namespace IRExplorerUI {
         }
 
         public static void WaitForDebugger(bool showMessageBox = false) {
-            if(showMessageBox) {
-                MessageBox.Show($"Waiting for debugger PID {Environment.ProcessId}", "Error", 
+            if (showMessageBox) {
+                MessageBox.Show($"Waiting for debugger PID {Environment.ProcessId}", "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
@@ -700,6 +702,88 @@ namespace IRExplorerUI {
             catch (Exception ex) {
                 return null;
             }
+        }
+
+        public static bool ValidateFilePath(string path, AutoCompleteBox box, string fileType, FrameworkElement owner) {
+            if (!File.Exists(path)) {
+                using var centerForm = new DialogCenteringHelper(owner);
+                MessageBox.Show($"Could not find {fileType} file {path}", "IR Explorer",
+                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
+
+                box.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        public static bool ValidateOptionalFilePath(string path, AutoCompleteBox box, string fileType, FrameworkElement owner) {
+            if (string.IsNullOrEmpty(path)) {
+                return true;
+            }
+
+            return ValidateFilePath(path, box, fileType, owner);
+        }
+
+        public static string ShowOpenFileDialog(string filter, string defaultExt = "*.*") {
+            var fileDialog = new OpenFileDialog {
+                DefaultExt = defaultExt,
+                Filter = filter
+            };
+
+            var result = fileDialog.ShowDialog();
+
+            if (result.HasValue && result.Value) {
+                return fileDialog.FileName;
+            }
+
+            return null;
+        }
+
+        public static bool ShowOpenFileDialog(AutoCompleteBox box, string filter, string defaultExt = "*.*") {
+            var path = ShowOpenFileDialog(filter, defaultExt);
+
+            if(path != null) {
+                box.Text = path;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool ShowOpenFileDialog(TextBox box, string filter, string defaultExt = "*.*") {
+            var path = ShowOpenFileDialog(filter, defaultExt);
+
+            if (path != null) {
+                box.Text = path;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool ShowOpenFileDialog(string filter, string defaultExt,
+                                              Action<string> setOutput) {
+            var path = ShowOpenFileDialog(filter, defaultExt);
+
+            if (path != null) {
+                setOutput(path);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static async Task<bool> ShowOpenFileDialogAsync(string filter, string defaultExt,
+                                      Func<string, Task> setOutput) {
+            var path = ShowOpenFileDialog(filter, defaultExt);
+
+            if (path != null) {
+                await setOutput(path);
+                return true;
+            }
+
+            return false;
         }
     }
 }

@@ -44,7 +44,7 @@
                     Height="22"
                     Padding="2,2,2,2"
                     HorizontalAlignment="Right"
-                    Click="BaseBrowseButton_Click"
+                    Click="ProfileBrowseButton_Click"
                     Content="Browse..."
                     IsEnabled="{Binding InputControlsEnabled}"
                     TabIndex="9" />
@@ -71,7 +71,7 @@
                     Height="22"
                     Padding="2,2,2,2"
                     HorizontalAlignment="Right"
-                    Click="DiffBrowseButton_Click"
+                    Click="BinaryBrowseButton_Click"
                     Content="Browse..."
                     IsEnabled="{Binding InputControlsEnabled}"
                     TabIndex="10" />
@@ -164,7 +164,7 @@
                 Padding="4,1,4,1"
                 VerticalAlignment="Top"
                 Background="#FFFCF4CC"
-                Click="UpdateButton_Click"
+                Click="LoadButton_Click"
                 Content="Load Profile"
                 IsEnabled="{Binding InputControlsEnabled}"
                 TabIndex="3" />

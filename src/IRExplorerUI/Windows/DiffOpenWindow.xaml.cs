@@ -28,27 +28,14 @@ namespace IRExplorerUI {
         }
 
         private void OpenFiles() {
-            if (ValidateFilePath(BaseFilePath, BaseAutocompleteBox, "base") &&
-                ValidateFilePath(DiffFilePath, DiffAutocompleteBox, "diff")) {
+            if (Utils.ValidateFilePath(BaseFilePath, BaseAutocompleteBox, "base", this) &&
+                Utils.ValidateFilePath(DiffFilePath, DiffAutocompleteBox, "diff", this)) {
                 App.Settings.AddRecentComparedFiles(BaseFilePath, DiffFilePath);
                 App.SaveApplicationSettings();
 
                 DialogResult = true;
                 Close();
             }
-        }
-
-        private bool ValidateFilePath(string path, AutoCompleteBox box, string fileType) {
-            if (!File.Exists(path)) {
-                using var centerForm = new DialogCenteringHelper(this);
-                MessageBox.Show($"Could not find {fileType} file {path}", "Compiler Studio",
-                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
-
-                box.Focus();
-                return false;
-            }
-
-            return true;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e) {

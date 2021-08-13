@@ -217,7 +217,7 @@
                             InputGestureText="Ctrl+Shift+O" />
                         <MenuItem
                             Command="local:AppCommand.OpenExecutable"
-                            Header="Open Executable"/>
+                            Header="Open Binary File"/>
                         <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
                             <Separator />
                             <MenuItem Click="RecentFilesMenu_Click" Header="Clear" />

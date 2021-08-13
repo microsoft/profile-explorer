@@ -105,19 +105,17 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void OpenDiffDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            string filePath = ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
+        private async void OpenDiffDocumentExecuted(object sender, ExecutedRoutedEventArgs e) =>
+            await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*",
+                async (path) => {
+                    bool loaded = await OpenDiffIRDocument(path);
 
-            if (filePath != null) {
-                bool loaded = await OpenDiffIRDocument(filePath);
-
-                if (!loaded) {
-                    using var centerForm = new DialogCenteringHelper(this);
-                    MessageBox.Show($"Failed to load diff file {filePath}", "IR Explorer",
-                                    MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                }
-            }
-        }
+                    if (!loaded) {
+                        using var centerForm = new DialogCenteringHelper(this);
+                        MessageBox.Show($"Failed to load diff file {path}", "IR Explorer",
+                                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    }
+                });
 
         private async void CloseDiffDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (!sessionState_.IsInTwoDocumentsDiffMode) {

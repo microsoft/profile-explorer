@@ -223,7 +223,7 @@
 		<Page Update="Converters.xaml">
 			<XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
-		<Page Update="Windows\ExecutableOpenWindow.xaml">
+		<Page Update="Windows\BinaryOpenWindow.xaml">
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
 		<Page Update="Windows\ProfileLoadWindow.xaml">

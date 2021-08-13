@@ -16,9 +16,8 @@ using IRExplorerUI.Document;
 using System.Windows.Documents;
 using System.IO;
 
-//? TODO: EXTRACT SOURCE LOCATION MARKING TO OWN CLASS NOT PROFILE-DEPENDENT
-
 namespace IRExplorerUI.Compilers.ASM {
+    //? TODO: Move to application settings
     public class ProfileDocumentMarkerOptions {
         public double VirtualColumnPosition { get; set; }
         public double ElementWeightCutoff { get; set; }

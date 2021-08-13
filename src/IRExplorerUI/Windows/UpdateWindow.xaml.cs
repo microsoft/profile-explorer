@@ -24,7 +24,7 @@ namespace IRExplorerUI {
 
             if (MessageBox.Show(
                     "Download and update to the latest version?\nThis will close the current session and restart the application.",
-                    "Compiler Studio", MessageBoxButton.YesNo, MessageBoxImage.Information) !=
+                    "IR Explorer", MessageBoxButton.YesNo, MessageBoxImage.Information) !=
                 MessageBoxResult.Yes) {
                 return;
             }
@@ -37,7 +37,7 @@ namespace IRExplorerUI {
                 }
             }
             catch (Exception ex) {
-                MessageBox.Show($"Failed to download update: {ex}", "Compiler Studio", MessageBoxButton.OK,
+                MessageBox.Show($"Failed to download update: {ex}", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Error);
             }
         }

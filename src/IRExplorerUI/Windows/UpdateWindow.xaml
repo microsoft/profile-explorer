@@ -5,7 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Compiler Studio Update"
+    Title="IR Explorer Update"
     Width="600"
     Height="500"
     Loaded="Window_Loaded"
