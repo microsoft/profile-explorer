@@ -1144,7 +1144,7 @@ namespace IRExplorerUI {
             using var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader, CompilerInfo, cvdumpPath);
             bool markInlinedFunctions = true;
 
-            sessionState_.ProfileData = await profileData.LoadTrace(profileFilePath, binaryFilePath, debugFilePath,
+            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, debugFilePath,
                                         markInlinedFunctions, progressCallback, cancelableTask);
             return sessionState_.ProfileData != null;
         }

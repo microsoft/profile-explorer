@@ -70,6 +70,9 @@ namespace IRExplorerUI {
         [ProtoMember(16)]
         public IRMode DefaultIRMode;
 
+        [ProtoMember(17)]
+        public BinaryDissasemblerOptions DissasemblerOptions; 
+
         public ApplicationSettings() {
             Reset();
         }
@@ -100,6 +103,7 @@ namespace IRExplorerUI {
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
+            DissasemblerOptions ??= BinaryDissasemblerOptions.Default;
 
             //? REMOVE
             /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {

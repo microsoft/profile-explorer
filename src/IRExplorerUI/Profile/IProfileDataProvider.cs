@@ -21,7 +21,11 @@ namespace IRExplorerUI.Profile {
     public delegate void ProfileLoadProgressHandler(ProfileLoadProgress info);
 
     public interface IProfileDataProvider {
-        Task<ProfileData> LoadTrace(string tracePath, string imageName, string symbolPath,
+        ProfileData LoadTrace(string tracePath, string imageName, string symbolPath,
+                              bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
+                              CancelableTask cancelableTask = null);
+
+        Task<ProfileData> LoadTraceAsync(string tracePath, string imageName, string symbolPath,
             bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
             CancelableTask cancelableTask = null);
     }

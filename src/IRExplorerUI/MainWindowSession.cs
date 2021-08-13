@@ -74,34 +74,22 @@ namespace IRExplorerUI {
             await OpenDocument();
         }
 
-        private void OpenDebugExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var file = ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb");
+        private void OpenDebugExecuted(object sender, ExecutedRoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb",
+                (path) => sessionState_.MainDocument.DebugInfoFilePath = path);
 
-            if (file != null) {
-                sessionState_.MainDocument.DebugInfoFilePath = file;
-            }
-        }
-
-        private void OpenDiffDebugExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var file = ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb");
-
-            if (file != null) {
-                sessionState_.DiffDocument.DebugInfoFilePath = file;
-            }
-        }
+        private void OpenDiffDebugExecuted(object sender, ExecutedRoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb",
+                (path) => sessionState_.DiffDocument.DebugInfoFilePath = path);
 
         private void CanExecuteDiffDocumentCommand(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = sessionState_ != null && sessionState_.IsInTwoDocumentsDiffMode;
             e.Handled = true;
         }
 
-        private async Task OpenDocument() {
-            string filePath = ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
-
-            if (filePath != null) {
-                await OpenDocument(filePath);
-            }
-        }
+        private async Task OpenDocument() =>
+            await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*",
+                async (path) => await OpenDocument(path));
 
         public async Task<bool> OpenSessionDocument(string filePath) {
             try {
@@ -1125,23 +1113,8 @@ namespace IRExplorerUI {
             Trace.TraceInformation($"Auto-saved session: {saved}");
         }
 
-        private string ShowOpenFileDialog(string filter, string defaultExtension = "*.*") {
-            var fileDialog = new OpenFileDialog {
-                DefaultExt = defaultExtension,
-                Filter = filter
-            };
-
-            var result = fileDialog.ShowDialog();
-
-            if (result.HasValue && result.Value) {
-                return fileDialog.FileName;
-            }
-
-            return null;
-        }
-
         private void OpenNewDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            string filePath = ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
+            string filePath = Utils.ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
 
             if (filePath != null) {
                 if (!Utils.StartNewApplicationInstance(filePath)) {
@@ -1153,7 +1126,7 @@ namespace IRExplorerUI {
         }
 
         private void OpenExecutableExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var openWindow = new ExecutableOpenWindow(this);
+            var openWindow = new BinaryOpenWindow(this);
             openWindow.Owner = this;
             var result = openWindow.ShowDialog();
 

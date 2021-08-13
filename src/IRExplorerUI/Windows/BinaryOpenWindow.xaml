@@ -1,17 +1,20 @@
 ﻿<Window
-    x:Class="IRExplorerUI.ExecutableOpenWindow"
+    x:Class="IRExplorerUI.BinaryOpenWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:IRExplorerUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Dissasemble executable"
-    Width="600"
+    Title="Dissasemble and open binary file"
+    Width="500"
+    MinWidth="500"
     Height="Auto"
     Loaded="Window_Loaded"
     ShowInTaskbar="False"
+    ResizeMode="NoResize"
     WindowStartupLocation="CenterOwner"
+    SizeToContent="Height"
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -28,15 +31,16 @@
             Grid.Row="0"
             Grid.Column="0"
             Grid.ColumnSpan="2">
-            <TextBlock Margin="16,8,16,0" Text="Executable file path" />
+            <TextBlock Margin="16,8,16,0" Text="Binary file path" />
             <Grid Margin="16,4,16,0">
                 <controls:FileSystemTextBox
-                    x:Name="BaseAutocompleteBox"
+                    x:Name="BinaryAutocompleteBox"
                     Height="22"
-                    Margin="0,0,55,0"
+                    Margin="0,0,50,0"
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
+                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                     MinimumPrefixLength="1"
                     TabIndex="1" />
 
@@ -45,17 +49,17 @@
                     Height="22"
                     Padding="2,2,2,2"
                     HorizontalAlignment="Right"
-                    Click="BaseBrowseButton_Click"
-                    Content="Browse..."
+                    Click="BinaryBrowseButton_Click"
+                    Content="Browse"
                     TabIndex="9" />
             </Grid>
 
             <TextBlock Margin="16,4,16,0" Text="Debug file path (optional)" />
             <Grid Margin="16,4,16,0">
                 <controls:FileSystemTextBox
-                    x:Name="DiffAutocompleteBox"
+                    x:Name="DebugAutocompleteBox"
                     Height="22"
-                    Margin="0,0,55,0"
+                    Margin="0,0,50,0"
                     HorizontalAlignment="Stretch"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -63,6 +67,7 @@
                     IsDropDownOpen="True"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
+                    Text="{Binding Path=DebugFilePath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
                     TabIndex="2" />
 
                 <Button
@@ -70,22 +75,22 @@
                     Height="22"
                     Padding="2,2,2,2"
                     HorizontalAlignment="Right"
-                    Click="DiffBrowseButton_Click"
-                    Content="Browse..."
+                    Click="DebugBrowseButton_Click"
+                    Content="Browse"
                     TabIndex="10" />
             </Grid>
 
-            <Expander  Margin="16,16,16,0" IsExpanded="True">
+            <Expander  Margin="16,8,16,0" IsExpanded="True">
                 <Expander.Header>
-                    <TextBlock Text="Dissasembler options" FontWeight="DemiBold"/>
+                    <TextBlock Text="Options" FontWeight="DemiBold"/>
                 </Expander.Header>
-                
+
                 <StackPanel>
-                <TextBlock Margin="0,8,0,0" Text="Dissasembler path" />
-                <Grid Margin="0,4,0,0">
-                    <controls:FileSystemTextBox
+                    <TextBlock Margin="0,8,0,0" Text="Dissasembler path" />
+                    <Grid Margin="0,4,0,0">
+                        <controls:FileSystemTextBox
         Height="22"
-        Margin="0,0,55,0"
+        Margin="0,0,50,0"
         HorizontalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -93,25 +98,25 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
-                        Text="dumpbin.exe"
+        Text="{Binding Path=Options.DissasemblerPath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
         TabIndex="2" />
-                    <Button
+                        <Button
     x:Name="DisasmBrowseButton"
     Height="22"
     Padding="2,2,2,2"
     HorizontalAlignment="Right"
-    Click="BaseBrowseButton_Click"
-    Content="Browse..."
+    Click="BinaryBrowseButton_Click"
+    Content="Browse"
     TabIndex="9" />
-                </Grid>
+                    </Grid>
 
 
 
-                <TextBlock Margin="0,4,0,0" Text="Dissasembler arguments" />
-                <Grid Margin="0,4,0,0">
-                    <controls:FileSystemTextBox
+                    <TextBlock Margin="0,4,0,0" Text="Dissasembler arguments" />
+                    <Grid Margin="0,4,0,0">
+                        <controls:FileSystemTextBox
         Height="22"
-        Margin="0,0,55,0"
+        Margin="0,0,50,0"
         HorizontalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -119,39 +124,40 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
-                        Text="/disasm /out:$DST $SRC"
+        Text="{Binding Path=Options.DissasemblerArguments, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
         TabIndex="2" />
-                </Grid>
+                    </Grid>
 
 
-                <TextBlock Margin="0,8,0,0" Text="Post-processing tool path" />
-                <Grid Margin="0,4,0,0">
-                    <controls:FileSystemTextBox
+                    <TextBlock Margin="0,8,0,0" Text="Dissasembly post-processing tool path" />
+                    <Grid Margin="0,4,0,0">
+                        <controls:FileSystemTextBox
         Height="22"
-        Margin="0,0,55,0"
+        Margin="0,0,50,0"
         HorizontalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
         FilterMode="StartsWithOrdinal"
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
-        MinimumPrefixLength="1" Text=""
+        MinimumPrefixLength="1"
+        Text="{Binding Path=Options.PostProcessorPath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
         TabIndex="2" />
-                    <Button
+                        <Button
     x:Name="PostprocessBrowseButton"
     Height="22"
     Padding="2,2,2,2"
     HorizontalAlignment="Right"
-    Click="BaseBrowseButton_Click"
-    Content="Browse..."
+    Click="BinaryBrowseButton_Click"
+    Content="Browse"
     TabIndex="9" />
-                </Grid>
+                    </Grid>
 
-                <TextBlock Margin="0,4,0,0" Text="Post-processing tool arguments" />
-                <Grid Margin="0,4,0,0">
-                    <controls:FileSystemTextBox
+                    <TextBlock Margin="0,4,0,0" Text="Post-processing tool arguments" />
+                    <Grid Margin="0,4,0,0">
+                        <controls:FileSystemTextBox
         Height="22"
-        Margin="0,0,55,0"
+        Margin="0,0,50,0"
         HorizontalAlignment="Stretch"
         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -159,43 +165,65 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
-                        Text="$SRC $DST"
+        Text="{Binding Path=Options.PostProcessorArguments, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
         TabIndex="2" />
-                </Grid>
+                    </Grid>
 
-                <CheckBox Margin="0,8,0,0" Content="Cache dissasembler output"/>
-                <TextBlock Margin="0,8,0,0" Text="Placeholders: $SRC - input file, $DST - output file, $DBG - debug file" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-            </StackPanel>
+                    <CheckBox Margin="0,8,0,0" Content="Cache dissasembler output"
+                              IsChecked="{Binding Path=Options.CacheDissasembly, Mode=TwoWay}"/>
+                    <TextBlock Margin="0,4,0,0" Text="Placeholders: $SRC - input file, $DST - output file, $DBG - debug file" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                </StackPanel>
             </Expander>
         </StackPanel>
-
 
         <StackPanel
             Grid.Row="1"
             Grid.Column="0"
-            Width="80"
-            Margin="16,4,0,16"
-            HorizontalAlignment="Left"
-            Orientation="Horizontal">
+            Width="200"
+            Margin="16,8,0,8"
+            VerticalAlignment="Top"
+            HorizontalAlignment="Left">
             <Button
                 x:Name="RecentButton"
                 Height="24"
+                Width="80"
+                HorizontalAlignment="Left"
                 Padding="4,1,4,1"
                 Click="RecentButton_Click"
                 Content="Recent Files"
-                TabIndex="5">
+                TabIndex="5"
+                Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
                 <Button.ContextMenu>
                     <ContextMenu />
                 </Button.ContextMenu>
             </Button>
+            <ProgressBar
+    x:Name="LoadProgressBar"
+    Height="20"
+    HorizontalAlignment="Stretch"
+    Maximum="100"
+    Value="40" 
+    Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}"/>
+            <DockPanel Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock
+        x:Name="LoadProgressLabel"
+        DockPanel.Dock="Left"
+        Text="" />
+                <TextBlock
+        x:Name="ProgressPercentLabel"
+        HorizontalAlignment="Right"
+        DockPanel.Dock="Right"
+        Text="0 %" />
+            </DockPanel>
         </StackPanel>
 
         <StackPanel
             Grid.Row="1"
             Grid.Column="1"
             Width="115"
-            Margin="0,4,16,16"
+            Margin="0,8,16,8"
             HorizontalAlignment="Right"
+            VerticalAlignment="Top"
             Orientation="Horizontal">
             <Button
                 x:Name="CancelButton"
@@ -206,11 +234,12 @@
                 Content="Cancel"
                 TabIndex="4" />
             <Button
-                x:Name="UpdateButton"
+                x:Name="OpenButton"
                 Height="24"
                 Padding="4,1,4,1"
                 Background="#FFFCF4CC"
-                Click="UpdateButton_Click"
+                Click="OpenButton_Click"
+                IsEnabled="{Binding InputControlsEnabled}"
                 Content="Open File"
                 TabIndex="3" />
         </StackPanel>

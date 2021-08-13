@@ -47,7 +47,7 @@ namespace IRExplorerUI {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
 
-        private async void UpdateButton_Click(object sender, RoutedEventArgs e) {
+        private async void LoadButton_Click(object sender, RoutedEventArgs e) {
             await OpenFiles();
         }
 
@@ -56,9 +56,8 @@ namespace IRExplorerUI {
             BinaryFilePath = BinaryAutocompleteBox.Text.Trim();
             DebugFilePath = DebugAutocompleteBox.Text.Trim();
 
-            if (ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile") &&
-                //ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary") &&
-                ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug")) {
+            if (Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this) &&
+                Utils.ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug", this)) {
                 App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, DebugFilePath);
                 App.SaveApplicationSettings();
 
@@ -90,26 +89,13 @@ namespace IRExplorerUI {
                     DialogResult = true;
                     Close();
                 }
-                else {
-                    MessageBox.Show($"Filed to load profile file {ProfileFilePath}", "Compiler Studio",
+                else if(!task.IsCanceled) {
+                    MessageBox.Show($"Filed to load profile file {ProfileFilePath}", "IR Explorer",
                                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
 
                 IsLoadingProfile = false;
             }
-        }
-
-        private bool ValidateFilePath(string path, AutoCompleteBox box, string fileType) {
-            if (!File.Exists(path)) {
-                using var centerForm = new DialogCenteringHelper(this);
-                MessageBox.Show($"Could not find {fileType} file {path}", "Compiler Studio",
-                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
-
-                box.Focus();
-                return false;
-            }
-
-            return true;
         }
 
         private async void CancelButton_Click(object sender, RoutedEventArgs e) {
@@ -126,44 +112,14 @@ namespace IRExplorerUI {
             ProfileAutocompleteBox.Focus();
         }
 
-        private void BaseBrowseButton_Click(object sender, RoutedEventArgs e) {
-            string path = ShowOpenFileDialog("ETW Trace Files|*.etl|All Files|*.*");
+        private void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*");
 
-            if (path != null) {
-                ProfileAutocompleteBox.Text = path;
-            }
-        }
+        private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(BinaryAutocompleteBox, "Binary Files|*.exe;*.dll;*.sys;|All Files|*.*");
 
-        private void DiffBrowseButton_Click(object sender, RoutedEventArgs e) {
-            string path = ShowOpenFileDialog("Binary Files|*.exe;*.dll;*.sys;|All Files|*.*");
-
-            if (path != null) {
-                BinaryAutocompleteBox.Text = path;
-            }
-        }
-
-        private string ShowOpenFileDialog(string filter) {
-            var fileDialog = new OpenFileDialog {
-                DefaultExt = "*.*",
-                Filter = filter
-            };
-
-            var result = fileDialog.ShowDialog();
-
-            if (result.HasValue && result.Value) {
-                return fileDialog.FileName;
-            }
-
-            return null;
-        }
-
-        private void DebugBrowseButton_OnClick(object sender, RoutedEventArgs e) {
-            string path = ShowOpenFileDialog("Debug Info Files|*.pdb|All Files|*.*");
-
-            if (path != null) {
-                DebugAutocompleteBox.Text = path;
-            }
-        }
+        private void DebugBrowseButton_OnClick(object sender, RoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(DebugAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
 
         private void RecentButton_Click(object sender, RoutedEventArgs e) {
             var menu = RecentButton.ContextMenu;
