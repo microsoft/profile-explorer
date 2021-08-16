@@ -416,11 +416,13 @@ namespace IRExplorerUI {
             string title = "IR Explorer";
 
             if (sessionState_.Documents.Count == 1) {
-                title += $" - {sessionState_.Documents[0].FilePath}";
+                var name = sessionState_.Documents[0].BinaryFilePath ?? sessionState_.Documents[0].FilePath;
+                title += $" - {name}";
             }
             else if (sessionState_.Documents.Count == 2) {
-                title +=
-                    $" - Base: {sessionState_.Documents[0].FilePath}  | Diff: {sessionState_.Documents[1].FilePath}";
+                var baseName = sessionState_.Documents[0].BinaryFilePath ?? sessionState_.Documents[0].FilePath;
+                var diffName = sessionState_.Documents[1].BinaryFilePath ?? sessionState_.Documents[1].FilePath;
+                title += $" - Base: {baseName}  | Diff: {diffName}";
             }
 
             Title = title;

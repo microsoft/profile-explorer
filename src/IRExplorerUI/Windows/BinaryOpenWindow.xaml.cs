@@ -48,6 +48,7 @@ namespace IRExplorerUI {
         public BinaryDissasemblerOptions Options { get; set; }
         public string BinaryFilePath { get; set; }
         public string DebugFilePath { get; set; }
+        public string OutputFilePath { get; set; }
 
         private async void OpenButton_Click(object sender, RoutedEventArgs e) {
             await OpenFile();
@@ -85,6 +86,7 @@ namespace IRExplorerUI {
                 }, task);
 
                 if (outputFile != null) {
+                    OutputFilePath = outputFile;
                     DialogResult = true;
                     Close();
                 }
@@ -158,5 +160,11 @@ namespace IRExplorerUI {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
 
+        private void ResetButton_Click(object sender, RoutedEventArgs e) {
+            Options.Reset();
+            App.SaveApplicationSettings();
+            DataContext = null;
+            DataContext = this;
+        }
     }
 }

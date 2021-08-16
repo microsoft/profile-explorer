@@ -303,7 +303,7 @@ namespace IRExplorerUI {
                 fileLoaded = await LoadSourceFileForFunction(inlineeFunc);
             }
 
-            if (!fileLoaded) {
+            if (!fileLoaded && !string.IsNullOrEmpty(inlinee.FilePath)) {
                 fileLoaded = await LoadSourceFile(inlinee.FilePath);
             }
 

@@ -20,12 +20,8 @@
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
-            <RowDefinition Height="48" />
+            <RowDefinition Height="50" />
         </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="115" />
-            <ColumnDefinition />
-        </Grid.ColumnDefinitions>
 
         <StackPanel
             Grid.Row="0"
@@ -40,7 +36,7 @@
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}"
                     MinimumPrefixLength="1"
                     TabIndex="1" />
 
@@ -67,7 +63,7 @@
                     IsDropDownOpen="True"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
-                    Text="{Binding Path=DebugFilePath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                    Text="{Binding Path=DebugFilePath, Mode=TwoWay}"
                     TabIndex="2" />
 
                 <Button
@@ -98,7 +94,7 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
-        Text="{Binding Path=Options.DissasemblerPath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+        Text="{Binding Path=Options.DissasemblerPath, Mode=TwoWay}"
         TabIndex="2" />
                         <Button
     x:Name="DisasmBrowseButton"
@@ -124,7 +120,7 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
-        Text="{Binding Path=Options.DissasemblerArguments, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+        Text="{Binding Path=Options.DissasemblerArguments, Mode=TwoWay}"
         TabIndex="2" />
                     </Grid>
 
@@ -141,7 +137,7 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
-        Text="{Binding Path=Options.PostProcessorPath, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+        Text="{Binding Path=Options.PostProcessorPath, Mode=TwoWay}"
         TabIndex="2" />
                         <Button
     x:Name="PostprocessBrowseButton"
@@ -165,7 +161,7 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
-        Text="{Binding Path=Options.PostProcessorArguments, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+        Text="{Binding Path=Options.PostProcessorArguments, Mode=TwoWay}"
         TabIndex="2" />
                     </Grid>
 
@@ -179,10 +175,11 @@
         <StackPanel
             Grid.Row="1"
             Grid.Column="0"
-            Width="200"
-            Margin="16,8,0,8"
+            Width="250"
+            Margin="16,16,0,8"
             VerticalAlignment="Top"
             HorizontalAlignment="Left">
+            <StackPanel Orientation="Horizontal">
             <Button
                 x:Name="RecentButton"
                 Height="24"
@@ -197,6 +194,22 @@
                     <ContextMenu />
                 </Button.ContextMenu>
             </Button>
+                <Button
+    Height="24"
+    Width="50"
+    HorizontalAlignment="Left"
+    Margin="4,0,0,0"
+    Padding="4,1,4,1"
+    Content="Reset"
+    TabIndex="5"
+    Click="ResetButton_Click"
+    ToolTip="Reset options to default values"
+    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
+                    <Button.ContextMenu>
+                        <ContextMenu />
+                    </Button.ContextMenu>
+                </Button>
+            </StackPanel>
             <ProgressBar
     x:Name="LoadProgressBar"
     Height="20"
@@ -221,7 +234,7 @@
             Grid.Row="1"
             Grid.Column="1"
             Width="115"
-            Margin="0,8,16,8"
+            Margin="0,16,16,8"
             HorizontalAlignment="Right"
             VerticalAlignment="Top"
             Orientation="Horizontal">

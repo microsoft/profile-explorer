@@ -53,21 +53,35 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task OpenDocument(string filePath) {
-            bool loaded;
+        private async Task<LoadedDocument> OpenDocument(string filePath) {
+            LoadedDocument loadedDoc = null;
 
-            if (Path.HasExtension(filePath) && Path.GetExtension(filePath) == ".irx") {
-                loaded = await OpenSessionDocument(filePath);
-            }
-            else {
-                loaded = await OpenIRDocument(filePath);
+            if (Path.HasExtension(filePath)) { 
+                if(Path.GetExtension(filePath).ToLowerInvariant() == ".irx") {
+                    loadedDoc = await OpenSessionDocument(filePath);
+                }
+                else if ((Path.GetExtension(filePath).ToLowerInvariant() == ".exe") ||
+                    (Path.GetExtension(filePath).ToLowerInvariant() == ".dll") ||
+                    (Path.GetExtension(filePath).ToLowerInvariant() == ".sys")) {
+                    var dissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
+                    var outputFile = await dissasembler.DissasembleAsync(filePath, null);
+                    loadedDoc = await OpenIRDocument(outputFile);
+                    loadedDoc.BinaryFilePath = filePath;
+                    UpdateWindowTitle();
+                }
             }
 
-            if (!loaded) {
+            if(loadedDoc == null) {
+                loadedDoc = await OpenIRDocument(filePath);
+            }
+
+            if (loadedDoc == null) {
                 using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show($"Failed to load file {filePath}", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Exclamation);
             }
+
+            return loadedDoc;
         }
 
         private async void OpenDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -91,20 +105,18 @@ namespace IRExplorerUI {
             await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*",
                 async (path) => await OpenDocument(path));
 
-        public async Task<bool> OpenSessionDocument(string filePath) {
+        public async Task<LoadedDocument> OpenSessionDocument(string filePath) {
             try {
                 await EndSession();
                 UpdateUIBeforeReadSession(filePath);
                 var data = await File.ReadAllBytesAsync(filePath);
                 var state = await SessionStateManager.DeserializeSession(data);
-                bool loaded = false;
 
                 if (state != null) {
-                    loaded = await LoadSessionDocument(state);
+                    var loadedDoc = await LoadSessionDocument(state);
+                    UpdateUIAfterLoadDocument();
+                    return loadedDoc;
                 }
-
-                UpdateUIAfterLoadDocument();
-                return loaded;
             }
             catch (IOException ioEx) {
                 Trace.TraceError($"Failed to loadsession, IO exception: {ioEx}");
@@ -116,10 +128,11 @@ namespace IRExplorerUI {
             }
 
             UpdateUIAfterLoadDocument();
-            return false;
+            return null;
         }
 
-        private async Task InitializeFromLoadedSession(SessionState state, Dictionary<Guid, LoadedDocument> idToDocumentMap) {
+        private async Task<LoadedDocument>
+        InitializeFromLoadedSession(SessionState state, Dictionary<Guid, LoadedDocument> idToDocumentMap) {
             sessionState_.Info.Notes = state.Info.Notes;
             int index = 0;
 
@@ -160,6 +173,7 @@ namespace IRExplorerUI {
 
             // Reload sections left open.
             var idToDocumentHostMap = new Dictionary<Guid, IRDocumentHost>();
+            LoadedDocument firstLoadedDoc = null;
 
             foreach (var openSection in state.OpenSections) {
                 var loadedDoc = idToDocumentMap[openSection.DocumentId];
@@ -178,6 +192,7 @@ namespace IRExplorerUI {
                 var args = new OpenSectionEventArgs(section, openKind);
                 var docHost = await OpenDocumentSection(args);
                 idToDocumentHostMap[openSection.DocumentId] = docHost;
+                firstLoadedDoc = loadedDoc;
             }
 
             // Enter diff mode if it was active.
@@ -194,6 +209,7 @@ namespace IRExplorerUI {
             }
 
             StartAutoSaveTimer();
+            return firstLoadedDoc;
         }
 
         public async Task<bool> SaveSessionDocument(string filePath) {
@@ -246,10 +262,6 @@ namespace IRExplorerUI {
             ClearGraphLayoutCache();
             compilerInfo_.ReloadSettings();
 
-            if (sessionKind != SessionKind.DebugSession) {
-                AddRecentFile(filePath);
-            }
-
             DiffModeButton.IsEnabled = true;
             HideStartPage();
         }
@@ -289,7 +301,7 @@ namespace IRExplorerUI {
             docHostInfo.HostParent.Children.Remove(docHostInfo.Host);
         }
 
-        private async Task<bool> OpenIRDocument(string filePath) {
+        private async Task<LoadedDocument> OpenIRDocument(string filePath) {
             try {
                 await EndSession();
                 UpdateUIBeforeLoadDocument(filePath);
@@ -297,7 +309,7 @@ namespace IRExplorerUI {
                                                                UpdateIRDocumentLoadProgress));
                 if (result != null) {
                     await SetupOpenedIRDocument(SessionKind.Default, filePath, result);
-                    return true;
+                    return result;
                 }
             }
             catch (Exception ex) {
@@ -306,7 +318,7 @@ namespace IRExplorerUI {
             }
 
             UpdateUIAfterLoadDocument();
-            return false;
+            return null;
         }
 
         private void UpdateIRDocumentLoadProgress(IRSectionReader reader, SectionReaderProgressInfo info) {
@@ -410,7 +422,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task<bool> LoadSessionDocument(SessionState state) {
+        private async Task<LoadedDocument> LoadSessionDocument(SessionState state) {
             try {
                 StartSession(state.Info.FilePath, SessionKind.FileSession);
                 var idToDocumentMap = new Dictionary<Guid, LoadedDocument>();
@@ -420,7 +432,7 @@ namespace IRExplorerUI {
                                                                    docState.Id, UpdateIRDocumentLoadProgress));
                     if (result == null) {
                         UpdateUIAfterLoadDocument();
-                        return false;
+                        return null;
                     }
 
                     sessionState_.RegisterLoadedDocument(result);
@@ -440,15 +452,14 @@ namespace IRExplorerUI {
                 }
 
                 UpdateUIAfterLoadDocument();
-                await InitializeFromLoadedSession(state, idToDocumentMap);
-                return true;
+                return await InitializeFromLoadedSession(state, idToDocumentMap);
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load in-memory document: {ex}");
             }
 
             UpdateUIAfterLoadDocument();
-            return false;
+            return null;
         }
 
         private async void SectionPanel_OpenSection(object sender, OpenSectionEventArgs args) {
@@ -1058,7 +1069,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            bool loaded = await OpenIRDocument(filePath);
+            bool loaded = await OpenIRDocument(filePath) != null;
 
             if (!loaded) {
                 using var centerForm = new DialogCenteringHelper(this);
@@ -1125,12 +1136,19 @@ namespace IRExplorerUI {
             }
         }
 
-        private void OpenExecutableExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private async void OpenExecutableExecuted(object sender, ExecutedRoutedEventArgs e) {
             var openWindow = new BinaryOpenWindow(this);
             openWindow.Owner = this;
             var result = openWindow.ShowDialog();
 
             if (result.HasValue && result.Value) {
+                var loadedDoc = await OpenDocument(openWindow.OutputFilePath);
+                
+                if(loadedDoc != null) {
+                    loadedDoc.BinaryFilePath = openWindow.BinaryFilePath;
+                    loadedDoc.DebugInfoFilePath = openWindow.DebugFilePath;
+                    UpdateWindowTitle();
+                }
             }
         }
 
