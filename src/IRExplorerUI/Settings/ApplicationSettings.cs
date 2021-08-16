@@ -103,7 +103,7 @@ namespace IRExplorerUI {
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
-            DissasemblerOptions ??= BinaryDissasemblerOptions.Default;
+            DissasemblerOptions ??= new BinaryDissasemblerOptions();
 
             //? REMOVE
             /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {

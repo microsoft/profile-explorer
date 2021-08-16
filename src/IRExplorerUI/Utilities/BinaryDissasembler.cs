@@ -6,26 +6,42 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using IRExplorerCore;
+using ProtoBuf;
 
 // Save recent exec files with pdb pairs
 // Caching that checks for same CRC
 // Try to fill PDB path
 
 namespace IRExplorerUI {
-    public class BinaryDissasemblerOptions {
+    [ProtoContract(SkipConstructor = true)]
+    public class BinaryDissasemblerOptions : SettingsBase {
+        [ProtoMember(1)]
         public string DissasemblerPath { get; set; }
+        [ProtoMember(2)]
         public string DissasemblerArguments { get; set; }
+        [ProtoMember(3)]
         public string PostProcessorPath { get; set; }
+        [ProtoMember(4)]
         public string PostProcessorArguments { get; set; }
+        [ProtoMember(5)]
         public bool CacheDissasembly { get; set; }
 
-        public static BinaryDissasemblerOptions Default => new BinaryDissasemblerOptions() {
-            DissasemblerPath = "dumpbin.exe",
-            DissasemblerArguments = "/disasm /out:$DST $SRC",
-            PostProcessorPath = "",
-            PostProcessorArguments = "$SRC $DST",
-            CacheDissasembly = true
-        };
+        public BinaryDissasemblerOptions() {
+            Reset();
+        }
+
+        public override void Reset() {
+            DissasemblerPath = "dumpbin.exe";
+            DissasemblerArguments = "/disasm /out:$DST $SRC";
+            PostProcessorPath = "";
+            PostProcessorArguments = "$SRC $DST";
+            CacheDissasembly = true;
+        }
+
+        public override SettingsBase Clone() {
+            var serialized = StateSerializer.Serialize(this);
+            return StateSerializer.Deserialize<BinaryDissasemblerOptions>(serialized);
+        }
     }
 
     public enum BinaryDissasemblerStage {
@@ -79,8 +95,8 @@ namespace IRExplorerUI {
         }
 
         public Task<string> DissasembleAsync(string exePath, string debugPath,
-                          BinaryDissasemblerProgressHandler progressCallback,
-                          CancelableTask cancelableTask) {
+                          BinaryDissasemblerProgressHandler progressCallback = null,
+                          CancelableTask cancelableTask = null) {
             return Task.Run(() => Dissasemble(exePath, debugPath, progressCallback, cancelableTask));
         }
 

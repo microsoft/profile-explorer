@@ -79,7 +79,7 @@ namespace IRExplorerUI {
         void UnregisterDetachedPanel(DraggablePopup panel);
 
         Task<bool> SaveSessionDocument(string filePath);
-        Task<bool> OpenSessionDocument(string filePath);
+        Task<LoadedDocument> OpenSessionDocument(string filePath);
 
         Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
                                 ProfileLoadProgressHandler progressCallback,
