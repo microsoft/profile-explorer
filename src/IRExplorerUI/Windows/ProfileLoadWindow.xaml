@@ -37,6 +37,7 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
+                    Text="{Binding Path=ProfileFilePath, Mode=TwoWay}"
                     TabIndex="1" />
 
                 <Button
@@ -64,6 +65,7 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
+                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}"
                     TabIndex="2" />
 
                 <Button
@@ -91,6 +93,7 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
+                    Text="{Binding Path=DebugFilePath, Mode=TwoWay}"
                     TabIndex="2" />
 
                 <Button

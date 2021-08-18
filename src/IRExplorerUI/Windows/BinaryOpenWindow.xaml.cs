@@ -55,6 +55,9 @@ namespace IRExplorerUI {
         }
 
         private async Task OpenFile() {
+            BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
+            DebugFilePath = Utils.CleanupPath(DebugFilePath);
+
             if (Utils.ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary", this) &&
                 Utils.ValidateOptionalFilePath(DebugFilePath, DebugAutocompleteBox, "debug", this)) {
                 App.Settings.AddRecentFile(BinaryFilePath);
@@ -156,6 +159,12 @@ namespace IRExplorerUI {
         private void DebugBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(DebugAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
 
+        private void DisasmBrowseButton_Click(object sender, RoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(DisasmAutocompleteBox, "Executables|*.exe|All Files|*.*");
+
+        private void ToolBrowseButton_Click(object sender, RoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(ToolAutocompleteBox, "Executables|*.exe|All Files|*.*");
+
         public void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
@@ -165,6 +174,10 @@ namespace IRExplorerUI {
             App.SaveApplicationSettings();
             DataContext = null;
             DataContext = this;
+        }
+
+        private void BinaryAutocompleteBox_LostFocus(object sender, RoutedEventArgs e) {
+
         }
     }
 }

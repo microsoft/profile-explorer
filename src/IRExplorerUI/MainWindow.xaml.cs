@@ -1020,6 +1020,7 @@ namespace IRExplorerUI {
             var result = window.ShowDialog();
 
             if (result.HasValue && result.Value) {
+                sessionState_.MainDocument.DebugInfoFilePath ??= window.DebugFilePath;
                 SectionPanel.RefreshMainSummary(MainDocumentSummary);
                 SetOptionalStatus("Profile data loaded");
             }
