@@ -8,13 +8,13 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Dissasemble and open binary file"
     Width="500"
-    MinWidth="500"
     Height="Auto"
+    MinWidth="500"
     Loaded="Window_Loaded"
-    ShowInTaskbar="False"
     ResizeMode="NoResize"
-    WindowStartupLocation="CenterOwner"
+    ShowInTaskbar="False"
     SizeToContent="Height"
+    WindowStartupLocation="CenterOwner"
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
@@ -36,10 +36,10 @@
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}"
                     LostFocus="BinaryAutocompleteBox_LostFocus"
                     MinimumPrefixLength="1"
-                    TabIndex="1" />
+                    TabIndex="1"
+                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="BaseBrowseButton"
@@ -64,8 +64,8 @@
                     IsDropDownOpen="True"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
-                    Text="{Binding Path=DebugFilePath, Mode=TwoWay}"
-                    TabIndex="2" />
+                    TabIndex="2"
+                    Text="{Binding Path=DebugFilePath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="DiffBrowseButton"
@@ -77,9 +77,9 @@
                     TabIndex="10" />
             </Grid>
 
-            <Expander  Margin="16,8,16,0" IsExpanded="True">
+            <Expander Margin="16,8,16,0" IsExpanded="True">
                 <Expander.Header>
-                    <TextBlock Text="Options" FontWeight="DemiBold"/>
+                    <TextBlock FontWeight="DemiBold" Text="Options" />
                 </Expander.Header>
 
                 <StackPanel>
@@ -87,25 +87,25 @@
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
                             x:Name="DisasmAutocompleteBox"
-        Height="22"
-        Margin="0,0,50,0"
-        HorizontalAlignment="Stretch"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        FilterMode="StartsWithOrdinal"
-        IsDropDownOpen="True"
-        IsTextCompletionEnabled="False"
-        MinimumPrefixLength="1"
-        Text="{Binding Path=Options.DissasemblerPath, Mode=TwoWay}"
-        TabIndex="2" />
+                            Height="22"
+                            Margin="0,0,50,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            FilterMode="StartsWithOrdinal"
+                            IsDropDownOpen="True"
+                            IsTextCompletionEnabled="False"
+                            MinimumPrefixLength="1"
+                            TabIndex="2"
+                            Text="{Binding Path=Options.DissasemblerPath, Mode=TwoWay}" />
                         <Button
-    x:Name="DisasmBrowseButton"
-    Height="22"
-    Padding="2,2,2,2"
-    HorizontalAlignment="Right"
-    Click="DisasmBrowseButton_Click"
-    Content="Browse"
-    TabIndex="9" />
+                            x:Name="DisasmBrowseButton"
+                            Height="22"
+                            Padding="2,2,2,2"
+                            HorizontalAlignment="Right"
+                            Click="DisasmBrowseButton_Click"
+                            Content="Browse"
+                            TabIndex="9" />
                     </Grid>
 
 
@@ -113,64 +113,69 @@
                     <TextBlock Margin="0,4,0,0" Text="Dissasembler arguments" />
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
-        Height="22"
-        Margin="0,0,50,0"
-        HorizontalAlignment="Stretch"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        FilterMode="StartsWithOrdinal"
-        IsDropDownOpen="True"
-        IsTextCompletionEnabled="False"
-        MinimumPrefixLength="1"
-        Text="{Binding Path=Options.DissasemblerArguments, Mode=TwoWay}"
-        TabIndex="2" />
+                            Height="22"
+                            Margin="0,0,50,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            FilterMode="StartsWithOrdinal"
+                            IsDropDownOpen="True"
+                            IsTextCompletionEnabled="False"
+                            MinimumPrefixLength="1"
+                            TabIndex="2"
+                            Text="{Binding Path=Options.DissasemblerArguments, Mode=TwoWay}" />
                     </Grid>
 
 
                     <TextBlock Margin="0,8,0,0" Text="Dissasembly post-processing tool path" />
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
-        Height="22"
-        Margin="0,0,50,0"
-        HorizontalAlignment="Stretch"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        FilterMode="StartsWithOrdinal"
-        IsDropDownOpen="True"
-        IsTextCompletionEnabled="False"
-        MinimumPrefixLength="1"
                             x:Name="ToolAutocompleteBox"
-        Text="{Binding Path=Options.PostProcessorPath, Mode=TwoWay}"
-        TabIndex="2" />
+                            Height="22"
+                            Margin="0,0,50,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            FilterMode="StartsWithOrdinal"
+                            IsDropDownOpen="True"
+                            IsTextCompletionEnabled="False"
+                            MinimumPrefixLength="1"
+                            TabIndex="2"
+                            Text="{Binding Path=Options.PostProcessorPath, Mode=TwoWay}" />
                         <Button
-    x:Name="PostprocessBrowseButton"
-    Height="22"
-    Padding="2,2,2,2"
-    HorizontalAlignment="Right"
-    Click="ToolBrowseButton_Click"
-    Content="Browse"
-    TabIndex="9" />
+                            x:Name="PostprocessBrowseButton"
+                            Height="22"
+                            Padding="2,2,2,2"
+                            HorizontalAlignment="Right"
+                            Click="ToolBrowseButton_Click"
+                            Content="Browse"
+                            TabIndex="9" />
                     </Grid>
 
                     <TextBlock Margin="0,4,0,0" Text="Post-processing tool arguments" />
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
-        Height="22"
-        Margin="0,0,50,0"
-        HorizontalAlignment="Stretch"
-        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-        FilterMode="StartsWithOrdinal"
-        IsDropDownOpen="True"
-        IsTextCompletionEnabled="False"
-        MinimumPrefixLength="1"
-        Text="{Binding Path=Options.PostProcessorArguments, Mode=TwoWay}"
-        TabIndex="2" />
+                            Height="22"
+                            Margin="0,0,50,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            FilterMode="StartsWithOrdinal"
+                            IsDropDownOpen="True"
+                            IsTextCompletionEnabled="False"
+                            MinimumPrefixLength="1"
+                            TabIndex="2"
+                            Text="{Binding Path=Options.PostProcessorArguments, Mode=TwoWay}" />
                     </Grid>
 
-                    <CheckBox Margin="0,8,0,0" Content="Cache dissasembler output"
-                              IsChecked="{Binding Path=Options.CacheDissasembly, Mode=TwoWay}"/>
-                    <TextBlock Margin="0,4,0,0" Text="Placeholders: $SRC - input file, $DST - output file, $DBG - debug file" Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                    <CheckBox
+                        Margin="0,8,0,0"
+                        Content="Cache dissasembler output"
+                        IsChecked="{Binding Path=Options.CacheDissasembly, Mode=TwoWay}" />
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                        Text="Placeholders: $SRC - input file, $DST - output file, $DBG - debug file" />
                 </StackPanel>
             </Expander>
         </StackPanel>
@@ -180,56 +185,56 @@
             Grid.Column="0"
             Width="250"
             Margin="16,16,0,8"
-            VerticalAlignment="Top"
-            HorizontalAlignment="Left">
+            HorizontalAlignment="Left"
+            VerticalAlignment="Top">
             <StackPanel Orientation="Horizontal">
-            <Button
-                x:Name="RecentButton"
-                Height="24"
-                Width="80"
-                HorizontalAlignment="Left"
-                Padding="4,1,4,1"
-                Click="RecentButton_Click"
-                Content="Recent Files"
-                TabIndex="5"
-                Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
-                <Button.ContextMenu>
-                    <ContextMenu />
-                </Button.ContextMenu>
-            </Button>
                 <Button
-    Height="24"
-    Width="50"
-    HorizontalAlignment="Left"
-    Margin="4,0,0,0"
-    Padding="4,1,4,1"
-    Content="Reset"
-    TabIndex="5"
-    Click="ResetButton_Click"
-    ToolTip="Reset options to default values"
-    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
+                    x:Name="RecentButton"
+                    Width="80"
+                    Height="24"
+                    Padding="4,1,4,1"
+                    HorizontalAlignment="Left"
+                    Click="RecentButton_Click"
+                    Content="Recent Files"
+                    TabIndex="5"
+                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
+                    <Button.ContextMenu>
+                        <ContextMenu />
+                    </Button.ContextMenu>
+                </Button>
+                <Button
+                    Width="50"
+                    Height="24"
+                    Margin="4,0,0,0"
+                    Padding="4,1,4,1"
+                    HorizontalAlignment="Left"
+                    Click="ResetButton_Click"
+                    Content="Reset"
+                    TabIndex="5"
+                    ToolTip="Reset options to default values"
+                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
                     <Button.ContextMenu>
                         <ContextMenu />
                     </Button.ContextMenu>
                 </Button>
             </StackPanel>
             <ProgressBar
-    x:Name="LoadProgressBar"
-    Height="20"
-    HorizontalAlignment="Stretch"
-    Maximum="100"
-    Value="40" 
-    Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}"/>
+                x:Name="LoadProgressBar"
+                Height="20"
+                HorizontalAlignment="Stretch"
+                Maximum="100"
+                Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}"
+                Value="40" />
             <DockPanel Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock
-        x:Name="LoadProgressLabel"
-        DockPanel.Dock="Left"
-        Text="" />
+                    x:Name="LoadProgressLabel"
+                    DockPanel.Dock="Left"
+                    Text="" />
                 <TextBlock
-        x:Name="ProgressPercentLabel"
-        HorizontalAlignment="Right"
-        DockPanel.Dock="Right"
-        Text="0 %" />
+                    x:Name="ProgressPercentLabel"
+                    HorizontalAlignment="Right"
+                    DockPanel.Dock="Right"
+                    Text="0 %" />
             </DockPanel>
         </StackPanel>
 
@@ -255,8 +260,8 @@
                 Padding="4,1,4,1"
                 Background="#FFFCF4CC"
                 Click="OpenButton_Click"
-                IsEnabled="{Binding InputControlsEnabled}"
                 Content="Open File"
+                IsEnabled="{Binding InputControlsEnabled}"
                 TabIndex="3" />
         </StackPanel>
     </Grid>
