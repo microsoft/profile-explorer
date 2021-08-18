@@ -37,8 +37,8 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
-                    Text="{Binding Path=ProfileFilePath, Mode=TwoWay}"
-                    TabIndex="1" />
+                    TabIndex="1"
+                    Text="{Binding Path=ProfileFilePath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="BaseBrowseButton"
@@ -65,8 +65,8 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
-                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}"
-                    TabIndex="2" />
+                    TabIndex="2"
+                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="DiffBrowseButton"
@@ -93,8 +93,8 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
-                    Text="{Binding Path=DebugFilePath, Mode=TwoWay}"
-                    TabIndex="2" />
+                    TabIndex="2"
+                    Text="{Binding Path=DebugFilePath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="DebugBrowseButton"
@@ -116,8 +116,8 @@
             HorizontalAlignment="Left">
             <Button
                 x:Name="RecentButton"
-                Height="24"
                 Width="80"
+                Height="24"
                 Padding="4,1,4,1"
                 HorizontalAlignment="Left"
                 Click="RecentButton_Click"
@@ -132,8 +132,8 @@
                 Height="20"
                 HorizontalAlignment="Stretch"
                 Maximum="100"
-                Value="40" 
-                Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}"/>
+                Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}"
+                Value="40" />
             <DockPanel Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}">
                 <TextBlock
                     x:Name="LoadProgressLabel"
