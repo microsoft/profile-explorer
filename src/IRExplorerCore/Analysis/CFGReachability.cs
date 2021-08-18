@@ -4,6 +4,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Analysis {
@@ -69,7 +70,10 @@ namespace IRExplorerCore.Analysis {
 
             foreach (var block in function_.Blocks) {
                 reachableBlocks_[block.Number] = new BitArray(maxBlockNumber_);
-                reachableBlocks_[block.Number].Set(block.Number, true);
+            }
+
+            if (function_.EntryBlock != null) {
+                reachableBlocks_[function_.EntryBlock.Number].Set(function_.EntryBlock.Number, true);
             }
         }
 
@@ -78,21 +82,35 @@ namespace IRExplorerCore.Analysis {
             //? A proper sparse bit-vector is needed.
             var currentValues = new BitArray(maxBlockNumber_);
             bool changed = true;
+            //var sw = Stopwatch.StartNew();
+
+            var blockOrdering = new CFGBlockOrdering(function_);
 
             while (changed) {
                 changed = false;
 
-                foreach (var block in function_.Blocks) {
+                //foreach (var block in function_.Blocks) {
+                blockOrdering.ReversePostorderWalk((block, _) => {
+                    if (block.Predecessors.Count == 0) {
+                        return true;
+                    }
+
                     currentValues.SetAll(false);
-                    currentValues.Set(block.Number, true);
 
                     foreach (var predBlock in block.Predecessors) {
                         var inValues = reachableBlocks_[predBlock.Number];
                         currentValues.Or(inValues);
                     }
 
-                    var outValues = reachableBlocks_[block.Number];
+                    int popcnt = GetCardinality(currentValues);
 
+                    if (popcnt > 0) {
+                        currentValues.Set(block.Number, true);
+                    }
+
+
+                    var outValues = reachableBlocks_[block.Number];
+                    
                     for (int i = 0; i < maxBlockNumber_; i++) {
                         if (currentValues[i] != outValues[i]) {
                             reachableBlocks_[block.Number] = new BitArray(currentValues);
@@ -100,9 +118,46 @@ namespace IRExplorerCore.Analysis {
                             break;
                         }
                     }
-                }
+
+                    return true;
+                });
             }
+
+            //sw.Stop();
+            //Trace.WriteLine($"Time {sw.ElapsedMilliseconds}");
+            //Trace.Flush();
         }
+
+        //? TODO: Algo cares only a bit being set at all
+        public static Int32 GetCardinality(BitArray bitArray) {
+
+            Int32[] ints = new Int32[(bitArray.Count >> 5) + 1];
+
+            bitArray.CopyTo(ints, 0);
+
+            Int32 count = 0;
+
+            // fix for not truncated bits in last integer that may have been set to true with SetAll()
+            ints[ints.Length - 1] &= ~(-1 << (bitArray.Count % 32));
+
+            for (Int32 i = 0; i < ints.Length; i++) {
+
+                Int32 c = ints[i];
+
+                // magic (http://graphics.stanford.edu/~seander/bithacks.html#CountBitsSetParallel)
+                unchecked {
+                    c = c - ((c >> 1) & 0x55555555);
+                    c = (c & 0x33333333) + ((c >> 2) & 0x33333333);
+                    c = ((c + (c >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+                }
+
+                count += c;
+
+            }
+
+            return count;
+        }
+
 
         private class PathBlock {
             public BlockIR Block;

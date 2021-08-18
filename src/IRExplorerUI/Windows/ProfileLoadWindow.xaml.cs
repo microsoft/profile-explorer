@@ -52,9 +52,9 @@ namespace IRExplorerUI {
         }
 
         private async Task OpenFiles() {
-            ProfileFilePath = ProfileAutocompleteBox.Text.Trim();
-            BinaryFilePath = BinaryAutocompleteBox.Text.Trim();
-            DebugFilePath = DebugAutocompleteBox.Text.Trim();
+            ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
+            BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
+            DebugFilePath = Utils.CleanupPath(DebugFilePath);
 
             if (Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this) &&
                 Utils.ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug", this)) {

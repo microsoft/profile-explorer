@@ -743,7 +743,7 @@ namespace IRExplorerUI {
         public static bool ShowOpenFileDialog(AutoCompleteBox box, string filter, string defaultExt = "*.*") {
             var path = ShowOpenFileDialog(filter, defaultExt);
 
-            if(path != null) {
+            if (path != null) {
                 box.Text = path;
                 return true;
             }
@@ -784,6 +784,13 @@ namespace IRExplorerUI {
             }
 
             return false;
+        }
+
+        private static readonly char[] CLEANUP_PATH_CHARS = new char[] {'"', '\n', '\r'};
+
+        public static string CleanupPath(string path) {
+            path = path.RemoveChars(CLEANUP_PATH_CHARS);
+            return path.Trim();
         }
     }
 }

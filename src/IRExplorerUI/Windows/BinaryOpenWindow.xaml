@@ -37,6 +37,7 @@
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
                     Text="{Binding Path=BinaryFilePath, Mode=TwoWay}"
+                    LostFocus="BinaryAutocompleteBox_LostFocus"
                     MinimumPrefixLength="1"
                     TabIndex="1" />
 
@@ -85,6 +86,7 @@
                     <TextBlock Margin="0,8,0,0" Text="Dissasembler path" />
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
+                            x:Name="DisasmAutocompleteBox"
         Height="22"
         Margin="0,0,50,0"
         HorizontalAlignment="Stretch"
@@ -101,7 +103,7 @@
     Height="22"
     Padding="2,2,2,2"
     HorizontalAlignment="Right"
-    Click="BinaryBrowseButton_Click"
+    Click="DisasmBrowseButton_Click"
     Content="Browse"
     TabIndex="9" />
                     </Grid>
@@ -137,6 +139,7 @@
         IsDropDownOpen="True"
         IsTextCompletionEnabled="False"
         MinimumPrefixLength="1"
+                            x:Name="ToolAutocompleteBox"
         Text="{Binding Path=Options.PostProcessorPath, Mode=TwoWay}"
         TabIndex="2" />
                         <Button
@@ -144,7 +147,7 @@
     Height="22"
     Padding="2,2,2,2"
     HorizontalAlignment="Right"
-    Click="BinaryBrowseButton_Click"
+    Click="ToolBrowseButton_Click"
     Content="Browse"
     TabIndex="9" />
                     </Grid>

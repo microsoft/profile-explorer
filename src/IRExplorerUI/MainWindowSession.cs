@@ -55,23 +55,33 @@ namespace IRExplorerUI {
 
         private async Task<LoadedDocument> OpenDocument(string filePath) {
             LoadedDocument loadedDoc = null;
+            bool failed = false;
 
             if (Path.HasExtension(filePath)) { 
                 if(Path.GetExtension(filePath).ToLowerInvariant() == ".irx") {
                     loadedDoc = await OpenSessionDocument(filePath);
+                    failed = loadedDoc == null;
                 }
                 else if ((Path.GetExtension(filePath).ToLowerInvariant() == ".exe") ||
                     (Path.GetExtension(filePath).ToLowerInvariant() == ".dll") ||
                     (Path.GetExtension(filePath).ToLowerInvariant() == ".sys")) {
                     var dissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
                     var outputFile = await dissasembler.DissasembleAsync(filePath, null);
-                    loadedDoc = await OpenIRDocument(outputFile);
-                    loadedDoc.BinaryFilePath = filePath;
-                    UpdateWindowTitle();
+
+                    if (outputFile != null) {
+                        loadedDoc = await OpenIRDocument(outputFile);
+
+                        if (loadedDoc != null) {
+                            loadedDoc.BinaryFilePath = filePath;
+                            UpdateWindowTitle();
+                        }
+                    }
+
+                    failed = loadedDoc == null;
                 }
             }
 
-            if(loadedDoc == null) {
+            if(loadedDoc == null && !failed) {
                 loadedDoc = await OpenIRDocument(filePath);
             }
 
