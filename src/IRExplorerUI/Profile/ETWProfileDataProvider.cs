@@ -98,8 +98,8 @@ namespace IRExplorerUI.Profile {
                     };
 
                     trace = TraceProcessor.Create(tracePath, settings);
-                    IPendingResult<ISymbolDataSource> pendingSymbolData = trace.UseSymbols();
-                    IPendingResult<ICpuSampleDataSource> pendingCpuSamplingData = trace.UseCpuSamplingData();
+                    var pendingSymbolData = trace.UseSymbols();
+                    var pendingCpuSamplingData = trace.UseCpuSamplingData();
 
                     trace.Process(new ProcessProgressTracker(progressCallback));
 
@@ -108,8 +108,8 @@ namespace IRExplorerUI.Profile {
                     }
 
                     // Load symbols.
-                    ISymbolDataSource symbolData = pendingSymbolData.Result;
-                    ICpuSampleDataSource cpuSamplingData = pendingCpuSamplingData.Result;
+                    var symbolData = pendingSymbolData.Result;
+                    var cpuSamplingData = pendingCpuSamplingData.Result;
                     await symbolData.LoadSymbolsAsync(SymCachePath.Automatic, new RawSymbolPath(new FileInfo(symbolPath).DirectoryName),
                         new SymbolProgressTracker(progressCallback));
 
@@ -129,9 +129,9 @@ namespace IRExplorerUI.Profile {
                     int index = 0;
                     var totalSamples = cpuSamplingData.Samples.Count;
                     var prevFuncts = new Dictionary<string, List<IRTextFunction>>();
-                    var demangledFuncNames = new Lazy<Dictionary<string, IRTextFunction>>(CreateDemangledNameMapping, LazyThreadSafetyMode.None);
+                    var demangledFuncNames = new Lazy<Dictionary<string, IRTextFunction>>(this.CreateDemangledNameMapping, LazyThreadSafetyMode.None);
 
-                    Dictionary<string, IRTextFunction> externalFuncNames = new Dictionary<string, IRTextFunction>();
+                    var externalFuncNames = new Dictionary<string, IRTextFunction>();
 
                     var stackFuncts = new HashSet<IRTextFunction>();
                     var stackModules = new HashSet<string>();
@@ -169,7 +169,7 @@ namespace IRExplorerUI.Profile {
                         if (sample.Stack == null) {
                             continue;
                         }
-                        
+
                         // Count time in the profile image.
                         profileData_.ProfileWeight += sampleWeight;
                         IRTextFunction prevStackFunc = null;
@@ -218,6 +218,10 @@ namespace IRExplorerUI.Profile {
                                               symbol.Image.AddressRange.BaseAddress.Value;
                             funcAddress -= 4096; // An extra page size is always added...
 
+                            if(funcName.Contains("MeanShiftImage")) {
+                                funcName = funcName;
+                            }
+
                             // Try to use the precise address -> function mapping from cvdump.
                             if (!addressFuncMap.TryGetValue(funcAddress, out var textFunction)) {
                                 if (!demangledFuncNames.Value.TryGetValue(funcName, out textFunction)) {
@@ -240,9 +244,8 @@ namespace IRExplorerUI.Profile {
                             }
 
                             var profile = profileData_.GetOrCreateFunctionProfile(textFunction, symbol.SourceFileName);
-                            var rva = frame.Address;
                             var functionRVA = symbol.AddressRange.BaseAddress;
-                            var offset = rva.Value - functionRVA.Value;
+                            var offset = frame.Address.Value - functionRVA.Value;
 
                             // Don't count the inclusive time for recursive functions multiple times.
                             if (stackFuncts.Add(textFunction)) {

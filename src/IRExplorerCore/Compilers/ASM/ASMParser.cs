@@ -220,6 +220,7 @@ namespace IRExplorerCore.ASM {
 
                                 if (tuple.TextLocation.Offset >= location.Item1.Offset) {
                                     refBlock.Tuples.Add(tuple);
+                                    tuple.Parent = refBlock;
                                     copiedTuples++;
                                 }
                             }
@@ -298,8 +299,8 @@ namespace IRExplorerCore.ASM {
             MetadataTag.ElementSizeMap[instr] = instrSize;
             MetadataTag.FunctionSize += instrSize;
 
-            SkipToLineEnd();
             SetTextRange(instr, startToken, current_, adjustment: 1);
+            SkipToLineEnd();
             return isJump; // A jump ends the current block.
         }
 

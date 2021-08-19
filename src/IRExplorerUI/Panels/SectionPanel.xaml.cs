@@ -1122,7 +1122,7 @@ namespace IRExplorerUI {
                 var moduleInfo = new ModuleEx() {
                     Name = pair.Key,
                     Time = moduleWeight.Ticks,
-                    Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(moduleWeight.TotalMilliseconds, 2)} ms)"
+                    Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(moduleWeight.TotalMilliseconds, 2):#,#} ms)"
                 };
                 modulesEx.Add(moduleInfo);
             }
@@ -2053,7 +2053,7 @@ namespace IRExplorerUI {
                 Name = childFunc.Name,
                 Percentage = weightPercentage,
                 DescendantCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
-                Text = isEmpty ? "" :  $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2)} ms)",
+                Text = isEmpty ? "" :  $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2):#,#} ms)",
                 TextColor = Brushes.Black,
                 BackColor = isEmpty ? Brushes.Transparent : ProfileDocumentMarkerOptions.Default.PickBrushForWeight(weightPercentage),
                 Children = new List<ChildFunctionEx>()

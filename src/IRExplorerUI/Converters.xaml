@@ -17,4 +17,5 @@
     <utils:DoubleScalingConverter x:Key="DoubleScaling" />
     <utils:TreeViewLineConverter x:Key="LineConverter" />
     <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacity" />
+    <utils:MIllisecondTimeConverter x:Key="MIllisecondTime" />
 </ResourceDictionary>

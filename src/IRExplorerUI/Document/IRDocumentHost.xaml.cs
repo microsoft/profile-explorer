@@ -24,6 +24,8 @@ using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using UserControl = System.Windows.Controls.UserControl;
 using IRExplorerUI.Query;
 using IRExplorerUI.Controls;
+using IRExplorerUI.Compilers.ASM;
+using IRExplorerCore.IR.Tags;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -41,6 +43,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "SearchSymbol", typeof(IRDocumentHost));
         public static readonly RoutedUICommand SearchSymbolAllSections =
             new RoutedUICommand("Untitled", "SearchSymbolAllSections", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand JumpToProfiledElement =
+            new RoutedUICommand("Untitled", "JumpToProfiledElement", typeof(IRDocumentHost));
     }
 
     [ProtoContract]
@@ -643,12 +647,15 @@ namespace IRExplorerUI {
                 }
 
                 await RemoveRemarks();
+                await HideProfile();
 
                 // Clear references to IR objects that would keep the previous function alive.
                 hoveredElement_ = null;
                 selectedElement_ = null;
                 remarkElement_ = null;
                 selectedBlock_ = null;
+                ProfileVisible = false;
+                PassOutputVisible = false;
                 BlockSelector.SelectedItem = null;
                 BlockSelector.ItemsSource = null;
             }
@@ -739,6 +746,7 @@ namespace IRExplorerUI {
                 await PassOutput.SwitchSection(parsedSection.Section, TextView);
             }
 
+            await ReloadProfile();
             await ReloadRemarks();
         }
 
@@ -755,6 +763,43 @@ namespace IRExplorerUI {
                     PassOutputVisibilityChanged?.Invoke(this, value);
                 }
             }
+        }
+
+        public bool ProfileVisible {
+            get => profileVisible_;
+            set {
+                if (profileVisible_ != value) {
+                    profileVisible_ = value;
+                    NotifyPropertyChanged(nameof(ProfileVisible));
+                }
+            }
+        }
+
+        private List<Tuple<IRElement, TimeSpan>> profileElements_;
+        private List<Tuple<BlockIR, TimeSpan>> profileBlocks_;
+
+        private async Task ReloadProfile() {
+            if(Session.ProfileData == null) {
+                return;
+            }
+
+            var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
+            var metadataTag = Function.GetTag<AssemblyMetadataTag>();
+
+            if (funcProfile == null || metadataTag == null) {
+                return;
+            }
+            
+            (profileElements_, profileBlocks_) = 
+                ProfileDocumentMarker.CollectProfiledElements(funcProfile, metadataTag, Session.CompilerInfo.IR);
+            ProfileBlockSelector.ItemsSource = new ListCollectionView(profileBlocks_);
+            ProfileVisible = true;
+        }
+
+        private async Task HideProfile() {
+            ProfileVisible = false;
+            ProfileBlockSelector.SelectedItem = null;
+            ProfileBlockSelector.ItemsSource = null;
         }
 
         private async Task ReloadRemarks() {
@@ -999,15 +1044,31 @@ namespace IRExplorerUI {
         }
 
         private void BlockSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (e.AddedItems.Count == 1) {
-                var block = e.AddedItems[0] as BlockIR;
+            if (e.AddedItems.Count != 1) {
+                return;
+            }
 
-                // If the event triggers during loading the section, while the combobox is update,
-                // ignore it, otherwise it selects the first block.
-                if (block != selectedBlock_ && !TextView.DuringSectionLoading) {
-                    selectedBlock_ = block;
-                    TextView.GoToBlock(block);
-                }
+            var block = e.AddedItems[0] as BlockIR;
+
+            // If the event triggers during loading the section, while the combobox is update,
+            // ignore it, otherwise it selects the first block.
+            if (block != selectedBlock_ && !TextView.DuringSectionLoading) {
+                selectedBlock_ = block;
+                TextView.GoToBlock(block);
+            }
+        }
+
+        private void ProfileBlockSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (e.AddedItems.Count != 1) {
+                return;
+            }
+
+            var profiledBlock = e.AddedItems[0] as Tuple<BlockIR, TimeSpan>;
+
+            // If the event triggers during loading the section, while the combobox is update,
+            // ignore it, otherwise it selects the first block.
+            if (!TextView.DuringSectionLoading) {
+                BlockSelector.SelectedItem = profiledBlock.Item1;
             }
         }
 
@@ -1111,6 +1172,19 @@ namespace IRExplorerUI {
             SearchSymbolImpl(true);
         }
 
+        private void JumpToProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if(profileElements_ == null || profileElements_.Count == 0) {
+                return;
+            }
+
+            JumpToProfiledElement(profileElements_[0].Item1);
+        }
+
+        private void JumpToProfiledElement(IRElement element) {
+            TextView.SetCaretAtElement(element);
+            TextView.BringElementIntoView(element);
+        }
+
         private void SearchSymbolImpl(bool searchAllSections) {
             var element = TextView.TryGetSelectedElement();
 
@@ -1198,7 +1272,6 @@ namespace IRExplorerUI {
             }
 
             optionsPanelWindow_.IsOpen = false;
-            ;
             optionsPanelWindow_.PanelClosed -= OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset -= OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged -= OptionsPanel_SettingsChanged;
@@ -1216,6 +1289,7 @@ namespace IRExplorerUI {
         private OptionsPanelHostWindow optionsPanelWindow_;
         private DocumentOptionsPanel optionsPanel_;
         private DelayedAction delayedHideActionPanel_;
+        private bool profileVisible_;
 
         private void ShowRemarkOptionsPanel() {
             if (remarkOptionsPanelVisible_) {

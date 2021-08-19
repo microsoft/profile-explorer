@@ -517,13 +517,16 @@ namespace IRExplorerUI {
             ignoreNextHoverEvent_ = true;
             ignoreNextCaretEvent_ = true;
             int line = Document.GetLineByOffset(offset).LineNumber;
+            ScrollToLine(AdjustVisibleLine(line));
+        }
 
+        private static int AdjustVisibleLine(int line) {
             // Leave a few lines be visible above.
             if (line > 2) {
                 line -= 2;
             }
 
-            ScrollToLine(line);
+            return line;
         }
 
         public void BringElementIntoView(IRElement op,
@@ -531,16 +534,27 @@ namespace IRExplorerUI {
             ignoreNextHoverEvent_ = true;
             ignoreNextCaretEvent_ = true;
             int line = Document.GetLineByOffset(op.TextLocation.Offset).LineNumber;
+            Trace.TraceInformation($"Scroll to {line}, offset {op.TextLocation.Offset}, irline {op.TextLocation.Line}");
+            Trace.TraceInformation($"   elem {op}");
+            Trace.TraceInformation(Environment.StackTrace);
+            Trace.Flush();
+
+            if(Math.Abs(op.TextLocation.Line - line) > 1) {
+                Trace.TraceInformation($"  !!! big diff");
+            }
 
             if (style == BringIntoViewStyle.Default) {
                 if (!IsElementOutsideView(op)) {
+                    Trace.TraceInformation($"  < inside view");
                     UpdateHighlighting();
                     return;
                 }
 
-                ScrollToLine(line);
+                Trace.TraceInformation($"  > outside view");
+                ScrollToLine(AdjustVisibleLine(line));
             }
             else if (style == BringIntoViewStyle.FirstLine) {
+                Trace.TraceInformation($"  > first line");
                 double y = TextArea.TextView.GetVisualTopByDocumentLine(line);
                 ScrollToVerticalOffset(y);
             }
@@ -3151,7 +3165,7 @@ namespace IRExplorerUI {
             HideTemporaryUI();
         }
 
-        private void TextAreaOnSelectionChanged(object? sender, EventArgs e) {
+        private void TextAreaOnSelectionChanged(object sender, EventArgs e) {
             if (Session.ProfileData == null) {
                 return;
             }
@@ -3182,7 +3196,7 @@ namespace IRExplorerUI {
             }
 
             var weightPercentage = funcProfile.ScaleWeight(weightSum);
-            var text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weightSum.TotalMilliseconds, 2)} ms)";
+            var text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weightSum.TotalMilliseconds, 2):#,#} ms)";
             Session.SetApplicationStatus(text, "Sum of selected instructions time");
         }
 

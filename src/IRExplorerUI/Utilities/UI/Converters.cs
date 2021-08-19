@@ -92,4 +92,18 @@ namespace IRExplorerUI.Utilities {
             throw new Exception("The method or operation is not implemented.");
         }
     }
+
+    class MIllisecondTimeConverter : IValueConverter {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+            if(value is double doubleValue) {
+                return $" {Math.Round(doubleValue, 2)} ms";
+            }
+
+            return value;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+            return null;
+        }
+    }
 }
