@@ -149,6 +149,10 @@ namespace IRExplorerUI.Profile {
             return null;
         }
 
+        public bool HasFunctionProfile(IRTextFunction function) {
+            return GetFunctionProfile(function) != null;
+        }
+
         public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function, string sourceFile) {
             if (!FunctionProfiles.TryGetValue(function, out var profile)) {
                 profile = new FunctionProfileData(sourceFile);

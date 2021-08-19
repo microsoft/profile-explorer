@@ -1070,7 +1070,7 @@ namespace IRExplorerUI {
                 if (funcProfile != null) {
                     double weightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
                     double inclusiveWeightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.Weight);
-                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}%  ({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2)} ms), {Math.Round(inclusiveWeightPercentage * 100, 2)}%";
+                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}%  ({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2):#,#} ms), {Math.Round(inclusiveWeightPercentage * 100, 2)}%";
 
                     if (!string.IsNullOrEmpty(sizeText)) {
                         tooltip += $"\n{sizeText}";
@@ -1094,8 +1094,7 @@ namespace IRExplorerUI {
 
         private bool AugmentCallerNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
             List<IRTextFunction> targetFuncts) {
-            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
-            return funcProfile != null;
+            return ProfileData.HasFunctionProfile(node.Function);
         }
 
         private bool AugmentCallNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
@@ -1140,7 +1139,7 @@ namespace IRExplorerUI {
             var cvdumpPath = "cvdump.exe"; // Expected to be in main directory.
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
 
-            if (string.IsNullOrEmpty(loadedDoc.DebugInfoFilePath)) {
+            if (!loadedDoc.DebugInfoFileExists) {
                 loadedDoc.DebugInfoFilePath = debugFilePath;
             }
 

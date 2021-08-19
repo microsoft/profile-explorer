@@ -62,7 +62,7 @@ namespace IRExplorerUI.Utilities {
 
                 //if (funcProfile != null) {
                 //    double weightPercentage = profileData.ScaleFunctionWeight(funcProfile.Weight);
-                //    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2)} ms)";
+                //    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(funcProfile.Weight.TotalMilliseconds, 2):#,#} ms)";
 
                 //    int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
                 //    e.FunctionNode.AddTag(GraphNodeTag.MakeHeatMap(colorIndex, 10));

@@ -22,6 +22,7 @@
         <CommandBinding Command="local:DocumentHostCommand.NextSection" Executed="NextSectionExecuted" />
         <CommandBinding Command="local:DocumentHostCommand.SearchSymbol" Executed="SearchSymbolExecuted" />
         <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
+        <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
     </UserControl.CommandBindings>
 
     <UserControl.Resources>
@@ -403,6 +404,48 @@
                             ToolTip="Search section text (Ctrl+F)">
                             <Image Source="{StaticResource SearchIcon}" />
                         </ToggleButton>
+
+                        <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <Button
+    Command="local:DocumentHostCommand.JumpToProfiledElement"
+    CommandTarget="{Binding ElementName=TextView}"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}" 
+    ToolTip="Jump to hottest profiled instruction">
+                            <Image Source="{StaticResource StarIcon}" />
+                        </Button>
+
+                        <ComboBox
+     x:Name="ProfileBlockSelector"
+     Width="80"
+     Margin="4,0,0,0"
+     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+     Loaded="ComboBox_Loaded"
+     SelectionChanged="ProfileBlockSelector_SelectionChanged"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}" 
+     ToolTip="Jump to profiled block">
+                            <ComboBox.Resources>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                </Style>
+                            </ComboBox.Resources>
+
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                                        <TextBlock Text="{Binding Path=Item1.Number}" Width="50"/>
+                                        <Separator/>
+                                        <TextBlock Text="{Binding Path=Item2.TotalMilliseconds, Converter={StaticResource MIllisecondTime}}"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+
+                            <ComboBox.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel />
+                                </ItemsPanelTemplate>
+                            </ComboBox.ItemsPanel>
+                        </ComboBox>
                     </ToolBar>
                 </ToolBarTray>
                 <local:PanelToolbarTray

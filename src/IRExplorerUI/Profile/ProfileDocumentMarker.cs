@@ -84,7 +84,7 @@ namespace IRExplorerUI.Compilers.ASM {
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
             if (hasInstrOffsetMetadata) {
-                var (elementWeights, blockWeights) = CollectProfiledElements(profile_, metadataTag);
+                var (elementWeights, blockWeights) = CollectProfiledElements(profile_, metadataTag, ir_);
 
                 MarkProfiledElements(elementWeights, document);
                 MarkProfiledBlocks(blockWeights, document);
@@ -95,14 +95,14 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        private (List<Tuple<IRElement, TimeSpan>>,
+        public static (List<Tuple<IRElement, TimeSpan>>,
                  List<Tuple<BlockIR, TimeSpan>>)
-            CollectProfiledElements(FunctionProfileData profile, AssemblyMetadataTag metadataTag) {
+            CollectProfiledElements(FunctionProfileData profile, AssemblyMetadataTag metadataTag, ICompilerIRInfo ir) {
             var elements = new List<Tuple<IRElement, TimeSpan>>(profile.InstructionWeight.Count);
             var blockWeightMap = new Dictionary<BlockIR, TimeSpan>();
 
             foreach (var pair in profile.InstructionWeight) {
-                if (TryFindElementForOffset(metadataTag, pair.Key, out var element)) {
+                if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
                     elements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
 
                     if (blockWeightMap.TryGetValue(element.ParentBlock, out var currentWeight)) {
@@ -145,7 +145,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     icon = IconDrawing.FromIconResource("DotIcon");
                 }
 
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
+                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2):#,#} ms)";
                 blockOverlays.Add(new IconElementOverlayData(element, icon, tooltip));
                 document.MarkBlock(element, options_.PickColorForWeight(weightPercentage), markOnFlowGraph);
 
@@ -207,7 +207,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     icon = IconDrawing.FromIconResource("DotIconYellow");
                 }
 
-                var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2)} ms)";
+                var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2):#,#} ms)";
                 elementOverlays.Add(new IconElementOverlayData (element, icon, label));
             }
 
@@ -258,9 +258,10 @@ namespace IRExplorerUI.Compilers.ASM {
             document.ResumeUpdate();
         }
 
-        private bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset, out IRElement element) {
+        private static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
+                                                    ICompilerIRInfo ir, out IRElement element) {
             int multiplier = 1;
-            var offsetData = ir_.InstructionOffsetData;
+            var offsetData = ir.InstructionOffsetData;
 
             do {
                 if (metadataTag.OffsetToElementMap.TryGetValue(offset - multiplier * offsetData.OffsetAdjustIncrement, out element)) {

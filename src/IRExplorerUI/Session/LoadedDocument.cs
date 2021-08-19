@@ -52,6 +52,11 @@ namespace IRExplorerUI {
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
 
+        public bool DebugInfoFileExists => !string.IsNullOrEmpty(DebugInfoFilePath) &&
+                                            File.Exists(DebugInfoFilePath);
+        public bool BinaryFileExists => !string.IsNullOrEmpty(BinaryFilePath) &&
+                                         File.Exists(BinaryFilePath);
+
         public string FileName {
             get {
                 try {

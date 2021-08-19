@@ -36,6 +36,7 @@ namespace IRExplorerUI {
         private IRElement element_;
         private bool fileLoaded_;
         private bool ignoreNextCaretEvent_;
+        private bool disableCaretEvent_;
         private int selectedLine_;
         private string currentFilePath_;
         private string initialFilePath_;
@@ -66,6 +67,9 @@ namespace IRExplorerUI {
                 ignoreNextCaretEvent_ = false;
                 return;
             }
+            else if(disableCaretEvent_) {
+                return;
+            }
 
             HighlightElementsOnSelectedLine();
         }
@@ -75,7 +79,7 @@ namespace IRExplorerUI {
 
             if (line != null && Document != null) {
                 selectedLine_ = line.LineNumber;
-                Document.SelectElementsOnSourceLine(line.LineNumber - 1, currentInlinee_);
+                Document.SelectElementsOnSourceLine(line.LineNumber, currentInlinee_);
             }
         }
 
@@ -109,13 +113,19 @@ namespace IRExplorerUI {
         }
 
         private async Task<bool> LoadSourceFileImpl(string path, int sourceStartLine) {
+            fileLoaded_ = false;
+            currentFilePath_ = null;
+
             try {
                 string text = await File.ReadAllTextAsync(path);
-                TextView.Text = text;
-                PathTextbox.Text = path;
                 currentFilePath_ = path;
                 fileLoaded_ = true;
 
+                disableCaretEvent_ = true; // Changing the text triggers the caret event twice.
+                TextView.Text = text;
+                disableCaretEvent_ = false;
+
+                PathTextbox.Text = path;
                 ScrollToLine(sourceStartLine);
                 return true;
             }
@@ -153,52 +163,46 @@ namespace IRExplorerUI {
         }
 
         private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {
-            fileLoaded_ = false;
+            // Get the associated source file from the debug info if available,
+            // since it also includes the start line number.
+            var loadedDoc = Session.SessionState.FindLoadedDocument(function);
 
-            // Check if there is profile info.
-            var profile = Session.ProfileData?.GetFunctionProfile(function);
+            if (loadedDoc.DebugInfoFileExists) {
+                using var debugInfo = new PDBDebugInfoProvider();
 
-            if (profile != null) {
-                if (!string.IsNullOrEmpty(profile.SourceFilePath)) {
-                    initialFilePath_ = profile.SourceFilePath;
+                if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
+                    var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(function);
 
-                    if (await LoadSourceFile(profile.SourceFilePath)) {
-                        await AnnotateProfilerData(profile);
-                        return true;
-                    }
-                }
-            }
-
-            if (!fileLoaded_) {
-                // Without profile info, try to get the associated source file
-                // from the debug info if specified and available.
-                var loadedDoc = Session.SessionState.FindLoadedDocument(function);
-                var debugFile = loadedDoc.DebugInfoFilePath;
-
-                if (!string.IsNullOrEmpty(debugFile) &&
-                    File.Exists(debugFile)) {
-                    using var debugInfo = new PDBDebugInfoProvider();
-
-                    if (debugInfo.LoadDebugInfo(debugFile)) {
-                        var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(function);
-
-                        if (!string.IsNullOrEmpty(sourceFilePath)) {
-                            initialFilePath_ = sourceFilePath;
-                            await LoadSourceFile(sourceFilePath, sourceStartLine);
+                    if (!string.IsNullOrEmpty(sourceFilePath)) {
+                        initialFilePath_ = sourceFilePath;
+                        
+                        if(await LoadSourceFile(sourceFilePath, sourceStartLine)) {
+                            return true;
                         }
                     }
                 }
             }
 
-            return fileLoaded_;
+            // Check if there is profile info.
+            var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
+
+            if (funcProfile != null) {
+                if (!string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
+                    initialFilePath_ = funcProfile.SourceFilePath;
+
+                    if (await LoadSourceFile(funcProfile.SourceFilePath)) {
+                        await AnnotateProfilerData(funcProfile);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private async Task<bool> LoadSourceFile(string sourceFilePath, int sourceStartLine = -1) {
-            if (fileLoaded_ && currentFilePath_ == sourceFilePath) {
-                return true;
-            }
-
-            fileLoaded_ = false;
+            // Check if the file can be found. If it's from another machine,
+            // a mapping is done after the user is asked to pick the new location of the file.
             string mappedSourceFilePath;
 
             if (File.Exists(sourceFilePath)) {
@@ -210,7 +214,13 @@ namespace IRExplorerUI {
                                      title: $"Open {sourceFilePath}"));
             }
 
-            if (mappedSourceFilePath != null && await LoadSourceFileImpl(mappedSourceFilePath, sourceStartLine)) {
+            if (fileLoaded_ && currentFilePath_ == mappedSourceFilePath) {
+                Trace.TraceWarning("SKIP");
+                return true;
+            }
+
+            if (mappedSourceFilePath != null &&
+                await LoadSourceFileImpl(mappedSourceFilePath, sourceStartLine)) {
                 return true;
             }
             else {
@@ -385,7 +395,7 @@ namespace IRExplorerUI {
                 group.Add(element);
                 profileMarker_.Add(group);
 
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2)} ms)";
+                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2):#,#} ms)";
                 AddElementOverlay(element, icon, lineIndex, 16, 16, tooltip, markerOptions);
                 lineIndex++;
             }
