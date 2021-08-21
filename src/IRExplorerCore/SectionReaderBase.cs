@@ -60,7 +60,7 @@ namespace IRExplorerCore {
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
         public static readonly long MAX_PRELOADED_FILE_SIZE = 512 * 1024 * 1024; // 512 MB
-        private static readonly int MAX_LINE_LENGTH = 1000;
+        private static readonly int MAX_LINE_LENGTH = 2000;
 
         private StreamReader dataReader_;
         private Stream dataStream_;
@@ -73,7 +73,8 @@ namespace IRExplorerCore {
         private int lineIndex_;
         private IRPassOutput optionalOutput_;
         private bool optionalOutputNeeded_;
-        private byte[] preloadedData_;
+        private char[] preloadedData_;
+        private byte[] preloadedDataBytes_;
         private MemoryStream preloadedDataStream_;
         private int prevLineCount_;
         private string[] prevLines_;
@@ -89,9 +90,13 @@ namespace IRExplorerCore {
                 using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read,
                                              FileShare.ReadWrite);
 
-                preloadedData_ = new byte[dataStreamSize_];
-                stream.Read(preloadedData_, 0, (int)dataStreamSize_);
-                preloadedDataStream_ = new MemoryStream(preloadedData_, true);
+                preloadedDataBytes_ = new byte[dataStreamSize_];
+                stream.Read(preloadedDataBytes_, 0, (int)dataStreamSize_);
+                stream.Seek(0, SeekOrigin.Begin);
+
+                using var textStream = new StreamReader(stream);
+                preloadedData_ = textStream.ReadToEnd().ToCharArray();
+                preloadedDataStream_ = new MemoryStream(preloadedDataBytes_, true);
                 dataStream_ = preloadedDataStream_;
             }
             else {
@@ -165,6 +170,14 @@ namespace IRExplorerCore {
             return GetPassOutputText(section.Output, false);
         }
 
+        public ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section) {
+            if (section.Output == null) {
+                throw new NullReferenceException();
+            }
+
+            return GetPassOutputTextSpan(section.Output);
+        }
+
         public List<string> GetSectionTextLines(IRTextSection section) {
             if (section.Output == null) {
                 throw new NullReferenceException();
@@ -175,6 +188,20 @@ namespace IRExplorerCore {
 
         public string GetPassOutputText(IRPassOutput output) {
             return GetPassOutputText(output, true);
+        }
+
+        public ReadOnlyMemory<char> GetPassOutputTextSpan(IRPassOutput output) {
+            if (output == null) {
+                throw new NullReferenceException();
+            }
+
+            if (!output.HasPreprocessedLines) {
+                // Fast path that avoids reading text line by line.
+                return GetRawPassOutputTextSpan(output, false);
+            }
+
+            var text = GetPassOutputText(output, false);
+            return text.AsMemory();
         }
 
         public List<string> GetPassOutputTextLines(IRPassOutput output) {
@@ -189,8 +216,20 @@ namespace IRExplorerCore {
             return GetRawPassOutputText(section.Output, false);
         }
 
+        public ReadOnlyMemory<char> GetRawSectionTextSpan(IRTextSection section) {
+            if (section.Output == null) {
+                throw new NullReferenceException();
+            }
+
+            return GetRawPassOutputTextSpan(section.Output, false);
+        }
+
         public string GetRawPassOutputText(IRPassOutput output) {
             return GetRawPassOutputText(output, true);
+        }
+
+        public ReadOnlyMemory<char> GetRawPassOutputTextSpan(IRPassOutput output) {
+            return GetRawPassOutputTextSpan(output, true);
         }
 
         private Encoding DetectUTF8Encoding(Stream stream, Encoding defaultEncoding) {
@@ -336,7 +375,7 @@ namespace IRExplorerCore {
         }
 
         private StreamReader CreatePreloadedDataReader() {
-            var reader = new MemoryStream(preloadedData_, true);
+            var reader = new MemoryStream(preloadedDataBytes_, true);
             var encoding = DetectUTF8Encoding(reader, Encoding.ASCII);
             return new StreamReader(reader, encoding, true, STREAM_BUFFER_SIZE);
         }
@@ -350,12 +389,30 @@ namespace IRExplorerCore {
                 // For some use cases, such as text search on the whole document,
                 // it is much faster to use the unfiltered text and avoid reading
                 // the text line by line to form the final string.
-                var span = preloadedData_.AsSpan((int)output.DataStartOffset, (int)output.Size);
+                var span = preloadedDataBytes_.AsSpan((int)output.DataStartOffset, (int)output.Size);
                 return dataStreamEncoding_.GetString(span);
             }
 
             lock (lockObject_) {
                 return ReadPassOutputText(dataReader_, output, isOptionalOutput);
+            }
+        }
+
+        private ReadOnlyMemory<char> GetRawPassOutputTextSpan(IRPassOutput output, bool isOptionalOutput) {
+            if (output == null) {
+                return ReadOnlyMemory<char>.Empty;
+            }
+
+            if (preloadedData_ != null) {
+                // For some use cases, such as text search on the whole document,
+                // it is much faster to use the unfiltered text and avoid reading
+                // the text line by line to form the final string.
+                return preloadedData_.AsMemory((int)output.DataStartOffset, (int)output.Size);
+            }
+
+            lock (lockObject_) {
+                var text = ReadPassOutputText(dataReader_, output, isOptionalOutput);
+                return text.AsMemory();
             }
         }
 

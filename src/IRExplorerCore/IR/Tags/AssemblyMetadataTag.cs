@@ -22,6 +22,13 @@ namespace IRExplorerCore.IR.Tags {
         public string Name => "Address metadata";
         public TaggedObject Owner { get; set; }
 
+        public void EnsureCapacity(int length) {
+            AddressToElementMap.EnsureCapacity(length);
+            OffsetToElementMap.EnsureCapacity(length);
+            ElementToOffsetMap.EnsureCapacity(length);
+            ElementSizeMap.EnsureCapacity(length);
+        }
+
         public override string ToString() {
             var builder = new StringBuilder();
 

@@ -563,7 +563,7 @@ namespace IRExplorerUI {
 
             if (document == sessionState_.SectionDiffState.LeftDocument) {
                 var result = await Task.Run(() => LoadAndParseSection(section));
-                leftText = result.Text;
+                leftText = result.Text.ToString(); //? TODO: Use Span
                 newLeftSection = section;
 
                 (rightText, newRightSection) =
@@ -573,7 +573,7 @@ namespace IRExplorerUI {
             }
             else if (document == sessionState_.SectionDiffState.RightDocument) {
                 var result = await Task.Run(() => LoadAndParseSection(section));
-                rightText = result.Text;
+                rightText = result.Text.ToString(); //? TODO: Use Span
                 newRightSection = section;
 
                 (leftText, newLeftSection) =
@@ -625,7 +625,7 @@ namespace IRExplorerUI {
 
                 if (diffSection != null) {
                     var result = await Task.Run(() => LoadAndParseSection(diffSection));
-                    return new Tuple<string, IRTextSection>(result.Text, diffSection);
+                    return new Tuple<string, IRTextSection>(result.Text.ToString(), diffSection);
                 }
                 else {
                     return new Tuple<string, IRTextSection>($"Diff document does not have section {section.Name}", null);
@@ -634,7 +634,7 @@ namespace IRExplorerUI {
             else {
                 // Load the text of the other section, but don't reload anything else.
                 var result = await Task.Run(() => LoadAndParseSection(otherSection));
-                return new Tuple<string, IRTextSection>(result.Text, null);
+                return new Tuple<string, IRTextSection>(result.Text.ToString(), null); //? TODO: Use span
             }
         }
 

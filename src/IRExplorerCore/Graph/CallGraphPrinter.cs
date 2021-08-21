@@ -16,7 +16,7 @@ namespace IRExplorerCore.Graph {
 
     public class CallGraphPrinter : GraphVizPrinter {
         private const int ExternalNodeId = -1;
-        private const int LargeGraphThresholdMin = 200;
+        private const int LargeGraphThresholdMin = 500;
 
         private const string StraightLinesSettings = @"
 splines = ortho;

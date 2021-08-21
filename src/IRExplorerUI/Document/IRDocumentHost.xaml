@@ -435,7 +435,17 @@
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                                         <TextBlock Text="{Binding Path=Item1.Number}" Width="50"/>
                                         <Separator/>
-                                        <TextBlock Text="{Binding Path=Item2.TotalMilliseconds, Converter={StaticResource MIllisecondTime}}"/>
+                                        <TextBlock Text="{Binding Path=Item2.TotalMilliseconds, Converter={StaticResource MIllisecondTime}}">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem}}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
                                     </StackPanel>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>

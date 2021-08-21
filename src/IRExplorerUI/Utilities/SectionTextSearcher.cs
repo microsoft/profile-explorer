@@ -16,7 +16,7 @@ namespace IRExplorerUI {
         public bool HasResults => Results != null && Results.Count > 0;
 
         public IRTextSection Section { get; set; }
-        public string SectionText { get; set; }
+        public ReadOnlyMemory<char> SectionText { get; set; }
         public List<TextSearchResult> Results { get; set; }
         public List<TextSearchResult> BeforeOutputResults { get; set; }
         public List<TextSearchResult> AfterOutputResults { get; set; }
@@ -119,16 +119,16 @@ namespace IRExplorerUI {
 
         public SectionSearchResult SearchSection(string searchedText, TextSearchKind searchKind,
                                                  IRTextSection section, CancelableTask cancelableTask) {
-            string text = options_.UseRawSectionText ?
-                            sectionLoader_.GetRawSectionText(section) :
-                            sectionLoader_.GetSectionText(section);
+            var text = options_.UseRawSectionText ?
+                            sectionLoader_.GetRawSectionTextSpan(section) :
+                            sectionLoader_.GetSectionTextSpan(section);
             return SearchSection(text, searchedText, searchKind, section, cancelableTask);
         }
 
-        public SectionSearchResult SearchSection(string text, string searchedText, TextSearchKind searchKind,
+        public SectionSearchResult SearchSection(ReadOnlyMemory<char> text, string searchedText, TextSearchKind searchKind,
                                                  IRTextSection section, CancelableTask cancelableTask = null) {
             var result = new SectionSearchResult(section) {
-                SectionText = options_.KeepSectionText ? text : null,
+                SectionText = options_.KeepSectionText ? text : ReadOnlyMemory<char>.Empty,
                 Results = TextSearcher.AllIndexesOf(text, searchedText, 0, searchKind, cancelableTask)
             };
 
@@ -138,20 +138,20 @@ namespace IRExplorerUI {
 
             if (options_.SearchBeforeOutput) {
                 var beforeText = options_.UseRawSectionText ?
-                                    sectionLoader_.GetRawSectionPassOutput(section.OutputBefore) :
-                                    sectionLoader_.GetSectionOutputText(section.OutputBefore);
+                                    sectionLoader_.GetRawSectionPassOutputSpan(section.OutputBefore) :
+                                    sectionLoader_.GetSectionOutputTextSpan(section.OutputBefore);
 
-                if (!string.IsNullOrEmpty(beforeText)) {
+                if (beforeText.Length > 0) {
                     result.BeforeOutputResults = TextSearcher.AllIndexesOf(beforeText, searchedText, 0, searchKind, cancelableTask);
                 }
             }
 
             if (options_.SearchAfterOutput) {
                 var afterText = options_.UseRawSectionText ?
-                                    sectionLoader_.GetRawSectionPassOutput(section.OutputAfter) :
-                                    sectionLoader_.GetSectionOutputText(section.OutputAfter);
+                                    sectionLoader_.GetRawSectionPassOutputSpan(section.OutputAfter) :
+                                    sectionLoader_.GetSectionOutputTextSpan(section.OutputAfter);
 
-                if (!string.IsNullOrEmpty(afterText)) {
+                if (afterText.Length > 0) {
                     result.BeforeOutputResults = TextSearcher.AllIndexesOf(afterText, searchedText, 0, searchKind, cancelableTask);
                 }
             }
@@ -166,7 +166,7 @@ namespace IRExplorerUI {
             var result = await Task.Run(() => TextSearcher.AllIndexesOf(text, searchedText, 0, searchKind, cancelableTask));
 
             return new SectionSearchResult(section) {
-                SectionText = options_.KeepSectionText ? text : null,
+                SectionText = options_.KeepSectionText ? text.AsMemory() : ReadOnlyMemory<char>.Empty,
                 Results = result
             };
         }

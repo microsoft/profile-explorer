@@ -39,7 +39,7 @@ namespace IRExplorerUI {
             return char.IsLetter(letter) || char.IsDigit(letter) || letter == '_';
         }
 
-        public static bool IsWholeWord(string matchedText, string text, int startOffset) {
+        public static bool IsWholeWord(ReadOnlySpan<char> matchedText, ReadOnlySpan<char> text, int startOffset) {
             if (startOffset > 0) {
                 if (IsWordLetter(text[startOffset - 1])) {
                     return false;
@@ -73,17 +73,18 @@ namespace IRExplorerUI {
             }
         }
 
-        private static (int, int) IndexOf(string text, string searchedText, int startOffset = 0,
+        private static (int, int) IndexOf(ReadOnlyMemory<char> text, 
+                                          ReadOnlyMemory<char> searchedText, int startOffset = 0,
                                            TextSearchKind searchKind = TextSearchKind.Default,
                                            Regex regex = null) {
-            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchedText)) {
+            if (text.Length == 0 || searchedText.Length == 0) {
                 return (-1, 0);
             }
-
+            
             if (searchKind.HasFlag(TextSearchKind.Regex)) {
                 try {
-                    regex ??= CreateRegex(searchedText, searchKind);
-                    var result = regex.Matches(text, startOffset);
+                    regex ??= CreateRegex(searchedText.ToString(), searchKind);
+                    var result = regex.Matches(text.ToString(), startOffset);
 
                     if (result.Count > 0) {
                         return (result[0].Index, result[0].Length);
@@ -94,51 +95,45 @@ namespace IRExplorerUI {
                     Debug.WriteLine($"Failed regex text search: {ex}");
                 }
             }
-            else if (!searchKind.HasFlag(TextSearchKind.CaseInsensitive)) {
-                int index = text.IndexOf(searchedText, startOffset, StringComparison.Ordinal);
-
-                if (index != -1 && searchKind.HasFlag(TextSearchKind.WholeWord)) {
-                    if (!IsWholeWord(searchedText, text, index)) {
-                        return (-1, searchedText.Length);
-                    }
-                }
-
-                return (index, searchedText.Length);
-            }
-            else if (searchKind.HasFlag(TextSearchKind.CaseInsensitive)) {
-                int index = text.IndexOf(searchedText, startOffset, StringComparison.OrdinalIgnoreCase);
-
-                if (index != -1 && searchKind.HasFlag(TextSearchKind.WholeWord)) {
-                    if (!IsWholeWord(searchedText, text, index)) {
-                        return (-1, searchedText.Length);
-                    }
-                }
-
-                return (index, searchedText.Length);
-            }
             else {
-                throw new InvalidOperationException($"Unknown search kind: {searchKind}");
+                var comparisonKind = searchKind.HasFlag(TextSearchKind.CaseInsensitive) ?
+                                     StringComparison.OrdinalIgnoreCase :
+                                     StringComparison.Ordinal;
+                var adjustedText = text.Slice(startOffset);
+                int index = MemoryExtensions.IndexOf(adjustedText.Span, searchedText.Span, comparisonKind);
+
+                if (index == -1) {
+                    return (-1, searchedText.Length);
+                }
+
+                if (searchKind.HasFlag(TextSearchKind.WholeWord)) {
+                    if (!IsWholeWord(searchedText.Span, text.Span, index + startOffset)) {
+                        return (-1, searchedText.Length);
+                    }
+                }
+
+                return (startOffset + index, searchedText.Length);
             }
 
             return (-1, searchedText.Length);
         }
 
-        public static List<TextSearchResult> AllIndexesOf(string text, string searchedText,
+        public static List<TextSearchResult> AllIndexesOf(ReadOnlyMemory<char> text,
+                                                          ReadOnlyMemory<char> searchedText,
                                                           int startOffset = 0,
                                                           TextSearchKind searchKind = TextSearchKind.Default,
                                                           CancelableTask cancelableTask = null) {
-            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(searchedText)) {
+            if (text.Length == 0 || searchedText.Length == 0) {
                 return new List<TextSearchResult>();
             }
 
-            var regex = searchKind.HasFlag(TextSearchKind.Regex)
-                ? CreateRegex(searchedText, searchKind)
-                : null;
+            var regex = searchKind.HasFlag(TextSearchKind.Regex) ?
+                        CreateRegex(searchedText.ToString(), searchKind) : null;
 
             var offsetList = new List<TextSearchResult>();
             (int offset, int length) = IndexOf(text, searchedText, startOffset, searchKind, regex);
 
-            while (offset != -1 && offset < text.Length) {
+            while (offset != -1 && offset + length < text.Length) {
                 offsetList.Add(new TextSearchResult(offset, length));
                 offset += length;
 
@@ -152,21 +147,64 @@ namespace IRExplorerUI {
             return offsetList;
         }
 
-        public static TextSearchResult? FirstIndexof(string text, string searchedText, 
-                                                    int startOffset = 0,
-                                                    TextSearchKind searchKind = TextSearchKind.Default) {
+        public static TextSearchResult? FirstIndexOf(ReadOnlyMemory<char> text, 
+                                                     ReadOnlyMemory<char> searchedText, 
+                                                     int startOffset = 0,
+                                                     TextSearchKind searchKind = TextSearchKind.Default) {
             (int offset, int length) = IndexOf(text, searchedText, startOffset, searchKind, null);
 
             if (offset != -1) {
                 return new TextSearchResult(offset, length);
             }
+
             return null;
         }
 
-        public static bool Contains(string text, string searchedText,
+        public static bool Contains(ReadOnlyMemory<char> text, 
+                                    ReadOnlyMemory<char> searchedText,
                                     TextSearchKind searchKind = TextSearchKind.Default) {
             (int offset, _) = IndexOf(text, searchedText, 0, searchKind, null);
             return offset != -1;
+        }
+
+        public static List<TextSearchResult> AllIndexesOf(string text, string searchedText,
+            int startOffset = 0,
+            TextSearchKind searchKind = TextSearchKind.Default,
+            CancelableTask cancelableTask = null) {
+            return AllIndexesOf(text.AsMemory(), searchedText.AsMemory(),
+                                startOffset, searchKind, cancelableTask);
+        }
+
+        public static TextSearchResult? FirstIndexOf(string text, string searchedText,
+            int startOffset = 0,
+            TextSearchKind searchKind = TextSearchKind.Default) {
+            return FirstIndexOf(text.AsMemory(), searchedText.AsMemory(), 
+                                startOffset, searchKind);
+        }
+
+        public static bool Contains(string text, string searchedText,
+            TextSearchKind searchKind = TextSearchKind.Default) {
+            return Contains(text.AsMemory(), searchedText.AsMemory());
+        }
+
+        public static List<TextSearchResult> AllIndexesOf(ReadOnlyMemory<char> text, string searchedText,
+            int startOffset = 0,
+            TextSearchKind searchKind = TextSearchKind.Default,
+            CancelableTask cancelableTask = null) {
+            return AllIndexesOf(text, searchedText.AsMemory(),
+                startOffset, searchKind, cancelableTask);
+        }
+
+        public static TextSearchResult? FirstIndexOf(ReadOnlyMemory<char> text, string searchedText,
+            int startOffset = 0,
+            TextSearchKind searchKind = TextSearchKind.Default) {
+            return FirstIndexOf(text, searchedText.AsMemory(),
+                startOffset, searchKind);
+        }
+
+        public static bool Contains(ReadOnlyMemory<char> text, string searchedText,
+            TextSearchKind searchKind = TextSearchKind.Default) {
+            return Contains(text, searchedText.AsMemory());
         }
     }
 }

@@ -9,14 +9,14 @@ using IRExplorerCore.IR;
 namespace IRExplorerCore {
     public class ParsedIRTextSection {
         public IRTextSection Section { get; set; }
-        public string Text { get; set; }
+        public ReadOnlyMemory<char> Text { get; set; }
         public FunctionIR Function { get; set; }
         public List<IRParsingError> ParsingErrors { get; set; }
         public bool IsCached { get; set; }
 
         public bool HadParsingErrors => ParsingErrors != null && ParsingErrors.Count > 0;
 
-        public ParsedIRTextSection(IRTextSection section, string text, FunctionIR function) {
+        public ParsedIRTextSection(IRTextSection section, ReadOnlyMemory<char> text, FunctionIR function) {
             Section = section;
             Text = text;
             Function = function;
@@ -61,10 +61,14 @@ namespace IRExplorerCore {
         public abstract byte[] GetDocumentTextBytes();
         public abstract ParsedIRTextSection LoadSection(IRTextSection section);
         public abstract string GetSectionText(IRTextSection section);
+        public abstract ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section);
         public abstract string GetSectionOutputText(IRPassOutput output);
+        public abstract ReadOnlyMemory<char> GetSectionOutputTextSpan(IRPassOutput output);
         public abstract List<string> GetSectionOutputTextLines(IRPassOutput output);
         public abstract string GetRawSectionText(IRTextSection section);
         public abstract string GetRawSectionPassOutput(IRPassOutput output);
+        public abstract ReadOnlyMemory<char> GetRawSectionTextSpan(IRTextSection section);
+        public abstract ReadOnlyMemory<char> GetRawSectionPassOutputSpan(IRPassOutput output);
 
         public ParsedIRTextSection TryGetLoadedSection(IRTextSection section) {
             if (!cacheEnabled_) {
@@ -77,6 +81,11 @@ namespace IRExplorerCore {
         }
 
         public string GetSectionText(IRTextSection section, bool useCache = true) {
+            var result = GetSectionTextSpan(section, useCache);
+            return result.ToString();
+        }
+
+        public ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section, bool useCache = true) {
             if (useCache && cacheEnabled_) {
                 lock (lockObject_) {
                     if (sectionCache_.TryGetValue(section, out var result)) {
@@ -85,7 +94,7 @@ namespace IRExplorerCore {
                 }
             }
 
-            return GetSectionText(section);
+            return GetSectionTextSpan(section);
         }
 
         public string GetRawSectionText(IRTextSection section, bool useCache = true) {

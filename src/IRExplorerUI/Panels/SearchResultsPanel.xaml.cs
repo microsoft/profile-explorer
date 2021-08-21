@@ -366,7 +366,6 @@ namespace IRExplorerUI {
 
             foreach (var sectionResult in results) {
                 searchResultsMap_[sectionResult.Section] = sectionResult;
-                string sectionText = sectionResult.SectionText;
                 int index = 1;
 
                 foreach (var result in sectionResult.Results) {

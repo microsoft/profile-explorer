@@ -534,27 +534,16 @@ namespace IRExplorerUI {
             ignoreNextHoverEvent_ = true;
             ignoreNextCaretEvent_ = true;
             int line = Document.GetLineByOffset(op.TextLocation.Offset).LineNumber;
-            Trace.TraceInformation($"Scroll to {line}, offset {op.TextLocation.Offset}, irline {op.TextLocation.Line}");
-            Trace.TraceInformation($"   elem {op}");
-            Trace.TraceInformation(Environment.StackTrace);
-            Trace.Flush();
-
-            if(Math.Abs(op.TextLocation.Line - line) > 1) {
-                Trace.TraceInformation($"  !!! big diff");
-            }
 
             if (style == BringIntoViewStyle.Default) {
                 if (!IsElementOutsideView(op)) {
-                    Trace.TraceInformation($"  < inside view");
                     UpdateHighlighting();
                     return;
                 }
 
-                Trace.TraceInformation($"  > outside view");
                 ScrollToLine(AdjustVisibleLine(line));
             }
             else if (style == BringIntoViewStyle.FirstLine) {
-                Trace.TraceInformation($"  > first line");
                 double y = TextArea.TextView.GetVisualTopByDocumentLine(line);
                 ScrollToVerticalOffset(y);
             }
@@ -1498,7 +1487,7 @@ namespace IRExplorerUI {
             ClearSelectedElements();
 
             ResetRenderers();
-            Document.Text = parsedSection.Text;
+            Document.Text = parsedSection.Text.ToString();
         }
 
         private void ResetRenderers() {

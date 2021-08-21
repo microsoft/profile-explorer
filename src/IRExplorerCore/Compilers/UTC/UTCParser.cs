@@ -602,8 +602,7 @@ namespace IRExplorerCore.UTC {
                     continue;
                 }
 
-                tuple.IndexInBlock = block.Tuples.Count;
-                block.Tuples.Add(tuple);
+                block.AddTuple(tuple);
             }
 
             SetTextRange(block, startToken, Environment.NewLine.Length);
