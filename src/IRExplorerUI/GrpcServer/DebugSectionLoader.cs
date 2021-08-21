@@ -71,7 +71,7 @@ namespace IRExplorerUI {
                 }
 
                 var (sectionParser, errorHandler) = InitializeParser();
-                string text = GetSectionText(section);
+                var text = GetSectionTextSpan(section);
                 var function = sectionParser.ParseSection(section, text);
                 result = new ParsedIRTextSection(section, text, function);
 
@@ -95,8 +95,20 @@ namespace IRExplorerUI {
             return sectionTextMap_[section].ToString();
         }
 
+        public override ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section) {
+            if (section == lastSection_) {
+                return lastSectionText_.AsMemory();
+            }
+
+            return sectionTextMap_[section].ToString().AsMemory();
+        }
+
         public override string GetSectionOutputText(IRPassOutput output) {
             return "";
+        }
+
+        public override ReadOnlyMemory<char> GetSectionOutputTextSpan(IRPassOutput output) {
+        return ReadOnlyMemory<char>.Empty;
         }
 
         public override List<string> GetSectionOutputTextLines(IRPassOutput output) {
@@ -109,6 +121,14 @@ namespace IRExplorerUI {
 
         public override string GetRawSectionPassOutput(IRPassOutput output) {
             return "";
+        }
+
+        public override ReadOnlyMemory<char> GetRawSectionTextSpan(IRTextSection section) {
+            return GetSectionTextSpan(section);
+        }
+
+        public override ReadOnlyMemory<char> GetRawSectionPassOutputSpan(IRPassOutput output) {
+            return ReadOnlyMemory<char>.Empty;
         }
 
         protected override void Dispose(bool disposing) {

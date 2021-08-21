@@ -99,7 +99,7 @@ namespace IRExplorerCore {
                 }
             }
 
-            string text = GetSectionText(section);
+            var text = GetSectionTextSpan(section);
 
             //? TODO: Workaround for not having an LLVM parser
             var (sectionParser, errorHandler) = InitializeParser();
@@ -131,6 +131,10 @@ namespace IRExplorerCore {
             return documentReader_.GetSectionText(section);
         }
 
+        public override ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section) {
+            return documentReader_.GetSectionTextSpan(section);
+        }
+
         public override string GetSectionOutputText(IRPassOutput output) {
             if (output == null) {
                 // With some documents there is no before/after text.
@@ -138,6 +142,15 @@ namespace IRExplorerCore {
             }
 
             return documentReader_.GetPassOutputText(output);
+        }
+
+        public override ReadOnlyMemory<char> GetSectionOutputTextSpan(IRPassOutput output) {
+            if (output == null) {
+                // With some documents there is no before/after text.
+                return ReadOnlyMemory<char>.Empty;
+            }
+
+            return documentReader_.GetPassOutputTextSpan(output);
         }
 
         public override List<string> GetSectionOutputTextLines(IRPassOutput output) {
@@ -155,6 +168,14 @@ namespace IRExplorerCore {
 
         public override string GetRawSectionPassOutput(IRPassOutput output) {
             return documentReader_.GetRawPassOutputText(output);
+        }
+
+        public override ReadOnlyMemory<char> GetRawSectionTextSpan(IRTextSection section) {
+            return documentReader_.GetRawSectionTextSpan(section);
+        }
+
+        public override ReadOnlyMemory<char> GetRawSectionPassOutputSpan(IRPassOutput output) {
+            return documentReader_.GetRawPassOutputTextSpan(output);
         }
 
         protected override void Dispose(bool disposing) {

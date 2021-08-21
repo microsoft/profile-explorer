@@ -15,7 +15,7 @@ namespace IRExplorerCore.Lexer {
         }
 
         public void Initialize(string text) {
-            TextSpan = new ReadOnlyMemory<char>(text.ToCharArray());
+            TextSpan = text.AsMemory();
             Position = 0;
         }
 

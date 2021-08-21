@@ -32,11 +32,15 @@ namespace IRExplorerCore {
         IRTextSummary GenerateSummary(ProgressInfoHandler progressHandler,
                                     SectionTextHandler sectionTextHandler = null);
         string GetSectionText(IRTextSection section);
+        ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section);
         List<string> GetSectionTextLines(IRTextSection section);
         string GetPassOutputText(IRPassOutput output);
+        ReadOnlyMemory<char> GetPassOutputTextSpan(IRPassOutput output);
         List<string> GetPassOutputTextLines(IRPassOutput output);
         string GetRawSectionText(IRTextSection section);
+        ReadOnlyMemory<char> GetRawSectionTextSpan(IRTextSection section);
         string GetRawPassOutputText(IRPassOutput output);
+        ReadOnlyMemory<char> GetRawPassOutputTextSpan(IRPassOutput output);
         public byte[] GetDocumentTextData();
         void Dispose();
     }

@@ -51,6 +51,7 @@ namespace IRExplorerCore.ASM {
             : base(irInfo, errorHandler, registerTable, section) {
             Reset();
             Initialize(sectionText);
+            MetadataTag.EnsureCapacity(section.LineCount + 1);
             SkipToken();
         }
 
@@ -60,6 +61,7 @@ namespace IRExplorerCore.ASM {
             : base(irInfo, errorHandler, registerTable, section) {
             Reset();
             Initialize(sectionText);
+            MetadataTag.EnsureCapacity(section.LineCount + 1);
             SkipToken();
         }
 
@@ -307,8 +309,7 @@ namespace IRExplorerCore.ASM {
         private (InstructionIR, bool) ParseInstruction(BlockIR block) {
             bool isJump = false;
             var instr = new InstructionIR(NextElementId, InstructionKind.Other, block);
-            instr.IndexInBlock = block.Tuples.Count;
-            block.Tuples.Add(instr);
+            block.AddTuple(instr);
             previousInstr_ = instr;
 
             // Extract the opcode.

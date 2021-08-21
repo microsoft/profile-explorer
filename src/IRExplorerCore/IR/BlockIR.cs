@@ -26,6 +26,11 @@ namespace IRExplorerCore.IR {
 
         public bool IsEmpty => Tuples == null || Tuples.Count == 0;
 
+        public void AddTuple(TupleIR tuple) {
+            tuple.IndexInBlock = Tuples.Count;
+            Tuples.Add(tuple);
+        }
+
         public bool IsBranchBlock {
             get {
                 var instr = TransferInstruction;

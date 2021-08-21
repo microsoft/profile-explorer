@@ -83,7 +83,7 @@ namespace IRExplorerUI.Document {
                 TextSearchResult? matchResult = null;
 
                 foreach (var query in highlightingList) {
-                    var result = TextSearcher.FirstIndexof(text, query.SearchedText, index, query.SearchKind);
+                    var result = TextSearcher.FirstIndexOf(text, query.SearchedText, index, query.SearchKind);
 
                     if (result.HasValue) {
                         matchResult = result.Value;

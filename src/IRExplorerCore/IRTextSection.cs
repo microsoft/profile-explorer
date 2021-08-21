@@ -28,7 +28,7 @@ namespace IRExplorerCore {
         public string Name { get; set; }
         public int BlockCount { get; set; }
         public IRTextFunction ParentFunction { get; set; }
-        public int LineCount => Output.EndLine - Output.StartLine + 1;
+        public int LineCount => Output.LineCount;
         public IRPassOutput Output { get; set; }
         public IRPassOutput OutputAfter { get; set; }
         public IRPassOutput OutputBefore { get; set; }
