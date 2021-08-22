@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using CSharpTest.Net.Collections;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
@@ -28,7 +29,9 @@ namespace IRExplorerCore {
     }
 
     public abstract class IRTextSectionLoader : IDisposable {
-        protected Dictionary<IRTextSection, ParsedIRTextSection> sectionCache_;
+        private const int CACHE_LIMIT = 32;
+
+        protected LurchTable<IRTextSection, ParsedIRTextSection> sectionCache_;
         protected ICompilerIRInfo irInfo_;
         protected bool cacheEnabled_;
         protected object lockObject_;
@@ -46,7 +49,7 @@ namespace IRExplorerCore {
             cacheEnabled_ = cacheEnabled;
             lockObject_ = new object();
             sectionPreprocessingCompleted_ = 0;
-            sectionCache_ = new Dictionary<IRTextSection, ParsedIRTextSection>();
+            sectionCache_ = new LurchTable<IRTextSection, ParsedIRTextSection>(LurchTableOrder.Insertion, CACHE_LIMIT);
         }
 
         protected (IRSectionParser, IRParsingErrorHandler) InitializeParser() {
