@@ -1,11 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using DiffPlex.DiffBuilder.Model;
 using IRExplorerCore;
 
 namespace IRExplorerUI.Diff {
-    public class AdjustedDiffPiece {
+    public struct AdjustedDiffPiece {
         public AdjustedDiffPiece(int offset, int length) {
             Offset = offset;
             Length = length;
@@ -26,7 +27,7 @@ namespace IRExplorerUI.Diff {
 
     public interface IDiffInputFilter {
         void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo);
-        string FilterInputText(string text);
+        (string, List<string> linePrefixes) FilterInputText(string text);
     }
 
     public class BasicDiffOutputFilter : IDiffOutputFilter {
@@ -34,8 +35,8 @@ namespace IRExplorerUI.Diff {
             '(', ')', ',', '.', ';', ':', '|', '{', '}', '!', ' ', '\t'
         };
 
-        public AdjustedDiffPiece AdjustChange(DiffPiece change, int offset, int lineOffset, string lineText) {
-            return new AdjustedDiffPiece(offset, lineOffset);
+        public AdjustedDiffPiece AdjustChange(DiffPiece change, int documentOffset, int lineOffset, string lineText) {
+            return new AdjustedDiffPiece(documentOffset, change.Text.Length);
         }
 
         public DiffKind EstimateModificationType(DiffPiece before, DiffPiece after, int beforeOffset, int afterOffset, string beforeDocumentText, string afterDocumentText) {

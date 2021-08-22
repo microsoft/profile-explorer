@@ -311,12 +311,13 @@ namespace IRExplorerUI {
         private Task<DiffMarkingResult> 
             MarkSectionDiffs(IRTextSection section, string text, string otherText,
                              DiffPaneModel diff, DiffPaneModel otherDiff, bool isRightDoc,
-                             IDiffOutputFilter diffFilter, DiffStatistics diffStats) {
+                             IDiffOutputFilter diffFilter, List<string> linePrefixes,
+                             DiffStatistics diffStats) {
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
             return Task.Run(() => {
                 var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
-                                                   isRightDoc, diffStats);
+                                                   isRightDoc, linePrefixes, diffStats);
                 diffUpdater.ReparseDiffedFunction(result, section);
                 return result;
             });
@@ -394,13 +395,12 @@ namespace IRExplorerUI {
             if(IsSectionTextDifferent(newLeftSection, newRightSection)) {
                 var leftDiffText = leftText;
                 var rightDiffText = rightText;
+                List<string> leftLinePrefixes = null;
+                List<string> rightLinePrefixes = null;
 
                 if (diffInputFilter != null) {
-                    leftDiffText = diffInputFilter.FilterInputText(leftText);
-                    rightDiffText = diffInputFilter.FilterInputText(rightText);
-
-                    leftText = leftDiffText;
-                    rightText = rightDiffText;
+                    (leftDiffText, leftLinePrefixes) = diffInputFilter.FilterInputText(leftText);
+                    (rightDiffText, rightLinePrefixes) = diffInputFilter.FilterInputText(rightText);
                 }
 
                 var diff = await ComputeSectionDiffs(leftDiffText, rightDiffText, newLeftSection, newRightSection);
@@ -410,10 +410,10 @@ namespace IRExplorerUI {
                 // in the doc. hosts once back on the UI thread.
                 var leftMarkTask = MarkSectionDiffs(newLeftSection, leftText, rightText,
                     diff.OldText, diff.NewText,
-                    false, diffFilter, leftDiffStats);
+                    false, diffFilter, leftLinePrefixes, leftDiffStats);
                 var rightMarkTask = MarkSectionDiffs(newRightSection, leftText, rightText,
                     diff.NewText, diff.OldText,
-                    true, diffFilter, rightDiffStats);
+                    true, diffFilter, rightLinePrefixes, rightDiffStats);
 
                 await Task.WhenAll(leftMarkTask, rightMarkTask);
                 leftDiffResult = await leftMarkTask;
@@ -495,10 +495,10 @@ namespace IRExplorerUI {
 
             var leftMarkTask = MarkSectionDiffs(leftDocument.Section, leftText, rightText,
                                                 diff.OldText, diff.NewText,
-                                                false, diffFilter, leftDiffStats);
+                                                false, diffFilter, null, leftDiffStats);
             var rightMarkTask = MarkSectionDiffs(rightDocument.Section, leftText, rightText,
                                                  diff.NewText, diff.OldText,
-                                                 true, diffFilter, rightDiffStats);
+                                                 true, diffFilter, null, rightDiffStats);
             await Task.WhenAll(leftMarkTask, rightMarkTask);
             var leftDiffResult = await leftMarkTask;
             var rightDiffResult = await rightMarkTask;
@@ -787,7 +787,7 @@ namespace IRExplorerUI {
             
             var diffResult = await MarkSectionDiffs(section, prevText, currentText, 
                                                     diff.NewText, diff.OldText,
-                                                    true, diffFilter, diffStats);
+                                                    true, diffFilter, null, diffStats);
             await UpdateDiffedFunction(doc.TextView, diffResult, section);
             DiffStatusText.Text = diffStats.ToString();
         }

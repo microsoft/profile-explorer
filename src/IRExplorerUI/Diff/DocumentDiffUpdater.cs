@@ -57,7 +57,8 @@ namespace IRExplorerUI.Diff {
 
         public DiffMarkingResult MarkDiffs(string text, string otherText,
                                            DiffPaneModel diff, DiffPaneModel otherDiff,
-                                           bool isRightDoc, DiffStatistics diffStats,
+                                           bool isRightDoc, List<string> linePrefixes,
+                                           DiffStatistics diffStats,
                                            bool markRightDocDeletion = false) {
             // Create a new text document and associate it with the task worker.
             var document = new TextDocument(new StringTextSource(text));
@@ -97,12 +98,12 @@ namespace IRExplorerUI.Diff {
                         break;
                     }
                     case ChangeType.Imaginary: {
-                        int actualLine = lineIndex + 1;
+                        int docLineIndex = lineIndex + 1;
 
                         if (isRightDoc) {
                             // Mark the lines that have been removed on the right side.
-                            if (actualLine <= document.LineCount) {
-                                var docLine = document.GetLineByNumber(actualLine);
+                            if (docLineIndex <= document.LineCount) {
+                                var docLine = document.GetLineByNumber(docLineIndex);
 
                                 if (markRightDocDeletion) {
                                     // Show the actual text that has been deleted.
@@ -112,26 +113,23 @@ namespace IRExplorerUI.Diff {
                                 else {
                                     document.Replace(docLine.Offset, docLine.Length,
                                         new string(RemovedDiffLineChar, docLine.Length));
-                                    result.DiffSegments.Add(
-                                    new DiffTextSegment(DiffKind.Placeholder, docLine.Offset, docLine.Length));
+                                    result.DiffSegments.Add(new DiffTextSegment(DiffKind.Placeholder, docLine.Offset, docLine.Length));
                                 }
                             }
                         }
                         else {
                             // Add a placeholder in the left side to mark
                             // the lines inserted on the right side.
-                            int offset = actualLine <= document.LineCount
-                                ? document.GetOffset(actualLine, 0)
+                            int offset = docLineIndex <= document.LineCount
+                                ? document.GetOffset(docLineIndex, 0)
                                 : document.TextLength;
 
                             string imaginaryText =
                                 new string(AddedDiffLineChar, otherDiff.Lines[lineIndex].Text.Length);
 
                             document.Insert(offset, imaginaryText + Environment.NewLine);
-
-                            result.DiffSegments.Add(
-                                new DiffTextSegment(DiffKind.Placeholder, offset,
-                                                    imaginaryText.Length));
+                            result.DiffSegments.Add(new DiffTextSegment(DiffKind.Placeholder, offset,
+                                                                        imaginaryText.Length));
                         }
 
                         lineAdjustment++;
@@ -139,13 +137,23 @@ namespace IRExplorerUI.Diff {
                     }
                     case ChangeType.Modified: {
                         MarkLineModificationDiffs(line, lineIndex, lineAdjustment,
-                                                    document, isRightDoc, otherDiff,
-                                                    result, diffStats);
+                                                  document, isRightDoc, otherDiff,
+                                                  result, diffStats);
 
                         break;
                     }
                     default:
                         throw new ArgumentOutOfRangeException();
+                }
+
+                if (linePrefixes != null) {
+                    int prefixLine = lineIndex - lineAdjustment;
+
+                    if (prefixLine < linePrefixes.Count) {
+                        var prefix = linePrefixes[prefixLine];
+                        var docLine = document.GetLineByNumber(lineIndex + 1);
+                        document.Replace(docLine.Offset, prefix.Length, prefix);
+                    }
                 }
             }
 
@@ -301,19 +309,19 @@ namespace IRExplorerUI.Diff {
                                                                     diffLine, otherDiffLine);
                             }
                         }
-                        else {
-                            otherPiece = FindOverlappingPieceInOtherDocument(otherDiff, lineIndex, column);
+                        //else {
+                        //    otherPiece = FindOverlappingPieceInOtherDocument(otherDiff, lineIndex, column);
 
-                            if (otherPiece != null && otherPiece.Type == ChangeType.Unchanged) {
-                                var diffLine = line.Text;
-                                var otherDiffLine = otherDiff.Lines[lineIndex].Text;
-                                int otherPieceOffset = column;
-                                int pieceOffset = column;
-                                diffKind = EstimateModificationType(piece, otherPiece,
-                                                                    pieceOffset, otherPieceOffset,
-                                                                    diffLine, otherDiffLine);
-                            }
-                        }
+                        //    if (otherPiece != null && otherPiece.Type == ChangeType.Unchanged) {
+                        //        var diffLine = line.Text;
+                        //        var otherDiffLine = otherDiff.Lines[lineIndex].Text;
+                        //        int otherPieceOffset = column;
+                        //        int pieceOffset = column;
+                        //        diffKind = EstimateModificationType(piece, otherPiece,
+                        //                                            pieceOffset, otherPieceOffset,
+                        //                                            diffLine, otherDiffLine);
+                        //    }
+                        //}
 
                         if (IsSignifficantDiff(piece)) {
                             var filteredPiece = diffFilter_.AdjustChange(piece, offset, column, line.Text);

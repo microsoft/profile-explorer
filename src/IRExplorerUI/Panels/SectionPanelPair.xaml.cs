@@ -118,7 +118,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public async Task RefreshDocumentsDiff() {
+        public async Task RefreshDocumentsDiffs() {
             if (MainPanel.CurrentFunction == null) {
                 return;
             }
@@ -404,8 +404,10 @@ namespace IRExplorerUI {
         }
 
         public async Task AnalyzeDocumentDiffs() {
+            Trace.TraceInformation("AnalyzeDocumentDiffs: waiting");
             await MainPanel.WaitForStatistics();
             await DiffPanel.WaitForStatistics();
+            Trace.TraceInformation("AnalyzeDocumentDiffs: start");
 
             foreach (var function in MainSummary.Functions) {
                 var functionEx = MainPanel.GetFunctionExtension(function);
@@ -419,20 +421,16 @@ namespace IRExplorerUI {
                 if (functionEx.Statistics == null || otherFunctionEx.Statistics == null) {
                     continue;
                 }
-
-                //var diff = otherFunctionEx.Statistics.Instructions - functionEx.Statistics.Instructions;
-
-                //if(diff < -1000) {
-                //    diff = diff;
-                //}
-
-                if (functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics)) {
+                
+                //? TODO: This diff ignores most changes in opcodes
+                if (functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics, true)) {
                     functionEx.FunctionDiffKind = DiffKind.Modification;
                 }
             }
-
+            
             MainPanel.AddStatisticsFunctionListColumns(true, " (D)", " delta", 55);
             MainPanel.RefreshFunctionList();
+            Trace.TraceInformation("AnalyzeDocumentDiffs: done");
         }
 
         public void ShowModuleReport() {

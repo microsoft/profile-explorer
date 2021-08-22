@@ -147,9 +147,10 @@ namespace IRExplorerUI.Compilers.ASM {
             'a', 'b', 'c', 'd', 'e', 'f'
         };
 
-        public string FilterInputText(string text) {
+        public (string, List<string> linePrefixes) FilterInputText(string text) {
             var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             var builder = new StringBuilder(lines.Length);
+            var linePrefixes = new List<string>();
 
             foreach (var line in lines) {
                 var newLine = line;
@@ -184,6 +185,7 @@ namespace IRExplorerUI.Compilers.ASM {
                             index--;
                         }
 
+                        linePrefixes.Add(line.Substring(0, index));
                         newLine = line.Substring(index).PadLeft(line.Length, '#');
                     }
                 }
@@ -191,7 +193,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 builder.AppendLine(newLine);
             }
 
-            return builder.ToString();
+            return (builder.ToString(), linePrefixes);
         }
 
         public void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo) {
