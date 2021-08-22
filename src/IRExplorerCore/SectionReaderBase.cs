@@ -8,7 +8,6 @@ using System.IO;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace IRExplorerCore {
@@ -57,9 +56,45 @@ namespace IRExplorerCore {
             }
         }
 
+        // Simple TextReader that can be used with a span or a substring.
+        class SpanStringReader : TextReader {
+            private ReadOnlyMemory<char> data_;
+            private int position_;
+            private int endPosition_;
+
+            public int Position => position_;
+
+            public SpanStringReader(ReadOnlyMemory<char> value, int length, int position = 0) {
+                data_ = value;
+                endPosition_ = position + length;
+                position_ = position;
+            }
+
+            public SpanStringReader(ReadOnlyMemory<char> value, int position = 0) :
+                this(value, value.Length, position) { }
+
+            public SpanStringReader(string value, int length, int position = 0) {
+                data_ = value.AsMemory();
+                endPosition_ = position + length;
+                position_ = position;
+            }
+
+            public SpanStringReader(string value, int position = 0) :
+                this(value, value.Length, position) { }
+
+            public override int Read() {
+                if (position_ == endPosition_) {
+                    return -1;
+                }
+
+                return (int)data_.Span[position_++];
+            }
+        }
+
+
         private static readonly int FILE_BUFFER_SIZE = 512 * 1024;
         private static readonly int STREAM_BUFFER_SIZE = 16 * 1024;
-        public static readonly long MAX_PRELOADED_FILE_SIZE = 512 * 1024 * 1024; // 512 MB
+        public static readonly long MAX_PRELOADED_FILE_SIZE = 256 * 1024 * 1024; // 256 MB
         private static readonly int MAX_LINE_LENGTH = 2000;
 
         private StreamReader dataReader_;
@@ -73,9 +108,7 @@ namespace IRExplorerCore {
         private int lineIndex_;
         private IRPassOutput optionalOutput_;
         private bool optionalOutputNeeded_;
-        private char[] preloadedData_;
-        private byte[] preloadedDataBytes_;
-        private MemoryStream preloadedDataStream_;
+        private string preloadedData_;
         private int prevLineCount_;
         private string[] prevLines_;
         private bool hasPreprocessedLines_;
@@ -87,22 +120,14 @@ namespace IRExplorerCore {
             dataStreamSize_ = new FileInfo(filePath).Length;
 
             if (dataStreamSize_ < MAX_PRELOADED_FILE_SIZE) {
-                using var stream = File.Open(filePath, FileMode.Open, FileAccess.Read,
-                                             FileShare.ReadWrite);
+                dataStream_ = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-                preloadedDataBytes_ = new byte[dataStreamSize_];
-                stream.Read(preloadedDataBytes_, 0, (int)dataStreamSize_);
-                stream.Seek(0, SeekOrigin.Begin);
-
-                using var textStream = new StreamReader(stream);
-                preloadedData_ = textStream.ReadToEnd().ToCharArray();
-                preloadedDataStream_ = new MemoryStream(preloadedDataBytes_, true);
-                dataStream_ = preloadedDataStream_;
+                var textStream = new StreamReader(dataStream_);
+                preloadedData_ = textStream.ReadToEnd();
+                dataStream_.Seek(0, SeekOrigin.Begin);
             }
             else {
-                dataStream_ = new FileStream(filePath, FileMode.Open, FileAccess.Read,
-                                             FileShare.Read, FILE_BUFFER_SIZE,
-                                             FileOptions.SequentialScan);
+                dataStream_ = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read);
             }
 
             Initialize();
@@ -348,7 +373,7 @@ namespace IRExplorerCore {
             // If the file was preloaded in memory, create a new stream 
             // to allow parallel loading of text.
             if (preloadedData_ != null) {
-                using var streamReader = CreatePreloadedDataReader();
+                using var streamReader = CreatePreloadedDataReader(output);
                 return ReadPassOutputText(streamReader, output, isOptionalOutput);
             }
 
@@ -365,7 +390,7 @@ namespace IRExplorerCore {
             // If the file was preloaded in memory, create a new stream 
             // to allow parallel loading of text.
             if (preloadedData_ != null) {
-                using var streamReader = CreatePreloadedDataReader();
+                using var streamReader = CreatePreloadedDataReader(output);
                 return ReadPassOutputTextLines(streamReader, output, isOptionalOutput);
             }
 
@@ -374,10 +399,8 @@ namespace IRExplorerCore {
             }
         }
 
-        private StreamReader CreatePreloadedDataReader() {
-            var reader = new MemoryStream(preloadedDataBytes_, true);
-            var encoding = DetectUTF8Encoding(reader, Encoding.ASCII);
-            return new StreamReader(reader, encoding, true, STREAM_BUFFER_SIZE);
+        private SpanStringReader CreatePreloadedDataReader(IRPassOutput output) {
+            return new SpanStringReader(preloadedData_, (int)output.Size, (int)output.DataStartOffset);
         }
 
         private string GetRawPassOutputText(IRPassOutput output, bool isOptionalOutput) {
@@ -389,8 +412,8 @@ namespace IRExplorerCore {
                 // For some use cases, such as text search on the whole document,
                 // it is much faster to use the unfiltered text and avoid reading
                 // the text line by line to form the final string.
-                var span = preloadedDataBytes_.AsSpan((int)output.DataStartOffset, (int)output.Size);
-                return dataStreamEncoding_.GetString(span);
+                var span = preloadedData_.AsMemory((int)output.DataStartOffset, (int)output.Size);
+                return span.ToString();
             }
 
             lock (lockObject_) {
@@ -418,9 +441,14 @@ namespace IRExplorerCore {
 
         private string ReadPassOutputText(StreamReader reader, IRPassOutput output,
                                           bool isOptionalOutput) {
-            var builder = new StringBuilder((int)output.Size);
             reader.BaseStream.Position = output.DataStartOffset;
             reader.DiscardBufferedData();
+            return ReadPassOutputText((TextReader)reader, output, isOptionalOutput);
+        }
+
+        private string ReadPassOutputText(TextReader reader, IRPassOutput output,
+                                          bool isOptionalOutput) {
+            var builder = new StringBuilder((int)output.Size);
 
             for (int i = output.StartLine; i <= output.EndLine; i++) {
                 string line = NextLine(reader, false);
@@ -447,9 +475,14 @@ namespace IRExplorerCore {
 
         private List<string> ReadPassOutputTextLines(StreamReader reader, IRPassOutput output,
                                                      bool isOptionalOutput) {
-            var list = new List<string>(output.LineCount);
             reader.BaseStream.Position = output.DataStartOffset;
             reader.DiscardBufferedData();
+            return ReadPassOutputTextLines((TextReader)reader, output, isOptionalOutput);
+        }
+
+        private List<string> ReadPassOutputTextLines(TextReader reader, IRPassOutput output,
+                                                     bool isOptionalOutput) {
+            var list = new List<string>(output.LineCount);
 
             for (int i = output.StartLine; i <= output.EndLine; i++) {
                 string line = NextLine(reader, false);
@@ -643,20 +676,28 @@ namespace IRExplorerCore {
             return NextLine(dataReader_, true);
         }
 
-        protected string NextLine(StreamReader reader, bool recordPreviousLines) {
+        protected string NextLine(TextReader reader, bool recordPreviousLines) {
             previousOffset_ = textOffset_;
-            if (!reader.EndOfStream) {
-                string line = PreprocessLine(reader.ReadLine());
+            string line = reader.ReadLine();
 
-                if (recordPreviousLines) {
-                    RecordPreviousLine(line);
-                }
-
-                textOffset_ = ComputeTextOffset(dataReader_);
-                return line;
+            if (line == null) {
+                return null;
             }
 
-            return null;
+            line = PreprocessLine(line);
+
+            if (recordPreviousLines) {
+                RecordPreviousLine(line);
+            }
+
+            if (reader == dataReader_) {
+                textOffset_ = ComputeTextOffset(dataReader_);
+            }
+            else {
+                textOffset_ = ((SpanStringReader)reader).Position;
+            }
+
+            return line;
         }
 
         protected string PreviousLine(int offset) {
@@ -743,10 +784,8 @@ namespace IRExplorerCore {
             if (!disposed_) {
                 dataReader_?.Dispose();
                 dataStream_?.Dispose();
-                preloadedDataStream_?.Dispose();
                 dataReader_ = null;
                 dataStream_ = null;
-                preloadedDataStream_ = null;
                 preloadedData_ = null;
                 disposed_ = true;
             }
