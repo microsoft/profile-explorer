@@ -453,7 +453,7 @@ namespace IRExplorerUI {
             diffFilter.Initialize(App.Settings.DiffSettings, Session.CompilerInfo.IR);
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, Session.CompilerInfo);
             var diffResult = await Task.Run(() => diffUpdater.MarkDiffs(otherText, text, diff.NewText, diff.OldText,
-                                                                        true, diffStats, true));
+                                                                        true, null, diffStats, true));
             ResetTextSearch(); // Reset current search, if there is any.
 
             // Replace the current text document.

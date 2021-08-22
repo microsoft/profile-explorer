@@ -392,7 +392,7 @@ namespace IRExplorerUI {
             SectionPanel.DiffSummary = result.Summary;
             SectionPanel.DiffTitle = result.FileName;
             await SectionPanel.AnalyzeDocumentDiffs();
-            await SectionPanel.RefreshDocumentsDiff();
+            await SectionPanel.RefreshDocumentsDiffs();
         }
 
         private void ShowProgressBar(string title) {

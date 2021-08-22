@@ -795,7 +795,7 @@ namespace IRExplorerUI {
             set {
                 if (value != otherSummary_) {
                     otherSummary_ = value;
-                    UpdateFunctionListBindings();
+                    UpdateFunctionListBindings(false);
                 }
             }
         }
@@ -1170,7 +1170,7 @@ namespace IRExplorerUI {
             UseProfileCallTree = true;
         }
 
-        private async Task UpdateFunctionListBindings() {
+        private async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
             if (summary_ == null) {
                 ResetSectionPanel();
                 return;
@@ -1232,7 +1232,9 @@ namespace IRExplorerUI {
                 SetFunctionProfileInfo(functionsEx);
             }
 
-            await ComputeFunctionStatistics();
+            if (analyzeFunctions) {
+                await ComputeFunctionStatistics();
+            }
         }
 
         private void ResetSectionPanel() {
@@ -2298,7 +2300,8 @@ namespace IRExplorerUI {
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary_);
             using var cancelableTask = statisticsTask_.CreateTask();
             Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
-            
+            Trace.TraceInformation("ComputeFunctionStatistics: start");
+
             var tasks = new List<Task>();
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
@@ -2324,6 +2327,7 @@ namespace IRExplorerUI {
                 functionEx.Statistics = pair.Value;
             }
 
+            Trace.TraceInformation("ComputeFunctionStatistics: done");
             statisticsTask_.CompleteTask(cancelableTask);
             
             AddStatisticsFunctionListColumns(false);
@@ -2354,39 +2358,8 @@ namespace IRExplorerUI {
 
         private FunctionCodeStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader,
             CallGraph callGraph) {
-            var stats = new FunctionCodeStatistics();
             var result = loader.LoadSection(section);
-            var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
-
-            if(metadataTag != null) {
-                stats.Size = metadataTag.FunctionSize;
-            }
-
-            var irInfo = Session.CompilerInfo.IR;
-
-            foreach(var instr in result.Function.AllInstructions) {
-                stats.Instructions++;
-
-                if(instr.IsBranch || instr.IsGoto || instr.IsSwitch) {
-                    stats.Branches++;
-                }
-
-                if (irInfo.IsLoadInstruction(instr)) {
-                    stats.Loads++;
-                }
-
-                if(irInfo.IsStoreInstruction(instr)) {
-                    stats.Stores++;
-                }
-
-                if(irInfo.IsCallInstruction(instr)) {
-                    if (irInfo.GetCallTarget(instr) == null) {
-                        stats.IndirectCalls++;
-                    }
-                    
-                    stats.Calls++;
-                }
-            }
+            var stats = FunctionCodeStatistics.Compute(result.Function, Session.CompilerInfo.IR);
 
             if (callGraph != null) {
                 var node = callGraph.FindNode(section.ParentFunction);
@@ -2399,7 +2372,7 @@ namespace IRExplorerUI {
 
             return stats;
         }
-        
+
         private DataTemplate CreateGridColumnBindingTemplate(string propertyName, IValueConverter valueConverter = null) {
             DataTemplate template = new DataTemplate();
             FrameworkElementFactory factory = new FrameworkElementFactory(typeof(TextBlock));

@@ -5,58 +5,6 @@ using System.Collections.Generic;
 using IRExplorerCore;
 
 namespace IRExplorerUI {
-    public class FunctionCodeStatistics {
-        public long Size { get; set; }
-        public int Instructions { get; set; }
-        public int Loads { get; set; }
-        public int Stores { get; set; }
-        public int Branches { get; set; }
-        public int Calls { get; set; }
-        public int Callers { get; set; }
-        public int IndirectCalls { get; set; }
-        public int Callees { get; set; }
-
-        public bool ComputeDiff(FunctionCodeStatistics other) {
-            Size = other.Size - Size;
-            Instructions = other.Instructions - Instructions;
-            Loads = other.Loads - Loads;
-            Stores = other.Stores - Stores;
-            Branches = other.Branches - Branches;
-            Calls = other.Calls - Calls;
-            Callers = other.Callers - Callers;
-            IndirectCalls = other.IndirectCalls - IndirectCalls;
-            Callees = other.Callees - Callees;
-            return Size != 0 || Instructions != 0 ||
-                   Loads != 0 || Stores != 0 ||
-                   Branches != 0 || Calls != 0 ||
-                   Callers != 0 || IndirectCalls != 0 || Callees != 0;
-        }
-        
-        public void Add(FunctionCodeStatistics other) {
-            Size = other.Size + Size;
-            Instructions = other.Instructions + Instructions;
-            Loads = other.Loads + Loads;
-            Stores = other.Stores + Stores;
-            Branches = other.Branches + Branches;
-            Calls = other.Calls + Calls;
-            Callers = other.Callers + Callers;
-            IndirectCalls = other.IndirectCalls + IndirectCalls;
-            Callees = other.Callees + Callees;
-        }
-
-        public override string ToString() {
-            return $"Size: {Size}\n" +
-                   $"Instructions: {Instructions}\n" +
-                   $"Loads: {Loads}\n" +
-                   $"Stores: {Stores}\n" +
-                   $"Branches: {Branches}\n" +
-                   $"Calls: {Calls}\n" +
-                   $"Callers: {Callers}\n" +
-                   $"IndirectCalls: {IndirectCalls}\n" +
-                   $"Callees: {Callees}";
-        }
-    }
-
     public class ValueStatistics {
         public class Generator {
             private List<Tuple<IRTextFunction, long>> values_ = new List<Tuple<IRTextFunction, long>>();
