@@ -65,7 +65,7 @@ namespace IRExplorerUI {
                     stats.OpcodeHash = HashCode.Combine(stats.OpcodeHash, instr.Opcode.GetHashCode());
                 }
                 else if (!instr.OpcodeText.IsEmpty) {
-                    stats.OpcodeHash = HashCode.Combine(stats.OpcodeHash, instr.OpcodeText.GetHashCode());
+                    stats.OpcodeHash = HashCode.Combine(stats.OpcodeHash, instr.OpcodeText.ToString().GetHashCode());
                 }
 
                 if (instr.IsBranch || instr.IsGoto || instr.IsSwitch) {
