@@ -23,10 +23,12 @@ namespace IRExplorerUI {
         private bool isLoadingBinary_;
         private BinaryDissasemblerOptions options;
 
-        public BinaryOpenWindow(ISession session) {
+        public BinaryOpenWindow(ISession session, bool inDiffMode) {
             InitializeComponent();
             Session = session;
             Options = App.Settings.DissasemblerOptions;
+            InDiffMode = inDiffMode;
+
             DataContext = this;
             loadTask_ = new CancelableTaskInstance();
         }
@@ -54,10 +56,13 @@ namespace IRExplorerUI {
             }
         }
 
-
         public string BinaryFilePath { get; set; }
+        public string DiffBinaryFilePath { get; set; }
         public string DebugFilePath { get; set; }
+        public string DiffDebugFilePath { get; set; }
         public string OutputFilePath { get; set; }
+        public string DiffOutputFilePath { get; set; }
+        public bool InDiffMode { get; set; }
 
         private async void OpenButton_Click(object sender, RoutedEventArgs e) {
             await OpenFile();
@@ -66,39 +71,32 @@ namespace IRExplorerUI {
         private async Task OpenFile() {
             BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
             DebugFilePath = Utils.CleanupPath(DebugFilePath);
+            DiffBinaryFilePath = Utils.CleanupPath(DiffBinaryFilePath);
+            DiffDebugFilePath = Utils.CleanupPath(DiffDebugFilePath);
 
             if (Utils.ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary", this) &&
-                Utils.ValidateOptionalFilePath(DebugFilePath, DebugAutocompleteBox, "debug", this)) {
-                App.Settings.AddRecentFile(BinaryFilePath);
-                App.SaveApplicationSettings();
+                Utils.ValidateOptionalFilePath(DebugFilePath, DebugAutocompleteBox, "debug", this)
+                && (!InDiffMode ||
+                    (Utils.ValidateFilePath(DiffBinaryFilePath, DiffBinaryAutocompleteBox, "binary", this) &&
+                     Utils.ValidateOptionalFilePath(DiffDebugFilePath, DiffDebugAutocompleteBox, "debug", this)))) {
+                if (InDiffMode) {
+                    App.Settings.AddRecentComparedFiles(BinaryFilePath, DiffBinaryFilePath);
+                }
+                else {
+                    App.Settings.AddRecentFile(BinaryFilePath);
+                }
+                
 
+                App.SaveApplicationSettings();
                 var task = loadTask_.CreateTask();
                 IsLoadingBinary = true;
 
-                var dissasembler = new BinaryDissasembler(Options);
-                var outputFile = await dissasembler.DissasembleAsync(BinaryFilePath, DebugFilePath, progressInfo => {
-                    Dispatcher.BeginInvoke((Action)(() => {
-                        LoadProgressBar.Maximum = progressInfo.Total;
-                        LoadProgressBar.Value = progressInfo.Current;
-
-                        LoadProgressLabel.Text = progressInfo.Stage switch {
-                            BinaryDissasemblerStage.Dissasembling => "Dissasembling",
-                            BinaryDissasemblerStage.PostProcessing => "Post-processing",
-                        };
-
-                        if (progressInfo.Total != 0) {
-                            double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
-                            ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
-                            LoadProgressBar.IsIndeterminate = false;
-                        }
-                        else {
-                            LoadProgressBar.IsIndeterminate = true;
-                        }
-                    }));
-                }, task);
+                string outputFile = await OutputSingleFile(task, BinaryFilePath, DebugFilePath);
+                string diffOutputFile = InDiffMode ? await OutputSingleFile(task, DiffBinaryFilePath, DiffDebugFilePath) : null;
 
                 if (outputFile != null) {
                     OutputFilePath = outputFile;
+                    DiffOutputFilePath = diffOutputFile;
                     DialogResult = true;
                     Close();
                 }
@@ -111,12 +109,39 @@ namespace IRExplorerUI {
             }
         }
 
+        private async Task<string> OutputSingleFile(CancelableTask task, string binaryFilePath, string debugFilePath) {
+            var dissasembler = new BinaryDissasembler(Options);
+            var outputFile = await dissasembler.DissasembleAsync(binaryFilePath, debugFilePath, progressInfo => {
+                Dispatcher.BeginInvoke((Action)(() => {
+                    LoadProgressBar.Maximum = progressInfo.Total;
+                    LoadProgressBar.Value = progressInfo.Current;
+
+                    LoadProgressLabel.Text = progressInfo.Stage switch {
+                        BinaryDissasemblerStage.Dissasembling => "Dissasembling",
+                        BinaryDissasemblerStage.PostProcessing => "Post-processing",
+                    };
+
+                    if (progressInfo.Total != 0) {
+                        double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
+                        ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
+                        LoadProgressBar.IsIndeterminate = false;
+                    }
+                    else {
+                        LoadProgressBar.IsIndeterminate = true;
+                    }
+                }));
+            }, task);
+
+            return outputFile;
+        }
+
         private void CancelButton_Click(object sender, RoutedEventArgs e) {
             if(IsLoadingBinary) {
                 loadTask_.CancelTask();
                 return;
             }
 
+            App.SaveApplicationSettings();
             DialogResult = false;
             Close();
         }
@@ -168,6 +193,12 @@ namespace IRExplorerUI {
         private void DebugBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(DebugAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
 
+        private void DiffBinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(DiffBinaryAutocompleteBox, "Binary Files|*.exe;*.dll;*.sys;|All Files|*.*");
+
+        private void DiffDebugBrowseButton_Click(object sender, RoutedEventArgs e) =>
+            Utils.ShowOpenFileDialog(DiffDebugAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
+
         private void DisasmBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(DisasmAutocompleteBox, "Executables|*.exe|All Files|*.*");
 
@@ -184,11 +215,7 @@ namespace IRExplorerUI {
             DataContext = null;
             DataContext = this;
         }
-
-        private void BinaryAutocompleteBox_LostFocus(object sender, RoutedEventArgs e) {
-            //? TODO: Find pdb
-        }
-
+        
         private void DetectButton_Click(object sender, RoutedEventArgs e) {
             var disasmPath = Options.DetectDissasembler();
 
@@ -206,6 +233,25 @@ namespace IRExplorerUI {
 
         public void NotifyPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void BinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
+            var path = Utils.FindPDBFile(Utils.CleanupPath(BinaryFilePath));
+
+            if (path != null && string.IsNullOrEmpty(DebugFilePath)) {
+                
+                DebugAutocompleteBox.Text = path;
+                DebugFilePath = path;
+            }
+        }
+
+        private void DiffBinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
+            var path = Utils.FindPDBFile(Utils.CleanupPath(DiffBinaryFilePath));
+
+            if (path != null && string.IsNullOrEmpty(DiffDebugFilePath)) {
+                DiffDebugAutocompleteBox.Text = path;
+                DiffDebugFilePath = path;
+            }
         }
     }
 }

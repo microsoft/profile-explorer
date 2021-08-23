@@ -28,6 +28,8 @@ namespace IRExplorerUI {
         public string PostProcessorArguments { get; set; }
         [ProtoMember(5)]
         public bool CacheDissasembly { get; set; }
+        [ProtoMember(6)]
+        public bool OptionsExpanded { get; set; }
 
         public BinaryDissasemblerOptions() {
             Reset();
@@ -47,6 +49,7 @@ namespace IRExplorerUI {
             PostProcessorPath = "";
             PostProcessorArguments = "$SRC $DST";
             CacheDissasembly = true;
+            OptionsExpanded = true;
         }
 
         public string DetectDissasembler() {

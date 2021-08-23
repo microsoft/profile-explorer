@@ -54,7 +54,14 @@
             Executed="OpenExecutableExecuted"
             PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="OpenExecutableExecuted" />
-        
+
+        <CommandBinding
+            CanExecute="CanExecuteAlways"
+            Command="local:AppCommand.OpenExecutableDiff"
+            Executed="OpenExecutableDiffExecuted"
+            PreviewCanExecute="CanExecuteAlways"
+            PreviewExecuted="OpenExecutableDiffExecuted" />
+
         <CommandBinding
             CanExecute="CanExecuteDocumentCommand"
             Command="local:AppCommand.CloseDocument"
@@ -225,6 +232,9 @@
                         <Separator />
 
                         <MenuItem Command="local:AppCommand.OpenBaseDiffDocuments" Header="_Compare Base/Diff Files (F12)" />
+                        <MenuItem
+                            Command="local:AppCommand.OpenExecutableDiff"
+                            Header="Compare Base/Diff Binary Files"/>
                         <MenuItem Command="local:AppCommand.OpenDiffDocument" Header="Open _Diff File (Ctrl+F12)" />
                         <MenuItem Command="local:AppCommand.CloseDiffDocument" Header="Close Diff File" />
                         <Separator />

@@ -791,6 +791,10 @@ namespace IRExplorerUI {
         private static readonly char[] CLEANUP_PATH_CHARS = new char[] {'"', '\n', '\r'};
 
         public static string CleanupPath(string path) {
+            if (string.IsNullOrEmpty(path)) {
+                return path;
+            }
+
             path = path.RemoveChars(CLEANUP_PATH_CHARS);
             return path.Trim();
         }
@@ -874,6 +878,48 @@ namespace IRExplorerUI {
             }
 
             return null;
+        }
+
+        public static string FindPDBFile(string binaryFile) {
+            try {
+                if (!File.Exists(binaryFile)) {
+                    return null;
+                }
+
+                var path = Path.GetDirectoryName(binaryFile);
+                var pdbPath = Path.Combine(path, Path.GetFileNameWithoutExtension(binaryFile)) + ".pdb";
+
+                if (File.Exists(pdbPath)) {
+                    return pdbPath;
+                }
+            }
+            catch (Exception ex) {
+
+            }
+
+            return null;
+        }
+
+        public static bool IsExecutableFile(string filePath) {
+            return FileHasExtension(filePath, ".exe") ||
+                   FileHasExtension(filePath, ".dll") ||
+                   FileHasExtension(filePath, ".sys");
+        }
+
+        public static bool FileHasExtension(string filePath, string extension) {
+            try {
+                extension = extension.ToLowerInvariant();
+
+                if (!extension.StartsWith(".")) {
+                    extension = $".{extension}";
+                }
+
+                return Path.GetExtension(filePath).ToLowerInvariant() == extension;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed FileHasExtension for {filePath}: {ex}");
+                return false;
+            }
         }
     }
 }

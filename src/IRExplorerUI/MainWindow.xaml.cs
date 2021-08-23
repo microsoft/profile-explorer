@@ -59,7 +59,9 @@ namespace IRExplorerUI {
         public static readonly RoutedUICommand OpenDiffDebug =
             new RoutedUICommand("Untitled", "OpenDiffDebug", typeof(Window));
         public static readonly RoutedUICommand OpenExecutable =
-    new RoutedUICommand("Untitled", "OpenExecutable", typeof(Window));
+            new RoutedUICommand("Untitled", "OpenExecutable", typeof(Window));
+        public static readonly RoutedUICommand OpenExecutableDiff =
+            new RoutedUICommand("Untitled", "OpenExecutableDiff", typeof(Window));
         public static readonly RoutedUICommand CloseDocument =
             new RoutedUICommand("Untitled", "CloseDocument", typeof(Window));
         public static readonly RoutedUICommand SaveDocument =
@@ -452,7 +454,8 @@ namespace IRExplorerUI {
                 if (File.Exists(baseFilePath) && File.Exists(diffFilePath)) {
                     baseFilePath = Path.GetFullPath(baseFilePath);
                     diffFilePath = Path.GetFullPath(diffFilePath);
-                    opened = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
+                    var (baseLoadedDoc, diffLoadedDoc) = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
+                    opened = baseLoadedDoc != null && diffLoadedDoc != null;
                 }
 
                 if (!opened) {

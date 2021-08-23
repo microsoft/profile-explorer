@@ -11,7 +11,7 @@
     Height="Auto"
     MinWidth="500"
     Loaded="Window_Loaded"
-    ResizeMode="NoResize"
+    ResizeMode="CanResizeWithGrip"
     ShowInTaskbar="False"
     SizeToContent="Height"
     WindowStartupLocation="CenterOwner"
@@ -36,13 +36,13 @@
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    LostFocus="BinaryAutocompleteBox_LostFocus"
+                    TextChanged="BinaryAutocompleteBox_OnTextChanged"
                     MinimumPrefixLength="1"
                     TabIndex="1"
                     Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
 
                 <Button
-                    x:Name="BaseBrowseButton"
+                    x:Name="BinaryBrowseButton"
                     Height="22"
                     Padding="2,2,2,2"
                     HorizontalAlignment="Right"
@@ -68,7 +68,7 @@
                     Text="{Binding Path=DebugFilePath, Mode=TwoWay}" />
 
                 <Button
-                    x:Name="DiffBrowseButton"
+                    x:Name="DebugBrowseButton"
                     Height="22"
                     Padding="2,2,2,2"
                     HorizontalAlignment="Right"
@@ -77,7 +77,66 @@
                     TabIndex="10" />
             </Grid>
 
-            <Expander Margin="16,8,16,0" IsExpanded="True">
+            <Expander Margin="16,8,16,0" IsExpanded="True"
+                      Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
+                <Expander.Header>
+                    <TextBlock FontWeight="DemiBold" Text="Diff file" />
+                </Expander.Header>
+
+                <StackPanel>
+                    <TextBlock Margin="0,8,0,0" Text="Binary file path" />
+                    <Grid Margin="0,4,0,0">
+                    <controls:FileSystemTextBox
+                        x:Name="DiffBinaryAutocompleteBox"
+                        Height="22"
+                        Margin="0,0,50,0"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        FilterMode="StartsWithOrdinal"
+                        TextChanged="DiffBinaryAutocompleteBox_OnTextChanged"
+                        MinimumPrefixLength="1"
+                        TabIndex="1"
+                        Text="{Binding Path=DiffBinaryFilePath, Mode=TwoWay}" />
+
+                    <Button
+                        x:Name="DiffBinaryBrowseButton"
+                        Height="22"
+                        Padding="2,2,2,2"
+                        HorizontalAlignment="Right"
+                        Click="DiffBinaryBrowseButton_Click"
+                        Content="Browse"
+                        TabIndex="9" />
+                </Grid>
+
+                    <TextBlock Margin="0,4,0,0" Text="Debug file path (optional)" />
+                <Grid Margin="0,4,0,0">
+                    <controls:FileSystemTextBox
+                        x:Name="DiffDebugAutocompleteBox"
+                        Height="22"
+                        Margin="0,0,50,0"
+                        HorizontalAlignment="Stretch"
+                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        FilterMode="StartsWithOrdinal"
+                        IsDropDownOpen="True"
+                        IsTextCompletionEnabled="False"
+                        MinimumPrefixLength="1"
+                        TabIndex="2"
+                        Text="{Binding Path=DiffDebugFilePath, Mode=TwoWay}" />
+
+                    <Button
+                        x:Name="DiffBrowseButton"
+                        Height="22"
+                        Padding="2,2,2,2"
+                        HorizontalAlignment="Right"
+                        Click="DiffDebugBrowseButton_Click"
+                        Content="Browse"
+                        TabIndex="10" />
+                </Grid>
+                </StackPanel>
+            </Expander>
+
+            <Expander Margin="16,8,16,0" IsExpanded="{Binding Path=Options.OptionsExpanded, Mode=TwoWay}">
                 <Expander.Header>
                     <TextBlock FontWeight="DemiBold" Text="Options" />
                 </Expander.Header>
@@ -229,7 +288,7 @@
             </StackPanel>
             <ProgressBar
                 x:Name="LoadProgressBar"
-                Height="20"
+                Height="4"
                 HorizontalAlignment="Stretch"
                 Maximum="100"
                 Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}"

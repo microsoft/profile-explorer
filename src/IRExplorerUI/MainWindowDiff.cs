@@ -35,14 +35,17 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task OpenBaseDiffsDocuments(string baseFilePath, string diffFilePath) {
-            bool loaded = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
+        private async Task<Tuple<LoadedDocument, LoadedDocument>> 
+        OpenBaseDiffsDocuments(string baseFilePath, string diffFilePath) {
+            var (baseDoc, diffDoc) = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
 
-            if (!loaded) {
+            if (baseDoc == null || diffDoc == null) {
                 using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show("Failed to load base/diff files", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Exclamation);
             }
+
+            return new Tuple<LoadedDocument, LoadedDocument>(baseDoc, diffDoc);
         }
 
         private async void ToggleDiffModeExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -66,31 +69,76 @@ namespace IRExplorerUI {
             await SwapDiffedDocuments();
         }
 
-        private async Task<bool> OpenBaseDiffIRDocumentsImpl(string baseFilePath, string diffFilePath) {
-            bool result = false;
+        private async Task<Tuple<LoadedDocument, LoadedDocument>> 
+        OpenBaseDiffIRDocumentsImpl(string baseFilePath, string diffFilePath) {
+            LoadedDocument baseResult = null;
+            LoadedDocument diffResult = null;
 
             try {
                 await EndSession();
                 UpdateUIBeforeLoadDocument($"Loading {baseFilePath}, {diffFilePath}");
-                var baseTask = Task.Run(() => LoadDocument(baseFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
-                var diffTask = Task.Run(() => LoadDocument(diffFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
-                await Task.WhenAll(baseTask, diffTask);
 
-                if (baseTask.Result != null && diffTask.Result != null) {
-                    await SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
-                    await SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
-                    result = true;
+                if (Utils.IsExecutableFile(baseFilePath) &&
+                    Utils.IsExecutableFile(diffFilePath)) {
+                    (baseResult, diffResult) = await OpenBinaryBaseDiffIRDocuments(baseFilePath, diffFilePath);
                 }
                 else {
-                    Trace.TraceWarning($"Failed to load base/diff documents: base {baseTask.Result != null}, diff {diffTask.Result != null}");
+                    (baseResult, diffResult) = await LoadBaseDiffIRDocuments(baseFilePath, diffFilePath);
                 }
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load base/diff documents: {ex}");
+                await EndSession();
             }
 
             UpdateUIAfterLoadDocument();
-            return result;
+            return new Tuple<LoadedDocument, LoadedDocument>(baseResult, diffResult);
+        }
+
+        private async Task<Tuple<LoadedDocument, LoadedDocument>> 
+            LoadBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
+            var baseTask = Task.Run(() => LoadDocument(baseFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
+            var diffTask = Task.Run(() => LoadDocument(diffFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
+            await Task.WhenAll(baseTask, diffTask);
+
+            if (baseTask.Result != null && diffTask.Result != null) {
+                await SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
+                await SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
+                return new Tuple<LoadedDocument, LoadedDocument>(baseTask.Result, diffTask.Result);
+            }
+            else {
+                Trace.TraceWarning($"Failed to load base/diff documents: base {baseTask.Result != null}, diff {diffTask.Result != null}");
+                await EndSession();
+                return new Tuple<LoadedDocument, LoadedDocument>(null, null);
+            }
+
+            return new Tuple<LoadedDocument, LoadedDocument>(null, null);
+        }
+
+        private async Task<Tuple<LoadedDocument, LoadedDocument>>
+            OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
+            var baseDissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
+            var diffDissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
+
+            var baseTask = baseDissasembler.DissasembleAsync(baseFilePath, null);
+            var diffTask = diffDissasembler.DissasembleAsync(diffFilePath, null);
+            await Task.WhenAll(baseTask, diffTask);
+
+            if (baseTask.Result != null && diffTask.Result != null) {
+                var (baseLoadedDoc, diffLoadedDoc) = await LoadBaseDiffIRDocuments(baseTask.Result, diffTask.Result);
+
+                if (baseLoadedDoc != null && diffLoadedDoc != null) {
+                    baseLoadedDoc.BinaryFilePath = baseFilePath;
+                    baseLoadedDoc.DebugInfoFilePath = Utils.FindPDBFile(baseFilePath);
+                    diffLoadedDoc.BinaryFilePath = diffFilePath;
+                    diffLoadedDoc.DebugInfoFilePath = Utils.FindPDBFile(diffFilePath);
+                }
+
+                UpdateWindowTitle();
+                return new Tuple<LoadedDocument, LoadedDocument>(baseLoadedDoc, diffLoadedDoc);
+            }
+
+            return new Tuple<LoadedDocument, LoadedDocument>(null, null);
         }
 
         private async void ToggleButton_Checked(object sender, RoutedEventArgs e) {

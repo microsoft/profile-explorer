@@ -58,25 +58,12 @@ namespace IRExplorerUI {
             bool failed = false;
 
             if (Path.HasExtension(filePath)) { 
-                if(Path.GetExtension(filePath).ToLowerInvariant() == ".irx") {
+                if(Utils.FileHasExtension(filePath, ".irx")) {
                     loadedDoc = await OpenSessionDocument(filePath);
                     failed = loadedDoc == null;
                 }
-                else if ((Path.GetExtension(filePath).ToLowerInvariant() == ".exe") ||
-                    (Path.GetExtension(filePath).ToLowerInvariant() == ".dll") ||
-                    (Path.GetExtension(filePath).ToLowerInvariant() == ".sys")) {
-                    var dissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
-                    var outputFile = await dissasembler.DissasembleAsync(filePath, null);
-
-                    if (outputFile != null) {
-                        loadedDoc = await OpenIRDocument(outputFile);
-
-                        if (loadedDoc != null) {
-                            loadedDoc.BinaryFilePath = filePath;
-                            UpdateWindowTitle();
-                        }
-                    }
-
+                else if (Utils.IsExecutableFile(filePath)) {
+                    loadedDoc = await OpenBinaryDocument(filePath);
                     failed = loadedDoc == null;
                 }
             }
@@ -92,6 +79,24 @@ namespace IRExplorerUI {
             }
 
             return loadedDoc;
+        }
+
+        private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
+            var dissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
+            var outputFile = await dissasembler.DissasembleAsync(filePath, null);
+
+            if (outputFile != null) {
+                var loadedDoc = await OpenIRDocument(outputFile);
+
+                if (loadedDoc != null) {
+                    loadedDoc.BinaryFilePath = filePath;
+                    loadedDoc.DebugInfoFilePath = Utils.FindPDBFile(filePath);
+                    UpdateWindowTitle();
+                    return loadedDoc;
+                }
+            }
+
+            return null;
         }
 
         private async void OpenDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -1147,7 +1152,7 @@ namespace IRExplorerUI {
         }
 
         private async void OpenExecutableExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var openWindow = new BinaryOpenWindow(this);
+            var openWindow = new BinaryOpenWindow(this, false);
             openWindow.Owner = this;
             var result = openWindow.ShowDialog();
 
@@ -1157,6 +1162,25 @@ namespace IRExplorerUI {
                 if(loadedDoc != null) {
                     loadedDoc.BinaryFilePath = openWindow.BinaryFilePath;
                     loadedDoc.DebugInfoFilePath = openWindow.DebugFilePath;
+                    UpdateWindowTitle();
+                }
+            }
+        }
+
+        private async void OpenExecutableDiffExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var openWindow = new BinaryOpenWindow(this, true);
+            openWindow.Owner = this;
+            var result = openWindow.ShowDialog();
+
+            if (result.HasValue && result.Value) {
+                var (baseLoadedDoc, diffLoadedDoc) = 
+                    await OpenBaseDiffsDocuments(openWindow.OutputFilePath,
+                                                 openWindow.DiffOutputFilePath);
+                if (baseLoadedDoc != null && diffLoadedDoc != null) {
+                    baseLoadedDoc.BinaryFilePath = openWindow.BinaryFilePath;
+                    baseLoadedDoc.DebugInfoFilePath = openWindow.DebugFilePath;
+                    diffLoadedDoc.BinaryFilePath = openWindow.DiffBinaryFilePath;
+                    diffLoadedDoc.DebugInfoFilePath = openWindow.DiffDebugFilePath;
                     UpdateWindowTitle();
                 }
             }

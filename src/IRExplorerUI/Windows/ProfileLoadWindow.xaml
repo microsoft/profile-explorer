@@ -9,6 +9,7 @@
     Title="Select profile files"
     Width="600"
     Height="250"
+    ResizeMode="CanResizeWithGrip"
     Loaded="Window_Loaded"
     ShowInTaskbar="False"
     WindowStartupLocation="CenterOwner"
@@ -17,7 +18,7 @@
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
-            <RowDefinition Height="48" />
+            <RowDefinition Height="38" />
         </Grid.RowDefinitions>
 
         <StackPanel
@@ -129,7 +130,7 @@
             </Button>
             <ProgressBar
                 x:Name="LoadProgressBar"
-                Height="20"
+                Height="4"
                 HorizontalAlignment="Stretch"
                 Maximum="100"
                 Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}"
@@ -149,7 +150,7 @@
 
         <StackPanel
             Grid.Row="1"
-            Margin="0,4,16,16"
+            Margin="0,4,16,8"
             HorizontalAlignment="Right"
             Orientation="Horizontal">
             <Button
