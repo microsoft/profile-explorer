@@ -213,9 +213,18 @@
                     TabIndex="5"
                     ToolTip="Reset options to default values"
                     Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
-                    <Button.ContextMenu>
-                        <ContextMenu />
-                    </Button.ContextMenu>
+                </Button>
+                <Button
+                    Width="50"
+                    Height="24"
+                    Margin="4,0,0,0"
+                    Padding="4,1,4,1"
+                    HorizontalAlignment="Left"
+                    Click="DetectButton_Click"
+                    Content="Detect"
+                    TabIndex="5"
+                    ToolTip="Detect location of system dissasembler"
+                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
                 </Button>
             </StackPanel>
             <ProgressBar

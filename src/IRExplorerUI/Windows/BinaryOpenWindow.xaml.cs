@@ -21,6 +21,7 @@ namespace IRExplorerUI {
     public partial class BinaryOpenWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingBinary_;
+        private BinaryDissasemblerOptions options;
 
         public BinaryOpenWindow(ISession session) {
             InitializeComponent();
@@ -45,7 +46,15 @@ namespace IRExplorerUI {
         public bool InputControlsEnabled => !isLoadingBinary_;
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public BinaryDissasemblerOptions Options { get; set; }
+        public BinaryDissasemblerOptions Options {
+            get => options;
+            set {
+                options = value;
+                NotifyPropertyChanged(nameof(Options));
+            }
+        }
+
+
         public string BinaryFilePath { get; set; }
         public string DebugFilePath { get; set; }
         public string OutputFilePath { get; set; }
@@ -177,7 +186,26 @@ namespace IRExplorerUI {
         }
 
         private void BinaryAutocompleteBox_LostFocus(object sender, RoutedEventArgs e) {
+            //? TODO: Find pdb
+        }
 
+        private void DetectButton_Click(object sender, RoutedEventArgs e) {
+            var disasmPath = Options.DetectDissasembler();
+
+            if(string.IsNullOrEmpty(disasmPath)) {
+                using var centerForm = new DialogCenteringHelper(this);
+
+                MessageBox.Show("Failed to find system dissasembler", "IR Explorer",
+                                MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            Options.DissasemblerPath = disasmPath;
+            NotifyPropertyChanged(nameof(Options));
+        }
+
+        public void NotifyPropertyChanged(string propertyName) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

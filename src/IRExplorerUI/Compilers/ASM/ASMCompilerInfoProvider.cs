@@ -186,7 +186,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         }
 
                         linePrefixes.Add(line.Substring(0, index));
-                        newLine = line.Substring(index).PadLeft(line.Length, '#');
+                        newLine = line.Substring(index).PadLeft(line.Length, ' ');
                     }
                 }
                 

@@ -15,6 +15,9 @@ using ProtoBuf;
 namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
     public class BinaryDissasemblerOptions : SettingsBase {
+        private const string DEFAULT_DISASM_NAME = "dumpbin.exe";
+        private const string DEFAULT_DISASM_ARGS = "/disasm /out:$DST $SRC";
+
         [ProtoMember(1)]
         public string DissasemblerPath { get; set; }
         [ProtoMember(2)]
@@ -31,11 +34,35 @@ namespace IRExplorerUI {
         }
 
         public override void Reset() {
-            DissasemblerPath = "dumpbin.exe";
-            DissasemblerArguments = "/disasm /out:$DST $SRC";
+            var disasmPath = DetectDissasembler();
+
+            if (!string.IsNullOrEmpty(disasmPath)) {
+                DissasemblerPath = disasmPath;
+            }
+            else {
+                DissasemblerPath = DEFAULT_DISASM_NAME;
+            }
+
+            DissasemblerArguments = DEFAULT_DISASM_ARGS;
             PostProcessorPath = "";
             PostProcessorArguments = "$SRC $DST";
             CacheDissasembly = true;
+        }
+
+        public string DetectDissasembler() {
+            try {
+                var path = Utils.DetectMSVCPath();
+                var disasmPath = Path.Combine(path, DEFAULT_DISASM_NAME);
+
+                if (File.Exists(disasmPath)) {
+                    return disasmPath;
+                }
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to detect dissasembler: {ex.Message}");
+            }
+
+            return null;
         }
 
         public override SettingsBase Clone() {
@@ -109,7 +136,7 @@ namespace IRExplorerUI {
                                                                .Replace(DEBUG_PLACEHOLDER, debugPath);
                 progressCallback?.Invoke(new BinaryDissasemblerProgress(BinaryDissasemblerStage.Dissasembling));
 
-                if (!ExecuteTool(options_.DissasemblerPath, disasmArgs, cancelableTask)) {
+                if (!Utils.ExecuteTool(options_.DissasemblerPath, disasmArgs, cancelableTask)) {
                     return false;
                 }
 
@@ -128,7 +155,7 @@ namespace IRExplorerUI {
                                                           .Replace(DEBUG_PLACEHOLDER, debugPath);
                 progressCallback?.Invoke(new BinaryDissasemblerProgress(BinaryDissasemblerStage.PostProcessing));
 
-                if (!ExecuteTool(options_.PostProcessorPath, args, cancelableTask)) {
+                if (!Utils.ExecuteTool(options_.PostProcessorPath, args, cancelableTask)) {
                     return false;
                 }
 
@@ -144,40 +171,6 @@ namespace IRExplorerUI {
             }
 
             return false;
-        }
-
-        private bool ExecuteTool(string path, string args, CancelableTask cancelableTask) {
-            if (!File.Exists(path)) {
-                return false;
-            }
-
-            var disasmProcInfo = new ProcessStartInfo(path) {
-                Arguments = args,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardError = false,
-                RedirectStandardOutput = false
-            };
-
-            using var disasmProc = new Process { StartInfo = disasmProcInfo, EnableRaisingEvents = true };
-            disasmProc.Start();
-
-            do {
-                disasmProc.WaitForExit(100);
-
-                if (cancelableTask != null && cancelableTask.IsCanceled) {
-                    Trace.TraceWarning($"Dissasembler task {ObjectTracker.Track(cancelableTask)}: Canceled");
-                    disasmProc.Kill();
-                    return false;
-                }
-            } while (!disasmProc.HasExited);
-
-            if (disasmProc.ExitCode != 0) {
-                Trace.TraceError($"Dissasembler task {ObjectTracker.Track(cancelableTask)}: Failed with error code: {disasmProc.ExitCode}");
-                return false;
-            }
-
-            return true;
         }
     }
 }

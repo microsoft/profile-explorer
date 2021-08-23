@@ -1908,7 +1908,8 @@ namespace IRExplorerUI {
                 List<IRElement> iteratedUseList = null;
                 bool handled = false;
                 
-                if (markExpression || true) {
+                //? TODO: Default expansion needs an option
+                if (markExpression) {
                     // Collect the transitive set of users, marking instructions
                     // that depend on the value of this destination operand.
                     iteratedUseList = ExpandIteratedUseList(op, useList);

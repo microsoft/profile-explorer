@@ -19,7 +19,7 @@ namespace IRExplorerUI {
         public int Callees { get; set; }
         public int OpcodeHash { get; set; }
 
-        public bool ComputeDiff(FunctionCodeStatistics other, bool compareOpcodes) {
+        public bool ComputeDiff(FunctionCodeStatistics other) {
             Size = other.Size - Size;
             Instructions = other.Instructions - Instructions;
             Loads = other.Loads - Loads;
@@ -35,6 +35,7 @@ namespace IRExplorerUI {
                    Callers != 0 || IndirectCalls != 0 || Callees != 0;
         }
         
+
         public void Add(FunctionCodeStatistics other) {
             Size = other.Size + Size;
             Instructions = other.Instructions + Instructions;
@@ -45,6 +46,7 @@ namespace IRExplorerUI {
             Callers = other.Callers + Callers;
             IndirectCalls = other.IndirectCalls + IndirectCalls;
             Callees = other.Callees + Callees;
+            OpcodeHash = HashCode.Combine(OpcodeHash, other.OpcodeHash);
         }
 
         public static FunctionCodeStatistics Compute(FunctionIR function, ICompilerIRInfo irInfo) {
@@ -58,6 +60,7 @@ namespace IRExplorerUI {
             foreach (var instr in function.AllInstructions) {
                 stats.Instructions++;
 
+                //? TODO: Add hash for branch targets, other diff registers, etc - configurable with options 
                 if (instr.Opcode != null) {
                     stats.OpcodeHash = HashCode.Combine(stats.OpcodeHash, instr.Opcode.GetHashCode());
                 }
