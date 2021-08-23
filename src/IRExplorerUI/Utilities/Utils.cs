@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
@@ -18,6 +19,7 @@ using System.Xml;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using Microsoft.Win32;
@@ -791,6 +793,87 @@ namespace IRExplorerUI {
         public static string CleanupPath(string path) {
             path = path.RemoveChars(CLEANUP_PATH_CHARS);
             return path.Trim();
+        }
+
+        public static bool ExecuteTool(string path, string args, CancelableTask cancelableTask = null) {
+            return ExecuteOutputTool(path, args, cancelableTask) != null;
+        }
+
+        public static string ExecuteOutputTool(string path, string args, CancelableTask cancelableTask = null) {
+            if (!File.Exists(path)) {
+                return null;
+            }
+
+            var outputText = new StringBuilder();
+            var procInfo = new ProcessStartInfo(path) {
+                Arguments = args,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardError = false,
+                RedirectStandardOutput = true
+            };
+
+            try {
+                using var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
+                
+                process.OutputDataReceived += (sender, e) => {
+                    outputText.AppendLine(e.Data);
+                };
+
+                process.Start();
+                process.BeginOutputReadLine();
+
+                do {
+                    process.WaitForExit(100);
+
+                    if (cancelableTask != null && cancelableTask.IsCanceled) {
+                        Trace.TraceWarning($"Task {ObjectTracker.Track(cancelableTask)}: Canceled");
+                        process.Kill();
+                        return null;
+                    }
+                } while (!process.HasExited);
+
+                process.CancelOutputRead();
+
+                if (process.ExitCode != 0) {
+                    Trace.TraceError("Task {ObjectTracker.Track(cancelableTask)}: Failed with error code: {proc.ExitCode}");
+                    return null;
+                }
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Task {ObjectTracker.Track(cancelableTask)}: Failed with exception: {ex.Message}");
+                return null;
+            }
+
+            return outputText.ToString();
+        }
+
+        public static string DetectMSVCPath() {
+            // https://devblogs.microsoft.com/cppblog/finding-the-visual-c-compiler-tools-in-visual-studio-2017/
+            var vswherePath = @"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe";
+            var vswhereArgs =
+                @"-latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath";
+
+            vswherePath = Environment.ExpandEnvironmentVariables(vswherePath);
+            
+            try {
+                var vsPath = ExecuteOutputTool(vswherePath, vswhereArgs);
+
+                if (string.IsNullOrEmpty(vsPath)) {
+                    Trace.TraceError("Failed to run vswhere");
+                    return null;
+                }
+
+                vsPath = vsPath.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries).First();
+                var msvcPathInfo = Path.Combine(vsPath, @"VC\Auxiliary\Build\Microsoft.VCToolsVersion.default.txt");
+                var msvcVersion = File.ReadLines(msvcPathInfo).First();
+                return Path.Combine(vsPath, @"VC\Tools\MSVC", msvcVersion, @"bin\HostX64\x64");
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to find MSVC path: {ex.Message}");
+            }
+
+            return null;
         }
     }
 }

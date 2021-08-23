@@ -7,7 +7,7 @@
     <Color name="Comment" foreground="Silver" />
     <Color name="Keywords" foreground="DarkBlue" fontWeight="bold"/>
     <Color name="Opcodes" foreground="Crimson" fontWeight="bold"/>
-    <Color name="TransferOpcodes" foreground="DarkGreen" fontWeight="bold"/>
+    <Color name="TransferOpcodes" foreground="Teal" fontWeight="bold"/>
     <Color name="CallOpcodes" foreground="DarkOrchid" fontWeight="bold" />
     <Color name="ArrayType" foreground="DarkMagenta" fontWeight="bold" />
     <Color name="PointerType" foreground="DarkMagenta" fontWeight="bold" />
@@ -45,6 +45,8 @@
             <Word>orr</Word>
             <Word>orn</Word>
             <Word>orn</Word>
+            <Word>bhi</Word>
+            <Word>ldrsw</Word>
             <Word>mvn</Word>
             <Word>mvn</Word>
             <Word>add</Word>
@@ -84,14 +86,9 @@
             <Word>asr</Word>
             <Word>ror</Word>
             <Word>cmn</Word>
-            <Word>cmn</Word>
-            <Word>cmn</Word>
-            <Word>cmp</Word>
-            <Word>cmp</Word>
             <Word>cmp</Word>
             <Word>ccmn</Word>
             <Word>ccmp</Word>
-            <Word>tst</Word>
             <Word>tst</Word>
             <Word>lea</Word>
             <Word>lea_gp</Word>
@@ -551,9 +548,17 @@
             <Word>b</Word>
             <Word>br</Word>
             <Word>cbz</Word>
+            <Word>cbnz</Word>
             <Word>tbz</Word>
+            <Word>tbnz</Word>
             <Word>b</Word>
             <Word>br</Word>
+            <Word>beq</Word>
+            <Word>bne</Word>
+            <Word>blt</Word>
+            <Word>ble</Word>
+            <Word>bgt</Word>
+            <Word>bge</Word>
             <Word>ret</Word>
         </Keywords>
 

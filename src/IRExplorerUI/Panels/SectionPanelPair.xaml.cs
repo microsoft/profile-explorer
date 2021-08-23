@@ -423,7 +423,8 @@ namespace IRExplorerUI {
                 }
                 
                 //? TODO: This diff ignores most changes in opcodes
-                if (functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics, true)) {
+                if (functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics) ||
+                    functionEx.Statistics.OpcodeHash != otherFunctionEx.Statistics.OpcodeHash) {
                     functionEx.FunctionDiffKind = DiffKind.Modification;
                 }
             }
