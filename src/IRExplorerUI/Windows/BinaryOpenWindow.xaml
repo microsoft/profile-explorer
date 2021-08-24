@@ -80,7 +80,7 @@
             <Expander Margin="16,8,16,0" IsExpanded="True"
                       Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
                 <Expander.Header>
-                    <TextBlock FontWeight="DemiBold" Text="Diff file" />
+                    <TextBlock FontWeight="DemiBold" Text="Diff file location" />
                 </Expander.Header>
 
                 <StackPanel>
@@ -147,7 +147,7 @@
                         <controls:FileSystemTextBox
                             x:Name="DisasmAutocompleteBox"
                             Height="22"
-                            Margin="0,0,50,0"
+                            Margin="0,0,104,0"
                             HorizontalAlignment="Stretch"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -157,6 +157,18 @@
                             MinimumPrefixLength="1"
                             TabIndex="2"
                             Text="{Binding Path=Options.DissasemblerPath, Mode=TwoWay}" />
+                        <Button
+                            Width="50"
+                            Height="22"
+                            Margin="0,0,48,0"
+                            Padding="2,2,2,2"
+                            HorizontalAlignment="Right"
+                            Click="DetectButton_Click"
+                            Content="Detect"
+                            TabIndex="5"
+                            ToolTip="Detect location of system dissasembler"
+                            Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
+                        </Button>
                         <Button
                             x:Name="DisasmBrowseButton"
                             Height="22"
@@ -229,6 +241,7 @@
 
                     <CheckBox
                         Margin="0,8,0,0"
+                        IsEnabled="False"
                         Content="Cache dissasembler output"
                         IsChecked="{Binding Path=Options.CacheDissasembly, Mode=TwoWay}" />
                     <TextBlock
@@ -273,18 +286,6 @@
                     ToolTip="Reset options to default values"
                     Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
                 </Button>
-                <Button
-                    Width="50"
-                    Height="24"
-                    Margin="4,0,0,0"
-                    Padding="4,1,4,1"
-                    HorizontalAlignment="Left"
-                    Click="DetectButton_Click"
-                    Content="Detect"
-                    TabIndex="5"
-                    ToolTip="Detect location of system dissasembler"
-                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
-                </Button>
             </StackPanel>
             <ProgressBar
                 x:Name="LoadProgressBar"
@@ -320,6 +321,7 @@
                 Margin="0,0,4,0"
                 Padding="4,1,4,1"
                 Click="CancelButton_Click"
+                IsCancel="True"
                 Content="Cancel"
                 TabIndex="4" />
             <Button

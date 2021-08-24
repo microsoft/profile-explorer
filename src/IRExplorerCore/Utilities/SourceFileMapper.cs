@@ -4,22 +4,36 @@ using System.IO;
 using System.Text;
 
 namespace IRExplorerCore {
-    public sealed class SourceFileMapper {
+    public class SourceFileMapper {
         private readonly Dictionary<string, DirectoryInfo> map_ = new Dictionary<string, DirectoryInfo>();
+        private readonly HashSet<string> missingFilesSet_ = new HashSet<string>();
 
         public string Map(string sourceFile, Func<string> lookup) {
             if (TryLookupInMap(sourceFile, out var result)) {
                 return result;
             }
+
+            if (missingFilesSet_.Contains(sourceFile)) {
+                return null;
+            }
+
             result = lookup();
+
             if (result != null) {
                 UpdateMap(sourceFile, result);
             }
+            else {
+                // Remember that the file couldn't be found so next time
+                // it won't ask again for the same one.
+                missingFilesSet_.Add(sourceFile);
+            }
+
             return result;
         }
 
         private bool TryLookupInMap(string sourceFile, out string result) {
             var index = sourceFile.LastIndexOf(Path.DirectorySeparatorChar);
+
             while (index != -1) {
                 if (map_.TryGetValue(sourceFile.Substring(0, index), out var mappedDirectory)) {
                     result = Path.Combine(mappedDirectory.FullName, sourceFile.Substring(index + 1));
@@ -38,11 +52,13 @@ namespace IRExplorerCore {
             int prevMappedPath = mappedPath.Length;
             int originalPathIndex = originalPath.LastIndexOf(Path.DirectorySeparatorChar);
             int mappedPathIndex = mappedPath.LastIndexOf(Path.DirectorySeparatorChar);
+
             while (originalPathIndex != -1 && mappedPathIndex != -1) {
                 if (originalPath.Substring(originalPathIndex, prevOriginalPath - originalPathIndex) !=
                     mappedPath.Substring(mappedPathIndex, prevMappedPath - mappedPathIndex)) {
                     return;
                 }
+
                 map_[originalPath.Substring(0, originalPathIndex)] = new DirectoryInfo(mappedPath.Substring(0, mappedPathIndex));
                 prevOriginalPath = originalPathIndex;
                 prevMappedPath = mappedPathIndex;

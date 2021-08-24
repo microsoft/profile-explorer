@@ -160,6 +160,7 @@
                 Padding="4,1,4,1"
                 VerticalAlignment="Top"
                 Click="CancelButton_Click"
+                IsCancel="True"
                 Content="Cancel"
                 TabIndex="4" />
             <Button

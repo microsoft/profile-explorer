@@ -104,11 +104,11 @@ namespace IRExplorerUI {
         }
 
         private void OpenDebugExecuted(object sender, ExecutedRoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb",
+            Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb", "Open debug info file",
                 (path) => sessionState_.MainDocument.DebugInfoFilePath = path);
 
         private void OpenDiffDebugExecuted(object sender, ExecutedRoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb",
+            Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb", "Open debug info file",
                 (path) => sessionState_.DiffDocument.DebugInfoFilePath = path);
 
         private void CanExecuteDiffDocumentCommand(object sender, CanExecuteRoutedEventArgs e) {
@@ -117,7 +117,7 @@ namespace IRExplorerUI {
         }
 
         private async Task OpenDocument() =>
-            await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*",
+            await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*", "Open file",
                 async (path) => await OpenDocument(path));
 
         public async Task<LoadedDocument> OpenSessionDocument(string filePath) {
@@ -1140,14 +1140,10 @@ namespace IRExplorerUI {
         }
 
         private void OpenNewDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            string filePath = Utils.ShowOpenFileDialog(CompilerInfo.OpenFileFilter);
-
-            if (filePath != null) {
-                if (!Utils.StartNewApplicationInstance(filePath)) {
-                    using var centerForm = new DialogCenteringHelper(this);
-                    MessageBox.Show("Failed to start new IR Explorer instance", "IR Explorer",
-                                    MessageBoxButton.OK, MessageBoxImage.Error);
-                }
+            if (!Utils.StartNewApplicationInstance()) {
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show("Failed to start new IR Explorer instance", "IR Explorer",
+                                MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
