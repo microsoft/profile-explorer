@@ -22,7 +22,6 @@ using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 using Microsoft.Win32;
 using Microsoft.Windows.EventTracing;
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 using Color = System.Windows.Media.Color;
 using TimeSpan = System.TimeSpan;
 

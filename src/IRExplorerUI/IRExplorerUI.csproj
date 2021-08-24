@@ -18,7 +18,7 @@
 	<PropertyGroup>
 		<ServerGarbageCollection>true</ServerGarbageCollection>
 		<ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
-		<RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+    <GCHeapCount>16</GCHeapCount>
 	</PropertyGroup>
 
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -58,7 +58,7 @@
 	<ItemGroup>
 		<PackageReference Include="Autoupdater.NET.Official" Version="1.6.4" />
 		<PackageReference Include="AvalonEdit" Version="6.1.2.30" />
-		<PackageReference Include="Azure.Storage.Blobs" Version="12.7.0" />
+		<PackageReference Include="Azure.Storage.Blobs" Version="12.9.1" />
 		<PackageReference Include="CS-Script.Core" Version="1.4.2-preview" />
 		<PackageReference Include="DiffPlex" Version="1.7.0" />
 		<PackageReference Include="Dirkster.AvalonDock" Version="4.50.0" />
@@ -69,14 +69,14 @@
 		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="4.6.94" />
 		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.0.85" />
 		<PackageReference Include="Google.Protobuf" Version="3.17.3" />
-		<PackageReference Include="Grpc" Version="2.39.0-pre1" />
-		<PackageReference Include="Grpc.Core" Version="2.39.0-pre1" />
-		<PackageReference Include="Grpc.Core.Api" Version="2.39.0-pre1" />
-		<PackageReference Include="Grpc.Tools" Version="2.39.0-pre1">
+		<PackageReference Include="Grpc" Version="2.39.1" />
+		<PackageReference Include="Grpc.Core" Version="2.39.1" />
+		<PackageReference Include="Grpc.Core.Api" Version="2.39.1" />
+		<PackageReference Include="Grpc.Tools" Version="2.39.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.16.0" />
+		<PackageReference Include="Microsoft.ApplicationInsights" Version="2.18.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.Common" Version="3.8.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.8.0" />
 		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="3.8.0" />

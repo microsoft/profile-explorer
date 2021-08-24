@@ -99,10 +99,12 @@ namespace IRExplorerUI {
             try {
                 var configuration = TelemetryConfiguration.CreateDefault();
                 configuration.DisableTelemetry = false;
-                configuration.InstrumentationKey = "da7d4359-13f9-40c0-a2bb-c3fb54a76275";
+                configuration.ConnectionString = @"InstrumentationKey=f44afd12-7079-42e2-83fb-62c5841f384a;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/";
+                configuration.InstrumentationKey = @"f44afd12-7079-42e2-83fb-62c5841f384a";
                 telemetry_ = new TelemetryClient(configuration);
+
                 telemetry_.Context.Session.Id = Guid.NewGuid().ToString();
-                var userId = Encoding.UTF8.GetBytes(Environment.UserName + Environment.MachineName);
+                var userId = Encoding.UTF8.GetBytes(Environment.UserName + Environment.UserDomainName);
                 using var crypto = new MD5CryptoServiceProvider();
                 var hash = crypto.ComputeHash(userId);
                 telemetry_.Context.User.Id = Convert.ToBase64String(hash);
@@ -116,12 +118,17 @@ namespace IRExplorerUI {
         }
 
         public static void CreateTelemetryEvent(string name) {
-            if (telemetry_ == null) {
-                return;
+            if (InitializeTelemetry()) {
+                telemetry_.TrackEvent(name);
+                telemetry_.Flush();
             }
+        }
 
-            telemetry_.TrackEvent(name);
-            telemetry_.Flush();
+        public static void CreateTelemetryMetric(string name, double value) {
+            if (InitializeTelemetry()) {
+                telemetry_.TrackMetric(name, value);
+                telemetry_.Flush();
+            }
         }
 
         public static void

@@ -1830,9 +1830,7 @@ namespace IRExplorerUI {
 
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             var callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
-            
             await Task.Run(() => callGraph.Execute());
-            loadedDoc.Loader.ResetCache(); // Clean up the cached functs, unlikely to be all needed later.
 
             // Cache the call graph, can be expensive to compute.
             callGraph_ = callGraph;

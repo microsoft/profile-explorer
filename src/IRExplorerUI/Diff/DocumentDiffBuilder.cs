@@ -91,9 +91,7 @@ namespace IRExplorerUI {
             foreach (var task in tasks) {
                 results.Add(await task);
             }
-
-            leftDocLoader.ResetCache();
-            rightDocLoader.ResetCache();
+            
             return results;
         }
 

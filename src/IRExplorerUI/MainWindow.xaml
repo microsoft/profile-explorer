@@ -414,7 +414,7 @@
                                 IsEnabled="False" />
                             <MenuItem Click="MenuItem_Click_2" Header="Create debug files" />
                             <MenuItem Click="MenuItem_Click" Header="Crash application" />
-                            <MenuItem Click="MenuItem_Click_8" Header="Start Grpc Server" />
+                            <MenuItem Click="MenuItem_Click_8" Header="Force GC" />
                         </MenuItem>
                     </MenuItem>
                 </Menu>
