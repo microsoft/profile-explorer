@@ -154,10 +154,6 @@
             Command="local:AppCommand.OpenDocument"
             Modifiers="Ctrl" />
         <KeyBinding
-            Key="O"
-            Command="local:AppCommand.OpenNewDocument"
-            Modifiers="Ctrl+Shift" />
-        <KeyBinding
             Key="F4"
             Command="local:AppCommand.CloseDocument"
             Modifiers="Ctrl" />
@@ -180,6 +176,14 @@
             Key="F12"
             Command="local:AppCommand.OpenDiffDocument"
             Modifiers="Ctrl" />
+        <KeyBinding
+            Key="F12"
+            Command="local:AppCommand.OpenExecutableDiff"
+            Modifiers="Shift" />
+        <KeyBinding
+            Key="O"
+            Command="local:AppCommand.OpenExecutable"
+            Modifiers="Ctrl+Shift" />
         <KeyBinding Key="F9" Command="local:AppCommand.ToggleDiffMode" />
         <KeyBinding Key="F10" Command="local:AppCommand.SwapDiffDocuments" />
     </Window.InputBindings>
@@ -216,26 +220,26 @@
                     <MenuItem Header="_File">
                         <MenuItem
                             Command="local:AppCommand.OpenDocument"
-                            Header="_Open File (Ctrl+O)"
+                            Header="_Open File"
                             InputGestureText="Ctrl+O" />
                         <MenuItem
-                            Command="local:AppCommand.OpenNewDocument"
-                            Header="Open File in _New Window"
-                            InputGestureText="Ctrl+Shift+O" />
-                        <MenuItem
                             Command="local:AppCommand.OpenExecutable"
-                            Header="Open Binary File"/>
+                            Header="Open Binary File"
+                            InputGestureText="Ctrl+Shift+O"/>
                         <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
                             <Separator />
                             <MenuItem Click="RecentFilesMenu_Click" Header="Clear" />
                         </MenuItem>
                         <Separator />
 
-                        <MenuItem Command="local:AppCommand.OpenBaseDiffDocuments" Header="_Compare Base/Diff Files (F12)" />
+                        <MenuItem Command="local:AppCommand.OpenBaseDiffDocuments" Header="_Compare Base/Diff Files"
+                                  InputGestureText="F12"/>
                         <MenuItem
                             Command="local:AppCommand.OpenExecutableDiff"
-                            Header="Compare Base/Diff Binary Files"/>
-                        <MenuItem Command="local:AppCommand.OpenDiffDocument" Header="Open _Diff File (Ctrl+F12)" />
+                            Header="Compare Base/Diff Binary Files"
+                            InputGestureText="Shift+F12"/>
+                        <MenuItem Command="local:AppCommand.OpenDiffDocument" Header="Open _Diff File" 
+                                  InputGestureText="Ctrl+F12"/>
                         <MenuItem Command="local:AppCommand.CloseDiffDocument" Header="Close Diff File" />
                         <Separator />
                         
@@ -273,6 +277,9 @@
                             Header="Close Session"
                             InputGestureText="Ctrl+F4" />
                         <Separator />
+                        <MenuItem
+                            Command="local:AppCommand.OpenNewDocument"
+                            Header="Launch New _Instance"/>
                         <MenuItem Click="MenuItem_Exit" Header="E_xit" />
                     </MenuItem>
 

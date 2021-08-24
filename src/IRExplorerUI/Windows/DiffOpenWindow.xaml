@@ -111,6 +111,7 @@
                 Margin="0,0,4,0"
                 Padding="4,1,4,1"
                 Click="CancelButton_Click"
+                IsCancel="True"
                 Content="Cancel"
                 TabIndex="4" />
             <Button

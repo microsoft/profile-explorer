@@ -154,7 +154,7 @@ namespace IRExplorerUI {
         }
 
         private async void OpenDiffDocumentExecuted(object sender, ExecutedRoutedEventArgs e) =>
-            await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*",
+            await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*", "Open diff file",
                 async (path) => {
                     bool loaded = await OpenDiffIRDocument(path);
 

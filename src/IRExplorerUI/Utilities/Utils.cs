@@ -580,7 +580,7 @@ namespace IRExplorerUI {
             return Path.GetDirectoryName(GetApplicationPath());
         }
 
-        public static bool StartNewApplicationInstance(string args) {
+        public static bool StartNewApplicationInstance(string args = "") {
             var psi = new ProcessStartInfo(GetApplicationPath());
             psi.Arguments = args;
             psi.UseShellExecute = true;
@@ -727,8 +727,9 @@ namespace IRExplorerUI {
             return ValidateFilePath(path, box, fileType, owner);
         }
 
-        public static string ShowOpenFileDialog(string filter, string defaultExt = "*.*") {
+        public static string ShowOpenFileDialog(string filter, string defaultExt = "*.*", string title = "Open") {
             var fileDialog = new OpenFileDialog {
+                Title = title,
                 DefaultExt = defaultExt,
                 Filter = filter
             };
@@ -742,8 +743,8 @@ namespace IRExplorerUI {
             return null;
         }
 
-        public static bool ShowOpenFileDialog(AutoCompleteBox box, string filter, string defaultExt = "*.*") {
-            var path = ShowOpenFileDialog(filter, defaultExt);
+        public static bool ShowOpenFileDialog(AutoCompleteBox box, string filter, string defaultExt = "*.*", string title = "Open") {
+            var path = ShowOpenFileDialog(filter, defaultExt, title);
 
             if (path != null) {
                 box.Text = path;
@@ -753,8 +754,8 @@ namespace IRExplorerUI {
             return false;
         }
 
-        public static bool ShowOpenFileDialog(TextBox box, string filter, string defaultExt = "*.*") {
-            var path = ShowOpenFileDialog(filter, defaultExt);
+        public static bool ShowOpenFileDialog(TextBox box, string filter, string defaultExt = "*.*", string title = "Open") {
+            var path = ShowOpenFileDialog(filter, defaultExt, title);
 
             if (path != null) {
                 box.Text = path;
@@ -764,9 +765,9 @@ namespace IRExplorerUI {
             return false;
         }
 
-        public static bool ShowOpenFileDialog(string filter, string defaultExt,
+        public static bool ShowOpenFileDialog(string filter, string defaultExt, string title,
                                               Action<string> setOutput) {
-            var path = ShowOpenFileDialog(filter, defaultExt);
+            var path = ShowOpenFileDialog(filter, defaultExt, title);
 
             if (path != null) {
                 setOutput(path);
@@ -776,9 +777,9 @@ namespace IRExplorerUI {
             return false;
         }
 
-        public static async Task<bool> ShowOpenFileDialogAsync(string filter, string defaultExt,
-                                      Func<string, Task> setOutput) {
-            var path = ShowOpenFileDialog(filter, defaultExt);
+        public static async Task<bool> ShowOpenFileDialogAsync(string filter, string defaultExt, string title,
+                                                                Func<string, Task> setOutput) {
+            var path = ShowOpenFileDialog(filter, defaultExt, title);
 
             if (path != null) {
                 await setOutput(path);
