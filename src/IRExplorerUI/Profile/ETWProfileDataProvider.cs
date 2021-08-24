@@ -80,8 +80,6 @@ namespace IRExplorerUI.Profile {
                       bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
                       CancelableTask cancelableTask) {
             try {
-                loader_.ResetCache();
-
                 // Extract just the file name.
                 imageName = Path.GetFileNameWithoutExtension(imageName);
                
@@ -283,11 +281,6 @@ namespace IRExplorerUI.Profile {
 
                     return true;
                 });
-
-                // Free memory of parsed functions that may not be loaded again.
-                if (markInlinedFunctions) {
-                    loader_.ResetCache();
-                }
 
                 trace.Dispose();
                 return result ? profileData_ : null;

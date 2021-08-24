@@ -352,9 +352,11 @@ namespace IRExplorerUI {
             DevMenuStartupTime.Header = $"Startup time: {time.TotalMilliseconds} ms";
 
             DelayedAction.StartNew(TimeSpan.FromSeconds(30), () => {
-                Dispatcher.BeginInvoke(new Action(() =>
-                    CheckForUpdate()
-                ));
+                Dispatcher.BeginInvoke(new Action(() => {
+                    ErrorReporting.CreateTelemetryEvent("Startup");
+                    ErrorReporting.CreateTelemetryMetric("StartupTime", time.TotalMilliseconds);
+                    CheckForUpdate();
+                }));
             });
 
           
@@ -818,7 +820,8 @@ namespace IRExplorerUI {
         }
 
         private void MenuItem_Click_8(object sender, RoutedEventArgs e) {
-            StartGrpcServer();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
         }
 
         private class MainWindowState {

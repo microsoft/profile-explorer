@@ -9,7 +9,7 @@ using System.Windows.Input;
 
 namespace IRExplorerUI {
     public partial class SessionSharingPanel : Popup {
-        private const string DefaultConnectionString = @"DefaultEndpointsProtocol=https;AccountName=irexplorer;AccountKey=aZu0InDtGTMf4lAhkNJgtqTi3AP8cmfyojE/PNICHcKpT2VaLGgQlfZbMuKicE2dmaXnV7XioHPGtB770aWp/g==;EndpointSuffix=core.windows.net";
+        private const string DefaultConnectionString = @"DefaultEndpointsProtocol=https;AccountName=irexplorer;AccountKey=+2FT4HoGoXXJm+LBaZ3cgGczYa3CMig2KE7ETkD5mgI5mjUL2jMQiZLVR+boTtIhj1XkxXBJFiZ+oH/D3effng==;EndpointSuffix=core.windows.net";
         private const string DefaultContainerName = "share";
 
         public const double DefaultHeight = 90;
