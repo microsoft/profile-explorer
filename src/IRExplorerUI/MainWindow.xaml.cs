@@ -337,6 +337,9 @@ namespace IRExplorerUI {
             }
 
             await EndSession();
+
+            var time = DateTime.UtcNow - App.AppStartTime;
+            Telemetry.TrackMetric("SessionTime", time.TotalSeconds)?.Wait();
         }
 
         private void MainWindow_ContentRendered(object sender, EventArgs e) {
@@ -346,15 +349,13 @@ namespace IRExplorerUI {
                 ShowStartPage();
             }
 
-            //? TODO: DEV ONLY
-            var now = DateTime.UtcNow;
-            var time = now - App.AppStartTime;
+            var time = DateTime.UtcNow - App.AppStartTime;
             DevMenuStartupTime.Header = $"Startup time: {time.TotalMilliseconds} ms";
 
-            DelayedAction.StartNew(TimeSpan.FromSeconds(30), () => {
+            DelayedAction.StartNew(TimeSpan.FromSeconds(10), () => {
                 Dispatcher.BeginInvoke(new Action(() => {
-                    ErrorReporting.CreateTelemetryEvent("Startup");
-                    ErrorReporting.CreateTelemetryMetric("StartupTime", time.TotalMilliseconds);
+                    Telemetry.TrackEvent("Startup");
+                    Telemetry.TrackMetric("StartupTime", time.TotalMilliseconds);
                     CheckForUpdate();
                 }));
             });

@@ -58,9 +58,9 @@
         <CommandBinding
             CanExecute="CanExecuteAlways"
             Command="local:AppCommand.OpenExecutableDiff"
-            Executed="OpenExecutableDiffExecuted"
+            Executed="OpenExecutableBaseDiffExecuted"
             PreviewCanExecute="CanExecuteAlways"
-            PreviewExecuted="OpenExecutableDiffExecuted" />
+            PreviewExecuted="OpenExecutableBaseDiffExecuted" />
 
         <CommandBinding
             CanExecute="CanExecuteDocumentCommand"

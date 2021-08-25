@@ -2,43 +2,13 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
 using System.Windows;
-using IRExplorerCore.UTC;
-using Microsoft.ApplicationInsights;
-using Microsoft.ApplicationInsights.Extensibility;
 
 namespace IRExplorerUI {
-    public static class ErrorReporting {
-        private static TelemetryClient telemetry_;
-
-        public static string CreateMiniDump() {
-            return "";
-#if false
-            var time = DateTime.Now;
-            string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.dmp";
-
-            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                                       fileName);
-
-            using var stream = new FileStream(path, FileMode.Create, FileAccess.ReadWrite, FileShare.Write);
-
-            Minidump.WriteDump(stream.SafeFileHandle,
-                               Minidump.Option.WithFullAuxiliaryState |
-                               Minidump.Option.WithFullMemory |
-                               Minidump.Option.WithFullMemoryInfo |
-                               Minidump.Option.WithHandleData |
-                               Minidump.Option.WithThreadInfo |
-                               Minidump.Option.WithProcessThreadData);
-
-            return path;
-#endif
-        }
-
+    public static partial class ErrorReporting {
         public static string CreateStackTraceDump(string stackTrace) {
             var time = DateTime.Now;
             string fileName = $"IRExplorer-{time.Month}.{time.Day}-{time.Hour}.{time.Minute}.trace";
@@ -91,46 +61,6 @@ namespace IRExplorerUI {
             return path;
         }
 
-        public static bool InitializeTelemetry() {
-            if (telemetry_ != null) {
-                return true;
-            }
-
-            try {
-                var configuration = TelemetryConfiguration.CreateDefault();
-                configuration.DisableTelemetry = false;
-                configuration.ConnectionString = @"InstrumentationKey=f44afd12-7079-42e2-83fb-62c5841f384a;IngestionEndpoint=https://westus2-2.in.applicationinsights.azure.com/";
-                configuration.InstrumentationKey = @"f44afd12-7079-42e2-83fb-62c5841f384a";
-                telemetry_ = new TelemetryClient(configuration);
-
-                telemetry_.Context.Session.Id = Guid.NewGuid().ToString();
-                var userId = Encoding.UTF8.GetBytes(Environment.UserName + Environment.UserDomainName);
-                using var crypto = new MD5CryptoServiceProvider();
-                var hash = crypto.ComputeHash(userId);
-                telemetry_.Context.User.Id = Convert.ToBase64String(hash);
-            }
-            catch (Exception ex) {
-                telemetry_ = null;
-                Debug.Write(ex);
-            }
-
-            return telemetry_ != null;
-        }
-
-        public static void CreateTelemetryEvent(string name) {
-            if (InitializeTelemetry()) {
-                telemetry_.TrackEvent(name);
-                telemetry_.Flush();
-            }
-        }
-
-        public static void CreateTelemetryMetric(string name, double value) {
-            if (InitializeTelemetry()) {
-                telemetry_.TrackMetric(name, value);
-                telemetry_.Flush();
-            }
-        }
-
         public static void
             LogUnhandledException(Exception exception, string source, bool showUIPrompt = true) {
             string message = $"Unhandled exception:\n{exception}";
@@ -148,16 +78,8 @@ namespace IRExplorerUI {
                 }
 
                 // Report exception to telemetry service.
-                if (InitializeTelemetry()) {
-                    telemetry_.TrackException(exception, new Dictionary<string, string> {
-                        {"StackTrace", stackTrace},
-                        {"Source", source}
-                    });
+                Telemetry.TrackException(exception)?.Wait();
 
-                    telemetry_.Flush();
-                }
-
-                ///var minidumpPath = CreateMiniDump();
                 var stackTracePath = CreateStackTraceDump(stackTrace);
                 var sectionPath = CreateSectionDump();
 

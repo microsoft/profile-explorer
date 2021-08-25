@@ -87,8 +87,9 @@ namespace IRExplorerUI {
                 }
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to load base/diff documents: {ex}");
                 await EndSession();
+                Trace.TraceError($"Failed to load base/diff documents: {ex}");
+                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -107,9 +108,8 @@ namespace IRExplorerUI {
                 return new Tuple<LoadedDocument, LoadedDocument>(baseTask.Result, diffTask.Result);
             }
             else {
-                Trace.TraceWarning($"Failed to load base/diff documents: base {baseTask.Result != null}, diff {diffTask.Result != null}");
                 await EndSession();
-                return new Tuple<LoadedDocument, LoadedDocument>(null, null);
+                Trace.TraceWarning($"Failed to load base/diff documents: base {baseTask.Result != null}, diff {diffTask.Result != null}");
             }
 
             return new Tuple<LoadedDocument, LoadedDocument>(null, null);
