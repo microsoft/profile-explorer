@@ -95,7 +95,7 @@ namespace IRExplorerUI {
                     return loadedDoc;
                 }
             }
-
+            
             return null;
         }
 
@@ -133,13 +133,10 @@ namespace IRExplorerUI {
                     return loadedDoc;
                 }
             }
-            catch (IOException ioEx) {
-                Trace.TraceError($"Failed to loadsession, IO exception: {ioEx}");
-                await EndSession();
-            }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to load session, exception: {ex}");
                 await EndSession();
+                Trace.TraceError($"Failed to load session, exception: {ex}");
+                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -238,11 +235,9 @@ namespace IRExplorerUI {
                     return true;
                 }
             }
-            catch (IOException ioEx) {
-                Trace.TraceError($"Failed to save session, IO exception: {ioEx}");
-            }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to save session, exception: {ex}");
+                Telemetry.TrackException(ex);
             }
 
             return false;
@@ -328,8 +323,9 @@ namespace IRExplorerUI {
                 }
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to load document: {ex}");
                 await EndSession();
+                Trace.TraceError($"Failed to load document: {ex}");
+                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -398,6 +394,7 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load diff document {filePath}: {ex}");
+                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -420,6 +417,7 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError("$Failed to load document {path}: {ex}");
+                Telemetry.TrackException(ex);
                 return null;
             }
         }
@@ -433,6 +431,7 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError("$Failed to load in-memory document: {ex}");
+                Telemetry.TrackException(ex);
                 return null;
             }
         }
@@ -471,6 +470,7 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load in-memory document: {ex}");
+                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -1163,7 +1163,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void OpenExecutableDiffExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private async void OpenExecutableBaseDiffExecuted(object sender, ExecutedRoutedEventArgs e) {
             var openWindow = new BinaryOpenWindow(this, true);
             openWindow.Owner = this;
             var result = openWindow.ShowDialog();
