@@ -62,6 +62,7 @@ namespace IRExplorerCore.Lexer {
                 NextChar(); // Skip over +/-.
 
                 while (CharTable.IsDigit(current_)) {
+                    previous = current_;
                     NextChar();
                 }
             }
@@ -72,7 +73,9 @@ namespace IRExplorerCore.Lexer {
                 source_.GoBack(2);
                 NextChar();
             }
-            else if (previous == 'x' || previous == 'X') {
+            else if ((previous == 'x' || previous == 'X') &&
+                     (source_.Position - startPosition) > 3) {
+                // 0x%x
                 // .x from 123.x should not be part of a number either,
                 // since the x does not denote a hex number.
                 source_.GoBack(3);

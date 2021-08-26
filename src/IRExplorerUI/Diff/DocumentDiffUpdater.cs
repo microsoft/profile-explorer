@@ -152,7 +152,10 @@ namespace IRExplorerUI.Diff {
                     if (prefixLine < linePrefixes.Count) {
                         var prefix = linePrefixes[prefixLine];
                         var docLine = document.GetLineByNumber(lineIndex + 1);
-                        document.Replace(docLine.Offset, prefix.Length, prefix);
+
+                        if (docLine.Offset + prefix.Length < document.TextLength) {
+                            document.Replace(docLine.Offset, prefix.Length, prefix);
+                        }
                     }
                 }
             }

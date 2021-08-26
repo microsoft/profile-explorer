@@ -17,6 +17,8 @@ namespace IRExplorerUI {
     public class BinaryDissasemblerOptions : SettingsBase {
         private const string DEFAULT_DISASM_NAME = "dumpbin.exe";
         private const string DEFAULT_DISASM_ARGS = "/disasm /out:$DST $SRC";
+        private const string DEFAULT_POSTPROC_TOOL_NAME = "";
+        private const string DEFAULT_POSTPROC_TOOL_ARGS = "$SRC $DST";
 
         [ProtoMember(1)]
         public string DissasemblerPath { get; set; }
@@ -46,8 +48,8 @@ namespace IRExplorerUI {
             }
 
             DissasemblerArguments = DEFAULT_DISASM_ARGS;
-            PostProcessorPath = "";
-            PostProcessorArguments = "$SRC $DST";
+            PostProcessorPath = DEFAULT_POSTPROC_TOOL_NAME;
+            PostProcessorArguments = DEFAULT_POSTPROC_TOOL_ARGS;
             CacheDissasembly = true;
             OptionsExpanded = true;
         }
