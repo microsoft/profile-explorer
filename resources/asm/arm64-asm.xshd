@@ -36,26 +36,16 @@
 
         <Keywords color="Opcodes">
             <Word>and</Word>
-            <Word>and</Word>
-            <Word>eor</Word>
             <Word>eor</Word>
             <Word>eon</Word>
-            <Word>eon</Word>
             <Word>orr</Word>
-            <Word>orr</Word>
-            <Word>orn</Word>
             <Word>orn</Word>
             <Word>bhi</Word>
             <Word>ldrsw</Word>
             <Word>mvn</Word>
             <Word>mvn</Word>
             <Word>add</Word>
-            <Word>add</Word>
-            <Word>add</Word>
             <Word>sub</Word>
-            <Word>sub</Word>
-            <Word>sub</Word>
-            <Word>neg</Word>
             <Word>neg</Word>
             <Word>sxtb</Word>
             <Word>sxth</Word>
@@ -68,7 +58,6 @@
             <Word>smulh</Word>
             <Word>umull</Word>
             <Word>umulh</Word>
-            <Word>sdiv</Word>
             <Word>sdiv</Word>
             <Word>udiv</Word>
             <Word>udiv</Word>

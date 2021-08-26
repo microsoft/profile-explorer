@@ -10,7 +10,7 @@
 
 [Setup]
 AppName=IR Explorer
-AppVersion=0.7.9
+AppVersion={#APP_VERSION}
 WizardStyle=modern
 DefaultDirName={autopf}\IR Explorer
 DefaultGroupName=IR Explorer
@@ -28,13 +28,16 @@ Root: HKCR; Subkey: "{#MyAppName}\DefaultIcon";             ValueData: "{app}\{#
 Root: HKCR; Subkey: "{#MyAppName}\shell\open\command";  ValueData: """{app}\{#MyAppExeName}"" ""%1""";  ValueType: string;  ValueName: ""
 
 [Files]
-Source: "d:\ir-explorer\publish\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+Source: ".\publish\\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 
 [Icons]
 Name: "{group}\IR Explorer"; Filename: "{app}\irexplorer.exe"
 
 [Tasks]
 Name: envPath; Description: "Add to PATH env. variable as irexplorer.exe" 
+
+[Run]
+Filename: "{sys}\Regsvr32.exe"; Parameters: "/s msdia140.dll"; WorkingDir: "{app}"; StatusMsg: "Registering components ... "; Flags: runhidden; 
 
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);
