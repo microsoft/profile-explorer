@@ -544,10 +544,10 @@ namespace IRExplorerUI {
                                     result = 1;
                                 }
                                 else if(functionY.IsModificationDiff) {
-                                    return -1;
+                                    result = -1;
                                 }
                                 else if(functionX.IsModificationDiff) {
-                                    return 1;
+                                    result = 1;
                                 }
                                 else {
                                     result = string.Compare(functionY.Name, functionX.Name, StringComparison.Ordinal);
@@ -1813,7 +1813,10 @@ namespace IRExplorerUI {
 
             var (callGraph, callGraphNode) = await GenerateFunctionCallGraph(function.ParentSummary, function);
 
-            CreateProfileCallTree(function, callGraphNode, rootNode, callGraph, visitedFuncts);
+            if (callGraphNode != null) {
+                CreateProfileCallTree(function, callGraphNode, rootNode, callGraph, visitedFuncts);
+            }
+
             return rootNode;
         }
 
@@ -1852,7 +1855,11 @@ namespace IRExplorerUI {
             var visitedNodes = new HashSet<CallGraphNode>();
             var rootNode = new ChildFunctionEx();
             rootNode.Children = new List<ChildFunctionEx>();
-            CreateCallTree(callGraphNode, otherNode, function, rootNode, visitedNodes);
+
+            if (callGraphNode != null) {
+                CreateCallTree(callGraphNode, otherNode, function, rootNode, visitedNodes);
+            }
+
             return rootNode;
         }
 

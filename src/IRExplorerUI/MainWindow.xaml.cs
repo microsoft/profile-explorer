@@ -305,6 +305,7 @@ namespace IRExplorerUI {
             App.Settings.ThemeIndex = ThemeCombobox.SelectedIndex;
             App.SaveApplicationSettings();
             SaveDockLayout();
+            Trace.Flush();
 
             if (sessionState_ == null) {
                 return;
