@@ -16,6 +16,11 @@
 *.recipe
 *.txt
 
+# Setup files
+installer/out
+installer/publish
+installer/*.exe
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
