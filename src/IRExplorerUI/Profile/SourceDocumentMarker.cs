@@ -67,17 +67,18 @@ namespace IRExplorerUI.Compilers.ASM {
 
             var elementOverlayList = document.AddIconElementOverlays(elementOverlays);
             var inlineeOverlayList = document.AddIconElementOverlays(inlineeOverlays);
+            double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
 
             for (int i = 0; i < elementOverlayList.Count; i++) {
                 var overlay = elementOverlayList[i];
                 overlay.IsLabelPinned = true;
                 overlay.TextColor = options_.ElementOverlayTextColor;
                 overlay.Background = options_.ElementOverlayBackColor;
-                overlay.VirtualColumn = options_.VirtualColumnPosition;
+                overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
             }
 
             foreach (var overlay in inlineeOverlayList) {
-                overlay.VirtualColumn = options_.VirtualColumnPosition + 50;
+                overlay.VirtualColumn = options_.VirtualColumnPosition + 50 + virtualColumnAdjustment;
                 overlay.TextColor = options_.InlineeOverlayTextColor;
                 overlay.Background = options_.ElementOverlayBackColor;
                 overlay.IsLabelPinned = true;

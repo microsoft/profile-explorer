@@ -212,8 +212,9 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             var elementOverlayList = document.AddIconElementOverlays(elementOverlays);
+            double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
 
-            for(int i = 0; i < elementOverlayList.Count; i++) {
+            for (int i = 0; i < elementOverlayList.Count; i++) {
                 var overlay = elementOverlayList[i];
                 overlay.IsLabelPinned = true;
 
@@ -228,7 +229,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     overlay.Background = options_.ElementOverlayBackColor;
                 }
 
-                overlay.VirtualColumn = options_.VirtualColumnPosition;
+                overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
             }
 
             document.MarkElements(elementColorPairs);
