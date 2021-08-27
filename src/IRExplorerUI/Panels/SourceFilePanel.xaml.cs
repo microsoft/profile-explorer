@@ -165,6 +165,7 @@ namespace IRExplorerUI {
             // Get the associated source file from the debug info if available,
             // since it also includes the start line number.
             var loadedDoc = Session.SessionState.FindLoadedDocument(function);
+            bool funcLoaded = false;
 
             if (loadedDoc.DebugInfoFileExists) {
                 using var debugInfo = new PDBDebugInfoProvider();
@@ -174,10 +175,7 @@ namespace IRExplorerUI {
 
                     if (!string.IsNullOrEmpty(sourceFilePath)) {
                         initialFilePath_ = sourceFilePath;
-                        
-                        if(await LoadSourceFile(sourceFilePath, sourceStartLine)) {
-                            return true;
-                        }
+                        funcLoaded = await LoadSourceFile(sourceFilePath, sourceStartLine);
                     }
                 }
             }
@@ -186,17 +184,15 @@ namespace IRExplorerUI {
             var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
 
             if (funcProfile != null) {
-                if (!string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
+                if (!funcLoaded && !string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
                     initialFilePath_ = funcProfile.SourceFilePath;
-
-                    if (await LoadSourceFile(funcProfile.SourceFilePath)) {
-                        await AnnotateProfilerData(funcProfile);
-                        return true;
-                    }
+                    funcLoaded = await LoadSourceFile(funcProfile.SourceFilePath);
                 }
+
+                await AnnotateProfilerData(funcProfile);
             }
 
-            return false;
+            return funcLoaded;
         }
 
         private async Task<bool> LoadSourceFile(string sourceFilePath, int sourceStartLine = -1) {
@@ -214,7 +210,6 @@ namespace IRExplorerUI {
             }
 
             if (fileLoaded_ && currentFilePath_ == mappedSourceFilePath) {
-                Trace.TraceWarning("SKIP");
                 return true;
             }
 

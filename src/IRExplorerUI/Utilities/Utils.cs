@@ -789,15 +789,20 @@ namespace IRExplorerUI {
             return false;
         }
 
-        private static readonly char[] CLEANUP_PATH_CHARS = new char[] {'"', '\n', '\r'};
-
         public static string CleanupPath(string path) {
             if (string.IsNullOrEmpty(path)) {
                 return path;
             }
 
-            path = path.RemoveChars(CLEANUP_PATH_CHARS);
-            return path.Trim();
+            path = path.Trim();
+
+            if (path.Length >= 2 &&
+                path[0] == '"' &&
+                path[path.Length - 1] == '"') {
+                path = path.Substring(1, path.Length - 2);
+            }
+
+            return path;
         }
 
         public static bool ExecuteTool(string path, string args, CancelableTask cancelableTask = null) {
@@ -841,7 +846,8 @@ namespace IRExplorerUI {
                 process.CancelOutputRead();
 
                 if (process.ExitCode != 0) {
-                    Trace.TraceError("Task {ObjectTracker.Track(cancelableTask)}: Failed with error code: {proc.ExitCode}");
+                    Trace.TraceError($"Task {ObjectTracker.Track(cancelableTask)}: Failed with error code: {process.ExitCode}");
+                    Trace.TraceError($"  Output:\n{outputText.ToString()}");
                     return null;
                 }
             }
