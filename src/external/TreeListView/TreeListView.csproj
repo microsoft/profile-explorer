@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net6.0-windows7.0</TargetFramework>
     <UseWPF>true</UseWPF>
+    <Platforms>AnyCPU;ARM64</Platforms>
   </PropertyGroup>
 
 </Project>
