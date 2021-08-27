@@ -14,6 +14,9 @@ namespace IRExplorerCore.ASM {
             Word,
             Dword,
             Qword,
+            Xmmword,
+            Ymmword,
+            Zmmword,
             Ptr,
             Hex
         }
@@ -24,15 +27,23 @@ namespace IRExplorerCore.ASM {
                 {"word", Keyword.Word},
                 {"dword", Keyword.Dword},
                 {"qword", Keyword.Qword},
+                {"xmmword", Keyword.Xmmword},
+                {"ymmword", Keyword.Ymmword},
+                {"Zmmword", Keyword.Zmmword},
                 {"ptr", Keyword.Ptr},
                 {"BYTE", Keyword.Byte},
                 {"WORD", Keyword.Word},
                 {"DWORD", Keyword.Dword},
                 {"QWORD", Keyword.Qword},
+                {"XMMWORD", Keyword.Xmmword},
+                {"YMMWORD", Keyword.Ymmword},
+                {"ZMMWORD", Keyword.Zmmword},
                 {"PTR", Keyword.Ptr},
                 {"h", Keyword.Hex},
                 {"H", Keyword.Hex},
             };
+
+        //? TODO: ILT+foo func names not parsed properly
 
         static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
 

@@ -16,7 +16,7 @@ namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
     public class BinaryDissasemblerOptions : SettingsBase {
         private const string DEFAULT_DISASM_NAME = "dumpbin.exe";
-        private const string DEFAULT_DISASM_ARGS = "/disasm /out:$DST $SRC";
+        private const string DEFAULT_DISASM_ARGS = "/disasm /out:\"$DST\" \"$SRC\"";
         private const string DEFAULT_POSTPROC_TOOL_NAME = "";
         private const string DEFAULT_POSTPROC_TOOL_ARGS = "$SRC $DST";
 

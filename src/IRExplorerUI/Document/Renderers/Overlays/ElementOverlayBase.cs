@@ -182,7 +182,7 @@ namespace IRExplorerUI.Document {
 
                 if(previousOveraly != null) {
                     // Align to the right of the previous overlay.
-                    rightEdgeX = previousOveraly.Bounds.Right;
+                    rightEdgeX = Math.Max(rect.Right, previousOveraly.Bounds.Right);
                 }
 
                 return Utils.SnapToPixels(Math.Max(VirtualColumn, rightEdgeX + MarginX));
