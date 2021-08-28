@@ -11,6 +11,7 @@ namespace IRExplorerCore {
         private Dictionary<ulong, IRTextSection> sectionMap_;
         private ulong nextSectionId_;
 
+        public string ModuleName { get; set; }
         public List<IRTextFunction> Functions { get; set; }
 
         public IRTextSummary() {

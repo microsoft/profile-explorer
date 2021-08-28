@@ -388,7 +388,8 @@ namespace IRExplorerUI {
                 var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
                 if (result != null) {
-                    await SetupOpenedDiffIRDocument(filePath, result);
+                    //await SetupOpenedDiffIRDocument(filePath, result);
+                    await SetupAdditionalIRDocument(filePath, result);
                     return true;
                 }
             }
@@ -408,10 +409,17 @@ namespace IRExplorerUI {
             await ShowSectionPanelDiffs(result);
         }
 
+        private async Task SetupAdditionalIRDocument(string filePath, LoadedDocument result) {
+            sessionState_.RegisterLoadedDocument(result);
+            UpdateUIAfterLoadDocument();
+            SectionPanel.AddOtherSummary(result.Summary);
+        }
+
         private LoadedDocument LoadDocument(string path, Guid id, ProgressInfoHandler progressHandler) {
             try {
                 var result = new LoadedDocument(path, id);
-                result.Loader = new DocumentSectionLoader(path, compilerInfo_.IR);
+                var moduleName = Utils.TryGetFileNameWithoutExtension(path);
+                result.Loader = new DocumentSectionLoader(path, moduleName, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
@@ -425,7 +433,8 @@ namespace IRExplorerUI {
         private LoadedDocument LoadDocument(byte[] data, string path, Guid id, ProgressInfoHandler progressHandler) {
             try {
                 var result = new LoadedDocument(path, id);
-                result.Loader = new DocumentSectionLoader(data, compilerInfo_.IR);
+                var moduleName = Utils.TryGetFileNameWithoutExtension(path);
+                result.Loader = new DocumentSectionLoader(data, moduleName, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
