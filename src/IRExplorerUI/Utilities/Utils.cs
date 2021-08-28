@@ -706,6 +706,19 @@ namespace IRExplorerUI {
             }
         }
 
+        public static string TryGetFileNameWithoutExtension(string path) {
+            try {
+                if (string.IsNullOrEmpty(path)) {
+                    return null;
+                }
+
+                return Path.GetFileNameWithoutExtension(path);
+            }
+            catch (Exception ex) {
+                return null;
+            }
+        }
+
         public static bool ValidateFilePath(string path, AutoCompleteBox box, string fileType, FrameworkElement owner) {
             if (!File.Exists(path)) {
                 using var centerForm = new DialogCenteringHelper(owner);

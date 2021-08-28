@@ -683,7 +683,7 @@ namespace IRExplorerUI {
 
         private string GetDocumentDescription(IRDocumentHost document, IRTextSection section) {
             var docInfo = sessionState_.FindLoadedDocument(section);
-            return $"{section.ParentFunction.Name.Trim()} ({docInfo.FileName})";
+            return $"{section.ParentFunction.Name.Trim()} ({section.ParentFunction.ParentSummary.ModuleName})";
         }
 
         private async void MenuItem_Click_1(object sender, RoutedEventArgs e) {

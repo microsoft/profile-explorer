@@ -118,6 +118,10 @@ namespace IRExplorerUI {
             }
         }
 
+        public void AddOtherSummary(IRTextSummary summary) {
+            MainPanel.AddOtherSummary(summary);
+        }
+
         public async Task RefreshDocumentsDiffs() {
             if (MainPanel.CurrentFunction == null) {
                 return;
@@ -261,10 +265,10 @@ namespace IRExplorerUI {
         private SectionPanel SelectSectionPanel(IRTextSection section) {
             var summary = section.ParentFunction.ParentSummary;
 
-            if (MainPanel.Summary == summary) {
+            if (MainPanel.HasSummary(summary)){
                 return MainPanel;
             }
-            else if (DiffPanel.Summary == summary) {
+            else if (DiffPanel.HasSummary(summary)) {
                 return DiffPanel;
             }
 

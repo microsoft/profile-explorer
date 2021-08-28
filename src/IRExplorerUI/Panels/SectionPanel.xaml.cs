@@ -256,6 +256,7 @@ namespace IRExplorerUI {
 
         public int Index { get; set; }
         public IRTextFunction Function { get; set; }
+        public string ModuleName => Function.ParentSummary.ModuleName;
         public object OptionalData { get; set; }
         public object OptionalData2 { get; set; }
         public string OptionalDataText { get; set; }
@@ -347,6 +348,7 @@ namespace IRExplorerUI {
         Name,
         AlternateName,
         Sections,
+        Module,
         Optional,
         Optional2,
         StatisticSize,
@@ -412,6 +414,7 @@ namespace IRExplorerUI {
         private IRTextSummary summary_;
         private IRTextSummary otherSummary_;
         private List<IRTextSectionEx> sections_;
+        private List<IRTextSummary> otherSummaries_;
 
         private bool sectionExtensionComputed_;
         private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
@@ -436,6 +439,7 @@ namespace IRExplorerUI {
             InitializeComponent();
             statisticsTask_ = new CancelableTaskInstance();
             sections_ = new List<IRTextSectionEx>();
+            otherSummaries_ = new List<IRTextSummary>();
             sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
             functionExtMap_ = new Dictionary<IRTextFunction, IRTextFunctionEx>();
             annotatedSections_ = new HashSet<IRTextSectionEx>();
@@ -450,6 +454,7 @@ namespace IRExplorerUI {
                     "FunctionColumnHeader" => FunctionFieldKind.Name,
                     "AlternateNameColumnHeader" => FunctionFieldKind.AlternateName,
                     "SectionsColumnHeader" => FunctionFieldKind.Sections,
+                    "FunctionModuleColumnHeader" => FunctionFieldKind.Module,
                     "OptionalColumnHeader" => FunctionFieldKind.Optional,
                     "OptionalColumnHeader2" => FunctionFieldKind.Optional2,
                     "SizeHeader" => FunctionFieldKind.StatisticSize,
@@ -478,6 +483,10 @@ namespace IRExplorerUI {
                         }
                         case FunctionFieldKind.AlternateName: {
                             int result = string.Compare(functionY.AlternateName, functionX.AlternateName, StringComparison.Ordinal);
+                            return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.Module: {
+                            int result = string.Compare(functionY.ModuleName, functionX.ModuleName, StringComparison.Ordinal);
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         case FunctionFieldKind.Optional: {
@@ -791,7 +800,7 @@ namespace IRExplorerUI {
         }
 
         public IRTextSummary OtherSummary {
-            get => summary_;
+            get => otherSummary_;
             set {
                 if (value != otherSummary_) {
                     otherSummary_ = value;
@@ -1033,6 +1042,17 @@ namespace IRExplorerUI {
             }
         }
 
+        public void AddOtherSummary(IRTextSummary summary) {
+            otherSummaries_.Add(summary);
+            sectionExtensionComputed_ = false;
+            UpdateFunctionListBindings();
+        }
+
+        public bool HasSummary(IRTextSummary summary) {
+            return summary == summary_ ||
+                   otherSummaries_.Contains(summary);
+        }
+
         public event EventHandler<IRTextFunction> FunctionSwitched;
         public event EventHandler<OpenSectionEventArgs> OpenSection;
         public event EventHandler<DiffModeEventArgs> EnterDiffMode;
@@ -1208,10 +1228,10 @@ namespace IRExplorerUI {
             }
             else {
                 // Single document mode.
-                foreach (var func in summary_.Functions) {
-                    var funcEx = new IRTextFunctionEx(func, index++);
-                    functionExtMap_[func] = funcEx;
-                    functionsEx.Add(funcEx);
+                CreateFunctionExtensions(summary_, functionsEx);
+
+                foreach (var otherSummary in otherSummaries_) {
+                    CreateFunctionExtensions(otherSummary, functionsEx);
                 }
             }
 
@@ -1227,13 +1247,20 @@ namespace IRExplorerUI {
                 }
 
                 // Attach additional data to the UI.
-
                 SetDemangledFunctionNames(functionsEx);
                 SetFunctionProfileInfo(functionsEx);
             }
 
             if (analyzeFunctions) {
                 await ComputeFunctionStatistics();
+            }
+        }
+
+        private void CreateFunctionExtensions(IRTextSummary summary, List<IRTextFunctionEx> functionsEx) {
+            foreach (var func in summary.Functions) {
+                var funcEx = new IRTextFunctionEx(func, functionsEx.Count);
+                functionExtMap_[func] = funcEx;
+                functionsEx.Add(funcEx);
             }
         }
 
@@ -1267,7 +1294,17 @@ namespace IRExplorerUI {
             otherCallGraph_ = null;
             functionStatMap_ = null;
 
-            foreach (var func in summary_.Functions) {
+            SetupSectionExtension(summary_);
+
+            foreach (var otherSummary in otherSummaries_) {
+                SetupSectionExtension(otherSummary);
+            }
+
+            sectionExtensionComputed_ = true;
+        }
+
+        private void SetupSectionExtension(IRTextSummary summary) {
+            foreach (var func in summary.Functions) {
                 int index = 0;
 
                 foreach (var section in func.Sections) {
@@ -1275,8 +1312,6 @@ namespace IRExplorerUI {
                     sectionExtMap_[section] = sectionEx;
                 }
             }
-
-            sectionExtensionComputed_ = true;
         }
 
         private void UpdateSectionListBindings(IRTextFunction function, bool force = false) {
@@ -1766,8 +1801,7 @@ namespace IRExplorerUI {
         }
 
         public async Task SelectFunction(IRTextFunction function) {
-            if (function == currentFunction_ ||
-                function.ParentSummary != Summary) {
+            if (function == currentFunction_) {
                 return;
             }
 
@@ -1877,7 +1911,7 @@ namespace IRExplorerUI {
                 parentNode.Children.Add(callerInfo);
 
                 foreach (var callerNode in node.UniqueCallers) {
-                    var callerFunc = summary_.FindFunction(callerNode.FunctionName);
+                    var callerFunc = function.ParentSummary.FindFunction(callerNode.FunctionName);
                     if (callerFunc == null)
                         continue;
 
@@ -1888,7 +1922,7 @@ namespace IRExplorerUI {
             }
 
             foreach (var calleeNode in node.UniqueCallees) {
-                var childFunc = summary_.FindFunction(calleeNode.FunctionName);
+                var childFunc = function.ParentSummary.FindFunction(calleeNode.FunctionName);
                 if (childFunc == null) continue;
 
                 // Create node and attach statistics if available.

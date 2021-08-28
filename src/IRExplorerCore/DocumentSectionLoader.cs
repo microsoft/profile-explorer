@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -16,19 +17,22 @@ namespace IRExplorerCore {
         private ConcurrentExclusiveSchedulerPair taskScheduler_;
         private TaskFactory taskFactory_;
         private CancelableTask preprocessTask_;
+        private string moduleName_;
 
         public DocumentSectionLoader(ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
         }
 
-        public DocumentSectionLoader(string filePath, ICompilerIRInfo irInfo, bool useCache = true) {
+        public DocumentSectionLoader(string filePath, string moduleName, ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
             documentReader_ = irInfo.CreateSectionReader(filePath);
+            moduleName_ = moduleName;
         }
 
-        public DocumentSectionLoader(byte[] textData, ICompilerIRInfo irInfo, bool useCache = true) {
+        public DocumentSectionLoader(byte[] textData, string moduleName, ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
             documentReader_ = irInfo.CreateSectionReader(textData);
+            moduleName_ = moduleName;
         }
 
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
@@ -49,6 +53,7 @@ namespace IRExplorerCore {
 
             if (result == null) {
                 preprocessTask_.Cancel();
+                return null;
             }
             else if(tasks.Count > 0) {
                 Task.Run(() => {
@@ -57,6 +62,7 @@ namespace IRExplorerCore {
                 });
             }
 
+            result.ModuleName = moduleName_;
             return result;
         }
 
