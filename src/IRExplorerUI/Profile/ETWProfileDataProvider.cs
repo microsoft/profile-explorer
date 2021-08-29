@@ -45,6 +45,20 @@ namespace IRExplorerUI.Profile {
             }
         }
 
+        //? TODO
+        // - on new image
+        // 
+
+        class ModuleInfo {
+            //? Session needed for loader
+            private string DebugFilePath;
+            private string BinarFilePatth;
+            private IRTextSummary summary_;
+            private PdbParser pdbParser_;
+            private IDebugInfoProvider debugInfo_;
+            private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
+        }
+
         private ICompilerInfoProvider compilerInfo_;
         private IRTextSummary summary_;
         private IRTextSectionLoader loader_;
@@ -333,6 +347,7 @@ namespace IRExplorerUI.Profile {
             }
         }
 
+        //? Merge with BuildUnmangledFunctionNameMap
         private new Dictionary<string, IRTextFunction> CreateDemangledNameMapping() {
             var map = new Dictionary<string, IRTextFunction>();
 
@@ -350,7 +365,7 @@ namespace IRExplorerUI.Profile {
         private (Dictionary<long, IRTextFunction>, Dictionary<long, string>)
             BuildAddressFunctionMap(string symbolPath) {
             var addressFuncMap = new Dictionary<long, IRTextFunction>();
-            var externalsFuncMap = new Dictionary<long, string>();
+            var externalsFuncMap = new Dictionary<long, string>();/
 
             foreach (var (funcName, address) in pdbParser_.Parse(symbolPath)) {
                 var func = summary_.FindFunction(funcName);
