@@ -365,7 +365,7 @@ namespace IRExplorerUI.Profile {
         private (Dictionary<long, IRTextFunction>, Dictionary<long, string>)
             BuildAddressFunctionMap(string symbolPath) {
             var addressFuncMap = new Dictionary<long, IRTextFunction>();
-            var externalsFuncMap = new Dictionary<long, string>();/
+            var externalsFuncMap = new Dictionary<long, string>();
 
             foreach (var (funcName, address) in pdbParser_.Parse(symbolPath)) {
                 var func = summary_.FindFunction(funcName);

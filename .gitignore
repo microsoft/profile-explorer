@@ -15,11 +15,11 @@
 *.exp
 *.recipe
 *.txt
+*.exe
 
 # Setup files
 installer/out
 installer/publish
-installer/*.exe
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -362,3 +362,6 @@ MigrationBackup/
 .ionide/
 src/.idea
 src/GrpcCppLib/ReleaseStaticLib
+
+# Include some pre-built binaries
+!/src/external/*
