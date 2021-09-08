@@ -1029,7 +1029,7 @@ namespace IRExplorerUI {
 
             if (result.HasValue && result.Value) {
                 sessionState_.MainDocument.DebugInfoFilePath ??= window.DebugFilePath;
-                SectionPanel.RefreshMainSummary(MainDocumentSummary);
+                await SectionPanel.RefreshMainSummary();
                 SetOptionalStatus("Profile data loaded");
             }
         }

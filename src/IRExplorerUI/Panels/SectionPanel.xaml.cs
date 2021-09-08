@@ -1193,6 +1193,7 @@ namespace IRExplorerUI {
         private async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
             if (summary_ == null) {
                 ResetSectionPanel();
+                ResetStatistics();
                 return;
             }
 
@@ -1265,22 +1266,26 @@ namespace IRExplorerUI {
         }
 
         private void ResetSectionPanel() {
+            ProfileControlsVisible = false;
+            FunctionModuleControlsVisible = false;
+            SectionList.ItemsSource = null;
+            FunctionList.ItemsSource = null;
+            
             otherSummary_ = null;
             currentFunction_ = null;
             moduleReport_ = null;
-            ProfileControlsVisible = false;
-            FunctionModuleControlsVisible = false;
             sections_.Clear();
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
+            
+            SectionList.UpdateLayout();
+            FunctionList.UpdateLayout();
+        }
+
+        private void ResetStatistics() {
             callGraph_ = null;
             otherCallGraph_ = null;
             functionStatMap_ = null;
-
-            SectionList.ItemsSource = null;
-            FunctionList.ItemsSource = null;
-            SectionList.UpdateLayout();
-            FunctionList.UpdateLayout();
         }
 
         private void SetupSectionExtension() {
@@ -1290,9 +1295,6 @@ namespace IRExplorerUI {
 
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
-            callGraph_ = null;
-            otherCallGraph_ = null;
-            functionStatMap_ = null;
 
             SetupSectionExtension(summary_);
 
@@ -2608,6 +2610,11 @@ namespace IRExplorerUI {
                 column.Width = 0;
                 column.Width = double.NaN;
             }
+        }
+
+        public async Task RefreshSummary() {
+            ResetSectionPanel();
+            await UpdateFunctionListBindings();
         }
     }
 }
