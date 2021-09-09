@@ -43,7 +43,7 @@ namespace IRExplorerUI {
         private OverlayRenderer overlayRenderer_;
         private bool hasProfileInfo_;
         private int hottestSourceLine_;
-        private InlineeSourceLocation currentInlinee_;
+        private IRExplorerCore.IR.StackFrame currentInlinee_;
 
         public SourceFilePanel() {
             InitializeComponent();
@@ -288,7 +288,7 @@ namespace IRExplorerUI {
         //? TODO: Select source line must go through inlinee mapping to select proper asm 
         //     all instrs that have the line on the inlinee list for this func
 
-        public async Task<bool> LoadInlineeSourceFile(InlineeSourceLocation inlinee) {
+        public async Task<bool> LoadInlineeSourceFile(IRExplorerCore.IR.StackFrame inlinee) {
             if(inlinee == currentInlinee_) {
                 return true;
             }
@@ -433,7 +433,7 @@ namespace IRExplorerUI {
 
         private async void InlineeCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (e.AddedItems.Count == 1) {
-                var inlinee = (InlineeSourceLocation)e.AddedItems[0];
+                var inlinee = (IRExplorerCore.IR.StackFrame)e.AddedItems[0];
                 await LoadInlineeSourceFile(inlinee);
             }
         }

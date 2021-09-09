@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -64,6 +65,27 @@ namespace IRExplorerCore {
 
         public static byte[] CreateSHA256(string text) {
             return CreateSHA256(Encoding.UTF8.GetBytes(text));
+        }
+
+        public static byte[] CreateSHA256(List<byte[]> byteList) {
+            int outputSize = 0;
+
+            foreach (var item in byteList) {
+                outputSize += item.Length + 1;
+            }
+
+            byte[] output = new byte[outputSize];
+            int position = 0;
+
+            foreach (var item in byteList) {
+                Array.Copy(item, 0, output, position, item.Length);
+                position += item.Length;
+                output[position] = 0xFF; // Use a separator so that "ab cde" and "abc de" are distinct.
+                position++;
+            }
+
+            using var sha = SHA256.Create();
+            return sha.ComputeHash(output);
         }
     }
 
