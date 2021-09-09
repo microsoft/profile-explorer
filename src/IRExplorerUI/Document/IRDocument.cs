@@ -621,7 +621,7 @@ namespace IRExplorerUI {
             HighlightSingleElement(element, GetHighlighter(type));
         }
 
-        public void SelectElementsOnSourceLine(int lineNumber, InlineeSourceLocation inlinee = null) {
+        public void SelectElementsOnSourceLine(int lineNumber, IRExplorerCore.IR.StackFrame inlinee = null) {
             ClearTemporaryHighlighting();
             MarkElementsOnSourceLine(selectedHighlighter_, lineNumber, Colors.Transparent, 
                                      false, true, inlinee);
@@ -632,7 +632,7 @@ namespace IRExplorerUI {
         }
 
         private void MarkElementsOnSourceLine(ElementHighlighter highlighter, int lineNumber, Color selectedColor,
-                                         bool raiseEvent, bool bringIntoView, InlineeSourceLocation inlinee) {
+                                         bool raiseEvent, bool bringIntoView, IRExplorerCore.IR.StackFrame inlinee) {
             var style = highlighter == selectedHighlighter_ ? selectedStyle_ : new HighlightingStyle(selectedColor);
             var group = new HighlightedGroup(style);
             IRElement firstTuple = null;
