@@ -1277,7 +1277,8 @@ namespace IRExplorerUI {
             sections_.Clear();
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
-            
+            sectionExtensionComputed_ = false;
+
             SectionList.UpdateLayout();
             FunctionList.UpdateLayout();
         }

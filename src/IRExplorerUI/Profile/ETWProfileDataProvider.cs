@@ -59,23 +59,17 @@ namespace IRExplorerUI.Profile {
             private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
         }
 
-        public class SampleInfo {
+        public class ProfileSample {
             public long RVA;
             public TimeSpan Weight;
+            public StackFrame Stack;
             public int Thread;
-            public int StackId;
         }
 
         public class PerformanceCounterInfo {
             public string Name;
             public string ShortName;
             public string Description;
-        }
-
-        public class StackTraceInfo {
-            // signature
-            // id
-            // List<frame>
         }
 
         private ICompilerInfoProvider compilerInfo_;
@@ -86,11 +80,11 @@ namespace IRExplorerUI.Profile {
         private IDebugInfoProvider debugInfo_;
         private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
-        static List<SampleInfo> temp_;
+        static List<ProfileSample> temp_;
 
         //? TODO: Workaround for crash that happens when the finalizers are run
         //? and the COM object is released after it looks as being destroyed.
-        // T his will keep it alive during the entire process.
+        // This will keep it alive during the entire process.
         private static ITraceProcessor trace; 
 
         public ETWProfileDataProvider(IRTextSummary summary, IRTextSectionLoader docLoader,
@@ -171,16 +165,8 @@ namespace IRExplorerUI.Profile {
                     var stackFuncts = new HashSet<IRTextFunction>();
                     var stackModules = new HashSet<string>();
 
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
-                    long memory = GC.GetTotalMemory(true);
-                    temp_  = new List<SampleInfo>();
-
                     //? TODO: parallel
                     foreach (var sample in cpuSamplingData.Samples) {
-                        temp_.Add(new SampleInfo());
-                        continue;
-
                         if (sample.IsExecutingDeferredProcedureCall == true ||
                             sample.IsExecutingInterruptServicingRoutine == true) {
                             continue;
@@ -324,18 +310,19 @@ namespace IRExplorerUI.Profile {
                         }
                     }
 
-                    GC.Collect();
-                    GC.WaitForPendingFinalizers();
+                    //GC.Collect();
+                    //GC.WaitForPendingFinalizers();
                     
-                    long memory2 = GC.GetTotalMemory(true);
+                    //long memory2 = GC.GetTotalMemory(true);
 
-                    Trace.WriteLine($"Diff: {(memory2 - memory) / 1024}, kb");
-                    Trace.Flush();
+                    //Trace.WriteLine($"Diff: {(memory2 - memory) / 1024}, kb");
+                    //Trace.Flush();
 
                     return true;
                 });
 
                 trace.Dispose();
+                //trace = null;
                 return result ? profileData_ : null;
             }
             catch (Exception ex) {
