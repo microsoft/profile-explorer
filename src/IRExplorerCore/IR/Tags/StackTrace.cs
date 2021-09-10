@@ -36,8 +36,16 @@ namespace IRExplorerCore.IR {
         public List<StackFrame> Frames { get; set; }
         public byte[] Signature { get; set; }
 
-        public void AddFrames(IEnumerator<StackFrame> frames) {
-            Frames.Add(frames);
+        public StackTrace() {
+            Frames = new List<StackFrame>();
+        }
+
+        public StackTrace(IEnumerable<StackFrame> frames) : this() {
+            AddFrames(frames);
+        }
+
+        public void AddFrames(IEnumerable<StackFrame> frames) {
+            Frames.AddRange(frames);
             UpdateSignature();
         }
 
@@ -51,6 +59,8 @@ namespace IRExplorerCore.IR {
         }
         
         public void UpdateSignature() {
+            // Compute a hash that identifies the stack trace
+            // to speed up equality check.
             var bytesList = new List<byte[]>(Frames.Count);
 
             foreach (var frame in Frames) {
