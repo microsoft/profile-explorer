@@ -97,6 +97,21 @@ namespace IRExplorerUI.Compilers {
             return (null, 0);
         }
 
+        public (string, long) FindFunctionByRVA(long rva) {
+            try {
+                session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
+
+                if(funcSym != null) {
+                    return (funcSym.name, funcSym.relativeVirtualAddress);
+                }
+            }
+            catch (Exception ex) { 
+                Trace.TraceError($"Failed to find function for RVA {rva}: {ex.Message}");
+            }
+            return (null, 0);
+
+        }
+
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {
             try {
                 session_.findLinesByRVA(instrRVA, 0, out var lineEnum);
