@@ -206,14 +206,14 @@
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="50" DisplayMemberBinding="{Binding ModuleName}">
+                        <!--<GridViewColumn Width="50" DisplayMemberBinding="{Binding ModuleName}">
                             <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
+                        </GridViewColumn>-->
 
                         <GridViewColumn Width="150">
                             <GridViewColumnHeader

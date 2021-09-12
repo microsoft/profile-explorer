@@ -12,6 +12,7 @@ using IRExplorerCore.IR.Tags;
 using System.Linq;
 using System.Threading;
 using IRExplorerUI.Compilers;
+using Microsoft.Windows.EventTracing.Processes;
 
 namespace IRExplorerUI.Profile {
     public class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
@@ -67,8 +68,8 @@ namespace IRExplorerUI.Profile {
         }
 
         public class PerformanceCounterInfo {
+            public int Id;
             public string Name;
-            public string ShortName;
             public string Description;
         }
 
@@ -104,6 +105,57 @@ namespace IRExplorerUI.Profile {
                                   markInlinedFunctions, progressCallback, cancelableTask).Result;
         }
 
+        /*
+
+        get
+        {
+            if ((eventRecord->EventHeader.Flags & 0x40) == 0)
+            {
+                return 4;
+            }
+            return 8;
+        }
+
+        public int ProfileSource => GetInt16At(HostOffset(8, 1));
+
+        protected internal int HostOffset(int offset, int numPointers)
+	        return offset + (PointerSize - 4) * numPointers;
+        }
+    }
+        */
+
+        private unsafe static long ReadInt64(ReadOnlySpan<byte> data, int offset = 0) {
+            fixed (byte* dataPtr = data) {
+                return *((long*)(dataPtr + offset));
+            }
+        }
+
+        private unsafe static short ReadInt16(ReadOnlySpan<byte> data, int offset = 0) {
+            fixed (byte* dataPtr = data) {
+                return *((short*)(dataPtr + offset));
+            }
+        }
+
+        private IImage FindImageForIP(long ip, IReadOnlyList<IProcess> procs) {
+            foreach (var proc in procs) {
+                foreach (var image in proc.Images) {
+                    if (ip >= image.AddressRange.BaseAddress.Value &&
+                        ip < image.AddressRange.BaseAddress.Value + image.AddressRange.Size.Bytes) {
+                        return image;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        class PerfCounter {
+            public long IP;
+            public long RVA;
+            public int ProcessId;
+            public short ProfilerSource;
+        }
+
         public async Task<ProfileData> 
             LoadTraceAsync(string tracePath, string imageName, string symbolPath,
                       bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
@@ -127,10 +179,75 @@ namespace IRExplorerUI.Profile {
                     trace = TraceProcessor.Create(tracePath, settings);
                     var pendingSymbolData = trace.UseSymbols();
                     var pendingCpuSamplingData = trace.UseCpuSamplingData();
+                    var procs = trace.UseProcesses();
+
+                    HashSet <Guid> providerIds = new HashSet<Guid>();
+                    var events = new List<PerfCounter>();
+
+                    trace.Use((e) => {
+                        if (e.Event.Id == 47) {
+                            if (e.Event.Data.Length > 0) {
+                                events.Add(new PerfCounter() {
+                                    IP = ReadInt64(e.Event.Data),
+                                    ProfilerSource = ReadInt16(e.Event.Data, 12),
+                                    ProcessId = e.Event.ProcessId.HasValue ? e.Event.ProcessId.Value : 0
+                                });
+                                }
+                        }
+                        else if (e.Event.Id == 0x49) {
+                            //? TODO: Counter name
+                            var data = e.Event.Data;
+                            return;
+                        }
+                    });
+
+                   
 
 
+                    //symbol.AddressRange.BaseAddress.Value -
+                    //    symbol.Image.AddressRange.BaseAddress.Value;
 
                     trace.Process(new ProcessProgressTracker(progressCallback));
+
+
+                    var imageCounts = new Dictionary<string, int>();
+                    int noImage = 0;
+                    var allProcs = procs.Result.Processes;
+                    var ipImageCache = new Dictionary<long, IImage>();
+                    var binaryCounters = new List<PerfCounter>();
+
+                    for(int i = 0; i < events.Count; i++) {
+                        var counter = events[i];
+
+                        if (!ipImageCache.TryGetValue(counter.IP, out var image)) {
+                            image = FindImageForIP(counter.IP, allProcs);
+                            ipImageCache[counter.IP] = image;
+                        }
+
+                        if (image != null) {
+                            if (imageCounts.TryGetValue(image.FileName, out var times)) {
+                                imageCounts[image.FileName] = times + 1;
+                            }
+                            else {
+                                imageCounts[image.FileName] = 1;
+                            }
+
+                            if (image.FileName.Contains(imageName)) {
+                                counter.RVA = counter.IP - image.AddressRange.BaseAddress.Value;
+                                binaryCounters.Add(counter);
+                            }
+                        }
+                        else {
+                            noImage++;
+                        }
+                    }
+
+                    Trace.WriteLine($"No count: {noImage}");
+                    foreach (var pair in imageCounts) {
+                        Trace.WriteLine($"{pair.Key} : {pair.Value}");
+                    }
+
+                    Trace.Flush();
 
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
                         return false;
@@ -164,6 +281,35 @@ namespace IRExplorerUI.Profile {
 
                     var stackFuncts = new HashSet<IRTextFunction>();
                     var stackModules = new HashSet<string>();
+
+                    foreach (var counter in binaryCounters) {
+                        var (funcName, funcRVA) = debugInfo_.FindFunctionByRVA(counter.RVA);
+
+                        if (funcName == null) {
+                            continue;
+                        }
+
+                        // Try to use the precise address -> function mapping from cvdump.
+                        if (!addressFuncMap.TryGetValue(funcRVA, out var textFunction)) {
+                            if (!demangledFuncNames.Value.TryGetValue(funcName, out textFunction)) {
+                              
+                            }
+                        }
+
+                        if (textFunction != null) {
+                            var funcOffset = counter.RVA - funcRVA;
+                            var profile = profileData_.GetOrCreateFunctionProfile(textFunction, "");
+
+                            if (profile != null) {
+                                var timeUnit = TimeSpan.FromMilliseconds(1);
+                                profile.AddInstructionSample(funcOffset, timeUnit);
+                                profile.Weight += timeUnit;
+                                profile.ExclusiveWeight += timeUnit;
+                                profileData_.TotalWeight += timeUnit;
+                                profileData_.ProfileWeight += timeUnit;
+                            }
+                        }
+                    }
 
                     //? TODO: parallel
                     foreach (var sample in cpuSamplingData.Samples) {
@@ -213,9 +359,9 @@ namespace IRExplorerUI.Profile {
                         foreach (var frame in stackFrames) {
                             // Count exclusive time for each module in the executable. 
                             if (isTopFrame &&
-                                frame.Symbol?.Image?.FileName != null &&
-                                stackModules.Add(frame.Symbol.Image.FileName)) {
-                                profileData_.AddModuleSample(frame.Symbol.Image.FileName, sampleWeight);
+                                frame.Image?.FileName != null &&
+                                stackModules.Add(frame.Image?.FileName)) {
+                                profileData_.AddModuleSample(frame.Image?.FileName, sampleWeight);
                             }
 
                             // Ignore samples targeting modules loaded in the executable that are not it.
@@ -246,10 +392,6 @@ namespace IRExplorerUI.Profile {
                             var funcAddress = symbol.AddressRange.BaseAddress.Value -
                                               symbol.Image.AddressRange.BaseAddress.Value;
                             funcAddress -= 4096; // An extra page size is always added...
-
-                            if(funcName.Contains("MeanShiftImage")) {
-                                funcName = funcName;
-                            }
 
                             // Try to use the precise address -> function mapping from cvdump.
                             if (!addressFuncMap.TryGetValue(funcAddress, out var textFunction)) {
