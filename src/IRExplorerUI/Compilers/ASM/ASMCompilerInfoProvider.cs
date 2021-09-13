@@ -117,17 +117,23 @@ namespace IRExplorerUI.Compilers.ASM {
             // Check if there is profile info and annotate the instrs. with timing info.
             var profile = Session.ProfileData?.GetFunctionProfile(section.ParentFunction);
             double sourceColumnOffset = 0;
+            double minVirtualColumn = 0;
 
             if(profile != null) {
                 var profileOptions = ProfileDocumentMarkerOptions.Default;
-                var profileMarker = new ProfileDocumentMarker(profile, profileOptions, ir_);
+                var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData,
+                                                              profileOptions, ir_);
                 profileMarker.Mark(document, function);
-                sourceColumnOffset = 150; // Make sure source lines are aligned nicely.
+
+                // Make sure source lines are aligned nicely.
+                minVirtualColumn = profileMarker.MaxVirtualColumn;
+                sourceColumnOffset = 200;
             }
 
             // Annotate instrs. with source line numbers if debug info is available.
             var markerOptions = ProfileDocumentMarkerOptions.Default;
-            markerOptions.VirtualColumnPosition += sourceColumnOffset;
+            markerOptions.VirtualColumnPosition =
+                Math.Max(minVirtualColumn, markerOptions.VirtualColumnPosition) + sourceColumnOffset;
             
             var sourceMarker = new SourceDocumentMarker(markerOptions, ir_);
             sourceMarker.Mark(document, function);

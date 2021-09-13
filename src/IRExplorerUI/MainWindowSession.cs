@@ -77,6 +77,9 @@ namespace IRExplorerUI {
                 MessageBox.Show($"Failed to load file {filePath}", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Exclamation);
             }
+            else {
+                AddRecentFile(filePath);
+            }
 
             return loadedDoc;
         }

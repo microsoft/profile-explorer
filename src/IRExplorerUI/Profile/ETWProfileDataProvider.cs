@@ -13,6 +13,7 @@ using System.Linq;
 using System.Threading;
 using IRExplorerUI.Compilers;
 using Microsoft.Windows.EventTracing.Processes;
+using System.Text;
 
 namespace IRExplorerUI.Profile {
     public class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
@@ -60,18 +61,7 @@ namespace IRExplorerUI.Profile {
             private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
         }
 
-        public class ProfileSample {
-            public long RVA;
-            public TimeSpan Weight;
-            public StackFrame Stack;
-            public int Thread;
-        }
-
-        public class PerformanceCounterInfo {
-            public int Id;
-            public string Name;
-            public string Description;
-        }
+       
 
         private ICompilerInfoProvider compilerInfo_;
         private IRTextSummary summary_;
@@ -95,6 +85,7 @@ namespace IRExplorerUI.Profile {
             compilerInfo_ = compilerInfo;
             pdbParser_ = new PdbParser(cvdumpPath);
             profileData_ = new ProfileData();
+            events_ = new List<PerfCounter>();
         }
 
         public ProfileData
@@ -136,6 +127,34 @@ namespace IRExplorerUI.Profile {
             }
         }
 
+        private unsafe static int ReadInt32(ReadOnlySpan<byte> data, int offset = 0) {
+            fixed (byte* dataPtr = data) {
+                return *((int*)(dataPtr + offset));
+            }
+        }
+
+        private unsafe static string ReadWideString(ReadOnlySpan<byte> data, int offset = 0) {
+            fixed (byte* dataPtr = data) {
+                var sb = new StringBuilder();
+
+                while(offset < data.Length - 1) {
+                    byte first = dataPtr[offset];
+                    byte second = dataPtr[offset + 1];
+
+                    if(first == 0 && second == 0) {
+                        break; // Found string null terminator.
+                    }
+
+                    sb.Append((char)((short)first | ((short)second << 8)));
+                    offset += 2;
+                }
+
+                return sb.ToString();
+            }
+
+            return null;
+        }
+
         private IImage FindImageForIP(long ip, IReadOnlyList<IProcess> procs) {
             foreach (var proc in procs) {
                 foreach (var image in proc.Images) {
@@ -156,6 +175,39 @@ namespace IRExplorerUI.Profile {
             public short ProfilerSource;
         }
 
+        private PerformanceCounterInfo ReadPerformanceCounterInfo(ReadOnlySpan<byte> data) {
+            // counter id : 4
+            // frequency : 4 min
+            // frequency: 4 max
+            // name : 12+
+            var counter = new PerformanceCounterInfo();
+            counter.Id = ReadInt32(data, 0);
+            counter.Frequency = ReadInt32(data, 4);
+            // counter.Frequency = ReadInt32(data, 8);
+            counter.Name = ReadWideString(data, 12);
+            return counter;
+        }
+
+        private List<PerfCounter> events_;
+        
+        private void ProcessPerfCounterEvents(EventContext e) {
+            if (e.Event.Id == 47) {
+                if (e.Event.Data.Length > 0) {
+                    events_.Add(new PerfCounter() {
+                        IP = ReadInt64(e.Event.Data), 
+                        ProfilerSource = ReadInt16(e.Event.Data, 12), 
+                        ProcessId = e.Event.ProcessId.HasValue ? e.Event.ProcessId.Value : -1
+                    });
+                }
+            }
+            else if (e.Event.Id == 0x49) {
+                if (e.Event.Data.Length > 0) {
+                    var counter = ReadPerformanceCounterInfo(e.Event.Data);
+                    profileData_.RegisterPerformanceCounter(counter);
+                }
+            }
+        }
+        
         public async Task<ProfileData> 
             LoadTraceAsync(string tracePath, string imageName, string symbolPath,
                       bool markInlinedFunctions, ProfileLoadProgressHandler progressCallback,
@@ -181,32 +233,7 @@ namespace IRExplorerUI.Profile {
                     var pendingCpuSamplingData = trace.UseCpuSamplingData();
                     var procs = trace.UseProcesses();
 
-                    HashSet <Guid> providerIds = new HashSet<Guid>();
-                    var events = new List<PerfCounter>();
-
-                    trace.Use((e) => {
-                        if (e.Event.Id == 47) {
-                            if (e.Event.Data.Length > 0) {
-                                events.Add(new PerfCounter() {
-                                    IP = ReadInt64(e.Event.Data),
-                                    ProfilerSource = ReadInt16(e.Event.Data, 12),
-                                    ProcessId = e.Event.ProcessId.HasValue ? e.Event.ProcessId.Value : 0
-                                });
-                                }
-                        }
-                        else if (e.Event.Id == 0x49) {
-                            //? TODO: Counter name
-                            var data = e.Event.Data;
-                            return;
-                        }
-                    });
-
-                   
-
-
-                    //symbol.AddressRange.BaseAddress.Value -
-                    //    symbol.Image.AddressRange.BaseAddress.Value;
-
+                    trace.Use(ProcessPerfCounterEvents);
                     trace.Process(new ProcessProgressTracker(progressCallback));
 
 
@@ -216,8 +243,10 @@ namespace IRExplorerUI.Profile {
                     var ipImageCache = new Dictionary<long, IImage>();
                     var binaryCounters = new List<PerfCounter>();
 
-                    for(int i = 0; i < events.Count; i++) {
-                        var counter = events[i];
+                    IImage mainImage = null;
+
+                    for(int i = 0; i < events_.Count; i++) {
+                        var counter = events_[i];
 
                         if (!ipImageCache.TryGetValue(counter.IP, out var image)) {
                             image = FindImageForIP(counter.IP, allProcs);
@@ -231,10 +260,14 @@ namespace IRExplorerUI.Profile {
                             else {
                                 imageCounts[image.FileName] = 1;
                             }
+                            
+                            profileData_.AddModuleCounter(image.FileName, counter.ProfilerSource, 1);
 
+                            // Filter counters for current binary.
                             if (image.FileName.Contains(imageName)) {
                                 counter.RVA = counter.IP - image.AddressRange.BaseAddress.Value;
                                 binaryCounters.Add(counter);
+                                mainImage = image;
                             }
                         }
                         else {
@@ -292,22 +325,14 @@ namespace IRExplorerUI.Profile {
                         // Try to use the precise address -> function mapping from cvdump.
                         if (!addressFuncMap.TryGetValue(funcRVA, out var textFunction)) {
                             if (!demangledFuncNames.Value.TryGetValue(funcName, out textFunction)) {
-                              
+                                continue;
                             }
                         }
 
                         if (textFunction != null) {
                             var funcOffset = counter.RVA - funcRVA;
                             var profile = profileData_.GetOrCreateFunctionProfile(textFunction, "");
-
-                            if (profile != null) {
-                                var timeUnit = TimeSpan.FromMilliseconds(1);
-                                profile.AddInstructionSample(funcOffset, timeUnit);
-                                profile.Weight += timeUnit;
-                                profile.ExclusiveWeight += timeUnit;
-                                profileData_.TotalWeight += timeUnit;
-                                profileData_.ProfileWeight += timeUnit;
-                            }
+                            profile.AddCounterSample(funcOffset, counter.ProfilerSource, 1);
                         }
                     }
 

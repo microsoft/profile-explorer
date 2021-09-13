@@ -3634,16 +3634,18 @@ namespace IRExplorerUI {
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
                                           double marginX = 8, double marginY = 4) {
-            var overlay = AddIconElementOveralyImpl(element, icon, width, height, label, tooltip,
-                                                    alignmentX, alignmentY, marginX, marginY);
+            var overlay = RegisterIcomElementOverlay(element, icon, width, height, label, tooltip,
+                                                     alignmentX, alignmentY, marginX, marginY);
             UpdateHighlighting();
             return overlay;
         }
 
-        private IconElementOverlay AddIconElementOveralyImpl(IRElement element, IconDrawing icon,
-                                                             double width, double height, string label, string tooltip,
-                                                             HorizontalAlignment alignmentX, VerticalAlignment alignmentY, 
-                                                             double marginX, double marginY) {
+        public IconElementOverlay RegisterIcomElementOverlay(IRElement element, IconDrawing icon,
+                                                             double width = 16, double height = 0,
+                                          string label = "", string tooltip = "",
+                                          HorizontalAlignment alignmentX = HorizontalAlignment.Right,
+                                          VerticalAlignment alignmentY = VerticalAlignment.Center,
+                                          double marginX = 8, double marginY = 4) {
             var overlay = IconElementOverlay.CreateDefault(icon, width, height,
                                                        Brushes.Transparent,
                                                        selectedStyle_.BackColor,
@@ -3651,33 +3653,13 @@ namespace IRExplorerUI {
                                                        label, tooltip, 
                                                        alignmentX, alignmentY,
                                                        marginX, marginY);
+            return (IconElementOverlay)RegisterElementOverlay(element, overlay);
+        }
+
+        public IElementOverlay RegisterElementOverlay(IRElement element, IElementOverlay overlay) {
             SetupElementOverlayEvents(overlay);
             overlayRenderer_.AddElementOverlay(element, overlay);
             return overlay;
-        }
-
-        public IconElementOverlay AddIconElementOverlay(IconElementOverlayData overlay,
-                                                        double width, double height, 
-                                                        HorizontalAlignment alignmentX, VerticalAlignment alignmentY,
-                                                        double marginX, double marginY) {
-            return AddIconElementOveralyImpl(overlay.Element, overlay.Icon, width, height,
-                                             overlay.Label, overlay.Tooltip, 
-                                             alignmentX, alignmentY, marginX, marginY);
-        }
-
-        public List<IconElementOverlay> AddIconElementOverlays(IEnumerable<IconElementOverlayData> overlays,
-                                  double width = 16, double height = 0,
-                                  HorizontalAlignment alignmentX = HorizontalAlignment.Right,
-                                  VerticalAlignment alignmentY = VerticalAlignment.Center,
-                                  double marginX = 8, double marginY = 4) {
-            var list = new List<IconElementOverlay>();
-
-            foreach (var overlay in overlays) {
-                list.Add(AddIconElementOverlay(overlay, width, height, alignmentX, alignmentY, marginX, marginY));
-            }
-
-            UpdateHighlighting();
-            return list;
         }
 
         private void SetupElementOverlayEvents(IElementOverlay overlay) {

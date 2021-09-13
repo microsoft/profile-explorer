@@ -70,59 +70,42 @@ namespace IRExplorerUI.Compilers.ASM {
 
     public class ProfileDocumentMarker {
         private FunctionProfileData profile_;
+        private ProfileData globalProfile_;
         private ProfileDocumentMarkerOptions options_;
         private ICompilerIRInfo ir_;
 
-        public ProfileDocumentMarker(FunctionProfileData profile, ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
+        public double MaxVirtualColumn { get; set; }
+
+        public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile, ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
             profile_ = profile;
+            globalProfile_ = globalProfile;
             options_ = options;
             ir_ = ir;
         }
 
         public void Mark(IRDocument document, FunctionIR function) {
+            document.SuspendUpdate();
+
             var metadataTag = function.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
             if (hasInstrOffsetMetadata) {
-                var (elementWeights, blockWeights) = CollectProfiledElements(profile_, metadataTag, ir_);
-
-                MarkProfiledElements(elementWeights, document);
-                MarkProfiledBlocks(blockWeights, document);
+                var result = profile_.Process(function, ir_);
+                MarkProfiledElements(result, document);
+                MarkProfiledBlocks(result.BlockSampledElements, document);
             }
 
+            // Without precise instruction info, try to derive it
+            // from line number info if that's available.
             if (!hasInstrOffsetMetadata) {
                 MarkProfiledLines(document);
             }
-        }
 
-        public static (List<Tuple<IRElement, TimeSpan>>,
-                 List<Tuple<BlockIR, TimeSpan>>)
-            CollectProfiledElements(FunctionProfileData profile, AssemblyMetadataTag metadataTag, ICompilerIRInfo ir) {
-            var elements = new List<Tuple<IRElement, TimeSpan>>(profile.InstructionWeight.Count);
-            var blockWeightMap = new Dictionary<BlockIR, TimeSpan>();
-
-            foreach (var pair in profile.InstructionWeight) {
-                if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
-                    elements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
-
-                    if (blockWeightMap.TryGetValue(element.ParentBlock, out var currentWeight)) {
-                        blockWeightMap[element.ParentBlock] = currentWeight + pair.Value;
-                    }
-                    else {
-                        blockWeightMap[element.ParentBlock] = pair.Value;
-                    }
-                }
-            }
-
-            var blockWeights = blockWeightMap.ToList();
-            blockWeights.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-            elements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-            return (elements, blockWeights);
+            document.ResumeUpdate();
         }
 
         private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, IRDocument document) {
             document.SuspendUpdate();
-            var blockOverlays = new List<IconElementOverlayData>(blockWeights.Count);
 
             for(int i = 0; i < blockWeights.Count; i++) {
                 var element = blockWeights[i].Item1;
@@ -145,19 +128,8 @@ namespace IRExplorerUI.Compilers.ASM {
                     icon = IconDrawing.FromIconResource("DotIcon");
                 }
 
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2):#,#} ms)";
-                blockOverlays.Add(new IconElementOverlayData(element, icon, tooltip));
-                document.MarkBlock(element, options_.PickColorForWeight(weightPercentage), markOnFlowGraph);
-
-                if (weightPercentage > options_.ElementWeightCutoff) {
-                    element.AddTag(GraphNodeTag.MakeLabel($"{Math.Round(weightPercentage * 100, 2)}%"));
-                }
-            }
-
-            var blockOverlayList = document.AddIconElementOverlays(blockOverlays);
-
-            for(int i = 0; i < blockOverlayList.Count; i++) {
-                var overlay = blockOverlayList[i];
+                var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2):#,#} ms)";
+                var overlay = document.RegisterIcomElementOverlay(element, icon, 16, 0, label);
                 overlay.IsLabelPinned = true;
                 overlay.UseLabelBackground = true;
                 overlay.ShowBackgroundOnMouseOverOnly = false;
@@ -173,14 +145,20 @@ namespace IRExplorerUI.Compilers.ASM {
                     overlay.TextColor = options_.BlockOverlayTextColor;
                     overlay.Background = options_.BlockOverlayBackColor;
                 }
-            }
 
-            document.ResumeUpdate();
+                // Mark the block itself with a color.
+                document.MarkBlock(element, options_.PickColorForWeight(weightPercentage), markOnFlowGraph);
+
+                if (weightPercentage > options_.ElementWeightCutoff) {
+                    element.AddTag(GraphNodeTag.MakeLabel($"{Math.Round(weightPercentage * 100, 2)}%"));
+                }
+            }
         }
 
-        private void MarkProfiledElements(List<Tuple<IRElement, TimeSpan>> elements, IRDocument document) {
+        private void MarkProfiledElements(FunctionProfileData.ProcessingResult result, IRDocument document) {
+            var elements = result.SampledElements;
             var elementColorPairs = new List<Tuple<IRElement, Color>>(elements.Count);
-            var elementOverlays = new List<IconElementOverlayData>(elements.Count);
+            double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
 
             for (int i = 0; i < elements.Count; i++) {
                 var element = elements[i].Item1;
@@ -208,14 +186,10 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
 
                 var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2):#,#} ms)";
-                elementOverlays.Add(new IconElementOverlayData (element, icon, label));
-            }
+                var overlay = document.RegisterIcomElementOverlay(element, icon, 16, 0, label);
 
-            var elementOverlayList = document.AddIconElementOverlays(elementOverlays);
-            double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
-
-            for (int i = 0; i < elementOverlayList.Count; i++) {
-                var overlay = elementOverlayList[i];
+                overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
+                MaxVirtualColumn = Math.Max(overlay.VirtualColumn, MaxVirtualColumn);
                 overlay.IsLabelPinned = true;
 
                 if (i <= 2) {
@@ -228,10 +202,45 @@ namespace IRExplorerUI.Compilers.ASM {
                     overlay.TextColor = options_.ElementOverlayTextColor;
                     overlay.Background = options_.ElementOverlayBackColor;
                 }
-
-                overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
             }
 
+            var counterElements = result.CounterElements;
+            var counterIcon = IconDrawing.FromIconResource("QueryIcon");
+
+            //? TODO: Filter to hide counters
+            //? TODO: Order of counters (custom sorting or fixed)
+
+            var perfCounters = globalProfile_.SortedPerformanceCounters;
+            var colors = new Brush[] { Brushes.DarkTurquoise, Brushes.DarkOliveGreen, Brushes.DarkViolet };
+
+            for (int i = 0; i < counterElements.Count; i++) {
+                var element = counterElements[i].Item1;
+                var counterSet = counterElements[i].Item2;
+
+                for(int k = 0; k < perfCounters.Count; k++) { 
+                    var counterInfo= perfCounters[k];
+                    var value = counterSet.FindCounterSamples(counterInfo.Id);
+
+                    if (value == 0) {
+                        continue;
+                    }
+
+                    var label = $"{value * counterInfo.Frequency}";
+                    var tooltip = counterInfo?.Name;
+                    var overlay = document.RegisterIcomElementOverlay(element, counterIcon, 16, 0, label);
+
+                    overlay.IsLabelPinned = true;
+                    overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
+                    MaxVirtualColumn = Math.Max(overlay.VirtualColumn, MaxVirtualColumn);
+
+                    overlay.ToolTip = $"{counterInfo.Name} ({counterInfo.Id})";
+                    overlay.VirtualColumn += k * 100;
+                    overlay.TextColor = colors[counterInfo.Number % colors.Length];
+                }
+
+            }
+
+            // Mark the elements themselves with a color.
             document.MarkElements(elementColorPairs);
         }
 
@@ -257,21 +266,6 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             document.ResumeUpdate();
-        }
-
-        private static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
-                                                    ICompilerIRInfo ir, out IRElement element) {
-            int multiplier = 1;
-            var offsetData = ir.InstructionOffsetData;
-
-            do {
-                if (metadataTag.OffsetToElementMap.TryGetValue(offset - multiplier * offsetData.OffsetAdjustIncrement, out element)) {
-                    return true;
-                }
-                ++multiplier;
-            } while (multiplier * offsetData.OffsetAdjustIncrement < offsetData.MaxOffsetAdjust);
-
-            return false;
         }
     }
 }

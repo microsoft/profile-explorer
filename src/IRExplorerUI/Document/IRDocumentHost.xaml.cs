@@ -789,9 +789,11 @@ namespace IRExplorerUI {
             if (funcProfile == null || metadataTag == null) {
                 return;
             }
-            
-            (profileElements_, profileBlocks_) = 
-                ProfileDocumentMarker.CollectProfiledElements(funcProfile, metadataTag, Session.CompilerInfo.IR);
+
+            var result = funcProfile.Process(Function, Session.CompilerInfo.IR);
+            profileElements_ = result.SampledElements;
+            profileBlocks_ = result.BlockSampledElements;
+
             ProfileBlockSelector.ItemsSource = new ListCollectionView(profileBlocks_);
             ProfileVisible = true;
         }

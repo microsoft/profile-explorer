@@ -8,21 +8,6 @@ using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorerUI.Document {
-    public struct IconElementOverlayData {
-        public IconElementOverlayData(IRElement element, IconDrawing icon, 
-                                      string label = null, string tooltip = null) {
-            Element = element;
-            Icon = icon;
-            Label = label;
-            Tooltip = tooltip;
-        }
-
-        public IRElement Element { get; set; }
-        public IconDrawing Icon { get; set; }
-        public string Label { get; set; }
-        public string Tooltip { get; set; }
-    }
-
     [ProtoContract(SkipConstructor = true)]
     public class IconElementOverlay : ElementOverlayBase {
         public IconElementOverlay() : base() {
