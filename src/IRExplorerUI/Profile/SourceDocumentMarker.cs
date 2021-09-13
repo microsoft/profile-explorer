@@ -23,10 +23,9 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         private void MarkProfiledElements(IRDocument document, FunctionIR function) {
-            var elementOverlays = new List<IconElementOverlayData>(function.TupleCount);
-            var inlineeOverlays = new List<IconElementOverlayData>(function.TupleCount);
+            double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
 
-            foreach(var element in function.AllInstructions) {
+            foreach (var element in function.AllInstructions) {
                 var tag = element.GetTag<SourceLocationTag>();
 
                 if (tag == null) {
@@ -38,7 +37,11 @@ namespace IRExplorerUI.Compilers.ASM {
                 if (tag.Line != 0) {
                     var label = $"{tag.Line}";
                     var tooltip = $"Line number for {funcName}";
-                    elementOverlays.Add(new IconElementOverlayData(element, null, label, tooltip));
+                    var overlay = document.RegisterIcomElementOverlay(element, null, 16, 0, label, tooltip);
+                    overlay.IsLabelPinned = true;
+                    overlay.TextColor = options_.ElementOverlayTextColor;
+                    overlay.Background = options_.ElementOverlayBackColor;
+                    overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
                 }
 
                 if(!tag.HasInlinees) {
@@ -62,26 +65,11 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
 
                 AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
-                inlineeOverlays.Add(new IconElementOverlayData(element, null, sb.ToString(), tooltipSb.ToString()));
-            }
-
-            var elementOverlayList = document.AddIconElementOverlays(elementOverlays);
-            var inlineeOverlayList = document.AddIconElementOverlays(inlineeOverlays);
-            double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
-
-            for (int i = 0; i < elementOverlayList.Count; i++) {
-                var overlay = elementOverlayList[i];
-                overlay.IsLabelPinned = true;
-                overlay.TextColor = options_.ElementOverlayTextColor;
-                overlay.Background = options_.ElementOverlayBackColor;
-                overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
-            }
-
-            foreach (var overlay in inlineeOverlayList) {
-                overlay.VirtualColumn = options_.VirtualColumnPosition + 50 + virtualColumnAdjustment;
-                overlay.TextColor = options_.InlineeOverlayTextColor;
-                overlay.Background = options_.ElementOverlayBackColor;
-                overlay.IsLabelPinned = true;
+                var inlineeOverlay = document.RegisterIcomElementOverlay(element, null, 16, 0, sb.ToString(), tooltipSb.ToString());
+                inlineeOverlay.VirtualColumn = options_.VirtualColumnPosition + 50 + virtualColumnAdjustment;
+                inlineeOverlay.TextColor = options_.InlineeOverlayTextColor;
+                inlineeOverlay.Background = options_.ElementOverlayBackColor;
+                inlineeOverlay.IsLabelPinned = true;
             }
         }
 

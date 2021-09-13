@@ -20,7 +20,7 @@ namespace IRExplorerUI {
 
             foreach (char c in value) {
                 if (Array.IndexOf(charList, c) == -1) {
-                    sb.Append(c);
+                    sb.Append(c); 
                 }
             }
 
@@ -110,6 +110,16 @@ namespace IRExplorerUI {
             return list;
         }
 
+        public static List<V> ToValueList<K, V>(this IDictionary<K, V> dict) {
+            var list = new List<V>(dict.Count);
+
+            foreach (var item in dict) {
+                list.Add(item.Value);
+            }
+
+            return list;
+        }
+
         public static List<Tuple<K2, V>> ToList<K1, K2, V>(this Dictionary<K1, V> dict)
             where K1 : IRElement where K2 : IRElementReference where V : class {
             var list = new List<Tuple<K2, V>>(dict.Count);
@@ -191,5 +201,42 @@ namespace IRExplorerUI {
 
             return true;
         }
+
+        public static int AccummulateValue<K>(this Dictionary<K, int> dict, K key, int value) where K : class {
+            if (dict.TryGetValue(key, out var currentValue)) {
+                var newValue = currentValue + value;
+                dict[key] = newValue;
+                return newValue;
+            }
+            else {
+                dict[key] = value;
+                return value;
+            }
+        }
+
+        public static long AccummulateValue<K>(this Dictionary<K, long> dict, K key, long value) where K : class {
+            if (dict.TryGetValue(key, out var currentValue)) {
+                var newValue = currentValue + value;
+                dict[key] = newValue;
+                return newValue;
+            }
+            else {
+                dict[key] = value;
+                return value;
+            }
+        }
+
+        public static TimeSpan AccummulateValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) where K : class {
+            if (dict.TryGetValue(key, out var currentValue)) {
+                var newValue = currentValue + value;
+                dict[key] = newValue;
+                return newValue;
+            }
+            else {
+                dict[key] = value;
+                return value;
+            }
+        }
+
     }
 }
