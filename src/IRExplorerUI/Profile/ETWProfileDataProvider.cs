@@ -85,7 +85,7 @@ namespace IRExplorerUI.Profile {
             compilerInfo_ = compilerInfo;
             pdbParser_ = new PdbParser(cvdumpPath);
             profileData_ = new ProfileData();
-            events_ = new List<PerfCounter>();
+            events_ = new List<PerformanceCounterEvent>();
         }
 
         public ProfileData
@@ -155,23 +155,62 @@ namespace IRExplorerUI.Profile {
             return null;
         }
 
-        private IImage FindImageForIP(long ip, IReadOnlyList<IProcess> procs) {
-            foreach (var proc in procs) {
-                foreach (var image in proc.Images) {
-                    if (ip >= image.AddressRange.BaseAddress.Value &&
-                        ip < image.AddressRange.BaseAddress.Value + image.AddressRange.Size.Bytes) {
-                        return image;
+        private class ProcessInfoCache {
+            public class ImageInfo {
+                public IImage Image { get; set; }
+                public long AddressStart { get; set; }
+                public long AddressEnd { get; set; }
+            }
+
+            private Dictionary<int, List<ImageInfo>> processMap_;
+            Dictionary<long, IImage> ipImageCache_;
+
+            public ProcessInfoCache(IReadOnlyList<IProcess> procs) {
+                processMap_ = new Dictionary<int, List<ImageInfo>>(procs.Count);
+                ipImageCache_ = new Dictionary<long, IImage>();
+
+                foreach (var proc in procs) {
+                    var imageList = new List<ImageInfo>(proc.Images.Count);
+                    processMap_[proc.Id] = imageList;
+
+                    foreach (var image in proc.Images) {
+                        imageList.Add(new ImageInfo() {
+                            Image = image,
+                            AddressStart = image.AddressRange.BaseAddress.Value,
+                            AddressEnd = image.AddressRange.BaseAddress.Value +
+                            image.AddressRange.Size.Bytes
+                        });
                     }
                 }
             }
 
-            return null;
+            public IImage FindImageForIP(long ip, int processId = -1) {
+                if(processId != -1) {
+                    // todo
+                }
+
+                if(ipImageCache_.TryGetValue(ip, out var cachedImage)) {
+                    return cachedImage;
+                }
+
+                foreach(var imageList in processMap_.Values) {
+                    foreach(var image in imageList) {
+                        if (ip >= image.AddressStart &&
+                            ip < image.AddressEnd) {
+                            ipImageCache_[ip] = image.Image;
+                            return image.Image;
+                        }
+                    }
+                }
+
+                return null;
+            }
         }
 
-        class PerfCounter {
+        private class PerformanceCounterEvent {
             public long IP;
             public long RVA;
-            public int ProcessId;
+            public int ProcessId; //? threadId
             public short ProfilerSource;
         }
 
@@ -188,12 +227,12 @@ namespace IRExplorerUI.Profile {
             return counter;
         }
 
-        private List<PerfCounter> events_;
+        private List<PerformanceCounterEvent> events_;
         
-        private void ProcessPerfCounterEvents(EventContext e) {
+        private void CollectPerformanceCounterEvents(EventContext e) {
             if (e.Event.Id == 47) {
                 if (e.Event.Data.Length > 0) {
-                    events_.Add(new PerfCounter() {
+                    events_.Add(new PerformanceCounterEvent() {
                         IP = ReadInt64(e.Event.Data), 
                         ProfilerSource = ReadInt16(e.Event.Data, 12), 
                         ProcessId = e.Event.ProcessId.HasValue ? e.Event.ProcessId.Value : -1
@@ -233,7 +272,7 @@ namespace IRExplorerUI.Profile {
                     var pendingCpuSamplingData = trace.UseCpuSamplingData();
                     var procs = trace.UseProcesses();
 
-                    trace.Use(ProcessPerfCounterEvents);
+                    trace.Use(CollectPerformanceCounterEvents);
                     trace.Process(new ProcessProgressTracker(progressCallback));
 
 
@@ -241,17 +280,18 @@ namespace IRExplorerUI.Profile {
                     int noImage = 0;
                     var allProcs = procs.Result.Processes;
                     var ipImageCache = new Dictionary<long, IImage>();
-                    var binaryCounters = new List<PerfCounter>();
+                    var binaryCounters = new List<PerformanceCounterEvent>();
 
                     IImage mainImage = null;
+                    var procCache = new ProcessInfoCache(allProcs);
 
                     for(int i = 0; i < events_.Count; i++) {
                         var counter = events_[i];
 
-                        if (!ipImageCache.TryGetValue(counter.IP, out var image)) {
-                            image = FindImageForIP(counter.IP, allProcs);
-                            ipImageCache[counter.IP] = image;
-                        }
+                        //if (!ipImageCache.TryGetValue(counter.IP, out var image)) {
+                            var image = procCache.FindImageForIP(counter.IP, counter.ProcessId);
+                            //ipImageCache[counter.IP] = image;
+                        //}
 
                         if (image != null) {
                             if (imageCounts.TryGetValue(image.FileName, out var times)) {
