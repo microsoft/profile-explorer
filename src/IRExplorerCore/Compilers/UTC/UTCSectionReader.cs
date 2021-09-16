@@ -63,11 +63,11 @@ namespace IRExplorerCore.UTC {
             }
 
             for (int i = 1; i < line.Length; i++) {
-                if (line[i] == '>') {
+                if (line[i] == '>' && i < line.Length - 1) {
                     MarkPreprocessedLine(i);
                     return line.Substring(i + 1);
                 }
-                else if (line[i] == ':') {
+                else if (line[i] == ':' && i < line.Length - 2) {
                     MarkPreprocessedLine(i);
                     return line.Substring(i + 2);
                 }

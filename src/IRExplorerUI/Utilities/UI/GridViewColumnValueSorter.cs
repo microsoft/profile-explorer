@@ -18,23 +18,25 @@ namespace IRExplorerUI {
     }
     
     class GridViewColumnValueSorter<T> : IGridViewColumnValueSorter where T : Enum {
-        public delegate int ValueCompareDelegate(object x, object y, T field, ListSortDirection direction);
+        public delegate int ValueCompareDelegate(object x, object y, T field, ListSortDirection direction, object tag);
         public delegate T ColumnFieldMappingDelegate(string columnName);
 
         class ValueComparer : IComparer {
             private ValueCompareDelegate compareFunc_;
             private ListSortDirection direction_;
             private T sortingField_;
+            private object tag_;
 
             public ValueComparer(T sortingField, ListSortDirection direction,
-                ValueCompareDelegate compareFunc) {
+                ValueCompareDelegate compareFunc, object tag) {
                 sortingField_ = sortingField;
                 direction_ = direction;
                 compareFunc_ = compareFunc;
+                tag_ = tag;
             }
 
             public int Compare(object x, object y) {
-                return compareFunc_(x, y, sortingField_, direction_);
+                return compareFunc_(x, y, sortingField_, direction_, tag_);
             }
         }
 
@@ -135,7 +137,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            view.CustomSort = new ValueComparer(sortField, sortingDirection, valueComparer_);
+            view.CustomSort = new ValueComparer(sortField, sortingDirection, valueComparer_, column.Tag);
             listView_.Items.Refresh();
         }
     }
