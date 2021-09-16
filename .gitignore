@@ -16,6 +16,8 @@
 *.recipe
 *.txt
 *.exe
+*.gz
+.vshistory/
 
 # Setup files
 installer/out

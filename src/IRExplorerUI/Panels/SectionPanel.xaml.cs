@@ -283,6 +283,9 @@ namespace IRExplorerUI {
         public FunctionCodeStatistics Statistics { get; set; }
         public FunctionCodeStatistics DiffStatistics { get; set; }
 
+        public PerformanceCounterSet Counters { get; set; }
+
+
         public DiffKind FunctionDiffKind {
             get => diffKind_;
             set {
@@ -360,7 +363,8 @@ namespace IRExplorerUI {
         StatisticCallees,
         StatisticCallers,
         StatisticIndirectCalls,
-        StatisticDiff
+        StatisticDiff,
+        PerformanceCounter
     }
     
     public enum ChildFunctionFieldKind {
@@ -448,7 +452,7 @@ namespace IRExplorerUI {
             MainGrid.DataContext = this;
             sectionSettings_ = App.Settings.SectionSettings;
 
-            functionValueSorter_ = 
+            functionValueSorter_ =
                 new GridViewColumnValueSorter<FunctionFieldKind>(FunctionList,
                 name => name switch {
                     "FunctionColumnHeader" => FunctionFieldKind.Name,
@@ -466,9 +470,10 @@ namespace IRExplorerUI {
                     "CallersHeader" => FunctionFieldKind.StatisticCallers,
                     "CalleesHeader" => FunctionFieldKind.StatisticCallees,
                     "IndirectCallsHeader" => FunctionFieldKind.StatisticIndirectCalls,
-                    "DiffHeader" => FunctionFieldKind.StatisticDiff
-                }, 
-                (x, y, field, direction) => {
+                    "DiffHeader" => FunctionFieldKind.StatisticDiff,
+                    _ => FunctionFieldKind.PerformanceCounter
+                },
+                (x, y, field, direction, tag) => {
                     var functionX = x as IRTextFunctionEx;
                     var functionY = y as IRTextFunctionEx;
 
@@ -552,10 +557,10 @@ namespace IRExplorerUI {
                                 else if (functionY.IsInsertionDiff || functionX.IsDeletionDiff) {
                                     result = 1;
                                 }
-                                else if(functionY.IsModificationDiff) {
+                                else if (functionY.IsModificationDiff) {
                                     result = -1;
                                 }
-                                else if(functionX.IsModificationDiff) {
+                                else if (functionX.IsModificationDiff) {
                                     result = 1;
                                 }
                                 else {
@@ -567,6 +572,33 @@ namespace IRExplorerUI {
                             }
 
                             return direction == ListSortDirection.Ascending ? -result : result;
+                        }
+                        case FunctionFieldKind.PerformanceCounter: {
+                            if (tag is PerformanceCounterInfo counter) {
+                                int result = 0;
+
+                                if (functionX.Counters != null &&
+                                    functionY.Counters != null) {
+                                    var valueX = functionX.Counters.FindCounterSamples(counter.Id);
+                                    var valueY = functionY.Counters.FindCounterSamples(counter.Id);
+
+                                    if (valueX > 0 && valueY > 0) {
+                                        result = valueX.CompareTo(valueY);
+                                    }
+                                    else if(valueX == 0) {
+                                        result = -1;
+                                    }
+
+                                    return direction == ListSortDirection.Ascending ? -result : result;
+                                }
+                                else if (functionX.Counters == null) {
+                                    result = -1;
+                                }
+
+                                return direction == ListSortDirection.Ascending ? -result : result;
+                            }
+
+                            return 0;
                         }
                         default:
                             throw new ArgumentOutOfRangeException();
@@ -580,7 +612,7 @@ namespace IRExplorerUI {
                     "NameColumnHeader" => SectionFieldKind.Name,
                     "BlocksColumnHeader" => SectionFieldKind.Blocks,
                 },
-                (x, y, field, direction) => {
+                (x, y, field, direction, tag) => {
                     var sectionX = x as IRTextSectionEx;
                     var sectionY = y as IRTextSectionEx;
 
@@ -601,17 +633,17 @@ namespace IRExplorerUI {
                             throw new ArgumentOutOfRangeException();
                     }
                 });
-            
-            
-            childFunctionValueSorter_ = 
+
+
+            childFunctionValueSorter_ =
                 new GridViewColumnValueSorter<ChildFunctionFieldKind>(ChildFunctionList,
                 name => name switch {
                     "ChildColumnHeader" => ChildFunctionFieldKind.Name,
                     "ChildAlternateNameColumnHeader" => ChildFunctionFieldKind.AlternateName,
                     "ChildTimeColumnHeader" => ChildFunctionFieldKind.Time,
                     "ChildCountColumnHeader" => ChildFunctionFieldKind.Children
-                }, 
-                (x, y, field, direction) => {
+                },
+                (x, y, field, direction, tag) => {
                     var childX = x as ChildFunctionEx;
                     var childY = y as ChildFunctionEx;
 
@@ -621,8 +653,8 @@ namespace IRExplorerUI {
                             return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         case ChildFunctionFieldKind.AlternateName: {
-                             int result = string.Compare(childY.AlternateName, childX.AlternateName, StringComparison.Ordinal);
-                             return direction == ListSortDirection.Ascending ? -result : result;
+                            int result = string.Compare(childY.AlternateName, childX.AlternateName, StringComparison.Ordinal);
+                            return direction == ListSortDirection.Ascending ? -result : result;
                         }
                         case ChildFunctionFieldKind.Time: {
                             int result = childY.Time.CompareTo(childX.Time);
@@ -636,14 +668,14 @@ namespace IRExplorerUI {
                             throw new ArgumentOutOfRangeException();
                     }
                 });
-            
-            moduleValueSorter_ = 
+
+            moduleValueSorter_ =
                 new GridViewColumnValueSorter<ModuleFieldKind>(ModulesList,
                     name => name switch {
                         "ModuleColumnHeader" => ModuleFieldKind.Name,
                         "ModuleTimeColumnHeader" => ModuleFieldKind.Time
-                    }, 
-                    (x, y, field, direction) => {
+                    },
+                    (x, y, field, direction, tag) => {
                         var moduleX = x as ModuleEx;
                         var moduleY = y as ModuleEx;
 
@@ -819,7 +851,7 @@ namespace IRExplorerUI {
                 }
             }
         }
-        
+
         private bool optionalDataColumnVisible_;
         public bool OptionalDataColumnVisible {
             get => optionalDataColumnVisible_;
@@ -830,7 +862,7 @@ namespace IRExplorerUI {
                 }
             }
         }
-        
+
         private string optionalDataColumnName2_;
         public string OptionalDataColumnName2 {
             get => optionalDataColumnName2_;
@@ -841,7 +873,7 @@ namespace IRExplorerUI {
                 }
             }
         }
-        
+
         private bool optionalDataColumnVisible2_;
         public bool OptionalDataColumnVisible2 {
             get => optionalDataColumnVisible2_;
@@ -1156,11 +1188,12 @@ namespace IRExplorerUI {
             OptionalDataColumnVisible2 = true;
             OptionalDataColumnName2 = "Time (total)";
             var markerOptions = ProfileDocumentMarkerOptions.Default;
+            bool counterColumnsAdded = false;
 
             foreach (var funcEx in functions) {
                 var funcProfile = profile.GetFunctionProfile(funcEx.Function);
 
-                if(funcProfile != null) {
+                if (funcProfile != null) {
                     double exclusivePercentage = profile.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
                     funcEx.ExclusivePercentage = exclusivePercentage;
                     funcEx.OptionalDataText = $"({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2):#,#} ms)";
@@ -1172,6 +1205,16 @@ namespace IRExplorerUI {
                     funcEx.OptionalDataText2 = $"({Math.Round(funcProfile.Weight.TotalMilliseconds, 2):#,#} ms)";
                     funcEx.OptionalData2 = funcProfile.Weight.Ticks;
                     funcEx.BackColor2 = markerOptions.PickBrushForWeight(percentage);
+
+                    //? TODO: Can be expensive, do in background
+                    if (funcProfile.HasPerformanceCounters) {
+                        funcEx.Counters = funcProfile.ComputeFunctionCounters();
+
+                        if (!counterColumnsAdded) {
+                            AddCountersFunctionListColumns(false);
+                            counterColumnsAdded = true;
+                        }
+                    }
                 }
                 else {
                     funcEx.OptionalData = TimeSpan.Zero.Ticks;
@@ -1198,7 +1241,7 @@ namespace IRExplorerUI {
             }
 
             SetupSectionExtension();
-            
+
             // Create for each function a wrapper with more properties for the UI.
             int index = 0;
             var functionsEx = new List<IRTextFunctionEx>();
@@ -1270,7 +1313,7 @@ namespace IRExplorerUI {
             FunctionModuleControlsVisible = false;
             SectionList.ItemsSource = null;
             FunctionList.ItemsSource = null;
-            
+
             otherSummary_ = null;
             currentFunction_ = null;
             moduleReport_ = null;
@@ -1536,7 +1579,7 @@ namespace IRExplorerUI {
             e.Handled = true;
         }
 
-            private void DiffSideBySideExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private void DiffSideBySideExecuted(object sender, ExecutedRoutedEventArgs e) {
             var leftSectionEx = SectionList.SelectedItems[0] as IRTextSectionEx;
             var rightSectionEx = SectionList.SelectedItems[1] as IRTextSectionEx;
 
@@ -1685,7 +1728,7 @@ namespace IRExplorerUI {
         public void SwitchToSection(IRTextSection section, IRDocumentHost targetDocument = null) {
             SwitchToSection(Sections.Find(item => item.Section == section), targetDocument);
         }
-        
+
         private void CommandBinding_CanExecute(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = true;
             e.Handled = true;
@@ -1700,7 +1743,7 @@ namespace IRExplorerUI {
             SwitchToSection(1);
             e.Handled = true;
         }
-        
+
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
             Utils.PatchToolbarStyle(sender as ToolBar);
         }
@@ -1711,7 +1754,7 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeConsecutiveSectionDiffs() {
-            if(!sectionSettings_.MarkSectionsIdenticalToPrevious || sections_.Count < 2) {
+            if (!sectionSettings_.MarkSectionsIdenticalToPrevious || sections_.Count < 2) {
                 return;
             }
 
@@ -1738,7 +1781,7 @@ namespace IRExplorerUI {
             var loader = Session.SessionState.FindLoadedDocument(Summary).Loader;
             var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
             var results = await diffBuilder.ComputeSectionDiffs(comparedSections, loader, loader, true);
-            
+
             foreach (var result in results) {
                 if (result.HasDiffs) {
                     var diffSection = GetSectionExtension(result.RightSection);
@@ -1776,7 +1819,7 @@ namespace IRExplorerUI {
         public IRTextFunctionEx GetFunctionExtension(IRTextFunction function) {
             return functionExtMap_[function];
         }
-        
+
         public override async void OnSessionStart() {
             base.OnSessionStart();
             var data = Session.LoadPanelState(this, null);
@@ -1815,10 +1858,10 @@ namespace IRExplorerUI {
             RefreshSectionList();
 
             //? TODO: A way to switch between the two modes?
-            if(useProfileCallTree_ && profileControlsVisible_ && Session.ProfileData != null) {
+            if (useProfileCallTree_ && profileControlsVisible_ && Session.ProfileData != null) {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
-                if(funcProfile != null) {
+                if (funcProfile != null) {
                     //? TODO: Make async
                     var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
                     ChildFunctionList.Model = profileCallTree;
@@ -1864,7 +1907,7 @@ namespace IRExplorerUI {
         }
 
         private async Task<CallGraph> GenerateCallGraph(IRTextSummary summary) {
-            if(callGraph_ != null) {
+            if (callGraph_ != null) {
                 return callGraph_;
             }
 
@@ -1900,7 +1943,7 @@ namespace IRExplorerUI {
             return rootNode;
         }
 
-        private void CreateCallTree(CallGraphNode node, CallGraphNode otherNode, 
+        private void CreateCallTree(CallGraphNode node, CallGraphNode otherNode,
                                  IRTextFunction function, ChildFunctionEx parentNode,
                                  HashSet<CallGraphNode> visitedNodes) {
             visitedNodes.Add(node);
@@ -1954,10 +1997,10 @@ namespace IRExplorerUI {
             // Sort children, since that is not yet supported by the TreeListView control.
             parentNode.Children.Sort((a, b) => {
                 // Ensure the callers node is placed first.
-                if(a.IsMarked) {
+                if (a.IsMarked) {
                     return 1;
                 }
-                else if(b.IsMarked) {
+                else if (b.IsMarked) {
                     return -1;
                 }
 
@@ -1988,19 +2031,19 @@ namespace IRExplorerUI {
             return childInfo;
         }
 
-        private void CreateProfileCallTree(IRTextFunction function, CallGraphNode cgNode, 
+        private void CreateProfileCallTree(IRTextFunction function, CallGraphNode cgNode,
                                            ChildFunctionEx parentNode, CallGraph callGraph,
                                            HashSet<IRTextFunction> visitedFuncts) {
             bool newFunc = visitedFuncts.Add(function);
             var funcProfile = Session.ProfileData.GetFunctionProfile(function);
             var funcWeight = funcProfile != null ? funcProfile.ExclusiveWeight : TimeSpan.Zero;
-            
+
             var selfInfo = CreateProfileCallTreeChild(function, funcWeight, funcProfile, null);
             selfInfo.Name = "Self";
             selfInfo.IsMarked = true;
             parentNode.Children.Add(selfInfo);
 
-            if(!newFunc) {
+            if (!newFunc) {
                 return; // Recursion in the call graph.
             }
 
@@ -2034,7 +2077,7 @@ namespace IRExplorerUI {
 
                     var childFuncProfile = Session.ProfileData.GetFunctionProfile(calleeNode.Function);
                     var childFuncWeight = childFuncProfile != null ? childFuncProfile.Weight : TimeSpan.Zero;
-                    
+
                     var childNode = CreateProfileCallTreeChild(calleeNode.Function, childFuncWeight, funcProfile, childFuncProfile);
                     parentNode.Children.Add(childNode);
 
@@ -2057,7 +2100,7 @@ namespace IRExplorerUI {
                     callerInfo.Children.Add(childNode);
                 }
             }
-            
+
             // Sort children, since that is not yet supported by the TreeListView control.
             parentNode.Children.Sort((a, b) => {
                 // Ensure the callers node is placed first.
@@ -2079,7 +2122,7 @@ namespace IRExplorerUI {
             });
         }
 
-        private ChildFunctionEx CreateProfileCallTreeChild(IRTextFunction childFunc, TimeSpan childWeight, 
+        private ChildFunctionEx CreateProfileCallTreeChild(IRTextFunction childFunc, TimeSpan childWeight,
                 FunctionProfileData funcProfile, FunctionProfileData childFuncProfile) {
             KeyValuePair<int, TimeSpan> pair;
             bool isEmpty = funcProfile == null;
@@ -2090,14 +2133,13 @@ namespace IRExplorerUI {
                 weightPercentage = funcProfile.ScaleChildWeight(childWeight);
             }
 
-            var childInfo = new ChildFunctionEx()
-            {
+            var childInfo = new ChildFunctionEx() {
                 Function = childFunc,
-                Time =  childWeight.Ticks,
+                Time = childWeight.Ticks,
                 Name = childFunc.Name,
                 Percentage = weightPercentage,
                 DescendantCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
-                Text = isEmpty ? "" :  $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2):#,#} ms)",
+                Text = isEmpty ? "" : $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2):#,#} ms)",
                 TextColor = Brushes.Black,
                 BackColor = isEmpty ? Brushes.Transparent : ProfileDocumentMarkerOptions.Default.PickBrushForWeight(weightPercentage),
                 Children = new List<ChildFunctionEx>()
@@ -2118,7 +2160,7 @@ namespace IRExplorerUI {
         }
 
         #endregion
-        
+
         private void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
             if (optionsPanelVisible_) {
                 CloseOptionsPanel();
@@ -2273,7 +2315,7 @@ namespace IRExplorerUI {
                 Clipboard.SetText(text);
             }
         }
-        
+
         private void CopyDemangledFunctionNameExecuted(object sender, ExecutedRoutedEventArgs e) {
             var func = GetSelectedFunction(e);
 
@@ -2318,7 +2360,7 @@ namespace IRExplorerUI {
             double profileControlsSpace = FunctionModuleControlsVisible ? 180 : 0;
             FunctionFilterGrid.Width = Math.Max(1, width - defaultSpace - profileControlsSpace);
         }
-        
+
         private void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
             if (sender is not ListViewItem) {
                 return;
@@ -2335,7 +2377,7 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
-            if(functionStatMap_ != null) {
+            if (functionStatMap_ != null) {
                 return;
             }
 
@@ -2361,7 +2403,7 @@ namespace IRExplorerUI {
                     functionStatMap_.TryAdd(function, sectionStats);
                 }, cancelableTask.Token));
             }
-            
+
             await Task.WhenAll(tasks.ToArray());
 
             foreach (var pair in functionStatMap_) {
@@ -2371,7 +2413,7 @@ namespace IRExplorerUI {
 
             Trace.TraceInformation("ComputeFunctionStatistics: done");
             statisticsTask_.CompleteTask(cancelableTask);
-            
+
             AddStatisticsFunctionListColumns(false);
             AddStatisticsChildFunctionListColumns(false);
             RefreshFunctionList();
@@ -2385,7 +2427,7 @@ namespace IRExplorerUI {
 
         public void ShowModuleReport() {
             //? TODO: Wait for it to be computed
-            if(functionStatMap_ == null) {
+            if (functionStatMap_ == null) {
                 return;
             }
 
@@ -2515,7 +2557,7 @@ namespace IRExplorerUI {
         }
 
         private class OptionalColumnInfo {
-            public OptionalColumnInfo(string binding, string title, string name, string tooltip, 
+            public OptionalColumnInfo(string binding, string title, string name, string tooltip,
                 IValueConverter converter = null, double width = Double.NaN, bool isVisible = true) {
                 Binding = binding;
                 Name = name;
@@ -2537,7 +2579,7 @@ namespace IRExplorerUI {
 
         private static IValueConverter DiffValueConverter = new FunctionDiffValueConverter();
         private static IValueConverter DiffKindConverter = new FunctionDiffKindConverter();
-        
+
         private static OptionalColumnInfo[] StatisticsColumns = new OptionalColumnInfo[] {
             new OptionalColumnInfo("Statistics.Instructions", "Instrs{0}", "InstructionsHeader", "Instruction number{0}", DiffValueConverter),
             new OptionalColumnInfo("Statistics.Size", "Size{0}", "SizeHeader", "Function size in bytes{0}", DiffValueConverter),
@@ -2547,15 +2589,15 @@ namespace IRExplorerUI {
             new OptionalColumnInfo("Statistics.Callees", "Callees{0}", "CalleesHeader", "Number of unique called functions{0}", DiffValueConverter),
             new OptionalColumnInfo("Statistics.Callers", "Callers{0}", "CallersHeader", "Number of unique caller functions{0}", DiffValueConverter),
             new OptionalColumnInfo("Statistics.Calls", "Calls{0}", "CallsHeader", "Number of call instructions{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.IndirectCalls", "IndirectCalls{0}", "IndirectCallsHeader", "Number of indirect/virtual call instructions{0}", DiffValueConverter),
+            new OptionalColumnInfo("Statistics.IndirectCalls", "IndirectCalls{0}", "IndirectCallsHeader", "Number of indirect/virtual call instructions{0}", DiffValueConverter)
 
         };
-        
+
         private static OptionalColumnInfo[] StatisticsDiffColumns = new OptionalColumnInfo[] {
             new OptionalColumnInfo("FunctionDiffKind", $"Diff",
                 "DiffHeader", "Difference kind (only in left/right document or modified)", DiffKindConverter),
         };
-        
+
 
         private void RemoveListViewColumns(ListView listView, OptionalColumnInfo[] columns,
             IGridViewColumnValueSorter columnSorter = null) {
@@ -2569,16 +2611,29 @@ namespace IRExplorerUI {
             IGridViewColumnValueSorter columnSorter = null,
             string titleSuffix = "", string tooltipSuffix = "", bool useValueConverter = true) {
             foreach (var column in columns) {
-                if(!column.IsVisible) continue;
-                
-                var columnHeader = AddListViewColumn(listView, column.Binding, 
-                    string.Format(column.Title, titleSuffix), column.Name, 
+                if (!column.IsVisible) continue;
+
+                var columnHeader = AddListViewColumn(listView, column.Binding,
+                    string.Format(column.Title, titleSuffix), column.Name,
                     string.Format(column.Tooltip, tooltipSuffix),
                     column.Width, useValueConverter ? column.Converter : null);
                 columnSorter?.RegisterColumnHeader(columnHeader);
             }
         }
-        
+
+        public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
+            //? TODO: to remove, check tag is counter type
+            var counters = Session.ProfileData.SortedPerformanceCounters;
+
+            for (int i = 0; i < counters.Count; i++) {
+                var counter = counters[i];
+                var columnHeader = AddListViewColumn(FunctionList, $"Counters.Counters[{i}].Value", $"{counter.Name}{titleSuffix}",
+                    $"PerfCounters{i}", $"{counter.Name} ({counter.Id}){tooltipSuffix}");
+                columnHeader.Tag = counter;
+                functionValueSorter_.RegisterColumnHeader(columnHeader);
+            }
+        }
+
         public void AddStatisticsFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
             RemoveListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_);
             RemoveListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);

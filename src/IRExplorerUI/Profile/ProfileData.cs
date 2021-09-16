@@ -41,16 +41,39 @@ namespace IRExplorerUI.Profile {
                 counter = Counters[index];
             }
             else {
+                // Keep the list sorted so that it is in sync
+                // with the sorted counter definition list.
                 counter = new PerformanceCounterValue(perfCounterId);
-                Counters.Add(counter);
+                int insertionIndex = 0;
+
+                for(int i = 0; i < Counters.Count; i++, insertionIndex++) {
+                    if(Counters[i].CounterId >= perfCounterId) {
+                        break;
+                    }
+                }
+
+                Counters.Insert(insertionIndex, counter);
             }
 
             counter.Value += value;
         }
 
         public long FindCounterSamples(int perfCounterId) {
-            var index =Counters.FindIndex((item) => item.CounterId == perfCounterId);
+            var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
             return index != -1 ? Counters[index].Value : 0;
+        }
+
+        public void Add(PerformanceCounterSet other) {
+            foreach(var counter in other.Counters) {
+                var index = Counters.FindIndex((item) => item.CounterId == counter.CounterId);
+
+                if(index != -1) {
+                    Counters[index].Value += counter.Value;
+                }
+                else {
+                    Counters.Add(new PerformanceCounterValue(counter.CounterId, counter.Value));
+                }
+            }
         }
     }
 
@@ -82,6 +105,7 @@ namespace IRExplorerUI.Profile {
 
         public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
 
+        public bool HasPerformanceCounters => InstructionCounters.Count > 0;
 
         public class ProcessingResult {
             public List<Tuple<IRElement, TimeSpan>> SampledElements { get; set; }
@@ -91,11 +115,14 @@ namespace IRExplorerUI.Profile {
             public Dictionary<BlockIR, PerformanceCounterSet> BlockCounterElementsMap { get; set; }
             public List<Tuple<BlockIR, PerformanceCounterSet>> BlockCounterElements { get; set; }
 
+            public PerformanceCounterSet FunctionCounters { get; set; }
+
             public ProcessingResult(int capacity = 0) {
                 SampledElements = new List<Tuple<IRElement, TimeSpan>>(capacity);
                 BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
                 CounterElements = new List<Tuple<IRElement, PerformanceCounterSet>>(capacity);
                 BlockCounterElementsMap = new Dictionary<BlockIR, PerformanceCounterSet>(capacity);
+                FunctionCounters = new PerformanceCounterSet();
             }
         }
 
@@ -195,11 +222,23 @@ namespace IRExplorerUI.Profile {
                     result.CounterElements.Add(new Tuple<IRElement, PerformanceCounterSet>(element, pair.Value));
                     //? TODO per block
                 }
+
+                result.FunctionCounters.Add(pair.Value);
             }
 
             result.BlockSampledElements = result.BlockSampledElementsMap.ToList();
             result.BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
             result.SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+            return result;
+        }
+
+        public PerformanceCounterSet ComputeFunctionCounters() {
+            var result = new PerformanceCounterSet();
+
+            foreach (var pair in InstructionCounters) {
+                result.Add(pair.Value);
+            }
+
             return result;
         }
 

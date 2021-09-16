@@ -12,6 +12,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Google.Protobuf.WellKnownTypes;
 using IRExplorerUI.DebugServer;
 using IRExplorerUI.Diff;
 using IRExplorerUI.Document;
@@ -335,11 +336,25 @@ namespace IRExplorerUI {
             return null;
         }
 
+        private DateTime lastDocumentLoadUpdate_;
+
         private void UpdateIRDocumentLoadProgress(IRSectionReader reader, SectionReaderProgressInfo info) {
             if (info.TotalBytes == 0) {
                 return;
             }
 
+            // Updating too often slows down the file parsing by about
+            // 20-30% due to Dispatcher.BeginInvoke overhead.
+            var currentTime = DateTime.UtcNow;
+            var diffTime = currentTime - lastDocumentLoadTime_;
+
+            if (diffTime.TotalMilliseconds < 100) {
+                return;
+            }
+
+            lastDocumentLoadUpdate_ = currentTime;
+
+            // Schedule the UI update.
             Dispatcher.BeginInvoke(new Action(() => {
                 if (!loadingDocuments_) {
                     // It can happen that this code on the dispatchers runs after
@@ -427,7 +442,7 @@ namespace IRExplorerUI {
                 return result;
             }
             catch (Exception ex) {
-                Trace.TraceError("$Failed to load document {path}: {ex}");
+                Trace.TraceError($"Failed to load document {path}: {ex}");
                 Telemetry.TrackException(ex);
                 return null;
             }
@@ -442,7 +457,7 @@ namespace IRExplorerUI {
                 return result;
             }
             catch (Exception ex) {
-                Trace.TraceError("$Failed to load in-memory document: {ex}");
+                Trace.TraceError($"Failed to load in-memory document: {ex}");
                 Telemetry.TrackException(ex);
                 return null;
             }

@@ -169,17 +169,34 @@ namespace IRExplorerUI.Profile {
                 processMap_ = new Dictionary<int, List<ImageInfo>>(procs.Count);
                 ipImageCache_ = new Dictionary<long, IImage>();
 
+                var imageSet = new Dictionary<string, ImageInfo>();
+
                 foreach (var proc in procs) {
+                   // Trace.WriteLine($"PROC {proc.ImageName}");
+
                     var imageList = new List<ImageInfo>(proc.Images.Count);
                     processMap_[proc.Id] = imageList;
 
                     foreach (var image in proc.Images) {
-                        imageList.Add(new ImageInfo() {
+                        var item = new ImageInfo() {
                             Image = image,
                             AddressStart = image.AddressRange.BaseAddress.Value,
                             AddressEnd = image.AddressRange.BaseAddress.Value +
-                            image.AddressRange.Size.Bytes
-                        });
+                                                    image.AddressRange.Size.Bytes
+                        };
+                        imageList.Add(item);
+
+                        //Trace.WriteLine($"Image {image.FileName}: {imageList[^1].AddressStart} - {imageList[^1].AddressEnd}");
+
+                        if (!string.IsNullOrEmpty(image.FileName)) {
+                            if (imageSet.TryGetValue(image.FileName, out var other)) {
+                                if (other.AddressStart != item.AddressStart ||
+                                    other.AddressEnd != item.AddressEnd) {
+                                    Trace.WriteLine("MISMATCH!");
+                                }
+                            }
+                            imageSet[image.FileName] = item;
+                        }
                     }
                 }
             }
@@ -193,6 +210,7 @@ namespace IRExplorerUI.Profile {
                     return cachedImage;
                 }
 
+                //? TODO: Needs a range tree
                 foreach(var imageList in processMap_.Values) {
                     foreach(var image in imageList) {
                         if (ip >= image.AddressStart &&
@@ -276,8 +294,6 @@ namespace IRExplorerUI.Profile {
                     trace.Process(new ProcessProgressTracker(progressCallback));
 
 
-                    var imageCounts = new Dictionary<string, int>();
-                    int noImage = 0;
                     var allProcs = procs.Result.Processes;
                     var ipImageCache = new Dictionary<long, IImage>();
                     var binaryCounters = new List<PerformanceCounterEvent>();
@@ -287,20 +303,9 @@ namespace IRExplorerUI.Profile {
 
                     for(int i = 0; i < events_.Count; i++) {
                         var counter = events_[i];
-
-                        //if (!ipImageCache.TryGetValue(counter.IP, out var image)) {
-                            var image = procCache.FindImageForIP(counter.IP, counter.ProcessId);
-                            //ipImageCache[counter.IP] = image;
-                        //}
+                        var image = procCache.FindImageForIP(counter.IP, counter.ProcessId);
 
                         if (image != null) {
-                            if (imageCounts.TryGetValue(image.FileName, out var times)) {
-                                imageCounts[image.FileName] = times + 1;
-                            }
-                            else {
-                                imageCounts[image.FileName] = 1;
-                            }
-                            
                             profileData_.AddModuleCounter(image.FileName, counter.ProfilerSource, 1);
 
                             // Filter counters for current binary.
@@ -310,17 +315,7 @@ namespace IRExplorerUI.Profile {
                                 mainImage = image;
                             }
                         }
-                        else {
-                            noImage++;
-                        }
                     }
-
-                    Trace.WriteLine($"No count: {noImage}");
-                    foreach (var pair in imageCounts) {
-                        Trace.WriteLine($"{pair.Key} : {pair.Value}");
-                    }
-
-                    Trace.Flush();
 
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
                         return false;
