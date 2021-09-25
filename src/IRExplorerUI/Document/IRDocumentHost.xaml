@@ -26,6 +26,34 @@
     </UserControl.CommandBindings>
 
     <UserControl.Resources>
+        <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="2" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ColumnsVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="*" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ColumnsVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
         <Style x:Key="GridSplitterStyle" TargetType="{x:Type RowDefinition}">
             <Style.Setters>
                 <Setter Property="Height" Value="2" />
@@ -406,24 +434,47 @@
                         </ToggleButton>
 
                         <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                    </ToolBar>
+                </ToolBarTray>
+                <local:PanelToolbarTray
+                    Grid.Column="1"
+                    HasDuplicateButton="False"
+                    HasPinButton="False"
+                    SettingsClicked="PanelToolbarTray_SettingsClicked" />
+            </Grid>
+
+            <Grid Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
+                    <ColumnDefinition Style="{StaticResource ColumnsStyle}" />
+                </Grid.ColumnDefinitions>
+
+                <DockPanel Grid.Column="0" LastChildFill="True">
+                    <StackPanel
+                        Height="20"
+                        Background="Gray"
+                        DockPanel.Dock="Top"
+                        Orientation="Horizontal">
                         <Button
-    Command="local:DocumentHostCommand.JumpToProfiledElement"
-    CommandTarget="{Binding ElementName=TextView}"
-                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}" 
-    ToolTip="Jump to hottest profiled instruction">
+                            Command="local:DocumentHostCommand.JumpToProfiledElement"
+                            CommandTarget="{Binding ElementName=TextView}"
+                            ToolTip="Jump to hottest profiled instruction"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
                             <Image Source="{StaticResource StarIcon}" />
                         </Button>
 
                         <ComboBox
-     x:Name="ProfileBlockSelector"
-     Width="80"
-     Margin="4,0,0,0"
-     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-     Loaded="ComboBox_Loaded"
-     SelectionChanged="ProfileBlockSelector_SelectionChanged"
-                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}" 
-     ToolTip="Jump to profiled block">
+                            x:Name="ProfileBlockSelector"
+                            Width="80"
+                            Margin="4,0,0,0"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            Loaded="ComboBox_Loaded"
+                            SelectionChanged="ProfileBlockSelector_SelectionChanged"
+                            ToolTip="Jump to profiled block"
+                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
                             <ComboBox.Resources>
                                 <Style TargetType="ComboBoxItem">
                                     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -432,15 +483,15 @@
 
                             <ComboBox.ItemTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
-                                        <TextBlock Text="{Binding Path=Item1.Number}" Width="50"/>
-                                        <Separator/>
+                                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                        <TextBlock Width="50" Text="{Binding Path=Item1.Number}" />
+                                        <Separator />
                                         <TextBlock Text="{Binding Path=Item2.TotalMilliseconds, Converter={StaticResource MIllisecondTime}}">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem}}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Setter Property="Visibility" Value="Collapsed" />
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
@@ -456,269 +507,308 @@
                                 </ItemsPanelTemplate>
                             </ComboBox.ItemsPanel>
                         </ComboBox>
-                    </ToolBar>
-                </ToolBarTray>
-                <local:PanelToolbarTray
+                    </StackPanel>
+
+                    <local:IRDocument
+                        x:Name="TextView"
+                        DockPanel.Dock="Bottom"
+                        FontFamily="Consolas"
+                        FontSize="13"
+                        ScrollViewer.ScrollChanged="TextView_ScrollChanged"
+                        ShowLineNumbers="True">
+                        <local:IRDocument.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem
+                                    Command="local:DocumentCommand.GoToDefinition"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Go To Definition"
+                                    InputGestureText="Return">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource GotoDefinitionIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.GoToDefinitionSkipCopies"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Go To Definition (skip copies)"
+                                    InputGestureText="Ctrl+Return">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource GotoDefinitionIconSkipIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentHostCommand.SearchSymbol"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Search Symbol"
+                                    InputGestureText="Ctrl+Shift+F">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource SearchIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentHostCommand.SearchSymbolAllSections"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Search Symbol in All Sections">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource SearchIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+
+                                <MenuItem
+                                    Command="local:DocumentCommand.ShowReferences"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Show All References"
+                                    InputGestureText="Ctrl+R">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource ListIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.ShowUses"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Show SSA Uses"
+                                    InputGestureText="Ctrl+U">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource SectionIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.ShowExpressionGraph"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="View Expression Graph"
+                                    InputGestureText="Ctrl+E">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource GraphIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+
+                                <Separator />
+
+                                <MenuItem
+                                    Command="local:DocumentCommand.AddBookmark"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Add Bookmark"
+                                    InputGestureText="Ctrl+B"
+                                    ToolTip="Add a new bookmark associated with the selected value">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource AddBookmarkIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.RemoveBookmark"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Remove Bookmark"
+                                    InputGestureText="Ctrl+Shift+B"
+                                    ToolTip="Remove the bookmark associated with the selected value">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource RemoveIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.PreviousBookmark"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Previous Bookmark"
+                                    InputGestureText="Shift+F2">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource UpArrowIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.NextBookmark"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Next Bookmark"
+                                    InputGestureText="F2">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource DownArrowIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+
+                                <MenuItem
+                                    Focusable="False"
+                                    Header="Mark"
+                                    InputGestureText="Ctrl+M"
+                                    IsHitTestVisible="False" />
+                                <MenuItem>
+                                    <MenuItem.Header>
+                                        <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.Mark" />
+                                    </MenuItem.Header>
+                                </MenuItem>
+                                <Separator />
+
+                                <MenuItem>
+                                    <MenuItem.Header>
+                                        <local:IconSelector Margin="0,2,0,2" IconSelectedCommand="local:DocumentCommand.MarkIcon" />
+                                    </MenuItem.Header>
+                                </MenuItem>
+                                <Separator />
+
+                                <MenuItem Header="Mark Block" InputGestureText="Ctrl+Shift+M">
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkBlock" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.MarkDefinition"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Mark Definition(s)"
+                                    InputGestureText="Ctrl+D">
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinition" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuItem>
+                                <MenuItem Header="Mark Definition Block" InputGestureText="Ctrl+Shift+D">
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinitionBlock" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.MarkUses"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Mark Uses"
+                                    InputGestureText="Ctrl+Shift+U">
+                                    <MenuItem>
+                                        <MenuItem.Header>
+                                            <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkUses" />
+                                        </MenuItem.Header>
+                                    </MenuItem>
+                                </MenuItem>
+                                <MenuItem
+                                    Command="local:DocumentCommand.MarkReferences"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Mark All References"
+                                    InputGestureText="Ctrl+Shift+R" />
+                                <Separator />
+
+                                <MenuItem
+                                    Command="local:DocumentCommand.UndoAction"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Undo"
+                                    InputGestureText="Ctrl+Z">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource UndoIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+
+                                <MenuItem Header="Clear">
+                                    <MenuItem
+                                        Command="local:DocumentCommand.ClearMarker"
+                                        CommandTarget="{Binding ElementName=TextView}"
+                                        Header="Selected Marker"
+                                        InputGestureText="Ctrl+Del" />
+                                    <MenuItem
+                                        Command="local:DocumentCommand.ClearAllMarkers"
+                                        CommandTarget="{Binding ElementName=TextView}"
+                                        Header="All Markers"
+                                        InputGestureText="Ctrl+Shift+Del" />
+                                    <MenuItem
+                                        Command="local:DocumentCommand.ClearBlockMarkers"
+                                        CommandTarget="{Binding ElementName=TextView}"
+                                        Header="All Block Markers" />
+                                    <MenuItem
+                                        Command="local:DocumentCommand.ClearInstructionMarkers"
+                                        CommandTarget="{Binding ElementName=TextView}"
+                                        Header="All Instruction Markers" />
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource RemoveIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </local:IRDocument.ContextMenu>
+                    </local:IRDocument>
+                </DockPanel>
+                <GridSplitter
                     Grid.Column="1"
-                    HasDuplicateButton="False"
-                    HasPinButton="False"
-                    SettingsClicked="PanelToolbarTray_SettingsClicked" />
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    ResizeBehavior="PreviousAndNext" />
+
+                <ListView
+                    x:Name="ColumnsList"
+                    Grid.Column="2"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Stretch"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                    BorderBrush="{x:Null}"
+                    BorderThickness="0,0,0,0"
+                    ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                    SelectionMode="Single"
+                    UseLayoutRounding="False"
+                    VirtualizingPanel.CacheLength="2,2"
+                    VirtualizingPanel.CacheLengthUnit="Pixel"
+                    VirtualizingPanel.ScrollUnit="Pixel"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling"
+                    Visibility="{Binding ShowColumns, Converter={StaticResource BoolToVisibility}}">
+                    <ListView.View>
+                        <GridView />
+                    </ListView.View>
+
+                    <ListView.Resources>
+                        <Style TargetType="{x:Type GridViewColumnHeader}">
+                            <Setter Property="Height" Value="18" />
+                            <Setter Property="Background" Value="Gray" />
+                            <Setter Property="Margin" Value="0" />
+                            <Setter Property="BorderThickness" Value="0" />
+                        </Style>
+                    </ListView.Resources>
+
+                    <ListView.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                            <Setter Property="Background" Value="{Binding BackColor}" />
+                            <Setter Property="Height" Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type local:IRDocumentHost}}}" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
             </Grid>
-
-            <local:IRDocument
-                x:Name="TextView"
-                Grid.Row="1"
-                FontFamily="Consolas"
-                FontSize="13"
-                ScrollViewer.ScrollChanged="TextView_ScrollChanged"
-                ShowLineNumbers="True">
-                <local:IRDocument.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem
-                            Command="local:DocumentCommand.GoToDefinition"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Go To Definition"
-                            InputGestureText="Return">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource GotoDefinitionIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.GoToDefinitionSkipCopies"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Go To Definition (skip copies)"
-                            InputGestureText="Ctrl+Return">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource GotoDefinitionIconSkipIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentHostCommand.SearchSymbol"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Search Symbol"
-                            InputGestureText="Ctrl+Shift+F">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource SearchIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentHostCommand.SearchSymbolAllSections"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Search Symbol in All Sections">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource SearchIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator />
-
-                        <MenuItem
-                            Command="local:DocumentCommand.ShowReferences"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Show All References"
-                            InputGestureText="Ctrl+R">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource ListIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.ShowUses"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Show SSA Uses"
-                            InputGestureText="Ctrl+U">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource SectionIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.ShowExpressionGraph"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="View Expression Graph"
-                            InputGestureText="Ctrl+E">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource GraphIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-
-                        <Separator />
-
-                        <MenuItem
-                            Command="local:DocumentCommand.AddBookmark"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Add Bookmark"
-                            InputGestureText="Ctrl+B"
-                            ToolTip="Add a new bookmark associated with the selected value">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource AddBookmarkIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.RemoveBookmark"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Remove Bookmark"
-                            InputGestureText="Ctrl+Shift+B"
-                            ToolTip="Remove the bookmark associated with the selected value">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource RemoveIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.PreviousBookmark"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Previous Bookmark"
-                            InputGestureText="Shift+F2">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource UpArrowIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.NextBookmark"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Next Bookmark"
-                            InputGestureText="F2">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource DownArrowIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <Separator />
-
-                        <MenuItem
-                            Focusable="False"
-                            Header="Mark"
-                            InputGestureText="Ctrl+M"
-                            IsHitTestVisible="False" />
-                        <MenuItem>
-                            <MenuItem.Header>
-                                <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.Mark" />
-                            </MenuItem.Header>
-                        </MenuItem>
-                        <Separator />
-
-                        <MenuItem>
-                            <MenuItem.Header>
-                                <local:IconSelector Margin="0,2,0,2" IconSelectedCommand="local:DocumentCommand.MarkIcon" />
-                            </MenuItem.Header>
-                        </MenuItem>
-                        <Separator />
-
-                        <MenuItem Header="Mark Block" InputGestureText="Ctrl+Shift+M">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkBlock" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.MarkDefinition"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Mark Definition(s)"
-                            InputGestureText="Ctrl+D">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinition" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <MenuItem Header="Mark Definition Block" InputGestureText="Ctrl+Shift+D">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkDefinitionBlock" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.MarkUses"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Mark Uses"
-                            InputGestureText="Ctrl+Shift+U">
-                            <MenuItem>
-                                <MenuItem.Header>
-                                    <local:ColorSelector ColorSelectedCommand="local:DocumentCommand.MarkUses" />
-                                </MenuItem.Header>
-                            </MenuItem>
-                        </MenuItem>
-                        <MenuItem
-                            Command="local:DocumentCommand.MarkReferences"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Mark All References"
-                            InputGestureText="Ctrl+Shift+R" />
-                        <Separator />
-
-                        <MenuItem
-                            Command="local:DocumentCommand.UndoAction"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            Header="Undo"
-                            InputGestureText="Ctrl+Z">
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource UndoIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-
-                        <MenuItem Header="Clear">
-                            <MenuItem
-                                Command="local:DocumentCommand.ClearMarker"
-                                CommandTarget="{Binding ElementName=TextView}"
-                                Header="Selected Marker"
-                                InputGestureText="Ctrl+Del" />
-                            <MenuItem
-                                Command="local:DocumentCommand.ClearAllMarkers"
-                                CommandTarget="{Binding ElementName=TextView}"
-                                Header="All Markers"
-                                InputGestureText="Ctrl+Shift+Del" />
-                            <MenuItem
-                                Command="local:DocumentCommand.ClearBlockMarkers"
-                                CommandTarget="{Binding ElementName=TextView}"
-                                Header="All Block Markers" />
-                            <MenuItem
-                                Command="local:DocumentCommand.ClearInstructionMarkers"
-                                CommandTarget="{Binding ElementName=TextView}"
-                                Header="All Instruction Markers" />
-                            <MenuItem.Icon>
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource RemoveIcon}" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                    </ContextMenu>
-                </local:IRDocument.ContextMenu>
-            </local:IRDocument>
-
             <GridSplitter
                 Grid.Row="2"
                 HorizontalAlignment="Stretch"

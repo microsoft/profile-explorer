@@ -11,7 +11,6 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerUI.OptionsPanels;
@@ -2457,58 +2456,6 @@ namespace IRExplorerUI {
             return stats;
         }
 
-        private DataTemplate CreateGridColumnBindingTemplate(string propertyName, IValueConverter valueConverter = null) {
-            DataTemplate template = new DataTemplate();
-            FrameworkElementFactory factory = new FrameworkElementFactory(typeof(TextBlock));
-            factory.SetValue(TextBlock.TextAlignmentProperty, TextAlignment.Left);
-            var binding = new Binding(propertyName);
-            binding.Converter = valueConverter;
-            factory.SetBinding(TextBlock.TextProperty, binding);
-            template.VisualTree = factory;
-            return template;
-        }
-
-        private GridViewColumnHeader RemoveListViewColumn(ListView listView, string columnName) {
-            var functionGrid = (GridView)listView.View;
-
-            foreach (var column in functionGrid.Columns) {
-                if (column.Header is GridViewColumnHeader header) {
-                    if (header.Name == columnName) {
-                        functionGrid.Columns.Remove(column);
-                        return header;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        private GridViewColumnHeader AddListViewColumn(ListView listView, string bindingValue,
-                               string columnTitle, string columnName, string columnTooltip = null,
-                               double columnWidth = double.NaN, IValueConverter valueConverter = null, int index = -1) {
-            var functionGrid = (GridView)listView.View;
-            var columnHeader = new GridViewColumnHeader() {
-                Name = columnName, Content = columnTitle, ToolTip = columnTooltip
-            };
-
-
-            var item = new GridViewColumn {
-                Header = columnHeader,
-                Width = columnWidth,
-                CellTemplate = CreateGridColumnBindingTemplate(bindingValue, valueConverter),
-                HeaderContainerStyle = (Style)Application.Current.FindResource("ListViewHeaderStyle") as Style
-            };
-
-            if (index != -1) {
-                functionGrid.Columns.Insert(index, item);
-            }
-            else {
-                functionGrid.Columns.Add(item);
-            }
-
-            return columnHeader;
-        }
-
         class FunctionDiffKindConverter : IValueConverter {
             public virtual object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
                 if (value is DiffKind diffKind) {
@@ -2556,70 +2503,26 @@ namespace IRExplorerUI {
             }
         }
 
-        private class OptionalColumnInfo {
-            public OptionalColumnInfo(string binding, string title, string name, string tooltip,
-                IValueConverter converter = null, double width = Double.NaN, bool isVisible = true) {
-                Binding = binding;
-                Name = name;
-                Title = title;
-                Tooltip = tooltip;
-                Width = width;
-                IsVisible = isVisible;
-                Converter = converter;
-            }
-
-            public string Binding { get; set; }
-            public string Name { get; set; }
-            public string Title { get; set; }
-            public string Tooltip { get; set; }
-            public double Width { get; set; }
-            public bool IsVisible { get; set; }
-            public IValueConverter Converter { get; set; }
-        }
-
         private static IValueConverter DiffValueConverter = new FunctionDiffValueConverter();
         private static IValueConverter DiffKindConverter = new FunctionDiffKindConverter();
 
-        private static OptionalColumnInfo[] StatisticsColumns = new OptionalColumnInfo[] {
-            new OptionalColumnInfo("Statistics.Instructions", "Instrs{0}", "InstructionsHeader", "Instruction number{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.Size", "Size{0}", "SizeHeader", "Function size in bytes{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.Loads", "Loads{0}", "LoadsHeader", "Number of instructions reading memory{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.Stores", "Stores{0}", "StoresHeader", "Number of instructions writing memory{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.Branches", "Branches{0}", "BranchesHeader", "Number of branch/jump instructions{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.Callees", "Callees{0}", "CalleesHeader", "Number of unique called functions{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.Callers", "Callers{0}", "CallersHeader", "Number of unique caller functions{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.Calls", "Calls{0}", "CallsHeader", "Number of call instructions{0}", DiffValueConverter),
-            new OptionalColumnInfo("Statistics.IndirectCalls", "IndirectCalls{0}", "IndirectCallsHeader", "Number of indirect/virtual call instructions{0}", DiffValueConverter)
+        private static  OptionalColumn[] StatisticsColumns = new  OptionalColumn[] {
+            OptionalColumn.Binding("Statistics.Instructions", "InstructionsHeader", "Instrs{0}", "Instruction number{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Size", "SizeHeader", "Size{0}", "Function size in bytes{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Loads", "LoadsHeader", "Loads{0}", "Number of instructions reading memory{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Stores", "StoresHeader", "Stores{0}", "Number of instructions writing memory{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Branches", "BranchesHeader", "Branches{0}", "Number of branch/jump instructions{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Callees", "CalleesHeader", "Callees{0}", "Number of unique called functions{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Callers", "CallersHeader", "Callers{0}", "Number of unique caller functions{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Calls", "CallsHeader", "Calls{0}", "Number of call instructions{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.IndirectCalls", "IndirectCallsHeader", "IndirectCalls{0}", "Number of indirect/virtual call instructions{0}", DiffValueConverter)
 
         };
 
-        private static OptionalColumnInfo[] StatisticsDiffColumns = new OptionalColumnInfo[] {
-            new OptionalColumnInfo("FunctionDiffKind", $"Diff",
-                "DiffHeader", "Difference kind (only in left/right document or modified)", DiffKindConverter),
+        private static  OptionalColumn[] StatisticsDiffColumns = new  OptionalColumn[] {
+             OptionalColumn.Binding("FunctionDiffKind",
+                "DiffHeader", $"Diff", "Difference kind (only in left/right document or modified)", DiffKindConverter),
         };
-
-
-        private void RemoveListViewColumns(ListView listView, OptionalColumnInfo[] columns,
-            IGridViewColumnValueSorter columnSorter = null) {
-            foreach (var column in columns) {
-                var columnHeader = RemoveListViewColumn(listView, column.Name);
-                columnSorter?.UnregisterColumnHeader(columnHeader);
-            }
-        }
-
-        private void AddListViewColumns(ListView listView, OptionalColumnInfo[] columns,
-            IGridViewColumnValueSorter columnSorter = null,
-            string titleSuffix = "", string tooltipSuffix = "", bool useValueConverter = true) {
-            foreach (var column in columns) {
-                if (!column.IsVisible) continue;
-
-                var columnHeader = AddListViewColumn(listView, column.Binding,
-                    string.Format(column.Title, titleSuffix), column.Name,
-                    string.Format(column.Tooltip, tooltipSuffix),
-                    column.Width, useValueConverter ? column.Converter : null);
-                columnSorter?.RegisterColumnHeader(columnHeader);
-            }
-        }
 
         public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
             //? TODO: to remove, check tag is counter type
@@ -2627,21 +2530,21 @@ namespace IRExplorerUI {
 
             for (int i = 0; i < counters.Count; i++) {
                 var counter = counters[i];
-                var columnHeader = AddListViewColumn(FunctionList, $"Counters.Counters[{i}].Value", $"{counter.Name}{titleSuffix}",
-                    $"PerfCounters{i}", $"{counter.Name} ({counter.Id}){tooltipSuffix}");
+                var columnHeader = OptionalColumn.AddListViewColumn(FunctionList, 
+                    OptionalColumn.Binding($"Counters.Counters[{i}].Value",
+                    $"PerfCounters{i}", $"{counter.Name}{titleSuffix}", $"{counter.Name} ({counter.Id}){tooltipSuffix}"), functionValueSorter_);
                 columnHeader.Tag = counter;
-                functionValueSorter_.RegisterColumnHeader(columnHeader);
             }
         }
 
         public void AddStatisticsFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            RemoveListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_);
-            RemoveListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
+            OptionalColumn.RemoveListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_);
+            OptionalColumn.RemoveListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
 
-            AddListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn);
+            OptionalColumn.AddListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn);
 
             if (addDiffColumn) {
-                AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);    
+                OptionalColumn.AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);    
             }
         }
 
@@ -2652,13 +2555,20 @@ namespace IRExplorerUI {
                 ChildTimeColumnVisible = false;
             }
 
-            AddListViewColumn(ChildFunctionList, "Statistics.Instructions", $"Instrs{titleSuffix}", "InstructionsHeader", $"Instruction number{tooltipSuffix}", columnWidth, null, 1);
-            AddListViewColumn(ChildFunctionList, "Statistics.Size", $"Size{titleSuffix}", "SizeHeader", $"Function size in bytes{tooltipSuffix}", columnWidth, null, 2);
+            OptionalColumn.AddListViewColumn(ChildFunctionList,
+                OptionalColumn.Binding("Statistics.Instructions", "InstructionsHeader", 
+                    $"Instrs", $"Instruction number", null, columnWidth), 
+                functionValueSorter_, titleSuffix, tooltipSuffix, true, 1);
+
+            OptionalColumn.AddListViewColumn(ChildFunctionList,
+                OptionalColumn.Binding("Statistics.Size", "SizeHeader", 
+                    $"Size", $"Function size in bytes", null, columnWidth), 
+                functionValueSorter_, titleSuffix, tooltipSuffix, true, 2);
         }
 
         public void RemoveStatisticsChildFunctionListColumns() {
-            RemoveListViewColumn(ChildFunctionList, "SizeHeader");
-            RemoveListViewColumn(ChildFunctionList, "InstructionsHeader");
+            OptionalColumn.RemoveListViewColumn(ChildFunctionList, "SizeHeader", functionValueSorter_);
+            OptionalColumn.RemoveListViewColumn(ChildFunctionList, "InstructionsHeader", functionValueSorter_);
         }
 
         private void AutoResizeColumns(ListView listView) {

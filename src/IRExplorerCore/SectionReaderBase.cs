@@ -111,6 +111,8 @@ namespace IRExplorerCore {
         private string preloadedData_;
         private int prevLineCount_;
         private string[] prevLines_;
+        private string currentLine_;
+        private long nextInitialOffset_;
         private bool hasPreprocessedLines_;
         private bool hasMetadataLines_;
         private IRTextSummary summary_;
@@ -536,13 +538,13 @@ namespace IRExplorerCore {
             hasMetadataLines_ = false;
         }
 
-        private string currentLine_;
 
         private IRTextSection FindNextSection(SectionTextHandler sectionTextHandler) {
             prevLineCount_ = 0;
 
             while (true) {
-                long initialOffset = TextOffset();
+                long initialOffset = nextInitialOffset_;
+
                 if (currentLine_ == null ||
                     !IsFunctionEnd(currentLine_) ||
                     !FunctionEndIsFunctionStart(currentLine_)) {
@@ -556,12 +558,12 @@ namespace IRExplorerCore {
                 // Each section is expected to start with a name,
                 // followed by an ASCII "currentLine_", which is searched for here,
                 // unless the client indicates that the name may be missing.
-                bool hasName = true;
+                bool hasSectionName = true;
 
                 if (!IsSectionStart(currentLine_)) {
                     if (!expectSectionHeaders_ &&
                         (IsFunctionStart(currentLine_) || IsBlockStart(currentLine_))) {
-                        hasName = false;
+                        hasSectionName = false;
                     }
                     else {
                         // Skip over currentLine_.
@@ -570,10 +572,12 @@ namespace IRExplorerCore {
                         continue;
                     }
                 }
+
                 string funcName = string.Empty;
 
                 if (SectionStartIsFunctionStart(currentLine_)) {
                     funcName = ExtractFunctionName(currentLine_);
+                    hasSectionName = false;
                 }
 
                 // Collect the text lines if the client wants to process
@@ -585,12 +589,12 @@ namespace IRExplorerCore {
                 }
 
                 // Go back and find the name of the section.
-                int sectionStartLine = lineIndex_ + (hasName ? 1 : 0);
+                int sectionStartLine = lineIndex_ + (hasSectionName ? 1 : 0);
                 int sectionEndLine = 0;
-                string sectionName = hasName ? ExtractSectionName(currentLine_) : string.Empty;
+                string sectionName = hasSectionName ? ExtractSectionName(currentLine_) : string.Empty;
 
                 // Find the end of the section and extract the function name.
-                long startOffset = hasName ? TextOffset() : initialOffset;
+                long startOffset = hasSectionName ? TextOffset() : initialOffset;
                 long endOffset = startOffset;
                 int blockCount = 0;
 
@@ -620,7 +624,8 @@ namespace IRExplorerCore {
                     else if (IsFunctionEnd(currentLine_)) {
                         // Found function end.
                         endOffset = FunctionEndIsFunctionStart(currentLine_) ? previousOffset_ : TextOffset();
-                        sectionEndLine = lineIndex_ + 1;
+                        sectionEndLine = lineIndex_ + 1; 
+                        nextInitialOffset_ = endOffset;
                         break;
                     }
                     else if (IsBlockStart(currentLine_)) {
@@ -632,6 +637,7 @@ namespace IRExplorerCore {
                         lineMetadata[lineIndex_ - sectionStartLine - metadataLines] = currentLine_;
                         metadataLines++;
                     }
+
                     currentLine_ = null;
                     lineIndex_++;
                 }
