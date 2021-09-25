@@ -135,6 +135,11 @@ namespace IRExplorerCore.ASM {
                         block = newBlock;
                         startElement = current_;
                     }
+                    else {
+                        // Skip over unknown text, such as the function name at the start.
+                        SkipToLineStart();
+                        continue;
+                    }
 
                     makeNewBlock_ = false;
                     connectNewBlock_ = false;

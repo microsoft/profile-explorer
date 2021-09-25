@@ -290,10 +290,16 @@ namespace IRExplorerUI.Profile {
                     var pendingCpuSamplingData = trace.UseCpuSamplingData();
                     var procs = trace.UseProcesses();
 
+                    Trace.WriteLine($"Start load at {DateTime.Now}");
+                    Trace.Flush();
+
                     trace.Use(CollectPerformanceCounterEvents);
                     trace.Process(new ProcessProgressTracker(progressCallback));
+                    
+                    Trace.WriteLine($"After process load at {DateTime.Now}");
+                    Trace.Flush();
 
-
+                    var sw = Stopwatch.StartNew();
                     var allProcs = procs.Result.Processes;
                     var ipImageCache = new Dictionary<long, IImage>();
                     var binaryCounters = new List<PerformanceCounterEvent>();
@@ -317,15 +323,26 @@ namespace IRExplorerUI.Profile {
                         }
                     }
 
+                    Trace.WriteLine($"Done PMC in {sw.Elapsed} at {DateTime.Now}");
+                    Trace.Flush();
+
+
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
                         return false;
                     }
 
-                    // Load symbols.
-                    var symbolData = pendingSymbolData.Result;
                     var cpuSamplingData = pendingCpuSamplingData.Result;
-                    await symbolData.LoadSymbolsAsync(SymCachePath.Automatic, new RawSymbolPath(new FileInfo(symbolPath).DirectoryName),
-                        new SymbolProgressTracker(progressCallback));
+
+                    // Load symbols.
+                    try {
+                        var symbolData = pendingSymbolData.Result;
+                        await symbolData.LoadSymbolsAsync(SymCachePath.Automatic,
+                            new RawSymbolPath(new FileInfo(symbolPath).DirectoryName),
+                            new SymbolProgressTracker(progressCallback));
+                    }
+                    catch (Exception ex) {
+                        Trace.TraceWarning($"Failed to load symbols: {ex.Message}");
+                    }
 
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
                         return false;
@@ -336,19 +353,26 @@ namespace IRExplorerUI.Profile {
                     bool hasDebugInfo = await debugInfoTask;
 
                     if (addressFuncMap.Count == 0) {
-                        return false; // If we have no functions from the pdb, there's nothing more to do.
+                        Trace.TraceWarning($"Failed to get debug info");
+                        //return false; // If we have no functions from the pdb, there's nothing more to do.
                     }
+
+
+                    Trace.WriteLine($"Start process PMC {binaryCounters.Count} at {DateTime.Now}");
+                    Trace.Flush();
+
+                    sw.Restart();
 
                     // Process the samples.
                     int index = 0;
-                    var totalSamples = cpuSamplingData.Samples.Count;
-                    var prevFuncts = new Dictionary<string, List<IRTextFunction>>();
+
                     var demangledFuncNames = new Lazy<Dictionary<string, IRTextFunction>>(this.CreateDemangledNameMapping, LazyThreadSafetyMode.None);
 
                     var externalFuncNames = new Dictionary<string, IRTextFunction>();
 
                     var stackFuncts = new HashSet<IRTextFunction>();
                     var stackModules = new HashSet<string>();
+                    int hits = 0;
 
                     foreach (var counter in binaryCounters) {
                         var (funcName, funcRVA) = debugInfo_.FindFunctionByRVA(counter.RVA);
@@ -356,6 +380,8 @@ namespace IRExplorerUI.Profile {
                         if (funcName == null) {
                             continue;
                         }
+
+                        hits++;
 
                         // Try to use the precise address -> function mapping from cvdump.
                         if (!addressFuncMap.TryGetValue(funcRVA, out var textFunction)) {
@@ -371,8 +397,17 @@ namespace IRExplorerUI.Profile {
                         }
                     }
 
+
+                    Trace.WriteLine($"Done process PMC hits {hits} in {sw.Elapsed} at {DateTime.Now}");
+                    Trace.Flush();
+
+
                     //? TODO: parallel
-                    foreach (var sample in cpuSamplingData.Samples) {
+
+                    var samples = cpuSamplingData.Samples;
+                    var totalSamples = samples.Count;
+
+                    foreach (var sample in samples) {
                         if (sample.IsExecutingDeferredProcedureCall == true ||
                             sample.IsExecutingInterruptServicingRoutine == true) {
                             continue;

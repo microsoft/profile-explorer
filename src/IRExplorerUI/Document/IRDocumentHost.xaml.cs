@@ -4,7 +4,9 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Diagnostics;
+using System.Runtime.InteropServices.ObjectiveC;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -111,6 +113,145 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
+    public class ElementColumnValue : BindableObject {
+        public ElementColumnValue(string value, string tooltip = null) {
+            Text = value;
+            TextWeight = FontWeights.Normal;
+            TextColor = Brushes.Black;
+        }
+        
+        public IRElement Element { get; set; }
+
+        private Thickness borderThickness_;
+        public Thickness BorderThickness {
+            get => borderThickness_;
+            set => SetAndNotify(ref borderThickness_, value);
+        }
+
+        private Brush borderBrush_;
+        public Brush BorderBrush {
+            get => borderBrush_;
+            set => SetAndNotify(ref borderBrush_, value);
+        }
+
+        private string text_;
+        public string Text {
+            get => text_;
+            set => SetAndNotify(ref text_, value);
+        }
+
+        private string prefixText_;
+        public string PrefixText {
+            get => prefixText_;
+            set => SetAndNotify(ref prefixText_, value);
+        }
+
+        public bool ShowPrefix => !string.IsNullOrEmpty(prefixText_);
+
+        private string toolTip_;
+        public string ToolTip {
+            get => toolTip_;
+            set => SetAndNotify(ref toolTip_, value);
+        }
+
+        public Brush TextColor { get; set; }
+        public Brush BackColor { get; set; }
+
+        private ImageSource icon_;
+
+        public ImageSource Icon {
+            get => icon_;
+            set => SetAndNotify(ref icon_, value);
+        }
+
+        public bool ShowIcon => icon_ != null;
+
+        private bool showPercentageBar_;
+        public bool ShowPercentageBar {
+            get => showPercentageBar_;
+            set => SetAndNotify(ref showPercentageBar_, value);
+        }
+
+        private double percentage_;
+
+        public double Percentage {
+            get => percentage_;
+            set => SetAndNotify(ref percentage_, value);
+        }
+
+        private Brush percentageBarBackColor__;
+        public Brush PercentageBarBackColor {
+            get => percentageBarBackColor__;
+            set => SetAndNotify(ref percentageBarBackColor__, value);
+        }
+
+        private double percentageBarBorderThickness_;
+        public double PercentageBarBorderThickness {
+            get => percentageBarBorderThickness_;
+            set => SetAndNotify(ref percentageBarBorderThickness_, value);
+        }
+
+        private Brush percentageBarBorderBrush_;
+        public Brush PercentageBarBorderBrush {
+            get => percentageBarBorderBrush_;
+            set => SetAndNotify(ref percentageBarBorderBrush_, value);
+        }
+
+        private FontWeight textWeight_;
+
+        public FontWeight TextWeight {
+            get => textWeight_;
+            set => SetAndNotify(ref textWeight_, value);
+        }
+    }
+
+    public class ElementColumnValueGroup : BindableObject {
+        public ElementColumnValueGroup(IRElement element) {
+            Element = element;
+            Values = new Dictionary<string, ElementColumnValue>();
+        }
+
+        public IRElement Element { get; set; }
+        public Dictionary<string, ElementColumnValue> Values { get; set; }
+
+        public Brush BackColor { get; set; }
+
+        //public void AddColumnValue(string key, ElementColumnValue value) {
+        //    Values[key] = value;
+        //}
+    }
+
+    public class IRDocumentColumnData {
+        public List<OptionalColumn> Columns { get; set; }
+
+        public Dictionary<IRElement, ElementColumnValueGroup> Values { get; set; }
+
+        public IRDocumentColumnData(int capacity = 0) {
+            Columns = new List<OptionalColumn>();
+            Values = new Dictionary<IRElement, ElementColumnValueGroup>(capacity);
+        }
+
+        public bool HasData => Values.Count > 0;
+
+        public ElementColumnValueGroup AddValue(ElementColumnValue value, IRElement element, OptionalColumn column) {
+            if (!Values.TryGetValue(element, out var valueGroup)) {
+                valueGroup = new ElementColumnValueGroup(element);
+                Values[element] = valueGroup;
+            }
+
+            valueGroup.Values[column.ColumnName] = value;
+            return valueGroup;
+        }
+
+        public ElementColumnValueGroup GetValues(IRElement element) {
+            if (Values.TryGetValue(element, out var valueGroup)) {
+                return valueGroup;
+            }
+
+            return null;
+        }
+    }
+
     public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         private const double ActionPanelInitialOpacity = 0.5;
         private const int ActionPanelHeight = 20;
@@ -143,6 +284,7 @@ namespace IRExplorerUI {
         private List<QueryPanel> activeQueryPanels_;
         private QueryValue mainQueryInputValue_;
         private bool pasOutputVisible_;
+        private bool columnsVisible_;
 
         public IRDocumentHost(ISession session) {
             InitializeComponent();
@@ -184,6 +326,16 @@ namespace IRExplorerUI {
             loadTask_ = new CancelableTaskInstance();
             activeQueryPanels_ = new List<QueryPanel>();
             remarkSettings_ = App.Settings.RemarkSettings;
+        }
+
+        public double ColumnsListItemHeight {
+            get => columnsListItemHeight_;
+            set {
+                if (columnsListItemHeight_ != value) {
+                    columnsListItemHeight_ = value;
+                    NotifyPropertyChanged(nameof(ColumnsListItemHeight));
+                }
+            }
         }
 
         public void NotifyPropertyChanged(string propertyName) {
@@ -588,6 +740,12 @@ namespace IRExplorerUI {
 
         public void ReloadSettings() {
             TextView.Settings = settings_;
+            UpdateColumnsListItemHeight();
+        }
+
+        private void UpdateColumnsListItemHeight() {   
+            ColumnsListItemHeight = TextView.TextArea.TextView.DefaultLineHeight;
+            ColumnsList.InvalidateVisual();
         }
 
         private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
@@ -764,6 +922,16 @@ namespace IRExplorerUI {
                 }
             }
         }
+        
+        public bool ColumnsVisible {
+            get => columnsVisible_;
+            set {
+                if (columnsVisible_ != value) {
+                    columnsVisible_ = value;
+                    NotifyPropertyChanged(nameof(ColumnsVisible));
+                }
+            }
+        }
 
         public bool ProfileVisible {
             get => profileVisible_;
@@ -778,8 +946,13 @@ namespace IRExplorerUI {
         private List<Tuple<IRElement, TimeSpan>> profileElements_;
         private List<Tuple<BlockIR, TimeSpan>> profileBlocks_;
 
+
+        private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template("Values[TimeHeader]", "TimeColumnValueTemplate",
+            "TimeHeader", "Time (ms)", "Instruction time");
+
         private async Task ReloadProfile() {
             if(Session.ProfileData == null) {
+                goto skip;
                 return;
             }
 
@@ -796,6 +969,68 @@ namespace IRExplorerUI {
 
             ProfileBlockSelector.ItemsSource = new ListCollectionView(profileBlocks_);
             ProfileVisible = true;
+
+skip:
+            // Show optional columns with timing, countes, etc.
+            // First remove any previous columns.
+            OptionalColumn.RemoveListViewColumns(ColumnsList);
+            ColumnsList.ItemsSource = null;
+
+            var columnData = TextView.ColumnData;
+
+            //? Disable vertical scrollbar. sync it with doc
+
+            //? filter columns
+
+            if (!columnData.HasData) {
+                columnData.Columns.Add(TIME_COLUMN);
+                foreach (var tuple in Function.AllTuples) {
+                    int currentLine = tuple.TextLocation.Line+1;
+                    columnData.AddValue(new ElementColumnValue(currentLine.ToString()), tuple, TIME_COLUMN);
+                }
+            }
+
+            ColumnsVisible = columnData.HasData;
+            UpdateColumnsListItemHeight();
+
+            if (columnData.HasData) {
+                OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
+                UpdateColumnsListItemHeight();
+
+                var elementValueList = new List<ElementColumnValueGroup>(Function.TupleCount);
+                var dummyValues = new ElementColumnValueGroup(null);
+
+                foreach (var column in columnData.Columns) {
+                    dummyValues.Values[column.ColumnName] = new ElementColumnValue(string.Empty);
+                }
+
+                int prevLine = -1;
+
+                foreach (var tuple in Function.AllTuples) {
+                    int currentLine = tuple.TextLocation.Line;
+
+                    // Add dummy empy list view lines to match document text.
+                    if (currentLine != prevLine + 1) {
+                        for (int i = 0; i < currentLine - prevLine - 1; i++) {
+                            elementValueList.Add(dummyValues);
+                        }
+                    }
+
+                    var values = columnData.GetValues(tuple);
+
+                    if (values != null) {
+                        elementValueList.Add(values);
+                    }
+                    else {
+                        elementValueList.Add(dummyValues);
+                    }
+
+                    prevLine = currentLine;
+                }
+
+                ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
+            }
+
         }
 
         private async Task HideProfile() {
@@ -1292,6 +1527,7 @@ namespace IRExplorerUI {
         private DocumentOptionsPanel optionsPanel_;
         private DelayedAction delayedHideActionPanel_;
         private bool profileVisible_;
+        private double columnsListItemHeight_;
 
         private void ShowRemarkOptionsPanel() {
             if (remarkOptionsPanelVisible_) {
@@ -1389,6 +1625,15 @@ namespace IRExplorerUI {
         private void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
             HideActionPanel();
             DetachRemarkPanel(true);
+
+            var columnScrollViewer = Utils.FindChild<ScrollViewer>(ColumnsList);
+
+            if (columnScrollViewer != null) {
+                //columnScrollViewer.CanContentScroll = false;
+                    
+                columnScrollViewer.ScrollToVerticalOffset(e.VerticalOffset);
+            }
+
             ScrollChanged?.Invoke(this, e);
         }
 

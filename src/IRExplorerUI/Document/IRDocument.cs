@@ -167,6 +167,7 @@ namespace IRExplorerUI {
             expressionStyle_ = DefaultHighlightingStyles.LightStyleSet;
             markerChildStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.StyleSet);
             markerParentStyle_ = new HighlightingStyleCyclingCollection(DefaultHighlightingStyles.LightStyleSet);
+
             SetupProperties();
             SetupStableRenderers();
             SetupCommands();
@@ -188,6 +189,8 @@ namespace IRExplorerUI {
                 ReloadSettings();
             }
         }
+
+        public IRDocumentColumnData ColumnData { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -2396,6 +2399,7 @@ namespace IRExplorerUI {
             //    CloneOtherSectionAnnotations(other);
 
             // Do compiler-specifiec document work.
+            ColumnData = new IRDocumentColumnData(function_.InstructionCount);
             Session.CompilerInfo.HandleLoadedDocument(this, function_, section_);
         }
 

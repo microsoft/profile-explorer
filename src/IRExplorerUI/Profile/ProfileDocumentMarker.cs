@@ -41,7 +41,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 VirtualColumnPosition = 450,
                 ElementWeightCutoff = 0.003, // 0.3%
                 LineWeightCutoff = 0.005, // 0.5%,
-                ElementOverlayTextColor = Brushes.DarkBlue,
+                ElementOverlayTextColor = Brushes.Black,
                 HotElementOverlayTextColor = Brushes.DarkRed,
                 ElementOverlayBackColor = Brushes.Transparent,
                 HotElementOverlayBackColor = Brushes.AntiqueWhite,
@@ -155,10 +155,21 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
+        private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template("Values[TimeHeader]", "TimeColumnValueTemplate",
+            "TimeHeader", "Time (ms)", "Instruction time");
+
+        private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN = OptionalColumn.Template("Values[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
+            "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time");
+
         private void MarkProfiledElements(FunctionProfileData.ProcessingResult result, IRDocument document) {
             var elements = result.SampledElements;
             var elementColorPairs = new List<Tuple<IRElement, Color>>(elements.Count);
             double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
+
+            // Add a time column.
+            var columnData = document.ColumnData;
+            columnData.Columns.Add(TIME_PERCENTAGE_COLUMN);
+            columnData.Columns.Add(TIME_COLUMN);
 
             for (int i = 0; i < elements.Count; i++) {
                 var element = elements[i].Item1;
@@ -175,50 +186,87 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 elementColorPairs.Add(new Tuple<IRElement, Color>(element, color));
 
-                //? TODO: Configurable
-                IconDrawing icon = null;
+                var label = $"{Math.Round(weight.TotalMilliseconds, 2):#,#} ms";
+                var percentageLabel = $"{Math.Round(weightPercentage * 100, 2)}%";
+                var columnValue = new ElementColumnValue(label);
+                var percentageColumnValue = new ElementColumnValue(percentageLabel);
 
-                if (i == 0) {
-                    icon = IconDrawing.FromIconResource("DotIconRed");
-                }
-                else if (i <= 2) {
-                    icon = IconDrawing.FromIconResource("DotIconYellow");
-                }
+                //? TODO: Split into time % and time MS
+                //? - time % has the bar, on the right, with % format as 00.00%
+                //? - make color pallete lie uprof yellow/red
 
-                var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2):#,#} ms)";
-                var overlay = document.RegisterIcomElementOverlay(element, icon, 16, 0, label);
+                if (i <= 8) {
+                    IconDrawing icon = null;
 
-                overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
-                MaxVirtualColumn = Math.Max(overlay.VirtualColumn, MaxVirtualColumn);
-                overlay.IsLabelPinned = true;
+                    if (i == 0) {
+                        icon = IconDrawing.FromIconResource("DotIconRed");
+                    }
+                    else if (i <= 10) {
+                        icon = IconDrawing.FromIconResource("DotIconYellow");
+                    }
 
-                if (i <= 2) {
-                    overlay.TextColor = options_.HotElementOverlayTextColor;
-                    overlay.UseLabelBackground = true;
-                    overlay.Background = options_.HotElementOverlayBackColor;
-                    overlay.TextWeight = FontWeights.Bold;
+                    percentageColumnValue.TextColor = options_.ElementOverlayTextColor;
+                    percentageColumnValue.BackColor = ColorBrushes.GetBrush(color);
+                    //percentageColumnValue.BorderBrush = ColorBrushes.GetBrush(color);
+                    //percentageColumnValue.BorderThickness = new Thickness(1);
+                    percentageColumnValue.TextWeight = FontWeights.Bold;
+                    percentageColumnValue.Icon = icon.Icon;
+                    percentageColumnValue.Percentage = weightPercentage;
+                    percentageColumnValue.PercentageBarBackColor = Brushes.Brown;
+                    percentageColumnValue.ShowPercentageBar = true;
+                    //percentageColumnValue.PrefixText = $"{i + 1}";
+
+                    columnValue.TextColor = i <= 3 ? options_.HotElementOverlayTextColor : options_.ElementOverlayTextColor;
+                    columnValue.TextWeight = FontWeights.Bold;
                 }
                 else {
-                    overlay.TextColor = options_.ElementOverlayTextColor;
-                    overlay.Background = options_.ElementOverlayBackColor;
+                    percentageColumnValue.TextColor = options_.ElementOverlayTextColor;
+                    percentageColumnValue.BackColor = options_.ElementOverlayBackColor;
+                    percentageColumnValue.Percentage = weightPercentage;
+                    percentageColumnValue.ShowPercentageBar = weightPercentage >= 0.02;
+                    percentageColumnValue.PercentageBarBackColor = Brushes.Brown;
+                    percentageColumnValue.PrefixText = " ";
+                    //percentageColumnValue.Icon = IconDrawing.FromIconResource("DotIconTransparent").Icon;
+
+                    columnValue.TextColor = options_.ElementOverlayTextColor;
+                    columnValue.BackColor = options_.ElementOverlayBackColor;
                 }
+
+                columnData.AddValue(percentageColumnValue, element, TIME_PERCENTAGE_COLUMN);
+                var valueGroup = columnData.AddValue(columnValue, element, TIME_COLUMN);
+                valueGroup.BackColor = Brushes.Bisque;
             }
 
+            // Mark the elements themselves with a color.
+            document.MarkElements(elementColorPairs);
+
             var counterElements = result.CounterElements;
-            var counterIcon = IconDrawing.FromIconResource("QueryIcon");
+
+            if (counterElements.Count == 0) {
+                return;
+            }
+
 
             //? TODO: Filter to hide counters
             //? TODO: Order of counters (custom sorting or fixed)
 
+            //? Max virt column must be for the entire document , not per line
+            //? Way to set a counter as a baseline, another diff to it in %
+            //?    misspredictedBranches / totalBranches
+            //?    takenBranches / total, etc JSON
+
             var perfCounters = globalProfile_.SortedPerformanceCounters;
             var colors = new Brush[] { Brushes.DarkTurquoise, Brushes.DarkOliveGreen, Brushes.DarkViolet };
+            var counterIcon = IconDrawing.FromIconResource("QueryIcon");
+
+            // Add a column for each of the counters.
 
             for (int i = 0; i < counterElements.Count; i++) {
                 var element = counterElements[i].Item1;
                 var counterSet = counterElements[i].Item2;
 
-                for(int k = 0; k < perfCounters.Count; k++) { 
-                    var counterInfo= perfCounters[k];
+                for (int k = 0; k < perfCounters.Count; k++) {
+                    var counterInfo = perfCounters[k];
                     var value = counterSet.FindCounterSamples(counterInfo.Id);
 
                     if (value == 0) {
@@ -239,9 +287,6 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
 
             }
-
-            // Mark the elements themselves with a color.
-            document.MarkElements(elementColorPairs);
         }
 
         private void MarkProfiledLines(IRDocument document) {
