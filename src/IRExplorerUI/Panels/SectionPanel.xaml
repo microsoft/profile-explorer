@@ -230,10 +230,17 @@
 
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor}">
-                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"/>
-                                        <TextBlock Text="{Binding Path=ExclusivePercentage, StringFormat=p2}" Margin="4,0,0,0"/>
-                                        <TextBlock Text="{Binding OptionalDataText2}"  Margin="6,0,0,0"/>
+                                    <StackPanel
+                                        VerticalAlignment="Center"
+                                        Background="{Binding BackColor}"
+                                        Orientation="Horizontal">
+                                        <Rectangle
+                                            Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                                            Height="16"
+                                            Fill="Brown"
+                                            Stroke="Black" />
+                                        <TextBlock Margin="4,0,0,0" Text="{Binding Path=ExclusivePercentage, StringFormat=p2}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText2}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
@@ -253,10 +260,17 @@
 
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor2}">
-                                        <Rectangle Fill="RoyalBlue" Stroke="Black" Height="16" Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"/>
-                                        <TextBlock Text="{Binding Path=InclusivePercentage, StringFormat=p2}" Margin="4,0,0,0"/>
-                                        <TextBlock Text="{Binding OptionalDataText2}"  Margin="6,0,0,0"/>
+                                    <StackPanel
+                                        VerticalAlignment="Center"
+                                        Background="{Binding BackColor2}"
+                                        Orientation="Horizontal">
+                                        <Rectangle
+                                            Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                                            Height="16"
+                                            Fill="RoyalBlue"
+                                            Stroke="Black" />
+                                        <TextBlock Margin="4,0,0,0" Text="{Binding Path=InclusivePercentage, StringFormat=p2}" />
+                                        <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText2}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
@@ -1007,8 +1021,15 @@
 
                             <GridViewColumn.CellTemplate>
                                 <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Background="{Binding BackColor}">
-                                        <Rectangle Fill="Brown" Stroke="Black" Height="16" Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"/>
+                                    <StackPanel
+                                        VerticalAlignment="Center"
+                                        Background="{Binding BackColor}"
+                                        Orientation="Horizontal">
+                                        <Rectangle
+                                            Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                                            Height="16"
+                                            Fill="Brown"
+                                            Stroke="Black" />
                                         <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
                                             <TextBlock.Style>
                                                 <Style TargetType="{x:Type TextBlock}">
@@ -1067,26 +1088,26 @@
 
                 <ListView.ContextMenu>
                     <ContextMenu>
-                 
+
                         <MenuItem
-Command="local:Command.SaveAllSectionText"
-CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-CommandTarget="{Binding ElementName=SectionList}"
-Header="Profile-based Call Tree"
-IsCheckable="True"
-IsChecked="{Binding UseProfileCallTree, Mode=TwoWay}"
-ToolTip="Show the call tree derived from runtime profile information" />
+                            Command="local:Command.SaveAllSectionText"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Profile-based Call Tree"
+                            IsCheckable="True"
+                            IsChecked="{Binding UseProfileCallTree, Mode=TwoWay}"
+                            ToolTip="Show the call tree derived from runtime profile information" />
                         <MenuItem
-Command="local:Command.SaveAllSectionText"
-CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-CommandTarget="{Binding ElementName=SectionList}"
-Header="IR Call Tree"
-IsCheckable="True"
-IsChecked="{Binding UseIRCallTree, Mode=TwoWay}"
-ToolTip="Show the call tree derived from the IR" />
-                            <Separator  />
-                        
-                            <MenuItem
+                            Command="local:Command.SaveAllSectionText"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="IR Call Tree"
+                            IsCheckable="True"
+                            IsChecked="{Binding UseIRCallTree, Mode=TwoWay}"
+                            ToolTip="Show the call tree derived from the IR" />
+                        <Separator />
+
+                        <MenuItem
                             Command="local:Command.SaveAllSectionText"
                             CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                             CommandTarget="{Binding ElementName=SectionList}"

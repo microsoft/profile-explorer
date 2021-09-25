@@ -56,7 +56,13 @@ namespace IRExplorerUI.Utilities {
 
     class DoubleScalingConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-            return (double)value * double.Parse((string)parameter);
+            double doubleValue = (double)value;
+
+            if (doubleValue == 0.0 || Math.Abs(doubleValue) < double.Epsilon) {
+                return 0.0;
+            }
+
+            return doubleValue * double.Parse((string)parameter);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
