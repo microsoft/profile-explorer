@@ -140,6 +140,9 @@ namespace IRExplorerUI {
         }
 
         private static DataTemplate CreateGridColumnTemplateBindingTemplate(string propertyName, string sourceTampleteName) {
+            //? Preloading XAML is faster
+            //? https://stackoverflow.com/questions/24620656/how-does-use-xamlreader-to-load-from-a-xaml-file-from-within-the-assembly/24623673
+
             var template = new DataTemplate();
             var sourceTemplate = (DataTemplate)Application.Current.FindResource(sourceTampleteName);
             FrameworkElementFactory factory = new FrameworkElementFactory(typeof(ContentControl));

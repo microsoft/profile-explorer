@@ -40,6 +40,7 @@ using IRExplorerUI.Compilers.LLVM;
 using IRExplorerUI.Controls;
 using System.Windows.Media.Imaging;
 using System.Threading.Tasks;
+using System.Windows.Automation.Peers;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Utilities;
 using AvalonDock.Layout.Serialization;
@@ -86,6 +87,22 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "ShowDocumentSearch", typeof(Window));
     }
 
+    public class DummyWindowAutomationPeer : FrameworkElementAutomationPeer {
+        public DummyWindowAutomationPeer(FrameworkElement owner) : base(owner) { }
+
+        protected override string GetNameCore() {
+            return "CustomWindowAutomationPeer";
+        }
+
+        protected override AutomationControlType GetAutomationControlTypeCore() {
+            return AutomationControlType.Window;
+        }
+
+        protected override List<AutomationPeer> GetChildrenCore() {
+            return new List<AutomationPeer>();
+        }
+    }
+
     public partial class MainWindow : Window, ISession {
         private LayoutDocumentPane activeDocumentPanel_;
         private AssemblyMetadataTag addressTag_;
@@ -129,6 +146,11 @@ namespace IRExplorerUI {
             Closing += MainWindow_Closing;
             Activated += MainWindow_Activated;
             Deactivated += MainWindow_Deactivated;
+            
+        }
+
+        protected override AutomationPeer OnCreateAutomationPeer() {
+            return new DummyWindowAutomationPeer(this);
         }
 
         private void MainWindow_StateChanged(object sender, EventArgs e) {

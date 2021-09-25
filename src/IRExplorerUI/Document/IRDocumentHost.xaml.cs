@@ -252,6 +252,27 @@ namespace IRExplorerUI {
         }
     }
 
+    public class DummyVirtualizingStackPanel : VirtualizingStackPanel {
+        protected override Size MeasureOverride(Size constraint) {
+            //Trace.WriteLine($"Measure {constraint}");
+            //var sw = Stopwatch.StartNew();
+             
+            var result = base.MeasureOverride(constraint);
+            
+            //sw.Stop();
+            //Trace.WriteLine($"Measured  {x} in {sw.ElapsedMilliseconds}");
+            //Trace.Flush(;
+           
+            return result;
+        }
+
+        protected override void OnChildDesiredSizeChanged(UIElement el) {
+            //? Workaround for WPF measuring bug, see link
+            //? https://stackoverflow.com/questions/11696008/performance-issue-with-measure
+            /* base.OnChildDesiredSizeChanged(el); */       // avoid rampant remeasuring
+        }
+    }
+
     public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         private const double ActionPanelInitialOpacity = 0.5;
         private const int ActionPanelHeight = 20;
@@ -313,6 +334,7 @@ namespace IRExplorerUI {
             TextView.ElementUnselected += TextView_ElementUnselected;
             TextView.PropertyChanged += TextView_PropertyChanged;
             TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
+            TextView.TextChanged += TextView_TextChanged;
 
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -326,6 +348,10 @@ namespace IRExplorerUI {
             loadTask_ = new CancelableTaskInstance();
             activeQueryPanels_ = new List<QueryPanel>();
             remarkSettings_ = App.Settings.RemarkSettings;
+        }
+
+        private void TextView_TextChanged(object sender, EventArgs e) {
+            UpdateColumnsListItemHeight();
         }
 
         public double ColumnsListItemHeight {
@@ -991,11 +1017,10 @@ skip:
             }
 
             ColumnsVisible = columnData.HasData;
-            UpdateColumnsListItemHeight();
 
             if (columnData.HasData) {
                 OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
-                UpdateColumnsListItemHeight();
+                //UpdateColumnsListItemHeight();
 
                 var elementValueList = new List<ElementColumnValueGroup>(Function.TupleCount);
                 var dummyValues = new ElementColumnValueGroup(null);
@@ -1629,8 +1654,6 @@ skip:
             var columnScrollViewer = Utils.FindChild<ScrollViewer>(ColumnsList);
 
             if (columnScrollViewer != null) {
-                //columnScrollViewer.CanContentScroll = false;
-                    
                 columnScrollViewer.ScrollToVerticalOffset(e.VerticalOffset);
             }
 

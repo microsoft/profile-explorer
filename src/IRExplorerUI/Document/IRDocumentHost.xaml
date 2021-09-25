@@ -777,6 +777,7 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{x:Null}"
                     BorderThickness="0,0,0,0"
+                    ScrollViewer.CanContentScroll="True"
                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
                     SelectionMode="Single"
                     UseLayoutRounding="False"
@@ -804,6 +805,7 @@
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                             <Setter Property="VerticalContentAlignment" Value="Stretch" />
                             <Setter Property="Background" Value="{Binding BackColor}" />
+                            <Setter Property="Focusable" Value="False" />
                             <Setter Property="Height" Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type local:IRDocumentHost}}}" />
                         </Style>
                     </ListView.ItemContainerStyle>

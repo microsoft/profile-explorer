@@ -155,7 +155,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template("Values[TimeHeader]", "TimeColumnValueTemplate",
+        private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template("Values[TimeHeader]", "TimePercentageColumnValueTemplate",
             "TimeHeader", "Time (ms)", "Instruction time");
 
         private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN = OptionalColumn.Template("Values[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
