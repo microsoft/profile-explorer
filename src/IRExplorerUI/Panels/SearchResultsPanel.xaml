@@ -125,8 +125,11 @@
             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
             BorderBrush="{x:Null}"
             BorderThickness="0,0,0,0"
+            VirtualizingPanel.CacheLengthUnit="Item"
             VirtualizingPanel.IsVirtualizing="True"
-            VirtualizingPanel.VirtualizationMode="Recycling">
+            VirtualizingStackPanel.CacheLength="2,3"
+            VirtualizingStackPanel.ScrollUnit="Item"
+            VirtualizingStackPanel.VirtualizationMode="Recycling">
             <ListView.View>
                 <GridView>
 

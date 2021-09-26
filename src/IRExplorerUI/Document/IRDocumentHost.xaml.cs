@@ -254,7 +254,7 @@ namespace IRExplorerUI {
 
     public class DummyVirtualizingStackPanel : VirtualizingStackPanel {
         protected override Size MeasureOverride(Size constraint) {
-            //Trace.WriteLine($"Measure {constraint}");
+            Trace.WriteLine($"Measure {constraint}");
             //var sw = Stopwatch.StartNew();
              
             var result = base.MeasureOverride(constraint);
@@ -335,6 +335,7 @@ namespace IRExplorerUI {
             TextView.PropertyChanged += TextView_PropertyChanged;
             TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
             TextView.TextChanged += TextView_TextChanged;
+            TextView.DocumentChanged += TextView_DocumentChanged;
 
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -350,6 +351,10 @@ namespace IRExplorerUI {
             remarkSettings_ = App.Settings.RemarkSettings;
         }
 
+        private void TextView_DocumentChanged(object sender, EventArgs e) {
+            UpdateColumnsListItemHeight();
+        }
+
         private void TextView_TextChanged(object sender, EventArgs e) {
             UpdateColumnsListItemHeight();
         }
@@ -358,6 +363,9 @@ namespace IRExplorerUI {
             get => columnsListItemHeight_;
             set {
                 if (columnsListItemHeight_ != value) {
+                    Trace.WriteLine($"New height {value} vs ol {columnsListItemHeight_}");
+                    Trace.WriteLine(Environment.StackTrace);
+
                     columnsListItemHeight_ = value;
                     NotifyPropertyChanged(nameof(ColumnsListItemHeight));
                 }
@@ -769,9 +777,21 @@ namespace IRExplorerUI {
             UpdateColumnsListItemHeight();
         }
 
-        private void UpdateColumnsListItemHeight() {   
+        private void UpdateColumnsListItemHeight() {
+            
+            /*
+             *
+             * public static Typeface CreateTypeface(this FrameworkElement fe) =>
+             * new Typeface((FontFamily) fe.GetValue(TextBlock.FontFamilyProperty),
+             * (FontStyle) fe.GetValue(TextBlock.FontStyleProperty),
+             * (FontWeight) fe.GetValue(TextBlock.FontWeightProperty),
+             * (FontStretch) fe.GetValue(TextBlock.FontStretchProperty));
+             *
+             * TextFormatter formatter = TextFormatterFactory.Create((DependencyObject) this);
+             */
+
             ColumnsListItemHeight = TextView.TextArea.TextView.DefaultLineHeight;
-            ColumnsList.InvalidateVisual();
+            //ColumnsList.InvalidateVisual();
         }
 
         private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {

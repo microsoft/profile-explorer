@@ -158,7 +158,9 @@
                             Loaded="ComboBox_Loaded"
                             SelectedValuePath="Number"
                             SelectionChanged="BlockSelector_SelectionChanged"
-                            ToolTip="Jump to block (Alt+G)">
+                            ToolTip="Jump to block (Alt+G)"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling">
                             <ComboBox.Resources>
                                 <Style TargetType="ComboBoxItem">
                                     <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -474,6 +476,8 @@
                             Loaded="ComboBox_Loaded"
                             SelectionChanged="ProfileBlockSelector_SelectionChanged"
                             ToolTip="Jump to profiled block"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling"
                             Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
                             <ComboBox.Resources>
                                 <Style TargetType="ComboBoxItem">
@@ -781,15 +785,21 @@
                     ScrollViewer.VerticalScrollBarVisibility="Hidden"
                     SelectionMode="Single"
                     UseLayoutRounding="False"
-                    VirtualizingPanel.CacheLength="2,2"
                     VirtualizingPanel.CacheLengthUnit="Pixel"
                     VirtualizingPanel.ScrollUnit="Pixel"
+                    VirtualizingStackPanel.CacheLength="200,300"
                     VirtualizingStackPanel.IsVirtualizing="True"
                     VirtualizingStackPanel.VirtualizationMode="Recycling"
                     Visibility="{Binding ShowColumns, Converter={StaticResource BoolToVisibility}}">
                     <ListView.View>
                         <GridView />
                     </ListView.View>
+
+                    <ListView.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <local:DummyVirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </ListView.ItemsPanel>
 
                     <ListView.Resources>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -801,7 +811,7 @@
                     </ListView.Resources>
 
                     <ListView.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <Style BasedOn="{StaticResource SimpleListViewItem}" TargetType="{x:Type ListViewItem}">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                             <Setter Property="VerticalContentAlignment" Value="Stretch" />
                             <Setter Property="Background" Value="{Binding BackColor}" />
@@ -819,7 +829,7 @@
 
             <local:PassOutputPanel
                 x:Name="PassOutput"
-                Grid.Row="3"
+                Grid.Row="3"    
                 HasDuplicateButton="false"
                 HasPinButton="false"
                 Visibility="{Binding PassOutputVisible, Converter={StaticResource BoolToVisibility}}" />

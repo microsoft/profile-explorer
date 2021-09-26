@@ -330,6 +330,7 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.VerticalScrollBarVisibility="Auto"
                 SelectionChanged="RemarkList_SelectionChanged"
+                VirtualizingPanel.CacheLength="2,2"
                 VirtualizingStackPanel.IsVirtualizing="True"
                 VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <ListView.View>
@@ -478,7 +479,11 @@
                                 ItemContainerStyle="{StaticResource RemarkTreeViewItemStyle}"
                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                VirtualizingStackPanel.IsVirtualizing="False" />
+                                VirtualizingPanel.CacheLengthUnit="Pixel"
+                                VirtualizingStackPanel.CacheLength="200,300"
+                                VirtualizingStackPanel.IsVirtualizing="True"
+                                VirtualizingStackPanel.ScrollUnit="Pixel"
+                                VirtualizingStackPanel.VirtualizationMode="Recycling" />
                         </DockPanel>
                     </TabItem>
 
