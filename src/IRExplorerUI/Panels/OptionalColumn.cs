@@ -102,6 +102,7 @@ namespace IRExplorerUI {
                 VerticalContentAlignment = VerticalAlignment.Stretch,
                 HorizontalContentAlignment = HorizontalAlignment.Stretch,
                 Padding = new Thickness(0),
+                Width = column.Width,
                 Content = string.Format(column.Title, titleSuffix),
                 ToolTip = string.Format(column.Tooltip, tooltipSuffix)
             };

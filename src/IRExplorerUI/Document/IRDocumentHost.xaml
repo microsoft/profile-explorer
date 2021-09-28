@@ -454,64 +454,118 @@
                 </Grid.ColumnDefinitions>
 
                 <DockPanel Grid.Column="0" LastChildFill="True">
-                    <StackPanel
-                        Height="20"
-                        Background="Gray"
+                    <ToolBarTray
+                        x:Name="ProfileToolbar"
+                        Grid.Column="0"
+                        Height="28"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Top"
+                        Background="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}"
                         DockPanel.Dock="Top"
-                        Orientation="Horizontal">
-                        <Button
-                            Command="local:DocumentHostCommand.JumpToProfiledElement"
-                            CommandTarget="{Binding ElementName=TextView}"
-                            ToolTip="Jump to hottest profiled instruction"
-                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
-                            <Image Source="{StaticResource StarIcon}" />
-                        </Button>
+                        IsLocked="True">
+                        <ToolBar
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Top"
+                            Background="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}"
+                            Loaded="ToolBar_Loaded">
+                            <TextBlock VerticalAlignment="Center" Text="Profile" />
+                            <Button
+                                Margin="4,0,0,0"
+                                VerticalAlignment="Center"
+                                Command="local:DocumentHostCommand.JumpToProfiledElement"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to hottest profiled instruction"
+                                Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                                <Image Source="{StaticResource FlameIcon}" />
+                            </Button>
+                            <Button
+                                Command="local:DocumentCommand.PreviousBookmark"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to previous bookmark (Shift+F2)">
+                                <Image Source="{StaticResource MinusIcon}" />
+                            </Button>
+                            <Button
+                                Command="local:DocumentCommand.PreviousBookmark"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to previous bookmark (Shift+F2)">
+                                <Image Source="{StaticResource PlusIcon}" />
+                            </Button>
+                            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
-                        <ComboBox
-                            x:Name="ProfileBlockSelector"
-                            Width="80"
-                            Margin="4,0,0,0"
-                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            Loaded="ComboBox_Loaded"
-                            SelectionChanged="ProfileBlockSelector_SelectionChanged"
-                            ToolTip="Jump to profiled block"
-                            VirtualizingStackPanel.IsVirtualizing="True"
-                            VirtualizingStackPanel.VirtualizationMode="Recycling"
-                            Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
-                            <ComboBox.Resources>
-                                <Style TargetType="ComboBoxItem">
-                                    <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                                </Style>
-                            </ComboBox.Resources>
+                            <TextBlock
+                                Margin="2,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="Block" />
+                            <Button
+                                Margin="4,0,0,0"
+                                VerticalAlignment="Center"
+                                Command="local:DocumentHostCommand.JumpToProfiledElement"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to hottest profiled instruction"
+                                Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                                <Image Source="{StaticResource FlameIcon}" />
+                            </Button>
 
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
-                                        <TextBlock Width="50" Text="{Binding Path=Item1.Number}" />
-                                        <Separator />
-                                        <TextBlock Text="{Binding Path=Item2.TotalMilliseconds, Converter={StaticResource MIllisecondTime}}">
-                                            <TextBlock.Style>
-                                                <Style TargetType="TextBlock">
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem}}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </TextBlock.Style>
-                                        </TextBlock>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
+                            <ComboBox
+                                x:Name="ProfileBlockSelector"
+                                Width="120"
+                                MinWidth="80"
+                                Margin="4,0,0,0"
+                                VerticalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                Loaded="ComboBox_Loaded"
+                                SelectionChanged="ProfileBlockSelector_SelectionChanged"
+                                ToolTip="Jump to profiled block"
+                                VirtualizingStackPanel.IsVirtualizing="True"
+                                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                                <ComboBox.Resources>
+                                    <Style TargetType="ComboBoxItem">
+                                        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                    </Style>
+                                </ComboBox.Resources>
 
-                            <ComboBox.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <VirtualizingStackPanel />
-                                </ItemsPanelTemplate>
-                            </ComboBox.ItemsPanel>
-                        </ComboBox>
-                    </StackPanel>
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel HorizontalAlignment="Left" Orientation="Horizontal">
+                                            <TextBlock Width="50" Text="{Binding Path=Item1.Number}" />
+                                            <Separator />
+                                            <TextBlock Text="{Binding Path=Item2.TotalMilliseconds, Converter={StaticResource MIllisecondTime}}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ComboBoxItem}}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+
+                                <ComboBox.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <VirtualizingStackPanel />
+                                    </ItemsPanelTemplate>
+                                </ComboBox.ItemsPanel>
+                            </ComboBox>
+                            <Button
+                                Command="local:DocumentCommand.PreviousBookmark"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to previous bookmark (Shift+F2)">
+                                <Image Source="{StaticResource MinusIcon}" />
+                            </Button>
+                            <Button
+                                Command="local:DocumentCommand.PreviousBookmark"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to previous bookmark (Shift+F2)">
+                                <Image Source="{StaticResource PlusIcon}" />
+                            </Button>
+                        </ToolBar>
+                    </ToolBarTray>
 
                     <local:IRDocument
                         x:Name="TextView"
@@ -776,9 +830,9 @@
                 <ListView
                     x:Name="ColumnsList"
                     Grid.Column="2"
+                    Padding="-2,-1,-2,0"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{x:Null}"
                     BorderThickness="0,0,0,0"
                     ScrollViewer.CanContentScroll="True"
@@ -803,9 +857,10 @@
 
                     <ListView.Resources>
                         <Style TargetType="{x:Type GridViewColumnHeader}">
-                            <Setter Property="Height" Value="18" />
-                            <Setter Property="Background" Value="Gray" />
-                            <Setter Property="Margin" Value="0" />
+                            <Setter Property="Height" Value="29" />
+                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
                             <Setter Property="BorderThickness" Value="0" />
                         </Style>
                     </ListView.Resources>
@@ -829,7 +884,7 @@
 
             <local:PassOutputPanel
                 x:Name="PassOutput"
-                Grid.Row="3"    
+                Grid.Row="3"
                 HasDuplicateButton="false"
                 HasPinButton="false"
                 Visibility="{Binding PassOutputVisible, Converter={StaticResource BoolToVisibility}}" />

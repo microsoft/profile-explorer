@@ -14,14 +14,16 @@ namespace IRExplorerCore.IR {
     }
 
     public class TupleIR : IRElement {
-        public TupleIR(IRElementId elementId, TupleKind kind, BlockIR parent) : base(
-            elementId.NextTuple()) {
+        public TupleIR(IRElementId elementId, TupleKind kind, BlockIR parent) : 
+            base(elementId.NextTuple()) {
             Kind = kind;
             Parent = parent;
         }
 
         public BlockIR Parent { get; set; }
         public int IndexInBlock { get; set; }
+        public bool HasOddIndexInBlock => (IndexInBlock & 1) == 1;
+        public bool HasEvenIndexInBlock => (IndexInBlock & 1) == 0;
         public TupleKind Kind { get; set; }
 
         public bool IsInstruction => Kind == TupleKind.Instruction;

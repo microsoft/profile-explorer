@@ -674,7 +674,7 @@ namespace IRExplorerUI {
 
                 if (icon != null) {
                     icon.Draw(0, y - 1, lineHeight - 1,
-                              RenderSize.Width, drawingContext);
+                              RenderSize.Width, lineHeight, drawingContext);
                 }
 
                 if (segment.IsExpanded) {
@@ -729,7 +729,7 @@ namespace IRExplorerUI {
             drawingContext.DrawRectangle(pinStyle.BackColor, pinStyle.Border, bounds);
 
             icon.Draw(bounds.Left + 1, bounds.Top + 1, ButtonIconWidth,
-                      ButtonIconWidth, drawingContext);
+                      bounds.Width, bounds.Height, drawingContext);
             return bounds;
         }
 

@@ -352,11 +352,11 @@ namespace IRExplorerUI {
         }
 
         private void TextView_DocumentChanged(object sender, EventArgs e) {
-            UpdateColumnsListItemHeight();
+            UpdateColumnsList();
         }
 
         private void TextView_TextChanged(object sender, EventArgs e) {
-            UpdateColumnsListItemHeight();
+            UpdateColumnsList();
         }
 
         public double ColumnsListItemHeight {
@@ -774,10 +774,10 @@ namespace IRExplorerUI {
 
         public void ReloadSettings() {
             TextView.Settings = settings_;
-            UpdateColumnsListItemHeight();
+            UpdateColumnsList();
         }
 
-        private void UpdateColumnsListItemHeight() {
+        private void UpdateColumnsList() {
             
             /*
              *
@@ -790,6 +790,7 @@ namespace IRExplorerUI {
              * TextFormatter formatter = TextFormatterFactory.Create((DependencyObject) this);
              */
 
+            ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
             ColumnsListItemHeight = TextView.TextArea.TextView.DefaultLineHeight;
             //ColumnsList.InvalidateVisual();
         }
@@ -1044,9 +1045,12 @@ skip:
 
                 var elementValueList = new List<ElementColumnValueGroup>(Function.TupleCount);
                 var dummyValues = new ElementColumnValueGroup(null);
+                var oddBackColor = settings_.BackgroundColor.AsBrush();
+                var oddDummyValues = new ElementColumnValueGroup(null) { BackColor = oddBackColor };
 
                 foreach (var column in columnData.Columns) {
                     dummyValues.Values[column.ColumnName] = new ElementColumnValue(string.Empty);
+                    oddDummyValues.Values[column.ColumnName] = new ElementColumnValue(string.Empty);
                 }
 
                 int prevLine = -1;
@@ -1061,13 +1065,19 @@ skip:
                         }
                     }
 
+                    // Check if there is any data associated with the element.
                     var values = columnData.GetValues(tuple);
 
                     if (values != null) {
                         elementValueList.Add(values);
+
+                        if (values.BackColor == null && ) {
+
+                        }
                     }
                     else {
-                        elementValueList.Add(dummyValues);
+                        elementValueList.Add((tuple.ParentBlock.IndexInFunction & 1) == 1 ? 
+                                              oddDummyValues : dummyValues);
                     }
 
                     prevLine = currentLine;

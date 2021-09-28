@@ -68,7 +68,7 @@ namespace IRExplorerUI {
                 var blockRect = new Rect(0, startLinePos.Y - lineAdjustmentY, textView.ActualWidth,
                                          Math.Min(maxViewHeight, endLinePos.Y - startLinePos.Y));
 
-                if ((block.Number & 1) == 1) {
+                if ((block.IndexInFunction & 1) == 1) {
                     oddGeoBuilder.AddRectangle(textView, blockRect);
                 }
 

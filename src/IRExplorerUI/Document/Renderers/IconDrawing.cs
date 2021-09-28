@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Windows;
 using System.Windows.Media;
 using ProtoBuf;
@@ -41,21 +42,33 @@ namespace IRExplorerUI {
             }
         }
 
-        public void Draw(double x, double y, double size, double availableSize,
+        public void Draw(double x, double y, double size, double availableWidth, double availableHeight,
                          DrawingContext drawingContext) {
-            double height = size;
-            double width = height * Proportion;
+            // This assumes the icon should be centered inside a rectangle {availableWidth, availableHeight}
+            // with {x, y} as top-left corner, scaling down if available space is not enough.
+            double height;
+            double width;
+
+            if (availableHeight < availableWidth) {
+                height = Math.Min(size, availableHeight);
+                width = height * Proportion;
+                y = y + (availableHeight - height) / 2;
+            }
+            else {
+                height = Math.Min(size, availableWidth);
+                width = height * Proportion;
+                x = x + (availableHeight - width) / 2;
+            }
 
             // Center icon in the available space.
-            var rect = Utils.SnapRectToPixels(x + (availableSize - width) / 2, y,
-                                             width, height);
+            var rect = Utils.SnapRectToPixels(x, y, width, height);
             drawingContext.DrawImage(Icon, rect);
         }
 
-        public void Draw(double x, double y, double size, double availableSize,
+        public void Draw(double x, double y, double size, double avaiableWidth, double availableHeight,
                        double opacity, DrawingContext drawingContext) {
             drawingContext.PushOpacity(opacity);
-            Draw(x, y, size, availableSize, drawingContext);
+            Draw(x, y, size, avaiableWidth, availableHeight, drawingContext);
             drawingContext.Pop();
         }
     }
