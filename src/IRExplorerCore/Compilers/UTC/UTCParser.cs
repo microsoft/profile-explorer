@@ -342,6 +342,12 @@ namespace IRExplorerCore.UTC {
             }
 
             SetTextRange(function, startToken);
+
+            // Assign block index as they show up in the text.
+            for (int i = 0; i < function.Blocks.Count; i++) {
+                function.Blocks[i].IndexInFunction = i;
+            }
+
             return function;
         }
 

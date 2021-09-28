@@ -58,6 +58,8 @@
 		<RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
 		<RunAnalyzersDuringBuild>false</RunAnalyzersDuringBuild>
 		<SignAssembly>false</SignAssembly>
+		<RunAnalyzersDuringLiveAnalysis>False</RunAnalyzersDuringLiveAnalysis>
+		<AnalysisLevel>none</AnalysisLevel>
 	</PropertyGroup>
 
 	<ItemGroup>

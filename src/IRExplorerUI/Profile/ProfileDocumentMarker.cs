@@ -22,6 +22,7 @@ namespace IRExplorerUI.Compilers.ASM {
         public double VirtualColumnPosition { get; set; }
         public double ElementWeightCutoff { get; set; }
         public double LineWeightCutoff {  get; set; }
+        public int TopCutoff { get; set; }
         public Brush ElementOverlayTextColor { get; set; }
         public Brush HotElementOverlayTextColor { get; set; }
         public Brush InlineeOverlayTextColor { get; set; }
@@ -38,9 +39,10 @@ namespace IRExplorerUI.Compilers.ASM {
 
         static ProfileDocumentMarkerOptions() {
             defaultInstance_ = new ProfileDocumentMarkerOptions() {
-                VirtualColumnPosition = 450,
+                VirtualColumnPosition = 350,
                 ElementWeightCutoff = 0.003, // 0.3%
                 LineWeightCutoff = 0.005, // 0.5%,
+                TopCutoff = 10,
                 ElementOverlayTextColor = Brushes.Black,
                 HotElementOverlayTextColor = Brushes.DarkRed,
                 ElementOverlayBackColor = Brushes.Transparent,
@@ -66,6 +68,20 @@ namespace IRExplorerUI.Compilers.ASM {
         public Brush PickBrushForWeight(double weightPercentage) {
             return ColorBrushes.GetBrush(PickColorForWeight(weightPercentage));
         }
+
+        public IconDrawing PickIconForIndex(int index) {
+            //return index switch {
+            //    0 => IconDrawing.FromIconResource("DotIconRed"),
+            //    1 => IconDrawing.FromIconResource("DotIconYellow"),
+            //    _ => IconDrawing.FromIconResource("DotIcon")
+            //};
+
+            return index switch {
+                0 => IconDrawing.FromIconResource("HotFlameIcon"),
+                1 => IconDrawing.FromIconResource("HotFlameIcon2"),
+                _ => IconDrawing.FromIconResource("HotFlameIcon3")
+            };
+        }
     }
 
     public class ProfileDocumentMarker {
@@ -73,8 +89,6 @@ namespace IRExplorerUI.Compilers.ASM {
         private ProfileData globalProfile_;
         private ProfileDocumentMarkerOptions options_;
         private ICompilerIRInfo ir_;
-
-        public double MaxVirtualColumn { get; set; }
 
         public ProfileDocumentMarker(FunctionProfileData profile, ProfileData globalProfile, ProfileDocumentMarkerOptions options, ICompilerIRInfo ir) {
             profile_ = profile;
@@ -113,21 +127,9 @@ namespace IRExplorerUI.Compilers.ASM {
                 double weightPercentage = profile_.ScaleWeight(weight);
 
                 //? TODO: Configurable
-                IconDrawing icon = null;
-                bool markOnFlowGraph = false;
-
-                if (i == 0) {
-                    icon = IconDrawing.FromIconResource("DotIconRed");
-                    markOnFlowGraph = true;
-                }
-                else if (i <= 2) {
-                    icon = IconDrawing.FromIconResource("DotIconYellow");
-                    markOnFlowGraph = true;
-                }
-                else {
-                    icon = IconDrawing.FromIconResource("DotIcon");
-                }
-
+                var icon = options_.PickIconForIndex(i);
+                bool markOnFlowGraph = i < 3;
+                
                 var label = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(weight.TotalMilliseconds, 2):#,#} ms)";
                 var overlay = document.RegisterIcomElementOverlay(element, icon, 16, 0, label);
                 overlay.IsLabelPinned = true;
@@ -195,18 +197,11 @@ namespace IRExplorerUI.Compilers.ASM {
                 //? - time % has the bar, on the right, with % format as 00.00%
                 //? - make color pallete lie uprof yellow/red
 
-                if (i <= 8) {
-                    IconDrawing icon = null;
-
-                    if (i == 0) {
-                        icon = IconDrawing.FromIconResource("DotIconRed");
-                    }
-                    else if (i <= 10) {
-                        icon = IconDrawing.FromIconResource("DotIconYellow");
-                    }
+                if (i < options_.TopCutoff) {
+                    var icon = options_.PickIconForIndex(i);
 
                     percentageColumnValue.TextColor = options_.ElementOverlayTextColor;
-                    percentageColumnValue.BackColor = ColorBrushes.GetBrush(color);
+                    //percentageColumnValue.BackColor = ColorBrushes.GetBrush(color);
                     //percentageColumnValue.BorderBrush = ColorBrushes.GetBrush(color);
                     //percentageColumnValue.BorderThickness = new Thickness(1);
                     percentageColumnValue.TextWeight = FontWeights.Bold;
@@ -221,7 +216,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
                 else {
                     percentageColumnValue.TextColor = options_.ElementOverlayTextColor;
-                    percentageColumnValue.BackColor = options_.ElementOverlayBackColor;
+                    //percentageColumnValue.BackColor = options_.ElementOverlayBackColor;
                     percentageColumnValue.Percentage = weightPercentage;
                     percentageColumnValue.ShowPercentageBar = weightPercentage >= 0.02;
                     percentageColumnValue.PercentageBarBackColor = Brushes.Brown;
@@ -234,7 +229,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 columnData.AddValue(percentageColumnValue, element, TIME_PERCENTAGE_COLUMN);
                 var valueGroup = columnData.AddValue(columnValue, element, TIME_COLUMN);
-                valueGroup.BackColor = Brushes.Bisque;
+                //valueGroup.BackColor = Brushes.Bisque;
             }
 
             // Mark the elements themselves with a color.
@@ -279,7 +274,6 @@ namespace IRExplorerUI.Compilers.ASM {
 
                     overlay.IsLabelPinned = true;
                     overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
-                    MaxVirtualColumn = Math.Max(overlay.VirtualColumn, MaxVirtualColumn);
 
                     overlay.ToolTip = $"{counterInfo.Name} ({counterInfo.Id})";
                     overlay.VirtualColumn += k * 100;

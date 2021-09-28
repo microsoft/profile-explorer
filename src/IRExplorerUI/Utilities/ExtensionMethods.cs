@@ -238,5 +238,16 @@ namespace IRExplorerUI {
             }
         }
 
+        public static SolidColorBrush AsBrush(this Color color) {
+            return ColorBrushes.GetBrush(color);
+        }
+
+        public static SolidColorBrush AsBrush(this Color color, double opacity) {
+            return ColorBrushes.GetTransparentBrush(color, opacity);
+        }
+
+        public static SolidColorBrush AsBrush(this Color color, byte alpha) {
+            return ColorBrushes.GetTransparentBrush(color, alpha);
+        }
     }
 }

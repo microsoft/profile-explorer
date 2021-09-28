@@ -18,6 +18,9 @@ namespace IRExplorerCore.IR {
         }
 
         public int Number { get; set; }
+        public int IndexInFunction { get; set; }
+        public bool HasOddIndexInFunction => (IndexInFunction & 1) == 1;
+        public bool HasEvenIndexInFunction => (IndexInFunction & 1) == 0;
         public List<TupleIR> Tuples { get; }
         public List<BlockIR> Successors { get; }
         public List<BlockIR> Predecessors { get; }

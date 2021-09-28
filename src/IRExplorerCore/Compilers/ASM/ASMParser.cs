@@ -177,6 +177,11 @@ namespace IRExplorerCore.ASM {
                 return true;
             });
 
+            // Assign block index as they show up in the text.
+            for (int i = 0; i < function.Blocks.Count; i++) {
+                function.Blocks[i].IndexInFunction = i;
+            }
+
             // The last block (after RET) is usually unreachable, remove it.
             if (function.EntryBlock != function.ExitBlock &&
                 function.ExitBlock.Predecessors.Count == 0) {
