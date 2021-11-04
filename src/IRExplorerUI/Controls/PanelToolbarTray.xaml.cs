@@ -185,5 +185,13 @@ namespace IRExplorerUI {
             // The MouseLeftButtonDown is not triggered when the popup is active.
             registerLeftButtonDown_ = true;
         }
+
+        private void ToolBar_OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e) {
+            Utils.RemoveToolbarOverflowButton(sender as ToolBar);
+        }
+
+        private void ToolBar_OnSizeChanged(object sender, SizeChangedEventArgs e) {
+            Utils.RemoveToolbarOverflowButton(sender as ToolBar);
+        }
     }
 }

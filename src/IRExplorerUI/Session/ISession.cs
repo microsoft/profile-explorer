@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using IRExplorerUI.Document;
@@ -36,6 +37,8 @@ namespace IRExplorerUI {
         ProfileData ProfileData { get; }
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
+        void AddOtherSummary(IRTextSummary summary);
+        IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId);
         IRDocument FindAssociatedDocument(IToolPanel panel);
         IRDocumentHost FindAssociatedDocumentHost(IToolPanel panel);
         void PopulateBindMenu(IToolPanel panel, BindMenuItemsArgs args);
@@ -81,7 +84,8 @@ namespace IRExplorerUI {
         Task<bool> SaveSessionDocument(string filePath);
         Task<LoadedDocument> OpenSessionDocument(string filePath);
 
-        Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
+        Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
+                                    ProfileDataProviderOptions options,
                                 ProfileLoadProgressHandler progressCallback,
                                 CancelableTask cancelableTask);
 

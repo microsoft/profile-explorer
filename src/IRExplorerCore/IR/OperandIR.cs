@@ -118,19 +118,6 @@ namespace IRExplorerCore.IR {
             visitor.Visit(this);
         }
 
-        public override bool Equals(object obj) {
-            return obj is OperandIR operand &&
-                   base.Equals(obj) &&
-                   Kind == operand.Kind &&
-                   EqualityComparer<TypeIR>.Default.Equals(Type, operand.Type) &&
-                   EqualityComparer<TupleIR>.Default.Equals(Parent, operand.Parent) &&
-                   EqualityComparer<object>.Default.Equals(Value, operand.Value);
-        }
-
-        public override int GetHashCode() {
-            return HashCode.Combine(base.GetHashCode(), (int) Kind, (int) Role, Type, Parent, Value);
-        }
-
         public override string ToString() {
             string result = Kind switch
             {

@@ -256,6 +256,16 @@ namespace IRExplorerUI {
             return documents_.Find(item => item.Summary == summary);
         }
 
+        public IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId) {
+            foreach (var doc in documents_) {
+                if (doc.Summary.Id == summaryId) {
+                    return doc.Summary.GetFunctionWithId(funcNumber);
+                }
+            }
+
+            return null;
+        }
+
         public bool AreSectionSignaturesComputed(IRTextSection section) {
             var loadedDoc = FindLoadedDocument(section);
             return loadedDoc?.Loader.SectionSignaturesComputed ?? false;
@@ -336,13 +346,14 @@ namespace IRExplorerUI {
                 var docState = docInfo.SerializeDocument();
                 state.Documents.Add(docState);
 
+                if (docInfo == MainDocument) {
+                    state.MainDocumentId = docState.Id;
+                }
+
                 // For two-document diff mode, save the document IDs 
                 // so they are restored properly later.
                 if (IsInTwoDocumentsDiffMode) {
-                    if (docInfo == MainDocument) {
-                        state.MainDocumentId = docState.Id;
-                    }
-                    else if (docInfo == DiffDocument) {
+                    if (docInfo == DiffDocument) {
                         state.DiffDocumentId = docState.Id;
                     }
                 }

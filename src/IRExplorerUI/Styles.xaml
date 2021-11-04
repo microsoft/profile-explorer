@@ -6,62 +6,110 @@
 
     <DataTemplate x:Key="TimePercentageColumnValueTemplate">
         <Border
+            Margin="-5,-1,-8,1"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             Background="{Binding BackColor}"
             BorderBrush="{Binding BorderBrush}"
-            BorderThickness="{Binding BorderThickness}"
-            ToolTip="{Binding ToolTip}">
+            BorderThickness="{Binding BorderThickness}">
             <StackPanel Orientation="Horizontal">
                 <Image
                     Width="Auto"
                     Height="Auto"
-                    Margin="2,0,2,0"
+                    Margin="4,0,2,1"
                     VerticalAlignment="Stretch"
                     Source="{Binding Icon}"
                     Stretch="Uniform"
+                    ToolTip="{Binding ToolTip}"
                     Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibility}}" />
 
                 <TextBlock
-                    Margin="2,0,2,0"
+                    MinWidth="{Binding MinTextWidth}"
+                    Margin="4,0,2,0"
                     VerticalAlignment="Center"
-                    FontFamily="Consolas"
-                    FontSize="12"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
                     FontWeight="{Binding TextWeight}"
                     Foreground="{Binding TextColor}"
-                    Text="{Binding PrefixText}"
-                    Visibility="{Binding Path=ShowPrefix, Converter={StaticResource BoolToVisibility}}" />
+                    Text="{Binding Text}"
+                    ToolTip="{Binding ToolTip}" />
+
                 <Rectangle
-                    Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=150.0}"
+                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
                     Height="Auto"
-                    Margin="2,0,2,0"
+                    Margin="4,0,2,0"
+                    HorizontalAlignment="Left"
                     VerticalAlignment="Stretch"
                     Fill="{Binding PercentageBarBackColor}"
                     Stroke="{Binding PercentageBarBorderBrush}"
                     StrokeThickness="{Binding PercentageBarBorderThickness}"
+                    ToolTip="{Binding ToolTip}"
                     Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibility}}" />
-
-                <TextBlock
-                    Margin="2,0,2,0"
-                    VerticalAlignment="Center"
-                    FontFamily="Consolas"
-                    FontSize="12"
-                    FontWeight="{Binding TextWeight}"
-                    Foreground="{Binding TextColor}"
-                    Text="{Binding Text}" />
             </StackPanel>
         </Border>
     </DataTemplate>
 
-
-    <DataTemplate x:Key="TimeColumnValueTemplate">
+    <DataTemplate x:Key="BlockPercentageValueTemplate">
         <Border
+            Padding="0"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
             Background="{Binding BackColor}"
             BorderBrush="{Binding BorderBrush}"
-            BorderThickness="{Binding BorderThickness}"
-            ToolTip="{Binding ToolTip}">
+            BorderThickness="{Binding BorderThickness}">
+            <StackPanel
+                Orientation="Horizontal">
+                <TextBlock
+                    MinWidth="{Binding MinTextWidth}"
+                    Margin="0,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
+                    FontWeight="DemiBold"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding PrefixText}"
+                    ToolTip="{Binding ToolTip}" />
+                <Rectangle
+                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                    Height="Auto"
+                    Margin="4,0,2,0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Stretch"
+                    Fill="{Binding PercentageBarBackColor}"
+                    Stroke="{Binding PercentageBarBorderBrush}"
+                    StrokeThickness="{Binding PercentageBarBorderThickness}"
+                    ToolTip="{Binding ToolTip}"
+                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibility}}" />
+                <TextBlock
+                    Margin="4,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
+                    FontWeight="DemiBold"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding ValuePercentage, StringFormat=p2}"
+                    ToolTip="{Binding ToolTip}" />
+                <TextBlock
+                    Margin="6,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{Binding TextFont}"
+                    FontSize="{Binding TextSize}"
+                    FontWeight="{Binding TextWeight}"
+                    Foreground="{Binding TextColor}"
+                    Text="{Binding Text}"
+                    ToolTip="{Binding ToolTip}" />
+            </StackPanel>
+        </Border>
+    </DataTemplate>
+    
+    <DataTemplate x:Key="TimeColumnValueTemplate">
+        <Border
+            Margin="-5,0,-8,0"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            Background="{Binding BackColor}"
+            BorderBrush="{Binding BorderBrush}"
+            BorderThickness="{Binding BorderThickness}">
             <StackPanel Orientation="Horizontal">
                 <Image
                     Width="Auto"
@@ -76,10 +124,44 @@
                     FontSize="12"
                     FontWeight="{Binding TextWeight}"
                     Foreground="{Binding TextColor}"
-                    Text="{Binding Text}" />
+                    Text="{Binding Text}"
+                    ToolTip="{Binding ToolTip}" />
             </StackPanel>
         </Border>
     </DataTemplate>
+
+    <Style x:Key="DisabledImageStyle" TargetType="Image">
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    
+    <Style x:Key="TimeColumnHeaderTemplate" TargetType="GridViewColumnHeader">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
+                    <Border
+                        Height="22"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Margin="-1,-1,0,0"
+                        Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        BorderThickness="0,0,1,1">
+                        <TextBlock
+                            x:Name="ContentHeader"
+                            Width="{TemplateBinding Width}"
+                            Padding="4,0,4,0"
+                            VerticalAlignment="Center"
+                            Text="{TemplateBinding Content}"
+                            TextAlignment="Left" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
 
     <Style x:Key="ListViewHeaderStyle" TargetType="{x:Type GridViewColumnHeader}">
@@ -273,6 +355,12 @@
                         BorderThickness="{TemplateBinding BorderThickness}">
                         <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                     </Border>
+
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsSelected" Value="true">
+                            <Setter TargetName="Border" Property="Background" Value="LightGray" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

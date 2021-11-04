@@ -69,7 +69,11 @@ namespace IRExplorerCore.IR {
 
         public virtual bool HasName => false;
         public virtual ReadOnlyMemory<char> NameValue => null;
-        public virtual string Name => NameValue.ToString();
+
+        public virtual string Name {
+            get => NameValue.ToString();
+            set => throw new NotImplementedException();
+        }
 
         public void SetTextRange(TextLocation location, int length) {
             TextLocation = location;
@@ -85,19 +89,7 @@ namespace IRExplorerCore.IR {
         }
 
         public override bool Equals(object obj) {
-            if (ReferenceEquals(null, obj)) {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj)) {
-                return true;
-            }
-
-            if (obj.GetType() != this.GetType()) {
-                return false;
-            }
-
-            return Equals((IRElement) obj);
+            return ReferenceEquals(this, obj) || obj is IRElement other && Equals(other);
         }
         
         protected bool Equals(IRElement other) {

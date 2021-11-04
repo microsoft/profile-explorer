@@ -45,22 +45,59 @@
                         Text="Path" />
                     <TextBox
                         Name="PathTextbox"
-                        Width="200"
+                        Width="150"
                         Margin="4,0,0,0"
                         HorizontalAlignment="Center"
                         Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
-                    <Button Click="Button_Click" ToolTip="Select source file">
-                        <Image Source="{StaticResource FolderIcon}" />
+                    <Button Click="Button_Click" ToolTip="Open a source file">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource FolderIcon}" />
+                            <TextBlock Text="Open" />
+                        </StackPanel>
+                    </Button>
+                    <Button Click="Button_Click" ToolTip="Find and open source file using debug info" IsEnabled="False">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource ReloadIcon}" />
+                            <TextBlock Text="Default" />
+                        </StackPanel>
                     </Button>
                     <Separator />
-                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line">
-                        <Image Source="{StaticResource StarIcon}" />
+                    
+                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line" 
+                            Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}" >
+                        <Image Source="{StaticResource HotFlameIcon}" />
+                    </Button>
+                    <Button
+                        Padding="1"
+                        Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+                        CommandTarget="{Binding ElementName=TextView}"
+                        ToolTip="Jump to previous bookmark (Shift+F2)">
+                        <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}">
+                        </Image>
+                    </Button>
+                    <Button
+                        Padding="1"
+                        Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+                        CommandTarget="{Binding ElementName=TextView}"
+                        ToolTip="Jump to previous bookmark (Shift+F2)">
+                        <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}">
+                        </Image>
                     </Button>
                     <Separator />
+                    
                     <TextBlock Text="Inlinees" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <ComboBox Name="InlineeCombobox" MaxWidth="300" Width="200" DisplayMemberPath="Function" 
+                    <ComboBox Name="InlineeCombobox" MaxWidth="300" MinWidth="100" Width="200" DisplayMemberPath="Function" 
                               SelectedValue="Function" 
+                              Loaded="ComboBox_Loaded"
                               SelectionChanged="InlineeCombobox_SelectionChanged" ToolTip="Inlined functions call stack"
                               Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                               BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>

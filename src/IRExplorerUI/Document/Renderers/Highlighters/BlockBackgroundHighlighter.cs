@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
@@ -41,8 +42,21 @@ namespace IRExplorerUI {
 
             int viewStart = visualLines[0].FirstDocumentLine.Offset;
             int viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
+
             var firstLinePos = visualLines[0].GetVisualPosition(0, VisualYPosition.LineTop);
             double scrollOffsetY = textView.ScrollOffset.Y % textView.DefaultLineHeight;
+            
+
+            // When a new line becomes the first in the view
+            // it seems to happen after this code runs, so consider
+            // the next one instead as first to get proper coordinates.
+            //if (scrollOffsetY == 0 && textView.ScrollOffset.Y > 0 &&
+            //    visualLines.Count > 1) {
+            //    Trace.WriteLine($"=> Instead of {firstLinePos}");
+            //    firstLinePos.Y -= textView.DefaultLineHeight;
+            //    Trace.WriteLine($"    use  {firstLinePos}");
+            //}
+
             double lineAdjustmentY = firstLinePos.Y + scrollOffsetY;
             int minOffset = viewStart;
             int maxOffset = visualLines[^1].LastDocumentLine.EndOffset;
@@ -65,15 +79,15 @@ namespace IRExplorerUI {
                 var startLinePos = startLineVisual.GetVisualPosition(0, VisualYPosition.LineTop);
                 var endLinePos = endLineVisual.GetVisualPosition(0, VisualYPosition.LineBottom);
 
-                var blockRect = new Rect(0, startLinePos.Y - lineAdjustmentY, textView.ActualWidth,
-                                         Math.Min(maxViewHeight, endLinePos.Y - startLinePos.Y));
+                var blockRect = Utils.SnapRectToPixels(0, startLinePos.Y - lineAdjustmentY, textView.ActualWidth,
+                                                       Math.Min(maxViewHeight, endLinePos.Y - startLinePos.Y));
 
-                if ((block.IndexInFunction & 1) == 1) {
+                if (block.HasOddIndexInFunction) {
                     oddGeoBuilder.AddRectangle(textView, blockRect);
                 }
 
                 // Draw separator line between blocks, if it doesn't end up outside the view.
-                if (blockRect.Bottom < maxViewHeight && separatorLineCount < separatorLines.Length) {
+                if (blockRect.Bottom <= maxViewHeight && separatorLineCount < separatorLines.Length) {
                     separatorLines[separatorLineCount] = blockRect;
                     separatorLineCount++;
                 }

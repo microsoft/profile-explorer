@@ -29,6 +29,8 @@ namespace IRExplorerUI {
             };
         }
 
+        public static IconDrawing Empty => new IconDrawing();
+
         [ProtoMember(1)]
         public string IconResourceName { get; set; }
         [ProtoMember(2)]

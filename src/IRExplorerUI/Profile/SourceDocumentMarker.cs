@@ -1,9 +1,12 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+
+using System;
 using System.Collections.Generic;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using System.Text;
+using System.Threading.Tasks;
 using IRExplorerUI.Document;
 
 //? TODO: EXTRACT SOURCE LOCATION MARKING TO OWN CLASS NOT PROFILE-DEPENDENT
@@ -18,12 +21,11 @@ namespace IRExplorerUI.Compilers.ASM {
             ir_ = ir;
         }
 
-        public void Mark(IRDocument document, FunctionIR function) {
-            MarkProfiledElements(document, function);
-        }
-
-        private void MarkProfiledElements(IRDocument document, FunctionIR function) {
-            double virtualColumnAdjustment = ir_.Mode == IRMode.x86_64 ? 100 : 0;
+        public Task Mark(IRDocument document, FunctionIR function) {
+            var overlays = new List<IconElementOverlay>(function.InstructionCount);
+            var inlineeOverlays = new List<IconElementOverlay>(function.InstructionCount);
+            var lineLengths = new List<int>(function.InstructionCount);
+            int maxLineLength = 0;
 
             foreach (var element in function.AllInstructions) {
                 var tag = element.GetTag<SourceLocationTag>();
@@ -37,11 +39,13 @@ namespace IRExplorerUI.Compilers.ASM {
                 if (tag.Line != 0) {
                     var label = $"{tag.Line}";
                     var tooltip = $"Line number for {funcName}";
-                    var overlay = document.RegisterIcomElementOverlay(element, null, 16, 0, label, tooltip);
+                    var overlay = document.RegisterIconElementOverlay(element, null, 16, 0, label, tooltip);
                     overlay.IsLabelPinned = true;
                     overlay.TextColor = options_.ElementOverlayTextColor;
                     overlay.Background = options_.ElementOverlayBackColor;
-                    overlay.VirtualColumn = options_.VirtualColumnPosition + virtualColumnAdjustment;
+                    
+                    overlays.Add(overlay);
+                    lineLengths.Add(element.TextLength);
                 }
 
                 if(!tag.HasInlinees) {
@@ -65,12 +69,39 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
 
                 AppendInlineeTooltip(funcName, tag.Line, null, tag.Inlinees.Count, tooltipSb);
-                var inlineeOverlay = document.RegisterIcomElementOverlay(element, null, 16, 0, sb.ToString(), tooltipSb.ToString());
-                inlineeOverlay.VirtualColumn = options_.VirtualColumnPosition + 50 + virtualColumnAdjustment;
+                var inlineeOverlay = document.RegisterIconElementOverlay(element, null, 16, 0, sb.ToString(), tooltipSb.ToString());
                 inlineeOverlay.TextColor = options_.InlineeOverlayTextColor;
                 inlineeOverlay.Background = options_.ElementOverlayBackColor;
                 inlineeOverlay.IsLabelPinned = true;
+                inlineeOverlays.Add(inlineeOverlay);
             }
+
+            // Place the line numbers on a column aligned with most instrs.
+            var settings = App.Settings.DocumentSettings;
+            const double lengthPercentile = 0.9;
+            const int overlayMargin = 20;
+            const int inlineeOverlayMargin = 30;
+
+            lineLengths.Sort();
+            int percentileLength = lineLengths.Count > 0 ? lineLengths[(int)Math.Floor(lineLengths.Count * lengthPercentile)] : 0;
+            double columnPosition = Utils.MeasureString(percentileLength, settings.FontName, settings.FontSize).Width;
+
+            foreach (var overlay in overlays) {
+                if (overlay.Element.TextLength > percentileLength) {
+                    //? adjust
+                }
+
+                double position = Math.Max(options_.VirtualColumnPosition, columnPosition);
+
+                overlay.VirtualColumn = position + overlayMargin;
+            }
+
+            foreach (var overlay in inlineeOverlays) {
+                double position = Math.Max(options_.VirtualColumnPosition, columnPosition);
+                overlay.VirtualColumn = position + overlayMargin + inlineeOverlayMargin;
+            }
+
+            return Task.CompletedTask;
         }
 
         private void AppendInlineeTooltip(string inlineeName, int inlineeLine, string inlineeFilePath,
@@ -78,7 +109,9 @@ namespace IRExplorerUI.Compilers.ASM {
             // func1:line (file)
             //     func2
             //         ...
-            for (int column = 0; column < index * 4; column++) {
+            const int tabWidth = 2;
+            ;
+            for (int column = 0; column < index * tabWidth; column++) {
                 tooltipSb.Append(' ');
             }
 

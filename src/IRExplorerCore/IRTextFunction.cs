@@ -1,6 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 
 namespace IRExplorerCore {
@@ -10,6 +11,7 @@ namespace IRExplorerCore {
         public string Name { get; }
         public IRTextSummary ParentSummary { get; set; }
         public int SectionCount => Sections?.Count ?? 0;
+        private int hashCode_;
 
         public IRTextFunction(string name) {
             Name = name;
@@ -43,11 +45,22 @@ namespace IRExplorerCore {
 
         public override bool Equals(object obj) {
             return obj is IRTextFunction function &&
-                   Name == function.Name;
+                   Name == function.Name &&
+                   ((ParentSummary != null && function.ParentSummary != null &&
+                     ParentSummary.ModuleName == function.ParentSummary.ModuleName) ||
+                    (ParentSummary == null && function.ParentSummary == null));
         }
 
         public override int GetHashCode() {
-            return System.HashCode.Combine(Name);
+            // Compute the hash so that functs. with same name in diff. modules
+            // don't get the same hash code.
+            if (hashCode_ == 0) {
+                hashCode_ = ParentSummary != null ? 
+                    HashCode.Combine(Name, ParentSummary) : 
+                    HashCode.Combine(Name);
+            }
+            
+            return hashCode_;
         }
     }
 }

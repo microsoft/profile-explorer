@@ -35,7 +35,6 @@
         <CommandBinding Command="local:Command.PreviousSection" Executed="PreviousSectionExecuted" />
         <CommandBinding Command="local:Command.NextSection" Executed="NextSectionExecuted" />
         <CommandBinding Command="local:Command.FocusSearch" Executed="FocusSearchExecuted" />
-        <CommandBinding Command="local:Command.ShowFunctions" Executed="ShowFunctionsExecuted" />
         <CommandBinding Command="local:Command.CopySectionText" Executed="CopySectionTextExecuted" />
         <CommandBinding Command="local:Command.SaveSectionText" Executed="SaveSectionTextExecuted" />
         <CommandBinding Command="local:Command.SaveAllSectionText" Executed="SaveAllSectionTextExecuted" />
@@ -69,6 +68,81 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+
+        <Style x:Key="ColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="2" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSectionListVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ModulesColumnsGridSplitterStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="2" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowModules}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ModulesColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="*" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowModules}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        
+        <Style x:Key="FunctionsColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="*" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsFunctionListVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="SectionsColumnsStyle" TargetType="{x:Type ColumnDefinition}">
+            <Style.Setters>
+                <Setter Property="Width" Value="2*" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsSectionListVisible}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="0" />
+                        <Setter Property="MaxWidth" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding ProfileControlsVisible}" Value="True">
+                    <DataTrigger.Setters>
+                        <Setter Property="Width" Value="*" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </local:ToolPanelControl.Resources>
 
     <Grid
@@ -76,9 +150,9 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Stretch">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="2" />
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Style="{StaticResource FunctionsColumnsStyle}" />
+            <ColumnDefinition Style="{StaticResource ColumnsGridSplitterStyle}" />
+            <ColumnDefinition Style="{StaticResource SectionsColumnsStyle}" />
         </Grid.ColumnDefinitions>
 
         <Grid
@@ -89,16 +163,24 @@
                 <RowDefinition Height="28" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ToolBarTray
+
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="25" />
+                </Grid.ColumnDefinitions>
+                <ToolBarTray
                 Name="FunctionToolbarTray"
-                Grid.Row="0"
+                Grid.Column="0"
                 Height="28"
                 Margin="0,0,24,0"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Top"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                IsLocked="True">
-                <ToolBar
+                IsLocked="True"
+                Visibility="{Binding IsFunctionListVisible, Converter={StaticResource BoolToVisibility}}">
+                    <ToolBar
                     Name="FunctionToolbar"
                     Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
                     HorizontalAlignment="Stretch"
@@ -106,36 +188,45 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded"
                     SizeChanged="ToolBar_SizeChanged">
-                    <TextBlock
+                        <TextBlock
                         Margin="5,0,0,0"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="Show"
-                        Visibility="{Binding FunctionModuleControlsVisible, Converter={StaticResource BoolToVisibility}}" />
-                    <ToggleButton
+                        Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <ToggleButton
                         Margin="8,0,0,0"
-                        Padding="4,2,4,2"
-                        HorizontalContentAlignment="Stretch"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        Content="Functions"
-                        IsChecked="{Binding ShowFunctions, Mode=TwoWay}"
-                        Visibility="{Binding FunctionModuleControlsVisible, Converter={StaticResource BoolToVisibility}}" />
-                    <ToggleButton
-                        Margin="-1,0,8,0"
                         Padding="4,2,4,2"
                         HorizontalContentAlignment="Stretch"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         Content="Modules"
                         IsChecked="{Binding ShowModules, Mode=TwoWay}"
-                        Visibility="{Binding FunctionModuleControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
 
-                    <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
-                    <Grid
+                        <ToggleButton
+                        Margin="-1,0,0,0"
+                        Padding="4,2,4,2"
+                        HorizontalContentAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Content="Call Tree"
+                        IsChecked="{Binding ShowChildren, Mode=TwoWay}"
+                        Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                        <ToggleButton
+                        Margin="-1,0,8,0"
+                        Padding="2,2,4,2"
+                        HorizontalContentAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        Content="Sections"
+                        IsChecked="{Binding ShowSections, Mode=TwoWay}"
+                        Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
+                        
+                        <Grid
                         x:Name="FunctionFilterGrid"
                         Height="24"
-                        HorizontalAlignment="Stretch"
                         ToolBar.OverflowMode="Never">
-                        <TextBox
+                            <TextBox
                             Name="FunctionFilter"
                             Height="24"
                             Margin="4,0,0,0"
@@ -146,47 +237,128 @@
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             TextChanged="FunctionFilter_TextChanged"
                             ToolTip="Filter function list based on a case-insensitive substring">
-                            <TextBox.InputBindings>
-                                <KeyBinding
+                                <TextBox.InputBindings>
+                                    <KeyBinding
                                     Key="Escape"
                                     Command="local:Command.ClearTextbox"
                                     CommandParameter="{Binding ElementName=FunctionFilter}" />
-                            </TextBox.InputBindings>
+                                </TextBox.InputBindings>
 
-                        </TextBox>
-                        <TextBlock
+                            </TextBox>
+                            <TextBlock
                             Margin="8,4"
                             Foreground="DimGray"
                             IsHitTestVisible="False"
                             Text="Search functions"
                             Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
-                    </Grid>
+                        </Grid>
 
-                    <Button
+                        <Button
                         Command="local:Command.ClearTextbox"
                         CommandParameter="{Binding ElementName=FunctionFilter}"
                         ToolBar.OverflowMode="Never"
                         ToolTip="Reset function filter">
-                        <Image
+                            <Image
                             Width="16"
                             Height="16"
                             Source="{StaticResource ClearIcon}" />
-                    </Button>
-                </ToolBar>
-            </ToolBarTray>
+                        </Button>
+                    </ToolBar>
+                </ToolBarTray>
+                <local:PanelToolbarTray
+                    Grid.Column="1"
+                    HasDuplicateButton="False"
+                    HasPinButton="False"
+                    SettingsClicked="FixedToolbar_SettingsClicked" 
+                    Visibility="{Binding IsSectionListVisible, Converter={StaticResource InvertedBoolToVisibility}}"/>
+            </Grid>
+        
+            <Grid Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Style="{StaticResource ModulesColumnsStyle}"></ColumnDefinition>
+                    <ColumnDefinition Style="{StaticResource ModulesColumnsGridSplitterStyle}"></ColumnDefinition>
+                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
 
+                <ListView
+                x:Name="ModulesList"
+                Grid.Column="0"
+                Panel.ZIndex="2"
+                AutomationProperties.AutomationId="AutoFunctionList"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                BorderBrush="{x:Null}"
+                BorderThickness="0,0,0,0"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Visibility="{Binding ShowModules, Converter={StaticResource BoolToVisibility}}">
+                <ListView.View>
+                    <GridView>
+                            <GridViewColumn Width="150">
+                                <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module"/>
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="2">
+                                            <TextBlock Margin="0,0,0,2" Text ="{Binding Name}" 
+                                                       DockPanel.Dock="Top" FontWeight="DemiBold"/>
+                                            <StackPanel DockPanel.Dock="Bottom"
+                                                VerticalAlignment="Center"
+                                                Background="{Binding BackColor}"
+                                                Orientation="Horizontal">
+                                                <Rectangle
+                                                    Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
+                                                    Height="16"
+                                                    Fill="#4A73C4"
+                                                    Stroke="Black" />
+                                                <TextBlock Margin="6,0,0,0"  Text="{Binding Text}" MinWidth="{Binding MinTextWidth}"/>
+
+                                            </StackPanel>
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                </ListView.View>
+                <ListView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        <EventSetter Event="MouseDoubleClick" Handler="ModuleDoubleClick" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+                <ListView.ContextMenu>
+                    <ContextMenu>
+                        <MenuItem
+                            Command="local:Command.SaveAllSectionText"
+                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                            CommandTarget="{Binding ElementName=SectionList}"
+                            Header="Save All Sections Text"
+                            ToolTip="Save the text (IR) of all sections for the selected function to a file" />
+                    </ContextMenu>
+                </ListView.ContextMenu>
+            </ListView>
+                
+            <GridSplitter 
+                Grid.Column="1"
+                Width="2"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch"
+                Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
+            
             <ListView
                 x:Name="FunctionList"
-                Grid.Row="1"
+                Grid.Column="2"
                 Panel.ZIndex="1"
-                AutomationProperties.AutomationId="AutoFunctionList"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 SelectionChanged="FunctionList_SelectionChanged"
                 VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling"
-                Visibility="{Binding ShowFunctions, Converter={StaticResource BoolToVisibility}}">
+                VirtualizingStackPanel.VirtualizationMode="Recycling">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
@@ -197,8 +369,9 @@
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
-                        <GridViewColumn Width="50" DisplayMemberBinding="{Binding SectionCount}">
-                            <GridViewColumnHeader x:Name="SectionsColumnHeader" Content="Sections" />
+                        <GridViewColumn Width="50" DisplayMemberBinding="{Binding SectionCount}"
+                                        local:GridViewColumnVisibility.IsVisible="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBool}}">
+                            <GridViewColumnHeader x:Name="SectionsColumnHeader" Content="Sections"/>
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -206,21 +379,19 @@
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <!--<GridViewColumn Width="50" DisplayMemberBinding="{Binding ModuleName}">
-                            <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
+                        <GridViewColumn Width="50" DisplayMemberBinding="{Binding ModuleName}" >
+                            <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module"/>
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
                                 </Style>
                             </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>-->
+                        </GridViewColumn>
 
-                        <GridViewColumn Width="150">
+                        <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
                             <GridViewColumnHeader
                                 x:Name="OptionalColumnHeader"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="{Binding OptionalDataColumnName}"
-                                Visibility="{Binding OptionalDataColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+                                Content="{Binding OptionalDataColumnName}"/>
 
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -235,22 +406,20 @@
                                         Background="{Binding BackColor}"
                                         Orientation="Horizontal">
                                         <Rectangle
-                                            Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                                            Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
                                             Height="16"
-                                            Fill="Brown"
+                                            Fill="#Aa4343"
                                             Stroke="Black" />
-                                        <TextBlock Margin="4,0,0,0" Text="{Binding Path=ExclusivePercentage, StringFormat=p2}" />
-                                        <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText2}" />
+                                        <TextBlock Margin="4,0,0,0" Text="{Binding Path=ExclusivePercentage, StringFormat=p2}" FontWeight="DemiBold"/>
+                                        <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Width="150">
+                        <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
                             <GridViewColumnHeader
                                 x:Name="OptionalColumnHeader2"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="{Binding OptionalDataColumnName2}"
-                                Visibility="{Binding OptionalDataColumnVisible2, Converter={StaticResource BoolToVisibility}}" />
+                                Content="{Binding OptionalDataColumnName2}"/>
 
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -265,9 +434,9 @@
                                         Background="{Binding BackColor2}"
                                         Orientation="Horizontal">
                                         <Rectangle
-                                            Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                                            Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
                                             Height="16"
-                                            Fill="RoyalBlue"
+                                            Fill="#4A73C4"
                                             Stroke="Black" />
                                         <TextBlock Margin="4,0,0,0" Text="{Binding Path=InclusivePercentage, StringFormat=p2}" />
                                         <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText2}" />
@@ -275,12 +444,10 @@
                                 </DataTemplate>
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
-                        <GridViewColumn Width="200">
+                        <GridViewColumn Width="200" local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
                             <GridViewColumnHeader
                                 x:Name="AlternateNameColumnHeader"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="Demangled Name"
-                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+                                Content="Demangled Name" />
 
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -301,6 +468,7 @@
                 <ListView.ItemContainerStyle>
                     <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                         <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick" />
 
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
@@ -354,114 +522,22 @@
                     </ContextMenu>
                 </ListView.ContextMenu>
             </ListView>
-
-            <ListView
-                x:Name="ModulesList"
-                Grid.Row="1"
-                Panel.ZIndex="2"
-                AutomationProperties.AutomationId="AutoFunctionList"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                BorderBrush="{x:Null}"
-                BorderThickness="0,0,0,0"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling"
-                Visibility="{Binding ShowModules, Converter={StaticResource BoolToVisibility}}">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Width="200" DisplayMemberBinding="{Binding Name}">
-                            <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-                        </GridViewColumn>
-                        <GridViewColumn Width="150">
-                            <GridViewColumnHeader
-                                x:Name="ModuleTimeColumnHeader"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="Time" />
-
-                            <GridViewColumn.HeaderContainerStyle>
-                                <Style TargetType="{x:Type GridViewColumnHeader}">
-                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                </Style>
-                            </GridViewColumn.HeaderContainerStyle>
-
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
-                                        <TextBlock Margin="6,2,6,2" Text="{Binding Text}" />
-                                    </Border>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-                    </GridView>
-                </ListView.View>
-                <ListView.ItemContainerStyle>
-                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    </Style>
-                </ListView.ItemContainerStyle>
-                <ListView.ContextMenu>
-                    <ContextMenu>
-                        <MenuItem
-                            Command="local:Command.SaveAllSectionText"
-                            CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                            CommandTarget="{Binding ElementName=SectionList}"
-                            Header="Save All Sections Text"
-                            ToolTip="Save the text (IR) of all sections for the selected function to a file" />
-                    </ContextMenu>
-                </ListView.ContextMenu>
-            </ListView>
-
-            <Grid
-                x:Name="ShowFunctionsGrid"
-                HorizontalAlignment="Right"
-                VerticalAlignment="Top">
-                <ToggleButton
-                    Width="22"
-                    Height="22"
-                    Margin="0,2,2,0"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Top"
-                    IsChecked="{Binding IsFunctionListVisible, Mode=TwoWay}"
-                    ToolTip="Show/hide the function list">
-                    <Image
-                        Width="16"
-                        Height="16"
-                        Source="{StaticResource ListIcon}" />
-                    <ToggleButton.Style>
-                        <Style TargetType="{x:Type ToggleButton}">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                        </Border>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.InactiveCaptionBrushKey}}" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </ToggleButton.Style>
-                </ToggleButton>
+                
             </Grid>
         </Grid>
 
+            
         <GridSplitter
             x:Name="MainGridSplitter"
             Grid.Column="1"
-            Width="3"
+            Width="2"
             HorizontalAlignment="Stretch"
             VerticalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" />
+            Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
 
-        <Grid x:Name="SectionGrid" Grid.Column="2">
+        <Grid Grid.Column="2" Visibility="{Binding IsSectionListVisible, Converter={StaticResource BoolToVisibility}}">
+            
+        <Grid x:Name="SectionGrid" Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibility}}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="28" />
                 <RowDefinition Height="*" />
@@ -485,23 +561,6 @@
                         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                         Loaded="ToolBar_Loaded">
 
-                        <ToggleButton
-                            Margin="4,0,0,0"
-                            Padding="2,2,4,2"
-                            HorizontalContentAlignment="Stretch"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            Content="Sections"
-                            IsChecked="{Binding ShowSections, Mode=TwoWay}"
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
-                        <ToggleButton
-                            Margin="-1,0,8,0"
-                            Padding="4,2,4,2"
-                            HorizontalContentAlignment="Stretch"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            Content="Call Tree"
-                            IsChecked="{Binding ShowChildren, Mode=TwoWay}"
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
-
                         <Image Source="{StaticResource SearchIcon}" />
                         <Grid Height="24">
                             <TextBox
@@ -514,7 +573,7 @@
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 TabIndex="4"
                                 TextChanged="SectionFilter_TextChanged"
-                                ToolTip="Filter setion list based on a case-insensitive string (Ctrl+F)">
+                                ToolTip="Filter section list based on a case-insensitive string (Ctrl+F)">
                                 <TextBox.InputBindings>
                                     <KeyBinding
                                         Key="Escape"
@@ -586,7 +645,6 @@
                 <local:PanelToolbarTray
                     x:Name="FixedToolbar"
                     Grid.Column="1"
-                    DockPanel.Dock="Right"
                     HasDuplicateButton="False"
                     HasPinButton="False"
                     SettingsClicked="FixedToolbar_SettingsClicked" />
@@ -605,7 +663,7 @@
                 ScrollViewer.HorizontalScrollBarVisibility="Hidden"
                 VirtualizingStackPanel.IsVirtualizing="True"
                 VirtualizingStackPanel.VirtualizationMode="Recycling"
-                Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibility}}">
+                >
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Width="50">
@@ -963,6 +1021,92 @@
                 </ListView.InputBindings>
             </ListView>
 
+        </Grid>
+
+        <Grid x:Name="CallChildrenGrid" 
+              Visibility="{Binding ShowChildren, Converter={StaticResource BoolToVisibility}}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="28" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="25" />
+                </Grid.ColumnDefinitions>
+
+                <ToolBarTray
+                    x:Name="CallChildrenToolbar"
+                    Grid.Column="0"
+                    Height="28"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    IsLocked="True">
+                    <ToolBar
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Top"
+                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                        Loaded="ToolBar_Loaded">
+
+                        <Image Source="{StaticResource SearchIcon}" />
+                        <Grid Height="24">
+                            <TextBox
+                                x:Name="CallChildrenFilter"
+                                IsEnabled="False"
+                                Width="200"
+                                Margin="4,0,0,0"
+                                HorizontalAlignment="Center"
+                                VerticalContentAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                TabIndex="4"
+                                TextChanged="SectionFilter_TextChanged"
+                                ToolTip="Filter children function list based on a case-insensitive string (Ctrl+F)">
+                                <TextBox.InputBindings>
+                                    <KeyBinding
+                                        Key="Escape"
+                                        Command="local:Command.ClearTextbox"
+                                        CommandParameter="{Binding ElementName=CallChildrenFilter}" />
+                                </TextBox.InputBindings>
+                            </TextBox>
+                            <TextBlock
+                                Margin="8,4"
+                                Foreground="DimGray"
+                                IsHitTestVisible="False"
+                                Text="Search functions"
+                                Visibility="{Binding ElementName=SectionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+
+                        </Grid>
+                        <Button
+                            Command="local:Command.ClearTextbox"
+                            CommandParameter="{Binding ElementName=SectionFilter}"
+                            TabIndex="5"
+                            ToolTip="Reset section filter">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Source="{StaticResource ClearIcon}" />
+                        </Button>
+                        <Separator />
+
+                        <ToggleButton
+                            IsChecked="{Binding FilterTagged}"
+                            TabIndex="2"
+                            IsEnabled="False"
+                            ToolTip="Show callers">
+                            <Image Source="{StaticResource EyeIcon}" />
+                        </ToggleButton>
+                    </ToolBar>
+                </ToolBarTray>
+
+                <local:PanelToolbarTray
+                    x:Name="FixedToolbar2"
+                    Grid.Column="1"
+                    HasDuplicateButton="False"
+                    HasPinButton="False"
+                    SettingsClicked="FixedToolbar_SettingsClicked" />
+            </Grid>
+            
             <tree:TreeList
                 x:Name="ChildFunctionList"
                 Grid.Row="1"
@@ -971,12 +1115,11 @@
                 BorderBrush="{x:Null}"
                 BorderThickness="0,0,0,0"
                 IsTextSearchEnabled="False"
-                SelectionMode="Single"
-                Visibility="{Binding ShowChildren, Converter={StaticResource BoolToVisibility}}">
+                SelectionMode="Single">
                 <tree:TreeList.View>
                     <GridView>
                         <GridViewColumn Width="200">
-                            <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function (callee)" />
+                            <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function" />
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
                                     <Setter Property="HorizontalContentAlignment" Value="Left" />
@@ -1006,12 +1149,10 @@
                             </GridViewColumn.CellTemplate>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="150">
+                        <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding ChildTimeColumnVisible}">
                             <GridViewColumnHeader
                                 x:Name="ChildTimeColumnHeader"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="Time"
-                                Visibility="{Binding ChildTimeColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+                                Content="Time"/>
 
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -1026,9 +1167,9 @@
                                         Background="{Binding BackColor}"
                                         Orientation="Horizontal">
                                         <Rectangle
-                                            Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                                            Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
                                             Height="16"
-                                            Fill="Brown"
+                                            Fill="#Aa4343"
                                             Stroke="Black" />
                                         <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
                                             <TextBlock.Style>
@@ -1055,12 +1196,10 @@
                             </GridViewColumn.HeaderContainerStyle>
                         </GridViewColumn>
 
-                        <GridViewColumn Width="200">
+                        <GridViewColumn Width="200" local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
                             <GridViewColumnHeader
                                 x:Name="ChildAlternateNameColumnHeader"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="Demangled Name"
-                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+                                Content="Demangled Name"/>
 
                             <GridViewColumn.HeaderContainerStyle>
                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -1119,7 +1258,7 @@
             </tree:TreeList>
 
         </Grid>
-
+        </Grid>
     </Grid>
 
 

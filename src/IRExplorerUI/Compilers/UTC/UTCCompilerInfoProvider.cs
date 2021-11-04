@@ -117,8 +117,8 @@ namespace IRExplorerUI.Compilers.UTC {
             return true;
         }
 
-        public bool HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
-            return true;
+        public Task HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
+            return Task.CompletedTask;
         }
 
         public void ReloadSettings() {

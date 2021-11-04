@@ -343,11 +343,9 @@ namespace IRExplorerCore.UTC {
 
             SetTextRange(function, startToken);
 
-            // Assign block index as they show up in the text.
-            for (int i = 0; i < function.Blocks.Count; i++) {
-                function.Blocks[i].IndexInFunction = i;
-            }
-
+            // Assign block index as they show up in the text,
+            // not RDFO or how the blocks where forward-referenced.
+            function.AssignBlockIndices();
             return function;
         }
 

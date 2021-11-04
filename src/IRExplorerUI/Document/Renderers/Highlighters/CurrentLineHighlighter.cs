@@ -9,24 +9,18 @@ using ICSharpCode.AvalonEdit.Rendering;
 namespace IRExplorerUI {
     public sealed class CurrentLineHighlighter : IBackgroundRenderer {
         private Brush backgroundBrush_;
-        private Pen borderPen_;
         private TextEditor editor_;
 
-        public CurrentLineHighlighter(TextEditor editor, Brush backgroundBrush = null, Pen borderPen = null) {
+        public CurrentLineHighlighter(TextEditor editor, Color backColor) {
             editor_ = editor;
 
-            if (borderPen != null) {
-                borderPen_ = borderPen;
+            //? TODO: Right now it appears on top of the selected element colors,
+            //? should be rendered before and only the border on top
+            if (backColor != Colors.Transparent) {
+                backgroundBrush_ = backColor.AsBrush();
             }
             else {
-                borderPen_ = ColorPens.GetPen(Colors.Gray);
-            }
-
-            if (backgroundBrush != null) {
-                backgroundBrush_ = backgroundBrush;
-            }
-            else {
-                backgroundBrush_ = Brushes.Transparent;
+                backgroundBrush_ = ColorBrushes.GetBrush(Colors.LightGray);
             }
         }
 
@@ -43,8 +37,8 @@ namespace IRExplorerUI {
 
             foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, currentLine)) {
                 var lineRect = Utils.SnapRectToPixels(rect.X, rect.Y,
-                                                      textView.ActualWidth, rect.Height + 1);
-                drawingContext.DrawRectangle(backgroundBrush_, borderPen_, lineRect);
+                                                      textView.ActualWidth, rect.Height);
+                drawingContext.DrawRectangle(backgroundBrush_, null, lineRect);
             }
         }
     }

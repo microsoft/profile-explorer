@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace IRExplorerCore {
     public class IRTextSummary {
@@ -10,11 +11,14 @@ namespace IRExplorerCore {
         private Dictionary<int, IRTextFunction> functionMap_;
         private Dictionary<ulong, IRTextSection> sectionMap_;
         private ulong nextSectionId_;
+        private int hashCode_;
 
+        public Guid Id { get; set; }
         public string ModuleName { get; set; }
         public List<IRTextFunction> Functions { get; set; }
 
-        public IRTextSummary() {
+        public IRTextSummary(string moduleName = null) {
+            ModuleName = moduleName;
             Functions = new List<IRTextFunction>();
             functionNameMap_ = new Dictionary<string, IRTextFunction>();
             functionMap_ = new Dictionary<int, IRTextFunction>();
@@ -51,8 +55,8 @@ namespace IRExplorerCore {
         public delegate bool FunctionNameMatchDelegate(string name);
 
         public IRTextFunction FindFunction(FunctionNameMatchDelegate matchCheck) {
-            foreach(var function in Functions) {
-                if(matchCheck(function.Name)) {
+            foreach (var function in Functions) {
+                if (matchCheck(function.Name)) {
                     return function;
                 }
             }
@@ -80,10 +84,24 @@ namespace IRExplorerCore {
             return functionNameMap_.TryGetValue(function.Name, out var result) ? result : null;
         }
 
-        //? TODO: Compute for each section the SHA256 signature
-        //? to speed up diffs and other tasks that would check the text for equality.
-        public void ComputeSectionSignatures() {
+        public override int GetHashCode() {
+            if (hashCode_ == 0) {
+                hashCode_ = HashCode.Combine(ModuleName, nextSectionId_);
+            }
 
+            return hashCode_;
+        }
+
+        public override string ToString() {
+            var sb = new StringBuilder();
+            sb.AppendLine($"Summary: {ModuleName}");
+            sb.AppendLine($"Functions: {Functions.Count}");
+
+            for (var i = 0; i < Functions.Count; i++) {
+                sb.AppendLine($"    {i}: {Functions[i].Name}, sections: {Functions[i].SectionCount}");
+            }
+
+            return sb.ToString();
         }
     }
 }

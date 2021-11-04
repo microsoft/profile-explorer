@@ -350,7 +350,7 @@ namespace IRExplorerUI {
             }
 
             if (action != null) {
-                Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Record undo action {action}");
+                //Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Record undo action {action}");
                 actionUndoStack_.Push(action);
             }
         }
@@ -758,7 +758,7 @@ namespace IRExplorerUI {
             SetCaretAtOffset(savedState.CaretOffset);
 
             await ComputeElementListsAsync();
-            LateLoadSectionSetup(parsedSection);
+            await LateLoadSectionSetup(parsedSection);
         }
 
         public async Task LoadSection(ParsedIRTextSection parsedSection) {
@@ -766,7 +766,7 @@ namespace IRExplorerUI {
             SetCaretAtOffset(0);
 
             await ComputeElementListsAsync();
-            LateLoadSectionSetup(parsedSection);
+            await LateLoadSectionSetup(parsedSection);
         }
 
         //? TODO: This is a more efficient way of marking the loop blocks
@@ -805,7 +805,7 @@ namespace IRExplorerUI {
 
         public void MarkBlock(IRElement element, HighlightingStyle style, bool raiseEvent = true) {
             var group = new HighlightedGroup(element, style);
-            margin_.AddBlock(group);
+            margin_.AddBlock(group, raiseEvent);
 
             if (raiseEvent) {
                 Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Mark block {((BlockIR)element).Number}");
@@ -837,7 +837,7 @@ namespace IRExplorerUI {
             UpdateHighlighting();
         }
 
-        public void MarkElements(IEnumerable<Tuple<IRElement, Color>> elementColorPairs) {
+        public void MarkElements(IEnumerable<ValueTuple<IRElement, Color>> elementColorPairs) {
             var colorGroupMap = new Dictionary<Color, HighlightedGroup>();
             ClearTemporaryHighlighting();
 
@@ -1051,7 +1051,7 @@ namespace IRExplorerUI {
                     int blockStartLine = element.TextLocation.Line;
 
                     if (line - 1 != blockStartLine) {
-                        UpdateHighlighting();
+                        HandelNoElementSelection();
                         return;
                     }
                 }
@@ -1070,12 +1070,15 @@ namespace IRExplorerUI {
             }
             else if (raiseEvent) {
                 // Notify of no element being selected.
-                RaiseElementUnselectedEvent();
-                RaiseElementHighlightingEvent(null, null, HighlighingType.Selected,
-                                              HighlightingEventAction.ReplaceHighlighting);
+                HandelNoElementSelection();
             }
+        }
 
+        private void HandelNoElementSelection() {
             UpdateHighlighting();
+            RaiseElementUnselectedEvent();
+            RaiseElementHighlightingEvent(null, null, HighlighingType.Selected,
+                HighlightingEventAction.ReplaceHighlighting);
         }
 
         public void UnselectElements() {
@@ -1424,7 +1427,7 @@ namespace IRExplorerUI {
             MirrorAction(DocumentActionKind.ClearBlockMarkers, null);
         }
 
-        private void ClearInstructionMarkers() {
+        public void ClearInstructionMarkers() {
             markedHighlighter_.ForEachElement(element => { RaiseElementRemoveHighlightingEvent(element); });
             markedHighlighter_.Clear();
             UpdateHighlighting();
@@ -1869,15 +1872,13 @@ namespace IRExplorerUI {
             // is also highlighted below, in append mode.
             action = HighlightingEventAction.AppendHighlighting;
             RaiseRemoveHighlightingEvent(highlighter.Type);
-            HandleOtherElement(instr, highlighter, ssaDefinitionStyle_.ParentStyle, action);
 
             foreach (var sourceOp in instr.Sources) {
                 if (sourceOp.IsLabelAddress) {
                     HighlightBlockLabel(sourceOp, highlighter, ssaUserStyle_, action);
                 }
                 else {
-                    HighlightDefinition(sourceOp, highlighter, ssaDefinitionStyle_, action,
-                                           false);
+                    HighlightDefinition(sourceOp, highlighter, ssaDefinitionStyle_, action, false);
                 }
             }
 
@@ -2372,7 +2373,7 @@ namespace IRExplorerUI {
             await Task.Run(() => ComputeElementLists());
         }
 
-        private void LateLoadSectionSetup(ParsedIRTextSection parsedSection) {
+        private async Task LateLoadSectionSetup(ParsedIRTextSection parsedSection) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(this)}: Complete setup for {parsedSection}");
 
@@ -2400,7 +2401,7 @@ namespace IRExplorerUI {
 
             // Do compiler-specifiec document work.
             ColumnData = new IRDocumentColumnData(function_.InstructionCount);
-            Session.CompilerInfo.HandleLoadedDocument(this, function_, section_);
+            await Session.CompilerInfo.HandleLoadedDocument(this, function_, section_);
         }
 
         private void CloneOtherSectionAnnotations(IRTextSection otherSection) {
@@ -2515,7 +2516,7 @@ namespace IRExplorerUI {
             // Remove the current block folding since it's bound to the current text area.
             UninstallBlockFolding();
             ClearTemporaryHighlighting();
-            LateLoadSectionSetup(null);
+            await LateLoadSectionSetup(null);
 
             AddDiffTextSegments(diffResult.DiffSegments);
             AllDiffSegmentsAdded();
@@ -2746,6 +2747,9 @@ namespace IRExplorerUI {
                 CreateRightMarkerMargin();
 
                 if (markerMargin_ == null) {
+                    //? TODO: Fix
+                    //Trace.WriteLine("NO MARGIN");
+                    //Trace.WriteLine(Environment.StackTrace);
                     return;
                 }
             }
@@ -2833,6 +2837,10 @@ namespace IRExplorerUI {
             foreach (var blockGroup in margin_.BlockGroups) {
                 var brush = blockGroup.Group.Style.BackColor as SolidColorBrush;
                 var color = ColorUtils.IncreaseSaturation(brush.Color, 1.5f);
+
+                if (!blockGroup.SavesStateToFile) {
+                    continue;
+                }
 
                 foreach (var segment in blockGroup.Segments) {
                     int startLine = Document.GetLineByOffset(segment.StartOffset).LineNumber;
@@ -3284,6 +3292,17 @@ namespace IRExplorerUI {
         }
 
         private void SetupRenderers() {
+            // Highlighting of current line.
+            if (lineHighlighter_ != null) {
+                TextArea.TextView.BackgroundRenderers.Remove(lineHighlighter_);
+                lineHighlighter_ = null;
+            }
+
+            if (settings_.HighlightCurrentLine) {
+                lineHighlighter_ = new CurrentLineHighlighter(this, settings_.SelectedValueColor);
+                TextArea.TextView.BackgroundRenderers.Insert(0, lineHighlighter_);
+            }
+
             if (blockHighlighter_ != null) {
                 TextArea.TextView.BackgroundRenderers.Remove(blockHighlighter_);
                 blockHighlighter_ = null;
@@ -3299,17 +3318,6 @@ namespace IRExplorerUI {
                 if (function_ != null) {
                     SetupBlockHighlighter();
                 }
-            }
-
-            // Highlighting of current line.
-            if (lineHighlighter_ != null) {
-                TextArea.TextView.BackgroundRenderers.Remove(lineHighlighter_);
-                lineHighlighter_ = null;
-            }
-
-            if (settings_.HighlightCurrentLine) {
-                lineHighlighter_ = new CurrentLineHighlighter(this);
-                TextArea.TextView.BackgroundRenderers.Add(lineHighlighter_);
             }
 
             if (margin_ != null) {
@@ -3638,13 +3646,13 @@ namespace IRExplorerUI {
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                                           VerticalAlignment alignmentY = VerticalAlignment.Center,
                                           double marginX = 8, double marginY = 4) {
-            var overlay = RegisterIcomElementOverlay(element, icon, width, height, label, tooltip,
+            var overlay = RegisterIconElementOverlay(element, icon, width, height, label, tooltip,
                                                      alignmentX, alignmentY, marginX, marginY);
             UpdateHighlighting();
             return overlay;
         }
 
-        public IconElementOverlay RegisterIcomElementOverlay(IRElement element, IconDrawing icon,
+        public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
                                                              double width = 16, double height = 0,
                                           string label = "", string tooltip = "",
                                           HorizontalAlignment alignmentX = HorizontalAlignment.Right,

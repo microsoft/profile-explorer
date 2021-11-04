@@ -83,7 +83,9 @@ namespace IRExplorerUI {
                     (baseResult, diffResult) = await OpenBinaryBaseDiffIRDocuments(baseFilePath, diffFilePath);
                 }
                 else {
-                    (baseResult, diffResult) = await LoadBaseDiffIRDocuments(baseFilePath, diffFilePath);
+                    //? HACK: Set the module name of both docs to be the same,
+                    //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
+                    (baseResult, diffResult) = await LoadBaseDiffIRDocuments(baseFilePath, baseFilePath, diffFilePath, baseFilePath);
                 }
             }
             catch (Exception ex) {
@@ -97,9 +99,9 @@ namespace IRExplorerUI {
         }
 
         private async Task<Tuple<LoadedDocument, LoadedDocument>> 
-            LoadBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
-            var baseTask = Task.Run(() => LoadDocument(baseFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
-            var diffTask = Task.Run(() => LoadDocument(diffFilePath, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
+            LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
+            var baseTask = Task.Run(() => LoadDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
+            var diffTask = Task.Run(() => LoadDocument(diffFilePath, diffModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
             await Task.WhenAll(baseTask, diffTask);
 
             if (baseTask.Result != null && diffTask.Result != null) {
@@ -117,15 +119,19 @@ namespace IRExplorerUI {
 
         private async Task<Tuple<LoadedDocument, LoadedDocument>>
             OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
-            var baseDissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
-            var diffDissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
+            var baseDissasembler = new BinaryDisassembler(App.Settings.DisassemblerOptions);
+            var diffDissasembler = new BinaryDisassembler(App.Settings.DisassemblerOptions);
 
-            var baseTask = baseDissasembler.DissasembleAsync(baseFilePath, null);
-            var diffTask = diffDissasembler.DissasembleAsync(diffFilePath, null);
+            var baseTask = baseDissasembler.DisassembleAsync(baseFilePath, null);
+            var diffTask = diffDissasembler.DisassembleAsync(diffFilePath, null);
             await Task.WhenAll(baseTask, diffTask);
 
             if (baseTask.Result != null && diffTask.Result != null) {
-                var (baseLoadedDoc, diffLoadedDoc) = await LoadBaseDiffIRDocuments(baseTask.Result, diffTask.Result);
+                //? HACK: Set the module name of both docs to be the same,
+                //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
+                var (baseLoadedDoc, diffLoadedDoc) = 
+                    await LoadBaseDiffIRDocuments(baseTask.Result, baseFilePath,
+                                                  diffTask.Result, baseFilePath);
 
                 if (baseLoadedDoc != null && diffLoadedDoc != null) {
                     baseLoadedDoc.BinaryFilePath = baseFilePath;

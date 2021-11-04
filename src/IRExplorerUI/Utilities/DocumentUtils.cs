@@ -69,10 +69,10 @@ namespace IRExplorerUI.Utilities {
         }
 
         public static FormattedText CreateFormattedText(FrameworkElement element, string text, Typeface typeface,
-                                                  double? emSize, Brush foreground, FontWeight? fontWeight = null) {
+                                                        double emSize, Brush foreground, FontWeight? fontWeight = null) {
 
             var formattedText = new FormattedText(text, CultureInfo.CurrentCulture, FlowDirection.LeftToRight,
-                                                  typeface, emSize.Value, foreground, null,
+                                                  typeface, emSize, foreground, null,
                                                   TextOptions.GetTextFormattingMode(element),
                                                   VisualTreeHelper.GetDpi(element).PixelsPerDip);
             if (fontWeight.HasValue) {

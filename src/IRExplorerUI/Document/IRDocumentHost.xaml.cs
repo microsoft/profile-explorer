@@ -6,10 +6,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
 using System.Diagnostics;
-using System.Runtime.InteropServices.ObjectiveC;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -47,6 +48,14 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "SearchSymbolAllSections", typeof(IRDocumentHost));
         public static readonly RoutedUICommand JumpToProfiledElement =
             new RoutedUICommand("Untitled", "JumpToProfiledElement", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand JumpToNextProfiledElement =
+            new RoutedUICommand("Untitled", "JumpToNextProfiledElement", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand JumpToPreviousProfiledElement =
+            new RoutedUICommand("Untitled", "JumpToPreviousProfiledElement", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand JumpToNextProfiledBlock =
+            new RoutedUICommand("Untitled", "JumpToNextProfiledBlock", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand JumpToPreviousProfiledBlock =
+            new RoutedUICommand("Untitled", "JumpToPreviousProfiledBlock", typeof(IRDocumentHost));
     }
 
     [ProtoContract]
@@ -113,14 +122,42 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-    public class ElementColumnValue : BindableObject {
-        public ElementColumnValue(string value, string tooltip = null) {
-            Text = value;
+
+    public class DummyVirtualizingStackPanel : VirtualizingStackPanel {
+        protected override Size MeasureOverride(Size constraint) {
+            //Trace.WriteLine($"Measure {constraint}");
+            //var sw = Stopwatch.StartNew();
+             
+            var result = base.MeasureOverride(constraint);
+            
+            //sw.Stop();
+            //Trace.WriteLine($"Measured  {x} in {sw.ElapsedMilliseconds}");
+            //Trace.Flush(;
+           
+            return result;
+        }
+
+        protected override void OnChildDesiredSizeChanged(UIElement el) {
+            //? Workaround for WPF measuring bug, see link
+            //? https://stackoverflow.com/questions/11696008/performance-issue-with-measure
+            /* base.OnChildDesiredSizeChanged(el); */       // avoid rampant remeasuring
+        }
+    }
+
+    public class ProfiledBlockEx : BindableObject {
+        public ProfiledBlockEx(string text, long value = 0, double valueValuePercentage = 0.0) {
+            Text = text;
+            Value = value;
+            ValuePercentage = valueValuePercentage;
             TextWeight = FontWeights.Normal;
             TextColor = Brushes.Black;
         }
-        
+
+        public static ElementColumnValue Empty => new ElementColumnValue(string.Empty);
+
         public IRElement Element { get; set; }
+        public long Value { get; set; }
+        public double ValuePercentage { get; set; }
 
         private Thickness borderThickness_;
         public Thickness BorderThickness {
@@ -146,7 +183,11 @@ namespace IRExplorerUI {
             set => SetAndNotify(ref prefixText_, value);
         }
 
-        public bool ShowPrefix => !string.IsNullOrEmpty(prefixText_);
+        private double minTextWidth_;
+        public double MinTextWidth {
+            get => minTextWidth_;
+            set => SetAndNotify(ref minTextWidth_, value);
+        }
 
         private string toolTip_;
         public string ToolTip {
@@ -154,14 +195,28 @@ namespace IRExplorerUI {
             set => SetAndNotify(ref toolTip_, value);
         }
 
-        public Brush TextColor { get; set; }
-        public Brush BackColor { get; set; }
+        private Brush textColor_;
+
+        public Brush TextColor {
+            get => textColor_;
+            set => SetAndNotify(ref textColor_, value);
+        }
+
+        private Brush backColor_;
+
+        public Brush BackColor {
+            get => backColor_;
+            set => SetAndNotify(ref backColor_, value);
+        }
 
         private ImageSource icon_;
 
         public ImageSource Icon {
             get => icon_;
-            set => SetAndNotify(ref icon_, value);
+            set {
+                SetAndNotify(ref icon_, value);
+                Notify(nameof(ShowIcon));
+            }
         }
 
         public bool ShowIcon => icon_ != null;
@@ -170,13 +225,6 @@ namespace IRExplorerUI {
         public bool ShowPercentageBar {
             get => showPercentageBar_;
             set => SetAndNotify(ref showPercentageBar_, value);
-        }
-
-        private double percentage_;
-
-        public double Percentage {
-            get => percentage_;
-            set => SetAndNotify(ref percentage_, value);
         }
 
         private Brush percentageBarBackColor__;
@@ -203,73 +251,17 @@ namespace IRExplorerUI {
             get => textWeight_;
             set => SetAndNotify(ref textWeight_, value);
         }
-    }
 
-    public class ElementColumnValueGroup : BindableObject {
-        public ElementColumnValueGroup(IRElement element) {
-            Element = element;
-            Values = new Dictionary<string, ElementColumnValue>();
+        private double textSize_;
+        public double TextSize {
+            get => textSize_;
+            set => SetAndNotify(ref textSize_, value);
         }
 
-        public IRElement Element { get; set; }
-        public Dictionary<string, ElementColumnValue> Values { get; set; }
-
-        public Brush BackColor { get; set; }
-
-        //public void AddColumnValue(string key, ElementColumnValue value) {
-        //    Values[key] = value;
-        //}
-    }
-
-    public class IRDocumentColumnData {
-        public List<OptionalColumn> Columns { get; set; }
-
-        public Dictionary<IRElement, ElementColumnValueGroup> Values { get; set; }
-
-        public IRDocumentColumnData(int capacity = 0) {
-            Columns = new List<OptionalColumn>();
-            Values = new Dictionary<IRElement, ElementColumnValueGroup>(capacity);
-        }
-
-        public bool HasData => Values.Count > 0;
-
-        public ElementColumnValueGroup AddValue(ElementColumnValue value, IRElement element, OptionalColumn column) {
-            if (!Values.TryGetValue(element, out var valueGroup)) {
-                valueGroup = new ElementColumnValueGroup(element);
-                Values[element] = valueGroup;
-            }
-
-            valueGroup.Values[column.ColumnName] = value;
-            return valueGroup;
-        }
-
-        public ElementColumnValueGroup GetValues(IRElement element) {
-            if (Values.TryGetValue(element, out var valueGroup)) {
-                return valueGroup;
-            }
-
-            return null;
-        }
-    }
-
-    public class DummyVirtualizingStackPanel : VirtualizingStackPanel {
-        protected override Size MeasureOverride(Size constraint) {
-            Trace.WriteLine($"Measure {constraint}");
-            //var sw = Stopwatch.StartNew();
-             
-            var result = base.MeasureOverride(constraint);
-            
-            //sw.Stop();
-            //Trace.WriteLine($"Measured  {x} in {sw.ElapsedMilliseconds}");
-            //Trace.Flush(;
-           
-            return result;
-        }
-
-        protected override void OnChildDesiredSizeChanged(UIElement el) {
-            //? Workaround for WPF measuring bug, see link
-            //? https://stackoverflow.com/questions/11696008/performance-issue-with-measure
-            /* base.OnChildDesiredSizeChanged(el); */       // avoid rampant remeasuring
+        private FontFamily textFont_;
+        public FontFamily TextFont {
+            get => textFont_;
+            set => SetAndNotify(ref textFont_, value);
         }
     }
 
@@ -306,6 +298,7 @@ namespace IRExplorerUI {
         private QueryValue mainQueryInputValue_;
         private bool pasOutputVisible_;
         private bool columnsVisible_;
+        private double previousVerticalOffset_;
 
         public IRDocumentHost(ISession session) {
             InitializeComponent();
@@ -313,6 +306,7 @@ namespace IRExplorerUI {
             PassOutput.DataContext = this;
 
             Session = session;
+            remarkSettings_ = App.Settings.RemarkSettings;
             Settings = App.Settings.DocumentSettings;
             ActionPanel.Visibility = Visibility.Collapsed;
 
@@ -334,8 +328,8 @@ namespace IRExplorerUI {
             TextView.ElementUnselected += TextView_ElementUnselected;
             TextView.PropertyChanged += TextView_PropertyChanged;
             TextView.GotKeyboardFocus += TextView_GotKeyboardFocus;
-            TextView.TextChanged += TextView_TextChanged;
-            TextView.DocumentChanged += TextView_DocumentChanged;
+            TextView.CaretChanged += TextViewOnCaretChanged;
+            TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
 
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SearchPanel.SearchChanged += SearchPanel_SearchChanged;
@@ -348,27 +342,57 @@ namespace IRExplorerUI {
             hover.MouseHover += Hover_MouseHover;
             loadTask_ = new CancelableTaskInstance();
             activeQueryPanels_ = new List<QueryPanel>();
-            remarkSettings_ = App.Settings.RemarkSettings;
         }
 
-        private void TextView_DocumentChanged(object sender, EventArgs e) {
-            UpdateColumnsList();
+        private void TextViewOnCaretChanged(object? sender, int offset) {
+            var line = TextView.Document.GetLineByOffset(offset);
+            Trace.TraceWarning($"Select {line.LineNumber}");
+
+            if (ColumnsList.Items.Count >= line.LineNumber) {
+                ColumnsList.SelectedIndex = line.LineNumber - 1;
+            }
         }
 
-        private void TextView_TextChanged(object sender, EventArgs e) {
-            UpdateColumnsList();
+        private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
+            HideActionPanel();
+            DetachRemarkPanel(true);
+
+            double offset = TextView.TextArea.TextView.VerticalOffset;
+            double changeAmount = offset - previousVerticalOffset_;
+            previousVerticalOffset_ = offset;
+
+            // Sync scrolling with the optional columns.
+            SyncColumnsVerticalScrollOffset(offset);
+            VerticalScrollChanged?.Invoke(this, (offset, changeAmount));
         }
 
+        private void SyncColumnsVerticalScrollOffset(double offset) {
+            // Sync scrolling with the optional columns.
+            if (columnsVisible_) {
+                var columnScrollViewer = Utils.FindChild<ScrollViewer>(ColumnsList);
+
+                if (columnScrollViewer != null) {
+                    columnScrollViewer.ScrollToVerticalOffset(offset);
+                }
+            }
+        }
+        
         public double ColumnsListItemHeight {
             get => columnsListItemHeight_;
             set {
                 if (columnsListItemHeight_ != value) {
-                    Trace.WriteLine($"New height {value} vs ol {columnsListItemHeight_}");
-                    Trace.WriteLine(Environment.StackTrace);
-
                     columnsListItemHeight_ = value;
                     NotifyPropertyChanged(nameof(ColumnsListItemHeight));
                 }
+            }
+        }
+
+        private Brush selectedLineBrush_;
+        public Brush SelectedLineBrush {
+            get => selectedLineBrush_;
+            set {
+                selectedLineBrush_ = value;
+                NotifyPropertyChanged(nameof(SelectedLineBrush));
             }
         }
 
@@ -436,8 +460,8 @@ namespace IRExplorerUI {
         public FunctionIR Function => TextView.Function;
         public bool DuringSectionLoading => TextView.DuringSectionLoading;
 
-        public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
-        public event EventHandler<ScrollChangedEventArgs> PassOutputScrollChanged;
+        public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
+        public event EventHandler<(double offset, double offsetChangeAmount)> PassOutputVerticalScrollChanged;
         public event EventHandler<bool> PassOutputShowBeforeChanged;
         public event EventHandler<bool> PassOutputVisibilityChanged;
         public event PropertyChangedEventHandler PropertyChanged;
@@ -774,26 +798,20 @@ namespace IRExplorerUI {
 
         public void ReloadSettings() {
             TextView.Settings = settings_;
+            SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
             UpdateColumnsList();
         }
 
         private void UpdateColumnsList() {
-            
-            /*
-             *
-             * public static Typeface CreateTypeface(this FrameworkElement fe) =>
-             * new Typeface((FontFamily) fe.GetValue(TextBlock.FontFamilyProperty),
-             * (FontStyle) fe.GetValue(TextBlock.FontStyleProperty),
-             * (FontWeight) fe.GetValue(TextBlock.FontWeightProperty),
-             * (FontStretch) fe.GetValue(TextBlock.FontStretchProperty));
-             *
-             * TextFormatter formatter = TextFormatterFactory.Create((DependencyObject) this);
-             */
-
             ColumnsList.Background = ColorBrushes.GetBrush(settings_.BackgroundColor);
-            ColumnsListItemHeight = TextView.TextArea.TextView.DefaultLineHeight;
+            double h = Utils.MeasureString("0123456789ABCFEFGH", settings_.FontName, settings_.FontSize).Height;
+
+            ColumnsListItemHeight = h;
+
             //ColumnsList.InvalidateVisual();
+            //ColumnsList.UpdateLayout();
         }
+        
 
         private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
             //CloseSectionPanel();
@@ -842,6 +860,7 @@ namespace IRExplorerUI {
 
             // Cancel any running tasks and hide panels.
             loadTask_.CancelTask();
+            // await loadTask_.WaitForTaskAsync();
             await HideRemarkPanel();
             HideActionPanel();
             SaveSectionState(section);
@@ -859,6 +878,8 @@ namespace IRExplorerUI {
                 selectedElement_ = null;
                 remarkElement_ = null;
                 selectedBlock_ = null;
+                profileDataRows_ = null;
+                profileColumnHeaders_ = null;
                 ProfileVisible = false;
                 PassOutputVisible = false;
                 BlockSelector.SelectedItem = null;
@@ -992,14 +1013,98 @@ namespace IRExplorerUI {
 
         private List<Tuple<IRElement, TimeSpan>> profileElements_;
         private List<Tuple<BlockIR, TimeSpan>> profileBlocks_;
+        private List<ElementRowValue> profileDataRows_;
+        private List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
+        private int profileElementIndex_;
+        private int profileBlockIndex_;
 
 
-        private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template("Values[TimeHeader]", "TimeColumnValueTemplate",
+        private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template("[TimeHeader]", "TimeColumnValueTemplate",
             "TimeHeader", "Time (ms)", "Instruction time");
 
+        public void UpdateProfileDataColumnWidths() {
+            if (profileDataRows_ == null ||
+                profileColumnHeaders_ == null) {
+                return;
+            }
+
+            var maxColumnTextSize = new Dictionary<OptionalColumn, double>();
+            var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
+            var font = new FontFamily(settings_.FontName);
+            var fontSize = settings_.FontSize;
+            const double maxBarWidth = 100;
+            const double columnMargin = 4;
+
+            foreach (var rowValues in profileDataRows_) {
+                foreach (var columnValue in rowValues.ColumnValues) {
+                    columnValue.Value.TextFont = font;
+                    columnValue.Value.TextSize = fontSize;
+                    
+                    // Remember the max text length for each column
+                    // to later set the MinWidth for alignment.
+                    maxColumnTextSize.CollectMaxValue(columnValue.Key, columnValue.Value.Text.Length);
+
+                    if (columnValue.Value.ShowPercentageBar ||
+                        columnValue.Value.ShowIcon) {
+                        double extraColumnWidth = columnMargin;
+
+                        if (columnValue.Value.ShowPercentageBar) {
+                            extraColumnWidth += columnValue.Value.ValuePercentage * maxBarWidth;
+                        }
+
+                        if (columnValue.Value.ShowIcon) {
+                            // Width of the icon is at most the height of the row.
+                            extraColumnWidth += ColumnsListItemHeight + columnMargin;
+                        }
+
+                        maxColumnExtraSize.CollectMaxValue(columnValue.Key, extraColumnWidth);
+                    }
+                }
+            }
+
+            // Set the MinWidth of the text for each cell.
+            foreach (var pair in maxColumnTextSize) {
+                var columnContentSize = Utils.MeasureString((int)pair.Value, settings_.FontName, settings_.FontSize);
+                double columnWidth = columnContentSize.Width + columnMargin;
+                maxColumnTextSize[pair.Key] = Math.Ceiling(columnWidth);
+
+                // Also set the initial width of each column header.
+                // For the header, consider image and percentage bar too.
+                if (maxColumnExtraSize.TryGetValue(pair.Key, out var extraSize)) {
+                    columnWidth += extraSize;
+                }
+
+                //? TODO: Pass options and check RemoveEmptyColumns
+                if (columnWidth == 0) {
+                    pair.Key.IsVisible = false;
+                }
+                else {
+                    var columnTitleSize = Utils.MeasureString(pair.Key.Title, settings_.FontName, settings_.FontSize);
+                    var gridColumn = profileColumnHeaders_.Find(item => item.Header.Tag.Equals(pair.Key));
+
+                    if (gridColumn.Column == null || gridColumn.Header == null) {
+                        continue;
+                    }
+
+                    columnWidth = Math.Max(columnWidth, columnTitleSize.Width + columnMargin);
+                    gridColumn.Header.Width = columnWidth;
+                    gridColumn.Column.Width = columnWidth;
+                }
+
+                //Trace.WriteLine($"Column width {columnWidth} for {pair.Key.ColumnName}");
+            }
+
+            foreach (var row in profileDataRows_) {
+                foreach (var columnValue in row.ColumnValues) {
+                    columnValue.Value.MinTextWidth = maxColumnTextSize[columnValue.Key];
+                }
+            }
+        }
+
         private async Task ReloadProfile() {
-            if(Session.ProfileData == null) {
-                goto skip;
+            profileLoaded_ = false;
+
+            if (Session.ProfileData == null) {
                 return;
             }
 
@@ -1012,86 +1117,239 @@ namespace IRExplorerUI {
 
             var result = funcProfile.Process(Function, Session.CompilerInfo.IR);
             profileElements_ = result.SampledElements;
-            profileBlocks_ = result.BlockSampledElements;
 
-            ProfileBlockSelector.ItemsSource = new ListCollectionView(profileBlocks_);
+            BuildProfileBlocksList(funcProfile, result);
             ProfileVisible = true;
 
-skip:
-            // Show optional columns with timing, countes, etc.
+            // Show optional columns with timing, counters, etc.
             // First remove any previous columns.
             OptionalColumn.RemoveListViewColumns(ColumnsList);
             ColumnsList.ItemsSource = null;
 
             var columnData = TextView.ColumnData;
-
-            //? Disable vertical scrollbar. sync it with doc
-
-            //? filter columns
-
-            if (!columnData.HasData) {
-                columnData.Columns.Add(TIME_COLUMN);
-                foreach (var tuple in Function.AllTuples) {
-                    int currentLine = tuple.TextLocation.Line+1;
-                    columnData.AddValue(new ElementColumnValue(currentLine.ToString()), tuple, TIME_COLUMN);
-                }
-            }
-
             ColumnsVisible = columnData.HasData;
 
             if (columnData.HasData) {
-                OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
-                //UpdateColumnsListItemHeight();
+                var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
+                var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
+                var font = new FontFamily(settings_.FontName);
+                var fontSize = settings_.FontSize;
 
-                var elementValueList = new List<ElementColumnValueGroup>(Function.TupleCount);
-                var dummyValues = new ElementColumnValueGroup(null);
-                var oddBackColor = settings_.BackgroundColor.AsBrush();
-                var oddDummyValues = new ElementColumnValueGroup(null) { BackColor = oddBackColor };
+                ElementColumnValue MakeDummyCell() {
+                    var columnValue = ElementColumnValue.Empty;
 
-                foreach (var column in columnData.Columns) {
-                    dummyValues.Values[column.ColumnName] = new ElementColumnValue(string.Empty);
-                    oddDummyValues.Values[column.ColumnName] = new ElementColumnValue(string.Empty);
+                    //? if (showColumnSeparators) {
+                    columnValue.BorderBrush = blockSeparatorColor;
+                    columnValue.BorderThickness = new Thickness(0, 0, 1, 0);
+                    columnValue.TextFont = font;
+                    columnValue.TextSize = fontSize;
+                    return columnValue;
                 }
+
+                ElementRowValue MakeDummyRow(Brush backColor = null) {
+                    var row = new ElementRowValue(null) {
+                        BackColor = backColor,
+                        BorderBrush = blockSeparatorColor
+                    };
+
+                    foreach (var column in columnData.Columns) {
+                        row.ColumnValues[column] = MakeDummyCell();
+                    }
+
+                    return row;
+                }
+
+
+                var elementValueList = new List<ElementRowValue>(Function.TupleCount);
+                var dummyValues = MakeDummyRow();
+                var oddDummyValues = MakeDummyRow(oddBackColor);
 
                 int prevLine = -1;
+                bool prevIsOddBlock = false;
 
-                foreach (var tuple in Function.AllTuples) {
-                    int currentLine = tuple.TextLocation.Line;
-
-                    // Add dummy empy list view lines to match document text.
-                    if (currentLine != prevLine + 1) {
-                        for (int i = 0; i < currentLine - prevLine - 1; i++) {
-                            elementValueList.Add(dummyValues);
-                        }
+                void AddDummyRows(int count, bool isOddBlock) {
+                    for (int i = 0; i < count; i++) {
+                        elementValueList.Add(isOddBlock ? oddDummyValues : dummyValues);
                     }
-
-                    // Check if there is any data associated with the element.
-                    var values = columnData.GetValues(tuple);
-
-                    if (values != null) {
-                        elementValueList.Add(values);
-
-                        if (values.BackColor == null && ) {
-
-                        }
-                    }
-                    else {
-                        elementValueList.Add((tuple.ParentBlock.IndexInFunction & 1) == 1 ? 
-                                              oddDummyValues : dummyValues);
-                    }
-
-                    prevLine = currentLine;
                 }
 
+                const double maxBarWidth = 100;
+                const double columnMargin = 4;
+                profileDataRows_ = new List<ElementRowValue>();
+
+                foreach (var block in Function.SortedBlocks) {
+                    bool isOddBlock = block.HasOddIndexInFunction;
+
+                    for (int i = 0; i < block.Tuples.Count; i++) {
+                        var tuple = block.Tuples[i];
+                        int currentLine = tuple.TextLocation.Line;
+                        bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
+                                               i == block.Tuples.Count - 1;
+
+                        // Add dummy empty list view lines to match document text.
+                        if (currentLine > prevLine + 1) {
+                            AddDummyRows(currentLine - prevLine - 1, isOddBlock);
+                        }
+
+                        // Check if there is any data associated with the element.
+                        // Have the row match the background color used in the doc.
+                        var rowValues = columnData.GetValues(tuple);
+
+                        if (rowValues != null) {
+                            rowValues.BorderBrush = blockSeparatorColor;
+
+                            if (rowValues.BackColor == null && isOddBlock) {
+                                rowValues.BackColor = oddBackColor;
+                            }
+
+                            foreach (var columnValue in rowValues.ColumnValues) {
+                                columnValue.Value.TextFont = font;
+                                columnValue.Value.TextSize = fontSize;
+                            }
+
+                            // Add dummy cells for the missing ones, needed for column separators.
+                            if (rowValues.ColumnValues.Count != columnData.Columns.Count) {
+                                foreach (var column in columnData.Columns) {
+                                    if (!rowValues.Columns.Contains(column)) {
+                                        rowValues.ColumnValues[column] = MakeDummyCell();
+                                    }
+                                }
+                            }
+
+                            profileDataRows_.Add(rowValues);
+                        }
+                        else {
+                            if (isSeparatorLine) {
+                                rowValues = isOddBlock ? MakeDummyRow(oddBackColor) : MakeDummyRow();
+                            }
+                            else {
+                                rowValues = isOddBlock ? oddDummyValues : dummyValues;
+                            }
+                        }
+
+                        // Add a separator line at the bottom of the current row
+                        // if the next instr. is found in another block.
+                        if (isSeparatorLine) {
+                            rowValues.BorderThickness = new Thickness(0, 0, 0, 1);
+                            rowValues.BorderBrush = blockSeparatorColor;
+                        }
+
+                        //? if (showColumnSeparators) {
+                        foreach (var value in rowValues.Values) {
+                            value.BorderBrush = blockSeparatorColor;
+                            value.BorderThickness = new Thickness(0, 0, 1, 0);
+                        }
+
+                        elementValueList.Add(rowValues);
+                        prevLine = currentLine;
+                    }
+
+                    prevIsOddBlock = isOddBlock;
+                }
+                
+                // Add empty lines at the end to match document,
+                // otherwise scrolling can get out of sync.
+                if (TextView.LineCount != prevLine + 1) {
+                    AddDummyRows(TextView.LineCount - prevLine, prevIsOddBlock);
+                }
+
+                profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
+
+                foreach (var columnHeader in profileColumnHeaders_) {
+                    columnHeader.Header.Click += ColumnHeaderOnClick;
+                    columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
+                }
+
+                UpdateProfileDataColumnWidths();
+
                 ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
+                ColumnsList.Background = settings_.BackgroundColor.AsBrush();
+                profileLoaded_ = true;
+
+                Trace.WriteLine($"Now {ColumnsListItemHeight}");
+                var saved = ColumnsListItemHeight;
+
+                //foreach (ListViewItem item in ColumnsList.it) {
+                //    item.Height = ColumnsListItemHeight;
+                //}
+
+                //ColumnsListItemHeight = 1;
+                //ColumnsList.UpdateLayout();
+                //ColumnsList.InvalidateVisual();
+                //ColumnsListItemHeight = saved;
+                //ColumnsList.UpdateLayout();
+                //ColumnsList.InvalidateVisual();
+            }
+        }
+
+        private void BuildProfileBlocksList(Profile.FunctionProfileData funcProfile, Profile.FunctionProfileData.ProcessingResult result) {
+            profileBlocks_ = result.BlockSampledElements;
+            var list = new List<ProfiledBlockEx>();
+            double maxWidth = 0;
+
+            var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
+            var valueStyle = ProfileDocumentMarkerOptions.Default; //? TODO: Use options
+            int index = 0;
+
+            foreach (var pair in result.BlockSampledElements) {
+                var block = pair.Item1;
+                var weight = pair.Item2;
+                double weightPercentage = funcProfile.ScaleWeight(weight);
+                var prefixText = $"B{block.Number}";
+                var text = $"({weight.AsMillisecondsString()})";
+
+                var value = new ProfiledBlockEx(text, weight.Ticks, weightPercentage) {
+                    Element = block,
+                    PrefixText = prefixText,
+                    ShowPercentageBar = valueStyle.ShowPercentageBar(weightPercentage),
+                    TextWeight = valueStyle.PickTextWeight(weightPercentage),
+                    PercentageBarBackColor = valueStyle.PercentageBarBackColor
+                };
+
+                var item = new MenuItem() {
+                    Header = value,
+                    Tag = list.Count,
+                    HeaderTemplate = valueTemplate
+                };
+
+                item.Click += (sender, args) => {
+                    var menuItem = (MenuItem)sender;
+                    profileBlockIndex_ = (int)menuItem.Tag;
+                    JumpToProfiledBlock(profileBlocks_[profileBlockIndex_].Item1);
+                };
+
+                ProfileBlocksMenu.Items.Add(item);
+
+                // Make sure percentage rects are aligned.
+                double width = Utils.MeasureString(prefixText, settings_.FontName, settings_.FontSize).Width;
+                maxWidth = Math.Max(width, maxWidth);
+                list.Add(value);
             }
 
+            foreach (var value in list) {
+                value.MinTextWidth = maxWidth;
+            }
+        }
+
+        private void ColumnHeaderOnClick(object sender, RoutedEventArgs e) {
+            if (((GridViewColumnHeader)sender).Tag is OptionalColumn column && 
+                column.HeaderClickHandler != null) {
+                column.HeaderClickHandler(column);
+                UpdateProfileDataColumnWidths();
+            }
+        }
+
+        private void ColumnHeaderOnDoubleClick(object sender, RoutedEventArgs e) {
+            if (((GridViewColumnHeader)sender).Tag is OptionalColumn column &&
+                column.HeaderDoubleClickHandler != null) {
+                column.HeaderDoubleClickHandler(column);
+                UpdateProfileDataColumnWidths();
+            }
         }
 
         private async Task HideProfile() {
             ProfileVisible = false;
-            ProfileBlockSelector.SelectedItem = null;
-            ProfileBlockSelector.ItemsSource = null;
+            ProfileBlocksMenu.Items.Clear();
         }
 
         private async Task ReloadRemarks() {
@@ -1350,20 +1608,6 @@ skip:
             }
         }
 
-        private void ProfileBlockSelector_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            if (e.AddedItems.Count != 1) {
-                return;
-            }
-
-            var profiledBlock = e.AddedItems[0] as Tuple<BlockIR, TimeSpan>;
-
-            // If the event triggers during loading the section, while the combobox is update,
-            // ignore it, otherwise it selects the first block.
-            if (!TextView.DuringSectionLoading) {
-                BlockSelector.SelectedItem = profiledBlock.Item1;
-            }
-        }
-
         private void NextBlockExecuted(object sender, ExecutedRoutedEventArgs e) {
             TextView.GoToNextBlock();
         }
@@ -1463,18 +1707,15 @@ skip:
         private void SearchSymbolAllSectionsExecuted(object sender, ExecutedRoutedEventArgs e) {
             SearchSymbolImpl(true);
         }
-
-        private void JumpToProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if(profileElements_ == null || profileElements_.Count == 0) {
-                return;
-            }
-
-            JumpToProfiledElement(profileElements_[0].Item1);
-        }
-
+        
         private void JumpToProfiledElement(IRElement element) {
             TextView.SetCaretAtElement(element);
             TextView.BringElementIntoView(element);
+            ColumnsList.InvalidateVisual();
+            ColumnsList.UpdateLayout();
+
+            double offset = TextView.TextArea.TextView.VerticalOffset;
+            SyncColumnsVerticalScrollOffset(offset);
         }
 
         private void SearchSymbolImpl(bool searchAllSections) {
@@ -1583,6 +1824,7 @@ skip:
         private DelayedAction delayedHideActionPanel_;
         private bool profileVisible_;
         private double columnsListItemHeight_;
+        private bool profileLoaded_;
 
         private void ShowRemarkOptionsPanel() {
             if (remarkOptionsPanelVisible_) {
@@ -1676,22 +1918,9 @@ skip:
         private async void RemarkOptionsPanel_PanelClosed(object sender, EventArgs e) {
             await CloseRemarkOptionsPanel();
         }
-
-        private void TextView_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            HideActionPanel();
-            DetachRemarkPanel(true);
-
-            var columnScrollViewer = Utils.FindChild<ScrollViewer>(ColumnsList);
-
-            if (columnScrollViewer != null) {
-                columnScrollViewer.ScrollToVerticalOffset(e.VerticalOffset);
-            }
-
-            ScrollChanged?.Invoke(this, e);
-        }
-
+        
         private void PassOutput_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            PassOutputScrollChanged?.Invoke(this, e);
+            PassOutputVerticalScrollChanged?.Invoke(this, (e.VerticalOffset, e.VerticalChange));
         }
 
         private void PassOutput_ShowBeforeOutputChanged(object sender, bool e) {
@@ -2090,6 +2319,93 @@ skip:
             while(activeQueryPanels_.Count > 0) {
                 CloseQueryPanel(activeQueryPanels_[0]);
             }
+        }
+
+        private void ColumnsList_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+            if (Math.Abs(e.VerticalChange) < double.Epsilon) {
+                return;
+            }
+            
+            TextView.ScrollToVerticalOffset(e.VerticalOffset);
+        }
+
+        private void JumpToProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (!HasProfileElements()) {
+                return;
+            }
+
+            profileElementIndex_ = 0;
+            JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+        }
+
+        private bool HasProfileElements() {
+            return ProfileVisible && profileElements_ != null && profileElements_.Count > 0;
+        }
+
+        private bool HasProfileElement(int offset) {
+            return ProfileVisible && profileElements_ != null &&
+                   profileElementIndex_ + offset >= 0 &&
+                   profileElementIndex_ + offset < profileElements_.Count;
+        }
+
+        private bool HasProfiledBlock(int offset) {
+            return ProfileVisible && profileBlocks_ != null &&
+                   profileBlockIndex_ + offset >= 0 &&
+                   profileBlockIndex_ + offset < profileElements_.Count;
+        }
+        
+        private void JumpToNextProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledElement(-1);
+        }
+
+        private void JumpToProfiledElement(int offset) {
+            if (!HasProfileElement(offset)) {
+                return;
+            }
+
+            profileElementIndex_ += offset;
+            JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+        }
+
+        private void JumpToProfiledBlock(int offset) {
+            if (!HasProfiledBlock(offset)) {
+                return;
+            }
+
+            profileBlockIndex_ += offset;
+            JumpToProfiledBlock(profileBlocks_[profileBlockIndex_].Item1);
+        }
+
+        private void JumpToProfiledBlock(BlockIR block) {
+            TextView.GoToBlock(block);
+        }
+
+        private void JumpToPreviousProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledElement(1);
+        }
+
+        private void JumpToNextProfiledBlockExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledBlock(-1);
+        }
+
+        private void JumpToPreviousProfiledBlockExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledBlock(1);
+        }
+
+        private void JumpToNextProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfileElement(-1);
+        }
+
+        private void JumpToPreviousProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfileElement(1);
+        }
+
+        private void JumpToNextProfiledBlockCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfiledBlock(-1);
+        }
+
+        private void JumpToPreviousProfiledBlockCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfiledBlock(1);
         }
     }
 }

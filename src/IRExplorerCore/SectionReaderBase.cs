@@ -288,7 +288,6 @@ namespace IRExplorerCore {
             dataStreamEncoding_ = DetectUTF8Encoding(dataStream_, Encoding.ASCII);
             dataReader_ = new StreamReader(dataStream_, dataStreamEncoding_,
                                            false, STREAM_BUFFER_SIZE);
-
             prevLines_ = new string[3];
             summary_ = new IRTextSummary();
             functionMap_ = new Dictionary<string, IRTextFunction>();
@@ -594,7 +593,7 @@ namespace IRExplorerCore {
                 string sectionName = hasSectionName ? ExtractSectionName(currentLine_) : string.Empty;
 
                 // Find the end of the section and extract the function name.
-                long startOffset = hasSectionName ? TextOffset() : initialOffset;
+                long startOffset = hasSectionName ? TextOffset() : previousOffset_;
                 long endOffset = startOffset;
                 int blockCount = 0;
 

@@ -55,21 +55,6 @@ namespace IRExplorerCore.IR {
             visitor.Visit(this);
         }
 
-        public override bool Equals(object obj) {
-            return ReferenceEquals(this, obj) || obj is InstructionIR other && Equals(other);
-        }
-
-        private bool Equals(InstructionIR other) {
-            return base.Equals(other) && Kind == other.Kind && 
-                   Equals(Opcode, other.Opcode) &&
-                   Equals(Sources, other.Sources) && 
-                   Equals(Destinations, other.Destinations);
-        }
-
-        public override int GetHashCode() {
-            return HashCode.Combine(base.GetHashCode(), (int) Kind, Opcode);
-        }
-
         public override string ToString() {
             var builder = new StringBuilder();
             builder.AppendLine($"instr kind: {Kind}, opcode: {OpcodeText} ({Opcode}), id: {Id}");

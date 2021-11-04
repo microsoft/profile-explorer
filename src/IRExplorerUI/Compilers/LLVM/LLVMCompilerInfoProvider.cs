@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using IRExplorerUI.Diff;
 using IRExplorerUI.UTC;
 using IRExplorerUI.Query;
@@ -57,8 +58,8 @@ namespace IRExplorerUI.Compilers.LLVM {
             return true;
         }
 
-        public bool HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
-            return true;
+        public Task HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
+            return Task.CompletedTask;
         }
 
         public void ReloadSettings() {

@@ -908,10 +908,17 @@ namespace IRExplorerUI {
         private async Task SetupSectionPanel() {
             SectionPanel.CompilerInfo = compilerInfo_;
             SectionPanel.MainSummary = sessionState_.MainDocument.Summary;
-            SectionPanel.MainTitle = sessionState_.MainDocument.FileName;
+            SectionPanel.MainTitle = sessionState_.MainDocument.ModuleName;
 
             if (sessionState_.IsInTwoDocumentsDiffMode) {
                 await ShowSectionPanelDiffs(sessionState_.DiffDocument);
+            }
+
+            foreach (var doc in sessionState_.Documents) {
+                if (doc != sessionState_.MainDocument &&
+                    doc != sessionState_.DiffDocument) {
+                    SectionPanel.AddOtherSummary(doc.Summary);
+                }
             }
 
             SectionPanel.OnSessionStart();

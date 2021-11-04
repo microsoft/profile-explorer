@@ -357,12 +357,10 @@ Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                                 </GridViewColumn.HeaderContainerStyle>
                             </GridViewColumn>
 
-                            <GridViewColumn Width="200">
+                            <GridViewColumn Width="200" local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
                                 <GridViewColumnHeader
                                 x:Name="ChildAlternateNameColumnHeader"
-                                local:GridViewBehaviors.CollapseableColumn="True"
-                                Content="Demangled Name"
-                                Visibility="{Binding AlternateNameColumnVisible, Converter={StaticResource BoolToVisibility}}" />
+                                Content="Demangled Name"/>
 
                                 <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">

@@ -15,6 +15,7 @@ using System.Windows.Media;
 using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace IRExplorerUI.Compilers.ASM {
     public class ASMCompilerInfoProvider : ICompilerInfoProvider {
@@ -87,32 +88,38 @@ namespace IRExplorerUI.Compilers.ASM {
             return new BasicBlockFoldingStrategy(function);
         }
 
-        public bool HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
+        public async Task HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
             // Since the ASM blocks don't have a number in the text,
             // attach an overlay label next to the first instr. in the block.
-            var overlayHeight = document.TextArea.TextView.DefaultLineHeight - 2;
+            var overlayHeight = document.TextArea.TextView.DefaultLineHeight;
+            var options = ProfileDocumentMarkerOptions.Default; //? TODO: App.Settings...
+            var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
+                                            options.BlockOverlayBorderThickness);
 
             foreach (var block in function.Blocks) {
-                if (block.Tuples.Count > 0) {
-                    var firstTuple = block.Tuples[0];
-                    var label = $"B{block.Number}";
-                    var overlay = document.AddIconElementOverlay(firstTuple, null, 0, overlayHeight, label, null,
-                                                                 HorizontalAlignment.Left, VerticalAlignment.Center, -6, -1);
-                    overlay.ShowOnMarkerBar = false;
-                    overlay.IsLabelPinned = true;
-                    overlay.DefaultOpacity = 1;
-                    overlay.TextWeight = FontWeights.DemiBold;
-                    overlay.TextColor = Brushes.DarkBlue;
-
-                    var backColor = block.Number % 2 == 0 ?
-                        App.Settings.DocumentSettings.BackgroundColor :
-                        App.Settings.DocumentSettings.AlternateBackgroundColor;
-                    overlay.Background = ColorBrushes.GetBrush(backColor);
-
-                    overlay.ShowBackgroundOnMouseOverOnly = false;
-                    overlay.UseLabelBackground = true;
-                    overlay.Padding = 2;
+                if (block.Tuples.Count <= 0) {
+                    continue;
                 }
+
+                var label = $"B{block.Number}";
+                var overlay = document.AddIconElementOverlay(block, null, 0, overlayHeight, label, null,
+                                                             HorizontalAlignment.Left, VerticalAlignment.Center);
+                overlay.MarginX = -8;
+                overlay.Padding = 4;
+                overlay.ShowOnMarkerBar = false;
+                overlay.IsLabelPinned = true;
+                overlay.TextWeight = FontWeights.Bold;
+                overlay.TextColor = options.BlockOverlayTextColor;
+
+                var backColor = block.HasEvenIndexInFunction ?
+                    App.Settings.DocumentSettings.BackgroundColor :
+                    App.Settings.DocumentSettings.AlternateBackgroundColor;
+                overlay.Background = ColorBrushes.GetBrush(backColor);
+                overlay.Border = blockPen;
+
+                overlay.ShowBackgroundOnMouseOverOnly = false;
+                overlay.ShowBorderOnMouseOverOnly = false;
+                overlay.UseLabelBackground = true;
             }
 
             // Check if there is profile info and annotate the instrs. with timing info.
@@ -122,14 +129,13 @@ namespace IRExplorerUI.Compilers.ASM {
                 var profileOptions = ProfileDocumentMarkerOptions.Default;
                 var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData,
                                                               profileOptions, ir_);
-                profileMarker.Mark(document, function);
+                await profileMarker.Mark(document, function);
             }
 
             // Annotate instrs. with source line numbers if debug info is available.
             var markerOptions = ProfileDocumentMarkerOptions.Default;
             var sourceMarker = new SourceDocumentMarker(markerOptions, ir_);
-            sourceMarker.Mark(document, function);
-            return true;
+            await sourceMarker.Mark(document, function);
         }
 
         public void ReloadSettings() {

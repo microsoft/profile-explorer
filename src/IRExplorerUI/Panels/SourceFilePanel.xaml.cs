@@ -3,8 +3,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,7 +31,7 @@ namespace IRExplorerUI {
     /// <summary>
     ///     Interaction logic for SectionPanel.xaml
     /// </summary>
-    public partial class SourceFilePanel : ToolPanelControl {
+    public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged {
         private SourceFileMapper sourceFileMapper_ = new SourceFileMapper();
         private IRTextSection section_;
         private IRElement element_;
@@ -47,18 +49,28 @@ namespace IRExplorerUI {
 
         public SourceFilePanel() {
             InitializeComponent();
-            TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
-            var lineBrush = Utils.BrushFromColor(Color.FromRgb(197, 222, 234));
+            DataContext = this;
 
             profileMarker_ = new ElementHighlighter(HighlighingType.Marked);
             TextView.TextArea.TextView.BackgroundRenderers.Add(profileMarker_);
             TextView.TextArea.TextView.BackgroundRenderers.Add(
-                new CurrentLineHighlighter(TextView, lineBrush, ColorPens.GetPen(Colors.Gray)));
+                new CurrentLineHighlighter(TextView, App.Settings.DocumentSettings.SelectedValueColor));
 
             // Create the overlay and place it on top of the text.
             overlayRenderer_ = new OverlayRenderer(profileMarker_);
+            TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
             TextView.TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextView.TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+        }
+
+        public bool HasProfileInfo {
+            get => hasProfileInfo_;
+            set {
+                if (hasProfileInfo_ != value) {
+                    hasProfileInfo_ = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
         private void Caret_PositionChanged(object sender, EventArgs e) {
@@ -239,7 +251,7 @@ namespace IRExplorerUI {
         private void ResetProfileMarking() {
             overlayRenderer_.Clear();
             profileMarker_.Clear();
-            hasProfileInfo_ = false;
+            HasProfileInfo = false;
         }
 
         private void ResetSelectedLine() {
@@ -345,10 +357,6 @@ namespace IRExplorerUI {
         private async Task AnnotateProfilerData(FunctionProfileData profile) {
             ResetProfileMarking();
 
-            foreach (var pair in profile.ChildrenWeights) {
-                var child = Session.MainDocumentSummary.GetFunctionWithId(pair.Key);
-            }
-
             var markerOptions = ProfileDocumentMarkerOptions.Default;
             var nextElementId = new IRElementId();
             var lines = new List<Tuple<int, TimeSpan>>(profile.SourceLineWeight.Count);
@@ -358,6 +366,7 @@ namespace IRExplorerUI {
             }
 
             lines.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+            hottestSourceLine_ = lines.Count > 0 ? lines[0].Item1 : 0;
             int lineIndex = 0;
 
             foreach (var pair in lines) {
@@ -368,17 +377,9 @@ namespace IRExplorerUI {
                 }
 
                 double weightPercentage = profile.ScaleWeight(pair.Item2);
-                var color = markerOptions.PickColorForWeight(weightPercentage);
+                var color = markerOptions.PickColorForPercentage(weightPercentage);
                 var style = new HighlightingStyle(color);
-                IconDrawing icon = null;
-
-                if (lineIndex == 0) {
-                    icon = IconDrawing.FromIconResource("DotIconRed");
-                    hottestSourceLine_ = sourceLine;
-                }
-                else if (lineIndex <= 3) {
-                    icon = IconDrawing.FromIconResource("DotIconYellow");
-                }
+                IconDrawing icon = markerOptions.PickIconForOrder(lineIndex, weightPercentage);
                 
                 var documentLine = TextView.Document.GetLineByNumber(sourceLine);
                 var location = new TextLocation(documentLine.Offset, sourceLine, 0);
@@ -389,13 +390,13 @@ namespace IRExplorerUI {
                 group.Add(element);
                 profileMarker_.Add(group);
 
-                var tooltip = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(pair.Item2.TotalMilliseconds, 2):#,#} ms)";
+                var tooltip = $"{weightPercentage.AsPercentageString()} ({pair.Item2.AsMillisecondsString()})";
                 AddElementOverlay(element, icon, lineIndex, 16, 16, tooltip, markerOptions);
                 lineIndex++;
             }
 
             UpdateHighlighting();
-            hasProfileInfo_ = true;
+            HasProfileInfo = true;
         }
 
         public void AddElementOverlay(IRElement element, IconDrawing icon, int index,
@@ -450,6 +451,12 @@ namespace IRExplorerUI {
                 InlineeCombobox.SelectedIndex < ((ListCollectionView)InlineeCombobox.ItemsSource).Count - 1) {
                 InlineeCombobox.SelectedIndex++;
             }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

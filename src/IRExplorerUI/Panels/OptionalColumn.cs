@@ -6,42 +6,88 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Collections.Generic;
+using System.Windows.Forms;
+using Application = System.Windows.Application;
+using Binding = System.Windows.Data.Binding;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
+using ListView = System.Windows.Controls.ListView;
 
 namespace IRExplorerUI {
-    public class OptionalColumn {
-        private OptionalColumn(string bindingName, string columnName, string title, string tooltip,
-            IValueConverter converter = null, double width = Double.NaN, bool isVisible = true) {
+    public class OptionalColumnAppearance {
+        public bool ShowPercentageBar { get; set; }
+        public bool ShowMainColumnPercentageBar { get; set; }
+        public Brush PercentageBarBackColor { get; set; }
+        public Brush TextColor { get; set; }
+
+        public bool ShowIcon { get; set; }
+        public bool ShowMainColumnIcon { get; set; }
+
+        public bool PickColorForPercentage { get; set; }
+
+        public bool UseBackColor { get; set; }
+        public bool UseMainColumnBackColor { get; set; }
+
+        public ColorPalette BackColorPalette { get; set; }
+        public bool InvertColorPalette { get; set; }
+    }
+
+    public delegate void OptionalColumnEventHandler(OptionalColumn column);
+
+    public class OptionalColumn : ICloneable {
+        private OptionalColumn(string bindingName, string cellTemplateName,
+                               string columnName, string title, string tooltip,
+                               IValueConverter converter = null,
+                               double width = Double.NaN, 
+                               string columnStyle = null,
+                               OptionalColumnAppearance appearance = null,
+                               bool isVisible = true) {
             BindingName = bindingName;
-            ColumnName = columnName;
+            CellTemplateName = cellTemplateName;
+            ColumnName = String.Intern(columnName);
             Title = title;
             Tooltip = tooltip; 
             Width = width;
-            IsVisible = isVisible;
             Converter = converter;
+            ColumnStyle = columnStyle;
+            Appearance = appearance ?? new OptionalColumnAppearance();
+            IsVisible = isVisible;
+            IsTemplateBinding = cellTemplateName != null;
         }
 
         public static OptionalColumn Binding(string binding, string columnName, string title, string tooltip = null,
-            IValueConverter converter = null, double width = Double.NaN, bool isVisible = true) {
-            return new OptionalColumn(binding, columnName, title, tooltip, converter, width, isVisible);
+            IValueConverter converter = null, double width = Double.NaN, string columnStyle = null, 
+            OptionalColumnAppearance appearance = null, bool isVisible = true) {
+            return new OptionalColumn(binding, null, columnName, title, tooltip, 
+                                      converter, width, columnStyle, appearance, isVisible);
         }
 
         public static OptionalColumn Template(string binding, string templateName, string columnName, string title, string tooltip = null,
-            IValueConverter converter = null, double width = Double.NaN, bool isVisible = true) {
-            return new OptionalColumn(binding, columnName, title, tooltip, converter, width, isVisible) {
-                IsTemplateBinding = true, 
-                TemplateName = templateName
-            };
+            IValueConverter converter = null, double width = Double.NaN, string columnStyle = null,
+            OptionalColumnAppearance appearance = null, bool isVisible = true) {
+            return new OptionalColumn(binding, templateName, columnName, title, tooltip, 
+                                      converter, width, columnStyle, appearance, isVisible);
         }
 
-        public bool IsTemplateBinding { get; set; }
         public string BindingName { get; set; }
-        public string TemplateName { get; set; }
+        public string CellTemplateName { get; set; }
         public string ColumnName { get; set; }
+        public string ColumnStyle { get; set; }
         public string Title { get; set; }
         public string Tooltip { get; set; }
         public double Width { get; set; }
-        public bool IsVisible { get; set; }
         public IValueConverter Converter { get; set; }
+        public OptionalColumnAppearance Appearance { get; set; }
+        public bool IsVisible { get; set; }
+        public bool IsMainColumn { get; set; }
+        public bool IsTemplateBinding { get; set; }
+
+        public OptionalColumnEventHandler HeaderClickHandler;
+        public OptionalColumnEventHandler HeaderDoubleClickHandler;
+
+        private int hashCode_;
+
+        public bool HasCustomStyle => !string.IsNullOrEmpty(ColumnStyle);
+        public Style CustomStyle => !string.IsNullOrEmpty(ColumnStyle) ? (Style)Application.Current.FindResource(ColumnStyle) : null;
 
         public static void RemoveListViewColumns(ListView listView,  OptionalColumn[] columns,
             IGridViewColumnValueSorter columnSorter = null) {
@@ -64,16 +110,20 @@ namespace IRExplorerUI {
             }
         }
 
-        public static void AddListViewColumns(ListView listView, IEnumerable<OptionalColumn> columns,
+        public static List<(GridViewColumnHeader Header, GridViewColumn Column)> AddListViewColumns(ListView listView, IEnumerable<OptionalColumn> columns,
             IGridViewColumnValueSorter columnSorter = null,
             string titleSuffix = "", string tooltipSuffix = "", bool useValueConverter = true) {
+            var columnHeaders = new List<(GridViewColumnHeader, GridViewColumn)>();
+
             foreach (var column in columns) {
                 if (column.IsVisible) {
-                    AddListViewColumn(listView, column, columnSorter, titleSuffix, tooltipSuffix, useValueConverter);
+                    columnHeaders.Add(AddListViewColumn(listView, column, columnSorter, titleSuffix, tooltipSuffix, useValueConverter));
                 }
             }
+
+            return columnHeaders;
         }
-        
+
         public static GridViewColumnHeader RemoveListViewColumn(ListView listView, string columnName,
                                                                 IGridViewColumnValueSorter columnSorter = null) {
             var functionGrid = (GridView)listView.View;
@@ -91,7 +141,8 @@ namespace IRExplorerUI {
             return null;
         }
         
-        public static GridViewColumnHeader AddListViewColumn(ListView listView, OptionalColumn column, 
+        public static (GridViewColumnHeader Header, GridViewColumn Column)
+            AddListViewColumn(ListView listView, OptionalColumn column, 
                                                              IGridViewColumnValueSorter columnSorter = null,
                                                              string titleSuffix = "", string tooltipSuffix = "",
                                                              bool useValueConverter = true, int index = -1) {
@@ -99,12 +150,16 @@ namespace IRExplorerUI {
             var columnHeader = new GridViewColumnHeader() {
                 Name = column.ColumnName,
                 VerticalAlignment = VerticalAlignment.Stretch,
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalContentAlignment = VerticalAlignment.Stretch,
-                HorizontalContentAlignment = HorizontalAlignment.Stretch,
-                Padding = new Thickness(0),
+                HorizontalContentAlignment = HorizontalAlignment.Left,
+                Padding = new Thickness(0,0,7,0),
                 Width = column.Width,
                 Content = string.Format(column.Title, titleSuffix),
-                ToolTip = string.Format(column.Tooltip, tooltipSuffix)
+                ToolTip = string.Format(column.Tooltip, tooltipSuffix),
+                OverridesDefaultStyle = column.HasCustomStyle,
+                Style = column.CustomStyle,
+                Tag = column
             };
 
             var converter = useValueConverter ? column.Converter : null;
@@ -112,9 +167,9 @@ namespace IRExplorerUI {
                 Header = columnHeader,
                 Width = column.Width,
                 CellTemplate = column.IsTemplateBinding ?
-                               CreateGridColumnTemplateBindingTemplate(column.BindingName, column.TemplateName) :
+                               CreateGridColumnTemplateBindingTemplate(column.BindingName, column.CellTemplateName) :
                                CreateGridColumnBindingTemplate(column.BindingName, converter),
-                HeaderContainerStyle = (Style)Application.Current.FindResource("ListViewHeaderStyle")
+                //HeaderContainerStyle = (Style)Application.Current.FindResource("ListViewHeaderStyle")
             };
 
             if (index != -1) {
@@ -125,7 +180,7 @@ namespace IRExplorerUI {
             }
 
             columnSorter?.RegisterColumnHeader(columnHeader);
-            return columnHeader;
+            return (columnHeader, gridColumn);
         }
 
         private static DataTemplate CreateGridColumnBindingTemplate(string propertyName, IValueConverter valueConverter = null) {
@@ -152,6 +207,31 @@ namespace IRExplorerUI {
             factory.SetValue(ContentControl.ContentTemplateProperty, sourceTemplate);
             template.VisualTree = factory;
             return template;
+        }
+
+        public override bool Equals(object? obj) {
+            return obj is OptionalColumn other &&
+                   other.IsTemplateBinding == IsTemplateBinding &&
+                   other.ColumnName.Equals(ColumnName);
+        }
+
+        public override int GetHashCode() {
+            if (hashCode_ != 0) {
+                return hashCode_;
+            }
+
+            hashCode_ = HashCode.Combine(ColumnName, IsTemplateBinding);
+            return hashCode_;
+        }
+
+        public object Clone() {
+            var clone = new OptionalColumn(BindingName, CellTemplateName, ColumnName, Title, Tooltip,
+                                      Converter, Width, ColumnStyle, Appearance, IsVisible) {
+                HeaderClickHandler = HeaderClickHandler,
+                HeaderDoubleClickHandler = HeaderDoubleClickHandler,
+            };
+
+            return clone;
         }
     }
 }

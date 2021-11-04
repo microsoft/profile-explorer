@@ -12,15 +12,22 @@ namespace IRExplorerUI {
     [ProtoContract]
     public class LoadedDocumentState {
         [ProtoMember(1)]
-        public string FilePath;
-        [ProtoMember(2)]
-        public byte[] DocumentText;
-        [ProtoMember(3)]
-        public List<Tuple<ulong, byte[]>> SectionStates;
-        [ProtoMember(4)]
-        public List<Tuple<ulong, PanelObjectPairState>> PanelStates;
-        [ProtoMember(5)]
         public Guid Id;
+        [ProtoMember(2)]
+        public string ModuleName;
+        [ProtoMember(3)]
+        public string FilePath;
+        [ProtoMember(4)]
+        public string BinaryFilePath;
+        [ProtoMember(5)]
+        public string DebugInfoFilePath;
+        [ProtoMember(6)]
+        public byte[] DocumentText;
+        [ProtoMember(7)]
+        public List<Tuple<ulong, byte[]>> SectionStates;
+        [ProtoMember(8)]
+        public List<Tuple<ulong, PanelObjectPairState>> PanelStates;
+        
 
         public LoadedDocumentState() {
             SectionStates = new List<Tuple<ulong, byte[]>>();
@@ -34,20 +41,36 @@ namespace IRExplorerUI {
 
     public class LoadedDocument : IDisposable {
         private FileSystemWatcher documentWatcher_;
+        private IRTextSummary summary_;
 
-        public LoadedDocument(string filePath, Guid id) {
+        public LoadedDocument(string filePath, string moduleName, Guid id) {
             FilePath = filePath;
+            moduleName = Utils.TryGetFileName(moduleName ?? filePath);
+            ModuleName = moduleName;
+            Id = id;
+
             PanelStates = new Dictionary<IRTextSection, List<PanelObjectPair>>();
             SectionStates = new Dictionary<IRTextSection, object>();
-            Id = id;
         }
 
         public Guid Id { get; set; }
+        public string ModuleName { get; set; }
         public string FilePath { get; set; }
         public string BinaryFilePath { get; set; }
         public string DebugInfoFilePath { get; set; }
         public IRTextSectionLoader Loader { get; set; }
-        public IRTextSummary Summary { get; set; }
+
+        public IRTextSummary Summary {
+            get => summary_;
+            set {
+                summary_ = value;
+                if (summary_ != null) {
+                    summary_.Id = Id;
+                    summary_.ModuleName = ModuleName;
+                }
+            }
+        }
+
         public bool IsDebugDocument { get; set; }
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
@@ -56,17 +79,7 @@ namespace IRExplorerUI {
                                             File.Exists(DebugInfoFilePath);
         public bool BinaryFileExists => !string.IsNullOrEmpty(BinaryFilePath) &&
                                          File.Exists(BinaryFilePath);
-
-        public string FileName {
-            get {
-                try {
-                    return Path.GetFileName(FilePath);
-                }
-                catch (Exception) {
-                    return "";
-                }
-            }
-        }
+        public string FileName => Utils.TryGetFileName(FilePath);
 
         public event EventHandler DocumentChanged;
 
@@ -118,9 +131,11 @@ namespace IRExplorerUI {
         }
 
         public LoadedDocumentState SerializeDocument() {
-            var state = new LoadedDocumentState(Id);
-            state.FilePath = FilePath;
-            state.DocumentText = Loader.GetDocumentTextBytes();
+            var state = new LoadedDocumentState(Id) {
+                ModuleName = ModuleName, FilePath = FilePath, BinaryFilePath = BinaryFilePath,
+                DebugInfoFilePath = DebugInfoFilePath,
+                DocumentText = Loader.GetDocumentTextBytes()
+            };
 
             foreach (var sectionState in SectionStates) {
                 state.SectionStates.Add(new Tuple<ulong, byte[]>(sectionState.Key.Id,

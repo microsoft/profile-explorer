@@ -24,9 +24,25 @@ namespace IRExplorerCore.ASM {
 
         protected override bool IsFunctionEnd(string line) => string.IsNullOrEmpty(line) || IsFunctionStart(line);
 
-        private readonly Regex functionStartRegex = new Regex(@"[^\s]+:$", RegexOptions.Compiled);
+        protected override bool IsFunctionStart(string line) {
+            // Search for name: with optional whitespace after :
+            int index = line.IndexOf(':');
+            if (index == -1) {
+                return false;
+            }
 
-        protected override bool IsFunctionStart(string line) => functionStartRegex.IsMatch(line);
+            if (index == line.Length - 1) {
+                return true;
+            }
+
+            for (; index < line.Length; index++) {
+                if (!char.IsWhiteSpace(line[index])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 
         protected override bool IsMetadataLine(string line) => false;
 

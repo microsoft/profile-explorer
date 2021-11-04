@@ -51,9 +51,15 @@ namespace IRExplorerUI {
         }
 
         public static byte[] Serialize<T>(T state, FunctionIR function = null) where T : class {
-            var stream = new MemoryStream();
+            using var stream = new MemoryStream();
             Serializer.Serialize(stream, state);
             return stream.ToArray();
+        }
+
+        public static bool Serialize<T>(string filePath, T state, FunctionIR function = null) where T : class {
+            using var stream = new FileStream(filePath, FileMode.CreateNew, FileAccess.ReadWrite);
+            Serializer.Serialize(stream, state);
+            return true;
         }
 
         public static T Deserialize<T>(byte[] data, FunctionIR function) where T : class {
@@ -73,6 +79,11 @@ namespace IRExplorerUI {
             }
 
             var stream = new MemoryStream(data);
+            return Serializer.Deserialize<T>(stream);
+        }
+
+        public static T Deserialize<T>(string filePath) where T : class {
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
             return Serializer.Deserialize<T>(stream);
         }
 

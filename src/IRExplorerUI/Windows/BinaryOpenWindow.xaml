@@ -6,10 +6,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Dissasemble and open binary file"
+    Title="Disassemble and open binary file"
     Width="500"
     Height="Auto"
-    MinWidth="500"
+    MinWidth="400"
     Loaded="Window_Loaded"
     ResizeMode="CanResizeWithGrip"
     ShowInTaskbar="False"
@@ -142,7 +142,7 @@
                 </Expander.Header>
 
                 <StackPanel>
-                    <TextBlock Margin="0,8,0,0" Text="Dissasembler path" />
+                    <TextBlock Margin="0,8,0,0" Text="Disassembler path" />
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
                             x:Name="DisasmAutocompleteBox"
@@ -181,7 +181,7 @@
 
 
 
-                    <TextBlock Margin="0,4,0,0" Text="Dissasembler arguments" />
+                    <TextBlock Margin="0,4,0,0" Text="Disassembler arguments" />
                     <Grid Margin="0,4,0,0">
                         <controls:FileSystemTextBox
                             Height="22"

@@ -35,30 +35,6 @@ namespace IRExplorerCore.IR {
             visitor.Visit(this);
         }
 
-        public override bool Equals(object obj) {
-            if (ReferenceEquals(null, obj)) {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj)) {
-                return true;
-            }
-
-            if (obj.GetType() != this.GetType()) {
-                return false;
-            }
-
-            return Equals((TupleIR) obj);
-        }
-        
-        protected bool Equals(TupleIR other) {
-            return base.Equals(other) && Kind == other.Kind;
-        }
-
-        public override int GetHashCode() {
-            return HashCode.Combine(base.GetHashCode(), (int) Kind);
-        }
-
         public override string ToString() {
             return $"tuple kind: {Kind}, id: {Id}";
         }

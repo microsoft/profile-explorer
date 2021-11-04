@@ -73,10 +73,15 @@ namespace IRExplorerCore.IR {
         public bool IsVoid => Kind == TypeKind.Void;
 
         public override bool Equals(object obj) {
-            return obj is TypeIR type &&
-                   Kind == type.Kind &&
-                   Size == type.Size &&
-                   Flags == type.Flags;
+            return ReferenceEquals(this, obj) || obj is TypeIR other && Equals(other);
+        }
+
+        private bool Equals(TypeIR other) {
+            return Flags == other.Flags && Kind == other.Kind && Size == other.Size;
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine((int)Flags, (int)Kind, Size);
         }
 
         public static TypeIR GetBool() {
@@ -90,15 +95,7 @@ namespace IRExplorerCore.IR {
         public static TypeIR GetFloat() {
             return floatType_;
         }
-
-        public override int GetHashCode() {
-            int hashCode = -438129221;
-            hashCode = hashCode * -1521134295 + Kind.GetHashCode();
-            hashCode = hashCode * -1521134295 + Size.GetHashCode();
-            hashCode = hashCode * -1521134295 + Flags.GetHashCode();
-            return hashCode;
-        }
-
+        
         public static TypeIR GetInt(int size) {
             return size switch
             {

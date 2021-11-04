@@ -44,8 +44,14 @@ using System.Windows.Automation.Peers;
 using IRExplorerUI.Scripting;
 using IRExplorerUI.Utilities;
 using AvalonDock.Layout.Serialization;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using Microsoft.ApplicationInsights;
+using OxyPlot;
+using OxyPlot.Axes;
+using OxyPlot.Wpf;
+using OxyPlot.SkiaSharp.Wpf;
+using LinearAxis = OxyPlot.Axes.LinearAxis;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -418,13 +424,15 @@ namespace IRExplorerUI {
 
         private async Task ShowSectionPanelDiffs(LoadedDocument result) {
             SectionPanel.DiffSummary = result.Summary;
-            SectionPanel.DiffTitle = result.FileName;
+            SectionPanel.DiffTitle = result.ModuleName;
             await SectionPanel.AnalyzeDocumentDiffs();
             await SectionPanel.RefreshDocumentsDiffs();
         }
 
         private void ShowProgressBar(string title) {
             documentLoadProgressVisible_ = true;
+            DocumentLoadProgressBar.Value = 0;
+            DocumentLoadProgressBar.Visibility = Visibility.Hidden;
             DocumentLoadProgressPanel.Visibility = Visibility.Visible;
             
             if (string.IsNullOrEmpty(title)) {
@@ -436,7 +444,9 @@ namespace IRExplorerUI {
 
         private void HideProgressBar() {
             DocumentLoadProgressPanel.Visibility = Visibility.Collapsed;
+            DocumentLoadProgressBar.Visibility = Visibility.Hidden;
             DocumentLoadProgressBar.IsIndeterminate = false;
+            DocumentLoadProgressBar.Value = 0;
             documentLoadProgressVisible_ = false;
         }
 
@@ -619,6 +629,10 @@ namespace IRExplorerUI {
         }
 
         private void UpdateStartPagePanelPosition() {
+            if (sessionState_ != null) {
+                return;
+            }
+
             var documentHost = Utils.FindChildLogical<LayoutDocumentPaneGroupControl>(this);
 
             if (documentHost != null) {
@@ -844,8 +858,217 @@ namespace IRExplorerUI {
         }
 
         private void MenuItem_Click_8(object sender, RoutedEventArgs e) {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            //var data = File.ReadAllBytes(@"C:\work\samples.dat");
+            //var profile = StateSerializer.Deserialize<ProtoProfile>(data);
+            var profile = StateSerializer.Deserialize<ProtoProfile>(@"C:\work\pmc.dat");
+
+
+            var dict = new Dictionary<int, TimeSpan>();
+            var start = long.MaxValue;
+            var end = long.MinValue;
+
+            foreach (var proc in profile.Processes) {
+                Trace.WriteLine($"{proc.Id}: {proc.Name}");
+
+                if (proc.Images == null) {
+                    continue;
+                }
+
+                //foreach (var image in proc.Images) {
+                //    Trace.WriteLine($"        {image.Id}: {image.Name} | {image.Path}");
+                //}
+            }
+
+            //MessageBox.Show(this, "waiting");
+
+            var sw = Stopwatch.StartNew();
+
+            long maxSample = 0;
+
+            foreach (var s in profile.Samples) {
+                maxSample = Math.Max(maxSample, s.Weight.Ticks);
+            }
+
+            Trace.WriteLine($"0_MaxSample: {sw.ElapsedMilliseconds}");
+
+            foreach (var s in profile.Samples) {
+                dict.AccumulateValue(s.ProcessId, s.Weight);
+                start = Math.Min(start, s.Time);
+                end = Math.Max(end, s.Time);
+            }
+
+            Trace.WriteLine($"1_PerProcTime: {sw.ElapsedMilliseconds}");
+            var r = new Random();
+
+            //for(int i = 0; i < profile.PerfCounters.Count; i++) {
+            //    var c = profile.PerfCounters[i];
+            //    c.ProcessId = r.Next(0, 500);
+            //    profile.PerfCounters[i] = c;
+            //}
+
+            //sw.Restart();
+            //var dict2 = new Dictionary<int, TimeSpan>();
+
+
+            //for (int k = 0; k < 5; k++) {
+            //    dict2.Clear();
+            //    var sw4 = Stopwatch.StartNew();
+
+            //    foreach (var s in profile.PerfCounters) {
+            //        dict2.AccumulateValue(s.ProcessId, TimeSpan.FromMilliseconds(1));
+            //    }
+
+            //    Trace.WriteLine($"PMCiter: {sw4.ElapsedMilliseconds}, {sw4.Elapsed}");
+            //}
+
+            //Trace.WriteLine($"1_PMC: {dict2.Count}, {sw.ElapsedMilliseconds}");
+            //foreach (var keyValuePair in dict2)
+            //{
+            //    Trace.Write($"{keyValuePair.Key}, ");
+            //}
+
+
+            //{
+            //    using var ts = new StreamWriter(@"C:\work\pmc_counters.csv");
+            //    foreach (var s in profile.PerfCounters) {
+            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.ProfilerSource}");
+            //    }
+            //}
+
+            //{
+            //    using var ts = new StreamWriter(@"C:\work\pmc_counters2.csv");
+            //    for(int i = 0; i < profile.PerfCounters.Count / 8; i++) {
+            //        var s = profile.PerfCounters[i];
+            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.ProfilerSource}");
+            //    }
+            //}
+
+            //{
+            //    using var ts = new StreamWriter(@"C:\work\pmc_samples.csv");
+            //    foreach (var s in profile.Samples) {
+            //        ts.WriteLine($"{s.RVA}, {s.Time}, {s.Weight.Ticks}, {s.ProcessId}, {s.ThreadId}, {s.ImageId}, {s.StackFrameId}, {s.ProcessorCore}");
+            //    }
+            //}
+
+            var sw2 = Stopwatch.StartNew();
+
+            //? - process timeline
+            //? - per-proc thread timeline
+            //? - per-proc module timeline
+            //? - per-proc core timeline
+            //? o time range filter
+            //? o group samples by process (cache)
+
+
+            // 1 tick = 100 ns
+            long resolution = 100;
+            var timeDiffNs = (end - start) / resolution;
+            var timeDiff = TimeSpan.FromTicks(timeDiffNs);
+            var timePerSlice = TimeSpan.FromMilliseconds(10);
+            double width = timeDiff.Ticks / timePerSlice.Ticks;
+            var sliceSeriesDict = new Dictionary<int, Dictionary<int, TimeSpan>>();
+            List<Tuple<int, Dictionary<int, TimeSpan>>> sliceSeriesList = null;
+
+            for (int k = 0; k < 1; k++) {
+                var sw3 = Stopwatch.StartNew();
+
+                sliceSeriesDict.Clear();
+                foreach (var s in profile.Samples) {
+                    var point = (s.Time - start) / resolution;
+                    var slice = (int)(point / timePerSlice.Ticks);
+
+                    //? Add extension method TryGetOrAddValue
+                    var sliceDict = sliceSeriesDict.GetOrAddValue(s.ProcessId);
+                    sliceDict.AccumulateValue(slice, s.Weight);
+                }
+
+                var list = dict.ToList();
+                list.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
+
+                sliceSeriesList = sliceSeriesDict.ToList();
+                sliceSeriesList.Sort((a, b) => {
+                    if (!dict.TryGetValue(a.Item1, out var pa) ||
+                        !dict.TryGetValue(b.Item1, out var pb)) {
+                        return 0;
+                    }
+
+                    return -pa.CompareTo(pb);
+                });
+
+                Trace.WriteLine($"Iter_PerProcSliceTime: {sw3.ElapsedMilliseconds}, {sw3.Elapsed}");
+            }
+
+            Trace.WriteLine($"2_PerProcSliceTime: {sw.ElapsedMilliseconds}, {sw.Elapsed}");
+            Trace.WriteLine($"2_PerProcSliceTime: {sw2.ElapsedMilliseconds}, {sw2.Elapsed}");
+            Trace.Flush();
+
+            Trace.WriteLine($"Samples: {profile.Samples.Count}");
+            Trace.WriteLine($"Time: {timeDiff}, {timeDiff.TotalMinutes}");
+
+
+            //foreach (var pair in list) {
+            //    var p = profile.FindProcess(pair.Item1);
+            //    Trace.WriteLine($"{p.Id}, {p?.Name}: {pair.Item2}");
+            //}
+
+            int count = 0;
+            var model = new PlotModel();
+
+            foreach (var pair in sliceSeriesList) {
+                if (count++ == 0) continue;
+                var sliceList = pair.Item2.ToList();
+                sliceList.Sort((a, b) => a.Item1.CompareTo(b.Item1));
+
+                //var slicePlot = new OxyPlot.Series.LineSeries();
+                var slicePlot = new OxyPlot.Series.LinearBarSeries();
+                slicePlot.BarWidth = 10;
+                slicePlot.StrokeThickness = 1;
+                slicePlot.StrokeColor = OxyColor.FromArgb(255, 50, 50, 50);
+
+                var p = profile.FindProcess(pair.Item1);
+                slicePlot.Title = p?.Name;
+                model.Series.Add(slicePlot);
+
+                foreach (var slicePair in sliceList) {
+                    var pointTime = TimeSpan.FromTicks(slicePair.Item1 * timePerSlice.Ticks).TotalSeconds;
+                    slicePlot.Points.Add(new DataPoint(pointTime, slicePair.Item2.TotalMilliseconds));
+                }
+
+                if (count++ >10) break;
+                //Trace.WriteLine($"{pair.Key}: {pair.Item2}");
+            }
+
+            var w = new Window();
+            w.Width = 500;
+            w.Height = 300;
+            var plotView = new OxyPlot.SkiaSharp.Wpf.PlotView();
+            model.IsLegendVisible = true;
+            model.Padding = new OxyThickness(0);
+            
+            model.Axes.Add(new LinearAxis() {
+                Position = AxisPosition.Left, 
+                TickStyle = TickStyle.Crossing, 
+                MajorGridlineStyle = LineStyle.Automatic, 
+                MinorGridlineStyle = LineStyle.None,
+                IsZoomEnabled = false,
+            });
+            model.Axes.Add(new LinearAxis() {
+                Position = AxisPosition.Bottom,
+                TickStyle = TickStyle.Crossing,
+                MajorGridlineStyle = LineStyle.Automatic,
+                MinorGridlineStyle = LineStyle.None,
+                IsZoomEnabled = true,
+            });
+
+
+            plotView.Model = model;
+            w.Content = plotView;
+            w.Show();
+
+            Trace.Flush();
+
+            //GC.Collect();
+            //GC.WaitForPendingFinalizers();
         }
 
         private class MainWindowState {
@@ -1050,7 +1273,6 @@ namespace IRExplorerUI {
             var result = window.ShowDialog();
 
             if (result.HasValue && result.Value) {
-                sessionState_.MainDocument.DebugInfoFilePath ??= window.DebugFilePath;
                 await SectionPanel.RefreshMainSummary();
                 SetOptionalStatus("Profile data loaded");
             }
@@ -1115,6 +1337,13 @@ namespace IRExplorerUI {
             }
 
             var layoutGraph = await Task.Run(() => CallGraphUtils.BuildCallGraphLayout(cg));
+
+            if (layoutGraph.IsEmpty) {
+                MessageBox.Show("Failed to compute call graph", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
             var panel = new CallGraphPanel(this);
             panel.TitlePrefix = "Profile ";
 
@@ -1136,7 +1365,7 @@ namespace IRExplorerUI {
             }
 
             foreach(var pair in funcProfile.ChildrenWeights) {
-                var childFunc = MainDocumentSummary.GetFunctionWithId(pair.Key);
+                var childFunc = FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
                 if (childFunc == null) {
                     continue;
                 }
@@ -1163,21 +1392,22 @@ namespace IRExplorerUI {
             SectionPanel.ShowModuleReport();
         }
 
-        public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, string debugFilePath,
-                                        ProfileLoadProgressHandler progressCallback,
-                                        CancelableTask cancelableTask) {
-            var cvdumpPath = "cvdump.exe"; // Expected to be in main directory.
+        public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
+                                                ProfileDataProviderOptions options,
+                                                ProfileLoadProgressHandler progressCallback,
+                                                CancelableTask cancelableTask) {
+            using var profileData = new ETWProfileDataProvider(MainDocumentSummary, this);
+
+            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, options,
+                                                                         progressCallback, cancelableTask);
+
+            // Update symbols path if not set already.
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
 
             if (!loadedDoc.DebugInfoFileExists) {
-                loadedDoc.DebugInfoFilePath = debugFilePath;
+                loadedDoc.DebugInfoFilePath = await PDBDebugInfoProvider.LocateDebugFile(binaryFilePath, options.Symbols);
             }
 
-            using var profileData = new ETWProfileDataProvider(MainDocumentSummary, loadedDoc.Loader, CompilerInfo, cvdumpPath);
-            bool markInlinedFunctions = true;
-
-            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, debugFilePath,
-                                        markInlinedFunctions, progressCallback, cancelableTask);
             return sessionState_.ProfileData != null;
         }
     }

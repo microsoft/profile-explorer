@@ -17,5 +17,7 @@
     <utils:DoubleScalingConverter x:Key="DoubleScaling" />
     <utils:TreeViewLineConverter x:Key="LineConverter" />
     <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacity" />
-    <utils:MIllisecondTimeConverter x:Key="MIllisecondTime" />
+    <utils:MillisecondTimeConverter x:Key="MillisecondTime" />
+    <utils:ListToStringConverter x:Key="StringListConverter"/>
+    <utils:InvertedBooleanConverter x:Key="InvertedBool" />
 </ResourceDictionary>

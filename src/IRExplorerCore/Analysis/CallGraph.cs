@@ -318,7 +318,12 @@ namespace IRExplorerCore.Analysis {
             CallGraph callGraph, List<IRTextFunction> targetFuncts);
 
         public void AugmentGraph(CallNodeCallback augmentAction) {
-            foreach (var node in nodes_) {
+            // Walk over a clone of the node list, since new nodes may be added
+            // and would invalidate the iterator and assert.
+            var listClone = new List<CallGraphNode>(nodes_.Count);
+            listClone.AddRange(nodes_);
+
+            foreach (var node in listClone) {
                 if (node.Function != null) {
                     augmentAction(node, node, this, null);
                 }

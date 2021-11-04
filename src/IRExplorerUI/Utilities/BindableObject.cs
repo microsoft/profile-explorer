@@ -21,8 +21,16 @@ namespace IRExplorerUI {
             return true;
         }
 
+        protected void Notify(string propertyName) {
+            NotifyPropertyChanged(propertyName);
+        }
+
         public void NotifyPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+    }
+
+    public class BindableToolPanelControl : BindableObject {
+        
     }
 }

@@ -164,6 +164,13 @@ namespace IRExplorerUI {
                 if (segment.Element is BlockIR) {
                     geoBuilder.AddSegment(textView, segment);
                 }
+                else if (segment.Element is TupleIR) {
+                    // Extend width to cover entire line.
+                    foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
+                        var actualRect = Utils.SnapRectToPixels(rect.X - 1, rect.Y, textView.ActualWidth, rect.Height);
+                        geoBuilder.AddRectangle(textView, actualRect);
+                    }
+                }
                 else {
                     foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {
                         var actualRect = Utils.SnapRectToPixels(rect, -1, 0, 2, 1);

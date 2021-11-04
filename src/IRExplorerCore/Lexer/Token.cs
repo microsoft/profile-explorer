@@ -45,7 +45,7 @@ namespace IRExplorerCore.Lexer {
         Keyword      // All values after this one denote tokens.
     }
 
-    public struct Token {
+    public struct Token : IEquatable<Token> {
         public TokenKind Kind {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get;

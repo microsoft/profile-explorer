@@ -17,22 +17,19 @@ namespace IRExplorerCore {
         private ConcurrentExclusiveSchedulerPair taskScheduler_;
         private TaskFactory taskFactory_;
         private CancelableTask preprocessTask_;
-        private string moduleName_;
 
         public DocumentSectionLoader(ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
         }
 
-        public DocumentSectionLoader(string filePath, string moduleName, ICompilerIRInfo irInfo, bool useCache = true) {
+        public DocumentSectionLoader(string filePath, ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
             documentReader_ = irInfo.CreateSectionReader(filePath);
-            moduleName_ = moduleName;
         }
 
-        public DocumentSectionLoader(byte[] textData, string moduleName, ICompilerIRInfo irInfo, bool useCache = true) {
+        public DocumentSectionLoader(byte[] textData, ICompilerIRInfo irInfo, bool useCache = true) {
             Initialize(irInfo, useCache);
             documentReader_ = irInfo.CreateSectionReader(textData);
-            moduleName_ = moduleName;
         }
 
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
@@ -62,7 +59,6 @@ namespace IRExplorerCore {
                 });
             }
 
-            result.ModuleName = moduleName_;
             return result;
         }
 
@@ -96,7 +92,6 @@ namespace IRExplorerCore {
         public override ParsedIRTextSection LoadSection(IRTextSection section) {
             //Trace.TraceInformation(
             //    $"Section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
-
             lock (lockObject_) {
                 if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var cachedResult)) {
                     //Trace.TraceInformation($"Section loader {ObjectTracker.Track(this)}: found in cache");

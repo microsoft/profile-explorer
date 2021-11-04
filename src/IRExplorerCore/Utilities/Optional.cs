@@ -2,7 +2,7 @@
 using System.Diagnostics;
 
 namespace IRExplorerCore {
-    public struct Optional<T> {
+    public struct Optional<T> : IEquatable<Optional<T>> {
         private T value_;
 
         public bool HasValue { get; private set; }
