@@ -202,7 +202,7 @@ namespace IRExplorerUI {
             return true;
         }
 
-        public static int AccummulateValue<K>(this Dictionary<K, int> dict, K key, int value) where K : class {
+        public static int AccumulateValue<K>(this Dictionary<K, int> dict, K key, int value) {
             if (dict.TryGetValue(key, out var currentValue)) {
                 var newValue = currentValue + value;
                 dict[key] = newValue;
@@ -214,7 +214,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public static long AccummulateValue<K>(this Dictionary<K, long> dict, K key, long value) where K : class {
+        public static long AccumulateValue<K>(this Dictionary<K, long> dict, K key, long value) {
             if (dict.TryGetValue(key, out var currentValue)) {
                 var newValue = currentValue + value;
                 dict[key] = newValue;
@@ -226,9 +226,12 @@ namespace IRExplorerUI {
             }
         }
 
-        public static TimeSpan AccummulateValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) where K : class {
+        public static TimeSpan AccumulateValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
             if (dict.TryGetValue(key, out var currentValue)) {
-                var newValue = currentValue + value;
+                // The TimeSpan + operator does an overflow check that is not relevant
+                // (and an exception undesirable), avoid it for some speedup.
+                var sum = currentValue.Ticks + value.Ticks;
+                var newValue = TimeSpan.FromTicks(sum);
                 dict[key] = newValue;
                 return newValue;
             }
@@ -236,6 +239,68 @@ namespace IRExplorerUI {
                 dict[key] = value;
                 return value;
             }
+        }
+
+        public static int CollectMaxValue<K>(this Dictionary<K, int> dict, K key, int value) {
+            if (dict.TryGetValue(key, out var currentValue)) {
+                if (value > currentValue) {
+                    dict[key] = value;
+                    return value;
+                }
+
+                return currentValue;
+            }
+            else {
+                dict[key] = value;
+                return value;
+            }
+        }
+
+        public static double CollectMaxValue<K>(this Dictionary<K, double> dict, K key, double value) {
+            if (dict.TryGetValue(key, out var currentValue)) {
+                if (value > currentValue) {
+                    dict[key] = value;
+                    return value;
+                }
+
+                return currentValue;
+            }
+            else {
+                dict[key] = value;
+                return value;
+            }
+        }
+
+        public static TimeSpan CollectMaxValue<K>(this Dictionary<K, TimeSpan> dict, K key, TimeSpan value) {
+            if (dict.TryGetValue(key, out var currentValue)) {
+                if (value > currentValue) {
+                    dict[key] = value;
+                    return value;
+                }
+
+                return currentValue;
+            }
+            else {
+                dict[key] = value;
+                return value;
+            }
+        }
+
+        public static V GetOrAddValue<K, V>(this Dictionary<K, V> dict, K key) where V : new() {
+            if (!dict.TryGetValue(key, out V currentValue)) {
+                currentValue = new V();
+                dict[key] = currentValue;
+            }
+
+            return currentValue;
+        }
+
+        public static V GetValueOrNothing<K, V>(this Dictionary<K, V> dict, K key) where V:class {
+            if (dict.TryGetValue(key, out V currentValue)) {
+                return currentValue;
+            }
+
+            return null;
         }
 
         public static SolidColorBrush AsBrush(this Color color) {
@@ -248,6 +313,44 @@ namespace IRExplorerUI {
 
         public static SolidColorBrush AsBrush(this Color color, byte alpha) {
             return ColorBrushes.GetTransparentBrush(color, alpha);
+        }
+
+        public static Pen AsPen(this Color color, double thickness = 1.0) {
+            return ColorPens.GetPen(color, thickness);
+        }
+
+        public static Pen AsBoldPen(this Color color) {
+            return ColorPens.GetBoldPen(color);
+        }
+
+        public static string AsPercentageString(this double value, int digits = 2, 
+                                                bool trim = true, string suffix="%") {
+            value = Math.Round(value * 100, digits);
+
+            if (value == 0 && trim) {
+                return "";
+            }
+
+            return $"{value}{suffix}";
+        }
+
+        public static string AsMillisecondsString(this TimeSpan value, int digits = 2, 
+                                                  string suffix=" ms") {
+            var roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
+            return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+        }
+
+        public static string AsSecondsString(this TimeSpan value, int digits = 2, 
+                                             string suffix = " s") {
+            var roundedValue = value.TotalSeconds.TruncateToDigits(digits);
+            return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
+        }
+
+        public static double TruncateToDigits(this double value, int digits) {
+            double factor = Math.Pow(10, digits);
+            value = value * factor;
+            value = Math.Truncate(value);
+            return value / factor;
         }
     }
 }

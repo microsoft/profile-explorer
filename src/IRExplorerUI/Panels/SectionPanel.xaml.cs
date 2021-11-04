@@ -58,8 +58,6 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "NextSection", typeof(SectionPanel));
         public static readonly RoutedUICommand FocusSearch =
             new RoutedUICommand("Untitled", "FocusSearch", typeof(SectionPanel));
-        public static readonly RoutedUICommand ShowFunctions =
-            new RoutedUICommand("Untitled", "ShowFunctions", typeof(SectionPanel));
         public static readonly RoutedUICommand CopySectionText =
             new RoutedUICommand("Untitled", "CopySectionText", typeof(SectionPanel));
         public static readonly RoutedUICommand SaveSectionText =
@@ -307,7 +305,9 @@ namespace IRExplorerUI {
         public string Name { get; set; }
         public long Time { get; set; }
         public string Text { get; set; }
+        public double MinTextWidth { get; set; }
         public Brush BackColor { get; set; }
+        public double Percentage { get; set; }
     }
 
     public class ChildFunctionEx : ITreeModel {
@@ -411,6 +411,7 @@ namespace IRExplorerUI {
         private bool isDiffModeEnabled_;
         private bool syncDiffedDocuments_;
         private bool isFunctionListVisible_;
+        private bool isSectionListVisible_;
         private bool useProfileCallTree_;
 
         private SectionSettings sectionSettings_;
@@ -432,11 +433,11 @@ namespace IRExplorerUI {
         private GridViewColumnValueSorter<ChildFunctionFieldKind> childFunctionValueSorter_;
         private GridViewColumnValueSorter<ModuleFieldKind> moduleValueSorter_;
 
-        private CallGraph callGraph_;
-        private CallGraph otherCallGraph_;
+        private Dictionary<IRTextSummary, CallGraph> callGraphCache_;
         private ModuleReport moduleReport_;
         private CancelableTaskInstance statisticsTask_;
         private ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics> functionStatMap_;
+        private ModuleEx activeModuleFilter_;
 
         public SectionPanel() {
             InitializeComponent();
@@ -447,6 +448,8 @@ namespace IRExplorerUI {
             functionExtMap_ = new Dictionary<IRTextFunction, IRTextFunctionEx>();
             annotatedSections_ = new HashSet<IRTextSectionEx>();
             IsFunctionListVisible = true;
+            IsSectionListVisible = true;
+            ShowSections = true;
             SyncDiffedDocuments = true;
             MainGrid.DataContext = this;
             sectionSettings_ = App.Settings.SectionSettings;
@@ -575,22 +578,19 @@ namespace IRExplorerUI {
                         case FunctionFieldKind.PerformanceCounter: {
                             if (tag is PerformanceCounterInfo counter) {
                                 int result = 0;
-
+                                
                                 if (functionX.Counters != null &&
                                     functionY.Counters != null) {
-                                    var valueX = functionX.Counters.FindCounterSamples(counter.Id);
-                                    var valueY = functionY.Counters.FindCounterSamples(counter.Id);
-
-                                    if (valueX > 0 && valueY > 0) {
-                                        result = valueX.CompareTo(valueY);
-                                    }
-                                    else if(valueX == 0) {
-                                        result = -1;
-                                    }
-
-                                    return direction == ListSortDirection.Ascending ? -result : result;
+                                    var valueX = functionX.Counters.FindCounterValue(counter.Id);
+                                    var valueY = functionY.Counters.FindCounterValue(counter.Id);
+                                    result = valueX.CompareTo(valueY);
                                 }
-                                else if (functionX.Counters == null) {
+                                else if (functionY.Counters == null &&
+                                         functionX.Counters != null) {
+                                    result = 1;
+                                }
+                                else if (functionX.Counters == null &&
+                                         functionY.Counters != null) {
                                     result = -1;
                                 }
 
@@ -671,8 +671,7 @@ namespace IRExplorerUI {
             moduleValueSorter_ =
                 new GridViewColumnValueSorter<ModuleFieldKind>(ModulesList,
                     name => name switch {
-                        "ModuleColumnHeader" => ModuleFieldKind.Name,
-                        "ModuleTimeColumnHeader" => ModuleFieldKind.Time
+                        "ModuleColumnHeader" => ModuleFieldKind.Name
                     },
                     (x, y, field, direction, tag) => {
                         var moduleX = x as ModuleEx;
@@ -680,10 +679,7 @@ namespace IRExplorerUI {
 
                         switch (field) {
                             case ModuleFieldKind.Name: {
-                                int result = string.Compare(moduleY.Name, moduleX.Name, StringComparison.Ordinal);
-                                return direction == ListSortDirection.Ascending ? -result : result;
-                            }
-                            case ModuleFieldKind.Time: {
+                                // Always sort modules by time.
                                 int result = moduleY.Time.CompareTo(moduleX.Time);
                                 return direction == ListSortDirection.Ascending ? -result : result;
                             }
@@ -714,30 +710,40 @@ namespace IRExplorerUI {
                 if (isFunctionListVisible_ != value) {
                     isFunctionListVisible_ = value;
 
-                    if (isFunctionListVisible_) {
-                        FunctionList.Visibility = Visibility.Visible;
-                        FunctionToolbarTray.Visibility = Visibility.Visible;
+                    //if (isFunctionListVisible_) {
+                    //    FunctionList.Visibility = Visibility.Visible;
+                    //    FunctionToolbarTray.Visibility = Visibility.Visible;
 
-                        if (profileControlsVisible_) {
-                            MainGrid.ColumnDefinitions[0].Width = new GridLength(5, GridUnitType.Star);
-                            MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
-                            MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
-                        }
-                        else {
-                            MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
-                            MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
-                            MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
-                        }
-                    }
-                    else {
-                        FunctionList.Visibility = Visibility.Collapsed;
-                        FunctionToolbarTray.Visibility = Visibility.Collapsed;
-                        MainGrid.ColumnDefinitions[0].Width = new GridLength(24, GridUnitType.Pixel);
-                        MainGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Pixel);
-                        MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
-                    }
+                    //    if (profileControlsVisible_) {
+                    //        MainGrid.ColumnDefinitions[0].Width = new GridLength(5, GridUnitType.Star);
+                    //        MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
+                    //        MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
+                    //    }
+                    //    else {
+                    //        MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+                    //        MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
+                    //        MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
+                    //    }
+                    //}
+                    //else {
+                    //    FunctionList.Visibility = Visibility.Collapsed;
+                    //    FunctionToolbarTray.Visibility = Visibility.Collapsed;
+                    //    MainGrid.ColumnDefinitions[0].Width = new GridLength(24, GridUnitType.Pixel);
+                    //    MainGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Pixel);
+                    //    MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
+                    //}
 
                     OnPropertyChange(nameof(IsFunctionListVisible));
+                }
+            }
+        }
+
+        public bool IsSectionListVisible {
+            get => isSectionListVisible_;
+            set {
+                if (isSectionListVisible_ != value) {
+                    isSectionListVisible_ = value;
+                    OnPropertyChange(nameof(IsSectionListVisible));
                 }
             }
         }
@@ -913,18 +919,7 @@ namespace IRExplorerUI {
                 if (showModules_ != value) {
                     showModules_ = value;
                     OnPropertyChange(nameof(ShowModules));
-                    OnPropertyChange(nameof(ShowFunctions));
-                }
-            }
-        }
-
-        public bool ShowFunctions {
-            get => !showModules_;
-            set {
-                if (showModules_ == value) {
-                    showModules_ = !value;
-                    OnPropertyChange(nameof(ShowModules));
-                    OnPropertyChange(nameof(ShowFunctions));
+                    ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
                 }
             }
         }
@@ -936,19 +931,43 @@ namespace IRExplorerUI {
             set {
                 if (showChildren_ != value) {
                     showChildren_ = value;
+
+                    if (showChildren_) {
+                        ShowSections = false;
+                        IsSectionListVisible = true;
+                    }
+                    else {
+                        IsSectionListVisible = false;
+                    }
+
                     OnPropertyChange(nameof(ShowSections));
                     OnPropertyChange(nameof(ShowChildren));
+                    OnPropertyChange(nameof(IsSectionListVisible));
+                    ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
                 }
             }
         }
 
+        private bool showSections_;
+
         public bool ShowSections {
-            get => !showChildren_;
+            get => showSections_;
             set {
-                if (showChildren_ == value) {
-                    showChildren_ = !value;
+                if (showSections_ != value) {
+                    showSections_ = value;
+
+                    if (showSections_) {
+                        ShowChildren = false;
+                        IsSectionListVisible = true;
+                    }
+                    else {
+                        IsSectionListVisible = false;
+                    }
+
                     OnPropertyChange(nameof(ShowSections));
                     OnPropertyChange(nameof(ShowChildren));
+                    OnPropertyChange(nameof(IsSectionListVisible));
+                    ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
                 }
             }
         }
@@ -963,18 +982,7 @@ namespace IRExplorerUI {
                 }
             }
         }
-
-        private bool functionModuleControlsVisible_;
-        public bool FunctionModuleControlsVisible {
-            get => functionModuleControlsVisible_;
-            set {
-                if (functionModuleControlsVisible_ != value) {
-                    functionModuleControlsVisible_ = value;
-                    OnPropertyChange(nameof(FunctionModuleControlsVisible));
-                }
-            }
-        }
-
+        
         public IRTextFunction CurrentFunction => currentFunction_;
         public bool HasAnnotatedSections => annotatedSections_.Count > 0;
         public ICompilerInfoProvider CompilerInfo { get; set; }
@@ -1164,23 +1172,43 @@ namespace IRExplorerUI {
                 return;
             }
 
+            var settings = App.Settings.DocumentSettings;
             var modulesEx = new List<ModuleEx>();
+            double maxWidth = 0;
 
             foreach (var pair in profile.ModuleWeights) {
                 var moduleWeight = pair.Value;
                 double weightPercentage = profile.ScaleModuleWeight(pair.Value);
-
+                var text = $"{weightPercentage.AsPercentageString()} ({moduleWeight.AsMillisecondsString()})";
                 var moduleInfo = new ModuleEx() {
                     Name = pair.Key,
                     Time = moduleWeight.Ticks,
-                    Text = $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(moduleWeight.TotalMilliseconds, 2):#,#} ms)"
+                    Percentage = weightPercentage,
+                    Text = text
                 };
+
                 modulesEx.Add(moduleInfo);
+                double width = Utils.MeasureString(text, settings.FontName, settings.FontSize).Width;
+                maxWidth = Math.Max(width, maxWidth);
+            }
+
+            // Add one entry to represent all modules.
+            var allWeightPercentage = profile.ScaleFunctionWeight(profile.ProfileWeight);
+
+            modulesEx.Add(new ModuleEx() {
+                Name = "All",
+                Time = profile.ProfileWeight.Ticks,
+                Percentage = allWeightPercentage,
+                Text = $"{allWeightPercentage.AsPercentageString()} ({profile.ProfileWeight.AsMillisecondsString()})"
+            });
+
+            foreach (var value in modulesEx) {
+                value.MinTextWidth = maxWidth;
             }
 
             var modulesFilter = new ListCollectionView(modulesEx);
             ModulesList.ItemsSource = modulesFilter;
-            moduleValueSorter_.SortByField(ModuleFieldKind.Time, ListSortDirection.Descending);
+            moduleValueSorter_.SortByField(ModuleFieldKind.Name, ListSortDirection.Descending);
 
             OptionalDataColumnVisible = true;
             OptionalDataColumnName = "Time (self)";
@@ -1194,16 +1222,24 @@ namespace IRExplorerUI {
 
                 if (funcProfile != null) {
                     double exclusivePercentage = profile.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
+
+                    if (double.IsNaN(exclusivePercentage)) {
+                        exclusivePercentage = 0; // No timing data, better 0 than NaN...
+                    }
+
                     funcEx.ExclusivePercentage = exclusivePercentage;
-                    funcEx.OptionalDataText = $"({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2):#,#} ms)";
+                    funcEx.OptionalDataText = $"({funcProfile.ExclusiveWeight.AsMillisecondsString()})";
                     funcEx.OptionalData = funcProfile.ExclusiveWeight.Ticks;
-                    funcEx.BackColor = markerOptions.PickBrushForWeight(exclusivePercentage);
+                    funcEx.BackColor = markerOptions.PickBrushForPercentage(exclusivePercentage);
+
+                    Trace.WriteLine(
+                        $"Perc {exclusivePercentage}, {exclusivePercentage * 100} color {funcEx.BackColor}");
 
                     double percentage = profile.ScaleFunctionWeight(funcProfile.Weight);
                     funcEx.InclusivePercentage = percentage;
-                    funcEx.OptionalDataText2 = $"({Math.Round(funcProfile.Weight.TotalMilliseconds, 2):#,#} ms)";
+                    funcEx.OptionalDataText2 = $"({funcProfile.Weight.AsMillisecondsString()})";
                     funcEx.OptionalData2 = funcProfile.Weight.Ticks;
-                    funcEx.BackColor2 = markerOptions.PickBrushForWeight(percentage);
+                    funcEx.BackColor2 = markerOptions.PickBrushForPercentage(percentage);
 
                     //? TODO: Can be expensive, do in background
                     if (funcProfile.HasPerformanceCounters) {
@@ -1220,17 +1256,20 @@ namespace IRExplorerUI {
                     funcEx.OptionalData2 = TimeSpan.Zero.Ticks;
                 }
             }
-
+            
             functionValueSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
             ProfileControlsVisible = true;
-            FunctionModuleControlsVisible = true;
             IsFunctionListVisible = false;
             IsFunctionListVisible = true;
+            ShowSections = false;
 
-
-            ResizeFunctionFilter(FunctionToolbar.RenderSize.Width);
+            if (modulesEx.Count > 1) {
+                ShowModules = true;
+            }
+            
             UseProfileCallTree = true;
         }
+
 
         private async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
             if (summary_ == null) {
@@ -1309,7 +1348,6 @@ namespace IRExplorerUI {
 
         private void ResetSectionPanel() {
             ProfileControlsVisible = false;
-            FunctionModuleControlsVisible = false;
             SectionList.ItemsSource = null;
             FunctionList.ItemsSource = null;
 
@@ -1326,8 +1364,7 @@ namespace IRExplorerUI {
         }
 
         private void ResetStatistics() {
-            callGraph_ = null;
-            otherCallGraph_ = null;
+            callGraphCache_ = null;
             functionStatMap_ = null;
         }
 
@@ -1459,10 +1496,16 @@ namespace IRExplorerUI {
 
             RegisterSectionListScrollEvent();
         }
-
+        
         private bool FilterFunctionList(object value) {
             var functionEx = (IRTextFunctionEx)value;
             var function = functionEx.Function;
+
+            if (activeModuleFilter_ != null) {
+                if (functionEx.ModuleName != activeModuleFilter_.Name) {
+                    return false;
+                }
+            }
 
             // Don't filter with less than 2 letters.
             //? TODO: FunctionFilter change should rather set a property with the trimmed text
@@ -1511,10 +1554,6 @@ namespace IRExplorerUI {
                 section.Name.Contains(text, StringComparison.OrdinalIgnoreCase));
         }
 
-        private void ShowFunctionsExecuted(object sender, ExecutedRoutedEventArgs e) {
-            IsFunctionListVisible = true;
-        }
-
         private void ExecuteClearTextbox(object sender, ExecutedRoutedEventArgs e) {
             ((TextBox)e.Parameter).Text = string.Empty;
         }
@@ -1526,7 +1565,7 @@ namespace IRExplorerUI {
             }
 
             if (e.Parameter is IRTextSectionEx section) {
-                OpenSectionExecute(section, OpenSectionKind.ReplaceCurrent);
+                OpenSectionImpl(section, OpenSectionKind.ReplaceCurrent);
             }
         }
 
@@ -1539,19 +1578,19 @@ namespace IRExplorerUI {
             var section = e.Parameter as IRTextSectionEx;
 
             if (section != null) {
-                OpenSectionExecute(section, OpenSectionKind.NewTab);
+                OpenSectionImpl(section, OpenSectionKind.NewTab);
             }
         }
 
         private void OpenLeftExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (e.Parameter is IRTextSectionEx section) {
-                OpenSectionExecute(section, OpenSectionKind.NewTabDockLeft);
+                OpenSectionImpl(section, OpenSectionKind.NewTabDockLeft);
             }
         }
 
         private void OpenRightExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (e.Parameter is IRTextSectionEx section) {
-                OpenSectionExecute(section, OpenSectionKind.NewTabDockRight);
+                OpenSectionImpl(section, OpenSectionKind.NewTabDockRight);
             }
         }
 
@@ -1559,8 +1598,8 @@ namespace IRExplorerUI {
             if (SectionList.SelectedItems.Count == 2) {
                 var leftSection = SectionList.SelectedItems[0] as IRTextSectionEx;
                 var rightSection = SectionList.SelectedItems[1] as IRTextSectionEx;
-                OpenSectionExecute(leftSection, OpenSectionKind.NewTabDockLeft);
-                OpenSectionExecute(rightSection, OpenSectionKind.NewTabDockRight);
+                OpenSectionImpl(leftSection, OpenSectionKind.NewTabDockLeft);
+                OpenSectionImpl(rightSection, OpenSectionKind.NewTabDockRight);
             }
         }
 
@@ -1664,13 +1703,21 @@ namespace IRExplorerUI {
         private void SectionDoubleClick(object sender, MouseButtonEventArgs e) {
             var section = ((ListViewItem)sender).Content as IRTextSectionEx;
 
+            OpenSectionImpl(section);
+        }
+
+        private void OpenSectionImpl(IRTextSection section) {
+            OpenSectionImpl(GetSectionExtension(section));
+        }
+
+        private void OpenSectionImpl(IRTextSectionEx section) {
             bool inNewTab = (Keyboard.Modifiers & ModifierKeys.Control) != 0 ||
                             (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
 
-            OpenSectionExecute(section, inNewTab ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent);
+            OpenSectionImpl(section, inNewTab ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent);
         }
 
-        private void OpenSectionExecute(IRTextSectionEx value, OpenSectionKind kind,
+        private void OpenSectionImpl(IRTextSectionEx value, OpenSectionKind kind,
                                         IRDocumentHost targetDocument = null) {
             if (OpenSection != null && value.Section != null) {
                 MarkCurrentSection(value);
@@ -1721,7 +1768,7 @@ namespace IRExplorerUI {
         public void SwitchToSection(IRTextSectionEx section, IRDocumentHost targetDocument = null) {
             SectionList.SelectedItem = section;
             SectionList.ScrollIntoView(SectionList.SelectedItem);
-            OpenSectionExecute(section, OpenSectionKind.ReplaceCurrent, targetDocument);
+            OpenSectionImpl(section, OpenSectionKind.ReplaceCurrent, targetDocument);
         }
 
         public void SwitchToSection(IRTextSection section, IRDocumentHost targetDocument = null) {
@@ -1828,7 +1875,7 @@ namespace IRExplorerUI {
 
                 foreach (ulong sectionId in state.AnnotatedSections) {
                     var section = summary_.GetSectionWithId(sectionId);
-                    var sectionExt = sectionExtMap_[section];
+                    var sectionExt = GetSectionExtension(section);
                     sectionExt.IsTagged = true;
                     annotatedSections_.Add(sectionExt);
                 }
@@ -1851,7 +1898,7 @@ namespace IRExplorerUI {
             }
 
             UpdateSectionListBindings(function);
-            var funcEx = functionExtMap_[function];
+            var funcEx = GetFunctionExtension(function);
             FunctionList.SelectedItem = funcEx;
             FunctionList.ScrollIntoView(FunctionList.SelectedItem);
             RefreshSectionList();
@@ -1906,16 +1953,18 @@ namespace IRExplorerUI {
         }
 
         private async Task<CallGraph> GenerateCallGraph(IRTextSummary summary) {
-            if (callGraph_ != null) {
-                return callGraph_;
+            callGraphCache_ ??= new Dictionary<IRTextSummary, CallGraph>();
+
+            if (callGraphCache_.TryGetValue(summary, out var callGraph)) {
+                return callGraph;
             }
 
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
-            var callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
+            callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
             await Task.Run(() => callGraph.Execute());
 
             // Cache the call graph, can be expensive to compute.
-            callGraph_ = callGraph;
+            callGraphCache_[summary] = callGraph;
             return callGraph;
         }
 
@@ -1996,11 +2045,14 @@ namespace IRExplorerUI {
             // Sort children, since that is not yet supported by the TreeListView control.
             parentNode.Children.Sort((a, b) => {
                 // Ensure the callers node is placed first.
-                if (a.IsMarked) {
-                    return 1;
+                if (a.IsMarked && b.IsMarked) {
+                    return b.Name.CompareTo(a.Name);
+                }
+                else if (a.IsMarked) {
+                    return -1;
                 }
                 else if (b.IsMarked) {
-                    return -1;
+                    return 1;
                 }
 
                 if (b.Time > a.Time) {
@@ -2040,6 +2092,7 @@ namespace IRExplorerUI {
             var selfInfo = CreateProfileCallTreeChild(function, funcWeight, funcProfile, null);
             selfInfo.Name = "Self";
             selfInfo.IsMarked = true;
+            selfInfo.Statistics = GetFunctionStatistics(function);
             parentNode.Children.Add(selfInfo);
 
             if (!newFunc) {
@@ -2053,7 +2106,13 @@ namespace IRExplorerUI {
 
             if (funcProfile != null) {
                 foreach (var pair in funcProfile.ChildrenWeights) {
-                    var childFunc = summary_.GetFunctionWithId(pair.Key);
+                    var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
+
+                    if (childFunc == null) {
+                        Debug.Assert(false, "Should be always found");
+                        continue;
+                    }
+
                     var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
                     var childCgNode = cgNode?.FindCallee(childFunc);
 
@@ -2063,10 +2122,14 @@ namespace IRExplorerUI {
                     if (childFuncProfile.ChildrenWeights.Count > 0) {
                         CreateProfileCallTree(childFunc, childCgNode, childNode, callGraph, visitedFuncts);
                     }
+                    else {
+                        visitedFuncts.Add(childFunc);
+                    }
                 }
             }
 
-            // Go over the IR callers.
+            // Go over the IR callees and add them for completeness,
+            // since all not in the profile will have 0 weight.
             if (cgNode != null) {
                 foreach (var calleeNode in cgNode.UniqueCallees) {
                     if (!calleeNode.HasKnownTarget ||
@@ -2075,13 +2138,16 @@ namespace IRExplorerUI {
                     }
 
                     var childFuncProfile = Session.ProfileData.GetFunctionProfile(calleeNode.Function);
-                    var childFuncWeight = childFuncProfile != null ? childFuncProfile.Weight : TimeSpan.Zero;
-
+                    var childFuncWeight = TimeSpan.Zero;
                     var childNode = CreateProfileCallTreeChild(calleeNode.Function, childFuncWeight, funcProfile, childFuncProfile);
+                    childNode.Statistics = GetFunctionStatistics(calleeNode.Function);
                     parentNode.Children.Add(childNode);
 
                     if (calleeNode.HasCallees) {
                         CreateProfileCallTree(calleeNode.Function, calleeNode, childNode, callGraph, visitedFuncts);
+                    }
+                    else {
+                        visitedFuncts.Add(calleeNode.Function);
                     }
                 }
             }
@@ -2093,9 +2159,16 @@ namespace IRExplorerUI {
                 parentNode.Children.Add(callerInfo);
 
                 foreach (var pair in funcProfile.CallerWeights) {
-                    var childFunc = summary_.GetFunctionWithId(pair.Key);
+                    var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
+
+                    if (childFunc == null) {
+                        Debug.Assert(false, "Should always be found");
+                        continue;
+                    }
+
                     var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
                     var childNode = CreateProfileCallTreeChild(childFunc, pair.Value, funcProfile, childFuncProfile);
+                    childNode.Statistics = GetFunctionStatistics(childFunc);
                     callerInfo.Children.Add(childNode);
                 }
             }
@@ -2103,11 +2176,14 @@ namespace IRExplorerUI {
             // Sort children, since that is not yet supported by the TreeListView control.
             parentNode.Children.Sort((a, b) => {
                 // Ensure the callers node is placed first.
-                if (a.IsMarked) {
-                    return 1;
+                if (a.IsMarked && b.IsMarked) {
+                    return b.Name.CompareTo(a.Name);
+                }
+                else if (a.IsMarked) {
+                    return -1;
                 }
                 else if (b.IsMarked) {
-                    return -1;
+                    return 1;
                 }
 
                 if (b.Time > a.Time) {
@@ -2138,10 +2214,10 @@ namespace IRExplorerUI {
                 Name = childFunc.Name,
                 Percentage = weightPercentage,
                 DescendantCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
-                Text = isEmpty ? "" : $"{Math.Round(weightPercentage * 100, 2)}% ({Math.Round(childWeight.TotalMilliseconds, 2):#,#} ms)",
+                Text = isEmpty ? "" : $"{weightPercentage.AsPercentageString()} ({childWeight.AsMillisecondsString()})",
                 TextColor = Brushes.Black,
-                BackColor = isEmpty ? Brushes.Transparent : ProfileDocumentMarkerOptions.Default.PickBrushForWeight(weightPercentage),
-                Children = new List<ChildFunctionEx>()
+                BackColor = isEmpty ? Brushes.Transparent : ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(weightPercentage),
+                Children = new List<ChildFunctionEx>(),
             };
             return childInfo;
         }
@@ -2170,7 +2246,7 @@ namespace IRExplorerUI {
         }
 
         private void ShowOptionsPanel() {
-            if (optionsPanelVisible_ || currentFunction_ == null) {
+            if (optionsPanelVisible_) {
                 return;
             }
 
@@ -2356,15 +2432,11 @@ namespace IRExplorerUI {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
             //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
             double defaultSpace = 60;
-            double profileControlsSpace = FunctionModuleControlsVisible ? 180 : 0;
+            double profileControlsSpace = ProfileControlsVisible ? 240 : 0;
             FunctionFilterGrid.Width = Math.Max(1, width - defaultSpace - profileControlsSpace);
         }
 
         private void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
-            if (sender is not ListViewItem) {
-                return;
-            }
-
             // A double-click on the +/- icon doesn't have select an actual node.
             var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
 
@@ -2375,38 +2447,27 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task ComputeFunctionStatistics() {
-            if (functionStatMap_ != null) {
-                return;
-            }
+        private void FunctionDoubleClick(object sender, MouseButtonEventArgs e) {
+            // A double-click on the +/- icon doesn't have an actual node selected.
+            var functionEx = ((ListViewItem)sender).Content as IRTextFunctionEx;
 
-            var loadedDoc = Session.SessionState.FindLoadedDocument(summary_);
-            using var cancelableTask = statisticsTask_.CreateTask();
-            Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
-            Trace.TraceInformation("ComputeFunctionStatistics: start");
+            if (functionEx != null) {
+                SelectFunction(functionEx.Function);
 
-            var tasks = new List<Task>();
-            var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
-            var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-            var callGraph = await GenerateCallGraph(summary_);
-            functionStatMap_ = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
-
-            foreach (var function in summary_.Functions) {
-                if (function.SectionCount == 0) {
-                    continue;
+                if (functionEx.SectionCount > 0) {
+                    OpenSectionImpl(functionEx.Function.Sections[0]);
                 }
-
-                tasks.Add(taskFactory.StartNew(() => {
-                    var section = function.Sections[0];
-                    var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
-                    functionStatMap_.TryAdd(function, sectionStats);
-                }, cancelableTask.Token));
             }
+        }
 
-            await Task.WhenAll(tasks.ToArray());
+        private async Task ComputeFunctionStatistics() {
+            return;
 
-            foreach (var pair in functionStatMap_) {
-                var functionEx = functionExtMap_[pair.Key];
+            using var cancelableTask = statisticsTask_.CreateTask();
+            var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
+            
+            foreach (var pair in functionStatMap) {
+                var functionEx = GetFunctionExtension(pair.Key);
                 functionEx.Statistics = pair.Value;
             }
 
@@ -2418,6 +2479,41 @@ namespace IRExplorerUI {
             RefreshFunctionList();
 
             Session.SetApplicationProgress(false, double.NaN);
+        }
+
+        private async Task<ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>> 
+            ComputeFunctionStatisticsImpl(CancelableTask cancelableTask) {
+            if (functionStatMap_ != null) {
+                return functionStatMap_;
+            }
+
+            var loadedDoc = Session.SessionState.FindLoadedDocument(summary_);
+            Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
+            Trace.TraceInformation("ComputeFunctionStatistics: start");
+
+            var tasks = new List<Task>();
+            var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
+            var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
+            var callGraph = await GenerateCallGraph(summary_);
+            functionStatMap_ = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
+
+            foreach (var function in summary_.Functions)
+            {
+                if (function.SectionCount == 0)
+                {
+                    continue;
+                }
+
+                tasks.Add(taskFactory.StartNew(() =>
+                {
+                    var section = function.Sections[0];
+                    var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
+                    functionStatMap_.TryAdd(function, sectionStats);
+                }, cancelableTask.Token));
+            }
+
+            await Task.WhenAll(tasks.ToArray());
+            return functionStatMap_;
         }
 
         public async Task WaitForStatistics() {
@@ -2524,16 +2620,24 @@ namespace IRExplorerUI {
                 "DiffHeader", $"Diff", "Difference kind (only in left/right document or modified)", DiffKindConverter),
         };
 
+
         public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            //? TODO: to remove, check tag is counter type
+            //? TODO: to remove, check tag is counter type 
             var counters = Session.ProfileData.SortedPerformanceCounters;
 
             for (int i = 0; i < counters.Count; i++) {
                 var counter = counters[i];
-                var columnHeader = OptionalColumn.AddListViewColumn(FunctionList, 
-                    OptionalColumn.Binding($"Counters.Counters[{i}].Value",
-                    $"PerfCounters{i}", $"{counter.Name}{titleSuffix}", $"{counter.Name} ({counter.Id}){tooltipSuffix}"), functionValueSorter_);
-                columnHeader.Tag = counter;
+
+                if (!ProfileDocumentMarker.IsPerfCounterVisible(counter)) {
+                    continue;
+                }
+
+                var name = $"{ProfileDocumentMarker.ShortenPerfCounterName(counter.Name)}";
+                var tooltip = counter.Description != null ? $"{counter.Description}" : $"{counter.Name}";
+                var gridColumn = OptionalColumn.AddListViewColumn(FunctionList, 
+                    OptionalColumn.Binding($"Counters[{counter.Id}]", $"PerfCounters{i}",
+                                           name, tooltip), functionValueSorter_);
+                gridColumn.Header.Tag = counter;
             }
         }
 
@@ -2558,12 +2662,12 @@ namespace IRExplorerUI {
             OptionalColumn.AddListViewColumn(ChildFunctionList,
                 OptionalColumn.Binding("Statistics.Instructions", "InstructionsHeader", 
                     $"Instrs", $"Instruction number", null, columnWidth), 
-                functionValueSorter_, titleSuffix, tooltipSuffix, true, 1);
+                functionValueSorter_, titleSuffix, tooltipSuffix, true, 2);
 
             OptionalColumn.AddListViewColumn(ChildFunctionList,
                 OptionalColumn.Binding("Statistics.Size", "SizeHeader", 
                     $"Size", $"Function size in bytes", null, columnWidth), 
-                functionValueSorter_, titleSuffix, tooltipSuffix, true, 2);
+                functionValueSorter_, titleSuffix, tooltipSuffix, true, 3);
         }
 
         public void RemoveStatisticsChildFunctionListColumns() {
@@ -2581,6 +2685,25 @@ namespace IRExplorerUI {
         public async Task RefreshSummary() {
             ResetSectionPanel();
             await UpdateFunctionListBindings();
+        }
+
+        private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
+            var moduleEx = ((ListViewItem)sender).Content as ModuleEx;
+
+            if (moduleEx != null) {
+                ApplyModuleFilter(moduleEx);
+            }
+        }
+
+        private void ApplyModuleFilter(ModuleEx moduleEx) {
+            if (moduleEx.Name == "All") {
+                activeModuleFilter_ = null;
+            }
+            else {
+                activeModuleFilter_ = moduleEx;
+            }
+
+            RefreshFunctionList();
         }
     }
 }

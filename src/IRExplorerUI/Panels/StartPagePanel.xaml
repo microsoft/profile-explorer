@@ -8,8 +8,8 @@
     xmlns:toolkit="clr-namespace:System.Windows.Controls;assembly=DotNetProjects.Input.Toolkit"
     d:DesignHeight="450"
     d:DesignWidth="800"
-    UseLayoutRounding="True"
     SnapsToDevicePixels="True"
+    UseLayoutRounding="True"
     mc:Ignorable="d">
     <Border
         Background="#BFD9EFFF"
@@ -77,25 +77,23 @@
                             DockPanel.Dock="Right"
                             Orientation="Horizontal">
                             <toolkit:AutoCompleteBox
-    Name="TextSearch"
-    Width="150"
-    Margin="4,0,2,0"
-    HorizontalAlignment="Center"
-    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-    BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
-    FilterMode="ContainsOrdinal"
-    IsDropDownOpen="True"
-    IsTextCompletionEnabled="False"
-    MinimumPrefixLength="1"
-    Populating="TextSearch_Populating"
-    KeyDown="TextSearch_KeyDown"
-    Placeholder="Search recent files"
-    TabIndex="4"
-    Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
+                                Name="TextSearch"
+                                Width="150"
+                                Margin="4,0,2,0"
+                                HorizontalAlignment="Center"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
+                                FilterMode="ContainsOrdinal"
+                                IsDropDownOpen="True"
+                                IsTextCompletionEnabled="False"
+                                KeyDown="TextSearch_KeyDown"
+                                MinimumPrefixLength="1"
+                                Placeholder="Search recent files"
+                                Populating="TextSearch_Populating"
+                                TabIndex="4"
+                                Text="{Binding Path=SearchedText, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}">
                                 <toolkit:AutoCompleteBox.InputBindings>
-                                    <KeyBinding
-            Key="Escape"
-            CommandTarget="{Binding ElementName=SearchPanelControl}" />
+                                    <KeyBinding Key="Escape" CommandTarget="{Binding ElementName=SearchPanelControl}" />
                                 </toolkit:AutoCompleteBox.InputBindings>
                             </toolkit:AutoCompleteBox>
                             <Button
@@ -106,7 +104,7 @@
                                 Padding="2,2,2,2"
                                 Click="ClearButton_Click"
                                 ToolTip="Clear list of recent files">
-                                <Image Source="{StaticResource RemoveIcon}"/>
+                                <Image Source="{StaticResource RemoveIcon}" />
                             </Button>
                             <Button
                                 x:Name="OpenButton"

@@ -14,14 +14,115 @@ namespace IRExplorerUI.Compilers {
 
     //? https://stackoverflow.com/questions/34960989/how-can-i-hide-dll-registration-message-window-in-my-application
 
-    //? Merge with PDB cvdump reader for ETW
     //? TODO: Move global symbol load as member done once
     //? Use for-each iterators
     //? Free more COM
 
+    public static class SymSrvHelpers {
+        //? TODO: Not thread safe
+        private static int processId_ = Process.GetCurrentProcess().Id;
+        private static bool initialized_;
+
+        public static bool InitSymSrv(string symbolPath) {
+            if (initialized_) {
+                CleanupSymSrv();
+                initialized_ = false;
+            }
+
+            if (NativeMethods.SymInitialize((IntPtr)processId_, symbolPath, false)) {
+                // Enable diagnostic printing to the debugger.
+                NativeMethods.SymSetOptions(NativeMethods.SYMOPT_DEBUG);
+                initialized_ = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool CleanupSymSrv() {
+            return NativeMethods.SymCleanup((IntPtr)processId_);
+        }
+
+        /// Private method to locate the local path for a matching PDB. Implicitly handles symbol download if needed.
+        public static string GetLocalPDBFilePath(string pdbFilename, Guid guid, int pdbAge) {
+            const int MAX_PATH = 4096;
+            StringBuilder outPath = new StringBuilder(MAX_PATH);
+            IntPtr buffer = Marshal.AllocHGlobal(Marshal.SizeOf(guid));
+            Marshal.StructureToPtr(guid, buffer, false);
+
+            try {
+                if (!NativeMethods.SymFindFileInPath((IntPtr)processId_, null, pdbFilename, buffer, pdbAge, 0, 8,
+                    outPath, IntPtr.Zero, IntPtr.Zero)) {
+                    return null;
+                }
+            }
+            finally {
+                Marshal.FreeHGlobal(buffer);
+            }
+
+            return outPath.ToString();
+        }
+
+        public static string GetLocalImageFilePath(string imageFilename, int imageTimestamp, int imageSize) {
+            const int MAX_PATH = 4096;
+            StringBuilder outPath = new StringBuilder(MAX_PATH);
+            IntPtr buffer = Marshal.AllocHGlobal(4);
+            Marshal.WriteInt32(buffer, imageTimestamp);
+
+            try {
+                if (!NativeMethods.SymFindFileInPath((IntPtr)processId_, null, imageFilename,
+                    buffer, imageSize, 0, 2, outPath, IntPtr.Zero, IntPtr.Zero)) {
+                    return null;
+                }
+            }
+            finally {
+                Marshal.FreeHGlobal(buffer);
+            }
+
+            return outPath.ToString();
+        }
+    }
+
     public class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
+        // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
+        private const string DefaultSymbolSource = @"SRV*https://msdl.microsoft.com/download/symbols";
+        private const string DefaultSymbolCachePath = @"C:\Symbols";
+
         private IDiaDataSource diaSource_;
         private IDiaSession session_;
+        private IDiaSymbol globalSymbol_;
+
+        public static async Task<string> LocateDebugFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
+            var symbolSearchPath = options.UseDefaultSymbolSource ? DefaultSymbolSource : "";
+
+            if (options.UseSymbolCache) {
+                var cachePath = options.HasSymbolCachePath ? options.SymbolCachePath : DefaultSymbolCachePath;
+                symbolSearchPath = $"CACHE*{cachePath};{symbolSearchPath}";
+            }
+
+            foreach(var path in options.SymbolSearchPaths) {
+                if (!string.IsNullOrEmpty(path)) {
+                    symbolSearchPath += $";{path}";
+                }
+            }
+
+            if (!SymSrvHelpers.InitSymSrv(symbolSearchPath)) {
+                return null;
+            }
+
+            return await Task.Run(() =>
+                SymSrvHelpers.GetLocalPDBFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age));
+        }
+
+        public static async Task<string> LocateDebugFile(string imagePath, SymbolFileSourceOptions options) {
+            using var binaryInfo = new PEBinaryInfoProvider(imagePath);
+
+            if (binaryInfo.Initialize()) {
+                return await LocateDebugFile(binaryInfo.SymbolFileInfo, options);
+            }
+
+            return null;
+        }
 
         public bool LoadDebugInfo(string debugFilePath) {
             try {
@@ -31,6 +132,15 @@ namespace IRExplorerUI.Compilers {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load debug file {debugFilePath}: {ex.Message}");
+                return false;
+            }
+
+            try {
+                session_.findChildren(null, SymTagEnum.SymTagExe, null, 0, out var exeSymEnum);
+                globalSymbol_ = exeSymEnum.Item(0);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to locate global sym for file {debugFilePath}: {ex.Message}");
                 return false;
             }
 
@@ -71,12 +181,39 @@ namespace IRExplorerUI.Compilers {
         public (string, int) FindFunctionSourceFilePath(string functionName) {
             var funcSymbol = FindFunction(functionName);
 
-            if (funcSymbol == null) {
-                return (null, 0);
+            if (funcSymbol != null) {
+                return FindFunctionSourceFilePathByRVA(funcSymbol.relativeVirtualAddress);
+            }
+            
+            return (null, 0);
+        }
+
+        public int FindLineByRVA(long rva) {
+            try {
+                session_.findLinesByRVA((uint)rva, 1, out var lineEnum);
+
+                while (true) {
+                    lineEnum.Next(1, out var lineNumber, out var retrieved);
+
+                    if (retrieved == 0) {
+                        break;
+                    }
+
+                    var sourceFile = lineNumber.sourceFile;
+                    return (int)lineNumber.lineNumber;
+                }
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to get line for RVA {rva}: {ex.Message}");
+                return -1;
             }
 
+            return -1;
+        }
+
+        public (string, int) FindFunctionSourceFilePathByRVA(long rva) {
             try {
-                session_.findLinesByRVA(funcSymbol.relativeVirtualAddress, (uint)funcSymbol.length, out var lineEnum);
+                session_.findLinesByRVA((uint)rva, 1, out var lineEnum);
 
                 while (true) {
                     lineEnum.Next(1, out var lineNumber, out var retrieved);
@@ -90,11 +227,11 @@ namespace IRExplorerUI.Compilers {
                 }
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to get source file for {functionName}: {ex.Message}");
-                return (null, 0);
+                Trace.TraceError($"Failed to get line for RVA {rva}: {ex.Message}");
+                return (null, -1);
             }
 
-            return (null, 0);
+            return (null, -1);
         }
 
         public (string, long) FindFunctionByRVA(long rva) {
@@ -103,6 +240,13 @@ namespace IRExplorerUI.Compilers {
 
                 if(funcSym != null) {
                     return (funcSym.name, funcSym.relativeVirtualAddress);
+                }
+
+                // Do another lookup as a public symbol.
+                session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var funcSym2);
+
+                if (funcSym2 != null) {
+                    return (funcSym2.name, funcSym2.relativeVirtualAddress);
                 }
             }
             catch (Exception ex) { 
@@ -139,7 +283,17 @@ namespace IRExplorerUI.Compilers {
                                 break;
                             }
 
-                            locationTag.AddInlinee(inlineFrame.name, inlineeLineNumber.sourceFile.fileName,
+                            // Getting the source file of the inlinee often fails, ignore it.
+                            string inlineeFileName = "";
+
+                            try {
+                                inlineeFileName = inlineeLineNumber.sourceFile.fileName;
+                            }
+                            catch (Exception _) {
+                                
+                            }
+
+                            locationTag.AddInlinee(inlineFrame.name, inlineeFileName,
                                                    (int)inlineeLineNumber.lineNumber,
                                                    (int)inlineeLineNumber.columnNumber);
                         }
@@ -155,14 +309,39 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
+        public IEnumerable<DebugFunctionInfo> EnumerateFunctions() {
+            IDiaEnumSymbols symbolEnum;
+
+            try {
+                globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
+                yield break;
+            }
+
+            Trace.AutoFlush = false;
+
+            foreach (IDiaSymbol sym in symbolEnum) {
+                //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
+                yield return new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+            }
+
+            globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out var publicSymbolEnum);
+         
+            foreach (IDiaSymbol sym in publicSymbolEnum) {
+                //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
+                yield return new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+            }
+
+            Trace.AutoFlush = true;
+        }
+
         private IDiaSymbol FindFunction(string functionName) {
             try {
-                session_.findChildren(null, SymTagEnum.SymTagExe, null, 0, out var exeSymEnum);
-                var globalSymbol = exeSymEnum.Item(0);
-
                 var demangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.Default);
                 var queryDemangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.OnlyName);
-                globalSymbol.findChildren(SymTagEnum.SymTagFunction, queryDemangledName, 0, out var symbolEnum);
+                globalSymbol_.findChildren(SymTagEnum.SymTagFunction, queryDemangledName, 0, out var symbolEnum);
                 IDiaSymbol candidateSymbol = null;
 
                 while (true) {

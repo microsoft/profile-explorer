@@ -82,6 +82,7 @@ namespace IRExplorerCore.Graph {
         public List<Edge> Edges { get; set; }
         public double Width { get; set; }
         public double Height { get; set; }
+        public bool IsEmpty => Nodes.Count == 0;
 
         //? TODO: Move below out so it's easy to discard them and free memory for large graphs
         public Dictionary<TaggedObject, Node> DataNodeMap { get; set; }

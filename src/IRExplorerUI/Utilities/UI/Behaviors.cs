@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.Collections.Generic;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Data;
@@ -57,36 +58,38 @@ namespace IRExplorerUI {
 
     }
 
-    public static class GridViewBehaviors {
-        public static readonly DependencyProperty CollapseableColumnProperty =
-            DependencyProperty.RegisterAttached("CollapseableColumn", typeof(bool), typeof(GridViewBehaviors),
-                new UIPropertyMetadata(false, OnCollapseableColumnChanged));
+    public class GridViewColumnVisibility {
+        static Dictionary<GridViewColumn, double> originalColumnWidths_ = new Dictionary<GridViewColumn, double>();
 
-        public static bool GetCollapseableColumn(DependencyObject d) {
-            return (bool)d.GetValue(CollapseableColumnProperty);
+        public static bool GetIsVisible(DependencyObject obj) {
+            return (bool)obj.GetValue(IsVisibleProperty);
         }
 
-        public static void SetCollapseableColumn(DependencyObject d, bool value) {
-            d.SetValue(CollapseableColumnProperty, value);
+        public static void SetIsVisible(DependencyObject obj, bool value) {
+            obj.SetValue(IsVisibleProperty, value);
         }
 
-        private static void OnCollapseableColumnChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) {
-            GridViewColumnHeader header = sender as GridViewColumnHeader;
-            if (header == null)
+        public static readonly DependencyProperty IsVisibleProperty =
+            DependencyProperty.RegisterAttached("IsVisible", typeof(bool), 
+                typeof(GridViewColumnVisibility), new UIPropertyMetadata(true, OnIsVisibleChanged));
+
+        private static void OnIsVisibleChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            GridViewColumn column = d as GridViewColumn;
+
+            if (column == null) {
                 return;
+            }
 
-            header.IsVisibleChanged += new DependencyPropertyChangedEventHandler(AdjustWidth);
-        }
-
-        static void AdjustWidth(object sender, DependencyPropertyChangedEventArgs e) {
-            GridViewColumnHeader header = sender as GridViewColumnHeader;
-            if (header == null)
-                return;
-
-            if (header.Visibility == Visibility.Collapsed)
-                header.Column.Width = 0;
-            else
-                header.Column.Width = double.NaN;   // "Auto"
+            if (GetIsVisible(column) == false) {
+                originalColumnWidths_[column] = column.Width;
+                column.Width = 0;
+            }
+            else if (column.Width == 0) {
+                column.Width = originalColumnWidths_[column];
+            }
+            else {
+                column.Width = double.NaN; // Auto
+            }
         }
     }
 }

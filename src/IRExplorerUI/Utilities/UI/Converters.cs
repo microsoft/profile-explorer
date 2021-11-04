@@ -1,6 +1,9 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -23,6 +26,11 @@ namespace IRExplorerUI.Utilities {
         public virtual object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
             return value is T && EqualityComparer<T>.Default.Equals((T)value, True);
         }
+    }
+
+    class InvertedBooleanConverter : BooleanConverter<bool> {
+        public InvertedBooleanConverter() :
+            base(false, true) { }
     }
 
     class BoolToVisibilityConverter : BooleanConverter<Visibility> {
@@ -99,7 +107,7 @@ namespace IRExplorerUI.Utilities {
         }
     }
 
-    class MIllisecondTimeConverter : IValueConverter {
+    class MillisecondTimeConverter : IValueConverter {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
             if(value is double doubleValue) {
                 return $" {Math.Round(doubleValue, 2)} ms";
@@ -110,6 +118,32 @@ namespace IRExplorerUI.Utilities {
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
             return null;
+        }
+    }
+
+    public class ListToStringConverter : IValueConverter {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+            var sb = new StringBuilder();
+
+            if (value is List<string> list) {
+                foreach (var line in list) {
+                    sb.AppendLine(line);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+            var list = new List<string>();
+
+            if (value is string text) {
+                var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+                list.AddRange(lines);
+            }
+
+            return list;
+
         }
     }
 }

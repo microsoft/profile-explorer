@@ -21,12 +21,12 @@ namespace IRExplorerUI {
     public partial class BinaryOpenWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingBinary_;
-        private BinaryDissasemblerOptions options;
+        private BinaryDisassemblerOptions options;
 
         public BinaryOpenWindow(ISession session, bool inDiffMode) {
             InitializeComponent();
             Session = session;
-            Options = App.Settings.DissasemblerOptions;
+            Options = App.Settings.DisassemblerOptions;
             InDiffMode = inDiffMode;
 
             DataContext = this;
@@ -48,7 +48,7 @@ namespace IRExplorerUI {
         public bool InputControlsEnabled => !isLoadingBinary_;
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public BinaryDissasemblerOptions Options {
+        public BinaryDisassemblerOptions Options {
             get => options;
             set {
                 options = value;
@@ -110,15 +110,15 @@ namespace IRExplorerUI {
         }
 
         private async Task<string> OutputSingleFile(CancelableTask task, string binaryFilePath, string debugFilePath) {
-            var dissasembler = new BinaryDissasembler(Options);
-            var outputFile = await dissasembler.DissasembleAsync(binaryFilePath, debugFilePath, progressInfo => {
+            var dissasembler = new BinaryDisassembler(Options);
+            var outputFile = await dissasembler.DisassembleAsync(binaryFilePath, debugFilePath, progressInfo => {
                 Dispatcher.BeginInvoke((Action)(() => {
                     LoadProgressBar.Maximum = progressInfo.Total;
                     LoadProgressBar.Value = progressInfo.Current;
 
                     LoadProgressLabel.Text = progressInfo.Stage switch {
-                        BinaryDissasemblerStage.Dissasembling => "Dissasembling",
-                        BinaryDissasemblerStage.PostProcessing => "Post-processing",
+                        BinaryDisassemblerStage.Disassembling => "Disassembling",
+                        BinaryDisassemblerStage.PostProcessing => "Post-processing",
                     };
 
                     if (progressInfo.Total != 0) {

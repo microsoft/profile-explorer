@@ -331,7 +331,7 @@ namespace IRExplorerUI {
                 return true;
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to create syntax file directory: {ex}");
+                //Trace.TraceError($"Failed to create syntax file directory: {ex}");
                 return false;
             }
         }

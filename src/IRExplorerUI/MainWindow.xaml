@@ -197,7 +197,7 @@
         </Grid.LayoutTransform>-->
 
         <Grid.RowDefinitions>
-            <RowDefinition Height="18" />
+            <RowDefinition Height="20" />
             <RowDefinition Height="*" />
             <RowDefinition Height="24" />
         </Grid.RowDefinitions>
@@ -208,7 +208,7 @@
             BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="160" />
+                    <ColumnDefinition Width="220" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
@@ -225,30 +225,30 @@
                         <MenuItem
                             Command="local:AppCommand.OpenExecutable"
                             Header="Open Binary File"
-                            InputGestureText="Ctrl+Shift+O"/>
+                            InputGestureText="Ctrl+Shift+O" />
                         <MenuItem x:Name="RecentFilesMenu" Header="_Recent Files">
                             <Separator />
                             <MenuItem Click="RecentFilesMenu_Click" Header="Clear" />
                         </MenuItem>
                         <Separator />
 
-                        <MenuItem Command="local:AppCommand.OpenBaseDiffDocuments" Header="_Compare Base/Diff Files"
-                                  InputGestureText="F12"/>
+                        <MenuItem
+                            Command="local:AppCommand.OpenBaseDiffDocuments"
+                            Header="_Compare Base/Diff Files"
+                            InputGestureText="F12" />
                         <MenuItem
                             Command="local:AppCommand.OpenExecutableDiff"
                             Header="Compare Base/Diff Binary Files"
-                            InputGestureText="Shift+F12"/>
-                        <MenuItem Command="local:AppCommand.OpenDiffDocument" Header="Open _Diff File" 
-                                  InputGestureText="Ctrl+F12"/>
+                            InputGestureText="Shift+F12" />
+                        <MenuItem
+                            Command="local:AppCommand.OpenDiffDocument"
+                            Header="Open _Diff File"
+                            InputGestureText="Ctrl+F12" />
                         <MenuItem Command="local:AppCommand.CloseDiffDocument" Header="Close Diff File" />
                         <Separator />
-                        
-                        <MenuItem
-                            Command="local:AppCommand.OpenDebug"
-                            Header="_Open Debug File"/>
-                        <MenuItem
-                            Command="local:AppCommand.OpenDiffDebug"
-                            Header="_Open Diff Debug File"/>
+
+                        <MenuItem Command="local:AppCommand.OpenDebug" Header="_Open Debug File" />
+                        <MenuItem Command="local:AppCommand.OpenDiffDebug" Header="_Open Diff Debug File" />
 
                         <Separator />
 
@@ -277,9 +277,7 @@
                             Header="Close Session"
                             InputGestureText="Ctrl+F4" />
                         <Separator />
-                        <MenuItem
-                            Command="local:AppCommand.OpenNewDocument"
-                            Header="Launch New _Instance"/>
+                        <MenuItem Command="local:AppCommand.OpenNewDocument" Header="Launch New _Instance" />
                         <MenuItem Click="MenuItem_Exit" Header="E_xit" />
                     </MenuItem>
 
@@ -364,6 +362,14 @@
                             Header="Reset Panel Layout"
                             IsEnabled="False" />
                     </MenuItem>
+
+                    <MenuItem Header="Profiling">
+                        <MenuItem Click="MenuItem_OnClick" Header="Load Profile Data" />
+                        <MenuItem Header="Recent Profiles" IsEnabled="False"/>
+                        <Separator />
+                        <MenuItem Click="MenuItem_OnClick3" Header="Profile Call Graph" />
+                    </MenuItem>
+
                     <MenuItem Header="Tools">
                         <MenuItem
                             Header="Diff Mode"
@@ -391,10 +397,9 @@
                         </MenuItem>
                         <Separator />
 
-                        <MenuItem Click="MenuItem_OnClick" Header="Load Profile Data" />
-                        <MenuItem Click="MenuItem_OnClick3" Header="Profile Call Graph" />
+
                         <MenuItem Click="MenuItem_OnClick2" Header="Function report" />
-                        <Separator/>
+                        <Separator />
 
                         <MenuItem Click="MenuItem_Click_9" Header="Install Visual Studio Extension" />
                         <MenuItem
@@ -402,6 +407,9 @@
                             Header="Settings"
                             IsEnabled="False" />
                     </MenuItem>
+
+
+
                     <MenuItem Header="Help">
                         <MenuItem Click="MenuItem_Click_4" Header="Documentation" />
                         <MenuItem Click="MenuItem_Click_5" Header="About" />
@@ -414,7 +422,7 @@
                                 IsEnabled="False" />
                             <MenuItem Click="MenuItem_Click_2" Header="Create debug files" />
                             <MenuItem Click="MenuItem_Click" Header="Crash application" />
-                            <MenuItem Click="MenuItem_Click_8" Header="Force GC" />
+                            <MenuItem Click="MenuItem_Click_8" Header="Profile" />
                         </MenuItem>
                     </MenuItem>
                 </Menu>
@@ -1060,15 +1068,13 @@
                 Name="DocumentLoadProgressPanel"
                 Orientation="Horizontal"
                 Visibility="Collapsed">
-                <ProgressBar
-                    x:Name="DocumentLoadProgressBar"
-                    Width="100"/>
+                <ProgressBar x:Name="DocumentLoadProgressBar" Width="100" />
                 <TextBlock
-                    VerticalAlignment="Center"
                     x:Name="DocumentLoadLabel"
+                    Margin="4,0,0,0"
+                    VerticalAlignment="Center"
                     FontSize="11"
-                    Text="Loading"
-                    Margin="4,0,0,0"/>
+                    Text="Loading" />
             </StackPanel>
 
             <Button

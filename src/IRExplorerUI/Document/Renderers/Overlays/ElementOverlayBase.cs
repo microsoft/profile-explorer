@@ -158,7 +158,7 @@ namespace IRExplorerUI.Document {
                                                         ActiveTextBrush, TextWeight);
             double textX = elementRect.Left + elementRect.Width + Padding;
             double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
-            double width = elementRect.Width + text.Width + 2 * Padding;
+            double width = elementRect.Width + text.WidthIncludingTrailingWhitespace + 2 * Padding;
             labelBounds_ = Utils.SnapRectToPixels(elementRect.X, elementRect.Y, width, elementRect.Height);
 
             drawingContext.PushOpacity(opacity);
@@ -175,7 +175,14 @@ namespace IRExplorerUI.Document {
 
         protected double ComputePositionX(Rect rect, IElementOverlay previousOveraly) {
             if (AlignmentX == HorizontalAlignment.Left) {
-                return Utils.SnapToPixels(rect.Left - ActualWidth + MarginX);
+                double leftEdgeX = rect.Left;
+
+                if (previousOveraly != null) {
+                    // Align to the right of the previous overlay.
+                    leftEdgeX = Math.Max(rect.Left, previousOveraly.Bounds.Right);
+                }
+
+                return Utils.SnapToPixels(leftEdgeX + MarginX);
             }
             else if(AlignmentX == HorizontalAlignment.Right) {
                 double rightEdgeX = rect.Right;
@@ -194,7 +201,7 @@ namespace IRExplorerUI.Document {
 
         protected double ComputeHeight(Rect rect) {
             if(Height > 0) {
-                return ActualHeight;
+                return Math.Min(ActualHeight, rect.Height);
             }
 
             return rect.Height;

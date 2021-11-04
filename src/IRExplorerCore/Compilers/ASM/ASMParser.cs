@@ -51,6 +51,7 @@ namespace IRExplorerCore.ASM {
         private bool makeNewBlock_;
         private bool connectNewBlock_;
         private InstructionIR previousInstr_;
+        private int instrCount_;
         private Dictionary<long, int> addressToBlockNumberMap_;
         private Dictionary<long, Tuple<TextLocation, int>> potentialLabelMap_;
         private HashSet<BlockIR> comittedBlocks_;
@@ -157,6 +158,11 @@ namespace IRExplorerCore.ASM {
                 SetTextRange(block, startElement, current_);
             }
 
+            Debug.Assert(function.InstructionCount == instrCount_);
+            Debug.Assert(function.TupleCount == instrCount_);
+            
+            function.InstructionCount = instrCount_;
+            function.TupleCount = instrCount_;
             FixBlockReferences(function);
             AssignBlockNumbers(function);
             AddMetadata(function);
@@ -164,7 +170,7 @@ namespace IRExplorerCore.ASM {
         }
 
         private void AssignBlockNumbers(FunctionIR function) {
-            if(function.Blocks.Count == 0) {
+            if (function.Blocks.Count == 0) {
                 return;
             }
 
@@ -177,10 +183,9 @@ namespace IRExplorerCore.ASM {
                 return true;
             });
 
-            // Assign block index as they show up in the text.
-            for (int i = 0; i < function.Blocks.Count; i++) {
-                function.Blocks[i].IndexInFunction = i;
-            }
+            // Assign block index as they show up in the text,
+            // not RDFO or how the blocks where forward-referenced.
+            function.AssignBlockIndices(true);
 
             // The last block (after RET) is usually unreachable, remove it.
             if (function.EntryBlock != function.ExitBlock &&
@@ -190,7 +195,7 @@ namespace IRExplorerCore.ASM {
         }
 
         private void FixBlockReferences(FunctionIR function) {
-            // Add any remaining block referenced by jumps.
+            // Add any remaining blocks referenced by jumps.
             foreach (var pair in referencedBlocks_) {
                 var refBlock = pair.Key;
                 var refAddress = pair.Value;
@@ -201,6 +206,7 @@ namespace IRExplorerCore.ASM {
 
                 // Found a referenced label, but there is no block created for it.
                 // This happens when there is no jump/branch before the label.
+                // In practice this is fast, although in worst case it's #labels * #blocks complexity.
                 bool blockAdded = false;
 
                 if (potentialLabelMap_.TryGetValue(refAddress, out var location)) {
@@ -211,6 +217,7 @@ namespace IRExplorerCore.ASM {
 
                     // Check if there is an overlapping block and split it at the label,
                     // move the tuples following the label to the new block.
+                    // |otherBlock|1|2|..|label|3|4|..|  =>  |otherBlock|1|2|..| -> |label|1|2|..|
                     for (int i = 0; i < function.Blocks.Count; i++) {
                         var otherBlock = function.Blocks[i];
 
@@ -218,13 +225,12 @@ namespace IRExplorerCore.ASM {
                             continue;
                         }
 
-                        if (otherBlock.TextLocation.Offset <= location.Item1.Offset &&
+                        if (otherBlock.TextLocation <= location.Item1 &&
                             otherBlock.TextLocation.Offset + otherBlock.TextLength > location.Item1.Offset) {
                             var offsetDiff = location.Item1.Offset - otherBlock.TextLocation.Offset;
                             refBlock.TextLength = otherBlock.TextLength - offsetDiff;
-                            otherBlock.TextLength = offsetDiff - 1;
 
-                            // Move sucessor blocks from otherBlock to refBlock.
+                            // Move successor blocks from otherBlock to refBlock.
                             foreach(var succBlock in otherBlock.Successors) {
                                 refBlock.Successors.Add(succBlock);
                                 succBlock.Predecessors.Remove(otherBlock);
@@ -241,21 +247,32 @@ namespace IRExplorerCore.ASM {
                             for (; splitIndex < otherBlock.Tuples.Count; splitIndex++) {
                                 var tuple = otherBlock.Tuples[splitIndex];
 
-                                if (tuple.TextLocation.Offset >= location.Item1.Offset) {
+                                if (tuple.TextLocation >= location.Item1) {
                                     refBlock.Tuples.Add(tuple);
                                     tuple.Parent = refBlock;
+                                    tuple.IndexInBlock = copiedTuples;
                                     copiedTuples++;
                                 }
                             }
 
                             if (copiedTuples > 0) {
                                 otherBlock.Tuples.RemoveRange(otherBlock.Tuples.Count - copiedTuples, copiedTuples);
+
+                                if (otherBlock.Tuples.Count > 0) {
+                                    otherBlock.TextLength = otherBlock.Tuples[^1].TextLocation.Offset +
+                                                            otherBlock.Tuples[^1].TextLength -
+                                                            otherBlock.TextLocation.Offset;
+                                }
+                                else {
+                                    otherBlock.TextLength = offsetDiff - 1;
+                                }
+
                             }
 
-                            // Add block after the other one.
+                            // Insert block after the other one.
                             function.Blocks.Insert(i + 1, refBlock);
                             blockAdded = true;
-                            break;
+                            break; // Stop, there can't be more than one overlapping block.
                         }
                     }
 
@@ -330,6 +347,8 @@ namespace IRExplorerCore.ASM {
         private (InstructionIR, bool) ParseInstruction(BlockIR block) {
             bool isJump = false;
             var instr = new InstructionIR(NextElementId, InstructionKind.Other, block);
+            instrCount_++;
+            
             block.AddTuple(instr);
             previousInstr_ = instr;
 

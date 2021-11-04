@@ -16,18 +16,34 @@ namespace IRExplorerUI {
     public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingProfile_;
+        private ProfileDataProviderOptions options_;
 
         public ProfileLoadWindow(ISession session) {
             InitializeComponent();
             DataContext = this;
             Session = session;
             loadTask_ = new CancelableTaskInstance();
+
+            Options = App.Settings.ProfileOptions;
+            var loadedDoc = Session.SessionState.FindLoadedDocument(Session.MainDocumentSummary);
+
+            if (loadedDoc.BinaryFileExists) {
+                BinaryFilePath = loadedDoc.BinaryFilePath;
+
+                if (loadedDoc.DebugInfoFileExists) {
+                    var debugPath = Utils.TryGetDirectoryName(loadedDoc.DebugInfoFilePath);
+
+                    if (!options_.Symbols.HasSymbolPath(debugPath)) {
+                        Options.Symbols.SymbolSearchPaths.Insert(0, debugPath);
+                    }
+
+                }
+            }
         }
 
         public ISession Session { get; set; }
         public string ProfileFilePath { get; set; }
         public string BinaryFilePath { get; set; }
-        public string DebugFilePath { get; set; }
 
         public bool IsLoadingProfile {
             get => isLoadingProfile_;
@@ -41,6 +57,17 @@ namespace IRExplorerUI {
         }
 
         public bool InputControlsEnabled => !isLoadingProfile_;
+
+        public ProfileDataProviderOptions Options {
+            get {
+                return options_;
+            }
+            set {
+                options_ = value;
+                OnPropertyChange(nameof(Options));
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public void OnPropertyChange(string propertyname) {
@@ -54,18 +81,21 @@ namespace IRExplorerUI {
         private async Task OpenFiles() {
             ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
             BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
-            DebugFilePath = Utils.CleanupPath(DebugFilePath);
 
-            if (Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this) &&
-                Utils.ValidateFilePath(DebugFilePath, DebugAutocompleteBox, "debug", this)) {
-                App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, DebugFilePath);
+            if (Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this)
+                //Utils.ValidateFilePath(SymbolPath, SymbolAutocompleteBox, "debug", this)
+                ) {
+                //? TODO: Save the entire state offor the Recent menu - could serialize the Options 
+                //? and save it as a string
+                App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, "");
                 App.SaveApplicationSettings();
 
                 //? TODO: Disable buttons
                 var task = loadTask_.CreateTask();
                 IsLoadingProfile = true;
 
-                if (await Session.LoadProfileData(ProfileFilePath, BinaryFilePath, DebugFilePath, progressInfo => {
+
+                if (await Session.LoadProfileData(ProfileFilePath, BinaryFilePath, options_, progressInfo => {
                     Dispatcher.BeginInvoke((Action)(() => {
                         LoadProgressBar.Maximum = progressInfo.Total;
                         LoadProgressBar.Value = progressInfo.Current;
@@ -74,6 +104,7 @@ namespace IRExplorerUI {
                             ProfileLoadStage.TraceLoading => "Loading trace",
                             ProfileLoadStage.TraceProcessing => "Processing trace",
                             ProfileLoadStage.SymbolLoading => "Loading symbols",
+                            ProfileLoadStage.PerfCounterProcessing => "Processing perf. counters"
                         };
 
                         if (progressInfo.Total != 0) {
@@ -119,7 +150,7 @@ namespace IRExplorerUI {
             Utils.ShowOpenFileDialog(BinaryAutocompleteBox, "Binary Files|*.exe;*.dll;*.sys;|All Files|*.*");
 
         private void DebugBrowseButton_OnClick(object sender, RoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(DebugAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
+            Utils.ShowOpenFileDialog(SymbolAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
 
         private void RecentButton_Click(object sender, RoutedEventArgs e) {
             var menu = RecentButton.ContextMenu;
@@ -127,7 +158,7 @@ namespace IRExplorerUI {
 
             foreach (var pathPair in App.Settings.RecentProfileFiles) {
                 var item = new MenuItem();
-                item.Header = $"Trace: {pathPair.Item1}\nBinary: {pathPair.Item2}\nDebug: {pathPair.Item3}";
+                item.Header = $"Trace: {pathPair.Item1}\nBinary: {pathPair.Item2}";
                 item.Tag = pathPair;
                 item.Click += RecentMenuItem_Click;
                 menu.Items.Add(item);
@@ -154,7 +185,7 @@ namespace IRExplorerUI {
                 var pathPair = menuItem.Tag as Tuple<string, string, string>;
                 ProfileAutocompleteBox.Text = pathPair.Item1;
                 BinaryAutocompleteBox.Text = pathPair.Item2;
-                DebugAutocompleteBox.Text = pathPair.Item3;
+                SymbolAutocompleteBox.Text = pathPair.Item3;
                 await OpenFiles();
             }
         }

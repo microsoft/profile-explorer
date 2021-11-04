@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -48,13 +47,15 @@ namespace IRExplorerUI {
         public Color? BorderColor { get; set; }
         public double BorderThickness { get; set; }
         public string Label { get; set; }
+        public string ToolTip { get; set; }
         public LabelPlacementKind LabelPlacement { get; set; }
         public Color? LabelFontColor { get; set; }
 
-        public static GraphNodeTag MakeLabel(string label, Color? fontColor = null,
+        public static GraphNodeTag MakeLabel(string label, string tooltip = null, Color? fontColor = null,
                                              LabelPlacementKind position = LabelPlacementKind.Bottom) {
             return new GraphNodeTag() {
                 Label = label,
+                ToolTip = tooltip,
                 LabelFontColor = fontColor,
                 LabelPlacement = position
             };

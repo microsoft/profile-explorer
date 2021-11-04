@@ -9,24 +9,33 @@ namespace IRExplorerCore.IR {
         private Dictionary<ulong, IRElement> elementMap_;
         private int instructionCount_;
         private int tupleCount_;
+        private string name_;
+
 
         public FunctionIR(string name = null) : base(IRElementId.NewFunctionId()) {
             ReturnType = TypeIR.GetUnknown();
             Parameters = new List<OperandIR>();
             Blocks = new List<BlockIR>();
-            Name = name;
+            name_ = name;
         }
 
         public FunctionIR(string name, TypeIR returnType) : this() {
-            Name = name;
+            name_ = name;
             ReturnType = returnType;
         }
 
-        public new string Name { get; set; }
+        public override bool HasName => !string.IsNullOrEmpty(Name);
+        public override ReadOnlyMemory<char> NameValue => name_.AsMemory();
+
+        public override string Name {
+            get => name_;
+            set => name_ = value;
+        }
 
         public TypeIR ReturnType { get; set; }
         public List<OperandIR> Parameters { get; }
         public List<BlockIR> Blocks { get; }
+        public List<BlockIR> SortedBlocks { get; private set; }
         public BlockIR EntryBlock => Blocks.Count > 0 ? Blocks[0] : null;
         public BlockIR ExitBlock => Blocks.Count > 0 ? Blocks[^1] : null;
 
@@ -61,6 +70,34 @@ namespace IRExplorerCore.IR {
                     }
                 }
             }
+        }
+
+        public void AssignBlockIndices(bool setBlockNumbers = false) {
+            // Assign block index as they show up in the text,
+            // not RDFO or how the blocks where forward-referenced.
+            var blockList = new List<BlockIR>(Blocks.Count);
+            bool needsSorting = false;
+
+            for(int i = 0; i < Blocks.Count; i++) {
+                var block = Blocks[i];
+                blockList.Add(block);
+                needsSorting = i > 1 && !needsSorting &&
+                                blockList[^1].TextLocation >= block.TextLocation;
+            }
+
+            if (needsSorting) {
+                blockList.Sort((a, b) => a.TextLocation.CompareTo(b.TextLocation));
+            }
+
+            for (int i = 0; i < blockList.Count; i++) {
+                blockList[i].IndexInFunction = i;
+
+                if (setBlockNumbers) {
+                    blockList[i].Number = i;
+                }
+            }
+
+            SortedBlocks = blockList;
         }
 
         public IEnumerable<IRElement> AllElements {
@@ -145,6 +182,9 @@ namespace IRExplorerCore.IR {
 
                 return instructionCount_;
             }
+            set {
+                instructionCount_ = value;
+            }
         }
 
         public int TupleCount {
@@ -157,6 +197,9 @@ namespace IRExplorerCore.IR {
                 }
 
                 return tupleCount_;
+            }
+            set {
+                tupleCount_ = value;
             }
         }
 

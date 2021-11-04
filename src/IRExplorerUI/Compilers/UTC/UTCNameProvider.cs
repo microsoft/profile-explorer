@@ -49,8 +49,13 @@ namespace IRExplorerUI.UTC {
         public string GetSectionName(IRTextSection section, bool includeNumber) {
             string sectionName = section.Name;
 
-            if (string.IsNullOrEmpty(sectionName)) {
-                return "<Untitled>";
+            if (string.IsNullOrEmpty(sectionName)) { 
+                var funcName = section.ParentFunction.Name;
+                if (!string.IsNullOrEmpty(funcName)) {
+                    return funcName.Length <= 24 ? funcName : $"{funcName.Substring(0, 24)}...";
+                }
+
+                return "<UNTITLED>";
             }
 
             foreach (var nameFilter in sectionNameFilters_) {

@@ -1,36 +1,75 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
+using System.Diagnostics;
+using System.Drawing;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using Microsoft.Windows.EventTracing;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile {
+    [ProtoContract(SkipConstructor = true)]
     public class PerformanceCounterInfo {
+        [ProtoMember(1)]
         public int Id { get; set; }
+        [ProtoMember(2)]
         public int Number { get; set; }
+        [ProtoMember(3)]
         public string Name { get; set; }
+        [ProtoMember(4)]
         public string Description { get; set; }
+        [ProtoMember(5)]
         public int Frequency { get; set; }
     }
 
-    public class PerformanceCounterValue {
+    //? TODO: Can't be changed to struct because updating Value
+    //? needs a new instance of the struct when used in List<T>.
+    //? Make a List<T> alternative that allows getting the inner array,
+    //? then ref locals will work.
+    // https://devblogs.microsoft.com/premier-developer/performance-traps-of-ref-locals-and-ref-returns-in-c/
+    [ProtoContract(SkipConstructor = true)]
+    public class PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
+        [ProtoMember(1)]
         public int CounterId { get; set; }
+        [ProtoMember(2)]
         public long Value { get; set; }
 
         public PerformanceCounterValue(int counterId, long value = 0) {
             CounterId = counterId;
             Value = value;
         }
+
+        public bool Equals(PerformanceCounterValue other) {
+            return CounterId == other.CounterId && Value == other.Value;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is PerformanceCounterValue other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(CounterId, Value);
+        }
     }
 
+    [ProtoContract(SkipConstructor = true)]
     public class PerformanceCounterSet {
+        //? Use smth like https://github.com/faustodavid/ListPool/blob/main/src/ListPool/ValueListPool.cs
+        //? and make PerformanceCounterSet as struct.
+        [ProtoMember(1)]
         public List<PerformanceCounterValue> Counters { get; set; }
 
         public PerformanceCounterSet() {
-            Counters = new List<PerformanceCounterValue>();
+            InitializeReferenceMembers();
+        }
+
+        [ProtoAfterDeserialization]
+        private void InitializeReferenceMembers() {
+            Counters ??= new List<PerformanceCounterValue>();
         }
 
         public void AddCounterSample(int perfCounterId, long value) {
@@ -58,16 +97,22 @@ namespace IRExplorerUI.Profile {
             counter.Value += value;
         }
 
-        public long FindCounterSamples(int perfCounterId) {
+        public long FindCounterValue(int perfCounterId) {
             var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
             return index != -1 ? Counters[index].Value : 0;
         }
 
+        public long FindCounterValue(PerformanceCounterInfo counter) {
+            return FindCounterValue(counter.Id);
+        }
+
+        //? TODO: Use Utils.Accumulate, and some small dict
         public void Add(PerformanceCounterSet other) {
             foreach(var counter in other.Counters) {
                 var index = Counters.FindIndex((item) => item.CounterId == counter.CounterId);
 
                 if(index != -1) {
+                    //? TODO: Once List is replaced use a ref local to change only the Value field.
                     Counters[index].Value += counter.Value;
                 }
                 else {
@@ -75,13 +120,126 @@ namespace IRExplorerUI.Profile {
                 }
             }
         }
+
+        public long this[int perfCounterId] => FindCounterValue(perfCounterId);
     }
 
-    public class ProfileSample {
-        public long RVA;
-        public TimeSpan Weight;
-        public StackFrame Stack;
-        public int Thread;
+    [ProtoContract(SkipConstructor = true)]
+    public struct ProfileSample : IEquatable<ProfileSample> {
+        [ProtoMember(1)]
+        public long RVA { get; set; }
+        [ProtoMember(2)]
+        public long Time { get; set; }
+        [ProtoMember(3)]
+        public TimeSpan Weight { get; set; }
+        [ProtoMember(7)]
+        public int StackFrameId { get; set; }
+        [ProtoMember(4)]
+        public int ProcessId { get; set; } //? Values after this part could be shared
+        [ProtoMember(5)]
+        public int ThreadId { get; set; }
+        [ProtoMember(6)]
+        public int ImageId { get; set; }
+        
+        [ProtoMember(8)]
+        public short ProcessorCore { get; set; }
+        [ProtoMember(9)]
+        public bool IsUserCode { get; set; }
+
+        public bool Equals(ProfileSample other) {
+            return RVA == other.RVA && Time == other.Time && ProcessId == other.ProcessId;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is ProfileSample other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(RVA, Time, ProcessId);
+        }
+    }
+
+    [ProtoContract(SkipConstructor = true)]
+    public class ProfileImage {
+        [ProtoMember(1)]
+        public int Id { get; set; }
+        [ProtoMember(2)]
+        public string Name { get; set; }
+        [ProtoMember(3)]
+        public string Path { get; set; }
+        [ProtoMember(4)]
+        public long AddressStart { get; set; }
+        [ProtoMember(5)]
+        public long AddressEnd { get; set; }
+    }
+
+    [ProtoContract(SkipConstructor = true)]
+    public class ProfileProcess {
+        [ProtoMember(1)]
+        public int Id { get; set; }
+        [ProtoMember(2)]
+        public string Name { get; set; }
+        [ProtoMember(3)]
+        public List<ProfileImage> Images { get; set; }
+
+        public ProfileProcess() {
+            Images = new List<ProfileImage>();
+        }
+    }
+
+    [ProtoContract(SkipConstructor = true)]
+    public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {
+        [ProtoMember(1)]
+        public long Time;
+        //? everything after is shared by many, use flyweight
+        [ProtoMember(2)]
+        public long IP;
+        [ProtoMember(3)]
+        public int ProcessId;
+        [ProtoMember(4)]
+        public int ThreadId;
+        [ProtoMember(5)]
+        public short ProfilerSource;
+
+        public bool Equals(PerformanceCounterEvent other) {
+            return Time == other.Time && IP == other.IP && 
+                ProcessId == other.ProcessId &&
+                ThreadId == other.ThreadId && 
+                ProfilerSource == other.ProfilerSource;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is PerformanceCounterEvent other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(Time, IP);
+        }
+
+        /// enum eventType (pmc, context switch, etc)
+    }
+
+    [ProtoContract(SkipConstructor = true)]
+    public class ProtoProfile {
+        [ProtoMember(1)]
+        public List<ProfileProcess> Processes { get; set; }
+        [ProtoMember(2)]
+        public List<ProfileImage> Images { get; set; }
+        [ProtoMember(3)]
+        public List<ProfileSample> Samples { get; set; }
+        [ProtoMember(4)]
+        public ChunkedList<PerformanceCounterEvent> PerfCounters { get; set; }
+
+        public ProtoProfile() {
+            Processes = new List<ProfileProcess>();
+            Images = new List<ProfileImage>();
+            Samples = new List<ProfileSample>();
+            PerfCounters = new ChunkedList<PerformanceCounterEvent>();
+        }
+
+        public ProfileProcess FindProcess(int id) {
+            return Processes.Find(p => p.Id == id);
+        }
     }
 
     [ProtoContract(SkipConstructor = true)]
@@ -99,10 +257,10 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(6)]
         public Dictionary<long, TimeSpan> BlockWeight { get; set; } // 
         [ProtoMember(7)]
-        public Dictionary<int, TimeSpan> ChildrenWeights { get; set; } // Function ID mapping
+        public Dictionary<(Guid, int), TimeSpan> ChildrenWeights { get; set; } // {Summary,Function ID} mapping
         [ProtoMember(8)]
-        public Dictionary<int, TimeSpan> CallerWeights { get; set; } // Function ID mapping
-
+        public Dictionary<(Guid, int), TimeSpan> CallerWeights { get; set; } // {Summary,Function ID} mapping
+        [ProtoMember(9)]
         public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
 
         public bool HasPerformanceCounters => InstructionCounters.Count > 0;
@@ -112,7 +270,6 @@ namespace IRExplorerUI.Profile {
             public Dictionary<BlockIR, TimeSpan> BlockSampledElementsMap { get; set; }
             public List<Tuple<BlockIR, TimeSpan>> BlockSampledElements { get; set; }
             public List<Tuple<IRElement, PerformanceCounterSet>> CounterElements { get; set; }
-            public Dictionary<BlockIR, PerformanceCounterSet> BlockCounterElementsMap { get; set; }
             public List<Tuple<BlockIR, PerformanceCounterSet>> BlockCounterElements { get; set; }
 
             public PerformanceCounterSet FunctionCounters { get; set; }
@@ -121,8 +278,12 @@ namespace IRExplorerUI.Profile {
                 SampledElements = new List<Tuple<IRElement, TimeSpan>>(capacity);
                 BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
                 CounterElements = new List<Tuple<IRElement, PerformanceCounterSet>>(capacity);
-                BlockCounterElementsMap = new Dictionary<BlockIR, PerformanceCounterSet>(capacity);
                 FunctionCounters = new PerformanceCounterSet();
+            }
+
+            public double ScaleCounterValue(long value, PerformanceCounterInfo counter) {
+                var total = FunctionCounters.FindCounterValue(counter);
+                return total > 0 ? (double)value / (double)total : 0;
             }
         }
 
@@ -138,11 +299,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public void AddCounterSample(long instrOffset, int perfCounterId, long value) {
-            if (!InstructionCounters.TryGetValue(instrOffset, out var counterSet)) {
-                counterSet = new PerformanceCounterSet();
-                InstructionCounters[instrOffset] = counterSet;
-            }
-
+            var counterSet = InstructionCounters.GetOrAddValue(instrOffset);
             counterSet.AddCounterSample(perfCounterId, value);
         }
 
@@ -151,8 +308,8 @@ namespace IRExplorerUI.Profile {
             SourceLineWeight ??= new Dictionary<int, TimeSpan>();
             InstructionWeight ??= new Dictionary<long, TimeSpan>();
             BlockWeight ??= new Dictionary<long, TimeSpan>();
-            ChildrenWeights ??= new Dictionary<int, TimeSpan>();
-            CallerWeights ??= new Dictionary<int, TimeSpan>();
+            ChildrenWeights ??= new Dictionary<(Guid, int), TimeSpan>();
+            CallerWeights ??= new Dictionary<(Guid, int), TimeSpan>();
             InstructionCounters ??= new Dictionary<long, PerformanceCounterSet>();
         }
 
@@ -175,20 +332,24 @@ namespace IRExplorerUI.Profile {
         }
 
         public void AddChildSample(IRTextFunction childFunc, TimeSpan weight) {
-            if (ChildrenWeights.TryGetValue(childFunc.Number, out var currentWeight)) {
-                ChildrenWeights[childFunc.Number] = currentWeight + weight;
+            var key = (childFunc.ParentSummary.Id, childFunc.Number);
+
+            if (ChildrenWeights.TryGetValue(key, out var currentWeight)) {
+                ChildrenWeights[key] = currentWeight + weight;
             }
             else {
-                ChildrenWeights[childFunc.Number] = weight;
+                ChildrenWeights[key] = weight;
             }
         }
 
         public void AddCallerSample(IRTextFunction callerFunc, TimeSpan weight) {
-            if (CallerWeights.TryGetValue(callerFunc.Number, out var currentWeight)) {
-                CallerWeights[callerFunc.Number] = currentWeight + weight;
+            var key = (callerFunc.ParentSummary.Id, callerFunc.Number);
+
+            if (CallerWeights.TryGetValue(key, out var currentWeight)) {
+                CallerWeights[key] = currentWeight + weight;
             }
             else {
-                CallerWeights[callerFunc.Number] = weight;
+                CallerWeights[key] = weight;
             }
         }
 
@@ -210,17 +371,26 @@ namespace IRExplorerUI.Profile {
 
             var result = new ProcessingResult(metadataTag.OffsetToElementMap.Count);
 
+            var hist = new Dictionary<IRElement, long>();
+
             foreach (var pair in InstructionWeight) {
                 if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
+                    if (hist.TryGetValue(element, out var prev)) {
+                        TryFindElementForOffset(metadataTag, pair.Key, ir, out var element2);
+                        ;
+                    }
+                    else {
+                        hist[element] = pair.Key;
+                    }
+
                     result.SampledElements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
-                    result.BlockSampledElementsMap.AccummulateValue(element.ParentBlock, pair.Value);
+                    result.BlockSampledElementsMap.AccumulateValue(element.ParentBlock, pair.Value);
                 }
             }
 
             foreach (var pair in InstructionCounters) {
                 if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
                     result.CounterElements.Add(new Tuple<IRElement, PerformanceCounterSet>(element, pair.Value));
-                    //? TODO per block
                 }
 
                 result.FunctionCounters.Add(pair.Value);
@@ -266,14 +436,21 @@ namespace IRExplorerUI.Profile {
             public TimeSpan ProfileWeight { get; set; }
             
             [ProtoMember(2)]
-            public TimeSpan TotalExclusiveWeight { get; set; }
+            public TimeSpan TotalWeight { get; set; }
 
             [ProtoMember(3)]
-            public Dictionary<int, FunctionProfileData> FunctionProfiles { get; set; }
+            public Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData> FunctionProfiles { get; set; }
 
-            public ProfileDataState(TimeSpan profileWeight) {
+            [ProtoMember(4)]
+            public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
+            
+            [ProtoMember(5)]
+            public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+
+            public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
                 ProfileWeight = profileWeight;
-                FunctionProfiles = new Dictionary<int, FunctionProfileData>();
+                TotalWeight = totalWeight;
+                FunctionProfiles = new Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData>();
             }
         }
 
@@ -287,15 +464,16 @@ namespace IRExplorerUI.Profile {
         public List<PerformanceCounterInfo> SortedPerformanceCounters {
             get {
                 var list = PerformanceCounters.ToValueList();
-                list.Sort((a, b) => a.Id - b.Id);
+                list.Sort((a, b) => b.Id.CompareTo(a.Id));
                 return list;
             }
         }
 
         //public List<PerformanceCounterInfo> SortedPerf
 
-        public ProfileData(TimeSpan profileWeight) : this() {
+        public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {
             ProfileWeight = profileWeight;
+            TotalWeight = totalWeight;
         }
 
         public ProfileData() {
@@ -367,21 +545,39 @@ namespace IRExplorerUI.Profile {
         }
 
         public byte[] Serialize() {
-            var profileState = new ProfileDataState(ProfileWeight);
+            var profileState = new ProfileDataState(ProfileWeight, TotalWeight);
+            profileState.PerformanceCounters = PerformanceCounters;
+            profileState.ModuleWeights = ModuleWeights;
 
             foreach (var pair in FunctionProfiles) {
-                profileState.FunctionProfiles[pair.Key.Number] = pair.Value;
+                var func = pair.Key;
+                profileState.FunctionProfiles[(func.ParentSummary.Id, func.Number)] = pair.Value;
             }
 
             return StateSerializer.Serialize(profileState);
         }
 
-        public static ProfileData Deserialize(byte[] data, IRTextSummary summary) {
+        public static ProfileData Deserialize(byte[] data, List<IRTextSummary> summaries) {
             var state = StateSerializer.Deserialize<ProfileDataState>(data);
-            var profileData = new ProfileData(state.ProfileWeight);
+            var profileData = new ProfileData(state.ProfileWeight, state.TotalWeight);
+            profileData.PerformanceCounters = state.PerformanceCounters;
+            profileData.ModuleWeights = state.ModuleWeights;
+
+            var summaryMap = new Dictionary<Guid, IRTextSummary>();
+
+            foreach (var summary in summaries) {
+                summaryMap[summary.Id] = summary;
+            }
 
             foreach(var pair in state.FunctionProfiles) {
-                var function = summary.GetFunctionWithId(pair.Key);
+                var summary = summaryMap[pair.Key.summaryId];
+                var function = summary.GetFunctionWithId(pair.Key.funcNumber);
+
+                if (function == null) {
+                    Trace.TraceWarning($"No func for {pair.Value.SourceFilePath}");
+                    continue;
+                }
+
                 profileData.FunctionProfiles[function] = pair.Value;
             }
 
@@ -394,4 +590,123 @@ namespace IRExplorerUI.Profile {
             return list;
         }
     }
+
+
+    [ProtoContract(SkipConstructor = true)]
+    public class ChunkedList<T> : IList<T> {
+        private const int ChunkSize = 8192;
+
+        [ProtoMember(1)]
+        private readonly List<T[]> chunks_ = new List<T[]>();
+        [ProtoMember(2)]
+        private int count_ = 0;
+
+        public int Count => count_;
+
+        public bool IsReadOnly => false;
+
+        public void Add(T item) {
+            int chunk = count_ >> 14;
+            int indexInChunk = count_ & (ChunkSize - 1);
+
+            if (indexInChunk == 0) {
+                chunks_.Add(new T[ChunkSize]);
+            }
+
+            //if (indexInChunk < 0 || indexInChunk >= 8192) {
+            //    return;
+            //}
+
+            //if (chunk < 0 || chunk >= chunks_.Count) {
+            //    return;
+            //}
+
+            chunks_[chunk][indexInChunk] = item;
+            count_++;
+        }
+
+        public int IndexOf(T item) {
+            return 0;
+        }
+
+        public void Insert(int index, T item) {
+
+        }
+
+        public void RemoveAt(int index) {
+
+        }
+
+        public void Clear() {
+            count_ = 0;
+            chunks_.Clear();
+        }
+
+        public bool Contains(T item) {
+            throw new NotImplementedException();
+        }
+
+        public void CopyTo(T[] array, int arrayIndex) {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(T item) {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerator<T> GetEnumerator() {
+            return new ChunkEnumerator<T>(this);
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            return new ChunkEnumerator<T>(this);
+        }
+
+        public class ChunkEnumerator<T> : IEnumerator<T> {
+            private ChunkedList<T> instance_;
+            private int index_;
+
+            public ChunkEnumerator(ChunkedList<T> instance) {
+                instance_ = instance;
+                index_ = -1;
+            }
+
+            public bool MoveNext() {
+                if (index_ < instance_.Count && instance_.Count > 0) {
+                    index_++;
+                    return true;
+                }
+
+                return false;
+            }
+
+            public void Reset() {
+                index_ = -1;
+            }
+
+            public T Current => instance_[index_];
+
+            object IEnumerator.Current => Current;
+
+            public void Dispose() {
+
+            }
+        }
+
+        public T this[int index] {
+            get {
+                int chunk = index >> 14;
+                int indexInChunk = index & (ChunkSize - 1);
+                return chunks_[chunk][indexInChunk];
+            }
+            set {
+                int chunk = index >> 14;
+                int indexInChunk = index & (ChunkSize - 1);
+                chunks_[chunk][indexInChunk] = value;
+            }
+        }
+
+
+    }
+
 }

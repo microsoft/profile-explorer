@@ -23,6 +23,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;
 using IRExplorerUI.Query;
@@ -38,6 +39,9 @@ namespace IRExplorerUI {
         public DiffModeInfo DiffModeInfo => sessionState_.SectionDiffState;
         public IRTextSummary MainDocumentSummary => sessionState_.MainDocument?.Summary;
         public IRTextSummary DiffDocumentSummary => sessionState_.DiffDocument?.Summary;
+
+        public IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId) =>
+            sessionState_.FindFunctionWithId(funcNumber, summaryId);
 
         public IRTextSection CurrentDocumentSection {
             get {
@@ -86,14 +90,35 @@ namespace IRExplorerUI {
         }
 
         private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
-            var dissasembler = new BinaryDissasembler(App.Settings.DissasemblerOptions);
-            var outputFile = await dissasembler.DissasembleAsync(filePath, null);
+
+            var dissasembler = new BinaryDisassembler(App.Settings.DisassemblerOptions);
+            var outputFile = await dissasembler.DisassembleAsync(filePath, null);
 
             if (outputFile != null) {
-                var loadedDoc = await OpenIRDocument(outputFile);
+                // Identify compiler target and switch IR mode.
+                var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
+
+                if (binaryInfo != null) {
+                    switch (binaryInfo.Architecture) {
+                        case System.Reflection.PortableExecutable.Machine.I386:
+                        case System.Reflection.PortableExecutable.Machine.Amd64: {
+                            SwitchCompilerTarget("ASM", IRMode.x86_64);
+                            break;
+                        }
+                        case System.Reflection.PortableExecutable.Machine.Arm:
+                        case System.Reflection.PortableExecutable.Machine.Arm64: {
+                            SwitchCompilerTarget("ASM", IRMode.ARM64);
+                            break;
+                        }
+                    }
+                }
+
+                var loadedDoc = await OpenIRDocument(outputFile, filePath);
 
                 if (loadedDoc != null) {
                     loadedDoc.BinaryFilePath = filePath;
+
+                    //? TODO: Use PDB exe info PEBinaryInfoProvider.GetSymbolFileInfo(filePath);
                     loadedDoc.DebugInfoFilePath = Utils.FindPDBFile(filePath);
                     UpdateWindowTitle();
                     return loadedDoc;
@@ -168,15 +193,14 @@ namespace IRExplorerUI {
                     var panelInfo = FindActivePanel(panelState.Item2.PanelKind);
                     sessionState_.SavePanelState(panelState.Item2.StateObject, panelInfo.Panel, section);
                 }
+            }
 
-
-                // Restore profile info.
-                if (state.ProfileState != null) {
-                    //? TODO: Support diff profile data providers
-                    //? Profile data should be per-document, not global for section
-                    var loader = idToDocumentMap[docState.Id].Loader;
-                    sessionState_.ProfileData = ProfileData.Deserialize(state.ProfileState, summary);
-                }
+            // Restore profile info.
+            if (state.ProfileState != null) {
+                //? TODO: Support diff profile data providers
+                //var loader = idToDocumentMap[docState.Id].Loader;
+                var summaries = sessionState_.Documents.ConvertAll<IRTextSummary>(d => d.Summary);
+                sessionState_.ProfileData = ProfileData.Deserialize(state.ProfileState, summaries);
             }
 
             foreach (var panelState in state.GlobalPanelStates) {
@@ -189,7 +213,6 @@ namespace IRExplorerUI {
 
             // Reload sections left open.
             var idToDocumentHostMap = new Dictionary<Guid, IRDocumentHost>();
-            LoadedDocument firstLoadedDoc = null;
 
             foreach (var openSection in state.OpenSections) {
                 var loadedDoc = idToDocumentMap[openSection.DocumentId];
@@ -208,7 +231,6 @@ namespace IRExplorerUI {
                 var args = new OpenSectionEventArgs(section, openKind);
                 var docHost = await OpenDocumentSection(args);
                 idToDocumentHostMap[openSection.DocumentId] = docHost;
-                firstLoadedDoc = loadedDoc;
             }
 
             // Enter diff mode if it was active.
@@ -225,7 +247,7 @@ namespace IRExplorerUI {
             }
 
             StartAutoSaveTimer();
-            return firstLoadedDoc;
+            return sessionState_.MainDocument;
         }
 
         public async Task<bool> SaveSessionDocument(string filePath) {
@@ -315,14 +337,14 @@ namespace IRExplorerUI {
             docHostInfo.HostParent.Children.Remove(docHostInfo.Host);
         }
 
-        private async Task<LoadedDocument> OpenIRDocument(string filePath) {
+        private async Task<LoadedDocument> OpenIRDocument(string filePath, string modulePath = null) {
             try {
                 await EndSession();
                 UpdateUIBeforeLoadDocument(filePath);
-                var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
+                var result = await Task.Run(() => LoadDocument(filePath, modulePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
                 if (result != null) {
-                    await SetupOpenedIRDocument(SessionKind.Default, filePath, result);
+                    await SetupOpenedIRDocument(SessionKind.Default, modulePath, result);
                     return result;
                 }
             }
@@ -403,11 +425,10 @@ namespace IRExplorerUI {
 
         private async Task<bool> OpenDiffIRDocument(string filePath) {
             try {
-                var result = await Task.Run(() => LoadDocument(filePath, Guid.NewGuid(),
+                var result = await Task.Run(() => LoadDocument(filePath, filePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
                 if (result != null) {
-                    //await SetupOpenedDiffIRDocument(filePath, result);
-                    await SetupAdditionalIRDocument(filePath, result);
+                    await SetupOpenedDiffIRDocument(filePath, result);
                     return true;
                 }
             }
@@ -433,26 +454,29 @@ namespace IRExplorerUI {
             SectionPanel.AddOtherSummary(result.Summary);
         }
 
-        private LoadedDocument LoadDocument(string path, Guid id, ProgressInfoHandler progressHandler) {
+        public void AddOtherSummary(IRTextSummary summary) {
+            SectionPanel.AddOtherSummary(summary);
+        }
+
+        private LoadedDocument LoadDocument(string filePath, string moduleName, Guid id, ProgressInfoHandler progressHandler) {
             try {
-                var result = new LoadedDocument(path, id);
-                var moduleName = Utils.TryGetFileNameWithoutExtension(path);
-                result.Loader = new DocumentSectionLoader(path, moduleName, compilerInfo_.IR);
+                var result = new LoadedDocument(filePath, moduleName, id);
+                result.Loader = new DocumentSectionLoader(filePath, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to load document {path}: {ex}");
+                Trace.TraceError($"Failed to load document {filePath}: {ex}");
                 Telemetry.TrackException(ex);
                 return null;
             }
         }
 
-        private LoadedDocument LoadDocument(byte[] data, string path, Guid id, ProgressInfoHandler progressHandler) {
+        private LoadedDocument LoadDocument(byte[] data, string filePath, string moduleName, Guid id, 
+                                            ProgressInfoHandler progressHandler) {
             try {
-                var result = new LoadedDocument(path, id);
-                var moduleName = Utils.TryGetFileNameWithoutExtension(path);
-                result.Loader = new DocumentSectionLoader(data, moduleName, compilerInfo_.IR);
+                var result = new LoadedDocument(filePath, moduleName, id);
+                result.Loader = new DocumentSectionLoader(data, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
             }
@@ -470,7 +494,8 @@ namespace IRExplorerUI {
 
                 foreach (var docState in state.Documents) {
                     var result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath,
-                                                                   docState.Id, UpdateIRDocumentLoadProgress));
+                                                                   docState.ModuleName, docState.Id,
+                                                                   UpdateIRDocumentLoadProgress));
                     if (result == null) {
                         UpdateUIAfterLoadDocument();
                         return null;
@@ -488,7 +513,11 @@ namespace IRExplorerUI {
                         }
                     }
                     else {
-                        sessionState_.MainDocument = result;
+                        // Outside of diff mode there can still be multiple documents
+                        // loaded with profile sessions, for ex.
+                        if (docState.Id == state.MainDocumentId) {
+                            sessionState_.MainDocument = result;
+                        }
                     }
                 }
 
@@ -802,8 +831,8 @@ namespace IRExplorerUI {
             document.TextView.BookmarkSelected += TextView_BookmarkSelected;
             document.TextView.BookmarkListCleared += TextView_BookmarkListCleared;
             document.TextView.CaretChanged += TextView_CaretChanged;
-            document.ScrollChanged += Document_ScrollChanged;
-            document.PassOutputScrollChanged += Document_PassOutputScrollChanged;
+            document.VerticalScrollChanged += DocumentVerticalScrollChanged;
+            document.PassOutputVerticalScrollChanged += DocumentPassOutputVerticalScrollChanged;
             document.PassOutputVisibilityChanged += Document_PassOutputVisibilityChanged;
             document.PassOutputShowBeforeChanged += Document_PassOutputShowBeforeChanged;
         }
@@ -818,15 +847,14 @@ namespace IRExplorerUI {
             document.TextView.BookmarkSelected -= TextView_BookmarkSelected;
             document.TextView.BookmarkListCleared -= TextView_BookmarkListCleared;
             document.TextView.CaretChanged -= TextView_CaretChanged;
-            document.ScrollChanged -= Document_ScrollChanged;
-            document.PassOutputScrollChanged -= Document_PassOutputScrollChanged;
+            document.VerticalScrollChanged -= DocumentVerticalScrollChanged;
+            document.PassOutputVerticalScrollChanged -= DocumentPassOutputVerticalScrollChanged;
             document.PassOutputVisibilityChanged -= Document_PassOutputVisibilityChanged;
             document.PassOutputShowBeforeChanged -= Document_PassOutputShowBeforeChanged;
         }
 
-        private void Document_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            if (!IsInDiffMode || 
-                Math.Abs(e.VerticalChange) < double.Epsilon) {
+        private void DocumentVerticalScrollChanged(object sender, (double offset, double offsetChangeAmount) value) {
+            if (!IsInDiffMode || Math.Abs(value.offsetChangeAmount) < double.Epsilon) {
                 return;
             }
 
@@ -834,7 +862,7 @@ namespace IRExplorerUI {
             var otherDocument = sessionState_.SectionDiffState.GetOtherDocument(document);
 
             if(otherDocument != null) {
-                otherDocument.TextView.ScrollToVerticalOffset(e.VerticalOffset);
+                otherDocument.TextView.ScrollToVerticalOffset(value.offset);
             }
         }
 
@@ -873,8 +901,8 @@ namespace IRExplorerUI {
             }
         }
 
-        private void Document_PassOutputScrollChanged(object sender, ScrollChangedEventArgs e) {
-            if (!IsInDiffMode || Math.Abs(e.VerticalChange) < double.Epsilon) {
+        private void DocumentPassOutputVerticalScrollChanged(object sender, (double offset, double offsetChangeAmount) value) {
+            if (!IsInDiffMode || Math.Abs(value.offsetChangeAmount) < double.Epsilon) {
                 return;
             }
 
@@ -882,7 +910,7 @@ namespace IRExplorerUI {
             var otherDocument = sessionState_.SectionDiffState.GetOtherDocument(document);
 
             if (otherDocument != null) {
-                otherDocument.PassOutput.TextView.ScrollToVerticalOffset(e.VerticalOffset);
+                otherDocument.PassOutput.TextView.ScrollToVerticalOffset(value.offset);
             }
         }
 
@@ -1032,7 +1060,6 @@ namespace IRExplorerUI {
             Title = $"IR Explorer - Loading {documentTitle}";
             Utils.DisableControl(DockManager, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
-            DocumentLoadProgressBar.Value = 0;
             documentLoadStartTime_ = DateTime.UtcNow;
             lastDocumentLoadTime_ = DateTime.UtcNow;
             loadingDocuments_ = true;
@@ -1157,6 +1184,8 @@ namespace IRExplorerUI {
         }
 
         private async Task AutoSaveSession() {
+            return;
+
             if (sessionState_ == null || !sessionState_.IsAutoSaveEnabled) {
                 return;
             }

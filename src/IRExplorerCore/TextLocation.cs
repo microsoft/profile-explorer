@@ -1,10 +1,11 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Runtime.CompilerServices;
 
 namespace IRExplorerCore {
-    public struct TextLocation {
+    public struct TextLocation : IComparable<TextLocation> {
         public int Offset {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get;
@@ -32,9 +33,9 @@ namespace IRExplorerCore {
             Line = line;
             Column = column;
         }
-
+        
         public override string ToString() {
-            return $"offset: {Offset}, line {Line}";
+            return $"offset: {Offset}, line: {Line}";
         }
 
         public override bool Equals(object obj) {
@@ -45,11 +46,11 @@ namespace IRExplorerCore {
         }
 
         public override int GetHashCode() {
-            int hashCode = -1429159632;
-            hashCode = hashCode * -1521134295 + Offset.GetHashCode();
-            hashCode = hashCode * -1521134295 + Line.GetHashCode();
-            hashCode = hashCode * -1521134295 + Column.GetHashCode();
-            return hashCode;
+            return HashCode.Combine(Offset, Line);
+        }
+
+        public int CompareTo(TextLocation other) {
+            return Offset.CompareTo(other.Offset);
         }
 
         public static bool operator ==(TextLocation a, TextLocation b) {
@@ -58,6 +59,22 @@ namespace IRExplorerCore {
 
         public static bool operator !=(TextLocation a, TextLocation b) {
             return !a.Equals(b);
+        }
+
+        public static bool operator <(TextLocation left, TextLocation right) {
+            return left.CompareTo(right) < 0;
+        }
+
+        public static bool operator >(TextLocation left, TextLocation right) {
+            return left.CompareTo(right) > 0;
+        }
+
+        public static bool operator <=(TextLocation left, TextLocation right) {
+            return left.CompareTo(right) <= 0;
+        }
+
+        public static bool operator >=(TextLocation left, TextLocation right) {
+            return left.CompareTo(right) >= 0;
         }
     }
 }

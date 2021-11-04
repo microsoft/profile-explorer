@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<OutputType>WinExe</OutputType>
-		<TargetFramework>net6.0-windows7.0</TargetFramework>
+		<TargetFramework>net6.0-windows</TargetFramework>
 		<UseWPF>true</UseWPF>
 		<ApplicationIcon>main.ico</ApplicationIcon>
 		<AssemblyVersion>0.8.2.0</AssemblyVersion>
@@ -109,7 +109,10 @@
 		</PackageReference>
 		<PackageReference Include="Microsoft.Windows.EventTracing.Processing.All" Version="1.7.4" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+		<PackageReference Include="OxyPlot.SkiaSharp.Wpf" Version="2.1.0-Preview1" />
+		<PackageReference Include="OxyPlot.Wpf" Version="2.0.0" />
 		<PackageReference Include="protobuf-net" Version="3.0.101" />
+		<PackageReference Include="RangeTree" Version="3.0.1" />
 		<PackageReference Include="System.IO" Version="4.3.0" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.34" />
 	</ItemGroup>
@@ -247,6 +250,10 @@
 		<Page Update="Windows\ProfileLoadWindow.xaml">
 		  <XamlRuntime>$(DefaultXamlRuntime)</XamlRuntime>
 		</Page>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Profile\ETW\" />
 	</ItemGroup>
 
 

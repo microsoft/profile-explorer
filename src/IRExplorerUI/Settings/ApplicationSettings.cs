@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using IRExplorerCore;
+using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
 using ProtoBuf;
 
@@ -71,7 +72,10 @@ namespace IRExplorerUI {
         public IRMode DefaultIRMode;
 
         [ProtoMember(17)]
-        public BinaryDissasemblerOptions DissasemblerOptions; 
+        public BinaryDisassemblerOptions DisassemblerOptions;
+
+        [ProtoMember(18)]
+        public ProfileDataProviderOptions ProfileOptions;
 
         public ApplicationSettings() {
             Reset();
@@ -103,7 +107,8 @@ namespace IRExplorerUI {
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
-            DissasemblerOptions ??= new BinaryDissasemblerOptions();
+            DisassemblerOptions ??= new BinaryDisassemblerOptions();
+            ProfileOptions ??= new ProfileDataProviderOptions();
 
             //? REMOVE
             /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {

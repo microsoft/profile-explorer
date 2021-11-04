@@ -21,7 +21,7 @@ namespace IRExplorerCore.Analysis {
         SSA = 1 << 3
     }
 
-    public class Reference {
+    public struct Reference : IEquatable<Reference> {
         public Reference(IRElement element, ReferenceKind kind) {
             Element = element;
             Kind = kind;
@@ -29,6 +29,18 @@ namespace IRExplorerCore.Analysis {
 
         public IRElement Element { get; set; }
         public ReferenceKind Kind { get; set; }
+
+        public bool Equals(Reference other) {
+            return Equals(Element, other.Element) && Kind == other.Kind;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is Reference other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(Element, (int)Kind);
+        }
     }
 
     public interface IReachableReferenceFilter {

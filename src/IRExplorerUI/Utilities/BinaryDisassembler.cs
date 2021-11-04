@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
@@ -14,7 +15,7 @@ using ProtoBuf;
 
 namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
-    public class BinaryDissasemblerOptions : SettingsBase {
+    public class BinaryDisassemblerOptions : SettingsBase {
         private const string DEFAULT_DISASM_NAME = "dumpbin.exe";
         private const string DEFAULT_DISASM_ARGS = "/disasm /out:\"$DST\" \"$SRC\"";
         private const string DEFAULT_POSTPROC_TOOL_NAME = "";
@@ -33,7 +34,7 @@ namespace IRExplorerUI {
         [ProtoMember(6)]
         public bool OptionsExpanded { get; set; }
 
-        public BinaryDissasemblerOptions() {
+        public BinaryDisassemblerOptions() {
             Reset();
         }
 
@@ -72,39 +73,39 @@ namespace IRExplorerUI {
 
         public override SettingsBase Clone() {
             var serialized = StateSerializer.Serialize(this);
-            return StateSerializer.Deserialize<BinaryDissasemblerOptions>(serialized);
+            return StateSerializer.Deserialize<BinaryDisassemblerOptions>(serialized);
         }
     }
 
-    public enum BinaryDissasemblerStage {
-        Dissasembling,
+    public enum BinaryDisassemblerStage {
+        Disassembling,
         PostProcessing
     }
 
-    public class BinaryDissasemblerProgress {
-        public BinaryDissasemblerProgress(BinaryDissasemblerStage stage) {
+    public class BinaryDisassemblerProgress {
+        public BinaryDisassemblerProgress(BinaryDisassemblerStage stage) {
             Stage = stage;
         }
 
-        public BinaryDissasemblerStage Stage { get; set; }
+        public BinaryDisassemblerStage Stage { get; set; }
         public int Total { get; set; }
         public int Current { get; set; }
     }
 
-    public delegate void BinaryDissasemblerProgressHandler(BinaryDissasemblerProgress info);
+    public delegate void BinaryDisassemblerProgressHandler(BinaryDisassemblerProgress info);
 
-    public class BinaryDissasembler {
+    public class BinaryDisassembler {
         private const string DEST_PLACEHOLDER = "$DST";
         private const string SOURCE_PLACEHOLDER = "$SRC";
         private const string DEBUG_PLACEHOLDER = "$DBG";
-        private BinaryDissasemblerOptions options_;
+        private BinaryDisassemblerOptions options_;
 
-        public BinaryDissasembler(BinaryDissasemblerOptions options) {
+        public BinaryDisassembler(BinaryDisassemblerOptions options) {
             options_ = options;
         }
 
-        public string Dissasemble(string exePath, string debugPath,
-                                  BinaryDissasemblerProgressHandler progressCallback,
+        public string Disassemble(string exePath, string debugPath,
+                                  BinaryDisassemblerProgressHandler progressCallback,
                                   CancelableTask cancelableTask) {
             try {
                 var outputFilePath = Path.GetTempFileName();
@@ -114,39 +115,46 @@ namespace IRExplorerUI {
                     finalFilePath = Path.GetTempFileName();
                 }
 
-                if(Dissasemble(exePath, debugPath, outputFilePath, finalFilePath, 
+                if(Disassemble(exePath, debugPath, outputFilePath, finalFilePath, 
                                progressCallback, cancelableTask)) {
                     return finalFilePath;
                 }
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to run dissasembler for {exePath}: {ex.Message}");
+                Trace.TraceError($"Failed to run disassembler for {exePath}: {ex.Message}");
             }
 
             return null;
         }
 
-        public Task<string> DissasembleAsync(string exePath, string debugPath,
-                          BinaryDissasemblerProgressHandler progressCallback = null,
+        public Task<string> DisassembleAsync(string exePath, string debugPath,
+                          BinaryDisassemblerProgressHandler progressCallback = null,
                           CancelableTask cancelableTask = null) {
-            return Task.Run(() => Dissasemble(exePath, debugPath, progressCallback, cancelableTask));
+            return Task.Run(() => Disassemble(exePath, debugPath, progressCallback, cancelableTask));
         }
 
-        public bool Dissasemble(string exePath, string debugPath, string dissasemblyPath, 
-                                string postprocessingPath, BinaryDissasemblerProgressHandler progressCallback,
+        public bool Disassemble(string exePath, string debugPath, string dissasemblyPath, 
+                                string postprocessingPath, BinaryDisassemblerProgressHandler progressCallback,
                                 CancelableTask cancelableTask) {
             try {
                 var disasmArgs = options_.DissasemblerArguments.Replace(DEST_PLACEHOLDER, dissasemblyPath)
                                                                .Replace(SOURCE_PLACEHOLDER, exePath)
                                                                .Replace(DEBUG_PLACEHOLDER, debugPath);
-                progressCallback?.Invoke(new BinaryDissasemblerProgress(BinaryDissasemblerStage.Dissasembling));
+                progressCallback?.Invoke(new BinaryDisassemblerProgress(BinaryDisassemblerStage.Disassembling));
 
-                if (!Utils.ExecuteTool(options_.DissasemblerPath, disasmArgs, cancelableTask)) {
+                // Force the symbol path in the disasm context so that it picks the PDB file
+                // in case it's in another directory (downloaded from a symbol server for ex).
+                var envVariables = new Dictionary<string, string>() {
+                    { "_NT_SYMBOL_PATH", Utils.TryGetDirectoryName(debugPath) }
+                };
+
+                if (!Utils.ExecuteTool(options_.DissasemblerPath, disasmArgs, cancelableTask, envVariables)) {
+                    Trace.TraceError($"Disassembler task {ObjectTracker.Track(cancelableTask)}: Failed to execute disassembler: ${options_.DissasemblerPath}");
                     return false;
                 }
 
                 if (!File.Exists(dissasemblyPath)) {
-                    Trace.TraceError($"Dissasembler task {ObjectTracker.Track(cancelableTask)}: Output file not found: ${dissasemblyPath}");
+                    Trace.TraceError($"Disassembler task {ObjectTracker.Track(cancelableTask)}: Output file not found: ${dissasemblyPath}");
                     return false;
                 }
 
@@ -158,14 +166,15 @@ namespace IRExplorerUI {
                 var args = options_.PostProcessorArguments.Replace(DEST_PLACEHOLDER, postprocessingPath)
                                                           .Replace(SOURCE_PLACEHOLDER, dissasemblyPath)
                                                           .Replace(DEBUG_PLACEHOLDER, debugPath);
-                progressCallback?.Invoke(new BinaryDissasemblerProgress(BinaryDissasemblerStage.PostProcessing));
+                progressCallback?.Invoke(new BinaryDisassemblerProgress(BinaryDisassemblerStage.PostProcessing));
 
                 if (!Utils.ExecuteTool(options_.PostProcessorPath, args, cancelableTask)) {
+                    Trace.TraceError($"Disassembler task {ObjectTracker.Track(cancelableTask)}: Failed to execute post-processing tool: ${options_.DissasemblerPath}");
                     return false;
                 }
 
                 if (!File.Exists(postprocessingPath)) {
-                    Trace.TraceError($"Dissasembler task {ObjectTracker.Track(cancelableTask)}: Postprocessing output file not found: ${postprocessingPath}");
+                    Trace.TraceError($"Disassembler task {ObjectTracker.Track(cancelableTask)}: Postprocessing output file not found: ${postprocessingPath}");
                     return false;
                 }
 

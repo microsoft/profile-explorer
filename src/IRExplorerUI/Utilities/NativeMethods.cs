@@ -91,5 +91,31 @@ namespace IRExplorerUI {
             [Out] StringBuilder UnDecoratedName,
             [In][MarshalAs(UnmanagedType.U4)] int UndecoratedLength,
             [In][MarshalAs(UnmanagedType.U4)] UnDecorateFlags Flags);
+
+        [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
+        public static extern bool SymFindFileInPath(IntPtr hProcess,
+            [MarshalAs(UnmanagedType.LPWStr)] string SearchPath,
+            [MarshalAs(UnmanagedType.LPWStr)] string FileName,
+            IntPtr id,
+            Int32 two,
+            Int32 three,
+            Int32 flags,
+            [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder filePath,
+            IntPtr callback,
+            IntPtr context);
+
+        [DllImport("dbghelp.dll")]
+        public static extern bool SymCleanup(IntPtr hProcess);
+
+        [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
+        public static extern bool SymInitialize(
+            IntPtr hProcess,
+            [MarshalAs(UnmanagedType.LPWStr)] string UserSearchPath,
+            bool fInvadeProcess);
+
+        [DllImport("dbghelp.dll", CharSet = CharSet.Unicode)]
+        public static extern uint SymSetOptions(uint options);
+
+        public const uint SYMOPT_DEBUG = 0x80000000;
     }
 }

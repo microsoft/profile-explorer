@@ -47,7 +47,7 @@ namespace IRExplorerCore.IR {
         }
 
         private void PrintBlock(BlockIR block) {
-            builder_.Append($"block {block.Number}:");
+            builder_.Append($"block {{#{block.IndexInFunction}, B{block.Number}}}:");
 
             builder_.Append(" P");
             block.Predecessors.ForEach((p) => builder_.Append($" {p.Number}"));
@@ -88,6 +88,9 @@ namespace IRExplorerCore.IR {
                     break;
                 }
             }
+
+            builder_.Append($"  | #{tuple.IndexInBlock}, B{tuple.ParentBlock.Number}");
+            builder_.Append($"  | {tuple.TextLocation}, len: {tuple.TextLength}");
         }
 
         private void PrintInstruction(InstructionIR instr) {

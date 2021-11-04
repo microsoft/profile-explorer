@@ -29,7 +29,7 @@ namespace IRExplorerUI.Document {
                       string label = "", string tooltip = "",
                       HorizontalAlignment alignmentX = HorizontalAlignment.Right,
                       VerticalAlignment alignmentY = VerticalAlignment.Center,
-                      double marginX = 4, double marginY = 4, double padding = 1) {
+                      double marginX = 4, double marginY = 4, double padding = 2) {
             return new IconElementOverlay(icon, width, height, 
                                           label, tooltip,
                                           alignmentX, alignmentY,
@@ -54,8 +54,7 @@ namespace IRExplorerUI.Document {
             double x = ComputePositionX(elementRect, previousOverlay);
             double y = ComputePositionY(elementRect, previousOverlay);
             double opacity = ActiveOpacity;
-            Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, 
-                                           Math.Max(ActualHeight, elementRect.Height));
+            Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, ComputeHeight(elementRect));
             if (ShowLabel) {
                 if (Icon == null) {
                     Bounds = Utils.SnapRectToPixels(Bounds.X + Bounds.Width, Bounds.Y, 0, Bounds.Height);

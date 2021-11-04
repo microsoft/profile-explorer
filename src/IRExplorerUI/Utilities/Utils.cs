@@ -2,8 +2,11 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -696,26 +699,43 @@ namespace IRExplorerUI {
         public static string TryGetFileName(string path) {
             try {
                 if (string.IsNullOrEmpty(path)) {
-                    return null;
+                    return "";
                 }
 
                 return Path.GetFileName(path);
             }
             catch (Exception ex) {
-                return null;
+                return "";
             }
         }
 
         public static string TryGetFileNameWithoutExtension(string path) {
             try {
                 if (string.IsNullOrEmpty(path)) {
-                    return null;
+                    return "";
                 }
 
                 return Path.GetFileNameWithoutExtension(path);
             }
             catch (Exception ex) {
-                return null;
+                return "";
+            }
+        }
+
+        public static string TryGetDirectoryName(string path) {
+            try {
+                if (string.IsNullOrEmpty(path)) {
+                    return "";
+                }
+
+                if (Directory.Exists(path)) {
+                    return path;
+                }
+
+                return Path.GetDirectoryName(path);
+            }
+            catch (Exception ex) {
+                return "";
             }
         }
 
@@ -818,11 +838,13 @@ namespace IRExplorerUI {
             return path;
         }
 
-        public static bool ExecuteTool(string path, string args, CancelableTask cancelableTask = null) {
-            return ExecuteOutputTool(path, args, cancelableTask) != null;
+        public static bool ExecuteTool(string path, string args, CancelableTask cancelableTask = null,
+                                       Dictionary<string, string> envVariables = null) {
+            return ExecuteToolWithOutput(path, args, cancelableTask, envVariables) != null;
         }
 
-        public static string ExecuteOutputTool(string path, string args, CancelableTask cancelableTask = null) {
+        public static string ExecuteToolWithOutput(string path, string args, CancelableTask cancelableTask = null,
+                                                   Dictionary<string, string> envVariables = null) {
             if (!File.Exists(path)) {
                 return null;
             }
@@ -835,6 +857,12 @@ namespace IRExplorerUI {
                 RedirectStandardError = false,
                 RedirectStandardOutput = true
             };
+
+            if (envVariables != null) {
+                foreach (var pair in envVariables) {
+                    procInfo.EnvironmentVariables.Add(pair.Key, pair.Value);
+                }
+            }
 
             try {
                 using var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
@@ -881,7 +909,7 @@ namespace IRExplorerUI {
             vswherePath = Environment.ExpandEnvironmentVariables(vswherePath);
             
             try {
-                var vsPath = ExecuteOutputTool(vswherePath, vswhereArgs);
+                var vsPath = ExecuteToolWithOutput(vswherePath, vswhereArgs);
 
                 if (string.IsNullOrEmpty(vsPath)) {
                     Trace.TraceError("Failed to run vswhere");
@@ -927,6 +955,10 @@ namespace IRExplorerUI {
         }
 
         public static bool FileHasExtension(string filePath, string extension) {
+            if (string.IsNullOrEmpty(filePath)) {
+                return false;
+            }
+
             try {
                 extension = extension.ToLowerInvariant();
 
@@ -940,6 +972,36 @@ namespace IRExplorerUI {
                 Trace.TraceError($"Failed FileHasExtension for {filePath}: {ex}");
                 return false;
             }
+        }
+
+        public static string GetFileExtension(string filePath) {
+            if (string.IsNullOrEmpty(filePath)) {
+                return "";
+            }
+
+            try {
+                return Path.GetExtension(filePath);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed GetFileExtension for {filePath}: {ex}");
+                return "";
+            }
+        }
+
+        public static Size MeasureString(string text, string fontName, double fontSize, 
+                                         FontWeight? fontWeight = null) {
+            var formattedText = new FormattedText(text, CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight,
+                new Typeface(new FontFamily(fontName), FontStyles.Normal,
+                             fontWeight ?? FontWeights.Normal, FontStretches.Normal),
+                fontSize, Brushes.Black, new NumberSubstitution(), 1);
+            return new Size(formattedText.WidthIncludingTrailingWhitespace, formattedText.Height);
+        }
+
+        public static Size MeasureString(int letterCount, string fontName, double fontSize,
+            FontWeight? fontWeight = null) {
+            var dummyString = new string('X', letterCount);
+            return MeasureString(dummyString, fontName, fontSize, fontWeight);
         }
     }
 }
