@@ -91,7 +91,6 @@ namespace IRExplorerUI {
             catch (Exception ex) {
                 await EndSession();
                 Trace.TraceError($"Failed to load base/diff documents: {ex}");
-                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -105,7 +104,7 @@ namespace IRExplorerUI {
             await Task.WhenAll(baseTask, diffTask);
 
             if (baseTask.Result != null && diffTask.Result != null) {
-                await SetupOpenedIRDocument(SessionKind.Default, baseFilePath, baseTask.Result);
+                await SetupOpenedIRDocument(SessionKind.Default, baseTask.Result);
                 await SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
                 return new Tuple<LoadedDocument, LoadedDocument>(baseTask.Result, diffTask.Result);
             }

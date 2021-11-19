@@ -492,8 +492,8 @@ namespace IRExplorerUI {
                     debugSummary_ = debugSections_.LoadDocument(null);
                     result.Loader = debugSections_;
                     result.Summary = debugSummary_;
-
-                    await SetupOpenedIRDocument(SessionKind.DebugSession, "Debug session", result);
+                    result.ModuleName = "Debug session";
+                    await SetupOpenedIRDocument(SessionKind.DebugSession, result);
 
                     debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
                     debugProcessId_ = e.ProcessId;

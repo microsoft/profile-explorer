@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -39,6 +40,7 @@ namespace IRExplorerUI {
         public DiffModeInfo DiffModeInfo => sessionState_.SectionDiffState;
         public IRTextSummary MainDocumentSummary => sessionState_.MainDocument?.Summary;
         public IRTextSummary DiffDocumentSummary => sessionState_.DiffDocument?.Summary;
+        public bool IsSessionStarted => sessionState_ != null;
 
         public IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId) =>
             sessionState_.FindFunctionWithId(funcNumber, summaryId);
@@ -90,6 +92,22 @@ namespace IRExplorerUI {
         }
 
         private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
+            var options = App.Settings.DisassemblerOptions;
+            
+            if (!File.Exists(options.DissasemblerPath)) {
+                var disasmPath = options.DetectDissasembler();
+
+                if (string.IsNullOrEmpty(disasmPath)) {
+                    using var centerForm = new DialogCenteringHelper(this);
+
+                    MessageBox.Show("Failed to find system dissasembler", "IR Explorer",
+                                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return null;
+                }
+
+                options.DissasemblerPath = disasmPath;
+                App.SaveApplicationSettings();
+            }
 
             var dissasembler = new BinaryDisassembler(App.Settings.DisassemblerOptions);
             var outputFile = await dissasembler.DisassembleAsync(filePath, null);
@@ -165,7 +183,6 @@ namespace IRExplorerUI {
             catch (Exception ex) {
                 await EndSession();
                 Trace.TraceError($"Failed to load session, exception: {ex}");
-                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -263,7 +280,6 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to save session, exception: {ex}");
-                Telemetry.TrackException(ex);
             }
 
             return false;
@@ -303,7 +319,9 @@ namespace IRExplorerUI {
         }
 
         private async Task EndSession(bool showStartPage = false) {
-            if (sessionState_ == null) {
+            using var sessionUnloading = await BeginSessionStateChange();
+
+            if (!IsSessionStarted) {
                 return; // Session not opened.
             }
 
@@ -340,22 +358,33 @@ namespace IRExplorerUI {
         private async Task<LoadedDocument> OpenIRDocument(string filePath, string modulePath = null) {
             try {
                 await EndSession();
+                using var sessionLoading = await BeginSessionStateChange();
                 UpdateUIBeforeLoadDocument(filePath);
                 var result = await Task.Run(() => LoadDocument(filePath, modulePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
                 if (result != null) {
-                    await SetupOpenedIRDocument(SessionKind.Default, modulePath, result);
+                    await SetupOpenedIRDocument(SessionKind.Default, result);
                     return result;
                 }
             }
             catch (Exception ex) {
                 await EndSession();
                 Trace.TraceError($"Failed to load document: {ex}");
-                Telemetry.TrackException(ex);
             }
 
+            // Failed to start a session.
             UpdateUIAfterLoadDocument();
             return null;
+        }
+
+        private async Task<ScopedResetEvent> BeginSessionStateChange() {
+            // Wait for any running state changes.
+            await SessionLoadCompleted.AsTask();
+
+            loadingDocuments_ = true;
+            documentLoadStartTime_ = DateTime.UtcNow;
+            lastDocumentLoadTime_ = DateTime.UtcNow;
+            return new ScopedResetEvent(SessionLoadCompleted);
         }
 
         private DateTime lastDocumentLoadUpdate_;
@@ -412,8 +441,8 @@ namespace IRExplorerUI {
             }), DispatcherPriority.Render);
         }
 
-        private async Task SetupOpenedIRDocument(SessionKind sessionKind, string filePath, LoadedDocument result) {
-            StartSession(filePath, sessionKind);
+        private async Task SetupOpenedIRDocument(SessionKind sessionKind, LoadedDocument result) {
+            StartSession(result.ModuleName, sessionKind);
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.MainDocument = result;
 
@@ -434,7 +463,6 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load diff document {filePath}: {ex}");
-                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -467,7 +495,6 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load document {filePath}: {ex}");
-                Telemetry.TrackException(ex);
                 return null;
             }
         }
@@ -482,7 +509,6 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load in-memory document: {ex}");
-                Telemetry.TrackException(ex);
                 return null;
             }
         }
@@ -526,7 +552,6 @@ namespace IRExplorerUI {
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to load in-memory document: {ex}");
-                Telemetry.TrackException(ex);
             }
 
             UpdateUIAfterLoadDocument();
@@ -1060,9 +1085,6 @@ namespace IRExplorerUI {
             Title = $"IR Explorer - Loading {documentTitle}";
             Utils.DisableControl(DockManager, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
-            documentLoadStartTime_ = DateTime.UtcNow;
-            lastDocumentLoadTime_ = DateTime.UtcNow;
-            loadingDocuments_ = true;
         }
 
         private void UpdateUIAfterLoadDocument() {
@@ -1088,6 +1110,8 @@ namespace IRExplorerUI {
             return result?.DocumentHost;
         }
 
+        private ManualResetEvent SessionLoadCompleted = new ManualResetEvent(true);
+
         private async void DocumentState_DocumentChangedEvent(object sender, EventArgs e) {
             var loadedDoc = (LoadedDocument)sender;
             var eventTime = DateTime.UtcNow;
@@ -1095,9 +1119,16 @@ namespace IRExplorerUI {
             if (appIsActivated_) {
                 // The event doesn't run on the main thread, redirect.
                 await Dispatcher.BeginInvoke(new Action(async () => {
+                    await SessionLoadCompleted.AsTask();
+
                     if (eventTime < lastDocumentLoadTime_ ||
                         eventTime < lastDocumentReloadQueryTime_) {
                         return; // Event happened before the last document reload, ignore.
+                    }
+
+                    // Session may get unloaded before this fires, ignore.
+                    if (!IsSessionStarted) {
+                        return;
                     }
 
                     if (ShowDocumentReloadQuery(loadedDoc.FilePath)) {

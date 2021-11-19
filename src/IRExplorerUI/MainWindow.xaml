@@ -132,6 +132,18 @@
             Command="local:AppCommand.ShowDocumentSearch"
             PreviewCanExecute="CanExecuteAlways"
             PreviewExecuted="ShowDocumentSearchExecuted" />
+
+        <CommandBinding
+            CanExecute="CanExecuteDocumentCommand"
+            Command="local:AppCommand.LoadProfile"
+            Executed="LoadProfileExecuted"
+            PreviewCanExecute="CanExecuteDocumentCommand"/>
+
+        <CommandBinding
+            CanExecute="CanExecuteProfileCommand"
+            Command="local:AppCommand.ShowProfileCallGraph"
+            Executed="ShowProfileCallGraphExecuted"
+            PreviewCanExecute="CanExecuteProfileCommand"/>
     </Window.CommandBindings>
 
     <Window.InputBindings>
@@ -364,10 +376,10 @@
                     </MenuItem>
 
                     <MenuItem Header="Profiling">
-                        <MenuItem Click="MenuItem_OnClick" Header="Load Profile Data" />
+                        <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile" />
                         <MenuItem Header="Recent Profiles" IsEnabled="False"/>
                         <Separator />
-                        <MenuItem Click="MenuItem_OnClick3" Header="Profile Call Graph" />
+                        <MenuItem Command="local:AppCommand.ShowProfileCallGraph" Header="Profile Call Graph" />
                     </MenuItem>
 
                     <MenuItem Header="Tools">
@@ -395,7 +407,6 @@
                                 Click="ARM64ASMMenuItem_Click"
                                 Header="ASM ARM64" />
                         </MenuItem>
-                        <Separator />
 
 
                         <MenuItem Click="MenuItem_OnClick2" Header="Function report" />
