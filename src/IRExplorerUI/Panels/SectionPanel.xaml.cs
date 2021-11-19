@@ -253,7 +253,8 @@ namespace IRExplorerUI {
 
         public int Index { get; set; }
         public IRTextFunction Function { get; set; }
-        public string ModuleName => Function.ParentSummary.ModuleName;
+        //? TODO: Maybe Summary.ModuleName should remove ext 
+        public string ModuleName => Utils.TryGetFileNameWithoutExtension(Function.ParentSummary.ModuleName);
         public object OptionalData { get; set; }
         public object OptionalData2 { get; set; }
         public string OptionalDataText { get; set; }
@@ -1502,7 +1503,7 @@ namespace IRExplorerUI {
             var function = functionEx.Function;
 
             if (activeModuleFilter_ != null) {
-                if (functionEx.ModuleName != activeModuleFilter_.Name) {
+                if(functionEx.ModuleName != activeModuleFilter_.Name) {
                     return false;
                 }
             }

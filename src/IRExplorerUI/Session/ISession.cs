@@ -28,6 +28,7 @@ namespace IRExplorerUI {
         List<IRDocument> OpenDocuments { get; }
         ICompilerInfoProvider CompilerInfo { get; }
         SessionStateManager SessionState { get; }
+        bool IsSessionStarted { get; }
         bool IsInDiffMode { get; }
         bool IsInTwoDocumentsDiffMode { get; }
         DiffModeInfo DiffModeInfo { get; }

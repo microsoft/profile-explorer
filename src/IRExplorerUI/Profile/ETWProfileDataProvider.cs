@@ -196,6 +196,14 @@ namespace IRExplorerUI.Profile {
                     return id;
                 }
 
+                // Do another search using a substring, this is needed
+                // for SPEC benchmarks because the runner gives a diff. name to the binary.
+                foreach (var pair in processNameMap_) {
+                    if (pair.Key.Contains(imageName)) {
+                        return pair.Value;
+                    }
+                }
+
                 return -1;
             }
 
@@ -548,11 +556,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         index++;
                         var sampleWeight = sample.Weight.TimeSpan;
                         var moduleName = sample.Process.ImageName;
-                        
-                        // Consider only the profiled executable.
-                        if (!moduleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
-                            continue;
-                        }
 
                         // Count time for each sample.
                         profileData_.TotalWeight += sampleWeight;
@@ -582,7 +585,14 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             if (isTopFrame &&
                                 frame.Image?.FileName != null &&
                                 stackModules.Add(frame.Image?.FileName)) {
-                                profileData_.AddModuleSample(frame.Image?.FileName, sampleWeight);
+
+                                //? TODO: Hack for SPEC runner using a diff binary name
+                                if (frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                                    profileData_.AddModuleSample(imageName, sampleWeight);
+                                }
+                                else {
+                                    profileData_.AddModuleSample(frame.Image.FileName, sampleWeight);
+                                }
                             }
 
                             if (frame.Image == null) {

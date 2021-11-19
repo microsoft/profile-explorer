@@ -91,6 +91,10 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "SwapDiffDocuments", typeof(Window));
         public static readonly RoutedUICommand ShowDocumentSearch =
             new RoutedUICommand("Untitled", "ShowDocumentSearch", typeof(Window));
+        public static readonly RoutedUICommand LoadProfile =
+            new RoutedUICommand("Untitled", "LoadProfile", typeof(Window));
+        public static readonly RoutedUICommand ShowProfileCallGraph =
+            new RoutedUICommand("Untitled", "ShowProfileCallGraph", typeof(Window));
     }
 
     public class DummyWindowAutomationPeer : FrameworkElementAutomationPeer {
@@ -368,7 +372,6 @@ namespace IRExplorerUI {
             await EndSession();
 
             var time = DateTime.UtcNow - App.AppStartTime;
-            Telemetry.TrackMetric("SessionTime", time.TotalSeconds)?.Wait();
         }
 
         private void MainWindow_ContentRendered(object sender, EventArgs e) {
@@ -383,8 +386,6 @@ namespace IRExplorerUI {
 
             DelayedAction.StartNew(TimeSpan.FromSeconds(10), () => {
                 Dispatcher.BeginInvoke(new Action(() => {
-                    Telemetry.TrackEvent("Startup");
-                    Telemetry.TrackMetric("StartupTime", time.TotalMilliseconds);
                     CheckForUpdate();
                 }));
             });
@@ -1267,7 +1268,68 @@ namespace IRExplorerUI {
 
         public ProfileData ProfileData => sessionState_.ProfileData;
 
-        private async void MenuItem_OnClick(object sender, RoutedEventArgs e) {
+
+        private bool AugmentCallerNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
+            List<IRTextFunction> targetFuncts) {
+            return ProfileData.HasFunctionProfile(node.Function);
+        }
+
+        private bool AugmentCallNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
+                                             List<IRTextFunction> targetFuncts) {
+            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
+
+            if(funcProfile == null) {
+                return false;
+            }
+
+            foreach(var pair in funcProfile.ChildrenWeights) {
+                var childFunc = FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
+                if (childFunc == null) {
+                    continue;
+                }
+
+                if(node.FindCallee(childFunc) == null) {
+                    var childNode = callGraph.GetOrCreateNode(childFunc);
+                    node.AddCallee(childNode);
+                }
+            }
+
+            return false;
+        }
+
+        private bool FilterCalleeNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
+                                              List<IRTextFunction> targetFuncts) {
+            if(node.Function == null) {
+                return false;
+            }
+
+            return targetFuncts.Contains(parentNode.Function);
+        }
+
+        private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
+            SectionPanel.ShowModuleReport();
+        }
+
+        public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
+                                                ProfileDataProviderOptions options,
+                                                ProfileLoadProgressHandler progressCallback,
+                                                CancelableTask cancelableTask) {
+            using var profileData = new ETWProfileDataProvider(MainDocumentSummary, this);
+
+            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, options,
+                                                                         progressCallback, cancelableTask);
+
+            // Update symbols path if not set already.
+            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
+
+            if (!loadedDoc.DebugInfoFileExists) {
+                loadedDoc.DebugInfoFilePath = await PDBDebugInfoProvider.LocateDebugFile(binaryFilePath, options.Symbols);
+            }
+
+            return sessionState_.ProfileData != null;
+        }
+
+        private async void LoadProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
             var window = new ProfileLoadWindow(this);
             window.Owner = this;
             var result = window.ShowDialog();
@@ -1278,7 +1340,12 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void MenuItem_OnClick3(object sender, RoutedEventArgs e) {
+        private void CanExecuteProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = sessionState_ != null && sessionState_.ProfileData != null;
+            e.Handled = true;
+        }
+
+        private async void ShowProfileCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
             var cg = CallGraphUtils.BuildCallGraph(MainDocumentSummary, null, loadedDoc, compilerInfo_);
             var targetFuncts = new List<IRTextFunction>();
@@ -1349,66 +1416,6 @@ namespace IRExplorerUI {
 
             DisplayFloatingPanel(panel);
             panel.DisplayGraph(layoutGraph);
-        }
-
-        private bool AugmentCallerNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
-            List<IRTextFunction> targetFuncts) {
-            return ProfileData.HasFunctionProfile(node.Function);
-        }
-
-        private bool AugmentCallNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
-                                             List<IRTextFunction> targetFuncts) {
-            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
-
-            if(funcProfile == null) {
-                return false;
-            }
-
-            foreach(var pair in funcProfile.ChildrenWeights) {
-                var childFunc = FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
-                if (childFunc == null) {
-                    continue;
-                }
-
-                if(node.FindCallee(childFunc) == null) {
-                    var childNode = callGraph.GetOrCreateNode(childFunc);
-                    node.AddCallee(childNode);
-                }
-            }
-
-            return false;
-        }
-
-        private bool FilterCalleeNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
-                                              List<IRTextFunction> targetFuncts) {
-            if(node.Function == null) {
-                return false;
-            }
-
-            return targetFuncts.Contains(parentNode.Function);
-        }
-
-        private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
-            SectionPanel.ShowModuleReport();
-        }
-
-        public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
-                                                ProfileDataProviderOptions options,
-                                                ProfileLoadProgressHandler progressCallback,
-                                                CancelableTask cancelableTask) {
-            using var profileData = new ETWProfileDataProvider(MainDocumentSummary, this);
-
-            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, options,
-                                                                         progressCallback, cancelableTask);
-
-            // Update symbols path if not set already.
-            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-
-            if (!loadedDoc.DebugInfoFileExists) {
-                loadedDoc.DebugInfoFilePath = await PDBDebugInfoProvider.LocateDebugFile(binaryFilePath, options.Symbols);
-            }
-
-            return sessionState_.ProfileData != null;
         }
     }
 }

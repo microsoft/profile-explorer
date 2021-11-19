@@ -78,8 +78,6 @@ namespace IRExplorerUI {
                 }
 
                 // Report exception to telemetry service.
-                Telemetry.TrackException(exception)?.Wait();
-
                 var stackTracePath = CreateStackTraceDump(stackTrace);
                 var sectionPath = CreateSectionDump();
 
