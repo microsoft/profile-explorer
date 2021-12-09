@@ -91,7 +91,7 @@ namespace IRExplorerUI {
         }
 
         public bool ShouldUsePolylines() {
-            return ((CallGraphPrinterOptions)graph_.GraphOptions).UseStraightLines;
+            return false;
         }
     }
 }

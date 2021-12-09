@@ -1138,7 +1138,7 @@ namespace IRExplorerUI {
             Clipboard.SetImage(bmpCopied);
         }
 
-        private async void SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
+        private async Task SwitchCompilerTarget(ICompilerInfoProvider compilerInfo) {
             await EndSession();
             compilerInfo_ = compilerInfo;
             compilerInfo_.ReloadSettings();
@@ -1161,32 +1161,32 @@ namespace IRExplorerUI {
             SwitchCompilerTarget("ASM", IRMode.ARM64);
         }
 
-        private void SetupCompilerTarget() {
+        private async Task SetupCompilerTarget() {
             if(!string.IsNullOrEmpty(App.Settings.DefaultCompilerIR)) {
                 SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
             }
             else {
-                SwitchCompilerTarget("UTC");
+                SwitchCompilerTarget("UTC").Wait();
             }
         }
 
-        private void SwitchCompilerTarget(string name, IRMode irMode = IRMode.Default) {
+        private async Task SwitchCompilerTarget(string name, IRMode irMode = IRMode.Default) {
             //? TODO: Use a list of registered IRs
             switch (name) {
                 case "UTC": {
-                    SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
+                    await SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
                     break;
                 }
                 case "LLVM": {
-                    SwitchCompilerTarget(new LLVMCompilerInfoProvider());
+                    await SwitchCompilerTarget(new LLVMCompilerInfoProvider());
                     break;
                 }
                 case "ASM": {
-                    SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
+                    await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
                     break;
                 }
                 default: {
-                    SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
+                    await SwitchCompilerTarget(new UTCCompilerInfoProvider(this));
                     break;
                 }
             }

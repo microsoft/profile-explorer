@@ -518,7 +518,11 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     Trace.Flush();
                     sw.Restart();
 
+                    int temp = 0;
+
                     foreach (var sample in samples) {
+                        temp++;
+
                         //var pf = new ProfileSample() {
                         //    RVA = sample.InstructionPointer.Value,
                         //    Time = sample.Timestamp.Nanoseconds,
@@ -555,7 +559,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                         index++;
                         var sampleWeight = sample.Weight.TimeSpan;
-                        var moduleName = sample.Process.ImageName;
+                        var moduleName = Utils.TryGetFileNameWithoutExtension(sample.Process.ImageName);
 
                         // Count time for each sample.
                         profileData_.TotalWeight += sampleWeight;
@@ -698,8 +702,13 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             var profile = profileData_.GetOrCreateFunctionProfile(textFunction, sourceFileName);
                             var offset = frameRva - funcRva;
 
+                            //if (textFunction.Name.Contains("execute@ElemTemplateElement@") ||
+                            //    (prevStackFunc != null && prevStackFunc.Name.Contains("execute@ElemTemplateElement@"))) {
+                            //    Trace.WriteLine($"Found {textFunction.Name}");
+                            //}
+
                             // Don't count the inclusive time for recursive functions multiple times.
-                            if (stackFuncts.Add(textFunction)) {
+                                if (stackFuncts.Add(textFunction)) {
                                 profile.AddInstructionSample(offset, sampleWeight);
                                 profile.AddLineSample(sourceLineNumber, sampleWeight);
                                 profile.Weight += sampleWeight;
@@ -707,6 +716,15 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 // Add the previous stack frame function as a child
                                 // and current frame as its parent.
                                 if (prevStackFunc != null) {
+                                    
+                                    //if(prevStackFunc.Name.Contains("normalizeWhiteSpace"))
+                                    //{
+                                    //    if (textFunction.Name.Contains("scanContent@IGXMLScanner")) {
+                                    //        Trace.WriteLine("Found pair ");
+                                    //        ;
+                                    //    }
+                                    //}
+
                                     profile.AddChildSample(prevStackFunc, sampleWeight);
                                 }
                             }

@@ -45,7 +45,7 @@ namespace IRExplorerUI {
 
         public LoadedDocument(string filePath, string moduleName, Guid id) {
             FilePath = filePath;
-            ModuleName = Utils.TryGetFileName(moduleName ?? filePath);
+            ModuleName = Utils.TryGetFileNameWithoutExtension(moduleName ?? filePath);
             Id = id;
 
             PanelStates = new Dictionary<IRTextSection, List<PanelObjectPair>>();

@@ -84,9 +84,6 @@ namespace IRExplorerUI {
                 MessageBox.Show($"Failed to load file {filePath}", "IR Explorer", MessageBoxButton.OK,
                                 MessageBoxImage.Exclamation);
             }
-            else {
-                AddRecentFile(filePath);
-            }
 
             return loadedDoc;
         }
@@ -165,7 +162,12 @@ namespace IRExplorerUI {
 
         private async Task OpenDocument() =>
             await Utils.ShowOpenFileDialogAsync(CompilerInfo.OpenFileFilter, "*.*", "Open file",
-                async (path) => await OpenDocument(path));
+                async (path) => {
+                    var loadedDoc = await OpenDocument(path);
+                    if (loadedDoc != null) {
+                        AddRecentFile(path);
+                    }
+                });
 
         public async Task<LoadedDocument> OpenSessionDocument(string filePath) {
             try {
@@ -290,21 +292,16 @@ namespace IRExplorerUI {
                 return true; // Save over same session file.
             }
 
-            var fileDialog = new SaveFileDialog {
-                DefaultExt = "*.irx",
-                Filter = "IR Explorer Session File|*.irx"
-            };
+            var filePath = Utils.ShowSaveFileDialog("IR Explorer Session File|*.irx", "*.irx");
 
-            var result = fileDialog.ShowDialog();
-
-            if (result.HasValue && result.Value) {
-                sessionState_.Info.FilePath = fileDialog.FileName;
-                sessionState_.Info.Kind = SessionKind.FileSession;
-                UpdateWindowTitle();
-                return true;
+            if (filePath == null) {
+                return false;
             }
 
-            return false;
+            sessionState_.Info.FilePath = filePath;
+            sessionState_.Info.Kind = SessionKind.FileSession;
+            UpdateWindowTitle();
+            return true;
         }
 
         private void StartSession(string filePath, SessionKind sessionKind) {
@@ -319,11 +316,11 @@ namespace IRExplorerUI {
         }
 
         private async Task EndSession(bool showStartPage = false) {
-            using var sessionUnloading = await BeginSessionStateChange();
-
             if (!IsSessionStarted) {
-                return; // Session not opened.
+                return;
             }
+
+            using var sessionUnloading = await BeginSessionStateChange();
 
             if (autoSaveTimer_ != null) {
                 autoSaveTimer_.Stop();
