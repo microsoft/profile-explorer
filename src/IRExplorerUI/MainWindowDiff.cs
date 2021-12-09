@@ -85,7 +85,7 @@ namespace IRExplorerUI {
                 else {
                     //? HACK: Set the module name of both docs to be the same,
                     //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
-                    (baseResult, diffResult) = await LoadBaseDiffIRDocuments(baseFilePath, baseFilePath, diffFilePath, baseFilePath);
+                    (baseResult, diffResult) = await LoadBaseDiffIRDocuments(baseFilePath, baseFilePath, diffFilePath, diffFilePath);
                 }
             }
             catch (Exception ex) {
@@ -674,7 +674,7 @@ namespace IRExplorerUI {
             if (sessionState_.DiffDocument != null) {
                 // When two documents are compared, try to pick 
                 // the other section from that other document.
-                var diffSection = await FindDiffDocumentSection(section, otherDocument);
+                var diffSection = FindDiffDocumentSection(section, otherDocument);
 
                 if (diffSection != null) {
                     var result = await Task.Run(() => LoadAndParseSection(diffSection));
@@ -691,8 +691,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task<IRTextSection> FindDiffDocumentSection(IRTextSection section, LoadedDocument diffDoc) {
-            await SectionPanel.SelectFunction(section.ParentFunction);
+        private IRTextSection FindDiffDocumentSection(IRTextSection section, LoadedDocument diffDoc) {
             return SectionPanel.FindDiffDocumentSection(section);
         }
 

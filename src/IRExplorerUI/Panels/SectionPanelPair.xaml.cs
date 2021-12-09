@@ -250,7 +250,10 @@ namespace IRExplorerUI {
 
         public async Task SelectFunction(IRTextFunction function) {
             await MainPanel.SelectFunction(function);
-            await DiffPanel.SelectFunction(function);
+
+            if (DiffPanel.IsDiffModeEnabled) {
+                await DiffPanel.SelectFunction(function);
+            }
         }
 
         public void DiffSelectedSection() {

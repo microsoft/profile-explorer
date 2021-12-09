@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -26,7 +27,7 @@ namespace IRExplorerCore.ASM {
 
         protected override bool IsFunctionStart(string line) {
             // Search for name: with optional whitespace after :
-            int index = line.IndexOf(':');
+            int index = line.LastIndexOf(':');
             if (index == -1) {
                 return false;
             }

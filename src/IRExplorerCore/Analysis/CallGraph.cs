@@ -107,6 +107,15 @@ namespace IRExplorerCore.Analysis {
             return FindCallee(node.FunctionName);
         }
 
+        public CallGraphNode FindCaller(IRTextFunction function) {
+            if (Callers == null) {
+                return null;
+            }
+
+            var result = Callers.Find((c) => c.Source != null && c.Source.Function == function);
+            return result?.Target;
+        }
+
         public override bool Equals(object obj) {
             return obj is CallGraphNode node &&
                    Number == node.Number &&
@@ -230,7 +239,7 @@ namespace IRExplorerCore.Analysis {
 
             // Find entry functions.
             foreach (var node in nodes_) {
-                if (!node.HasCallees) {
+                if (!node.HasCallers) {
                     entryNodes_.Add(node);
                 }
             }

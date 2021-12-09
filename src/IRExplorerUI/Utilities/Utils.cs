@@ -822,6 +822,22 @@ namespace IRExplorerUI {
             return false;
         }
 
+        public static string ShowSaveFileDialog(string filter, string defaultExt = "*.*", string title = "Save") {
+            var fileDialog = new SaveFileDialog {
+                Title = title,
+                DefaultExt = defaultExt,
+                Filter = filter
+            };
+
+            var result = fileDialog.ShowDialog();
+
+            if (result.HasValue && result.Value) {
+                return fileDialog.FileName;
+            }
+
+            return null;
+        }
+
         public static string CleanupPath(string path) {
             if (string.IsNullOrEmpty(path)) {
                 return path;

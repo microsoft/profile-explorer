@@ -265,6 +265,9 @@ namespace IRExplorerUI.Profile {
 
         public bool HasPerformanceCounters => InstructionCounters.Count > 0;
 
+        public bool HasCallers => CallerWeights != null && CallerWeights.Count > 0;
+        public bool HasCallees => ChildrenWeights != null && ChildrenWeights.Count > 0;
+
         public class ProcessingResult {
             public List<Tuple<IRElement, TimeSpan>> SampledElements { get; set; }
             public Dictionary<BlockIR, TimeSpan> BlockSampledElementsMap { get; set; }

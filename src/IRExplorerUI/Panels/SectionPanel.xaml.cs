@@ -72,6 +72,10 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "CopyFunctionName", typeof(SectionPanel));
         public static readonly RoutedUICommand CopyDemangledFunctionName =
             new RoutedUICommand("Untitled", "CopyDemangledFunctionName", typeof(SectionPanel));
+        public static readonly RoutedUICommand ExportFunctionList =
+            new RoutedUICommand("Untitled", "ExportFunctionList", typeof(SectionPanel));
+        public static readonly RoutedUICommand ExportModuleList =
+            new RoutedUICommand("Untitled", "ExportModuleList", typeof(SectionPanel));
     }
     
     public enum OpenSectionKind {
@@ -253,8 +257,7 @@ namespace IRExplorerUI {
 
         public int Index { get; set; }
         public IRTextFunction Function { get; set; }
-        //? TODO: Maybe Summary.ModuleName should remove ext 
-        public string ModuleName => Utils.TryGetFileNameWithoutExtension(Function.ParentSummary.ModuleName);
+        public string ModuleName => Function.ParentSummary.ModuleName;
         public object OptionalData { get; set; }
         public object OptionalData2 { get; set; }
         public string OptionalDataText { get; set; }
@@ -1864,7 +1867,19 @@ namespace IRExplorerUI {
         }
 
         public IRTextFunctionEx GetFunctionExtension(IRTextFunction function) {
-            return functionExtMap_[function];
+            if (functionExtMap_.TryGetValue(function, out var functionEx)) {
+                return functionEx;
+            }
+            else if (IsDiffModeEnabled && function.ParentSummary == otherSummary_) {
+                //? TODO: Add name mapping
+                foreach (var pair in functionExtMap_) {
+                    if (pair.Key.Name == function.Name) {
+                        return pair.Value;
+                    }
+                }
+            }
+
+            throw new InvalidOperationException();
         }
 
         public override async void OnSessionStart() {
@@ -1909,12 +1924,12 @@ namespace IRExplorerUI {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if (funcProfile != null) {
-                    //? TODO: Make async
-                    var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
+                    //var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
+                    var profileCallTree = await Task.Run(() => CreateProfileCallTree2(function));
                     ChildFunctionList.Model = profileCallTree;
                     ChildTimeColumnVisible = true;
                     SetDemangledChildFunctionNames(profileCallTree);
-                    AutoResizeColumns(ChildFunctionList);
+                    AutoResizeColumns(ChildFunctionList, 1);
                 }
                 else {
                     ChildFunctionList.Model = null;
@@ -1927,7 +1942,7 @@ namespace IRExplorerUI {
                 ProfileControlsVisible = true; //? TODO: Shouldn't show modules
                 ChildTimeColumnVisible = false;
                 SetDemangledChildFunctionNames(callTree);
-                AutoResizeColumns(ChildFunctionList);
+                AutoResizeColumns(ChildFunctionList, 1);
             }
 
             await ComputeConsecutiveSectionDiffs();
@@ -1942,6 +1957,32 @@ namespace IRExplorerUI {
 
             if (callGraphNode != null) {
                 CreateProfileCallTree(function, callGraphNode, rootNode, callGraph, visitedFuncts);
+            }
+
+            return rootNode;
+        }
+
+        private async Task<ChildFunctionEx> CreateProfileCallTree2(IRTextFunction function) {
+            var visitedFuncts = new HashSet<IRTextFunction>();
+            var rootNode = new ChildFunctionEx();
+            rootNode.Children = new List<ChildFunctionEx>();
+
+            var (callGraph, callGraphNode) = await GenerateFunctionCallGraph(function.ParentSummary, function);
+
+            foreach (var entryNode in callGraph.EntryFunctionNodes) {
+                if (entryNode.Function == null) {
+                    continue;
+                }
+
+                var funcProfile = Session.ProfileData.GetFunctionProfile(entryNode.Function);
+
+                if (funcProfile != null && funcProfile.HasCallers) {
+                    continue;
+                }
+
+                Trace.WriteLine($"Entry {entryNode.FunctionName}");
+                visitedFuncts.Clear();
+                CreateProfileCallTree2(entryNode.Function, entryNode, rootNode, callGraph, visitedFuncts);
             }
 
             return rootNode;
@@ -2087,6 +2128,11 @@ namespace IRExplorerUI {
                                            ChildFunctionEx parentNode, CallGraph callGraph,
                                            HashSet<IRTextFunction> visitedFuncts) {
             bool newFunc = visitedFuncts.Add(function);
+
+            if (!newFunc) {
+                return; // Recursion in the call graph.
+            }
+
             var funcProfile = Session.ProfileData.GetFunctionProfile(function);
             var funcWeight = funcProfile != null ? funcProfile.ExclusiveWeight : TimeSpan.Zero;
 
@@ -2095,10 +2141,6 @@ namespace IRExplorerUI {
             selfInfo.IsMarked = true;
             selfInfo.Statistics = GetFunctionStatistics(function);
             parentNode.Children.Add(selfInfo);
-
-            if (!newFunc) {
-                return; // Recursion in the call graph.
-            }
 
             // Due to virtual calls, the func may not be on the caller's list.
             if (cgNode == null) {
@@ -2160,17 +2202,17 @@ namespace IRExplorerUI {
                 parentNode.Children.Add(callerInfo);
 
                 foreach (var pair in funcProfile.CallerWeights) {
-                    var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
+                    var callerFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
 
-                    if (childFunc == null) {
+                    if (callerFunc == null) {
                         Debug.Assert(false, "Should always be found");
                         continue;
                     }
 
-                    var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
-                    var childNode = CreateProfileCallTreeChild(childFunc, pair.Value, funcProfile, childFuncProfile);
-                    childNode.Statistics = GetFunctionStatistics(childFunc);
-                    callerInfo.Children.Add(childNode);
+                    var callerFuncProfile = Session.ProfileData.GetFunctionProfile(callerFunc);
+                    var callerNode = CreateProfileCallTreeChild(callerFunc, pair.Value, funcProfile, callerFuncProfile);
+                    callerNode.Statistics = GetFunctionStatistics(callerFunc);
+                    callerInfo.Children.Add(callerNode);
                 }
             }
 
@@ -2198,6 +2240,70 @@ namespace IRExplorerUI {
             });
         }
 
+        private void CreateProfileCallTree2(IRTextFunction function, CallGraphNode cgNode,
+                                           ChildFunctionEx parentNode, CallGraph callGraph,
+                                           HashSet<IRTextFunction> visitedFuncts) {
+            bool newFunc = visitedFuncts.Add(function);
+
+            if (!newFunc) {
+                return; // Recursion in the call graph.
+            }
+
+            var funcProfile = Session.ProfileData.GetFunctionProfile(function);
+            var funcWeight = funcProfile != null ? funcProfile.ExclusiveWeight : TimeSpan.Zero;
+
+            // Due to virtual calls, the func may not be on the caller's list.
+            if (cgNode == null) {
+                cgNode = callGraph.FindNode(function);
+            }
+
+            if (funcProfile != null) {
+                foreach (var pair in funcProfile.ChildrenWeights) {
+                    var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
+
+                    if (childFunc == null) {
+                        Debug.Assert(false, "Should be always found");
+                        continue;
+                    }
+
+                    var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
+                    var childCgNode = cgNode?.FindCallee(childFunc);
+
+                    var childNode = CreateProfileCallTreeChild2(childFunc, pair.Value, funcProfile, childFuncProfile);
+                    parentNode.Children.Add(childNode);
+
+                    if (childFuncProfile.ChildrenWeights.Count > 0) {
+                        CreateProfileCallTree2(childFunc, childCgNode, childNode, callGraph, visitedFuncts);
+                    }
+                }
+            }
+
+            // Sort children, since that is not yet supported by the TreeListView control.
+            parentNode.Children.Sort((a, b) => {
+                // Ensure the callers node is placed first.
+                if (a.IsMarked && b.IsMarked) {
+                    return b.Name.CompareTo(a.Name);
+                }
+                else if (a.IsMarked) {
+                    return -1;
+                }
+                else if (b.IsMarked) {
+                    return 1;
+                }
+
+                if (b.Time > a.Time) {
+                    return 1;
+                }
+                else if (b.Time < a.Time) {
+                    return -1;
+                }
+
+                return b.Name.CompareTo(a.Name);
+            });
+
+            visitedFuncts.Remove(function);
+        }
+
         private ChildFunctionEx CreateProfileCallTreeChild(IRTextFunction childFunc, TimeSpan childWeight,
                 FunctionProfileData funcProfile, FunctionProfileData childFuncProfile) {
             KeyValuePair<int, TimeSpan> pair;
@@ -2207,6 +2313,31 @@ namespace IRExplorerUI {
 
             if (!isEmpty) {
                 weightPercentage = funcProfile.ScaleChildWeight(childWeight);
+            }
+
+            var childInfo = new ChildFunctionEx() {
+                Function = childFunc,
+                Time = childWeight.Ticks,
+                Name = childFunc.Name,
+                Percentage = weightPercentage,
+                DescendantCount = childFuncProfile != null ? childFuncProfile.ChildrenWeights.Count : 0,
+                Text = isEmpty ? "" : $"{weightPercentage.AsPercentageString()} ({childWeight.AsMillisecondsString()})",
+                TextColor = Brushes.Black,
+                BackColor = isEmpty ? Brushes.Transparent : ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(weightPercentage),
+                Children = new List<ChildFunctionEx>(),
+            };
+            return childInfo;
+        }
+
+        private ChildFunctionEx CreateProfileCallTreeChild2(IRTextFunction childFunc, TimeSpan childWeight,
+            FunctionProfileData funcProfile, FunctionProfileData childFuncProfile) {
+            KeyValuePair<int, TimeSpan> pair;
+            bool isEmpty = funcProfile == null;
+            double weightPercentage = 0;
+            int colorIndex = 0;
+
+            if (!isEmpty) {
+                weightPercentage = Session.ProfileData.ScaleFunctionWeight(childWeight);
             }
 
             var childInfo = new ChildFunctionEx() {
@@ -2462,8 +2593,6 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
-            return;
-
             using var cancelableTask = statisticsTask_.CreateTask();
             var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
             
@@ -2676,10 +2805,16 @@ namespace IRExplorerUI {
             OptionalColumn.RemoveListViewColumn(ChildFunctionList, "InstructionsHeader", functionValueSorter_);
         }
 
-        private void AutoResizeColumns(ListView listView) {
+        private void AutoResizeColumns(ListView listView, int skipCount) {
+            int index = 0;
+
             foreach (GridViewColumn column in ((GridView)listView.View).Columns) {
-                column.Width = 0;
-                column.Width = double.NaN;
+                if (index >= skipCount) {
+                    column.Width = 0;
+                    column.Width = double.NaN;
+                }
+
+                index++;
             }
         }
 
@@ -2705,6 +2840,78 @@ namespace IRExplorerUI {
             }
 
             RefreshFunctionList();
+        }
+
+        private void ExportFunctionListExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var filePath = Utils.ShowSaveFileDialog("CSV File|*.csv", "*.csv");
+
+            if (filePath == null) {
+                return;
+            }
+
+            try {
+                var text = ExportFunctionList();
+                File.WriteAllText(filePath, text);
+            }
+            catch (Exception ex) {
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show($"Failed to save CSV to file {filePath}", "IR Explorer", MessageBoxButton.OK,
+                                MessageBoxImage.Exclamation);
+            }
+        }
+
+        private string ExportFunctionList() {
+            var sb = new StringBuilder();
+            sb.Append("Function,Module,Sections");
+
+            if (ProfileControlsVisible) {
+                sb.Append(",Time,Time Perc,Time Inc,Time Inc Perc");
+            }
+            else {
+                if (OptionalDataColumnVisible) {
+                    sb.Append($",{OptionalDataColumnName}");
+                }
+
+                if (OptionalDataColumnVisible2) {
+                    sb.Append($",{OptionalDataColumnName2}");
+                }
+            }
+
+            if (AlternateNameColumnVisible) {
+                sb.Append(",Unmangled");
+            }
+
+            sb.AppendLine();
+
+            var funcList = ((ListCollectionView)FunctionList.ItemsSource);
+
+            foreach (IRTextFunctionEx func in funcList) {
+                sb.Append($"{func.Name},{func.ModuleName},{func.SectionCount}");
+
+                if (ProfileControlsVisible) {
+                    sb.Append($",{TimeSpan.FromTicks((long)func.OptionalData).TotalMilliseconds}");
+                    sb.Append($",{func.ExclusivePercentage.AsPercentageString(2,false,"")}");
+                    sb.Append($",{TimeSpan.FromTicks((long)func.OptionalData2).TotalMilliseconds}");
+                    sb.Append($",{func.InclusivePercentage.AsPercentageString(2, false, "")}");
+                }
+                else {
+                    if (OptionalDataColumnVisible) {
+                        sb.Append($",{func.OptionalData}");
+                    }
+
+                    if (OptionalDataColumnVisible2) {
+                        sb.Append($",{func.OptionalData2}");
+                    }
+                }
+
+                if (AlternateNameColumnVisible) {
+                    sb.Append($",\"{func.AlternateName}\"");
+                }
+
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
         }
     }
 }

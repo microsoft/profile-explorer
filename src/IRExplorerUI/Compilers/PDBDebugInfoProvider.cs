@@ -268,6 +268,7 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var locationTag = instr.GetOrAddTag<SourceLocationTag>();
+                    locationTag.Inlinees.Clear(); // Tag may be already populated.
                     locationTag.Line = (int)lineNumber.lineNumber;
                     locationTag.Column = (int)lineNumber.columnNumber;
 

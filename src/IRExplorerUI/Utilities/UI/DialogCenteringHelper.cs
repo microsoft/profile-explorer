@@ -46,6 +46,9 @@ namespace IRExplorerUI {
             else if (owner is OptionsPanelBase optionsPanel) {
                 Initialize(optionsPanel.Parent);
             }
+            else if (owner is UserControl panel) {
+                Initialize(Window.GetWindow(owner));
+            }
             else {
                 throw new InvalidOperationException("Unexpected owner control!");
             }

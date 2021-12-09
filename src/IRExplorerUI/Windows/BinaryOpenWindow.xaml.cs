@@ -85,14 +85,17 @@ namespace IRExplorerUI {
                 else {
                     App.Settings.AddRecentFile(BinaryFilePath);
                 }
-                
 
+
+                options.DissasemblerPath = Utils.CleanupPath(options.DissasemblerPath);
+                options.PostProcessorPath = Utils.CleanupPath(options.PostProcessorPath);
                 App.SaveApplicationSettings();
+
                 var task = loadTask_.CreateTask();
                 IsLoadingBinary = true;
 
-                string outputFile = await OutputSingleFile(task, BinaryFilePath, DebugFilePath);
-                string diffOutputFile = InDiffMode ? await OutputSingleFile(task, DiffBinaryFilePath, DiffDebugFilePath) : null;
+                string outputFile = await DisassembleFile(task, BinaryFilePath, DebugFilePath);
+                string diffOutputFile = InDiffMode ? await DisassembleFile(task, DiffBinaryFilePath, DiffDebugFilePath) : null;
 
                 if (outputFile != null) {
                     OutputFilePath = outputFile;
@@ -101,7 +104,7 @@ namespace IRExplorerUI {
                     Close();
                 }
                 else if(!task.IsCanceled) {
-                    MessageBox.Show($"Filed to dissasemble file {BinaryFilePath}", "IR Explorer",
+                    MessageBox.Show($"Filed to disassemble file {BinaryFilePath}", "IR Explorer",
                                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
 
@@ -109,7 +112,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task<string> OutputSingleFile(CancelableTask task, string binaryFilePath, string debugFilePath) {
+        private async Task<string> DisassembleFile(CancelableTask task, string binaryFilePath, string debugFilePath) {
             var dissasembler = new BinaryDisassembler(Options);
             var outputFile = await dissasembler.DisassembleAsync(binaryFilePath, debugFilePath, progressInfo => {
                 Dispatcher.BeginInvoke((Action)(() => {
@@ -168,7 +171,7 @@ namespace IRExplorerUI {
             menu.IsOpen = true;
         }
 
-        private void RecentMenuItem_Click(object sender, RoutedEventArgs e) {
+        private async void RecentMenuItem_Click(object sender, RoutedEventArgs e) {
             RecentButton.ContextMenu.IsOpen = false;
             var menuItem = sender as MenuItem;
 
@@ -179,7 +182,7 @@ namespace IRExplorerUI {
                 var pathPair = menuItem.Tag as Tuple<string, string>;
                 BinaryFilePath = pathPair.Item1;
                 DebugFilePath = pathPair.Item2;
-                OpenFile();
+                await OpenFile();
             }
         }
 
