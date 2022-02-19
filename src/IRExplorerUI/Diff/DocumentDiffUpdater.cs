@@ -468,7 +468,8 @@ namespace IRExplorerUI.Diff {
                 int position = piece.Position.Value + piecePossitionOffset;
 
                 if (position > 0 && position < otherLine.SubPieces.Count) {
-                    return otherLine.SubPieces[position - 1];
+                    var result = otherLine.SubPieces[position - 1];
+                    return !string.IsNullOrEmpty(result.Text) ? result : null;
                 }
             }
 

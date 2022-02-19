@@ -286,23 +286,6 @@ namespace IRExplorerUI {
             }
         }
 
-        public static V GetOrAddValue<K, V>(this Dictionary<K, V> dict, K key) where V : new() {
-            if (!dict.TryGetValue(key, out V currentValue)) {
-                currentValue = new V();
-                dict[key] = currentValue;
-            }
-
-            return currentValue;
-        }
-
-        public static V GetValueOrNothing<K, V>(this Dictionary<K, V> dict, K key) where V:class {
-            if (dict.TryGetValue(key, out V currentValue)) {
-                return currentValue;
-            }
-
-            return null;
-        }
-
         public static SolidColorBrush AsBrush(this Color color) {
             return ColorBrushes.GetBrush(color);
         }

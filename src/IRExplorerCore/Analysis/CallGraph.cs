@@ -211,22 +211,17 @@ namespace IRExplorerCore.Analysis {
 
         public event EventHandler<CallGraphEventArgs> CallGraphNodeCreated;
 
-        public CallGraph(IRTextSummary summary, IRTextSectionLoader loader, ICompilerIRInfo irInfo) : 
-            this(summary) {
+        public CallGraph(IRTextSummary summary, IRTextSectionLoader loader, ICompilerIRInfo irInfo) {
+            summary_ = summary;
             loader_ = loader;
             irInfo_ = irInfo;
-            
-        }
-
-        public CallGraph(IRTextSummary summary) {
-            summary_ = summary;
             nodes_ = new List<CallGraphNode>(summary.Functions.Count);
             funcToNodeMap_ = new Dictionary<IRTextFunction, CallGraphNode>(summary.Functions.Count);
             externalFuncToNodeMap_ = new Dictionary<string, CallGraphNode>();
             visitedFuncts_ = new HashSet<IRTextFunction>();
             entryNodes_ = new List<CallGraphNode>();
-        }
 
+        }
         public void Execute(IRTextSection section = null) {
             //? TODO: Can be multithreaded, most time spent parsing the functs
             foreach (var func in summary_.Functions) {

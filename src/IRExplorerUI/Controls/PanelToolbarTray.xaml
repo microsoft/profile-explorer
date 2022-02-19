@@ -18,9 +18,9 @@
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+        IsVisibleChanged="ToolBar_OnIsVisibleChanged"
         Loaded="ToolBar_Loaded"
-        SizeChanged="ToolBar_OnSizeChanged"
-        IsVisibleChanged="ToolBar_OnIsVisibleChanged">
+        SizeChanged="ToolBar_OnSizeChanged">
 
         <Separator />
 

@@ -37,7 +37,7 @@ Name: "{group}\IR Explorer"; Filename: "{app}\irexplorer.exe"
 Name: envPath; Description: "Add to PATH env. variable as irexplorer.exe" 
 
 [Run]
-Filename: "{sys}\Regsvr32.exe"; Parameters: "/s {app}\msdia140.dll"; WorkingDir: "{app}"; Flags: shellexec runhidden; 
+Filename: "{sys}\Regsvr32.exe"; Parameters: "/s msdia140.dll"; WorkingDir: "{app}"; Flags: shellexec runhidden; 
 
 [Code]
 procedure CurStepChanged(CurStep: TSetupStep);

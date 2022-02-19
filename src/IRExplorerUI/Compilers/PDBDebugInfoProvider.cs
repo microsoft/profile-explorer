@@ -1,4 +1,7 @@
-﻿using System;
+﻿// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,28 +22,35 @@ namespace IRExplorerUI.Compilers {
     //? Free more COM
 
     public static class SymSrvHelpers {
-        //? TODO: Not thread safe
         private static int processId_ = Process.GetCurrentProcess().Id;
         private static bool initialized_;
+        private static object lockObject_ = new object();
 
         public static bool InitSymSrv(string symbolPath) {
-            if (initialized_) {
-                CleanupSymSrv();
-                initialized_ = false;
-            }
-
-            if (NativeMethods.SymInitialize((IntPtr)processId_, symbolPath, false)) {
-                // Enable diagnostic printing to the debugger.
-                NativeMethods.SymSetOptions(NativeMethods.SYMOPT_DEBUG);
-                initialized_ = true;
-                return true;
+            lock (lockObject_) {
+                if (initialized_) {
+                    return true;
+                }
+                
+                if (NativeMethods.SymInitialize((IntPtr)processId_, symbolPath, false)) {
+                    //NativeMethods.SymSetOptions(NativeMethods.SYMOPT_EXACT_SYMBOLS);
+                    initialized_ = true;
+                    return true;
+                }
             }
 
             return false;
         }
 
         public static bool CleanupSymSrv() {
-            return NativeMethods.SymCleanup((IntPtr)processId_);
+            lock (lockObject_) {
+                if (initialized_) {
+                    initialized_ = false;
+                    return NativeMethods.SymCleanup((IntPtr)processId_);
+                }
+
+                return true;
+            }
         }
 
         /// Private method to locate the local path for a matching PDB. Implicitly handles symbol download if needed.
@@ -59,6 +69,8 @@ namespace IRExplorerUI.Compilers {
             finally {
                 Marshal.FreeHGlobal(buffer);
             }
+
+            Trace.WriteLine($"=> Found PDB for {pdbFilename} as {outPath.ToString()}, Guid {guid}");
 
             return outPath.ToString();
         }
@@ -92,19 +104,31 @@ namespace IRExplorerUI.Compilers {
         private IDiaSession session_;
         private IDiaSymbol globalSymbol_;
 
-        public static async Task<string> LocateDebugFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
-            var symbolSearchPath = options.UseDefaultSymbolSource ? DefaultSymbolSource : "";
-
-            if (options.UseSymbolCache) {
-                var cachePath = options.HasSymbolCachePath ? options.SymbolCachePath : DefaultSymbolCachePath;
-                symbolSearchPath = $"CACHE*{cachePath};{symbolSearchPath}";
+        public static async Task<string> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
+            if (symbolFile == null) {
+                return null;
             }
+
+            var defaultSearchPath = "";
+
+            if (options.UseDefaultSymbolSource) {
+                defaultSearchPath = DefaultSymbolSource;
+
+                if (options.UseSymbolCache) {
+                    var cachePath = options.HasSymbolCachePath ? options.SymbolCachePath : DefaultSymbolCachePath;
+                    defaultSearchPath = $"CACHE*{cachePath};{defaultSearchPath}";
+                }
+            }
+
+            var userSearchPath = "";
 
             foreach(var path in options.SymbolSearchPaths) {
                 if (!string.IsNullOrEmpty(path)) {
-                    symbolSearchPath += $";{path}";
+                    userSearchPath += $"{path};";
                 }
             }
+
+            var symbolSearchPath = $"{userSearchPath}{defaultSearchPath}";
 
             if (!SymSrvHelpers.InitSymSrv(symbolSearchPath)) {
                 return null;
@@ -114,11 +138,11 @@ namespace IRExplorerUI.Compilers {
                 SymSrvHelpers.GetLocalPDBFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age));
         }
 
-        public static async Task<string> LocateDebugFile(string imagePath, SymbolFileSourceOptions options) {
+        public static async Task<string> LocateDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
             using var binaryInfo = new PEBinaryInfoProvider(imagePath);
 
             if (binaryInfo.Initialize()) {
-                return await LocateDebugFile(binaryInfo.SymbolFileInfo, options);
+                return await LocateDebugInfoFile(binaryInfo.SymbolFileInfo, options);
             }
 
             return null;
@@ -158,7 +182,7 @@ namespace IRExplorerUI.Compilers {
                 return false;
             }
 
-            var funcSymbol = FindFunction(functionName);
+            var funcSymbol = FindFunctionSymbol(functionName);
 
             if (funcSymbol == null) {
                 return false;
@@ -174,21 +198,25 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
-        public (string, int) FindFunctionSourceFilePath(IRTextFunction textFunc) {
+        public SourceLineInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
             return FindFunctionSourceFilePath(textFunc.Name);
         }
 
-        public (string, int) FindFunctionSourceFilePath(string functionName) {
-            var funcSymbol = FindFunction(functionName);
+        public SourceLineInfo FindFunctionSourceFilePath(string functionName) {
+            var funcSymbol = FindFunctionSymbol(functionName);
 
             if (funcSymbol != null) {
-                return FindFunctionSourceFilePathByRVA(funcSymbol.relativeVirtualAddress);
+                return FindSourceLineByRVA(funcSymbol.relativeVirtualAddress);
             }
-            
-            return (null, 0);
+
+            return SourceLineInfo.Unknown;
+        }
+        
+        public SourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
+            return FindSourceLineByRVA(rva);
         }
 
-        public int FindLineByRVA(long rva) {
+        private SourceLineInfo FindSourceLineByRVA(long rva) {
             try {
                 session_.findLinesByRVA((uint)rva, 1, out var lineEnum);
 
@@ -200,60 +228,47 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var sourceFile = lineNumber.sourceFile;
-                    return (int)lineNumber.lineNumber;
+                    return new SourceLineInfo(lineNumber.addressOffset, (int)lineNumber.lineNumber,
+                                             (int)lineNumber.columnNumber, sourceFile.fileName);
                 }
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to get line for RVA {rva}: {ex.Message}");
-                return -1;
             }
 
-            return -1;
+            return SourceLineInfo.Unknown;
         }
 
-        public (string, int) FindFunctionSourceFilePathByRVA(long rva) {
-            try {
-                session_.findLinesByRVA((uint)rva, 1, out var lineEnum);
-
-                while (true) {
-                    lineEnum.Next(1, out var lineNumber, out var retrieved);
-
-                    if (retrieved == 0) {
-                        break;
-                    }
-
-                    var sourceFile = lineNumber.sourceFile;
-                    return (sourceFile.fileName, (int)lineNumber.lineNumber);
-                }
-            }
-            catch (Exception ex) {
-                Trace.TraceError($"Failed to get line for RVA {rva}: {ex.Message}");
-                return (null, -1);
-            }
-
-            return (null, -1);
-        }
-
-        public (string, long) FindFunctionByRVA(long rva) {
+        public DebugFunctionInfo FindFunctionByRVA(long rva) {
             try {
                 session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
 
                 if(funcSym != null) {
-                    return (funcSym.name, funcSym.relativeVirtualAddress);
+                    return new DebugFunctionInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
                 }
 
                 // Do another lookup as a public symbol.
                 session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var funcSym2);
 
                 if (funcSym2 != null) {
-                    return (funcSym2.name, funcSym2.relativeVirtualAddress);
+                    return new DebugFunctionInfo(funcSym2.name, funcSym2.relativeVirtualAddress, (long)funcSym2.length);
                 }
             }
             catch (Exception ex) { 
                 Trace.TraceError($"Failed to find function for RVA {rva}: {ex.Message}");
             }
-            return (null, 0);
 
+            return DebugFunctionInfo.Unknown;
+        }
+
+        public DebugFunctionInfo FindFunction(string functionName) {
+            var funcSym = FindFunctionSymbol(functionName);
+
+            if (funcSym != null) {
+                return new DebugFunctionInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
+            }
+
+            return DebugFunctionInfo.Unknown;
         }
 
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {
@@ -268,7 +283,7 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var locationTag = instr.GetOrAddTag<SourceLocationTag>();
-                    locationTag.Inlinees.Clear(); // Tag may be already populated.
+                    locationTag.Reset(); // Tag may be already populated.
                     locationTag.Line = (int)lineNumber.lineNumber;
                     locationTag.Column = (int)lineNumber.columnNumber;
 
@@ -338,7 +353,7 @@ namespace IRExplorerUI.Compilers {
             Trace.AutoFlush = true;
         }
 
-        private IDiaSymbol FindFunction(string functionName) {
+        private IDiaSymbol FindFunctionSymbol(string functionName) {
             try {
                 var demangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.Default);
                 var queryDemangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.OnlyName);

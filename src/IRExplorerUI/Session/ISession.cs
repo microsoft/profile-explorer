@@ -11,6 +11,7 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Query;
 using IRExplorerCore.Graph;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 
@@ -84,9 +85,12 @@ namespace IRExplorerUI {
 
         Task<bool> SaveSessionDocument(string filePath);
         Task<LoadedDocument> OpenSessionDocument(string filePath);
+        Task<DisassemberResult> DisassembleBinary(string filePath, DisassemblerProgressHandler progressCallback = null,
+                                                    CancelableTask cancelableTask = null);
 
         Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
                                     ProfileDataProviderOptions options,
+                                    SymbolFileSourceOptions symbolOptions,
                                 ProfileLoadProgressHandler progressCallback,
                                 CancelableTask cancelableTask);
 
@@ -94,5 +98,6 @@ namespace IRExplorerUI {
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
         void SetApplicationStatus(string text, string tooltip = "");
         void SetApplicationProgress(bool visible, double percentage, string title = null);
+        void UpdatePanelTitles();
     }
 }

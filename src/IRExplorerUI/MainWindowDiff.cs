@@ -78,8 +78,8 @@ namespace IRExplorerUI {
                 await EndSession();
                 UpdateUIBeforeLoadDocument($"Loading {baseFilePath}, {diffFilePath}");
 
-                if (Utils.IsExecutableFile(baseFilePath) &&
-                    Utils.IsExecutableFile(diffFilePath)) {
+                if (Utils.IsBinaryFile(baseFilePath) &&
+                    Utils.IsBinaryFile(diffFilePath)) {
                     (baseResult, diffResult) = await OpenBinaryBaseDiffIRDocuments(baseFilePath, diffFilePath);
                 }
                 else {
@@ -118,32 +118,32 @@ namespace IRExplorerUI {
 
         private async Task<Tuple<LoadedDocument, LoadedDocument>>
             OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
-            var baseDissasembler = new BinaryDisassembler(App.Settings.DisassemblerOptions);
-            var diffDissasembler = new BinaryDisassembler(App.Settings.DisassemblerOptions);
-
-            var baseTask = baseDissasembler.DisassembleAsync(baseFilePath, null);
-            var diffTask = diffDissasembler.DisassembleAsync(diffFilePath, null);
+            var baseTask = DisassembleBinary(baseFilePath);
+            var diffTask = DisassembleBinary(diffFilePath);
             await Task.WhenAll(baseTask, diffTask);
 
-            if (baseTask.Result != null && diffTask.Result != null) {
-                //? HACK: Set the module name of both docs to be the same,
-                //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
-                var (baseLoadedDoc, diffLoadedDoc) = 
-                    await LoadBaseDiffIRDocuments(baseTask.Result, baseFilePath,
-                                                  diffTask.Result, baseFilePath);
-
-                if (baseLoadedDoc != null && diffLoadedDoc != null) {
-                    baseLoadedDoc.BinaryFilePath = baseFilePath;
-                    baseLoadedDoc.DebugInfoFilePath = Utils.FindPDBFile(baseFilePath);
-                    diffLoadedDoc.BinaryFilePath = diffFilePath;
-                    diffLoadedDoc.DebugInfoFilePath = Utils.FindPDBFile(diffFilePath);
-                }
-
-                UpdateWindowTitle();
-                return new Tuple<LoadedDocument, LoadedDocument>(baseLoadedDoc, diffLoadedDoc);
+            if (baseTask.Result == null || diffTask.Result != null) {
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show("Failed to find system disassembler", "IR Explorer",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return new Tuple<LoadedDocument, LoadedDocument>(null, null);
             }
 
-            return new Tuple<LoadedDocument, LoadedDocument>(null, null);
+            //? HACK: Set the module name of both docs to be the same,
+            //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
+            var (baseLoadedDoc, diffLoadedDoc) = 
+                await LoadBaseDiffIRDocuments(baseTask.Result.DisassemblyPath, baseFilePath,
+                                              diffTask.Result.DisassemblyPath, baseFilePath);
+
+            if (baseLoadedDoc != null && diffLoadedDoc != null) {
+                baseLoadedDoc.BinaryFilePath = baseFilePath;
+                baseLoadedDoc.DebugInfoFilePath = baseTask.Result.DebugInfoPath;
+                diffLoadedDoc.BinaryFilePath = diffFilePath;
+                diffLoadedDoc.DebugInfoFilePath = diffTask.Result.DebugInfoPath;
+            }
+
+            UpdateWindowTitle();
+            return new Tuple<LoadedDocument, LoadedDocument>(baseLoadedDoc, diffLoadedDoc);
         }
 
         private async void ToggleButton_Checked(object sender, RoutedEventArgs e) {

@@ -525,11 +525,13 @@ namespace IRExplorerUI {
         private void RenamePanels(ToolPanelKind kind, List<PanelHostInfo> list) {
             if (list.Count == 1) {
                 list[0].Host.Title = GetPanelName(kind, list[0].Panel);
+                list[0].Host.ToolTip = list[0].Panel.TitleToolTip;
             }
             else {
                 for (int i = 0; i < list.Count; i++) {
                     string name = GetPanelName(kind, list[i].Panel);
                     list[i].Host.Title = $"{name}:{i + 1}";
+                    list[i].Host.ToolTip = list[i].Panel.TitleToolTip;
                 }
             }
         }
@@ -538,6 +540,10 @@ namespace IRExplorerUI {
             foreach (var (kind, list) in panelHostSet_) {
                 RenamePanels(kind, list);
             }
+        }
+
+        public void UpdatePanelTitles() {
+            RenameAllPanels();
         }
 
         private IToolPanel CreateNewPanel(ToolPanelKind kind) {

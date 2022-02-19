@@ -11,7 +11,6 @@
     Height="Auto"
     MinWidth="400"
     ResizeMode="CanResizeWithGrip"
-    Loaded="Window_Loaded"
     ShowInTaskbar="False"
     SizeToContent="Height"
     WindowStartupLocation="CenterOwner"
@@ -69,6 +68,7 @@
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
                     TabIndex="2"
+                    TextChanged="BinaryAutocompleteBox_OnTextChanged"
                     Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
 
                 <Button
@@ -81,72 +81,82 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     TabIndex="10" />
             </Grid>
-            
 
-            <Expander Margin="16,8,16,0" IsExpanded="True"
-                      Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
+
+            <Expander
+                Margin="16,8,16,0"
+                IsExpanded="True"
+                Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
                 <Expander.Header>
                     <TextBlock FontWeight="DemiBold" Text="Symbol source options" />
                 </Expander.Header>
 
                 <StackPanel>
-                    <CheckBox Content="Use default Symbol Server" Margin="0,8,0,0" ToolTip="https://msdl.microsoft.com/download/symbols"
-                              IsChecked="{Binding Path=Options.Symbols.UseDefaultSymbolSource, Mode=TwoWay}"/>
-                    <CheckBox Content="Cache symbol files" Margin="0,4,0,0" ToolTip="C:\Symbols"  
-                              IsChecked="{Binding Path=Options.Symbols.UseSymbolCache, Mode=TwoWay}" IsEnabled="False"/>
-                    <TextBlock Margin="0,8,0,0" Text="Optional symbol directories (one per line)"/>
+                    <CheckBox
+                        Margin="0,8,0,0"
+                        Content="Use default Symbol Server"
+                        IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
+                        ToolTip="https://msdl.microsoft.com/download/symbols" />
+                    <CheckBox
+                        Margin="0,4,0,0"
+                        Content="Cache symbol files"
+                        IsChecked="{Binding Path=SymbolOptions.UseSymbolCache, Mode=TwoWay}"
+                        IsEnabled="False"
+                        ToolTip="C:\Symbols" />
+                    <TextBlock Margin="0,8,0,0" Text="Optional symbol directories (one per line)" />
                     <Grid Margin="0,4,0,0">
                         <TextBox
                             x:Name="SymbolAutocompleteBox"
                             MinHeight="44"
-
                             Margin="0,0,55,0"
                             HorizontalAlignment="Stretch"
+                            AcceptsReturn="True"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             IsEnabled="{Binding InputControlsEnabled}"
                             TabIndex="2"
-                            TextWrapping="Wrap"
-                            AcceptsReturn="True"
-                            Text="{Binding Path=Options.Symbols.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}" />
+                            Text="{Binding Path=SymbolOptions.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                            TextWrapping="Wrap" />
                     </Grid>
                 </StackPanel>
             </Expander>
 
-            <Expander Margin="16,8,16,8" IsExpanded="True"
-                      Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
+            <Expander
+                Margin="16,8,16,8"
+                IsExpanded="True"
+                Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
                 <Expander.Header>
                     <TextBlock FontWeight="DemiBold" Text="Binary options" />
                 </Expander.Header>
 
                 <StackPanel>
-                    <TextBlock Margin="0,8,0,0" Text="Optional binary directories (one per line)"/>
+                    <TextBlock Margin="0,8,0,0" Text="Optional binary directories (one per line)" />
                     <Grid Margin="0,4,0,0">
                         <TextBox
                             MinHeight="44"
                             Margin="0,0,55,0"
                             HorizontalAlignment="Stretch"
+                            AcceptsReturn="True"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             IsEnabled="{Binding InputControlsEnabled}"
                             TabIndex="2"
-                            TextWrapping="Wrap"
-                            AcceptsReturn="True"
-                            Text="{Binding Path=Options.BinarySearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}" />
+                            Text="{Binding Path=Options.BinarySearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                            TextWrapping="Wrap" />
                     </Grid>
-                    <TextBlock Margin="0,4,0,0" Text="Processed binary whitelist (one per line)"/>
+                    <TextBlock Margin="0,4,0,0" Text="Processed binary whitelist (one per line)" />
                     <Grid Margin="0,4,0,0">
                         <TextBox
                             MinHeight="44"
                             Margin="0,0,55,0"
                             HorizontalAlignment="Stretch"
+                            AcceptsReturn="True"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             IsEnabled="{Binding InputControlsEnabled}"
                             TabIndex="2"
-                            TextWrapping="Wrap"
-                            AcceptsReturn="True"
-                            Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"  />
+                            Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                            TextWrapping="Wrap" />
                     </Grid>
                 </StackPanel>
             </Expander>
@@ -203,8 +213,8 @@
                 Padding="4,1,4,1"
                 VerticalAlignment="Top"
                 Click="CancelButton_Click"
-                IsCancel="True"
                 Content="Cancel"
+                IsCancel="True"
                 TabIndex="4" />
             <Button
                 x:Name="LoadButton"

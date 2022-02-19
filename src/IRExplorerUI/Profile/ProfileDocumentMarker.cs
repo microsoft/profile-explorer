@@ -299,7 +299,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
 
                 bool markOnFlowGraph = options_.IsSignificantValue(i, weightPercentage);
-                var label = $"{weightPercentage.AsPercentageString()} ({weight.AsMillisecondsString()})";
+                var label = $"{weightPercentage.AsPercentageString()}";
                 var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label);
                 overlay.Background = color.AsBrush();
                 overlay.Border = blockPen;
@@ -324,7 +324,6 @@ namespace IRExplorerUI.Compilers.ASM {
                 document.MarkBlock(block, color, markOnFlowGraph);
 
                 if (weightPercentage > options_.ElementWeightCutoff) {
-                    var graphLabel = $"{weightPercentage.AsPercentageString()} ({weight.AsMillisecondsString()})";
                     block.AddTag(GraphNodeTag.MakeLabel(weightPercentage.AsPercentageString()));
                 }
             }

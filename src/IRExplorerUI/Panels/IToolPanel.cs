@@ -36,6 +36,7 @@ namespace IRExplorerUI {
         ToolPanelKind PanelKind { get; }
         string TitlePrefix { get; }
         string TitleSuffix { get; }
+        string TitleToolTip { get; }
         HandledEventKind HandledEvents { get; }
         bool SavesStateToFile { get; }
         bool IsUnloaded { get; }

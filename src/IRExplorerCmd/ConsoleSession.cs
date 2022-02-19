@@ -13,6 +13,8 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerUI.Controls;
 using IRExplorerCore.Graph;
+using IRExplorerUI.Compilers;
+using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 
 namespace IRExplorerCmd {
@@ -23,6 +25,7 @@ namespace IRExplorerCmd {
         }
 
         public string CompilerIRName { get; set; }
+        public string CompilerDisplayName { get; }
         public string DefaultSyntaxHighlightingFile { get; set; }
         public ICompilerIRInfo IR { get; set; }
 
@@ -34,13 +37,34 @@ namespace IRExplorerCmd {
             throw new NotImplementedException();
         }
 
+        public Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
+            return null;
+        }
+
+        public void HandleLoadedDocument(LoadedDocument document, string modulePath) {
+        }
+
+        public IDiffInputFilter CreateDiffInputFilter() {
+            return null;
+        }
+
         public IDiffOutputFilter CreateDiffOutputFilter() {
             throw new NotImplementedException();
+        }
+
+        public IDebugInfoProvider CreateDebugInfoProvider() {
+            return null;
+        }
+
+        public string FindDebugInfoFile(string modulePath) {
+            return null;
         }
 
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             throw new NotImplementedException();
         }
+
+        public string OpenDebugFileFilter { get; }
 
         public void ReloadSettings() {
             throw new NotImplementedException();
@@ -49,6 +73,7 @@ namespace IRExplorerCmd {
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => throw new NotImplementedException();
         public List<FunctionTaskDefinition> ScriptFunctionTasks => throw new NotImplementedException();
+        public string OpenFileFilter { get; }
 
         public ISession Session { get; set; }
     }
@@ -75,7 +100,7 @@ namespace IRExplorerCmd {
         }
 
         private LoadedDocument LoadDocument(string path, bool useCache) {
-            var result = new LoadedDocument(path, Guid.NewGuid());
+            var result = new LoadedDocument(path, path, Guid.NewGuid());
             result.Loader = new DocumentSectionLoader(path, CompilerInfo.IR, useCache);
             result.Summary = result.Loader.LoadDocument(null);
             sessionState_.RegisterLoadedDocument(result);
@@ -108,6 +133,10 @@ namespace IRExplorerCmd {
         public IRTextSection CurrentDocumentSection => throw new NotImplementedException();
         public List<IRDocument> OpenDocuments => throw new NotImplementedException();
         public SessionStateManager SessionState => throw new NotImplementedException();
+
+        public bool IsSessionStarted => throw new NotImplementedException();
+
+        ProfileData ISession.ProfileData => throw new NotImplementedException();
 
         public void BindToDocument(IToolPanel panel, BindMenuItem args) {
             throw new NotImplementedException();
@@ -261,6 +290,34 @@ namespace IRExplorerCmd {
         public void Dispose() {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        public void AddOtherSummary(IRTextSummary summary) {
+        }
+
+        public IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId) {
+            return null;
+        }
+
+        public void DisplayFloatingPanel(IToolPanel panel) {
+        }
+
+        public Task SwitchActiveFunction(IRTextFunction function) {
+            return null;
+        }
+
+        Task<LoadedDocument> ISession.OpenSessionDocument(string filePath) {
+            return null;
+        }
+
+        public Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, ProfileDataProviderOptions options, ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
+            return null;
+        }
+
+        public void SetApplicationStatus(string text, string tooltip = "") {
+        }
+
+        public void SetApplicationProgress(bool visible, double percentage, string title = null) {
         }
 
         #endregion

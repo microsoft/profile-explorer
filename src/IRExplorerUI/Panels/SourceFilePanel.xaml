@@ -38,18 +38,6 @@
                     VerticalAlignment="Top"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
-                    <TextBlock
-                        Margin="5,0,0,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Text="Path" />
-                    <TextBox
-                        Name="PathTextbox"
-                        Width="150"
-                        Margin="4,0,0,0"
-                        HorizontalAlignment="Center"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
                     <Button Click="Button_Click" ToolTip="Open a source file">
                         <StackPanel Orientation="Horizontal">
                             <Image
@@ -60,7 +48,10 @@
                             <TextBlock Text="Open" />
                         </StackPanel>
                     </Button>
-                    <Button Click="Button_Click" ToolTip="Find and open source file using debug info" IsEnabled="False">
+                    <Button
+                        Click="Button_Click"
+                        IsEnabled="False"
+                        ToolTip="Find and open source file using debug info">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
@@ -71,9 +62,11 @@
                         </StackPanel>
                     </Button>
                     <Separator />
-                    
-                    <Button Click="ButtonBase_OnClick" ToolTip="Jump to hottest source line" 
-                            Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}" >
+
+                    <Button
+                        Click="ButtonBase_OnClick"
+                        ToolTip="Jump to hottest source line"
+                        Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}">
                         <Image Source="{StaticResource HotFlameIcon}" />
                     </Button>
                     <Button
@@ -81,32 +74,50 @@
                         Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                         CommandTarget="{Binding ElementName=TextView}"
                         ToolTip="Jump to previous bookmark (Shift+F2)">
-                        <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}">
-                        </Image>
+                        <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                     </Button>
                     <Button
                         Padding="1"
                         Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                         CommandTarget="{Binding ElementName=TextView}"
                         ToolTip="Jump to previous bookmark (Shift+F2)">
-                        <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}">
-                        </Image>
+                        <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                     </Button>
                     <Separator />
-                    
-                    <TextBlock Text="Inlinees" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <ComboBox Name="InlineeCombobox" MaxWidth="300" MinWidth="100" Width="200" DisplayMemberPath="Function" 
-                              SelectedValue="Function" 
-                              Loaded="ComboBox_Loaded"
-                              SelectionChanged="InlineeCombobox_SelectionChanged" ToolTip="Inlined functions call stack"
-                              Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                              BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"/>
+
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        VerticalAlignment="Center"
+                        Text="Inlinees" />
+                    <Button
+                        Padding="1"
+                        Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+                        CommandTarget="{Binding ElementName=TextView}"
+                        ToolTip="Jump to previous bookmark (Shift+F2)">
+                        <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                    </Button>
+                    <ComboBox
+                        Name="InlineeCombobox"
+                        Width="200"
+                        MinWidth="100"
+                        MaxWidth="200"
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        DisplayMemberPath="Function"
+                        Loaded="ComboBox_Loaded"
+                        SelectedValue="Function"
+                        SelectionChanged="InlineeCombobox_SelectionChanged"
+                        ToolTip="Inlined functions call stack" />
                     <Button Click="Button_Click_1" ToolTip="Switch to callee">
                         <Image Source="{StaticResource LeftArrowIcon}" />
                     </Button>
-                    <Button Click="Button_Click_2"  ToolTip="Switch to caller">
+                    <Button Click="Button_Click_2" ToolTip="Switch to caller">
                         <Image Source="{StaticResource RightArrowIcon}" />
                     </Button>
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        VerticalAlignment="Center"
+                        Text="0/0" />
                 </ToolBar>
             </ToolBarTray>
             <local:PanelToolbarTray

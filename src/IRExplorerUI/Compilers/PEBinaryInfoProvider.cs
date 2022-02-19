@@ -22,7 +22,7 @@ namespace IRExplorerUI.Compilers {
             try {
                 var stream = File.OpenRead(filePath_);
                 reader_ = new PEReader(stream);
-                return true;
+                return reader_.PEHeaders != null; // Throws BadImageFormatException on invalid file.
             }
             catch (Exception ex) {
                 return false;
@@ -38,6 +38,7 @@ namespace IRExplorerUI.Compilers {
 
             return null;
         }
+
         public static SymbolFileDescriptor GetSymbolFileInfo(string filePath) {
             using var binaryInfo = new PEBinaryInfoProvider(filePath);
 
@@ -78,9 +79,21 @@ namespace IRExplorerUI.Compilers {
                     return null;
                 }
 
+                BinaryFileKind fileKind = BinaryFileKind.Native;
+
+                if (reader_.HasMetadata && reader_.PEHeaders.CorHeader != null) {
+                    if (reader_.PEHeaders.CorHeader.Flags.HasFlag(CorFlags.ILLibrary)) {
+                        fileKind = BinaryFileKind.DotNetR2R;
+                    }
+                    else if (reader_.PEHeaders.CorHeader.Flags.HasFlag(CorFlags.ILLibrary)) {
+                        fileKind = BinaryFileKind.DotNet;
+                    }
+                }
+
                 return new BinaryFileDescription() {
                     FilePath = filePath_,
                     Architecture = reader_.PEHeaders.CoffHeader.Machine,
+                    FileKind = fileKind,
                     TimeStamp = reader_.PEHeaders.CoffHeader.TimeDateStamp,
                     ImageSize = reader_.PEHeaders.PEHeader.SizeOfImage,
                     CodeSize = reader_.PEHeaders.PEHeader.SizeOfCode,

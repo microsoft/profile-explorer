@@ -137,13 +137,13 @@
             CanExecute="CanExecuteDocumentCommand"
             Command="local:AppCommand.LoadProfile"
             Executed="LoadProfileExecuted"
-            PreviewCanExecute="CanExecuteDocumentCommand"/>
+            PreviewCanExecute="CanExecuteDocumentCommand" />
 
         <CommandBinding
             CanExecute="CanExecuteProfileCommand"
             Command="local:AppCommand.ShowProfileCallGraph"
             Executed="ShowProfileCallGraphExecuted"
-            PreviewCanExecute="CanExecuteProfileCommand"/>
+            PreviewCanExecute="CanExecuteProfileCommand" />
     </Window.CommandBindings>
 
     <Window.InputBindings>
@@ -377,7 +377,7 @@
 
                     <MenuItem Header="Profiling">
                         <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile" />
-                        <MenuItem Header="Recent Profiles" IsEnabled="False"/>
+                        <MenuItem Header="Recent Profiles" IsEnabled="False" />
                         <Separator />
                         <MenuItem Command="local:AppCommand.ShowProfileCallGraph" Header="Profile Call Graph" />
                     </MenuItem>
@@ -398,6 +398,7 @@
                                 Name="LLVMMenuItem"
                                 Click="LLVMMenuItem_Click"
                                 Header="LLVM" />
+                            <Separator />
                             <MenuItem
                                 Name="ASMMenuItem"
                                 Click="ASMMenuItem_Click"
@@ -406,6 +407,15 @@
                                 Name="ARM64ASMMenuItem"
                                 Click="ARM64ASMMenuItem_Click"
                                 Header="ASM ARM64" />
+                            <Separator />
+                            <MenuItem
+                                Name="DotNetMenuItem"
+                                Click="DotNetMenuItem_Click"
+                                Header=".NET ASM x86/x64" />
+                            <MenuItem
+                                Name="DotNetARM64MenuItem"
+                                Click="DotNetARM64MenuItem_Click"
+                                Header=".NET ASM ARM64" />
                         </MenuItem>
 
 
@@ -703,6 +713,31 @@
             AllowMixedOrientation="True"
             AutomationProperties.AutomationId="AutoDockManager"
             Theme="{Binding ElementName=ThemeCombobox, Path=SelectedItem.Tag}">
+
+            <!--<avalonDock:DockingManager.Resources>
+                <DataTemplate x:Key="DockingWindowTitleDataTemplate" DataType="{x:Type avalonDock:LayoutContent}">
+                    <Label>
+                        <StackPanel
+                            HorizontalAlignment="Stretch"
+                            Orientation="Horizontal"
+                            ToolTip="{Binding Path=ToolTip}">
+
+                            <TextBlock
+                                VerticalAlignment="Center"
+                                FontSize="12"
+                                Foreground="White"
+                                Text="{Binding Path=Title}"
+                                ToolTip="{Binding Path=ToolTip}" />
+                        </StackPanel>
+                    </Label>
+                </DataTemplate>
+            </avalonDock:DockingManager.Resources>
+
+            <avalonDock:DockingManager.AnchorableTitleTemplate>
+                <StaticResource ResourceKey="DockingWindowTitleDataTemplate" />
+            </avalonDock:DockingManager.AnchorableTitleTemplate>-->
+
+
             <!--<avalonDock:DockingManager.Theme>
                 <avalonDock:Vs2013LightTheme />
             </avalonDock:DockingManager.Theme>-->

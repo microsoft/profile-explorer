@@ -47,6 +47,7 @@ using AvalonDock.Layout.Serialization;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using Microsoft.ApplicationInsights;
+using IRExplorerCore.Utilities;
 using OxyPlot;
 using OxyPlot.Axes;
 using OxyPlot.Wpf;
@@ -1161,6 +1162,13 @@ namespace IRExplorerUI {
             SwitchCompilerTarget("ASM", IRMode.ARM64);
         }
 
+        private void DotNetMenuItem_Click(object sender, RoutedEventArgs e) {
+            SwitchCompilerTarget("DotNet", IRMode.x86_64);
+        }
+        private void DotNetARM64MenuItem_Click(object sender, RoutedEventArgs e) {
+            SwitchCompilerTarget("DotNet", IRMode.ARM64);
+        }
+
         private async Task SetupCompilerTarget() {
             if(!string.IsNullOrEmpty(App.Settings.DefaultCompilerIR)) {
                 SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
@@ -1183,6 +1191,10 @@ namespace IRExplorerUI {
                 }
                 case "ASM": {
                     await SwitchCompilerTarget(new ASMCompilerInfoProvider(irMode, this));
+                    break;
+                }
+                case "DotNet": {
+                    await SwitchCompilerTarget(new DotNetCompilerInfoProvider(irMode, this));
                     break;
                 }
                 default: {
@@ -1312,18 +1324,20 @@ namespace IRExplorerUI {
 
         public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
                                                 ProfileDataProviderOptions options,
+                                                SymbolFileSourceOptions symbolOptions,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(MainDocumentSummary, this);
 
-            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, options,
+            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
+                                                                         options, symbolOptions,
                                                                          progressCallback, cancelableTask);
 
             // Update symbols path if not set already.
             var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
 
             if (!loadedDoc.DebugInfoFileExists) {
-                loadedDoc.DebugInfoFilePath = await PDBDebugInfoProvider.LocateDebugFile(binaryFilePath, options.Symbols);
+                loadedDoc.DebugInfoFilePath = await PDBDebugInfoProvider.LocateDebugInfoFile(binaryFilePath, symbolOptions);
             }
 
             return sessionState_.ProfileData != null;

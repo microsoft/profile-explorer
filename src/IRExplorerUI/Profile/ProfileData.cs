@@ -8,6 +8,7 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
+using IRExplorerCore.Utilities;
 using Microsoft.Windows.EventTracing;
 using ProtoBuf;
 

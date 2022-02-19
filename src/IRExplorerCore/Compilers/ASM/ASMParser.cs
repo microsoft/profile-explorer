@@ -118,7 +118,7 @@ namespace IRExplorerCore.ASM {
             while (!IsEOF()) {
                 if (makeNewBlock_) {
                     // Make a new block.
-                    if (current_.Kind == TokenKind.Number &&
+                    if ((IsNumber() || IsIdentifier()) &&
                         NextTokenIs(TokenKind.Colon) &&
                         TokenLongHexNumber(out long address)) {
                         var newBlock = GetOrCreateBlock(address, function);
@@ -300,7 +300,7 @@ namespace IRExplorerCore.ASM {
 
             if (!(IsNumber() || IsIdentifier()) ||
                 !TokenLongHexNumber(out address)) {
-                ReportErrorAndSkipLine(TokenKind.Number, "Expected line to start with an address");
+                // Ignore lines that don't start with an address (comments, etc).
                 return false;
             }
 

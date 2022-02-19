@@ -24,6 +24,12 @@ namespace IRExplorerCore.IR {
             Inlinees.Add(new StackFrame(function, filePath, line, column));
         }
 
+        public void Reset() {
+            Inlinees = null;
+            Line = 0;
+            Column = 0;
+        }
+
         public string Name => "Source location";
         public TaggedObject Owner { get; set; }
 
