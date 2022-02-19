@@ -345,7 +345,8 @@ namespace IRExplorerUI {
         public static string GetSyntaxHighlightingFilePath() {
             // If a file is not set yet (first run for ex), set the default one.
             var docSettings = Settings.DocumentSettings;
-
+            
+            //? TODO: Each compiler mode should have its own syntax saved
             if (string.IsNullOrEmpty(docSettings.SyntaxHighlightingName)) {
                 docSettings.SyntaxHighlightingName = Session.CompilerInfo.DefaultSyntaxHighlightingFile;
             }

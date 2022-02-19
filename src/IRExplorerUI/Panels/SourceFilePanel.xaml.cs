@@ -136,7 +136,7 @@ namespace IRExplorerUI {
                 TextView.Text = text;
                 disableCaretEvent_ = false;
 
-                PathTextbox.Text = path;
+                SetPanelName(path);
                 ScrollToLine(sourceStartLine);
                 return true;
             }
@@ -144,6 +144,12 @@ namespace IRExplorerUI {
                 Trace.TraceError($"Failed to load source file {path}: {ex.Message}");
                 return false;
             }
+        }
+
+        private void SetPanelName(string path) {
+            TitleSuffix = $" - {Utils.TryGetFileName(path)}";
+            TitleToolTip = path;
+            Session.UpdatePanelTitles();
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e) {
@@ -180,14 +186,14 @@ namespace IRExplorerUI {
             bool funcLoaded = false;
 
             if (loadedDoc.DebugInfoFileExists) {
-                using var debugInfo = new PDBDebugInfoProvider();
+                using var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
 
                 if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
-                    var (sourceFilePath, sourceStartLine) = debugInfo.FindFunctionSourceFilePath(function);
+                    var info = debugInfo.FindFunctionSourceFilePath(function);
 
-                    if (!string.IsNullOrEmpty(sourceFilePath)) {
-                        initialFilePath_ = sourceFilePath;
-                        funcLoaded = await LoadSourceFile(sourceFilePath, sourceStartLine);
+                    if (!string.IsNullOrEmpty(info.FilePath)) {
+                        initialFilePath_ = info.FilePath;
+                        funcLoaded = await LoadSourceFile(info.FilePath, info.Line);
                     }
                 }
             }
@@ -231,6 +237,7 @@ namespace IRExplorerUI {
             }
             else {
                 TextView.Text = $"Failed to load profile source file {sourceFilePath}!";
+                SetPanelName("");
                 return false;
             }
         }

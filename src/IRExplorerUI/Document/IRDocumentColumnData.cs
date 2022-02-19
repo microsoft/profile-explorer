@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using IRExplorerCore.IR;
+using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI {
     public class IRDocumentColumnData {
@@ -188,7 +189,7 @@ namespace IRExplorerUI {
         public int Count => ColumnValues.Count;
 
         public ElementColumnValue this[OptionalColumn column] {
-            get => ColumnValues.GetValueOrNothing(column);
+            get => ColumnValues.GetValueOrNull(column);
         }
 
         public ElementColumnValue this[string columnName] {

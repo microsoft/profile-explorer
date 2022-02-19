@@ -826,8 +826,8 @@
         <Rule color="Variable">%\w+(.\w+)*</Rule>
         <Rule color="CallTarget">@\w+(.\w+)*</Rule>
         <Rule color="Annotation">!\w+([a-z]|[A-Z]|[0-9]|\(|\))*</Rule>
-        <Rule color="Digits">\b((0x)?[0-9a-fA-F]+|[0-9]+)\b</Rule>
-        
+		<Rule color="Digits">\b0[xX]*[0-9a-fA-F]+|(\b\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
+		
         <Keywords color="Attributes">
             <Word>true</Word>
             <Word>false</Word>

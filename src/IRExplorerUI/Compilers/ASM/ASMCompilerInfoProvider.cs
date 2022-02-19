@@ -9,6 +9,7 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.ASM;
 using System;
+using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
@@ -16,6 +17,7 @@ using IRExplorerUI.Profile;
 using IRExplorerCore.IR.Tags;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Media.Animation;
 
 namespace IRExplorerUI.Compilers.ASM {
     public class ASMCompilerInfoProvider : ICompilerInfoProvider {
@@ -34,14 +36,14 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public ISession Session => session_;
 
-        public string CompilerIRName => "ASM";
+        public virtual string CompilerIRName => "ASM";
 
-        public string CompilerDisplayName => "ASM " + ir_.Mode.ToString();
+        public virtual string CompilerDisplayName => "ASM " + ir_.Mode.ToString();
 
-        public string OpenFileFilter => "ASM and Binary Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys|All Files|*.*";
-        public string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
+        public virtual string OpenFileFilter => "ASM and Binary Files|*.asm;*.txt;*.log;*.exe;*.dll;*.sys|All Files|*.*";
+        public virtual string OpenDebugFileFilter => "Debug Files|*.pdb|All Files|*.*";
 
-        public string DefaultSyntaxHighlightingFile => "ASM";
+        public virtual string DefaultSyntaxHighlightingFile => (ir_.Mode == IRMode.ARM64 ?  "ARM64" : "x86") + " ASM IR";
 
         public ICompilerIRInfo IR => ir_;
 
@@ -63,10 +65,8 @@ namespace IRExplorerUI.Compilers.ASM {
             var loadedDoc = Session.SessionState.FindLoadedDocument(section);
             var debugFile = loadedDoc.DebugInfoFilePath;
 
-            if (!string.IsNullOrEmpty(debugFile) &&
-                File.Exists(debugFile)) {
-
-                using var debugInfo = new PDBDebugInfoProvider();
+            if (!string.IsNullOrEmpty(debugFile) && File.Exists(debugFile)) {
+                using var debugInfo = CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
 
                 if (debugInfo.LoadDebugInfo(debugFile)) {
                     debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
@@ -84,11 +84,93 @@ namespace IRExplorerUI.Compilers.ASM {
             return new BasicDiffOutputFilter();
         }
 
+        public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
+            using var info = new PEBinaryInfoProvider(imagePath);
+
+            if (!info.Initialize()) {
+                return new JsonDebugInfoProvider();
+                return null;
+            }
+
+            switch (info.BinaryFileInfo.FileKind) {
+                case BinaryFileKind.Native: {
+                    return new PDBDebugInfoProvider();
+                }
+                case BinaryFileKind.DotNetR2R:
+                case BinaryFileKind.DotNet: {
+                    return new JsonDebugInfoProvider();
+                }
+                default: {
+                    throw new InvalidOperationException();
+                }
+            }
+        }
+
+        public async Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null, string disasmOutputPath = null) {
+            using var info = new PEBinaryInfoProvider(imagePath);
+
+            if (!info.Initialize()) {
+                return Utils.LocateDebugInfoFile(imagePath, ".json");
+            }
+
+            switch (info.BinaryFileInfo.FileKind) {
+                case BinaryFileKind.Native: {
+                    if (options == null) {
+                        // Make sure the binary directory is also included in the symbol search.
+                        options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
+                        options.InsertSymbolPath(imagePath);
+                    }
+
+                    var result = await PDBDebugInfoProvider.LocateDebugInfoFile(info.SymbolFileInfo, options);
+
+                    if (File.Exists(result)) {
+                        return result;
+                    }
+
+                    // Do a simple search otherwise.
+                    return Utils.LocateDebugInfoFile(imagePath, ".pdb");
+                }
+                case BinaryFileKind.DotNetR2R: {
+                    if (!string.IsNullOrEmpty(disasmOutputPath)) {
+                        try {
+                            // When using the external disassembler, the output file
+                            // will be a random temp file, not based on image name.
+                            var path = Path.GetDirectoryName(disasmOutputPath);
+                            return Path.Combine(path, Path.GetFileNameWithoutExtension(disasmOutputPath)) + ".json";
+                        }
+                        catch (Exception ex) {
+                            Trace.TraceError($"Failed to get .NET R2R debug file path for {imagePath}: {ex}");
+                        }
+                    }
+
+                    return Utils.LocateDebugInfoFile(imagePath, ".json");
+                }
+                default: {
+                    throw new InvalidOperationException();
+                }
+            }
+            
+        }
+        public IDisassembler CreateDisassembler(string modulePath) {
+            var info = PEBinaryInfoProvider.GetBinaryFileInfo(modulePath);
+
+            if (info != null) {
+                return new ExternalDisassembler(App.Settings.GetExternalDisassemblerOptions(info.FileKind));
+            }
+
+            // Assume it's a native image.
+            return new ExternalDisassembler(App.Settings.GetExternalDisassemblerOptions(BinaryFileKind.Native));
+        }
+
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             return new BasicBlockFoldingStrategy(function);
         }
 
-        public async Task HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
+        public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
+            return Task.CompletedTask;
+        }
+
+        public async Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
             // Since the ASM blocks don't have a number in the text,
             // attach an overlay label next to the first instr. in the block.
             var overlayHeight = document.TextArea.TextView.DefaultLineHeight;

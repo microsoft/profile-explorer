@@ -15,10 +15,21 @@ using System.Threading;
 using Microsoft.Windows.EventTracing.Processes;
 using System.Text;
 using System.Collections;
+using IRExplorerUI.Compilers;
 using ProtoBuf;
 
+//? TODO
+// - on new image
+//   - locate binary file
+//   - LoadDocument to run disasm and build summary
+//   - locate PDB and populate PdbParser,DebugInfo
+//   - at the end, update SectionPanel.AddOtherSummary
+//
+// image -> moduleInfo
+
+
 namespace IRExplorerUI.Profile {
-    public partial class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
+    public class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
             private ProfileLoadProgressHandler callback_;
 
@@ -78,9 +89,12 @@ namespace IRExplorerUI.Profile {
         }
 
         public ProfileData LoadTrace(string tracePath, string imageName, 
-              ProfileDataProviderOptions options, ProfileLoadProgressHandler progressCallback,
+              ProfileDataProviderOptions options,
+              SymbolFileSourceOptions symbolOptions, 
+              ProfileLoadProgressHandler progressCallback,
               CancelableTask cancelableTask) {
-            return LoadTraceAsync(tracePath, imageName, options, progressCallback, cancelableTask).Result;
+            return LoadTraceAsync(tracePath, imageName, options, symbolOptions,
+                                  progressCallback, cancelableTask).Result;
         }
 
         /*
@@ -367,13 +381,23 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
 
         public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName, 
-                      ProfileDataProviderOptions options, ProfileLoadProgressHandler progressCallback,
+                      ProfileDataProviderOptions options, 
+                      SymbolFileSourceOptions symbolOptions,
+                      ProfileLoadProgressHandler progressCallback,
                       CancelableTask cancelableTask) {
             try {
                 options_ = options;
                 mainModule_ = new ModuleInfo(options, session_);
 
                 // Extract just the file name.
+                var initialImageName = imageName;
+                var image = Utils.TryGetFileName(imageName);
+
+                //? TODO: This is needed only when the already opened file is a DLL and not the EXE
+                //if (!options.BinaryNameWhitelist.Contains(image)) {
+                //    options.BinaryNameWhitelist.Add(image);
+                //}
+
                 imageName = Utils.TryGetFileNameWithoutExtension(imageName);
 
                 times_ = 0;
@@ -443,7 +467,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     try {
                         var symbolData = pendingSymbolData.Result;
 
-                        foreach (var path in options_.Symbols.SymbolSearchPaths) {
+                        foreach (var path in symbolOptions.SymbolSearchPaths) {
                             var directory = Utils.TryGetDirectoryName(path);
                             await symbolData.LoadSymbolsAsync(SymCachePath.Automatic,
                                 new RawSymbolPath(directory),
@@ -477,7 +501,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         }
                         else {
                             if (!imageModuleMap.TryGetValue(queryImage, out var imageModule)) {
-                                if (queryImage.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                                if (queryImage.FileName.Contains(mainModule_.Summary.ModuleName, StringComparison.OrdinalIgnoreCase)) {
                                     // This is the main image, add it to the map.
                                     imageModule = mainModule_;
                                 }
@@ -559,7 +583,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                         index++;
                         var sampleWeight = sample.Weight.TimeSpan;
-                        var moduleName = Utils.TryGetFileNameWithoutExtension(sample.Process.ImageName);
 
                         // Count time for each sample.
                         profileData_.TotalWeight += sampleWeight;
@@ -581,88 +604,148 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         bool isTopFrame = true;
 
                         bool track = false;
+                        int idx = 0;
+                        //var prevFrames = new List<string>(stackFrames.Count);
 
                         //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
                         //? for ex it never gets to main. Easy example is a quicksort impl
                         foreach (var frame in stackFrames) {
+                            idx++;
+
                             // Count exclusive time for each module in the executable. 
                             if (isTopFrame &&
                                 frame.Image?.FileName != null &&
                                 stackModules.Add(frame.Image?.FileName)) {
 
                                 //? TODO: Hack for SPEC runner using a diff binary name
-                                if (frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
-                                    profileData_.AddModuleSample(imageName, sampleWeight);
-                                }
-                                else {
+                                //if (frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
+                                //    profileData_.AddModuleSample(image, sampleWeight);
+                                //}
+                                //else {
                                     profileData_.AddModuleSample(frame.Image.FileName, sampleWeight);
-                                }
+                                //}
                             }
 
-                            if (frame.Image == null) {
-                                prevStackFunc = null;
-                                prevStackProfile = null;
-                                isTopFrame = false;
-                                continue;
-                            }
-                            
-                            var module = await FindModuleInfo(frame.Image);
-                            var symbol = frame.Symbol;
-
-
-                            // Search for a function with the matching RVA.
-
-                            long frameRva = frame.RelativeVirtualAddress.Value;
+                            long frameRva = 0;
                             long funcRva = 0;
                             string funcName = null;
                             string sourceFileName = null;
                             int sourceLineNumber = 0;
+                            ModuleInfo module = null;
 
-                            if (symbol != null) {
-                                //? TODO: This will be removed with sampling redesign
-                                 funcName = symbol.FunctionName;
+                            if (frame.Image == null) {
+                                // sample.IP matches JIT load addr
 
-                                 funcRva = symbol.AddressRange.BaseAddress.Value -
-                                           symbol.Image.AddressRange.BaseAddress.Value;
-                                 sourceLineNumber = symbol.SourceLineNumber;
-                                 sourceFileName = symbol.SourceFileName;
-                                //funcAddress -= 4096; // An extra page size is always added...
+                                //? Assume it's the JIT code, shows up as not belonging to any module.
+                                module = mainModule_;
+
+                                //? TODO: Module DLL name needed in debug file to add proper mapping instead of All
+
+                                if (await module.Initialize(imageName, initialImageName)) {
+
+                                    if (!await module.InitializeDebugInfo()) {
+                                        if (isTopFrame) {
+                                            profileData_.AddModuleSample("Unknown", sampleWeight);
+                                        }
+
+                                        prevStackFunc = null;
+                                        prevStackProfile = null;
+                                        isTopFrame = false;
+                                        //prevFrames.Add("<UNKNOWN>");
+                                      
+
+                                        continue;
+                                    }
+                                }
+
+                                frameRva = sample.InstructionPointer.Value;
+
+                                var funcInfo = module.FindFunctionByRVA2(frameRva);
+
+                                if (funcInfo.IsUnknown) {
+                                    if (isTopFrame) {
+                                        profileData_.AddModuleSample("Unknown", sampleWeight);
+                                    }
+
+                                    prevStackFunc = null;
+                                    prevStackProfile = null;
+                                    isTopFrame = false;
+                                    //prevFrames.Add("<UNKNOWN>");
+
+                                   
+
+                                    continue;
+                                }
+
+                                //Trace.WriteLine($"Found JIT IP {sample.InstructionPointer.Value}: {funcInfo.Name}");
+                                funcName = funcInfo.Name;
+                                funcRva = funcInfo.RVA;
+
+                                var lineInfo = module.FindSourceLineByRVA(funcInfo, frameRva);
+                                sourceFileName = lineInfo.FilePath;
+                                sourceLineNumber = lineInfo.Line;
+
+                                if (funcInfo.HasModuleName) {
+                                    //? TODO: Associate the func somehow with the module in UI
+                                    profileData_.AddModuleSample(funcInfo.ModuleName, sampleWeight);
+                                }
                             }
-                            else if(module.HasDebugInfo) {
-                                //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
-                                (sourceFileName, sourceLineNumber) = module.DebugInfo.FindFunctionSourceFilePathByRVA(frameRva);
+                            //else if(frame.Symbol != null) {
+                            //    //? TODO: This will be removed with sampling redesign
+                            //    module = await FindModuleInfo(frame.Image);
 
-                                //? An extra cache could help
-                                var other = module.FindFunctionByRVA2(frameRva);
-                                funcName = other.Name;
-                                funcRva = other.RVA;
 
-                                //? PubSym overwrites func in tree, keep func
-                                //? WppInitKm
+                            //    // Search for a function with the matching RVA.
+                            //    frameRva = frame.RelativeVirtualAddress.Value;
+                            //    var symbol = frame.Symbol;
+                            //    funcName = symbol.FunctionName;
 
-                                //if (funcName != null) {
-                                //    if (funcName == "WppInitKm") {
-                                //        ;
-                                //    }
+                            //    funcRva = symbol.AddressRange.BaseAddress.Value -
+                            //              symbol.Image.AddressRange.BaseAddress.Value;
+                            //    sourceLineNumber = symbol.SourceLineNumber;
+                            //    sourceFileName = symbol.SourceFileName;
+                            //}
+                            else {
+                                module = await FindModuleInfo(frame.Image);
 
-                               // if (other.Name != funcName) {
-                               //         Trace.WriteLine($"=> Mismatch func {funcName} at RVA {funcRva} with frame {frameRva}, module {frame.Image.FileName}");
-                               //         Trace.WriteLine($"      tree func {other.Name} at RVA {other.RVA} with frame {frameRva}, module {frame.Image.FileName}");
+                                if (module != null && module.HasDebugInfo) {
+                                    //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
+                                    frameRva = frame.RelativeVirtualAddress.Value;
+                                    var funcInfo = module.FindFunctionByRVA2(frameRva);
+                                    funcName = funcInfo.Name;
+                                    funcRva = funcInfo.RVA;
 
-                               //         (funcName, funcRva) = module.FindFunctionByRVA(frameRva);
-                               //     }
-                               //     //    }
-                               //     //    else {
-                               //     //        ;
-                               //     //    }
-                               //// }
+                                    var lineInfo = module.FindSourceLineByRVA(funcInfo, frameRva);
+                                    sourceFileName = lineInfo.FilePath;
+                                    sourceLineNumber = lineInfo.Line;
 
-                                //if (funcName != null) {
-                                //    Trace.WriteLine($"=> Found func without sym {funcName} at RVA {funcRva} with frame {frameRva}, module {frame.Image.FileName}");
-                                //}
-                                //else {
-                                //    Trace.WriteLine($"=> NotFound func without sym at RVA {funcRva} with frame RVA {frameRva}, frame {frame.Address.Value}, module {frame.Image.FileName}");
-                                //}
+                                    //? PubSym overwrites func in tree, keep func
+                                    //? WppInitKm
+
+                                    //if (funcName != null) {
+                                    //    if (funcName == "WppInitKm") {
+                                    //        ;
+                                    //    }
+
+                                    // if (other.Name != funcName) {
+                                    //         Trace.WriteLine($"=> Mismatch func {funcName} at RVA {funcRva} with frame {frameRva}, module {frame.Image.FileName}");
+                                    //         Trace.WriteLine($"      tree func {other.Name} at RVA {other.RVA} with frame {frameRva}, module {frame.Image.FileName}");
+
+                                    //         (funcName, funcRva) = module.FindFunctionByRVA(frameRva);
+                                    //     }
+                                    //     //    }
+                                    //     //    else {
+                                    //     //        ;
+                                    //     //    }
+                                    //// }
+
+                                    //if (funcName != null) {
+                                    //    Trace.WriteLine($"=> Found func without sym {funcName} at RVA {funcRva} with frame {frameRva}, module {frame.Image.FileName}");
+                                    //}
+                                    //else {
+                                    //    Trace.WriteLine($"=> NotFound func without sym at RVA {funcRva} with frame RVA {frameRva}, frame {frame.Address.Value}, module {frame.Image.FileName}");
+                                    //}
+                                }
                             }
 
                             if (funcName == null) {
@@ -672,28 +755,46 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 continue;
                             }
 
-                            //if (funcName.Contains("RtlpHeapGenerateRandomValue32")) {
+                            //if (funcName.Contains("a_fit_segment_end_p")) {
                             //    track = true;
                             //    Trace.WriteLine($"Found tracked: {funcName} at RVA {funcRva} with frame {frameRva}");
+                            //    Trace.WriteLine($"    sample: {sample.Weight.TotalMilliseconds}");
+
+                            //    if (prevStackFunc != null) {
+                            //        Trace.WriteLine($"  => prev func: {prevStackFunc.Name}");
+                            //    }
+                            //    else {
+                            //        Trace.WriteLine($"  => NO prev func");
+                            //    }
+
+                            //    Trace.WriteLine($"   Prev frames: {idx}");
+
+                            //    foreach (var p in prevFrames) {
+                            //        Trace.WriteLine($"   o {p}");
+                            //    }
                             //}
-                            
+
 
                             var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
 
                             if (textFunction == null) {
                                 if (track) {
-                                    Trace.WriteLine($"  - Skip frame {funcName}");
+                                    Trace.WriteLine($"  - Skip missing frame {funcName}");
                                 }
 
                                 prevStackFunc = null;
                                 prevStackProfile = null;
                                 isTopFrame = false;
+
+                                //prevFrames.Add($"<MISSING> {funcName} " + (frame.Symbol != null ? "SYM" : "NOSYM") );
                                 continue;
                             }
                             else {
                                 if (track) {
                                     Trace.WriteLine($"  - Walking frame {funcName}");
                                 }
+
+                                //prevFrames.Add(funcName);
                             }
 
                             //? TODO: Everything here should work only on addresses (func profile as
@@ -739,10 +840,10 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             }
                             
                             // Try to map the sample to all the inlined functions.
-                            if (options_.MarkInlineFunctions && module.HasDebugInfo &&
-                                textFunction.Sections.Count > 0) {
-                                //ProcessInlineeSample(sampleWeight, offset, textFunction, module);
-                            }
+                            //if (options_.MarkInlineFunctions && module.HasDebugInfo &&
+                            //    textFunction.Sections.Count > 0) {
+                            //    ProcessInlineeSample(sampleWeight, offset, textFunction, module);
+                            //}
 
                             isTopFrame = false;
                             prevStackFunc = textFunction;

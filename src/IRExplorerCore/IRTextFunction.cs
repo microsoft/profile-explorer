@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
     public class IRTextFunction {

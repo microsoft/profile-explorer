@@ -7,7 +7,7 @@ using IRExplorerCore.IR;
 using System.Collections.Generic;
 using IRExplorerUI.Query;
 using System.Threading.Tasks;
-using System;
+using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI {
     public interface ICompilerInfoProvider {
@@ -29,9 +29,13 @@ namespace IRExplorerUI {
         void ReloadSettings();
 
         bool AnalyzeLoadedFunction(FunctionIR function, IRTextSection section);
-        Task HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section);
+        Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section);
+        Task HandleLoadedDocument(LoadedDocument document, string modulePath);
         IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function);
         IDiffInputFilter CreateDiffInputFilter();
         IDiffOutputFilter CreateDiffOutputFilter();
+        IDebugInfoProvider CreateDebugInfoProvider(string imagePath);
+        Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null, string disasmOutputPath = null);
+        IDisassembler CreateDisassembler(string modulePath);
     }
 }

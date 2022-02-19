@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using IRExplorerCore;
+using IRExplorerUI.Compilers;
 using Microsoft.Win32;
 using Microsoft.Windows.EventTracing.Processes;
 
@@ -21,12 +22,12 @@ namespace IRExplorerUI {
     public partial class BinaryOpenWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingBinary_;
-        private BinaryDisassemblerOptions options;
+        private ExternalDisassemblerOptions options;
 
         public BinaryOpenWindow(ISession session, bool inDiffMode) {
             InitializeComponent();
             Session = session;
-            Options = App.Settings.DisassemblerOptions;
+            Options = App.Settings.GetExternalDisassemblerOptions(BinaryFileKind.Native);
             InDiffMode = inDiffMode;
 
             DataContext = this;
@@ -48,7 +49,7 @@ namespace IRExplorerUI {
         public bool InputControlsEnabled => !isLoadingBinary_;
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public BinaryDisassemblerOptions Options {
+        public ExternalDisassemblerOptions Options {
             get => options;
             set {
                 options = value;
@@ -58,10 +59,8 @@ namespace IRExplorerUI {
 
         public string BinaryFilePath { get; set; }
         public string DiffBinaryFilePath { get; set; }
-        public string DebugFilePath { get; set; }
-        public string DiffDebugFilePath { get; set; }
-        public string OutputFilePath { get; set; }
-        public string DiffOutputFilePath { get; set; }
+        public DisassemberResult Result { get; set; }
+        public DisassemberResult DiffResult { get; set; }
         public bool InDiffMode { get; set; }
 
         private async void OpenButton_Click(object sender, RoutedEventArgs e) {
@@ -70,15 +69,10 @@ namespace IRExplorerUI {
 
         private async Task OpenFile() {
             BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
-            DebugFilePath = Utils.CleanupPath(DebugFilePath);
             DiffBinaryFilePath = Utils.CleanupPath(DiffBinaryFilePath);
-            DiffDebugFilePath = Utils.CleanupPath(DiffDebugFilePath);
 
             if (Utils.ValidateFilePath(BinaryFilePath, BinaryAutocompleteBox, "binary", this) &&
-                Utils.ValidateOptionalFilePath(DebugFilePath, DebugAutocompleteBox, "debug", this)
-                && (!InDiffMode ||
-                    (Utils.ValidateFilePath(DiffBinaryFilePath, DiffBinaryAutocompleteBox, "binary", this) &&
-                     Utils.ValidateOptionalFilePath(DiffDebugFilePath, DiffDebugAutocompleteBox, "debug", this)))) {
+                (!InDiffMode || (Utils.ValidateFilePath(DiffBinaryFilePath, DiffBinaryAutocompleteBox, "binary", this)))) {
                 if (InDiffMode) {
                     App.Settings.AddRecentComparedFiles(BinaryFilePath, DiffBinaryFilePath);
                 }
@@ -86,20 +80,17 @@ namespace IRExplorerUI {
                     App.Settings.AddRecentFile(BinaryFilePath);
                 }
 
-
-                options.DissasemblerPath = Utils.CleanupPath(options.DissasemblerPath);
+                options.DisassemblerPath = Utils.CleanupPath(options.DisassemblerPath);
                 options.PostProcessorPath = Utils.CleanupPath(options.PostProcessorPath);
                 App.SaveApplicationSettings();
 
                 var task = loadTask_.CreateTask();
                 IsLoadingBinary = true;
 
-                string outputFile = await DisassembleFile(task, BinaryFilePath, DebugFilePath);
-                string diffOutputFile = InDiffMode ? await DisassembleFile(task, DiffBinaryFilePath, DiffDebugFilePath) : null;
+                Result = await DisassembleFile(task, BinaryFilePath);
+                DiffResult = InDiffMode ? await DisassembleFile(task, DiffBinaryFilePath) : null;
 
-                if (outputFile != null) {
-                    OutputFilePath = outputFile;
-                    DiffOutputFilePath = diffOutputFile;
+                if (Result != null) {
                     DialogResult = true;
                     Close();
                 }
@@ -112,16 +103,15 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task<string> DisassembleFile(CancelableTask task, string binaryFilePath, string debugFilePath) {
-            var dissasembler = new BinaryDisassembler(Options);
-            var outputFile = await dissasembler.DisassembleAsync(binaryFilePath, debugFilePath, progressInfo => {
+        private async Task<DisassemberResult> DisassembleFile(CancelableTask task, string binaryFilePath) {
+            return await Session.DisassembleBinary(binaryFilePath, progressInfo => {
                 Dispatcher.BeginInvoke((Action)(() => {
                     LoadProgressBar.Maximum = progressInfo.Total;
                     LoadProgressBar.Value = progressInfo.Current;
 
                     LoadProgressLabel.Text = progressInfo.Stage switch {
-                        BinaryDisassemblerStage.Disassembling => "Disassembling",
-                        BinaryDisassemblerStage.PostProcessing => "Post-processing",
+                        DisassemblerStage.Disassembling => "Disassembling",
+                        DisassemblerStage.PostProcessing => "Post-processing",
                     };
 
                     if (progressInfo.Total != 0) {
@@ -134,8 +124,6 @@ namespace IRExplorerUI {
                     }
                 }));
             }, task);
-
-            return outputFile;
         }
 
         private void CancelButton_Click(object sender, RoutedEventArgs e) {
@@ -181,7 +169,6 @@ namespace IRExplorerUI {
             else {
                 var pathPair = menuItem.Tag as Tuple<string, string>;
                 BinaryFilePath = pathPair.Item1;
-                DebugFilePath = pathPair.Item2;
                 await OpenFile();
             }
         }
@@ -193,14 +180,8 @@ namespace IRExplorerUI {
         private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(BinaryAutocompleteBox, "Binary Files|*.exe;*.dll;*.sys;|All Files|*.*");
 
-        private void DebugBrowseButton_Click(object sender, RoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(DebugAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
-
         private void DiffBinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(DiffBinaryAutocompleteBox, "Binary Files|*.exe;*.dll;*.sys;|All Files|*.*");
-
-        private void DiffDebugBrowseButton_Click(object sender, RoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(DiffDebugAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
 
         private void DisasmBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(DisasmAutocompleteBox, "Executables|*.exe|All Files|*.*");
@@ -220,41 +201,22 @@ namespace IRExplorerUI {
         }
         
         private void DetectButton_Click(object sender, RoutedEventArgs e) {
-            var disasmPath = Options.DetectDissasembler();
+            var disasmPath = Options.DetectDisassembler();
 
             if(string.IsNullOrEmpty(disasmPath)) {
                 using var centerForm = new DialogCenteringHelper(this);
 
-                MessageBox.Show("Failed to find system dissasembler", "IR Explorer",
+                MessageBox.Show("Failed to find system disassembler", "IR Explorer",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
 
-            Options.DissasemblerPath = disasmPath;
+            Options.DisassemblerPath = disasmPath;
             NotifyPropertyChanged(nameof(Options));
         }
 
         public void NotifyPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        private void BinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
-            var path = Utils.FindPDBFile(Utils.CleanupPath(BinaryFilePath));
-
-            if (path != null && string.IsNullOrEmpty(DebugFilePath)) {
-                
-                DebugAutocompleteBox.Text = path;
-                DebugFilePath = path;
-            }
-        }
-
-        private void DiffBinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
-            var path = Utils.FindPDBFile(Utils.CleanupPath(DiffBinaryFilePath));
-
-            if (path != null && string.IsNullOrEmpty(DiffDebugFilePath)) {
-                DiffDebugAutocompleteBox.Text = path;
-                DiffDebugFilePath = path;
-            }
         }
     }
 }

@@ -123,7 +123,9 @@ namespace IRExplorerUI.Controls {
 
         protected override void OnPreviewMouseDown(MouseButtonEventArgs e) {
             base.OnPreviewMouseDown(e);
-            BringToFront();
+            //? TODO: This breaks the ComboBox in the documents options panel
+            //? by bringing the panel on top of the ComboBox on mouse down when selecting item
+            //BringToFront();
         }
 
         protected override void OnInitialized(EventArgs e) {

@@ -69,14 +69,14 @@ namespace IRExplorerUI {
                     loadedDoc = await OpenSessionDocument(filePath);
                     failed = loadedDoc == null;
                 }
-                else if (Utils.IsExecutableFile(filePath)) {
+                else if (Utils.IsBinaryFile(filePath)) {
                     loadedDoc = await OpenBinaryDocument(filePath);
                     failed = loadedDoc == null;
                 }
             }
 
             if(loadedDoc == null && !failed) {
-                loadedDoc = await OpenIRDocument(filePath);
+                loadedDoc = await OpenIRDocument(filePath, filePath);
             }
 
             if (loadedDoc == null) {
@@ -88,56 +88,74 @@ namespace IRExplorerUI {
             return loadedDoc;
         }
 
-        private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
-            var options = App.Settings.DisassemblerOptions;
-            
-            if (!File.Exists(options.DissasemblerPath)) {
-                var disasmPath = options.DetectDissasembler();
+        public async Task<DisassemberResult> DisassembleBinary(string filePath, DisassemblerProgressHandler progressCallback = null,
+                                                               CancelableTask cancelableTask = null) {
+            // Identify compiler target and switch IR mode.
+            var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
 
-                if (string.IsNullOrEmpty(disasmPath)) {
-                    using var centerForm = new DialogCenteringHelper(this);
-
-                    MessageBox.Show("Failed to find system dissasembler", "IR Explorer",
-                                    MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return null;
-                }
-
-                options.DissasemblerPath = disasmPath;
-                App.SaveApplicationSettings();
-            }
-
-            var dissasembler = new BinaryDisassembler(App.Settings.DisassemblerOptions);
-            var outputFile = await dissasembler.DisassembleAsync(filePath, null);
-
-            if (outputFile != null) {
-                // Identify compiler target and switch IR mode.
-                var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
-
-                if (binaryInfo != null) {
-                    switch (binaryInfo.Architecture) {
-                        case System.Reflection.PortableExecutable.Machine.I386:
-                        case System.Reflection.PortableExecutable.Machine.Amd64: {
-                            SwitchCompilerTarget("ASM", IRMode.x86_64);
-                            break;
+            if (binaryInfo != null) {
+                switch (binaryInfo.Architecture) {
+                    case System.Reflection.PortableExecutable.Machine.I386:
+                    case System.Reflection.PortableExecutable.Machine.Amd64: {
+                        switch (binaryInfo.FileKind) {
+                            case BinaryFileKind.Native: {
+                                SwitchCompilerTarget("ASM", IRMode.x86_64);
+                                break;
+                            }
+                            case BinaryFileKind.DotNetR2R:
+                            case BinaryFileKind.DotNet: {
+                                SwitchCompilerTarget("DotNet", IRMode.x86_64);
+                                break;
+                            }
                         }
-                        case System.Reflection.PortableExecutable.Machine.Arm:
-                        case System.Reflection.PortableExecutable.Machine.Arm64: {
-                            SwitchCompilerTarget("ASM", IRMode.ARM64);
-                            break;
+
+                        break;
+                    }
+                    case System.Reflection.PortableExecutable.Machine.Arm:
+                    case System.Reflection.PortableExecutable.Machine.Arm64: {
+                        switch (binaryInfo.FileKind) {
+                            case BinaryFileKind.Native: {
+                                SwitchCompilerTarget("ASM", IRMode.ARM64);
+                                break;
+                            }
+                            case BinaryFileKind.DotNetR2R:
+                            case BinaryFileKind.DotNet: {
+                                SwitchCompilerTarget("DotNet", IRMode.ARM64);
+                                break;
+                            }
                         }
+                        break;
                     }
                 }
+            }
 
-                var loadedDoc = await OpenIRDocument(outputFile, filePath);
+            // Try to run disassembler.
+            var disassembler = compilerInfo_.CreateDisassembler(filePath);
 
-                if (loadedDoc != null) {
-                    loadedDoc.BinaryFilePath = filePath;
+            if (disassembler == null || !disassembler.EnsureDisassemblerAvailable()) {
+                return null;
+            }
 
-                    //? TODO: Use PDB exe info PEBinaryInfoProvider.GetSymbolFileInfo(filePath);
-                    loadedDoc.DebugInfoFilePath = Utils.FindPDBFile(filePath);
-                    UpdateWindowTitle();
-                    return loadedDoc;
-                }
+            return await disassembler.DisassembleAsync(filePath, compilerInfo_, progressCallback, cancelableTask);
+        }
+
+        private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
+            var disasmResult = await DisassembleBinary(filePath);
+
+            if (disasmResult == null) {
+                using var centerForm = new DialogCenteringHelper(this);
+                MessageBox.Show("Failed to find system disassembler", "IR Explorer",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return null;
+            }
+
+            var loadedDoc = await OpenIRDocument(disasmResult.DisassemblyPath, filePath);
+
+            if (loadedDoc != null) {
+                loadedDoc.BinaryFilePath = filePath;
+                loadedDoc.DebugInfoFilePath = disasmResult.DebugInfoPath;
+                UpdateWindowTitle();
+                return loadedDoc;
             }
             
             return null;
@@ -483,11 +501,12 @@ namespace IRExplorerUI {
             SectionPanel.AddOtherSummary(summary);
         }
 
-        private LoadedDocument LoadDocument(string filePath, string moduleName, Guid id, ProgressInfoHandler progressHandler) {
+        private LoadedDocument LoadDocument(string filePath, string modulePath, Guid id, ProgressInfoHandler progressHandler) {
             try {
-                var result = new LoadedDocument(filePath, moduleName, id);
+                var result = new LoadedDocument(filePath, modulePath, id);
                 result.Loader = new DocumentSectionLoader(filePath, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
+                compilerInfo_.HandleLoadedDocument(result, modulePath);
                 return result;
             }
             catch (Exception ex) {
@@ -496,10 +515,10 @@ namespace IRExplorerUI {
             }
         }
 
-        private LoadedDocument LoadDocument(byte[] data, string filePath, string moduleName, Guid id, 
+        private LoadedDocument LoadDocument(byte[] data, string filePath, string modulePath, Guid id, 
                                             ProgressInfoHandler progressHandler) {
             try {
-                var result = new LoadedDocument(filePath, moduleName, id);
+                var result = new LoadedDocument(filePath, modulePath, id);
                 result.Loader = new DocumentSectionLoader(data, compilerInfo_.IR);
                 result.Summary = result.Loader.LoadDocument(progressHandler);
                 return result;
@@ -1237,11 +1256,11 @@ namespace IRExplorerUI {
             var result = openWindow.ShowDialog();
 
             if (result.HasValue && result.Value) {
-                var loadedDoc = await OpenDocument(openWindow.OutputFilePath);
+                var loadedDoc = await OpenDocument(openWindow.Result.DisassemblyPath);
                 
                 if(loadedDoc != null) {
                     loadedDoc.BinaryFilePath = openWindow.BinaryFilePath;
-                    loadedDoc.DebugInfoFilePath = openWindow.DebugFilePath;
+                    loadedDoc.DebugInfoFilePath = openWindow.Result.DebugInfoPath;
                     UpdateWindowTitle();
                 }
             }
@@ -1254,13 +1273,13 @@ namespace IRExplorerUI {
 
             if (result.HasValue && result.Value) {
                 var (baseLoadedDoc, diffLoadedDoc) = 
-                    await OpenBaseDiffsDocuments(openWindow.OutputFilePath,
-                                                 openWindow.DiffOutputFilePath);
+                    await OpenBaseDiffsDocuments(openWindow.Result.DisassemblyPath,
+                                                 openWindow.DiffResult.DisassemblyPath);
                 if (baseLoadedDoc != null && diffLoadedDoc != null) {
                     baseLoadedDoc.BinaryFilePath = openWindow.BinaryFilePath;
-                    baseLoadedDoc.DebugInfoFilePath = openWindow.DebugFilePath;
+                    baseLoadedDoc.DebugInfoFilePath = openWindow.Result.DebugInfoPath;
                     diffLoadedDoc.BinaryFilePath = openWindow.DiffBinaryFilePath;
-                    diffLoadedDoc.DebugInfoFilePath = openWindow.DiffDebugFilePath;
+                    diffLoadedDoc.DebugInfoFilePath = openWindow.DiffResult.DebugInfoPath;
                     UpdateWindowTitle();
                 }
             }

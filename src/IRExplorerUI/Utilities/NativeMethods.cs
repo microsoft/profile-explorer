@@ -117,5 +117,6 @@ namespace IRExplorerUI {
         public static extern uint SymSetOptions(uint options);
 
         public const uint SYMOPT_DEBUG = 0x80000000;
+        public const uint SYMOPT_EXACT_SYMBOLS = 0x00000400;
     }
 }

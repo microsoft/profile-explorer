@@ -23,9 +23,12 @@ namespace IRExplorerUI {
 
     public class JsonUtils {
         public static JsonSerializerOptions GetJsonOptions() {
-            var options = new JsonSerializerOptions();
-            options.WriteIndented = true;
-            options.PropertyNameCaseInsensitive = true;
+            var options = new JsonSerializerOptions {
+                WriteIndented = true, 
+                PropertyNameCaseInsensitive = true, 
+                IgnoreReadOnlyProperties = true
+            };
+
             options.Converters.Add(new JsonColorConverter());
             options.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
             return options;

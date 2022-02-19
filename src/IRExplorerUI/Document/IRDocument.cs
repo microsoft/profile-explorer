@@ -2401,7 +2401,7 @@ namespace IRExplorerUI {
 
             // Do compiler-specifiec document work.
             ColumnData = new IRDocumentColumnData(function_.InstructionCount);
-            await Session.CompilerInfo.HandleLoadedDocument(this, function_, section_);
+            await Session.CompilerInfo.HandleLoadedSection(this, function_, section_);
         }
 
         private void CloneOtherSectionAnnotations(IRTextSection otherSection) {

@@ -3,23 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31612.314
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleTester", "ConsoleTester\ConsoleTester.csproj", "{8FA8BEAA-F47C-4B1B-B95F-E0A0DBE3AA79}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCore", "IRExplorerCore\IRExplorerCore.csproj", "{74EA0CBC-6A4A-455F-B978-D8F4E361E19A}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCoreTests", "IRExplorerCoreUnitTests\IRExplorerCoreTests.csproj", "{CB6DD82B-FF3A-4BA9-BEDE-7B73B84204FF}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerUI", "IRExplorerUI\IRExplorerUI.csproj", "{23169CA2-2157-4978-A8AF-CF360540F467}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientUITests", "ClientUITests\ClientUITests.csproj", "{A853A439-AD83-48F8-B924-B7EE3910E721}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IRExplorerExtension", "VSExtension\IRExplorerExtension.csproj", "{DF5E31FD-A162-4053-B7C6-50C196CF60E3}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IRExplorerCmd", "IRExplorerCmd\IRExplorerCmd.csproj", "{3EC127DC-070C-4610-AD7B-A95FB29D72A0}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{97556D7C-B58A-4BBF-AB5D-0E893CBFC022}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{A7ADE973-6B3C-41A1-BDD5-8B8A500E321E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{11DEE166-9224-42F9-92C6-A6447A90C31B}"
 EndProject
@@ -30,6 +14,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "External", "External", "{9A2F89BD-58B1-4E31-A0CF-F4D3AFB3F02B}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TreeListView", "external\TreeListView\TreeListView.csproj", "{D64FF95C-C555-458B-BCB9-3AD41AF95084}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GrpcLib", "ClientServer\GrpcLib.csproj", "{D96DF738-CE6B-4037-8449-4DA6C5169108}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,6 +45,22 @@ Global
 		{23169CA2-2157-4978-A8AF-CF360540F467}.Release|x64.Build.0 = Release|Any CPU
 		{23169CA2-2157-4978-A8AF-CF360540F467}.Release|x86.ActiveCfg = Release|Any CPU
 		{23169CA2-2157-4978-A8AF-CF360540F467}.Release|x86.Build.0 = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|x64.Build.0 = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Debug|x86.Build.0 = Debug|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|ARM64.Build.0 = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|x64.ActiveCfg = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|x64.Build.0 = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|x86.ActiveCfg = Release|Any CPU
+		{93F5E9D4-1135-4649-88F6-2F1A6D23FBEE}.Release|x86.Build.0 = Release|Any CPU
 		{FD944310-BD36-4076-9C8E-A80589E26BFF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FD944310-BD36-4076-9C8E-A80589E26BFF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD944310-BD36-4076-9C8E-A80589E26BFF}.Debug|ARM64.ActiveCfg = Debug|Any CPU
@@ -89,6 +91,22 @@ Global
 		{D64FF95C-C555-458B-BCB9-3AD41AF95084}.Release|x64.Build.0 = Release|Any CPU
 		{D64FF95C-C555-458B-BCB9-3AD41AF95084}.Release|x86.ActiveCfg = Release|Any CPU
 		{D64FF95C-C555-458B-BCB9-3AD41AF95084}.Release|x86.Build.0 = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|x64.Build.0 = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Debug|x86.Build.0 = Debug|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|ARM64.Build.0 = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|x64.ActiveCfg = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|x64.Build.0 = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|x86.ActiveCfg = Release|Any CPU
+		{D96DF738-CE6B-4037-8449-4DA6C5169108}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

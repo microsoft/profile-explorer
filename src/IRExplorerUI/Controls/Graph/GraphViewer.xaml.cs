@@ -292,7 +292,7 @@ namespace IRExplorerUI {
             var cache = FunctionAnalysisCache.Get(block.ParentFunction);
             var dominatorAlgorithm = await getDominators(cache).ConfigureAwait(true);
 
-            foreach (var dominator in dominatorAlgorithm.GetDominators(block)) {
+            foreach (var dominator in dominatorAlgorithm.EnumerateDominators(block)) {
                 MarkNode(GetBlockNode(dominator), style);
             }
         }

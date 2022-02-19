@@ -39,17 +39,7 @@ namespace IRExplorerExtension {
                 if (EnsurePane()) {
                     string text = $"{DateTime.Now}: {message}\n";
                     panel_.OutputStringThreadSafe(text);
-
-                    if (isError && InitializeTelemetry()) {
-                        telemetry_.TrackEvent("Extension error", new Dictionary<string, string> {
-                            {"Message", message},
-                            {"Debugger attached", DebuggerInstance.InBreakMode.ToString()},
-                            {"Client connected", ClientInstance.IsConnected.ToString()}
-                        });
-
-                        telemetry_.Flush();
-                    }
-
+                    
 #if DEBUG
                     if (Debugger.IsAttached) {
                         Debug.Write(text);

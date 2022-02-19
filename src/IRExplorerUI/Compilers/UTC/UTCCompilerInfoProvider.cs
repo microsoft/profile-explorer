@@ -60,6 +60,18 @@ namespace IRExplorerUI.Compilers.UTC {
             return new UTCDiffOutputFilter();
         }
 
+        public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
+            return new PDBDebugInfoProvider();
+        }
+
+        public async Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options, string disasmOutputPath) {
+            return Utils.LocateDebugInfoFile(imagePath, ".pdb");
+        }
+
+        public IDisassembler CreateDisassembler(string imagePath) {
+            return null;
+        }
+
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() {
             UTCBuiltinInterferenceQuery.GetDefinition(),
             UTCRegisterQuery.GetDefinition(),
@@ -117,7 +129,10 @@ namespace IRExplorerUI.Compilers.UTC {
             return true;
         }
 
-        public Task HandleLoadedDocument(IRDocument document, FunctionIR function, IRTextSection section) {
+        public Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
+            return Task.CompletedTask;
+        }
+        public Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
             return Task.CompletedTask;
         }
 

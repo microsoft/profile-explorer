@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using IRExplorerCore;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;
 
@@ -17,6 +18,7 @@ namespace IRExplorerUI {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingProfile_;
         private ProfileDataProviderOptions options_;
+        private SymbolFileSourceOptions symbolOptions_;
 
         public ProfileLoadWindow(ISession session) {
             InitializeComponent();
@@ -25,19 +27,31 @@ namespace IRExplorerUI {
             loadTask_ = new CancelableTaskInstance();
 
             Options = App.Settings.ProfileOptions;
+            SymbolOptions = App.Settings.SymbolOptions;
             var loadedDoc = Session.SessionState.FindLoadedDocument(Session.MainDocumentSummary);
 
-            if (loadedDoc.BinaryFileExists) {
-                BinaryFilePath = loadedDoc.BinaryFilePath;
+            // For executables, try to set the executable directory as an optional debug source.
+            if (loadedDoc.BinaryFileExists && Utils.IsExecutableFile(loadedDoc.BinaryFilePath)) {
+                SetAdditionalDirectories(loadedDoc.BinaryFilePath).RunSynchronously();
+            }
+        }
 
-                if (loadedDoc.DebugInfoFileExists) {
-                    var debugPath = Utils.TryGetDirectoryName(loadedDoc.DebugInfoFilePath);
+        private async Task SetAdditionalDirectories(string binaryFilePath) {
+            var binaryDir = Utils.TryGetDirectoryName(binaryFilePath);
 
-                    if (!options_.Symbols.HasSymbolPath(debugPath)) {
-                        Options.Symbols.SymbolSearchPaths.Insert(0, debugPath);
-                    }
+            if (string.IsNullOrEmpty(binaryDir)) {
+                return;
+            }
 
-                }
+            if (!Options.HasBinaryPath(binaryFilePath)) {
+                Options.BinarySearchPaths.Insert(0, binaryDir);
+                OnPropertyChange(nameof(Options));
+            }
+
+            //? TODO: Use InsertSymbolPath
+            if (!SymbolOptions.HasSymbolPath(binaryDir)) {
+                SymbolOptions.SymbolSearchPaths.Insert(0, binaryDir);
+                OnPropertyChange(nameof(SymbolOptions));
             }
         }
 
@@ -68,6 +82,16 @@ namespace IRExplorerUI {
             }
         }
 
+        public SymbolFileSourceOptions SymbolOptions {
+            get {
+                return symbolOptions_;
+            }
+            set {
+                symbolOptions_ = value;
+                OnPropertyChange(nameof(SymbolOptions));
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public void OnPropertyChange(string propertyname) {
@@ -82,10 +106,8 @@ namespace IRExplorerUI {
             ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
             BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
 
-            if (Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this)
-                //Utils.ValidateFilePath(SymbolPath, SymbolAutocompleteBox, "debug", this)
-                ) {
-                //? TODO: Save the entire state offor the Recent menu - could serialize the Options 
+            if (Utils.ValidateFilePath(ProfileFilePath, ProfileAutocompleteBox, "profile", this)) {
+                //? TODO: Save the entire state for the Recent menu - could serialize the Options 
                 //? and save it as a string
                 App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, "");
                 App.SaveApplicationSettings();
@@ -95,7 +117,8 @@ namespace IRExplorerUI {
                 IsLoadingProfile = true;
 
 
-                if (await Session.LoadProfileData(ProfileFilePath, BinaryFilePath, options_, progressInfo => {
+                if (await Session.LoadProfileData(ProfileFilePath, BinaryFilePath, 
+                                                  options_, symbolOptions_, progressInfo => {
                     Dispatcher.BeginInvoke((Action)(() => {
                         LoadProgressBar.Maximum = progressInfo.Total;
                         LoadProgressBar.Value = progressInfo.Current;
@@ -121,7 +144,7 @@ namespace IRExplorerUI {
                     Close();
                 }
                 else if(!task.IsCanceled) {
-                    MessageBox.Show($"Filed to load profile file {ProfileFilePath}", "IR Explorer",
+                    MessageBox.Show($"Failed to load profile file {ProfileFilePath}", "IR Explorer",
                                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
 
@@ -138,20 +161,13 @@ namespace IRExplorerUI {
             DialogResult = false;
             Close();
         }
-
-        private void Window_Loaded(object sender, RoutedEventArgs e) {
-            ProfileAutocompleteBox.Focus();
-        }
-
+        
         private void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*");
 
         private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(BinaryAutocompleteBox, "Binary Files|*.exe;*.dll;*.sys;|All Files|*.*");
-
-        private void DebugBrowseButton_OnClick(object sender, RoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(SymbolAutocompleteBox, "Debug Info Files|*.pdb|All Files|*.*");
-
+            Utils.ShowOpenFileDialog(BinaryAutocompleteBox, Session.CompilerInfo.OpenFileFilter);
+        
         private void RecentButton_Click(object sender, RoutedEventArgs e) {
             var menu = RecentButton.ContextMenu;
             menu.Items.Clear();
@@ -187,6 +203,14 @@ namespace IRExplorerUI {
                 BinaryAutocompleteBox.Text = pathPair.Item2;
                 SymbolAutocompleteBox.Text = pathPair.Item3;
                 await OpenFiles();
+            }
+        }
+
+        private async void BinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
+            var binaryFilePath = BinaryAutocompleteBox.Text;
+
+            if (File.Exists(binaryFilePath) && Utils.IsExecutableFile(binaryFilePath)) {
+                await SetAdditionalDirectories(binaryFilePath);
             }
         }
     }

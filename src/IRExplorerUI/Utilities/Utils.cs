@@ -865,6 +865,8 @@ namespace IRExplorerUI {
                 return null;
             }
 
+            Trace.TraceInformation($"Executing tool {path} with args {args}");
+
             var outputText = new StringBuilder();
             var procInfo = new ProcessStartInfo(path) {
                 Arguments = args,
@@ -876,7 +878,7 @@ namespace IRExplorerUI {
 
             if (envVariables != null) {
                 foreach (var pair in envVariables) {
-                    procInfo.EnvironmentVariables.Add(pair.Key, pair.Value);
+                    procInfo.EnvironmentVariables[pair.Key] = pair.Value;
                 }
             }
 
@@ -944,14 +946,14 @@ namespace IRExplorerUI {
             return null;
         }
 
-        public static string FindPDBFile(string binaryFile) {
+        public static string LocateDebugInfoFile(string imagePath, string extension) {
             try {
-                if (!File.Exists(binaryFile)) {
+                if (!File.Exists(imagePath)) {
                     return null;
                 }
 
-                var path = Path.GetDirectoryName(binaryFile);
-                var pdbPath = Path.Combine(path, Path.GetFileNameWithoutExtension(binaryFile)) + ".pdb";
+                var path = Path.GetDirectoryName(imagePath);
+                var pdbPath = Path.Combine(path, Path.GetFileNameWithoutExtension(imagePath)) + extension;
 
                 if (File.Exists(pdbPath)) {
                     return pdbPath;
@@ -964,10 +966,14 @@ namespace IRExplorerUI {
             return null;
         }
 
-        public static bool IsExecutableFile(string filePath) {
+        public static bool IsBinaryFile(string filePath) {
             return FileHasExtension(filePath, ".exe") ||
                    FileHasExtension(filePath, ".dll") ||
                    FileHasExtension(filePath, ".sys");
+        }
+
+        public static bool IsExecutableFile(string filePath) {
+            return FileHasExtension(filePath, ".exe");
         }
 
         public static bool FileHasExtension(string filePath, string extension) {

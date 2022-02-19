@@ -27,14 +27,11 @@ namespace IRExplorerUI.Profile {
     [ProtoContract(SkipConstructor = true)]
     public class ProfileDataProviderOptions : SettingsBase {
         [ProtoMember(1)]
-        public SymbolFileSourceOptions Symbols { get; set; }
-        [ProtoMember(2)]
         public List<string> BinarySearchPaths { get; set; }
-        [ProtoMember(3)]
+        [ProtoMember(2)]
         public List<string> BinaryNameWhitelist { get; set; }
-        [ProtoMember(4)]
+        [ProtoMember(3)]
         public bool MarkInlineFunctions { get; set; }
-
 
         public ProfileDataProviderOptions() {
             Reset();
@@ -44,15 +41,17 @@ namespace IRExplorerUI.Profile {
             InitializeReferenceMembers();
             MarkInlineFunctions = true;
         }
+        public bool HasBinaryPath(string path) {
+            path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
+            return BinarySearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
+        }
 
         [ProtoAfterDeserialization]
         private void InitializeReferenceMembers() {
-            Symbols ??= new SymbolFileSourceOptions();
             BinarySearchPaths ??= new List<string>();
             BinaryNameWhitelist ??= new List<string>();
         }
-
-
+        
         public override SettingsBase Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<ProfileDataProviderOptions>(serialized);
@@ -61,12 +60,14 @@ namespace IRExplorerUI.Profile {
     
     public interface IProfileDataProvider {
         ProfileData LoadTrace(string tracePath, string imageName,
-                              ProfileDataProviderOptions options, 
+                              ProfileDataProviderOptions options,
+                              SymbolFileSourceOptions symbolOptions,
                               ProfileLoadProgressHandler progressCallback,
                               CancelableTask cancelableTask = null);
 
         Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
                                          ProfileDataProviderOptions options,
+                                         SymbolFileSourceOptions symbolOptions,
                                          ProfileLoadProgressHandler progressCallback,
                                          CancelableTask cancelableTask = null);
     }

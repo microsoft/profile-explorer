@@ -6,45 +6,17 @@ using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorerUI.Compilers {
-    public struct DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
-        public string Name;
-        public long RVA;
-        public long Size;
-
-        public long StartRVA => RVA;
-        public long EndRVA => RVA + Size - 1;
-
-        public DebugFunctionInfo(string name, long rva, long size) {
-            Name = name;
-            RVA = rva;
-            Size = size;
-        }
-
-        public override bool Equals(object obj) {
-            return obj is DebugFunctionInfo info && Equals(info);
-        }
-
-        public bool Equals(DebugFunctionInfo other) {
-            return RVA == other.RVA &&
-                   Size == other.Size;
-        }
-
-        public override int GetHashCode() {
-            return HashCode.Combine(Name, RVA, Size);
-        }
-    }
-
-    public interface IDebugInfoProvider {
+    public interface IDebugInfoProvider : IDisposable {
+        bool LoadDebugInfo(string debugFilePath);
         bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
         bool AnnotateSourceLocations(FunctionIR function, string functionName);
         void Dispose();
         IEnumerable<DebugFunctionInfo> EnumerateFunctions();
-        (string Name, long RVA) FindFunctionByRVA(long rva);
-        (string Path, int LineNumber) FindFunctionSourceFilePath(IRTextFunction textFunc);
-        (string Path, int LineNumber) FindFunctionSourceFilePath(string functionName);
-        (string Path, int LineNumber) FindFunctionSourceFilePathByRVA(long rva);
-        int FindLineByRVA(long rva);
-        bool LoadDebugInfo(string debugFilePath);
+        DebugFunctionInfo FindFunction(string functionName);
+        DebugFunctionInfo FindFunctionByRVA(long rva);
+        SourceLineInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
+        SourceLineInfo FindFunctionSourceFilePath(string functionName);
+        SourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva);
     }
 
     [ProtoContract(SkipConstructor = true)]
@@ -65,9 +37,23 @@ namespace IRExplorerUI.Compilers {
             return SymbolSearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
         }
 
+        public void InsertSymbolPath(string path) {
+            if (HasSymbolPath(path)) {
+                return;
+            }
+
+            path = Utils.TryGetDirectoryName(path);
+
+            if (!string.IsNullOrEmpty(path)) {
+                SymbolSearchPaths.Insert(0, path);
+            }
+        }
+
         public SymbolFileSourceOptions() {
             Reset();
         }
+
+        public static SymbolFileSourceOptions Default = new SymbolFileSourceOptions();
 
         public override void Reset() {
             InitializeReferenceMembers();
@@ -90,21 +76,5 @@ namespace IRExplorerUI.Compilers {
         public string FileName { get; set; }
         public Guid Id { get; set; }
         public int Age { get; set; }
-    }
-
-    public class BinaryFileDescription {
-        public string FilePath { get; set; }
-        public Machine Architecture { get; set; }
-        public long TimeStamp { get; set; }
-        public long ImageSize { get; set; }
-        public long CodeSize { get; set; }
-        public int MajorVersion { get; set; }
-        public int MinorVersion { get; set; }
-
-    }
-
-    public interface IBinaryInfoProvider {
-        SymbolFileDescriptor SymbolFileInfo { get; }
-        BinaryFileDescription BinaryFileInfo { get; }
     }
 }

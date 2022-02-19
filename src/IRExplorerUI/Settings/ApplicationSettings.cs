@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using IRExplorerCore;
+using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
 using ProtoBuf;
@@ -72,10 +73,13 @@ namespace IRExplorerUI {
         public IRMode DefaultIRMode;
 
         [ProtoMember(17)]
-        public BinaryDisassemblerOptions DisassemblerOptions;
+        public Dictionary<BinaryFileKind, ExternalDisassemblerOptions> ExternalDisassemblerOptions;
 
         [ProtoMember(18)]
         public ProfileDataProviderOptions ProfileOptions;
+
+        [ProtoMember(19)]
+        public SymbolFileSourceOptions SymbolOptions { get; set; }
 
         public ApplicationSettings() {
             Reset();
@@ -107,13 +111,24 @@ namespace IRExplorerUI {
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
-            DisassemblerOptions ??= new BinaryDisassemblerOptions();
+            ExternalDisassemblerOptions ??= new Dictionary<BinaryFileKind, ExternalDisassemblerOptions>();
             ProfileOptions ??= new ProfileDataProviderOptions();
+            SymbolOptions ??= new SymbolFileSourceOptions();
 
             //? REMOVE
             /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {
             //DocumentSettings.SyntaxHighlightingName = "UTC IR";
             //}
+        }
+
+        public ExternalDisassemblerOptions GetExternalDisassemblerOptions(BinaryFileKind fileKind) {
+            if (ExternalDisassemblerOptions.TryGetValue(fileKind, out var options)) {
+                return options;
+            }
+
+            options = new ExternalDisassemblerOptions(fileKind);
+            ExternalDisassemblerOptions[fileKind] = options;
+            return options;
         }
 
         public void AddRecentFile(string path) {

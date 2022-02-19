@@ -229,7 +229,6 @@
 		</Span>
 		
 		<Rule color="Pragma">PRAGMA(\s?\w*\s?)*</Rule>
-			
-        <Rule color="Digits">\b0[xX][0-9a-fA-F]+|(\b(?&lt;!\$)\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
+        <Rule color="Digits">\b0[xX]*[0-9a-fA-F]+|(\b\d+(\.[0-9]+)?|\.[0-9]+)([eE][+-]?[0-9]+)?</Rule>
    </RuleSet>
 </SyntaxDefinition>

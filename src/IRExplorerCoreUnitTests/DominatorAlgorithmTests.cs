@@ -92,27 +92,27 @@ namespace IRExplorerCoreTests {
             // entry node has no dominators
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { },
-                algorithm.GetDominators(function.BlockByNumber(0)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(0)).ToList());
 
             // block 1 is dominated by block 0
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(0) },
-                algorithm.GetDominators(function.BlockByNumber(1)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(1)).ToList());
 
             // block 2 is dominated by blocks 1 and 0
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(0), function.BlockByNumber(1) },
-                algorithm.GetDominators(function.BlockByNumber(2)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(2)).ToList());
 
             // block 3 is dominated by block 0 and 1
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(0), function.BlockByNumber(1) },
-                algorithm.GetDominators(function.BlockByNumber(3)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(3)).ToList());
 
             // block 4 is dominated by block 0, 1, and 3
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(0), function.BlockByNumber(1), function.BlockByNumber(3) },
-                algorithm.GetDominators(function.BlockByNumber(4)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(4)).ToList());
         }
 
         [TestMethod]
@@ -123,27 +123,27 @@ namespace IRExplorerCoreTests {
             // block 0 has no dominators
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { },
-                algorithm.GetDominators(function.BlockByNumber(0)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(0)).ToList());
 
             // block 1 is dominated by block 0
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(0) },
-                algorithm.GetDominators(function.BlockByNumber(1)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(1)).ToList());
 
             // block 2 is not in the graph
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { },
-                algorithm.GetDominators(function.BlockByNumber(2)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(2)).ToList());
 
             // block 3 is dominated by block 0 and 1
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(0), function.BlockByNumber(1) },
-                algorithm.GetDominators(function.BlockByNumber(3)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(3)).ToList());
 
             // block 4 is dominated by block 0, 1, and 3
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(0), function.BlockByNumber(1), function.BlockByNumber(3) },
-                algorithm.GetDominators(function.BlockByNumber(4)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(4)).ToList());
         }
 
         [TestMethod]
@@ -154,27 +154,27 @@ namespace IRExplorerCoreTests {
             // block 0 is post-dominated by blocks 1, 3, and 4
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(1), function.BlockByNumber(3), function.BlockByNumber(4) },
-                algorithm.GetDominators(function.BlockByNumber(0)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(0)).ToList());
 
             // block 1 is post-dominated by blocks 3 and 4
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(3), function.BlockByNumber(4) },
-                algorithm.GetDominators(function.BlockByNumber(1)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(1)).ToList());
 
             // block 2 is post-dominated by blocks 3 and 4
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(3), function.BlockByNumber(4) },
-                algorithm.GetDominators(function.BlockByNumber(2)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(2)).ToList());
 
             // block 3 is post-dominated by block 4
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(4) },
-                algorithm.GetDominators(function.BlockByNumber(3)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(3)).ToList());
 
             // block 4 has no post-dominators
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { },
-                algorithm.GetDominators(function.BlockByNumber(4)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(4)).ToList());
         }
 
         [TestMethod]
@@ -185,27 +185,27 @@ namespace IRExplorerCoreTests {
             // block 0 is post-dominated by blocks 1, 3, and 4
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(1), function.BlockByNumber(3), function.BlockByNumber(4) },
-                algorithm.GetDominators(function.BlockByNumber(0)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(0)).ToList());
 
             // block 1 is post-dominated by blocks 3 and 4
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(3), function.BlockByNumber(4) },
-                algorithm.GetDominators(function.BlockByNumber(1)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(1)).ToList());
 
             // block 2 is not in the graph
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { },
-                algorithm.GetDominators(function.BlockByNumber(2)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(2)).ToList());
 
             // block 3 is post-dominated by block 4
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { function.BlockByNumber(4) },
-                algorithm.GetDominators(function.BlockByNumber(3)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(3)).ToList());
 
             // block 4 has no post-dominators
             CollectionAssert.AreEquivalent(
                 new List<BlockIR> { },
-                algorithm.GetDominators(function.BlockByNumber(4)).ToList());
+                algorithm.EnumerateDominators(function.BlockByNumber(4)).ToList());
         }
     }
 }

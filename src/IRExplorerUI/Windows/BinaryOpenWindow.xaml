@@ -36,7 +36,6 @@
                     HorizontalAlignment="Stretch"
                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                     FilterMode="StartsWithOrdinal"
-                    TextChanged="BinaryAutocompleteBox_OnTextChanged"
                     MinimumPrefixLength="1"
                     TabIndex="1"
                     Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
@@ -51,88 +50,37 @@
                     TabIndex="9" />
             </Grid>
 
-            <TextBlock Margin="16,4,16,0" Text="Debug file path (optional)" />
-            <Grid Margin="16,4,16,0">
-                <controls:FileSystemTextBox
-                    x:Name="DebugAutocompleteBox"
-                    Height="22"
-                    Margin="0,0,50,0"
-                    HorizontalAlignment="Stretch"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                    FilterMode="StartsWithOrdinal"
-                    IsDropDownOpen="True"
-                    IsTextCompletionEnabled="False"
-                    MinimumPrefixLength="1"
-                    TabIndex="2"
-                    Text="{Binding Path=DebugFilePath, Mode=TwoWay}" />
-
-                <Button
-                    x:Name="DebugBrowseButton"
-                    Height="22"
-                    Padding="2,2,2,2"
-                    HorizontalAlignment="Right"
-                    Click="DebugBrowseButton_Click"
-                    Content="Browse"
-                    TabIndex="10" />
-            </Grid>
-
-            <Expander Margin="16,8,16,0" IsExpanded="True"
-                      Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
+            <Expander
+                Margin="16,8,16,0"
+                IsExpanded="True"
+                Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
                 <Expander.Header>
-                    <TextBlock FontWeight="DemiBold" Text="Diff file location" />
+                    <TextBlock FontWeight="DemiBold" Text="Diff file" />
                 </Expander.Header>
 
                 <StackPanel>
                     <TextBlock Margin="0,8,0,0" Text="Binary file path" />
                     <Grid Margin="0,4,0,0">
-                    <controls:FileSystemTextBox
-                        x:Name="DiffBinaryAutocompleteBox"
-                        Height="22"
-                        Margin="0,0,50,0"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        FilterMode="StartsWithOrdinal"
-                        TextChanged="DiffBinaryAutocompleteBox_OnTextChanged"
-                        MinimumPrefixLength="1"
-                        TabIndex="1"
-                        Text="{Binding Path=DiffBinaryFilePath, Mode=TwoWay}" />
+                        <controls:FileSystemTextBox
+                            x:Name="DiffBinaryAutocompleteBox"
+                            Height="22"
+                            Margin="0,0,50,0"
+                            HorizontalAlignment="Stretch"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            FilterMode="StartsWithOrdinal"
+                            MinimumPrefixLength="1"
+                            TabIndex="1"
+                            Text="{Binding Path=DiffBinaryFilePath, Mode=TwoWay}" />
 
-                    <Button
-                        x:Name="DiffBinaryBrowseButton"
-                        Height="22"
-                        Padding="2,2,2,2"
-                        HorizontalAlignment="Right"
-                        Click="DiffBinaryBrowseButton_Click"
-                        Content="Browse"
-                        TabIndex="9" />
-                </Grid>
-
-                    <TextBlock Margin="0,4,0,0" Text="Debug file path (optional)" />
-                <Grid Margin="0,4,0,0">
-                    <controls:FileSystemTextBox
-                        x:Name="DiffDebugAutocompleteBox"
-                        Height="22"
-                        Margin="0,0,50,0"
-                        HorizontalAlignment="Stretch"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        FilterMode="StartsWithOrdinal"
-                        IsDropDownOpen="True"
-                        IsTextCompletionEnabled="False"
-                        MinimumPrefixLength="1"
-                        TabIndex="2"
-                        Text="{Binding Path=DiffDebugFilePath, Mode=TwoWay}" />
-
-                    <Button
-                        x:Name="DiffBrowseButton"
-                        Height="22"
-                        Padding="2,2,2,2"
-                        HorizontalAlignment="Right"
-                        Click="DiffDebugBrowseButton_Click"
-                        Content="Browse"
-                        TabIndex="10" />
-                </Grid>
+                        <Button
+                            x:Name="DiffBinaryBrowseButton"
+                            Height="22"
+                            Padding="2,2,2,2"
+                            HorizontalAlignment="Right"
+                            Click="DiffBinaryBrowseButton_Click"
+                            Content="Browse"
+                            TabIndex="9" />
+                    </Grid>
                 </StackPanel>
             </Expander>
 
@@ -156,7 +104,7 @@
                             IsTextCompletionEnabled="False"
                             MinimumPrefixLength="1"
                             TabIndex="2"
-                            Text="{Binding Path=Options.DissasemblerPath, Mode=TwoWay}" />
+                            Text="{Binding Path=Options.DisassemblerPath, Mode=TwoWay}" />
                         <Button
                             Width="50"
                             Height="22"
@@ -166,9 +114,8 @@
                             Click="DetectButton_Click"
                             Content="Detect"
                             TabIndex="5"
-                            ToolTip="Detect location of system dissasembler"
-                            Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
-                        </Button>
+                            ToolTip="Detect location of system disassembler"
+                            Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}" />
                         <Button
                             x:Name="DisasmBrowseButton"
                             Height="22"
@@ -194,7 +141,7 @@
                             IsTextCompletionEnabled="False"
                             MinimumPrefixLength="1"
                             TabIndex="2"
-                            Text="{Binding Path=Options.DissasemblerArguments, Mode=TwoWay}" />
+                            Text="{Binding Path=Options.DisassemblerArguments, Mode=TwoWay}" />
                     </Grid>
 
 
@@ -241,9 +188,9 @@
 
                     <CheckBox
                         Margin="0,8,0,0"
-                        IsEnabled="False"
-                        Content="Cache dissasembler output"
-                        IsChecked="{Binding Path=Options.CacheDissasembly, Mode=TwoWay}" />
+                        Content="Cache disassembler output"
+                        IsChecked="{Binding Path=Options.CacheDissasembly, Mode=TwoWay}"
+                        IsEnabled="False" />
                     <TextBlock
                         Margin="0,4,0,0"
                         Foreground="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}"
@@ -284,8 +231,7 @@
                     Content="Reset"
                     TabIndex="5"
                     ToolTip="Reset options to default values"
-                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
-                </Button>
+                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}" />
             </StackPanel>
             <ProgressBar
                 x:Name="LoadProgressBar"
@@ -321,8 +267,8 @@
                 Margin="0,0,4,0"
                 Padding="4,1,4,1"
                 Click="CancelButton_Click"
-                IsCancel="True"
                 Content="Cancel"
+                IsCancel="True"
                 TabIndex="4" />
             <Button
                 x:Name="OpenButton"

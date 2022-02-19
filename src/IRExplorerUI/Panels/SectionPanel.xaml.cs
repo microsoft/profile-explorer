@@ -1236,8 +1236,7 @@ namespace IRExplorerUI {
                     funcEx.OptionalData = funcProfile.ExclusiveWeight.Ticks;
                     funcEx.BackColor = markerOptions.PickBrushForPercentage(exclusivePercentage);
 
-                    Trace.WriteLine(
-                        $"Perc {exclusivePercentage}, {exclusivePercentage * 100} color {funcEx.BackColor}");
+                    //Trace.WriteLine("Perc {exclusivePercentage}, {exclusivePercentage * 100} color {funcEx.BackColor}");
 
                     double percentage = profile.ScaleFunctionWeight(funcProfile.Weight);
                     funcEx.InclusivePercentage = percentage;
@@ -1924,8 +1923,8 @@ namespace IRExplorerUI {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if (funcProfile != null) {
-                    //var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
-                    var profileCallTree = await Task.Run(() => CreateProfileCallTree2(function));
+                    var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
+                    //var profileCallTree = await Task.Run(() => CreateProfileCallTree2(function));
                     ChildFunctionList.Model = profileCallTree;
                     ChildTimeColumnVisible = true;
                     SetDemangledChildFunctionNames(profileCallTree);
@@ -1939,6 +1938,7 @@ namespace IRExplorerUI {
                 var callTree = await Task.Run(() => CreateCallTree(function));
                 ChildFunctionList.Model = callTree;
 
+                //? One flag for Calls, one Profile
                 ProfileControlsVisible = true; //? TODO: Shouldn't show modules
                 ChildTimeColumnVisible = false;
                 SetDemangledChildFunctionNames(callTree);
@@ -1962,6 +1962,7 @@ namespace IRExplorerUI {
             return rootNode;
         }
 
+        //? TODO: This creates the global CG from entry points
         private async Task<ChildFunctionEx> CreateProfileCallTree2(IRTextFunction function) {
             var visitedFuncts = new HashSet<IRTextFunction>();
             var rootNode = new ChildFunctionEx();
@@ -1980,7 +1981,7 @@ namespace IRExplorerUI {
                     continue;
                 }
 
-                Trace.WriteLine($"Entry {entryNode.FunctionName}");
+                //Trace.WriteLine($"Entry {entryNode.FunctionName}");
                 visitedFuncts.Clear();
                 CreateProfileCallTree2(entryNode.Function, entryNode, rootNode, callGraph, visitedFuncts);
             }

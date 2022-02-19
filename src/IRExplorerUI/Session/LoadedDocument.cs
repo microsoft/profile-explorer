@@ -43,9 +43,9 @@ namespace IRExplorerUI {
         private FileSystemWatcher documentWatcher_;
         private IRTextSummary summary_;
 
-        public LoadedDocument(string filePath, string moduleName, Guid id) {
+        public LoadedDocument(string filePath, string modulePath, Guid id) {
             FilePath = filePath;
-            ModuleName = Utils.TryGetFileNameWithoutExtension(moduleName ?? filePath);
+            ModuleName = Utils.TryGetFileName(modulePath ?? filePath);
             Id = id;
 
             PanelStates = new Dictionary<IRTextSection, List<PanelObjectPair>>();
