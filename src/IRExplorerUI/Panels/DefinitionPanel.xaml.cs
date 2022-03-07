@@ -1,6 +1,8 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Controls;
 using IRExplorerCore;
@@ -83,16 +85,28 @@ namespace IRExplorerUI {
         }
 
         public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
-            TextView.InitializeFromDocument(document);
+            TextView.InitializeFromDocument(document, false);
             Document = document;
 
-            if (Session.LoadPanelState(this, section, Document) is DefinitionPanelState savedState) {
-                SwitchSelectedElement(savedState.DefinedOperand, document);
+            if (Session.LoadPanelState(this, section, document) is DefinitionPanelState savedState) {
+#if DEBUG
+                bool found = false;
 
-                if (savedState.CaretOffset > TextView.Text.Length) {
-                    MessageBox.Show("Invalid offset in definition window text, attach debugger");
+                foreach (var op in document.Function.AllElements) {
+                    if (op.TextLocation == savedState.DefinedOperand.TextLocation) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Trace.WriteLine($"=> ERROR for {savedState.DefinedOperand}");
+                    MessageBox.Show("Definition panel offset error, attach debugger");
                     Utils.WaitForDebugger();
                 }
+#endif
+
+                SwitchSelectedElement(savedState.DefinedOperand, document);
 
                 TextView.SetCaretAtOffset(savedState.CaretOffset);
                 TextView.ScrollToHorizontalOffset(savedState.HorizontalOffset);

@@ -391,7 +391,9 @@ namespace IRExplorerUI.Compilers {
                 FunctionNameDemanglingOptions.Default) {
             var sb = new StringBuilder(MaxDemangledFunctionNameLength);
             NativeMethods.UnDecorateFlags flags = NativeMethods.UnDecorateFlags.UNDNAME_COMPLETE;
-            flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS;
+            flags |= NativeMethods.UnDecorateFlags.UNDNAME_NO_ACCESS_SPECIFIERS |
+                     NativeMethods.UnDecorateFlags.UNDNAME_NO_ALLOCATION_MODEL |
+                     NativeMethods.UnDecorateFlags.UNDNAME_NO_MEMBER_TYPE;
 
             if (options.HasFlag(FunctionNameDemanglingOptions.OnlyName)) {
                 flags |= NativeMethods.UnDecorateFlags.UNDNAME_NAME_ONLY;

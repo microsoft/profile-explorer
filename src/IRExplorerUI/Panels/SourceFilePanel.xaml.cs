@@ -132,10 +132,7 @@ namespace IRExplorerUI {
                 currentFilePath_ = path;
                 fileLoaded_ = true;
 
-                disableCaretEvent_ = true; // Changing the text triggers the caret event twice.
-                TextView.Text = text;
-                disableCaretEvent_ = false;
-
+                SetSourceText(text);
                 SetPanelName(path);
                 ScrollToLine(sourceStartLine);
                 return true;
@@ -144,6 +141,12 @@ namespace IRExplorerUI {
                 Trace.TraceError($"Failed to load source file {path}: {ex.Message}");
                 return false;
             }
+        }
+
+        private void SetSourceText(string text) {
+            disableCaretEvent_ = true; // Changing the text triggers the caret event twice.
+            TextView.Text = text;
+            disableCaretEvent_ = false;
         }
 
         private void SetPanelName(string path) {
@@ -172,7 +175,7 @@ namespace IRExplorerUI {
             section_ = section;
 
             if (!await LoadSourceFileForFunction(section_.ParentFunction)) {
-                TextView.Text = $"No source file available";
+                SetSourceText($"No source file available");
             }
             else {
                 ScrollToLine(hottestSourceLine_);

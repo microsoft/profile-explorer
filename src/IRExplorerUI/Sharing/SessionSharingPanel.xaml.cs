@@ -46,7 +46,6 @@ namespace IRExplorerUI {
                 var filePath = Path.GetTempFileName();
 
                 if (await Session.SaveSessionDocument(filePath)) {
-
                     var sharingClient = CreateSharingClient();
                     var result = await sharingClient.UploadSession(filePath, DefaultContainerName);
                     return sharingClient.ToSharingLink(result);

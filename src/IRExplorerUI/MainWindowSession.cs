@@ -140,12 +140,14 @@ namespace IRExplorerUI {
         }
 
         private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
+            UpdateUIBeforeLoadDocument(filePath);
             var disasmResult = await DisassembleBinary(filePath);
 
             if (disasmResult == null) {
                 using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show("Failed to find system disassembler", "IR Explorer",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
+                UpdateUIAfterLoadDocument();
                 return null;
             }
 
@@ -457,7 +459,7 @@ namespace IRExplorerUI {
         }
 
         private async Task SetupOpenedIRDocument(SessionKind sessionKind, LoadedDocument result) {
-            StartSession(result.ModuleName, sessionKind);
+            StartSession(result.FilePath, sessionKind);
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.MainDocument = result;
 
@@ -1094,12 +1096,14 @@ namespace IRExplorerUI {
         private void UpdateUIBeforeReadSession(string documentTitle) {
             Title = $"IR Explorer - Reading {documentTitle}";
             Utils.DisableControl(DockManager, 0.85);
+            Utils.DisableControl(StartPage, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
         }
 
         private void UpdateUIBeforeLoadDocument(string documentTitle) {
             Title = $"IR Explorer - Loading {documentTitle}";
             Utils.DisableControl(DockManager, 0.85);
+            Utils.DisableControl(StartPage, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
         }
 
@@ -1118,6 +1122,7 @@ namespace IRExplorerUI {
 
             // Hide temporary UI.
             HideProgressBar();
+            Utils.EnableControl(StartPage);
         }
 
 

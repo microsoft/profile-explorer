@@ -55,6 +55,7 @@ namespace IRExplorerUI.Document {
             double y = ComputePositionY(elementRect, previousOverlay);
             double opacity = ActiveOpacity;
             Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, ComputeHeight(elementRect));
+
             if (ShowLabel) {
                 if (Icon == null) {
                     Bounds = Utils.SnapRectToPixels(Bounds.X + Bounds.Width, Bounds.Y, 0, Bounds.Height);

@@ -23,10 +23,22 @@
         <CommandBinding Command="local:DocumentHostCommand.SearchSymbol" Executed="SearchSymbolExecuted" />
         <CommandBinding Command="local:DocumentHostCommand.SearchSymbolAllSections" Executed="SearchSymbolAllSectionsExecuted" />
         <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
-        <CommandBinding Command="local:DocumentHostCommand.JumpToNextProfiledElement" Executed="JumpToNextProfiledElementExecuted" CanExecute="JumpToNextProfiledElementCanExecute" />
-        <CommandBinding Command="local:DocumentHostCommand.JumpToPreviousProfiledElement" Executed="JumpToPreviousProfiledElementExecuted" CanExecute="JumpToPreviousProfiledElementCanExecute"/>
-        <CommandBinding Command="local:DocumentHostCommand.JumpToNextProfiledBlock" Executed="JumpToNextProfiledBlockExecuted" CanExecute="JumpToNextProfiledBlockCanExecute"/>
-        <CommandBinding Command="local:DocumentHostCommand.JumpToPreviousProfiledBlock" Executed="JumpToPreviousProfiledBlockExecuted" CanExecute="JumpToPreviousProfiledBlockCanExecute"/>
+        <CommandBinding
+            CanExecute="JumpToNextProfiledElementCanExecute"
+            Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+            Executed="JumpToNextProfiledElementExecuted" />
+        <CommandBinding
+            CanExecute="JumpToPreviousProfiledElementCanExecute"
+            Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
+            Executed="JumpToPreviousProfiledElementExecuted" />
+        <CommandBinding
+            CanExecute="JumpToNextProfiledBlockCanExecute"
+            Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
+            Executed="JumpToNextProfiledBlockExecuted" />
+        <CommandBinding
+            CanExecute="JumpToPreviousProfiledBlockCanExecute"
+            Command="local:DocumentHostCommand.JumpToPreviousProfiledBlock"
+            Executed="JumpToPreviousProfiledBlockExecuted" />
     </UserControl.CommandBindings>
 
     <UserControl.Resources>
@@ -463,9 +475,9 @@
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Top"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                        Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}"
                         BorderThickness="0,1,0,1"
-                        DockPanel.Dock="Top">
+                        DockPanel.Dock="Top"
+                        Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
                         <ToolBarTray
                             x:Name="ProfileToolbar"
                             HorizontalAlignment="Stretch"
@@ -495,29 +507,31 @@
                                     Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     ToolTip="Jump to previous bookmark (Shift+F2)">
-                                    <Image Source="{StaticResource MinusIcon}"  Style="{StaticResource DisabledImageStyle}"/>
+                                    <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Button
                                     Padding="1"
                                     Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     ToolTip="Jump to previous bookmark (Shift+F2)">
-                                    <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}">
-                                    </Image>
+                                    <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
                                 <Menu Margin="2,0,0,0" VerticalAlignment="Center">
                                     <MenuItem
                                         x:Name="ProfileBlocksMenu"
-                                        Padding="0,0,0,0"
                                         Margin="0,0,0,0"
+                                        Padding="0,0,0,0"
                                         OverridesDefaultStyle="True">
                                         <MenuItem.Header>
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock VerticalAlignment="Bottom" Text="Blocks"/>
-                                                <Path VerticalAlignment="Center" Margin="4,2,0,0"
-                                                  Fill="Black" Data="M 0 0 L 3 3 L 6 0 Z"/>
+                                                <TextBlock VerticalAlignment="Bottom" Text="Blocks" />
+                                                <Path
+                                                    Margin="4,2,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Data="M 0 0 L 3 3 L 6 0 Z"
+                                                    Fill="Black" />
                                             </StackPanel>
                                         </MenuItem.Header>
                                     </MenuItem>
@@ -529,14 +543,14 @@
                                     Command="local:DocumentHostCommand.JumpToPreviousProfiledBlock"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     ToolTip="Jump to the previous hottest block (Shift+F2)">
-                                    <Image Source="{StaticResource MinusIcon}"  Style="{StaticResource DisabledImageStyle}"/>
+                                    <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Button
                                     Padding="1"
                                     Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     ToolTip="Jump to next hottest block (Shift+F2)">
-                                    <Image Source="{StaticResource PlusIcon}"  Style="{StaticResource DisabledImageStyle}"/>
+                                    <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
 
@@ -544,15 +558,16 @@
                                     Margin="2,0,0,0"
                                     VerticalAlignment="Center"
                                     Text="Filter" />
-                                <Button IsEnabled="False"
+                                <Button
                                     Margin="4,0,0,0"
                                     Padding="1"
                                     VerticalAlignment="Center"
                                     Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
                                     CommandTarget="{Binding ElementName=TextView}"
+                                    IsEnabled="False"
                                     ToolTip="Jump to hottest profiled instruction"
                                     Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
-                                    <Image Source="{StaticResource EyeIcon}"  Style="{StaticResource DisabledImageStyle}"/>
+                                    <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                             </ToolBar>
                         </ToolBarTray>
@@ -849,9 +864,9 @@
                                             <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
                                                 <Border
                                                     Height="21"
+                                                    Margin="-1,-1,0,0"
                                                     HorizontalAlignment="Stretch"
                                                     VerticalAlignment="Stretch"
-                                                    Margin="-1,-1,0,0"
                                                     Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
                                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                                     BorderThickness="0,0,1,1">
@@ -874,7 +889,7 @@
                     <ListView.ItemContainerStyle>
                         <Style TargetType="{x:Type ListViewItem}">
                             <Setter Property="OverridesDefaultStyle" Value="true" />
-                            <Setter Property="Height" Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type local:IRDocumentHost}}}"/>
+                            <Setter Property="Height" Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type local:IRDocumentHost}}}" />
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                             <Setter Property="VerticalContentAlignment" Value="Stretch" />
                             <Setter Property="Background" Value="{Binding BackColor}" />

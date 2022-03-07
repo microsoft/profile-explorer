@@ -54,13 +54,14 @@ namespace IRExplorerUI {
             if (availableHeight < availableWidth) {
                 height = Math.Min(size, availableHeight);
                 width = height * Proportion;
-                y = y + (availableHeight - height) / 2;
             }
             else {
                 height = Math.Min(size, availableWidth);
                 width = height * Proportion;
-                x = x + (availableHeight - width) / 2;
             }
+            
+            y += (availableHeight - height) / 2;
+            x += (availableWidth - width) / 2;
 
             // Center icon in the available space.
             var rect = Utils.SnapRectToPixels(x, y, width, height);

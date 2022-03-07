@@ -176,7 +176,7 @@ namespace IRExplorerCore {
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected bool TokenFloatNumber(out double value) {
-            return double.TryParse(TokenStringData(), out value);
+            return double.TryParse(TokenStringData(), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

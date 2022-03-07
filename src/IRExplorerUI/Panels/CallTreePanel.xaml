@@ -1,0 +1,305 @@
+﻿<local:ToolPanelControl
+    x:Class="IRExplorerUI.CallTreePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:IRExplorerUI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:tree="clr-namespace:Aga.Controls.Tree;assembly=TreeListView"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+    <local:ToolPanelControl.CommandBindings>
+        <CommandBinding Command="local:CallTreeCommand.ExpandHottestCallPath" Executed="ExpandHottestCallPathExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.CollapseCallPath" Executed="CollapseCallPathExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
+        <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
+    </local:ToolPanelControl.CommandBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="28" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <DockPanel
+            Grid.Row="0"
+            HorizontalAlignment="Stretch"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            <ToolBarTray
+                Grid.Row="0"
+                Grid.Column="2"
+                Height="28"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Top"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                IsLocked="True">
+                <ToolBar
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Loaded="ToolBar_Loaded">
+
+                    <Button ToolTip="Expand hottest call path">
+                        <Image Source="{StaticResource HotFlameIcon}" />
+                    </Button>
+                    <Separator />
+
+                    <Image Source="{StaticResource SearchIcon}" />
+                    <Grid Height="24">
+                        <TextBox
+                            x:Name="FunctionFilter"
+                            Width="200"
+                            Margin="4,0,0,0"
+                            HorizontalAlignment="Center"
+                            VerticalContentAlignment="Center"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            IsEnabled="False"
+                            TabIndex="4"
+                            ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
+                            <TextBox.InputBindings>
+                                <KeyBinding
+                                    Key="Escape"
+                                    Command="local:Command.ClearTextbox"
+                                    CommandParameter="{Binding ElementName=CallChildrenFilter}" />
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <TextBlock
+                            Margin="8,4"
+                            Foreground="DimGray"
+                            IsHitTestVisible="False"
+                            Text="Search functions"
+                            Visibility="{Binding ElementName=SectionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+
+                    </Grid>
+                    <Button
+                        Command="local:Command.ClearTextbox"
+                        CommandParameter="{Binding ElementName=SectionFilter}"
+                        TabIndex="5"
+                        ToolTip="Reset section filter">
+                        <Image
+                            Width="16"
+                            Height="16"
+                            Source="{StaticResource ClearIcon}" />
+                    </Button>
+                </ToolBar>
+            </ToolBarTray>
+
+            <local:PanelToolbarTray
+                DockPanel.Dock="Right"
+                DuplicateClicked="PanelToolbarTray_DuplicateClicked"
+                HasDuplicateButton="False"
+                HasPinButton="False" />
+        </DockPanel>
+
+        <tree:TreeList
+            x:Name="CallTree"
+            Grid.Row="1"
+            Panel.ZIndex="2"
+            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+            BorderBrush="{x:Null}"
+            BorderThickness="0,0,0,0"
+            IsTextSearchEnabled="False"
+            SelectionMode="Single">
+            <tree:TreeList.View>
+                <GridView>
+                    <GridViewColumn Width="300">
+                        <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function" />
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
+                                    <tree:RowExpander />
+                                    <TextBlock
+                                        Margin="6,2,6,2"
+                                        HorizontalAlignment="Stretch"
+                                        Foreground="{Binding TextColor}"
+                                        Text="{Binding Name}"
+                                        TextTrimming="CharacterEllipsis">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                                        <Setter Property="FontWeight" Value="Bold" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <GridViewColumn Width="150">
+                        <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
+
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel
+                                    VerticalAlignment="Center"
+                                    Background="{Binding BackColor}"
+                                    Orientation="Horizontal">
+                                    <Rectangle
+                                        Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
+                                        Height="16"
+                                        Fill="#Aa4343"
+                                        Stroke="Black" />
+                                    <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                                        <Setter Property="FontWeight" Value="Bold" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <GridViewColumn Width="150">
+                        <GridViewColumnHeader x:Name="ExclusiveChildTimeColumnHeader" Content="Time (self)" />
+
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel
+                                    VerticalAlignment="Center"
+                                    Background="{Binding BackColor2}"
+                                    Orientation="Horizontal">
+                                    <Rectangle
+                                        Width="{Binding Path=PercentageExclusive, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
+                                        Height="16"
+                                        Fill="#Aa4343"
+                                        Stroke="Black" />
+                                    <TextBlock Margin="6,2,6,2" Text="{Binding Text2}">
+                                        <TextBlock.Style>
+                                            <Style TargetType="{x:Type TextBlock}">
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                                        <Setter Property="FontWeight" Value="Bold" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+
+                    <GridViewColumn Width="120">
+                        <GridViewColumnHeader x:Name="ChildAlternateNameColumnHeader" Content="Module" />
+
+                        <GridViewColumn.HeaderContainerStyle>
+                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                            </Style>
+                        </GridViewColumn.HeaderContainerStyle>
+
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border HorizontalAlignment="Stretch">
+                                    <TextBlock Margin="6,2,6,2" Text="{Binding ModuleName}" />
+                                </Border>
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </tree:TreeList.View>
+
+            <ListView.ItemContainerStyle>
+                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                    <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
+                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                </Style>
+            </ListView.ItemContainerStyle>
+
+            <ListView.ContextMenu>
+                <ContextMenu>
+                    <MenuItem
+                        Command="local:CallTreeCommand.ExpandHottestCallPath"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Expand Hottest Call Path"
+                        InputGestureText="Ctrl+="
+                        ToolTip="" />
+                    <MenuItem
+                        Command="local:CallTreeCommand.CollapseCallPath"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Collapse Call Path"
+                        InputGestureText="Ctrl+-"
+                        ToolTip="" />
+                    <Separator />
+                    <MenuItem
+                        Command="local:CallTreeCommand.SelectFunction"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Select Function"
+                        InputGestureText="Ctrl+Return"
+                        ToolTip="" />
+                    <MenuItem
+                        Command="local:CallTreeCommand.OpenFunction"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Open Function"
+                        InputGestureText="Return"
+                        IsEnabled="False"
+                        ToolTip="" />
+                    <MenuItem
+                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Open Function in New Tab"
+                        InputGestureText="Shift+Return"
+                        IsEnabled="False"
+                        ToolTip="" />
+                </ContextMenu>
+            </ListView.ContextMenu>
+        </tree:TreeList>
+    </Grid>
+
+    <local:ToolPanelControl.InputBindings>
+        <KeyBinding
+            Key="OemPlus"
+            Command="local:CallTreeCommand.ExpandHottestCallPath"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="OemMinus"
+            Command="local:CallTreeCommand.CollapseCallPath"
+            Modifiers="Ctrl" />
+        <KeyBinding
+            Key="Return"
+            Command="local:CallTreeCommand.SelectFunction"
+            Modifiers="Ctrl" />
+        <KeyBinding Key="Return" Command="local:CallTreeCommand.OpenFunction" />
+        <KeyBinding
+            Key="Return"
+            Command="local:CallTreeCommand.OpenFunctionInNewTab"
+            Modifiers="Shift" />
+    </local:ToolPanelControl.InputBindings>
+</local:ToolPanelControl>

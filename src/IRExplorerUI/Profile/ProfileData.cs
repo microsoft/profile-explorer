@@ -375,18 +375,8 @@ namespace IRExplorerUI.Profile {
 
             var result = new ProcessingResult(metadataTag.OffsetToElementMap.Count);
 
-            var hist = new Dictionary<IRElement, long>();
-
             foreach (var pair in InstructionWeight) {
                 if (TryFindElementForOffset(metadataTag, pair.Key, ir, out var element)) {
-                    if (hist.TryGetValue(element, out var prev)) {
-                        TryFindElementForOffset(metadataTag, pair.Key, ir, out var element2);
-                        ;
-                    }
-                    else {
-                        hist[element] = pair.Key;
-                    }
-
                     result.SampledElements.Add(new Tuple<IRElement, TimeSpan>(element, pair.Value));
                     result.BlockSampledElementsMap.AccumulateValue(element.ParentBlock, pair.Value);
                 }

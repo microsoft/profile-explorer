@@ -306,7 +306,6 @@ namespace IRExplorerUI {
                 SetActiveDocumentHost(hostDocPair);
 
                 if (document.Section != null) {
-                    var docInfo = sessionState_.FindLoadedDocument(document.Section);
                     SectionPanel.SelectSection(document.Section, false);
                     NotifyPanelsOfSectionLoad(document.Section, document, false);
                 }
@@ -486,10 +485,11 @@ namespace IRExplorerUI {
                 ToolPanelKind.PostDominatorTree => "Post-Dominator Tree",
                 ToolPanelKind.ExpressionGraph => "Expression Graph",
                 ToolPanelKind.CallGraph => "Call Graph",
+                ToolPanelKind.CallTree => "Call Tree",
                 ToolPanelKind.Developer => "Developer",
                 ToolPanelKind.Notes => "Notes",
                 ToolPanelKind.References => "References",
-                ToolPanelKind.Section => "Sections",
+                ToolPanelKind.Section => "Summary",
                 ToolPanelKind.Source => "Source File",
                 ToolPanelKind.PassOutput => "Pass Output",
                 ToolPanelKind.SearchResults => "Search Results",
@@ -558,7 +558,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.ExpressionGraph => new ExpressionGraphPanel(),
                 ToolPanelKind.SearchResults => new SearchResultsPanel(),
                 ToolPanelKind.Scripting => new ScriptingPanel(),
-                _ => null
+                _ => throw new InvalidOperationException()
             };
         }
 
@@ -961,6 +961,9 @@ namespace IRExplorerUI {
                         }
 
                         switch (panel.PanelKind) {
+                            case ToolPanelKind.CallTree: {
+                                break; // Don't recreate call tree panels.
+                            }
                             case ToolPanelKind.Bookmarks: {
                                 BookmarksPanel = (BookmarksPanel)panel;
                                 BookmarksPanelHost = (LayoutAnchorable)args.Model;
@@ -1124,6 +1127,28 @@ namespace IRExplorerUI {
             if(panelHost != null) {
                 panelHost.Show();
                 panelHost.IsActive = true;
+            }
+        }
+
+        private void MenuItem_OnClick(object sender, RoutedEventArgs e) {
+            var file = App.GetTraceFilePath();
+
+            if (File.Exists(file)) {
+                try {
+                    var psi = new ProcessStartInfo(file) {
+                        UseShellExecute = true
+                    };
+
+                    Process.Start(psi);
+                }
+                catch (Exception ex) {
+                    MessageBox.Show($"Failed to open log file {file}\n{ex.Message}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+            else {
+                MessageBox.Show($"No log file found: {file}", "IR Explorer",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }

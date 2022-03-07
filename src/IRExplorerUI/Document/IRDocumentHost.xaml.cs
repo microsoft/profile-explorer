@@ -346,7 +346,6 @@ namespace IRExplorerUI {
 
         private void TextViewOnCaretChanged(object? sender, int offset) {
             var line = TextView.Document.GetLineByOffset(offset);
-            Trace.TraceWarning($"Select {line.LineNumber}");
 
             if (ColumnsList.Items.Count >= line.LineNumber) {
                 ColumnsList.SelectedIndex = line.LineNumber - 1;
@@ -402,7 +401,7 @@ namespace IRExplorerUI {
 
         private async void HandleRemarkSettingsChange() {
             if (!remarkPanelVisible_ && !remarkOptionsPanelVisible_) {
-                await HandleNewRemarkSettings(remarkSettings_, false);
+                await HandleNewRemarkSettings(remarkSettings_, false, true);
             }
         }
 
@@ -452,6 +451,7 @@ namespace IRExplorerUI {
                 if (value != remarkSettings_.ShowPreviousSections) {
                     remarkSettings_.ShowPreviousSections = value;
                     NotifyPropertyChanged(nameof(ShowPreviousSections));
+                    HandleRemarkSettingsChange();
                 }
             }
         }
@@ -467,11 +467,7 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void IRDocumentHost_Unloaded(object sender, RoutedEventArgs e) {
-            if (remarkPanelVisible_) {
-                remarkPanel_.IsOpen = false;
-                remarkPanelVisible_ = false;
-                remarkPanel_ = null;
-            }
+            HideRemarkPanel(true);
         }
 
         private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
@@ -732,8 +728,14 @@ namespace IRExplorerUI {
             remarkPanel_.Initialize(element, remarkPanelLocation_, this, remarkSettings_);
         }
 
-        private async Task HideRemarkPanel() {
+        private async Task HideRemarkPanel(bool force = false) {
             if (!remarkPanelVisible_) {
+                return;
+            }
+
+            if (force) {
+                remarkPanel_.IsOpen = false;
+                remarkPanel_ = null;
                 return;
             }
 
@@ -743,9 +745,6 @@ namespace IRExplorerUI {
             animation.Completed += (s, e) => {
                 if (remarkPanel_ != null) { // When section unloads, can be before animation completes.
                     remarkPanel_.IsOpen = false;
-                    remarkPanel_.PopupClosed -= RemarkPanel__PanelClosed;
-                    remarkPanel_.PopupDetached -= RemarkPanel__PanelDetached;
-                    remarkPanel_.RemarkContextChanged -= RemarkPanel__RemarkContextChanged;
                     remarkPanel_ = null;
                 }
             };
@@ -1864,14 +1863,16 @@ namespace IRExplorerUI {
             remarkOptionsPanelVisible_ = false;
         }
 
-        private async Task HandleNewRemarkSettings(RemarkSettings newSettings, bool commit) {
+        private async Task HandleNewRemarkSettings(RemarkSettings newSettings, bool commit, bool force = false) {
             if (commit) {
                 Session.ReloadRemarkSettings(newSettings, TextView);
                 App.Settings.RemarkSettings = newSettings;
                 App.SaveApplicationSettings();
             }
 
-            if (newSettings.Equals(remarkSettings_)) {
+            // Toolbar remark buttons change remarkSettings_ directly,
+            // force an update in this case since newSettings is remarkSettings_.
+            if (!force && newSettings.Equals(remarkSettings_)) {
                 return;
             }
 
@@ -2097,7 +2098,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
+        private async void TaskMenuItem_SubmenuOpened(object sender, RoutedEventArgs e) {
             var defaultItems = SaveDefaultMenuItems(TaskMenuItem);
             TaskMenuItem.Items.Clear();
 
@@ -2105,11 +2106,23 @@ namespace IRExplorerUI {
                 AddFunctionTaskDefinitionMenuItem(action);
             }
 
-            foreach (var action in Session.CompilerInfo.ScriptFunctionTasks) {
+            // Since first loading the scripts takes 1-2 sec,
+            // temporarily add a menu entry to show initially in the menu.
+            var item = new MenuItem() {
+                Header = "Loading scripts...",
+                IsEnabled = false,
+            };
+
+            TaskMenuItem.Items.Add(item);
+
+            var scriptTasks = await Task.Run(() => Session.CompilerInfo.ScriptFunctionTasks);
+
+            foreach (var action in scriptTasks) {
                 AddFunctionTaskDefinitionMenuItem(action);
             }
 
             RestoreDefaultMenuItems(TaskMenuItem, defaultItems);
+            TaskMenuItem.Items.Remove(item);
         }
 
         private void AddFunctionTaskDefinitionMenuItem(FunctionTaskDefinition action) {

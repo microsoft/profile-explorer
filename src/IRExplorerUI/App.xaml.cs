@@ -176,7 +176,7 @@ namespace IRExplorerUI {
             return GetSettingsFilePath(SettingsFile);
         }
 
-        private static string GetTraceFilePath() {
+        public static string GetTraceFilePath() {
             return GetSettingsFilePath(TraceFile);
         }
 

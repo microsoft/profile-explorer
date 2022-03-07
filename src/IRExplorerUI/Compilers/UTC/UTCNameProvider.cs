@@ -44,7 +44,7 @@ namespace IRExplorerUI.UTC {
         }
 
         public bool IsDemanglingSupported => true;
-        public FunctionNameDemanglingOptions DemanglingOptions => App.Settings.SectionSettings.DemanglingOptions;
+        public FunctionNameDemanglingOptions GlobalDemanglingOptions => App.Settings.SectionSettings.DemanglingOptions;
 
         public string GetSectionName(IRTextSection section, bool includeNumber) {
             string sectionName = section.Name;
