@@ -68,8 +68,8 @@ namespace IRExplorerCore {
 
         public static byte[] CreateNewKey() {
             var key = new byte[KeyBitSize / 8];
-            var random = new Random();
-            random.NextBytes(key);
+            var random = new RNGCryptoServiceProvider();
+            random.GetNonZeroBytes(key);
             return key;
         }
     }

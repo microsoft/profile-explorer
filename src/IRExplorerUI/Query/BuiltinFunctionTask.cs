@@ -37,17 +37,25 @@ namespace IRExplorerUI.Query {
             TaskInfo = taskInfo;
             callback_ = (TaskCallback)optionalData;
 
-            //? TODO: Load options from session, or from App.Settings
             LoadOptions();
             return true;
         }
 
         private void LoadOptions() {
-            ResetOptions();
+            var options = Session.LoadFunctionTaskOptions(TaskInfo);
+
+            if (options != null) {
+                Options = options;
+            }
+            else {
+                ResetOptions();
+            }
         }
 
         public void SaveOptions() {
-            var data = StateSerializer.Serialize(Options);
+            if (Options != null) {
+                Session.SaveFunctionTaskOptions(TaskInfo, Options);
+            }
         }
 
         public void ResetOptions() {

@@ -356,6 +356,15 @@ namespace IRExplorerUI {
         }
 
         private async Task EnableDocumentDiffState(DiffModeInfo diffState) {
+            // Notify panels about the current sections being unloaded
+            // before diff mode is activated, since otherwise those sections
+            // may be wrongly be associated with diff mode, for ex. the panel states.
+            var leftDocumentHost = FindDocumentHost(diffState.LeftDocument.TextView);
+            var rightDocumentHost = FindDocumentHost(diffState.RightDocument.TextView);
+            NotifyPanelsOfSectionUnload(diffState.LeftDocument.Section, leftDocumentHost, true);
+            NotifyPanelsOfSectionUnload(diffState.RightDocument.Section, rightDocumentHost, true);
+
+            // Prepare documents for diff mode.
             await diffState.LeftDocument.EnterDiffMode();
             await diffState.RightDocument.EnterDiffMode();
             sessionState_.SectionDiffState.IsEnabled = true;
@@ -431,6 +440,8 @@ namespace IRExplorerUI {
                                       string leftText, string rightText, 
                                       IRTextSection newLeftSection,
                                       IRTextSection newRightSection) {
+            var leftDocumentHost = FindDocumentHost(leftDocument);
+            var rightDocumentHost = FindDocumentHost(rightDocument);
             var leftDiffStats = new DiffStatistics();
             var rightDiffStats = new DiffStatistics();
             DiffMarkingResult leftDiffResult;
@@ -486,11 +497,7 @@ namespace IRExplorerUI {
                                                     rightDiffResult, newRightSection);
 
             // The UI-thread dependent work.
-            var leftDocumentHost = FindDocumentHost(leftDocument);
-            var rightDocumentHost = FindDocumentHost(rightDocument);
-
-            NotifyPanelsOfSectionUnload(leftDocument.Section, leftDocumentHost, true);
-            NotifyPanelsOfSectionUnload(rightDocument.Section, rightDocumentHost, true);
+            
 
             //? TODO: Workaround for some cases where the updated left/right docs
             //? don't have the same length due to a bug in diff updating.

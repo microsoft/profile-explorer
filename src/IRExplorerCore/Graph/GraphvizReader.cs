@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.CompilerServices;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.Lexer;
@@ -39,10 +41,12 @@ namespace IRExplorerCore.Graph {
             current_ = lexer_.NextToken();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsToken(TokenKind kind) {
             return current_.Kind == kind;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Keyword TokenKeyword() {
             if (current_.IsIdentifier() &&
                 keywordTrie_.TryGetValue(TokenData(), out var keyword)) {
@@ -52,20 +56,18 @@ namespace IRExplorerCore.Graph {
             return Keyword.None;
         }
 
-        private string TokenString() {
-            return current_.Data.ToString();
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ReadOnlySpan<char> TokenStringData() {
             return current_.Data.Span;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ReadOnlyMemory<char> TokenData() {
             return current_.Data;
         }
 
         private bool ReadTokenIntNumber(out int value) {
-            bool result = int.TryParse(TokenStringData(), out value);
+            bool result = int.TryParse(TokenStringData(), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
 
             if (result) {
                 SkipToken();
@@ -74,6 +76,7 @@ namespace IRExplorerCore.Graph {
             return result;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool ReadFloatNumber(out double value) {
             bool isNegated = false;
 
@@ -82,7 +85,7 @@ namespace IRExplorerCore.Graph {
                 isNegated = true;
             }
 
-            bool result = double.TryParse(TokenStringData(), out value);
+            bool result = double.TryParse(TokenStringData(), NumberStyles.Any, CultureInfo.InvariantCulture, out value);
 
             if (result) {
                 SkipToken();
@@ -129,6 +132,7 @@ namespace IRExplorerCore.Graph {
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool ReadPoint(out double x, out double y) {
             if (ReadFloatNumber(out x) && ReadFloatNumber(out y)) {
                 y = graph_.Height - y;
@@ -139,18 +143,22 @@ namespace IRExplorerCore.Graph {
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsString() {
             return current_.IsIdentifier() || current_.IsString();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool NextTokenIs(TokenKind kind) {
             return lexer_.PeekToken().Kind == kind;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void SkipToken() {
             current_ = lexer_.NextToken();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool ExpectAndSkipKeyword(Keyword keyword) {
             if (TokenKeyword() == keyword) {
                 SkipToken();
@@ -160,6 +168,7 @@ namespace IRExplorerCore.Graph {
             return false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsEOF() {
             return current_.IsEOF();
         }
@@ -229,7 +238,7 @@ namespace IRExplorerCore.Graph {
                 !ReadPoint(out double x, out double y) ||
                 !ReadFloatNumber(out double width) ||
                 !ReadFloatNumber(out double height)) {
-                Debug.WriteLine("Failed 1");
+                Trace.TraceError("Failed to parse Graphviz output node");
                 return null;
             }
 
@@ -245,7 +254,7 @@ namespace IRExplorerCore.Graph {
                 !ReadString(out var shape) ||
                 !ReadString(out var borderColor) ||
                 !ReadString(out var backgroundColor)) {
-                Debug.WriteLine("Failed 2");
+                Trace.TraceError("Failed to parse Graphviz output node properties");
                 return null;
             }
 
@@ -263,8 +272,8 @@ namespace IRExplorerCore.Graph {
                 graph_.DataNodeMap.Add(data, node);
             }
             else {
-                //Debug.Assert(false, "Could not find block");
-                Debug.WriteLine("Failed 3");
+                Debug.Assert(false, $"Could not find block {name}");
+                Trace.TraceError($"Could not find Graphviz output block {name}");
             }
 
             return node;
@@ -285,7 +294,6 @@ namespace IRExplorerCore.Graph {
 
             for (int i = 0; i < pointCont; i++) {
                 if (!ReadPoint(out double x, out double y)) {
-                    Debug.WriteLine("Failed 3");
                     return null;
                 }
 
@@ -299,13 +307,11 @@ namespace IRExplorerCore.Graph {
             if (IsString() && NextTokenIs(TokenKind.Number)) {
                 // Edge has a label.
                 if (!ReadString(out label) || !ReadPoint(out labelX, out labelY)) {
-                    Debug.WriteLine("Failed 4");
                     return null;
                 }
             }
 
             if (!ReadString(out var style) || !ReadString(out var color)) {
-                Debug.WriteLine("Failed 5");
                 return null;
             }
 
@@ -329,7 +335,8 @@ namespace IRExplorerCore.Graph {
                     node.OutEdges.Add(edge);
                 }
                 else {
-                    Debug.WriteLine("Failed 6");
+                    Debug.Assert(false, $"Could not find block {fromNode}");
+                    Trace.TraceError($"Could not find Graphviz output block {fromNode}");
                 }
             }
 
@@ -346,7 +353,8 @@ namespace IRExplorerCore.Graph {
                     node.InEdges.Add(edge);
                 }
                 else {
-                    Debug.WriteLine("Failed 6");
+                    Debug.Assert(false, $"Could not find block {fromNode}");
+                    Trace.TraceError($"Could not find Graphviz output block {fromNode}");
                 }
             }
 

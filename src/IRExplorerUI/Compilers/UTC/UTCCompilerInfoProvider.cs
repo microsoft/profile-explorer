@@ -32,9 +32,6 @@ namespace IRExplorerUI.Compilers.UTC {
             names_ = new UTCNameProvider();
             remarks_ = new UTCRemarkProvider(this);
             lockObject_ = new object();
-
-            // Load the list of script tasks in the background to reduce UI delay.
-            Task.Run(() => LoadScriptFunctionTasks());
         }
 
         public string CompilerIRName => "UTC";
@@ -103,6 +100,7 @@ namespace IRExplorerUI.Compilers.UTC {
                     return scriptFuncTasks_;
                 }
 
+                //? TODO: Lazy-load the scripts, CreateScriptInstance on startup uses lots of memory.
                 scriptFuncTasks_ = new List<FunctionTaskDefinition>();
                 var files = App.GetFunctionTaskScripts();
 

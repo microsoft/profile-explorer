@@ -184,7 +184,7 @@ namespace IRExplorerUI {
 
         public static bool Contains(string text, string searchedText,
             TextSearchKind searchKind = TextSearchKind.Default) {
-            return Contains(text.AsMemory(), searchedText.AsMemory());
+            return Contains(text.AsMemory(), searchedText.AsMemory(), searchKind);
         }
 
         public static List<TextSearchResult> AllIndexesOf(ReadOnlyMemory<char> text, string searchedText,

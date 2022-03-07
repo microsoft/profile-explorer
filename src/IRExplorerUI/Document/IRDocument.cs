@@ -688,7 +688,7 @@ namespace IRExplorerUI {
         }
 
         public void InitializeBasedOnDocument(string text, IRDocument doc) {
-            InitializeFromDocument(doc, text);
+            InitializeFromDocument(doc, true, text);
         }
 
         public void UnloadDocument() {
@@ -702,9 +702,9 @@ namespace IRExplorerUI {
             Text = "";
         }
 
-        public void InitializeFromDocument(IRDocument doc, string text = null) {
+        public bool InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
             if (section_ == doc.section_) {
-                return;
+                return false;
             }
 
             UnloadDocument();
@@ -714,8 +714,12 @@ namespace IRExplorerUI {
             blockElements_ = doc.blockElements_;
             tupleElements_ = doc.tupleElements_;
             operandElements_ = doc.operandElements_;
-            hoverHighlighter_.CopyFrom(doc.hoverHighlighter_);
-            selectedHighlighter_.CopyFrom(doc.selectedHighlighter_);
+
+            if (copyTemporaryHighlighting) {
+                hoverHighlighter_.CopyFrom(doc.hoverHighlighter_);
+                selectedHighlighter_.CopyFrom(doc.selectedHighlighter_);
+            }
+
             markedHighlighter_.CopyFrom(doc.markedHighlighter_);
             bookmarks_.CopyFrom(doc.bookmarks_);
             margin_.CopyFrom(doc.margin_);
@@ -727,6 +731,8 @@ namespace IRExplorerUI {
             else {
                 Document.Text = doc.Document.Text;
             }
+
+            return true;
         }
 
         public bool JumpToBookmark(Bookmark bookmark) {
@@ -1062,6 +1068,7 @@ namespace IRExplorerUI {
 
                 var highlighter = Utils.IsAltModifierActive() ? markedHighlighter_ : selectedHighlighter_;
                 HandleElement(element, highlighter, markExpression, markReferences);
+                UpdateHighlighting();
 
                 if (fromUICommand) {
                     ignoreNextCaretEvent_ = true;
@@ -1895,10 +1902,10 @@ namespace IRExplorerUI {
                                           bool markExpression, bool markReferences,
                                           HighlightingEventAction action) {
             if (op.Role == OperandRole.Source) {
-                if (markExpression || true) {
+                if (markExpression) {
                     // Mark an entire SSA def-use expression DAG.
                     HighlightExpression(op, highlighter, expressionOperandStyle_, expressionStyle_);
-                    //return true;
+                    return true;
                 }
 
                 // Further handling of sources is done below.

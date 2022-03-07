@@ -89,6 +89,14 @@ namespace IRExplorerCore {
 
                 return (int)data_.Span[position_++];
             }
+
+            public override int Peek() {
+                if (position_ == endPosition_) {
+                    return -1;
+                }
+
+                return (int)data_.Span[position_];
+            }
         }
 
 

@@ -43,8 +43,8 @@
       {
         "Kind": "analysis",
         "Title": "VN",
-        "SearchedText": "VN ",
-        "SearchKind": "default",
+        "SearchedText": "VN [0-9]+\\:",
+        "SearchKind": "regex",
         "AddTextMark": true,
         "TextMarkBorderColor": "#bd93d9",
         "TextMarkBorderWeight": 1.5,

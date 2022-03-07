@@ -74,7 +74,7 @@ namespace IRExplorerUI {
         }
 
         public void InitializeFromDocument(IRDocument document, string text = null) {
-            TextView.InitializeFromDocument(document, text);
+            TextView.InitializeFromDocument(document, false, text);
         }
 
         public void InitializeBasedOnDocument(string text, IRDocument document) {

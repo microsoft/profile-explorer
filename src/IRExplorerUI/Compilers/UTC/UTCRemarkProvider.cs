@@ -434,6 +434,8 @@ namespace IRExplorerUI.UTC {
                     continue;
                 }
 
+                //? TODO: If SearchKind is Regex, this ends up creating a new Regex
+                //? instance for each remark, should make it once and attach it to category
                 if (TextSearcher.Contains(text, category.SearchedText, category.SearchKind)) {
                     return category;
                 }
