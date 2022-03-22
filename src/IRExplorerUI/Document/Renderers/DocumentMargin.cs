@@ -297,39 +297,36 @@ namespace IRExplorerUI {
             bool newTextHoveredBookmark = false;
             bool needsRedrawing = false;
 
-            if (DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
-                foreach (var segment in bookmarkSegments_.FindOverlappingSegments(
-                    viewStart, viewEnd - viewStart)) {
-                    if (newHoveredBookmark == null) {
-                        if (segment.PinButtonBounds.Contains(point) ||
-                            segment.RemoveButtonBounds.Contains(point)) {
-                            newHoveredBookmark = segment;
-                            newTextHoveredBookmark = false;
-                            continue;
-                        }
-                        else if (segment.Bounds.Contains(point)) {
-                            newHoveredBookmark = segment;
-                            newTextHoveredBookmark = true;
-                            continue;
-                        }
+            foreach (var segment in bookmarkSegments_.FindOverlappingSegments(TextView)) {
+                if (newHoveredBookmark == null) {
+                    if (segment.PinButtonBounds.Contains(point) ||
+                        segment.RemoveButtonBounds.Contains(point)) {
+                        newHoveredBookmark = segment;
+                        newTextHoveredBookmark = false;
+                        continue;
                     }
+                    else if (segment.Bounds.Contains(point)) {
+                        newHoveredBookmark = segment;
+                        newTextHoveredBookmark = true;
+                        continue;
+                    }
+                }
 
-                    if (!segment.IsExpanded) {
-                        double distance = (segment.Bounds.TopLeft - point).Length;
-                        bool onSameLine = point.Y >= segment.Bounds.Top && point.Y <= segment.Bounds.Bottom;
+                if (!segment.IsExpanded) {
+                    double distance = (segment.Bounds.TopLeft - point).Length;
+                    bool onSameLine = point.Y >= segment.Bounds.Top && point.Y <= segment.Bounds.Bottom;
 
-                        if (distance < NearbyBookmarkDistance && onSameLine) {
-                            if (!nearbyBookmarks_.Contains(segment)) {
-                                nearbyBookmarks_.Add(segment);
-                                segment.IsNearby = true;
-                                needsRedrawing = true;
-                            }
-                        }
-                        else if (nearbyBookmarks_.Contains(segment)) {
-                            segment.IsNearby = false;
-                            nearbyBookmarks_.Remove(segment);
+                    if (distance < NearbyBookmarkDistance && onSameLine) {
+                        if (!nearbyBookmarks_.Contains(segment)) {
+                            nearbyBookmarks_.Add(segment);
+                            segment.IsNearby = true;
                             needsRedrawing = true;
                         }
+                    }
+                    else if (nearbyBookmarks_.Contains(segment)) {
+                        segment.IsNearby = false;
+                        nearbyBookmarks_.Remove(segment);
+                        needsRedrawing = true;
                     }
                 }
             }
@@ -371,13 +368,9 @@ namespace IRExplorerUI {
         }
 
         private Tuple<BookmarkSegment, BookmarkSegmentElement> HitTestBookmarks() {
-            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
-                return null;
-            }
-
             var point = Mouse.GetPosition(this);
 
-            foreach (var segment in bookmarkSegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+            foreach (var segment in bookmarkSegments_.FindOverlappingSegments(TextView)) {
                 if (segment.PinButtonBounds.Contains(point)) {
                     return new Tuple<BookmarkSegment, BookmarkSegmentElement>(
                         segment, BookmarkSegmentElement.PinButton);
@@ -541,7 +534,7 @@ namespace IRExplorerUI {
                                          new Rect(0, 0, RenderSize.Width, RenderSize.Height));
 
             // Draw highlighted blocks.
-            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
+            if (!DocumentUtils.FindVisibleTextOffsets(TextView, out int viewStart, out int viewEnd)) {
                 return;
             }
 
@@ -553,7 +546,7 @@ namespace IRExplorerUI {
             // This is done so that the borders of the selected ones are not drawn over by other 
             // segments with a different border color.
             double lineHeight = Math.Ceiling(TextView.DefaultLineHeight);
-            var segments = bookmarkSegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart);
+            var segments = bookmarkSegments_.FindOverlappingSegments(TextView);
 
             foreach (var segment in segments) {
                 if (!(segment.IsSelected || segment.IsHovered || segment.IsPinned)) {

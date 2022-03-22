@@ -9,6 +9,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "GoToDefinition", typeof(IRDocumentHost));
         public static readonly RoutedUICommand GoToDefinitionSkipCopies =
             new RoutedUICommand("Untitled", "GoToDefinitionSkipCopies", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand PreviewDefinition =
+            new RoutedUICommand("Untitled", "PreviewDefinition", typeof(IRDocumentHost));
 
         public static readonly RoutedUICommand MarkDefinition =
             new RoutedUICommand("Untitled", "MarkDefinition", typeof(IRDocumentHost));

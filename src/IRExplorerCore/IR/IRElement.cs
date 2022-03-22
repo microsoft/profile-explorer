@@ -84,6 +84,10 @@ namespace IRExplorerCore.IR {
             return source.AsMemory(TextLocation.Offset, TextLength);
         }
 
+        public ReadOnlyMemory<char> GetText(ReadOnlyMemory<char> source) {
+            return source.Slice(TextLocation.Offset, TextLength);
+        }
+
         public virtual void Accept(IRVisitor visitor) {
             visitor.Visit(this);
         }

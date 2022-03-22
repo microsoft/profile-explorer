@@ -268,7 +268,6 @@ namespace IRExplorerUI {
     public partial class IRDocumentHost : UserControl, INotifyPropertyChanged {
         private const double ActionPanelInitialOpacity = 0.5;
         private const int ActionPanelHeight = 20;
-        private const double ActionPanelHideTimeout = 0.5;
         private const double AnimationDuration = 0.1;
         private const int ActionPanelOffset = 15;
 
@@ -407,9 +406,8 @@ namespace IRExplorerUI {
 
         public ISession Session {
             get => session_;
-            set {
+            private set {
                 session_ = value;
-                TextView.Session = session_;
             }
         }
 
@@ -634,7 +632,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            delayedHideActionPanel_ = DelayedAction.StartNew(TimeSpan.FromSeconds(ActionPanelHideTimeout), () => {
+            delayedHideActionPanel_ = DelayedAction.StartNew(() => {
                 if (remarkPanelVisible_ || ActionPanel.IsMouseOver) {
                     return;
                 }
@@ -796,7 +794,7 @@ namespace IRExplorerUI {
         }
 
         public void ReloadSettings() {
-            TextView.Settings = settings_;
+            TextView.Initalize(settings_, session_);
             SelectedLineBrush = settings_.SelectedValueColor.AsBrush();
             UpdateColumnsList();
         }
@@ -1785,10 +1783,10 @@ namespace IRExplorerUI {
                     Math.Min(TextView.ActualWidth, DocumentOptionsPanel.DefaultWidth));
             var height = Math.Max(DocumentOptionsPanel.MinimumHeight,
                     Math.Min(TextView.ActualHeight, DocumentOptionsPanel.DefaultHeight));
-            var position = TextView.PointToScreen(new Point(TextView.ActualWidth - width, 0));
+            var position = new Point(TextView.ActualWidth - width, 0);
 
             optionsPanel_ = new DocumentOptionsPanel();
-            optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, this);
+            optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, TextView);
 
             optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
@@ -1834,10 +1832,10 @@ namespace IRExplorerUI {
                     Math.Min(TextView.ActualWidth, RemarkOptionsPanel.DefaultWidth));
             var height = Math.Max(RemarkOptionsPanel.MinimumHeight,
                     Math.Min(TextView.ActualHeight, RemarkOptionsPanel.DefaultHeight));
-            var position = TextView.PointToScreen(new Point(RemarkOptionsPanel.LeftMargin, 0));
+            var position = new Point(RemarkOptionsPanel.LeftMargin, 0);
 
             remarkOptionsPanelWindow_ = new OptionsPanelHostWindow(new RemarkOptionsPanel(),
-                                                                   position, width, height, this);
+                                                                   position, width, height, TextView);
             remarkOptionsPanelWindow_.PanelClosed += RemarkOptionsPanel_PanelClosed;
             remarkOptionsPanelWindow_.PanelReset += RemarkOptionsPanel_PanelReset;
             remarkOptionsPanelWindow_.SettingsChanged += RemarkOptionsPanel_SettingsChanged;
@@ -2026,7 +2024,7 @@ namespace IRExplorerUI {
             if (documentHost != null) {
                 var left = documentHost.ActualWidth - QueryPanel.DefaultWidth - 32;
                 var top = documentHost.ActualHeight - QueryPanel.DefaultHeight - 32;
-                position = documentHost.PointToScreen(new Point(left, top));
+                position = new Point(left, top);
             }
 
             var queryPanel = new QueryPanel(position, QueryPanel.DefaultWidth, QueryPanel.DefaultHeight, 

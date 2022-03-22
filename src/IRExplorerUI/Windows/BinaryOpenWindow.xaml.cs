@@ -169,6 +169,7 @@ namespace IRExplorerUI {
             else {
                 var pathPair = menuItem.Tag as Tuple<string, string>;
                 BinaryFilePath = pathPair.Item1;
+                DiffBinaryFilePath = pathPair.Item2;
                 await OpenFile();
             }
         }

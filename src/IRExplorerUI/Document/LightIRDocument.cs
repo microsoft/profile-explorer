@@ -58,7 +58,7 @@ namespace IRExplorerUI {
         private string initialText_;
         private bool initialTextChanged_;
         private List<Tuple<int, int>> initialTextLines_;
-        private IRPreviewToolTip previewTooltip_;
+        private IRPreviewToolTipHost previewTooltip_;
         private IRElement prevSelectedElement_;
         private TextSearchMode searchMode_;
         private ElementHighlighter searchResultMarker_;
@@ -130,7 +130,7 @@ namespace IRExplorerUI {
 
                     var refElementDef = refFinder.FindSingleDefinition(refElement);
                     var tooltipElement = refElementDef ?? refElement;
-                    previewTooltip_ = new IRPreviewToolTip(600, 100, Session.CurrentDocument, tooltipElement);
+                    previewTooltip_ = new IRPreviewToolTipHost(600, 100, Session.CurrentDocument, tooltipElement);
                     previewTooltip_.Show();
                 }
             }

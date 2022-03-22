@@ -272,7 +272,7 @@ namespace IRExplorerCore.Graph {
                 graph_.DataNodeMap.Add(data, node);
             }
             else {
-                Debug.Assert(false, $"Could not find block {name}");
+                //Debug.Assert(false, $"Could not find block {name}");
                 Trace.TraceError($"Could not find Graphviz output block {name}");
             }
 

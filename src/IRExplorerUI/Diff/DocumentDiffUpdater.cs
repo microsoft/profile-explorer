@@ -57,7 +57,7 @@ namespace IRExplorerUI.Diff {
 
         public DiffMarkingResult MarkDiffs(string text, string otherText,
                                            DiffPaneModel diff, DiffPaneModel otherDiff,
-                                           bool isRightDoc, List<string> linePrefixes,
+                                           bool isRightDoc, FilteredDiffInput filteredInput,
                                            DiffStatistics diffStats,
                                            bool markRightDocDeletion = false) {
             // Create a new text document and associate it with the task worker.
@@ -146,15 +146,23 @@ namespace IRExplorerUI.Diff {
                         throw new ArgumentOutOfRangeException();
                 }
 
-                if (linePrefixes != null) {
-                    int prefixLine = lineIndex - lineAdjustment;
+                // If the input text had parts replaced as a form of canonicalization,
+                // replace those with the original text.
+                if (filteredInput != null && line.Type != ChangeType.Imaginary) {
+                    int filteredLine = lineIndex - lineAdjustment;
+                    int docLineIndex = lineIndex + 1;
 
-                    if (prefixLine < linePrefixes.Count) {
-                        var prefix = linePrefixes[prefixLine];
-                        var docLine = document.GetLineByNumber(lineIndex + 1);
+                    if (filteredLine < filteredInput.LineReplacements.Count &&
+                        docLineIndex <= document.LineCount) {
+                        var replacements = filteredInput.LineReplacements[filteredLine];
+                        var docLine = document.GetLineByNumber(docLineIndex);
 
-                        if (docLine.Offset + prefix.Length < document.TextLength) {
-                            document.Replace(docLine.Offset, prefix.Length, prefix);
+                        foreach (var replacement in replacements) {
+                            int docLineOffset = docLine.Offset + replacement.Offset;
+
+                            if (docLineOffset + replacement.Length < document.TextLength) {
+                                document.Replace(docLineOffset, replacement.Length, replacement.Original);
+                            }
                         }
                     }
                 }
@@ -467,7 +475,7 @@ namespace IRExplorerUI.Diff {
                 var otherLine = otherDiff.Lines[lineIndex];
                 int position = piece.Position.Value + piecePossitionOffset;
 
-                if (position > 0 && position < otherLine.SubPieces.Count) {
+                if (position > 0 && position <= otherLine.SubPieces.Count) {
                     var result = otherLine.SubPieces[position - 1];
                     return !string.IsNullOrEmpty(result.Text) ? result : null;
                 }

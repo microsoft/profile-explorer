@@ -202,18 +202,15 @@ namespace IRExplorerUI.Document {
                 return;
             }
 
-            // Find start/end index of visible lines.
-            if (!DocumentUtils.FindVisibleText(textView, out int viewStart, out int viewEnd)) {
-                return;
-            }
-
             var visual = new DrawingVisual();
             var overlayDC = visual.RenderOpen();
 
+            //? TODO: Only use for this seems to be the VS extension,
+            //? it should use a proper overlay instead of a NotesTag and remove this
             if (highlighter_.Groups.Count > 0) {
                 // Query and draw visible segments from each group.
                 foreach (var group in highlighter_.Groups) {
-                    DrawGroup(group, textView, overlayDC, viewStart, viewEnd);
+                    DrawGroup(group, textView, overlayDC);
                 }
             }
 
@@ -222,7 +219,7 @@ namespace IRExplorerUI.Document {
             IElementOverlay hoverPrevOverlay = null;
             IElementOverlay selectedPrevOverlay = null;
 
-            foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+            foreach (var segment in overlaySegments_.FindOverlappingSegments(TextView)) {
                 bool isBlockElement = segment.Element is BlockIR;
                 IElementOverlay prevOverlay = null;
 
@@ -410,13 +407,9 @@ namespace IRExplorerUI.Document {
                 return;
             }
 
-            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
-                return;
-            }
-
             IElementOverlay hoverOverlay = null;
 
-            foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+            foreach (var segment in overlaySegments_.FindOverlappingSegments(TextView)) {
                 if (hoverOverlay != null) {
                     break;
                 }
@@ -451,14 +444,10 @@ namespace IRExplorerUI.Document {
                 return false;
             }
 
-            if (!DocumentUtils.FindVisibleText(TextView, out int viewStart, out int viewEnd)) {
-                return false;
-            }
-
             IElementOverlay hoverOverlay = null;
             bool redraw = false;
 
-            foreach (var segment in overlaySegments_.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+            foreach (var segment in overlaySegments_.FindOverlappingSegments(TextView)) {
                 if (hoverOverlay != null) {
                     break;
                 }
@@ -527,11 +516,11 @@ namespace IRExplorerUI.Document {
         }
 
         private void DrawGroup(HighlightedSegmentGroup group, TextView textView,
-                               DrawingContext drawingContext, int viewStart, int viewEnd) {
+                               DrawingContext drawingContext) {
             IRElement element = null;
             double fontSize = App.Settings.DocumentSettings.FontSize;
 
-            foreach (var segment in group.Segments.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
+            foreach (var segment in group.Segments.FindOverlappingSegments(TextView)) {
                 element = segment.Element;
 
                 foreach (var rect in BackgroundGeometryBuilder.GetRectsForSegment(textView, segment)) {

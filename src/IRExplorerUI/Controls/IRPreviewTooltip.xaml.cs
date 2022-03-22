@@ -5,42 +5,20 @@ using System;
 using System.Windows;
 using System.Windows.Controls;
 using IRExplorerCore.IR;
+using static System.Diagnostics.Trace;
 
 namespace IRExplorerUI {
     /// <summary>
     ///     Interaction logic for IRPreview.xaml
     /// </summary>
-    public partial class IRPreviewTooltip : UserControl {
-        public static readonly DependencyProperty ListElementProperty = DependencyProperty.Register(
-            "ListElement", typeof(Tuple<IRDocument, IRElement, string>), typeof(IRPreviewTooltip),
-            new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender,
-                                          OnElementChanged));
-
+    public partial class IRPreviewToolTip : UserControl {
         private string headerText_;
-
         private bool isDocumentOnly_;
 
-        public IRPreviewTooltip() {
+        public IRPreviewToolTip() {
             InitializeComponent();
         }
-
-        public Tuple<IRDocument, IRElement, string> ListElement {
-            get => (Tuple<IRDocument, IRElement, string>)GetValue(ListElementProperty);
-            set {
-                SetValue(ListElementProperty, value);
-
-                if (value != null) {
-                    TextView.ShowLineNumbers = false;
-                    TextView.Background = null;
-                    IsDocumentOnly = true;
-                    ResizeForLines(1);
-                    InitializeFromDocument(value.Item1);
-                    PreviewedElement = value.Item2;
-                    UpdateView();
-                }
-            }
-        }
-
+        
         public IRElement PreviewedElement { get; set; }
 
         public bool IsDocumentOnly {
@@ -66,13 +44,7 @@ namespace IRExplorerUI {
                 }
             }
         }
-
-        public static void OnElementChanged(DependencyObject sender,
-                                            DependencyPropertyChangedEventArgs eventArgs) {
-            var control = (IRPreviewTooltip)sender;
-            control.ListElement = (Tuple<IRDocument, IRElement, string>)eventArgs.NewValue;
-        }
-
+        
         public void InitializeFromDocument(IRDocument document, string text = null) {
             TextView.InitializeFromDocument(document, false, text);
         }
@@ -106,6 +78,16 @@ namespace IRExplorerUI {
             TextView.Height = height;
             TextViewHost.Height = hostHeight;
             return hostHeight;
+        }
+
+        public void AdjustVerticalPosition(double amount) {
+            // Make scroll bar visible, it's not by default.
+            TextView.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
+            ScrollViewer.SetVerticalScrollBarVisibility(TextView, ScrollBarVisibility.Auto);
+
+            amount *= TextView.TextArea.TextView.DefaultLineHeight;
+            double newOffset = TextView.VerticalOffset + amount;
+            TextView.ScrollToVerticalOffset(newOffset);
         }
     }
 }

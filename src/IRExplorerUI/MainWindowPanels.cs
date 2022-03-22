@@ -936,7 +936,9 @@ namespace IRExplorerUI {
         }
 
         public void UnregisterDetachedPanel(DraggablePopup panel) {
-            detachedPanels_.Remove(panel);
+            if (panel.IsDetached) {
+                detachedPanels_.Remove(panel);
+            }
         }
 
         private bool RestoreDockLayout() {

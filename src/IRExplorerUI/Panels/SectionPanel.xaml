@@ -477,7 +477,7 @@
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <Border HorizontalAlignment="Stretch">
-                                            <TextBlock Margin="6,2,6,2" Text="{Binding AlternateName}" />
+                                            <TextBlock Text="{Binding AlternateName}" />
                                         </Border>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
@@ -488,7 +488,7 @@
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                             <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick" />
-
+                            
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
                                     <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />

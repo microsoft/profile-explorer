@@ -1777,7 +1777,7 @@ namespace IRExplorerUI {
             // Make a list of all section pairs like [i - 1, i] and diff each one.
             // Note that when comparing two documents side-by-side, some of the sections
             // may be placeholders that don't have a real section behind, those must be ignored.
-            var comparedSections = new List<Tuple<IRTextSection, IRTextSection>>();
+            var comparedSections = new List<(IRTextSection, IRTextSection)>();
             int prevIndex = -1;
 
             for (int i = 0; i < sections_.Count; i++) {
@@ -1786,8 +1786,7 @@ namespace IRExplorerUI {
                 }
 
                 if (prevIndex != -1) {
-                    comparedSections.Add(new Tuple<IRTextSection, IRTextSection>(
-                        sections_[prevIndex].Section, sections_[i].Section));
+                    comparedSections.Add((sections_[prevIndex].Section, sections_[i].Section));
                 }
 
                 prevIndex = i;
@@ -1796,7 +1795,9 @@ namespace IRExplorerUI {
             //? TODO: Pass the LoadedDocument to the panel, not Summary.
             var loader = Session.SessionState.FindLoadedDocument(Summary).Loader;
             var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
-            var results = await diffBuilder.ComputeSectionDiffs(comparedSections, loader, loader, true);
+            var cancelableTask = new CancelableTask(); //? TODO: Fix
+            var results = await diffBuilder.AreSectionsDifferent(comparedSections, loader, loader,
+                                                                 Session.CompilerInfo, true, cancelableTask);
 
             foreach (var result in results) {
                 if (result.HasDiffs) {
@@ -2254,10 +2255,10 @@ namespace IRExplorerUI {
                 Math.Min(SectionList.ActualWidth, SectionOptionsPanel.DefaultWidth));
             var height = Math.Max(SectionOptionsPanel.MinimumHeight,
                 Math.Min(SectionList.ActualHeight, SectionOptionsPanel.DefaultHeight));
-            var position = SectionList.PointToScreen(new Point(SectionList.ActualWidth - width, 0));
+            var position = new Point(SectionList.ActualWidth - width, 0);
 
             optionsPanelWindow_ = new OptionsPanelHostWindow(new SectionOptionsPanel(CompilerInfo),
-                position, width, height, this);
+                                                             position, width, height, SectionList);
             optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;

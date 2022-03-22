@@ -46,7 +46,6 @@ using IRExplorerUI.Utilities;
 using AvalonDock.Layout.Serialization;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
-using Microsoft.ApplicationInsights;
 using IRExplorerCore.Utilities;
 using OxyPlot;
 using OxyPlot.Axes;
@@ -434,7 +433,7 @@ namespace IRExplorerUI {
         private void ShowProgressBar(string title) {
             documentLoadProgressVisible_ = true;
             DocumentLoadProgressBar.Value = 0;
-            DocumentLoadProgressBar.Visibility = Visibility.Hidden;
+            DocumentLoadProgressBar.Visibility = Visibility.Visible;
             DocumentLoadProgressPanel.Visibility = Visibility.Visible;
             
             if (string.IsNullOrEmpty(title)) {
@@ -1234,7 +1233,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var position = MainGrid.PointToScreen(new Point(236, MainMenu.ActualHeight + 1));
+            var position = new Point(236, MainMenu.ActualHeight + 1);
             documentSearchPanel_ = new DocumentSearchPanel(position, 800, 500, this, this, sessionState_.Documents[0]);
             documentSearchPanel_.PopupClosed += DocumentSearchPanel__PopupClosed;
             documentSearchPanel_.PopupDetached += DocumentSearchPanel__PopupDetached;

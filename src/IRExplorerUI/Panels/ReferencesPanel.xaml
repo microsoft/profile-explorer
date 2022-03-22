@@ -109,15 +109,6 @@
                     </ToggleButton>
 
                     <Button
-                        Margin="4,0,0,0"
-                        Command="local:ReferenceCommand.JumpToReference"
-                        CommandParameter="{Binding ElementName=ReferenceList, Path=SelectedItem}"
-                        CommandTarget="{Binding ElementName=ReferenceList}"
-                        ToolTip="Jump to reference (Return)">
-                        <Image Source="{StaticResource JumpIcon}" />
-                    </Button>
-
-                    <Button
                         Command="local:ReferenceCommand.CopyToClipboard"
                         CommandTarget="{Binding ElementName=ReferenceList}"
                         ToolTip="Copy reference list to clipboard (Ctrl+C)">
@@ -221,8 +212,7 @@
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                    <EventSetter Event="Control.MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
-                    <EventSetter Event="UIElement.MouseEnter" Handler="ListViewItem_MouseEnter" />
+                    <EventSetter Event="MouseDoubleClick" Handler="ListViewItem_MouseDoubleClick" />
 
                     <Style.Triggers>
                         <DataTrigger Binding="{Binding Kind}" Value="Store">

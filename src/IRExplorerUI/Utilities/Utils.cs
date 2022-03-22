@@ -282,13 +282,14 @@ namespace IRExplorerUI {
                 return "";
             }
 
-            if (block.HasLabel) {
+            if (block.HasLabel && !string.IsNullOrEmpty(block.Label.Name)) {
                 return $"B{block.Number} ({block.Label.Name})";
             }
 
             return $"B{block.Number}";
         }
 
+        //? TODO: This should be part of the IR NameProvider
         public static string MakeElementDescription(IRElement element) {
             switch (element) {
                 case BlockIR block:
@@ -329,7 +330,7 @@ namespace IRExplorerUI {
                     return builder.ToString();
                 }
                 case OperandIR op: {
-                    string text = ReferenceFinder.GetSymbolName(op);
+                    string text = GetSymbolName(op);
 
                     switch (op.Kind) {
                         case OperandKind.Address:
@@ -362,6 +363,15 @@ namespace IRExplorerUI {
                 default:
                     return element.ToString();
             }
+        }
+        
+        //? TODO: This should be part of the IR NameProvider
+        public static string GetSymbolName(OperandIR op) {
+            if (op.HasName) {
+                return op.NameValue.ToString();
+            }
+
+            return "";
         }
 
         public static KeyCharInfo KeyToChar(Key key) {

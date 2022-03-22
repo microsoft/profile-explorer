@@ -122,7 +122,7 @@ namespace IRExplorerUI {
             var diffTask = DisassembleBinary(diffFilePath);
             await Task.WhenAll(baseTask, diffTask);
 
-            if (baseTask.Result == null || diffTask.Result != null) {
+            if (baseTask.Result == null || diffTask.Result == null) {
                 using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show("Failed to find system disassembler", "IR Explorer",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
@@ -373,13 +373,13 @@ namespace IRExplorerUI {
         private Task<DiffMarkingResult> 
             MarkSectionDiffs(IRTextSection section, string text, string otherText,
                              DiffPaneModel diff, DiffPaneModel otherDiff, bool isRightDoc,
-                             IDiffOutputFilter diffFilter, List<string> linePrefixes,
+                             IDiffOutputFilter diffFilter, FilteredDiffInput filteredInput,
                              DiffStatistics diffStats) {
             var diffUpdater = new DocumentDiffUpdater(diffFilter, App.Settings.DiffSettings, compilerInfo_);
 
             return Task.Run(() => {
                 var result = diffUpdater.MarkDiffs(text, otherText, diff, otherDiff,
-                                                   isRightDoc, linePrefixes, diffStats);
+                                                   isRightDoc, filteredInput, diffStats);
                 diffUpdater.ReparseDiffedFunction(result, section);
                 return result;
             });
@@ -448,9 +448,9 @@ namespace IRExplorerUI {
             DiffMarkingResult rightDiffResult;
 
             // Create the diff filter that will post-process the diff results.
-            var diffInputFilter = compilerInfo_.CreateDiffInputFilter();
+            var leftDiffInputFilter = compilerInfo_.CreateDiffInputFilter();
+            var rightDiffInputFilter = compilerInfo_.CreateDiffInputFilter();
             var diffFilter = compilerInfo_.CreateDiffOutputFilter();
-            diffInputFilter?.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
             diffFilter?.Initialize(App.Settings.DiffSettings, compilerInfo_.IR);
 
             // Fairly often the text is identical, don't do the diffing for such cases.
@@ -459,12 +459,18 @@ namespace IRExplorerUI {
             if(IsSectionTextDifferent(newLeftSection, newRightSection)) {
                 var leftDiffText = leftText;
                 var rightDiffText = rightText;
-                List<string> leftLinePrefixes = null;
-                List<string> rightLinePrefixes = null;
+                FilteredDiffInput leftFilteredInput = null;
+                FilteredDiffInput rightFilteredInput = null;
 
-                if (diffInputFilter != null) {
-                    (leftDiffText, leftLinePrefixes) = diffInputFilter.FilterInputText(leftText);
-                    (rightDiffText, rightLinePrefixes) = diffInputFilter.FilterInputText(rightText);
+                if (leftDiffInputFilter != null) {
+                    var leftTask = Task.Run(() => leftDiffInputFilter.FilterInputText(leftText));
+                    var rightTask = Task.Run(() => rightDiffInputFilter.FilterInputText(rightText));
+                    await Task.WhenAll(leftTask, rightTask);
+
+                    leftFilteredInput = await leftTask;
+                    rightFilteredInput = await rightTask;
+                    leftDiffText = leftFilteredInput.Text;
+                    rightDiffText = rightFilteredInput.Text;
                 }
 
                 var diff = await ComputeSectionDiffs(leftDiffText, rightDiffText, newLeftSection, newRightSection);
@@ -474,10 +480,10 @@ namespace IRExplorerUI {
                 // in the doc. hosts once back on the UI thread.
                 var leftMarkTask = MarkSectionDiffs(newLeftSection, leftText, rightText,
                     diff.OldText, diff.NewText,
-                    false, diffFilter, leftLinePrefixes, leftDiffStats);
+                    false, diffFilter, leftFilteredInput, leftDiffStats);
                 var rightMarkTask = MarkSectionDiffs(newRightSection, leftText, rightText,
                     diff.NewText, diff.OldText,
-                    true, diffFilter, rightLinePrefixes, rightDiffStats);
+                    true, diffFilter, rightFilteredInput, rightDiffStats);
 
                 await Task.WhenAll(leftMarkTask, rightMarkTask);
                 leftDiffResult = await leftMarkTask;
@@ -760,8 +766,8 @@ namespace IRExplorerUI {
                     Math.Min(MainGrid.ActualWidth, DiffOptionsPanel.DefaultWidth));
             var height = Math.Max(DiffOptionsPanel.MinimumHeight,
                     Math.Min(MainGrid.ActualHeight, DiffOptionsPanel.DefaultHeight));
-            var position = MainGrid.PointToScreen(new Point(230, MainMenu.ActualHeight + 1));
-            diffOptionsPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, this);
+            var position = new Point(230, MainMenu.ActualHeight + 1);
+            diffOptionsPanelHost_ = new OptionsPanelHostWindow(new DiffOptionsPanel(), position, width, height, MainGrid);
             diffOptionsPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
             diffOptionsPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;
             diffOptionsPanelHost_.SettingsChanged += DiffOptionsPanel_SettingsChanged;

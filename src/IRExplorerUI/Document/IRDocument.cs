@@ -27,6 +27,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Controls;
 
 namespace IRExplorerUI {
     public enum BringIntoViewStyle {
@@ -101,7 +102,6 @@ namespace IRExplorerUI {
         private HighlightingStyleCollection expressionStyle_;
         private FoldingManager folding_;
 
-        private FunctionIR function_;
         private MarkerMarginVersionInfo highlighterVersion_;
         private MarkerBarElement hoveredBarElement_;
         private IRElement hoveredElement_;
@@ -124,13 +124,12 @@ namespace IRExplorerUI {
         private Canvas markerMargin_;
         private List<MarkerBarElement> markerMargingElements_;
         private HighlightingStyleCyclingCollection markerParentStyle_;
-        private IRPreviewToolTip nodeToolTip_;
+        private IRDocumentPopup previewPopup_;
         private List<IRElement> operandElements_;
         private RemarkHighlighter remarkHighlighter_;
         private DelayedAction removeHoveredAction_;
         private Dictionary<TextSearchResult, IRElement> searchResultMap_;
         private HighlightedGroup searchResultsGroup_;
-        private IRTextSection section_;
         private HighlightingStyle selectedBlockStyle_;
         private HashSet<IRElement> selectedElements_;
         private ElementHighlighter selectedHighlighter_;
@@ -172,19 +171,27 @@ namespace IRExplorerUI {
             SetupStableRenderers();
             SetupCommands();
         }
+        public void Initalize(DocumentSettings settings, ISession session) {
+            Session = session;
+            Settings = settings;
+        }
 
-        public List<BlockIR> Blocks => function_.Blocks;
+        public List<BlockIR> Blocks => Function.Blocks;
         public BookmarkManager BookmarkManager => bookmarks_;
-        public ISession Session { get; set; }
-        public FunctionIR Function => function_;
-        public IRTextSection Section => section_;
+        public ISession Session { get; private set; }
+        public FunctionIR Function { get; set; }
+        public IRTextSection Section { get; set; }
+
+        public ReadOnlyMemory<char> SectionText { get; set; }
+
+        public double DefaultLineHeight => TextArea.TextView.DefaultLineHeight;
 
         public bool DiffModeEnabled { get; set; }
         public bool DuringSectionLoading => duringSectionLoading_;
 
         public DocumentSettings Settings {
             get => settings_;
-            set {
+            private set {
                 settings_ = value;
                 ReloadSettings();
             }
@@ -584,10 +591,10 @@ namespace IRExplorerUI {
         }
 
         public BlockIR GoToNextBlock() {
-            int index = function_.Blocks.IndexOf(currentBlock_);
+            int index = Function.Blocks.IndexOf(currentBlock_);
 
-            if (index + 1 < function_.Blocks.Count) {
-                GoToBlock(function_.Blocks[index + 1]);
+            if (index + 1 < Function.Blocks.Count) {
+                GoToBlock(Function.Blocks[index + 1]);
             }
 
             return currentBlock_;
@@ -598,13 +605,13 @@ namespace IRExplorerUI {
         }
 
         public BlockIR GoToPreviousBlock() {
-            int index = function_.Blocks.IndexOf(currentBlock_);
+            int index = Function.Blocks.IndexOf(currentBlock_);
 
             if (index == -1) {
                 return currentBlock_;
             }
-            else if (index > 0 && function_.Blocks.Count > 0) {
-                GoToBlock(function_.Blocks[index - 1]);
+            else if (index > 0 && Function.Blocks.Count > 0) {
+                GoToBlock(Function.Blocks[index - 1]);
             }
 
             return currentBlock_;
@@ -640,7 +647,7 @@ namespace IRExplorerUI {
             var group = new HighlightedGroup(style);
             IRElement firstTuple = null;
 
-            foreach (var block in function_.Blocks) {
+            foreach (var block in Function.Blocks) {
                 foreach (var tuple in block.Tuples) {
                     var sourceTag = tuple.GetTag<SourceLocationTag>();
                     bool found = false;
@@ -692,25 +699,27 @@ namespace IRExplorerUI {
         }
 
         public void UnloadDocument() {
-            section_ = null;
-            function_ = null;
+            Section = null;
+            Function = null;
             selectedRemark_ = null;
             currentExprElement_ = null;
             ClearSelectedElements();
 
             ResetRenderers();
             Text = "";
+            SectionText = ReadOnlyMemory<char>.Empty;
         }
-
+        
         public bool InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
-            if (section_ == doc.section_) {
+            if (Section == doc.Section) {
                 return false;
             }
 
             UnloadDocument();
+            Session = doc.Session;
             Settings = doc.Settings;
-            section_ = doc.section_;
-            function_ = doc.function_;
+            Section = doc.Section;
+            Function = doc.Function;
             blockElements_ = doc.blockElements_;
             tupleElements_ = doc.tupleElements_;
             operandElements_ = doc.operandElements_;
@@ -724,14 +733,18 @@ namespace IRExplorerUI {
             bookmarks_.CopyFrom(doc.bookmarks_);
             margin_.CopyFrom(doc.margin_);
             ignoreNextCaretEvent_ = true;
-
+            
             if (text != null) {
-                Document.Text = text;
+                Text = text;
+                SectionText = text.AsMemory();
             }
             else {
-                Document.Text = doc.Document.Text;
+                Text = doc.SectionText.ToString();
+                SectionText = doc.SectionText;
             }
-
+            
+            SetupBlockFolding();
+            Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
             return true;
         }
 
@@ -1122,7 +1135,7 @@ namespace IRExplorerUI {
             switch (e.Key) {
                 case Key.Return: {
                     if (Utils.IsShiftModifierActive()) {
-                        PeekDefinitionExecuted(this, null);
+                        PreviewDefinitionExecuted(this, null);
                     }
                     else if (Utils.IsControlModifierActive()) {
                         GoToDefinitionSkipCopiesExecuted(this, null);
@@ -1135,7 +1148,7 @@ namespace IRExplorerUI {
                     break;
                 }
                 case Key.Escape: {
-                    HideTooltip();
+                    HidePreviewPopup();
                     e.Handled = true;
                     break;
                 }
@@ -1375,7 +1388,7 @@ namespace IRExplorerUI {
                 barElement.Style.Border = ColorPens.GetBoldPen(Colors.Black);
                 hoveredBarElement_ = barElement;
                 needsRendering = true;
-                ShowTooltip(barElement.Element, true);
+                ShowPreviewPopup(barElement.Element);
             }
             else {
                 HideTemporaryUI();
@@ -1452,7 +1465,7 @@ namespace IRExplorerUI {
         }
 
         private void ClearTemporaryHighlighting(bool clearSelected = true) {
-            hoverHighlighter_.Clear();
+            HideHoverHighlighting();
 
             if (clearSelected) {
                 ClearSelectedElements();
@@ -1494,13 +1507,14 @@ namespace IRExplorerUI {
         public void EarlyLoadSectionSetup(ParsedIRTextSection parsedSection) {
             Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Start setup for {parsedSection}");
             duringSectionLoading_ = true;
-            section_ = parsedSection.Section;
-            function_ = parsedSection.Function;
+            Section = parsedSection.Section;
+            Function = parsedSection.Function;
             ignoreNextCaretEvent_ = true;
             ClearSelectedElements();
 
             ResetRenderers();
-            Document.Text = parsedSection.Text.ToString();
+            Text = parsedSection.Text.ToString();
+            SectionText = parsedSection.Text;
         }
 
         private void ResetRenderers() {
@@ -1730,6 +1744,13 @@ namespace IRExplorerUI {
                 var element = GetSelectedElement();
                 GoToElementDefinition(element);
                 MirrorAction(DocumentActionKind.GoToDefinition, element);
+            }
+        }
+
+        private async void PreviewDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (selectedElements_.Count == 1) {
+                var element = GetSelectedElement();
+                await ShowDefinitionPreview(element, true);
             }
         }
 
@@ -2040,16 +2061,16 @@ namespace IRExplorerUI {
         }
 
         private void HideTemporaryUI() {
-            HideTooltip();
+            HidePreviewPopup();
             margin_.UnselectBookmark();
         }
 
-        private void HideTooltip() {
+        private void HidePreviewPopup(bool force = false) {
             ignoreNextPreviewElement_ = null;
-
-            if (nodeToolTip_ != null) {
-                nodeToolTip_.Hide();
-                nodeToolTip_ = null;
+            
+            if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
+                previewPopup_.ClosePopup();
+                previewPopup_ = null;
             }
         }
 
@@ -2269,7 +2290,7 @@ namespace IRExplorerUI {
             e.Handled = GoToElementDefinition(element, Utils.IsControlModifierActive());
         }
 
-        private void IRDocument_PreviewMouseHover(object sender, MouseEventArgs e) {
+        private async void IRDocument_PreviewMouseHover(object sender, MouseEventArgs e) {
             if (ignoreNextHoverEvent_) {
                 ignoreNextHoverEvent_ = false;
                 return;
@@ -2295,11 +2316,11 @@ namespace IRExplorerUI {
                 if (!selectedElements_.Contains(element) &&
                     !(element is BlockIR) &&
                     !(element is InstructionIR)) {
-                    hoveredElement_ = element;
-                    ShowDefinitionPreview(element);
+                    bool previewDisplayed = await ShowDefinitionPreview(element);
 
-                    if (highlightElement) {
-                        hoverHighlighter_.Clear();
+                    if (highlightElement || previewDisplayed) {
+                        HideHoverHighlighting();
+                        hoveredElement_ = element;
                         HandleElement(element, hoverHighlighter_,
                                       markExpression: Utils.IsControlModifierActive(),
                                       markReferences: Utils.IsShiftModifierActive());
@@ -2310,17 +2331,18 @@ namespace IRExplorerUI {
             }
 
             HideHoverHighlighting();
+            UpdateHighlighting();
         }
 
         private void IRDocument_PreviewMouseHoverStopped(object sender, MouseEventArgs e) {
-            removeHoveredAction_ = DelayedAction.StartNew(TimeSpan.FromMilliseconds(500), () => {
+            removeHoveredAction_ = DelayedAction.StartNew(() => {
                 if (removeHoveredAction_ != null) {
                     removeHoveredAction_ = null;
                     HideHoverHighlighting();
+                    HidePreviewPopup();
                 }
             });
 
-            HideTooltip();
             ignoreNextHoverEvent_ = false;
         }
 
@@ -2333,12 +2355,11 @@ namespace IRExplorerUI {
                                           HighlightingEventAction.ReplaceHighlighting);
 
             hoverHighlighter_.Clear();
-            UpdateHighlighting();
             hoveredElement_ = null;
         }
 
         private void IRDocument_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e) {
-            HideTooltip();
+            HidePreviewPopup();
 
             if (ignoreNextScrollEvent_) {
                 ignoreNextScrollEvent_ = false;
@@ -2397,20 +2418,21 @@ namespace IRExplorerUI {
             NotifyPropertyChanged("Blocks"); // Force block dropdown to update.
             duringSectionLoading_ = false;
 
-            //? Check if other sections have marked elements and try to mark same ones
+            //? TODO: Check if other sections have marked elements and try to mark same ones
             //!  - session can be queried
             //!  - load func and deserialize state object
             //!    - for each marker/bookmark, use FindEquivalentValue
             //!    - maybe set "no saving" flag for these copied markers
-            //var other = Session.GetNextSection(section_);
+            //var other = Session.GetNextSection(Section);
             //if (other != null)
             //    CloneOtherSectionAnnotations(other);
 
             // Do compiler-specifiec document work.
-            ColumnData = new IRDocumentColumnData(function_.InstructionCount);
-            await Session.CompilerInfo.HandleLoadedSection(this, function_, section_);
+            ColumnData = new IRDocumentColumnData(Function.InstructionCount);
+            await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
         }
 
+        //? TODO: Check if other sections have marked elements and try to mark same ones
         private void CloneOtherSectionAnnotations(IRTextSection otherSection) {
             var parsedSection = Session.LoadAndParseSection(otherSection);
             if (parsedSection == null)
@@ -2461,23 +2483,23 @@ namespace IRExplorerUI {
         private void ComputeElementLists() {
             // In case the function couldn't be parsed, bail
             // after creating the elements, this should prevent further issues.
-            int blocks = function_ != null ? function_.Blocks.Count : 1;
+            int blocks = Function != null ? Function.Blocks.Count : 1;
             blockElements_ = new List<IRElement>(blocks);
             tupleElements_ = new List<IRElement>(blockElements_.Count * 4);
             operandElements_ = new List<IRElement>(tupleElements_.Count * 2);
             selectedElements_ = new HashSet<IRElement>();
 
-            if (function_ == null) {
+            if (Function == null) {
                 return;
             }
 
             // Add the function parameters.
-            foreach (var param in function_.Parameters) {
+            foreach (var param in Function.Parameters) {
                 operandElements_.Add(param);
             }
 
             // Add the elements from the entire function.
-            foreach (var block in function_.Blocks) {
+            foreach (var block in Function.Blocks) {
                 blockElements_.Add(block);
 
                 if(block.Label != null) {
@@ -2507,8 +2529,8 @@ namespace IRExplorerUI {
 
         public async Task LoadDiffedFunction(DiffMarkingResult diffResult, IRTextSection newSection) {
             StartDiffSegmentAdding();
-            function_ = diffResult.DiffFunction;
-            section_ = newSection;
+            Function = diffResult.DiffFunction;
+            Section = newSection;
 
             // Compute the element lists before removing the block folding.
             // If done after, the UI may update during the async call
@@ -2590,8 +2612,7 @@ namespace IRExplorerUI {
 
                 if (e != null && e.Parameter is SelectedIconEventArgs iconArgs) {
                     var icon = IconDrawing.FromIconResource(iconArgs.SelectedIconName);
-                    AddIconElementOverlay(element, icon, this.TextArea.TextView.DefaultLineHeight,
-                                                     this.TextArea.TextView.DefaultLineHeight);
+                    AddIconElementOverlay(element, icon, DefaultLineHeight, DefaultLineHeight);
                     // MirrorAction(DocumentActionKind.MarkIcon, element, iconArgs);
                 }
             }
@@ -2602,7 +2623,7 @@ namespace IRExplorerUI {
             var graphStyle = new FlowGraphStyleProvider(dummyGraph, App.Settings.FlowGraphSettings);
             var loopGroups = new Dictionary<HighlightingStyle, HighlightedGroup>();
 
-            foreach (var block in function_.Blocks) {
+            foreach (var block in Function.Blocks) {
                 var loopTag = block.GetTag<LoopBlockTag>();
 
                 if (loopTag != null) {
@@ -2703,13 +2724,7 @@ namespace IRExplorerUI {
         private void NotifyPropertyChanged([CallerMemberName] string propertyName = "") {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-
-        private void PeekDefinitionExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (selectedElements_.Count == 1) {
-                ShowTooltip(GetSelectedElement());
-            }
-        }
-
+        
         private HighlightingStyle PickMarkerLightStyle() {
             return markerParentStyle_.GetNext();
         }
@@ -3121,6 +3136,7 @@ namespace IRExplorerUI {
         private void SetupCommands() {
             AddCommand(DocumentCommand.GoToDefinition, GoToDefinitionExecuted);
             AddCommand(DocumentCommand.GoToDefinitionSkipCopies, GoToDefinitionSkipCopiesExecuted);
+            AddCommand(DocumentCommand.PreviewDefinition, PreviewDefinitionExecuted);
             AddCommand(DocumentCommand.Mark, MarkExecuted);
             AddCommand(DocumentCommand.MarkIcon, MarkIconExecuted);
             AddCommand(DocumentCommand.MarkBlock, MarkBlockExecuted);
@@ -3169,7 +3185,7 @@ namespace IRExplorerUI {
             eventSetupDone_ = true;
             AllowDrop = true; // Enable drag-and-drop handilng.
         }
-
+        
         private void IRDocument_MouseLeave(object sender, MouseEventArgs e) {
             HideTemporaryUI();
         }
@@ -3179,8 +3195,8 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var funcProfile = Session.ProfileData.GetFunctionProfile(section_.ParentFunction);
-            var metadataTag = function_.GetTag<AssemblyMetadataTag>();
+            var funcProfile = Session.ProfileData.GetFunctionProfile(Section.ParentFunction);
+            var metadataTag = Function.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
             
             if (funcProfile == null || !hasInstrOffsetMetadata) {
@@ -3265,13 +3281,13 @@ namespace IRExplorerUI {
                 UninstallBlockFolding();
                 return;
             }
-            else if (function_ == null) {
+            else if (Function == null) {
                 return; // Function couldn't be parsed.
             }
 
             UninstallBlockFolding();
             folding_ = FoldingManager.Install(TextArea);
-            var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(function_);
+            var foldingStrategy = Session.CompilerInfo.CreateFoldingStrategy(Function);
             foldingStrategy.UpdateFoldings(folding_, Document);
         }
 
@@ -3322,7 +3338,7 @@ namespace IRExplorerUI {
                                                              settings_.AlternateBackgroundColor);
                 TextArea.TextView.BackgroundRenderers.Insert(0, blockHighlighter_);
 
-                if (function_ != null) {
+                if (Function != null) {
                     SetupBlockHighlighter();
                 }
             }
@@ -3519,27 +3535,47 @@ namespace IRExplorerUI {
             AddRemarks(allRemarks, markerRemarksGroups, hasContextFilter);
         }
 
-        private void ShowDefinitionPreview(IRElement element) {
+        private async Task<bool> ShowDefinitionPreview(IRElement element, bool alwaysShow = false) {
             IRElement target = null;
+            bool isCallTarget = false;
+            bool show = false;
+
+            if (!alwaysShow) {
+                if (!settings_.ShowPreviewPopup ||
+                    (settings_.ShowPreviewPopupWithModifier && !Utils.IsKeyboardModifierActive())) {
+                    HidePreviewPopup();
+                    return false;
+                }
+            }
 
             if (element is OperandIR op) {
                 if (op.IsLabelAddress) {
                     target = op.BlockLabelValue;
+                    show = target != null && IsElementOutsideView(target);
                 }
-                else {
+                else if (op.ParentInstruction is var instr) {
+                    if (op == Session.CompilerInfo.IR.GetCallTarget(instr)) {
+                        target = op;
+                        isCallTarget = true;
+                        show = true;
+                    }
+                }
+
+
+                if (target == null) {
                     var refFinder = CreateReferenceFinder();
                     target = refFinder.FindSingleDefinition(op);
+                    show = target != null && IsElementOutsideView(target);
                 }
-            }
-
-            if (target == null) {
-                return;
             }
 
             // Show the preview only if outside the current view.
-            if (IsElementOutsideView(target)) {
-                ShowTooltip(target);
+            if (show) {
+                await ShowPreviewPopup(target, isCallTarget, alwaysShow);
+                return true;
             }
+
+            return false;
         }
 
         private void ShowReferencesExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -3568,36 +3604,74 @@ namespace IRExplorerUI {
             Session.ShowAllReferences(op, this);
         }
 
-        private void ShowTooltip(IRElement element, bool showAlways = false) {
+        private async Task ShowPreviewPopup(IRElement element, bool isCallTarget = false, bool alwaysShow = false) {
             if (element == null) {
                 return; // Valid case for search results.
             }
-
-            if (!showAlways) {
-                if (!settings_.ShowPreviewPopup ||
-                    (settings_.ShowPreviewPopupWithModifier && !Utils.IsKeyboardModifierActive())) {
-                    HideTooltip();
-                    return;
-                }
-            }
-
-            if (nodeToolTip_ != null) {
-                if (nodeToolTip_.Element == element) {
+            
+            if (previewPopup_ != null) {
+                if (previewPopup_.PreviewedElement == element) {
                     return; // Already showing preview for this element.
                 }
-                else {
-                    HideTooltip();
-                }
+                
+                HidePreviewPopup();
             }
 
             if (element == null || ignoreNextPreviewElement_ == element) {
                 return;
             }
 
-            nodeToolTip_ = new IRPreviewToolTip(600, 100, this, element);
-            nodeToolTip_.Show();
+            var position = Mouse.GetPosition(TextArea.TextView).AdjustForMouseCursor();
+
+            if (isCallTarget) {
+                // Try to find a function definition for the call.
+                IRTextSection targetSection = FindCallTargetSection(element);
+
+                if (targetSection == null && alwaysShow) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Couldn't find call target in opened document:\n{element.Name}", "IR Explorer" ,
+                                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                var result = await Task.Run(() => Session.LoadAndParseSection(targetSection));
+
+                if (result != null) {
+                    previewPopup_ = await IRDocumentPopup.CreateNew(result, element, position, 500, 300, this, Session, "Call target ");
+                }
+            }
+            else {
+                previewPopup_ = IRDocumentPopup.CreateNew(this, element, position, 500, 150, this, "Definition of ");
+            }
+
+            previewPopup_.PopupDetached += Popup_PopupDetached;
+            previewPopup_.ShowPopup();
         }
 
+
+        private IRTextSection FindCallTargetSection(IRElement element) {
+            var targetFunc = Section.ParentFunction.ParentSummary.FindFunction(element.Name);
+
+            if (targetFunc == null) {
+                return null;
+            }
+
+            // Prefer the same section as this document if there are multiple.
+            if (targetFunc.SectionCount == 0) {
+                return null;
+            }
+
+            return targetFunc.Sections[0];
+        }
+
+        private void Popup_PopupDetached(object sender, EventArgs e) {
+            var popup = (IRDocumentPopup)sender;
+
+            if (popup == previewPopup_) {
+                previewPopup_ = null; // Prevent automatic closing.
+            }
+        }
+        
         private void ShowUsesExecuted(object sender, ExecutedRoutedEventArgs e) {
             var defOp = GetSelectedElementDefinition();
 

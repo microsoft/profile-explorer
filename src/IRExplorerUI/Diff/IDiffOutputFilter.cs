@@ -25,9 +25,41 @@ namespace IRExplorerUI.Diff {
         AdjustedDiffPiece AdjustChange(DiffPiece change, int offset, int lineOffset, string lineText);
     }
 
+    public class FilteredDiffInput {
+        public struct Replacement {
+            public Replacement(int offset, string replaced, string original) {
+                Offset = offset;
+                Replaced = replaced;
+                Original = original;
+            }
+
+            public int Offset { get; set; }
+            public string Replaced { get; set; }
+            public string Original { get; set; }
+
+            public int Length => Replaced.Length;
+        }
+        
+        public string Text { get; set; }
+        public List<List<Replacement>> LineReplacements { get; set; }
+
+        public static List<Replacement> NoReplacements = new List<Replacement>(0);
+
+        public FilteredDiffInput(int capacity) {
+            Text = string.Empty;
+            LineReplacements = new List<List<Replacement>>(capacity);
+        }
+
+        public FilteredDiffInput(string text) {
+            Text = text;
+            LineReplacements = null;
+        }
+    }
+
     public interface IDiffInputFilter {
         void Initialize(DiffSettings settings, ICompilerIRInfo ifInfo);
-        (string, List<string> linePrefixes) FilterInputText(string text);
+        FilteredDiffInput FilterInputText(string text);
+        string FilterInputLine(string line);
     }
 
     public class BasicDiffOutputFilter : IDiffOutputFilter {

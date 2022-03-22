@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -11,9 +12,11 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Controls;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -85,13 +88,14 @@ namespace IRExplorerUI {
             }
         }
 
+        //? TODO: Should match editor font
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
 
         private static (TextBlock, string) 
             CreatePreviewTextBlock(OperandIR operand, Reference reference, string documentText) {
             // Mark every instance of the symbol name in the preview text (usually an instr).
             string text = FindPreviewText(reference, documentText);
-            string symbolName = ReferenceFinder.GetSymbolName(operand);
+            string symbolName = Utils.GetSymbolName(operand);
             int index = 0;
             
             var textBlock = new TextBlock();
@@ -208,9 +212,9 @@ namespace IRExplorerUI {
         private IRElement element_;
         private ReferenceKind filterKind_;
         private bool ignoreNextElement_;
-        private bool isFindAll_;
 
-        private IRPreviewToolTip previewTooltip_;
+        private IRDocumentPopup previewPopup_;
+        private DelayedAction removeHoveredAction_;
         private List<ReferenceInfo> referenceList_;
         private ListCollectionView referenceListView_;
         private ReferenceSummary referenceSummary_;
@@ -219,6 +223,11 @@ namespace IRExplorerUI {
         public ReferencesPanel() {
             InitializeComponent();
             DataContext = this;
+            MouseLeave += OnMouseLeave;
+            
+            var hover = new MouseHoverLogic(this);
+            hover.MouseHover += Hover_MouseHover;
+            hover.MouseHoverStopped += Hover_MouseHoverStopped;
         }
 
         public ReferenceKind FilterKind {
@@ -249,10 +258,10 @@ namespace IRExplorerUI {
             }
         }
 
-        public int LoadCount => referenceSummary_ != null ? referenceSummary_.LoadCount : 0;
-        public int StoreCount => referenceSummary_ != null ? referenceSummary_.StoreCount : 0;
-        public int AddressCount => referenceSummary_ != null ? referenceSummary_.AddressCount : 0;
-        public int SSACount => referenceSummary_ != null ? referenceSummary_.SSACount : 0;
+        public int LoadCount => referenceSummary_?.LoadCount ?? 0;
+        public int StoreCount => referenceSummary_?.StoreCount ?? 0;
+        public int AddressCount => referenceSummary_?.AddressCount ?? 0;
+        public int SSACount => referenceSummary_?.SSACount ?? 0;
 
         public bool ShowLoad {
             get => filterKind_.HasFlag(ReferenceKind.Load);
@@ -276,8 +285,8 @@ namespace IRExplorerUI {
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public void OnPropertyChange(string propertyname) {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
+        public void OnPropertyChange(string propertyName) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         public IRElement Element {
@@ -287,26 +296,32 @@ namespace IRExplorerUI {
                     ignoreNextElement_ = false;
                     return;
                 }
+                
+                var operand = FindReferenceOperand(value);
 
-                if (!(value is OperandIR)) {
-                    return; // Only operands can have references.
-                }
-
-                if (element_ != value) {
-                    if (value != null && HasPinnedContent) {
+                if (element_ != operand) {
+                    if (operand != null && HasPinnedContent) {
                         return; // Keep pinned element.
                     }
 
-                    element_ = value;
-
-                    //? TODO: There should be an option to pick default behavior for SSA values
-                    //?  - if SSA def, show only SSA uses
-                    //?  - or always show all refs
-                    if (!FindAllReferences(element_, showSSAUses: true, false)) {
-                        FindAllReferences(element_, showSSAUses: false, false);
-                    }
+                    element_ = operand;
+                    FindAllReferences(operand, alwaysShowSSAUses: true, false);
                 }
             }
+        }
+
+        private OperandIR FindReferenceOperand(IRElement value) {
+            // Only operands can have references.
+            // For instrs. use the first destination operand.
+            if (value is OperandIR operand) {
+                return operand;
+            }
+            else if (value is InstructionIR instr &&
+                     instr.Destinations.Count > 0) {
+                return instr.Destinations[0];
+            }
+
+            return null;
         }
 
         private bool FilterReferenceList(object value) {
@@ -314,27 +329,25 @@ namespace IRExplorerUI {
             return filterKind_.HasFlag(refInfo.Info.Kind);
         }
 
-        public bool FindAllReferences(IRElement element, bool showSSAUses, bool pinElement = true) {
-            if (!(element is OperandIR operand)) {
+        public bool FindAllReferences(IRElement element, bool alwaysShowSSAUses, bool pinElement = true) {
+            if (element is not OperandIR operand) {
                 ResetReferenceListView();
                 return false;
             }
 
-            var refFinder = new ReferenceFinder(Document.Function);
-            var operandRefs = refFinder.FindAllReferences(element, includeSSAUses: true);
-            UpdateReferenceListView(operand, operandRefs);
-
+            //? TODO: There should be an option to pick default behavior for SSA values
+            //?  - if SSA def, show only SSA uses
+            //?  - or always show all refs
             // Enabled the filters.
-            if (showSSAUses) {
+            if (alwaysShowSSAUses) {
                 FilterKind |= ReferenceKind.SSA;
             }
-            else {
-                FilterKind |= ReferenceKind.Address | ReferenceKind.Load | ReferenceKind.Store;
-            }
+
+            var refFinder = new ReferenceFinder(Document.Function);
+            var operandRefs = refFinder.FindAllReferences(operand, includeSSAUses: true);
+            UpdateReferenceListView(operand, operandRefs);
 
             FixedToolbar.IsPinned = pinElement;
-            element_ = element;
-            isFindAll_ = true;
             return operandRefs.Count > 0;
         }
 
@@ -374,7 +387,7 @@ namespace IRExplorerUI {
             ReferenceSummary = summary;
 
             if (operand != null) {
-                SymbolName.Text = ReferenceFinder.GetSymbolName(operand);
+                SymbolName.Text = Utils.GetSymbolName(operand);
             }
             else {
                 SymbolName.Text = "";
@@ -457,19 +470,42 @@ namespace IRExplorerUI {
             Document.BringElementIntoView(refInfo.Info.Element);
         }
 
-        private void ListViewItem_MouseEnter(object sender, MouseEventArgs e) {
-            HideToolTip();
-            var listItem = sender as ListViewItem;
-            var refInfo = listItem.DataContext as ReferenceInfo;
-            previewTooltip_ = new IRPreviewToolTip(600, 100, Document, refInfo.Info.Element, documentText_);
-            listItem.ToolTip = previewTooltip_;
+        private void ShowPreviewPopup(IRElement element, UIElement referenceElement) {
+            if (previewPopup_ != null) {
+                if (previewPopup_.PreviewedElement == element) {
+                    return;
+                }
+
+                HidePreviewPopup(true);
+            }
+
+            if (removeHoveredAction_ != null) {
+                removeHoveredAction_.Cancel();
+                removeHoveredAction_ = null;
+            }
+
+            var position = Mouse.GetPosition(referenceElement).AdjustForMouseCursor();
+            previewPopup_ = IRDocumentPopup.CreateNew(Document, element, position, 500, 150, referenceElement, "Use of ");
+            previewPopup_.PopupDetached += Popup_PopupDetached;
+            previewPopup_.ShowPopup();
         }
 
-        private void HideToolTip() {
-            if (previewTooltip_ != null) {
-                previewTooltip_.Hide();
-                previewTooltip_ = null;
+        private void HidePreviewPopup(bool force = false) {
+            if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
+                previewPopup_.ClosePopup();
+                previewPopup_ = null;
             }
+        }
+        
+        private void Popup_PopupDetached(object sender, EventArgs e) {
+            var popup = (IRDocumentPopup)sender;
+
+            if (popup == previewPopup_) {
+                previewPopup_ = null; // Prevent automatic closing.
+            }
+        }
+        private void OnMouseLeave(object sender, MouseEventArgs e) {
+            HidePreviewPopup();
         }
 
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -533,16 +569,11 @@ namespace IRExplorerUI {
             }
 
             var state = new ReferencePanelState();
-            state.IsFindAll = isFindAll_;
             state.Element = Element;
             state.HasPinnedContent = HasPinnedContent;
             state.FilterKind = FilterKind;
             var data = StateSerializer.Serialize(state, document.Function);
-            var back = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
             Session.SavePanelState(data, this, section, Document);
-
-            var data2 = Session.LoadPanelState(this, section, Document);
-            var back2 = StateSerializer.Deserialize<ReferencePanelState>(data, document.Function);
 
             ResetReferenceListView();
             Document = null;
@@ -577,6 +608,34 @@ namespace IRExplorerUI {
             }
 
             return false;
+        }
+
+        private void Hover_MouseHover(object sender, MouseEventArgs e) {
+            var hoveredItem = FindPointedListItem(ReferenceList);
+
+            if (hoveredItem != null) {
+                var refInfo = (ReferenceInfo)hoveredItem.DataContext;
+                ShowPreviewPopup(refInfo.Info.Element, hoveredItem);
+            }
+        }
+        
+        private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
+            HidePreviewPopupDelayed();
+        }
+        
+        private void HidePreviewPopupDelayed() {
+            removeHoveredAction_ = DelayedAction.StartNew(() => {
+                if (removeHoveredAction_ != null) {
+                    removeHoveredAction_ = null;
+                    HidePreviewPopup();
+                }
+            });
+        }
+        
+        ListViewItem FindPointedListItem(UIElement source) {
+            var mousePosition = Mouse.GetPosition(source);
+            var result = ReferenceList.GetObjectAtPoint<ListViewItem>(mousePosition);
+            return result as ListViewItem;
         }
     }
 }

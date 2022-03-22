@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -876,56 +877,6 @@ namespace IRExplorerUI.Document {
             UpdateRemarkList();
         }
 
-        private Color GenerateRandomPastelColor() {
-#if false
-            Random random = new Random();
-            int red = random.Next(256);
-            int green = random.Next(256);
-            int blue = random.Next(256);
-
-            Color mix = Colors.White;
-            red = (red + mix.R) / 2;
-            green = (green + mix.G) / 2;
-            blue = (blue + mix.B) / 2;
-            return Color.FromRgb((byte)red, (byte)green, (byte)blue);
-#else
-            string[] PastelColors = new string[] {
-                "#FE9BA1",
-                "#FFABA0",
-                "#FFC69E",
-                "#D8BBCA",
-                "#D5A2BB",
-                "#EAA2B9",
-                "#FFAB9F",
-                "#FFBEA1",
-                "#FFE0A0",
-                "#DBD2CA",
-                "#D9B5B9",
-                "#EAB4B8",
-                "#FFBEA0",
-                "#FFFF9F",
-                "#C8F3A9",
-                "#D4F3D4",
-                "#CFD3BC",
-                "#AAC4C5",
-                "#99C4C6",
-                "#9AE2B3",
-                "#DCEFAC",
-                "#A4C7F0",
-                "#B7C6F0",
-                "#DEDCB8",
-                "#B6C9EE",
-                "#EAB4B8",
-                "#B0ABDB",
-                "#CCA9DB",
-                "#ACC6C5",
-                "#F1DCB8"
-            };
-
-            return Utils.ColorFromString(PastelColors[new Random().Next(PastelColors.Length)]);
-#endif
-        }
-
         private void ColorSelector_ColorSelected(object sender, SelectedColorEventArgs e) {
             SetPanelAccentColor(e.SelectedColor);
             HideColorSelector();
@@ -942,7 +893,6 @@ namespace IRExplorerUI.Document {
             ToolbarPanel.Background = ColorBrushes.GetBrush(color);
             ContextToolbarPanel.Background = ColorBrushes.GetBrush(color);
             PanelBorder.BorderBrush = ColorBrushes.GetBrush(color);
-            PanelBorder.BorderThickness = new Thickness(2);
         }
 
         private void ColorButton_Click(object sender, RoutedEventArgs e) {
@@ -961,6 +911,10 @@ namespace IRExplorerUI.Document {
             colorPopup_.IsOpen = true;
         }
 
+        //? TODO: ColorButton_Click
+        class ColorSelectorPopup : Popup {
+        }
+
         private void PopupPanelButton_Click(object sender, RoutedEventArgs e) {
             DetachPanel();
         }
@@ -973,17 +927,17 @@ namespace IRExplorerUI.Document {
             DetachPopup();
             PopupPanelButton.Visibility = Visibility.Collapsed;
             ColorButton.Visibility = Visibility.Visible;
-            SetPanelAccentColor(GenerateRandomPastelColor());
+            SetPanelAccentColor(ColorUtils.GenerateRandomPastelColor());
         }
 
         private void ClosePanelButton_Click(object sender, RoutedEventArgs e) {
             IsOpen = false;
         }
 
-        public override bool ShouldStartDragging() {
+        public override bool ShouldStartDragging(MouseButtonEventArgs e) {
             HideColorSelector();
 
-            if (ToolbarPanel.IsMouseOver) {
+            if (e.LeftButton == MouseButtonState.Pressed && ToolbarPanel.IsMouseOver) {
                 DetachPanel();
                 return true;
             }
