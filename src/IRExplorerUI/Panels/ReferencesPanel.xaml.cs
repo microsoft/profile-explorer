@@ -470,7 +470,7 @@ namespace IRExplorerUI {
             Document.BringElementIntoView(refInfo.Info.Element);
         }
 
-        private void ShowPreviewPopup(IRElement element, UIElement referenceElement) {
+        private void ShowPreviewPopup(IRElement element, UIElement relativeElement) {
             if (previewPopup_ != null) {
                 if (previewPopup_.PreviewedElement == element) {
                     return;
@@ -484,8 +484,8 @@ namespace IRExplorerUI {
                 removeHoveredAction_ = null;
             }
 
-            var position = Mouse.GetPosition(referenceElement).AdjustForMouseCursor();
-            previewPopup_ = IRDocumentPopup.CreateNew(Document, element, position, 500, 150, referenceElement, "Use of ");
+            var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
+            previewPopup_ = IRDocumentPopup.CreateNew(Document, element, position, 500, 150, relativeElement, "Use of ");
             previewPopup_.PopupDetached += Popup_PopupDetached;
             previewPopup_.ShowPopup();
         }
@@ -504,6 +504,7 @@ namespace IRExplorerUI {
                 previewPopup_ = null; // Prevent automatic closing.
             }
         }
+
         private void OnMouseLeave(object sender, MouseEventArgs e) {
             HidePreviewPopup();
         }
