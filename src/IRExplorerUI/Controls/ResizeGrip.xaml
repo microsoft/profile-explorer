@@ -23,7 +23,9 @@
                                 <Grid
                                     x:Name="resizeVisual"
                                     VerticalAlignment="Bottom"
-                                    DockPanel.Dock="Right">
+                                    Background="Transparent"
+                                    DockPanel.Dock="Right"
+                                    IsHitTestVisible="True">
                                     <Line
                                         Stroke="DarkGray"
                                         StrokeThickness="1.5"

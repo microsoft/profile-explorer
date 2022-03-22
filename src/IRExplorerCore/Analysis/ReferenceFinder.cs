@@ -534,14 +534,6 @@ namespace IRExplorerCore.Analysis {
             return false;
         }
 
-        public static string GetSymbolName(OperandIR op) {
-            if (op.HasName) {
-                return op.NameValue.ToString();
-            }
-
-            return "";
-        }
-
         private bool AcceptReference(IRElement element, IRElement startElement) {
             if(referenceFilter_ != null) {
                 return referenceFilter_.AcceptReference(element, startElement);

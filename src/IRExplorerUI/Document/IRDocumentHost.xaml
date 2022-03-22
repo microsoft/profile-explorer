@@ -597,7 +597,7 @@
                                 <MenuItem
                                     Command="local:DocumentCommand.GoToDefinitionSkipCopies"
                                     CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Go To Definition (skip copies)"
+                                    Header="Go To Definition (Skip Copies)"
                                     InputGestureText="Ctrl+Return">
                                     <MenuItem.Icon>
                                         <Image
@@ -607,10 +607,23 @@
                                     </MenuItem.Icon>
                                 </MenuItem>
                                 <MenuItem
+                                    Command="local:DocumentCommand.PreviewDefinition"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Preview Definition"
+                                    InputGestureText="Shift+Return"
+                                    ToolTip="Preview operand definition or call target function">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource OpenExternalIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
                                     Command="local:DocumentHostCommand.SearchSymbol"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     Header="Search Symbol"
-                                    InputGestureText="Ctrl+Shift+F">
+                                    InputGestureText="Ctrl+F">
                                     <MenuItem.Icon>
                                         <Image
                                             Width="16"
@@ -621,7 +634,8 @@
                                 <MenuItem
                                     Command="local:DocumentHostCommand.SearchSymbolAllSections"
                                     CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Search Symbol in All Sections">
+                                    Header="Search Symbol in All Sections"
+                                    InputGestureText="Ctrl+Shift+F">
                                     <MenuItem.Icon>
                                         <Image
                                             Width="16"

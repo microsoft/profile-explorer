@@ -12,7 +12,7 @@ namespace IRExplorerUI.Controls {
 
         public DraggablePopup() {
             MouseDown += (sender, e) => {
-                if (ShouldStartDragging()) {
+                if (ShouldStartDragging(e)) {
                     Thumb.RaiseEvent(e);
                 }
             };
@@ -34,7 +34,8 @@ namespace IRExplorerUI.Controls {
             var screenPosition = position;
 
             if (referenceElement != null) {
-                screenPosition = Utils.CoordinatesToScreen(position, referenceElement);
+                screenPosition = referenceElement.PointToScreen(position);
+                screenPosition = Utils.CoordinatesToScreen(screenPosition, referenceElement);
             }
 
             HorizontalOffset = screenPosition.X;
@@ -52,8 +53,8 @@ namespace IRExplorerUI.Controls {
             UpdateSize(width, height);
         }
 
-        public virtual bool ShouldStartDragging() {
-            return true;
+        public virtual bool ShouldStartDragging(MouseButtonEventArgs e) {
+            return e.LeftButton == MouseButtonState.Pressed;
         }
 
         public virtual void DetachPopup() {
@@ -62,7 +63,12 @@ namespace IRExplorerUI.Controls {
             PopupDetached?.Invoke(this, null);
         }
 
+        public virtual void ShowPopup() {
+            IsOpen = true;
+        }
+
         public virtual void ClosePopup() {
+            IsOpen = false;
             PopupClosed?.Invoke(this, null);
         }
 

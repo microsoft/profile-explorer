@@ -52,7 +52,7 @@ namespace IRExplorerUI {
             SwitchSelectedElement(e.Element, e.Document);
         }
 
-        public void SwitchSelectedElement(IRElement element, IRDocument document) {
+        private void SwitchSelectedElement(IRElement element, IRDocument document) {
             if (HasPinnedContent) {
                 return;
             }
@@ -79,6 +79,7 @@ namespace IRExplorerUI {
         }
 
         private void SwitchDefinitionElement(OperandIR op, IRElement defOp) {
+            //? TODO: Go through the NameProvider
             SymbolName.Text = op.GetText(Document.Text).ToString();
             TextView.MarkElementWithDefaultStyle(defOp);
             definedOperand_ = op;

@@ -57,8 +57,7 @@
             Background="{Binding BackColor}"
             BorderBrush="{Binding BorderBrush}"
             BorderThickness="{Binding BorderThickness}">
-            <StackPanel
-                Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal">
                 <TextBlock
                     MinWidth="{Binding MinTextWidth}"
                     Margin="0,0,2,0"
@@ -101,7 +100,7 @@
             </StackPanel>
         </Border>
     </DataTemplate>
-    
+
     <DataTemplate x:Key="TimeColumnValueTemplate">
         <Border
             Margin="-5,0,-8,0"
@@ -137,16 +136,16 @@
             </Trigger>
         </Style.Triggers>
     </Style>
-    
+
     <Style x:Key="TimeColumnHeaderTemplate" TargetType="GridViewColumnHeader">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
                     <Border
                         Height="22"
+                        Margin="-1,-1,0,0"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Margin="-1,-1,0,0"
                         Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="0,0,1,1">
@@ -182,7 +181,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <local:IRPreviewTooltip x:Name="IRPreviewer" Background="Silver" />
+                    <local:IRPreviewToolTip x:Name="IRPreviewer" Background="Silver" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
@@ -199,7 +198,7 @@
                             <ColumnDefinition Width="120" />
                         </Grid.ColumnDefinitions>
 
-                        <local:IRPreviewTooltip
+                        <local:IRPreviewToolTip
                             x:Name="IRPreviewer"
                             Grid.Column="0"
                             Background="Silver" />
@@ -294,12 +293,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <Grid>
-                        <local:IRPreviewTooltip
-                            x:Name="IRPreviewer"
-                            Grid.Column="0"
-                            Background="Silver" />
-                    </Grid>
+                    <local:IRPreviewToolTip x:Name="IRPreviewer" Background="Silver" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

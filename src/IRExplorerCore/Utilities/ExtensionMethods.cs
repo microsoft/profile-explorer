@@ -19,6 +19,15 @@ namespace IRExplorerCore.Utilities {
             return currentValue;
         }
 
+        public static V GetOrAddValue<K, V>(this Dictionary<K, V> dict, K key, V defaultValue) where V : new() {
+            if (!dict.TryGetValue(key, out V currentValue)) {
+                currentValue = defaultValue;
+                dict[key] = currentValue;
+            }
+
+            return currentValue;
+        }
+
         public static V GetValueOrNull<K, V>(this Dictionary<K, V> dict, K key) where V : class {
             if (dict.TryGetValue(key, out V currentValue)) {
                 return currentValue;

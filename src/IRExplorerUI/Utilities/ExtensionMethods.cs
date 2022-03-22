@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using Grpc.Core.Logging;
 using ICSharpCode.AvalonEdit.Document;
@@ -334,6 +337,34 @@ namespace IRExplorerUI {
             value = value * factor;
             value = Math.Truncate(value);
             return value / factor;
+        }
+
+        public static Point AdjustForMouseCursor(this Point value) {
+            return new Point(value.X + SystemParameters.CursorWidth / 2,
+                             value.Y + SystemParameters.CursorHeight / 2);
+        } 
+        
+        public static object GetObjectAtPoint<ItemContainer>(this ItemsControl control, Point p) 
+            where ItemContainer : DependencyObject         {
+            // ItemContainer - can be ListViewItem, or TreeViewItem and so on(depends on control)
+            return control.GetContainerAtPoint<ItemContainer>(p);
+        }
+
+        private static ItemContainer GetContainerAtPoint<ItemContainer>(this ItemsControl control, Point p) 
+            where ItemContainer : DependencyObject         {
+            var result = VisualTreeHelper.HitTest(control, p);
+            var obj = result?.VisualHit;
+
+            if (obj == null) {
+                return null;
+            }
+            
+            while (VisualTreeHelper.GetParent(obj) != null && !(obj is ItemContainer))             {
+                obj = VisualTreeHelper.GetParent(obj);
+            }
+
+            // Will return null if not found
+            return obj as ItemContainer;
         }
     }
 }

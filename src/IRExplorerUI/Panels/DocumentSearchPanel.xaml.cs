@@ -201,8 +201,8 @@ namespace IRExplorerUI.Panels {
             data_.IsPanelDetached = true;
         }
 
-        public override bool ShouldStartDragging() {
-            if (SearchPanelHost.IsMouseOver) {
+        public override bool ShouldStartDragging(MouseButtonEventArgs e) {
+            if (e.LeftButton == MouseButtonState.Pressed && SearchPanelHost.IsMouseOver) {
                 DetachPanel();
                 return true;
             }

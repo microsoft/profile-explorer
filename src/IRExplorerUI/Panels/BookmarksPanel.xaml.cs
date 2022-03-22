@@ -23,7 +23,7 @@ namespace IRExplorerUI {
 
     public partial class BookmarksPanel : ToolPanelControl {
         private ObservableCollectionRefresh<Bookmark> bookmarks_;
-        private IRPreviewToolTip previewTooltip_;
+        private IRPreviewToolTipHost previewTooltip_;
 
         public BookmarksPanel() {
             InitializeComponent();
@@ -52,7 +52,7 @@ namespace IRExplorerUI {
             HideToolTip();
             var listItem = sender as ListViewItem;
             var bookmark = listItem.DataContext as Bookmark;
-            previewTooltip_ = new IRPreviewToolTip(600, 100, Document, bookmark.Element);
+            previewTooltip_ = new IRPreviewToolTipHost(600, 100, Document, bookmark.Element);
             listItem.ToolTip = previewTooltip_;
         }
 

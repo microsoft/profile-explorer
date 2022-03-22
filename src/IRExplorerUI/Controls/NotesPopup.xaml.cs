@@ -52,6 +52,19 @@ namespace IRExplorerUI.Controls {
                 }
             }
         }
+
+        public override bool ShouldStartDragging(MouseButtonEventArgs e) {
+            if (e.LeftButton == MouseButtonState.Pressed && ToolbarPanel.IsMouseOver) {
+                if (!IsDetached) {
+                    DetachPopup();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         private void OnPropertyChange(string propertyname) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }

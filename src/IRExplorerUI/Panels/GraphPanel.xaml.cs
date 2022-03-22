@@ -16,6 +16,7 @@ using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
+using IRExplorerUI.Controls;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -69,7 +70,6 @@ namespace IRExplorerUI {
         private static readonly double VerticalViewMargin = 100;
         private bool delayFitSize_;
         private bool delayRestoreState_;
-        private string documentText_;
         private object lockObject_;
 
         private bool dragging_;
@@ -80,7 +80,7 @@ namespace IRExplorerUI {
 
         private bool ignoreNextHover_;
         private CancelableTask loadTask_;
-        private ToolTip nodeToolTip_;
+        private IRDocumentPopup previewPopup_;
         private bool optionsPanelVisible_;
         private GraphQueryInfo queryInfo_;
         private bool queryPanelVisible_;
@@ -213,7 +213,6 @@ namespace IRExplorerUI {
             GraphViewer.HideGraph();
             graph_ = null;
             Document = null;
-            documentText_ = null;
             hoveredNode_ = null;
             Utils.DisableControl(GraphViewer);
             IsPanelEnabled = false;
@@ -248,7 +247,6 @@ namespace IRExplorerUI {
         public void InitializeFromDocument(IRDocument document) {
             Trace.TraceInformation($"Graph panel {ObjectTracker.Track(this)}: initialize with doc {ObjectTracker.Track(document)}");
             Document = document;
-            documentText_ = null; // Loaded on-demand.
         }
 
         private CancelableTask CreateGraphLoadTask() {
@@ -405,11 +403,11 @@ namespace IRExplorerUI {
         }
 
         private void GraphHost_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            HideTooltip();
+            HidePreviewPopup();
         }
 
         private void GraphPanel_MouseLeave(object sender, MouseEventArgs e) {
-            HideTooltip();
+            HidePreviewPopupDelayed();
         }
 
         private void GraphPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
@@ -434,9 +432,9 @@ namespace IRExplorerUI {
 
             dragging_ = true;
             draggingStart_ = e.GetPosition(GraphHost);
-            draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset);
+            draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset); CaptureMouse();
+            HidePreviewPopup();
             CaptureMouse();
-            HideTooltip();
             e.Handled = true;
         }
 
@@ -503,7 +501,7 @@ namespace IRExplorerUI {
             }
 
             if (e.Handled) {
-                HideTooltip();
+                HidePreviewPopup();
                 GraphHost.ScrollToHorizontalOffset(offsetX);
                 GraphHost.ScrollToVerticalOffset(offsetY);
             }
@@ -522,19 +520,16 @@ namespace IRExplorerUI {
             ignoreNextHover_ = true;
         }
 
-        private void HideTooltip() {
-            if (nodeToolTip_ != null) {
-                nodeToolTip_.IsOpen = false;
-                nodeToolTip_ = null;
+        private void HidePreviewPopup(bool force = false) {
+            if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
+                previewPopup_.ClosePopup();
+                previewPopup_ = null;
             }
         }
 
         private void Hover_MouseHover(object sender, MouseEventArgs e) {
-            if (!Settings.ShowPreviewPopup) {
-                return;
-            }
-
-            if (Settings.ShowPreviewPopupWithModifier && !Utils.IsShiftModifierActive()) {
+            if (!Settings.ShowPreviewPopup ||
+                (Settings.ShowPreviewPopupWithModifier && !Utils.IsShiftModifierActive())) {
                 return;
             }
 
@@ -547,13 +542,23 @@ namespace IRExplorerUI {
             var node = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
             if (node?.NodeInfo.ElementData != null) {
-                ShowTooltipForNode(node);
+                ShowPreviewPopup(node);
                 hoveredNode_ = node;
             }
         }
 
         private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
-            HideTooltip();
+            HidePreviewPopupDelayed();
+        }
+
+        private void HidePreviewPopupDelayed() {
+            removeHoveredAction_ = DelayedAction.StartNew(() => {
+                if (removeHoveredAction_ != null) {
+                    removeHoveredAction_ = null;
+                    HidePreviewPopup();
+                }
+            });
+
             ignoreNextHover_ = false;
         }
 
@@ -642,40 +647,6 @@ namespace IRExplorerUI {
             }
         }
 
-        private void NodeToolTip__Loaded(object sender, RoutedEventArgs e) {
-            var node = nodeToolTip_.Tag as GraphNode;
-            var previewer = Utils.FindChild<IRPreviewTooltip>(nodeToolTip_, "IRPreviewer");
-            previewer.InitializeFromDocument(Document, GetDocumentText());
-
-            if (node.NodeInfo.ElementData is BlockIR block) {
-                previewer.PreviewedElement = block;
-                nodeToolTip_.DataContext = new BlockTooltipInfo(block);
-
-                // 5 lines are needed to not truncate the block info labels.
-                int lines = Math.Max(5, Math.Min(block.Tuples.Count + 1, 20));
-                nodeToolTip_.Height = previewer.ResizeForLines(lines);
-                previewer.UpdateView(false);
-            }
-            else {
-                var element = node.NodeInfo.ElementData;
-                previewer.PreviewedElement = element;
-
-                //? TODO: Use settings for size
-                nodeToolTip_.DataContext = new IRPreviewToolTip(600, 100, Document, element);
-                int lines = Math.Max(1, Math.Min(element.ParentBlock.Tuples.Count + 1, 20));
-                nodeToolTip_.Height = previewer.ResizeForLines(lines);
-                previewer.UpdateView();
-            }
-        }
-
-        private string GetDocumentText() {
-            if (documentText_ == null) {
-                documentText_ = Document.Text; // Cache text.
-            }
-
-            return documentText_;
-        }
-
         private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {
             Session.DuplicatePanel(this, e.Kind);
         }
@@ -755,6 +726,7 @@ namespace IRExplorerUI {
         }
 
         private OptionsPanelHostWindow graphOptionsPanel_;
+        private DelayedAction removeHoveredAction_;
 
         //? TODO: Should be a virtual overriden in the expr panel
         private void ShowOptionsPanel() {
@@ -767,18 +739,18 @@ namespace IRExplorerUI {
                     Math.Min(GraphHost.ActualWidth, ExpressionGraphOptionsPanel.DefaultWidth));
                 var height = Math.Max(ExpressionGraphOptionsPanel.MinimumHeight,
                     Math.Min(GraphHost.ActualHeight, ExpressionGraphOptionsPanel.DefaultHeight));
-                var position = GraphHost.PointToScreen(new Point(GraphHost.ActualWidth - width, 0));
+                var position = new Point(GraphHost.ActualWidth - width, 0);
                 graphOptionsPanel_ = new OptionsPanelHostWindow(new ExpressionGraphOptionsPanel(),
-                                                                  position, width, height, this);
+                                                                  position, width, height, GraphHost);
             }
             else {
                 var width = Math.Max(FlowGraphOptionsPanel.MinimumWidth,
                     Math.Min(GraphHost.ActualWidth, FlowGraphOptionsPanel.DefaultWidth));
                 var height = Math.Max(FlowGraphOptionsPanel.MinimumHeight,
                     Math.Min(GraphHost.ActualHeight, FlowGraphOptionsPanel.DefaultHeight));
-                var position = GraphHost.PointToScreen(new Point(GraphHost.ActualWidth - width, 0));
+                var position = new Point(GraphHost.ActualWidth - width, 0);
                 graphOptionsPanel_ = new OptionsPanelHostWindow(new FlowGraphOptionsPanel(),
-                                                                  position, width, height, this);
+                                                                  position, width, height, GraphHost);
             }
 
             graphOptionsPanel_.PanelClosed += OptionsPanel_PanelClosed;
@@ -855,32 +827,37 @@ namespace IRExplorerUI {
             GraphHost.ScrollToVerticalOffset(offsetY * zoom - centerY);
         }
 
-        private void ShowTooltipForNode(GraphNode node) {
-            if (nodeToolTip_ != null) {
+        private void ShowPreviewPopup(GraphNode node) {
+            if (previewPopup_ != null) {
                 if (hoveredNode_ == node) {
                     return;
                 }
-                else {
-                    HideTooltip();
-                }
+                
+                HidePreviewPopup();
             }
 
             if (node == null) {
                 return;
             }
+            
+            if (removeHoveredAction_ != null) {
+                removeHoveredAction_.Cancel();
+                removeHoveredAction_ = null;
+            }
 
-            nodeToolTip_ = new ToolTip();
+            var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
+            previewPopup_ = IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData, 
+                                                      position, 500, 150, GraphHost, "Block ");
+            previewPopup_.PopupDetached += Popup_PopupDetached;
+            previewPopup_.ShowPopup();
+        }
 
-            string previewControl = PanelKind == ToolPanelKind.ExpressionGraph
-                ? "ExpressionIRPreviewTooltip"
-                : "BlockIRPreviewTooltip";
+        private void Popup_PopupDetached(object sender, EventArgs e) {
+            var popup = (IRDocumentPopup)sender;
 
-            nodeToolTip_.Style = Application.Current.FindResource(previewControl) as Style;
-            nodeToolTip_.Width = 600;
-            nodeToolTip_.Height = 100;
-            nodeToolTip_.Tag = node;
-            nodeToolTip_.Loaded += NodeToolTip__Loaded;
-            nodeToolTip_.IsOpen = true;
+            if (popup == previewPopup_) {
+                previewPopup_ = null; // Prevent automatic closing.
+            } 
         }
 
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {
@@ -1014,7 +991,7 @@ namespace IRExplorerUI {
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
-            HideTooltip();
+            HidePreviewPopup(true);
             HideQueryPanel();
             Utils.DisableControl(GraphHost);
             restoredState_ = false;

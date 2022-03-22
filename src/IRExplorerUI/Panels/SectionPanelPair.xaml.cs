@@ -382,22 +382,27 @@ namespace IRExplorerUI {
 
         private async Task<List<DocumentDiffResult>> ComputeSectionIRDiffs(
             List<IRTextSectionEx> baseSections, List<IRTextSectionEx> diffSections) {
-            var comparedSections = new List<Tuple<IRTextSection, IRTextSection>>();
+            var comparedSections = new List<(IRTextSection, IRTextSection)>();
 
             for (int i = 0; i < baseSections.Count; i++) {
                 if (baseSections[i].SectionDiffKind == DiffKind.None &&
                     diffSections[i].SectionDiffKind == DiffKind.None) {
-                    comparedSections.Add(new Tuple<IRTextSection, IRTextSection>(
-                                             baseSections[i].Section, diffSections[i].Section));
+                    comparedSections.Add((baseSections[i].Section, diffSections[i].Section));
                 }
             }
 
             //? TODO: Pass the LoadedDocument to the panel, not Summary.
+            return await ComputeSectionIRDiffs(comparedSections);
+        }
+
+        private async Task<List<DocumentDiffResult>> ComputeSectionIRDiffs(List<(IRTextSection, IRTextSection)> comparedSections) {
             var baseLoader = Session.SessionState.FindLoadedDocument(MainPanel.Summary).Loader;
             var diffLoader = Session.SessionState.FindLoadedDocument(DiffPanel.Summary).Loader;
 
             var diffBuilder = new DocumentDiffBuilder(App.Settings.DiffSettings);
-            return await diffBuilder.ComputeSectionDiffs(comparedSections, baseLoader, diffLoader, true);
+            var cancelableTask = new CancelableTask(); //? TODO: Fix
+            return await diffBuilder.AreSectionsDifferent(comparedSections, baseLoader, diffLoader,
+                Session.CompilerInfo, true, cancelableTask);
         }
 
         public override void OnSessionStart() {
@@ -415,28 +420,43 @@ namespace IRExplorerUI {
             await DiffPanel.WaitForStatistics();
             Trace.TraceInformation("AnalyzeDocumentDiffs: start");
 
+            var comparedSections = new List<(IRTextSection, IRTextSection)>();
+            var comparedFuncts = new List<IRTextFunctionEx>();
+
+            Session.SetApplicationProgress(true, double.NaN, "Computing document diffs");
+
             foreach (var function in MainSummary.Functions) {
                 var functionEx = MainPanel.GetFunctionExtension(function);
 
                 if (functionEx.IsDeletionDiff || functionEx.IsInsertionDiff) {
+                    functionEx.Statistics.ComputeDiff(functionEx.Statistics); // Consider as no diff.
                     continue;
                 }
 
                 var otherFunctionEx = DiffPanel.GetFunctionExtension(function);
+                var otherFunction = otherFunctionEx.Function;
 
-                if (functionEx.Statistics == null || otherFunctionEx.Statistics == null) {
-                    continue;
+                //? TODO: With multiple, which should be compared? Probably all of them, but expensive
+                if (function.SectionCount > 0 && otherFunction.SectionCount > 0) {
+                    comparedSections.Add((function.Sections[0], otherFunction.Sections[0]));
+                    comparedFuncts.Add(functionEx);
                 }
-                
-                //? TODO: This diff ignores most changes in opcodes
-                if (functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics) ||
-                    functionEx.Statistics.OpcodeHash != otherFunctionEx.Statistics.OpcodeHash) {
-                    functionEx.FunctionDiffKind = DiffKind.Modification;
+
+                functionEx.Statistics.ComputeDiff(otherFunctionEx.Statistics);
+            }
+
+            var results = await ComputeSectionIRDiffs(comparedSections);
+
+            for (int i = 0; i < comparedFuncts.Count; i++) {
+                if (results[i].HasDiffs) {
+                    comparedFuncts[i].FunctionDiffKind = DiffKind.Modification;
                 }
             }
-            
+
             MainPanel.AddStatisticsFunctionListColumns(true, " (D)", " delta", 55);
             MainPanel.RefreshFunctionList();
+
+            Session.SetApplicationProgress(false, double.NaN);
             Trace.TraceInformation("AnalyzeDocumentDiffs: done");
         }
 

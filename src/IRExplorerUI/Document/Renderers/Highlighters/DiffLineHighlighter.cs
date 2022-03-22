@@ -82,7 +82,7 @@ namespace IRExplorerUI {
             }
 
             // Find start/end index of visible lines.
-            if (!DocumentUtils.FindVisibleText(textView, out int viewStart, out int viewEnd)) {
+            if (!DocumentUtils.FindVisibleTextOffsets(textView, out int viewStart, out int viewEnd)) {
                 return;
             }
 

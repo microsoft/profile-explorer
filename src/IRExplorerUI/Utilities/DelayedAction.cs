@@ -8,7 +8,9 @@ namespace IRExplorerUI {
     public class DelayedAction {
         private bool canceled_;
 
-        public async void Start(TimeSpan delay, Action action) {
+        public static TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(750);
+        
+        public async Task Start(TimeSpan delay, Action action) {
             canceled_ = false;
             await Task.Delay(delay);
 
@@ -19,6 +21,10 @@ namespace IRExplorerUI {
 
         public void Cancel() {
             canceled_ = true;
+        }
+
+        public static DelayedAction StartNew(Action action) {
+            return StartNew(DefaultDelay, action);
         }
 
         public static DelayedAction StartNew(TimeSpan delay, Action action) {
