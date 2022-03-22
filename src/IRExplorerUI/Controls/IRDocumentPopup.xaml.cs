@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 
@@ -40,17 +41,17 @@ namespace IRExplorerUI.Controls {
 
         public static IRDocumentPopup CreateNew(IRDocument document, IRElement previewedElement,
             Point position, double width, double height, UIElement owner, string titlePrefix = "") {
-            var popup = CreatePopup(document.Section, previewedElement, position,
+            var popup = CreatePopup(document.Section, previewedElement, position, width, height,
                                     owner ?? document.TextArea.TextView, document.Session, titlePrefix);
             popup.InitializeFromDocument(document);
             popup.CaptureMouseWheel();
             return popup;
         }
 
-        public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection, IRElement previewedElement,
+        public static async Task<IRDocumentPopup> CreateNew(ParsedIRTextSection parsedSection,
                                                             Point position, double width, double height,
-                                                            UIElement owner, ISession session, string titlePrefix) {
-            var popup = CreatePopup(parsedSection.Section, previewedElement, position, 
+                                                            UIElement owner, ISession session, string titlePrefix = "") {
+            var popup = CreatePopup(parsedSection.Section, null, position, width, height,
                                     owner, session, titlePrefix);
             popup.TextView.Initalize(App.Settings.DocumentSettings, session);
             popup.TextView.EarlyLoadSectionSetup(parsedSection);
@@ -60,11 +61,20 @@ namespace IRExplorerUI.Controls {
         }
 
         private static IRDocumentPopup CreatePopup(IRTextSection section, IRElement previewedElement,
-                                                   Point position, UIElement owner, ISession session, string titlePrefix) {
+                                                   Point position, double width, double height,
+                                                   UIElement owner, ISession session, string titlePrefix) {
             var popup = new IRDocumentPopup(position, 500, 150, owner, session);
-            string elementText = Utils.MakeElementDescription(previewedElement);
-            popup.PanelTitle = !string.IsNullOrEmpty(titlePrefix) ? $"{titlePrefix}{elementText}" : elementText;
+
+            if (previewedElement != null) {
+                string elementText = Utils.MakeElementDescription(previewedElement);
+                popup.PanelTitle = !string.IsNullOrEmpty(titlePrefix) ? $"{titlePrefix}{elementText}" : elementText;
+            }
+            else {
+                popup.PanelTitle = titlePrefix;
+            }
+
             popup.PanelToolTip = popup.Session.CompilerInfo.NameProvider.GetSectionName(section);
+            popup.PreviewedElement = previewedElement;
             return popup;
         }
 
@@ -191,6 +201,144 @@ namespace IRExplorerUI.Controls {
 
         private void ColorButton_Click(object sender, RoutedEventArgs e) {
 
+        }
+    }
+
+    public class IRDocumentPopupInstance {
+        public class PreviewPopupArgs {
+            public PreviewPopupArgs(IRElement element, UIElement relativeElement,
+                                    IRDocument associatedDocument = null,
+                                    ParsedIRTextSection associatedSection = null) {
+                Element = element;
+                RelativeElement = relativeElement;
+                AssociatedDocument = associatedDocument;
+                AssociatedSection = associatedSection;
+            }
+
+            public IRElement Element { get; set; }
+            public UIElement RelativeElement { get; set; }
+            public IRDocument AssociatedDocument { get; set; }
+            public ParsedIRTextSection AssociatedSection { get; set; }
+        }
+
+        private IRDocumentPopup previewPopup_;
+        private DelayedAction removeHoveredAction_;
+        private Func<PreviewPopupArgs> previewedElementFinder_;
+        private  double width_;
+        private  double height_;
+        private ISession session_;
+        private string title_;
+
+        public IRDocumentPopupInstance(double width, double height, string title, ISession session) {
+            width_ = width;
+            height_ = height;
+            session_ = session;
+            title_ = title;
+        }
+
+        public void SetupHoverEvents(UIElement target, Func<PreviewPopupArgs> previewedElementFinder) {
+            previewedElementFinder_ = previewedElementFinder;
+            var hover = new MouseHoverLogic(target);
+            hover.MouseHover += Hover_MouseHover;
+            hover.MouseHoverStopped += Hover_MouseHoverStopped;
+        }
+
+        public void ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement) {
+            ShowPreviewPopupForDocument(document, element, relativeElement, width_, height_, title_);
+        }
+
+        public void ShowPreviewPopupForDocument(IRDocument document, IRElement element, UIElement relativeElement,
+                                            double width, double height, string titlePrefix) {
+            if (!Prepare(element)) {
+                return;
+            }
+
+            var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
+            previewPopup_ = IRDocumentPopup.CreateNew(document, element, position, width, height,
+                                                      relativeElement, titlePrefix);
+            Complete();
+        }
+
+        public async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement) {
+            await ShowPreviewPopupForSection(parsedSection, relativeElement, width_, height_, title_);
+        }
+
+        public async Task ShowPreviewPopupForSection(ParsedIRTextSection parsedSection, UIElement relativeElement,
+                                                     double width, double height, string title = "") {
+            if (!Prepare()) {
+                return;
+            }
+
+            var position = Mouse.GetPosition(relativeElement).AdjustForMouseCursor();
+            previewPopup_ = await IRDocumentPopup.CreateNew(parsedSection, position, width, height,
+                                                            relativeElement, session_, title);
+            Complete();
+        }
+
+        public void HidePreviewPopup(bool force = false) {
+            if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
+                previewPopup_.ClosePopup();
+                previewPopup_ = null;
+            }
+        }
+
+        private void HidePreviewPopupDelayed() {
+            removeHoveredAction_ = DelayedAction.StartNew(() => {
+                if (removeHoveredAction_ != null) {
+                    removeHoveredAction_ = null;
+                    HidePreviewPopup();
+                }
+            });
+        }
+
+        private bool Prepare(IRElement element = null) {
+            if (previewPopup_ != null) {
+                if (element != null && previewPopup_.PreviewedElement == element) {
+                    return false; // Right preview already displayed.
+                }
+
+                HidePreviewPopup(true);
+            }
+
+            if (removeHoveredAction_ != null) {
+                removeHoveredAction_.Cancel();
+                removeHoveredAction_ = null;
+            }
+
+            return true;
+        }
+
+        private void Complete() {
+            previewPopup_.PopupDetached += Popup_PopupDetached;
+            previewPopup_.ShowPopup();
+        }
+
+        private void Popup_PopupDetached(object sender, EventArgs e) {
+            var popup = (IRDocumentPopup)sender;
+
+            if (popup == previewPopup_) {
+                previewPopup_ = null; // Prevent automatic closing.
+            }
+        }
+
+        private async void Hover_MouseHover(object sender, MouseEventArgs e) {
+            var result = previewedElementFinder_();
+
+            if (result.Element != null) {
+                if (result.AssociatedDocument != null) {
+                    ShowPreviewPopupForDocument(result.AssociatedDocument, result.Element, result.RelativeElement);
+                }
+                else if(result.AssociatedSection != null) {
+                    await ShowPreviewPopupForSection(result.AssociatedSection, result.RelativeElement);
+                }
+                else {
+                    throw new InvalidOperationException();
+                }
+            }
+        }
+
+        private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
+            HidePreviewPopupDelayed();
         }
     }
 }

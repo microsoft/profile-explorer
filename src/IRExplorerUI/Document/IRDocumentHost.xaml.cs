@@ -320,6 +320,7 @@ namespace IRExplorerUI {
 
             PreviewKeyDown += IRDocumentHost_PreviewKeyDown;
             TextView.PreviewMouseRightButtonDown += TextView_PreviewMouseRightButtonDown;
+            TextView.MouseDoubleClick += TextViewOnMouseDoubleClick;
             TextView.PreviewMouseMove += TextView_PreviewMouseMove;
             TextView.PreviewMouseDown += TextView_PreviewMouseDown;
             TextView.BlockSelected += TextView_BlockSelected;
@@ -341,6 +342,10 @@ namespace IRExplorerUI {
             hover.MouseHover += Hover_MouseHover;
             loadTask_ = new CancelableTaskInstance();
             activeQueryPanels_ = new List<QueryPanel>();
+        }
+
+        private void TextViewOnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            SearchSymbolImpl(Utils.IsShiftModifierActive());
         }
 
         private void TextViewOnCaretChanged(object? sender, int offset) {

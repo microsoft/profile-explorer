@@ -1414,7 +1414,7 @@ namespace IRExplorerUI {
 
             Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Change caret to {CaretOffset}");
             var element = FindElementAtOffset(TextArea.Caret.Offset);
-            SelectElement(element, true, true, TextArea.Caret.Offset);
+            SelectElement(element, true, false, TextArea.Caret.Offset);
         }
 
         private void ClearAllMarkersExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -2285,9 +2285,15 @@ namespace IRExplorerUI {
         }
 
         private void IRDocument_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            // If Ctrl is pressed, instead of go to definition
+            // the action is a text search, which is handled by the host.
+            if (Utils.IsControlModifierActive()) {
+                return;
+            }
+
             var position = e.GetPosition(TextArea.TextView);
             var element = FindPointedElement(position, out _);
-            e.Handled = GoToElementDefinition(element, Utils.IsControlModifierActive());
+            e.Handled = GoToElementDefinition(element, Utils.IsAltModifierActive());
         }
 
         private async void IRDocument_PreviewMouseHover(object sender, MouseEventArgs e) {
@@ -3637,11 +3643,14 @@ namespace IRExplorerUI {
                 var result = await Task.Run(() => Session.LoadAndParseSection(targetSection));
 
                 if (result != null) {
-                    previewPopup_ = await IRDocumentPopup.CreateNew(result, element, position, 500, 300, this, Session, "Call target ");
+                    var title = $"Function: {element.Name}";
+                    previewPopup_ = await IRDocumentPopup.CreateNew(result, position, 500, 300,
+                                                                    this, Session, title);
                 }
             }
             else {
-                previewPopup_ = IRDocumentPopup.CreateNew(this, element, position, 500, 150, this, "Definition of ");
+                previewPopup_ = IRDocumentPopup.CreateNew(this, element, position, 500, 150,
+                                                     this, "Definition of ");
             }
 
             previewPopup_.PopupDetached += Popup_PopupDetached;
