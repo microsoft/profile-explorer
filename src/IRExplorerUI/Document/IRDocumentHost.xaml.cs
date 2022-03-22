@@ -1286,7 +1286,7 @@ namespace IRExplorerUI {
 
         private void BuildProfileBlocksList(Profile.FunctionProfileData funcProfile, Profile.FunctionProfileData.ProcessingResult result) {
             profileBlocks_ = result.BlockSampledElements;
-            var list = new List<ProfiledBlockEx>();
+            var list = new List<ProfiledBlockEx>(result.BlockSampledElements.Count);
             double maxWidth = 0;
 
             var valueTemplate = (DataTemplate)Application.Current.FindResource("BlockPercentageValueTemplate");
@@ -1399,7 +1399,7 @@ namespace IRExplorerUI {
             }
 
             // Group remarks by element line number.
-            var markerRemarksGroups = new List<RemarkLineGroup>();
+            var markerRemarksGroups = new List<RemarkLineGroup>(remarks.Count);
 
             if (remarkSettings_.ShowMarginRemarks) {
                 var markerRemarksMap = new Dictionary<int, RemarkLineGroup>(remarks.Count);

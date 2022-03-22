@@ -229,6 +229,9 @@ namespace IRExplorerUI.Controls {
         private ISession session_;
         private string title_;
 
+        public const double DefaultWidth = 600;
+        public const double DefaultHeigth = 200;
+
         public IRDocumentPopupInstance(double width, double height, string title, ISession session) {
             width_ = width;
             height_ = height;

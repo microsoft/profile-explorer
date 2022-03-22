@@ -856,8 +856,8 @@ namespace IRExplorerUI {
             UpdateHighlighting();
         }
 
-        public void MarkElements(IEnumerable<ValueTuple<IRElement, Color>> elementColorPairs) {
-            var colorGroupMap = new Dictionary<Color, HighlightedGroup>();
+        public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs) {
+            var colorGroupMap = new Dictionary<Color, HighlightedGroup>(elementColorPairs.Count);
             ClearTemporaryHighlighting();
 
             foreach (var pair in elementColorPairs) {
@@ -982,7 +982,7 @@ namespace IRExplorerUI {
             }
 
             var style = new HighlightingStyle(color, ColorPens.GetPen(Colors.DarkGray));
-            searchResultMap_ = new Dictionary<TextSearchResult, IRElement>();
+            searchResultMap_ = new Dictionary<TextSearchResult, IRElement>(results.Count);
             searchResultsGroup_ = new HighlightedGroup(style);
 
             foreach (var result in results) {
@@ -1984,7 +1984,7 @@ namespace IRExplorerUI {
         }
 
         private List<IRElement> ExpandIteratedUseList(OperandIR operand, List<IRElement> useList) {
-            var handledElements = new HashSet<IRElement>();
+            var handledElements = new HashSet<IRElement>(useList.Count);
 
             foreach (var use in useList) {
                 handledElements.Add(use);
@@ -2014,7 +2014,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var newUseLists = new List<List<IRElement>>();
+            var newUseLists = new List<List<IRElement>>(1 << (maxLevel - level + 1));
 
             foreach (var use in useList) {
                 if (use is not OperandIR op) {
@@ -2029,8 +2029,8 @@ namespace IRExplorerUI {
                             continue; // Use already visited during recursion.
                         }
 
-                        // Recursively iterate over and collect uses
-                        var iteratedUseList = new List<IRElement>();
+                        // Recursively iterate over and collect uses.
+                        var iteratedUseList = new List<IRElement>(1 << (maxLevel - level));
                         iteratedUseList.Add(iteratedUse);
 
                         ExpandIteratedUseList(iteratedUseList, handledElements,
@@ -2172,7 +2172,7 @@ namespace IRExplorerUI {
                                          HighlightingStyleCollection style,
                                          HighlightingStyleCollection instrStyle) {
             var locationTag = element.GetTag<SourceLocationTag>();
-            var handledElements = new HashSet<IRElement>();
+            var handledElements = new HashSet<IRElement>(128);
 
             // Each expansion of the same element doubles the recursion depth.
             if (currentExprElement_ == element) {
@@ -2492,7 +2492,7 @@ namespace IRExplorerUI {
             int blocks = Function != null ? Function.Blocks.Count : 1;
             blockElements_ = new List<IRElement>(blocks);
             tupleElements_ = new List<IRElement>(blockElements_.Count * 4);
-            operandElements_ = new List<IRElement>(tupleElements_.Count * 2);
+            operandElements_ = new List<IRElement>(tupleElements_.Count * 3);
             selectedElements_ = new HashSet<IRElement>();
 
             if (Function == null) {
@@ -2667,7 +2667,7 @@ namespace IRExplorerUI {
 
             var refFinder = CreateReferenceFinder();
             var operandRefs = refFinder.FindAllReferences(op);
-            var markedInstrs = new HashSet<InstructionIR>();
+            var markedInstrs = new HashSet<InstructionIR>(operandRefs.Count);
 
             //? TODO: Issue when an instr has multiple operands highlighted (PHI)
             //? the prev ops are covered by the background of the other ops,
@@ -2786,7 +2786,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            markerMargingElements_ = new List<MarkerBarElement>(64);
+            markerMargingElements_ = new List<MarkerBarElement>(128);
             int arrowButtonHeight = 16;
             int startY = arrowButtonHeight;
             double width = markerMargin_.ActualWidth;
@@ -3644,17 +3644,22 @@ namespace IRExplorerUI {
 
                 if (result != null) {
                     var title = $"Function: {element.Name}";
-                    previewPopup_ = await IRDocumentPopup.CreateNew(result, position, 500, 300,
+                    previewPopup_ = await IRDocumentPopup.CreateNew(result, position, 600, 400,
                                                                     this, Session, title);
                 }
             }
             else {
-                previewPopup_ = IRDocumentPopup.CreateNew(this, element, position, 500, 150,
+                previewPopup_ = IRDocumentPopup.CreateNew(this, element, position, 600, 200,
                                                      this, "Definition of ");
             }
 
             previewPopup_.PopupDetached += Popup_PopupDetached;
             previewPopup_.ShowPopup();
+
+            if(alwaysShow) {
+                // Keep open when triggered manually from UI or shortcut.
+                previewPopup_.DetachPopup();
+            }
         }
 
 
