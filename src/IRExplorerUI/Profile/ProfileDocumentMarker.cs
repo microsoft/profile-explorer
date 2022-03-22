@@ -355,9 +355,8 @@ namespace IRExplorerUI.Compilers.ASM {
                 InvertColorPalette = true
             });
         
-        public void ApplyColumnStyle(OptionalColumn column,
-            IRDocumentColumnData columnData,
-            IRDocument document) {
+        public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
+                                     IRDocument document) {
             Trace.WriteLine($"Apply {column.ColumnName}, main {column.IsMainColumn}");
 
             var function = document.Function;

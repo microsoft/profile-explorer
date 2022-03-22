@@ -1607,7 +1607,7 @@ namespace IRExplorerUI {
 
         private void DiffWithOtherDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
             var sectionEx = SectionList.SelectedItems[0] as IRTextSectionEx;
-
+            //? TODO: Double-click in two diffs should enter mode
             var args = new DiffModeEventArgs { IsWithOtherDocument = true, Left = new OpenSectionEventArgs(sectionEx.Section, OpenSectionKind.NewTabDockLeft) };
 
             EnterDiffMode?.Invoke(this, args);
