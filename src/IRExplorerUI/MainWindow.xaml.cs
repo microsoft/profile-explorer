@@ -203,19 +203,20 @@ namespace IRExplorerUI {
             SectionPanel.SetSectionAnnotationState(section, hasAnnotations);
         }
 
-        public async Task SwitchDocumentSectionAsync(OpenSectionEventArgs args, IRDocument document) {
-            var documentHost = FindDocumentHost(document);
+        public async Task<IRDocumentHost> SwitchDocumentSectionAsync(OpenSectionEventArgs args) {
+            var documentHost = args.TargetDocument;
 
             if (documentHost != null) {
                 // Use the existing editor to show the section.
-                await OpenDocumentSection(args, documentHost);
+                documentHost = await OpenDocumentSectionAsync(args, documentHost);
             }
             else {
                 // Open a new editor to show the section.
-                await OpenDocumentSection(args);
+                documentHost = await OpenDocumentSectionAsync(args);
             }
 
             SectionPanel.SelectSection(args.Section, false);
+            return documentHost;
         }
 
         public async Task SwitchGraphsAsync(GraphPanel graphPanel, IRTextSection section,

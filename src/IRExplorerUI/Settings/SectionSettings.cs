@@ -29,6 +29,7 @@ namespace IRExplorerUI {
         [ProtoMember(18)] public bool DemangleOnlyNames { get; set; }
         [ProtoMember(19)] public bool DemangleNoReturnType { get; set; }
         [ProtoMember(20)] public bool DemangleNoSpecialKeywords { get; set; }
+        [ProtoMember(21)] public bool ComputeStatistics { get; set; }
 
         public FunctionNameDemanglingOptions DemanglingOptions {
             get {
@@ -68,8 +69,10 @@ namespace IRExplorerUI {
             SectionSearchCaseSensitive = false;
             MarkSectionsIdenticalToPrevious = true;
             LowerIdenticalToPreviousOpacity = true;
+            ShowDemangledNames = true;
             DemangleNoSpecialKeywords = true;
             DemangleNoReturnType = true;
+            ComputeStatistics = true;
             NewSectionColor = Utils.ColorFromString("#007200");
             MissingSectionColor = Utils.ColorFromString("#BB0025");
             ChangedSectionColor = Utils.ColorFromString("#DE8000");
@@ -98,7 +101,8 @@ namespace IRExplorerUI {
                    ShowDemangledNames == settings.ShowDemangledNames &&
                    DemangleOnlyNames == settings.DemangleOnlyNames &&
                    DemangleNoReturnType == settings.DemangleNoReturnType &&
-                   DemangleNoSpecialKeywords == settings.DemangleNoSpecialKeywords;
+                   DemangleNoSpecialKeywords == settings.DemangleNoSpecialKeywords &&
+                   ComputeStatistics == settings.ComputeStatistics;
         }
     }
 }

@@ -380,9 +380,6 @@ namespace IRExplorerUI.Compilers.ASM {
                 value.TextWeight = options_.PickTextWeight(column, order, percentage);
 
                 value.Icon = options_.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
-                //value.BorderBrush = ColorBrushes.GetBrush(color);
-                //value.BorderThickness = new Thickness(1);
-
                 value.ShowPercentageBar = options_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
                 value.PercentageBarBackColor = options_.PickPercentageBarColor(column);
             }

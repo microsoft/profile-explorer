@@ -3557,7 +3557,7 @@ namespace IRExplorerUI {
             if (element is OperandIR op) {
                 if (op.IsLabelAddress) {
                     target = op.BlockLabelValue;
-                    show = target != null && IsElementOutsideView(target);
+                    show = target != null && (alwaysShow || IsElementOutsideView(target));
                 }
                 else if (op.ParentInstruction is var instr) {
                     if (op == Session.CompilerInfo.IR.GetCallTarget(instr)) {
@@ -3567,11 +3567,10 @@ namespace IRExplorerUI {
                     }
                 }
 
-
                 if (target == null) {
                     var refFinder = CreateReferenceFinder();
                     target = refFinder.FindSingleDefinition(op);
-                    show = target != null && IsElementOutsideView(target);
+                    show = target != null && (alwaysShow || IsElementOutsideView(target));
                 }
             }
 
@@ -3623,7 +3622,7 @@ namespace IRExplorerUI {
                 HidePreviewPopup();
             }
 
-            if (element == null || ignoreNextPreviewElement_ == element) {
+            if (ignoreNextPreviewElement_ == element) {
                 return;
             }
 
@@ -3650,7 +3649,7 @@ namespace IRExplorerUI {
             }
             else {
                 previewPopup_ = IRDocumentPopup.CreateNew(this, element, position, 600, 200,
-                                                     this, "Definition of ");
+                                                          this, "Definition of ");
             }
 
             previewPopup_.PopupDetached += Popup_PopupDetached;

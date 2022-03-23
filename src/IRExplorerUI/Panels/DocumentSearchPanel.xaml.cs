@@ -92,7 +92,7 @@ namespace IRExplorerUI.Panels {
         }
 
         private async void ResultsPanel_OpenSection(object sender, OpenSectionEventArgs e) {
-            await session_.SwitchDocumentSectionAsync(e, null);
+            await session_.SwitchDocumentSectionAsync(e);
         }
 
         private async void SearchPanel_SearchChanged(object sender, SearchInfo e) {

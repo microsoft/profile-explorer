@@ -52,18 +52,19 @@
                     ToolTip="{Binding PanelToolTip}" />
             </Grid>
             <Button
-                x:Name="ColorButton"
+                x:Name="OpenButton"
                 Grid.Row="0"
+                Grid.Column="1"
                 Width="20"
                 Height="20"
-                Background="#01FFFFFF"
+                Background="{x:Null}"
                 BorderBrush="{x:Null}"
-                Click="ColorButton_Click"
-                Visibility="Collapsed">
+                ToolTip="Open previewed document in a new tab"
+                Click="OpenButton_Click">
                 <Image
                     Width="16"
                     Height="16"
-                    Source="{StaticResource ThemeIcon}" />
+                    Source="{StaticResource OpenExternalIcon}" />
             </Button>
             <Button
                 x:Name="CloseButton"
@@ -72,7 +73,7 @@
                 Background="{x:Null}"
                 BorderBrush="{x:Null}"
                 Click="CloseButton_Click"
-                ToolTip="Close query panel">
+                ToolTip="Close popup">
                 <Image
                     Width="16"
                     Height="16"

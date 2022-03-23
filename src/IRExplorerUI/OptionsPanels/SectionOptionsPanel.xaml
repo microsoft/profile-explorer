@@ -6,7 +6,7 @@
     xmlns:local="clr-namespace:IRExplorerUI.OptionsPanels"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
-    d:DesignHeight="250"
+    d:DesignHeight="450"
     d:DesignWidth="350"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
@@ -88,8 +88,14 @@
 
             <TextBlock FontWeight="DemiBold" Text="Function List" />
             <CheckBox
-                x:Name="DemanglingCheckbox"
+                x:Name="StatisticsCheckbox"
                 Margin="0,4,0,2"
+                Content="Compute instruction statistics"
+                IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
+                ToolTip="Compute IR statistics on document load and show extra columns" />
+            <CheckBox
+                x:Name="DemanglingCheckbox"
+                Margin="0,2,0,2"
                 Content="Show demangled function names"
                 IsChecked="{Binding ShowDemangledNames, Mode=TwoWay}"
                 ToolTip="Show an extra column with the C/C++ demangled (undecorated) function names" />

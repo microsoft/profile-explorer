@@ -112,7 +112,10 @@ namespace IRExplorerUI.Controls {
 
         public override void ShowPopup() {
             base.ShowPopup();
-            UpdateView();
+
+            if (PreviewedElement != null) {
+                MarkPreviewedElement(PreviewedElement, TextView);
+            }
         }
 
         public override void ClosePopup() {
@@ -121,25 +124,19 @@ namespace IRExplorerUI.Controls {
             base.ClosePopup();
         }
 
-        public void UpdateView(bool highlight = true) {
-            if (PreviewedElement == null) {
-                return;
-            }
-
-            if (highlight) {
-                if (PreviewedElement is BlockIR block) {
-                    if (block.HasLabel) {
-                        TextView.MarkElementWithDefaultStyle(block.Label);
-                        return;
-                    }
-                }
-                else {
-                    TextView.MarkElementWithDefaultStyle(PreviewedElement);
+        public void MarkPreviewedElement(IRElement element, IRDocument document) {
+            if (PreviewedElement is BlockIR block) {
+                if (block.HasLabel) {
+                    document.MarkElementWithDefaultStyle(block.Label);
                     return;
                 }
             }
+            else {
+                document.MarkElementWithDefaultStyle(PreviewedElement);
+                return;
+            }
                 
-            TextView.BringElementIntoView(PreviewedElement, BringIntoViewStyle.FirstLine);
+            document.BringElementIntoView(PreviewedElement, BringIntoViewStyle.FirstLine);
         }
 
         public void CaptureMouseWheel() {
@@ -199,8 +196,14 @@ namespace IRExplorerUI.Controls {
             ToolbarPanel.Background = ColorBrushes.GetBrush(color);
         }
 
-        private void ColorButton_Click(object sender, RoutedEventArgs e) {
+        private async void OpenButton_Click(object sender, RoutedEventArgs e) {
+            var args = new OpenSectionEventArgs(TextView.Section, OpenSectionKind.NewTabDockRight);
+            var result = await Session.OpenDocumentSectionAsync(args);
 
+            //? TODO: Mark the previewed elem in the new doc
+            // var similarValueFinder = new SimilarValueFinder(function_);
+            // refElement = similarValueFinder.Find(instr);
+            result.TextView.ScrollToVerticalOffset(TextView.VerticalOffset);
         }
     }
 

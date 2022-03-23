@@ -86,7 +86,6 @@ namespace IRExplorerUI {
         NewTab,
         NewTabDockLeft,
         NewTabDockRight,
-        UndockedWindow
     }
 
     public class OpenSectionEventArgs : EventArgs {
@@ -424,7 +423,7 @@ namespace IRExplorerUI {
         private bool isSectionListVisible_;
         private bool useProfileCallTree_;
 
-        private SectionSettings sectionSettings_;
+        private SectionSettings settings_;
         private IRTextSummary summary_;
         private IRTextSummary otherSummary_;
         private List<IRTextSectionEx> sections_;
@@ -462,7 +461,7 @@ namespace IRExplorerUI {
             ShowSections = true;
             SyncDiffedDocuments = true;
             MainGrid.DataContext = this;
-            sectionSettings_ = App.Settings.SectionSettings;
+            settings_ = App.Settings.SectionSettings;
 
             functionValueSorter_ =
                 new GridViewColumnValueSorter<FunctionFieldKind>(FunctionList,
@@ -716,30 +715,6 @@ namespace IRExplorerUI {
             set {
                 if (isFunctionListVisible_ != value) {
                     isFunctionListVisible_ = value;
-
-                    //if (isFunctionListVisible_) {
-                    //    FunctionList.Visibility = Visibility.Visible;
-                    //    FunctionToolbarTray.Visibility = Visibility.Visible;
-
-                    //    if (profileControlsVisible_) {
-                    //        MainGrid.ColumnDefinitions[0].Width = new GridLength(5, GridUnitType.Star);
-                    //        MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
-                    //        MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
-                    //    }
-                    //    else {
-                    //        MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
-                    //        MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
-                    //        MainGrid.ColumnDefinitions[2].Width = new GridLength(2, GridUnitType.Star);
-                    //    }
-                    //}
-                    //else {
-                    //    FunctionList.Visibility = Visibility.Collapsed;
-                    //    FunctionToolbarTray.Visibility = Visibility.Collapsed;
-                    //    MainGrid.ColumnDefinitions[0].Width = new GridLength(24, GridUnitType.Pixel);
-                    //    MainGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Pixel);
-                    //    MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
-                    //}
-
                     OnPropertyChange(nameof(IsFunctionListVisible));
                 }
             }
@@ -1000,6 +975,18 @@ namespace IRExplorerUI {
             }
         }
 
+        private bool moduleControlsVisible_;
+
+        public bool ModuleControlsVisible {
+            get => moduleControlsVisible_;
+            set {
+                if (moduleControlsVisible_ != value) {
+                    moduleControlsVisible_ = value;
+                    OnPropertyChange(nameof(ModuleControlsVisible));
+                }
+            }
+        }
+
         public IRTextFunction CurrentFunction => currentFunction_;
         public bool HasAnnotatedSections => annotatedSections_.Count > 0;
         public ICompilerInfoProvider CompilerInfo { get; set; }
@@ -1058,7 +1045,7 @@ namespace IRExplorerUI {
         }
 
         public void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations) {
-            if (!sectionSettings_.MarkAnnotatedSections) {
+            if (!settings_.MarkAnnotatedSections) {
                 return;
             }
 
@@ -1141,7 +1128,7 @@ namespace IRExplorerUI {
         private void SetDemangledFunctionNames(List<IRTextFunctionEx> functions) {
             var nameProvider = Session.CompilerInfo.NameProvider;
 
-            if (!sectionSettings_.ShowDemangledNames || !nameProvider.IsDemanglingSupported) {
+            if (!settings_.ShowDemangledNames || !nameProvider.IsDemanglingSupported) {
                 AlternateNameColumnVisible = false;
                 return;
             }
@@ -1181,7 +1168,6 @@ namespace IRExplorerUI {
 
             // Add one entry to represent all modules.
             var allWeightPercentage = profile.ScaleFunctionWeight(profile.ProfileWeight);
-
             modulesEx.Add(new ModuleEx() { Name = "All", Time = profile.ProfileWeight.Ticks, Percentage = allWeightPercentage, Text = $"{allWeightPercentage.AsPercentageString()} ({profile.ProfileWeight.AsMillisecondsString()})" });
 
             foreach (var value in modulesEx) {
@@ -1240,6 +1226,7 @@ namespace IRExplorerUI {
 
             functionValueSorter_.SortByField(FunctionFieldKind.Optional, ListSortDirection.Descending);
             ProfileControlsVisible = true;
+            ModuleControlsVisible = true;
             IsFunctionListVisible = false;
             IsFunctionListVisible = true;
             ShowSections = false;
@@ -1250,7 +1237,6 @@ namespace IRExplorerUI {
 
             UseProfileCallTree = true;
         }
-
 
         private async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
             if (summary_ == null) {
@@ -1315,6 +1301,12 @@ namespace IRExplorerUI {
             }
 
             if (analyzeFunctions) {
+                await RunFunctionAnalysis();
+            }
+        }
+
+        private async Task RunFunctionAnalysis() {
+            if (settings_.ComputeStatistics) {
                 await ComputeFunctionStatistics();
             }
         }
@@ -1329,6 +1321,7 @@ namespace IRExplorerUI {
 
         private void ResetSectionPanel() {
             ProfileControlsVisible = false;
+            ModuleControlsVisible = false;
             SectionList.ItemsSource = null;
             FunctionList.ItemsSource = null;
 
@@ -1406,7 +1399,7 @@ namespace IRExplorerUI {
                 sections.Add(sectionEx);
 
                 if (CompilerInfo.SectionStyleProvider.IsMarkedSection(section, out var markedName)) {
-                    if (sectionSettings_.ColorizeSectionNames) {
+                    if (settings_.ColorizeSectionNames) {
                         sectionEx.IsMarked = true;
                         sectionEx.TextColor = ColorBrushes.GetBrush(markedName.TextColor);
                     }
@@ -1414,13 +1407,13 @@ namespace IRExplorerUI {
                         sectionEx.IsMarked = false;
                     }
 
-                    if (sectionSettings_.ShowSectionSeparators) {
+                    if (settings_.ShowSectionSeparators) {
                         ApplySectionBorder(sectionEx, sectionIndex, markedName, sections);
                     }
                     else
                         sectionEx.BorderThickness = new Thickness();
 
-                    if (sectionSettings_.UseNameIndentation &&
+                    if (settings_.UseNameIndentation &&
                         markedName.IndentationLevel > 0) {
                         ApplySectionNameIndentation(sectionEx, markedName);
                     }
@@ -1432,7 +1425,7 @@ namespace IRExplorerUI {
 
                 sectionEx.SectionDiffKind = DiffKind.None;
                 sectionEx.LowerIdenticalToPreviousOpacity = sectionIndex > 0 &&
-                                                            sectionSettings_.LowerIdenticalToPreviousOpacity;
+                                                            settings_.LowerIdenticalToPreviousOpacity;
                 sectionIndex++;
             }
 
@@ -1454,10 +1447,10 @@ namespace IRExplorerUI {
 
         private void ApplySectionNameIndentation(IRTextSectionEx sectionEx, MarkedSectionName markedName) {
             int level = markedName.IndentationLevel;
-            var builder = new StringBuilder(sectionEx.Name.Length + level * sectionSettings_.IndentationAmount);
+            var builder = new StringBuilder(sectionEx.Name.Length + level * settings_.IndentationAmount);
 
             while (level > 0) {
-                builder.Append(' ', sectionSettings_.IndentationAmount);
+                builder.Append(' ', settings_.IndentationAmount);
                 level--;
             }
 
@@ -1607,18 +1600,18 @@ namespace IRExplorerUI {
 
         private void DiffWithOtherDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
             var sectionEx = SectionList.SelectedItems[0] as IRTextSectionEx;
-            //? TODO: Double-click in two diffs should enter mode
-            var args = new DiffModeEventArgs { IsWithOtherDocument = true, Left = new OpenSectionEventArgs(sectionEx.Section, OpenSectionKind.NewTabDockLeft) };
+            DiffWithOtherSection(sectionEx);
+        }
 
+        private void DiffWithOtherSection(IRTextSectionEx sectionEx) {
+            var args = new DiffModeEventArgs { IsWithOtherDocument = true, Left = new OpenSectionEventArgs(sectionEx.Section, OpenSectionKind.NewTabDockLeft) };
             EnterDiffMode?.Invoke(this, args);
         }
 
         public void DiffSelectedSection() {
             if (SectionList.SelectedItem != null) {
                 var sectionEx = SectionList.SelectedItem as IRTextSectionEx;
-
                 var args = new DiffModeEventArgs { IsWithOtherDocument = true, Left = new OpenSectionEventArgs(sectionEx.Section, OpenSectionKind.NewTabDockLeft) };
-
                 EnterDiffMode?.Invoke(this, args);
             }
         }
@@ -1671,24 +1664,27 @@ namespace IRExplorerUI {
         }
 
         private void SectionDoubleClick(object sender, MouseButtonEventArgs e) {
-            var section = ((ListViewItem)sender).Content as IRTextSectionEx;
-
-            OpenSectionImpl(section);
+            var sectionEx = ((ListViewItem)sender).Content as IRTextSectionEx;
+            OpenSectionImpl(sectionEx);
         }
 
         private void OpenSectionImpl(IRTextSection section) {
             OpenSectionImpl(GetSectionExtension(section));
         }
 
-        private void OpenSectionImpl(IRTextSectionEx section) {
-            bool inNewTab = (Keyboard.Modifiers & ModifierKeys.Control) != 0 ||
-                            (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
-
-            OpenSectionImpl(section, inNewTab ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent);
+        private void OpenSectionImpl(IRTextSectionEx sectionEx) {
+            if (Session.IsInTwoDocumentsDiffMode) {
+                DiffWithOtherSection(sectionEx);
+            }
+            else {
+                bool inNewTab = (Keyboard.Modifiers & ModifierKeys.Control) != 0 ||
+                                (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+                OpenSectionImpl(sectionEx, inNewTab ? OpenSectionKind.NewTab : OpenSectionKind.ReplaceCurrent);
+            }
         }
 
         private void OpenSectionImpl(IRTextSectionEx value, OpenSectionKind kind,
-            IRDocumentHost targetDocument = null) {
+                                     IRDocumentHost targetDocument = null) {
             if (OpenSection != null && value.Section != null) {
                 MarkCurrentSection(value);
                 OpenSection(this, new OpenSectionEventArgs(value.Section, kind, targetDocument));
@@ -1770,7 +1766,7 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeConsecutiveSectionDiffs() {
-            if (!sectionSettings_.MarkSectionsIdenticalToPrevious || sections_.Count < 2) {
+            if (!settings_.MarkSectionsIdenticalToPrevious || sections_.Count < 2) {
                 return;
             }
 
@@ -1905,7 +1901,7 @@ namespace IRExplorerUI {
                 ChildFunctionList.Model = callTree;
 
                 //? One flag for Calls, one Profile
-                ProfileControlsVisible = true; //? TODO: Shouldn't show modules
+                ProfileControlsVisible = true;
                 ChildTimeColumnVisible = false;
                 AutoResizeColumns(ChildFunctionList, 1);
             }
@@ -2009,7 +2005,7 @@ namespace IRExplorerUI {
 
                 if (otherSummary_ != null && otherCalleeNode == null) {
                     // Missing in right.
-                    childNode.TextColor = ColorBrushes.GetBrush(sectionSettings_.NewSectionColor);
+                    childNode.TextColor = ColorBrushes.GetBrush(settings_.NewSectionColor);
                     childNode.IsMarked = true;
                 }
 
@@ -2262,7 +2258,7 @@ namespace IRExplorerUI {
             optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
-            optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
+            optionsPanelWindow_.Settings = (SectionSettings)settings_.Clone();
             optionsPanelWindow_.IsOpen = true;
             optionsPanelVisible_ = true;
         }
@@ -2271,7 +2267,7 @@ namespace IRExplorerUI {
             var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
             HandleNewSettings(newSettings, false);
             optionsPanelWindow_.Settings = null;
-            optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
+            optionsPanelWindow_.Settings = (SectionSettings)settings_.Clone();
         }
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
@@ -2279,7 +2275,7 @@ namespace IRExplorerUI {
 
             //? TODO: Setting to null should be part of OptionsPanelBase and remove it in all places
             optionsPanelWindow_.Settings = null;
-            optionsPanelWindow_.Settings = (SectionSettings)sectionSettings_.Clone();
+            optionsPanelWindow_.Settings = (SectionSettings)settings_.Clone();
         }
 
         private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {
@@ -2309,13 +2305,13 @@ namespace IRExplorerUI {
                 App.SaveApplicationSettings();
             }
 
-            if (newSettings.Equals(sectionSettings_)) {
+            if (newSettings.Equals(settings_)) {
                 return;
             }
 
-            bool updateFunctionList = newSettings.HasFunctionListChanges(sectionSettings_);
+            bool updateFunctionList = newSettings.HasFunctionListChanges(settings_);
             App.Settings.SectionSettings = newSettings;
-            sectionSettings_ = newSettings;
+            settings_ = newSettings;
 
             if (updateFunctionList) {
                 await UpdateFunctionListBindings();
@@ -2334,45 +2330,51 @@ namespace IRExplorerUI {
         }
 
         private async void SaveSectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (e.Parameter is IRTextSectionEx sectionEx) {
-                var fileDialog = new SaveFileDialog { DefaultExt = "*.txt|All Files|*.*", Filter = "IR text|*.txt" };
+            if (!(e.Parameter is IRTextSectionEx sectionEx)) {
+                return;
+            }
 
-                var result = fileDialog.ShowDialog();
+            var fileDialog = new SaveFileDialog { DefaultExt = "*.txt|All Files|*.*", Filter = "IR text|*.txt" };
+            var result = fileDialog.ShowDialog();
 
-                if (result.HasValue && result.Value) {
-                    var path = fileDialog.FileName;
+            if (result.HasValue && result.Value) {
+                var path = fileDialog.FileName;
 
-                    try {
-                        var text = await Session.GetSectionTextAsync(sectionEx.Section);
-                        await File.WriteAllTextAsync(path, text);
-                    }
-                    catch (Exception ex) {
-                        using var centerForm = new DialogCenteringHelper(this);
-                        MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
-                            MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                    }
+                try {
+                    var text = await Session.GetSectionTextAsync(sectionEx.Section);
+                    await File.WriteAllTextAsync(path, text);
+                }
+                catch (Exception ex) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
             }
         }
 
         private async void SaveAllSectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (e.Parameter is IRTextSectionEx sectionEx) {
-                var fileDialog = new SaveFileDialog { DefaultExt = "*.txt|All Files|*.*", Filter = "IR text|*.txt" };
+            if (!(e.Parameter is IRTextFunctionEx functionEx)) {
+                return;
+            }
 
-                var result = fileDialog.ShowDialog();
+            var fileDialog = new SaveFileDialog { DefaultExt = "*.txt|All Files|*.*", Filter = "IR text|*.txt" };
+            var result = fileDialog.ShowDialog();
 
-                if (result.HasValue && result.Value) {
-                    var path = fileDialog.FileName;
+            if (result.HasValue && result.Value) {
+                var path = fileDialog.FileName;
 
-                    try {
-                        var text = await Session.GetDocumentTextAsync(sectionEx.Section.ParentFunction.ParentSummary);
-                        await File.WriteAllTextAsync(path, text);
+                try {
+                    using var writer = new StreamWriter(path);
+
+                    foreach (var section in functionEx.Function.Sections) {
+                        var text = await Session.GetSectionTextAsync(section);
+                        await writer.WriteLineAsync(text);
                     }
-                    catch (Exception ex) {
-                        using var centerForm = new DialogCenteringHelper(this);
-                        MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
-                            MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                    }
+                }
+                catch (Exception ex) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
             }
         }
@@ -2426,9 +2428,17 @@ namespace IRExplorerUI {
         private void ResizeFunctionFilter(double width) {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
             //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
-            double defaultSpace = 60;
-            double profileControlsSpace = ProfileControlsVisible ? 240 : 0;
-            FunctionFilterGrid.Width = Math.Max(1, width - defaultSpace - profileControlsSpace);
+            double reservedWidth = 60;
+
+            if(profileControlsVisible_) {
+                reservedWidth += 120;
+            }
+
+            if(moduleControlsVisible_) {
+                reservedWidth += 80;
+            }
+
+            FunctionFilterGrid.Width = Math.Max(1, width - reservedWidth);
         }
 
         private void ChildDoubleClick(object sender, MouseButtonEventArgs e) {

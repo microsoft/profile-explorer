@@ -292,9 +292,9 @@ namespace IRExplorerUI {
                 var leftArgs = new OpenSectionEventArgs(leftDocument.Section, OpenSectionKind.ReplaceCurrent);
                 var rightArgs = new OpenSectionEventArgs(rightDocument.Section, OpenSectionKind.ReplaceCurrent);
 
-                await OpenDocumentSection(leftArgs, leftDocument, false);
+                await OpenDocumentSectionAsync(leftArgs, leftDocument, false);
                 await leftDocument.ExitDiffMode();
-                await OpenDocumentSection(rightArgs, rightDocument, false);
+                await OpenDocumentSectionAsync(rightArgs, rightDocument, false);
                 await rightDocument.ExitDiffMode();
             }
 
@@ -319,8 +319,8 @@ namespace IRExplorerUI {
             Trace.TraceInformation($"Diff mode: Start with left doc. {ObjectTracker.Track(leftDocument)}, " +
                                    $"right doc. {ObjectTracker.Track(rightDocument)}");
 
-            leftDocument = await OpenDocumentSection(e.Left, leftDocument, false);
-            rightDocument = await OpenDocumentSection(e.Right, rightDocument, false);
+            leftDocument = await OpenDocumentSectionAsync(e.Left, leftDocument, false);
+            rightDocument = await OpenDocumentSectionAsync(e.Right, rightDocument, false);
             bool result = await EnterDocumentDiffState(leftDocument, rightDocument);
 
             UpdateDiffModeButton(result);
@@ -1000,11 +1000,11 @@ namespace IRExplorerUI {
             if (leftIndex > 0 && rightIndex > 0) {
                 var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex - 1];
                 var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(leftArgs, sessionState_.SectionDiffState.LeftDocument);
+                await OpenDocumentSectionAsync(leftArgs, sessionState_.SectionDiffState.LeftDocument);
 
                 var prevRightSection = rightSection.ParentFunction.Sections[rightIndex - 1];
                 var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(rightArgs, sessionState_.SectionDiffState.RightDocument);
+                await OpenDocumentSectionAsync(rightArgs, sessionState_.SectionDiffState.RightDocument);
             }
         }
 
@@ -1023,11 +1023,11 @@ namespace IRExplorerUI {
                 rightIndex < rightSection.ParentFunction.SectionCount - 1) {
                 var prevLeftSection = leftSection.ParentFunction.Sections[leftIndex + 1];
                 var leftArgs = new OpenSectionEventArgs(prevLeftSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(leftArgs, sessionState_.SectionDiffState.LeftDocument);
+                await OpenDocumentSectionAsync(leftArgs, sessionState_.SectionDiffState.LeftDocument);
 
                 var prevRightSection = rightSection.ParentFunction.Sections[rightIndex + 1];
                 var rightArgs = new OpenSectionEventArgs(prevRightSection, OpenSectionKind.ReplaceCurrent);
-                await OpenDocumentSection(rightArgs, sessionState_.SectionDiffState.RightDocument);
+                await OpenDocumentSectionAsync(rightArgs, sessionState_.SectionDiffState.RightDocument);
             }
         }
 
