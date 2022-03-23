@@ -583,6 +583,19 @@
                         <local:IRDocument.ContextMenu>
                             <ContextMenu>
                                 <MenuItem
+                                    Command="local:DocumentCommand.PreviewDefinition"
+                                    CommandTarget="{Binding ElementName=TextView}"
+                                    Header="Preview Definition"
+                                    InputGestureText="Shift+Return"
+                                    ToolTip="Preview operand definition or call target function">
+                                    <MenuItem.Icon>
+                                        <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource OpenExternalIcon}" />
+                                    </MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem
                                     Command="local:DocumentCommand.GoToDefinition"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     Header="Go To Definition"
@@ -606,19 +619,8 @@
                                             Source="{StaticResource GotoDefinitionIconSkipIcon}" />
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <MenuItem
-                                    Command="local:DocumentCommand.PreviewDefinition"
-                                    CommandTarget="{Binding ElementName=TextView}"
-                                    Header="Preview Definition"
-                                    InputGestureText="Shift+Return"
-                                    ToolTip="Preview operand definition or call target function">
-                                    <MenuItem.Icon>
-                                        <Image
-                                            Width="16"
-                                            Height="16"
-                                            Source="{StaticResource OpenExternalIcon}" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
+                                <Separator/>
+
                                 <MenuItem
                                     Command="local:DocumentHostCommand.SearchSymbol"
                                     CommandTarget="{Binding ElementName=TextView}"

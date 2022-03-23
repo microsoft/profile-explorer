@@ -224,18 +224,18 @@ namespace IRExplorerUI {
             //? from the previous jump, this must wait for it to complete, otherwise
             //? the document text can get out of sync and assert.
             if (switching) {
+#if DEBUG
                 throw new Exception("Switching...");
-
+#endif
             }
 
             switching = true;
             var documentHost = Session.FindAssociatedDocumentHost(this);
 
             if (documentHost == null) {
-                // DOcument may have been closed in the meantime.
+                // Document may have been closed in the meantime.
                 var args = new OpenSectionEventArgs(result.Section, OpenSectionKind.NewTabDockLeft);
-                await Session.SwitchDocumentSectionAsync(args, args.TargetDocument?.TextView);
-                documentHost = Session.FindAssociatedDocumentHost(this);
+                documentHost = await Session.SwitchDocumentSectionAsync(args);
             }
 
             if (!documentHost.HasSameSearchResultSection(result.Section)) {

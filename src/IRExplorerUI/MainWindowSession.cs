@@ -268,7 +268,7 @@ namespace IRExplorerUI {
                 }
 
                 var args = new OpenSectionEventArgs(section, openKind);
-                var docHost = await OpenDocumentSection(args);
+                var docHost = await OpenDocumentSectionAsync(args);
                 idToDocumentHostMap[openSection.DocumentId] = docHost;
             }
 
@@ -577,11 +577,16 @@ namespace IRExplorerUI {
         }
 
         private async void SectionPanel_OpenSection(object sender, OpenSectionEventArgs args) {
-            await OpenDocumentSection(args, args.TargetDocument);
+            await OpenDocumentSectionAsync(args, args.TargetDocument);
+        }
+
+        public async Task<IRDocumentHost>
+        OpenDocumentSectionAsync(OpenSectionEventArgs args) {
+            return await OpenDocumentSectionAsync(args, args.TargetDocument, false);
         }
 
         private async Task<IRDocumentHost> 
-        OpenDocumentSection(OpenSectionEventArgs args, IRDocumentHost targetDocument = null,
+        OpenDocumentSectionAsync(OpenSectionEventArgs args, IRDocumentHost targetDocument = null,
                             bool runExtraTasks = true) {
             var document = targetDocument;
 

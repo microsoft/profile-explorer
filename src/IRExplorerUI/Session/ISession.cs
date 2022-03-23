@@ -54,7 +54,8 @@ namespace IRExplorerUI {
         void SaveDocumentState(object stateObject, IRTextSection section);
         void SavePanelState(object stateObject, IToolPanel panel, 
                             IRTextSection section, IRDocument document = null);
-        Task SwitchDocumentSectionAsync(OpenSectionEventArgs args, IRDocument document);
+        Task<IRDocumentHost> SwitchDocumentSectionAsync(OpenSectionEventArgs args);
+        Task<IRDocumentHost> OpenDocumentSectionAsync(OpenSectionEventArgs args);
         bool SwitchToPreviousSection(IRTextSection section, IRDocument document);
         bool SwitchToNextSection(IRTextSection section, IRDocument document);
         void SetSectionAnnotationState(IRTextSection section, bool hasAnnotations);

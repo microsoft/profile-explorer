@@ -339,7 +339,7 @@ namespace IRExplorerUI {
                 return null;
             }
 
-            return await OpenDocumentSection(
+            return await OpenDocumentSectionAsync(
                     new OpenSectionEventArgs(previousDebugSection_, OpenSectionKind.ReplaceCurrent));
         }
 
@@ -435,7 +435,7 @@ namespace IRExplorerUI {
                     verticalOffset = document.TextView.VerticalOffset;
                 }
 
-                await OpenDocumentSection(new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent), document);
+                await OpenDocumentSectionAsync(new OpenSectionEventArgs(section, OpenSectionKind.ReplaceCurrent), document);
 
                 //? TODO: Diff only if enabled
                 if (previousDebugSection_ != null && document != null) {

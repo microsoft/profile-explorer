@@ -89,7 +89,7 @@
                 <Setter Property="Width" Value="2" />
             </Style.Setters>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding ShowModules}" Value="False">
+                <DataTrigger Binding="{Binding ModuleControlsVisible}" Value="False">
                     <DataTrigger.Setters>
                         <Setter Property="Width" Value="0" />
                         <Setter Property="MaxWidth" Value="0" />
@@ -189,20 +189,13 @@
                         Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                         Loaded="ToolBar_Loaded"
                         SizeChanged="ToolBar_SizeChanged">
-                        <TextBlock
-                            Margin="5,0,0,0"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Text="Show"
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
                         <ToggleButton
-                            Margin="8,0,0,0"
                             Padding="4,2,4,2"
                             HorizontalContentAlignment="Stretch"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             Content="Modules"
                             IsChecked="{Binding ShowModules, Mode=TwoWay}"
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                            Visibility="{Binding ModuleControlsVisible, Converter={StaticResource BoolToVisibility}}" />
 
                         <ToggleButton
                             Margin="-1,0,0,0"
@@ -344,17 +337,11 @@
                     <ListView.ContextMenu>
                         <ContextMenu>
                             <MenuItem
-                                Command="local:Command.SaveAllSectionText"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                CommandTarget="{Binding ElementName=SectionList}"
-                                Header="Save All Sections Text"
-                                ToolTip="Save the text (IR) of all sections for the selected function to a file" />
-                            <MenuItem
                                 Command="local:Command.ExportFunctionList"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
-                                Header="Export List as CSV"
-                                ToolTip="Save the list of functions and associated column data" />
+                                Header="Export Function List as CSV"
+                                ToolTip="Save the list of functions and associated column data as a CSV file" />
                         </ContextMenu>
                     </ListView.ContextMenu>
                 </ListView>
@@ -400,7 +387,7 @@
 
                             <GridViewColumn
                                 Width="50"
-                                local:GridViewColumnVisibility.IsVisible="{Binding ProfileControlsVisible}"
+                                local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}"
                                 DisplayMemberBinding="{Binding ModuleName}">
                                 <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
                                 <GridViewColumn.HeaderContainerStyle>
@@ -521,12 +508,6 @@
                     <ListView.ContextMenu>
                         <ContextMenu>
                             <MenuItem
-                                Command="local:Command.SaveAllSectionText"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                CommandTarget="{Binding ElementName=FunctionList}"
-                                Header="Save All Sections Text"
-                                ToolTip="Save the text (IR) of all sections for the selected function to a file" />
-                            <MenuItem
                                 Command="local:Command.CopyFunctionName"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
@@ -538,12 +519,20 @@
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Copy Demangled Function Name"
                                 ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
+                            <Separator/>
+
+                            <MenuItem
+                                Command="local:Command.SaveAllSectionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Save Function Text"
+                                ToolTip="Save the text (IR) of all sections for the selected function to a file" />
                             <MenuItem
                                 Command="local:Command.ExportFunctionList"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
-                                Header="Export List as CSV"
-                                ToolTip="Save the list of functions and associated column data" />
+                                Header="Export Function List as CSV"
+                                ToolTip="Save the list of functions and associated column data as a CSV file" />
                         </ContextMenu>
                     </ListView.ContextMenu>
                 </ListView>
@@ -867,8 +856,6 @@
                                         Source="{StaticResource OpenExternalIcon}" />
                                 </MenuItem.Icon>
                             </MenuItem>
-
-
                             <MenuItem
                                 Command="local:Command.OpenLeft"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -942,8 +929,30 @@
                                 Header="Sync Section with Other Document"
                                 IsCheckable="True"
                                 IsChecked="{Binding Path=SyncDiffedDocuments, Mode=TwoWay}"
-                                ToolTip="Enable syncing of diffed section between the two documents" />
+                                ToolTip="Sync the diffed section between the two documents" />
                             <Separator />
+
+                            <MenuItem
+                                    Command="local:Command.CopySectionText"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                    CommandTarget="{Binding ElementName=SectionList}"
+                                    Header="Copy Section Text"
+                                    ToolTip="Copy the section text (IR) to the clipboard">
+                                <MenuItem.Icon>
+                                    <Image
+                                            Width="16"
+                                            Height="16"
+                                            Source="{StaticResource ClipboardIcon}" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+
+                            <MenuItem
+                                    Command="local:Command.SaveSectionText"
+                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                    CommandTarget="{Binding ElementName=SectionList}"
+                                    Header="Save Section Text"
+                                    ToolTip="Save the section text (IR) to a file" />
+                            <Separator/>
 
                             <MenuItem
                                 Command="local:Command.ToggleTag"
@@ -958,8 +967,6 @@
                                         Source="{StaticResource TagIcon}" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <Separator />
-
                             <MenuItem Header="More...">
                                 <MenuItem
                                     Command="local:Command.DisplayPartialCallGraph"
@@ -974,28 +981,6 @@
                                     CommandTarget="{Binding ElementName=FunctionList}"
                                     Header="Show Call Graph"
                                     ToolTip="Show the call graph for all the functions in the document" />
-                                <Separator />
-
-                                <MenuItem
-                                    Command="local:Command.CopySectionText"
-                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                    CommandTarget="{Binding ElementName=SectionList}"
-                                    Header="Copy Section Text"
-                                    ToolTip="Copy the section text (IR) to the clipboard">
-                                    <MenuItem.Icon>
-                                        <Image
-                                            Width="16"
-                                            Height="16"
-                                            Source="{StaticResource ClipboardIcon}" />
-                                    </MenuItem.Icon>
-                                </MenuItem>
-
-                                <MenuItem
-                                    Command="local:Command.SaveSectionText"
-                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                    CommandTarget="{Binding ElementName=SectionList}"
-                                    Header="Save Section Text"
-                                    ToolTip="Save the section text (IR) to a file" />
                             </MenuItem>
 
                         </ContextMenu>
@@ -1299,15 +1284,6 @@
                                 IsCheckable="True"
                                 IsChecked="{Binding UseIRCallTree, Mode=TwoWay}"
                                 ToolTip="Show the call tree derived from the IR" />
-                            <Separator />
-
-                            <MenuItem
-                                Command="local:Command.SaveAllSectionText"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                CommandTarget="{Binding ElementName=SectionList}"
-                                Header="Save All Sections Text"
-                                ToolTip="Save the text (IR) of all sections for the selected function to a file" />
-
                         </ContextMenu>
                     </ListView.ContextMenu>
                 </tree:TreeList>

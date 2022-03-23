@@ -262,14 +262,34 @@ namespace IRExplorerUI {
             sessionState_.DocumentHosts.Remove(docHostInfo);
 
             if (sessionState_.DocumentHosts.Count > 0) {
-                var newActivePanel = sessionState_.DocumentHosts[0];
-                activeDocumentPanel_ = newActivePanel.HostParent;
-                newActivePanel.IsActiveDocument = true;
-                NotifyPanelsOfSectionLoad(newActivePanel.DocumentHost.Section, newActivePanel.DocumentHost, false);
+                SetActiveDocument(sessionState_.DocumentHosts[0]);
             }
             else {
-                activeDocumentPanel_ = null;
+                ResetActiveDocument();
             }
+        }
+
+        private void SetActiveDocument(DocumentHostInfo newActivePanel, bool updateUI = true) {
+            activeDocumentPanel_ = newActivePanel.HostParent;
+
+            foreach (var item in sessionState_.DocumentHosts) {
+                item.IsActiveDocument = false;
+            }
+
+            newActivePanel.IsActiveDocument = true;
+
+            if (updateUI) {
+                var docHost = newActivePanel.DocumentHost;
+
+                if (docHost.Section != null) {
+                    SectionPanel.SelectSection(docHost.Section, false);
+                    NotifyPanelsOfSectionLoad(docHost.Section, docHost, false);
+                }
+            }
+        }
+
+        private void ResetActiveDocument() {
+            activeDocumentPanel_ = null;
         }
 
         private void UnbindPanels(IRDocumentHost document) {
@@ -303,12 +323,7 @@ namespace IRExplorerUI {
                 }
 
                 var hostDocPair = FindDocumentHostPair(document);
-                SetActiveDocumentHost(hostDocPair);
-
-                if (document.Section != null) {
-                    SectionPanel.SelectSection(document.Section, false);
-                    NotifyPanelsOfSectionLoad(document.Section, document, false);
-                }
+                SetActiveDocument(hostDocPair);
             }
         }
 
@@ -370,14 +385,6 @@ namespace IRExplorerUI {
 
         private bool IsActiveDocument(IRDocumentHost document) {
             return FindActiveDocumentHost() == document;
-        }
-
-        private void SetActiveDocumentHost(DocumentHostInfo docHost) {
-            foreach (var item in sessionState_.DocumentHosts) {
-                item.IsActiveDocument = false;
-            }
-
-            docHost.IsActiveDocument = true;
         }
 
         private PanelHostInfo FindActivePanel(ToolPanelKind kind) {
@@ -581,14 +588,7 @@ namespace IRExplorerUI {
 
             switch (duplicateKind) {
                 case DuplicatePanelKind.Floating: {
-                    //? TODO: Use saved position settings
-                    panelHost.Host.FloatingLeft = Left + 100;
-                    panelHost.Host.FloatingTop = Top + 100;
-                    panelHost.Host.FloatingWidth = 800;
-                    panelHost.Host.FloatingHeight = 600;
-
-                    var window = DockManager.CreateFloatingWindow(panelHost.Host, false);
-                    window.Show();
+                    DisplayFloatingWindow(panelHost.Host);
                     attached = true;
                     break;
                 }
@@ -648,6 +648,17 @@ namespace IRExplorerUI {
 
             panelHost.Host.IsSelected = true;
             return panelHost;
+        }
+
+        private void DisplayFloatingWindow(LayoutContent host) {
+            //? TODO: Use saved position settings
+            host.FloatingLeft = Left + 100;
+            host.FloatingTop = Top + 100;
+            host.FloatingWidth = 800;
+            host.FloatingHeight = 600;
+
+            var window = DockManager.CreateFloatingWindow(host, false);
+            window.Show();
         }
 
         private PanelHostInfo AddNewPanel(IToolPanel panel) {
@@ -808,15 +819,16 @@ namespace IRExplorerUI {
                     documentGroup.Children.Add(activeDocumentPanel_);
                     break;
                 }
-                default:
+                default: {
                     throw new ArgumentOutOfRangeException(nameof(kind), kind, null);
+                }
             }
 
             var documentHost = new DocumentHostInfo(document, host);
             documentHost.HostParent = activeDocumentPanel_;
             sessionState_.DocumentHosts.Add(documentHost);
 
-            SetActiveDocumentHost(documentHost);
+            SetActiveDocument(documentHost, false);
             host.IsActiveChanged += DocumentHost_IsActiveChanged;
             host.Closed += DocumentHost_Closed;
             host.IsSelected = true;
