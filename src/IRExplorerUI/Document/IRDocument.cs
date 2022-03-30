@@ -708,6 +708,7 @@ namespace IRExplorerUI {
             ResetRenderers();
             Text = "";
             SectionText = ReadOnlyMemory<char>.Empty;
+            ColumnData = null;
         }
         
         public bool InitializeFromDocument(IRDocument doc, bool copyTemporaryHighlighting = true, string text = null) {
@@ -744,7 +745,7 @@ namespace IRExplorerUI {
             }
             
             SetupBlockFolding();
-            Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
+            //await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
             return true;
         }
 
@@ -2434,7 +2435,6 @@ namespace IRExplorerUI {
             //    CloneOtherSectionAnnotations(other);
 
             // Do compiler-specifiec document work.
-            ColumnData = new IRDocumentColumnData(Function.InstructionCount);
             await Session.CompilerInfo.HandleLoadedSection(this, Function, Section);
         }
 
