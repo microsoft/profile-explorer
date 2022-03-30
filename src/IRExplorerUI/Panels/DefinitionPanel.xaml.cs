@@ -85,9 +85,9 @@ namespace IRExplorerUI {
             definedOperand_ = op;
         }
 
-        public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+        public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
             TextView.InitializeFromDocument(document, false);
-            Document = document;
+            Document = document;    
 
             if (Session.LoadPanelState(this, section, document) is DefinitionPanelState savedState) {
 #if DEBUG

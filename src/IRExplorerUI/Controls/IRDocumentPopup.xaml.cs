@@ -13,6 +13,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -198,12 +199,18 @@ namespace IRExplorerUI.Controls {
 
         private async void OpenButton_Click(object sender, RoutedEventArgs e) {
             var args = new OpenSectionEventArgs(TextView.Section, OpenSectionKind.NewTabDockRight);
-            var result = await Session.OpenDocumentSectionAsync(args);
 
-            //? TODO: Mark the previewed elem in the new doc
-            // var similarValueFinder = new SimilarValueFinder(function_);
-            // refElement = similarValueFinder.Find(instr);
-            result.TextView.ScrollToVerticalOffset(TextView.VerticalOffset);
+            //? TODO: BeginInvoke prevents the "Dispatcher suspended" assert that happens
+            // with profiling, when Source panel shows the open dialog.
+            // The dialog code should rather invoke the dispatcher...
+            Dispatcher.BeginInvoke(async () => {
+                var result = await Session.OpenDocumentSectionAsync(args);
+
+                //? TODO: Mark the previewed elem in the new doc
+                // var similarValueFinder = new SimilarValueFinder(function_);
+                // refElement = similarValueFinder.Find(instr);
+                result.TextView.ScrollToVerticalOffset(TextView.VerticalOffset);
+            }, DispatcherPriority.Background);
         }
     }
 

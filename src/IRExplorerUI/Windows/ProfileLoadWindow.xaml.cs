@@ -32,11 +32,11 @@ namespace IRExplorerUI {
 
             // For executables, try to set the executable directory as an optional debug source.
             if (loadedDoc.BinaryFileExists && Utils.IsExecutableFile(loadedDoc.BinaryFilePath)) {
-                SetAdditionalDirectories(loadedDoc.BinaryFilePath).RunSynchronously();
+                SetAdditionalDirectories(loadedDoc.BinaryFilePath);
             }
         }
 
-        private async Task SetAdditionalDirectories(string binaryFilePath) {
+        private void SetAdditionalDirectories(string binaryFilePath) {
             var binaryDir = Utils.TryGetDirectoryName(binaryFilePath);
 
             if (string.IsNullOrEmpty(binaryDir)) {
@@ -210,7 +210,7 @@ namespace IRExplorerUI {
             var binaryFilePath = BinaryAutocompleteBox.Text;
 
             if (File.Exists(binaryFilePath) && Utils.IsExecutableFile(binaryFilePath)) {
-                await SetAdditionalDirectories(binaryFilePath);
+                SetAdditionalDirectories(binaryFilePath);
             }
         }
     }
