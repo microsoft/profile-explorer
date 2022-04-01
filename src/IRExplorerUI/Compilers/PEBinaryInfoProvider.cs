@@ -91,9 +91,10 @@ namespace IRExplorerUI.Compilers {
                 }
 
                 return new BinaryFileDescription() {
-                    FilePath = filePath_,
+                    ImageName = filePath_,
                     Architecture = reader_.PEHeaders.CoffHeader.Machine,
                     FileKind = fileKind,
+                    Checksum = reader_.PEHeaders.PEHeader.CheckSum,
                     TimeStamp = reader_.PEHeaders.CoffHeader.TimeDateStamp,
                     ImageSize = reader_.PEHeaders.PEHeader.SizeOfImage,
                     CodeSize = reader_.PEHeaders.PEHeader.SizeOfCode,

@@ -31,9 +31,12 @@ namespace IRExplorerUI.Compilers {
                 if (initialized_) {
                     return true;
                 }
-                
+
+                symbolPath = @"srv*https://symweb";
+
                 if (NativeMethods.SymInitialize((IntPtr)processId_, symbolPath, false)) {
                     //NativeMethods.SymSetOptions(NativeMethods.SYMOPT_EXACT_SYMBOLS);
+                    //NativeMethods.SymSetOptions(NativeMethods.SYMOPT_DEBUG);
                     initialized_ = true;
                     return true;
                 }
@@ -75,6 +78,12 @@ namespace IRExplorerUI.Compilers {
             return outPath.ToString();
         }
 
+        public static string GetLocalImageFilePath(BinaryFileDescription binaryInfo) {
+            return GetLocalImageFilePath(binaryInfo.ImageName, 
+                                         (int)binaryInfo.TimeStamp, 
+                                         (int)binaryInfo.ImageSize);
+        }
+
         public static string GetLocalImageFilePath(string imageFilename, int imageTimestamp, int imageSize) {
             const int MAX_PATH = 4096;
             StringBuilder outPath = new StringBuilder(MAX_PATH);
@@ -83,7 +92,7 @@ namespace IRExplorerUI.Compilers {
 
             try {
                 if (!NativeMethods.SymFindFileInPath((IntPtr)processId_, null, imageFilename,
-                    buffer, imageSize, 0, 2, outPath, IntPtr.Zero, IntPtr.Zero)) {
+                    buffer, imageSize, 0, 4, outPath, IntPtr.Zero, IntPtr.Zero)) {
                     return null;
                 }
             }
