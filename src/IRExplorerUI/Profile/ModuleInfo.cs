@@ -19,13 +19,14 @@ namespace IRExplorerUI.Profile {
         //? TODO: Needed only for inlinee samples
         public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
         public LoadedDocument ModuleDocument;
-        private ISession session_;
+
+        private BinaryFileDescription binaryInfo_;
         private ProfileDataProviderOptions options_;
+        private ISession session_;
 
         public Dictionary<long, IRTextFunction> addressFuncMap;
         public Dictionary<long, string> externalsFuncMap;
         private Dictionary<string, IRTextFunction> externalFuncNames;
-        private PEBinaryInfoProvider binaryInfo_;
         private IntervalTree<long, DebugFunctionInfo> functionRvaTree_;
 
         public ModuleInfo(ProfileDataProviderOptions options, ISession session) {
@@ -33,25 +34,26 @@ namespace IRExplorerUI.Profile {
             session_ = session;
         }
 
-        public void Initialize(IRTextSummary summary) {
+        public void Initialize(IRTextSummary summary, BinaryFileDescription binaryInfo) {
             Initialized = true;
             Summary = summary;
             ModuleDocument = session_.SessionState.FindLoadedDocument(summary);
         }
 
-        public async Task<bool> Initialize(string imageName, string imagePath) {
+        public async Task<bool> Initialize(BinaryFileDescription binaryInfo) {
             if (Initialized) {
                 return true;
             }
 
-            Trace.WriteLine($"ModuleInfo init {imageName}, path: {imagePath}");
+            var imageName = binaryInfo.ImageName;
+            Trace.WriteLine($"ModuleInfo init {imageName}");
 
             if (!IsAcceptedModule(imageName)) {
                 Trace.TraceInformation($"Ignore not whitelisted image {imageName}");
                 return false;
             }
 
-            var filePath = FindBinaryFilePath(imageName, imagePath);
+            var filePath = FindBinaryFilePath();
 
             if (filePath == null) {
                 Trace.TraceWarning($"Could not find local path for image {imageName}");
@@ -188,9 +190,17 @@ namespace IRExplorerUI.Profile {
         }
 
 
-        public string FindBinaryFilePath(string imageName, string imagePath) {
-            // Search in the provided directories.
-            imageName = imageName.ToLowerInvariant();
+        public string FindBinaryFilePath() {
+            // Use the symbol server to locate the image,
+            // this will also attempt to download it if not found locally.
+            var imagePath = SymSrvHelpers.GetLocalImageFilePath(binaryInfo_);
+
+            if (!string.IsNullOrEmpty(imagePath)) {
+                return imagePath;
+            }
+
+            // Manually search in the provided directories.
+            var imageName = binaryInfo_.ImageName.ToLowerInvariant();
             var imageExtension = Utils.GetFileExtension(imageName);
             var searchPattern = $"*{imageExtension}";
 
@@ -209,35 +219,10 @@ namespace IRExplorerUI.Profile {
                     Trace.TraceError($"Exception searching for binary {imageName} in {path}: {ex.Message}");
                 }
             }
-
-
-            if (File.Exists(imagePath)) {
-                return imagePath;
-            }
-
+            
             return null;
-
-            //? look in path dirs, sym server, Environment.GetEnvironmentVariable("PATH")
-            //? Similar to resolve PDB file
         }
         
-        private IBinaryInfoProvider SetupBinaryInfo(string imagePath) {
-            if (binaryInfo_ != null) {
-                return binaryInfo_;
-            }
-
-            binaryInfo_ = new PEBinaryInfoProvider(imagePath);
-
-            if (binaryInfo_.Initialize()) {
-                return binaryInfo_;
-            }
-            else {
-                binaryInfo_.Dispose();
-                binaryInfo_ = null;
-                return null;
-            }
-        }
-
         public DebugFunctionInfo FindFunctionByRVA(long funcAddress) {
             if (!HasDebugInfo) {
                 return DebugFunctionInfo.Unknown;
@@ -319,7 +304,6 @@ namespace IRExplorerUI.Profile {
         }
 
         public void Dispose() {
-            binaryInfo_?.Dispose();
         }
     }
 }

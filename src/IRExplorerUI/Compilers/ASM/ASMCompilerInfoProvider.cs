@@ -155,6 +155,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
             
         }
+
         public IDisassembler CreateDisassembler(string modulePath) {
             var info = PEBinaryInfoProvider.GetBinaryFileInfo(modulePath);
 

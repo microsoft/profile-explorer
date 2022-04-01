@@ -32,6 +32,12 @@ namespace IRExplorerUI.Profile {
         public List<string> BinaryNameWhitelist { get; set; }
         [ProtoMember(3)]
         public bool MarkInlineFunctions { get; set; }
+        [ProtoMember(4)]
+        public bool IncludeKernelEvents { get; set; }
+        [ProtoMember(5)]
+        public bool IncludeAllProcesses { get; set; }
+        [ProtoMember(6)]
+        public bool IncludePerformanceCounters { get; set; }
 
         public ProfileDataProviderOptions() {
             Reset();
@@ -40,6 +46,7 @@ namespace IRExplorerUI.Profile {
         public override void Reset() {
             InitializeReferenceMembers();
             MarkInlineFunctions = true;
+            IncludePerformanceCounters = true;
         }
         public bool HasBinaryPath(string path) {
             path = Utils.TryGetDirectoryName(path).ToLowerInvariant();

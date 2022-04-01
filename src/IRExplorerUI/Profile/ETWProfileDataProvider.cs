@@ -15,6 +15,7 @@ using System.Threading;
 using Microsoft.Windows.EventTracing.Processes;
 using System.Text;
 using System.Collections;
+using System.IO;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
 
@@ -190,7 +191,7 @@ namespace IRExplorerUI.Profile {
                         };
 
                         imageList.Add(item);
-                        //Trace.WriteLine($"Image {image.FilePath}: {imageList[^1].AddressStart} - {imageList[^1].AddressEnd}");
+                        //Trace.WriteLine($"Image {image.ImageName}: {imageList[^1].AddressStart} - {imageList[^1].AddressEnd}");
                     }
 
                     var imageName = Utils.TryGetFileNameWithoutExtension(proc.ImageName);
@@ -379,6 +380,20 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
             }
         }
 
+        private BinaryFileDescription FromETLImage(IImage image) {
+            return new BinaryFileDescription() {
+                ImageName = image.FileName,
+                Checksum = image.Checksum,
+                TimeStamp = image.Timestamp,
+                ImageSize = image.Size.Bytes,
+                MajorVersion = image.FileVersionNumber.Major,
+                MinorVersion = image.FileVersionNumber.Minor
+            };
+        }
+
+        private BinaryFileDescription FromSummary(IRTextSummary summary) {
+            return new BinaryFileDescription();
+        }
 
         public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName, 
                       ProfileDataProviderOptions options, 
@@ -421,7 +436,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
 
                     // Setup module for main binary.
-                    mainModule_.Initialize(mainSummary_);
+                    mainModule_.Initialize(mainSummary_, FromSummary(mainSummary_));
 
                     // Load the trace.
                     var settings = new TraceProcessorSettings {
@@ -501,6 +516,9 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         }
                         else {
                             if (!imageModuleMap.TryGetValue(queryImage, out var imageModule)) {
+                                // queryImage.Checksum
+
+                                //? TODO: Do search by PE32 Checksum
                                 if (queryImage.FileName.Contains(mainModule_.Summary.ModuleName, StringComparison.OrdinalIgnoreCase)) {
                                     // This is the main image, add it to the map.
                                     imageModule = mainModule_;
@@ -517,7 +535,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 Trace.WriteLine($"Start loading image {queryImage.FileName}");
 
                                 //? TODO: New doc not registerd properly with session, reload crashes
-                                if (await imageModule.Initialize(queryImage.FileName, queryImage.Path)) {
+                                if (await imageModule.Initialize(FromETLImage(queryImage))) {
                                     Trace.WriteLine($"  - Init in {sw.Elapsed}");
                                     sw2.Restart();
 
@@ -560,6 +578,28 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         
                         //proto.Samples.Add(pf);
                         //continue;
+
+                        if(sample.Image?.FileName != null &&
+                            sample.Image.FileName.Contains("ntosk"))
+                        {
+                            var info = PEBinaryInfoProvider.GetBinaryFileInfo(@"D:\work\NodeExecute\ntkrnlmp.exe");
+                            var symInfo = PEBinaryInfoProvider.GetSymbolFileInfo(@"D:\work\NodeExecute\ntkrnlmp.exe");
+
+                            SymSrvHelpers.InitSymSrv(@"srv*https://symweb");
+                            var p = SymSrvHelpers.GetLocalImageFilePath(sample.Image.FileName, (int)sample.Image.Timestamp,
+                                (int)sample.Image.Size.Bytes);
+
+                            // good
+                            var p2 = SymSrvHelpers.GetLocalImageFilePath("ntkrnlmp.exe", (int)info.TimeStamp,
+                                (int)info.ImageSize);
+
+                            var p3 = SymSrvHelpers.GetLocalImageFilePath("ntkrnlmp.exe", (int)sample.Image.Timestamp,
+                                (int)sample.Image.Size.Bytes);
+
+                            var pdb2 = SymSrvHelpers.GetLocalPDBFilePath("ntkrnlmp.pdb", symInfo.Id, symInfo.Age);
+                            
+                            ;
+                        }
 
                         if (sample.IsExecutingDeferredProcedureCall == true ||
                             sample.IsExecutingInterruptServicingRoutine == true) {
@@ -641,7 +681,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                                 //? TODO: Module DLL name needed in debug file to add proper mapping instead of All
 
-                                if (await module.Initialize(imageName, initialImageName)) {
+                                if (await module.Initialize(FromETLImage(frame.Image))) {
 
                                     if (!await module.InitializeDebugInfo()) {
                                         if (isTopFrame) {
