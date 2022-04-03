@@ -517,27 +517,14 @@ namespace IRExplorerUI {
         }
 
         public static void InstallExtension() {
-            try {
-                var path = GetExtensionFilePath();
-                var psi = new ProcessStartInfo(path) {
-                    UseShellExecute = true
-                };
-
-                Process.Start(psi);
-            }
-            catch (Exception ex) {
-                MessageBox.Show($"Failed to open extension file\n{ex.Message}", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (!Utils.OpenExternalFile(GetExtensionFilePath())) {
+                MessageBox.Show($"Failed to open VS extension installer", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
         public static void OpenDocumentation() {
-            try {
-                var psi = new ProcessStartInfo(DocumentationLocation);
-                psi.UseShellExecute = true;
-                Process.Start(psi);
-            }
-            catch (Exception) {
-                MessageBox.Show($"Failed to open documentation page,\nmake sure the VPN connection is active", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+            if (!Utils.OpenExternalFile(DocumentationLocation)) {
+                MessageBox.Show($"Failed to open documentation page", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

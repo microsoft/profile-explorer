@@ -37,7 +37,10 @@
         <CommandBinding Command="local:Command.FocusSearch" Executed="FocusSearchExecuted" />
         <CommandBinding Command="local:Command.CopySectionText" Executed="CopySectionTextExecuted" />
         <CommandBinding Command="local:Command.SaveSectionText" Executed="SaveSectionTextExecuted" />
-        <CommandBinding Command="local:Command.SaveAllSectionText" Executed="SaveAllSectionTextExecuted" />
+        <CommandBinding Command="local:Command.SaveFunctionText" Executed="SaveFunctionTextExecuted" />
+        <CommandBinding Command="local:Command.CopyFunctionText" Executed="CopyFunctionTextExecuted" />
+        <CommandBinding Command="local:Command.OpenDocumentInEditor" Executed="OpenDocumentInEditorExecuted" />
+        <CommandBinding Command="local:Command.OpenDocumentInNewInstance" Executed="OpenDocumentInNewInstanceExecuted" />
         <CommandBinding Command="local:Command.DisplayCallGraph" Executed="DisplayCallGraphExecuted" />
         <CommandBinding Command="local:Command.DisplayPartialCallGraph" Executed="DisplayPartialCallGraphExecuted" />
         <CommandBinding Command="local:Command.CopyFunctionName" Executed="CopyFunctionNameExecuted" />
@@ -207,22 +210,26 @@
                             Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
 
                         <ToggleButton
-                            Margin="-1,0,8,0"
+                            Margin="-1,0,0,0"
                             Padding="2,2,4,2"
                             HorizontalContentAlignment="Stretch"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             Content="Sections"
                             IsChecked="{Binding ShowSections, Mode=TwoWay}"
                             Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+
+                        <Grid Width="8" Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
                         <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
 
                         <Grid
                             x:Name="FunctionFilterGrid"
                             Height="24"
+                            MaxWidth="300"
                             ToolBar.OverflowMode="Never">
                             <TextBox
                                 Name="FunctionFilter"
                                 Height="24"
+                                MaxWidth="300"
                                 Margin="4,0,0,0"
                                 HorizontalAlignment="Stretch"
                                 VerticalAlignment="Center"
@@ -475,7 +482,7 @@
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                             <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick" />
-                            
+
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
                                     <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
@@ -519,20 +526,69 @@
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Copy Demangled Function Name"
                                 ToolTip="Copy the demangled function name to the clipboard (C/C++)" />
-                            <Separator/>
-
-                            <MenuItem
-                                Command="local:Command.SaveAllSectionText"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                CommandTarget="{Binding ElementName=FunctionList}"
-                                Header="Save Function Text"
-                                ToolTip="Save the text (IR) of all sections for the selected function to a file" />
                             <MenuItem
                                 Command="local:Command.ExportFunctionList"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Export Function List as CSV"
                                 ToolTip="Save the list of functions and associated column data as a CSV file" />
+                            <Separator />
+
+                            <MenuItem
+                                Command="local:Command.CopyFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Copy Function Text"
+                                ToolTip="Copies the text (IR) of all sections for the selected function to the clipboard" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Save Function Text"
+                                ToolTip="Save the text (IR) of all sections for the selected function to a file" />
+                            <MenuItem
+                                Command="local:Command.OpenDocumentInNewInstance"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Open File in New IR Explorer Instance"
+                                ToolTip="Opens the IR document in a new instance of IR Explorer" />
+                            <MenuItem
+                                Command="local:Command.OpenDocumentInEditor"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Open File in External Editor"
+                                ToolTip="Opens the IR document in the default external editor" />
+
+                            <Separator Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Copy Diff Function Text"
+                                ToolTip="Copies the text (IR) of all sections for the selected diff function to the clipboard"
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Save Function Text"
+                                ToolTip="Save the text (IR) of all sections for the selected diff function to a file"
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Open Diff File in New IR Explorer Instance"
+                                ToolTip="Opens the diff IR document in a new instance of IR Explorer"
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                            <MenuItem
+                                Command="local:Command.SaveFunctionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=FunctionList}"
+                                Header="Open Diff File in External Editor"
+                                ToolTip="Opens the diff IR document in the default external editor"
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+
                         </ContextMenu>
                     </ListView.ContextMenu>
                 </ListView>
@@ -882,8 +938,6 @@
                                         Source="{StaticResource DockRightIcon}" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <Separator />
-
                             <MenuItem
                                 Command="local:Command.OpenSideBySide"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
@@ -898,6 +952,7 @@
                                         Source="{StaticResource WordWrapIcon}" />
                                 </MenuItem.Icon>
                             </MenuItem>
+                            <Separator />
 
                             <MenuItem
                                 Command="local:Command.DiffSideBySide"
@@ -913,7 +968,6 @@
                                         Source="{StaticResource BookIcon}" />
                                 </MenuItem.Icon>
                             </MenuItem>
-                            <Separator />
 
                             <MenuItem
                                 Command="local:Command.DiffWithOtherDocument"
@@ -933,26 +987,26 @@
                             <Separator />
 
                             <MenuItem
-                                    Command="local:Command.CopySectionText"
-                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                    CommandTarget="{Binding ElementName=SectionList}"
-                                    Header="Copy Section Text"
-                                    ToolTip="Copy the section text (IR) to the clipboard">
+                                Command="local:Command.CopySectionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=SectionList}"
+                                Header="Copy Section Text"
+                                ToolTip="Copy the section text (IR) to the clipboard">
                                 <MenuItem.Icon>
                                     <Image
-                                            Width="16"
-                                            Height="16"
-                                            Source="{StaticResource ClipboardIcon}" />
+                                        Width="16"
+                                        Height="16"
+                                        Source="{StaticResource ClipboardIcon}" />
                                 </MenuItem.Icon>
                             </MenuItem>
 
                             <MenuItem
-                                    Command="local:Command.SaveSectionText"
-                                    CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                    CommandTarget="{Binding ElementName=SectionList}"
-                                    Header="Save Section Text"
-                                    ToolTip="Save the section text (IR) to a file" />
-                            <Separator/>
+                                Command="local:Command.SaveSectionText"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                                CommandTarget="{Binding ElementName=SectionList}"
+                                Header="Save Section Text"
+                                ToolTip="Save the section text (IR) to a file" />
+                            <Separator />
 
                             <MenuItem
                                 Command="local:Command.ToggleTag"
@@ -1269,7 +1323,7 @@
                         <ContextMenu>
 
                             <MenuItem
-                                Command="local:Command.SaveAllSectionText"
+                                Command="local:Command.SaveFunctionText"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=SectionList}"
                                 Header="Profile-based Call Tree"
@@ -1277,7 +1331,7 @@
                                 IsChecked="{Binding UseProfileCallTree, Mode=TwoWay}"
                                 ToolTip="Show the call tree derived from runtime profile information" />
                             <MenuItem
-                                Command="local:Command.SaveAllSectionText"
+                                Command="local:Command.SaveFunctionText"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=SectionList}"
                                 Header="IR Call Tree"
