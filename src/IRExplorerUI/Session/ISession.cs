@@ -32,6 +32,7 @@ namespace IRExplorerUI {
         bool IsSessionStarted { get; }
         bool IsInDiffMode { get; }
         bool IsInTwoDocumentsDiffMode { get; }
+        bool IsInTwoDocumentsMode { get; }
         DiffModeInfo DiffModeInfo { get; }
 
         IRTextSummary MainDocumentSummary { get; }

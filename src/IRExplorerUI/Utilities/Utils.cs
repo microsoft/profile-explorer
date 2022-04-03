@@ -864,6 +864,21 @@ namespace IRExplorerUI {
             return path;
         }
 
+        public static bool OpenExternalFile(string path) {
+            try {
+                var psi = new ProcessStartInfo(path) {
+                    UseShellExecute = true
+                };
+
+                Process.Start(psi);
+                return true;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to open file: {path}, exception {ex.Message}");
+                return false;
+            }
+        }
+
         public static bool ExecuteTool(string path, string args, CancelableTask cancelableTask = null,
                                        Dictionary<string, string> envVariables = null) {
             return ExecuteToolWithOutput(path, args, cancelableTask, envVariables) != null;

@@ -32,6 +32,12 @@ using MessageBox = System.Windows.MessageBox;
 using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI {
+    //? TODo; Commands can be defined in code-behind with this pattern,
+    //? will remove this and a lot of other Xaml code
+    // https://www.c-sharpcorner.com/UploadFile/20c06b/icommand-and-relaycommand-in-wpf/
+    // https://stackoverflow.com/questions/19573380/pass-different-commandparameters-to-same-command-using-relaycommand-wpf
+    // https://stackoverflow.com/questions/1361350/keyboard-shortcuts-in-wpf
+    //? https://stackoverflow.com/questions/13826504/how-do-you-bind-a-command-to-a-menuitem-wpf
     public static class Command {
         public static readonly RoutedUICommand ClearTextbox =
             new RoutedUICommand("Clear text", "ClearTextbox", typeof(SectionPanel));
@@ -63,8 +69,14 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "CopySectionText", typeof(SectionPanel));
         public static readonly RoutedUICommand SaveSectionText =
             new RoutedUICommand("Untitled", "SaveSectionText", typeof(SectionPanel));
-        public static readonly RoutedUICommand SaveAllSectionText =
-            new RoutedUICommand("Untitled", "SaveAllSectionText", typeof(SectionPanel));
+        public static readonly RoutedUICommand SaveFunctionText =
+            new RoutedUICommand("Untitled", "SaveFunctionText", typeof(SectionPanel));
+        public static readonly RoutedUICommand CopyFunctionText =
+            new RoutedUICommand("Untitled", "CopyFunctionText", typeof(SectionPanel));
+        public static readonly RoutedUICommand OpenDocumentInEditor =
+            new RoutedUICommand("Untitled", "OpenDocumentInEditor", typeof(SectionPanel));
+        public static readonly RoutedUICommand OpenDocumentInNewInstance =
+            new RoutedUICommand("Untitled", "OpenDocumentInNewInstance", typeof(SectionPanel));
         public static readonly RoutedUICommand DisplayCallGraph =
            new RoutedUICommand("Untitled", "DisplayCallGraph", typeof(SectionPanel));
         public static readonly RoutedUICommand DisplayPartialCallGraph =
@@ -828,6 +840,10 @@ namespace IRExplorerUI {
                     UpdateFunctionListBindings(false);
                 }
             }
+        }
+
+        public bool IsInTwoDocumentsMode {
+            get => Session != null && Session.IsInTwoDocumentsMode;
         }
 
         private string optionalDataColumnName_;
@@ -2352,7 +2368,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void SaveAllSectionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private async void SaveFunctionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (!(e.Parameter is IRTextFunctionEx functionEx)) {
                 return;
             }
@@ -2365,17 +2381,26 @@ namespace IRExplorerUI {
 
                 try {
                     using var writer = new StreamWriter(path);
-
-                    foreach (var section in functionEx.Function.Sections) {
-                        var text = await Session.GetSectionTextAsync(section);
-                        await writer.WriteLineAsync(text);
-                    }
+                    await CombineFunctionText(functionEx.Function, writer);
                 }
                 catch (Exception ex) {
                     using var centerForm = new DialogCenteringHelper(this);
                     MessageBox.Show($"Failed to save IR text file {path}: {ex.Message}", "IR Explorer",
                         MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
+            }
+        }
+
+        private async Task CombineFunctionText(IRTextFunction function, TextWriter writer) {
+            foreach (var section in function.Sections) {
+                var text = await Session.GetSectionTextAsync(section);
+
+                if (section.OutputBefore != null) {
+                    var beforeText = await Session.GetSectionOutputTextAsync(section.OutputBefore, section);
+                    await writer.WriteLineAsync(beforeText);
+                }
+
+                await writer.WriteLineAsync(text);
             }
         }
 
@@ -2428,7 +2453,7 @@ namespace IRExplorerUI {
         private void ResizeFunctionFilter(double width) {
             //? TODO: Hacky way to resize the function search textbox in the toolbar
             //? when the toolbar gets smaller - couldn't find another way to do this in WPF...
-            double reservedWidth = 60;
+            double reservedWidth = 20;
 
             if(profileControlsVisible_) {
                 reservedWidth += 120;
@@ -2780,6 +2805,32 @@ namespace IRExplorerUI {
                 Session.DisplayFloatingPanel(panel);
                 await panel.DisplaProfileCallTree();
             }
+        }
+
+        private void OpenDocumentInNewInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var loadedDoc = Session.SessionState.FindLoadedDocument(Summary);
+
+            if (!Utils.StartNewApplicationInstance(loadedDoc.FilePath)) {
+                MessageBox.Show($"Failed to start new application instance", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenDocumentInEditorExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var loadedDoc = Session.SessionState.FindLoadedDocument(Summary);
+
+            if (!Utils.OpenExternalFile(loadedDoc.FilePath)) {
+                MessageBox.Show($"Failed to open document", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void CopyFunctionTextExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (!(e.Parameter is IRTextFunctionEx functionEx)) {
+                return;
+            }
+
+            using var writer = new StringWriter();
+            await CombineFunctionText(functionEx.Function, writer);
+            Clipboard.SetText(writer.ToString());
         }
     }
 }

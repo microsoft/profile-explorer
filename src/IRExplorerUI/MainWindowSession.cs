@@ -37,6 +37,7 @@ namespace IRExplorerUI {
         public bool SilentMode { get; set; }
         public bool IsInDiffMode => sessionState_.SectionDiffState.IsEnabled;
         public bool IsInTwoDocumentsDiffMode => sessionState_.IsInTwoDocumentsDiffMode;
+        public bool IsInTwoDocumentsMode => DiffDocumentSummary != null;
         public DiffModeInfo DiffModeInfo => sessionState_.SectionDiffState;
         public IRTextSummary MainDocumentSummary => sessionState_.MainDocument?.Summary;
         public IRTextSummary DiffDocumentSummary => sessionState_.DiffDocument?.Summary;
