@@ -65,6 +65,10 @@ namespace IRExplorerUI.Compilers.UTC {
             return Utils.LocateDebugInfoFile(imagePath, ".pdb");
         }
 
+        public Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
+            return null;
+        }
+
         public IDisassembler CreateDisassembler(string imagePath) {
             return null;
         }

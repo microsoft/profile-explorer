@@ -88,6 +88,7 @@ namespace IRExplorerUI.Compilers.ASM {
             return new BasicDiffOutputFilter();
         }
 
+        //? TODO: Debug/Binary related functs should not be part of CompilerInfoProvider
         public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
             using var info = new PEBinaryInfoProvider(imagePath);
 
@@ -131,6 +132,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         return result;
                     }
 
+                    //? TODO: Shouldn't be needed anymore
                     // Do a simple search otherwise.
                     return Utils.LocateDebugInfoFile(imagePath, ".pdb");
                 }
@@ -156,6 +158,19 @@ namespace IRExplorerUI.Compilers.ASM {
             
         }
 
+        public async Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
+            if (options == null) {
+                // Make sure the binary directory is also included in the symbol search.
+                options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
+
+                if (!string.IsNullOrEmpty(binaryFile.ImagePath)) {
+                    options.InsertSymbolPath(binaryFile.ImagePath);
+                }
+            }
+
+            return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options);
+        }
+
         public IDisassembler CreateDisassembler(string modulePath) {
             var info = PEBinaryInfoProvider.GetBinaryFileInfo(modulePath);
 
@@ -166,6 +181,7 @@ namespace IRExplorerUI.Compilers.ASM {
             // Assume it's a native image.
             return new ExternalDisassembler(App.Settings.GetExternalDisassemblerOptions(BinaryFileKind.Native));
         }
+        //? TODO: << Debug/Binary related functs should not be part of CompilerInfoProvider
 
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {
             return new BasicBlockFoldingStrategy(function);
