@@ -10,6 +10,7 @@ public interface IBinaryInfoProvider {
 
 public class BinaryFileDescription {
     public string ImageName { get; set; }
+    public string ImagePath { get; set; }
     public Machine Architecture { get; set; }
     public BinaryFileKind FileKind { get; set; }
     public long Checksum { get; set; }

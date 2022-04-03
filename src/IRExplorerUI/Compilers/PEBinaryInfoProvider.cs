@@ -2,8 +2,12 @@
 // // Licensed under the MIT License.
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers {
     public class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
@@ -25,6 +29,7 @@ namespace IRExplorerUI.Compilers {
                 return reader_.PEHeaders != null; // Throws BadImageFormatException on invalid file.
             }
             catch (Exception ex) {
+                Trace.WriteLine($"Failed to read PE binary file: {filePath_}");
                 return false;
             }
         }
@@ -47,6 +52,18 @@ namespace IRExplorerUI.Compilers {
             }
 
             return null;
+        }
+
+        public static async Task<string> LocateBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options) {
+            using var logWriter = new StringWriter();
+            var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
+            using var symbolReader = new SymbolReader(logWriter, userSearchPath);
+            var result = await Task.Run(() => symbolReader.FindExecutableFilePath(binaryFile.ImageName, (int)binaryFile.TimeStamp, (int)binaryFile.ImageSize));
+
+            Trace.WriteLine($">> TraceEvent FindExecutableFilePath for {binaryFile.ImageName}");
+            Trace.WriteLine(logWriter.ToString());
+            Trace.WriteLine($"<< TraceEvent");
+            return result;
         }
 
         public SymbolFileDescriptor SymbolFileInfo {
@@ -91,7 +108,8 @@ namespace IRExplorerUI.Compilers {
                 }
 
                 return new BinaryFileDescription() {
-                    ImageName = filePath_,
+                    ImageName = Utils.TryGetFileName(filePath_),
+                    ImagePath = filePath_,
                     Architecture = reader_.PEHeaders.CoffHeader.Machine,
                     FileKind = fileKind,
                     Checksum = reader_.PEHeaders.PEHeader.CheckSum,

@@ -56,6 +56,10 @@ namespace IRExplorerUI.Compilers.LLVM {
             return Utils.LocateDebugInfoFile(imagePath, ".pdb");
         }
 
+        public Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
+            return null;
+        }
+
         public IDisassembler CreateDisassembler(string modulePath) {
             return null;
         }

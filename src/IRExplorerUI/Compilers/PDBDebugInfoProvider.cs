@@ -1,5 +1,6 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
+#define TRACE_EVENT
 
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,9 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using Dia2Lib;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
+using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers {
 
@@ -24,20 +27,25 @@ namespace IRExplorerUI.Compilers {
     public static class SymSrvHelpers {
         private static int processId_ = Process.GetCurrentProcess().Id;
         private static bool initialized_;
+        private static string currentSymbolPath_;
         private static object lockObject_ = new object();
 
         public static bool InitSymSrv(string symbolPath) {
             lock (lockObject_) {
                 if (initialized_) {
-                    return true;
+                    if (currentSymbolPath_ == symbolPath) {
+                        return true;
+                    }
+                    
+                    CleanupSymSrv();
                 }
 
-                symbolPath = @"srv*https://symweb";
+                //symbolPath = @"srv*https://symweb";
 
                 if (NativeMethods.SymInitialize((IntPtr)processId_, symbolPath, false)) {
                     //NativeMethods.SymSetOptions(NativeMethods.SYMOPT_EXACT_SYMBOLS);
-                    //NativeMethods.SymSetOptions(NativeMethods.SYMOPT_DEBUG);
                     initialized_ = true;
+                    currentSymbolPath_ = symbolPath;
                     return true;
                 }
             }
@@ -45,15 +53,13 @@ namespace IRExplorerUI.Compilers {
             return false;
         }
 
-        public static bool CleanupSymSrv() {
-            lock (lockObject_) {
-                if (initialized_) {
-                    initialized_ = false;
-                    return NativeMethods.SymCleanup((IntPtr)processId_);
-                }
-
-                return true;
+        private static bool CleanupSymSrv() {
+            if (initialized_) {
+                initialized_ = false;
+                return NativeMethods.SymCleanup((IntPtr)processId_);
             }
+
+            return true;
         }
 
         /// Private method to locate the local path for a matching PDB. Implicitly handles symbol download if needed.
@@ -118,6 +124,29 @@ namespace IRExplorerUI.Compilers {
                 return null;
             }
 
+            string symbolSearchPath = ConstructSymbolSearchPath(options);
+
+#if TRACE_EVENT
+            using var logWriter = new StringWriter();
+            using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+            var result = await Task.Run(() => symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age));
+
+            Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
+            Trace.WriteLine(logWriter.ToString());
+            Trace.WriteLine($"<< TraceEvent");
+            return result;
+#else
+            if (!SymSrvHelpers.InitSymSrv(symbolSearchPath)) {
+                return null;
+            }
+
+            return await Task.Run(() =>
+                SymSrvHelpers.GetLocalPDBFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age));
+#endif
+        }
+
+        public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
+            //? TODO: Option for var ret = Environment.GetEnvironmentVariable("_NT_SYMBOL_PATH");
             var defaultSearchPath = "";
 
             if (options.UseDefaultSymbolSource) {
@@ -131,20 +160,14 @@ namespace IRExplorerUI.Compilers {
 
             var userSearchPath = "";
 
-            foreach(var path in options.SymbolSearchPaths) {
+            foreach (var path in options.SymbolSearchPaths) {
                 if (!string.IsNullOrEmpty(path)) {
                     userSearchPath += $"{path};";
                 }
             }
 
             var symbolSearchPath = $"{userSearchPath}{defaultSearchPath}";
-
-            if (!SymSrvHelpers.InitSymSrv(symbolSearchPath)) {
-                return null;
-            }
-
-            return await Task.Run(() =>
-                SymSrvHelpers.GetLocalPDBFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age));
+            return symbolSearchPath;
         }
 
         public static async Task<string> LocateDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {

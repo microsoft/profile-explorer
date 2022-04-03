@@ -18,6 +18,7 @@ using System.Collections;
 using System.IO;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
+using Google.Protobuf.WellKnownTypes;
 
 //? TODO
 // - on new image
@@ -381,13 +382,17 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
         }
 
         private BinaryFileDescription FromETLImage(IImage image) {
+            if (image == null) {
+                return new BinaryFileDescription(); // Main module
+            }
+
             return new BinaryFileDescription() {
                 ImageName = image.FileName,
                 Checksum = image.Checksum,
                 TimeStamp = image.Timestamp,
                 ImageSize = image.Size.Bytes,
-                MajorVersion = image.FileVersionNumber.Major,
-                MinorVersion = image.FileVersionNumber.Minor
+                MajorVersion = image.FileVersionNumber?.Major ?? 0,
+                MinorVersion = image.FileVersionNumber?.Minor ?? 0
             };
         }
 
@@ -454,7 +459,10 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     Trace.WriteLine($"Start load at {DateTime.Now}");
                     //Trace.Flush();
 
-                    //trace.Use(CollectPerformanceCounterEvents);
+                    if (options_.IncludePerformanceCounters) {
+                        trace.Use(CollectPerformanceCounterEvents);
+                    }
+
                     trace.Process(new ProcessProgressTracker(progressCallback));
 
                     Trace.WriteLine($"After process load in {sw.Elapsed}");
@@ -479,6 +487,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     var cpuSamplingData = pendingCpuSamplingData.Result;
 
                     // Load symbols.
+                    //? TODO: Not needed anymore with all symbols stuff handled by IRX
                     try {
                         var symbolData = pendingSymbolData.Result;
 
@@ -507,6 +516,32 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     temp_ = new List<ProfileSample>();
 
                     //var proto = new ProtoProfile();
+                    var acceptedImages = new List<string>();
+
+                    bool IsAcceptedModule(string name) {
+                        name = Utils.TryGetFileNameWithoutExtension(name);
+                        name = name.ToLowerInvariant();
+
+                        if (acceptedImages.Contains(name)) {
+                            Trace.WriteLine($"=> Accept image {name}");
+                            return true;
+                        }
+
+                        if (options_.BinaryNameWhitelist.Count == 0) {
+                            return false;
+                        }
+
+                        foreach (var file in options_.BinaryNameWhitelist) {
+                            var fileName = Utils.TryGetFileNameWithoutExtension(file);
+
+                            if (fileName.ToLowerInvariant() == name) {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    }
+
 
                     async Task<ModuleInfo> FindModuleInfo(IImage queryImage) {
                         ModuleInfo module = null;
@@ -519,6 +554,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 // queryImage.Checksum
 
                                 //? TODO: Do search by PE32 Checksum
+                                //? TODO: Just start a new session
                                 if (queryImage.FileName.Contains(mainModule_.Summary.ModuleName, StringComparison.OrdinalIgnoreCase)) {
                                     // This is the main image, add it to the map.
                                     imageModule = mainModule_;
@@ -533,6 +569,11 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 //? - now Initialize uses a whitelist
                                 var sw2 = Stopwatch.StartNew();
                                 Trace.WriteLine($"Start loading image {queryImage.FileName}");
+
+                                if (!IsAcceptedModule(queryImage.FileName)) {
+                                    Trace.TraceInformation($"Ignore not whitelisted image {queryImage.FileName}");
+                                    return null;
+                                }
 
                                 //? TODO: New doc not registerd properly with session, reload crashes
                                 if (await imageModule.Initialize(FromETLImage(queryImage))) {
@@ -556,9 +597,97 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         return module;
                     }
 
+                    Trace.WriteLine($"Start preload symbols {DateTime.Now}");
+                    var imageTimeMap = new Dictionary<IImage, TimeSpan>();
+
+                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                        Total = 0,
+                        Current = 0
+                    });
+
+                    foreach (var sample in samples) {
+                        if (!options.IncludeKernelEvents &&
+                            (sample.IsExecutingDeferredProcedureCall == true ||
+                             sample.IsExecutingInterruptServicingRoutine == true)) {
+                            continue; //? TODO: Is this all kernel?
+                        }
+
+                        if (sample.Process.Id != mainProcessId) {
+                            continue;
+                        }
+
+                        foreach (var frame in sample.Stack.Frames) {
+                            if (frame.Image != null && frame.Image.FileName != null) {
+                                imageTimeMap.AccumulateValue(frame.Image, sample.Weight.TimeSpan);
+                            }
+                        }
+                    }
+
+                    var imageTimeList = imageTimeMap.ToList();
+                    imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
+                    int imageLimit = imageTimeList.Count;
+
+
+
+#if false
+                    // 9/24 sec MT/ST
+                    var binTaskList = new Task<string>[imageLimit];
+                    var pdbTaskList = new Task<string>[imageLimit];
+
+                    for (int i = 0; i < imageLimit; i++) {
+                        var binaryFile = FromETLImage(imageTimeList[i].Item1);
+                        binTaskList[i] = session_.CompilerInfo.FindBinaryFile(binaryFile);
+                    }
+
+                    //Task.WaitAll(binTaskList);
+
+                    for (int i = 0; i < imageLimit; i++) {
+                        var binaryFilePath = await binTaskList[i];
+
+                        if (File.Exists(binaryFilePath)) {
+                            Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
+                            var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
+                            acceptedImages.Add(name.ToLowerInvariant());
+
+                            pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
+                        }
+                    }
+
+                    for (int i = 0; i < imageLimit; i++) {
+                        if (pdbTaskList[i] != null) {
+                            var pdbPath = await pdbTaskList[i];
+                            Trace.WriteLine($"Loaded PDB: {pdbPath}");
+                        }
+                    }
+#else
+                    for (int i = 0; i < imageLimit; i++) {
+                        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                            Total = imageLimit,
+                            Current = i
+                        });
+
+                        var binaryFile = FromETLImage(imageTimeList[i].Item1);
+                        var binaryFilePath = await session_.CompilerInfo.FindBinaryFile(binaryFile);
+
+                        if (File.Exists(binaryFilePath)) {
+                            Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
+                            var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
+                            acceptedImages.Add(name.ToLowerInvariant());
+
+                            var pdbPath = await session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
+                            Trace.WriteLine($"Loaded PDB: {pdbPath}");
+                        }
+                    }
+#endif
+                    Trace.WriteLine($"Done preload symbols in {sw.Elapsed} at {DateTime.Now}");
+                    Trace.Flush();
+                    sw.Restart();
+
                     Trace.WriteLine($"Start process samples {DateTime.Now}");
                     Trace.Flush();
                     sw.Restart();
+
+                    // Trace.WriteLine($"Done process samples in {sw.Elapsed} at {DateTime.Now}");
 
                     int temp = 0;
 
@@ -578,31 +707,10 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         
                         //proto.Samples.Add(pf);
                         //continue;
-
-                        if(sample.Image?.FileName != null &&
-                            sample.Image.FileName.Contains("ntosk"))
-                        {
-                            var info = PEBinaryInfoProvider.GetBinaryFileInfo(@"D:\work\NodeExecute\ntkrnlmp.exe");
-                            var symInfo = PEBinaryInfoProvider.GetSymbolFileInfo(@"D:\work\NodeExecute\ntkrnlmp.exe");
-
-                            SymSrvHelpers.InitSymSrv(@"srv*https://symweb");
-                            var p = SymSrvHelpers.GetLocalImageFilePath(sample.Image.FileName, (int)sample.Image.Timestamp,
-                                (int)sample.Image.Size.Bytes);
-
-                            // good
-                            var p2 = SymSrvHelpers.GetLocalImageFilePath("ntkrnlmp.exe", (int)info.TimeStamp,
-                                (int)info.ImageSize);
-
-                            var p3 = SymSrvHelpers.GetLocalImageFilePath("ntkrnlmp.exe", (int)sample.Image.Timestamp,
-                                (int)sample.Image.Size.Bytes);
-
-                            var pdb2 = SymSrvHelpers.GetLocalPDBFilePath("ntkrnlmp.pdb", symInfo.Id, symInfo.Age);
-                            
-                            ;
-                        }
-
-                        if (sample.IsExecutingDeferredProcedureCall == true ||
-                            sample.IsExecutingInterruptServicingRoutine == true) {
+                        
+                        if(!options.IncludeKernelEvents &&
+                            (sample.IsExecutingDeferredProcedureCall == true ||
+                            sample.IsExecutingInterruptServicingRoutine == true)) {
                             continue; //? TODO: Is this all kernel?
                         }
 

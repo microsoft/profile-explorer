@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using IntervalTree;
 using IRExplorerCore;
@@ -45,15 +44,11 @@ namespace IRExplorerUI.Profile {
                 return true;
             }
 
+            binaryInfo_ = binaryInfo;
             var imageName = binaryInfo.ImageName;
             Trace.WriteLine($"ModuleInfo init {imageName}");
 
-            if (!IsAcceptedModule(imageName)) {
-                Trace.TraceInformation($"Ignore not whitelisted image {imageName}");
-                return false;
-            }
-
-            var filePath = FindBinaryFilePath();
+            var filePath = await FindBinaryFilePath();
 
             if (filePath == null) {
                 Trace.TraceWarning($"Could not find local path for image {imageName}");
@@ -101,31 +96,11 @@ namespace IRExplorerUI.Profile {
             return true;
         }
 
-        private bool IsAcceptedModule(string imageName) {
-            if (options_.BinaryNameWhitelist.Count == 0) {
-                return false;
-            }
-
-            imageName = Utils.TryGetFileNameWithoutExtension(imageName);
-            imageName = imageName.ToLowerInvariant();
-
-            foreach (var file in options_.BinaryNameWhitelist) {
-                var fileName = Utils.TryGetFileNameWithoutExtension(file);
-
-                if (fileName.ToLowerInvariant() == imageName) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         public async Task<bool> InitializeDebugInfo() {
             if (DebugInfo != null) {
                 return HasDebugInfo;
             }
 
-            //? TODO: Check if it works as MT
             DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.BinaryFilePath);
             HasDebugInfo = await Task.Run(() => DebugInfo.LoadDebugInfo(ModuleDocument.DebugInfoFilePath));
 
@@ -140,7 +115,7 @@ namespace IRExplorerUI.Profile {
             return HasDebugInfo;
         }
 
-        private async Task<bool> BuildAddressFunctionMap() {
+        private bool BuildAddressFunctionMap() {
             // An "external" function here is considered any func. that
             // has no associated IR in the module.
             addressFuncMap = new Dictionary<long, IRTextFunction>(Summary.Functions.Count);
@@ -155,7 +130,7 @@ namespace IRExplorerUI.Profile {
                 if (funcInfo.RVA != 0 && funcInfo.Size > 0) {
                     functionRvaTree_.Add(funcInfo.StartRVA, funcInfo.EndRVA, funcInfo);
                 }
-
+                
                 var func = Summary.FindFunction(funcInfo.Name);
 
                 if (func != null) {
@@ -164,8 +139,10 @@ namespace IRExplorerUI.Profile {
                 else {
                     externalsFuncMap[funcInfo.RVA] = funcInfo.Name;
                 }
+
             }
 
+            Trace.Flush();
 
 #if DEBUG
             //Trace.WriteLine($"Address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
@@ -190,12 +167,12 @@ namespace IRExplorerUI.Profile {
         }
 
 
-        public string FindBinaryFilePath() {
+        public async Task<string> FindBinaryFilePath() {
             // Use the symbol server to locate the image,
             // this will also attempt to download it if not found locally.
-            var imagePath = SymSrvHelpers.GetLocalImageFilePath(binaryInfo_);
+            var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_);
 
-            if (!string.IsNullOrEmpty(imagePath)) {
+            if (File.Exists(imagePath)) {
                 return imagePath;
             }
 
