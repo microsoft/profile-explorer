@@ -24,6 +24,7 @@ using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
 using Microsoft.Win32;
 using Microsoft.Windows.EventTracing;
+using static IRExplorerUI.ModuleReportPanel;
 using Color = System.Windows.Media.Color;
 using TimeSpan = System.TimeSpan;
 
@@ -35,15 +36,15 @@ namespace IRExplorerUI {
         private SourceFileMapper sourceFileMapper_ = new SourceFileMapper();
         private IRTextSection section_;
         private IRElement element_;
-        private bool fileLoaded_;
         private bool ignoreNextCaretEvent_;
         private bool disableCaretEvent_;
         private int selectedLine_;
         private string currentFilePath_;
-        private string initialFilePath_;
         private ElementHighlighter profileMarker_;
         private OverlayRenderer overlayRenderer_;
         private bool hasProfileInfo_;
+        private bool sourceFileLoaded_;
+        private IRTextFunction sourceFileFunc_;
         private int hottestSourceLine_;
         private IRExplorerCore.IR.StackFrame currentInlinee_;
 
@@ -123,17 +124,15 @@ namespace IRExplorerUI {
             return null;
         }
 
-        private async Task<bool> LoadSourceFileImpl(string path, int sourceStartLine) {
-            fileLoaded_ = false;
+        private async Task<bool> LoadSourceFileImpl(string path, string originalPath, int sourceStartLine) {
             currentFilePath_ = null;
 
             try {
                 string text = await File.ReadAllTextAsync(path);
                 currentFilePath_ = path;
-                fileLoaded_ = true;
 
                 SetSourceText(text);
-                SetPanelName(path);
+                SetPanelName(originalPath);
                 ScrollToLine(sourceStartLine);
                 return true;
             }
@@ -159,7 +158,8 @@ namespace IRExplorerUI {
             string path = BrowseSourceFile();
 
             if (path != null) {
-                if(!await LoadSourceFile(path)) {
+                var sourceInfo = new DebugFunctionSourceFileInfo(path, path);
+                if(!await LoadSourceFile(sourceInfo, section_.ParentFunction)) {
                     TextView.Text = $"Failed to load source file {path}!";
                 }
             }
@@ -183,6 +183,10 @@ namespace IRExplorerUI {
         }
 
         private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {
+            if (sourceFileLoaded_ && sourceFileFunc_ == function) {
+                return true; // Right file already loaded.
+            }
+
             // Get the associated source file from the debug info if available,
             // since it also includes the start line number.
             var loadedDoc = Session.SessionState.FindLoadedDocument(function);
@@ -192,11 +196,10 @@ namespace IRExplorerUI {
                 using var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
 
                 if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
-                    var info = debugInfo.FindFunctionSourceFilePath(function);
-
-                    if (!string.IsNullOrEmpty(info.FilePath)) {
-                        initialFilePath_ = info.FilePath;
-                        funcLoaded = await LoadSourceFile(info.FilePath, info.Line);
+                    var sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
+                    
+                    if (!string.IsNullOrEmpty(sourceInfo.FilePath)) {
+                        funcLoaded = await LoadSourceFile(sourceInfo, function);
                     }
                 }
             }
@@ -206,8 +209,8 @@ namespace IRExplorerUI {
 
             if (funcProfile != null) {
                 if (!funcLoaded && !string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
-                    initialFilePath_ = funcProfile.SourceFilePath;
-                    funcLoaded = await LoadSourceFile(funcProfile.SourceFilePath);
+                    var sourceInfo = new DebugFunctionSourceFileInfo(funcProfile.SourceFilePath, funcProfile.SourceFilePath, 0);
+                    funcLoaded = await LoadSourceFile(sourceInfo, function);
                 }
 
                 await AnnotateProfilerData(funcProfile);
@@ -215,32 +218,32 @@ namespace IRExplorerUI {
 
             return funcLoaded;
         }
-
-        private async Task<bool> LoadSourceFile(string sourceFilePath, int sourceStartLine = -1) {
+        
+        private async Task<bool> LoadSourceFile(DebugFunctionSourceFileInfo sourceInfo, IRTextFunction function) {
             // Check if the file can be found. If it's from another machine,
             // a mapping is done after the user is asked to pick the new location of the file.
             string mappedSourceFilePath;
 
-            if (File.Exists(sourceFilePath)) {
-                mappedSourceFilePath = sourceFilePath;
+            if (File.Exists(sourceInfo.FilePath)) {
+                mappedSourceFilePath = sourceInfo.FilePath;
             }
             else {
-                mappedSourceFilePath = sourceFileMapper_.Map(sourceFilePath, () => 
-                    BrowseSourceFile(filter: $"Source File|{Path.GetFileName(sourceFilePath)}",
-                                     title: $"Open {sourceFilePath}"));
+                mappedSourceFilePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => 
+                    BrowseSourceFile(filter: $"Source File|{Path.GetFileName(sourceInfo.OriginalFilePath)}",
+                                     title: $"Open {sourceInfo.OriginalFilePath}"));
             }
-
-            if (fileLoaded_ && currentFilePath_ == mappedSourceFilePath) {
-                return true;
-            }
-
+            
             if (mappedSourceFilePath != null &&
-                await LoadSourceFileImpl(mappedSourceFilePath, sourceStartLine)) {
+                await LoadSourceFileImpl(mappedSourceFilePath, sourceInfo.OriginalFilePath, sourceInfo.StartLine)) {
+                sourceFileLoaded_ = true;
+                sourceFileFunc_ = function;
                 return true;
             }
             else {
-                TextView.Text = $"Failed to load profile source file {sourceFilePath}!";
+                TextView.Text = $"Failed to load profile source file {sourceInfo.FilePath}!";
                 SetPanelName("");
+                sourceFileLoaded_ = false;
+                sourceFileFunc_ = null;
                 return false;
             }
         }
@@ -254,7 +257,8 @@ namespace IRExplorerUI {
             ResetSelectedLine();
             ResetProfileMarking();
             section_ = null;
-            fileLoaded_ = false;
+            sourceFileLoaded_ = false;
+            sourceFileFunc_ = null;
             currentInlinee_ = null;
         }
 
@@ -270,7 +274,7 @@ namespace IRExplorerUI {
         }
 
         public override async void OnElementSelected(IRElementEventArgs e) {
-            if (!fileLoaded_ || e.Element == element_) {
+            if (!sourceFileLoaded_ || e.Element == element_) {
                 return;
             }
 
@@ -328,11 +332,7 @@ namespace IRExplorerUI {
             if (inlineeFunc != null) {
                 fileLoaded = await LoadSourceFileForFunction(inlineeFunc);
             }
-
-            if (!fileLoaded && !string.IsNullOrEmpty(inlinee.FilePath)) {
-                fileLoaded = await LoadSourceFile(inlinee.FilePath);
-            }
-
+            
             if (fileLoaded) {
                 ScrollToLine(inlinee.Line);
             }

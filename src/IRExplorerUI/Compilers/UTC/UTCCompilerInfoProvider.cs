@@ -58,7 +58,7 @@ namespace IRExplorerUI.Compilers.UTC {
         }
 
         public IDebugInfoProvider CreateDebugInfoProvider(string imagePath) {
-            return new PDBDebugInfoProvider();
+            return new PDBDebugInfoProvider(App.Settings.SymbolOptions);
         }
 
         public async Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options, string disasmOutputPath) {

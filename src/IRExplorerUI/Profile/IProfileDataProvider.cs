@@ -27,17 +27,26 @@ namespace IRExplorerUI.Profile {
     [ProtoContract(SkipConstructor = true)]
     public class ProfileDataProviderOptions : SettingsBase {
         [ProtoMember(1)]
-        public List<string> BinarySearchPaths { get; set; }
+        public bool BinarySearchPathsEnabled { get; set; }
         [ProtoMember(2)]
-        public List<string> BinaryNameWhitelist { get; set; }
+        public bool BinaryNameWhitelistEnabled { get; set; }
         [ProtoMember(3)]
-        public bool MarkInlineFunctions { get; set; }
+        public bool DownloadBinaryFiles { get; set; }
         [ProtoMember(4)]
-        public bool IncludeKernelEvents { get; set; }
+        public List<string> BinarySearchPaths { get; set; }
         [ProtoMember(5)]
-        public bool IncludeAllProcesses { get; set; }
+        public List<string> BinaryNameWhitelist { get; set; }
         [ProtoMember(6)]
+        public bool MarkInlinedFunctions { get; set; }
+        [ProtoMember(7)]
+        public bool IncludeKernelEvents { get; set; }
+        [ProtoMember(8)]
+        public bool IncludeAllProcesses { get; set; }
+        [ProtoMember(9)]
         public bool IncludePerformanceCounters { get; set; }
+
+        public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
+        public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;
 
         public ProfileDataProviderOptions() {
             Reset();
@@ -45,8 +54,7 @@ namespace IRExplorerUI.Profile {
 
         public override void Reset() {
             InitializeReferenceMembers();
-            MarkInlineFunctions = true;
-            IncludePerformanceCounters = true;
+            DownloadBinaryFiles = true;
         }
         public bool HasBinaryPath(string path) {
             path = Utils.TryGetDirectoryName(path).ToLowerInvariant();

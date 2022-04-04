@@ -14,6 +14,7 @@ using Dia2Lib;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers {
@@ -115,9 +116,15 @@ namespace IRExplorerUI.Compilers {
         private const string DefaultSymbolSource = @"SRV*https://msdl.microsoft.com/download/symbols";
         private const string DefaultSymbolCachePath = @"C:\Symbols";
 
+        private SymbolFileSourceOptions options_;
+        private string debugFilePath_;
         private IDiaDataSource diaSource_;
         private IDiaSession session_;
         private IDiaSymbol globalSymbol_;
+
+        public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
+            options_ = options;
+        }
 
         public static async Task<string> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
             if (symbolFile == null) {
@@ -166,6 +173,7 @@ namespace IRExplorerUI.Compilers {
                 }
             }
 
+            // Give priority to the user locations.
             var symbolSearchPath = $"{userSearchPath}{defaultSearchPath}";
             return symbolSearchPath;
         }
@@ -182,6 +190,7 @@ namespace IRExplorerUI.Compilers {
 
         public bool LoadDebugInfo(string debugFilePath) {
             try {
+                debugFilePath_ = debugFilePath;
                 diaSource_ = new DiaSourceClass();
                 diaSource_.loadDataFromPdb(debugFilePath);
                 diaSource_.openSession(out session_);
@@ -230,25 +239,78 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
-        public SourceLineInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
+        public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
             return FindFunctionSourceFilePath(textFunc.Name);
         }
 
-        public SourceLineInfo FindFunctionSourceFilePath(string functionName) {
+        //? TODO: file selected in source panel should also be checked
+        //? TODO: Integrate with SourceFileMapper
+        public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName) {
             var funcSymbol = FindFunctionSymbol(functionName);
 
-            if (funcSymbol != null) {
-                return FindSourceLineByRVA(funcSymbol.relativeVirtualAddress);
+            if (funcSymbol == null) {
+                return DebugFunctionSourceFileInfo.Unknown;
             }
 
-            return SourceLineInfo.Unknown;
-        }
-        
-        public SourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
-            return FindSourceLineByRVA(rva);
+            // Find the first line in the function.
+            var (lineInfo, sourceFile) = FindSourceLineByRVA(funcSymbol.relativeVirtualAddress);
+
+            if (lineInfo.IsUnknown) {
+                return DebugFunctionSourceFileInfo.Unknown;
+            }
+
+            var originalFilePath = lineInfo.FilePath;
+            var localFilePath = lineInfo.FilePath;
+            bool localFileFound = File.Exists(localFilePath);
+            bool hasChecksumMismatch = false;
+
+            if (localFileFound) {
+                // Check if the PDB file checksum matches the one of the local file.
+                hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
+            }
+
+            // Try to use the source server if no exact local file found.
+            if ((!localFileFound || hasChecksumMismatch) && options_.SourceServerEnabled) {
+                using var logWriter = new StringWriter();
+                using var symbolReader = new SymbolReader(logWriter);
+                using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
+                var sourceLine = pdb.SourceLocationForRva(funcSymbol.relativeVirtualAddress);
+
+                if (sourceLine?.SourceFile != null) {
+                    if (options_.HasAuthorizationToken) {
+                        // SourceLink HTTP personal authentication token.
+                        var token = string.Format("{0}:{1}", "", options_.AuthorizationToken);
+                        var tokenB64 = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(token));
+                        pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
+                    }
+
+                    // Download the source file.
+                    // The checksum should match, but do a check just in case.
+                    var filePath = sourceLine.SourceFile.GetSourceFile();
+
+                    if (File.Exists(filePath)) {
+                        localFilePath = filePath;
+                        hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
+                    }
+                }
+            }
+
+            return new DebugFunctionSourceFileInfo(localFilePath, originalFilePath, lineInfo.Line, hasChecksumMismatch);
         }
 
-        private SourceLineInfo FindSourceLineByRVA(long rva) {
+        private bool SourceFileChecksumMatchesPDB(IDiaSourceFile sourceFile, string filePath) {
+            var hashAlgo = GetSourceFileChecksumHashAlgorithm(sourceFile);
+            var pdbChecksum = GetSourceFileChecksum(sourceFile);
+            var fileChecksum = ComputeSourceFileChecksum(filePath, hashAlgo);
+            return pdbChecksum != null && fileChecksum != null &&
+                   Enumerable.SequenceEqual(pdbChecksum, fileChecksum);
+        }
+
+        public DebugSourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
+            return FindSourceLineByRVA(rva).Item1;
+        }
+
+        private (DebugSourceLineInfo, IDiaSourceFile) FindSourceLineByRVA(long rva) {
             try {
                 session_.findLinesByRVA((uint)rva, 1, out var lineEnum);
 
@@ -260,15 +322,52 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var sourceFile = lineNumber.sourceFile;
-                    return new SourceLineInfo(lineNumber.addressOffset, (int)lineNumber.lineNumber,
-                                             (int)lineNumber.columnNumber, sourceFile.fileName);
+                    return (new DebugSourceLineInfo(lineNumber.addressOffset, (int)lineNumber.lineNumber,
+                                             (int)lineNumber.columnNumber, sourceFile.fileName), sourceFile);
                 }
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to get line for RVA {rva}: {ex.Message}");
             }
 
-            return SourceLineInfo.Unknown;
+            return (DebugSourceLineInfo.Unknown, null);
+        }
+
+        private HashAlgorithm GetSourceFileChecksumHashAlgorithm(IDiaSourceFile sourceFile) {
+            return sourceFile.checksumType switch {
+                1 => System.Security.Cryptography.MD5.Create(),
+                2 => System.Security.Cryptography.SHA1.Create(),
+                3 => System.Security.Cryptography.SHA256.Create(),
+                _ => System.Security.Cryptography.MD5.Create()
+            };
+        }
+
+        private unsafe byte[] GetSourceFileChecksum(IDiaSourceFile sourceFile) {
+            // Call once to get the size of the hash.
+            uint hashSizeInBytes;
+            byte* dummy = null;
+            sourceFile.get_checksum(0, out hashSizeInBytes, out *dummy);
+
+            // Allocate buffer and get the actual hash.
+            var hash = new byte[hashSizeInBytes];
+            uint bytesFetched;
+
+            fixed (byte* bufferPtr = hash) {
+                sourceFile.get_checksum((uint)hash.Length, out bytesFetched, out *bufferPtr);
+            }
+
+            return hash;
+        }
+
+        private byte[] ComputeSourceFileChecksum(string sourceFile, HashAlgorithm hashAlgo) {
+            try {
+                using var stream = File.OpenRead(sourceFile);
+                return hashAlgo.ComputeHash(stream);
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed to compute hash for {sourceFile}: {ex.Message}");
+                return Array.Empty<byte>();
+            }
         }
 
         public DebugFunctionInfo FindFunctionByRVA(long rva) {

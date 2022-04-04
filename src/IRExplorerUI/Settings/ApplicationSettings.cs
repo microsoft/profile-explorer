@@ -114,11 +114,6 @@ namespace IRExplorerUI {
             ExternalDisassemblerOptions ??= new Dictionary<BinaryFileKind, ExternalDisassemblerOptions>();
             ProfileOptions ??= new ProfileDataProviderOptions();
             SymbolOptions ??= new SymbolFileSourceOptions();
-
-            //? REMOVE
-            /// if(string.IsNullOrEmpty(DocumentSettings.SyntaxHighlightingName)) {
-            //DocumentSettings.SyntaxHighlightingName = "UTC IR";
-            //}
         }
 
         public ExternalDisassemblerOptions GetExternalDisassemblerOptions(BinaryFileKind fileKind) {
@@ -224,6 +219,10 @@ namespace IRExplorerUI {
         public void SwitchDefaultCompilerIR(string irName, IRMode irMode) {
             DefaultCompilerIR = irName;
             DefaultIRMode = irMode;
+
+            //? TODO: Hack to get the default IR style picked when the IR changes
+            //? Should remember a last {ir -> ir style name} and restore based on that 
+            DocumentSettings.SyntaxHighlightingName = null;
         }
     }
 }

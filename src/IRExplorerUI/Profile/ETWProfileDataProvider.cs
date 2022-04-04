@@ -385,9 +385,9 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
             if (image == null) {
                 return new BinaryFileDescription(); // Main module
             }
-
+            
             return new BinaryFileDescription() {
-                ImageName = image.FileName,
+                ImageName = image.OriginalFileName,
                 Checksum = image.Checksum,
                 TimeStamp = image.Timestamp,
                 ImageSize = image.Size.Bytes,
@@ -442,6 +442,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                     // Setup module for main binary.
                     mainModule_.Initialize(mainSummary_, FromSummary(mainSummary_));
+                    var mainBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(mainModule_.ModuleDocument.BinaryFilePath);
 
                     // Load the trace.
                     var settings = new TraceProcessorSettings {
@@ -476,10 +477,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     var procCache = new ProcessInfoCache(allProcs, allThreads);
                     var mainProcessId = procCache.FindProcess(imageName);
 
-
-                    //Trace.Flush();
-
-
+                    
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
                         return false;
                     }
@@ -527,7 +525,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             return true;
                         }
 
-                        if (options_.BinaryNameWhitelist.Count == 0) {
+                        if (!options_.HasBinaryNameWhitelist) {
                             return false;
                         }
 
@@ -553,16 +551,22 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             if (!imageModuleMap.TryGetValue(queryImage, out var imageModule)) {
                                 // queryImage.Checksum
 
-                                //? TODO: Do search by PE32 Checksum
                                 //? TODO: Just start a new session
-                                if (queryImage.FileName.Contains(mainModule_.Summary.ModuleName, StringComparison.OrdinalIgnoreCase)) {
+#if true
+                                if (queryImage.FileName.Contains("ntos")) {
+                                    ;
+                                }
+                                imageModule = new ModuleInfo(options_, session_);
+#else
+                                if ((mainBinaryInfo != null && mainBinaryInfo.Checksum == queryImage.Checksum) ||
+                                    queryImage.FileName.Contains(mainModule_.Summary.ModuleName, StringComparison.OrdinalIgnoreCase)) {
                                     // This is the main image, add it to the map.
                                     imageModule = mainModule_;
                                 }
                                 else {
                                     imageModule = new ModuleInfo(options_, session_);
                                 }
-
+#endif
                                 imageModuleMap[queryImage] = imageModule;
 
                                 //? Needs some delay-load, can't disasm every dll for no reason
@@ -612,7 +616,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             continue; //? TODO: Is this all kernel?
                         }
 
-                        if (sample.Process.Id != mainProcessId) {
+                        if (sample.Process.Id != mainProcessId || sample.Stack == null) {
                             continue;
                         }
 
@@ -627,14 +631,18 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
                     int imageLimit = imageTimeList.Count;
 
-
-
-#if false
+#if true
                     // 9/24 sec MT/ST
                     var binTaskList = new Task<string>[imageLimit];
                     var pdbTaskList = new Task<string>[imageLimit];
 
                     for (int i = 0; i < imageLimit; i++) {
+                        if (i > 9) //? TODO: Hacky limit to avoid slowdown
+                            break;
+
+                        var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
+                        acceptedImages.Add(name.ToLowerInvariant());
+
                         var binaryFile = FromETLImage(imageTimeList[i].Item1);
                         binTaskList[i] = session_.CompilerInfo.FindBinaryFile(binaryFile);
                     }
@@ -642,6 +650,9 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     //Task.WaitAll(binTaskList);
 
                     for (int i = 0; i < imageLimit; i++) {
+                        if (i > 9)
+                            break;
+
                         var binaryFilePath = await binTaskList[i];
 
                         if (File.Exists(binaryFilePath)) {
@@ -666,13 +677,14 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             Current = i
                         });
 
+                        var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
+                        acceptedImages.Add(name.ToLowerInvariant());
+
                         var binaryFile = FromETLImage(imageTimeList[i].Item1);
                         var binaryFilePath = await session_.CompilerInfo.FindBinaryFile(binaryFile);
 
                         if (File.Exists(binaryFilePath)) {
                             Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
-                            var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
-                            acceptedImages.Add(name.ToLowerInvariant());
 
                             var pdbPath = await session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
                             Trace.WriteLine($"Loaded PDB: {pdbPath}");
@@ -987,11 +999,12 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 profile.ExclusiveWeight += sampleWeight;
                             }
                             
+                            //? TODO: Expensive, do as post-processing
                             // Try to map the sample to all the inlined functions.
-                            //if (options_.MarkInlineFunctions && module.HasDebugInfo &&
-                            //    textFunction.Sections.Count > 0) {
-                            //    ProcessInlineeSample(sampleWeight, offset, textFunction, module);
-                            //}
+                            if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
+                                textFunction.Sections.Count > 0) {
+                                ProcessInlineeSample(sampleWeight, offset, textFunction, module);
+                            }
 
                             isTopFrame = false;
                             prevStackFunc = textFunction;

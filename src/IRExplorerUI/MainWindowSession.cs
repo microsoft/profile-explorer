@@ -325,6 +325,12 @@ namespace IRExplorerUI {
             return true;
         }
 
+        public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
+            await SwitchCompilerTarget(compilerInfo);
+            StartSession(sessionName, sessionKind);
+            return true;
+        }
+
         private void StartSession(string filePath, SessionKind sessionKind) {
             sessionState_ = new SessionStateManager(filePath, sessionKind);
             sessionState_.DocumentChanged += DocumentState_DocumentChangedEvent;
