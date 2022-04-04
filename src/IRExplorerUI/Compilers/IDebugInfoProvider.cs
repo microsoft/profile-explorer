@@ -14,9 +14,9 @@ namespace IRExplorerUI.Compilers {
         IEnumerable<DebugFunctionInfo> EnumerateFunctions();
         DebugFunctionInfo FindFunction(string functionName);
         DebugFunctionInfo FindFunctionByRVA(long rva);
-        SourceLineInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
-        SourceLineInfo FindFunctionSourceFilePath(string functionName);
-        SourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva);
+        DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
+        DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName);
+        DebugSourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva);
     }
 
     [ProtoContract(SkipConstructor = true)]
@@ -25,12 +25,21 @@ namespace IRExplorerUI.Compilers {
         public bool UseDefaultSymbolSource { get; set; }
         [ProtoMember(2)]
         public bool UseSymbolCache { get; set; }
-        [ProtoMember(3)]
-        public string SymbolCachePath { get; set; }
+        [ProtoMember(3)] 
+        public bool SymbolSearchPathsEnabled { get; set; }
         [ProtoMember(4)]
+        public string SymbolCachePath { get; set; }
+        [ProtoMember(5)]
         public List<string> SymbolSearchPaths { get; set; }
+        [ProtoMember(6)]
+        public bool SourceServerEnabled { get; set; }
+        [ProtoMember(7)]
+        public bool AuthorizationTokenEnabled { get; set; }
+        [ProtoMember(8)]
+        public string AuthorizationToken { get; set; }
 
         public bool HasSymbolCachePath => !string.IsNullOrEmpty(SymbolCachePath);
+        public bool HasAuthorizationToken => AuthorizationTokenEnabled && !string.IsNullOrEmpty(AuthorizationToken);
 
         public bool HasSymbolPath(string path) {
             path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
@@ -38,7 +47,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public void InsertSymbolPath(string path) {
-            if (HasSymbolPath(path)) {
+            if(string.IsNullOrEmpty(path) || HasSymbolPath(path)) {
                 return;
             }
 
@@ -72,6 +81,7 @@ namespace IRExplorerUI.Compilers {
         }
     }
 
+    //? TODO: Convert to record, similar for other such classes
     public class SymbolFileDescriptor {
         public string FileName { get; set; }
         public Guid Id { get; set; }

@@ -8,8 +8,8 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
     public string Name { get; set; }
     public long RVA { get; set; }
     public long Size { get; set; }
-    public SourceLineInfo StartSourceLine { get; set; }
-    public List<SourceLineInfo> SourceLines { get; set; }
+    public DebugSourceLineInfo StartDebugSourceLine { get; set; }
+    public List<DebugSourceLineInfo> SourceLines { get; set; }
     public int Id { get; set; }
     public string ModuleName { get; set; }
 
@@ -25,18 +25,18 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
         Name = name;
         RVA = rva;
         Size = size;
-        StartSourceLine = SourceLineInfo.Unknown;
+        StartDebugSourceLine = DebugSourceLineInfo.Unknown;
         SourceLines = null;
         Id = id;
     }
     
-    public SourceLineInfo FindNearestLine(long offset) {
+    public DebugSourceLineInfo FindNearestLine(long offset) {
         if (!HasSourceLines) {
-            return SourceLineInfo.Unknown;
+            return DebugSourceLineInfo.Unknown;
         }
 
         if (offset < SourceLines[0].Offset) {
-            return SourceLineInfo.Unknown;
+            return DebugSourceLineInfo.Unknown;
         }
 
         // Find line mapped to same offset or nearest smaller offset.
@@ -76,29 +76,61 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
     }
 }
 
-public struct SourceLineInfo : IEquatable<SourceLineInfo> {
-    public long Offset { get; set; }
+public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileInfo> {
+    public DebugFunctionSourceFileInfo(string filePath, string originalFilePath, int startLine = 0, bool hasChecksumMismatch = false) {
+        FilePath = filePath;
+        OriginalFilePath = originalFilePath;
+        StartLine = startLine;
+        HasChecksumMismatch = hasChecksumMismatch;
+    }
+
+    public string FilePath { get; set; }
+    public string OriginalFilePath { get; set; }
+    public int StartLine { get; set; }
+    public bool HasChecksumMismatch { get; set; }
+    public static DebugFunctionSourceFileInfo Unknown => new DebugFunctionSourceFileInfo(null, null, -1);
+
+    public bool IsUnknown => FilePath == null;
+
+    public bool Equals(DebugFunctionSourceFileInfo other) {
+        return FilePath == other.FilePath &&
+               OriginalFilePath == other.OriginalFilePath &&
+               StartLine == other.StartLine &&
+               HasChecksumMismatch == other.HasChecksumMismatch;
+    }
+
+    public override bool Equals(object obj) {
+        return obj is DebugFunctionSourceFileInfo other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(FilePath, OriginalFilePath, StartLine, HasChecksumMismatch);
+    }
+}
+
+public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
+    public long Offset { get; set; } // Offset in bytes relative to function start.
     public int Line { get; set; }
     public int Column { get; set; }
     public string FilePath { get; set; }
 
-    public static SourceLineInfo Unknown = new SourceLineInfo(-1, -1);
+    public static DebugSourceLineInfo Unknown = new DebugSourceLineInfo(-1, -1);
     public bool IsUnknown => Line == -1;
 
-    public SourceLineInfo(long offset, int line, int column = 0, string filePath = null) {
+    public DebugSourceLineInfo(long offset, int line, int column = 0, string filePath = null) {
         Offset = offset;
         Line = line;
         Column = column;
         FilePath = filePath;
     }
 
-    public bool Equals(SourceLineInfo other) {
+    public bool Equals(DebugSourceLineInfo other) {
         return Offset == other.Offset && Line == other.Line && 
                Column == other.Column && FilePath == other.FilePath;
     }
 
     public override bool Equals(object obj) {
-        return obj is SourceLineInfo other && Equals(other);
+        return obj is DebugSourceLineInfo other && Equals(other);
     }
 
     public override int GetHashCode() {

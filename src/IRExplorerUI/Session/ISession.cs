@@ -39,6 +39,8 @@ namespace IRExplorerUI {
         IRTextSummary DiffDocumentSummary { get; }
         ProfileData ProfileData { get; }
 
+        Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
+
         IRTextSummary GetDocumentSummary(IRTextSection section);
         void AddOtherSummary(IRTextSummary summary);
         IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId);

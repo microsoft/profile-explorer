@@ -99,7 +99,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
             switch (info.BinaryFileInfo.FileKind) {
                 case BinaryFileKind.Native: {
-                    return new PDBDebugInfoProvider();
+                    return new PDBDebugInfoProvider(App.Settings.SymbolOptions);
                 }
                 case BinaryFileKind.DotNetR2R:
                 case BinaryFileKind.DotNet: {
@@ -162,10 +162,7 @@ namespace IRExplorerUI.Compilers.ASM {
             if (options == null) {
                 // Make sure the binary directory is also included in the symbol search.
                 options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
-
-                if (!string.IsNullOrEmpty(binaryFile.ImagePath)) {
-                    options.InsertSymbolPath(binaryFile.ImagePath);
-                }
+                options.InsertSymbolPath(binaryFile.ImagePath);
             }
 
             return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options);

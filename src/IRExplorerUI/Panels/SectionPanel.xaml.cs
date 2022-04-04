@@ -2832,5 +2832,12 @@ namespace IRExplorerUI {
             await CombineFunctionText(functionEx.Function, writer);
             Clipboard.SetText(writer.ToString());
         }
+
+        public void RemoveSummary(IRTextSummary summary) {
+            if (otherSummaries_.Remove(summary_)) {
+                sectionExtensionComputed_ = false;
+                UpdateFunctionListBindings();
+            }
+        }
     }
 }

@@ -170,13 +170,16 @@ namespace IRExplorerUI.Profile {
         public async Task<string> FindBinaryFilePath() {
             // Use the symbol server to locate the image,
             // this will also attempt to download it if not found locally.
-            var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_);
+            if (options_.DownloadBinaryFiles) {
+                var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_);
 
-            if (File.Exists(imagePath)) {
-                return imagePath;
+                if (File.Exists(imagePath)) {
+                    return imagePath;
+                }
             }
 
             // Manually search in the provided directories.
+            // Give priority to the user directories.
             var imageName = binaryInfo_.ImageName.ToLowerInvariant();
             var imageExtension = Utils.GetFileExtension(imageName);
             var searchPattern = $"*{imageExtension}";
@@ -185,8 +188,8 @@ namespace IRExplorerUI.Profile {
                 try {
                     var searchPath = Utils.TryGetDirectoryName(path);
 
-                    foreach (var file in Directory.EnumerateFiles(searchPath, searchPattern,
-                        SearchOption.TopDirectoryOnly)) {
+                    foreach (var file in Directory.EnumerateFiles(searchPath, searchPattern, SearchOption.TopDirectoryOnly)) {
+                        //? TODO: Should also do a checksum match
                         if (Path.GetFileName(file).ToLowerInvariant() == imageName) {
                             return file;
                         }
@@ -196,7 +199,12 @@ namespace IRExplorerUI.Profile {
                     Trace.TraceError($"Exception searching for binary {imageName} in {path}: {ex.Message}");
                 }
             }
-            
+
+            //? TODO: Should also do a checksum match
+            if (File.Exists(binaryInfo_.ImagePath)) {
+                return binaryInfo_.ImagePath;
+            }
+
             return null;
         }
         
@@ -221,9 +229,9 @@ namespace IRExplorerUI.Profile {
             return DebugFunctionInfo.Unknown;
         }
 
-        public SourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
+        public DebugSourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
             if (!HasDebugInfo) {
-                return SourceLineInfo.Unknown;
+                return DebugSourceLineInfo.Unknown;
             }
 
             return DebugInfo.FindSourceLineByRVA(funcInfo, rva);

@@ -28,33 +28,8 @@ namespace IRExplorerUI {
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
-            var loadedDoc = Session.SessionState.FindLoadedDocument(Session.MainDocumentSummary);
-
-            // For executables, try to set the executable directory as an optional debug source.
-            if (loadedDoc.BinaryFileExists && Utils.IsExecutableFile(loadedDoc.BinaryFilePath)) {
-                SetAdditionalDirectories(loadedDoc.BinaryFilePath);
-            }
         }
-
-        private void SetAdditionalDirectories(string binaryFilePath) {
-            var binaryDir = Utils.TryGetDirectoryName(binaryFilePath);
-
-            if (string.IsNullOrEmpty(binaryDir)) {
-                return;
-            }
-
-            if (!Options.HasBinaryPath(binaryFilePath)) {
-                Options.BinarySearchPaths.Insert(0, binaryDir);
-                OnPropertyChange(nameof(Options));
-            }
-
-            //? TODO: Use InsertSymbolPath
-            if (!SymbolOptions.HasSymbolPath(binaryDir)) {
-                SymbolOptions.SymbolSearchPaths.Insert(0, binaryDir);
-                OnPropertyChange(nameof(SymbolOptions));
-            }
-        }
-
+        
         public ISession Session { get; set; }
         public string ProfileFilePath { get; set; }
         public string BinaryFilePath { get; set; }
@@ -158,6 +133,7 @@ namespace IRExplorerUI {
                 await loadTask_.WaitForTaskAsync();
             }
 
+            App.SaveApplicationSettings();
             DialogResult = false;
             Close();
         }
@@ -201,17 +177,13 @@ namespace IRExplorerUI {
                 var pathPair = menuItem.Tag as Tuple<string, string, string>;
                 ProfileAutocompleteBox.Text = pathPair.Item1;
                 BinaryAutocompleteBox.Text = pathPair.Item2;
-                SymbolAutocompleteBox.Text = pathPair.Item3;
+                SymbolAutocompleteBox.Text = pathPair.Item3; //? TODO: Unused
                 await OpenFiles();
             }
         }
 
-        private async void BinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
-            var binaryFilePath = BinaryAutocompleteBox.Text;
-
-            if (File.Exists(binaryFilePath) && Utils.IsExecutableFile(binaryFilePath)) {
-                SetAdditionalDirectories(binaryFilePath);
-            }
+        private void BinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
+            
         }
     }
 }
