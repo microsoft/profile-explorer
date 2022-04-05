@@ -619,7 +619,7 @@
                                             Source="{StaticResource GotoDefinitionIconSkipIcon}" />
                                     </MenuItem.Icon>
                                 </MenuItem>
-                                <Separator/>
+                                <Separator />
 
                                 <MenuItem
                                     Command="local:DocumentHostCommand.SearchSymbol"
@@ -869,8 +869,7 @@
                     VirtualizingPanel.ScrollUnit="Pixel"
                     VirtualizingStackPanel.CacheLength="0,0"
                     VirtualizingStackPanel.IsVirtualizing="True"
-                    VirtualizingStackPanel.VirtualizationMode="Recycling"
-                    Visibility="{Binding ShowColumns, Converter={StaticResource BoolToVisibility}}">
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
                     <ListView.View>
                         <GridView>
                             <GridView.ColumnHeaderContainerStyle>

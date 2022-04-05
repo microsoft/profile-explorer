@@ -16,7 +16,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
     public long StartRVA => RVA;
     public long EndRVA => RVA + Size - 1;
 
-    public static DebugFunctionInfo Unknown = new DebugFunctionInfo(null, 0, 0);
+    public static DebugFunctionInfo Unknown = new(null, 0, 0);
     public bool IsUnknown => Name == null;
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
     public bool HasModuleName => !string.IsNullOrEmpty(ModuleName);
@@ -59,9 +59,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
 
         return SourceLines[high];
     }
-
-
-
+    
     public override bool Equals(object obj) {
         return obj is DebugFunctionInfo info && Equals(info);
     }
@@ -88,7 +86,7 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
     public string OriginalFilePath { get; set; }
     public int StartLine { get; set; }
     public bool HasChecksumMismatch { get; set; }
-    public static DebugFunctionSourceFileInfo Unknown => new DebugFunctionSourceFileInfo(null, null, -1);
+    public static DebugFunctionSourceFileInfo Unknown => new(null, null, -1);
 
     public bool IsUnknown => FilePath == null;
 

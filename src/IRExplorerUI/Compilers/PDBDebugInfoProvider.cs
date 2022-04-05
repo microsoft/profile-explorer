@@ -13,8 +13,10 @@ using IRExplorerCore.IR.Tags;
 using Dia2Lib;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Threading;
 using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers {
@@ -243,6 +245,12 @@ namespace IRExplorerUI.Compilers {
             return FindFunctionSourceFilePath(textFunc.Name);
         }
 
+        public DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva) {
+            // Find the first line in the function.
+            var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(rva);
+            return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, (uint)rva);
+        }
+
         //? TODO: file selected in source panel should also be checked
         //? TODO: Integrate with SourceFileMapper
         public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName) {
@@ -253,8 +261,12 @@ namespace IRExplorerUI.Compilers {
             }
 
             // Find the first line in the function.
-            var (lineInfo, sourceFile) = FindSourceLineByRVA(funcSymbol.relativeVirtualAddress);
+            var (lineInfo, sourceFile) = FindSourceLineByRVAImpl(funcSymbol.relativeVirtualAddress);
+            return FindFunctionSourceFilePathImpl(lineInfo, sourceFile, funcSymbol.relativeVirtualAddress);
+        }
 
+        private DebugFunctionSourceFileInfo FindFunctionSourceFilePathImpl(DebugSourceLineInfo lineInfo,
+            IDiaSourceFile sourceFile, uint rva) {
             if (lineInfo.IsUnknown) {
                 return DebugFunctionSourceFileInfo.Unknown;
             }
@@ -274,7 +286,9 @@ namespace IRExplorerUI.Compilers {
                 using var logWriter = new StringWriter();
                 using var symbolReader = new SymbolReader(logWriter);
                 using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
-                var sourceLine = pdb.SourceLocationForRva(funcSymbol.relativeVirtualAddress);
+                var sourceLine = pdb.SourceLocationForRva(rva);
+
+                Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
 
                 if (sourceLine?.SourceFile != null) {
                     if (options_.HasAuthorizationToken) {
@@ -289,6 +303,7 @@ namespace IRExplorerUI.Compilers {
                     var filePath = sourceLine.SourceFile.GetSourceFile();
 
                     if (File.Exists(filePath)) {
+                        Trace.WriteLine($" - downloded {filePath}");
                         localFilePath = filePath;
                         hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
                     }
@@ -306,11 +321,11 @@ namespace IRExplorerUI.Compilers {
                    Enumerable.SequenceEqual(pdbChecksum, fileChecksum);
         }
 
-        public DebugSourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
-            return FindSourceLineByRVA(rva).Item1;
+        public DebugSourceLineInfo FindSourceLineByRVA(long rva) {
+            return FindSourceLineByRVAImpl(rva).Item1;
         }
 
-        private (DebugSourceLineInfo, IDiaSourceFile) FindSourceLineByRVA(long rva) {
+        private (DebugSourceLineInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
             try {
                 session_.findLinesByRVA((uint)rva, 1, out var lineEnum);
 
@@ -458,7 +473,7 @@ namespace IRExplorerUI.Compilers {
 
         public IEnumerable<DebugFunctionInfo> EnumerateFunctions() {
             IDiaEnumSymbols symbolEnum;
-
+            
             try {
                 globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
             }
@@ -485,10 +500,20 @@ namespace IRExplorerUI.Compilers {
         }
 
         private IDiaSymbol FindFunctionSymbol(string functionName) {
+            var demangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.Default);
+            var queryDemangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.OnlyName);
+            var result = FindFunctionSymbolImpl(SymTagEnum.SymTagFunction, functionName, demangledName, queryDemangledName);
+
+            if (result != null) {
+                return result;
+            }
+
+            return FindFunctionSymbolImpl(SymTagEnum.SymTagPublicSymbol, functionName, demangledName, queryDemangledName);
+        }
+
+        private IDiaSymbol FindFunctionSymbolImpl(SymTagEnum symbolType, string functionName, string demangledName, string queryDemangledName) {
             try {
-                var demangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.Default);
-                var queryDemangledName = DemangleFunctionName(functionName, FunctionNameDemanglingOptions.OnlyName);
-                globalSymbol_.findChildren(SymTagEnum.SymTagFunction, queryDemangledName, 0, out var symbolEnum);
+                globalSymbol_.findChildren(symbolType, queryDemangledName, 0, out var symbolEnum);
                 IDiaSymbol candidateSymbol = null;
 
                 while (true) {

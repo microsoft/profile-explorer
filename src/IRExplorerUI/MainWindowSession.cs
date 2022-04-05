@@ -199,7 +199,6 @@ namespace IRExplorerUI {
 
                 if (state != null) {
                     var loadedDoc = await LoadSessionDocument(state);
-                    UpdateUIAfterLoadDocument();
                     return loadedDoc;
                 }
             }
@@ -207,8 +206,10 @@ namespace IRExplorerUI {
                 await EndSession();
                 Trace.TraceError($"Failed to load session, exception: {ex}");
             }
+            finally {
+                UpdateUIAfterLoadDocument();
+            }
 
-            UpdateUIAfterLoadDocument();
             return null;
         }
 
@@ -403,9 +404,7 @@ namespace IRExplorerUI {
                 using var sessionLoading = await BeginSessionStateChange();
                 UpdateUIBeforeLoadDocument(filePath);
                 var result = await Task.Run(() => LoadDocument(filePath, modulePath, Guid.NewGuid(),
-                                                               UpdateIRDocumentLoadProgress));
-                UpdateUIAfterLoadDocument();
-
+                    UpdateIRDocumentLoadProgress));
                 if (result != null) {
                     await SetupOpenedIRDocument(SessionKind.Default, result);
                     return result;
@@ -414,6 +413,9 @@ namespace IRExplorerUI {
             catch (Exception ex) {
                 await EndSession();
                 Trace.TraceError($"Failed to load document: {ex}");
+            }
+            finally {
+                UpdateUIAfterLoadDocument();
             }
 
             // Failed to start a session.
@@ -489,8 +491,9 @@ namespace IRExplorerUI {
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.MainDocument = result;
 
-            await SetupPanels();
+            UpdateUIAfterLoadDocument();
             StartAutoSaveTimer();
+            await SetupPanels();
         }
 
         private async Task<bool> OpenDiffIRDocument(string filePath) {

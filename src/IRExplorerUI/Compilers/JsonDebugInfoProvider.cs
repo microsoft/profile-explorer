@@ -74,17 +74,34 @@ namespace IRExplorerUI.Compilers {
         }
 
         public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName) {
-            if (functionMap_.TryGetValue(functionName, out var info)) {
-                return new DebugFunctionSourceFileInfo(info.StartDebugSourceLine.FilePath,
-                                                       info.StartDebugSourceLine.FilePath,
-                                                       info.StartDebugSourceLine.Line);
+            if (functionMap_.TryGetValue(functionName, out var funcInfo)) {
+                return GetSourceFileInfo(funcInfo);
             }
 
             return DebugFunctionSourceFileInfo.Unknown;
         }
 
-        public DebugSourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
-            if (funcInfo.HasSourceLines) {
+        private static DebugFunctionSourceFileInfo GetSourceFileInfo(DebugFunctionInfo info)
+        {
+            return new DebugFunctionSourceFileInfo(info.StartDebugSourceLine.FilePath,
+                info.StartDebugSourceLine.FilePath,
+                info.StartDebugSourceLine.Line);
+        }
+
+        public DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva) {
+            var funcInfo = FindFunctionByRVA(rva);
+
+            if (!funcInfo.IsUnknown && funcInfo.HasSourceLines) {
+                return GetSourceFileInfo(funcInfo);
+            }
+
+            return DebugFunctionSourceFileInfo.Unknown;
+        }
+
+        public DebugSourceLineInfo FindSourceLineByRVA(long rva) {
+            var funcInfo = FindFunctionByRVA(rva);
+
+            if (!funcInfo.IsUnknown && funcInfo.HasSourceLines) {
                 long offset = rva - funcInfo.StartRVA;
                 return funcInfo.FindNearestLine(offset);
             }
