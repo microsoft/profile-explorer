@@ -738,11 +738,17 @@ namespace IRExplorerUI {
                     return "";
                 }
 
-                if (Directory.Exists(path)) {
-                    return path;
+                if (!Directory.Exists(path)) {
+                    path = Path.GetDirectoryName(path);
                 }
 
-                return Path.GetDirectoryName(path);
+                // Remove \ at the end.
+                if (path.EndsWith(Path.DirectorySeparatorChar) ||
+                    path.EndsWith(Path.AltDirectorySeparatorChar)) {
+                    path = path.Substring(0, path.Length - 1);
+                }
+
+                return path;
             }
             catch (Exception ex) {
                 return "";

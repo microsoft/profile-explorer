@@ -1104,7 +1104,6 @@ namespace IRExplorerUI {
         public void AddOtherSummary(IRTextSummary summary) {
             otherSummaries_.Add(summary);
             sectionExtensionComputed_ = false;
-            UpdateFunctionListBindings();
         }
 
         public bool HasSummary(IRTextSummary summary) {
@@ -1252,6 +1251,12 @@ namespace IRExplorerUI {
             }
 
             UseProfileCallTree = true;
+        }
+
+        public async Task Update() {
+            if (summary_ != null) {
+                await UpdateFunctionListBindings();
+            }
         }
 
         private async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
