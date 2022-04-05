@@ -923,6 +923,11 @@ namespace IRExplorerUI {
             UpdateStartPagePanelPosition();
         }
 
+        private async Task SetupPanels() {
+            await SetupSectionPanel();
+            NotifyPanelsOfSessionStart();
+        }
+
         private async Task SetupSectionPanel() {
             SectionPanel.CompilerInfo = compilerInfo_;
             SectionPanel.MainSummary = sessionState_.MainDocument.Summary;
@@ -939,6 +944,7 @@ namespace IRExplorerUI {
                 }
             }
 
+            await SectionPanel.Update();
             SectionPanel.OnSessionStart();
         }
 

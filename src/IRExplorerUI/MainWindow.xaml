@@ -134,10 +134,10 @@
             PreviewExecuted="ShowDocumentSearchExecuted" />
 
         <CommandBinding
-            CanExecute="CanExecuteDocumentCommand"
+            CanExecute="CanExecuteLoadProfileCommand"
             Command="local:AppCommand.LoadProfile"
             Executed="LoadProfileExecuted"
-            PreviewCanExecute="CanExecuteDocumentCommand" />
+            PreviewCanExecute="CanExecuteLoadProfileCommand" />
 
         <CommandBinding
             CanExecute="CanExecuteProfileCommand"

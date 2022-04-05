@@ -117,6 +117,11 @@ namespace IRExplorerUI {
             }
         }
 
+        public async Task Update() {
+            await MainPanel.Update();
+            await DiffPanel.Update();
+        }
+
         public void AddOtherSummary(IRTextSummary summary) {
             MainPanel.AddOtherSummary(summary);
         }

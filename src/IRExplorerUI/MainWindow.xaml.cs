@@ -455,14 +455,19 @@ namespace IRExplorerUI {
         private void UpdateWindowTitle() {
             string title = "IR Explorer";
 
-            if (sessionState_.Documents.Count == 1) {
-                var name = sessionState_.Documents[0].BinaryFilePath ?? sessionState_.Documents[0].FilePath;
-                title += $" - {name}";
+            if (sessionState_.Info.IsFileSession) {
+                title += $" - {sessionState_.Info.FilePath}";
             }
-            else if (sessionState_.Documents.Count == 2) {
-                var baseName = sessionState_.Documents[0].BinaryFilePath ?? sessionState_.Documents[0].FilePath;
-                var diffName = sessionState_.Documents[1].BinaryFilePath ?? sessionState_.Documents[1].FilePath;
-                title += $" - Base: {baseName}  | Diff: {diffName}";
+            else {
+                if (sessionState_.Documents.Count == 1) {
+                    var name = sessionState_.Documents[0].BinaryFilePath ?? sessionState_.Documents[0].FilePath;
+                    title += $" - {name}";
+                }
+                else if (sessionState_.Documents.Count == 2) {
+                    var baseName = sessionState_.Documents[0].BinaryFilePath ?? sessionState_.Documents[0].FilePath;
+                    var diffName = sessionState_.Documents[1].BinaryFilePath ?? sessionState_.Documents[1].FilePath;
+                    title += $" - Base: {baseName}  | Diff: {diffName}";
+                }
             }
 
             Title = title;
@@ -1327,20 +1332,12 @@ namespace IRExplorerUI {
                                                 SymbolFileSourceOptions symbolOptions,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
-            using var profileData = new ETWProfileDataProvider(MainDocumentSummary, this);
-
-            sessionState_.ProfileData = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
+            using var profileData = new ETWProfileDataProvider(null, this);
+            var result = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
                                                                          options, symbolOptions,
                                                                          progressCallback, cancelableTask);
-
-            // Update symbols path if not set already.
-            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-
-            if (!loadedDoc.DebugInfoFileExists) {
-                loadedDoc.DebugInfoFilePath = await PDBDebugInfoProvider.LocateDebugInfoFile(binaryFilePath, symbolOptions);
-            }
-
-            return sessionState_.ProfileData != null;
+            sessionState_.ProfileData = result;
+            return result != null;
         }
 
         private async void LoadProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
@@ -1356,6 +1353,11 @@ namespace IRExplorerUI {
 
         private void CanExecuteProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = sessionState_ != null && sessionState_.ProfileData != null;
+            e.Handled = true;
+        }
+
+        private void CanExecuteLoadProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = sessionState_ == null || sessionState_.ProfileData == null;
             e.Handled = true;
         }
 

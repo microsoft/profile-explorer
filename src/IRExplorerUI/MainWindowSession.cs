@@ -248,8 +248,7 @@ namespace IRExplorerUI {
                 sessionState_.SavePanelState(panelState.StateObject, panelInfo.Panel, null);
             }
 
-            await SetupSectionPanel();
-            NotifyPanelsOfSessionStart();
+            await SetupPanels();
 
             // Reload sections left open.
             var idToDocumentHostMap = new Dictionary<Guid, IRDocumentHost>();
@@ -326,8 +325,27 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
-            await SwitchCompilerTarget(compilerInfo);
-            StartSession(sessionName, sessionKind);
+            await Dispatcher.InvokeAsync(async () =>  {
+                UpdateUIBeforeLoadDocument("profile");
+                await SwitchCompilerTarget(compilerInfo);
+                StartSession(sessionName, sessionKind);
+                UpdateUIAfterLoadDocument();
+            });
+
+            return true;
+        }
+
+        public async Task<bool> SetupNewSession() {
+            await Dispatcher.InvokeAsync(async () => {
+                await SetupPanels();
+
+                foreach (var loadedDoc in sessionState_.Documents) {
+                    if (loadedDoc != sessionState_.MainDocument) {
+                        AddOtherSummary(loadedDoc.Summary);
+                    }
+                }
+            });
+
             return true;
         }
 
@@ -386,6 +404,8 @@ namespace IRExplorerUI {
                 UpdateUIBeforeLoadDocument(filePath);
                 var result = await Task.Run(() => LoadDocument(filePath, modulePath, Guid.NewGuid(),
                                                                UpdateIRDocumentLoadProgress));
+                UpdateUIAfterLoadDocument();
+
                 if (result != null) {
                     await SetupOpenedIRDocument(SessionKind.Default, result);
                     return result;
@@ -397,7 +417,6 @@ namespace IRExplorerUI {
             }
 
             // Failed to start a session.
-            UpdateUIAfterLoadDocument();
             return null;
         }
 
@@ -470,9 +489,7 @@ namespace IRExplorerUI {
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.MainDocument = result;
 
-            UpdateUIAfterLoadDocument();
-            await SetupSectionPanel();
-            NotifyPanelsOfSessionStart();
+            await SetupPanels();
             StartAutoSaveTimer();
         }
 
@@ -496,14 +513,7 @@ namespace IRExplorerUI {
         private async Task SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.EnterTwoDocumentDiffMode(result);
-            UpdateUIAfterLoadDocument();
             await ShowSectionPanelDiffs(result);
-        }
-
-        private async Task SetupAdditionalIRDocument(string filePath, LoadedDocument result) {
-            sessionState_.RegisterLoadedDocument(result);
-            UpdateUIAfterLoadDocument();
-            SectionPanel.AddOtherSummary(result.Summary);
         }
 
         public void AddOtherSummary(IRTextSummary summary) {
@@ -1212,6 +1222,9 @@ namespace IRExplorerUI {
         }
 
         private void StartAutoSaveTimer() {
+            //? TODO: Disable for now
+            return;
+
             try {
                 string filePath = Utils.GetAutoSaveFilePath();
 

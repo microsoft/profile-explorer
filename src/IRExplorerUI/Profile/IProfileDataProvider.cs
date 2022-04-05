@@ -61,6 +61,18 @@ namespace IRExplorerUI.Profile {
             return BinarySearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
         }
 
+        public void InsertBinaryPath(string path) {
+            if (string.IsNullOrEmpty(path) || HasBinaryPath(path)) {
+                return;
+            }
+
+            path = Utils.TryGetDirectoryName(path);
+
+            if (!string.IsNullOrEmpty(path)) {
+                BinarySearchPaths.Insert(0, path);
+            }
+        }
+
         [ProtoAfterDeserialization]
         private void InitializeReferenceMembers() {
             BinarySearchPaths ??= new List<string>();

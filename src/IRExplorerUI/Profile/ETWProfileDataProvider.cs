@@ -19,6 +19,7 @@ using System.IO;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
 using Google.Protobuf.WellKnownTypes;
+using IRExplorerUI.Compilers.ASM;
 
 //? TODO
 // - on new image
@@ -385,9 +386,16 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
             if (image == null) {
                 return new BinaryFileDescription(); // Main module
             }
-            
+
+            var imageName = image.OriginalFileName;
+
+            if (string.IsNullOrEmpty(imageName)) {
+                imageName = image.FileName;
+            }
+
             return new BinaryFileDescription() {
-                ImageName = image.OriginalFileName,
+                ImageName = imageName,
+                ImagePath = image.Path,
                 Checksum = image.Checksum,
                 TimeStamp = image.Timestamp,
                 ImageSize = image.Size.Bytes,
@@ -407,7 +415,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                       CancelableTask cancelableTask) {
             try {
                 options_ = options;
-                mainModule_ = new ModuleInfo(options, session_);
 
                 // Extract just the file name.
                 var initialImageName = imageName;
@@ -441,8 +448,8 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
 
                     // Setup module for main binary.
-                    mainModule_.Initialize(mainSummary_, FromSummary(mainSummary_));
-                    var mainBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(mainModule_.ModuleDocument.BinaryFilePath);
+                    //mainModule_.Initialize(mainSummary_, FromSummary(mainSummary_));
+                    //var mainBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(mainModule_.ModuleDocument.BinaryFilePath);
 
                     // Load the trace.
                     var settings = new TraceProcessorSettings {
@@ -476,7 +483,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                     var procCache = new ProcessInfoCache(allProcs, allThreads);
                     var mainProcessId = procCache.FindProcess(imageName);
-
                     
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
                         return false;
@@ -553,7 +559,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                                 //? TODO: Just start a new session
 #if true
-                                if (queryImage.FileName.Contains("ntos")) {
+                                if (queryImage.FileName.Contains("imag")) {
                                     ;
                                 }
                                 imageModule = new ModuleInfo(options_, session_);
@@ -629,7 +635,17 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                     var imageTimeList = imageTimeMap.ToList();
                     imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
-                    int imageLimit = imageTimeList.Count;
+                    int imageLimit = Math.Min(10, imageTimeList.Count);  //? TODO: Hacky limit to avoid slowdown
+
+                    async Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
+                        if (options == null) {
+                            // Make sure the binary directory is also included in the symbol search.
+                            options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
+                            options.InsertSymbolPath(binaryFile.ImagePath);
+                        }
+
+                        return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options);
+                    }
 
 #if true
                     // 9/24 sec MT/ST
@@ -637,9 +653,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     var pdbTaskList = new Task<string>[imageLimit];
 
                     for (int i = 0; i < imageLimit; i++) {
-                        if (i > 9) //? TODO: Hacky limit to avoid slowdown
-                            break;
-
                         var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
                         acceptedImages.Add(name.ToLowerInvariant());
 
@@ -647,12 +660,37 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         binTaskList[i] = session_.CompilerInfo.FindBinaryFile(binaryFile);
                     }
 
-                    //Task.WaitAll(binTaskList);
+                    IRMode irMode = IRMode.Default;
 
                     for (int i = 0; i < imageLimit; i++) {
-                        if (i > 9)
-                            break;
+                        var binaryFilePath = await binTaskList[i];
 
+                        if (irMode == IRMode.Default && File.Exists(binaryFilePath)) {
+                            var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(binaryFilePath);
+
+                            if (binaryInfo != null) {
+                                Trace.WriteLine($"=> Profile arch {binaryInfo.Architecture}");
+
+                                switch (binaryInfo.Architecture) {
+                                    case System.Reflection.PortableExecutable.Machine.Arm:
+                                    case System.Reflection.PortableExecutable.Machine.Arm64: {
+                                        irMode = IRMode.ARM64;
+                                        break;
+                                    }
+                                    case System.Reflection.PortableExecutable.Machine.I386:
+                                    case System.Reflection.PortableExecutable.Machine.Amd64: {
+                                        irMode = IRMode.x86_64;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Start a new session in the proper ASM mode.
+                    await session_.StartNewSession(tracePath, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_));
+
+                    for (int i = 0; i < imageLimit; i++) {
                         var binaryFilePath = await binTaskList[i];
 
                         if (File.Exists(binaryFilePath)) {
@@ -777,13 +815,14 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 frame.Image?.FileName != null &&
                                 stackModules.Add(frame.Image?.FileName)) {
 
-                                //? TODO: Hack for SPEC runner using a diff binary name
-                                //if (frame.Image.FileName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
-                                //    profileData_.AddModuleSample(image, sampleWeight);
-                                //}
-                                //else {
-                                    profileData_.AddModuleSample(frame.Image.FileName, sampleWeight);
-                                //}
+                                //? TODO: Use info from FindModuleInfo
+                                var name = frame.Image.OriginalFileName;
+                                
+                                if (name == null) {
+                                    name = frame.Image.FileName;
+                                }
+                                
+                                profileData_.AddModuleSample(name, sampleWeight);
                             }
 
                             long frameRva = 0;
@@ -1112,14 +1151,26 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                 });
 
                 // Add 
-                foreach (var pair in imageModuleMap) {
-                    if (pair.Value != mainModule_ && pair.Value.Summary != null) {
-                        Trace.WriteLine(
-                            $"Add other {pair.Value.ModuleDocument.FileName}, {pair.Value.Summary.ModuleName}");
-                        session_.AddOtherSummary(pair.Value.Summary);
-                    }
-                }
+                if (result) {
+                    LoadedDocument exeDocument = null;
 
+                    foreach (var pair in imageModuleMap) {
+                        if (pair.Value.ModuleDocument != null &&
+                            Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFilePath)) {
+                            exeDocument = pair.Value.ModuleDocument;
+
+                            if (pair.Value.ModuleDocument.ModuleName.Contains(imageName)) {
+                                break;
+                            }
+                        }
+                        
+                        
+                    }
+
+                    Trace.WriteLine($"Using exe document {exeDocument?.ModuleName}");
+                    session_.SessionState.MainDocument = exeDocument;
+                    session_.SetupNewSession();
+                }
 
                 trace.Dispose();
                 //trace = null;

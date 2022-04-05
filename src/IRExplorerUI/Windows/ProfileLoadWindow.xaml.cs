@@ -183,7 +183,19 @@ namespace IRExplorerUI {
         }
 
         private void BinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
-            
+            var binaryFilePath = BinaryAutocompleteBox.Text;
+
+            if (File.Exists(binaryFilePath) && Utils.IsExecutableFile(binaryFilePath)) {
+                SetAdditionalDirectories(binaryFilePath);
+            }
+        }
+
+        private void SetAdditionalDirectories(string binaryFilePath) {
+            if (!Options.HasBinaryPath(binaryFilePath)) {
+                Options.InsertBinaryPath(binaryFilePath);
+                Options.BinarySearchPathsEnabled = true;
+                OnPropertyChange(nameof(Options));
+            }
         }
     }
 }
