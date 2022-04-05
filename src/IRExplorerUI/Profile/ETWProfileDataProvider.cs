@@ -635,7 +635,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                     var imageTimeList = imageTimeMap.ToList();
                     imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
-                    int imageLimit = Math.Min(10, imageTimeList.Count);  //? TODO: Hacky limit to avoid slowdown
+                    int imageLimit = Math.Min(2, imageTimeList.Count);  //? TODO: Hacky limit to avoid slowdown
 
                     async Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
                         if (options == null) {
@@ -651,13 +651,15 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     // 9/24 sec MT/ST
                     var binTaskList = new Task<string>[imageLimit];
                     var pdbTaskList = new Task<string>[imageLimit];
+                    var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
+                    binSearchOptions.InsertSymbolPath(initialImageName);
 
                     for (int i = 0; i < imageLimit; i++) {
                         var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
                         acceptedImages.Add(name.ToLowerInvariant());
 
                         var binaryFile = FromETLImage(imageTimeList[i].Item1);
-                        binTaskList[i] = session_.CompilerInfo.FindBinaryFile(binaryFile);
+                        binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, binSearchOptions);
                     }
 
                     IRMode irMode = IRMode.Default;
@@ -831,6 +833,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             string sourceFileName = null;
                             int sourceLineNumber = 0;
                             ModuleInfo module = null;
+                            DebugFunctionInfo funcInfo = null;
 
                             if (frame.Image == null) {
                                 // sample.IP matches JIT load addr
@@ -858,8 +861,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 }
 
                                 frameRva = sample.InstructionPointer.Value;
-
-                                var funcInfo = module.FindFunctionByRVA2(frameRva);
+                                funcInfo = module.FindFunctionByRVA2(frameRva);
 
                                 if (funcInfo.IsUnknown) {
                                     if (isTopFrame) {
@@ -889,31 +891,18 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                     profileData_.AddModuleSample(funcInfo.ModuleName, sampleWeight);
                                 }
                             }
-                            //else if(frame.Symbol != null) {
-                            //    //? TODO: This will be removed with sampling redesign
-                            //    module = await FindModuleInfo(frame.Image);
-
-
-                            //    // Search for a function with the matching RVA.
-                            //    frameRva = frame.RelativeVirtualAddress.Value;
-                            //    var symbol = frame.Symbol;
-                            //    funcName = symbol.FunctionName;
-
-                            //    funcRva = symbol.AddressRange.BaseAddress.Value -
-                            //              symbol.Image.AddressRange.BaseAddress.Value;
-                            //    sourceLineNumber = symbol.SourceLineNumber;
-                            //    sourceFileName = symbol.SourceFileName;
-                            //}
                             else {
                                 module = await FindModuleInfo(frame.Image);
 
                                 if (module != null && module.HasDebugInfo) {
                                     //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
                                     frameRva = frame.RelativeVirtualAddress.Value;
-                                    var funcInfo = module.FindFunctionByRVA2(frameRva);
+                                    funcInfo = module.FindFunctionByRVA2(frameRva);
                                     funcName = funcInfo.Name;
                                     funcRva = funcInfo.RVA;
 
+                                    //? TODO: Make post-processing task when loading func profile, very slow,
+                                    //? calls DIA through COM    | dynamicClass.IL_STUB_CLRtoCOM() 9242(7.63 %)    9242(7.63 %)
                                     var lineInfo = module.FindSourceLineByRVA(funcInfo, frameRva);
                                     sourceFileName = lineInfo.FilePath;
                                     sourceLineNumber = lineInfo.Line;
@@ -1000,6 +989,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             //? {address-image} id), including stack checks. With data collected, background task (or on demand) disasm binary and creates the IRTextFunc ds.
                             //? - samples are already not based on IRElement, only offsets
                             var profile = profileData_.GetOrCreateFunctionProfile(textFunction, sourceFileName);
+                            profile.DebugInfo = funcInfo;
                             var offset = frameRva - funcRva;
 
                             //if (textFunction.Name.Contains("execute@ElemTemplateElement@") ||

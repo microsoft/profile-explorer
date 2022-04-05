@@ -16,7 +16,8 @@ namespace IRExplorerUI.Compilers {
         DebugFunctionInfo FindFunctionByRVA(long rva);
         DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
         DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName);
-        DebugSourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva);
+        DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva);
+        DebugSourceLineInfo FindSourceLineByRVA(long rva);
     }
 
     [ProtoContract(SkipConstructor = true)]

@@ -1789,10 +1789,12 @@ namespace IRExplorerUI {
                     Math.Min(TextView.ActualWidth, DocumentOptionsPanel.DefaultWidth));
             var height = Math.Max(DocumentOptionsPanel.MinimumHeight,
                     Math.Min(TextView.ActualHeight, DocumentOptionsPanel.DefaultHeight));
-            var position = new Point(TextView.ActualWidth - width, 0);
+
+            FrameworkElement relativeElement = ProfileVisible ? ColumnsList : TextView;
+            var position = new Point(relativeElement.ActualWidth - width, 0);
 
             optionsPanel_ = new DocumentOptionsPanel();
-            optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, TextView);
+            optionsPanelWindow_ = new OptionsPanelHostWindow(optionsPanel_, position, width, height, relativeElement);
 
             optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;

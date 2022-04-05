@@ -234,7 +234,7 @@ namespace IRExplorerUI.Profile {
                 return DebugSourceLineInfo.Unknown;
             }
 
-            return DebugInfo.FindSourceLineByRVA(funcInfo, rva);
+            return DebugInfo.FindSourceLineByRVA(rva);
         }
 
         public IRTextFunction FindFunction(long funcAddress) {

@@ -9,6 +9,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
+using IRExplorerUI.Compilers;
 using Microsoft.Windows.EventTracing;
 using ProtoBuf;
 
@@ -263,6 +264,8 @@ namespace IRExplorerUI.Profile {
         public Dictionary<(Guid, int), TimeSpan> CallerWeights { get; set; } // {Summary,Function ID} mapping
         [ProtoMember(9)]
         public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
+
+        public DebugFunctionInfo DebugInfo { get; set; }
 
         public bool HasPerformanceCounters => InstructionCounters.Count > 0;
 

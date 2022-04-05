@@ -1148,6 +1148,7 @@ namespace IRExplorerUI {
             await EndSession();
             compilerInfo_ = compilerInfo;
             compilerInfo_.ReloadSettings();
+            App.Settings.CompilerIRSwitched(compilerInfo_.CompilerIRName, compilerInfo.IR.Mode);
             SetupMainWindow();
         }
 

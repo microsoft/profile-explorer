@@ -129,10 +129,10 @@ namespace IRExplorerUI {
         public void AddRecentFile(string path) {
             // Keep at most N recent files, and move this one on the top of the list.
             // Search as case-insensitive so that C:\file and c:\file are considered the same.
-            int index = RecentFiles.FindIndex(file => file.Equals(path, 
+            int index = RecentFiles.FindIndex(file => file.Equals(path,
                 StringComparison.InvariantCultureIgnoreCase));
 
-            if(index != -1) {
+            if (index != -1) {
                 RecentFiles.RemoveAt(index);
             }
             else if (RecentFiles.Count >= 10) {
@@ -209,7 +209,7 @@ namespace IRExplorerUI {
         }
 
         public byte[] LoadFunctionTaskOptions(FunctionTaskInfo taskInfo) {
-            if(FunctionTaskOptions.TryGetValue(taskInfo.Id, out var data)) {
+            if (FunctionTaskOptions.TryGetValue(taskInfo.Id, out var data)) {
                 return data;
             }
 
@@ -219,10 +219,13 @@ namespace IRExplorerUI {
         public void SwitchDefaultCompilerIR(string irName, IRMode irMode) {
             DefaultCompilerIR = irName;
             DefaultIRMode = irMode;
+        }
 
+        public void CompilerIRSwitched(string irName, IRMode irMode) {
             //? TODO: Hack to get the default IR style picked when the IR changes
             //? Should remember a last {ir -> ir style name} and restore based on that 
             DocumentSettings.SyntaxHighlightingName = null;
+            App.ReloadSyntaxHighlightingFiles(irName);
         }
     }
 }

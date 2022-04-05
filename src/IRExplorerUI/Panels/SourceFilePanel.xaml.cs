@@ -159,8 +159,8 @@ namespace IRExplorerUI {
 
             if (path != null) {
                 var sourceInfo = new DebugFunctionSourceFileInfo(path, path);
-                if(!await LoadSourceFile(sourceInfo, section_.ParentFunction)) {
-                    TextView.Text = $"Failed to load source file {path}!";
+                if (!await LoadSourceFile(sourceInfo, section_.ParentFunction)) {
+                    HandleMissingSourceFile();
                 }
             }
         }
@@ -174,10 +174,7 @@ namespace IRExplorerUI {
             base.OnDocumentSectionLoaded(section, document);
             section_ = section;
 
-            if (!await LoadSourceFileForFunction(section_.ParentFunction)) {
-                SetSourceText($"No source file available");
-            }
-            else {
+            if (await LoadSourceFileForFunction(section_.ParentFunction)) {
                 ScrollToLine(hottestSourceLine_);
             }
         }
@@ -192,12 +189,25 @@ namespace IRExplorerUI {
             var loadedDoc = Session.SessionState.FindLoadedDocument(function);
             bool funcLoaded = false;
 
+            //Trace.WriteLine($"=> Load source for {function.Name}");
+
             if (loadedDoc.DebugInfoFileExists) {
                 using var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
 
                 if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
-                    var sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
-                    
+                    var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
+                    var funcProfile2 = Session.ProfileData?.GetFunctionProfile(function);
+
+                    if (funcProfile2 != null && funcProfile2.DebugInfo != null) {
+                        //Trace.WriteLine($" o use RVA {funcProfile2.DebugInfo.RVA}");
+                        sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile2.DebugInfo.RVA);
+                    }
+
+                    if (sourceInfo.IsUnknown) {
+                        //Trace.WriteLine($" o attempt func name ");
+                        sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
+                    }
+
                     if (!string.IsNullOrEmpty(sourceInfo.FilePath)) {
                         funcLoaded = await LoadSourceFile(sourceInfo, function);
                     }
@@ -206,7 +216,7 @@ namespace IRExplorerUI {
 
             // Check if there is profile info.
             var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-
+            
             if (funcProfile != null) {
                 if (!funcLoaded && !string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
                     var sourceInfo = new DebugFunctionSourceFileInfo(funcProfile.SourceFilePath, funcProfile.SourceFilePath, 0);
@@ -214,6 +224,10 @@ namespace IRExplorerUI {
                 }
 
                 await AnnotateProfilerData(funcProfile);
+            }
+
+            if (!funcLoaded) {
+                HandleMissingSourceFile();
             }
 
             return funcLoaded;
@@ -240,12 +254,17 @@ namespace IRExplorerUI {
                 return true;
             }
             else {
-                TextView.Text = $"Failed to load profile source file {sourceInfo.FilePath}!";
-                SetPanelName("");
-                sourceFileLoaded_ = false;
-                sourceFileFunc_ = null;
+                HandleMissingSourceFile();
                 return false;
             }
+        }
+
+        private void HandleMissingSourceFile()
+        {
+            TextView.Text = $"Failed to load profile source file";
+            SetPanelName("");
+            sourceFileLoaded_ = false;
+            sourceFileFunc_ = null;
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
@@ -292,8 +311,9 @@ namespace IRExplorerUI {
                     ResetInlinee();
                 }
 
-                await LoadSourceFileForFunction(section_.ParentFunction);
-                ScrollToLine(tag.Line);
+                if (await LoadSourceFileForFunction(section_.ParentFunction)) {
+                    ScrollToLine(tag.Line);
+                }
             }
         }
 
