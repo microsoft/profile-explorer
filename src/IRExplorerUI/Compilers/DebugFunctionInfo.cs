@@ -89,6 +89,8 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
     public static DebugFunctionSourceFileInfo Unknown => new(null, null, -1);
 
     public bool IsUnknown => FilePath == null;
+    public bool HasFilePath => !string.IsNullOrEmpty(FilePath);
+    public bool HasOriginalFilePath => !string.IsNullOrEmpty(OriginalFilePath);
 
     public bool Equals(DebugFunctionSourceFileInfo other) {
         return FilePath == other.FilePath &&

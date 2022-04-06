@@ -113,6 +113,16 @@ namespace IRExplorerUI {
             return list;
         }
 
+        public static List<(K, V)> ToKeyValueList<K, V>(this IDictionary<K, V> dict) {
+            var list = new List<(K, V)>(dict.Count);
+
+            foreach (var item in dict) {
+                list.Add((item.Key, item.Value));
+            }
+
+            return list;
+        }
+
         public static List<V> ToValueList<K, V>(this IDictionary<K, V> dict) {
             var list = new List<V>(dict.Count);
 
