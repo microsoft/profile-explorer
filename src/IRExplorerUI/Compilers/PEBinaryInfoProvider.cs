@@ -5,6 +5,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.Diagnostics.Symbols;
@@ -88,6 +89,28 @@ namespace IRExplorerUI.Compilers {
 
                 return null;
             }
+        }
+
+        public SectionHeader? TextSectionHeader {
+            get {
+                if (reader_.PEHeaders.PEHeader == null) {
+                    return null;
+                }
+
+                foreach (var section in reader_.PEHeaders.SectionHeaders) {
+                    if (section.Name == ".text") {
+                        return section;
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        public byte[] GetSectionData(SectionHeader header) {
+            var data = reader_.GetSectionData(header.VirtualAddress);
+            var array = data.GetContent();
+            return Unsafe.As<byte[]>(array);
         }
 
         public BinaryFileDescription BinaryFileInfo {
