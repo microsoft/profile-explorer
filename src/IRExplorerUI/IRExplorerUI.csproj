@@ -86,6 +86,7 @@
 		<PackageReference Include="Dirkster.AvalonDock.Themes.VS2013" Version="4.70.1" />
 		<PackageReference Include="DotNetProjects.Extended.Wpf.Toolkit" Version="5.0.100" />
 		<PackageReference Include="DotNetProjects.WpfToolkit.Input" Version="6.1.94" />
+		<PackageReference Include="Gee.External.Capstone" Version="2.0.2" />
 		<PackageReference Include="Google.Protobuf" Version="3.19.4" />
 		<PackageReference Include="Grpc" Version="2.44.0" />
 		<PackageReference Include="Grpc.Core" Version="2.44.0" />
