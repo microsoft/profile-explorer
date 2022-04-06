@@ -188,42 +188,51 @@ namespace IRExplorerUI {
             // since it also includes the start line number.
             var loadedDoc = Session.SessionState.FindLoadedDocument(function);
             bool funcLoaded = false;
-
-            //Trace.WriteLine($"=> Load source for {function.Name}");
+            FunctionProfileData funcProfile = null;
 
             if (loadedDoc.DebugInfoFileExists) {
                 using var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
 
                 if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
                     var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
-                    var funcProfile2 = Session.ProfileData?.GetFunctionProfile(function);
+                    funcProfile = Session.ProfileData?.GetFunctionProfile(function);
 
-                    if (funcProfile2 != null && funcProfile2.DebugInfo != null) {
-                        //Trace.WriteLine($" o use RVA {funcProfile2.DebugInfo.RVA}");
-                        sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile2.DebugInfo.RVA);
+                    if (funcProfile != null) {
+                        // Lookup function by RVA, more precise.
+                        if (funcProfile.DebugInfo != null) {
+                            sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
+                        }
+
+                        // Precompute the per-line sample weights.
+                        funcProfile.ProcessSourceLines(debugInfo);
                     }
 
                     if (sourceInfo.IsUnknown) {
-                        //Trace.WriteLine($" o attempt func name ");
+                        // Try again using the function name.
                         sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
                     }
 
-                    if (!string.IsNullOrEmpty(sourceInfo.FilePath)) {
+                    if (sourceInfo.HasFilePath) {
                         funcLoaded = await LoadSourceFile(sourceInfo, function);
                     }
                 }
             }
 
-            // Check if there is profile info.
-            var funcProfile = Session.ProfileData?.GetFunctionProfile(function);
-            
+            if (funcProfile == null) {
+                // Check if there is profile info.
+                // This path is taken only if there is no debug info.
+                funcProfile = Session.ProfileData?.GetFunctionProfile(function);
+            }
+
             if (funcProfile != null) {
                 if (!funcLoaded && !string.IsNullOrEmpty(funcProfile.SourceFilePath)) {
                     var sourceInfo = new DebugFunctionSourceFileInfo(funcProfile.SourceFilePath, funcProfile.SourceFilePath, 0);
                     funcLoaded = await LoadSourceFile(sourceInfo, function);
                 }
 
-                await AnnotateProfilerData(funcProfile);
+                if (funcProfile.HasSourceLines) {
+                    await AnnotateProfilerData(funcProfile);
+                }
             }
 
             if (!funcLoaded) {
@@ -389,17 +398,13 @@ namespace IRExplorerUI {
 
             var markerOptions = ProfileDocumentMarkerOptions.Default;
             var nextElementId = new IRElementId();
-            var lines = new List<Tuple<int, TimeSpan>>(profile.SourceLineWeight.Count);
+            var sourceLineWeights = profile.SourceLineWeightList;
 
-            foreach (var pair in profile.SourceLineWeight) {
-                lines.Add(new Tuple<int, TimeSpan>(pair.Key, pair.Value));
-            }
-
-            lines.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-            hottestSourceLine_ = lines.Count > 0 ? lines[0].Item1 : 0;
+            sourceLineWeights.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+            hottestSourceLine_ = sourceLineWeights.Count > 0 ? sourceLineWeights[0].Item1 : 0;
             int lineIndex = 0;
 
-            foreach (var pair in lines) {
+            foreach (var pair in sourceLineWeights) {
                 int sourceLine = pair.Item1;
 
                 if (sourceLine <= 0 || sourceLine > TextView.Document.LineCount) {

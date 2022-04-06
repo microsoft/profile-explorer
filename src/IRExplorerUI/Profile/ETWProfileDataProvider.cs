@@ -830,8 +830,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             long frameRva = 0;
                             long funcRva = 0;
                             string funcName = null;
-                            string sourceFileName = null;
-                            int sourceLineNumber = 0;
                             ModuleInfo module = null;
                             DebugFunctionInfo funcInfo = null;
 
@@ -881,11 +879,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 //Trace.WriteLine($"Found JIT IP {sample.InstructionPointer.Value}: {funcInfo.Name}");
                                 funcName = funcInfo.Name;
                                 funcRva = funcInfo.RVA;
-
-                                var lineInfo = module.FindSourceLineByRVA(funcInfo, frameRva);
-                                sourceFileName = lineInfo.FilePath;
-                                sourceLineNumber = lineInfo.Line;
-
+                                
                                 if (funcInfo.HasModuleName) {
                                     //? TODO: Associate the func somehow with the module in UI
                                     profileData_.AddModuleSample(funcInfo.ModuleName, sampleWeight);
@@ -900,13 +894,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                     funcInfo = module.FindFunctionByRVA2(frameRva);
                                     funcName = funcInfo.Name;
                                     funcRva = funcInfo.RVA;
-
-                                    //? TODO: Make post-processing task when loading func profile, very slow,
-                                    //? calls DIA through COM    | dynamicClass.IL_STUB_CLRtoCOM() 9242(7.63 %)    9242(7.63 %)
-                                    var lineInfo = module.FindSourceLineByRVA(funcInfo, frameRva);
-                                    sourceFileName = lineInfo.FilePath;
-                                    sourceLineNumber = lineInfo.Line;
-
+                                    
                                     //? PubSym overwrites func in tree, keep func
                                     //? WppInitKm
 
@@ -988,7 +976,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             //? TODO: Everything here should work only on addresses (func profile as
                             //? {address-image} id), including stack checks. With data collected, background task (or on demand) disasm binary and creates the IRTextFunc ds.
                             //? - samples are already not based on IRElement, only offsets
-                            var profile = profileData_.GetOrCreateFunctionProfile(textFunction, sourceFileName);
+                            var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
                             profile.DebugInfo = funcInfo;
                             var offset = frameRva - funcRva;
 
@@ -1000,7 +988,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             // Don't count the inclusive time for recursive functions multiple times.
                                 if (stackFuncts.Add(textFunction)) {
                                 profile.AddInstructionSample(offset, sampleWeight);
-                                profile.AddLineSample(sourceLineNumber, sampleWeight);
                                 profile.Weight += sampleWeight;
 
                                 // Add the previous stack frame function as a child

@@ -257,7 +257,7 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(5)]
         public Dictionary<long, TimeSpan> InstructionWeight { get; set; } // Instr. offset mapping
         [ProtoMember(6)]
-        public Dictionary<long, TimeSpan> BlockWeight { get; set; } // 
+        public Dictionary<long, TimeSpan> BlockWeight { get; set; } //? TODO: Unused
         [ProtoMember(7)]
         public Dictionary<(Guid, int), TimeSpan> ChildrenWeights { get; set; } // {Summary,Function ID} mapping
         [ProtoMember(8)]
@@ -267,10 +267,11 @@ namespace IRExplorerUI.Profile {
 
         public DebugFunctionInfo DebugInfo { get; set; }
 
+        public bool HasSourceLines => SourceLineWeight != null && SourceLineWeight.Count > 0;
         public bool HasPerformanceCounters => InstructionCounters.Count > 0;
-
         public bool HasCallers => CallerWeights != null && CallerWeights.Count > 0;
         public bool HasCallees => ChildrenWeights != null && ChildrenWeights.Count > 0;
+        public List<(int LineNumber, TimeSpan Weight)> SourceLineWeightList => SourceLineWeight.ToKeyValueList();
 
         public class ProcessingResult {
             public List<Tuple<IRElement, TimeSpan>> SampledElements { get; set; }
@@ -397,6 +398,24 @@ namespace IRExplorerUI.Profile {
             result.BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
             result.SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
             return result;
+        }
+
+        public void ProcessSourceLines(IDebugInfoProvider debugInfo) {
+            if (HasSourceLines) {
+                return;
+            }
+
+            SourceLineWeight ??= new Dictionary<int, TimeSpan>();
+            var funcInfo = debugInfo.FindFunctionByRVA(DebugInfo.RVA);
+
+            foreach (var pair in InstructionWeight) {
+                long rva = pair.Key + funcInfo.RVA;
+                var lineInfo = debugInfo.FindSourceLineByRVA(rva);
+
+                if (!lineInfo.IsUnknown) {
+                    SourceLineWeight.AccumulateValue(lineInfo.Line, pair.Value);
+                }
+            }
         }
 
         public PerformanceCounterSet ComputeFunctionCounters() {
