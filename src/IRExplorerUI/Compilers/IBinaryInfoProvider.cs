@@ -17,6 +17,8 @@ public class BinaryFileDescription {
     public long TimeStamp { get; set; }
     public long ImageSize { get; set; }
     public long CodeSize { get; set; }
+    public long ImageBase { get; set; }
+    public long BaseOfCode { get; set; }
     public int MajorVersion { get; set; }
     public int MinorVersion { get; set; }
 

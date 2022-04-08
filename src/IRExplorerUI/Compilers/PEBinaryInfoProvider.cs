@@ -110,7 +110,10 @@ namespace IRExplorerUI.Compilers {
         public byte[] GetSectionData(SectionHeader header) {
             var data = reader_.GetSectionData(header.VirtualAddress);
             var array = data.GetContent();
-            return Unsafe.As<byte[]>(array);
+            var copy = new byte[array.Length];
+            array.CopyTo(copy);
+            return copy;
+            //? TODO: return Unsafe.As<byte[]>(array);
         }
 
         public BinaryFileDescription BinaryFileInfo {
@@ -139,6 +142,8 @@ namespace IRExplorerUI.Compilers {
                     TimeStamp = reader_.PEHeaders.CoffHeader.TimeDateStamp,
                     ImageSize = reader_.PEHeaders.PEHeader.SizeOfImage,
                     CodeSize = reader_.PEHeaders.PEHeader.SizeOfCode,
+                    ImageBase = (long)reader_.PEHeaders.PEHeader.ImageBase,
+                    BaseOfCode = reader_.PEHeaders.PEHeader.BaseOfCode,
                     MajorVersion = reader_.PEHeaders.PEHeader.MajorImageVersion,
                     MinorVersion = reader_.PEHeaders.PEHeader.MinorImageVersion
                 };
