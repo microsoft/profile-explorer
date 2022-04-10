@@ -162,12 +162,20 @@ namespace IRExplorerUI {
             var pdb = new PDBDebugInfoProvider(SymbolFileSourceOptions.Default);
 
             if (pdb.LoadDebugInfo(@"C:\work\s\imagick_r.pdb")) {
-                var func = pdb.FindFunction("wcsnlen");
+                //var func = pdb.FindFunction("wcsnlen");
                 var sw = Stopwatch.StartNew();
-                var r = d.DisassembleToText(func);
+
+                foreach (var func in pdb.EnumerateFunctions()) {
+                    if (func.Size > 0) {
+                        Trace.WriteLine($"{func.Name}:");
+
+                        var r = d.DisassembleToText(func);
+                        Trace.WriteLine(r);
+                    }
+                }
+
                 sw.Stop();
-                MessageBox.Show($"Took {sw.Elapsed}");
-                Trace.WriteLine(r);
+                MessageBox.Show($"Took {sw.ElapsedMilliseconds} ms");
                 Environment.Exit(0);
             }
         }
