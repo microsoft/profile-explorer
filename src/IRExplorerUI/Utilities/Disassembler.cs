@@ -294,7 +294,7 @@ namespace IRExplorerUI.Utilities {
 
        
         public unsafe string DisassembleToText(long startRVA, long size) {
-            var builder = new StringBuilder();
+            var builder = new StringBuilder((int)(size / 4) + 1);
 
 #if false
             // 2.61s
@@ -325,20 +325,13 @@ namespace IRExplorerUI.Utilities {
             builder.AppendFormat("{0}", t);
 #else
             //SetDisassemblerOption(Interop.DisassemblerOptionType.SetInstructionDetails, Interop.DisassemblerOptionValue.Enable);
-            long t = 0;
-
-            for (int k = 0; k < 1000 *10; k++) {
-
-                foreach (var instr in DisassembleInstructions(startRVA, size, baseAddress_ + startRVA)) {
-                    var address = instr.Address;
-                    var s = instr.MnemonicString;
-                    var o = instr.OperandString;
-                    builder.AppendFormat("{0:X}: \t {1} \t {2}\n", address, s, o);
-                    t += address + s.Length + o.Length;
-                }
+            
+            foreach (var instr in DisassembleInstructions(startRVA, size, baseAddress_ + startRVA)) {
+                var address = instr.Address;
+                var s = instr.MnemonicString;
+                var o = instr.OperandString;
+                //builder.AppendFormat("{0:X}: \t {1} \t {2}\n", address, s, o);
             }
-
-            builder.AppendFormat("{0}", t);
 #endif
 
             return builder.ToString();
@@ -354,6 +347,7 @@ namespace IRExplorerUI.Utilities {
 
             if (offset < 0 || (offset + size) > data_.Length) {
                 Trace.WriteLine($"Invalid disassembler offset/size {offset}/{size} for image of length {data_.Length}");
+                yield break;
             }
 
             var dataBuffer = GCHandle.Alloc(data_, GCHandleType.Pinned);
