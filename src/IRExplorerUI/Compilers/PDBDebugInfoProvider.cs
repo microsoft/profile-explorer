@@ -471,7 +471,7 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
-        public IEnumerable<DebugFunctionInfo> EnumerateFunctions() {
+        public IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal) {
             IDiaEnumSymbols symbolEnum;
             
             try {
@@ -482,21 +482,27 @@ namespace IRExplorerUI.Compilers {
                 yield break;
             }
 
-            Trace.AutoFlush = false;
-
             foreach (IDiaSymbol sym in symbolEnum) {
                 //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
                 yield return new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
             }
 
-            globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out var publicSymbolEnum);
-         
-            foreach (IDiaSymbol sym in publicSymbolEnum) {
-                //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
-                yield return new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
-            }
+            if (includeExternal) {
+                IDiaEnumSymbols publicSymbolEnum;
 
-            Trace.AutoFlush = true;
+                try {
+                    globalSymbol_.findChildren(SymTagEnum.SymTagPublicSymbol, null, 0, out publicSymbolEnum);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
+                    yield break;
+                }
+
+                foreach (IDiaSymbol sym in publicSymbolEnum) {
+                    //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
+                    yield return new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+                }
+            }
         }
 
         private IDiaSymbol FindFunctionSymbol(string functionName) {

@@ -11,7 +11,7 @@ namespace IRExplorerUI.Compilers {
         bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
         bool AnnotateSourceLocations(FunctionIR function, string functionName);
         void Dispose();
-        IEnumerable<DebugFunctionInfo> EnumerateFunctions();
+        IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal = false);
         DebugFunctionInfo FindFunction(string functionName);
         DebugFunctionInfo FindFunctionByRVA(long rva);
         DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc);
