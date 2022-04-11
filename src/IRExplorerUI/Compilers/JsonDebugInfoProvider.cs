@@ -55,7 +55,7 @@ namespace IRExplorerUI.Compilers {
             
         }
 
-        public IEnumerable<DebugFunctionInfo> EnumerateFunctions() {
+        public IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal) {
             return functions_;
         }
 

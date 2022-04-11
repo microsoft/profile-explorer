@@ -125,7 +125,7 @@ namespace IRExplorerUI.Profile {
 
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
 
-            foreach (var funcInfo in DebugInfo.EnumerateFunctions()) {
+            foreach (var funcInfo in DebugInfo.EnumerateFunctions(true)) {
                 // There can be 0 size func. such as __guard_xfg, ignore.
                 if (funcInfo.RVA != 0 && funcInfo.Size > 0) {
                     functionRvaTree_.Add(funcInfo.StartRVA, funcInfo.EndRVA, funcInfo);
