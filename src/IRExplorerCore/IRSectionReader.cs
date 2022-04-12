@@ -11,8 +11,13 @@ namespace IRExplorerCore {
             TotalBytes = totalBytes;
         }
 
+        public SectionReaderProgressInfo(bool working) {
+            IsIndeterminate = working;
+        }
+
         public long BytesProcessed { get; set; }
         public long TotalBytes { get; set; }
+        public bool IsIndeterminate { get; set; }
     }
 
     public class SectionReaderText {

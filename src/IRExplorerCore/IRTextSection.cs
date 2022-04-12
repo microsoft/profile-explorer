@@ -11,19 +11,15 @@ namespace IRExplorerCore {
 
         public IRTextSection() { }
 
-        public IRTextSection(IRTextFunction parent, ulong id, int number, string name,
-            IRPassOutput sectionOutput, int blocks = 0) {
+        public IRTextSection(IRTextFunction parent, string name,
+                             IRPassOutput sectionOutput, int blocks = 0) {
             ParentFunction = parent;
-            Id = id;
-
-            Debug.Assert(number > 0, "Section numbers must start at 1");
-            Number = number;
             Name = name;
             Output = sectionOutput;
             BlockCount = blocks;
         }
 
-        public ulong Id { get; set; }
+        public int Id { get; set; }
         public int Number { get; set; }
         public string Name { get; set; }
         public int BlockCount { get; set; }

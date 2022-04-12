@@ -399,9 +399,7 @@ namespace IRExplorerUI {
                     sectionName += $" ({debugCurrentStackFrame_.Function}:{debugCurrentStackFrame_.LineNumber})";
                 }
 
-                var section = new IRTextSection(debugFunction_, (ulong)debugSectionId_, debugSectionId_ + 1,
-                                                sectionName, new IRPassOutput(0, 0, 0, 0));
-
+                var section = new IRTextSection(debugFunction_, sectionName, IRPassOutput.Empty);
                 string filteredText = ExtractLineMetadata(section, e.Text);
 
                 //? TODO: Is this still needed?
@@ -416,7 +414,7 @@ namespace IRExplorerUI {
                     MessageBox.Show($"Unexpected RPC failure: {ex.Message}\n {ex.StackTrace}");
                 }
 
-                debugFunction_.Sections.Add(section);
+                debugFunction_.AddSection(section);
                 debugSummary_.AddSection(section);
                 debugSections_.AddSection(section, filteredText);
 

@@ -9,8 +9,7 @@ namespace IRExplorerCore {
     public class IRTextSummary {
         private Dictionary<string, IRTextFunction> functionNameMap_;
         private Dictionary<int, IRTextFunction> functionMap_;
-        private Dictionary<ulong, IRTextSection> sectionMap_;
-        private ulong nextSectionId_;
+        private Dictionary<int, IRTextSection> sectionMap_;
         private int hashCode_;
 
         public Guid Id { get; set; }
@@ -22,11 +21,14 @@ namespace IRExplorerCore {
             Functions = new List<IRTextFunction>();
             functionNameMap_ = new Dictionary<string, IRTextFunction>();
             functionMap_ = new Dictionary<int, IRTextFunction>();
-            sectionMap_ = new Dictionary<ulong, IRTextSection>();
-            nextSectionId_ = 1;
+            sectionMap_ = new Dictionary<int, IRTextSection>();
         }
 
         public void AddFunction(IRTextFunction function) {
+            if (functionNameMap_.ContainsKey(function.Name)) {
+                return; //? remove
+            }
+            
             function.Number = Functions.Count;
             Functions.Add(function);
             functionNameMap_.Add(function.Name, function);
@@ -35,12 +37,11 @@ namespace IRExplorerCore {
         }
 
         public void AddSection(IRTextSection section) {
-            sectionMap_.Add(nextSectionId_, section);
-            section.Id = nextSectionId_;
-            nextSectionId_++;
+            section.Id = sectionMap_.Count;
+            sectionMap_.Add(sectionMap_.Count, section);
         }
 
-        public IRTextSection GetSectionWithId(ulong id) {
+        public IRTextSection GetSectionWithId(int id) {
             return sectionMap_.TryGetValue(id, out var value) ? value : null;
         }
 
@@ -86,7 +87,7 @@ namespace IRExplorerCore {
 
         public override int GetHashCode() {
             if (hashCode_ == 0) {
-                hashCode_ = HashCode.Combine(ModuleName, nextSectionId_);
+                hashCode_ = HashCode.Combine(ModuleName);
             }
 
             return hashCode_;

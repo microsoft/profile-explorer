@@ -94,7 +94,6 @@ namespace IRExplorerUI.Compilers.ASM {
 
             if (!info.Initialize()) {
                 return new JsonDebugInfoProvider();
-                return null;
             }
 
             switch (info.BinaryFileInfo.FileKind) {

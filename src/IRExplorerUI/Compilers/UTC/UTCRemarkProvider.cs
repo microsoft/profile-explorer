@@ -391,7 +391,7 @@ namespace IRExplorerUI.UTC {
 
                 tasks[index++] = Task.Run(() => {
                     try {
-                        var sectionTextLines = document.Loader.GetSectionOutputTextLines(section.OutputBefore);
+                        var sectionTextLines = document.Loader.GetSectionPassOutputTextLines(section.OutputBefore);
                         return ExtractRemarks(sectionTextLines, function, section, 
                                               options, cancelableTask);
                     }

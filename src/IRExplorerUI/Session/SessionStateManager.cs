@@ -59,11 +59,11 @@ namespace IRExplorerUI {
         [ProtoMember(1)]
         public Guid DocumentId;
         [ProtoMember(2)]
-        public ulong SectionId;
+        public int SectionId;
 
         public OpenSectionState() { }
 
-        public OpenSectionState(Guid documentId, ulong sectionId) {
+        public OpenSectionState(Guid documentId, int sectionId) {
             DocumentId = documentId;
             SectionId = sectionId;
         }

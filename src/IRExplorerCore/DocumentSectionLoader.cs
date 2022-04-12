@@ -92,34 +92,25 @@ namespace IRExplorerCore {
         public override ParsedIRTextSection LoadSection(IRTextSection section) {
             //Trace.TraceInformation(
             //    $"Section loader {ObjectTracker.Track(this)}: ({section.Number}) {section.Name}");
-            lock (lockObject_) {
-                if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var cachedResult)) {
-                    //Trace.TraceInformation($"Section loader {ObjectTracker.Track(this)}: found in cache");
-                    cachedResult.IsCached = true;
-                    return cachedResult;
-                }
+            var result = TryGetCachedParsedSection(section);
+
+            if (result != null) {
+                return result;
             }
 
             var text = GetSectionTextSpan(section);
-
-            //? TODO: Workaround for not having an LLVM parser
             var (sectionParser, errorHandler) = InitializeParser();
             FunctionIR function;
 
             if (sectionParser == null) {
-                function = new FunctionIR();
+                function = new FunctionIR(); //? TODO: Workaround for not having an LLVM parser
             }
             else {
                 function = sectionParser.ParseSection(section, text);
             }
 
-            var result = new ParsedIRTextSection(section, text, function);
-
-            lock (lockObject_) {
-                if (cacheEnabled_ && function != null) {
-                    sectionCache_[section] = result;
-                }
-            }
+            result = new ParsedIRTextSection(section, text, function);
+            CacheParsedSection(section, function, result);
 
             if (errorHandler.HadParsingErrors) {
                 result.ParsingErrors = errorHandler.ParsingErrors;
@@ -145,7 +136,7 @@ namespace IRExplorerCore {
             return documentReader_.GetPassOutputText(output);
         }
 
-        public override ReadOnlyMemory<char> GetSectionOutputTextSpan(IRPassOutput output) {
+        public override ReadOnlyMemory<char> GetSectionPassOutputTextSpan(IRPassOutput output) {
             if (output == null) {
                 // With some documents there is no before/after text.
                 return ReadOnlyMemory<char>.Empty;
@@ -154,7 +145,7 @@ namespace IRExplorerCore {
             return documentReader_.GetPassOutputTextSpan(output);
         }
 
-        public override List<string> GetSectionOutputTextLines(IRPassOutput output) {
+        public override List<string> GetSectionPassOutputTextLines(IRPassOutput output) {
             if (output == null) {
                 // With some documents there is no before/after text.
                 return new List<string>();

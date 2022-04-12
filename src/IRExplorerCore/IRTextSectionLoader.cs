@@ -57,6 +57,26 @@ namespace IRExplorerCore {
             return (irInfo_.CreateSectionParser(errorHandler), errorHandler);
         }
 
+        protected void CacheParsedSection(IRTextSection section, FunctionIR function, ParsedIRTextSection result) {
+            lock (lockObject_) {
+                if (cacheEnabled_ && function != null) {
+                    sectionCache_[section] = result;
+                }
+            }
+        }
+
+        protected ParsedIRTextSection TryGetCachedParsedSection(IRTextSection section) {
+            lock (lockObject_) {
+                if (cacheEnabled_ && sectionCache_.TryGetValue(section, out var cachedResult)) {
+                    //Trace.TraceInformation($"Section loader {ObjectTracker.Track(this)}: found in cache");
+                    cachedResult.IsCached = true;
+                    return cachedResult;
+                }
+            }
+
+            return null;
+        }
+
         public bool SectionSignaturesComputed => Interlocked.Read(ref sectionPreprocessingCompleted_) != 0;
 
         public abstract IRTextSummary LoadDocument(ProgressInfoHandler progressHandler);
@@ -66,8 +86,8 @@ namespace IRExplorerCore {
         public abstract string GetSectionText(IRTextSection section);
         public abstract ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section);
         public abstract string GetSectionOutputText(IRPassOutput output);
-        public abstract ReadOnlyMemory<char> GetSectionOutputTextSpan(IRPassOutput output);
-        public abstract List<string> GetSectionOutputTextLines(IRPassOutput output);
+        public abstract ReadOnlyMemory<char> GetSectionPassOutputTextSpan(IRPassOutput output);
+        public abstract List<string> GetSectionPassOutputTextLines(IRPassOutput output);
         public abstract string GetRawSectionText(IRTextSection section);
         public abstract string GetRawSectionPassOutput(IRPassOutput output);
         public abstract ReadOnlyMemory<char> GetRawSectionTextSpan(IRTextSection section);

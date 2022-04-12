@@ -20,11 +20,7 @@ namespace IRExplorerUI {
         }
 
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
-            if (summary_ == null) {
-                summary_ = new IRTextSummary();
-            }
-
-            return summary_;
+            return summary_ ??= new IRTextSummary();
         }
 
         public override string GetDocumentOutputText() {
@@ -107,11 +103,11 @@ namespace IRExplorerUI {
             return "";
         }
 
-        public override ReadOnlyMemory<char> GetSectionOutputTextSpan(IRPassOutput output) {
+        public override ReadOnlyMemory<char> GetSectionPassOutputTextSpan(IRPassOutput output) {
         return ReadOnlyMemory<char>.Empty;
         }
 
-        public override List<string> GetSectionOutputTextLines(IRPassOutput output) {
+        public override List<string> GetSectionPassOutputTextLines(IRPassOutput output) {
             return new List<string>();
         }
 

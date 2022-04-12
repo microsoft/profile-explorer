@@ -87,7 +87,7 @@ namespace IRExplorerUI.Profile {
             //? TODO: Register must be done at the end
             session_.SessionState.RegisterLoadedDocument(loadedDoc);
             loadedDoc.BinaryFilePath = filePath;
-            loadedDoc.DebugInfoFilePath = disasmResult.DebugInfoPath;
+            loadedDoc.DebugInfoFilePath = disasmResult.DebugInfoFilePath;
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
 

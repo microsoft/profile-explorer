@@ -401,14 +401,14 @@ namespace IRExplorerUI {
     [ProtoContract]
     public class SectionPanelState {
         [ProtoMember(1)]
-        public List<ulong> AnnotatedSections;
+        public List<int> AnnotatedSections;
         [ProtoMember(2)]
         public int SelectedFunctionNumber;
         [ProtoMember(3)]
         public int SelectedSectionNumber;
 
         public SectionPanelState() {
-            AnnotatedSections = new List<ulong>();
+            AnnotatedSections = new List<int>();
         }
     }
 
@@ -1873,7 +1873,7 @@ namespace IRExplorerUI {
             if (data != null) {
                 var state = StateSerializer.Deserialize<SectionPanelState>(data);
 
-                foreach (ulong sectionId in state.AnnotatedSections) {
+                foreach (int sectionId in state.AnnotatedSections) {
                     var section = summary_.GetSectionWithId(sectionId);
                     var sectionExt = GetSectionExtension(section);
                     sectionExt.IsTagged = true;
@@ -1959,7 +1959,7 @@ namespace IRExplorerUI {
 
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
-            await Task.Run(() => callGraph.Execute());
+            //await Task.Run(() => callGraph.Execute());
 
             // Cache the call graph, can be expensive to compute.
             callGraphCache_[summary] = callGraph;

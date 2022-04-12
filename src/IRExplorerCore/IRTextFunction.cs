@@ -36,6 +36,11 @@ namespace IRExplorerCore {
             }
         }
 
+        public void AddSection(IRTextSection section) {
+            section.Number = Sections.Count + 1;
+            Sections.Add(section);
+        }
+
         public IRTextSection FindSection(string name) {
             return Sections.Find(item => item.Name == name);
         }

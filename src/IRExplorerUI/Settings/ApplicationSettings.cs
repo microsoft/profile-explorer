@@ -126,6 +126,18 @@ namespace IRExplorerUI {
             return options;
         }
 
+        public bool IsExternalDisassemblerEnabled(BinaryFileKind fileKind) {
+            return GetExternalDisassemblerOptions(fileKind).IsEnabled;
+        }
+
+        public bool IsExternalDisassemblerEnabled() {
+            foreach (var options in ExternalDisassemblerOptions.Values) {
+                if (options.IsEnabled) return true;
+            }
+
+            return false;
+        }
+
         public void AddRecentFile(string path) {
             // Keep at most N recent files, and move this one on the top of the list.
             // Search as case-insensitive so that C:\file and c:\file are considered the same.
