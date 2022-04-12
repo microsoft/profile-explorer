@@ -24,14 +24,14 @@ namespace IRExplorerUI {
         [ProtoMember(6)]
         public byte[] DocumentText;
         [ProtoMember(7)]
-        public List<Tuple<ulong, byte[]>> SectionStates;
+        public List<Tuple<int, byte[]>> SectionStates;
         [ProtoMember(8)]
-        public List<Tuple<ulong, PanelObjectPairState>> PanelStates;
+        public List<Tuple<int, PanelObjectPairState>> PanelStates;
         
 
         public LoadedDocumentState() {
-            SectionStates = new List<Tuple<ulong, byte[]>>();
-            PanelStates = new List<Tuple<ulong, PanelObjectPairState>>();
+            SectionStates = new List<Tuple<int, byte[]>>();
+            PanelStates = new List<Tuple<int, PanelObjectPairState>>();
         }
 
         public LoadedDocumentState(Guid id) : this() {
@@ -137,14 +137,14 @@ namespace IRExplorerUI {
             };
 
             foreach (var sectionState in SectionStates) {
-                state.SectionStates.Add(new Tuple<ulong, byte[]>(sectionState.Key.Id,
-                                                                 sectionState.Value as byte[]));
+                state.SectionStates.Add(new Tuple<int, byte[]>(sectionState.Key.Id,
+                                                               sectionState.Value as byte[]));
             }
 
             foreach (var panelState in PanelStates) {
                 foreach (var panelStatePair in panelState.Value) {
                     if (panelStatePair.Panel.SavesStateToFile) {
-                        state.PanelStates.Add(new Tuple<ulong, PanelObjectPairState>(
+                        state.PanelStates.Add(new Tuple<int, PanelObjectPairState>(
                                                   panelState.Key.Id,
                                                   new PanelObjectPairState(panelStatePair.Panel.PanelKind,
                                                                            panelStatePair.StateObject)));

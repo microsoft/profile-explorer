@@ -665,8 +665,8 @@ namespace IRExplorerCore {
                 };
 
                 var textFunc = GetOrCreateFunction(funcName);
-                var section = new IRTextSection(textFunc, 0, textFunc.Sections.Count + 1, sectionName, output, blockCount);
-                textFunc.Sections.Add(section);
+                var section = new IRTextSection(textFunc, sectionName, output, blockCount);
+                textFunc.AddSection(section);
 
                 // Notify client a new section has been read.
                 if (sectionTextHandler != null) {

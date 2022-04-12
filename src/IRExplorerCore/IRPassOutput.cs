@@ -14,6 +14,8 @@ namespace IRExplorerCore
             EndLine = endLine;
         }
 
+        public static IRPassOutput Empty => new IRPassOutput(0, 0, 0, 0);
+
         public long DataStartOffset { get; set; }
         /// <summary>
         /// One past the end

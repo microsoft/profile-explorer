@@ -59,8 +59,6 @@ namespace IRExplorerUI {
 
         public string BinaryFilePath { get; set; }
         public string DiffBinaryFilePath { get; set; }
-        public DisassemberResult Result { get; set; }
-        public DisassemberResult DiffResult { get; set; }
         public bool InDiffMode { get; set; }
 
         private async void OpenButton_Click(object sender, RoutedEventArgs e) {
@@ -83,49 +81,10 @@ namespace IRExplorerUI {
                 options.DisassemblerPath = Utils.CleanupPath(options.DisassemblerPath);
                 options.PostProcessorPath = Utils.CleanupPath(options.PostProcessorPath);
                 App.SaveApplicationSettings();
-
-                var task = loadTask_.CreateTask();
-                IsLoadingBinary = true;
-
-                Result = await DisassembleFile(task, BinaryFilePath);
-                DiffResult = InDiffMode ? await DisassembleFile(task, DiffBinaryFilePath) : null;
-
-                if (Result != null) {
-                    DialogResult = true;
-                    Close();
-                }
-                else if(!task.IsCanceled) {
-                    MessageBox.Show($"Filed to disassemble file {BinaryFilePath}", "IR Explorer",
-                                    MessageBoxButton.OK, MessageBoxImage.Exclamation);
-                }
-
-                IsLoadingBinary = false;
+                Close();
             }
         }
-
-        private async Task<DisassemberResult> DisassembleFile(CancelableTask task, string binaryFilePath) {
-            return await Session.DisassembleBinary(binaryFilePath, progressInfo => {
-                Dispatcher.BeginInvoke((Action)(() => {
-                    LoadProgressBar.Maximum = progressInfo.Total;
-                    LoadProgressBar.Value = progressInfo.Current;
-
-                    LoadProgressLabel.Text = progressInfo.Stage switch {
-                        DisassemblerStage.Disassembling => "Disassembling",
-                        DisassemblerStage.PostProcessing => "Post-processing",
-                    };
-
-                    if (progressInfo.Total != 0) {
-                        double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
-                        ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
-                        LoadProgressBar.IsIndeterminate = false;
-                    }
-                    else {
-                        LoadProgressBar.IsIndeterminate = true;
-                    }
-                }));
-            }, task);
-        }
-
+        
         private void CancelButton_Click(object sender, RoutedEventArgs e) {
             if(IsLoadingBinary) {
                 loadTask_.CancelTask();

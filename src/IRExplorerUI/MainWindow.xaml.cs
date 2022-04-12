@@ -53,6 +53,7 @@ using OxyPlot.Axes;
 using OxyPlot.Wpf;
 using OxyPlot.SkiaSharp.Wpf;
 using LinearAxis = OxyPlot.Axes.LinearAxis;
+using System.Drawing.Drawing2D;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -158,26 +159,48 @@ namespace IRExplorerUI {
             Activated += MainWindow_Activated;
             Deactivated += MainWindow_Deactivated;
 
-            var d = Disassembler.CreateForBinary(@"C:\work\s\imagick_r.exe");
+#if false
             var pdb = new PDBDebugInfoProvider(SymbolFileSourceOptions.Default);
+            
 
-            if (pdb.LoadDebugInfo(@"C:\work\s\imagick_r.pdb")) {
-                //var func = pdb.FindFunction("wcsnlen");
+            var d = Disassembler.CreateForBinary(@"D:\work\blender\LTCG\blender.exe", pdb);
+            if (pdb.LoadDebugInfo(@"D:\work\blender\LTCG\blender.pdb")) {
+
+                //var d = Disassembler.CreateForBinary(@"C:\work\xc.exe", pdb);
+                //if (pdb.LoadDebugInfo(@"C:\work\xc.pdb")) {
+
+                //var d = Disassembler.CreateForBinary(@"C:\work\s\imagick_r.exe", pdb);
+
+                //if (pdb.LoadDebugInfo(@"C:\work\s\imagick_r.pdb")) {
+                //var func2 = pdb.FindFunction("wmain");
+                 //d.DisassembleToText(func2);
+
                 var sw = Stopwatch.StartNew();
 
-                foreach (var func in pdb.EnumerateFunctions()) {
+                var functs = pdb.EnumerateFunctions(false).ToList();
+
+                for(int i = 0; i < functs.Count; i++) {
+                    var func = functs[i];
+
                     if (func.Size > 0) {
-                        Trace.WriteLine($"{func.Name}:");
+                        //fif (i % 1000 == 0) {
+                        //    Trace.TraceError($"At {i} of {functs.Count}");
+                        //    Trace.Flush();
+                        //}
+
+                        //Trace.WriteLine($"{func.Name}:");
 
                         var r = d.DisassembleToText(func);
-                        Trace.WriteLine(r);
+                        //Trace.WriteLine(r);
                     }
                 }
 
                 sw.Stop();
                 MessageBox.Show($"Took {sw.ElapsedMilliseconds} ms");
+                Trace.Flush();
                 Environment.Exit(0);
             }
+#endif
         }
 
         protected override AutomationPeer OnCreateAutomationPeer() {

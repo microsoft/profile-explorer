@@ -41,6 +41,8 @@ namespace IRExplorerUI {
         public BinaryFileKind FileKind { get; set; }
         [ProtoMember(8)]
         public bool UseInputFileName { get; set; }
+        [ProtoMember(9)]
+        public bool IsEnabled { get; set; }
 
         public ExternalDisassemblerOptions(BinaryFileKind fileKind) {
             FileKind = fileKind;
@@ -133,13 +135,13 @@ namespace IRExplorerUI {
     }
 
     public class DisassemberResult {
-        public DisassemberResult(string disassemblyPath, string debugInfoPath) {
+        public DisassemberResult(string disassemblyPath, string debugInfoFilePath) {
             DisassemblyPath = disassemblyPath;
-            DebugInfoPath = debugInfoPath;
+            DebugInfoFilePath = debugInfoFilePath;
         }
 
         public string DisassemblyPath { get; set; }
-        public string DebugInfoPath { get; set; }
+        public string DebugInfoFilePath { get; set; }
     }
 
     public class ExternalDisassembler : IDisassembler {
