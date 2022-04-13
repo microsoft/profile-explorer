@@ -26,8 +26,8 @@ namespace IRExplorerCore.ASM {
             return new CFGReachabilityReferenceFilter(function);
         }
 
-        public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
-            return new ASMIRSectionParser(this, errorHandler);
+        public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize) {
+            return new ASMIRSectionParser(functionSize, this, errorHandler);
         }
 
         public IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true) {

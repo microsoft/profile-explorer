@@ -1957,12 +1957,15 @@ namespace IRExplorerUI {
                 return callGraph;
             }
 
+            Session.SetApplicationProgress(true, double.NaN, "Generating call graph");
+
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
-            //await Task.Run(() => callGraph.Execute());
+            await Task.Run(() => callGraph.Execute());
 
             // Cache the call graph, can be expensive to compute.
             callGraphCache_[summary] = callGraph;
+            Session.SetApplicationProgress(false, 0);
             return callGraph;
         }
 
@@ -2510,8 +2513,6 @@ namespace IRExplorerUI {
             AddStatisticsFunctionListColumns(false);
             AddStatisticsChildFunctionListColumns(false);
             RefreshFunctionList();
-
-            Session.SetApplicationProgress(false, double.NaN);
         }
 
         private async Task<ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>>
@@ -2521,13 +2522,14 @@ namespace IRExplorerUI {
             }
 
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary_);
-            Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
             Trace.TraceInformation("ComputeFunctionStatistics: start");
 
             var tasks = new List<Task>();
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
             var callGraph = await GenerateCallGraph(summary_);
+
+            Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
             functionStatMap_ = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
 
             foreach (var function in summary_.Functions) {
@@ -2543,6 +2545,8 @@ namespace IRExplorerUI {
             }
 
             await Task.WhenAll(tasks.ToArray());
+            
+            Session.SetApplicationProgress(false, double.NaN);
             return functionStatMap_;
         }
 

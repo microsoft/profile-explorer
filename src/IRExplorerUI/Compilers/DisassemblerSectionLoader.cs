@@ -64,7 +64,14 @@ namespace IRExplorerUI.Compilers {
                 return null;
             }
 
-            var (sectionParser, errorHandler) = InitializeParser();
+            // Function size needed by parser to properly set instr. sizes.
+            long functionSize = 0;
+
+            if (funcToDebugInfoMap_.TryGetValue(section.ParentFunction, out var funcInfo)) {
+                functionSize = funcInfo.Size;
+            }
+
+            var (sectionParser, errorHandler) = InitializeParser(functionSize);
             FunctionIR function;
 
             if (sectionParser == null) {

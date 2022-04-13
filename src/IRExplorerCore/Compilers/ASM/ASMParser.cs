@@ -46,33 +46,37 @@ namespace IRExplorerCore.ASM {
         //? TODO: ILT+foo func names not parsed properly
 
         static readonly StringTrie<Keyword> keywordTrie_ = new StringTrie<Keyword>(keywordMap_);
-
+        
+        private long functionSize_;
         private long? initialAddress_;
         private bool makeNewBlock_;
         private bool connectNewBlock_;
         private InstructionIR previousInstr_;
+        private long previousInstrAddress_;
         private int instrCount_;
         private Dictionary<long, int> addressToBlockNumberMap_;
         private Dictionary<long, Tuple<TextLocation, int>> potentialLabelMap_;
-        private HashSet<BlockIR> comittedBlocks_;
+        private HashSet<BlockIR> committedBlocks_;
         private Dictionary<BlockIR, long> referencedBlocks_;
 
         public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
-                         RegisterTable registerTable,
-                         ReadOnlyMemory<char> sectionText, IRTextSection section)
+                         RegisterTable registerTable, ReadOnlyMemory<char> sectionText, 
+                         IRTextSection section, long functionSize)
             : base(irInfo, errorHandler, registerTable, section) {
             Reset();
             Initialize(sectionText);
+            functionSize_ = functionSize;
             MetadataTag.EnsureCapacity(section.LineCount + 1);
             SkipToken();
         }
 
         public ASMParser(ICompilerIRInfo irInfo, IRParsingErrorHandler errorHandler,
-            RegisterTable registerTable,
-            string sectionText, IRTextSection section)
+                         RegisterTable registerTable, string sectionText, 
+                         IRTextSection section, long functionSize)
             : base(irInfo, errorHandler, registerTable, section) {
             Reset();
             Initialize(sectionText);
+            functionSize_ = functionSize;
             MetadataTag.EnsureCapacity(section.LineCount + 1);
             SkipToken();
         }
@@ -82,7 +86,7 @@ namespace IRExplorerCore.ASM {
             makeNewBlock_ = true;
             addressToBlockNumberMap_ = new Dictionary<long, int>();
             potentialLabelMap_ = new Dictionary<long, Tuple<TextLocation, int>>();
-            comittedBlocks_ = new HashSet<BlockIR>();
+            committedBlocks_ = new HashSet<BlockIR>();
             referencedBlocks_ = new Dictionary<BlockIR, long>();
         }
 
@@ -132,7 +136,7 @@ namespace IRExplorerCore.ASM {
                         }
 
                         function.Blocks.Add(newBlock);
-                        comittedBlocks_.Add(newBlock);
+                        committedBlocks_.Add(newBlock);
                         block = newBlock;
                         startElement = current_;
                     }
@@ -161,6 +165,7 @@ namespace IRExplorerCore.ASM {
             Debug.Assert(function.InstructionCount == instrCount_);
             Debug.Assert(function.TupleCount == instrCount_);
             
+            SetLastInstructionSize();
             function.InstructionCount = instrCount_;
             function.TupleCount = instrCount_;
             FixBlockReferences(function);
@@ -200,7 +205,7 @@ namespace IRExplorerCore.ASM {
                 var refBlock = pair.Key;
                 var refAddress = pair.Value;
 
-                if (comittedBlocks_.Contains(refBlock)) {
+                if (committedBlocks_.Contains(refBlock)) {
                     continue;
                 }
 
@@ -276,7 +281,7 @@ namespace IRExplorerCore.ASM {
                         }
                     }
 
-                    comittedBlocks_.Add(refBlock);
+                    committedBlocks_.Add(refBlock);
                 }
 
                 if (!blockAdded) {
@@ -313,10 +318,7 @@ namespace IRExplorerCore.ASM {
                 // 0000000140068023: 49 BF 70 89 DE 5E  mov         r15,9375B7955EDE8970h
                 //                   95 B7 75 93
                 if (previousInstr_ != null) {
-                    int prevInstrSize = 1;
-                    prevInstrSize = CountInstructionBytes(prevInstrSize);
-                    MetadataTag.ElementSizeMap[previousInstr_] += prevInstrSize;
-                    MetadataTag.FunctionSize += prevInstrSize;
+                    SkipInstructionBytes();
                     return false;
                 }
 
@@ -325,8 +327,7 @@ namespace IRExplorerCore.ASM {
             }
 
             // Skip over the list of instruction bytecodes.
-            int instrSize = 0;
-            instrSize = CountInstructionBytes(instrSize);
+            SkipInstructionBytes();
             var (instr, isJump) = ParseInstruction(block);
 
             // Update metadata.
@@ -336,21 +337,37 @@ namespace IRExplorerCore.ASM {
             MetadataTag.AddressToElementMap[address] = instr;
             MetadataTag.OffsetToElementMap[offset] = instr;
             MetadataTag.ElementToOffsetMap[instr] = offset;
-            MetadataTag.ElementSizeMap[instr] = instrSize;
-            MetadataTag.FunctionSize += instrSize;
+            SetPreviousInstructionSize(address);
+
+            previousInstr_ = instr;
+            previousInstrAddress_ = address;
 
             SetTextRange(instr, startToken, current_, adjustment: 1);
             SkipToLineEnd();
             return isJump; // A jump ends the current block.
         }
 
+        private void SetPreviousInstructionSize(long address) {
+            if (previousInstr_ != null) {
+                int instrSize = (int)(address - previousInstrAddress_);
+                MetadataTag.ElementSizeMap[previousInstr_] = instrSize;
+                MetadataTag.FunctionSize += instrSize;
+            }
+        }
+
+        private void SetLastInstructionSize() {
+            if (previousInstr_ != null) {
+                int instrSize = (int)(functionSize_ - MetadataTag.FunctionSize);
+                MetadataTag.ElementSizeMap[previousInstr_] = instrSize;
+                MetadataTag.FunctionSize += instrSize;
+            }
+        }
+
         private (InstructionIR, bool) ParseInstruction(BlockIR block) {
             bool isJump = false;
             var instr = new InstructionIR(NextElementId, InstructionKind.Other, block);
-            instrCount_++;
-            
             block.AddTuple(instr);
-            previousInstr_ = instr;
+            instrCount_++;
 
             // Extract the opcode.
             if (IsIdentifier()) {
@@ -573,24 +590,32 @@ namespace IRExplorerCore.ASM {
 #endif
         }
 
-        private int CountInstructionBytes(int instrSize) {
-            // For ARM64, the bytecodes are not found in the assembly listing
-            // and each instruction is 4 bytes.
+        private void SkipInstructionBytes() {
+            // For ARM64 each instruction is 4 bytes.
             if (irInfo_.Mode == IRMode.ARM64) {
-                SkipHexNumber(8);
-                return 4;
+                if (SkipHexNumber(8)) {
+                    return;
+                }
             }
 
             while (SkipHexNumber(2)) { // Groups of 2 digits.
-                instrSize++;
             }
-
-            return instrSize;
         }
 
         private void SetInstructionOpcode(InstructionIR instr) {
-            instr.OpcodeText = TokenData();
             instr.OpcodeLocation = current_.Location;
+            instr.OpcodeText = TokenData();
+
+            if (NextTokenIs(TokenKind.Dot) && irInfo_.Mode == IRMode.ARM64) {
+                // Some disassemblers for ARM64 print branch opcodes
+                // like b.eq b.le instead of beq ble and so on.
+                SkipToken(); // Skip b
+                SkipToken(); // Skip .
+
+                if (IsIdentifier()) {
+                    instr.OpcodeText = $"{instr.OpcodeText}{TokenData()}".AsMemory();
+                }
+            }
 
             switch (irInfo_.Mode) {
                 case IRMode.x86_64: {

@@ -392,8 +392,7 @@ namespace IRExplorerUI {
                 using var centerForm = new DialogCenteringHelper(this);
 
                 if (MessageBox.Show("Save session changes before closing?", "IR Explorer",
-                                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No,
-                                    MessageBoxOptions.DefaultDesktopOnly) ==
+                                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
                     MessageBoxResult.Yes) {
                     SaveDocumentExecuted(this, null);
                 }
@@ -406,8 +405,7 @@ namespace IRExplorerUI {
                     using var centerForm = new DialogCenteringHelper(this);
 
                     if (MessageBox.Show("Save file changes as a new session before closing?", "IR Explorer",
-                                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No,
-                                        MessageBoxOptions.DefaultDesktopOnly) ==
+                                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) ==
                         MessageBoxResult.Yes) {
                         SaveDocumentExecuted(this, null);
                     }
