@@ -523,7 +523,7 @@ namespace IRExplorerUI.Profile {
 
                     var imageList = procCache.GetProcessImages(mainProcessId);
 
-                    if (imageList == null) {
+                    if (imageList == null || imageList.Count == 0) {
                         var imageMap = new HashSet<IImage>();
 
                         foreach (var sample in samples) {

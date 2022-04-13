@@ -2540,7 +2540,10 @@ namespace IRExplorerUI {
                 tasks.Add(taskFactory.StartNew(() => {
                     var section = function.Sections[0];
                     var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
-                    functionStatMap_.TryAdd(function, sectionStats);
+
+                    if (sectionStats != null) {
+                        functionStatMap_.TryAdd(function, sectionStats);
+                    }
                 }, cancelableTask.Token));
             }
 
@@ -2572,6 +2575,11 @@ namespace IRExplorerUI {
         private FunctionCodeStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader,
             CallGraph callGraph) {
             var result = loader.LoadSection(section);
+
+            if (result == null) {
+                return null;
+            }
+
             var stats = FunctionCodeStatistics.Compute(result.Function, Session.CompilerInfo.IR);
 
             if (callGraph != null) {

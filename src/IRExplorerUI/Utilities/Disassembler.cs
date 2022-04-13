@@ -19,8 +19,7 @@ namespace IRExplorerUI.Utilities {
     }
 
     public class Disassembler : IDisposable {
-        private byte[] data_;
-        private long dataStartRVA_;
+        private List<(byte[] Data, long StartRVA)> codeSectionData_;
         private long baseAddress_;
         private Machine architecture_;
         private IDebugInfoProvider debugInfo_;
@@ -34,27 +33,35 @@ namespace IRExplorerUI.Utilities {
                 return null;
             }
 
-            var textSection = peInfo.TextSectionHeader;
+            var codeSections = peInfo.CodeSectionHeaders;
+            var codeSectionData = new List<(byte[] Data, long StartRVA)>();
 
-            if (textSection.HasValue) {
-                var binaryInfo = peInfo.BinaryFileInfo;
-                return new Disassembler(binaryInfo.Architecture,
-                                        peInfo.GetSectionData(textSection.Value), 
-                                        textSection.Value.VirtualAddress,
-                                        binaryInfo.ImageBase,
-                                        debugInfo);
+            foreach (var section in codeSections) {
+                codeSectionData.Add((peInfo.GetSectionData(section), section.VirtualAddress));
             }
-            
-            return null;
+
+            var binaryInfo = peInfo.BinaryFileInfo;
+            return new Disassembler(binaryInfo.Architecture, codeSectionData,
+                                    binaryInfo.ImageBase,
+                                    debugInfo);
+        }
+
+        private Disassembler(Machine architecture, List<(byte[] Data, long StartRVA)> codeSectionData, long baseAddress = 0,
+            IDebugInfoProvider debugInfo = null) {
+            codeSectionData_ = codeSectionData;
+            architecture_ = architecture;
+            baseAddress_ = baseAddress;
+            debugInfo_ = debugInfo;
+            disasmHandle_ = Interop.Create(architecture);
         }
 
         public Disassembler(Machine architecture, byte[] data, long dataStartRva = 0, long baseAddress = 0,
                             IDebugInfoProvider debugInfo = null) {
             architecture_ = architecture;
-            data_ = data;
-            dataStartRVA_ = dataStartRva;
             baseAddress_ = baseAddress;
             debugInfo_ = debugInfo;
+            codeSectionData_ = new List<(byte[] Data, long StartRVA)>();
+            codeSectionData_.Add((data, dataStartRva));
             disasmHandle_ = Interop.Create(architecture);
         }
 
@@ -64,9 +71,11 @@ namespace IRExplorerUI.Utilities {
         }
 
         public string DisassembleToText(long startRVA, long size) {
-            var builder = new StringBuilder((int)(size / 4) + 1);
+            if (startRVA == 0 || size == 0) {
+                return "";
+            }
 
-            //SetDisassemblerOption(Interop.DisassemblerOptionType.SetInstructionDetails, Interop.DisassemblerOptionValue.Enable);
+            var builder = new StringBuilder((int)(size / 4) + 1);
 
             try {
                 foreach (var instr in DisassembleInstructions(startRVA, size, baseAddress_ + startRVA)) {
@@ -165,9 +174,8 @@ namespace IRExplorerUI.Utilities {
         }
 
         private bool IsValidCallAddress(int hexLength, long hexValue) {
-            return hexLength > 0 && 
-                   hexValue >= baseAddress_ && 
-                   hexValue < (baseAddress_ + data_.Length);
+            long rva = hexValue - baseAddress_;
+            return FindCodeSection(rva).Data != null;
         }
 
         private bool TryAppendFunctionName(StringBuilder builder, long rva) {
@@ -313,16 +321,27 @@ namespace IRExplorerUI.Utilities {
             Interop.SetDisassemblerOption(disasmHandle_, option, (IntPtr)value);
         }
 
-        private IEnumerable<Interop.Instruction> DisassembleInstructions(long startRVA, long size, long startAddress) {
-            using var instrBuffer = Interop.AllocateInstruction(disasmHandle_);
-            long offset = startRVA - dataStartRVA_;
+        private (byte[] Data, long StartRVA) FindCodeSection(long rva) {
+            foreach (var section in codeSectionData_) {
+                if (rva >= section.StartRVA && rva < (section.StartRVA + section.Data.Length)) {
+                    return section;
+                }
+            }
 
-            if (offset < 0 || (offset + size) > data_.Length) {
-                Trace.WriteLine($"Invalid disassembler offset/size {offset}/{size} for image of length {data_.Length}");
+            return (null, 0);
+        }
+
+        private IEnumerable<Interop.Instruction> DisassembleInstructions(long startRVA, long size, long startAddress) {
+            var codeSection = FindCodeSection(startRVA);
+
+            if (codeSection.Data == null) {
+                Trace.WriteLine($"Invalid disassembler RVA/size {startRVA}/{size}");
                 yield break;
             }
 
-            var dataBuffer = GCHandle.Alloc(data_, GCHandleType.Pinned);
+            using var instrBuffer = Interop.AllocateInstruction(disasmHandle_);
+            long offset = startRVA - codeSection.StartRVA;
+            var dataBuffer = GCHandle.Alloc(codeSection.Data, GCHandleType.Pinned);
             var dataBufferPtr = dataBuffer.AddrOfPinnedObject();
 
             IntPtr dataIteratorPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset);

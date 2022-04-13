@@ -18,7 +18,7 @@ namespace IRExplorerUI {
         public int IndirectCalls { get; set; }
         public int Callees { get; set; }
         public int OpcodeHash { get; set; }
-
+        
         public bool ComputeDiff(FunctionCodeStatistics other) {
             Size = other.Size - Size;
             Instructions = other.Instructions - Instructions;
