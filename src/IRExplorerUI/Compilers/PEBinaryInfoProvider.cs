@@ -2,6 +2,7 @@
 // // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.PortableExecutable;
@@ -91,19 +92,22 @@ namespace IRExplorerUI.Compilers {
             }
         }
 
-        public SectionHeader? TextSectionHeader {
+        public List<SectionHeader> CodeSectionHeaders {
             get {
+                var list = new List<SectionHeader>();
+
                 if (reader_.PEHeaders.PEHeader == null) {
-                    return null;
+                    return list;
                 }
 
                 foreach (var section in reader_.PEHeaders.SectionHeaders) {
-                    if (section.Name == ".text") {
-                        return section;
+                    if (section.SectionCharacteristics.HasFlag(SectionCharacteristics.MemExecute) ||
+                        section.SectionCharacteristics.HasFlag(SectionCharacteristics.ContainsCode)) {
+                        list.Add(section);
                     }
                 }
 
-                return null;
+                return list;
             }
         }
 

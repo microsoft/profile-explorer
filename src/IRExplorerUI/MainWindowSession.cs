@@ -820,7 +820,7 @@ namespace IRExplorerUI {
             var docInfo = sessionState_.FindLoadedDocument(section);
             var parsedSection = docInfo.Loader.LoadSection(section);
 
-            if (parsedSection.Function != null) {
+            if (parsedSection != null && parsedSection.Function != null) {
                 compilerInfo_.AnalyzeLoadedFunction(parsedSection.Function, section);
                 addressTag_ = parsedSection.Function.GetTag<AssemblyMetadataTag>();
             }
