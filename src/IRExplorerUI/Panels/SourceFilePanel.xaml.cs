@@ -12,21 +12,14 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
-using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using IRExplorerCore.IR.Tags;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
-using IRExplorerUI.Utilities;
 using Microsoft.Win32;
-using Microsoft.Windows.EventTracing;
-using static IRExplorerUI.ModuleReportPanel;
-using Color = System.Windows.Media.Color;
-using TimeSpan = System.TimeSpan;
 
 namespace IRExplorerUI {
     /// <summary>
@@ -39,7 +32,6 @@ namespace IRExplorerUI {
         private bool ignoreNextCaretEvent_;
         private bool disableCaretEvent_;
         private int selectedLine_;
-        private string currentFilePath_;
         private ElementHighlighter profileMarker_;
         private OverlayRenderer overlayRenderer_;
         private bool hasProfileInfo_;
@@ -47,6 +39,7 @@ namespace IRExplorerUI {
         private IRTextFunction sourceFileFunc_;
         private int hottestSourceLine_;
         private IRExplorerCore.IR.StackFrame currentInlinee_;
+        private bool sourceMapperDisabled_;
 
         public SourceFilePanel() {
             InitializeComponent();
@@ -106,7 +99,7 @@ namespace IRExplorerUI {
         }
 
         private string BrowseSourceFile() => BrowseSourceFile(
-            filter: "C/C++ source files|*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.hxx;*.hh|All Files|*.*",
+            filter: "C/C++ source files|*.c;*.cpp;*.cc;*.cxx;*.h;*.hpp;*.hxx;*.hh|.NET source files|*.cs;*.vb|All Files|*.*",
             title: string.Empty);
 
         private string BrowseSourceFile(string filter, string title) {
@@ -116,7 +109,7 @@ namespace IRExplorerUI {
             };
 
             var result = fileDialog.ShowDialog();
-
+            
             if (result.HasValue && result.Value) {
                 return fileDialog.FileName;
             }
@@ -125,12 +118,8 @@ namespace IRExplorerUI {
         }
 
         private async Task<bool> LoadSourceFileImpl(string path, string originalPath, int sourceStartLine) {
-            currentFilePath_ = null;
-
             try {
                 string text = await File.ReadAllTextAsync(path);
-                currentFilePath_ = path;
-
                 SetSourceText(text);
                 SetPanelName(originalPath);
                 ScrollToLine(sourceStartLine);
@@ -149,12 +138,19 @@ namespace IRExplorerUI {
         }
 
         private void SetPanelName(string path) {
-            TitleSuffix = $" - {Utils.TryGetFileName(path)}";
-            TitleToolTip = path;
+            if (!string.IsNullOrEmpty(path)) {
+                TitleSuffix = $" - {Utils.TryGetFileName(path)}";
+                TitleToolTip = path;
+            }
+            else {
+                TitleSuffix = "";
+                TitleToolTip = null;
+            }
+
             Session.UpdatePanelTitles();
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e) {
+        private async void OpenButton_Click(object sender, RoutedEventArgs e) {
             string path = BrowseSourceFile();
 
             if (path != null) {
@@ -245,15 +241,25 @@ namespace IRExplorerUI {
         private async Task<bool> LoadSourceFile(DebugFunctionSourceFileInfo sourceInfo, IRTextFunction function) {
             // Check if the file can be found. If it's from another machine,
             // a mapping is done after the user is asked to pick the new location of the file.
-            string mappedSourceFilePath;
+            string mappedSourceFilePath = null;
 
             if (File.Exists(sourceInfo.FilePath)) {
                 mappedSourceFilePath = sourceInfo.FilePath;
             }
-            else {
+            else if(!sourceMapperDisabled_) {
                 mappedSourceFilePath = sourceFileMapper_.Map(sourceInfo.FilePath, () => 
                     BrowseSourceFile(filter: $"Source File|{Path.GetFileName(sourceInfo.OriginalFilePath)}",
                                      title: $"Open {sourceInfo.OriginalFilePath}"));
+
+                if (mappedSourceFilePath == null) {
+                    using var centerForm = new DialogCenteringHelper(this);
+
+                    if (MessageBox.Show("Continue asking for source file location during this session?", "IR Explorer",
+                                        MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == 
+                                        MessageBoxResult.No) {
+                        sourceMapperDisabled_ = true;
+                    }
+                }
             }
             
             if (mappedSourceFilePath != null &&
@@ -268,8 +274,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void HandleMissingSourceFile()
-        {
+        private void HandleMissingSourceFile() {
             TextView.Text = $"Failed to load profile source file";
             SetPanelName("");
             sourceFileLoaded_ = false;
@@ -492,6 +497,19 @@ namespace IRExplorerUI {
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private async void DefaultButton_Click(object sender, RoutedEventArgs e) {
+            if (section_ == null) {
+                return; //? TODO: Button should be disabled, needs commands
+            }
+
+            // Re-enable source mapper if it was disabled before.
+            sourceMapperDisabled_ = false;
+
+            if (await LoadSourceFileForFunction(section_.ParentFunction)) {
+                ScrollToLine(hottestSourceLine_);
+            }
         }
     }
 }

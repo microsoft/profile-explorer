@@ -208,6 +208,14 @@ namespace IRExplorerUI.Profile {
                 }
             }
 
+            public List<IImage> GetProcessImages(int id) {
+                if (processMap_.TryGetValue(id, out var list)) {
+                    return list.ConvertAll(item => item.Image);
+                }
+
+                return null;
+            }
+
             public int FindProcess(string imageName) {
                 if(processNameMap_.TryGetValue(imageName, out int id)) {
                     return id;
@@ -256,7 +264,6 @@ namespace IRExplorerUI.Profile {
                 return null;
             }
         }
-        
 
         private PerformanceCounterInfo ReadPerformanceCounterInfo(ReadOnlySpan<byte> data) {
             // counter id : 4
@@ -274,74 +281,8 @@ namespace IRExplorerUI.Profile {
         //? Use some chunked list to avoid reallocation and LOH
         private ChunkedList<PerformanceCounterEvent> events_;
         private long times_;
-        private long memory_;
-        
         
         private void CollectPerformanceCounterEvents(EventContext e) {
-            /*
-             *internal override unsafe void FixupData()
-    {
-      if (this.eventRecord->EventHeader.ThreadId == -1)
-        this.eventRecord->EventHeader.ThreadId = this.GetInt32At(this.HostOffset(4, 1));
-      if (this.eventRecord->EventHeader.ProcessId != -1)
-        return;
-      this.eventRecord->EventHeader.ProcessId = this.state.ThreadIDToProcessID(this.ThreadID, this.TimeStampQPC);
-    }
-
-    public override unsafe int ProcessID
-    {
-      get
-      {
-        int processId = this.eventRecord->EventHeader.ProcessId;
-        if (processId == -1)
-          processId = this.state.ThreadIDToProcessID(this.ThreadID, this.TimeStampQPC);
-        return processId;
-      }
-    }
-
-
-
-            if ((tracking & ParserTrackingOptions.ThreadToProcess) != 0 && (state.callBacksSet & ParserTrackingOptions.ThreadToProcess) == 0)
-	{
-		state.callBacksSet |= ParserTrackingOptions.ThreadToProcess;
-		ThreadStartGroup += delegate(ThreadTraceData data)
-		{
-			state.threadIDtoProcessID.Add((ulong)data.ThreadID, 0L, data.ProcessID);
-		};
-		ThreadEndGroup += delegate(ThreadTraceData data)
-		{
-			int value2;
-			if (source.IsRealTime)
-			{
-				state.threadIDtoProcessID.Remove((ulong)data.ThreadID);
-			}
-			else if (!state.threadIDtoProcessID.TryGetValue((ulong)data.ThreadID, data.TimeStampQPC, out value2))
-			{
-				if (state.threadIDtoProcessIDRundown == null)
-				{
-					state.threadIDtoProcessIDRundown = new HistoryDictionary<int>(100);
-				}
-				state.threadIDtoProcessIDRundown.Add((ulong)data.ThreadID, -data.TimeStampQPC, data.ProcessID);
-			}
-             *
-             * --------------------------------
-             *
-             * 
-// Microsoft.Diagnostics.Tracing.Parsers.KernelTraceEventParser
-using System;
-using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
-
-protected internal override void EnumerateTemplates(Func<string, string, EventFilterResponse> eventsToObserve, Action<TraceEvent> callback)
-{
-	if (s_templates == null)
-	{
-		s_templates = new TraceEvent[194]
-		{
-			new EventTraceHeaderTraceData(null, 65535, 0, "EventTrace", EventTraceTaskGuid, 0, "Header", ProviderGuid, ProviderName, null),
-		};
-	}
-             */
-
             if (e.Event.Id == 47) {
                 if (e.Event.Data.Length > 0) {
                     events_.Add(new PerformanceCounterEvent() {
@@ -414,43 +355,24 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                       ProfileLoadProgressHandler progressCallback,
                       CancelableTask cancelableTask) {
             try {
-                options_ = options;
-
                 // Extract just the file name.
+                options_ = options;
+                times_ = 0;
                 var initialImageName = imageName;
-                var image = Utils.TryGetFileName(imageName);
-
-                //? TODO: This is needed only when the already opened file is a DLL and not the EXE
-                //if (!options.BinaryNameWhitelist.Contains(image)) {
-                //    options.BinaryNameWhitelist.Add(image);
-                //}
-
                 imageName = Utils.TryGetFileNameWithoutExtension(imageName);
 
-                times_ = 0;
-                memory_ = GC.GetTotalMemory(true);
-
                 var imageModuleMap = new Dictionary<IImage, ModuleInfo>();
-
 
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
                     Trace.WriteLine($"Init at {DateTime.Now}");
-                    //Trace.Flush();
-
-                    // map IImage -> moduleInfo
-                    // assume moduleInfo doesn't change, check prev iimage
-
+                    
                     IImage prevImage = null;
                     ModuleInfo prevModule = null;
 
                     // Start getting the function address data while the trace is loading.
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-
-                    // Setup module for main binary.
-                    //mainModule_.Initialize(mainSummary_, FromSummary(mainSummary_));
-                    //var mainBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(mainModule_.ModuleDocument.BinaryFilePath);
-
+                    
                     // Load the trace.
                     var settings = new TraceProcessorSettings {
                         AllowLostEvents = true
@@ -463,6 +385,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     var procs = trace.UseProcesses();
 
                     var sw = Stopwatch.StartNew();
+                    var swTotal = Stopwatch.StartNew();
 
                     Trace.WriteLine($"Start load at {DateTime.Now}");
                     //Trace.Flush();
@@ -555,24 +478,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         }
                         else {
                             if (!imageModuleMap.TryGetValue(queryImage, out var imageModule)) {
-                                // queryImage.Checksum
-
-                                //? TODO: Just start a new session
-#if true
-                                if (queryImage.FileName.Contains("imag")) {
-                                    ;
-                                }
                                 imageModule = new ModuleInfo(options_, session_);
-#else
-                                if ((mainBinaryInfo != null && mainBinaryInfo.Checksum == queryImage.Checksum) ||
-                                    queryImage.FileName.Contains(mainModule_.Summary.ModuleName, StringComparison.OrdinalIgnoreCase)) {
-                                    // This is the main image, add it to the map.
-                                    imageModule = mainModule_;
-                                }
-                                else {
-                                    imageModule = new ModuleInfo(options_, session_);
-                                }
-#endif
                                 imageModuleMap[queryImage] = imageModule;
 
                                 //? Needs some delay-load, can't disasm every dll for no reason
@@ -587,14 +493,14 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                                 //? TODO: New doc not registerd properly with session, reload crashes
                                 if (await imageModule.Initialize(FromETLImage(queryImage))) {
-                                    Trace.WriteLine($"  - Init in {sw.Elapsed}");
+                                    Trace.WriteLine($"  - Init in {sw2.Elapsed}");
                                     sw2.Restart();
 
                                     if (!await imageModule.InitializeDebugInfo()) {
                                         Trace.TraceWarning($"Failed to load debug info for image: {queryImage.FileName}");
                                     }
                                     else {
-                                        Trace.WriteLine($"  - Loaded debug info in {sw.Elapsed}");
+                                        Trace.WriteLine($"  - Loaded debug info in {sw2.Elapsed}");
                                     }
                                 }
                             }
@@ -608,60 +514,62 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     }
 
                     Trace.WriteLine($"Start preload symbols {DateTime.Now}");
-                    var imageTimeMap = new Dictionary<IImage, TimeSpan>();
+                    //var imageTimeMap = new Dictionary<IImage, TimeSpan>();
 
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
                         Total = 0,
                         Current = 0
                     });
 
-                    foreach (var sample in samples) {
-                        if (!options.IncludeKernelEvents &&
-                            (sample.IsExecutingDeferredProcedureCall == true ||
-                             sample.IsExecutingInterruptServicingRoutine == true)) {
-                            continue; //? TODO: Is this all kernel?
-                        }
+                    var imageList = procCache.GetProcessImages(mainProcessId);
 
-                        if (sample.Process.Id != mainProcessId || sample.Stack == null) {
-                            continue;
-                        }
+                    if (imageList == null) {
+                        var imageMap = new HashSet<IImage>();
 
-                        foreach (var frame in sample.Stack.Frames) {
-                            if (frame.Image != null && frame.Image.FileName != null) {
-                                imageTimeMap.AccumulateValue(frame.Image, sample.Weight.TimeSpan);
+                        foreach (var sample in samples) {
+                            if (!options.IncludeKernelEvents &&
+                                (sample.IsExecutingDeferredProcedureCall == true ||
+                                 sample.IsExecutingInterruptServicingRoutine == true)) {
+                                continue; //? TODO: Is this all kernel?
+                            }
+
+                            if (sample.Process.Id != mainProcessId || sample.Stack == null) {
+                                continue;
+                            }
+
+                            foreach (var frame in sample.Stack.Frames) {
+                                if (frame.Image != null && frame.Image.FileName != null) {
+                                    //imageTimeMap.AccumulateValue(frame.Image, sample.Weight.TimeSpan);
+                                    imageMap.Add(frame.Image); //? TODO: This can stop once all images in process added
+                                }
                             }
                         }
+
+                        imageList = imageMap.ToList();
                     }
 
-                    var imageTimeList = imageTimeMap.ToList();
-                    imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
-                    int imageLimit = Math.Min(2, imageTimeList.Count);  //? TODO: Hacky limit to avoid slowdown
-
-                    async Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
-                        if (options == null) {
-                            // Make sure the binary directory is also included in the symbol search.
-                            options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
-                            options.InsertSymbolPath(binaryFile.ImagePath);
-                        }
-
-                        return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options);
-                    }
+                    //var imageTimeList = imageTimeMap.ToList();
+                    //imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
+                    int imageLimit = imageList.Count;
 
 #if true
-                    // 9/24 sec MT/ST
+                    // Locate the referenced binary files. This will download them
+                    // from the symbol server if option activated and not yet on local machine.
                     var binTaskList = new Task<string>[imageLimit];
                     var pdbTaskList = new Task<string>[imageLimit];
                     var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
                     binSearchOptions.InsertSymbolPath(initialImageName);
 
                     for (int i = 0; i < imageLimit; i++) {
-                        var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
+                        var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FileName);
                         acceptedImages.Add(name.ToLowerInvariant());
 
-                        var binaryFile = FromETLImage(imageTimeList[i].Item1);
+                        var binaryFile = FromETLImage(imageList[i]);
                         binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, binSearchOptions);
+                        //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
                     }
 
+                    // Determine the compiler target for the new session.
                     IRMode irMode = IRMode.Default;
 
                     for (int i = 0; i < imageLimit; i++) {
@@ -671,8 +579,6 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(binaryFilePath);
 
                             if (binaryInfo != null) {
-                                Trace.WriteLine($"=> Profile arch {binaryInfo.Architecture}");
-
                                 switch (binaryInfo.Architecture) {
                                     case System.Reflection.PortableExecutable.Machine.Arm:
                                     case System.Reflection.PortableExecutable.Machine.Arm64: {
@@ -697,13 +603,15 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
 
                         if (File.Exists(binaryFilePath)) {
                             Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
-                            var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
+                            var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FileName);
                             acceptedImages.Add(name.ToLowerInvariant());
 
                             pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
                         }
                     }
 
+                    // Wait for the PDBs to be loaded.
+                    //? TODO: Processing could continue
                     for (int i = 0; i < imageLimit; i++) {
                         if (pdbTaskList[i] != null) {
                             var pdbPath = await pdbTaskList[i];
@@ -742,6 +650,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                     // Trace.WriteLine($"Done process samples in {sw.Elapsed} at {DateTime.Now}");
 
                     int temp = 0;
+                    var missing = new HashSet<string>();
 
                     foreach (var sample in samples) {
                         temp++;
@@ -834,6 +743,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             DebugFunctionInfo funcInfo = null;
 
                             if (frame.Image == null) {
+                                continue; //? TODO: Disabled for now
                                 // sample.IP matches JIT load addr
 
                                 //? Assume it's the JIT code, shows up as not belonging to any module.
@@ -859,7 +769,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 }
 
                                 frameRva = sample.InstructionPointer.Value;
-                                funcInfo = module.FindFunctionByRVA2(frameRva);
+                                funcInfo = module.FindDebugFunctionInfo(frameRva);
 
                                 if (funcInfo.IsUnknown) {
                                     if (isTopFrame) {
@@ -891,7 +801,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                                 if (module != null && module.HasDebugInfo) {
                                     //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
                                     frameRva = frame.RelativeVirtualAddress.Value;
-                                    funcInfo = module.FindFunctionByRVA2(frameRva);
+                                    funcInfo = module.FindDebugFunctionInfo(frameRva);
                                     funcName = funcInfo.Name;
                                     funcRva = funcInfo.RVA;
                                     
@@ -954,9 +864,9 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
 
                             if (textFunction == null) {
-                                if (track) {
-                                    Trace.WriteLine($"  - Skip missing frame {funcName}");
-                                }
+                                //if (missing.Add(funcName)) {
+                                //    Trace.WriteLine($"  - Skip missing frame {funcName} in {frame.Image.FileName}");
+                                //}
 
                                 prevStackFunc = null;
                                 prevStackProfile = null;
@@ -1073,7 +983,7 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                             }
 
                             long counterRVA = counter.IP - image.AddressRange.BaseAddress.Value;
-                            var funcInfo = module.FindFunctionByRVA2(counterRVA);
+                            var funcInfo = module.FindDebugFunctionInfo(counterRVA);
 
                             if (funcInfo.Name == null) {
                                 continue;
@@ -1089,9 +999,8 @@ protected internal override void EnumerateTemplates(Func<string, string, EventFi
                         }
                     }
                     
-                    Trace.WriteLine($"Done process PMC in {sw.Elapsed} at {DateTime.Now}");
-                    Trace.Flush();
-                    long memory = GC.GetTotalMemory(true);
+                    Trace.WriteLine($"Done process PMC in {sw.Elapsed}");
+                    Trace.WriteLine($"Done loading profile in {swTotal.Elapsed}");
 
                     //proto.PerfCounters = events_;
 

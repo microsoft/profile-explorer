@@ -52,9 +52,9 @@ namespace IRExplorerCore {
             sectionCache_ = new LurchTable<IRTextSection, ParsedIRTextSection>(LurchTableOrder.Insertion, CACHE_LIMIT);
         }
 
-        protected (IRSectionParser, IRParsingErrorHandler) InitializeParser() {
+        protected (IRSectionParser, IRParsingErrorHandler) InitializeParser(long functionSize = 0) {
             var errorHandler = irInfo_.CreateParsingErrorHandler();
-            return (irInfo_.CreateSectionParser(errorHandler), errorHandler);
+            return (irInfo_.CreateSectionParser(errorHandler, functionSize), errorHandler);
         }
 
         protected void CacheParsedSection(IRTextSection section, FunctionIR function, ParsedIRTextSection result) {

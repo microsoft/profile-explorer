@@ -58,27 +58,8 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceInformation($"Found local path for image {imageName}: {filePath}");
             }
 
-            var disassembler = session_.CompilerInfo.CreateDisassembler(filePath);
-            var disasmResult = await disassembler.DisassembleAsync(filePath, session_.CompilerInfo);
-
-            if(disasmResult == null) {
-                Trace.TraceWarning($"Failed to disassemble image {imageName}");
-                return false;
-            }
-
-            var loadedDoc = await Task.Run(() => {
-                var loadedDoc = new LoadedDocument(disasmResult.DisassemblyPath, imageName, Guid.NewGuid());
-                loadedDoc.Loader = new DocumentSectionLoader(disasmResult.DisassemblyPath, session_.CompilerInfo.IR);
-                loadedDoc.Summary = loadedDoc.Loader.LoadDocument(null);
-
-                if (loadedDoc.Summary == null) {
-                    loadedDoc.Dispose();
-                    return null;
-                }
-
-                return loadedDoc;
-            });
-
+            var loadedDoc = await session_.LoadBinaryDocument(filePath, filePath);
+            
             if (loadedDoc == null) {
                 Trace.TraceWarning($"Failed to load document for image {imageName}");
                 return false;
@@ -86,8 +67,6 @@ namespace IRExplorerUI.Profile {
 
             //? TODO: Register must be done at the end
             session_.SessionState.RegisterLoadedDocument(loadedDoc);
-            loadedDoc.BinaryFilePath = filePath;
-            loadedDoc.DebugInfoFilePath = disasmResult.DebugInfoFilePath;
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
 
@@ -125,7 +104,7 @@ namespace IRExplorerUI.Profile {
 
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
 
-            foreach (var funcInfo in DebugInfo.EnumerateFunctions(true)) {
+            foreach (var funcInfo in DebugInfo.EnumerateFunctions(false)) {
                 // There can be 0 size func. such as __guard_xfg, ignore.
                 if (funcInfo.RVA != 0 && funcInfo.Size > 0) {
                     functionRvaTree_.Add(funcInfo.StartRVA, funcInfo.EndRVA, funcInfo);
@@ -208,15 +187,7 @@ namespace IRExplorerUI.Profile {
             return null;
         }
         
-        public DebugFunctionInfo FindFunctionByRVA(long funcAddress) {
-            if (!HasDebugInfo) {
-                return DebugFunctionInfo.Unknown;
-            }
-
-            return DebugInfo.FindFunctionByRVA(funcAddress);
-        }
-
-        public DebugFunctionInfo FindFunctionByRVA2(long funcAddress) {
+        public DebugFunctionInfo FindDebugFunctionInfo(long funcAddress) {
             if (!HasDebugInfo) {
                 return DebugFunctionInfo.Unknown;
             }
@@ -228,15 +199,7 @@ namespace IRExplorerUI.Profile {
 
             return DebugFunctionInfo.Unknown;
         }
-
-        public DebugSourceLineInfo FindSourceLineByRVA(DebugFunctionInfo funcInfo, long rva) {
-            if (!HasDebugInfo) {
-                return DebugSourceLineInfo.Unknown;
-            }
-
-            return DebugInfo.FindSourceLineByRVA(rva);
-        }
-
+        
         public IRTextFunction FindFunction(long funcAddress) {
             if (!HasDebugInfo) {
                 return null;

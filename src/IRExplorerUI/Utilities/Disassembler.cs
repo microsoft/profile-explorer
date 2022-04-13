@@ -5,20 +5,12 @@ using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
-using AutoUpdaterDotNET;
-using Gee.External.Capstone;
-using Gee.External.Capstone.Arm64;
-using Gee.External.Capstone.X86;
-using Google.Protobuf.WellKnownTypes;
 using IntervalTree;
 using IRExplorerCore;
 using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using Microsoft.Win32.SafeHandles;
-using Microsoft.Windows.EventTracing.Metadata;
-using Microsoft.Windows.EventTracing.Symbols;
 
 namespace IRExplorerUI.Utilities {
     public class Disassembler : IDisposable {

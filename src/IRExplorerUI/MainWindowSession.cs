@@ -525,15 +525,16 @@ namespace IRExplorerUI {
                 new DocumentSectionLoader(filePath, compilerInfo_.IR));
         }
 
+        public Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath) {
+            return Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), null));
+        }
+
         private LoadedDocument LoadBinaryDocument(string filePath, string modulePath, Guid id, 
                                                   ProgressInfoHandler progressHandler) {
             if (App.Settings.IsExternalDisassemblerEnabled()) {
                 var disasmResult = DisassembleBinary(filePath).Result;
 
                 if (disasmResult == null) {
-                    using var centerForm = new DialogCenteringHelper(this);
-                    MessageBox.Show("Failed to find system disassembler", "IR Explorer",
-                                    MessageBoxButton.OK, MessageBoxImage.Warning);
                     return null;
                 }
 
@@ -1592,21 +1593,23 @@ namespace IRExplorerUI {
         }
 
         public void SetApplicationProgress(bool visible, double percentage, string title = null) {
-            if (visible && !documentLoadProgressVisible_) {
-                ShowProgressBar(title);
-            }
-            else if (!visible && documentLoadProgressVisible_) {
-                HideProgressBar();
-            }
+            Dispatcher.BeginInvoke(() => {
+                if (visible && !documentLoadProgressVisible_) {
+                    ShowProgressBar(title);
+                }
+                else if (!visible && documentLoadProgressVisible_) {
+                    HideProgressBar();
+                }
 
-            if (double.IsNaN(percentage)) {
-                DocumentLoadProgressBar.IsIndeterminate = true;
-            }
-            else {
-                DocumentLoadProgressBar.IsIndeterminate = false;
-                percentage = Math.Max(percentage, DocumentLoadProgressBar.Value);
-                DocumentLoadProgressBar.Value = percentage;
-            }
+                if (double.IsNaN(percentage)) {
+                    DocumentLoadProgressBar.IsIndeterminate = true;
+                }
+                else {
+                    DocumentLoadProgressBar.IsIndeterminate = false;
+                    percentage = Math.Max(percentage, DocumentLoadProgressBar.Value);
+                    DocumentLoadProgressBar.Value = percentage;
+                }
+            }, DispatcherPriority.Render);
         }
     }
 }

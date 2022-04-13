@@ -944,7 +944,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            await SectionPanel.Update();
+            //await SectionPanel.Update();
             SectionPanel.OnSessionStart();
         }
 

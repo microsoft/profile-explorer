@@ -29,7 +29,7 @@ namespace IRExplorerCore {
         IRMode Mode { get; set; }
         IRSectionReader CreateSectionReader(string filePath, bool expectSectionHeaders = true);
         IRSectionReader CreateSectionReader(byte[] textData, bool expectSectionHeaders = true);
-        IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler);
+        IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize = 0);
         IRParsingErrorHandler CreateParsingErrorHandler();
         IReachableReferenceFilter CreateReferenceFilter(FunctionIR function);
         InstrOffsetData InstructionOffsetData { get; }

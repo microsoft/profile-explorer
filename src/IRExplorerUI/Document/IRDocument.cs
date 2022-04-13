@@ -3663,6 +3663,10 @@ namespace IRExplorerUI {
 
 
         private IRTextSection FindCallTargetSection(IRElement element) {
+            if (!element.HasName) {
+                return null;
+            }
+
             var targetFunc = Section.ParentFunction.ParentSummary.FindFunction(element.Name);
 
             if (targetFunc == null) {

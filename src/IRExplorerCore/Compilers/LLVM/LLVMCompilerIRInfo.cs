@@ -20,7 +20,7 @@ namespace IRExplorerCore.LLVM {
             return new LLVMSectionReader(textData, expectSectionHeaders);
         }
 
-        public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler) {
+        public IRSectionParser CreateSectionParser(IRParsingErrorHandler errorHandler, long functionSize) {
             return null;
         }
 
