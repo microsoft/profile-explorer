@@ -13,6 +13,11 @@ using IRExplorerUI.Compilers;
 using Microsoft.Win32.SafeHandles;
 
 namespace IRExplorerUI.Utilities {
+    public class DisassemblerOptions {
+        public bool IncludeBytes { get; set; }
+
+    }
+
     public class Disassembler : IDisposable {
         private byte[] data_;
         private long dataStartRVA_;
@@ -353,11 +358,7 @@ namespace IRExplorerUI.Utilities {
                 GC.SuppressFinalize(this);
             }
         }
-
-        ~Disassembler() {
-            Dispose(false);
-        }
-
+        
         static class Interop {
             [StructLayout(LayoutKind.Sequential)]
             public unsafe struct Instruction {

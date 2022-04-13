@@ -30,11 +30,12 @@ namespace IRExplorerUI.Compilers {
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
             progressHandler?.Invoke(null, new SectionReaderProgressInfo(true));
 
-            disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_);
             debugInfo_ = compilerInfo_.CreateDebugInfoProvider(binaryFilePath_);
             debugFilePath_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
 
             if (debugInfo_.LoadDebugInfo(debugFilePath_)) {
+                disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_);
+
                 foreach (var funcInfo in debugInfo_.EnumerateFunctions()) {
                     var func = new IRTextFunction(funcInfo.Name);
                     var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
