@@ -43,6 +43,7 @@ namespace IRExplorerCore {
 
         public CancellationToken Token => cancelToken_;
         public bool IsCanceled => cancelToken_.IsCancellationRequested;
+        public bool IsCompleted => !IsCanceled && taskCompletedEvent_.WaitOne(0);
 
         public void Dispose() {
             Dispose(true);
@@ -63,32 +64,35 @@ namespace IRExplorerCore {
             taskCompletedEvent_.WaitOne();
         }
 
-        public async Task WaitToCompleteAsync() {
+        public async Task<bool> WaitToCompleteAsync() {
+            //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
+            //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
+            return await WaitToCompleteAsync(TimeSpan.MaxValue);
+        }
+
+        public bool WaitToComplete(TimeSpan timeout) {
+            if (disposed_) {
+                return false;
+            }
+
+            return taskCompletedEvent_.WaitOne(timeout);
+        }
+
+        public async Task<bool> WaitToCompleteAsync(TimeSpan timeout) {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
             if (disposed_) {
-                return;
+                return false;
             }
 
-            await taskCompletedEvent_.AsTask();
-        }
-
-        public void WaitToComplete(TimeSpan timeout) {
-            if (disposed_) {
-                return;
+            try {
+                await taskCompletedEvent_.AsTask(timeout);
+                return true;
             }
-
-            taskCompletedEvent_.WaitOne(timeout);
-        }
-
-        public async Task WaitToCompleteAsync(TimeSpan timeout) {
-            //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
-            //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
-            if (disposed_) {
-                return;
+            catch (TaskCanceledException ex) {
+                // Triggered when timing out.
+                return false;
             }
-
-            await taskCompletedEvent_.AsTask(timeout);
         }
 
         public void Completed() {

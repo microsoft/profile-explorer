@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Threading;
 using IRExplorerUI.DebugServer;
 using IRExplorerUI.Diff;
 using IRExplorerUI.OptionsPanels;
@@ -63,11 +64,11 @@ namespace IRExplorerUI {
                 debugService_.OnClearTemporaryHighlighting += DebugService__OnClearTemporaryHighlighting;
                 debugService_.OnUpdateCurrentStackFrame += DebugService__OnUpdateCurrentStackFrame;
 
-                DebugServer.DebugService.StartServer(debugService_);
                 Trace.TraceInformation("Grpc server started, waiting for client...");
                 SetOptionalStatus("Waiting for client...");
                 DiffPreviousSectionCheckbox.Visibility = Visibility.Visible;
-                sessionStartTask_ = new CancelableTask();
+
+                DebugServer.DebugService.StartServer(debugService_);
             }
             catch (Exception ex) {
                 Trace.TraceError("Failed to start Grpc server: {0}", $"{ex.Message}\n{ex.StackTrace}");
@@ -81,26 +82,39 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            await sessionStartTask_.WaitToCompleteAsync(TimeSpan.FromSeconds(10));
-            return !sessionStartTask_.IsCanceled;
+            Trace.WriteLine("=> WaitForSessionInitialization\n");
+            
+            if (sessionStartTask_.IsCompleted) {
+                Trace.WriteLine("  < already completed\n");
+                return true;
+            }
+
+            Trace.WriteLine("  > start waiting\n");
+            if(!await Task.Run(() => sessionStartTask_.WaitToComplete(TimeSpan.FromSeconds(30)))) {
+                Trace.WriteLine("    < timeout\n");
+                return false;
+            }
+
+            Trace.WriteLine($"    < completed {sessionStartTask_.IsCompleted}\n");
+            return sessionStartTask_.IsCompleted;
         }
 
         private async void DebugService__OnUpdateCurrentStackFrame(object sender, CurrentStackFrameRequest e) {
-            await Dispatcher.BeginInvoke(new Action(async () => {
-                if (!(await WaitForSessionInitialization())) {
-                    return;
-                }
+            if (!(await WaitForSessionInitialization())) {
+                return;
+            }
 
+            await Dispatcher.BeginInvoke(new Action(async () => {
                 debugCurrentStackFrame_ = e.CurrentFrame;
             }));
         }
 
-        private void DebugService__OnClearTemporaryHighlighting(object sender, ClearHighlightingRequest e) {
-            Dispatcher.BeginInvoke(new Action(async () => {
-                if (!(await WaitForSessionInitialization())) {
-                    return;
-                }
+        private async void DebugService__OnClearTemporaryHighlighting(object sender, ClearHighlightingRequest e) {
+            if (!(await WaitForSessionInitialization())) {
+                return;
+            }
 
+            await Dispatcher.BeginInvoke(new Action(async () => {
                 var activeDoc = await GetDebugSessionDocument();
                 
                 if (activeDoc == null) {
@@ -122,9 +136,8 @@ namespace IRExplorerUI {
                 return;
             }
 
-
             if (addressTag_.AddressToElementMap.TryGetValue(e.Request.ElementAddress, out var element)) {
-                await Dispatcher.Invoke(async () => {
+                await Dispatcher.BeginInvoke(async () => {
                     var activeDoc = await GetDebugSessionDocument();
                     if (activeDoc == null)
                         return;
@@ -134,8 +147,7 @@ namespace IRExplorerUI {
         }
 
         private DocumentActionKind CommandToAction(ElementCommand command) {
-            return command switch
-            {
+            return command switch {
                 ElementCommand.GoToDefinition => DocumentActionKind.GoToDefinition,
                 ElementCommand.MarkBlock => DocumentActionKind.MarkBlock,
                 ElementCommand.MarkExpression => DocumentActionKind.MarkExpression,
@@ -252,8 +264,7 @@ namespace IRExplorerUI {
         }
 
         private HighlightingStyle GetIteratorElementStyle(ElementIteratorId elementIteratorId) {
-            return elementIteratorId.ElementKind switch
-            {
+            return elementIteratorId.ElementKind switch {
                 IRElementKind.Instruction => new HighlightingStyle(
                     Colors.LightBlue, ColorPens.GetPen(Colors.MediumBlue)),
                 IRElementKind.Operand => new HighlightingStyle(Colors.PeachPuff,
@@ -367,11 +378,11 @@ namespace IRExplorerUI {
         }
 
         private async void DebugService_OnIRUpdated(object sender, UpdateIRRequest e) {
-            await Dispatcher.BeginInvoke(new Action(async () => {
-                if (!(await WaitForSessionInitialization())) {
-                    return;
-                }
+            if (!(await WaitForSessionInitialization())) {
+                return;
+            }
 
+            await Dispatcher.BeginInvoke(new Action(async () => {
                 if (sessionState_ == null ||
                     sessionState_.MainDocument == null) {
                     return;
@@ -471,18 +482,20 @@ namespace IRExplorerUI {
             return builder.ToString();
         }
 
-        private async void DebugService_OnSessionStarted(object sender, StartSessionRequest e) {
+        private void DebugService_OnSessionStarted(object sender, StartSessionRequest e) {
             if (e.ProcessId == debugProcessId_) {
                 return;
             }
 
             // Mark that session is about to start.
+            WaitForSessionInitialization().Wait();
             sessionStartTask_ = new CancelableTask();
+            Trace.WriteLine("=> OnSessionStarted\n");
 
-            await Dispatcher.BeginInvoke(new Action(async () => {
+            Dispatcher.Invoke(new Action(() => {
                 try {
                     SetOptionalStatus($"Client connected to process #{e.ProcessId}");
-                    await EndSession();
+                    EndSession().Wait();
 
                     FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
                     var result = new LoadedDocument("Debug session", "", Guid.NewGuid());
@@ -491,7 +504,8 @@ namespace IRExplorerUI {
                     result.Loader = debugSections_;
                     result.Summary = debugSummary_;
                     result.ModuleName = "Debug session";
-                    await SetupOpenedIRDocument(SessionKind.DebugSession, result);
+
+                    SetupOpenedIRDocument(SessionKind.DebugSession, result).Wait();
 
                     debugCurrentIteratorElement_ = new Dictionary<ElementIteratorId, IRElement>();
                     debugProcessId_ = e.ProcessId;
@@ -500,6 +514,7 @@ namespace IRExplorerUI {
                     previousDebugSection_ = null;
 
                     // Mark session started.
+                    Trace.WriteLine("<= OnSessionStarted\n");
                     sessionStartTask_.Completed();
                 }
                 catch (Exception ex) {
