@@ -58,7 +58,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 for (int k = 0; k < tag.Inlinees.Count; k++) {
                     var inlinee = tag.Inlinees[k];
                     var inlineeName = PDBDebugInfoProvider.DemangleFunctionName(inlinee.Function, FunctionNameDemanglingOptions.OnlyName);
-                    sb.AppendFormat("{0}:{1}", inlineeName, tag.Inlinees[k].Line);
+                    sb.Append($"{inlineeName}:{tag.Inlinees[k].Line}");
 
                     AppendInlineeTooltip(inlineeName, inlinee.Line, inlinee.FilePath, k, tooltipSb);
                     tooltipSb.AppendLine();
@@ -92,7 +92,6 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
 
                 double position = Math.Max(options_.VirtualColumnPosition, columnPosition);
-
                 overlay.VirtualColumn = position + overlayMargin;
             }
 
@@ -118,10 +117,10 @@ namespace IRExplorerUI.Compilers.ASM {
             var inlineeFileName = Utils.TryGetFileName(inlineeFilePath);
 
             if (!string.IsNullOrEmpty(inlineeFileName)) {
-                tooltipSb.AppendFormat("{0}:{1} ({2})", inlineeName, inlineeLine, inlineeFileName);
+                tooltipSb.Append($"{inlineeName}:{inlineeLine} ({inlineeFileName})");
             }
             else {
-                tooltipSb.AppendFormat("{0}:{1}", inlineeName, inlineeLine);
+                tooltipSb.Append($"{inlineeName}:{inlineeLine}");
             }
         }
     }

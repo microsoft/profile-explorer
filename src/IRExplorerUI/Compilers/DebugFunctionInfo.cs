@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace IRExplorerUI.Compilers;
 
-public class DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
+public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<DebugFunctionInfo> {
     public string Name { get; set; }
     public long RVA { get; set; }
     public long Size { get; set; }
@@ -71,6 +71,29 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo> {
 
     public override int GetHashCode() {
         return HashCode.Combine(Name, RVA, Size);
+    }
+
+
+    public int CompareTo(DebugFunctionInfo other) {
+        if (StartRVA < other.StartRVA && EndRVA < other.EndRVA) {
+            return -1;
+        }
+        if (StartRVA > other.StartRVA && EndRVA > other.EndRVA) {
+            return 1;
+        }
+        return 0;
+
+    }
+
+    public int CompareTo(long value) {
+        if (value < StartRVA) {
+            return 1;
+        }
+        if (value > EndRVA) {
+            return -1;
+        }
+
+        return 0;
     }
 }
 

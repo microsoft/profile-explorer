@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Analysis {
@@ -222,14 +223,19 @@ namespace IRExplorerCore.Analysis {
             entryNodes_ = new List<CallGraphNode>();
 
         }
-        public void Execute(IRTextSection section = null) {
+
+        public void Execute(IRTextSection section = null, CancelableTask cancelableTask = null) {
             //? TODO: Can be multithreaded, most time spent parsing the functs
             foreach (var func in summary_.Functions) {
                 if (visitedFuncts_.Contains(func)) {
                     continue;
                 }
 
-                BuildCallSubgraph(func, section?.Name);
+                if (cancelableTask is { IsCanceled: true }) {
+                    return;
+                }
+
+                BuildCallSubgraph(func, section?.Name, cancelableTask);
             }
 
             // Find entry functions.
@@ -240,17 +246,21 @@ namespace IRExplorerCore.Analysis {
             }
         }
 
-        public CallGraphNode Execute(IRTextFunction startFunction, IRTextSection section = null) {
-            BuildCallSubgraph(startFunction, section?.Name);
+        public CallGraphNode Execute(IRTextFunction startFunction, IRTextSection section = null, CancelableTask cancelableTask = null) {
+            BuildCallSubgraph(startFunction, section?.Name, cancelableTask);
             return GetOrCreateNode(startFunction);
         }
 
-        private void BuildCallSubgraph(IRTextFunction startFunction, string sectionName) {
+        private void BuildCallSubgraph(IRTextFunction startFunction, string sectionName, CancelableTask cancelableTask) {
             var worklist = new Queue<IRTextFunction>();
             worklist.Enqueue(startFunction);
             visitedFuncts_.Add(startFunction);
 
             while (worklist.Count > 0) {
+                if (cancelableTask is { IsCanceled: true }) {
+                    break;
+                }
+
                 var func = worklist.Dequeue();
                 var funcNode = GetOrCreateNode(func);
 

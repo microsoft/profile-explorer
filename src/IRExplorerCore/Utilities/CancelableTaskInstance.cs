@@ -23,6 +23,25 @@ namespace IRExplorerCore {
             }
         }
 
+        public async Task<CancelableTask> CancelAndCreateTaskAsync(CancelableTaskDelegate registerAction = null) {
+            CancelableTask task = null;
+
+            lock (lockObject_) {
+                task = taskInstance_;
+                taskInstance_ = null;
+            }
+
+            if (task != null) {
+                await CancelTaskAsync(task);
+            }
+
+            lock (lockObject_) {
+                taskInstance_ = new CancelableTask();
+                registerAction?.Invoke(taskInstance_);
+                return taskInstance_;
+            }
+        }
+
         public void CancelTask(CancelableTaskDelegate unregisterAction = null) {
             lock (lockObject_) {
                 if (taskInstance_ == null) {
@@ -41,6 +60,17 @@ namespace IRExplorerCore {
                     canceledTask.Dispose();
                 });
             }
+        }
+
+        private async Task CancelTaskAsync(CancelableTask canceledTask, CancelableTaskDelegate unregisterAction = null) {
+            // Cancel the task and wait for it to complete.
+            canceledTask.Cancel();
+            unregisterAction?.Invoke(canceledTask);
+
+            await Task.Run(async () => {
+                await canceledTask.WaitToCompleteAsync();
+                canceledTask.Dispose();
+            });
         }
 
         public void CompleteTask(CancelableTask task, CancelableTaskDelegate unregisterAction = null) {

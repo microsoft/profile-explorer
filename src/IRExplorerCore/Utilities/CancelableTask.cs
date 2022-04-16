@@ -67,7 +67,7 @@ namespace IRExplorerCore {
         public async Task<bool> WaitToCompleteAsync() {
             //Debug.WriteLine($"+ Wait to complete task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
-            return await WaitToCompleteAsync(TimeSpan.MaxValue);
+            return await WaitToCompleteAsync(TimeSpan.FromMilliseconds(int.MaxValue - 1));
         }
 
         public bool WaitToComplete(TimeSpan timeout) {

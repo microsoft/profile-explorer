@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Input;
+using CSharpTest.Net.Collections;
 using IntervalTree;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -64,9 +66,7 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceWarning($"Failed to load document for image {imageName}");
                 return false;
             }
-
-            //? TODO: Register must be done at the end
-            session_.SessionState.RegisterLoadedDocument(loadedDoc);
+            
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
 
@@ -187,20 +187,87 @@ namespace IRExplorerUI.Profile {
             return null;
         }
         
+        private List<DebugFunctionInfo> sortedList_;
+
+        private SortedList<DebugFunctionInfo, DebugFunctionInfo> sortedList2_;
+
+        DebugFunctionInfo BinarySearch(IList<DebugFunctionInfo> ranges, long value) {
+            int min = 0;
+            int max = ranges.Count - 1;
+
+            while (min <= max) {
+                int mid = (min + max) / 2;
+                var range = ranges[mid];
+                int comparison = range.CompareTo(value);
+                
+                if (comparison == 0) {
+                    return range;
+                }
+                if (comparison < 0) {
+                    min = mid + 1;
+                }
+                else {
+                    max = mid - 1;
+                }
+            }
+
+            return DebugFunctionInfo.Unknown;
+        }
+
         public DebugFunctionInfo FindDebugFunctionInfo(long funcAddress) {
             if (!HasDebugInfo) {
                 return DebugFunctionInfo.Unknown;
             }
 
+#if false
+
+#if false
+            if (sortedList2_ == null) {
+                sortedList2_ = new SortedList<DebugFunctionInfo, DebugFunctionInfo>();
+
+                foreach (var x in functionRvaTree_) {
+                    if (!sortedList2_.ContainsKey(x.Value)) {
+                        sortedList2_.Add(x.Value, x.Value);
+                    }
+                }
+            }
+
+            return sortedList2_.TryGetValue(new DebugFunctionInfo(null, funcAddress, 0), out var result) ? result : DebugFunctionInfo.Unknown;
+#else
+            if (sortedList_ == null) {
+                sortedList_ = new List<DebugFunctionInfo>();
+
+                foreach (var x in functionRvaTree_) {
+                    sortedList_.Add(x.Value);
+                }
+
+                sortedList_.Sort();
+            }
+
+            return BinarySearch(sortedList_, funcAddress);
+#endif
+
+#else
+            //foreach (var pair in cache_.orderList) {
+            //    var func = pair;
+
+            //    if (funcAddress >= func.StartRVA && funcAddress < func.EndRVA) {
+            //        Same++;
+            //        return func;
+            //    }
+            //}
+
             var functs = functionRvaTree_.Query(funcAddress);
             foreach (var func in functs) {
+                //cache_.Put(func, true);
                 return func;
             }
 
             return DebugFunctionInfo.Unknown;
+#endif
         }
-        
-        public IRTextFunction FindFunction(long funcAddress) {
+
+            public IRTextFunction FindFunction(long funcAddress) {
             if (!HasDebugInfo) {
                 return null;
             }
@@ -242,6 +309,10 @@ namespace IRExplorerUI.Profile {
             }
 
             if (!externalFuncNames.TryGetValue(externalFuncName, out var textFunction)) {
+                if (externalFuncName.Contains("quickSortDLL")) {
+                    ;
+                }
+
                 // Create a dummy external function that will have no sections. 
                 textFunction = new IRTextFunction(externalFuncName);
                 Summary.AddFunction(textFunction);

@@ -457,12 +457,14 @@ namespace IRExplorerUI {
         private Dictionary<IRTextSummary, CallGraph> callGraphCache_;
         private ModuleReport moduleReport_;
         private CancelableTaskInstance statisticsTask_;
+        private CancelableTaskInstance callGraphTask_;
         private ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics> functionStatMap_;
         private ModuleEx activeModuleFilter_;
 
         public SectionPanel() {
             InitializeComponent();
             statisticsTask_ = new CancelableTaskInstance();
+            callGraphTask_ = new CancelableTaskInstance();
             sections_ = new List<IRTextSectionEx>();
             otherSummaries_ = new List<IRTextSummary>();
             sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
@@ -1958,13 +1960,16 @@ namespace IRExplorerUI {
             }
 
             Session.SetApplicationProgress(true, double.NaN, "Generating call graph");
+            using var cancelableTask = await callGraphTask_.CancelAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
 
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
-            await Task.Run(() => callGraph.Execute());
+            await Task.Run(() => callGraph.Execute(null, cancelableTask));
 
             // Cache the call graph, can be expensive to compute.
             callGraphCache_[summary] = callGraph;
+
+            callGraphTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
             Session.SetApplicationProgress(false, 0);
             return callGraph;
         }
@@ -2106,7 +2111,7 @@ namespace IRExplorerUI {
             }
 
             if (funcProfile != null) {
-                foreach (var pair in funcProfile.ChildrenWeights) {
+                foreach (var pair in funcProfile.CalleesWeights) {
                     var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
 
                     if (childFunc == null) {
@@ -2117,11 +2122,12 @@ namespace IRExplorerUI {
                     var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
                     var childCgNode = cgNode?.FindCallee(childFunc);
 
+
                     //? TODO: Not path sensitive - child time is for all instances of it
                     var childNode = CreateProfileCallTreeChild(childFunc, childFuncProfile, pair.Value);
                     parentNode.Children.Add(childNode);
 
-                    if (childFuncProfile.ChildrenWeights.Count > 0) {
+                    if (childFuncProfile.CalleesWeights.Count > 0) {
                         CreateProfileCallTree(childFunc, childCgNode, childNode, callGraph, visitedFuncts);
                     }
                     else {
@@ -2499,7 +2505,7 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
-            using var cancelableTask = statisticsTask_.CreateTask();
+            using var cancelableTask = await statisticsTask_.CancelAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
             var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
 
             foreach (var pair in functionStatMap) {
@@ -2508,7 +2514,7 @@ namespace IRExplorerUI {
             }
 
             Trace.TraceInformation("ComputeFunctionStatistics: done");
-            statisticsTask_.CompleteTask(cancelableTask);
+            statisticsTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
 
             AddStatisticsFunctionListColumns(false);
             AddStatisticsChildFunctionListColumns(false);
@@ -2650,8 +2656,7 @@ namespace IRExplorerUI {
             OptionalColumn.Binding("FunctionDiffKind",
                 "DiffHeader", $"Diff", "Difference kind (only in left/right document or modified)", DiffKindConverter),
         };
-
-
+        
         public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
             //? TODO: to remove, check tag is counter type 
             var counters = Session.ProfileData.SortedPerformanceCounters;

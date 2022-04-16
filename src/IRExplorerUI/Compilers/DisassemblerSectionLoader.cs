@@ -40,7 +40,7 @@ namespace IRExplorerUI.Compilers {
                     if (funcInfo.RVA == 0) {
                         continue; // Some entries don't represent real functions.
                     }
-
+                    
                     var func = new IRTextFunction(funcInfo.Name);
                     var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
                     func.AddSection(section);

@@ -122,7 +122,7 @@ namespace IRExplorerUI {
             parentNode.Children.Add(selfInfo);
 
             if (funcProfile != null) {
-                foreach (var pair in funcProfile.ChildrenWeights) {
+                foreach (var pair in funcProfile.CalleesWeights) {
                     var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
 
                     if (childFunc == null) {
