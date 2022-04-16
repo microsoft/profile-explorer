@@ -146,11 +146,10 @@ namespace IRExplorerUI {
             changedDocuments_ = new Dictionary<string, DateTime>();
             detachedPanels_ = new List<DraggablePopup>();
             lockObject_ = new object();
-
-            SetupCompilerTarget();
+            
             SetupMainWindow();
             SetupGraphLayoutCache();
-
+            
             DockManager.LayoutUpdated += DockManager_LayoutUpdated;
             ContentRendered += MainWindow_ContentRendered;
             StateChanged += MainWindow_StateChanged;
@@ -325,6 +324,9 @@ namespace IRExplorerUI {
             PopulateRecentFilesMenu();
             ThemeCombobox.SelectedIndex = App.Settings.ThemeIndex;
             DiffModeButton.IsEnabled = false;
+        }
+
+        private void SetupMainWindowCompilerTarget() {
             IRTypeLabel.Content = compilerInfo_.CompilerDisplayName;
         }
 
@@ -516,6 +518,8 @@ namespace IRExplorerUI {
         }
 
         private async void Window_Loaded(object sender, RoutedEventArgs e) {
+            await SetupCompilerTarget();
+
             SectionPanel.OpenSection += SectionPanel_OpenSection;
             SectionPanel.EnterDiffMode += SectionPanel_EnterDiffMode;
             SectionPanel.SyncDiffedDocumentsChanged += SectionPanel_SyncDiffedDocumentsChanged;
@@ -1191,7 +1195,7 @@ namespace IRExplorerUI {
             compilerInfo_ = compilerInfo;
             compilerInfo_.ReloadSettings();
             App.Settings.CompilerIRSwitched(compilerInfo_.CompilerIRName, compilerInfo.IR.Mode);
-            SetupMainWindow();
+            SetupMainWindowCompilerTarget();
         }
 
         private void LLVMMenuItem_Click(object sender, RoutedEventArgs e) {
@@ -1219,10 +1223,10 @@ namespace IRExplorerUI {
 
         private async Task SetupCompilerTarget() {
             if(!string.IsNullOrEmpty(App.Settings.DefaultCompilerIR)) {
-                SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
+                await SwitchCompilerTarget(App.Settings.DefaultCompilerIR, App.Settings.DefaultIRMode);
             }
             else {
-                SwitchCompilerTarget("UTC").Wait();
+                await SwitchCompilerTarget("UTC");
             }
         }
 
@@ -1342,7 +1346,7 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            foreach(var pair in funcProfile.ChildrenWeights) {
+            foreach(var pair in funcProfile.CalleesWeights) {
                 var childFunc = FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
                 if (childFunc == null) {
                     continue;
@@ -1379,6 +1383,10 @@ namespace IRExplorerUI {
             var result = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
                                                                          options, symbolOptions,
                                                                          progressCallback, cancelableTask);
+            if (!IsSessionStarted) {
+                return false;
+            }
+
             sessionState_.ProfileData = result;
             return result != null;
         }

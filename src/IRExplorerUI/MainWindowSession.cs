@@ -322,15 +322,15 @@ namespace IRExplorerUI {
             return true;
         }
 
-        public async Task<bool> SetupNewSession() {
+        public async Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments) {
             await Dispatcher.InvokeAsync(async () => {
-                await SetupPanels();
+                sessionState_.RegisterLoadedDocument(mainDocument);
 
-                foreach (var loadedDoc in sessionState_.Documents) {
-                    if (loadedDoc != sessionState_.MainDocument) {
-                        AddOtherSummary(loadedDoc.Summary);
-                    }
+                foreach (var loadedDoc in otherDocuments) {
+                    sessionState_.RegisterLoadedDocument(loadedDoc);
                 }
+
+                await SetupPanels();
             });
 
             return true;
@@ -348,11 +348,11 @@ namespace IRExplorerUI {
         }
 
         private async Task EndSession(bool showStartPage = false) {
+            using var sessionUnloading = await BeginSessionStateChange();
+
             if (!IsSessionStarted) {
                 return;
             }
-
-            using var sessionUnloading = await BeginSessionStateChange();
 
             if (autoSaveTimer_ != null) {
                 autoSaveTimer_.Stop();
@@ -690,7 +690,7 @@ namespace IRExplorerUI {
             var delayedAction = UpdateUIBeforeSectionLoad(section, document);
             var result = await Task.Run(() => LoadAndParseSection(section));
 
-            if (result.Function == null) {
+            if (result == null || result.Function == null) {
                 //? TODO: Handle load function failure better
                 Trace.TraceError($"Document {ObjectTracker.Track(document)}: Failed to parse function");
                 OptionalStatusText.Text = "Failed to parser section IR";

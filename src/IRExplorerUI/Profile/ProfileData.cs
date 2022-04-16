@@ -258,7 +258,7 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(6)]
         public Dictionary<long, TimeSpan> BlockWeight { get; set; } //? TODO: Unused
         [ProtoMember(7)]
-        public Dictionary<(Guid, int), TimeSpan> ChildrenWeights { get; set; } // {Summary,Function ID} mapping
+        public Dictionary<(Guid, int), TimeSpan> CalleesWeights { get; set; } // {Summary,Function ID} mapping
         [ProtoMember(8)]
         public Dictionary<(Guid, int), TimeSpan> CallerWeights { get; set; } // {Summary,Function ID} mapping
         [ProtoMember(9)]
@@ -269,7 +269,7 @@ namespace IRExplorerUI.Profile {
         public bool HasSourceLines => SourceLineWeight != null && SourceLineWeight.Count > 0;
         public bool HasPerformanceCounters => InstructionCounters.Count > 0;
         public bool HasCallers => CallerWeights != null && CallerWeights.Count > 0;
-        public bool HasCallees => ChildrenWeights != null && ChildrenWeights.Count > 0;
+        public bool HasCallees => CalleesWeights != null && CalleesWeights.Count > 0;
         public List<(int LineNumber, TimeSpan Weight)> SourceLineWeightList => SourceLineWeight.ToKeyValueList();
 
         public class ProcessingResult {
@@ -315,7 +315,7 @@ namespace IRExplorerUI.Profile {
             SourceLineWeight ??= new Dictionary<int, TimeSpan>();
             InstructionWeight ??= new Dictionary<long, TimeSpan>();
             BlockWeight ??= new Dictionary<long, TimeSpan>();
-            ChildrenWeights ??= new Dictionary<(Guid, int), TimeSpan>();
+            CalleesWeights ??= new Dictionary<(Guid, int), TimeSpan>();
             CallerWeights ??= new Dictionary<(Guid, int), TimeSpan>();
             InstructionCounters ??= new Dictionary<long, PerformanceCounterSet>();
         }
@@ -341,11 +341,11 @@ namespace IRExplorerUI.Profile {
         public void AddChildSample(IRTextFunction childFunc, TimeSpan weight) {
             var key = (childFunc.ParentSummary.Id, childFunc.Number);
 
-            if (ChildrenWeights.TryGetValue(key, out var currentWeight)) {
-                ChildrenWeights[key] = currentWeight + weight;
+            if (CalleesWeights.TryGetValue(key, out var currentWeight)) {
+                CalleesWeights[key] = currentWeight + weight;
             }
             else {
-                ChildrenWeights[key] = weight;
+                CalleesWeights[key] = weight;
             }
         }
 

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using IntervalTree;
 using IRExplorerCore;
 using IRExplorerCore.ASM;
@@ -52,9 +53,9 @@ namespace IRExplorerUI.Utilities {
             architecture_ = architecture;
             baseAddress_ = baseAddress;
             debugInfo_ = debugInfo;
-            disasmHandle_ = Interop.Create(architecture);
+            Initialize();
         }
-
+        
         public Disassembler(Machine architecture, byte[] data, long dataStartRva = 0, long baseAddress = 0,
                             IDebugInfoProvider debugInfo = null) {
             architecture_ = architecture;
@@ -62,9 +63,13 @@ namespace IRExplorerUI.Utilities {
             debugInfo_ = debugInfo;
             codeSectionData_ = new List<(byte[] Data, long StartRVA)>();
             codeSectionData_.Add((data, dataStartRva));
-            disasmHandle_ = Interop.Create(architecture);
+            Initialize();
         }
 
+        private void Initialize() {
+            disasmHandle_ = Interop.Create(architecture_);
+            BuildFunctionRvaTree();
+        }
 
         public string DisassembleToText(DebugFunctionInfo funcInfo) {
             return DisassembleToText(funcInfo.StartRVA, funcInfo.Size);
@@ -76,29 +81,33 @@ namespace IRExplorerUI.Utilities {
             }
 
             var builder = new StringBuilder((int)(size / 4) + 1);
-
+            
             try {
                 foreach (var instr in DisassembleInstructions(startRVA, size, baseAddress_ + startRVA)) {
-                    var addressString = $"{instr.Address:X}: ";
+                    var addressString = $"{instr.Address:X}:  ";
                     builder.Append(addressString);
                     int startIndex = 0;
+                    bool appendBytes = false; //? TODO: Use option
+                    //? TODO: Also adjust column of editor line numbers based on this
 
-                    unsafe {
+                    if (appendBytes) {
                         startIndex += AppendBytes(instr, startIndex, builder);
                         builder.Append("  ");
-
-                        AppendMnemonic(instr, builder);
-                        builder.Append("  ");
-
-                        AppendOperands(instr, startRVA, size, builder);
-                        builder.AppendLine();
                     }
 
-                    // For longer instructions, append up to 6 bytes per line.
-                    while (startIndex < instr.Size) {
-                        builder.Append(' ', addressString.Length); // Align right.
-                        startIndex += AppendBytes(instr, startIndex, builder);
-                        builder.AppendLine();
+                    AppendMnemonic(instr, builder);
+                    builder.Append("  ");
+
+                    AppendOperands(instr, startRVA, size, builder);
+                    builder.AppendLine();
+
+                    if (appendBytes) {
+                        // For longer instructions, append up to 6 bytes per line.
+                        while (startIndex < instr.Size) {
+                            builder.Append(' ', addressString.Length); // Align right.
+                            startIndex += AppendBytes(instr, startIndex, builder);
+                            builder.AppendLine();
+                        }
                     }
                 }
             }
@@ -121,13 +130,13 @@ namespace IRExplorerUI.Utilities {
         }
 
         private unsafe void AppendOperands(Interop.Instruction instr, long startRVA, long size, StringBuilder builder) {
-            byte* letterPtr = instr.Operand;
             bool isArm = architecture_ == Machine.Arm || architecture_ == Machine.Arm64;
-            int index = 0;
-
             bool isJump = false;
             bool sawBracket = false;
             bool lookupName = ShouldLookupAddressByName(instr, ref isJump);
+
+            byte* letterPtr = instr.Operand;
+            int index = 0;
 
             while (index < Interop.Instruction.OperandLength && letterPtr[index] != 0) {
                 char letter = (char)letterPtr[index];
@@ -190,17 +199,6 @@ namespace IRExplorerUI.Utilities {
         }
 
         private DebugFunctionInfo FindFunctionByRva(long rva) {
-            if(functionRvaTree_ == null) {
-                // Cache RVA -> function mapping, much faster to query.
-                functionRvaTree_ = new IntervalTree<long, DebugFunctionInfo>();
-
-                foreach (var func in debugInfo_.EnumerateFunctions(true)) {
-                    if (func.Size > 0) {
-                        functionRvaTree_.Add(func.StartRVA, func.EndRVA, func);
-                    }
-                }
-            }
-
             var functs = functionRvaTree_.Query(rva);
             foreach (var func in functs) {
                 return func;
@@ -213,6 +211,25 @@ namespace IRExplorerUI.Utilities {
             }
 
             return funcInfo;
+        }
+
+        private void BuildFunctionRvaTree() {
+            // Cache RVA -> function mapping, much faster to query.
+            functionRvaTree_ = new IntervalTree<long, DebugFunctionInfo>();
+
+            if (debugInfo_ == null) {
+                return;
+            }
+
+            foreach (var func in debugInfo_.EnumerateFunctions(true)) {
+                if (func.Size > 0) {
+                    functionRvaTree_.Add(func.StartRVA, func.EndRVA, func);
+                }
+            }
+
+            // Force a query to ensure the tree is built on this thread
+            // and all future queries are read-only.
+            functionRvaTree_.Query(0);
         }
 
         private bool ShouldLookupAddressByName(Interop.Instruction instr, ref bool isJump) {

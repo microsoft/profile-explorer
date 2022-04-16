@@ -40,7 +40,7 @@ namespace IRExplorerUI {
         ProfileData ProfileData { get; }
 
         Task<bool> StartNewSession(string sessionName, SessionKind sessionKind, ICompilerInfoProvider compilerInfo);
-        Task<bool> SetupNewSession();
+        Task<bool> SetupNewSession(LoadedDocument mainDocument, List<LoadedDocument> otherDocuments);
 
         IRTextSummary GetDocumentSummary(IRTextSection section);
         void AddOtherSummary(IRTextSummary summary);

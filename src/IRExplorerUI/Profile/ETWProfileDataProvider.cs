@@ -76,12 +76,7 @@ namespace IRExplorerUI.Profile {
         //private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
         static List<ProfileSample> temp_;
-
-        //? TODO: Workaround for crash that happens when the finalizers are run
-        //? and the COM object is released after it looks as being destroyed.
-        // This will keep it alive during the entire process.
-        private static ITraceProcessor trace; 
-
+        
         public ETWProfileDataProvider(IRTextSummary summary, ISession session) {
             mainSummary_ = summary;
             session_ = session;
@@ -99,26 +94,7 @@ namespace IRExplorerUI.Profile {
             return LoadTraceAsync(tracePath, imageName, options, symbolOptions,
                                   progressCallback, cancelableTask).Result;
         }
-
-        /*
-
-        get
-        {
-            if ((eventRecord->EventHeader.Flags & 0x40) == 0)
-            {
-                return 4;
-            }
-            return 8;
-        }
-
-        public int ProfileSource => GetInt16At(HostOffset(8, 1));
-
-        protected internal int HostOffset(int offset, int numPointers)
-	        return offset + (PointerSize - 4) * numPointers;
-        }
-    }
-        */
-
+        
         private unsafe static long ReadInt64(ReadOnlySpan<byte> data, int offset = 0) {
             fixed (byte* dataPtr = data) {
                 return *((long*)(dataPtr + offset));
@@ -377,8 +353,8 @@ namespace IRExplorerUI.Profile {
                     var settings = new TraceProcessorSettings {
                         AllowLostEvents = true
                     };
-
-                    trace = TraceProcessor.Create(tracePath, settings);
+                    
+                    using ITraceProcessor trace = TraceProcessor.Create(tracePath, settings);
                     var pendingSymbolData = trace.UseSymbols();
                     var pendingCpuSamplingData = trace.UseCpuSamplingData();
                     var threads = trace.UseThreads();
@@ -514,7 +490,6 @@ namespace IRExplorerUI.Profile {
                     }
 
                     Trace.WriteLine($"Start preload symbols {DateTime.Now}");
-                    //var imageTimeMap = new Dictionary<IImage, TimeSpan>();
 
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
                         Total = 0,
@@ -524,9 +499,14 @@ namespace IRExplorerUI.Profile {
                     var imageList = procCache.GetProcessImages(mainProcessId);
 
                     if (imageList == null || imageList.Count == 0) {
-                        var imageMap = new HashSet<IImage>();
+                        imageList.Clear();
+                        //var imageMap = new HashSet<IImage>();
+                        var imageTimeMap = new Dictionary<IImage, TimeSpan>();
 
                         foreach (var sample in samples) {
+                            //Trace.WriteLine($"sample {sample.Weight.TimeSpan.Ticks}");
+                            //Trace.Flush();
+                            
                             if (!options.IncludeKernelEvents &&
                                 (sample.IsExecutingDeferredProcedureCall == true ||
                                  sample.IsExecutingInterruptServicingRoutine == true)) {
@@ -539,18 +519,19 @@ namespace IRExplorerUI.Profile {
 
                             foreach (var frame in sample.Stack.Frames) {
                                 if (frame.Image != null && frame.Image.FileName != null) {
-                                    //imageTimeMap.AccumulateValue(frame.Image, sample.Weight.TimeSpan);
-                                    imageMap.Add(frame.Image); //? TODO: This can stop once all images in process added
+                                    imageTimeMap.AccumulateValue(frame.Image, sample.Weight.TimeSpan);
+                                    //imageMap.Add(frame.Image); //? TODO: This can stop once all images in process added
                                 }
                             }
                         }
 
-                        imageList = imageMap.ToList();
+                        var imageTimeList = imageTimeMap.ToList();
+                        imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
+                        imageList = imageTimeMap.ToList().ConvertAll(item => item.Item1);
                     }
 
-                    //var imageTimeList = imageTimeMap.ToList();
-                    //imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
                     int imageLimit = imageList.Count;
+                    //int imageLimit = 4;
 
 #if true
                     // Locate the referenced binary files. This will download them
@@ -946,6 +927,20 @@ namespace IRExplorerUI.Profile {
                     Trace.Flush();
                     // END SAMPLES PROC
 
+                    //long same = 0;
+                    //long diff = 0;
+
+                    //foreach (var pair in imageModuleMap) {
+                    //    if (pair.Value.Initialized && pair.Value.HasDebugInfo) {
+                    //        Trace.WriteLine($"=> MOD {pair.Value.ModuleDocument.ModuleName}");
+                    //        Trace.WriteLine($"   same: {pair.Value.Same}");
+                    //        Trace.WriteLine($"   diff: {pair.Value.Diff}");
+                    //        same += pair.Value.Same;
+                    //        diff += pair.Value.Diff;
+                    //    }
+                    //}
+
+                    //Trace.WriteLine($"   cache: {100 * (double)same / (double)(diff + same)}%");
 
                     Trace.WriteLine($"Start process PMC at {DateTime.Now}");
                     Trace.Flush();
@@ -1039,26 +1034,33 @@ namespace IRExplorerUI.Profile {
                 // Add 
                 if (result) {
                     LoadedDocument exeDocument = null;
+                    var otherDocuments = new List<LoadedDocument>();
 
                     foreach (var pair in imageModuleMap) {
-                        if (pair.Value.ModuleDocument != null &&
-                            Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFilePath)) {
-                            exeDocument = pair.Value.ModuleDocument;
+                        if (pair.Value.ModuleDocument == null) {
+                            continue;
+                        }
 
-                            if (pair.Value.ModuleDocument.ModuleName.Contains(imageName)) {
-                                break;
+                        if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFilePath)) {
+                            if (exeDocument == null) {
+                                exeDocument = pair.Value.ModuleDocument;
+                                continue;
+                            }
+                            else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName)) {
+                                otherDocuments.Add(exeDocument);
+                                exeDocument = pair.Value.ModuleDocument;
+                                continue;
                             }
                         }
-                        
-                        
+
+                        otherDocuments.Add(pair.Value.ModuleDocument);
                     }
 
                     Trace.WriteLine($"Using exe document {exeDocument?.ModuleName}");
                     session_.SessionState.MainDocument = exeDocument;
-                    session_.SetupNewSession();
+                    await session_.SetupNewSession(exeDocument, otherDocuments);
                 }
 
-                trace.Dispose();
                 //trace = null;
                 return result ? profileData_ : null;
             }
