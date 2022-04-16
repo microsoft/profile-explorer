@@ -7,7 +7,7 @@ using IRExplorerCore.IR;
 using System;
 
 namespace IRExplorerUI.Document {
-    public class TextElementOverlay : ElementOverlayBase {
+    public sealed class TextElementOverlay : ElementOverlayBase {
         public TextElementOverlay(string text, double width, double height,
                                   double marginX = 2, double marginY = 2, 
                                   HorizontalAlignment alignmentX = HorizontalAlignment.Right,

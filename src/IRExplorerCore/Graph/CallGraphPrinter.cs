@@ -14,7 +14,7 @@ namespace IRExplorerCore.Graph {
         public double VerticalDistanceFactor { get; set; }
     }
 
-    public class CallGraphPrinter : GraphVizPrinter {
+    public sealed class CallGraphPrinter : GraphVizPrinter {
         private const int ExternalNodeId = -1;
         private const int LargeGraphThresholdMin = 500;
 

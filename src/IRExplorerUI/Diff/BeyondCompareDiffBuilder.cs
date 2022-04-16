@@ -11,7 +11,7 @@ using System.Text;
 #pragma warning disable CA1305, CA1307
 
 namespace IRExplorerUI.Diff {
-    class BeyondCompareDiffBuilder {
+    public class BeyondCompareDiffBuilder {
         private const string BeyondCompareDirectory = @"Beyond Compare 4";
         private const string BeyondCompareExecutable = @"BCompare.exe";
 

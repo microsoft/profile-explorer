@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
 using IRExplorerCore.IR;
-using IRExplorerUI.Utilities;
 using ProtoBuf;
 
 namespace IRExplorerUI.Document {

@@ -14,6 +14,7 @@ using IRExplorerCore.Graph;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Utilities;
+using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI {
     public enum DuplicatePanelKind {

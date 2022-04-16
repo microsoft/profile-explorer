@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace IRExplorerCore.IR {
-    public class RegisterIR {
+    public sealed class RegisterIR {
         public object Register { get; set; }
 
         public T RegisterAs<T>() where T : Enum {

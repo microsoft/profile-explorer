@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 
 namespace IRExplorerCore.ASM {
-    public class ASMIRSectionReader : SectionReaderBase {
+    public sealed class ASMIRSectionReader : SectionReaderBase {
         public ASMIRSectionReader(string filePath, bool expectSectionHeaders) :
             base(filePath, expectSectionHeaders) { }
         public ASMIRSectionReader(byte[] textData, bool expectSectionHeaders) :

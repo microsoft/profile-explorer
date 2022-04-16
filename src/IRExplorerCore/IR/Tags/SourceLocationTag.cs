@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace IRExplorerCore.IR {
-    public class SourceLocationTag : ITag {
+    public sealed class SourceLocationTag : ITag {
         public SourceLocationTag() { }
         
         public SourceLocationTag(int line, int column) {

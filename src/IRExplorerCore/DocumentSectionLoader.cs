@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore {
-    public class DocumentSectionLoader : IRTextSectionLoader {
+    public sealed class DocumentSectionLoader : IRTextSectionLoader {
         private IRSectionReader documentReader_;
         private ConcurrentExclusiveSchedulerPair taskScheduler_;
         private TaskFactory taskFactory_;

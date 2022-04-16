@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Query;
 using ProtoBuf;

@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Controls;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Compilers.ASM;
 using Microsoft.Win32;
 using Microsoft.Windows.EventTracing.Processes;
 

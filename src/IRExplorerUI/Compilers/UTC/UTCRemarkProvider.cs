@@ -33,7 +33,7 @@ namespace IRExplorerUI.UTC {
         }
     }
 
-    public class UTCRemarkProvider : IRRemarkProvider {
+    public sealed class UTCRemarkProvider : IRRemarkProvider {
         private class RemarkContextState {
             private Stack<RemarkContext> contextStack_;
             private List<RemarkContext> rootContexts_;

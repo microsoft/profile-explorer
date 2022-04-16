@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.IR;
-using IRExplorerUI.Utilities;
+using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI.Compilers {
-    public class DisassemblerSectionLoader : IRTextSectionLoader {
+    public sealed class DisassemblerSectionLoader : IRTextSectionLoader {
         private IRTextSummary summary_;
         private string binaryFilePath_;
         private Disassembler disassembler_;

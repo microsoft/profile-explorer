@@ -8,7 +8,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
 
 namespace IRExplorerUI {
-    public class CallGraphStyleProvider : IGraphStyleProvider {
+    public sealed class CallGraphStyleProvider : IGraphStyleProvider {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
 

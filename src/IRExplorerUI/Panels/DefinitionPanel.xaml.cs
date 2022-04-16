@@ -8,7 +8,7 @@ using System.Windows.Controls;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
-using IRExplorerUI.Utilities;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI {
     public class DefinitionPanelState {

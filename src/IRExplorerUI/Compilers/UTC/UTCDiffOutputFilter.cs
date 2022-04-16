@@ -9,7 +9,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
 
 namespace IRExplorerUI.UTC {
-    public class UTCDiffOutputFilter : IDiffOutputFilter {
+    public sealed class UTCDiffOutputFilter : IDiffOutputFilter {
         public char[] IgnoredDiffLetters => new char[] {
             '(', ')', ',', '.', ';', ':', '|', '{', '}', '!', ' ', '\t'
         };

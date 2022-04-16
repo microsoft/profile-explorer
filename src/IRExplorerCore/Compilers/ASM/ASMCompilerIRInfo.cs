@@ -8,7 +8,7 @@ using IRExplorerCore.Analysis;
 using System;
 
 namespace IRExplorerCore.ASM {
-    public class ASMCompilerIRInfo : ICompilerIRInfo {
+    public sealed class ASMCompilerIRInfo : ICompilerIRInfo {
         public IRMode Mode { get; set; }
 
         public ASMCompilerIRInfo(IRMode mode) {

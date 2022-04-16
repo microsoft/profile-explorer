@@ -12,7 +12,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
-    public sealed class GraphNode {
+    public class GraphNode {
         private const double DefaultTextSize = 0.225;
         private const double DefaultLabelTextSize = 0.190;
 
@@ -86,7 +86,7 @@ namespace IRExplorerUI {
         bool ShouldUsePolylines();
     }
 
-    public sealed class GraphRenderer {
+    public class GraphRenderer {
         private const double DefaultEdgeThickness = 0.025;
         private const double GroupBoundingBoxMargin = 0.20;
         private const double GroupBoundingBoxTextMargin = 0.10;

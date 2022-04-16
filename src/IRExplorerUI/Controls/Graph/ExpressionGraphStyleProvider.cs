@@ -8,7 +8,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.UTC;
 
 namespace IRExplorerUI {
-    public class ExpressionGraphStyleProvider : IGraphStyleProvider {
+    public sealed class ExpressionGraphStyleProvider : IGraphStyleProvider {
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;
         private HighlightingStyle addressOperandNodeStyle_;

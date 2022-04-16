@@ -20,7 +20,6 @@ using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerUI.Document;
 using IRExplorerUI.Query;
-using IRExplorerUI.Utilities;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
@@ -66,7 +65,7 @@ namespace IRExplorerUI {
         public int TotalBookmarks { get; set; }
     }
 
-    public class IRDocument : TextEditor, INotifyPropertyChanged {
+    public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
         private const float ParentStyleLightAdjustment = 1.20f;
         private const int DefaultMaxExpressionLevel = 4;
         private const int ExpressionLevelIncrement = 2;

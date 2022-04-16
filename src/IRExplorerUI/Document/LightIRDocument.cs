@@ -9,7 +9,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit;
 using IRExplorerUI.Document;
-using IRExplorerUI.Utilities;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
@@ -41,7 +40,7 @@ namespace IRExplorerUI {
         }
     }
 
-    public class LightIRDocument : TextEditor {
+    public sealed class LightIRDocument : TextEditor {
         public enum TextSearchMode {
             Mark,
             Filter

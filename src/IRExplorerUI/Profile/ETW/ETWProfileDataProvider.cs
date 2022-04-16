@@ -17,22 +17,10 @@ using System.Text;
 using System.Collections;
 using System.IO;
 using IRExplorerUI.Compilers;
-using ProtoBuf;
-using Google.Protobuf.WellKnownTypes;
 using IRExplorerUI.Compilers.ASM;
 
-//? TODO
-// - on new image
-//   - locate binary file
-//   - LoadDocument to run disasm and build summary
-//   - locate PDB and populate PdbParser,DebugInfo
-//   - at the end, update SectionPanel.AddOtherSummary
-//
-// image -> moduleInfo
-
-
 namespace IRExplorerUI.Profile {
-    public class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
+    public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
             private ProfileLoadProgressHandler callback_;
 
@@ -70,11 +58,7 @@ namespace IRExplorerUI.Profile {
         private IRTextSummary mainSummary_;
         private ModuleInfo mainModule_;
         private ProfileData profileData_;
-
-        //private PdbParser pdbParser_;
-        //private IDebugInfoProvider DebugInfo;
-        //private Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
-
+        
         static List<ProfileSample> temp_;
         
         public ETWProfileDataProvider(IRTextSummary summary, ISession session) {
