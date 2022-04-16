@@ -14,9 +14,10 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
+using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI.Compilers.UTC {
-    public class UTCCompilerInfoProvider : ICompilerInfoProvider {
+    public sealed class UTCCompilerInfoProvider : ICompilerInfoProvider {
         private UTCCompilerIRInfo ir_;
         private ISession session_;
         private UTCNameProvider names_;

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace IRExplorerCore.IR.Tags {
-    public class AssemblyMetadataTag : ITag {
+    public sealed class AssemblyMetadataTag : ITag {
         public AssemblyMetadataTag() {
             AddressToElementMap = new Dictionary<long, IRElement>();
             OffsetToElementMap = new Dictionary<long, IRElement>();

@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers {
-    public class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
+    public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
         private string filePath_;
         private PEReader reader_;
 

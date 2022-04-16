@@ -11,36 +11,29 @@ using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
     class ModuleInfo : IDisposable {
-        public bool HasDebugInfo { get; private set; }
-        public bool Initialized { get; private set; }
-
-        public IRTextSummary Summary;
-        public IDebugInfoProvider DebugInfo;
-
-        //? TODO: Needed only for inlinee samples
-        public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
-        public LoadedDocument ModuleDocument;
-
         private BinaryFileDescription binaryInfo_;
         private ProfileDataProviderOptions options_;
         private ISession session_;
+        private Dictionary<long, IRTextFunction> addressFuncMap_;
+        private Dictionary<long, string> externalsFuncMap_;
+        private Dictionary<string, IRTextFunction> externalFuncNames_;
+        private IntervalTree<long, DebugFunctionInfo> functionRvaTree_; //? TODO: Replace
 
-        public Dictionary<long, IRTextFunction> addressFuncMap;
-        public Dictionary<long, string> externalsFuncMap;
-        private Dictionary<string, IRTextFunction> externalFuncNames;
-        private IntervalTree<long, DebugFunctionInfo> functionRvaTree_;
+        public IRTextSummary Summary { get; set; }
+        public LoadedDocument ModuleDocument { get; set; }
+        public IDebugInfoProvider DebugInfo { get; set; }
+
+        public bool HasDebugInfo { get; set; }
+        public bool Initialized { get; set; }
+
+        //? TODO: Needed only for inlinee samples
+        public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
         public ModuleInfo(ProfileDataProviderOptions options, ISession session) {
             options_ = options;
             session_ = session;
         }
-
-        public void Initialize(IRTextSummary summary, BinaryFileDescription binaryInfo) {
-            Initialized = true;
-            Summary = summary;
-            ModuleDocument = session_.SessionState.FindLoadedDocument(summary);
-        }
-
+        
         public async Task<bool> Initialize(BinaryFileDescription binaryInfo) {
             if (Initialized) {
                 return true;
@@ -97,9 +90,9 @@ namespace IRExplorerUI.Profile {
         private bool BuildAddressFunctionMap() {
             // An "external" function here is considered any func. that
             // has no associated IR in the module.
-            addressFuncMap = new Dictionary<long, IRTextFunction>(Summary.Functions.Count);
-            externalsFuncMap = new Dictionary<long, string>();
-            externalFuncNames = new Dictionary<string, IRTextFunction>();
+            addressFuncMap_ = new Dictionary<long, IRTextFunction>(Summary.Functions.Count);
+            externalsFuncMap_ = new Dictionary<long, string>();
+            externalFuncNames_ = new Dictionary<string, IRTextFunction>();
             functionRvaTree_ = new IntervalTree<long, DebugFunctionInfo>();
 
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
@@ -113,15 +106,13 @@ namespace IRExplorerUI.Profile {
                 var func = Summary.FindFunction(funcInfo.Name);
 
                 if (func != null) {
-                    addressFuncMap[funcInfo.RVA] = func;
+                    addressFuncMap_[funcInfo.RVA] = func;
                 }
                 else {
-                    externalsFuncMap[funcInfo.RVA] = funcInfo.Name;
+                    externalsFuncMap_[funcInfo.RVA] = funcInfo.Name;
                 }
 
             }
-
-            Trace.Flush();
 
 #if DEBUG
             //Trace.WriteLine($"Address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
@@ -189,8 +180,6 @@ namespace IRExplorerUI.Profile {
         
         private List<DebugFunctionInfo> sortedList_;
 
-        private SortedList<DebugFunctionInfo, DebugFunctionInfo> sortedList2_;
-
         DebugFunctionInfo BinarySearch(IList<DebugFunctionInfo> ranges, long value) {
             int min = 0;
             int max = ranges.Count - 1;
@@ -219,21 +208,9 @@ namespace IRExplorerUI.Profile {
                 return DebugFunctionInfo.Unknown;
             }
 
+            //? TODO: Enable sorted list, integrate in PDBProvider
 #if false
 
-#if false
-            if (sortedList2_ == null) {
-                sortedList2_ = new SortedList<DebugFunctionInfo, DebugFunctionInfo>();
-
-                foreach (var x in functionRvaTree_) {
-                    if (!sortedList2_.ContainsKey(x.Value)) {
-                        sortedList2_.Add(x.Value, x.Value);
-                    }
-                }
-            }
-
-            return sortedList2_.TryGetValue(new DebugFunctionInfo(null, funcAddress, 0), out var result) ? result : DebugFunctionInfo.Unknown;
-#else
             if (sortedList_ == null) {
                 sortedList_ = new List<DebugFunctionInfo>();
 
@@ -245,8 +222,6 @@ namespace IRExplorerUI.Profile {
             }
 
             return BinarySearch(sortedList_, funcAddress);
-#endif
-
 #else
             //foreach (var pair in cache_.orderList) {
             //    var func = pair;
@@ -273,7 +248,7 @@ namespace IRExplorerUI.Profile {
             }
 
             // Try to use the precise address -> function mapping.
-            if (addressFuncMap.TryGetValue(funcAddress, out var textFunction)) {
+            if (addressFuncMap_.TryGetValue(funcAddress, out var textFunction)) {
                 return textFunction;
             }
 
@@ -304,11 +279,11 @@ namespace IRExplorerUI.Profile {
                 return null;
             }
 
-            if (!externalsFuncMap.TryGetValue(funcAddress, out var externalFuncName)) {
+            if (!externalsFuncMap_.TryGetValue(funcAddress, out var externalFuncName)) {
                 return null;
             }
 
-            if (!externalFuncNames.TryGetValue(externalFuncName, out var textFunction)) {
+            if (!externalFuncNames_.TryGetValue(externalFuncName, out var textFunction)) {
                 if (externalFuncName.Contains("quickSortDLL")) {
                     ;
                 }
@@ -316,7 +291,7 @@ namespace IRExplorerUI.Profile {
                 // Create a dummy external function that will have no sections. 
                 textFunction = new IRTextFunction(externalFuncName);
                 Summary.AddFunction(textFunction);
-                externalFuncNames[externalFuncName] = textFunction;
+                externalFuncNames_[externalFuncName] = textFunction;
             }
 
             return textFunction;

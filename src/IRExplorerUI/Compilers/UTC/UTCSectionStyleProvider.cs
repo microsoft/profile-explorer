@@ -6,7 +6,7 @@ using System.Diagnostics;
 using IRExplorerCore;
 
 namespace IRExplorerUI.UTC {
-    public class UTCSectionStyleProvider : ISectionStyleProvider {
+    public sealed class UTCSectionStyleProvider : ISectionStyleProvider {
         private List<MarkedSectionName> sectionNameMarkers_;
 
         public UTCSectionStyleProvider() {

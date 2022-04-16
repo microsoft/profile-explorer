@@ -6,7 +6,7 @@ using ProtoBuf;
 namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
-public class ChunkedList<T> : IList<T> {
+public sealed class ChunkedList<T> : IList<T> {
     private const int ChunkSize = 8192;
 
     [ProtoMember(1)]

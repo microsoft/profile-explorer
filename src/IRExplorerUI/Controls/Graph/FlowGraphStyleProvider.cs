@@ -8,7 +8,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
-    public class FlowGraphStyleProvider : IGraphStyleProvider {
+    public sealed class FlowGraphStyleProvider : IGraphStyleProvider {
         private const int PolylineEdgeThreshold = 100;
         private const double DefaultEdgeThickness = 0.025;
         private const double BoldEdgeThickness = 0.05;

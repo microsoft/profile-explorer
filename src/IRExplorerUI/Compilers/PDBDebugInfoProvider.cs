@@ -24,96 +24,10 @@ namespace IRExplorerUI.Compilers {
     //? https://stackoverflow.com/questions/34960989/how-can-i-hide-dll-registration-message-window-in-my-application
 
     //? TODO: Move global symbol load as member done once
-    //? Use for-each iterators
-    //? Free more COM
+    //? Use for-each iterators everywhere
+    //? Free more COM?
 
-    public static class SymSrvHelpers {
-        private static int processId_ = Process.GetCurrentProcess().Id;
-        private static bool initialized_;
-        private static string currentSymbolPath_;
-        private static object lockObject_ = new object();
-
-        public static bool InitSymSrv(string symbolPath) {
-            lock (lockObject_) {
-                if (initialized_) {
-                    if (currentSymbolPath_ == symbolPath) {
-                        return true;
-                    }
-                    
-                    CleanupSymSrv();
-                }
-
-                //symbolPath = @"srv*https://symweb";
-
-                if (NativeMethods.SymInitialize((IntPtr)processId_, symbolPath, false)) {
-                    //NativeMethods.SymSetOptions(NativeMethods.SYMOPT_EXACT_SYMBOLS);
-                    initialized_ = true;
-                    currentSymbolPath_ = symbolPath;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static bool CleanupSymSrv() {
-            if (initialized_) {
-                initialized_ = false;
-                return NativeMethods.SymCleanup((IntPtr)processId_);
-            }
-
-            return true;
-        }
-
-        /// Private method to locate the local path for a matching PDB. Implicitly handles symbol download if needed.
-        public static string GetLocalPDBFilePath(string pdbFilename, Guid guid, int pdbAge) {
-            const int MAX_PATH = 4096;
-            StringBuilder outPath = new StringBuilder(MAX_PATH);
-            IntPtr buffer = Marshal.AllocHGlobal(Marshal.SizeOf(guid));
-            Marshal.StructureToPtr(guid, buffer, false);
-
-            try {
-                if (!NativeMethods.SymFindFileInPath((IntPtr)processId_, null, pdbFilename, buffer, pdbAge, 0, 8,
-                    outPath, IntPtr.Zero, IntPtr.Zero)) {
-                    return null;
-                }
-            }
-            finally {
-                Marshal.FreeHGlobal(buffer);
-            }
-
-            Trace.WriteLine($"=> Found PDB for {pdbFilename} as {outPath.ToString()}, Guid {guid}");
-
-            return outPath.ToString();
-        }
-
-        public static string GetLocalImageFilePath(BinaryFileDescription binaryInfo) {
-            return GetLocalImageFilePath(binaryInfo.ImageName, 
-                                         (int)binaryInfo.TimeStamp, 
-                                         (int)binaryInfo.ImageSize);
-        }
-
-        public static string GetLocalImageFilePath(string imageFilename, int imageTimestamp, int imageSize) {
-            const int MAX_PATH = 4096;
-            StringBuilder outPath = new StringBuilder(MAX_PATH);
-            IntPtr buffer = Marshal.AllocHGlobal(4);
-            Marshal.WriteInt32(buffer, imageTimestamp);
-
-            try {
-                if (!NativeMethods.SymFindFileInPath((IntPtr)processId_, null, imageFilename,
-                    buffer, imageSize, 0, 4, outPath, IntPtr.Zero, IntPtr.Zero)) {
-                    return null;
-                }
-            }
-            finally {
-                Marshal.FreeHGlobal(buffer);
-            }
-
-            return outPath.ToString();
-        }
-    }
-
-    public class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
+    public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
         private const string DefaultSymbolSource = @"SRV*https://msdl.microsoft.com/download/symbols";
         private const string DefaultSymbolCachePath = @"C:\Symbols";
@@ -590,3 +504,91 @@ namespace IRExplorerUI.Compilers {
         }
     }
 }
+
+
+//? TODO: Remove unused code, replaced by TraceEvent
+//public static class SymSrvHelpers {
+//    private static int processId_ = Process.GetCurrentProcess().Id;
+//    private static bool initialized_;
+//    private static string currentSymbolPath_;
+//    private static object lockObject_ = new object();
+
+//    public static bool InitSymSrv(string symbolPath) {
+//        lock (lockObject_) {
+//            if (initialized_) {
+//                if (currentSymbolPath_ == symbolPath) {
+//                    return true;
+//                }
+
+//                CleanupSymSrv();
+//            }
+
+//            //symbolPath = @"srv*https://symweb";
+
+//            if (NativeMethods.SymInitialize((IntPtr)processId_, symbolPath, false)) {
+//                //NativeMethods.SymSetOptions(NativeMethods.SYMOPT_EXACT_SYMBOLS);
+//                initialized_ = true;
+//                currentSymbolPath_ = symbolPath;
+//                return true;
+//            }
+//        }
+
+//        return false;
+//    }
+
+//    private static bool CleanupSymSrv() {
+//        if (initialized_) {
+//            initialized_ = false;
+//            return NativeMethods.SymCleanup((IntPtr)processId_);
+//        }
+
+//        return true;
+//    }
+
+//    /// Private method to locate the local path for a matching PDB. Implicitly handles symbol download if needed.
+//    public static string GetLocalPDBFilePath(string pdbFilename, Guid guid, int pdbAge) {
+//        const int MAX_PATH = 4096;
+//        StringBuilder outPath = new StringBuilder(MAX_PATH);
+//        IntPtr buffer = Marshal.AllocHGlobal(Marshal.SizeOf(guid));
+//        Marshal.StructureToPtr(guid, buffer, false);
+
+//        try {
+//            if (!NativeMethods.SymFindFileInPath((IntPtr)processId_, null, pdbFilename, buffer, pdbAge, 0, 8,
+//                outPath, IntPtr.Zero, IntPtr.Zero)) {
+//                return null;
+//            }
+//        }
+//        finally {
+//            Marshal.FreeHGlobal(buffer);
+//        }
+
+//        Trace.WriteLine($"=> Found PDB for {pdbFilename} as {outPath.ToString()}, Guid {guid}");
+
+//        return outPath.ToString();
+//    }
+
+//    public static string GetLocalImageFilePath(BinaryFileDescription binaryInfo) {
+//        return GetLocalImageFilePath(binaryInfo.ImageName, 
+//                                     (int)binaryInfo.TimeStamp, 
+//                                     (int)binaryInfo.ImageSize);
+//    }
+
+//    public static string GetLocalImageFilePath(string imageFilename, int imageTimestamp, int imageSize) {
+//        const int MAX_PATH = 4096;
+//        StringBuilder outPath = new StringBuilder(MAX_PATH);
+//        IntPtr buffer = Marshal.AllocHGlobal(4);
+//        Marshal.WriteInt32(buffer, imageTimestamp);
+
+//        try {
+//            if (!NativeMethods.SymFindFileInPath((IntPtr)processId_, null, imageFilename,
+//                buffer, imageSize, 0, 4, outPath, IntPtr.Zero, IntPtr.Zero)) {
+//                return null;
+//            }
+//        }
+//        finally {
+//            Marshal.FreeHGlobal(buffer);
+//        }
+
+//        return outPath.ToString();
+//    }
+//}

@@ -8,7 +8,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.Graph {
-    class DominatorTreePrinter : GraphVizPrinter {
+    public sealed class DominatorTreePrinter : GraphVizPrinter {
         private FunctionIR function_;
         private DominatorAlgorithmOptions options_;
         private Dictionary<string, TaggedObject> blockNameMap_;

@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
-using IRExplorerUI.Utilities;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using System.Collections.Generic;
@@ -27,7 +26,7 @@ namespace IRExplorerUI.Document {
         }
     }
 
-    public class OverlayRenderer : Canvas, IBackgroundRenderer {
+    public sealed class OverlayRenderer : Canvas, IBackgroundRenderer {
         class VisualHost : FrameworkElement {
             public Visual Visual { get; set; }
 
@@ -48,7 +47,7 @@ namespace IRExplorerUI.Document {
             public HighlightingStyle Style { get; set; }
         }
 
-        public class IROverlaySegment : IRSegment {
+        public sealed class IROverlaySegment : IRSegment {
             public IROverlaySegment(IRElement element, IElementOverlay overlay) : base(element) {
                 Overlays = new List<IElementOverlay>();
                 Overlays.Add(overlay);

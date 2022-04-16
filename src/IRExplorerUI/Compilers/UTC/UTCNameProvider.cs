@@ -30,7 +30,7 @@ namespace IRExplorerUI.UTC {
         public FilteredSectionNameKind FilterKind { get; set; }
     }
 
-    class UTCNameProvider : INameProvider {
+    public sealed class UTCNameProvider : INameProvider {
         private static List<FilteredSectionName> sectionNameFilters_;
 
         static UTCNameProvider() {

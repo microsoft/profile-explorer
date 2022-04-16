@@ -9,10 +9,9 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Document {
     [ProtoContract(SkipConstructor = true)]
-    public class IconElementOverlay : ElementOverlayBase {
+    public sealed class IconElementOverlay : ElementOverlayBase {
         public IconElementOverlay() : base() {
             // Used by deserialization.
-            return;
         }
 
         public IconElementOverlay(IconDrawing icon, double width, double height, 

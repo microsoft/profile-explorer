@@ -6,7 +6,7 @@ using System.Windows.Media;
 using IRExplorerCore.IR;
 
 namespace IRExplorerUI {
-    public class GraphNodeTag : ITag {
+    public sealed class GraphNodeTag : ITag {
         public enum LabelPlacementKind {
             Top,
             Bottom,

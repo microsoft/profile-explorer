@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using IRExplorerUI.Query;
 using System.Threading.Tasks;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI {
     public interface ICompilerInfoProvider {

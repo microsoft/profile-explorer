@@ -11,7 +11,7 @@ using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
-namespace IRExplorerUI.Utilities {
+namespace IRExplorerUI.Document {
     public static class DocumentUtils {
         public static IRElement FindElement(int offset, List<IRElement> list) {
             if (list == null) {
@@ -88,20 +88,20 @@ namespace IRExplorerUI.Utilities {
                                                out int viewStartLine, out int viewEndLine)) {
                 yield break;
             }
-            
+
             foreach (var segment in list.FindOverlappingSegments(viewStart, viewEnd - viewStart)) {
                 // Blocks can start on a line that is out of view and the overlay
                 // is meant to be associated with the start line, while GetRectsForSegment
                 // would use the first line still in view, so skip manually over it.
-                if ((segment.Element is BlockIR) && 
+                if (segment.Element is BlockIR &&
                     segment.Element.TextLocation.Line < viewStartLine) {
                     continue;
                 }
-                
+
                 yield return segment;
             }
         }
-        
+
         public static bool FindVisibleTextOffsets(TextView textView, out int viewStart, out int viewEnd) {
             textView.EnsureVisualLines();
             var visualLines = textView.VisualLines;
@@ -115,7 +115,7 @@ namespace IRExplorerUI.Utilities {
             viewEnd = visualLines[^1].LastDocumentLine.EndOffset;
             return true;
         }
-        
+
         public static bool FindVisibleTextLineAndOffsets(TextView textView, out int viewStart, out int viewEnd,
                                                          out int viewStartLine, out int viewEndLine) {
             textView.EnsureVisualLines();

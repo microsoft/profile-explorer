@@ -28,6 +28,7 @@ using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;
 using IRExplorerUI.Query;
+using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISession {

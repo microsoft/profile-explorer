@@ -56,7 +56,7 @@ namespace IRExplorerUI {
     }
 
 
-    public class ElementColumnValue : BindableObject {
+    public sealed class ElementColumnValue : BindableObject {
         public ElementColumnValue(string text, long value = 0, double valueValuePercentage = 0.0, 
                                 int valueOrder = int.MaxValue, string tooltip = null) {
             Text = text;
@@ -176,7 +176,7 @@ namespace IRExplorerUI {
     }
 
 
-    public class ElementRowValue : BindableObject {
+    public sealed class ElementRowValue : BindableObject {
         public ElementRowValue(IRElement element) {
             Element = element;
             ColumnValues = new Dictionary<OptionalColumn, ElementColumnValue>();

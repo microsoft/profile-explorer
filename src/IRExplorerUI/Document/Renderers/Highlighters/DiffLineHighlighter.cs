@@ -8,7 +8,7 @@ using System.Windows;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
-using IRExplorerUI.Utilities;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI {
     public enum DiffKind {
@@ -20,7 +20,7 @@ namespace IRExplorerUI {
         Placeholder
     }
 
-    public class DiffTextSegment : TextSegment {
+    public sealed class DiffTextSegment : TextSegment {
         public DiffTextSegment(DiffKind kind, int startOffset, int length) {
             Kind = kind;
             StartOffset = startOffset;

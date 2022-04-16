@@ -9,6 +9,7 @@ using IRExplorerUI.Query;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.LLVM;
+using IRExplorerUI.Compilers.ASM;
 
 namespace IRExplorerUI.Compilers.LLVM {
     public class LLVMCompilerInfoProvider : ICompilerInfoProvider {

@@ -13,7 +13,7 @@ using IRExplorerCore.IR;
 using IRExplorerUI.Compilers;
 using Microsoft.Win32.SafeHandles;
 
-namespace IRExplorerUI.Utilities {
+namespace IRExplorerUI.Compilers.ASM {
     public class DisassemblerOptions {
         public bool IncludeBytes { get; set; }
 
@@ -55,7 +55,7 @@ namespace IRExplorerUI.Utilities {
             debugInfo_ = debugInfo;
             Initialize();
         }
-        
+
         public Disassembler(Machine architecture, byte[] data, long dataStartRva = 0, long baseAddress = 0,
                             IDebugInfoProvider debugInfo = null) {
             architecture_ = architecture;
@@ -81,7 +81,7 @@ namespace IRExplorerUI.Utilities {
             }
 
             var builder = new StringBuilder((int)(size / 4) + 1);
-            
+
             try {
                 foreach (var instr in DisassembleInstructions(startRVA, size, baseAddress_ + startRVA)) {
                     var addressString = $"{instr.Address:X}:  ";
@@ -163,12 +163,13 @@ namespace IRExplorerUI.Utilities {
                         bool replaced = false;
 
                         // For jumps, use the name only if it's to another function.
-                        if (!isJump || rva < startRVA || rva >= (startRVA + size)) {
+                        if (!isJump || rva < startRVA || rva >= startRVA + size) {
                             replaced = TryAppendFunctionName(builder, rva);
                         }
 
-                        if(!replaced) {
-                            if (skippedSharp) builder.Append('#');
+                        if (!replaced) {
+                            if (skippedSharp)
+                                builder.Append('#');
                             builder.Append($"0x{hexValue:X}");
                         }
 
@@ -204,7 +205,7 @@ namespace IRExplorerUI.Utilities {
                 return func;
             }
 
-            var funcInfo =  debugInfo_.FindFunctionByRVA(rva);
+            var funcInfo = debugInfo_.FindFunctionByRVA(rva);
 
             if (!funcInfo.IsUnknown) {
                 Trace.WriteLine($"=> Found for RVA {rva}: {funcInfo.Name}");
@@ -264,7 +265,7 @@ namespace IRExplorerUI.Utilities {
         private unsafe int FindHexNumber(byte* letterPtr, int index, out long value) {
             // Expect star with 0x and skip.
             if (letterPtr[index] != '0' ||
-                (index + 1) >= Interop.Instruction.OperandLength ||
+                index + 1 >= Interop.Instruction.OperandLength ||
                 !(letterPtr[index + 1] == 'x' || letterPtr[index + 1] == 'X')) {
                 value = 0;
                 return 0;
@@ -277,19 +278,20 @@ namespace IRExplorerUI.Utilities {
             while (index < Interop.Instruction.OperandLength && letterPtr[index] != 0) {
                 char c = (char)letterPtr[index];
 
-                if ((c >= '0' && c <= '9')) {
-                    value = (value << 4) | (c - '0');
+                if (c >= '0' && c <= '9') {
+                    value = value << 4 | c - '0';
                     index++;
                 }
                 else if (c >= 'a' && c <= 'f') {
-                    value = (value << 4) | (10 + (c - 'a'));
+                    value = value << 4 | 10 + (c - 'a');
                     index++;
                 }
                 else if (c >= 'A' && c <= 'F') {
-                    value = (value << 4) | (10 + (c - 'A'));
+                    value = value << 4 | 10 + (c - 'A');
                     index++;
                 }
-                else break;
+                else
+                    break;
             }
 
             int length = index - startIndex;
@@ -298,7 +300,7 @@ namespace IRExplorerUI.Utilities {
 
         private unsafe int AppendBytes(Interop.Instruction instr, int startIndex, StringBuilder builder) {
             // Append at most 6 bytes per line.
-            int count =  Math.Min(6, instr.Size - startIndex);
+            int count = Math.Min(6, instr.Size - startIndex);
             byte* bytes = instr.Bytes;
 
             switch (count) {
@@ -340,7 +342,7 @@ namespace IRExplorerUI.Utilities {
 
         private (byte[] Data, long StartRVA) FindCodeSection(long rva) {
             foreach (var section in codeSectionData_) {
-                if (rva >= section.StartRVA && rva < (section.StartRVA + section.Data.Length)) {
+                if (rva >= section.StartRVA && rva < section.StartRVA + section.Data.Length) {
                     return section;
                 }
             }
@@ -361,14 +363,14 @@ namespace IRExplorerUI.Utilities {
             var dataBuffer = GCHandle.Alloc(codeSection.Data, GCHandleType.Pinned);
             var dataBufferPtr = dataBuffer.AddrOfPinnedObject();
 
-            IntPtr dataIteratorPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset);
-            IntPtr dataEndPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset + size);
+            var dataIteratorPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset);
+            var dataEndPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset + size);
 
             while (dataIteratorPtr.ToInt64() < dataEndPtr.ToInt64()) {
-                IntPtr remainingLength = (IntPtr)(dataEndPtr.ToInt64() - dataIteratorPtr.ToInt64());
+                var remainingLength = (IntPtr)(dataEndPtr.ToInt64() - dataIteratorPtr.ToInt64());
 
                 if (Interop.Iterate(disasmHandle_, ref dataIteratorPtr, ref remainingLength, ref startAddress, instrBuffer)) {
-                    IntPtr instrPtr = instrBuffer.DangerousGetHandle();
+                    var instrPtr = instrBuffer.DangerousGetHandle();
                     var instruction = (Interop.Instruction)Marshal.PtrToStructure(instrPtr, typeof(Interop.Instruction));
                     yield return instruction;
                 }
@@ -394,7 +396,7 @@ namespace IRExplorerUI.Utilities {
                 GC.SuppressFinalize(this);
             }
         }
-        
+
         static class Interop {
             [StructLayout(LayoutKind.Sequential)]
             public unsafe struct Instruction {
@@ -509,24 +511,24 @@ namespace IRExplorerUI.Utilities {
 
             public class DisassemblerHandle : SafeHandleMinusOneIsInvalid {
                 public DisassemblerHandle(IntPtr pDisassembler) : base(true) {
-                    this.handle = pDisassembler;
+                    handle = pDisassembler;
                 }
 
                 protected override bool ReleaseHandle() {
-                    var resultCode = CloseDisassembler(ref this.handle);
-                    this.handle = IntPtr.Zero;
+                    var resultCode = CloseDisassembler(ref handle);
+                    handle = IntPtr.Zero;
                     return resultCode == CapstoneResultCode.Ok;
                 }
             }
 
             public class InstructionHandle : SafeHandleZeroOrMinusOneIsInvalid {
                 public InstructionHandle(IntPtr pInstruction) : base(true) {
-                    this.handle = pInstruction;
+                    handle = pInstruction;
                 }
 
                 protected override bool ReleaseHandle() {
-                    FreeInstructions(this.handle, (IntPtr)1);
-                    this.handle = IntPtr.Zero;
+                    FreeInstructions(handle, (IntPtr)1);
+                    handle = IntPtr.Zero;
                     return true;
                 }
             }

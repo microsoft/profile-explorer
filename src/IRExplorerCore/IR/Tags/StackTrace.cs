@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace IRExplorerCore.IR {
-    public class StackFrame {
+    public sealed class StackFrame {
         public StackFrame(string function, string filePath, int line, int column) {
             Function = function;
             FilePath = filePath;
@@ -32,7 +32,7 @@ namespace IRExplorerCore.IR {
         }
     }
 
-    public class StackTrace {
+    public sealed class StackTrace {
         public List<StackFrame> Frames { get; set; }
         public byte[] Signature { get; set; }
 

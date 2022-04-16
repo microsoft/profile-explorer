@@ -14,7 +14,7 @@ using ProtoBuf;
 // Caching that checks for same CRC
 // Try to fill PDB path
 
-namespace IRExplorerUI {
+namespace IRExplorerUI.Compilers.ASM {
     [ProtoContract(SkipConstructor = true)]
     public class ExternalDisassemblerOptions : SettingsBase {
         private const string DEFAULT_DISASM_NAME = "dumpbin.exe";
@@ -24,7 +24,7 @@ namespace IRExplorerUI {
 
         private const string DEFAULT_DOTNET_DISASM_NAME = "r2rdump.exe";
         private const string DEFAULT_DOTNET_DISASM_ARGS = "--in \"$SRC\" --out \"$DST\" --disasm --irexplorer-dump";
-        
+
         [ProtoMember(1)]
         public string DisassemblerPath { get; set; }
         [ProtoMember(2)]
@@ -61,14 +61,14 @@ namespace IRExplorerUI {
                 }
                 case BinaryFileKind.DotNetR2R: {
                     DisassemblerArguments = DEFAULT_DOTNET_DISASM_ARGS;
-                    UseInputFileName = true; 
+                    UseInputFileName = true;
                     break;
                 }
                 default: {
                     throw new InvalidOperationException();
                 }
             }
-            
+
             CacheDissasembly = true;
             OptionsExpanded = true;
         }
@@ -166,7 +166,7 @@ namespace IRExplorerUI {
                           CancelableTask cancelableTask = null) {
             return Task.Run(() => DisassembleImpl(imagePath, compilerInfo, progressCallback, cancelableTask));
         }
-        
+
         private DisassemberResult DisassembleImpl(string imagePath, ICompilerInfoProvider compilerInfo,
             DisassemblerProgressHandler progressCallback,
             CancelableTask cancelableTask) {
@@ -212,7 +212,7 @@ namespace IRExplorerUI {
                 // in case it's in another directory (downloaded from a symbol server for ex).
                 var envVariables = new Dictionary<string, string>();
 
-                if(!string.IsNullOrEmpty(debugPath)) {
+                if (!string.IsNullOrEmpty(debugPath)) {
                     envVariables["_NT_SYMBOL_PATH"] = Utils.TryGetDirectoryName(debugPath);
                 }
 
@@ -227,7 +227,7 @@ namespace IRExplorerUI {
                 }
 
                 // Done if no post-processing of the output is needed.
-                if(string.IsNullOrEmpty(Options.PostProcessorPath)) {
+                if (string.IsNullOrEmpty(Options.PostProcessorPath)) {
                     return true;
                 }
 

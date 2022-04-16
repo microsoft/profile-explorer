@@ -14,7 +14,7 @@ namespace IRExplorerCore.UTC {
         Dead = 1 << 3          // !
     }
 
-    public class SymbolAnnotationTag : ITag {
+    public sealed class SymbolAnnotationTag : ITag {
         public SymbolAnnotationTag() {
 
         }
@@ -46,7 +46,7 @@ namespace IRExplorerCore.UTC {
         }
     }
 
-    public class SymbolOffsetTag : ITag {
+    public sealed class SymbolOffsetTag : ITag {
         public SymbolOffsetTag(long offset) {
             Offset = offset;
         }
@@ -68,7 +68,7 @@ namespace IRExplorerCore.UTC {
             return $"symbol offset: {Offset}";
         }
     }
-    public class PointsAtSetTag : ITag {
+    public sealed class PointsAtSetTag : ITag {
         public PointsAtSetTag(int pas) {
             Pas = pas;
         }
@@ -91,7 +91,7 @@ namespace IRExplorerCore.UTC {
         }
     }
 
-    public class InterferenceTag : ITag {
+    public sealed class InterferenceTag : ITag {
         public Dictionary<int, HashSet<int>> InterferingPasMap { get; }
         public Dictionary<int, List<string>> PasToSymMap { get; }
         public Dictionary<string, int> SymToPasMap { get; }

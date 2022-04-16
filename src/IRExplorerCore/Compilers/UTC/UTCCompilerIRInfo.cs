@@ -8,7 +8,7 @@ using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
 
 namespace IRExplorerCore.UTC {
-    public class UTCCompilerIRInfo : ICompilerIRInfo {
+    public sealed class UTCCompilerIRInfo : ICompilerIRInfo {
         public IRMode Mode { get; set; }
 
         public InstrOffsetData InstructionOffsetData => InstrOffsetData.PointsToNextInstr();

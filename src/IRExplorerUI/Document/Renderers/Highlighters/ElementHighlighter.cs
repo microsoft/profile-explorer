@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore.IR;
-using IRExplorerUI.Utilities;
+using IRExplorerUI.Document;
 using ProtoBuf;
 
 namespace IRExplorerUI {

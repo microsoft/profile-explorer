@@ -9,9 +9,9 @@ using System.Windows.Media;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Rendering;
-using IRExplorerUI.Utilities;
 using IRExplorerCore.IR;
 using ProtoBuf;
+using IRExplorerUI.Document;
 
 namespace IRExplorerUI {
     public enum BookmarkSegmentKind {
@@ -20,7 +20,7 @@ namespace IRExplorerUI {
     }
 
     [ProtoContract]
-    public class BookmarkSegment : IRSegment {
+    public sealed class BookmarkSegment : IRSegment {
         public BookmarkSegment() : base(null) { }
 
         public BookmarkSegment(Bookmark bookmark, BookmarkSegmentKind kind, object tag = null) : base(
