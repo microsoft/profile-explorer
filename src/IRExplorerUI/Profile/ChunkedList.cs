@@ -120,5 +120,9 @@ public sealed class ChunkedList<T> : IList<T> {
         }
     }
 
-
+    public ref T GetRef(int index) {
+        int chunk = index >> 14;
+        int indexInChunk = index & (ChunkSize - 1);
+        return ref chunks_[chunk][indexInChunk];
+    }
 }

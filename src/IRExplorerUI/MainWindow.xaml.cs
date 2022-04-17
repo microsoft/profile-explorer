@@ -911,8 +911,10 @@ namespace IRExplorerUI {
         }
 
         private void MenuItem_Click_8(object sender, RoutedEventArgs e) {
+            //? TODO: Remove
             //var data = File.ReadAllBytes(@"C:\work\samples.dat");
             //var profile = StateSerializer.Deserialize<ProtoProfile>(data);
+#if false
             var profile = StateSerializer.Deserialize<ProtoProfile>(@"C:\work\pmc.dat");
 
 
@@ -1078,7 +1080,7 @@ namespace IRExplorerUI {
                 slicePlot.StrokeThickness = 1;
                 slicePlot.StrokeColor = OxyColor.FromArgb(255, 50, 50, 50);
 
-                var p = profile.FindProcess(pair.Item1);
+                var p = profile.GetOrCreateProcess(pair.Item1);
                 slicePlot.Title = p?.Name;
                 model.Series.Add(slicePlot);
 
@@ -1122,6 +1124,7 @@ namespace IRExplorerUI {
 
             //GC.Collect();
             //GC.WaitForPendingFinalizers();
+#endif
         }
 
         private class MainWindowState {

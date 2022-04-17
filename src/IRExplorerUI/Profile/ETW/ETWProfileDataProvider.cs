@@ -19,6 +19,10 @@ using System.IO;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 
+using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
+using Microsoft.Diagnostics.Tracing.Etlx;
+using Microsoft.Diagnostics.Tracing;
+
 namespace IRExplorerUI.Profile {
     public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
@@ -326,7 +330,136 @@ namespace IRExplorerUI.Profile {
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
                     Trace.WriteLine($"Init at {DateTime.Now}");
-                    
+
+#if true
+                    GC.Collect();
+                    GC.WaitForPendingFinalizers();
+                    long memoryUse = GC.GetTotalMemory(true);
+
+                    var tsw = Stopwatch.StartNew();
+
+                    using (var source = new ETWTraceEventSource(tracePath)) {
+                        double lastTime = 0;
+                        
+                        var psw = Stopwatch.StartNew();
+
+                        ProtoProfile prof = new();
+
+                        source.Kernel.ProcessStartGroup += data => {
+                            var proc = new ProfileProcess(data.ProcessID, data.ParentID,
+                                                          data.ProcessName, data.ImageFileName,
+                                                          data.CommandLine);
+                            prof.AddProcess(proc);
+                        };
+
+                        source.Kernel.ImageGroup += data => {
+                            var image = new ProfileImage(data.FileName, (long)data.ImageBase,
+                                                         (long)data.DefaultBase, data.ImageSize,
+                                                         data.TimeDateStamp, data.ImageChecksum);
+                            prof.AddImageToProcess(data.ProcessID, image);
+                        };
+
+                        source.Kernel.ThreadStartGroup += data => {
+                            var thread = new ProfileThread(data.ThreadID, data.ProcessID, data.ThreadName);
+                            prof.AddThreadToProcess(data.ProcessID, thread);
+                        };
+
+                        source.Kernel.EventTraceHeader += data => {
+                            // data.PointerSize;
+                        };
+
+                        source.Kernel.StackWalkStack += data => {
+                            //if (data.ProcessID != mainProcessId) {
+                            //    return;
+                            //}
+
+                            var context = new ProfileContext(data.ProcessID, data.ThreadID,
+                                                             data.ProcessorNumber);
+                            var stack = new ProfileStack(data.FrameCount);
+                            int contextId = prof.SetContext(ref stack, context);
+
+                            for (int i = 0; i < data.FrameCount; i++) {
+                                stack.FramePointers[i] = (long)data.InstructionPointer(i);
+                            }
+
+                            int stackId = prof.AddStack(stack);
+                            prof.SetLastSampleStack(stackId, contextId);
+
+                            // Try to associate with a previous sample from the same context.
+
+                            //Trace.WriteLine("-------------------------------");
+                            //Trace.WriteLine($"Stack frame #{data.FrameCount}");
+
+                            //for (int i = 0; i < data.FrameCount; i++) {
+                            //    var frameIP = data.InstructionPointer(i);
+                            //    Trace.Write($"  #{i}: ");
+                            //    PrintIPInfo(frameIP, data.ThreadID, out var _, out var _, out var _);
+                            //    Trace.WriteLine("");
+                            //}
+                        };
+
+                        source.Kernel.PerfInfoSample += data => {
+                            // if (data.ProcessID != mainProcessId) {
+                            //     return;
+                            // }
+
+                            var weight = data.TimeStampRelativeMSec - lastTime;
+                            lastTime = data.TimeStampRelativeMSec;
+
+                            var sample = new ProfileSample();
+                            //? bool isUserCode = !data.ExecutingDPC && !data.ExecutingISR;
+                            var context = new ProfileContext(data.ProcessID, data.ThreadID,
+                                                             data.ProcessorNumber);
+                            prof.SetContext(ref sample, context);
+
+                            sample.IP = (long)data.InstructionPointer;
+                            sample.Weight = TimeSpan.FromMilliseconds(weight);
+                            sample.Time = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
+                            prof.AddSample(sample);
+
+                            //Trace.WriteLine("-------------------------------");
+                            //Trace.Write($"Sample {weight:F4}: ");
+                            //bool found = PrintIPInfo(data.InstructionPointer, data.ThreadID, out var funcInfo, out var offset, out var module);
+                            //Trace.WriteLine("");
+
+                            //if (found) {
+                            //    var textFunction = module.FindFunction(funcInfo.StartRVA, out bool isExternalFunc);
+
+                            //    if (textFunction != null) {
+                            //        var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                            //        profile.DebugInfo = funcInfo;
+                            //        var sampleWeight = TimeSpan.FromMilliseconds(weight);
+                            //        profile.AddInstructionSample(offset, sampleWeight);
+                            //        profile.Weight += sampleWeight;
+                            //        profile.ExclusiveWeight += sampleWeight;
+                            //    }
+                            //}
+                        };
+
+                        source.Process();
+
+                        psw.Stop();
+                        tsw.Stop();
+
+                        GC.Collect();
+                        GC.WaitForPendingFinalizers();
+                        long memoryUseAfter = GC.GetTotalMemory(true);
+                        Trace.WriteLine($"Time: {psw.Elapsed}");
+                        Trace.WriteLine($"Total time: {tsw.Elapsed}");
+                        Trace.WriteLine($"    Mem usage: {(double)(memoryUseAfter - memoryUse) / (1024 * 1024)} MB");
+                        Trace.WriteLine($"    stacks: {prof.stacks_.Count}");
+                        Trace.WriteLine($"    samples: {prof.samples_.Count}");
+                        Trace.WriteLine($"    ctxs: {prof.contexts_.Count}");
+                        Trace.WriteLine($"    procs: {prof.processes_.Count}");
+                        Trace.WriteLine($"    imgs: {prof.imagesMap_.Count}");
+                        Trace.WriteLine($"    threads: {prof.threadsMap_.Count}");
+                        Trace.Flush();
+                        Environment.Exit(0);
+                        return true;
+
+                    }
+#endif
+
                     IImage prevImage = null;
                     ModuleInfo prevModule = null;
 
@@ -366,6 +499,7 @@ namespace IRExplorerUI.Profile {
 
                     var procCache = new ProcessInfoCache(allProcs, allThreads);
                     var mainProcessId = procCache.FindProcess(imageName);
+
                     
                     if (cancelableTask != null && cancelableTask.IsCanceled) {
                         return false;
@@ -406,6 +540,8 @@ namespace IRExplorerUI.Profile {
                     var acceptedImages = new List<string>();
 
                     bool IsAcceptedModule(string name) {
+                        return true; //? REMOVE
+
                         name = Utils.TryGetFileNameWithoutExtension(name);
                         name = name.ToLowerInvariant();
 
@@ -440,7 +576,7 @@ namespace IRExplorerUI.Profile {
                             if (!imageModuleMap.TryGetValue(queryImage, out var imageModule)) {
                                 imageModule = new ModuleInfo(options_, session_);
                                 imageModuleMap[queryImage] = imageModule;
-
+                                
                                 //? Needs some delay-load, can't disasm every dll for no reason
                                 //? - now Initialize uses a whitelist
                                 var sw2 = Stopwatch.StartNew();
@@ -472,6 +608,144 @@ namespace IRExplorerUI.Profile {
 
                         return module;
                     }
+
+#if false
+                    await session_.StartNewSession(tracePath, SessionKind.FileSession,
+                        new ASMCompilerInfoProvider(IRMode.ARM64, session_));
+
+                    bool PrintIPInfo(ulong frameIp, int threadId, out DebugFunctionInfo funcInfo, out long offset, out ModuleInfo frameModule) {
+                        funcInfo = null;
+                        offset = 0;
+                        frameModule = null;
+
+                        if (frameIp >= 0xFFFF000000000000) {
+                            return false;
+                        }
+
+                        var frameImage = procCache.FindImageForIP((long)frameIp, threadId, mainProcessId);
+
+                        if (frameImage != null) {
+                            long frameRva = (long)frameIp - frameImage.AddressRange.BaseAddress.Value;
+                            frameModule = FindModuleInfo(frameImage).Result;
+
+                            if (frameModule != null && frameModule.HasDebugInfo) {
+                                funcInfo = frameModule.FindDebugFunctionInfo(frameRva);
+
+                                if (funcInfo != null && !funcInfo.IsUnknown) {
+                                     offset = frameRva - funcInfo.StartRVA;
+                                    Trace.Write($"{frameImage.FileName}:{funcInfo.Name} + {offset:X}");
+                                    return true;
+                                }
+                            }
+                        }
+
+                        return false;
+                    }
+
+                    
+
+                    using (var source = new ETWTraceEventSource(tracePath)) {
+                        double lastTime = 0;
+                        ProtoProfile prof = new();
+
+                        source.Kernel.ProcessStartGroup += data => {
+                            var proc = new ProfileProcess(data.ProcessID, data.ParentID,
+                                                          data.ProcessName, data.ImageFileName,
+                                                          data.CommandLine);
+                            prof.AddProcess(proc);
+                        };
+
+                        source.Kernel.ImageGroup += data => {
+                            var image = new ProfileImage(data.FileName, (long)data.ImageBase,
+                                                         (long)data.DefaultBase, data.ImageSize,
+                                                         data.TimeDateStamp, data.ImageChecksum);
+                            prof.AddImageToProcess(data.ProcessID, image);
+                        };
+
+                        source.Kernel.ThreadStartGroup += data => {
+                            var thread = new ProfileThread(data.ThreadID, data.ProcessID, data.ThreadName);
+                            prof.AddThreadToProcess(data.ProcessID, thread);
+                        };
+
+                        source.Kernel.EventTraceHeader += data => {
+                            // data.PointerSize;
+                        };
+
+                        source.Kernel.StackWalkStack += data => {
+                            if (data.ProcessID != mainProcessId) {
+                                return;
+                            }
+
+                            var context = new ProfileContext(data.ProcessID, data.ThreadID,
+                                                             data.ProcessorNumber);
+                            var stack = new ProfileStack(data.FrameCount);
+                            int contextId = prof.SetContext(ref stack, context);
+
+                            for (int i = 0; i < data.FrameCount; i++) {
+                                stack.FramePointers[i] = (long)data.InstructionPointer(i);
+                            }
+
+                            int stackId = prof.AddStack(stack);
+                            prof.SetLastSampleStack(stackId, contextId);
+
+                            // Try to associate with a previous sample from the same context.
+
+                            Trace.WriteLine("-------------------------------");
+                            Trace.WriteLine($"Stack frame #{data.FrameCount}");
+
+                            //for (int i = 0; i < data.FrameCount; i++) {
+                            //    var frameIP = data.InstructionPointer(i);
+                            //    Trace.Write($"  #{i}: ");
+                            //    PrintIPInfo(frameIP, data.ThreadID, out var _, out var _, out var _);
+                            //    Trace.WriteLine("");
+                            //}
+                        };
+
+                        source.Kernel.PerfInfoSample += data => {
+                            if (data.ProcessID != mainProcessId) {
+                                return;
+                            }
+
+                            var weight = data.TimeStampRelativeMSec - lastTime;
+                            lastTime = data.TimeStampRelativeMSec;
+
+                            var sample = new ProfileSample();
+                            //? bool isUserCode = !data.ExecutingDPC && !data.ExecutingISR;
+                            var context = new ProfileContext(data.ProcessID, data.ThreadID,
+                                                             data.ProcessorNumber);
+                            prof.SetContext(ref sample, context);
+                            
+                            sample.IP = (long)data.InstructionPointer;
+                            sample.Weight = TimeSpan.FromMilliseconds(weight);
+                            sample.Time = TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec);
+                            prof.AddSample(sample);
+
+                            Trace.WriteLine("-------------------------------");
+                            Trace.Write($"Sample {weight:F4}: ");
+                            //bool found = PrintIPInfo(data.InstructionPointer, data.ThreadID, out var funcInfo, out var offset, out var module);
+                            //Trace.WriteLine("");
+
+                            //if (found) {
+                            //    var textFunction = module.FindFunction(funcInfo.StartRVA, out bool isExternalFunc);
+
+                            //    if (textFunction != null) {
+                            //        var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                            //        profile.DebugInfo = funcInfo;
+                            //        var sampleWeight = TimeSpan.FromMilliseconds(weight);
+                            //        profile.AddInstructionSample(offset, sampleWeight);
+                            //        profile.Weight += sampleWeight;
+                            //        profile.ExclusiveWeight += sampleWeight;
+                            //    }
+                            //}
+                        };
+
+                        source.Process();
+                        Trace.Flush();
+                        return true;
+                        //Environment.Exit(0);
+                    }
+#endif
+
 
                     Trace.WriteLine($"Start preload symbols {DateTime.Now}");
 
