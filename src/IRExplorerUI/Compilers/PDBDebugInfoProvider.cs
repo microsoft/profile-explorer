@@ -37,6 +37,7 @@ namespace IRExplorerUI.Compilers {
         private IDiaDataSource diaSource_;
         private IDiaSession session_;
         private IDiaSymbol globalSymbol_;
+        private List<DebugFunctionInfo> cachedFunctionList_;
 
         public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
             options_ = options;
@@ -384,21 +385,31 @@ namespace IRExplorerUI.Compilers {
 
             return true;
         }
-
+        
         public IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal) {
-            IDiaEnumSymbols symbolEnum;
-            
-            try {
-                globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
+            if (cachedFunctionList_ != null) {
+                foreach (var entry in cachedFunctionList_) {
+                    yield return entry;
+                }
             }
-            catch (Exception ex) {
-                Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
-                yield break;
-            }
+            else {
+                cachedFunctionList_ = new List<DebugFunctionInfo>();
+                IDiaEnumSymbols symbolEnum;
 
-            foreach (IDiaSymbol sym in symbolEnum) {
-                //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
-                yield return new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+                try {
+                    globalSymbol_.findChildren(SymTagEnum.SymTagFunction, null, 0, out symbolEnum);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to enumerate functions: {ex.Message}");
+                    yield break;
+                }
+
+                foreach (IDiaSymbol sym in symbolEnum) {
+                    //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
+                    var funcInfo = new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+                    cachedFunctionList_.Add(funcInfo);
+                    yield return funcInfo;
+                }
             }
 
             if (includeExternal) {

@@ -2544,6 +2544,10 @@ namespace IRExplorerUI {
                 }
 
                 tasks.Add(taskFactory.StartNew(() => {
+                    if (cancelableTask.IsCanceled) {
+                        return;
+                    }
+
                     var section = function.Sections[0];
                     var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
 
