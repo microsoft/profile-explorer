@@ -26,6 +26,7 @@ namespace IRExplorerUI.Compilers.ASM {
         private IDebugInfoProvider debugInfo_;
         private Interop.DisassemblerHandle disasmHandle_;
         private IntervalTree<long, DebugFunctionInfo> functionRvaTree_;
+        private bool hasExternalSyms_;
 
         public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo) {
             using var peInfo = new PEBinaryInfoProvider(binaryFilePath);
@@ -68,7 +69,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
         private void Initialize() {
             disasmHandle_ = Interop.Create(architecture_);
-            BuildFunctionRvaTree();
+            BuildFunctionRvaTree(false);
         }
 
         public string DisassembleToText(DebugFunctionInfo funcInfo) {
@@ -200,29 +201,29 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         private DebugFunctionInfo FindFunctionByRva(long rva) {
+            // Rebuild RVA tree with all symbol info when symbol name lookup is done.
+            if (!hasExternalSyms_) {
+                BuildFunctionRvaTree(true);
+            }
+
             var functs = functionRvaTree_.Query(rva);
             foreach (var func in functs) {
                 return func;
             }
 
-            var funcInfo = debugInfo_.FindFunctionByRVA(rva);
-
-            if (!funcInfo.IsUnknown) {
-                Trace.WriteLine($"=> Found for RVA {rva}: {funcInfo.Name}");
-            }
-
-            return funcInfo;
+            return debugInfo_.FindFunctionByRVA(rva);
         }
 
-        private void BuildFunctionRvaTree() {
+        private void BuildFunctionRvaTree(bool includeExternalSyms) {
             // Cache RVA -> function mapping, much faster to query.
             functionRvaTree_ = new IntervalTree<long, DebugFunctionInfo>();
+            hasExternalSyms_ = includeExternalSyms;
 
             if (debugInfo_ == null) {
                 return;
             }
 
-            foreach (var func in debugInfo_.EnumerateFunctions(true)) {
+            foreach (var func in debugInfo_.EnumerateFunctions(includeExternalSyms)) {
                 if (func.Size > 0) {
                     functionRvaTree_.Add(func.StartRVA, func.EndRVA, func);
                 }
