@@ -180,7 +180,7 @@ namespace IRExplorerUI.Profile {
         
         private List<DebugFunctionInfo> sortedList_;
 
-        DebugFunctionInfo BinarySearch(IList<DebugFunctionInfo> ranges, long value) {
+        DebugFunctionInfo BinarySearch(List<DebugFunctionInfo> ranges, long value) {
             int min = 0;
             int max = ranges.Count - 1;
 
@@ -209,7 +209,7 @@ namespace IRExplorerUI.Profile {
             }
 
             //? TODO: Enable sorted list, integrate in PDBProvider
-#if false
+#if true
 
             if (sortedList_ == null) {
                 sortedList_ = new List<DebugFunctionInfo>();
