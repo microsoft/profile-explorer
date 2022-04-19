@@ -125,7 +125,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         options.InsertSymbolPath(imagePath);
                     }
 
-                    var result = await PDBDebugInfoProvider.LocateDebugInfoFile(info.SymbolFileInfo, options);
+                    var result = await PDBDebugInfoProvider.LocateDebugInfoFile(info.SymbolFileInfo, options).ConfigureAwait(false);
 
                     if (File.Exists(result)) {
                         return result;
@@ -164,7 +164,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 options.InsertSymbolPath(binaryFile.ImagePath);
             }
 
-            return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options);
+            return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options).ConfigureAwait(false);
         }
 
         public IDisassembler CreateDisassembler(string modulePath) {

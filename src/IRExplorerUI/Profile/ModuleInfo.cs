@@ -10,14 +10,13 @@ using IRExplorerCore;
 using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
-    class ModuleInfo : IDisposable {
+    public class ModuleInfo : IDisposable {
         private BinaryFileDescription binaryInfo_;
         private ProfileDataProviderOptions options_;
         private ISession session_;
         private Dictionary<long, IRTextFunction> addressFuncMap_;
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
-        private IntervalTree<long, DebugFunctionInfo> functionRvaTree_; //? TODO: Replace
 
         public IRTextSummary Summary { get; set; }
         public LoadedDocument ModuleDocument { get; set; }
@@ -43,7 +42,7 @@ namespace IRExplorerUI.Profile {
             var imageName = binaryInfo.ImageName;
             Trace.WriteLine($"ModuleInfo init {imageName}");
 
-            var filePath = await FindBinaryFilePath();
+            var filePath = await FindBinaryFilePath().ConfigureAwait(false);
 
             if (filePath == null) {
                 Trace.TraceWarning($"Could not find local path for image {imageName}");
@@ -53,7 +52,7 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceInformation($"Found local path for image {imageName}: {filePath}");
             }
 
-            var loadedDoc = await session_.LoadBinaryDocument(filePath, filePath);
+            var loadedDoc = await session_.LoadBinaryDocument(filePath, filePath).ConfigureAwait(false);
             
             if (loadedDoc == null) {
                 Trace.TraceWarning($"Failed to load document for image {imageName}");
@@ -74,11 +73,12 @@ namespace IRExplorerUI.Profile {
             }
 
             DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.BinaryFilePath);
-            HasDebugInfo = await Task.Run(() => DebugInfo.LoadDebugInfo(ModuleDocument.DebugInfoFilePath));
+            HasDebugInfo = await Task.Run(() => DebugInfo.LoadDebugInfo(ModuleDocument.DebugInfoFilePath)).ConfigureAwait(false);
 
             if (HasDebugInfo) {
-                HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap());
-                BuildUnmangledFunctionNameMap();
+                HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
+                //? TODO: Not thread safe, heap corruption
+                // BuildUnmangledFunctionNameMap();
             }
             else {
                 Trace.TraceWarning($"Failed to load debug info: {ModuleDocument.DebugInfoFilePath}");
@@ -93,14 +93,14 @@ namespace IRExplorerUI.Profile {
             addressFuncMap_ = new Dictionary<long, IRTextFunction>(Summary.Functions.Count);
             externalsFuncMap_ = new Dictionary<long, string>();
             externalFuncNames_ = new Dictionary<string, IRTextFunction>();
-            functionRvaTree_ = new IntervalTree<long, DebugFunctionInfo>();
+            sortedFuncList_ = new List<DebugFunctionInfo>();
 
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
 
             foreach (var funcInfo in DebugInfo.EnumerateFunctions(false)) {
                 // There can be 0 size func. such as __guard_xfg, ignore.
                 if (funcInfo.RVA != 0 && funcInfo.Size > 0) {
-                    functionRvaTree_.Add(funcInfo.StartRVA, funcInfo.EndRVA, funcInfo);
+                    sortedFuncList_.Add(funcInfo);
                 }
                 
                 var func = Summary.FindFunction(funcInfo.Name);
@@ -113,6 +113,8 @@ namespace IRExplorerUI.Profile {
                 }
 
             }
+            
+            sortedFuncList_.Sort();
 
 #if DEBUG
             //Trace.WriteLine($"Address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
@@ -141,7 +143,7 @@ namespace IRExplorerUI.Profile {
             // Use the symbol server to locate the image,
             // this will also attempt to download it if not found locally.
             if (options_.DownloadBinaryFiles) {
-                var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_);
+                var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_).ConfigureAwait(false);
 
                 if (File.Exists(imagePath)) {
                     return imagePath;
@@ -161,6 +163,7 @@ namespace IRExplorerUI.Profile {
                     foreach (var file in Directory.EnumerateFiles(searchPath, searchPattern, SearchOption.TopDirectoryOnly)) {
                         //? TODO: Should also do a checksum match
                         if (Path.GetFileName(file).ToLowerInvariant() == imageName) {
+                            Trace.WriteLine($"Using unchecked local file {file}");
                             return file;
                         }
                     }
@@ -178,7 +181,7 @@ namespace IRExplorerUI.Profile {
             return null;
         }
         
-        private List<DebugFunctionInfo> sortedList_;
+        private List<DebugFunctionInfo> sortedFuncList_;
 
         DebugFunctionInfo BinarySearch(List<DebugFunctionInfo> ranges, long value) {
             int min = 0;
@@ -210,18 +213,8 @@ namespace IRExplorerUI.Profile {
 
             //? TODO: Enable sorted list, integrate in PDBProvider
 #if true
-
-            if (sortedList_ == null) {
-                sortedList_ = new List<DebugFunctionInfo>();
-
-                foreach (var x in functionRvaTree_) {
-                    sortedList_.Add(x.Value);
-                }
-
-                sortedList_.Sort();
-            }
-
-            return BinarySearch(sortedList_, funcAddress);
+            
+            return BinarySearch(sortedFuncList_, funcAddress);
 #else
             //foreach (var pair in cache_.orderList) {
             //    var func = pair;

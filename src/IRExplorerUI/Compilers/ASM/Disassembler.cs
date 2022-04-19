@@ -85,7 +85,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
             try {
                 foreach (var instr in DisassembleInstructions(startRVA, size, baseAddress_ + startRVA)) {
-                    var addressString = $"{instr.Address:X}:  ";
+                    var addressString = $"{instr.Address:X}:    ";
                     builder.Append(addressString);
                     int startIndex = 0;
                     bool appendBytes = false; //? TODO: Use option
@@ -113,7 +113,9 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
             }
             catch (Exception ex) {
+#if DEBUG
                 Trace.TraceError($"Failed to disassemble code at RVA {startRVA}, size {size}");
+#endif
                 return "";
             }
 
@@ -359,17 +361,22 @@ namespace IRExplorerUI.Compilers.ASM {
                 yield break;
             }
 
+            // Allocate a buffer for storing the instruction,
+            // gets reused during iteration.
             using var instrBuffer = Interop.AllocateInstruction(disasmHandle_);
             long offset = startRVA - codeSection.StartRVA;
             var dataBuffer = GCHandle.Alloc(codeSection.Data, GCHandleType.Pinned);
             var dataBufferPtr = dataBuffer.AddrOfPinnedObject();
 
+            // Disassemble the entire range of the code data buffer.
             var dataIteratorPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset);
             var dataEndPtr = (IntPtr)(dataBufferPtr.ToInt64() + offset + size);
 
             while (dataIteratorPtr.ToInt64() < dataEndPtr.ToInt64()) {
                 var remainingLength = (IntPtr)(dataEndPtr.ToInt64() - dataIteratorPtr.ToInt64());
 
+                // Handles one instruction at a time.
+                // dataIteratorPtr is being incremented by the native API.
                 if (Interop.Iterate(disasmHandle_, ref dataIteratorPtr, ref remainingLength, ref startAddress, instrBuffer)) {
                     var instrPtr = instrBuffer.DangerousGetHandle();
                     var instruction = (Interop.Instruction)Marshal.PtrToStructure(instrPtr, typeof(Interop.Instruction));
@@ -382,7 +389,6 @@ namespace IRExplorerUI.Compilers.ASM {
 
             dataBuffer.Free();
         }
-
 
         public void Dispose() {
             Dispose(true);

@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Buffers;
+using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
@@ -6,6 +9,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Policy;
+using System.Windows.Markup;
 using HarfBuzzSharp;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
@@ -132,14 +136,26 @@ namespace IRExplorerUI.Profile {
     }
 
     [ProtoContract(SkipConstructor = true)]
-    public class ProfileStack : IEquatable<ProfileStack> {
+    public sealed class ProfileStack : IEquatable<ProfileStack> {
+        private const int MaxFrameNumber = 256;
+        private static long[][] tempFrameArrays_ = new long[MaxFrameNumber + 1][];
+
+        static ProfileStack() {
+            // The frame ptr. array is being interned (unique instance)
+            // later, use a pre-allocated array initially to reduce GC pressure.
+            // Note: this also means creating ProfileStack must be single-threaded.
+            for (int i = 0; i <= MaxFrameNumber; i++) {
+                tempFrameArrays_[i] = new long[i];
+            }
+        }
+
         public ProfileStack() {
             FramePointers = null;
             ContextId = 0;
         }
 
         public ProfileStack(int contextId, int frameCount) {
-            FramePointers = new long[frameCount];
+            FramePointers = RentArray(frameCount);
             ContextId = contextId;
         }
 
@@ -150,8 +166,45 @@ namespace IRExplorerUI.Profile {
 
         public int FrameCount => FramePointers.Length;
 
-        public ProfileImage FindImageForFrame(int frameIndex, ProtoProfile profile) {
-            return profile.FindImageForIP(FramePointers[frameIndex], profile.FindContext(ContextId));
+        public long[] CloneFramePointers() {
+            long[] clone = new long[FramePointers.Length];
+            FramePointers.CopyTo(clone, 0);
+            return clone;
+        }
+
+        public void SubstituteFramePointers(long[] data) {
+            ReturnArray(FramePointers);
+            FramePointers = data;
+        }
+
+        public ProfileImage FindImageForFrame(int frameIndex, RawProfileData profileData) {
+            return profileData.FindImageForIP(FramePointers[frameIndex], profileData.FindContext(ContextId));
+        }
+
+        private long[] RentArray(int frameCount) {
+            // In most cases one of the pre-allocated temporary arrays can be used.
+            long[] array;
+
+            if (frameCount <= MaxFrameNumber) {
+                array = tempFrameArrays_[frameCount];
+#if DEBUG
+                Debug.Assert(array != null);
+                tempFrameArrays_[frameCount] = null;
+#endif
+            }
+            else {
+                array = new long[frameCount];
+            }
+
+            return array;
+        }
+
+        private void ReturnArray(long[] array) {
+#if DEBUG
+            if (array.Length <= MaxFrameNumber) {
+                tempFrameArrays_[array.Length] = array;
+            }
+#endif
         }
 
         public bool Equals(ProfileStack other) {
@@ -186,22 +239,20 @@ namespace IRExplorerUI.Profile {
             return $"#{FrameCount}, ContextId: {ContextId}";
         }
     }
-
+    
     [ProtoContract(SkipConstructor = true)]
     public struct ProfileSample : IEquatable<ProfileSample> {
         [ProtoMember(1)]
         public long IP { get; set; }
         [ProtoMember(2)]
-        public long RVA { get; set; } //? Cache
-        [ProtoMember(3)]
         public TimeSpan Time { get; set; }
-        [ProtoMember(4)]
+        [ProtoMember(3)]
         public TimeSpan Weight { get; set; }
-        [ProtoMember(5)]
+        [ProtoMember(4)]
         public int StackId { get; set; }
-        [ProtoMember(6)]
+        [ProtoMember(5)]
         public int ContextId { get; set; }
-        [ProtoMember(7)]
+        [ProtoMember(6)]
         public bool IsKernelCode { get; set; }
 
         public bool HasStack => StackId != 0;
@@ -210,7 +261,6 @@ namespace IRExplorerUI.Profile {
 
         public ProfileSample(long ip, TimeSpan time, TimeSpan weight, bool isKernelCode, int contextId) {
             IP = ip;
-            RVA = 0;
             Time = time;
             Weight = weight;
             StackId = 0;
@@ -218,12 +268,12 @@ namespace IRExplorerUI.Profile {
             ContextId = contextId;
         }
 
-        public ProfileStack GetStack(ProtoProfile profile) {
-            return StackId != 0 ? profile.FindStack(StackId) : null;
+        public ProfileStack GetStack(RawProfileData profileData) {
+            return StackId != 0 ? profileData.FindStack(StackId) : null;
         }
 
-        public ProfileContext GetContext(ProtoProfile profile) {
-            return profile.FindContext(ContextId);
+        public ProfileContext GetContext(RawProfileData profileData) {
+            return profileData.FindContext(ContextId);
         }
 
         public bool Equals(ProfileSample other) {
@@ -257,7 +307,7 @@ namespace IRExplorerUI.Profile {
     }
 
     [ProtoContract(SkipConstructor = true)]
-    public class ProfileContext : IEquatable<ProfileContext> {
+    public sealed class ProfileContext : IEquatable<ProfileContext> {
         public ProfileContext() {}
 
         public ProfileContext(int processId, int threadId, int processorNumber) {
@@ -273,12 +323,12 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(3)]
         public int ProcessorNumber { get; set; }
 
-        public ProfileProcess GetProcess(ProtoProfile profile) {
-            return profile.GetOrCreateProcess(ProcessId);
+        public ProfileProcess GetProcess(RawProfileData profileData) {
+            return profileData.GetOrCreateProcess(ProcessId);
         }
 
-        public ProfileThread GetThread(ProtoProfile profile) {
-            return profile.FindThread(ThreadId);
+        public ProfileThread GetThread(RawProfileData profileData) {
+            return profileData.FindThread(ThreadId);
         }
 
         public bool Equals(ProfileContext other) {
@@ -324,7 +374,7 @@ namespace IRExplorerUI.Profile {
     }
 
     [ProtoContract(SkipConstructor = true)]
-    public class ProfileImage : IEquatable<ProfileImage>, IComparable<ProfileImage> {
+    public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<ProfileImage> {
         [ProtoMember(1)]
         public int Id { get; set; }
         [ProtoMember(2)]
@@ -334,20 +384,24 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(4)]
         public long DefaultBaseAddress { get; set; }
         [ProtoMember(5)]
-        public string Name { get; set; }
+        public string FileName { get; set; }
         [ProtoMember(6)]
-        public long TimeStamp { get; set; }
+        public string OriginalFileName { get; set; }
         [ProtoMember(7)]
+        public long TimeStamp { get; set; }
+        [ProtoMember(8)]
         public long Checksum { get; set; }
 
         public long BaseAddressEnd => BaseAddress + Size;
 
         public ProfileImage() {}
 
-        public ProfileImage(string name, long baseAddress, long defaultBaseAddress, 
+        public ProfileImage(string fileName, string originalFileName, 
+                            long baseAddress, long defaultBaseAddress, 
                             int size, long timeStamp, long checksum) {
             Size = size;
-            Name = name;
+            FileName = fileName;
+            OriginalFileName = originalFileName;
             BaseAddress = baseAddress;
             DefaultBaseAddress = defaultBaseAddress;
             TimeStamp = timeStamp;
@@ -359,8 +413,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(Size, Name, BaseAddress, DefaultBaseAddress,
-                                    TimeStamp, Checksum);
+            return HashCode.Combine(Size, FileName, BaseAddress, DefaultBaseAddress, Checksum);
         }
 
         public bool Equals(ProfileImage other) {
@@ -371,10 +424,9 @@ namespace IRExplorerUI.Profile {
             }
 
             return Size == other.Size &&
-                   Name == other.Name &&
+                   FileName == other.FileName &&
                    BaseAddress == other.BaseAddress &&
                    DefaultBaseAddress == other.DefaultBaseAddress &&
-                   TimeStamp == other.TimeStamp &&
                    Checksum == other.Checksum;
         }
 
@@ -422,12 +474,12 @@ namespace IRExplorerUI.Profile {
         }
 
         public override string ToString() {
-            return $"{Name}, Id: {Id}, Base: {BaseAddress:X}, Size: {Size}";
+            return $"{FileName}, Id: {Id}, Base: {BaseAddress:X}, Size: {Size}";
         }
     }
 
     [ProtoContract(SkipConstructor = true)]
-    public class ProfileProcess : IEquatable<ProfileProcess> {
+    public sealed class ProfileProcess : IEquatable<ProfileProcess> {
         [ProtoMember(1)]
         public int ProcessId { get; set; }
         [ProtoMember(2)]
@@ -448,15 +500,15 @@ namespace IRExplorerUI.Profile {
             ThreadIds = new List<int>();
         }
 
-        public IEnumerable<ProfileImage> Images(ProtoProfile profile) {
+        public IEnumerable<ProfileImage> Images(RawProfileData profileData) {
             foreach (var id in ImageIds) {
-                yield return profile.FindImage(id);
+                yield return profileData.FindImage(id);
             }
         }
 
-        public IEnumerable<ProfileThread> Threads(ProtoProfile profile) {
+        public IEnumerable<ProfileThread> Threads(RawProfileData profileData) {
             foreach (var id in ThreadIds) {
-                yield return profile.FindThread(id);
+                yield return profileData.FindThread(id);
             }
         }
 
@@ -467,6 +519,18 @@ namespace IRExplorerUI.Profile {
             Name = name;
             ImageFileName = imageFileName;
             CommandLine = commandLine;
+        }
+
+        public void AddImage(int imageId) {
+            if (!ImageIds.Contains(imageId)) {
+                ImageIds.Add(imageId);
+            }
+        }
+
+        public void AddThread(int threadId) {
+            if (!ThreadIds.Contains(threadId)) {
+                ThreadIds.Add(threadId);
+            }
         }
 
         public bool Equals(ProfileProcess other) {
@@ -512,7 +576,7 @@ namespace IRExplorerUI.Profile {
     }
 
     [ProtoContract(SkipConstructor = true)]
-    public class ProfileThread : IEquatable<ProfileThread> {
+    public sealed class ProfileThread : IEquatable<ProfileThread> {
         [ProtoMember(1)]
         public int ThreadId { get; set; }
         [ProtoMember(2)]
@@ -603,7 +667,7 @@ namespace IRExplorerUI.Profile {
     }
 
     [ProtoContract(SkipConstructor = true)]
-    public class ProtoProfile {
+    public class RawProfileData {
         public List<ProfileProcess> Processes => processes_.ToValueList();
         public ChunkedList<PerformanceCounterEvent> PerfCounters { get; set; }
 
@@ -618,14 +682,18 @@ namespace IRExplorerUI.Profile {
         public Dictionary<ProfileImage, int> imagesMap_;
 
         public List<ProfileStack> stacks_;
-        public Dictionary<ProfileStack, int> stacksMap_;
+        public Dictionary<int, Dictionary<ProfileStack, int>> stacksMap_;
         private HashSet<long[]> stackData_;
+        private Dictionary<ProfileStack, int> lastProcStacks_;
+        private int lastProcId_;
 
         public List<ProfileSample> samples_;
         public List<PerformanceCounterEvent> events_;
 
-        private List<(ProfileProcess Process, IpToImageCache Cache)> ipImageCache_;
-        private ProfileImage lastIpImage_;
+        [ThreadStatic] 
+        private static List<(int ProcessId, IpToImageCache Cache)> ipImageCache_;
+        [ThreadStatic]
+        private static ProfileImage lastIpImage_;
 
         private class IpToImageCache {
             private List<ProfileImage> images_;
@@ -680,7 +748,7 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        public ProtoProfile() {
+        public RawProfileData() {
             contexts_ = new List<ProfileContext>();
             contextsMap_ = new Dictionary<ProfileContext, int>();
             images_ = new List<ProfileImage>();
@@ -689,12 +757,10 @@ namespace IRExplorerUI.Profile {
             threads_ = new List<ProfileThread>();
             threadsMap_ = new Dictionary<ProfileThread, int>();
             stacks_ = new List<ProfileStack>();
-            stacksMap_ = new Dictionary<ProfileStack, int>();
+            stacksMap_ = new Dictionary<int, Dictionary<ProfileStack, int>>();
             stackData_ = new HashSet<long[]>(new StackComparer());
             samples_ = new List<ProfileSample>();
             events_ = new List<PerformanceCounterEvent>();
-
-            ipImageCache_ = new List<(ProfileProcess Process, IpToImageCache Cache)>();
             PerfCounters = new ChunkedList<PerformanceCounterEvent>();
         }
 
@@ -741,17 +807,18 @@ namespace IRExplorerUI.Profile {
         public int AddThreadToProcess(int processId, ProfileThread thread) {
             var proc = GetOrCreateProcess(processId);
             var result = AddThread(thread);
-            proc.ThreadIds.Add(result);
+            proc.AddThread(result);
             return result;
         }
 
         public int AddImageToProcess(int processId, ProfileImage image) {
             var proc = GetOrCreateProcess(processId);
             var result = AddImage(image);
-            proc.ImageIds.Add(result);
+            proc.AddImage(result);
             return result;
         }
 
+        //? TODO: Per-process samples, reduces dict pressure
         public int AddSample(ProfileSample sample) {
             Debug.Assert(sample.ContextId != 0);
             samples_.Add(sample);
@@ -801,17 +868,35 @@ namespace IRExplorerUI.Profile {
             return contexts_[id - 1];
         }
 
-        public int AddStack(ProfileStack stack) {
+        //? TODO: Per-process stack, reduces dict pressure
+        public int AddStack(ProfileStack stack, ProfileContext context) {
             Debug.Assert(stack.ContextId != 0);
-
-            if (stackData_.TryGetValue(stack.FramePointers, out var existingData)) {
-                stack.FramePointers = existingData;
+            
+            if (!stackData_.TryGetValue(stack.FramePointers, out var framePtrData)) {
+                // Make a clone since the temporary stack uses a static array.
+                framePtrData = stack.CloneFramePointers();
+                stackData_.Add(framePtrData);
             }
-            else stackData_.Add(stack.FramePointers);
 
-            if (!stacksMap_.TryGetValue(stack, out var existingStack)) {
+            stack.SubstituteFramePointers(framePtrData);
+            Dictionary<ProfileStack, int> procStacks = null;
+
+            if (lastProcId_ == context.ProcessId && lastProcStacks_ != null) {
+                procStacks = lastProcStacks_;
+            }
+            else {
+                if (!stacksMap_.TryGetValue(context.ProcessId, out procStacks)) {
+                    procStacks = new Dictionary<ProfileStack, int>();
+                    stacksMap_[context.ProcessId] = procStacks;
+                }
+
+                lastProcId_ = context.ProcessId;
+                lastProcStacks_ = procStacks;
+            }
+
+            if (!procStacks.TryGetValue(stack, out var existingStack)) {
                 stacks_.Add(stack);
-                stacksMap_[stack] = stacks_.Count;
+                procStacks[stack] = stacks_.Count;
                 existingStack = stacks_.Count;
             }
             else {
@@ -838,7 +923,7 @@ namespace IRExplorerUI.Profile {
 
         public ProfileImage FindImage(ProfileProcess process, BinaryFileDescription info) {
             foreach (var image in process.Images(this)) {
-                if (image.Name == info.ImageName &&
+                if (image.FileName == info.ImageName &&
                     image.TimeStamp == info.TimeStamp &&
                     image.Checksum == info.Checksum) {
                     return image;
@@ -849,26 +934,30 @@ namespace IRExplorerUI.Profile {
         }
 
         public ProfileImage FindImageForIP(long ip, ProfileContext context) {
-            return FindImageForIP(ip, GetOrCreateProcess(context.ProcessId), context.ThreadId);
+            return FindImageForIP(ip, context.ProcessId, context.ThreadId);
         }
 
-        public ProfileImage FindImageForIP(long ip, ProfileProcess process, int threadId) {
+        private ProfileImage FindImageForIP(long ip, int processId, int threadId) {
+            // lastIpImage_ and ipImageCache_ are thread-local,
+            // making this function thread-safe.
             if (lastIpImage_ != null && lastIpImage_.HasAddress(ip)) {
                 return lastIpImage_;
             }
 
+            ipImageCache_ ??= new List<(int ProcessId, IpToImageCache Cache)>();
             IpToImageCache cache = null;
 
             foreach (var entry in ipImageCache_) {
-                if (entry.Process == process) {
+                if (entry.ProcessId == processId) {
                     cache = entry.Cache;
                     break;
                 }
             }
 
             if (cache == null) {
+                var process = GetOrCreateProcess(processId);
                 cache = IpToImageCache.Create(process.Images(this));
-                ipImageCache_.Add((process, cache));
+                ipImageCache_.Add((processId, cache));
             }
 
             if (!cache.IsValidAddres(ip)) {
@@ -887,16 +976,18 @@ namespace IRExplorerUI.Profile {
         }
 
         //? TODO Perf
-        //? - FindProcess check for last_process
-        //? - Stack - allocate temp long[] using pool, return
-        //?         - try replace EQ check by a signature (SHA1?)
-        //?         - in FindModuleInfo, computing hash of image expensive, cache it
+        //? - Per-process stacks and samples, reduces dict pressure
+        //?     - also removes need to have ProcessId in sample
         //? - Matching sample with stack - keep a per-process/per thread last sample and use time?
-        //? Check OriginalFileName in OS profiler
 
         private class StackComparer : IEqualityComparer<long[]> {
-            public bool Equals(long[] x, long[] y) {
-                return Enumerable.SequenceEqual(x, y);
+            public unsafe bool Equals(long[] data1, long[] data2) {
+                //fixed (long* p1 = data1, p2 = data2) {
+                //    return new Span<long>(p1, data1.Length).
+                //        SequenceEqual(new Span<long>(p2, data2.Length));
+                //}
+
+                return Enumerable.SequenceEqual(data1, data1);
             }
 
             public int GetHashCode(long[] data) {
@@ -1149,7 +1240,7 @@ namespace IRExplorerUI.Profile {
 
         public TimeSpan ProfileWeight { get; set; }
         public TimeSpan TotalWeight { get; set; }
-        public Dictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
+        public ConcurrentDictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
         public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
         public Dictionary<string, PerformanceCounterSet> ModuleCounters { get; set; }
         public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
@@ -1171,7 +1262,7 @@ namespace IRExplorerUI.Profile {
 
         public ProfileData() {
             ProfileWeight = TimeSpan.Zero;
-            FunctionProfiles = new Dictionary<IRTextFunction, FunctionProfileData>();
+            FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
             ModuleWeights = new Dictionary<string, TimeSpan>();
             PerformanceCounters = new Dictionary<int, PerformanceCounterInfo>();
             ModuleCounters = new Dictionary<string, PerformanceCounterSet>();
@@ -1231,7 +1322,7 @@ namespace IRExplorerUI.Profile {
         public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function, string sourceFile) {
             if (!FunctionProfiles.TryGetValue(function, out var profile)) {
                 profile = new FunctionProfileData(sourceFile);
-                FunctionProfiles[function] = profile;
+                FunctionProfiles.TryAdd(function, profile);
             }
 
             return profile;

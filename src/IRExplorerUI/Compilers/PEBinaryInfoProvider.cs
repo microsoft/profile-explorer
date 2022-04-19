@@ -56,16 +56,30 @@ namespace IRExplorerUI.Compilers {
             return null;
         }
 
-        public static async Task<string> LocateBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options) {
+        public static async Task<string> LocateBinaryFile(BinaryFileDescription binaryFile,
+                                                          SymbolFileSourceOptions options) {
+#if DEBUG
             using var logWriter = new StringWriter();
-            var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
-            using var symbolReader = new SymbolReader(logWriter, userSearchPath);
-            var result = await Task.Run(() => symbolReader.FindExecutableFilePath(binaryFile.ImageName, (int)binaryFile.TimeStamp, (int)binaryFile.ImageSize));
-
+#else
+            var logWriter = StringWriter.Null;
+#endif
+            try {
+                var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
+                using var symbolReader = new SymbolReader(logWriter, userSearchPath);
+                var result = await Task.Run(() => symbolReader.FindExecutableFilePath(binaryFile.ImageName,
+                    (int)binaryFile.TimeStamp,
+                    (int)binaryFile.ImageSize)).ConfigureAwait(false);
+                return result;
+            }
+            catch (Exception ex) {
+                Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
+                return null;
+            }
+#if DEBUG
             Trace.WriteLine($">> TraceEvent FindExecutableFilePath for {binaryFile.ImageName}");
             Trace.WriteLine(logWriter.ToString());
             Trace.WriteLine($"<< TraceEvent");
-            return result;
+#endif
         }
 
         public SymbolFileDescriptor SymbolFileInfo {

@@ -51,13 +51,19 @@ namespace IRExplorerUI.Compilers {
             string symbolSearchPath = ConstructSymbolSearchPath(options);
 
 #if TRACE_EVENT
+#if DEBUG
             using var logWriter = new StringWriter();
+#else
+            var logWriter = StringWriter.Null;
+#endif
             using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
-            var result = await Task.Run(() => symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age));
+            var result = await Task.Run(() => symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age)).ConfigureAwait(false);
 
+#if DEBUG
             Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
             Trace.WriteLine(logWriter.ToString());
             Trace.WriteLine($"<< TraceEvent");
+#endif
             return result;
 #else
             if (!SymSrvHelpers.InitSymSrv(symbolSearchPath)) {
@@ -99,7 +105,7 @@ namespace IRExplorerUI.Compilers {
             using var binaryInfo = new PEBinaryInfoProvider(imagePath);
 
             if (binaryInfo.Initialize()) {
-                return await LocateDebugInfoFile(binaryInfo.SymbolFileInfo, options);
+                return await LocateDebugInfoFile(binaryInfo.SymbolFileInfo, options).ConfigureAwait(false);
             }
 
             return null;
