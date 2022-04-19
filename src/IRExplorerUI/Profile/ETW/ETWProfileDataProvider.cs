@@ -384,8 +384,7 @@ namespace IRExplorerUI.Profile {
                     traceProfile = prof;
 
                     //? Maybe faster to process twice - once to get proc list, then get samples/stacks just for one proc?
-                    //? Try the stack compression
-
+                    //?   OR multiple threads, each handling diff processes
                     using (var source = new ETWTraceEventSource(tracePath)) {
                         double lastTime = 0;
                         ImageIDTraceData lastImageIdData = null;
@@ -478,19 +477,19 @@ namespace IRExplorerUI.Profile {
                             //}
 
                             //queue.Add((StackWalkStackTraceData)data.Clone());
+                            var context = prof.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+                            int contextId = prof.AddContext(context);
 
-                            var context = new ProfileContext(data.ProcessID, data.ThreadID,
-                                                             data.ProcessorNumber);
-                            var contextId = prof.AddContext(context);
-                            var stack = new ProfileStack(contextId, data.FrameCount);
+                            var stack = prof.RentTemporaryStack(data.FrameCount, contextId);
 
+                            //? Could copy faster using Span  data.DataStart
                             for (int i = 0; i < data.FrameCount; i++) {
                                 stack.FramePointers[i] = (long)data.InstructionPointer(i);
                             }
 
                             int stackId = prof.AddStack(stack, context);
 
-                            //? TODO: maybe set for each not having a context?
+                            // Try to associate with a previous sample from the same context.
                             if (!prof.SetLastSampleStack(stackId, contextId)) {
                                 //Trace.WriteLine("---------------------");
                                 //Trace.WriteLine($" search ctx {context}");
@@ -498,7 +497,8 @@ namespace IRExplorerUI.Profile {
                                 //Trace.WriteLine($"Failed to set sample stack, with maxStep {r}");
                             }
 
-                            // Try to associate with a previous sample from the same context.
+                            prof.ReturnStack(stackId);
+                            prof.ReturnContext(contextId);
 
                             //Trace.WriteLine("-------------------------------");
 
@@ -517,9 +517,7 @@ namespace IRExplorerUI.Profile {
                             // if (data.ProcessID != mainProcessId) {
                             //     return;
                             // }
-
                             
-
                             var weight = data.TimeStampRelativeMSec - lastTime;
                             lastTime = data.TimeStampRelativeMSec;
                             
@@ -527,14 +525,15 @@ namespace IRExplorerUI.Profile {
                                 return;
                             }
 
-                            var context = new ProfileContext(data.ProcessID, data.ThreadID,
-                                                             data.ProcessorNumber);
+                            var context = prof.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+                            int contextId = prof.AddContext(context);
                             var sample = new ProfileSample((long)data.InstructionPointer,
                                                             TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec),
                                                             TimeSpan.FromMilliseconds(weight),
                                                             data.ExecutingDPC || data.ExecutingISR,
-                                                            prof.AddContext(context));
+                                                            contextId);
                             prof.AddSample(sample);
+                            prof.ReturnContext(contextId);
 
                             //Trace.WriteLine("-------------------------------");
                             //Trace.WriteLine($"Sample {data.InstructionPointer:X}, {data.ProcessID}, t {data.ThreadID}, p {data.ProcessorNumber}");
@@ -604,7 +603,7 @@ namespace IRExplorerUI.Profile {
                         Trace.WriteLine($"    procs: {prof.processes_.Count}");
                         Trace.WriteLine($"    imgs: {prof.imagesMap_.Count}");
                         Trace.WriteLine($"    threads: {prof.threadsMap_.Count}");
-                        Trace.Flush();
+                        //Trace.Flush();
 
                         //ProfileImage prevImage = null;
                         //ModuleInfo prevModule = null;
@@ -616,6 +615,8 @@ namespace IRExplorerUI.Profile {
                         //Environment.Exit(0);
 
                     }
+
+                    //MessageBox.Show("Done reading");
 
                     ProfileImage prevImage = null;
                     ModuleInfo prevModule = null;
@@ -637,16 +638,16 @@ namespace IRExplorerUI.Profile {
                     var acceptedImages = new List<string>();
 
                     bool IsAcceptedModule(string name) {
-                        name = Utils.TryGetFileNameWithoutExtension(name);
-                        name = name.ToLowerInvariant();
+                        //name = Utils.TryGetFileNameWithoutExtension(name);
+                        //name = name.ToLowerInvariant();
 
-                        if (acceptedImages.Contains(name)) {
-                            Trace.WriteLine($"=> Accept image {name}");
-                            return true;
-                        }
+                        //if (acceptedImages.Contains(name)) {
+                        //    Trace.WriteLine($"=> Accept image {name}");
+                        //    return true;
+                        //}
 
                         if (!options_.HasBinaryNameWhitelist) {
-                            return false;
+                            return true;
                         }
 
                         foreach (var file in options_.BinaryNameWhitelist) {
@@ -885,7 +886,7 @@ namespace IRExplorerUI.Profile {
                     var sw = Stopwatch.StartNew();
 
 #if true
-                    int chunks = 16;
+                    int chunks = 1;
 
                     var tasks = new List<Task>();
                     var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
@@ -893,7 +894,14 @@ namespace IRExplorerUI.Profile {
 
                     int chunkSize = prof.samples_.Count / chunks;
                     var lockObject = new object();
-                    
+
+                    int perc10 = prof.samples_.Count / 10;
+
+                    //MessageBox.Show("Start tasks");
+
+                    var resolvedStacks = new ConcurrentDictionary<int, ResolvedProfileStack>();
+
+
                     for (int k = 0; k < chunks; k++) {
                         int start = k * chunkSize;
                         int end = Math.Min((k + 1) * chunkSize, prof.samples_.Count);
@@ -904,7 +912,6 @@ namespace IRExplorerUI.Profile {
                             var stackFuncts = new HashSet<IRTextFunction>();
                             var stackModules = new HashSet<int>();
 
-                            var resolvedStacks = new Dictionary<int, ResolvedProfileStack>();
 
                             for (int i = start; i < end; i++) {
                                 var sample = prof.samples_[i]; //? Avoid copy, use ref
@@ -927,6 +934,10 @@ namespace IRExplorerUI.Profile {
 
                                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) { Total = prof.samples_.Count, Current = index });
                                 }
+
+                                //if (index > perc10) {
+                                //    MessageBox.Show("STOP NOW");
+                                //}
 
                                 index++;
                                 var sampleWeight = sample.Weight;
@@ -989,10 +1000,7 @@ namespace IRExplorerUI.Profile {
                                             isTopFrame = false;
                                             continue;
                                         }
-
-                                        prevStackFunc = null;
-                                        prevStackProfile = null;
-
+                                        
                                         var textFunction = resolvedFrame.Function;
 
                                         if (textFunction == null) {
@@ -1052,8 +1060,6 @@ namespace IRExplorerUI.Profile {
                                 }
                                 else {
                                     resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
-                                    resolvedStacks[sample.StackId] = resolvedStack;
-
                                     var stackFrames = stack.FramePointers;
 
                                     //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
@@ -1063,7 +1069,7 @@ namespace IRExplorerUI.Profile {
                                         ProfileImage frameImage = prof.FindImageForIP(frameIp, context);
 
                                         if (frameImage == null) {
-                                            resolvedStack.StackFrames.Add(ResolvedProfileStackFrame.Unknown);
+                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                             prevStackFunc = null;
                                             prevStackProfile = null;
                                             isTopFrame = false;
@@ -1106,23 +1112,20 @@ namespace IRExplorerUI.Profile {
                                         }
 
                                         if (funcName == null) {
-                                            resolvedStack.StackFrames.Add(new ResolvedProfileStackFrame(frameIp, null, null, frameImage, module));
+                                            resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, null, null, frameImage, module));
                                             prevStackFunc = null;
                                             prevStackProfile = null;
                                             isTopFrame = false;
                                             continue;
                                         }
-
-                                        prevStackFunc = null;
-                                        prevStackProfile = null;
-
+                                        
                                         var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
 
                                         if (textFunction == null) {
                                             //if (missing.Add(funcName)) {
                                             //    Trace.WriteLine($"  - Skip missing frame {funcName} in {frame.Image.FileName}");
                                             //}
-                                            resolvedStack.StackFrames.Add(new ResolvedProfileStackFrame(frameIp, funcInfo, null, frameImage, module));
+                                            resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, funcInfo, null, frameImage, module));
                                             prevStackFunc = null;
                                             prevStackProfile = null;
                                             isTopFrame = false;
@@ -1142,8 +1145,6 @@ namespace IRExplorerUI.Profile {
 
                                         lock (profile) {
                                             profile.DebugInfo = funcInfo;
-                                            resolvedStack.StackFrames.Add(new ResolvedProfileStackFrame(frameIp, funcInfo, textFunction, frameImage, module, profile));
-
                                             var offset = frameRva - funcRva;
 
                                             // Don't count the inclusive time for recursive functions multiple times.
@@ -1175,6 +1176,8 @@ namespace IRExplorerUI.Profile {
                                                 textFunction.Sections.Count > 0) {
                                                 ProcessInlineeSample(sampleWeight, offset, textFunction, module);
                                             }
+
+                                            resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, funcInfo, textFunction, frameImage, module, profile));
                                         }
                                         //}
 
@@ -1182,6 +1185,8 @@ namespace IRExplorerUI.Profile {
                                         isTopFrame = false;
                                         prevStackFunc = textFunction;
                                     }
+
+                                    resolvedStacks.TryAdd(sample.StackId, resolvedStack);
                                 }
                             }
                         }));
@@ -1342,7 +1347,7 @@ namespace IRExplorerUI.Profile {
 #endif
 
                     Trace.WriteLine($"Done process samples in {sw.Elapsed}");
-                    Trace.Flush();
+                    //Trace.Flush();
                     // END SAMPLES PROC
 
 #if false
@@ -1432,7 +1437,7 @@ namespace IRExplorerUI.Profile {
                     //Trace.Flush();
 
                     Trace.WriteLine($"Done in {totalSw.Elapsed}");
-                    Trace.Flush();
+                    //Trace.Flush();
                     return true;
                 });
 
@@ -2473,7 +2478,7 @@ namespace IRExplorerUI.Profile {
         }
     }
 
-    public struct ResolvedProfileStackFrame {
+    public class ResolvedProfileStackFrame {
         public long FrameIP { get; set; }
         public DebugFunctionInfo FunctionInfo { get; set; }
         public IRTextFunction Function { get; set; }
@@ -2481,6 +2486,8 @@ namespace IRExplorerUI.Profile {
         public ModuleInfo Module { get; set; }
         public FunctionProfileData Profile { get; set; }
         public bool IsUnknown => Image == null;
+
+        public ResolvedProfileStackFrame() {}
 
         public ResolvedProfileStackFrame(long frameIP, DebugFunctionInfo functionInfo, IRTextFunction function,
             ProfileImage image, ModuleInfo module, FunctionProfileData profile = null) {
@@ -2500,6 +2507,13 @@ namespace IRExplorerUI.Profile {
         public List<ResolvedProfileStackFrame> StackFrames { get; set; }
         public ProfileContext Context { get; set; }
         public int FrameCount => StackFrames.Count;
+
+        private static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ = new();
+
+        public void AddFrame(ResolvedProfileStackFrame frame) {
+            var existingFrame = frameInstances_.GetOrAdd(frame.FrameIP, frame);
+            StackFrames.Add(existingFrame);
+        }
 
         public ResolvedProfileStack(int frameCount, ProfileContext context) {
             StackFrames = new List<ResolvedProfileStackFrame>(frameCount);
