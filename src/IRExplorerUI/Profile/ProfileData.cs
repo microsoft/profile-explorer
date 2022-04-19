@@ -172,7 +172,60 @@ namespace IRExplorerUI.Profile {
             return clone;
         }
 
+        public void SetTempFramePointers(int frameCount) {
+            FramePointers = RentArray(frameCount);
+        }
+
         public void SubstituteFramePointers(long[] data) {
+            //if (data.Length > 0) {
+            //    long first = data[0];
+            //    long deltaTotal = 0;
+            //    long minDelta = long.MaxValue;
+            //    long maxDelta = long.MinValue;
+
+            //    for (int i = 1; i < data.Length; i++) {
+            //        long delta = data[i] - first;
+            //        deltaTotal += delta;
+            //        minDelta = Math.Min(delta, minDelta);
+            //        maxDelta = Math.Max(delta, maxDelta);
+            //    }
+
+            //    double avgDelta = (double)deltaTotal / data.Length;
+            //    Trace.WriteLine($"Avg delta1: {avgDelta:F2}");
+            //    Trace.WriteLine($"   min: {minDelta}, max {maxDelta}");
+
+            //    long deltaTotal2 = 0;
+            //    minDelta = long.MaxValue;
+            //    maxDelta = long.MinValue;
+
+            //    for (int i = 1; i < data.Length; i++) {
+            //        long delta = data[i] - data[i - 1];
+            //        deltaTotal2 += delta;
+            //        minDelta = Math.Min(delta, minDelta);
+            //        maxDelta = Math.Max(delta, maxDelta);
+            //    }
+
+            //    double avgDelta2 = (double)deltaTotal2 / data.Length;
+            //    Trace.WriteLine($"Avg delta2: {avgDelta2:F2}");
+            //    Trace.WriteLine($"   min: {minDelta}, max {maxDelta}");
+            //    Trace.WriteLine(" -------- ");
+
+            //    long deltaTotal3 = 0;
+            //    minDelta = long.MaxValue;
+            //    maxDelta = long.MinValue;
+
+            //    for (int i = 1; i < data.Length; i++) {
+            //        long delta = data[i] - (long)(avgDelta2);
+            //        deltaTotal3 += delta;
+            //        minDelta = Math.Min(delta, minDelta);
+            //        maxDelta = Math.Max(delta, maxDelta);
+            //    }
+
+            //    Trace.WriteLine($"Avg delta3: {avgDelta2:F2}");
+            //    Trace.WriteLine($"   min: {minDelta}, max {maxDelta}");
+            //    Trace.WriteLine(" -------- ");
+            //}
+
             ReturnArray(FramePointers);
             FramePointers = data;
         }
@@ -671,6 +724,7 @@ namespace IRExplorerUI.Profile {
         public List<ProfileProcess> Processes => processes_.ToValueList();
         public ChunkedList<PerformanceCounterEvent> PerfCounters { get; set; }
 
+        //? Make fields private
         public Dictionary<int, ProfileProcess> processes_;
         public List<ProfileThread> threads_;
         public Dictionary<ProfileThread, int> threadsMap_;
@@ -689,6 +743,9 @@ namespace IRExplorerUI.Profile {
 
         public List<ProfileSample> samples_;
         public List<PerformanceCounterEvent> events_;
+
+        private static ProfileContext tempContext_ = new ProfileContext();
+        private static ProfileStack tempStack_ = new ProfileStack();
 
         [ThreadStatic] 
         private static List<(int ProcessId, IpToImageCache Cache)> ipImageCache_;
@@ -844,15 +901,25 @@ namespace IRExplorerUI.Profile {
             return false;
         }
         
-        public void SetContext(ProfileSample sample, ProfileContext context) {
-            sample.ContextId = AddContext(context);
+        internal ProfileContext RentTempContext() {
+            return tempContext_;
         }
 
-        internal int SetContext(ref ProfileStack stack, ProfileContext context) {
-            stack.ContextId = AddContext(context);
-            return stack.ContextId;
+        internal ProfileContext RentTempContext(int processId, int threadId, int processorNumber) {
+            tempContext_.ProcessId = processId;
+            tempContext_.ThreadId = threadId;
+            tempContext_.ProcessorNumber = processorNumber;
+            return tempContext_;
         }
 
+        internal void ReturnContext(int contextId) {
+            var context = FindContext(contextId);
+
+            if (ReferenceEquals(context, tempContext_)) {
+                tempContext_ = new ProfileContext();
+            }
+        }
+        
         internal int AddContext(ProfileContext context) {
             if (!contextsMap_.TryGetValue(context, out var existingContext)) {
                 contexts_.Add(context);
@@ -866,6 +933,20 @@ namespace IRExplorerUI.Profile {
         public ProfileContext FindContext(int id) {
             Debug.Assert(id > 0 && id <= contexts_.Count);
             return contexts_[id - 1];
+        }
+        
+        internal ProfileStack RentTemporaryStack(int frameCount, int contextId) {
+            tempStack_.SetTempFramePointers(frameCount);
+            tempStack_.ContextId = contextId;
+            return tempStack_;
+        }
+
+        internal void ReturnStack(int stackId) {
+            var stack = FindStack(stackId);
+
+            if (ReferenceEquals(stack, tempStack_)) {
+                tempStack_ = new ProfileStack();
+            }
         }
 
         //? TODO: Per-process stack, reduces dict pressure
@@ -976,18 +1057,31 @@ namespace IRExplorerUI.Profile {
         }
 
         //? TODO Perf
+        //? - use chunked list for samples and stack
+        //? - use chunked dict (Frugal?)  
+        //? - DebugFunctionInfo should be a class and interned?
+        //!       - same func on diff call stacks uses a new struct
+        /*
+            Comparison of Snapshot #1 to Snapshot #2
+            Type, Survived objects, New objects, Dead objects, Objects delta, Survived bytes, New bytes, Dead bytes, Bytes delta
+
+            System.Collections.Generic.Dictionary+Entry<ProfileStack, Int32>[], 0, 249, 0, 249, 0, 72491472, 0, 72491472
+            System.Collections.Generic.HashSet+Entry<Int64[]>[], 0, 1, 0, 1, 0, 22324232, 0, 22324232
+
+         *
+         */
+        //? - use pooling for context/stack to reduce GC
+        //? - compress stacks
         //? - Per-process stacks and samples, reduces dict pressure
         //?     - also removes need to have ProcessId in sample
         //? - Matching sample with stack - keep a per-process/per thread last sample and use time?
 
         private class StackComparer : IEqualityComparer<long[]> {
             public unsafe bool Equals(long[] data1, long[] data2) {
-                //fixed (long* p1 = data1, p2 = data2) {
-                //    return new Span<long>(p1, data1.Length).
-                //        SequenceEqual(new Span<long>(p2, data2.Length));
-                //}
-
-                return Enumerable.SequenceEqual(data1, data1);
+                fixed (long* p1 = data1, p2 = data2) {
+                    return new Span<long>(p1, data1.Length).
+                        SequenceEqual(new Span<long>(p2, data2.Length));
+                }
             }
 
             public int GetHashCode(long[] data) {
@@ -1196,7 +1290,6 @@ namespace IRExplorerUI.Profile {
             return result;
         }
 
-       
         private bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
                                                     ICompilerIRInfo ir, out IRElement element) {
             int multiplier = 1;

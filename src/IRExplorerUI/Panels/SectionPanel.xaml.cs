@@ -1936,13 +1936,7 @@ namespace IRExplorerUI {
             var visitedFuncts = new HashSet<IRTextFunction>();
             var rootNode = new ChildFunctionEx();
             rootNode.Children = new List<ChildFunctionEx>();
-
-            var (callGraph, callGraphNode) = await GenerateFunctionCallGraph(function.ParentSummary, function);
-
-            if (callGraphNode != null) {
-                CreateProfileCallTree(function, callGraphNode, rootNode, callGraph, visitedFuncts);
-            }
-
+            CreateProfileCallTree(function, rootNode, visitedFuncts);
             return rootNode;
         }
 
@@ -2089,8 +2083,8 @@ namespace IRExplorerUI {
             return childInfo;
         }
 
-        private void CreateProfileCallTree(IRTextFunction function, CallGraphNode cgNode,
-            ChildFunctionEx parentNode, CallGraph callGraph,
+        private void CreateProfileCallTree(IRTextFunction function,
+            ChildFunctionEx parentNode,
             HashSet<IRTextFunction> visitedFuncts) {
             bool newFunc = visitedFuncts.Add(function);
 
@@ -2106,10 +2100,6 @@ namespace IRExplorerUI {
             parentNode.Children.Add(selfInfo);
 
             // Due to virtual calls, the func may not be on the caller's list.
-            if (cgNode == null) {
-                cgNode = callGraph.FindNode(function);
-            }
-
             if (funcProfile != null) {
                 foreach (var pair in funcProfile.CalleesWeights) {
                     var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
@@ -2120,7 +2110,6 @@ namespace IRExplorerUI {
                     }
 
                     var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
-                    var childCgNode = cgNode?.FindCallee(childFunc);
 
 
                     //? TODO: Not path sensitive - child time is for all instances of it
@@ -2128,7 +2117,7 @@ namespace IRExplorerUI {
                     parentNode.Children.Add(childNode);
 
                     if (childFuncProfile.CalleesWeights.Count > 0) {
-                        CreateProfileCallTree(childFunc, childCgNode, childNode, callGraph, visitedFuncts);
+                        CreateProfileCallTree(childFunc, childNode, visitedFuncts);
                     }
                     else {
                         visitedFuncts.Add(childFunc);
