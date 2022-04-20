@@ -387,6 +387,10 @@ namespace IRExplorerUI.Profile {
                     //?   OR multiple threads, each handling diff processes
                     using (var source = new ETWTraceEventSource(tracePath)) {
                         double lastTime = 0;
+
+                        double[] perCoreLastTime = new double[4096];
+                        bool[] perCoreWasKernel = new bool[4096];
+
                         ImageIDTraceData lastImageIdData = null;
                         ProfileImage lastProfileImage = null;
                         long lastProfileImageTime = 0;
@@ -458,6 +462,7 @@ namespace IRExplorerUI.Profile {
                         source.Kernel.ThreadStartGroup += data => {
                             var thread = new ProfileThread(data.ThreadID, data.ProcessID, data.ThreadName);
                             prof.AddThreadToProcess(data.ProcessID, thread);
+                            //Trace.WriteLine($"thread: {thread}");
                         };
 
                         source.Kernel.EventTraceHeader += data => {
@@ -517,27 +522,51 @@ namespace IRExplorerUI.Profile {
                             // if (data.ProcessID != mainProcessId) {
                             //     return;
                             // }
-                            
-                            var weight = data.TimeStampRelativeMSec - lastTime;
-                            lastTime = data.TimeStampRelativeMSec;
+
+                            //? Stacks also have to be per CPU?
+                            int cpu = data.ProcessorNumber;
+                            double timestamp = data.TimeStampRelativeMSec;
+
+                            bool isKernelCode = data.ExecutingDPC || data.ExecutingISR;
+                            double weight;
+
+                            if (isKernelCode != perCoreWasKernel[cpu]) {
+                                // Transition between kernel/user code on core.
+                                weight = 1.0; //? sample frequency
+                                perCoreWasKernel[cpu] = isKernelCode;
+                            }
+                            else {
+                                weight = timestamp - perCoreLastTime[cpu];
+
+                                if (weight > 1.1) {
+                                    weight = 1;
+                                }
+                            }
+
+                            perCoreLastTime[cpu] = timestamp;
                             
                             if (data.ProcessID < 0) { //? Filter out
                                 return;
                             }
 
-                            var context = prof.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+
+                            // Skip idle thread on non-kernel code.
+                            if (data.ThreadID == 0 && !isKernelCode) {
+                                return;
+                            }
+                            
+                            var context = prof.RentTempContext(data.ProcessID, data.ThreadID, cpu);
                             int contextId = prof.AddContext(context);
                             var sample = new ProfileSample((long)data.InstructionPointer,
-                                                            TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec),
+                                                            TimeSpan.FromMilliseconds(timestamp),
                                                             TimeSpan.FromMilliseconds(weight),
-                                                            data.ExecutingDPC || data.ExecutingISR,
-                                                            contextId);
+                                                            isKernelCode, contextId);
                             prof.AddSample(sample);
                             prof.ReturnContext(contextId);
 
                             //Trace.WriteLine("-------------------------------");
                             //Trace.WriteLine($"Sample {data.InstructionPointer:X}, {data.ProcessID}, t {data.ThreadID}, p {data.ProcessorNumber}");
-                            //Trace.WriteLine($"      DPC: {data.ExecutingDPC || data.ExecutingISR}, InKernel: {IsKernelAddress(data.InstructionPointer, data.PointerSize)}");
+                            //Trace.WriteLine($"      Kernel: {data.ExecutingDPC || data.ExecutingISR}");
                             //bool found = PrintIPInfo(data.InstructionPointer, data.ThreadID, out var funcInfo, out var offset, out var module);
                             //Trace.WriteLine("");
 
@@ -734,36 +763,46 @@ namespace IRExplorerUI.Profile {
                     var mainProcessId = mainProcess.ProcessId;
                     var imageList = prof.FindProcess(imageName).Images(prof).ToList();
 
-                    //if (imageList == null || imageList.Count == 0) {
-                    //    imageList.Clear();
-                    //    //var imageMap = new HashSet<IImage>();
-                    //    var imageTimeMap = new Dictionary<IImage, TimeSpan>();
+                    if (imageList == null || imageList.Count == 0) {
+                        var imageSet = new HashSet<ProfileImage>();
 
-                    //    foreach (var sample in prof.samples_) {
-                    //        //Trace.WriteLine($"sample {sample.Weight.TimeSpan.Ticks}");
-                    //        //Trace.Flush();
+                        foreach (var sample in prof.samples_) {
+                            //Trace.WriteLine($"sample {sample.Weight.TimeSpan.Ticks}");
+                            //Trace.Flush();
 
-                    //        if (!options.IncludeKernelEvents &&
-                    //            sample.IsKernelCode) {
-                    //            continue; //? TODO: Is this all kernel?
-                    //        }
+                            if (!options.IncludeKernelEvents &&
+                                sample.IsKernelCode) {
+                                continue; //? TODO: Is this all kernel?
+                            }
 
-                    //        if (sample !=  || sample.StackId == 0) {
-                    //            continue;
-                    //        }
+                            var context = sample.GetContext(prof);
 
-                    //        foreach (var frame in sample.Stack.Frames) {
-                    //            if (frame.Image != null && frame.Image.FileName != null) {
-                    //                imageTimeMap.AccumulateValue(frame.Image, sample.Weight.TimeSpan);
-                    //                //imageMap.Add(frame.Image); //? TODO: This can stop once all images in process added
-                    //            }
-                    //        }
-                    //    }
+                            if (context.ProcessId != mainProcessId) {
+                                continue;
+                            }
 
-                    //    var imageTimeList = imageTimeMap.ToList();
-                    //    imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
-                    //    imageList = imageTimeMap.ToList().ConvertAll(item => item.Item1);
-                    //}
+                            var stack = sample.GetStack(prof);
+
+                            if (stack == null) {
+                                continue;
+                            }
+
+                            foreach (var frameIp in stack.FramePointers) {
+                                //? Use Frame -> Resolved Frame cache
+                                ProfileImage frameImage = prof.FindImageForIP(frameIp);
+
+                                if (frameImage != null) {
+                                    imageSet.Add(frameImage);
+                                }
+                            }
+                        }
+
+                        imageList = imageSet.ToList();
+
+                        foreach (var image in imageList) {
+                            prof.AddImageToProcess(mainProcessId, image);
+                        }
+                    }
 
                     int imageLimit = imageList.Count;
                     //int imageLimit = 4;
