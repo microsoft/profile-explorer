@@ -392,7 +392,8 @@ namespace IRExplorerUI.Profile {
             }
 
             return ProcessId == other.ProcessId &&
-                   ThreadId == other.ThreadId;
+                   ThreadId == other.ThreadId &&
+                   ProcessorNumber == other.ProcessorNumber;
         }
 
         public override bool Equals(object other) {
@@ -410,7 +411,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(ProcessId, ThreadId);
+            return HashCode.Combine(ProcessId, ThreadId, ProcessorNumber);
         }
 
         public static bool operator ==(ProfileContext left, ProfileContext right) {
@@ -752,6 +753,9 @@ namespace IRExplorerUI.Profile {
         [ThreadStatic]
         private static ProfileImage lastIpImage_;
 
+        [ThreadStatic] 
+        private static IpToImageCache globalIpImageCache_;
+
         private class IpToImageCache {
             private List<ProfileImage> images_;
             private long lowestBaseAddress_;
@@ -1054,6 +1058,14 @@ namespace IRExplorerUI.Profile {
             
             // Trace.WriteLine($"No image for ip {ip:X}");
             return null;
+        }
+
+        public ProfileImage FindImageForIP(long ip) {
+            if (globalIpImageCache_ == null) {
+                globalIpImageCache_ = IpToImageCache.Create(images_);
+            }
+
+            return globalIpImageCache_.Find(ip);
         }
 
         //? TODO Perf
