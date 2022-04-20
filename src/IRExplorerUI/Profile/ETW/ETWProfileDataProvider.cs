@@ -383,6 +383,8 @@ namespace IRExplorerUI.Profile {
                     RawProfileData prof = new();
                     traceProfile = prof;
 
+                    TimeSpan totalFcopy = TimeSpan.Zero;
+
                     //? Maybe faster to process twice - once to get proc list, then get samples/stacks just for one proc?
                     //?   OR multiple threads, each handling diff processes
                     using (var source = new ETWTraceEventSource(tracePath)) {
@@ -483,9 +485,15 @@ namespace IRExplorerUI.Profile {
                             var stack = prof.RentTemporaryStack(data.FrameCount, contextId);
 
                             //? Could copy faster using Span  data.DataStart
+                            var sw = Stopwatch.StartNew();
+
+
                             for (int i = 0; i < data.FrameCount; i++) {
                                 stack.FramePointers[i] = (long)data.InstructionPointer(i);
                             }
+
+                            sw.Stop();
+                            totalFcopy += sw.Elapsed;
 
                             int stackId = prof.AddStack(stack, context);
 
@@ -512,7 +520,7 @@ namespace IRExplorerUI.Profile {
                             //    Trace.WriteLine("");
                             //}
                         };
-
+                        
                         source.Kernel.PerfInfoSample += data => {
                             // if (data.ProcessID != mainProcessId) {
                             //     return;
@@ -597,6 +605,8 @@ namespace IRExplorerUI.Profile {
                         //Trace.WriteLine($"    Mem usage: {(double)(memoryUseAfter - memoryUse) / (1024 * 1024)} MB");
 
                         Trace.WriteLine($"Read time: {psw.Elapsed}");
+                        Trace.WriteLine($"F time: {totalFcopy.TotalMilliseconds} ms");
+                        Trace.WriteLine($"F time: {totalFcopy.TotalSeconds} s");
                         Trace.WriteLine($"    stacks: {prof.stacks_.Count}");
                         Trace.WriteLine($"    samples: {prof.samples_.Count}");
                         Trace.WriteLine($"    ctxs: {prof.contexts_.Count}");
