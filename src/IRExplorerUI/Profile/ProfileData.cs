@@ -196,55 +196,6 @@ namespace IRExplorerUI.Profile {
         }
 
         public void SubstituteFramePointers(long[] data) {
-            //if (data.Length > 0) {
-            //    long first = data[0];
-            //    long deltaTotal = 0;
-            //    long minDelta = long.MaxValue;
-            //    long maxDelta = long.MinValue;
-
-            //    for (int i = 1; i < data.Length; i++) {
-            //        long delta = data[i] - first;
-            //        deltaTotal += delta;
-            //        minDelta = Math.Min(delta, minDelta);
-            //        maxDelta = Math.Max(delta, maxDelta);
-            //    }
-
-            //    double avgDelta = (double)deltaTotal / data.Length;
-            //    Trace.WriteLine($"Avg delta1: {avgDelta:F2}");
-            //    Trace.WriteLine($"   min: {minDelta}, max {maxDelta}");
-
-            //    long deltaTotal2 = 0;
-            //    minDelta = long.MaxValue;
-            //    maxDelta = long.MinValue;
-
-            //    for (int i = 1; i < data.Length; i++) {
-            //        long delta = data[i] - data[i - 1];
-            //        deltaTotal2 += delta;
-            //        minDelta = Math.Min(delta, minDelta);
-            //        maxDelta = Math.Max(delta, maxDelta);
-            //    }
-
-            //    double avgDelta2 = (double)deltaTotal2 / data.Length;
-            //    Trace.WriteLine($"Avg delta2: {avgDelta2:F2}");
-            //    Trace.WriteLine($"   min: {minDelta}, max {maxDelta}");
-            //    Trace.WriteLine(" -------- ");
-
-            //    long deltaTotal3 = 0;
-            //    minDelta = long.MaxValue;
-            //    maxDelta = long.MinValue;
-
-            //    for (int i = 1; i < data.Length; i++) {
-            //        long delta = data[i] - (long)(avgDelta2);
-            //        deltaTotal3 += delta;
-            //        minDelta = Math.Min(delta, minDelta);
-            //        maxDelta = Math.Max(delta, maxDelta);
-            //    }
-
-            //    Trace.WriteLine($"Avg delta3: {avgDelta2:F2}");
-            //    Trace.WriteLine($"   min: {minDelta}, max {maxDelta}");
-            //    Trace.WriteLine(" -------- ");
-            //}
-
             ReturnArray(FramePointers);
             FramePointers = data;
         }
@@ -1094,23 +1045,10 @@ namespace IRExplorerUI.Profile {
 
         //? TODO Perf
         //? - use chunked list for samples and stack
-        //? - use chunked dict (Frugal?)  
-        //? - DebugFunctionInfo should be a class and interned?
-        //!       - same func on diff call stacks uses a new struct
-        /*
-            Comparison of Snapshot #1 to Snapshot #2
-            Type, Survived objects, New objects, Dead objects, Objects delta, Survived bytes, New bytes, Dead bytes, Bytes delta
-
-            System.Collections.Generic.Dictionary+Entry<ProfileStack, Int32>[], 0, 249, 0, 249, 0, 72491472, 0, 72491472
-            System.Collections.Generic.HashSet+Entry<Int64[]>[], 0, 1, 0, 1, 0, 22324232, 0, 22324232
-
-         *
-         */
-        //? - use pooling for context/stack to reduce GC
-        //? - compress stacks
+        //? - use chunked dict?  
+        //? - compress stacks?
         //? - Per-process stacks and samples, reduces dict pressure
         //?     - also removes need to have ProcessId in sample
-        //? - Matching sample with stack - keep a per-process/per thread last sample and use time?
 
         private class StackComparer : IEqualityComparer<long[]> {
             public unsafe bool Equals(long[] data1, long[] data2) {
