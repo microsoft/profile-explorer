@@ -325,15 +325,9 @@ namespace IRExplorerUI.Profile {
                 return new BinaryFileDescription(); // Main module
             }
 
-            string imageName = image.OriginalFileName;
-
-            if (string.IsNullOrEmpty(imageName)) {
-                imageName = Utils.TryGetFileName(image.FileName);
-            }
-
             return new BinaryFileDescription() {
-                ImageName = imageName,
-                ImagePath = image.FileName,
+                ImageName = image.ModuleName,
+                ImagePath = image.FilePath,
                 Checksum = image.Checksum,
                 TimeStamp = image.TimeStamp,
                 ImageSize = image.Size,
@@ -359,8 +353,6 @@ namespace IRExplorerUI.Profile {
                 //var imageModuleMap = new Dictionary<int, ModuleInfo>();
                 var imageModuleMap = new ConcurrentDictionary<int, ModuleInfo>();
 
-                RawProfileData traceProfile = null;
-
                 // The entire ETW processing must be done on the same thread.
                 bool result = await Task.Run(async () => {
                     Trace.WriteLine($"Init at {DateTime.Now}");
@@ -376,9 +368,6 @@ namespace IRExplorerUI.Profile {
 
                     var totalSw = Stopwatch.StartNew();
                     RawProfileData prof = new();
-                    traceProfile = prof;
-
-                    TimeSpan totalFcopy = TimeSpan.Zero;
 
                     //? Maybe faster to process twice - once to get proc list, then get samples/stacks just for one proc?
                     //?   OR multiple threads, each handling diff processes
@@ -388,7 +377,6 @@ namespace IRExplorerUI.Profile {
                         double[] perCoreLastTime = new double[4096];
                         int[] perCoreLastSample = new int[4096];
                         var perContextLastSample = new Dictionary<int, int>();
-
 
                         bool samplingIntervalSet = false;
                         int samplingInterval100NS; 
@@ -483,7 +471,6 @@ namespace IRExplorerUI.Profile {
                         source.Kernel.EventTraceHeader += data => {
                             // data.PointerSize;
                         };
-
 
                         source.Kernel.StackWalkStack += data => {
                             //if (data.ProcessID != mainProcessId) {
@@ -654,8 +641,6 @@ namespace IRExplorerUI.Profile {
                         //Trace.WriteLine($"    Mem usage: {(double)(memoryUseAfter - memoryUse) / (1024 * 1024)} MB");
 
                         Trace.WriteLine($"Read time: {psw.Elapsed}");
-                        Trace.WriteLine($"Frame copy time: {totalFcopy.TotalMilliseconds} ms");
-                        Trace.WriteLine($"Frame copy time: {totalFcopy.TotalSeconds} s");
                         Trace.WriteLine($"    stacks: {prof.stacks_.Count}");
                         Trace.WriteLine($"    samples: {prof.samples_.Count}");
                         Trace.WriteLine($"    ctxs: {prof.contexts_.Count}");
@@ -663,22 +648,10 @@ namespace IRExplorerUI.Profile {
                         Trace.WriteLine($"    imgs: {prof.imagesMap_.Count}");
                         Trace.WriteLine($"    threads: {prof.threadsMap_.Count}");
                         Trace.Flush();
-
-                        //MessageBox.Show("Done");
-                        //Environment.Exit(0);
-
-                        //ProfileImage prevImage = null;
-                        //ModuleInfo prevModule = null;
-
+                        
                         // Start getting the function address data while the trace is loading.
                         progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-
-                        //MessageBox.Show("Done");
-                        //Environment.Exit(0);
-
                     }
-
-                    //MessageBox.Show("Done reading");
 
                     ProfileImage prevImage = null;
                     ModuleInfo prevModule = null;
@@ -694,9 +667,6 @@ namespace IRExplorerUI.Profile {
 
                     // Process the samples.
                     int index = 0;
-                  
-
-                    //var proto = new ProtoProfile();
                     var acceptedImages = new List<string>();
 
                     bool IsAcceptedModule(string name) {
@@ -732,14 +702,11 @@ namespace IRExplorerUI.Profile {
                     }
 
                     ModuleInfo FindModuleInfo(ProfileImage queryImage) {
-
                         //if (queryImage == prevImage) {
                         //    return prevModule;
                         //}
                         //else {
                             ModuleInfo imageModule = null;
-                            //Trace.WriteLine($"Lock {queryImage}");
-                            //Trace.Flush();
 
                             if(!imageModuleMap.TryGetValue(queryImage.Id, out imageModule)) {
                                 //Trace.WriteLine($"Lock2 {queryImage}");
@@ -752,12 +719,12 @@ namespace IRExplorerUI.Profile {
                                         //? Needs some delay-load, can't disasm every dll for no reason
                                         //? - now Initialize uses a whitelist
                                         var sw2 = Stopwatch.StartNew();
-                                        Trace.WriteLine($"Start loading image {queryImage.FileName}");
+                                        Trace.WriteLine($"Start loading image {queryImage.FilePath}");
 
-                                        if (!IsAcceptedModule(queryImage.FileName)) {
+                                        if (!IsAcceptedModule(queryImage.FilePath)) {
                                             imageModuleMap.TryAdd(queryImage.Id, imageModule);
 
-                                            Trace.TraceInformation($"Ignore not whitelisted image {queryImage.FileName}");
+                                            Trace.TraceInformation($"Ignore not whitelisted image {queryImage.FilePath}");
                                             return null;
                                         }
 
@@ -767,7 +734,7 @@ namespace IRExplorerUI.Profile {
                                             sw2.Restart();
 
                                             if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
-                                                Trace.TraceWarning($"Failed to load debug info for image: {queryImage.FileName}");
+                                                Trace.TraceWarning($"Failed to load debug info for image: {queryImage.FilePath}");
                                             }
                                             else {
                                                 Trace.WriteLine($"  - Loaded debug info in {sw2.Elapsed}");
@@ -800,9 +767,6 @@ namespace IRExplorerUI.Profile {
                         var imageSet = new HashSet<ProfileImage>();
 
                         foreach (var sample in prof.samples_) {
-                            //Trace.WriteLine($"sample {sample.Weight.TimeSpan.Ticks}");
-                            //Trace.Flush();
-
                             if (!options.IncludeKernelEvents &&
                                 sample.IsKernelCode) {
                                 continue; //? TODO: Is this all kernel?
@@ -848,17 +812,11 @@ namespace IRExplorerUI.Profile {
                     var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
                     binSearchOptions.InsertSymbolPath(initialImageName);
 
-                    var symSw = Stopwatch.StartNew();
-                    //var processed = new Dictionary<string, ProfileImage>();
-
                     for (int i = 0; i < imageLimit; i++) {
                         var binaryFile = FromProfileImage(imageList[i]);
                         binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, binSearchOptions);
                         //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
                     }
-
-                    Trace.WriteLine($"=> Schedule BIN load in {symSw.Elapsed}");
-                    symSw.Restart();
 
                     // Determine the compiler target for the new session.
                     IRMode irMode = IRMode.Default;
@@ -887,9 +845,6 @@ namespace IRExplorerUI.Profile {
                         }
                     }
 
-                    Trace.WriteLine($"=> BIN load in {symSw.Elapsed}");
-                    symSw.Restart();
-
                     // Start a new session in the proper ASM mode.
                     await session_.StartNewSession(tracePath, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
 
@@ -898,15 +853,12 @@ namespace IRExplorerUI.Profile {
 
                         if (File.Exists(binaryFilePath)) {
                             Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
-                            var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FileName);
+                            var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FilePath);
                             acceptedImages.Add(name.ToLowerInvariant());
 
                             pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
                         }
                     }
-
-                    Trace.WriteLine($"=> Schedule PDB load in {symSw.Elapsed}");
-                    symSw.Restart();
 
                     // Wait for the PDBs to be loaded.
                     //? TODO: Processing could continue
@@ -916,9 +868,6 @@ namespace IRExplorerUI.Profile {
                             Trace.WriteLine($"Loaded PDB: {pdbPath}");
                         }
                     }
-
-                    Trace.WriteLine($"=> PDB load in {symSw.Elapsed}");
-                    symSw.Stop();
 #else
 
 
@@ -957,7 +906,6 @@ namespace IRExplorerUI.Profile {
                     int temp = 0;
                     var sw = Stopwatch.StartNew();
 
-#if true
                     int chunks = (Environment.ProcessorCount * 3) / 4;
                     Trace.WriteLine($"Using {chunks} threads");
 
@@ -1000,19 +948,15 @@ namespace IRExplorerUI.Profile {
                                     continue;
                                 }
 
-                                if (index % 10000 == 0) {
+                                if (index % 20000 == 0) {
                                     if (cancelableTask != null && cancelableTask.IsCanceled) {
-                                        // return;
+                                        return;
                                     }
 
                                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
                                         Total = (int)prof.samples_.Count, Current = index
                                     });
                                 }
-
-                                //if (index > perc10) {
-                                //    MessageBox.Show("STOP NOW");
-                                //}
 
                                 var sampleWeight = sample.Weight;
 
@@ -1051,9 +995,8 @@ namespace IRExplorerUI.Profile {
                                                 if (frameImage != null  && stackModules.Add(frameImage.Id)) {
 
                                                     //? TODO: Use info from FindModuleInfo
-                                                    var name = Utils.TryGetFileName(frameImage.FileName);
                                                     lock (lockObject) {
-                                                        profileData_.AddModuleSample(name, sampleWeight);
+                                                        profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
                                                     }
                                                 }
                                             }
@@ -1065,7 +1008,7 @@ namespace IRExplorerUI.Profile {
                                         if (isTopFrame && stackModules.Add(resolvedFrame.Image.Id)) {
 
                                             //? TODO: Use info from FindModuleInfo
-                                            var name = Utils.TryGetFileName(resolvedFrame.Image.FileName);
+                                            var name = Utils.TryGetFileName(resolvedFrame.Image.FilePath);
                                             lock (lockObject) {
                                                 profileData_.AddModuleSample(name, sampleWeight);
                                             }
@@ -1169,9 +1112,8 @@ namespace IRExplorerUI.Profile {
                                         if (isTopFrame && stackModules.Add(frameImage.Id)) {
 
                                             //? TODO: Use info from FindModuleInfo
-                                            var name = Utils.TryGetFileName(frameImage.FileName);
                                             lock (profileData_) {
-                                                profileData_.AddModuleSample(name, sampleWeight);
+                                                profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
                                             }
                                         }
 
@@ -1222,13 +1164,6 @@ namespace IRExplorerUI.Profile {
                                             //prevFrames.Add($"<MISSING> {funcName} " + (frame.Symbol != null ? "SYM" : "NOSYM") );
                                             continue;
                                         }
-
-
-
-                                        //? TODO: Everything here should work only on addresses (func profile as
-                                        //? {address-image} id), including stack checks. With data collected, background task (or on demand) disasm binary and creates the IRTextFunc ds.
-                                        //? - samples are already not based on IRElement, only offsets
-
                                         var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
                                         
 
@@ -1283,159 +1218,6 @@ namespace IRExplorerUI.Profile {
                     }
 
                     await Task.WhenAll(tasks.ToArray());
-
-                    MessageBox.Show("DONE");
-#else
-
-                    foreach (var sample in prof.samples_) {
-                        temp++;
-                        
-                        if (!options.IncludeKernelEvents &&
-                            sample.IsKernelCode) {
-                            continue; //? TODO: Is this all kernel?
-                        }
-
-                        var context = sample.GetContext(prof);
-
-                        if (context.ProcessId != mainProcessId) {
-                            continue;
-                        }
-
-                        if (index % 10000 == 0) {
-                            if (cancelableTask != null && cancelableTask.IsCanceled) {
-                                return false;
-                            }
-
-                            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-                                Total = prof.samples_.Count,
-                                Current = index
-                            });
-                        }
-
-                        index++;
-                        var sampleWeight = sample.Weight;
-
-                        // Count time for each sample.
-                        profileData_.TotalWeight += sampleWeight;
-                        var stack = sample.GetStack(prof);
-
-                        if (stack == null) {
-                            continue;
-                        }
-
-                        // Count time in the profile image.
-                        profileData_.ProfileWeight += sampleWeight;
-                        IRTextFunction prevStackFunc = null;
-                        FunctionProfileData prevStackProfile = null;
-
-                        stackFuncts.Clear();
-                        stackModules.Clear();
-
-                        var stackFrames = stack.FramePointers;
-                        bool isTopFrame = true;
-
-
-                        //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
-                        //? for ex it never gets to main. Easy example is a quicksort impl
-                        foreach (var frameIp in stackFrames) {
-                            var frameImage = prof.FindImageForIP(frameIp, context);
-
-                            if (frameImage == null) {
-                                prevStackFunc = null;
-                                prevStackProfile = null;
-                                isTopFrame = false;
-                                continue;
-                            }
-
-                            // Count exclusive time for each module in the executable. 
-                            if (isTopFrame && stackModules.Add(frameImage.Id)) {
-
-                                //? TODO: Use info from FindModuleInfo
-                                var name = Utils.TryGetFileName(frameImage.Name);
-                                profileData_.AddModuleSample(name, sampleWeight);
-                            }
-
-                            long frameRva = 0;
-                            long funcRva = 0;
-                            string funcName = null;
-                            ModuleInfo module = null;
-                            DebugFunctionInfo funcInfo = null;
-                            
-                            module = await FindModuleInfo(frameImage);
-
-                            if (module != null && module.HasDebugInfo) {
-                                //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
-                                frameRva = frameIp - frameImage.BaseAddress;
-                                funcInfo = module.FindDebugFunctionInfo(frameRva);
-                                funcName = funcInfo.Name;
-                                funcRva = funcInfo.RVA;
-                            }
-
-                            if (funcName == null) {
-                                prevStackFunc = null;
-                                prevStackProfile = null;
-                                isTopFrame = false;
-                                continue;
-                            }
-
-                            continue; //? REMOVE
-
-                            var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
-
-                            if (textFunction == null) {
-                                //if (missing.Add(funcName)) {
-                                //    Trace.WriteLine($"  - Skip missing frame {funcName} in {frame.Image.FileName}");
-                                //}
-
-                                prevStackFunc = null;
-                                prevStackProfile = null;
-                                isTopFrame = false;
-
-                                //prevFrames.Add($"<MISSING> {funcName} " + (frame.Symbol != null ? "SYM" : "NOSYM") );
-                                continue;
-                            }
-
-                            //? TODO: Everything here should work only on addresses (func profile as
-                            //? {address-image} id), including stack checks. With data collected, background task (or on demand) disasm binary and creates the IRTextFunc ds.
-                            //? - samples are already not based on IRElement, only offsets
-                            var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
-                            profile.DebugInfo = funcInfo;
-                            var offset = frameRva - funcRva;
-                            
-                            // Don't count the inclusive time for recursive functions multiple times.
-                            if (stackFuncts.Add(textFunction)) {
-                                profile.AddInstructionSample(offset, sampleWeight);
-                                profile.Weight += sampleWeight;
-
-                                // Add the previous stack frame function as a child
-                                // and current frame as its parent.
-                                if (prevStackFunc != null) {
-                                    profile.AddChildSample(prevStackFunc, sampleWeight);
-                                }
-                            }
-
-                            if (prevStackFunc != null) {
-                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                            }
-
-                            // Count the exclusive time for the top frame function.
-                            if (isTopFrame) {
-                                profile.ExclusiveWeight += sampleWeight;
-                            }
-
-                            //? TODO: Expensive, do as post-processing
-                            // Try to map the sample to all the inlined functions.
-                            if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
-                                textFunction.Sections.Count > 0) {
-                                ProcessInlineeSample(sampleWeight, offset, textFunction, module);
-                            }
-
-                            isTopFrame = false;
-                            prevStackFunc = textFunction;
-                            prevStackProfile = profile;
-                        }
-                    }
-#endif
 
                     Trace.WriteLine($"Done process samples in {sw.Elapsed}");
                     //Trace.Flush();
