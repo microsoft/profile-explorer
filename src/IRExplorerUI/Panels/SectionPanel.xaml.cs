@@ -30,6 +30,8 @@ using IRExplorerCore.Analysis;
 using Xceed.Wpf.Toolkit;
 using MessageBox = System.Windows.MessageBox;
 using IRExplorerUI.Compilers.ASM;
+using System.Dynamic;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerUI {
     //? TODo; Commands can be defined in code-behind with this pattern,
@@ -342,7 +344,7 @@ namespace IRExplorerUI {
         public FunctionCodeStatistics Statistics { get; set; }
         public double Percentage { get; set; }
         public double PercentageExclusive { get; set; }
-
+        public string ToolTip { get; set; }
 
         public IEnumerable GetChildren(object node) {
             if (node == null) {
@@ -1912,6 +1914,8 @@ namespace IRExplorerUI {
                 if (funcProfile != null) {
                     var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
                     ChildFunctionList.Model = profileCallTree;
+                    ExpandCallTreeTop();
+
                     ChildTimeColumnVisible = true;
                     AutoResizeColumns(ChildFunctionList, 1);
                 }
@@ -1932,6 +1936,14 @@ namespace IRExplorerUI {
             await ComputeConsecutiveSectionDiffs();
         }
 
+        private void ExpandCallTreeTop() {
+            if (ChildFunctionList.Nodes.Count > 0) {
+                foreach (var childNode in ChildFunctionList.Nodes) {
+                    childNode.IsExpanded = true;
+                }
+            }
+        }
+        
         private async Task<ChildFunctionEx> CreateProfileCallTree(IRTextFunction function) {
             var visitedFuncts = new HashSet<IRTextFunction>();
             var rootNode = new ChildFunctionEx();
@@ -2045,16 +2057,6 @@ namespace IRExplorerUI {
             // Sort children, since that is not yet supported by the TreeListView control.
             parentNode.Children.Sort((a, b) => {
                 // Ensure the callers node is placed first.
-                if (a.IsMarked && b.IsMarked) {
-                    return b.Name.CompareTo(a.Name);
-                }
-                else if (a.IsMarked) {
-                    return -1;
-                }
-                else if (b.IsMarked) {
-                    return 1;
-                }
-
                 if (b.Time > a.Time) {
                     return 1;
                 }
@@ -2062,7 +2064,7 @@ namespace IRExplorerUI {
                     return -1;
                 }
 
-                return b.Name.CompareTo(a.Name);
+                return string.Compare(b.Name, a.Name, StringComparison.Ordinal);
             });
         }
 
@@ -2095,12 +2097,20 @@ namespace IRExplorerUI {
             var funcProfile = Session.ProfileData.GetFunctionProfile(function);
             var selfInfo = CreateProfileCallTreeChild(function, funcProfile, TimeSpan.Zero);
             selfInfo.Name = "Self";
+            selfInfo.Time = Int64.MaxValue;
+            selfInfo.ToolTip = "Function exclusive time";
             selfInfo.IsMarked = true;
             selfInfo.Statistics = GetFunctionStatistics(function);
             parentNode.Children.Add(selfInfo);
 
-            // Due to virtual calls, the func may not be on the caller's list.
-            if (funcProfile != null) {
+            if (funcProfile != null && funcProfile.HasCallees) {
+                var calleeGroupNode = CreateProfileCallTreeChild(function, null, TimeSpan.Zero);
+                selfInfo.Time = Int64.MaxValue - 1;
+                calleeGroupNode.Name = "Callees";
+                calleeGroupNode.ToolTip = "Functions being called";
+                calleeGroupNode.IsMarked = true;
+                parentNode.Children.Add(calleeGroupNode);
+
                 foreach (var pair in funcProfile.CalleesWeights) {
                     var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
 
@@ -2114,7 +2124,7 @@ namespace IRExplorerUI {
 
                     //? TODO: Not path sensitive - child time is for all instances of it
                     var childNode = CreateProfileCallTreeChild(childFunc, childFuncProfile, pair.Value);
-                    parentNode.Children.Add(childNode);
+                    calleeGroupNode.Children.Add(childNode);
 
                     if (childFuncProfile.CalleesWeights.Count > 0) {
                         CreateProfileCallTree(childFunc, childNode, visitedFuncts);
@@ -2125,34 +2135,13 @@ namespace IRExplorerUI {
                 }
             }
 
-            // Go over the IR callees and add them for completeness,
-            // since all not in the profile will have 0 weight.
-            //if (cgNode != null) {
-            //    foreach (var calleeNode in cgNode.UniqueCallees) {
-            //        if (!calleeNode.HasKnownTarget ||
-            //            visitedFuncts.Contains(calleeNode.Function)) {
-            //            continue;
-            //        }
-
-            //        //? TODO: Not path sensitive - child time is for all instances of it
-            //        var childNode = CreateProfileCallTreeChild(calleeNode.Function, funcProfile, TimeSpan.Zero);
-            //        childNode.Statistics = GetFunctionStatistics(calleeNode.Function);
-            //        parentNode.Children.Add(childNode);
-
-            //        if (calleeNode.HasCallees) {
-            //            CreateProfileCallTree(calleeNode.Function, calleeNode, childNode, callGraph, visitedFuncts);
-            //        }
-            //        else {
-            //            visitedFuncts.Add(calleeNode.Function);
-            //        }
-            //    }
-            //}
-
-            if (funcProfile != null) {
-                var callerInfo = CreateProfileCallTreeChild(function, null, TimeSpan.Zero);
-                callerInfo.Name = "Callers";
-                callerInfo.IsMarked = true;
-                parentNode.Children.Add(callerInfo);
+            if (funcProfile != null && funcProfile.HasCallers) {
+                var callerGroupNode = CreateProfileCallTreeChild(function, null, TimeSpan.Zero);
+                selfInfo.Time = Int64.MaxValue - 2;
+                callerGroupNode.Name = "Callers";
+                callerGroupNode.ToolTip = "Functions calling";
+                callerGroupNode.IsMarked = true;
+                parentNode.Children.Add(callerGroupNode);
 
                 foreach (var pair in funcProfile.CallerWeights) {
                     var callerFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
@@ -2166,31 +2155,25 @@ namespace IRExplorerUI {
                     //? TODO: Not path sensitive - child time is for all instances of it
                     var callerNode = CreateProfileCallTreeChild(callerFunc, callerFuncProfile, pair.Value);
                     callerNode.Statistics = GetFunctionStatistics(callerFunc);
-                    callerInfo.Children.Add(callerNode);
+                    callerGroupNode.Children.Add(callerNode);
                 }
             }
 
             // Sort children, since that is not yet supported by the TreeListView control.
             parentNode.Children.Sort((a, b) => {
-                // Ensure the callers node is placed first.
-                if (a.IsMarked && b.IsMarked) {
-                    return b.Name.CompareTo(a.Name);
+                if (!(a.IsMarked && b.IsMarked)) {
+                    if (a.IsMarked) return -1;
+                    else if (b.IsMarked) return 1;
                 }
-                else if (a.IsMarked) {
+
+                if (a.Time > b.Time) {
                     return -1;
                 }
-                else if (b.IsMarked) {
+                else if (a.Time < b.Time) {
                     return 1;
                 }
 
-                if (b.Time > a.Time) {
-                    return 1;
-                }
-                else if (b.Time < a.Time) {
-                    return -1;
-                }
-
-                return b.Name.CompareTo(a.Name);
+                return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
             });
         }
 

@@ -17,6 +17,9 @@ using System.Text;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Windows;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
@@ -365,15 +368,7 @@ namespace IRExplorerUI.Profile {
                     // GC.Collect();
                     // GC.WaitForPendingFinalizers();
                     // long memoryUse = GC.GetTotalMemory(true);
-
-                    bool IsKernelAddress(ulong ip, int pointerSize) {
-                        if (pointerSize == 4) {
-                            return ip >= 0x80000000;
-                        }
-
-                        return ip >= 0xFFFF000000000000;
-                    }
-
+                    
                     progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
                         Total = 0,
                         Current = 0
@@ -391,7 +386,25 @@ namespace IRExplorerUI.Profile {
                         double lastTime = 0;
 
                         double[] perCoreLastTime = new double[4096];
-                        bool[] perCoreWasKernel = new bool[4096];
+                        int[] perCoreLastSample = new int[4096];
+                        var perContextLastSample = new Dictionary<int, int>();
+
+
+                        bool samplingIntervalSet = false;
+                        int samplingInterval100NS; 
+                        const double samplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
+                        double samplingIntervalMS;
+                        double samplingIntervalLimitMS;
+                        var shaBuffer = new byte[20].AsMemory();
+
+                        void UpdateSamplingInterval(int value) {
+                            samplingInterval100NS = value;
+                            samplingIntervalMS = samplingInterval100NS / 10000;
+                            samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
+                        }
+
+                        // Default 1ms sampling interval, 1M ns.
+                        UpdateSamplingInterval(10000);
 
                         ImageIDTraceData lastImageIdData = null;
                         ProfileImage lastProfileImage = null;
@@ -471,45 +484,46 @@ namespace IRExplorerUI.Profile {
                             // data.PointerSize;
                         };
 
+
                         source.Kernel.StackWalkStack += data => {
                             //if (data.ProcessID != mainProcessId) {
                             //    return;
                             //}
-
-                            //? See EmitStackOnExitFromKernel
-                            //bool IsKernel = data.FrameCount > 0 && IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), data.PointerSize);
-
-                            //if (IsKernel) {
-                            //    Trace.WriteLine($"=> In kernel: {data.InstructionPointer(data.FrameCount - 1):X}");
-                            //}
-
+                            
                             //queue.Add((StackWalkStackTraceData)data.Clone());
                             var context = prof.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
                             int contextId = prof.AddContext(context);
 
-                            var stack = prof.RentTemporaryStack(data.FrameCount, contextId);
+                            int frameCount = data.FrameCount;
+                            var stack = prof.RentTemporaryStack(frameCount, contextId);
+                            
+                            // Copy data from event to the temp. stack pointer array.
+                            unsafe {
+                                void* ptr = (void*)((IntPtr)(void*)data.DataStart + 16);
+                                int bytes = data.PointerSize * frameCount;
+                                var span = new Span<byte>(ptr, bytes);
 
-                            //? Could copy faster using Span  data.DataStart
-                            var sw = Stopwatch.StartNew();
-
-
-                            for (int i = 0; i < data.FrameCount; i++) {
-                                stack.FramePointers[i] = (long)data.InstructionPointer(i);
+                                fixed (long* destPtr = stack.FramePointers) {
+                                    var destSpan = new Span<byte>(destPtr, bytes);
+                                    span.CopyTo(destSpan);
+                                }
                             }
 
-                            sw.Stop();
-                            totalFcopy += sw.Elapsed;
-
+                            //for (int i = 0; i < data.FrameCount; i++) {
+                            //    stack.FramePointers[i] = (long)data.InstructionPointer(i);
+                            //}
+                            
                             int stackId = prof.AddStack(stack, context);
 
                             // Try to associate with a previous sample from the same context.
-                            if (!prof.SetLastSampleStack(stackId, contextId)) {
-                                //Trace.WriteLine("---------------------");
-                                //Trace.WriteLine($" search ctx {context}");
-                                //bool r = prof.SetLastSampleStack(stackId, contextId, 10);
-                                //Trace.WriteLine($"Failed to set sample stack, with maxStep {r}");
-                            }
+                            int sampleId = perCoreLastSample[data.ProcessorNumber];
 
+                            if (!prof.TrySetSampleStack(sampleId, stackId, contextId)) {
+                                if(perContextLastSample.TryGetValue(contextId, out sampleId)) {
+                                    prof.SetSampleStack(sampleId, stackId, contextId);
+                                }
+                            }
+                            
                             prof.ReturnStack(stackId);
                             prof.ReturnContext(contextId);
 
@@ -525,38 +539,42 @@ namespace IRExplorerUI.Profile {
                             //    Trace.WriteLine("");
                             //}
                         };
+
+                        source.Kernel.PerfInfoCollectionStart += data => {
+                            if (data.SampleSource == 0) {
+                                UpdateSamplingInterval(data.NewInterval);
+                                samplingIntervalSet = true;
+                            }
+                        };
+
+                        source.Kernel.PerfInfoSetInterval += data => {
+                            if (data.SampleSource == 0 && !samplingIntervalSet) {
+                                UpdateSamplingInterval(data.OldInterval);
+                                samplingIntervalSet = true;
+                            }
+                        };
+
                         
                         source.Kernel.PerfInfoSample += data => {
                             // if (data.ProcessID != mainProcessId) {
                             //     return;
                             // }
-
-                            //? Stacks also have to be per CPU?
                             int cpu = data.ProcessorNumber;
                             double timestamp = data.TimeStampRelativeMSec;
 
                             bool isKernelCode = data.ExecutingDPC || data.ExecutingISR;
-                            double weight;
+                            double weight = timestamp - perCoreLastTime[cpu];
 
-                            if (isKernelCode != perCoreWasKernel[cpu]) {
-                                // Transition between kernel/user code on core.
-                                weight = 1.0; //? sample frequency
-                                perCoreWasKernel[cpu] = isKernelCode;
-                            }
-                            else {
-                                weight = timestamp - perCoreLastTime[cpu];
-
-                                if (weight > 1.1) {
-                                    weight = 1;
-                                }
+                            if (weight > samplingIntervalLimitMS) {
+                                weight = samplingIntervalMS;
                             }
 
                             perCoreLastTime[cpu] = timestamp;
                             
-                            if (data.ProcessID < 0) { //? Filter out
+                            // Skip unknown process.
+                            if (data.ProcessID < 0) {
                                 return;
                             }
-
 
                             // Skip idle thread on non-kernel code.
                             if (data.ThreadID == 0 && !isKernelCode) {
@@ -569,8 +587,11 @@ namespace IRExplorerUI.Profile {
                                                             TimeSpan.FromMilliseconds(timestamp),
                                                             TimeSpan.FromMilliseconds(weight),
                                                             isKernelCode, contextId);
-                            prof.AddSample(sample);
+                            int sampleId = prof.AddSample(sample);
                             prof.ReturnContext(contextId);
+
+                            perCoreLastSample[cpu] = sampleId;
+                            perContextLastSample[contextId] = sampleId;
 
                             //Trace.WriteLine("-------------------------------");
                             //Trace.WriteLine($"Sample {data.InstructionPointer:X}, {data.ProcessID}, t {data.ThreadID}, p {data.ProcessorNumber}");
@@ -626,7 +647,6 @@ namespace IRExplorerUI.Profile {
 
                         source.Process();
                         psw.Stop();
-                        //Environment.Exit(0);
 
                         // GC.Collect();
                         // GC.WaitForPendingFinalizers();
@@ -634,15 +654,18 @@ namespace IRExplorerUI.Profile {
                         //Trace.WriteLine($"    Mem usage: {(double)(memoryUseAfter - memoryUse) / (1024 * 1024)} MB");
 
                         Trace.WriteLine($"Read time: {psw.Elapsed}");
-                        Trace.WriteLine($"F time: {totalFcopy.TotalMilliseconds} ms");
-                        Trace.WriteLine($"F time: {totalFcopy.TotalSeconds} s");
+                        Trace.WriteLine($"Frame copy time: {totalFcopy.TotalMilliseconds} ms");
+                        Trace.WriteLine($"Frame copy time: {totalFcopy.TotalSeconds} s");
                         Trace.WriteLine($"    stacks: {prof.stacks_.Count}");
                         Trace.WriteLine($"    samples: {prof.samples_.Count}");
                         Trace.WriteLine($"    ctxs: {prof.contexts_.Count}");
                         Trace.WriteLine($"    procs: {prof.processes_.Count}");
                         Trace.WriteLine($"    imgs: {prof.imagesMap_.Count}");
                         Trace.WriteLine($"    threads: {prof.threadsMap_.Count}");
-                        //Trace.Flush();
+                        Trace.Flush();
+
+                        //MessageBox.Show("Done");
+                        //Environment.Exit(0);
 
                         //ProfileImage prevImage = null;
                         //ModuleInfo prevModule = null;
@@ -701,7 +724,7 @@ namespace IRExplorerUI.Profile {
                     }
 
                     var moduleLockObject = new object();
-                    const int IMAGE_LOCK_COUNT = 32;
+                    const int IMAGE_LOCK_COUNT = 64;
                     var imageLocks = new object[IMAGE_LOCK_COUNT];
 
                     for (int i = 0; i < imageLocks.Length; i++) {
@@ -935,25 +958,24 @@ namespace IRExplorerUI.Profile {
                     var sw = Stopwatch.StartNew();
 
 #if true
-                    int chunks = 1;
+                    int chunks = (Environment.ProcessorCount * 3) / 4;
+                    Trace.WriteLine($"Using {chunks} threads");
 
                     var tasks = new List<Task>();
                     var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
                     var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
-                    int chunkSize = prof.samples_.Count / chunks;
+                    int chunkSize = (int)(prof.samples_.Count / chunks);
                     var lockObject = new object();
-
-                    int perc10 = prof.samples_.Count / 10;
 
                     //MessageBox.Show("Start tasks");
 
-                    var resolvedStacks = new ConcurrentDictionary<int, ResolvedProfileStack>();
+                    //var resolvedStacks = new ConcurrentDictionary<int, ResolvedProfileStack>();
 
 
                     for (int k = 0; k < chunks; k++) {
                         int start = k * chunkSize;
-                        int end = Math.Min((k + 1) * chunkSize, prof.samples_.Count);
+                        int end = Math.Min((k + 1) * chunkSize, (int)prof.samples_.Count);
                         Trace.WriteLine($"Chunk {k}: {start} - {end}");
 
                         tasks.Add(taskFactory.StartNew(() => {
@@ -963,6 +985,8 @@ namespace IRExplorerUI.Profile {
 
 
                             for (int i = start; i < end; i++) {
+                                index++;
+
                                 var sample = prof.samples_[i]; //? Avoid copy, use ref
 
                                 if (!options.IncludeKernelEvents &&
@@ -981,20 +1005,21 @@ namespace IRExplorerUI.Profile {
                                         // return;
                                     }
 
-                                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) { Total = prof.samples_.Count, Current = index });
+                                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
+                                        Total = (int)prof.samples_.Count, Current = index
+                                    });
                                 }
 
                                 //if (index > perc10) {
                                 //    MessageBox.Show("STOP NOW");
                                 //}
 
-                                index++;
                                 var sampleWeight = sample.Weight;
 
                                 // Count time for each sample.
                                 var stack = sample.GetStack(prof);
 
-                                if (stack == null) {
+                                if (stack.IsUnknown) {
                                     lock (profileData_) {
                                         profileData_.TotalWeight += sampleWeight; //? Lock
                                     }
@@ -1015,9 +1040,24 @@ namespace IRExplorerUI.Profile {
                                 stackFuncts.Clear();
                                 stackModules.Clear();
 
-                                if (resolvedStacks.TryGetValue(sample.StackId, out var resolvedStack)) {
+                                var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
+
+                                if (resolvedStack != null) {
                                     foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                         if (resolvedFrame.IsUnknown) {
+                                            if (isTopFrame) {
+                                                var frameImage = prof.FindImageForIP(resolvedFrame.FrameIP, context);
+
+                                                if (frameImage != null  && stackModules.Add(frameImage.Id)) {
+
+                                                    //? TODO: Use info from FindModuleInfo
+                                                    var name = Utils.TryGetFileName(frameImage.FileName);
+                                                    lock (lockObject) {
+                                                        profileData_.AddModuleSample(name, sampleWeight);
+                                                    }
+                                                }
+                                            }
+
                                             continue;
                                         }
 
@@ -1174,7 +1214,7 @@ namespace IRExplorerUI.Profile {
                                             //if (missing.Add(funcName)) {
                                             //    Trace.WriteLine($"  - Skip missing frame {funcName} in {frame.Image.FileName}");
                                             //}
-                                            resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, funcInfo, null, frameImage, module));
+                                            resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, null, null, frameImage, module));
                                             prevStackFunc = null;
                                             prevStackProfile = null;
                                             isTopFrame = false;
@@ -1235,7 +1275,7 @@ namespace IRExplorerUI.Profile {
                                         prevStackFunc = textFunction;
                                     }
 
-                                    resolvedStacks.TryAdd(sample.StackId, resolvedStack);
+                                    stack.SetOptionalData(resolvedStack);
                                 }
                             }
                         }));
@@ -1243,6 +1283,8 @@ namespace IRExplorerUI.Profile {
                     }
 
                     await Task.WhenAll(tasks.ToArray());
+
+                    MessageBox.Show("DONE");
 #else
 
                     foreach (var sample in prof.samples_) {
