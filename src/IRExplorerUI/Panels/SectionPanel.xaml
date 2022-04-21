@@ -404,6 +404,33 @@
                                 </GridViewColumn.HeaderContainerStyle>
                             </GridViewColumn>
 
+                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
+                                <GridViewColumnHeader x:Name="OptionalColumnHeader2" Content="{Binding OptionalDataColumnName2}" />
+
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel
+                                            VerticalAlignment="Center"
+                                            Background="{Binding BackColor2}"
+                                            Orientation="Horizontal">
+                                            <Rectangle
+                                                Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
+                                                Height="16"
+                                                Fill="#4A73C4"
+                                                Stroke="Black" />
+                                            <TextBlock Margin="4,0,0,0" Text="{Binding Path=InclusivePercentage, StringFormat=p2}" />
+                                            <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText2}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
                             <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible}">
                                 <GridViewColumnHeader x:Name="OptionalColumnHeader" Content="{Binding OptionalDataColumnName}" />
 
@@ -433,32 +460,7 @@
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
-                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding OptionalDataColumnVisible2}">
-                                <GridViewColumnHeader x:Name="OptionalColumnHeader2" Content="{Binding OptionalDataColumnName2}" />
 
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel
-                                            VerticalAlignment="Center"
-                                            Background="{Binding BackColor2}"
-                                            Orientation="Horizontal">
-                                            <Rectangle
-                                                Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                                Height="16"
-                                                Fill="#4A73C4"
-                                                Stroke="Black" />
-                                            <TextBlock Margin="4,0,0,0" Text="{Binding Path=InclusivePercentage, StringFormat=p2}" />
-                                            <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText2}" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
                             <GridViewColumn Width="200" local:GridViewColumnVisibility.IsVisible="{Binding AlternateNameColumnVisible}">
                                 <GridViewColumnHeader x:Name="AlternateNameColumnHeader" Content="Demangled Name" />
 
@@ -1203,7 +1205,44 @@
                                                 HorizontalAlignment="Stretch"
                                                 Foreground="{Binding TextColor}"
                                                 Text="{Binding Name}"
-                                                TextTrimming="CharacterEllipsis">
+                                                TextTrimming="CharacterEllipsis"
+                                                ToolTip="{Binding ToolTip}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="{x:Type TextBlock}">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                                                <Setter Property="FontWeight" Value="Bold" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+
+                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding ChildTimeColumnVisible}">
+                                <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
+
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel
+                                            VerticalAlignment="Center"
+                                            Background="{Binding BackColor}"
+                                            Orientation="Horizontal">
+                                            <Rectangle
+                                                Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
+                                                Height="16"
+                                                Fill="#Aa4343"
+                                                Stroke="Black" />
+                                            <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
                                                 <TextBlock.Style>
                                                     <Style TargetType="{x:Type TextBlock}">
                                                         <Style.Triggers>
@@ -1255,41 +1294,6 @@
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
 
-                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding ChildTimeColumnVisible}">
-                                <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
-
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel
-                                            VerticalAlignment="Center"
-                                            Background="{Binding BackColor}"
-                                            Orientation="Horizontal">
-                                            <Rectangle
-                                                Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                                Height="16"
-                                                Fill="#Aa4343"
-                                                Stroke="Black" />
-                                            <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                                <Setter Property="FontWeight" Value="Bold" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
 
                             <GridViewColumn Width="120">
                                 <GridViewColumnHeader x:Name="ChildAlternateNameColumnHeader" Content="Module" />

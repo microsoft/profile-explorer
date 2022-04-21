@@ -7,8 +7,10 @@ using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Policy;
+using System.Threading;
 using System.Windows.Markup;
 using HarfBuzzSharp;
 using IRExplorerCore;
@@ -136,7 +138,7 @@ namespace IRExplorerUI.Profile {
     }
 
     [ProtoContract(SkipConstructor = true)]
-    public sealed class ProfileStack : IEquatable<ProfileStack> {
+    public class ProfileStack : IEquatable<ProfileStack> {
         private const int MaxFrameNumber = 256;
         private static long[][] tempFrameArrays_ = new long[MaxFrameNumber + 1][];
 
@@ -155,16 +157,33 @@ namespace IRExplorerUI.Profile {
         }
 
         public ProfileStack(int contextId, int frameCount) {
-            FramePointers = RentArray(frameCount);
+            FramePointers = null;
             ContextId = contextId;
+            FramePointers = RentArray(frameCount);
         }
+
+        private object optionalData_;
 
         [ProtoMember(1)]
         public long[] FramePointers { get; set; }
         [ProtoMember(2)]
         public int ContextId { get; set; }
 
+        public bool IsUnknown => FramePointers == null;
         public int FrameCount => FramePointers.Length;
+
+        public static ProfileStack Unknown => new ProfileStack();
+
+        public object GetOptionalData() {
+            Interlocked.MemoryBarrierProcessWide();
+            return optionalData_;
+        }
+
+        public void SetOptionalData(object value) {
+            optionalData_ = value;
+            Interlocked.MemoryBarrierProcessWide();
+
+        }
 
         public long[] CloneFramePointers() {
             long[] clone = new long[FramePointers.Length];
@@ -322,7 +341,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public ProfileStack GetStack(RawProfileData profileData) {
-            return StackId != 0 ? profileData.FindStack(StackId) : null;
+            return StackId != 0 ? profileData.FindStack(StackId) : ProfileStack.Unknown;
         }
 
         public ProfileContext GetContext(RawProfileData profileData) {
@@ -743,7 +762,6 @@ namespace IRExplorerUI.Profile {
         private int lastProcId_;
 
         public List<ProfileSample> samples_;
-        public List<PerformanceCounterEvent> events_;
 
         private static ProfileContext tempContext_ = new ProfileContext();
         private static ProfileStack tempStack_ = new ProfileStack();
@@ -821,8 +839,14 @@ namespace IRExplorerUI.Profile {
             stacksMap_ = new Dictionary<int, Dictionary<ProfileStack, int>>();
             stackData_ = new HashSet<long[]>(new StackComparer());
             samples_ = new List<ProfileSample>();
-            events_ = new List<PerformanceCounterEvent>();
             PerfCounters = new ChunkedList<PerformanceCounterEvent>();
+        }
+
+        public void Done() {
+            // Free objects used while reading the profile.
+            stacksMap_ = null;
+            stackData_ = null;
+            lastProcStacks_ = null;
         }
 
         public ProfileProcess GetOrCreateProcess(int id) {
@@ -883,32 +907,30 @@ namespace IRExplorerUI.Profile {
         public int AddSample(ProfileSample sample) {
             Debug.Assert(sample.ContextId != 0);
             samples_.Add(sample);
-            return samples_.Count;
+            return (int)samples_.Count;
         }
 
-        public bool SetLastSampleStack(int stackId, int contextId) {
-            for (int i = samples_.Count - 1, steps = 0; i >= 0 && steps < 5; i--, steps++) {
-                //? TODO: CPU can change
-                if (samples_[i].ContextId == contextId) {
-                    if (samples_[i].StackId != 0) {
-                        return true;
-                    }
+        public bool TrySetSampleStack(int sampleId, int stackId, int contextId) {
+            if (sampleId == 0) {
+                return false;
+            }
 
-                    // Change the stack ID in-place.
-                    var span = CollectionsMarshal.AsSpan(samples_);
-                    ref var sampleRef = ref span[i];
-                    sampleRef.StackId = stackId;
-                    return true;
-                }
+            if (samples_[sampleId - 1].ContextId == contextId) {
+                SetSampleStack(sampleId, stackId, contextId);
+                return true;
             }
 
             return false;
         }
-        
-        internal ProfileContext RentTempContext() {
-            return tempContext_;
-        }
 
+        public void SetSampleStack(int sampleId, int stackId, int contextId) {
+            // Change the stack ID in-place in the array.
+            Debug.Assert(samples_[sampleId - 1].ContextId == contextId);
+            var span = CollectionsMarshal.AsSpan(samples_);
+            ref var sampleRef = ref span[sampleId - 1];
+            sampleRef.StackId = stackId;
+        }
+        
         internal ProfileContext RentTempContext(int processId, int threadId, int processorNumber) {
             tempContext_.ProcessId = processId;
             tempContext_.ThreadId = threadId;
@@ -952,7 +974,7 @@ namespace IRExplorerUI.Profile {
                 tempStack_ = new ProfileStack();
             }
         }
-
+        
         //? TODO: Per-process stack, reduces dict pressure
         public int AddStack(ProfileStack stack, ProfileContext context) {
             Debug.Assert(stack.ContextId != 0);
@@ -981,8 +1003,8 @@ namespace IRExplorerUI.Profile {
 
             if (!procStacks.TryGetValue(stack, out var existingStack)) {
                 stacks_.Add(stack);
-                procStacks[stack] = stacks_.Count;
-                existingStack = stacks_.Count;
+                procStacks[stack] = (int)stacks_.Count;
+                existingStack = (int)stacks_.Count;
             }
             else {
                 Debug.Assert(stack == FindStack(existingStack));
@@ -990,7 +1012,7 @@ namespace IRExplorerUI.Profile {
 
             return existingStack;
         }
-
+        
         public ProfileStack FindStack(int id) {
             Debug.Assert(id > 0 && id <= stacks_.Count);
             return stacks_[id - 1];
