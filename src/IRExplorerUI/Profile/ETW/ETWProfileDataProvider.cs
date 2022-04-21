@@ -780,7 +780,7 @@ namespace IRExplorerUI.Profile {
 
                             var stack = sample.GetStack(prof);
 
-                            if (stack == null) {
+                            if (stack == null || stack.IsUnknown) {
                                 continue;
                             }
 
@@ -1006,11 +1006,9 @@ namespace IRExplorerUI.Profile {
 
                                         // Count exclusive time for each module in the executable. 
                                         if (isTopFrame && stackModules.Add(resolvedFrame.Image.Id)) {
-
-                                            //? TODO: Use info from FindModuleInfo
-                                            var name = Utils.TryGetFileName(resolvedFrame.Image.FilePath);
+                                            
                                             lock (lockObject) {
-                                                profileData_.AddModuleSample(name, sampleWeight);
+                                                profileData_.AddModuleSample(resolvedFrame.Image.ModuleName, sampleWeight);
                                             }
                                         }
 
@@ -1067,9 +1065,7 @@ namespace IRExplorerUI.Profile {
                                             }
 
                                             if (prevStackFunc != null) {
-                                                lock (prevStackProfile) {
-                                                    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                                                }
+                                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
                                             }
 
                                             // Count the exclusive time for the top frame function.
@@ -1184,9 +1180,7 @@ namespace IRExplorerUI.Profile {
                                             }
 
                                             if (prevStackFunc != null) {
-                                                lock (prevStackProfile) {
-                                                    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                                                }
+                                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
                                             }
 
                                             // Count the exclusive time for the top frame function.
