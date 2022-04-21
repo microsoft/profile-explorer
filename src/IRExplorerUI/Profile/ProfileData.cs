@@ -1238,24 +1238,28 @@ namespace IRExplorerUI.Profile {
         }
 
         public void AddChildSample(IRTextFunction childFunc, TimeSpan weight) {
-            var key = (childFunc.ParentSummary.Id, childFunc.Number);
+            lock (CalleesWeights) {
+                var key = (childFunc.ParentSummary.Id, childFunc.Number);
 
-            if (CalleesWeights.TryGetValue(key, out var currentWeight)) {
-                CalleesWeights[key] = currentWeight + weight;
-            }
-            else {
-                CalleesWeights[key] = weight;
+                if (CalleesWeights.TryGetValue(key, out var currentWeight)) {
+                    CalleesWeights[key] = currentWeight + weight;
+                }
+                else {
+                    CalleesWeights[key] = weight;
+                }
             }
         }
 
         public void AddCallerSample(IRTextFunction callerFunc, TimeSpan weight) {
-            var key = (callerFunc.ParentSummary.Id, callerFunc.Number);
+            lock (CallerWeights) {
+                var key = (callerFunc.ParentSummary.Id, callerFunc.Number);
 
-            if (CallerWeights.TryGetValue(key, out var currentWeight)) {
-                CallerWeights[key] = currentWeight + weight;
-            }
-            else {
-                CallerWeights[key] = weight;
+                if (CallerWeights.TryGetValue(key, out var currentWeight)) {
+                    CallerWeights[key] = currentWeight + weight;
+                }
+                else {
+                    CallerWeights[key] = weight;
+                }
             }
         }
 
