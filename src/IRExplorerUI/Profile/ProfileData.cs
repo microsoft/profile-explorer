@@ -457,7 +457,7 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(4)]
         public long DefaultBaseAddress { get; set; }
         [ProtoMember(5)]
-        public string FileName { get; set; }
+        public string FilePath { get; set; }
         [ProtoMember(6)]
         public string OriginalFileName { get; set; }
         [ProtoMember(7)]
@@ -467,13 +467,15 @@ namespace IRExplorerUI.Profile {
 
         public long BaseAddressEnd => BaseAddress + Size;
 
+        public string ModuleName => !string.IsNullOrWhiteSpace(OriginalFileName) ? Utils.TryGetFileName(OriginalFileName) : FilePath;
+
         public ProfileImage() {}
 
-        public ProfileImage(string fileName, string originalFileName, 
+        public ProfileImage(string filePath, string originalFileName, 
                             long baseAddress, long defaultBaseAddress, 
                             int size, long timeStamp, long checksum) {
             Size = size;
-            FileName = fileName;
+            FilePath = filePath;
             OriginalFileName = originalFileName;
             BaseAddress = baseAddress;
             DefaultBaseAddress = defaultBaseAddress;
@@ -486,7 +488,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public override int GetHashCode() {
-            return HashCode.Combine(Size, FileName, BaseAddress, DefaultBaseAddress, Checksum);
+            return HashCode.Combine(Size, FilePath, BaseAddress, DefaultBaseAddress, Checksum);
         }
 
         public bool Equals(ProfileImage other) {
@@ -497,7 +499,7 @@ namespace IRExplorerUI.Profile {
             }
 
             return Size == other.Size &&
-                   FileName == other.FileName &&
+                   FilePath == other.FilePath &&
                    BaseAddress == other.BaseAddress &&
                    DefaultBaseAddress == other.DefaultBaseAddress &&
                    Checksum == other.Checksum;
@@ -547,7 +549,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public override string ToString() {
-            return $"{FileName}, Id: {Id}, Base: {BaseAddress:X}, Size: {Size}";
+            return $"{FilePath}, Id: {Id}, Base: {BaseAddress:X}, Size: {Size}";
         }
     }
 
@@ -1030,7 +1032,7 @@ namespace IRExplorerUI.Profile {
 
         public ProfileImage FindImage(ProfileProcess process, BinaryFileDescription info) {
             foreach (var image in process.Images(this)) {
-                if (image.FileName == info.ImageName &&
+                if (image.FilePath == info.ImageName &&
                     image.TimeStamp == info.TimeStamp &&
                     image.Checksum == info.Checksum) {
                     return image;
