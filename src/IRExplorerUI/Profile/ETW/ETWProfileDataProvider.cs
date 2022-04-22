@@ -920,6 +920,7 @@ namespace IRExplorerUI.Profile {
 
                     //var resolvedStacks = new ConcurrentDictionary<int, ResolvedProfileStack>();
 
+                    var callTree = new ProfileCallTree();
 
                     for (int k = 0; k < chunks; k++) {
                         int start = k * chunkSize;
@@ -989,10 +990,11 @@ namespace IRExplorerUI.Profile {
                                 if (resolvedStack != null) {
                                     foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                         if (resolvedFrame.IsUnknown) {
+                                            // Can at least increment the module weight.
                                             if (isTopFrame) {
                                                 var frameImage = prof.FindImageForIP(resolvedFrame.FrameIP, context);
 
-                                                if (frameImage != null  && stackModules.Add(frameImage.Id)) {
+                                                if (frameImage != null && stackModules.Add(frameImage.Id)) {
 
                                                     //? TODO: Use info from FindModuleInfo
                                                     lock (lockObject) {
@@ -1006,46 +1008,15 @@ namespace IRExplorerUI.Profile {
 
                                         // Count exclusive time for each module in the executable. 
                                         if (isTopFrame && stackModules.Add(resolvedFrame.Image.Id)) {
-                                            
                                             lock (lockObject) {
                                                 profileData_.AddModuleSample(resolvedFrame.Image.ModuleName, sampleWeight);
                                             }
                                         }
 
                                         var funcInfo = resolvedFrame.FunctionInfo;
-
-                                        if (funcInfo == null) {
-                                            prevStackFunc = null;
-                                            prevStackProfile = null;
-                                            isTopFrame = false;
-                                            continue;
-                                        }
-
                                         var funcName = funcInfo.Name;
                                         var funcRva = funcInfo.RVA;
-
-                                        if (funcName == null) {
-                                            prevStackFunc = null;
-                                            prevStackProfile = null;
-                                            isTopFrame = false;
-                                            continue;
-                                        }
-                                        
                                         var textFunction = resolvedFrame.Function;
-
-                                        if (textFunction == null) {
-                                            //if (missing.Add(funcName)) {
-                                            //    Trace.WriteLine($"  - Skip missing frame {funcName} in {frame.Image.FileName}");
-                                            //}
-
-                                            prevStackFunc = null;
-                                            prevStackProfile = null;
-                                            isTopFrame = false;
-
-                                            //prevFrames.Add($"<MISSING> {funcName} " + (frame.Symbol != null ? "SYM" : "NOSYM") );
-                                            continue;
-                                        }
-
                                         var profile = resolvedFrame.Profile;
 
                                         lock (profile) {
@@ -1120,7 +1091,7 @@ namespace IRExplorerUI.Profile {
                                         DebugFunctionInfo funcInfo = null;
 
                                         //var modSw = Stopwatch.StartNew();
-                                            module = FindModuleInfo(frameImage);
+                                        module = FindModuleInfo(frameImage);
                                         //modSw.Stop();
                                         //if (modSw.ElapsedMilliseconds > 500) {
                                         //    Trace.WriteLine($"=> Slow load {modSw.Elapsed}: {frameImage.Name}");
@@ -1139,20 +1110,20 @@ namespace IRExplorerUI.Profile {
                                         }
 
                                         if (funcName == null) {
-                                            resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, null, null, frameImage, module));
+                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                             prevStackFunc = null;
                                             prevStackProfile = null;
                                             isTopFrame = false;
                                             continue;
                                         }
-                                        
+
                                         var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
 
                                         if (textFunction == null) {
                                             //if (missing.Add(funcName)) {
                                             //    Trace.WriteLine($"  - Skip missing frame {funcName} in {frame.Image.FileName}");
                                             //}
-                                            resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, null, null, frameImage, module));
+                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                             prevStackFunc = null;
                                             prevStackProfile = null;
                                             isTopFrame = false;
@@ -1160,8 +1131,9 @@ namespace IRExplorerUI.Profile {
                                             //prevFrames.Add($"<MISSING> {funcName} " + (frame.Symbol != null ? "SYM" : "NOSYM") );
                                             continue;
                                         }
+
                                         var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
-                                        
+
 
                                         lock (profile) {
                                             profile.DebugInfo = funcInfo;
@@ -1206,6 +1178,37 @@ namespace IRExplorerUI.Profile {
 
                                     stack.SetOptionalData(resolvedStack);
                                 }
+
+                                // Build call tree.
+                                lock (lockObject) {
+                                    bool isRootFrame = true;
+                                    ProfileCallTreeNode prevNode = null;
+
+                                    for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
+                                        var resolvedFrame = resolvedStack.StackFrames[k];
+
+                                        if (resolvedFrame.IsUnknown) {
+                                            continue;
+                                        }
+
+                                        ProfileCallTreeNode node = null;
+
+                                        if (isRootFrame) {
+                                            node = callTree.AddRootNode(resolvedFrame.FunctionInfo, resolvedFrame.Function);
+                                            isRootFrame = false;
+                                        }
+                                        else {
+                                            node = prevNode.AddChild(resolvedFrame.FunctionInfo, resolvedFrame.Function);
+                                        }
+
+                                        node.Weight += sampleWeight;
+                                        prevNode = node;
+                                    }
+
+                                    if (prevNode != null) {
+                                        prevNode.ExclusiveWeight += sampleWeight;
+                                    }
+                                }
                             }
                         }));
                         //}
@@ -1214,7 +1217,10 @@ namespace IRExplorerUI.Profile {
                     await Task.WhenAll(tasks.ToArray());
 
                     Trace.WriteLine($"Done process samples in {sw.Elapsed}");
-                    //Trace.Flush();
+                    MessageBox.Show("D");
+
+                    Trace.WriteLine(callTree.Print());
+                    Trace.Flush();
                     // END SAMPLES PROC
 
 #if false
@@ -2365,8 +2371,7 @@ namespace IRExplorerUI.Profile {
             Module = module;
             Profile = profile;
         }
-
-
+        
         public static ResolvedProfileStackFrame Unknown => new ResolvedProfileStackFrame();
     }
 
