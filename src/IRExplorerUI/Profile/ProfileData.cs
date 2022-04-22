@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Policy;
+using System.Text;
 using System.Threading;
 using System.Windows.Markup;
 using HarfBuzzSharp;
@@ -1077,6 +1078,149 @@ namespace IRExplorerUI.Profile {
 
                 return hash;
             }
+        }
+    }
+
+    //! Sparse BV could be used to keep track of samples for each function
+    //     should work at least for total func, but maybe small enough for TreeNode
+    public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
+      
+        public IRTextFunction Function { get; set; }
+        public DebugFunctionInfo DebugInfo { get; set; }
+        public TimeSpan Weight { get; set; }
+        public TimeSpan ExclusiveWeight { get; set; }
+        public List<ProfileCallTreeNode> Callers => callers_;
+        public List<ProfileCallTreeNode> Children => children_;
+
+        private List<ProfileCallTreeNode> children_;
+        private List<ProfileCallTreeNode> callers_;
+
+        public ProfileCallTreeNode(DebugFunctionInfo funcInfo, IRTextFunction function) {
+            DebugInfo = funcInfo;
+            Function = function;
+        }
+
+        private ProfileCallTreeNode GetOrCreateNode(ref List<ProfileCallTreeNode> list,
+                                                    DebugFunctionInfo debugInfo, IRTextFunction function) {
+            if (list != null) {
+                foreach (var child in list) {
+                    if (child.Equals(debugInfo, function)) {
+                        return child;
+                    }
+                }
+            }
+            else {
+                list = new List<ProfileCallTreeNode>();
+            }
+
+            var childNode = new ProfileCallTreeNode(debugInfo, function);
+            list.Add(childNode);
+            return childNode;
+        }
+
+        public ProfileCallTreeNode AddChild(DebugFunctionInfo debugInfo, IRTextFunction function) {
+            var childNode = GetOrCreateNode(ref children_, debugInfo, function);
+            AddParent(childNode);
+            return childNode;
+        }
+
+        private void AddParent(ProfileCallTreeNode childNode) {
+            GetOrCreateNode(ref childNode.callers_, DebugInfo, Function);
+        }
+
+        internal void Print(StringBuilder builder, int level = 0) {
+            builder.Append(new string(' ', level * 4));
+            builder.AppendLine($"{DebugInfo.Name}, RVA {DebugInfo.RVA}");
+            builder.Append(new string(' ', level * 4));
+            builder.AppendLine($"        weight {Weight.TotalMilliseconds}");
+            builder.Append(new string(' ', level * 4));
+            builder.AppendLine($"    exc weight {ExclusiveWeight.TotalMilliseconds}");
+            builder.Append(new string(' ', level * 4));
+            builder.AppendLine($"    callees: {(Children != null ? Children.Count : 0)}");
+
+            if (Children != null) {
+                foreach (var child in Children) {
+                    child.Print(builder, level + 1);
+                }
+            }
+        }
+
+        public bool Equals(ProfileCallTreeNode other) {
+            if (ReferenceEquals(null, other)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, other)) {
+                return true;
+            }
+
+            return Function.Equals(other.Function) && 
+                   DebugInfo.Equals(other.DebugInfo);
+        }
+
+        public bool Equals(DebugFunctionInfo debugInfo, IRTextFunction function) {
+            return Function.Equals(function) &&
+                   DebugInfo.Equals(debugInfo);
+        }
+
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((ProfileCallTreeNode)obj);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(Function, DebugInfo);
+        }
+
+        public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(ProfileCallTreeNode left, ProfileCallTreeNode right) {
+            return !Equals(left, right);
+        }
+
+    }
+
+    public class ProfileCallTree {
+        private HashSet<ProfileCallTreeNode> rootNodes_;
+
+        public ProfileCallTree() {
+            rootNodes_ = new HashSet<ProfileCallTreeNode>();
+        }
+
+        public ProfileCallTreeNode AddRootNode(DebugFunctionInfo funcInfo, IRTextFunction function) {
+            var node = new ProfileCallTreeNode(funcInfo, function);
+
+            if (rootNodes_.TryGetValue(node, out var existingNode)) {
+                return existingNode;
+            }
+
+            rootNodes_.Add(node);
+            return node;
+        }
+
+        public string Print() {
+            var builder = new StringBuilder();
+
+            foreach (var node in rootNodes_) {
+                builder.AppendLine("Call tree root node");
+                builder.AppendLine("-----------------------");
+                node.Print(builder);
+            }
+
+            return builder.ToString();
         }
     }
 

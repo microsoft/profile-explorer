@@ -66,7 +66,8 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
 
     public bool Equals(DebugFunctionInfo other) {
         return RVA == other.RVA &&
-               Size == other.Size;
+               Size == other.Size &&
+               Name.Equals(other.Name, StringComparison.Ordinal);
     }
 
     public override int GetHashCode() {
