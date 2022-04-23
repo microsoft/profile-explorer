@@ -33,7 +33,7 @@ namespace IRExplorerUI.Profile {
             session_ = session;
         }
         
-        public async Task<bool> Initialize(BinaryFileDescription binaryInfo) {
+        public async Task<bool> Initialize(BinaryFileDescription binaryInfo, SymbolFileSourceOptions options) {
             if (Initialized) {
                 return true;
             }
@@ -42,7 +42,7 @@ namespace IRExplorerUI.Profile {
             var imageName = binaryInfo.ImageName;
             Trace.WriteLine($"ModuleInfo init {imageName}");
 
-            var filePath = await FindBinaryFilePath().ConfigureAwait(false);
+            var filePath = await FindBinaryFilePath(options).ConfigureAwait(false);
 
             if (filePath == null) {
                 Trace.TraceWarning($"Could not find local path for image {imageName}");
@@ -52,7 +52,7 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceInformation($"Found local path for image {imageName}: {filePath}");
             }
 
-            var loadedDoc = await session_.LoadBinaryDocument(filePath, filePath).ConfigureAwait(false);
+            var loadedDoc = await session_.LoadBinaryDocument(filePath, binaryInfo.ImageName).ConfigureAwait(false);
             
             if (loadedDoc == null) {
                 Trace.TraceWarning($"Failed to load document for image {imageName}");
@@ -77,7 +77,7 @@ namespace IRExplorerUI.Profile {
 
             if (HasDebugInfo) {
                 HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
-                //? TODO: Not thread safe, heap corruption
+                //? TODO: Not thread safe, heap corruption from Undname
                 // BuildUnmangledFunctionNameMap();
             }
             else {
@@ -139,11 +139,11 @@ namespace IRExplorerUI.Profile {
         }
 
 
-        public async Task<string> FindBinaryFilePath() {
+        public async Task<string> FindBinaryFilePath(SymbolFileSourceOptions options) {
             // Use the symbol server to locate the image,
             // this will also attempt to download it if not found locally.
             if (options_.DownloadBinaryFiles) {
-                var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_).ConfigureAwait(false);
+                var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_, options).ConfigureAwait(false);
 
                 if (File.Exists(imagePath)) {
                     return imagePath;
@@ -277,10 +277,6 @@ namespace IRExplorerUI.Profile {
             }
 
             if (!externalFuncNames_.TryGetValue(externalFuncName, out var textFunction)) {
-                if (externalFuncName.Contains("quickSortDLL")) {
-                    ;
-                }
-
                 // Create a dummy external function that will have no sections. 
                 textFunction = new IRTextFunction(externalFuncName);
                 Summary.AddFunction(textFunction);

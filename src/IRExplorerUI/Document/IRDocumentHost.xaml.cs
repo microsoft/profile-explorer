@@ -967,8 +967,8 @@ namespace IRExplorerUI {
                 TextView.ScrollToVerticalOffset(state.VerticalOffset);
             }
             else {
-                TextView.ScrollToVerticalOffset(0);
                 await TextView.LoadSection(parsedSection);
+                TextView.ScrollToVerticalOffset(0);
             }
 
             if (PassOutputVisible) {
