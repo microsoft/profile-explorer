@@ -972,10 +972,18 @@ namespace IRExplorerUI.Profile {
             return stacks_[id - 1];
         }
 
-        public ProfileProcess FindProcess(string name) {
+        public ProfileProcess FindProcess(string name, bool allowSubstring = false) {
             foreach (var process in processes_.Values) {
                 if (process.Name == name) {
                     return process;
+                }
+            }
+
+            if (allowSubstring) {
+                foreach (var process in processes_.Values) {
+                    if (process.Name.Contains(name)) {
+                        return process;
+                    }
                 }
             }
 
@@ -1044,6 +1052,25 @@ namespace IRExplorerUI.Profile {
             return globalIpImageCache_.Find(ip);
         }
 
+        public void PrintSamples(int processId) {
+            int zeroTime = 0;
+            int total = 0;
+
+            foreach (var sample in samples_) {
+                var context = sample.GetContext(this);
+                if (context.ProcessId == processId) {
+                    total++;
+                    if (sample.Weight.Ticks == 0) {
+                        zeroTime++;
+                    }
+
+                    Trace.WriteLine(sample);
+                }
+            }
+
+            Trace.WriteLine($"Total samples for proc {processId}: {total}, zero weight {zeroTime}");
+        }
+
         //? TODO Perf
         //? - use chunked list for samples and stack
         //? - use chunked dict?  
@@ -1089,43 +1116,91 @@ namespace IRExplorerUI.Profile {
         public DebugFunctionInfo DebugInfo { get; set; }
         public TimeSpan Weight { get; set; }
         public TimeSpan ExclusiveWeight { get; set; }
+        
+        private List<ProfileCallTreeNode> children_;
+        private List<ProfileCallTreeNode> callers_;
+        private ReaderWriterLockSlim lock_;
+
         public List<ProfileCallTreeNode> Callers => callers_;
         public List<ProfileCallTreeNode> Children => children_;
 
-        private List<ProfileCallTreeNode> children_;
-        private List<ProfileCallTreeNode> callers_;
+        public bool HasChildren => Children != null && Children.Count > 0;
+        public string FunctionName => DebugInfo.Name;
 
         public ProfileCallTreeNode(DebugFunctionInfo funcInfo, IRTextFunction function) {
             DebugInfo = funcInfo;
             Function = function;
+            lock_ = new ReaderWriterLockSlim();
         }
 
-        private ProfileCallTreeNode GetOrCreateNode(ref List<ProfileCallTreeNode> list,
+        public void AccumulateWeight(TimeSpan weight) {
+            lock_.EnterWriteLock();
+            Weight += weight;
+            lock_.ExitWriteLock();
+        }
+
+        public void AccumulateExclusiveWeight(TimeSpan weight) {
+            lock_.EnterWriteLock();
+            ExclusiveWeight += weight;
+            lock_.ExitWriteLock();
+        }
+
+        private (ProfileCallTreeNode, bool) GetOrCreateNode(ref List<ProfileCallTreeNode> list,
                                                     DebugFunctionInfo debugInfo, IRTextFunction function) {
-            if (list != null) {
-                foreach (var child in list) {
-                    if (child.Equals(debugInfo, function)) {
-                        return child;
+            lock_.EnterUpgradeableReadLock();
+
+            try {
+                if (list != null) {
+                    foreach (var child in list) {
+                        if (child.Equals(debugInfo, function)) {
+                            return (child, false);
+                        }
                     }
                 }
+                
+                lock_.EnterWriteLock();
+                try {
+                    list ??= new List<ProfileCallTreeNode>();
+                    var childNode = new ProfileCallTreeNode(debugInfo, function);
+                    list.Add(childNode);
+                    return (childNode, true);
+                }
+                finally {
+                    lock_.ExitWriteLock();
+                }
             }
-            else {
-                list = new List<ProfileCallTreeNode>();
+            finally {
+                lock_.ExitUpgradeableReadLock();
             }
-
-            var childNode = new ProfileCallTreeNode(debugInfo, function);
-            list.Add(childNode);
-            return childNode;
         }
 
-        public ProfileCallTreeNode AddChild(DebugFunctionInfo debugInfo, IRTextFunction function) {
-            var childNode = GetOrCreateNode(ref children_, debugInfo, function);
-            AddParent(childNode);
-            return childNode;
+        public (ProfileCallTreeNode, bool) AddChild(DebugFunctionInfo debugInfo, IRTextFunction function) {
+            var (childNode, isNewNode) = GetOrCreateNode(ref children_, debugInfo, function);
+
+            if (isNewNode) {
+                childNode.AddParent(this);
+            }
+
+            return (childNode, isNewNode);
         }
 
-        private void AddParent(ProfileCallTreeNode childNode) {
-            GetOrCreateNode(ref childNode.callers_, DebugInfo, Function);
+        private Dictionary<long, ProfileSample> samples_;
+        private int sampleCount_;
+
+        public void RecordSample(ProfileSample sample, ResolvedProfileStackFrame stackFrame) {
+            lock_.EnterWriteLock();
+            try {
+                samples_ ??= new Dictionary<long, ProfileSample>();
+                samples_[stackFrame.FrameIP] = sample;
+                sampleCount_++;
+            }
+            finally {
+                lock_.ExitWriteLock();
+            }
+        }
+
+        private void AddParent(ProfileCallTreeNode parentNode) {
+            GetOrCreateNode(ref callers_, parentNode.DebugInfo, parentNode.Function);
         }
 
         internal void Print(StringBuilder builder, int level = 0) {
@@ -1145,6 +1220,21 @@ namespace IRExplorerUI.Profile {
             }
         }
 
+        public void CollectSamples(List<(int total, int unique, string name)> list) {
+            list.Add((sampleCount_, samples_.Count, FunctionName));
+
+            if (HasChildren) {
+                foreach (var child in Children) {
+                    child.CollectSamples(list);
+                }
+            }
+        }
+        
+        public bool Equals(DebugFunctionInfo debugInfo, IRTextFunction function) {
+            return Function.Equals(function) &&
+                   DebugInfo.Equals(debugInfo);
+        }
+
         public bool Equals(ProfileCallTreeNode other) {
             if (ReferenceEquals(null, other)) {
                 return false;
@@ -1154,13 +1244,8 @@ namespace IRExplorerUI.Profile {
                 return true;
             }
 
-            return Function.Equals(other.Function) && 
+            return Function.Equals(other.Function) &&
                    DebugInfo.Equals(other.DebugInfo);
-        }
-
-        public bool Equals(DebugFunctionInfo debugInfo, IRTextFunction function) {
-            return Function.Equals(function) &&
-                   DebugInfo.Equals(debugInfo);
         }
 
         public override bool Equals(object obj) {
@@ -1190,25 +1275,96 @@ namespace IRExplorerUI.Profile {
         public static bool operator !=(ProfileCallTreeNode left, ProfileCallTreeNode right) {
             return !Equals(left, right);
         }
-
     }
 
     public class ProfileCallTree {
         private HashSet<ProfileCallTreeNode> rootNodes_;
+        private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
+        private ReaderWriterLockSlim lock_;
+        private ReaderWriterLockSlim funcLock_;
+
+        public HashSet<ProfileCallTreeNode> RootNodes => rootNodes_;
 
         public ProfileCallTree() {
             rootNodes_ = new HashSet<ProfileCallTreeNode>();
+            funcToNodesMap_ = new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
+            lock_ = new ReaderWriterLockSlim();
+            funcLock_ = new ReaderWriterLockSlim();
         }
 
         public ProfileCallTreeNode AddRootNode(DebugFunctionInfo funcInfo, IRTextFunction function) {
             var node = new ProfileCallTreeNode(funcInfo, function);
+            lock_.EnterUpgradeableReadLock();
 
-            if (rootNodes_.TryGetValue(node, out var existingNode)) {
-                return existingNode;
+            try {
+                if (rootNodes_.TryGetValue(node, out var existingNode)) {
+                    return existingNode;
+                }
+
+                lock_.EnterWriteLock();
+                try {
+                    rootNodes_.Add(node);
+                    RegisterFunctionTreeNode(node);
+                }
+                finally {
+                    lock_.ExitWriteLock();
+                }   
+            }
+            finally {
+                lock_.ExitUpgradeableReadLock();
             }
 
-            rootNodes_.Add(node);
             return node;
+        }
+
+        public ProfileCallTreeNode AddChildNode(ProfileCallTreeNode node, DebugFunctionInfo funcInfo, IRTextFunction function) {
+            var (childNode, isNewNode) = node.AddChild(funcInfo, function);
+
+            if (isNewNode) {
+                RegisterFunctionTreeNode(childNode);
+            }
+
+            return childNode;
+        }
+
+        public void RegisterFunctionTreeNode(ProfileCallTreeNode node) {
+            List<ProfileCallTreeNode> nodeList = null;
+            funcLock_.EnterUpgradeableReadLock();
+
+            try {
+                if (!funcToNodesMap_.TryGetValue(node.Function, out nodeList)) {
+                    funcLock_.EnterWriteLock();
+                    try {
+                        nodeList = new List<ProfileCallTreeNode>();
+                        funcToNodesMap_[node.Function] = nodeList;
+                    }
+                    finally {
+                        funcLock_.ExitWriteLock();
+                    }
+                }
+            }
+            finally {
+                funcLock_.ExitUpgradeableReadLock();
+            }
+
+            lock (nodeList) {
+                nodeList.Add(node);
+            }
+        }
+
+        public List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function) {
+            funcLock_.EnterReadLock();
+
+            try {
+                if (funcToNodesMap_.TryGetValue(function, out var nodeList)) {
+                    return nodeList;
+                }
+            }
+            finally {
+                funcLock_.ExitReadLock();
+            }
+
+            return null;
         }
 
         public string Print() {
@@ -1220,6 +1376,31 @@ namespace IRExplorerUI.Profile {
                 node.Print(builder);
             }
 
+            return builder.ToString();
+        }
+
+        public string PrintSamples() {
+            var samples = new List<(int total, int unique, string name)>();
+            var builder = new StringBuilder();
+
+            foreach (var node in rootNodes_) {
+                node.CollectSamples(samples);
+            }
+
+            samples.Sort((a, b) => b.total.CompareTo(a.total));
+            int total = 0;
+            int unique = 0;
+
+            foreach (var sample in samples) {
+                builder.AppendLine($"{sample.name}");
+                builder.AppendLine($"   {sample.total} samples, {sample.unique} unique");
+                builder.AppendLine($"   {100*(double)sample.unique / sample.total:F4} unique");
+                total += sample.total;
+                unique += sample.unique;
+            }
+
+            builder.AppendLine($"{total} total samples, {unique} unique");
+            builder.AppendLine($"     {100 * (double)unique / total:F4} unique");
             return builder.ToString();
         }
     }
@@ -1460,6 +1641,8 @@ namespace IRExplorerUI.Profile {
         public Dictionary<string, PerformanceCounterSet> ModuleCounters { get; set; }
         public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
         
+        public ProfileCallTree CallTree { get; set; }
+
         public List<PerformanceCounterInfo> SortedPerformanceCounters {
             get {
                 var list = PerformanceCounters.ToValueList();
@@ -1467,8 +1650,6 @@ namespace IRExplorerUI.Profile {
                 return list;
             }
         }
-
-        //public List<PerformanceCounterInfo> SortedPerf
 
         public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {
             ProfileWeight = profileWeight;

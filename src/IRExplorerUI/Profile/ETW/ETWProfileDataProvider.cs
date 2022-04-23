@@ -321,10 +321,6 @@ namespace IRExplorerUI.Profile {
         }
 
         private BinaryFileDescription FromProfileImage(ProfileImage image) {
-            if (image == null) {
-                return new BinaryFileDescription(); // Main module
-            }
-
             return new BinaryFileDescription() {
                 ImageName = image.ModuleName,
                 ImagePath = image.FilePath,
@@ -387,7 +383,7 @@ namespace IRExplorerUI.Profile {
 
                         void UpdateSamplingInterval(int value) {
                             samplingInterval100NS = value;
-                            samplingIntervalMS = samplingInterval100NS / 10000;
+                            samplingIntervalMS = (double)samplingInterval100NS / 10000;
                             samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
                         }
 
@@ -529,6 +525,7 @@ namespace IRExplorerUI.Profile {
 
                         source.Kernel.PerfInfoCollectionStart += data => {
                             if (data.SampleSource == 0) {
+                                Trace.WriteLine($"=> PerfInfoCollectionStart: new {data.NewInterval}, old {data.OldInterval}");
                                 UpdateSamplingInterval(data.NewInterval);
                                 samplingIntervalSet = true;
                             }
@@ -536,6 +533,7 @@ namespace IRExplorerUI.Profile {
 
                         source.Kernel.PerfInfoSetInterval += data => {
                             if (data.SampleSource == 0 && !samplingIntervalSet) {
+                                Trace.WriteLine($"=> PerfInfoCollectionStart: new {data.NewInterval}, old {data.OldInterval}");
                                 UpdateSamplingInterval(data.OldInterval);
                                 samplingIntervalSet = true;
                             }
@@ -647,7 +645,6 @@ namespace IRExplorerUI.Profile {
                         Trace.WriteLine($"    procs: {prof.processes_.Count}");
                         Trace.WriteLine($"    imgs: {prof.imagesMap_.Count}");
                         Trace.WriteLine($"    threads: {prof.threadsMap_.Count}");
-                        Trace.Flush();
                         
                         // Start getting the function address data while the trace is loading.
                         progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
@@ -701,6 +698,10 @@ namespace IRExplorerUI.Profile {
                         imageLocks[i] = new object();
                     }
 
+                    var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
+                    binSearchOptions.InsertSymbolPath(initialImageName);
+                    binSearchOptions.InsertSymbolPath(tracePath);
+
                     ModuleInfo FindModuleInfo(ProfileImage queryImage) {
                         //if (queryImage == prevImage) {
                         //    return prevModule;
@@ -729,7 +730,8 @@ namespace IRExplorerUI.Profile {
                                         }
 
                                         //? TODO: New doc not registerd properly with session, reload crashes
-                                        if (imageModule.Initialize(FromProfileImage(queryImage)).ConfigureAwait(false).GetAwaiter().GetResult()) {
+                                        if (imageModule.Initialize(FromProfileImage(queryImage), binSearchOptions).
+                                                ConfigureAwait(false).GetAwaiter().GetResult()) {
                                             Trace.WriteLine($"  - Init in {sw2.Elapsed}");
                                             sw2.Restart();
 
@@ -759,9 +761,16 @@ namespace IRExplorerUI.Profile {
                         Current = 0
                     });
 
-                    var mainProcess = prof.FindProcess(imageName);
+                    var mainProcess = prof.FindProcess(imageName, true);
+
+                    if (mainProcess == null) {
+                        return false;
+                    }
+
                     var mainProcessId = mainProcess.ProcessId;
-                    var imageList = prof.FindProcess(imageName).Images(prof).ToList();
+                    //prof.PrintSamples(mainProcessId);
+
+                    var imageList = mainProcess.Images(prof).ToList();
 
                     if (imageList == null || imageList.Count == 0) {
                         var imageSet = new HashSet<ProfileImage>();
@@ -802,15 +811,13 @@ namespace IRExplorerUI.Profile {
                     }
 
                     int imageLimit = imageList.Count;
-                    //int imageLimit = 4;
 
 #if true
                     // Locate the referenced binary files. This will download them
                     // from the symbol server if option activated and not yet on local machine.
                     var binTaskList = new Task<string>[imageLimit];
                     var pdbTaskList = new Task<string>[imageLimit];
-                    var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
-                    binSearchOptions.InsertSymbolPath(initialImageName);
+                    
 
                     for (int i = 0; i < imageLimit; i++) {
                         var binaryFile = FromProfileImage(imageList[i]);
@@ -906,7 +913,7 @@ namespace IRExplorerUI.Profile {
                     int temp = 0;
                     var sw = Stopwatch.StartNew();
 
-                    int chunks = (Environment.ProcessorCount * 3) / 4;
+                    int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
                     Trace.WriteLine($"Using {chunks} threads");
 
                     var tasks = new List<Task>();
@@ -954,9 +961,7 @@ namespace IRExplorerUI.Profile {
                                         return;
                                     }
 
-                                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-                                        Total = (int)prof.samples_.Count, Current = index
-                                    });
+                                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {Total = (int)prof.samples_.Count, Current = index});
                                 }
 
                                 var sampleWeight = sample.Weight;
@@ -1030,14 +1035,14 @@ namespace IRExplorerUI.Profile {
 
                                                 // Add the previous stack frame function as a child
                                                 // and current frame as its parent.
-                                                if (prevStackFunc != null) {
-                                                    profile.AddChildSample(prevStackFunc, sampleWeight);
-                                                }
+                                                //if (prevStackFunc != null) {
+                                                //    profile.AddChildSample(prevStackFunc, sampleWeight);
+                                                //}
                                             }
 
-                                            if (prevStackFunc != null) {
-                                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                                            }
+                                            //if (prevStackFunc != null) {
+                                            //    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
+                                            //}
 
                                             // Count the exclusive time for the top frame function.
                                             if (isTopFrame) {
@@ -1146,14 +1151,14 @@ namespace IRExplorerUI.Profile {
 
                                                 // Add the previous stack frame function as a child
                                                 // and current frame as its parent.
-                                                if (prevStackFunc != null) {
-                                                    profile.AddChildSample(prevStackFunc, sampleWeight);
-                                                }
+                                                //if (prevStackFunc != null) {
+                                                //    profile.AddChildSample(prevStackFunc, sampleWeight);
+                                                //}
                                             }
 
-                                            if (prevStackFunc != null) {
-                                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                                            }
+                                            //if (prevStackFunc != null) {
+                                            //    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
+                                            //}
 
                                             // Count the exclusive time for the top frame function.
                                             if (isTopFrame) {
@@ -1180,34 +1185,34 @@ namespace IRExplorerUI.Profile {
                                 }
 
                                 // Build call tree.
-                                lock (lockObject) {
-                                    bool isRootFrame = true;
-                                    ProfileCallTreeNode prevNode = null;
+                                bool isRootFrame = true;
+                                ProfileCallTreeNode prevNode = null;
 
-                                    for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
-                                        var resolvedFrame = resolvedStack.StackFrames[k];
+                                for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
+                                    var resolvedFrame = resolvedStack.StackFrames[k];
 
-                                        if (resolvedFrame.IsUnknown) {
-                                            continue;
-                                        }
-
-                                        ProfileCallTreeNode node = null;
-
-                                        if (isRootFrame) {
-                                            node = callTree.AddRootNode(resolvedFrame.FunctionInfo, resolvedFrame.Function);
-                                            isRootFrame = false;
-                                        }
-                                        else {
-                                            node = prevNode.AddChild(resolvedFrame.FunctionInfo, resolvedFrame.Function);
-                                        }
-
-                                        node.Weight += sampleWeight;
-                                        prevNode = node;
+                                    if (resolvedFrame.IsUnknown) {
+                                        continue;
                                     }
 
-                                    if (prevNode != null) {
-                                        prevNode.ExclusiveWeight += sampleWeight;
+                                    ProfileCallTreeNode node = null;
+
+                                    if (isRootFrame) {
+                                        node = callTree.AddRootNode(resolvedFrame.FunctionInfo, resolvedFrame.Function);
+                                        isRootFrame = false;
                                     }
+                                    else {
+                                        node = callTree.AddChildNode(prevNode, resolvedFrame.FunctionInfo, resolvedFrame.Function);
+                                    }
+
+                                    node.AccumulateWeight(sampleWeight);
+
+                                    node.RecordSample(sample, resolvedFrame); //? Remove
+                                    prevNode = node;
+                                }
+
+                                if (prevNode != null) {
+                                    prevNode.AccumulateExclusiveWeight(sampleWeight);
                                 }
                             }
                         }));
@@ -1215,12 +1220,15 @@ namespace IRExplorerUI.Profile {
                     }
 
                     await Task.WhenAll(tasks.ToArray());
+                    profileData_.CallTree = callTree;
+                    Trace.WriteLine(callTree.PrintSamples());
 
                     Trace.WriteLine($"Done process samples in {sw.Elapsed}");
-                    MessageBox.Show("D");
+                    MessageBox.Show($"Done in {sw.Elapsed}");
 
-                    Trace.WriteLine(callTree.Print());
-                    Trace.Flush();
+
+                    //Trace.WriteLine(callTree.Print());
+                    //Trace.Flush();
                     // END SAMPLES PROC
 
 #if false
@@ -1554,755 +1562,7 @@ namespace IRExplorerUI.Profile {
             w.Show();
 
         }
-
-        public async Task<ProfileData> LoadTraceAsync2(string tracePath, string imageName, 
-                      ProfileDataProviderOptions options, 
-                      SymbolFileSourceOptions symbolOptions,
-                      ProfileLoadProgressHandler progressCallback,
-                      CancelableTask cancelableTask) {
-            try {
-                // Extract just the file name.
-                options_ = options;
-                times_ = 0;
-                var initialImageName = imageName;
-                imageName = Utils.TryGetFileNameWithoutExtension(imageName);
-
-                var imageModuleMap = new Dictionary<IImage, ModuleInfo>();
-
-                // The entire ETW processing must be done on the same thread.
-                bool result = await Task.Run(async () => {
-                    Trace.WriteLine($"Init at {DateTime.Now}");
-                    
-                    IImage prevImage = null;
-                    ModuleInfo prevModule = null;
-
-                    // Start getting the function address data while the trace is loading.
-                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-                    
-                    // Load the trace.
-                    var settings = new TraceProcessorSettings {
-                        AllowLostEvents = true
-                    };
-                    
-                    using ITraceProcessor trace = TraceProcessor.Create(tracePath, settings);
-                    var pendingSymbolData = trace.UseSymbols();
-                    var pendingCpuSamplingData = trace.UseCpuSamplingData();
-                    var threads = trace.UseThreads();
-                    var procs = trace.UseProcesses();
-
-                    var sw = Stopwatch.StartNew();
-                    var swTotal = Stopwatch.StartNew();
-
-                    Trace.WriteLine($"Start load at {DateTime.Now}");
-                    //Trace.Flush();
-
-                    if (options_.IncludePerformanceCounters) {
-                        trace.Use(CollectPerformanceCounterEvents);
-                    }
-
-                    trace.Process(new ProcessProgressTracker(progressCallback));
-
-                    Trace.WriteLine($"After process load in {sw.Elapsed}");
-                    Trace.WriteLine($"PMC events: {events_.Count}");
-                    //Trace.Flush();
-
-                    var allProcs = procs.Result.Processes;
-                    var allThreads = threads.Result.Threads;
-
-
-                    var procCache = new ProcessInfoCache(allProcs, allThreads);
-                    var mainProcessId = procCache.FindProcess(imageName);
-
-                    
-                    if (cancelableTask != null && cancelableTask.IsCanceled) {
-                        return false;
-                    }
-
-                    var cpuSamplingData = pendingCpuSamplingData.Result;
-
-                    // Load symbols.
-                    //? TODO: Not needed anymore with all symbols stuff handled by IRX
-                    try {
-                        var symbolData = pendingSymbolData.Result;
-
-                        foreach (var path in symbolOptions.SymbolSearchPaths) {
-                            var directory = Utils.TryGetDirectoryName(path);
-                            await symbolData.LoadSymbolsAsync(SymCachePath.Automatic,
-                                new RawSymbolPath(directory),
-                                new SymbolProgressTracker(progressCallback));
-                        }
-                    }
-                    catch (Exception ex) {
-                        Trace.TraceWarning($"Failed to load symbols: {ex.Message}");
-                    }
-
-                    if (cancelableTask != null && cancelableTask.IsCanceled) {
-                        return false;
-                    }
-
-                    // Process the samples.
-                    int index = 0;
-                    var stackFuncts = new HashSet<IRTextFunction>();
-                    var stackModules = new HashSet<string>();
-
-                    var samples = cpuSamplingData.Samples;
-                    var totalSamples = samples.Count;
-                    temp_ = new List<ProfileSample>();
-
-                    //var proto = new ProtoProfile();
-                    var acceptedImages = new List<string>();
-
-                    bool IsAcceptedModule(string name) {
-                        name = Utils.TryGetFileNameWithoutExtension(name);
-                        name = name.ToLowerInvariant();
-
-                        if (acceptedImages.Contains(name)) {
-                            Trace.WriteLine($"=> Accept image {name}");
-                            return true;
-                        }
-
-                        if (!options_.HasBinaryNameWhitelist) {
-                            return false;
-                        }
-
-                        foreach (var file in options_.BinaryNameWhitelist) {
-                            var fileName = Utils.TryGetFileNameWithoutExtension(file);
-
-                            if (fileName.ToLowerInvariant() == name) {
-                                return true;
-                            }
-                        }
-
-                        return false;
-                    }
-
-
-                    async Task<ModuleInfo> FindModuleInfo(IImage queryImage) {
-                        ModuleInfo module = null;
-
-                        if (queryImage == prevImage) {
-                            module = prevModule;
-                        }
-                        else {
-                            if (!imageModuleMap.TryGetValue(queryImage, out var imageModule)) {
-                                imageModule = new ModuleInfo(options_, session_);
-                                imageModuleMap[queryImage] = imageModule;
-                                
-                                //? Needs some delay-load, can't disasm every dll for no reason
-                                //? - now Initialize uses a whitelist
-                                var sw2 = Stopwatch.StartNew();
-                                Trace.WriteLine($"Start loading image {queryImage.FileName}");
-
-                                if (!IsAcceptedModule(queryImage.FileName)) {
-                                    Trace.TraceInformation($"Ignore not whitelisted image {queryImage.FileName}");
-                                    return null;
-                                }
-
-                                //? TODO: New doc not registerd properly with session, reload crashes
-                                if (await imageModule.Initialize(FromETLImage(queryImage))) {
-                                    Trace.WriteLine($"  - Init in {sw2.Elapsed}");
-                                    sw2.Restart();
-
-                                    if (!await imageModule.InitializeDebugInfo()) {
-                                        Trace.TraceWarning($"Failed to load debug info for image: {queryImage.FileName}");
-                                    }
-                                    else {
-                                        Trace.WriteLine($"  - Loaded debug info in {sw2.Elapsed}");
-                                    }
-                                }
-                            }
-
-                            module = imageModule;
-                            prevImage = queryImage;
-                            prevModule = module;
-                        }
-
-                        return module;
-                    }
-                    
-                    Trace.WriteLine($"Start preload symbols {DateTime.Now}");
-
-                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                        Total = 0,
-                        Current = 0
-                    });
-
-                    var imageList = procCache.GetProcessImages(mainProcessId);
-
-                    if (imageList == null || imageList.Count == 0) {
-                        imageList.Clear();
-                        //var imageMap = new HashSet<IImage>();
-                        var imageTimeMap = new Dictionary<IImage, TimeSpan>();
-
-                        foreach (var sample in samples) {
-                            //Trace.WriteLine($"sample {sample.Weight.TimeSpan.Ticks}");
-                            //Trace.Flush();
-                            
-                            if (!options.IncludeKernelEvents &&
-                                (sample.IsExecutingDeferredProcedureCall == true ||
-                                 sample.IsExecutingInterruptServicingRoutine == true)) {
-                                continue; //? TODO: Is this all kernel?
-                            }
-
-                            if (sample.Process.Id != mainProcessId || sample.Stack == null) {
-                                continue;
-                            }
-
-                            foreach (var frame in sample.Stack.Frames) {
-                                if (frame.Image != null && frame.Image.FileName != null) {
-                                    imageTimeMap.AccumulateValue(frame.Image, sample.Weight.TimeSpan);
-                                    //imageMap.Add(frame.Image); //? TODO: This can stop once all images in process added
-                                }
-                            }
-                        }
-
-                        var imageTimeList = imageTimeMap.ToList();
-                        imageTimeList.Sort((a, b) => -a.Item2.CompareTo(b.Item2));
-                        imageList = imageTimeMap.ToList().ConvertAll(item => item.Item1);
-                    }
-
-                    int imageLimit = imageList.Count;
-                    //int imageLimit = 4;
-
-#if true
-                    // Locate the referenced binary files. This will download them
-                    // from the symbol server if option activated and not yet on local machine.
-                    var binTaskList = new Task<string>[imageLimit];
-                    var pdbTaskList = new Task<string>[imageLimit];
-                    var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
-                    binSearchOptions.InsertSymbolPath(initialImageName);
-
-                    for (int i = 0; i < imageLimit; i++) {
-                        var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FileName);
-                        acceptedImages.Add(name.ToLowerInvariant());
-
-                        var binaryFile = FromETLImage(imageList[i]);
-                        binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, binSearchOptions);
-                        //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
-                    }
-
-                    // Determine the compiler target for the new session.
-                    IRMode irMode = IRMode.Default;
-
-                    for (int i = 0; i < imageLimit; i++) {
-                        var binaryFilePath = await binTaskList[i];
-
-                        if (irMode == IRMode.Default && File.Exists(binaryFilePath)) {
-                            var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(binaryFilePath);
-
-                            if (binaryInfo != null) {
-                                switch (binaryInfo.Architecture) {
-                                    case System.Reflection.PortableExecutable.Machine.Arm:
-                                    case System.Reflection.PortableExecutable.Machine.Arm64: {
-                                        irMode = IRMode.ARM64;
-                                        break;
-                                    }
-                                    case System.Reflection.PortableExecutable.Machine.I386:
-                                    case System.Reflection.PortableExecutable.Machine.Amd64: {
-                                        irMode = IRMode.x86_64;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Start a new session in the proper ASM mode.
-                    await session_.StartNewSession(tracePath, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_));
-
-                    for (int i = 0; i < imageLimit; i++) {
-                        var binaryFilePath = await binTaskList[i];
-
-                        if (File.Exists(binaryFilePath)) {
-                            Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
-                            var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FileName);
-                            acceptedImages.Add(name.ToLowerInvariant());
-
-                            pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
-                        }
-                    }
-
-                    // Wait for the PDBs to be loaded.
-                    //? TODO: Processing could continue
-                    for (int i = 0; i < imageLimit; i++) {
-                        if (pdbTaskList[i] != null) {
-                            var pdbPath = await pdbTaskList[i];
-                            Trace.WriteLine($"Loaded PDB: {pdbPath}");
-                        }
-                    }
-#else
-                    for (int i = 0; i < imageLimit; i++) {
-                        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                            Total = imageLimit,
-                            Current = i
-                        });
-
-                        var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
-                        acceptedImages.Add(name.ToLowerInvariant());
-
-                        var binaryFile = FromETLImage(imageTimeList[i].Item1);
-                        var binaryFilePath = await session_.CompilerInfo.FindBinaryFile(binaryFile);
-
-                        if (File.Exists(binaryFilePath)) {
-                            Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
-
-                            var pdbPath = await session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
-                            Trace.WriteLine($"Loaded PDB: {pdbPath}");
-                        }
-                    }
-#endif
-                    Trace.WriteLine($"Done preload symbols in {sw.Elapsed} at {DateTime.Now}");
-                    Trace.Flush();
-                    sw.Restart();
-
-                    Trace.WriteLine($"Start process samples {DateTime.Now}");
-                    Trace.Flush();
-                    sw.Restart();
-
-                    // Trace.WriteLine($"Done process samples in {sw.Elapsed} at {DateTime.Now}");
-
-                    int temp = 0;
-                    var missing = new HashSet<string>();
-
-                    foreach (var sample in samples) {
-                        temp++;
-
-                        //var pf = new ProfileSample() {
-                        //    RVA = sample.InstructionPointer.Value,
-                        //    Time = sample.Timestamp.Nanoseconds,
-                        //    Weight = sample.Weight.TimeSpan,
-                        //    ProcessId = sample.Process?.Id ?? -1,
-                        //    ThreadId = sample.Thread?.Id ?? -1,
-                        //    ImageId = sample.Image?.ProcessId ?? -1, //? Needs some other ID, maybethe md5?
-                        //    IsUserCode = !(sample.IsExecutingDeferredProcedureCall == true ||
-                        //                   sample.IsExecutingInterruptServicingRoutine == true) 
-                        //};
-                        
-                        //proto.Samples.Add(pf);
-                        //continue;
-                        
-                        if(!options.IncludeKernelEvents &&
-                            (sample.IsExecutingDeferredProcedureCall == true ||
-                            sample.IsExecutingInterruptServicingRoutine == true)) {
-                            continue; //? TODO: Is this all kernel?
-                        }
-
-                        if (sample.Process.Id != mainProcessId) {
-                            continue;
-                        }
-
-                        if (index % 10000 == 0) {
-                            if (cancelableTask != null && cancelableTask.IsCanceled) {
-                                return false;
-                            }
-
-                            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
-                                Total = totalSamples,
-                                Current = index
-                            });
-                        }
-
-                        index++;
-                        var sampleWeight = sample.Weight.TimeSpan;
-
-                        // Count time for each sample.
-                        profileData_.TotalWeight += sampleWeight;
-
-                        if (sample.Stack == null) {
-                            continue;
-                        }
-                        
-
-                        // Count time in the profile image.
-                        profileData_.ProfileWeight += sampleWeight;
-                        IRTextFunction prevStackFunc = null;
-                        FunctionProfileData prevStackProfile = null;
-
-                        stackFuncts.Clear();
-                        stackModules.Clear();
-                        
-                        var stackFrames = sample.Stack.Frames;
-                        bool isTopFrame = true;
-
-                        bool track = false;
-                        int idx = 0;
-                        //var prevFrames = new List<string>(stackFrames.Count);
-
-                        //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
-                        //? for ex it never gets to main. Easy example is a quicksort impl
-                        foreach (var frame in stackFrames) {
-                            idx++;
-
-                            // Count exclusive time for each module in the executable. 
-                            if (isTopFrame &&
-                                frame.Image?.FileName != null &&
-                                stackModules.Add(frame.Image?.FileName)) {
-
-                                //? TODO: Use info from FindModuleInfo
-                                var name = frame.Image.OriginalFileName;
-                                
-                                if (name == null) {
-                                    name = frame.Image.FileName;
-                                }
-                                
-                                profileData_.AddModuleSample(name, sampleWeight);
-                            }
-
-                            long frameRva = 0;
-                            long funcRva = 0;
-                            string funcName = null;
-                            ModuleInfo module = null;
-                            DebugFunctionInfo funcInfo = null;
-
-                            if (frame.Image == null) {
-                                continue; //? TODO: Disabled for now
-                                // sample.IP matches JIT load addr
-
-                                //? Assume it's the JIT code, shows up as not belonging to any module.
-                                module = mainModule_;
-
-                                //? TODO: Module DLL name needed in debug file to add proper mapping instead of All
-
-                                if (await module.Initialize(FromETLImage(frame.Image))) {
-
-                                    if (!await module.InitializeDebugInfo()) {
-                                        if (isTopFrame) {
-                                            profileData_.AddModuleSample("Unknown", sampleWeight);
-                                        }
-
-                                        prevStackFunc = null;
-                                        prevStackProfile = null;
-                                        isTopFrame = false;
-                                        //prevFrames.Add("<UNKNOWN>");
-                                      
-
-                                        continue;
-                                    }
-                                }
-
-                                frameRva = sample.InstructionPointer.Value;
-                                funcInfo = module.FindDebugFunctionInfo(frameRva);
-
-                                if (funcInfo.IsUnknown) {
-                                    if (isTopFrame) {
-                                        profileData_.AddModuleSample("Unknown", sampleWeight);
-                                    }
-
-                                    prevStackFunc = null;
-                                    prevStackProfile = null;
-                                    isTopFrame = false;
-                                    //prevFrames.Add("<UNKNOWN>");
-
-                                   
-
-                                    continue;
-                                }
-
-                                //Trace.WriteLine($"Found JIT IP {sample.InstructionPointer.Value}: {funcInfo.Name}");
-                                funcName = funcInfo.Name;
-                                funcRva = funcInfo.RVA;
-                                
-                                if (funcInfo.HasModuleName) {
-                                    //? TODO: Associate the func somehow with the module in UI
-                                    profileData_.AddModuleSample(funcInfo.ModuleName, sampleWeight);
-                                }
-                            }
-                            else {
-                                module = await FindModuleInfo(frame.Image);
-
-                                if (module != null && module.HasDebugInfo) {
-                                    //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
-                                    frameRva = frame.RelativeVirtualAddress.Value;
-                                    funcInfo = module.FindDebugFunctionInfo(frameRva);
-                                    funcName = funcInfo.Name;
-                                    funcRva = funcInfo.RVA;
-                                    
-                                    //? PubSym overwrites func in tree, keep func
-                                    //? WppInitKm
-
-                                    //if (funcName != null) {
-                                    //    if (funcName == "WppInitKm") {
-                                    //        ;
-                                    //    }
-
-                                    // if (other.Name != funcName) {
-                                    //         Trace.WriteLine($"=> Mismatch func {funcName} at RVA {funcRva} with frame {frameRva}, module {frame.Image.FileName}");
-                                    //         Trace.WriteLine($"      tree func {other.Name} at RVA {other.RVA} with frame {frameRva}, module {frame.Image.FileName}");
-
-                                    //         (funcName, funcRva) = module.FindFunctionByRVA(frameRva);
-                                    //     }
-                                    //     //    }
-                                    //     //    else {
-                                    //     //        ;
-                                    //     //    }
-                                    //// }
-
-                                    //if (funcName != null) {
-                                    //    Trace.WriteLine($"=> Found func without sym {funcName} at RVA {funcRva} with frame {frameRva}, module {frame.Image.FileName}");
-                                    //}
-                                    //else {
-                                    //    Trace.WriteLine($"=> NotFound func without sym at RVA {funcRva} with frame RVA {frameRva}, frame {frame.Address.Value}, module {frame.Image.FileName}");
-                                    //}
-                                }
-                            }
-
-                            if (funcName == null) {
-                                prevStackFunc = null;
-                                prevStackProfile = null;
-                                isTopFrame = false;
-                                continue;
-                            }
-
-                            //if (funcName.Contains("a_fit_segment_end_p")) {
-                            //    track = true;
-                            //    Trace.WriteLine($"Found tracked: {funcName} at RVA {funcRva} with frame {frameRva}");
-                            //    Trace.WriteLine($"    sample: {sample.Weight.TotalMilliseconds}");
-
-                            //    if (prevStackFunc != null) {
-                            //        Trace.WriteLine($"  => prev func: {prevStackFunc.Name}");
-                            //    }
-                            //    else {
-                            //        Trace.WriteLine($"  => NO prev func");
-                            //    }
-
-                            //    Trace.WriteLine($"   Prev frames: {idx}");
-
-                            //    foreach (var p in prevFrames) {
-                            //        Trace.WriteLine($"   o {p}");
-                            //    }
-                            //}
-
-
-                            var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
-
-                            if (textFunction == null) {
-                                //if (missing.Add(funcName)) {
-                                //    Trace.WriteLine($"  - Skip missing frame {funcName} in {frame.Image.FileName}");
-                                //}
-
-                                prevStackFunc = null;
-                                prevStackProfile = null;
-                                isTopFrame = false;
-
-                                //prevFrames.Add($"<MISSING> {funcName} " + (frame.Symbol != null ? "SYM" : "NOSYM") );
-                                continue;
-                            }
-                            else {
-                                if (track) {
-                                    Trace.WriteLine($"  - Walking frame {funcName}");
-                                }
-
-                                //prevFrames.Add(funcName);
-                            }
-
-                            //? TODO: Everything here should work only on addresses (func profile as
-                            //? {address-image} id), including stack checks. With data collected, background task (or on demand) disasm binary and creates the IRTextFunc ds.
-                            //? - samples are already not based on IRElement, only offsets
-                            var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
-                            profile.DebugInfo = funcInfo;
-                            var offset = frameRva - funcRva;
-
-                            //if (textFunction.Name.Contains("execute@ElemTemplateElement@") ||
-                            //    (prevStackFunc != null && prevStackFunc.Name.Contains("execute@ElemTemplateElement@"))) {
-                            //    Trace.WriteLine($"Found {textFunction.Name}");
-                            //}
-
-                            // Don't count the inclusive time for recursive functions multiple times.
-                                if (stackFuncts.Add(textFunction)) {
-                                profile.AddInstructionSample(offset, sampleWeight);
-                                profile.Weight += sampleWeight;
-
-                                // Add the previous stack frame function as a child
-                                // and current frame as its parent.
-                                if (prevStackFunc != null) {
-                                    
-                                    //if(prevStackFunc.Name.Contains("normalizeWhiteSpace"))
-                                    //{
-                                    //    if (textFunction.Name.Contains("scanContent@IGXMLScanner")) {
-                                    //        Trace.WriteLine("Found pair ");
-                                    //        ;
-                                    //    }
-                                    //}
-
-                                    profile.AddChildSample(prevStackFunc, sampleWeight);
-                                }
-                            }
-
-                            if (prevStackFunc != null) {
-                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                            }
-                            
-                            // Count the exclusive time for the top frame function.
-                            if (isTopFrame) {
-                                profile.ExclusiveWeight += sampleWeight;
-                            }
-                            
-                            //? TODO: Expensive, do as post-processing
-                            // Try to map the sample to all the inlined functions.
-                            if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
-                                textFunction.Sections.Count > 0) {
-                                ProcessInlineeSample(sampleWeight, offset, textFunction, module);
-                            }
-
-                            isTopFrame = false;
-                            prevStackFunc = textFunction;
-                            prevStackProfile = profile;
-                        }
-
-                        if (track) {
-                            Trace.WriteLine($"   < End tracked frames: {stackFrames.Count}");
-                        }
-                    }
-
-                    Trace.WriteLine($"Done process samples in {sw.Elapsed} at {DateTime.Now}");
-                    Trace.Flush();
-                    // END SAMPLES PROC
-
-                    //long same = 0;
-                    //long diff = 0;
-
-                    //foreach (var pair in imageModuleMap) {
-                    //    if (pair.Value.Initialized && pair.Value.HasDebugInfo) {
-                    //        Trace.WriteLine($"=> MOD {pair.Value.ModuleDocument.ModuleName}");
-                    //        Trace.WriteLine($"   same: {pair.Value.Same}");
-                    //        Trace.WriteLine($"   diff: {pair.Value.Diff}");
-                    //        same += pair.Value.Same;
-                    //        diff += pair.Value.Diff;
-                    //    }
-                    //}
-
-                    //Trace.WriteLine($"   cache: {100 * (double)same / (double)(diff + same)}%");
-
-                    Trace.WriteLine($"Start process PMC at {DateTime.Now}");
-                    Trace.Flush();
-                    sw.Restart();
-
-                    // Process performance counters.
-                    index = 0;
-
-                    foreach (var counter in events_) {
-                        if (index % 10000 == 0) {
-                            if (cancelableTask != null && cancelableTask.IsCanceled) {
-                                return false;
-                            }
-
-                            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.PerfCounterProcessing) {
-                                Total = events_.Count,
-                                Current = index
-                            });
-                        }
-
-                        index++;
-                        var image = procCache.FindImageForIP(counter.IP, counter.ThreadId, mainProcessId);
-
-                        if (image != null) {
-                            profileData_.AddModuleCounter(image.FileName, counter.ProfilerSource, 1);
-
-                            var module = await FindModuleInfo(image);
-
-                            if (module == null) {
-                                continue;
-                            }
-                            else if (!module.Initialized || !module.HasDebugInfo) {
-                                //Trace.WriteLine($"Uninitialized module {image.FileName}");
-                                continue;
-                            }
-
-                            long counterRVA = counter.IP - image.AddressRange.BaseAddress.Value;
-                            var funcInfo = module.FindDebugFunctionInfo(counterRVA);
-
-                            if (funcInfo.Name == null) {
-                                continue;
-                            }
-
-                            var textFunction = module.FindFunction(funcInfo.RVA);
-
-                            if (textFunction != null) {
-                                var funcOffset = counterRVA - funcInfo.RVA;
-                                var profile = profileData_.GetOrCreateFunctionProfile(textFunction, "");
-                                profile.AddCounterSample(funcOffset, counter.ProfilerSource, 1);
-                            }
-                        }
-                    }
-                    
-                    Trace.WriteLine($"Done process PMC in {sw.Elapsed}");
-                    Trace.WriteLine($"Done loading profile in {swTotal.Elapsed}");
-
-                    //proto.PerfCounters = events_;
-
-                    //foreach (var proc in allProcs) {
-                    //    var procProfile = new ProfileProcess() { Id = proc.Id, Name = proc.ImageName };
-
-                    //    foreach (var image in proc.Images) {
-                    //        var imageProfile = new ProfileImage() {
-                    //            Id = image.ProcessId,
-                    //            Name = image.FileName,
-                    //            Path = image.Path,
-                    //            // ...
-                    //        };
-                    //        procProfile.Images.Add(imageProfile);
-                    //    }
-
-                    //    proto.Processes.Add(procProfile);
-                    //}
-
-
-
-                    //var data = StateSerializer.Serialize(@"C:\work\pmc.dat", proto);
-                    //Trace.WriteLine($"Serialized");
-                    //Trace.Flush();
-
-                    //GC.Collect();
-                    //GC.WaitForPendingFinalizers();
-                    //
-                    //long memory2 = GC.GetTotalMemory(true);
-                    //Trace.WriteLine($"Diff: {(memory2 - memory) / 1024}, kb");
-                    //Trace.Flush();
-
-                    return true;
-                });
-
-                // Add 
-                if (result) {
-                    LoadedDocument exeDocument = null;
-                    var otherDocuments = new List<LoadedDocument>();
-
-                    foreach (var pair in imageModuleMap) {
-                        if (pair.Value.ModuleDocument == null) {
-                            continue;
-                        }
-
-                        if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFilePath)) {
-                            if (exeDocument == null) {
-                                exeDocument = pair.Value.ModuleDocument;
-                                continue;
-                            }
-                            else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName)) {
-                                otherDocuments.Add(exeDocument);
-                                exeDocument = pair.Value.ModuleDocument;
-                                continue;
-                            }
-                        }
-
-                        otherDocuments.Add(pair.Value.ModuleDocument);
-                    }
-
-                    Trace.WriteLine($"Using exe document {exeDocument?.ModuleName}");
-                    session_.SessionState.MainDocument = exeDocument;
-                    await session_.SetupNewSession(exeDocument, otherDocuments);
-                }
-
-                //trace = null;
-                return result ? profileData_ : null;
-            }
-            catch (Exception ex) {
-                Trace.TraceError($"Exception loading profile: {ex.Message}");
-                Trace.WriteLine(ex.StackTrace);
-                Trace.Flush();
-                return null;
-            }
-        }
-
+        
         private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset, 
                                           IRTextFunction textFunction, ModuleInfo module) {
             // Load current function.
