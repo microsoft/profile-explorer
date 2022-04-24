@@ -1221,10 +1221,14 @@ namespace IRExplorerUI.Profile {
 
                     await Task.WhenAll(tasks.ToArray());
                     profileData_.CallTree = callTree;
-                    Trace.WriteLine(callTree.PrintSamples());
+
+                    //profileData_.Complete();
+
+                    //Trace.WriteLine(callTree.PrintSamples());
+                    prof.PrintSamples(0);
 
                     Trace.WriteLine($"Done process samples in {sw.Elapsed}");
-                    MessageBox.Show($"Done in {sw.Elapsed}");
+                    //MessageBox.Show($"Done in {sw.Elapsed}");
 
 
                     //Trace.WriteLine(callTree.Print());
