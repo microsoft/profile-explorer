@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -13,6 +14,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using System.Windows.Markup;
+using CSScriptLib;
 using HarfBuzzSharp;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
@@ -329,6 +331,74 @@ namespace IRExplorerUI.Profile {
             return $"{IP}, Weight: {Weight.Ticks}, StackId: {StackId}";
         }
     }
+
+
+    [ProtoContract(SkipConstructor = true)]
+    public class ProfileSample2 : IEquatable<ProfileSample2> {
+        [ProtoMember(1)]
+        public long IP { get; set; }
+        [ProtoMember(2)]
+        public List<TimeSpan> Time { get; set; }
+        [ProtoMember(3)]
+        public TimeSpan Weight { get; set; }
+        [ProtoMember(4)]
+        public int StackId { get; set; }
+        [ProtoMember(5)]
+        public int ContextId { get; set; }
+        [ProtoMember(6)]
+        public bool IsKernelCode { get; set; }
+
+        public bool HasStack => StackId != 0;
+
+        public ProfileSample2() {
+            Time = new List<TimeSpan>();
+        }
+
+        public ProfileSample2(long ip,  TimeSpan weight, bool isKernelCode, int contextId) {
+            IP = ip;
+            Time = new List<TimeSpan>();
+            Weight = weight;;
+            StackId = 0;
+            IsKernelCode = isKernelCode;
+            ContextId = contextId;
+        }
+
+        public ProfileStack GetStack(RawProfileData profileData) {
+            return StackId != 0 ? profileData.FindStack(StackId) : ProfileStack.Unknown;
+        }
+
+        public ProfileContext GetContext(RawProfileData profileData) {
+            return profileData.FindContext(ContextId);
+        }
+
+        public bool Equals(ProfileSample2 other) {
+            return IP == other.IP &&
+                   StackId == other.StackId &&
+                   ContextId == other.ContextId &&
+                   IsKernelCode == other.IsKernelCode;
+        }
+
+        public override bool Equals(object obj) {
+            return obj is ProfileSample2 other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(IP, StackId, ContextId);
+        }
+
+        public static bool operator ==(ProfileSample2 left, ProfileSample2 right) {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(ProfileSample2 left, ProfileSample2 right) {
+            return !Equals(left, right);
+        }
+
+        public override string ToString() {
+            return $"{IP}, Weight: {Weight.Ticks}, StackId: {StackId}";
+        }
+    }
+
 
     [ProtoContract(SkipConstructor = true)]
     public sealed class ProfileContext : IEquatable<ProfileContext> {
@@ -728,6 +798,13 @@ namespace IRExplorerUI.Profile {
         [ThreadStatic] 
         private static IpToImageCache globalIpImageCache_;
 
+
+        [ProtoContract(SkipConstructor = true)]
+        class SampleHolder {
+            [ProtoMember(1)]
+            public List<ProfileSample> samples { get; set; }
+        }
+
         private class IpToImageCache {
             private List<ProfileImage> images_;
             private long lowestBaseAddress_;
@@ -858,9 +935,11 @@ namespace IRExplorerUI.Profile {
         }
 
         //? TODO: Per-process samples, reduces dict pressure
+        
         public int AddSample(ProfileSample sample) {
             Debug.Assert(sample.ContextId != 0);
             samples_.Add(sample);
+            
             return (int)samples_.Count;
         }
 
@@ -1052,23 +1131,51 @@ namespace IRExplorerUI.Profile {
             return globalIpImageCache_.Find(ip);
         }
 
+        private HashSet<ProfileSample2> sampleSet_ = new HashSet<ProfileSample2>();
+
+
         public void PrintSamples(int processId) {
-            int zeroTime = 0;
-            int total = 0;
+            //SampleHolder h = new SampleHolder() { samples = samples_ };
 
-            foreach (var sample in samples_) {
-                var context = sample.GetContext(this);
-                if (context.ProcessId == processId) {
-                    total++;
-                    if (sample.Weight.Ticks == 0) {
-                        zeroTime++;
-                    }
+            //var d = StateSerializer.Serialize(h);
+            //Trace.WriteLine($"Serialized to {d.Length}b");
+            //Trace.Flush();
+            //File.WriteAllBytes(@"C:\test\samples.dat", d);
+            
+            foreach (var s in samples_) {
+                var s2 = new ProfileSample2() {
+                    IP = s.IP,
+                    StackId = s.StackId,
+                    ContextId = s.ContextId,
+                    IsKernelCode = s.IsKernelCode
+                };
 
-                    Trace.WriteLine(sample);
+                if (!sampleSet_.TryGetValue(s2, out var es2)) {
+                    sampleSet_.Add(s2);
+                    es2 = s2;
                 }
+
+                es2.Weight += s.Weight;
+                es2.Time.Add(s.Time);
             }
 
-            Trace.WriteLine($"Total samples for proc {processId}: {total}, zero weight {zeroTime}");
+            List<int> counts = sampleSet_.Select(s => s.Time.Count).ToList();
+            int max = sampleSet_.Max(s => s.Time.Count);
+            counts.Sort();
+            int med = counts[counts.Count / 2];
+
+            int memUsage = samples_.Count * Unsafe.SizeOf<ProfileSample>();
+            int memUsage2 = sampleSet_.Count * Unsafe.SizeOf<ProfileSample>() +
+                            sampleSet_.Select(s => s.Time.Count * 8).Sum();
+            int memUsage3 = sampleSet_.Count * Unsafe.SizeOf<ProfileSample>() +
+                            sampleSet_.Select(s => s.Time.Capacity * 8).Sum();
+
+            Trace.WriteLine($"Total samples: {samples_.Count}");
+            Trace.WriteLine($"    same IP: {sampleSet_.Count}, {100*(double)sampleSet_.Count / samples_.Count}%, median {med}, max {max}");
+            Trace.WriteLine($"    memUsage:           {memUsage}, {(double)memUsage / (1024 * 1024)} MB");
+            Trace.WriteLine($"    memUsage2 size:     {memUsage2}, {(double)memUsage2 / (1024 * 1024)} MB");
+            Trace.WriteLine($"    memUsage2 capacity: {memUsage3}, {(double)memUsage3 / (1024 * 1024)} MB");
+
         }
 
         //? TODO Perf
@@ -1188,15 +1295,15 @@ namespace IRExplorerUI.Profile {
         private int sampleCount_;
 
         public void RecordSample(ProfileSample sample, ResolvedProfileStackFrame stackFrame) {
-            lock_.EnterWriteLock();
-            try {
-                samples_ ??= new Dictionary<long, ProfileSample>();
-                samples_[stackFrame.FrameIP] = sample;
-                sampleCount_++;
-            }
-            finally {
-                lock_.ExitWriteLock();
-            }
+            //lock_.EnterWriteLock();
+            //try {
+            //    samples_ ??= new Dictionary<long, ProfileSample>();
+            //    samples_[stackFrame.FrameIP] = sample;
+            //    sampleCount_++;
+            //}
+            //finally {
+            //    lock_.ExitWriteLock();
+            //}
         }
 
         private void AddParent(ProfileCallTreeNode parentNode) {
