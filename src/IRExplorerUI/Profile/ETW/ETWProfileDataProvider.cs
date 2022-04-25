@@ -878,6 +878,7 @@ namespace IRExplorerUI.Profile {
                                             }
                                         }
 
+                                        var frameRva = resolvedFrame.FrameIP - resolvedFrame.Image.BaseAddress;
                                         var funcInfo = resolvedFrame.FunctionInfo;
                                         var funcName = funcInfo.Name;
                                         var funcRva = funcInfo.RVA;
@@ -886,7 +887,7 @@ namespace IRExplorerUI.Profile {
 
                                         lock (profile) {
                                             profile.DebugInfo = funcInfo;
-                                            var offset = resolvedFrame.FrameIP - funcRva;
+                                            var offset = frameRva - funcRva;
 
                                             // Don't count the inclusive time for recursive functions multiple times.
                                             if (stackFuncts.Add(textFunction)) {
