@@ -61,12 +61,14 @@ namespace IRExplorerCore {
             // Compute the hash so that functs. with same name in diff. modules
             // don't get the same hash code.
             if (hashCode_ == 0) {
-                hashCode_ = ParentSummary != null ? 
-                    HashCode.Combine(Name, ParentSummary) : 
-                    HashCode.Combine(Name);
+                hashCode_ = ParentSummary != null ? HashCode.Combine(Name, ParentSummary) : HashCode.Combine(Name);
             }
-            
+
             return hashCode_;
+        }
+
+        public override string ToString() {
+            return Name;
         }
     }
 }

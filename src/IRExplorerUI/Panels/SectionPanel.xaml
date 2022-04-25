@@ -103,7 +103,7 @@
 
         <Style x:Key="ModulesColumnsStyle" TargetType="{x:Type ColumnDefinition}">
             <Style.Setters>
-                <Setter Property="Width" Value="*" />
+                <Setter Property="Width" Value="210" />
             </Style.Setters>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding ShowModules}" Value="False">
@@ -297,7 +297,7 @@
                     Visibility="{Binding ShowModules, Converter={StaticResource BoolToVisibility}}">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Width="150">
+                            <GridViewColumn Width="200">
                                 <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
                                 <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -1124,6 +1124,31 @@
                                     <TextBlock Text="Call Tree" />
                                 </StackPanel>
                             </Button>
+                            <Button
+                                IsEnabled="False"
+                                ToolTip="View flame graph"
+                                Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,1,0,0"
+                                        Source="{StaticResource FlameGraphIcon}" />
+                                    <TextBlock Text="Flame Graph" />
+                                </StackPanel>
+                            </Button>
+                            <Separator />
+
+                            <ToggleButton ToolTip="Combine all function instances into one" Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image
+                                        Width="16"
+                                        Height="16"
+                                        Margin="0,1,0,0"
+                                        Source="{StaticResource MergeIcon}" />
+                                    <TextBlock Text="Combine" />
+                                </StackPanel>
+                            </ToggleButton>
                             <Separator />
 
                             <Image Source="{StaticResource SearchIcon}" />
@@ -1177,175 +1202,13 @@
                         SettingsClicked="FixedToolbar_SettingsClicked" />
                 </Grid>
 
-                <tree:TreeList
-                    x:Name="ChildFunctionList"
+                <local:CallTreePanel
+                    x:Name="CalleCalleePanel"
                     Grid.Row="1"
-                    Panel.ZIndex="2"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     BorderBrush="{x:Null}"
                     BorderThickness="0,0,0,0"
-                    IsTextSearchEnabled="False"
-                    SelectionMode="Single">
-                    <tree:TreeList.View>
-                        <GridView>
-                            <GridViewColumn Width="200">
-                                <GridViewColumnHeader x:Name="ChildColumnHeader" Content="Function" />
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
-                                            <tree:RowExpander />
-                                            <TextBlock
-                                                Margin="6,2,6,2"
-                                                HorizontalAlignment="Stretch"
-                                                Foreground="{Binding TextColor}"
-                                                Text="{Binding Name}"
-                                                TextTrimming="CharacterEllipsis"
-                                                ToolTip="{Binding ToolTip}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                                <Setter Property="FontWeight" Value="Bold" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-
-                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding ChildTimeColumnVisible}">
-                                <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
-
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel
-                                            VerticalAlignment="Center"
-                                            Background="{Binding BackColor}"
-                                            Orientation="Horizontal">
-                                            <Rectangle
-                                                Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                                Height="16"
-                                                Fill="#Aa4343"
-                                                Stroke="Black" />
-                                            <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                                <Setter Property="FontWeight" Value="Bold" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-
-                            <GridViewColumn Width="150" local:GridViewColumnVisibility.IsVisible="{Binding ChildTimeColumnVisible}">
-                                <GridViewColumnHeader x:Name="ExclusiveChildTimeColumnHeader" Content="Time (self)" />
-
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel
-                                            VerticalAlignment="Center"
-                                            Background="{Binding BackColor2}"
-                                            Orientation="Horizontal">
-                                            <Rectangle
-                                                Width="{Binding Path=PercentageExclusive, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                                Height="16"
-                                                Fill="#Aa4343"
-                                                Stroke="Black" />
-                                            <TextBlock Margin="6,2,6,2" Text="{Binding Text2}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="{x:Type TextBlock}">
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                                <Setter Property="FontWeight" Value="Bold" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-
-
-                            <GridViewColumn Width="120">
-                                <GridViewColumnHeader x:Name="ChildAlternateNameColumnHeader" Content="Module" />
-
-                                <GridViewColumn.HeaderContainerStyle>
-                                    <Style TargetType="{x:Type GridViewColumnHeader}">
-                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                    </Style>
-                                </GridViewColumn.HeaderContainerStyle>
-
-                                <GridViewColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border HorizontalAlignment="Stretch">
-                                            <TextBlock Margin="6,2,6,2" Text="{Binding ModuleName}" />
-                                        </Border>
-                                    </DataTemplate>
-                                </GridViewColumn.CellTemplate>
-                            </GridViewColumn>
-                        </GridView>
-                    </tree:TreeList.View>
-
-                    <ListView.ItemContainerStyle>
-                        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                            <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
-                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        </Style>
-                    </ListView.ItemContainerStyle>
-
-                    <ListView.ContextMenu>
-                        <ContextMenu>
-
-                            <MenuItem
-                                Command="local:Command.SaveFunctionText"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                CommandTarget="{Binding ElementName=SectionList}"
-                                Header="Profile-based Call Tree"
-                                IsCheckable="True"
-                                IsChecked="{Binding UseProfileCallTree, Mode=TwoWay}"
-                                ToolTip="Show the call tree derived from runtime profile information" />
-                            <MenuItem
-                                Command="local:Command.SaveFunctionText"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                CommandTarget="{Binding ElementName=SectionList}"
-                                Header="IR Call Tree"
-                                IsCheckable="True"
-                                IsChecked="{Binding UseIRCallTree, Mode=TwoWay}"
-                                ToolTip="Show the call tree derived from the IR" />
-                        </ContextMenu>
-                    </ListView.ContextMenu>
-                </tree:TreeList>
-
+                    ShowToolbar="False" />
             </Grid>
         </Grid>
     </Grid>

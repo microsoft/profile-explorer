@@ -17,16 +17,33 @@
         <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
     </local:ToolPanelControl.CommandBindings>
 
+    <local:ToolPanelControl.Resources>
+        <Style x:Key="ToolbarStyle" TargetType="{x:Type RowDefinition}">
+            <Style.Setters>
+                <Setter Property="Height" Value="28" />
+            </Style.Setters>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding ShowToolbar}" Value="False">
+                    <DataTrigger.Setters>
+                        <Setter Property="Height" Value="0" />
+                        <Setter Property="MaxHeight" Value="0" />
+                    </DataTrigger.Setters>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </local:ToolPanelControl.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="28" />
+            <RowDefinition Style="{StaticResource ToolbarStyle}" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <DockPanel
             Grid.Row="0"
             HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            Visibility="{Binding ShowToolbar, Converter={StaticResource BoolToVisibility}}">
             <ToolBarTray
                 Grid.Row="0"
                 Grid.Column="2"
@@ -188,13 +205,17 @@
                                 <StackPanel
                                     VerticalAlignment="Center"
                                     Background="{Binding BackColor2}"
-                                    Orientation="Horizontal">
+                                    Orientation="Horizontal"
+                                    ToolTip="Something2">
                                     <Rectangle
                                         Width="{Binding Path=PercentageExclusive, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
                                         Height="16"
                                         Fill="#Aa4343"
                                         Stroke="Black" />
-                                    <TextBlock Margin="6,2,6,2" Text="{Binding Text2}">
+                                    <TextBlock
+                                        Margin="6,2,6,2"
+                                        Text="{Binding Text2}"
+                                        ToolTip="{Binding ToolTip}">
                                         <TextBlock.Style>
                                             <Style TargetType="{x:Type TextBlock}">
                                                 <Style.Triggers>
@@ -233,6 +254,7 @@
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                     <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
+                    <Setter Property="ToolTip" Value="Something" />
                     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 </Style>
@@ -275,6 +297,15 @@
                         CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Open Function in New Tab"
+                        InputGestureText="Shift+Return"
+                        IsEnabled="False"
+                        ToolTip="" />
+
+                    <MenuItem
+                        Command="local:CallTreeCommand.OpenFunctionInNewTab"
+                        CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
+                        CommandTarget="{Binding ElementName=CallTree}"
+                        Header="Select Function in Call Tree"
                         InputGestureText="Shift+Return"
                         IsEnabled="False"
                         ToolTip="" />
