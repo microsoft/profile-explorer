@@ -959,16 +959,17 @@ namespace IRExplorerUI {
 
         public async Task LoadSection(ParsedIRTextSection parsedSection) {
             var data = Session.LoadDocumentState(parsedSection.Section);
+            double horizontalOffset = 0;
+            double verticalOffset = 0;
 
             if (data != null) {
                 var state = StateSerializer.Deserialize<IRDocumentHostState>(data, parsedSection.Function);
                 await TextView.LoadSavedSection(parsedSection, state.DocumentState);
-                TextView.ScrollToHorizontalOffset(state.HorizontalOffset);
-                TextView.ScrollToVerticalOffset(state.VerticalOffset);
+                horizontalOffset = state.HorizontalOffset;
+                verticalOffset = state.VerticalOffset;
             }
             else {
                 await TextView.LoadSection(parsedSection);
-                TextView.ScrollToVerticalOffset(0);
             }
 
             if (PassOutputVisible) {
@@ -977,6 +978,9 @@ namespace IRExplorerUI {
 
             await ReloadProfile();
             await ReloadRemarks();
+
+            TextView.ScrollToHorizontalOffset(horizontalOffset);
+            TextView.ScrollToVerticalOffset(verticalOffset);
         }
 
         public bool PassOutputVisible {
@@ -1268,20 +1272,6 @@ namespace IRExplorerUI {
                 ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
                 ColumnsList.Background = settings_.BackgroundColor.AsBrush();
                 profileLoaded_ = true;
-
-                Trace.WriteLine($"Now {ColumnsListItemHeight}");
-                var saved = ColumnsListItemHeight;
-
-                //foreach (ListViewItem item in ColumnsList.it) {
-                //    item.Height = ColumnsListItemHeight;
-                //}
-
-                //ColumnsListItemHeight = 1;
-                //ColumnsList.UpdateLayout();
-                //ColumnsList.InvalidateVisual();
-                //ColumnsListItemHeight = saved;
-                //ColumnsList.UpdateLayout();
-                //ColumnsList.InvalidateVisual();
             }
         }
 

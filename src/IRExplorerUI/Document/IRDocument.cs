@@ -2377,7 +2377,11 @@ namespace IRExplorerUI {
             ForceCursor = true;
             Cursor = Cursors.Arrow;
             margin_.MouseMoved(e);
-            overlayRenderer_.MouseMoved(e);
+
+            // Don't send event to overlays that may extend under the scrollbar.
+            if (docVerticalScrollbar_ == null || !docVerticalScrollbar_.IsMouseOver) {
+                overlayRenderer_.MouseMoved(e);
+            }
         }
 
         private void IRDocument_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e) {

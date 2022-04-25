@@ -20,8 +20,8 @@
 .vshistory/
 
 # Setup files
-installer/out
-installer/publish
+installer/out*
+installer/publish*
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

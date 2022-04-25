@@ -12,7 +12,6 @@ using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using Microsoft.Win32;
-using Microsoft.Windows.EventTracing.Processes;
 
 // Add Options struct 
 // Save recent exec files with pdb pairs

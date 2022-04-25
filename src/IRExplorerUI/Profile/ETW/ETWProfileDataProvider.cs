@@ -4,15 +4,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Microsoft.Windows.EventTracing;
-using Microsoft.Windows.EventTracing.Cpu;
-using Microsoft.Windows.EventTracing.Symbols;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using System.Linq;
 using System.Threading;
-using Microsoft.Windows.EventTracing.Processes;
 using System.Text;
 using System.Collections;
 using System.Collections.Concurrent;
@@ -23,7 +19,6 @@ using System.Security.Cryptography;
 using System.Windows;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
-
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Diagnostics.Tracing.Etlx;
 using Microsoft.Diagnostics.Tracing;
@@ -36,37 +31,6 @@ using OxyPlot;
 
 namespace IRExplorerUI.Profile {
     public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
-        class ProcessProgressTracker : IProgress<TraceProcessingProgress> {
-            private ProfileLoadProgressHandler callback_;
-
-            public ProcessProgressTracker(ProfileLoadProgressHandler callback) {
-                callback_ = callback;
-            }
-
-            public void Report(TraceProcessingProgress value) {
-                callback_?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
-                    Total = value.TotalPasses,
-                    Current = value.CurrentPass
-                });
-            }
-        }
-
-        class SymbolProgressTracker : IProgress<SymbolLoadingProgress> {
-            private ProfileLoadProgressHandler callback_;
-
-            public SymbolProgressTracker(ProfileLoadProgressHandler callback) {
-                callback_ = callback;
-            }
-
-            public void Report(SymbolLoadingProgress value) {
-                callback_?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                    Total = value.ImagesTotal,
-                    Current = value.ImagesProcessed
-                });
-            }
-        }
-
-
         private ProfileDataProviderOptions options_;
         private ISession session_;
         private ICompilerInfoProvider compilerInfo_;
@@ -133,113 +97,7 @@ namespace IRExplorerUI.Profile {
 
             return null;
         }
-
-        private class ProcessInfoCache {
-            public class ImageInfo {
-                public IImage Image { get; set; }
-                public long AddressStart { get; set; }
-                public long AddressEnd { get; set; }
-            }
-
-            private Dictionary<int, List<ImageInfo>> processMap_;
-            private Dictionary<int, int> threadProcessMap_; // threadId -> processId
-            private Dictionary<string, int> processNameMap_;
-            private Dictionary<int, Dictionary<long, IImage>> ipImageCache_; // processId -> {IP -> image}
-
-
-            public ProcessInfoCache(IReadOnlyList<IProcess> procs, IReadOnlyList<IThread> threads) {
-                processMap_ = new Dictionary<int, List<ImageInfo>>(procs.Count);
-                processNameMap_ = new Dictionary<string, int>(procs.Count);
-                threadProcessMap_ = new Dictionary<int, int>();
-                ipImageCache_ = new Dictionary<int, Dictionary<long, IImage>>(procs.Count);
-
-                foreach (var proc in procs) {
-                   // Trace.WriteLine($"PROC {proc.ImageName}");
-
-                    var imageList = new List<ImageInfo>(proc.Images.Count);
-                    processMap_[proc.Id] = imageList;
-
-                    foreach (var image in proc.Images) {
-                        var item = new ImageInfo() {
-                            Image = image,
-                            AddressStart = image.AddressRange.BaseAddress.Value,
-                            AddressEnd = image.AddressRange.BaseAddress.Value +
-                                                    image.AddressRange.Size.Bytes
-                        };
-
-                        imageList.Add(item);
-                        //Trace.WriteLine($"Image {image.ImageName}: {imageList[^1].AddressStart} - {imageList[^1].AddressEnd}");
-                    }
-
-                    var imageName = Utils.TryGetFileNameWithoutExtension(proc.ImageName);
-                    processNameMap_[imageName] = proc.Id;
-                }
-
-                foreach (var thread in threads) {
-                    if (!threadProcessMap_.TryAdd(thread.Id, thread.ProcessId)) {
-                        //? TODO: A thread ID could end up being reused during the run,
-                        //? HistoryDictionary used by etl lib for this doing lookup by {threadId, timestamp}
-                    }
-                }
-            }
-
-            public List<IImage> GetProcessImages(int id) {
-                if (processMap_.TryGetValue(id, out var list)) {
-                    return list.ConvertAll(item => item.Image);
-                }
-
-                return null;
-            }
-
-            public int FindProcess(string imageName) {
-                if(processNameMap_.TryGetValue(imageName, out int id)) {
-                    return id;
-                }
-
-                // Do another search using a substring, this is needed
-                // for SPEC benchmarks because the runner gives a diff. name to the binary.
-                foreach (var pair in processNameMap_) {
-                    if (pair.Key.Contains(imageName)) {
-                        return pair.Value;
-                    }
-                }
-
-                return -1;
-            }
-
-            public IImage FindImageForIP(long ip, int threadId, int searchedProcessId) {
-                if (!threadProcessMap_.TryGetValue(threadId, out int processId)) {
-                    return null;
-                }
-
-                if (processId != searchedProcessId ||
-                    !processMap_.TryGetValue(processId, out var imageList)) {
-                    return null;
-                }
-
-                // Lookup into the IP -> image cache first.
-                if (!ipImageCache_.TryGetValue(processId, out var imageCache)) {
-                    imageCache = new Dictionary<long, IImage>();
-                    ipImageCache_[processId] = imageCache;
-                }
-
-                if (imageCache.TryGetValue(ip, out var cachedImage)) {
-                    return cachedImage;
-                }
-
-                //? TODO: Use a range tree or do a binary search
-                foreach (var image in imageList) {
-                    if (ip >= image.AddressStart &&
-                        ip < image.AddressEnd) {
-                        imageCache[ip] = image.Image;
-                        return image.Image;
-                    }
-                }
-
-                return null;
-            }
-        }
-
+        
         private PerformanceCounterInfo ReadPerformanceCounterInfo(ReadOnlySpan<byte> data) {
             // counter id : 4
             // frequency : 4 min
@@ -257,68 +115,68 @@ namespace IRExplorerUI.Profile {
         private ChunkedList<PerformanceCounterEvent> events_;
         private long times_;
         
-        private void CollectPerformanceCounterEvents(EventContext e) {
-            if (e.Event.Id == 47) {
-                if (e.Event.Data.Length > 0) {
-                    events_.Add(new PerformanceCounterEvent() {
-                        Time = e.Event.Timestamp.Nanoseconds,
-                        IP = ReadInt64(e.Event.Data), 
-                        ProfilerSource = ReadInt16(e.Event.Data, 12), 
-                        ProcessId = e.Event.ProcessId ?? -1,
-                        ThreadId = e.Event.ThreadId ?? ReadInt32(e.Event.Data, 8),
-                    });
+        //private void CollectPerformanceCounterEvents(EventContext e) {
+        //    if (e.Event.Id == 47) {
+        //        if (e.Event.Data.Length > 0) {
+        //            events_.Add(new PerformanceCounterEvent() {
+        //                Time = e.Event.Timestamp.Nanoseconds,
+        //                IP = ReadInt64(e.Event.Data), 
+        //                ProfilerSource = ReadInt16(e.Event.Data, 12), 
+        //                ProcessId = e.Event.ProcessId ?? -1,
+        //                ThreadId = e.Event.ThreadId ?? ReadInt32(e.Event.Data, 8),
+        //            });
 
-                    //if (times_++ % 50000 == 0) {
-                    //    Trace.WriteLine($"Events {times_}, {(double)times_ / 1000000} M");
-                    //    long memory2 = GC.GetTotalMemory(true);
-                    //    Trace.WriteLine($"    Mem usage: {(double)(memory2 - memory_) / (1024 * 1024 * 1024)} GB");
-                    //    var objSize = GetSizeOfObject(new PerformanceCounterEvent());
-                    //    Trace.WriteLine($"    Events mem: {(double)((long)events_.Count * objSize) / (1024 * 1024 * 1024)} GB, event size: {objSize} b");
-                    //    Trace.Flush();
-                    //}
-                }
-            }
-            else if (e.Event.Id == 50) {
-                ; // DispatcherReadyThreadTraceData needs THREAD+PROC xperf
-            }
-            else if (e.Event.Id == 0x49) {
-                if (e.Event.Data.Length > 0) {
-                    var counter = ReadPerformanceCounterInfo(e.Event.Data);
-                    profileData_.RegisterPerformanceCounter(counter);
+        //            //if (times_++ % 50000 == 0) {
+        //            //    Trace.WriteLine($"Events {times_}, {(double)times_ / 1000000} M");
+        //            //    long memory2 = GC.GetTotalMemory(true);
+        //            //    Trace.WriteLine($"    Mem usage: {(double)(memory2 - memory_) / (1024 * 1024 * 1024)} GB");
+        //            //    var objSize = GetSizeOfObject(new PerformanceCounterEvent());
+        //            //    Trace.WriteLine($"    Events mem: {(double)((long)events_.Count * objSize) / (1024 * 1024 * 1024)} GB, event size: {objSize} b");
+        //            //    Trace.Flush();
+        //            //}
+        //        }
+        //    }
+        //    else if (e.Event.Id == 50) {
+        //        ; // DispatcherReadyThreadTraceData needs THREAD+PROC xperf
+        //    }
+        //    else if (e.Event.Id == 0x49) {
+        //        if (e.Event.Data.Length > 0) {
+        //            var counter = ReadPerformanceCounterInfo(e.Event.Data);
+        //            profileData_.RegisterPerformanceCounter(counter);
 
-                    //if (times_++ % 50000 == 0) {
-                    //    Trace.WriteLine($"Events {times_}, {(double)times_ / 1000000} M");
-                    //    long memory2 = GC.GetTotalMemory(true);
-                    //    Trace.WriteLine($"    Mem usage: {(double)(memory2 - memory_) / (1024 * 1024 * 1024)} GB");
-                    //    var objSize = GetSizeOfObject(new PerformanceCounterEvent());
-                    //    Trace.WriteLine($"    Events mem: {(double)((long)events_.Count * objSize) / (1024 * 1024 * 1024)} GB, event size: {objSize} b");
-                    //    Trace.Flush();
-                    //}
-                }
-            }
-        }
+        //            //if (times_++ % 50000 == 0) {
+        //            //    Trace.WriteLine($"Events {times_}, {(double)times_ / 1000000} M");
+        //            //    long memory2 = GC.GetTotalMemory(true);
+        //            //    Trace.WriteLine($"    Mem usage: {(double)(memory2 - memory_) / (1024 * 1024 * 1024)} GB");
+        //            //    var objSize = GetSizeOfObject(new PerformanceCounterEvent());
+        //            //    Trace.WriteLine($"    Events mem: {(double)((long)events_.Count * objSize) / (1024 * 1024 * 1024)} GB, event size: {objSize} b");
+        //            //    Trace.Flush();
+        //            //}
+        //        }
+        //    }
+        //}
 
-        private BinaryFileDescription FromETLImage(IImage image) {
-            if (image == null) {
-                return new BinaryFileDescription(); // Main module
-            }
+        //private BinaryFileDescription FromETLImage(IImage image) {
+        //    if (image == null) {
+        //        return new BinaryFileDescription(); // Main module
+        //    }
 
-            var imageName = image.OriginalFileName;
+        //    var imageName = image.OriginalFileName;
 
-            if (string.IsNullOrEmpty(imageName)) {
-                imageName = image.FileName;
-            }
+        //    if (string.IsNullOrEmpty(imageName)) {
+        //        imageName = image.FileName;
+        //    }
 
-            return new BinaryFileDescription() {
-                ImageName = imageName,
-                ImagePath = image.Path,
-                Checksum = image.Checksum,
-                TimeStamp = image.Timestamp,
-                ImageSize = image.Size.Bytes,
-                MajorVersion = image.FileVersionNumber?.Major ?? 0,
-                MinorVersion = image.FileVersionNumber?.Minor ?? 0
-            };
-        }
+        //    return new BinaryFileDescription() {
+        //        ImageName = imageName,
+        //        ImagePath = image.Path,
+        //        Checksum = image.Checksum,
+        //        TimeStamp = image.Timestamp,
+        //        ImageSize = image.Size.Bytes,
+        //        MajorVersion = image.FileVersionNumber?.Major ?? 0,
+        //        MinorVersion = image.FileVersionNumber?.Minor ?? 0
+        //    };
+        //}
 
         private BinaryFileDescription FromProfileImage(ProfileImage image) {
             return new BinaryFileDescription() {
@@ -385,6 +243,7 @@ namespace IRExplorerUI.Profile {
                             samplingInterval100NS = value;
                             samplingIntervalMS = (double)samplingInterval100NS / 10000;
                             samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
+                            Trace.WriteLine($"=> UPDATE {value} to {samplingIntervalMS} ms");
                         }
 
                         // Default 1ms sampling interval, 1M ns.
@@ -914,6 +773,7 @@ namespace IRExplorerUI.Profile {
                     var sw = Stopwatch.StartNew();
 
                     int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
+                    chunks = 1;
                     Trace.WriteLine($"Using {chunks} threads");
 
                     var tasks = new List<Task>();
@@ -1035,14 +895,14 @@ namespace IRExplorerUI.Profile {
 
                                                 // Add the previous stack frame function as a child
                                                 // and current frame as its parent.
-                                                //if (prevStackFunc != null) {
-                                                //    profile.AddChildSample(prevStackFunc, sampleWeight);
-                                                //}
+                                                if (prevStackFunc != null) {
+                                                    profile.AddChildSample(prevStackFunc, sampleWeight);
+                                                }
                                             }
 
-                                            //if (prevStackFunc != null) {
-                                            //    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                                            //}
+                                            if (prevStackFunc != null) {
+                                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
+                                            }
 
                                             // Count the exclusive time for the top frame function.
                                             if (isTopFrame) {
@@ -1151,14 +1011,14 @@ namespace IRExplorerUI.Profile {
 
                                                 // Add the previous stack frame function as a child
                                                 // and current frame as its parent.
-                                                //if (prevStackFunc != null) {
-                                                //    profile.AddChildSample(prevStackFunc, sampleWeight);
-                                                //}
+                                                if (prevStackFunc != null) {
+                                                    profile.AddChildSample(prevStackFunc, sampleWeight);
+                                                }
                                             }
 
-                                            //if (prevStackFunc != null) {
-                                            //    prevStackProfile.AddCallerSample(textFunction, sampleWeight);
-                                            //}
+                                            if (prevStackFunc != null) {
+                                                prevStackProfile.AddCallerSample(textFunction, sampleWeight);
+                                            }
 
                                             // Count the exclusive time for the top frame function.
                                             if (isTopFrame) {
@@ -1225,7 +1085,7 @@ namespace IRExplorerUI.Profile {
                     //profileData_.Complete();
 
                     //Trace.WriteLine(callTree.PrintSamples());
-                    prof.PrintSamples(0);
+                    //prof.PrintSamples(0);
 
                     Trace.WriteLine($"Done process samples in {sw.Elapsed}");
                     //MessageBox.Show($"Done in {sw.Elapsed}");

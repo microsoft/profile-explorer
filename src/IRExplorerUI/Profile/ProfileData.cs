@@ -18,14 +18,14 @@ using CSScriptLib;
 using HarfBuzzSharp;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
+using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
-using Microsoft.Windows.EventTracing;
-using Microsoft.Windows.EventTracing.Processes;
 using ProtoBuf;
+using static IRExplorerUI.ModuleReportPanel;
 
 namespace IRExplorerUI.Profile {
     [ProtoContract(SkipConstructor = true)]
@@ -1232,7 +1232,9 @@ namespace IRExplorerUI.Profile {
         public List<ProfileCallTreeNode> Children => children_;
 
         public bool HasChildren => Children != null && Children.Count > 0;
-        public string FunctionName => DebugInfo.Name;
+        public bool HasCallers => Callers != null && Callers.Count > 0;
+        public string FunctionName => Function.Name;
+        public string ModuleName => Function.ParentSummary.ModuleName;
 
         public ProfileCallTreeNode(DebugFunctionInfo funcInfo, IRTextFunction function) {
             DebugInfo = funcInfo;
@@ -1251,38 +1253,9 @@ namespace IRExplorerUI.Profile {
             ExclusiveWeight += weight;
             lock_.ExitWriteLock();
         }
-
-        private (ProfileCallTreeNode, bool) GetOrCreateNode(ref List<ProfileCallTreeNode> list,
-                                                    DebugFunctionInfo debugInfo, IRTextFunction function) {
-            lock_.EnterUpgradeableReadLock();
-
-            try {
-                if (list != null) {
-                    foreach (var child in list) {
-                        if (child.Equals(debugInfo, function)) {
-                            return (child, false);
-                        }
-                    }
-                }
-                
-                lock_.EnterWriteLock();
-                try {
-                    list ??= new List<ProfileCallTreeNode>();
-                    var childNode = new ProfileCallTreeNode(debugInfo, function);
-                    list.Add(childNode);
-                    return (childNode, true);
-                }
-                finally {
-                    lock_.ExitWriteLock();
-                }
-            }
-            finally {
-                lock_.ExitUpgradeableReadLock();
-            }
-        }
-
+        
         public (ProfileCallTreeNode, bool) AddChild(DebugFunctionInfo debugInfo, IRTextFunction function) {
-            var (childNode, isNewNode) = GetOrCreateNode(ref children_, debugInfo, function);
+            var (childNode, isNewNode) = GetOrCreateChildNode(debugInfo, function);
 
             if (isNewNode) {
                 childNode.AddParent(this);
@@ -1290,10 +1263,7 @@ namespace IRExplorerUI.Profile {
 
             return (childNode, isNewNode);
         }
-
-        private Dictionary<long, ProfileSample> samples_;
-        private int sampleCount_;
-
+        
         public void RecordSample(ProfileSample sample, ResolvedProfileStackFrame stackFrame) {
             //lock_.EnterWriteLock();
             //try {
@@ -1307,10 +1277,69 @@ namespace IRExplorerUI.Profile {
         }
 
         private void AddParent(ProfileCallTreeNode parentNode) {
-            GetOrCreateNode(ref callers_, parentNode.DebugInfo, parentNode.Function);
+            lock_.EnterUpgradeableReadLock();
+            ref var list = ref callers_;
+            try {
+                var childNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
+                if (childNode != null) {
+                    return;
+                }
+
+                lock_.EnterWriteLock();
+                try {
+                    list ??= new List<ProfileCallTreeNode>();
+                    list.Add(parentNode);
+                }
+                finally {
+                    lock_.ExitWriteLock();
+                }
+            }
+            finally {
+                lock_.ExitUpgradeableReadLock();
+            }
         }
 
-        internal void Print(StringBuilder builder, int level = 0) {
+        private (ProfileCallTreeNode, bool) GetOrCreateChildNode(DebugFunctionInfo debugInfo, IRTextFunction function) {
+            lock_.EnterUpgradeableReadLock();
+            ref var list = ref children_;
+
+            try {
+                var childNode = FindExistingNode(ref list, debugInfo, function);
+
+                if (childNode != null) {
+                    return (childNode, false);
+                }
+
+                lock_.EnterWriteLock();
+                try {
+                    list ??= new List<ProfileCallTreeNode>();
+                    childNode = new ProfileCallTreeNode(debugInfo, function);
+                    list.Add(childNode);
+                    return (childNode, true);
+                }
+                finally {
+                    lock_.ExitWriteLock();
+                }
+            }
+            finally {
+                lock_.ExitUpgradeableReadLock();
+            }
+        }
+
+        private ProfileCallTreeNode FindExistingNode(ref List<ProfileCallTreeNode> list,
+            DebugFunctionInfo debugInfo, IRTextFunction function) {
+            if (list != null) {
+                foreach (var child in list) {
+                    if (child.Equals(debugInfo, function)) {
+                        return child;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        internal void Print(StringBuilder builder, int level = 0, bool caller = false) {
             builder.Append(new string(' ', level * 4));
             builder.AppendLine($"{DebugInfo.Name}, RVA {DebugInfo.RVA}");
             builder.Append(new string(' ', level * 4));
@@ -1320,21 +1349,30 @@ namespace IRExplorerUI.Profile {
             builder.Append(new string(' ', level * 4));
             builder.AppendLine($"    callees: {(Children != null ? Children.Count : 0)}");
 
-            if (Children != null) {
+            if (Children != null && !caller) {
                 foreach (var child in Children) {
                     child.Print(builder, level + 1);
                 }
             }
+
+            if (Callers != null) {
+                builder.AppendLine($"Callers: {Callers.Count}");
+                foreach (var child in Callers) {
+                    child.Print(builder, level + 1, true);
+                }
+
+                builder.AppendLine("-------------------------------------------------");
+            }
         }
 
         public void CollectSamples(List<(int total, int unique, string name)> list) {
-            list.Add((sampleCount_, samples_.Count, FunctionName));
+            //list.Add((sampleCount_, samples_.Count, FunctionName));
 
-            if (HasChildren) {
-                foreach (var child in Children) {
-                    child.CollectSamples(list);
-                }
-            }
+            //if (HasChildren) {
+            //    foreach (var child in Children) {
+            //        child.CollectSamples(list);
+            //    }
+            //}
         }
         
         public bool Equals(DebugFunctionInfo debugInfo, IRTextFunction function) {
@@ -1381,6 +1419,10 @@ namespace IRExplorerUI.Profile {
 
         public static bool operator !=(ProfileCallTreeNode left, ProfileCallTreeNode right) {
             return !Equals(left, right);
+        }
+
+        public override string ToString() {
+            return $"{FunctionName}, weight: {Weight}, exc weight {ExclusiveWeight}, children: {(HasCallers ? Children.Count : 0)}";
         }
     }
 
@@ -1634,10 +1676,6 @@ namespace IRExplorerUI.Profile {
         }
 
         public double ScaleWeight(TimeSpan weight) {
-            return (double)weight.Ticks / (double)Weight.Ticks;
-        }
-
-        public double ScaleChildWeight(TimeSpan weight) {
             return (double)weight.Ticks / (double)Weight.Ticks;
         }
 

@@ -346,6 +346,10 @@ namespace IRExplorerUI {
         public double PercentageExclusive { get; set; }
         public string ToolTip { get; set; }
 
+        public ChildFunctionEx() {
+            Children = new List<ChildFunctionEx>();
+        }
+
         public IEnumerable GetChildren(object node) {
             if (node == null) {
                 return Children;
@@ -657,39 +661,7 @@ namespace IRExplorerUI {
                                 throw new ArgumentOutOfRangeException();
                         }
                     });
-
-
-            childFunctionValueSorter_ =
-                new GridViewColumnValueSorter<ChildFunctionFieldKind>(ChildFunctionList,
-                    name => name switch {
-                        "ChildColumnHeader" => ChildFunctionFieldKind.Name,
-                        "ChildAlternateNameColumnHeader" => ChildFunctionFieldKind.AlternateName,
-                        "ChildTimeColumnHeader" => ChildFunctionFieldKind.Time,
-                        "ExclusiveChildTimeColumnHeader" => ChildFunctionFieldKind.Time,
-                        "ChildCountColumnHeader" => ChildFunctionFieldKind.Children
-                    },
-                    (x, y, field, direction, tag) => {
-                        var childX = x as ChildFunctionEx;
-                        var childY = y as ChildFunctionEx;
-
-                        switch (field) {
-                            case ChildFunctionFieldKind.Name: {
-                                int result = string.Compare(childY.Name, childX.Name, StringComparison.Ordinal);
-                                return direction == ListSortDirection.Ascending ? -result : result;
-                            }
-                            case ChildFunctionFieldKind.Time: {
-                                int result = childY.Time.CompareTo(childX.Time);
-                                return direction == ListSortDirection.Ascending ? -result : result;
-                            }
-                            case ChildFunctionFieldKind.Children: {
-                                int result = childY.DescendantCount.CompareTo(childX.DescendantCount);
-                                return direction == ListSortDirection.Ascending ? -result : result;
-                            }
-                            default:
-                                throw new ArgumentOutOfRangeException();
-                        }
-                    });
-
+            
             moduleValueSorter_ =
                 new GridViewColumnValueSorter<ModuleFieldKind>(ModulesList,
                     name => name switch {
@@ -1872,6 +1844,7 @@ namespace IRExplorerUI {
 
         public override async void OnSessionStart() {
             base.OnSessionStart();
+            CalleCalleePanel.Session = Session;
             var data = Session.LoadPanelState(this, null);
 
             if (data != null) {
@@ -1912,36 +1885,22 @@ namespace IRExplorerUI {
                 var funcProfile = Session.ProfileData.GetFunctionProfile(function);
 
                 if (funcProfile != null) {
-                    var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
-                    ChildFunctionList.Model = profileCallTree;
-                    ExpandCallTreeTop();
-
-                    ChildTimeColumnVisible = true;
-                    AutoResizeColumns(ChildFunctionList, 1);
+                    //?var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
+                    await CalleCalleePanel.DisplaProfileCallerCalleeTree(function);
                 }
                 else {
-                    ChildFunctionList.Model = null;
+                    CalleCalleePanel.Reset();
                 }
             }
             else {
                 var callTree = await Task.Run(() => CreateCallTree(function));
-                ChildFunctionList.Model = callTree;
 
                 //? One flag for Calls, one Profile
                 ProfileControlsVisible = true;
                 ChildTimeColumnVisible = false;
-                AutoResizeColumns(ChildFunctionList, 1);
             }
 
             await ComputeConsecutiveSectionDiffs();
-        }
-
-        private void ExpandCallTreeTop() {
-            if (ChildFunctionList.Nodes.Count > 0) {
-                foreach (var childNode in ChildFunctionList.Nodes) {
-                    childNode.IsExpanded = true;
-                }
-            }
         }
         
         private async Task<ChildFunctionEx> CreateProfileCallTree(IRTextFunction function) {
@@ -2489,7 +2448,6 @@ namespace IRExplorerUI {
             statisticsTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
 
             AddStatisticsFunctionListColumns(false);
-            AddStatisticsChildFunctionListColumns(false);
             RefreshFunctionList();
         }
 
@@ -2663,30 +2621,7 @@ namespace IRExplorerUI {
                 OptionalColumn.AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
             }
         }
-
-        public void AddStatisticsChildFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            RemoveStatisticsChildFunctionListColumns();
-
-            if (Session.ProfileData == null) {
-                ChildTimeColumnVisible = false;
-            }
-
-            OptionalColumn.AddListViewColumn(ChildFunctionList,
-                OptionalColumn.Binding("Statistics.Instructions", "InstructionsHeader",
-                    $"Instrs", $"Instruction number", null, columnWidth),
-                functionValueSorter_, titleSuffix, tooltipSuffix, true, 3);
-
-            OptionalColumn.AddListViewColumn(ChildFunctionList,
-                OptionalColumn.Binding("Statistics.Size", "SizeHeader",
-                    $"Size", $"Function size in bytes", null, columnWidth),
-                functionValueSorter_, titleSuffix, tooltipSuffix, true, 4);
-        }
-
-        public void RemoveStatisticsChildFunctionListColumns() {
-            OptionalColumn.RemoveListViewColumn(ChildFunctionList, "SizeHeader", functionValueSorter_);
-            OptionalColumn.RemoveListViewColumn(ChildFunctionList, "InstructionsHeader", functionValueSorter_);
-        }
-
+        
         private void AutoResizeColumns(ListView listView, int skipCount) {
             int index = 0;
 

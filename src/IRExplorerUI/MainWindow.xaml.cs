@@ -912,47 +912,30 @@ namespace IRExplorerUI {
 
         private void MenuItem_Click_8(object sender, RoutedEventArgs e) {
             //? TODO: Remove
+#if false
             //var data = File.ReadAllBytes(@"C:\work\samples.dat");
             //var profile = StateSerializer.Deserialize<ProtoProfile>(data);
-#if false
-            var profile = StateSerializer.Deserialize<ProtoProfile>(@"C:\work\pmc.dat");
-
 
             var dict = new Dictionary<int, TimeSpan>();
             var start = long.MaxValue;
             var end = long.MinValue;
-
-            foreach (var proc in profile.Processes) {
-                Trace.WriteLine($"{proc.Id}: {proc.Name}");
-
-                if (proc.Images == null) {
-                    continue;
-                }
-
-                //foreach (var image in proc.Images) {
-                //    Trace.WriteLine($"        {image.Id}: {image.Name} | {image.Path}");
-                //}
-            }
-
-            //MessageBox.Show(this, "waiting");
-
             var sw = Stopwatch.StartNew();
 
             long maxSample = 0;
 
-            foreach (var s in profile.Samples) {
+            foreach (var s in profile.samples_) {
                 maxSample = Math.Max(maxSample, s.Weight.Ticks);
             }
 
             Trace.WriteLine($"0_MaxSample: {sw.ElapsedMilliseconds}");
 
-            foreach (var s in profile.Samples) {
-                dict.AccumulateValue(s.ProcessId, s.Weight);
-                start = Math.Min(start, s.Time);
-                end = Math.Max(end, s.Time);
+            foreach (var s in profile.samples_) {
+                dict.AccumulateValue(s.GetContext(profile).ProcessId, s.Weight);
+                start = Math.Min(start, s.Weight.Ticks);
+                end = Math.Max(end, s.Weight.Ticks);
             }
 
-            Trace.WriteLine($"1_PerProcTime: {sw.ElapsedMilliseconds}");
+            //Trace.WriteLine($"1_PerProcTime: {sw.ElapsedMilliseconds}");
             var r = new Random();
 
             //for(int i = 0; i < profile.PerfCounters.Count; i++) {
@@ -1028,12 +1011,12 @@ namespace IRExplorerUI {
                 var sw3 = Stopwatch.StartNew();
 
                 sliceSeriesDict.Clear();
-                foreach (var s in profile.Samples) {
-                    var point = (s.Time - start) / resolution;
+                foreach (var s in profile.samples_) {
+                    var point = (s.Time.Ticks - start) / resolution;
                     var slice = (int)(point / timePerSlice.Ticks);
 
                     //? Add extension method TryGetOrAddValue
-                    var sliceDict = sliceSeriesDict.GetOrAddValue(s.ProcessId);
+                    var sliceDict = sliceSeriesDict.GetOrAddValue(s.GetContext(profile).ProcessId);
                     sliceDict.AccumulateValue(slice, s.Weight);
                 }
 
@@ -1057,7 +1040,7 @@ namespace IRExplorerUI {
             Trace.WriteLine($"2_PerProcSliceTime: {sw2.ElapsedMilliseconds}, {sw2.Elapsed}");
             Trace.Flush();
 
-            Trace.WriteLine($"Samples: {profile.Samples.Count}");
+            Trace.WriteLine($"Samples: {profile.samples_.Count}");
             Trace.WriteLine($"Time: {timeDiff}, {timeDiff.TotalMinutes}");
 
 
