@@ -155,6 +155,7 @@
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
 
+
                     <GridViewColumn Width="150">
                         <GridViewColumnHeader x:Name="ChildTimeColumnHeader" Content="Time (total)" />
 
@@ -205,17 +206,13 @@
                                 <StackPanel
                                     VerticalAlignment="Center"
                                     Background="{Binding BackColor2}"
-                                    Orientation="Horizontal"
-                                    ToolTip="Something2">
+                                    Orientation="Horizontal">
                                     <Rectangle
                                         Width="{Binding Path=PercentageExclusive, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
                                         Height="16"
                                         Fill="#Aa4343"
                                         Stroke="Black" />
-                                    <TextBlock
-                                        Margin="6,2,6,2"
-                                        Text="{Binding Text2}"
-                                        ToolTip="{Binding ToolTip}">
+                                    <TextBlock Margin="6,2,6,2" Text="{Binding Text2}">
                                         <TextBlock.Style>
                                             <Style TargetType="{x:Type TextBlock}">
                                                 <Style.Triggers>
@@ -254,7 +251,6 @@
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                     <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
-                    <Setter Property="ToolTip" Value="Something" />
                     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 </Style>

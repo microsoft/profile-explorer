@@ -297,6 +297,7 @@ namespace IRExplorerUI {
         private QueryValue mainQueryInputValue_;
         private bool pasOutputVisible_;
         private bool columnsVisible_;
+        private bool duringSectionSwitching_;
         private double previousVerticalOffset_;
 
         public IRDocumentHost(ISession session) {
@@ -461,7 +462,6 @@ namespace IRExplorerUI {
 
         public IRTextSection Section => TextView.Section;
         public FunctionIR Function => TextView.Function;
-        public bool DuringSectionLoading => TextView.DuringSectionLoading;
 
         public event EventHandler<(double offset, double offsetChangeAmount)> VerticalScrollChanged;
         public event EventHandler<(double offset, double offsetChangeAmount)> PassOutputVerticalScrollChanged;
@@ -958,6 +958,7 @@ namespace IRExplorerUI {
         }
 
         public async Task LoadSection(ParsedIRTextSection parsedSection) {
+            duringSectionSwitching_ = true;
             var data = Session.LoadDocumentState(parsedSection.Section);
             double horizontalOffset = 0;
             double verticalOffset = 0;
@@ -981,6 +982,7 @@ namespace IRExplorerUI {
 
             TextView.ScrollToHorizontalOffset(horizontalOffset);
             TextView.ScrollToVerticalOffset(verticalOffset);
+            duringSectionSwitching_ = false;
         }
 
         public bool PassOutputVisible {
@@ -2331,7 +2333,7 @@ namespace IRExplorerUI {
         }
 
         private void ColumnsList_ScrollChanged(object sender, ScrollChangedEventArgs e) {
-            if (Math.Abs(e.VerticalChange) < double.Epsilon) {
+            if (duringSectionSwitching_ || Math.Abs(e.VerticalChange) < double.Epsilon) {
                 return;
             }
             

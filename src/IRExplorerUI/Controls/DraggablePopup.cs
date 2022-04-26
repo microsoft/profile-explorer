@@ -16,7 +16,7 @@ namespace IRExplorerUI.Controls {
                     Thumb.RaiseEvent(e);
                 }
             };
-
+            
             Thumb.DragDelta += (sender, e) => {
                 HorizontalOffset += e.HorizontalChange;
                 VerticalOffset += e.VerticalChange;

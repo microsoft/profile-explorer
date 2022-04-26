@@ -22,10 +22,7 @@
             <RowDefinition Height="38" />
         </Grid.RowDefinitions>
 
-        <StackPanel
-            Grid.Row="0"
-            Grid.Column="0"
-            Grid.ColumnSpan="2">
+        <StackPanel Grid.Row="0" Grid.Column="0">
             <TextBlock Margin="16,8,16,0" Text="Profile data file" />
             <Grid Margin="16,4,16,0">
                 <controls:FileSystemTextBox
@@ -53,7 +50,7 @@
                     TabIndex="9" />
             </Grid>
 
-            <TextBlock Margin="16,4,16,0" Text="Executable file (main image)" />
+            <TextBlock Margin="16,4,16,0" Text="Process binary" />
             <Grid Margin="16,4,16,0">
                 <controls:FileSystemTextBox
                     x:Name="BinaryAutocompleteBox"
@@ -68,8 +65,7 @@
                     IsTextCompletionEnabled="False"
                     MinimumPrefixLength="1"
                     TabIndex="2"
-                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}"
-                    TextChanged="BinaryAutocompleteBox_OnTextChanged" />
+                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="DiffBrowseButton"
@@ -81,6 +77,67 @@
                     IsEnabled="{Binding InputControlsEnabled}"
                     TabIndex="10" />
             </Grid>
+
+            <ProgressBar
+                x:Name="SummaryProgressBar"
+                Height="4"
+                Margin="16,4,16,0"
+                HorizontalAlignment="Stretch"
+                IsIndeterminate="True"
+                Maximum="100"
+                Visibility="{Binding IsLoadingProcessList, Converter={StaticResource BoolToVisibility}}" />
+            <ListView
+                x:Name="ProcessList"
+                MinHeight="80"
+                MaxHeight="80"
+                Margin="16,4,16,0"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                IsEnabled="{Binding InputControlsEnabled}"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                SelectionChanged="ProcessList_OnSelectionChanged"
+                SelectionMode="Single"
+                VirtualizingStackPanel.IsVirtualizing="True"
+                VirtualizingStackPanel.VirtualizationMode="Recycling"
+                Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibility}}">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Width="200" DisplayMemberBinding="{Binding ProcessName}">
+                            <GridViewColumnHeader Content="Process" />
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                        </GridViewColumn>
+
+                        <GridViewColumn Width="80" DisplayMemberBinding="{Binding WeightPercentage, StringFormat={}{0:#0.00'%'}}">
+                            <GridViewColumnHeader Content="Weight" />
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                        </GridViewColumn>
+
+                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding SampleCount}">
+                            <GridViewColumnHeader Content="Samples" />
+                            <GridViewColumn.HeaderContainerStyle>
+                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                </Style>
+                            </GridViewColumn.HeaderContainerStyle>
+                        </GridViewColumn>
+
+                    </GridView>
+                </ListView.View>
+
+                <ListView.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        <EventSetter Event="MouseDoubleClick" Handler="LoadButton_Click" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
 
             <Expander
                 Margin="16,8,16,0"
