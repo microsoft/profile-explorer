@@ -835,7 +835,6 @@ namespace IRExplorerUI.Profile {
                     var sw = Stopwatch.StartNew();
 
                     int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
-                    chunks = 1;
                     Trace.WriteLine($"Using {chunks} threads");
 
                     var tasks = new List<Task>();

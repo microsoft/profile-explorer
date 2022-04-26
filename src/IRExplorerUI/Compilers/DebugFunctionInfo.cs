@@ -59,7 +59,30 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
 
         return SourceLines[high];
     }
-    
+
+    public static DebugFunctionInfo BinarySearch(List<DebugFunctionInfo> ranges, long value) {
+        int min = 0;
+        int max = ranges.Count - 1;
+
+        while (min <= max) {
+            int mid = (min + max) / 2;
+            var range = ranges[mid];
+            int comparison = range.CompareTo(value);
+
+            if (comparison == 0) {
+                return range;
+            }
+            if (comparison < 0) {
+                min = mid + 1;
+            }
+            else {
+                max = mid - 1;
+            }
+        }
+
+        return DebugFunctionInfo.Unknown;
+    }
+
     public override bool Equals(object obj) {
         return obj is DebugFunctionInfo info && Equals(info);
     }

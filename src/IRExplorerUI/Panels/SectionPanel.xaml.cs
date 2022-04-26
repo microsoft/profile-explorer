@@ -1928,8 +1928,10 @@ namespace IRExplorerUI {
             callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
             await Task.Run(() => callGraph.Execute(null, cancelableTask));
 
-            // Cache the call graph, can be expensive to compute.
-            callGraphCache_[summary] = callGraph;
+            if (!cancelableTask.IsCanceled) {
+                // Cache the call graph, can be expensive to compute.
+                callGraphCache_[summary] = callGraph;
+            }
 
             callGraphTask_.CompleteTask(cancelableTask, Session.SessionState.UnregisterCancelableTask);
             Session.SetApplicationProgress(false, 0);

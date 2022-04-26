@@ -105,16 +105,11 @@ namespace IRExplorerUI.Compilers.ASM {
 
         private void AppendInlineeTooltip(string inlineeName, int inlineeLine, string inlineeFilePath,
                                           int index, StringBuilder tooltipSb) {
-            // func1:line (file)
-            //     func2
-            //         ...
-            const int tabWidth = 2;
-            ;
-            for (int column = 0; column < index * tabWidth; column++) {
-                tooltipSb.Append(' ');
-            }
-
             var inlineeFileName = Utils.TryGetFileName(inlineeFilePath);
+
+            if (inlineeName.Length > 80) {
+                inlineeName = $"{inlineeName.Substring(0, 80)}...";
+            }
 
             if (!string.IsNullOrEmpty(inlineeFileName)) {
                 tooltipSb.Append($"{inlineeName}:{inlineeLine} ({inlineeFileName})");

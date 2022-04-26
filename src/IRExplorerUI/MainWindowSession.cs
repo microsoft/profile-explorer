@@ -706,22 +706,24 @@ namespace IRExplorerUI {
                 OptionalStatusText.Text = "";
             }
 
-            // Update UI to reflect new section before starting long-running tasks.
-            document.LoadSectionMinimal(result);
-            NotifyPanelsOfSectionLoad(section, document, true);
-            SetupDocumentEvents(document);
-            UpdateUIAfterSectionSwitch(section, document);
+            if (result != null) {
+                // Update UI to reflect new section before starting long-running tasks.
+                document.LoadSectionMinimal(result);
+                NotifyPanelsOfSectionLoad(section, document, true);
+                SetupDocumentEvents(document);
+                UpdateUIAfterSectionSwitch(section, document);
 
-            // Load both the document and generate graphs in parallel,
-            // since both can be fairly time-consuming for huge functions.
-            Task graphTask = Task.CompletedTask;
+                // Load both the document and generate graphs in parallel,
+                // since both can be fairly time-consuming for huge functions.
+                Task graphTask = Task.CompletedTask;
 
-            if (runExtraTasks) {
-                graphTask = GenerateGraphs(section, document.TextView);
+                if (runExtraTasks) {
+                    graphTask = GenerateGraphs(section, document.TextView);
+                }
+
+                var documentTask = document.LoadSection(result);
+                await Task.WhenAll(documentTask, graphTask);
             }
-
-            var documentTask = document.LoadSection(result);
-            await Task.WhenAll(documentTask, graphTask);
 
             // Hide any UI that may show due to long-running tasks.
             UpdateUIAfterSectionLoad(section, document, delayedAction);
@@ -729,7 +731,7 @@ namespace IRExplorerUI {
         }
 
         private string FormatParsingErrors(ParsedIRTextSection result, string message) {
-            if (!result.HadParsingErrors) {
+            if (result == null || !result.HadParsingErrors) {
                 return "";
             }
 

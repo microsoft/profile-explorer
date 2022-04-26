@@ -11,9 +11,10 @@ using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
     public class ModuleInfo : IDisposable {
+        private ISession session_;
         private BinaryFileDescription binaryInfo_;
         private ProfileDataProviderOptions options_;
-        private ISession session_;
+        private List<DebugFunctionInfo> sortedFuncList_;
         private Dictionary<long, IRTextFunction> addressFuncMap_;
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
@@ -98,8 +99,7 @@ namespace IRExplorerUI.Profile {
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
 
             foreach (var funcInfo in DebugInfo.EnumerateFunctions(false)) {
-                // There can be 0 size func. such as __guard_xfg, ignore.
-                if (funcInfo.RVA != 0 && funcInfo.Size > 0) {
+                if (funcInfo.RVA != 0) {
                     sortedFuncList_.Add(funcInfo);
                 }
                 
@@ -111,7 +111,6 @@ namespace IRExplorerUI.Profile {
                 else {
                     externalsFuncMap_[funcInfo.RVA] = funcInfo.Name;
                 }
-
             }
             
             sortedFuncList_.Sort();
@@ -181,61 +180,16 @@ namespace IRExplorerUI.Profile {
             return null;
         }
         
-        private List<DebugFunctionInfo> sortedFuncList_;
-
-        DebugFunctionInfo BinarySearch(List<DebugFunctionInfo> ranges, long value) {
-            int min = 0;
-            int max = ranges.Count - 1;
-
-            while (min <= max) {
-                int mid = (min + max) / 2;
-                var range = ranges[mid];
-                int comparison = range.CompareTo(value);
-                
-                if (comparison == 0) {
-                    return range;
-                }
-                if (comparison < 0) {
-                    min = mid + 1;
-                }
-                else {
-                    max = mid - 1;
-                }
-            }
-
-            return DebugFunctionInfo.Unknown;
-        }
-
         public DebugFunctionInfo FindDebugFunctionInfo(long funcAddress) {
             if (!HasDebugInfo) {
                 return DebugFunctionInfo.Unknown;
             }
 
             //? TODO: Enable sorted list, integrate in PDBProvider
-#if true
-            
-            return BinarySearch(sortedFuncList_, funcAddress);
-#else
-            //foreach (var pair in cache_.orderList) {
-            //    var func = pair;
-
-            //    if (funcAddress >= func.StartRVA && funcAddress < func.EndRVA) {
-            //        Same++;
-            //        return func;
-            //    }
-            //}
-
-            var functs = functionRvaTree_.Query(funcAddress);
-            foreach (var func in functs) {
-                //cache_.Put(func, true);
-                return func;
-            }
-
-            return DebugFunctionInfo.Unknown;
-#endif
+            return DebugFunctionInfo.BinarySearch(sortedFuncList_, funcAddress);
         }
 
-            public IRTextFunction FindFunction(long funcAddress) {
+        public IRTextFunction FindFunction(long funcAddress) {
             if (!HasDebugInfo) {
                 return null;
             }

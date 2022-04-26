@@ -22,8 +22,7 @@ using Microsoft.Diagnostics.Symbols;
 namespace IRExplorerUI.Compilers {
 
     //? https://stackoverflow.com/questions/34960989/how-can-i-hide-dll-registration-message-window-in-my-application
-
-    //? TODO: Move global symbol load as member done once
+    
     //? Use for-each iterators everywhere
     //? Free more COM?
 
@@ -49,8 +48,6 @@ namespace IRExplorerUI.Compilers {
             }
 
             string symbolSearchPath = ConstructSymbolSearchPath(options);
-
-#if TRACE_EVENT
 #if DEBUG
             using var logWriter = new StringWriter();
 #else
@@ -65,14 +62,6 @@ namespace IRExplorerUI.Compilers {
             Trace.WriteLine($"<< TraceEvent");
 #endif
             return result;
-#else
-            if (!SymSrvHelpers.InitSymSrv(symbolSearchPath)) {
-                return null;
-            }
-
-            return await Task.Run(() =>
-                SymSrvHelpers.GetLocalPDBFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age));
-#endif
         }
 
         public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
