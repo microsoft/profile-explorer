@@ -25,7 +25,7 @@ namespace IRExplorerUI.Compilers.ASM {
         private Machine architecture_;
         private IDebugInfoProvider debugInfo_;
         private Interop.DisassemblerHandle disasmHandle_;
-        private IntervalTree<long, DebugFunctionInfo> functionRvaTree_;
+        private List<DebugFunctionInfo> sortedFuncList_;
         private bool hasExternalSyms_;
 
         public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo) {
@@ -69,7 +69,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
         private void Initialize() {
             disasmHandle_ = Interop.Create(architecture_);
-            BuildFunctionRvaTree(false);
+            BuildFunctionRvaCache(false);
         }
 
         public string DisassembleToText(DebugFunctionInfo funcInfo) {
@@ -194,6 +194,7 @@ namespace IRExplorerUI.Compilers.ASM {
         private bool TryAppendFunctionName(StringBuilder builder, long rva) {
             var func = FindFunctionByRva(rva);
 
+            //? TODO: Option to demangle
             if (!func.IsUnknown) {
                 builder.Append(func.Name);
                 return true;
@@ -205,35 +206,36 @@ namespace IRExplorerUI.Compilers.ASM {
         private DebugFunctionInfo FindFunctionByRva(long rva) {
             // Rebuild RVA tree with all symbol info when symbol name lookup is done.
             if (!hasExternalSyms_) {
-                BuildFunctionRvaTree(true);
+                BuildFunctionRvaCache(true);
             }
 
-            var functs = functionRvaTree_.Query(rva);
-            foreach (var func in functs) {
-                return func;
+            var result = DebugFunctionInfo.BinarySearch(sortedFuncList_, rva);
+
+            if (!result.IsUnknown) {
+                return result;
             }
 
+            Trace.WriteLine($"=> NOTHING FOR {rva}");
             return debugInfo_.FindFunctionByRVA(rva);
         }
 
-        private void BuildFunctionRvaTree(bool includeExternalSyms) {
+        private void BuildFunctionRvaCache(bool includeExternalSyms) {
             // Cache RVA -> function mapping, much faster to query.
-            functionRvaTree_ = new IntervalTree<long, DebugFunctionInfo>();
+            int capacity = sortedFuncList_ != null ? sortedFuncList_.Count * 2 : 1;
+            sortedFuncList_ = new List<DebugFunctionInfo>(capacity);
             hasExternalSyms_ = includeExternalSyms;
 
             if (debugInfo_ == null) {
                 return;
             }
 
-            foreach (var func in debugInfo_.EnumerateFunctions(includeExternalSyms)) {
-                if (func.Size > 0) {
-                    functionRvaTree_.Add(func.StartRVA, func.EndRVA, func);
+            foreach (var funcInfo in debugInfo_.EnumerateFunctions(includeExternalSyms)) {
+                if (funcInfo.RVA != 0) {
+                    sortedFuncList_.Add(funcInfo);
                 }
             }
 
-            // Force a query to ensure the tree is built on this thread
-            // and all future queries are read-only.
-            functionRvaTree_.Query(0);
+            sortedFuncList_.Sort();
         }
 
         private bool ShouldLookupAddressByName(Interop.Instruction instr, ref bool isJump) {
@@ -413,7 +415,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 public int Id;
                 public long Address;
                 public short Size;
-                public fixed byte Bytes[16];
+                public fixed byte Bytes[24];
                 public fixed byte Mnemonic[32];
                 public fixed byte Operand[160];
                 public IntPtr Details;

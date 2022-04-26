@@ -3635,10 +3635,12 @@ namespace IRExplorerUI {
                 // Try to find a function definition for the call.
                 IRTextSection targetSection = FindCallTargetSection(element);
 
-                if (targetSection == null && alwaysShow) {
-                    using var centerForm = new DialogCenteringHelper(this);
-                    MessageBox.Show($"Couldn't find call target in opened document:\n{element.Name}", "IR Explorer" ,
-                                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                if (targetSection == null) {
+                    if (alwaysShow) {
+                        MessageBox.Show($"Couldn't find call target in opened document:\n{element.Name}", "IR Explorer",
+                            MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+
                     return;
                 }
 

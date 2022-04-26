@@ -60,6 +60,8 @@ namespace IRExplorerUI {
             PreviewKeyDown += OnPreviewKeyDown;
             ShowToolbar = true;
             DataContext = this;
+            combineNodes_ = true;
+            
             stackHoverPreview_ = new ToolTipHoverPreview(CallTree, 
                 mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
                 (previewPoint, element) => {
@@ -341,11 +343,11 @@ namespace IRExplorerUI {
                 //? TODO: Use CreatePreviewTextBlock to make module name lighter.
                 // WinDBG style of combining module and func. name.
                 var moduleName = Utils.TryGetFileNameWithoutExtension(node.ModuleName);
-                funcName = $"{moduleName}!{funcName}";
+                funcName = $"{moduleName}! {funcName}";
             }
 
             if (funcName.Length > maxLength) {
-                funcName = funcName.Substring(0, maxLength);
+                funcName = $"{funcName.Substring(0, maxLength)}...";
             }
 
             return funcName;
@@ -364,7 +366,7 @@ namespace IRExplorerUI {
 
             var percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight);
             builder.Append($"{percentage.AsPercentageString(2, false).PadLeft(6)}  ");
-            builder.AppendLine(FormatFunctionName(node, 50));
+            builder.AppendLine(FormatFunctionName(node, 80));
         }
 
         #region IToolPanel
