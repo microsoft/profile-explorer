@@ -23,7 +23,7 @@ namespace IRExplorerCore {
             }
         }
 
-        public async Task<CancelableTask> CancelAndCreateTaskAsync(CancelableTaskDelegate registerAction = null) {
+        public async Task<CancelableTask> CancelPreviousAndCreateTaskAsync(CancelableTaskDelegate registerAction = null) {
             CancelableTask task = null;
 
             lock (lockObject_) {

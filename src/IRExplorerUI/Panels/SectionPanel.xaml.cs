@@ -344,7 +344,7 @@ namespace IRExplorerUI {
         public FunctionCodeStatistics Statistics { get; set; }
         public double Percentage { get; set; }
         public double PercentageExclusive { get; set; }
-        public string ToolTip { get; set; }
+        public ProfileCallTreeNode CallTreeNode { get; set; }
 
         public ChildFunctionEx() {
             Children = new List<ChildFunctionEx>();
@@ -1869,6 +1869,11 @@ namespace IRExplorerUI {
             SectionFilter.Text = "";
         }
 
+        public override void OnSessionEnd() {
+            base.OnSessionEnd();
+            CalleCalleePanel.Reset();
+        }
+
         public async Task SelectFunction(IRTextFunction function) {
             if (function == currentFunction_) {
                 return;
@@ -1903,14 +1908,6 @@ namespace IRExplorerUI {
             await ComputeConsecutiveSectionDiffs();
         }
         
-        private async Task<ChildFunctionEx> CreateProfileCallTree(IRTextFunction function) {
-            var visitedFuncts = new HashSet<IRTextFunction>();
-            var rootNode = new ChildFunctionEx();
-            rootNode.Children = new List<ChildFunctionEx>();
-            CreateProfileCallTree(function, rootNode, visitedFuncts);
-            return rootNode;
-        }
-
         private async Task<(CallGraph, CallGraphNode)> GenerateFunctionCallGraph(IRTextSummary summary, IRTextFunction function) {
             var callGraph = await GenerateCallGraph(summary);
             var callGraphNode = callGraph.FindNode(function);
@@ -1925,7 +1922,7 @@ namespace IRExplorerUI {
             }
 
             Session.SetApplicationProgress(true, double.NaN, "Generating call graph");
-            using var cancelableTask = await callGraphTask_.CancelAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
+            using var cancelableTask = await callGraphTask_.CancelPreviousAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
 
             var loadedDoc = Session.SessionState.FindLoadedDocument(summary);
             callGraph = new CallGraph(summary, loadedDoc.Loader, Session.CompilerInfo.IR);
@@ -2043,142 +2040,7 @@ namespace IRExplorerUI {
             };
             return childInfo;
         }
-
-        private void CreateProfileCallTree(IRTextFunction function,
-            ChildFunctionEx parentNode,
-            HashSet<IRTextFunction> visitedFuncts) {
-            bool newFunc = visitedFuncts.Add(function);
-
-            if (!newFunc) {
-                return; // Recursion in the call graph.
-            }
-
-            var funcProfile = Session.ProfileData.GetFunctionProfile(function);
-            var selfInfo = CreateProfileCallTreeChild(function, funcProfile, TimeSpan.Zero);
-            selfInfo.Name = "Self";
-            selfInfo.Time = Int64.MaxValue;
-            selfInfo.ToolTip = "Function exclusive time";
-            selfInfo.IsMarked = true;
-            selfInfo.Statistics = GetFunctionStatistics(function);
-            parentNode.Children.Add(selfInfo);
-
-            if (funcProfile != null && funcProfile.HasCallees) {
-                var calleeGroupNode = CreateProfileCallTreeChild(function, null, TimeSpan.Zero);
-                selfInfo.Time = Int64.MaxValue - 1;
-                calleeGroupNode.Name = "Callees";
-                calleeGroupNode.ToolTip = "Functions being called";
-                calleeGroupNode.IsMarked = true;
-                parentNode.Children.Add(calleeGroupNode);
-
-                foreach (var pair in funcProfile.CalleesWeights) {
-                    var childFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
-
-                    if (childFunc == null) {
-                        Debug.Assert(false, "Should be always found");
-                        continue;
-                    }
-
-                    var childFuncProfile = Session.ProfileData.GetFunctionProfile(childFunc);
-
-
-                    //? TODO: Not path sensitive - child time is for all instances of it
-                    var childNode = CreateProfileCallTreeChild(childFunc, childFuncProfile, pair.Value);
-                    calleeGroupNode.Children.Add(childNode);
-
-                    if (childFuncProfile.CalleesWeights.Count > 0) {
-                        CreateProfileCallTree(childFunc, childNode, visitedFuncts);
-                    }
-                    else {
-                        visitedFuncts.Add(childFunc);
-                    }
-                }
-            }
-
-            if (funcProfile != null && funcProfile.HasCallers) {
-                var callerGroupNode = CreateProfileCallTreeChild(function, null, TimeSpan.Zero);
-                selfInfo.Time = Int64.MaxValue - 2;
-                callerGroupNode.Name = "Callers";
-                callerGroupNode.ToolTip = "Functions calling";
-                callerGroupNode.IsMarked = true;
-                parentNode.Children.Add(callerGroupNode);
-
-                foreach (var pair in funcProfile.CallerWeights) {
-                    var callerFunc = Session.FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
-
-                    if (callerFunc == null) {
-                        Debug.Assert(false, "Should always be found");
-                        continue;
-                    }
-
-                    var callerFuncProfile = Session.ProfileData.GetFunctionProfile(callerFunc);
-                    //? TODO: Not path sensitive - child time is for all instances of it
-                    var callerNode = CreateProfileCallTreeChild(callerFunc, callerFuncProfile, pair.Value);
-                    callerNode.Statistics = GetFunctionStatistics(callerFunc);
-                    callerGroupNode.Children.Add(callerNode);
-                }
-            }
-
-            // Sort children, since that is not yet supported by the TreeListView control.
-            parentNode.Children.Sort((a, b) => {
-                if (!(a.IsMarked && b.IsMarked)) {
-                    if (a.IsMarked) return -1;
-                    else if (b.IsMarked) return 1;
-                }
-
-                if (a.Time > b.Time) {
-                    return -1;
-                }
-                else if (a.Time < b.Time) {
-                    return 1;
-                }
-
-                return string.Compare(a.Name, b.Name, StringComparison.Ordinal);
-            });
-        }
-
-        //? TODO: Replace with CallTreePanel code
-        private ChildFunctionEx CreateProfileCallTreeChild(IRTextFunction func, FunctionProfileData funcProfile, TimeSpan childTime) {
-            double weightPercentage = 0;
-            double exclusiveWeightPercentage = 0;
-            bool hasProfile = funcProfile != null;
-
-            if (hasProfile) {
-                if (childTime == TimeSpan.Zero) {
-                    childTime = funcProfile.Weight;
-                }
-
-                weightPercentage = Session.ProfileData.ScaleFunctionWeight(childTime);
-                exclusiveWeightPercentage = Session.ProfileData.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
-            }
-
-            var funcName = func.Name;
-
-            var nameProvider = Session.CompilerInfo.NameProvider;
-            if (nameProvider.IsDemanglingSupported) {
-                var demanglingOptions = nameProvider.GlobalDemanglingOptions;
-
-                if (true) {
-                    funcName = nameProvider.DemangleFunctionName(funcName, demanglingOptions);
-                }
-            }
-
-            var childInfo = new ChildFunctionEx() {
-                Function = func,
-                Time = childTime.Ticks,
-                Name = funcName,
-                Percentage = weightPercentage,
-                PercentageExclusive = exclusiveWeightPercentage,
-                Text = !hasProfile ? "" : $"{weightPercentage.AsPercentageString()} ({funcProfile.Weight.AsMillisecondsString()})",
-                Text2 = !hasProfile ? "" : $"{exclusiveWeightPercentage.AsPercentageString()} ({funcProfile.ExclusiveWeight.AsMillisecondsString()})",
-                TextColor = Brushes.Black,
-                BackColor = !hasProfile ? Brushes.Transparent : ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(weightPercentage),
-                BackColor2 = !hasProfile ? Brushes.Transparent : ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(exclusiveWeightPercentage),
-                Children = new List<ChildFunctionEx>(),
-                ModuleName = func.ParentSummary.ModuleName
-            };
-            return childInfo;
-        }
-
+        
         public override void OnSessionSave() {
             base.OnSessionStart();
             var state = new SectionPanelState();
@@ -2436,7 +2298,7 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
-            using var cancelableTask = await statisticsTask_.CancelAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
+            using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
             var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
 
             foreach (var pair in functionStatMap) {

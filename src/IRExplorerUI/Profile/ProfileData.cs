@@ -1218,27 +1218,47 @@ namespace IRExplorerUI.Profile {
     //! Sparse BV could be used to keep track of samples for each function
     //     should work at least for total func, but maybe small enough for TreeNode
     public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
-      
+
         public IRTextFunction Function { get; set; }
         public DebugFunctionInfo DebugInfo { get; set; }
         public TimeSpan Weight { get; set; }
         public TimeSpan ExclusiveWeight { get; set; }
-        
+
         private List<ProfileCallTreeNode> children_;
         private List<ProfileCallTreeNode> callers_;
         private ReaderWriterLockSlim lock_;
 
-        public List<ProfileCallTreeNode> Callers => callers_;
         public List<ProfileCallTreeNode> Children => children_;
+
+        public List<ProfileCallTreeNode> Callers => callers_;
 
         public bool HasChildren => Children != null && Children.Count > 0;
         public bool HasCallers => Callers != null && Callers.Count > 0;
         public string FunctionName => Function.Name;
         public string ModuleName => Function.ParentSummary.ModuleName;
 
-        public ProfileCallTreeNode(DebugFunctionInfo funcInfo, IRTextFunction function) {
+        public (TimeSpan Weight, TimeSpan ExclusiveWeight) ChildrenWeight {
+            get {
+                Debug.Assert(HasChildren);
+                TimeSpan weight = TimeSpan.Zero;
+                TimeSpan exclusiveWeight = TimeSpan.Zero;
+                
+                foreach (var child in Children) {
+                    weight += child.Weight;
+                    exclusiveWeight += child.ExclusiveWeight;
+                }
+
+                return (weight, exclusiveWeight);
+            }
+        }
+
+        public ProfileCallTreeNode(DebugFunctionInfo funcInfo, IRTextFunction function,
+                                   List<ProfileCallTreeNode> children = null,
+                                   List<ProfileCallTreeNode> callers = null) {
             DebugInfo = funcInfo;
             Function = function;
+            children_ = children;
+            callers_ = callers;
             lock_ = new ReaderWriterLockSlim();
         }
 
@@ -1514,6 +1534,63 @@ namespace IRExplorerUI.Profile {
             }
 
             return null;
+        }
+
+        public ProfileCallTreeNode GetCombinedCallTreeNode(IRTextFunction function) {
+            var nodes = GetCallTreeNodes(function);
+
+            if (nodes == null) {
+                return null;
+            }
+            else if (nodes.Count == 1) {
+                return nodes[0];
+            }
+
+            var childrenSet = new HashSet<ProfileCallTreeNode>();
+            var callersSet = new HashSet<ProfileCallTreeNode>();
+            TimeSpan weight = TimeSpan.Zero;
+            TimeSpan excWeight = TimeSpan.Zero;
+
+            foreach (var node in nodes) {
+                weight += node.Weight;
+                excWeight += node.ExclusiveWeight;
+
+                if (node.HasChildren) {
+                    foreach (var childNode in node.Children) {
+                        childrenSet.Add(childNode);
+                    }
+                }
+
+                if (node.HasCallers) {
+                    foreach (var callerNode in node.Callers) {
+                        callersSet.Add(callerNode);
+                    }
+                }
+            }
+
+            return new ProfileCallTreeNode(nodes[0].DebugInfo, nodes[0].Function, 
+                                           childrenSet.ToList(), callersSet.ToList()) {
+                Weight = weight, ExclusiveWeight = excWeight
+            };
+        }
+
+        public TimeSpan GetCombinedCallTreeNodeWeight(IRTextFunction function) {
+            var nodes = GetCallTreeNodes(function);
+
+            if (nodes == null) {
+                return TimeSpan.Zero;
+            }
+            else if (nodes.Count == 1) {
+                return nodes[0].Weight;
+            }
+
+            TimeSpan weight = TimeSpan.Zero;
+
+            foreach (var node in nodes) {
+                weight += node.Weight;
+            }
+
+            return weight;
         }
 
         public string Print() {

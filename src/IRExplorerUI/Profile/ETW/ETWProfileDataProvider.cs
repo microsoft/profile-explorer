@@ -192,6 +192,73 @@ namespace IRExplorerUI.Profile {
             return new BinaryFileDescription();
         }
 
+        public class TraceProcessSummary {
+            public ProfileProcess Process { get; set; }
+            public TimeSpan Weight { get; set; }
+            public double WeightPercentage { get; set; }
+            public int SampleCount { get; set; }
+
+            public string ProcessName => Process.ImageFileName;
+
+            public TraceProcessSummary(ProfileProcess process, int sampleCount) {
+                Process = process;
+                SampleCount = sampleCount;
+            }
+
+            public override string ToString() {
+                return Process.ToString();
+            }
+        }
+
+        public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, CancelableTask cancelableTask) {
+            var list = new List<TraceProcessSummary>();
+
+            //? TODO: Progress can be shown as % by taking sample time / session time
+            //? Update proc list while building it, with a hot proc is shows immediately
+            await Task.Run(() => {
+                using var source = new ETWTraceEventSource(tracePath);
+                var processSamples = new Dictionary<ProfileProcess, int>();
+                int sampleCount = 0;
+                RawProfileData prof = new();
+
+                source.Kernel.ProcessStartGroup += data => {
+                    if (cancelableTask.IsCanceled) {
+                        source.StopProcessing();
+                    }
+                    
+                    var proc = new ProfileProcess(data.ProcessID, data.ParentID,
+                        data.ProcessName, data.ImageFileName,
+                        data.CommandLine);
+                    //Trace.WriteLine($"proc: {proc}");
+                    prof.AddProcess(proc);
+                };
+
+                source.Kernel.PerfInfoSample += data => {
+                    if (cancelableTask.IsCanceled) {
+                        source.StopProcessing();
+                    }
+
+                    if (data.ProcessID < 0) {
+                        return;
+                    }
+
+                    var process = prof.GetOrCreateProcess(data.ProcessID);
+                    processSamples.AccumulateValue(process, data.Count);
+                    sampleCount++;
+                };
+
+                source.Process();
+
+                foreach (var pair in processSamples) {
+                    list.Add(new TraceProcessSummary(pair.Key, pair.Value) {
+                        WeightPercentage = 100*(double)pair.Value / (double)sampleCount
+                    });
+                }
+            });
+
+            return list;
+        }
+
         public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
               ProfileDataProviderOptions options,
               SymbolFileSourceOptions symbolOptions,
@@ -226,8 +293,6 @@ namespace IRExplorerUI.Profile {
                     //? Maybe faster to process twice - once to get proc list, then get samples/stacks just for one proc?
                     //?   OR multiple threads, each handling diff processes
                     using (var source = new ETWTraceEventSource(tracePath)) {
-                        double lastTime = 0;
-
                         double[] perCoreLastTime = new double[4096];
                         int[] perCoreLastSample = new int[4096];
                         var perContextLastSample = new Dictionary<int, int>();
@@ -243,7 +308,6 @@ namespace IRExplorerUI.Profile {
                             samplingInterval100NS = value;
                             samplingIntervalMS = (double)samplingInterval100NS / 10000;
                             samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
-                            Trace.WriteLine($"=> UPDATE {value} to {samplingIntervalMS} ms");
                         }
 
                         // Default 1ms sampling interval, 1M ns.
@@ -384,7 +448,6 @@ namespace IRExplorerUI.Profile {
 
                         source.Kernel.PerfInfoCollectionStart += data => {
                             if (data.SampleSource == 0) {
-                                Trace.WriteLine($"=> PerfInfoCollectionStart: new {data.NewInterval}, old {data.OldInterval}");
                                 UpdateSamplingInterval(data.NewInterval);
                                 samplingIntervalSet = true;
                             }
@@ -392,7 +455,6 @@ namespace IRExplorerUI.Profile {
 
                         source.Kernel.PerfInfoSetInterval += data => {
                             if (data.SampleSource == 0 && !samplingIntervalSet) {
-                                Trace.WriteLine($"=> PerfInfoCollectionStart: new {data.NewInterval}, old {data.OldInterval}");
                                 UpdateSamplingInterval(data.OldInterval);
                                 samplingIntervalSet = true;
                             }

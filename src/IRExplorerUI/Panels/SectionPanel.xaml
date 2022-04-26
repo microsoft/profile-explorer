@@ -1139,7 +1139,7 @@
                             </Button>
                             <Separator />
 
-                            <ToggleButton ToolTip="Combine all function instances into one" Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}">
+                            <ToggleButton IsChecked="{Binding CombineNodes, ElementName=CalleCalleePanel}" ToolTip="Combine all function instances into one">
                                 <StackPanel Orientation="Horizontal">
                                     <Image
                                         Width="16"

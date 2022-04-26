@@ -4,13 +4,17 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Input;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
+using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Win32;
 
 namespace IRExplorerUI {
@@ -41,6 +45,29 @@ namespace IRExplorerUI {
                     isLoadingProfile_ = value;
                     OnPropertyChange(nameof(IsLoadingProfile));
                     OnPropertyChange(nameof(InputControlsEnabled));
+                }
+            }
+        }
+
+        private bool isLoadingProcessList_;
+        private bool showProcessList_;
+
+        public bool IsLoadingProcessList {
+            get => isLoadingProcessList_;
+            set {
+                if (isLoadingProcessList_ != value) {
+                    isLoadingProcessList_ = value;
+                    OnPropertyChange(nameof(IsLoadingProcessList));
+                }
+            }
+        }
+        
+        public bool ShowProcessList {
+            get => showProcessList_;
+            set {
+                if (showProcessList_ != value) {
+                    showProcessList_ = value;
+                    OnPropertyChange(nameof(ShowProcessList));
                 }
             }
         }
@@ -88,7 +115,7 @@ namespace IRExplorerUI {
                 App.SaveApplicationSettings();
 
                 //? TODO: Disable buttons
-                var task = loadTask_.CreateTask();
+                var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
                 IsLoadingProfile = true;
 
 
@@ -137,9 +164,25 @@ namespace IRExplorerUI {
             DialogResult = false;
             Close();
         }
-        
-        private void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*");
+
+        private async void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) {
+            if (!Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*")) {
+                return;
+            }
+
+            if (File.Exists(ProfileFilePath)) {
+                IsLoadingProcessList = true;
+                ShowProcessList = false;
+                
+                var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+                var processList = await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, task);
+
+                processList.Sort((a, b) => b.SampleCount.CompareTo(a.SampleCount));
+                ProcessList.ItemsSource = new ListCollectionView(processList);
+                IsLoadingProcessList = false;
+                ShowProcessList = true;
+            }
+        }
 
         private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(BinaryAutocompleteBox, Session.CompilerInfo.OpenFileFilter);
@@ -182,19 +225,10 @@ namespace IRExplorerUI {
             }
         }
 
-        private void BinaryAutocompleteBox_OnTextChanged(object sender, RoutedEventArgs e) {
-            var binaryFilePath = BinaryAutocompleteBox.Text;
-
-            if (File.Exists(binaryFilePath) && Utils.IsExecutableFile(binaryFilePath)) {
-                SetAdditionalDirectories(binaryFilePath);
-            }
-        }
-
-        private void SetAdditionalDirectories(string binaryFilePath) {
-            if (!Options.HasBinaryPath(binaryFilePath)) {
-                Options.InsertBinaryPath(binaryFilePath);
-                Options.BinarySearchPathsEnabled = true;
-                OnPropertyChange(nameof(Options));
+        private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
+            if (ProcessList.SelectedItem != null) {
+                var procSummary = (ETWProfileDataProvider.TraceProcessSummary)ProcessList.SelectedItem;
+                BinaryAutocompleteBox.Text = procSummary.ProcessName;
             }
         }
     }
