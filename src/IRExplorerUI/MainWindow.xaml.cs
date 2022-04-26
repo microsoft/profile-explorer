@@ -1365,7 +1365,7 @@ namespace IRExplorerUI {
                                                 SymbolFileSourceOptions symbolOptions,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
-            using var profileData = new ETWProfileDataProvider(null, this);
+            using var profileData = new ETWProfileDataProvider(this);
             var result = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
                                                                          options, symbolOptions,
                                                                          progressCallback, cancelableTask);
