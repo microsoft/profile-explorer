@@ -450,7 +450,7 @@ namespace IRExplorerUI {
         protected virtual void Dispose(bool disposing) {
             if (!disposed_) {
                 documents_.ForEach(item => item.Dispose());
-                documents_ = null;
+                documents_.Clear();
                 MainDocument = null;
                 DiffDocument = null;
                 disposed_ = true;

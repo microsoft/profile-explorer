@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.Graph;
@@ -16,6 +17,7 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
+using static IRExplorerUI.Profile.ETWProfileDataProvider;
 
 namespace IRExplorerUI.Profile;
 
@@ -75,8 +77,8 @@ public class RawProfileData {
         samples_ = new List<ProfileSample>();
         PerfCounters = new List<PerformanceCounterEvent>();
     }
-
-    public void Done() {
+    
+    public void LoadingCompleted() {
         // Free objects used while reading the profile.
         stacksMap_ = null;
         stackData_ = null;
@@ -332,6 +334,25 @@ public class RawProfileData {
         }
 
         return globalIpImageCache_.Find(ip);
+    }
+
+    public List<TraceProcessSummary> BuildProcessSummary() {
+        var list = new List<TraceProcessSummary>();
+        var processSamples = new Dictionary<ProfileProcess, int>();
+
+        foreach (var sample in samples_) {
+            var context = sample.GetContext(this);
+            var process = GetOrCreateProcess(context.ProcessId);
+            processSamples.AccumulateValue(process, 1);
+        };
+
+        foreach (var pair in processSamples) {
+            list.Add(new TraceProcessSummary(pair.Key, pair.Value) {
+                WeightPercentage = 100 * (double)pair.Value / (double)samples_.Count
+            });
+        }
+
+        return list;
     }
 
     //private HashSet<ProfileSample2> sampleSet_ = new HashSet<ProfileSample2>();

@@ -15,6 +15,7 @@ using IRExplorerUI.Compilers.ASM;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
+using IRExplorerUI.Profile.ETW;
 
 namespace IRExplorerUI.Profile; 
 
@@ -189,55 +190,33 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, CancelableTask cancelableTask) {
-        var list = new List<TraceProcessSummary>();
-
-        //? TODO: Progress can be shown as % by taking sample time / session time
-        //? Update proc list while building it, with a hot proc is shows immediately
-        await Task.Run(() => {
-            using var source = new ETWTraceEventSource(tracePath);
-            var processSamples = new Dictionary<ProfileProcess, int>();
-            int sampleCount = 0;
-            RawProfileData prof = new();
-
-            source.Kernel.ProcessStartGroup += data => {
-                if (cancelableTask.IsCanceled) {
-                    source.StopProcessing();
-                }
-                    
-                var proc = new ProfileProcess(data.ProcessID, data.ParentID,
-                    data.ProcessName, data.ImageFileName,
-                    data.CommandLine);
-                //Trace.WriteLine($"proc: {proc}");
-                prof.AddProcess(proc);
-            };
-
-            source.Kernel.PerfInfoSample += data => {
-                if (cancelableTask.IsCanceled) {
-                    source.StopProcessing();
-                }
-
-                if (data.ProcessID < 0) {
-                    return;
-                }
-
-                var process = prof.GetOrCreateProcess(data.ProcessID);
-                processSamples.AccumulateValue(process, data.Count);
-                sampleCount++;
-            };
-
-            source.Process();
-
-            foreach (var pair in processSamples) {
-                list.Add(new TraceProcessSummary(pair.Key, pair.Value) {
-                    WeightPercentage = 100*(double)pair.Value / (double)sampleCount
-                });
-            }
-        });
-
-        return list;
+        using var eventProcessor = new ETWEventProcessor(tracePath);
+        return await Task.Run(() => eventProcessor.BuildProcessSummary(cancelableTask));
     }
 
     public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
+        ProfileDataProviderOptions options,
+        SymbolFileSourceOptions symbolOptions,
+        ProfileLoadProgressHandler progressCallback,
+        CancelableTask cancelableTask) {
+
+        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
+            Total = 0,
+            Current = 0
+        });
+        
+        var profile = await Task.Run(() => {
+            using var eventProcessor = new ETWEventProcessor(tracePath);
+            return eventProcessor.ProcessEvents(cancelableTask);
+        });
+
+        var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
+        binSearchOptions.InsertSymbolPath(imageName);
+        binSearchOptions.InsertSymbolPath(tracePath);
+        return await LoadTraceAsync(profile, imageName, options, binSearchOptions, progressCallback, cancelableTask);
+    }
+
+        public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileLoadProgressHandler progressCallback,
@@ -256,298 +235,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             bool result = await Task.Run(async () => {
                 Trace.WriteLine($"Init at {DateTime.Now}");
 
-                // GC.Collect();
-                // GC.WaitForPendingFinalizers();
-                // long memoryUse = GC.GetTotalMemory(true);
-                    
-                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
-                    Total = 0,
-                    Current = 0
-                });
-
                 var totalSw = Stopwatch.StartNew();
-                RawProfileData prof = new();
-
-                //? Maybe faster to process twice - once to get proc list, then get samples/stacks just for one proc?
-                //?   OR multiple threads, each handling diff processes
-                using (var source = new ETWTraceEventSource(tracePath)) {
-                    double[] perCoreLastTime = new double[4096];
-                    int[] perCoreLastSample = new int[4096];
-                    var perContextLastSample = new Dictionary<int, int>();
-
-                    bool samplingIntervalSet = false;
-                    int samplingInterval100NS; 
-                    const double samplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
-                    double samplingIntervalMS;
-                    double samplingIntervalLimitMS;
-                    var shaBuffer = new byte[20].AsMemory();
-
-                    void UpdateSamplingInterval(int value) {
-                        samplingInterval100NS = value;
-                        samplingIntervalMS = (double)samplingInterval100NS / 10000;
-                        samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
-                    }
-
-                    // Default 1ms sampling interval, 1M ns.
-                    UpdateSamplingInterval(10000);
-
-                    ImageIDTraceData lastImageIdData = null;
-                    ProfileImage lastProfileImage = null;
-                    long lastProfileImageTime = 0;
-
-                    var psw = Stopwatch.StartNew();
-
-
-                    //BlockingCollection<StackWalkStackTraceData> queue = new BlockingCollection<StackWalkStackTraceData>();
-
-                    var symbolParser = new SymbolTraceEventParser(source);
-
-                    symbolParser.ImageID += data => {
-                        if (lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC) {
-                            lastProfileImage.OriginalFileName = data.OriginalFileName;
-
-                            if (lastProfileImage.TimeStamp == 0) {
-                                lastProfileImage.TimeStamp = data.TimeDateStamp;
-                            }
-                        }
-                        else {
-                            // The ImageGroup event should show up later in the stream.
-                            lastImageIdData = (ImageIDTraceData)data.Clone();
-                        }
-                    };
-
-                    //? PDB info - could allow downloading PDBs before EXEs
-                    //symbolParser.ImageIDDbgID_RSDS
-
-                    source.Kernel.ProcessStartGroup += data => {
-                        var proc = new ProfileProcess(data.ProcessID, data.ParentID,
-                            data.ProcessName, data.ImageFileName,
-                            data.CommandLine);
-                        //Trace.WriteLine($"proc: {proc}");
-                        prof.AddProcess(proc);
-                    };
-                        
-                    source.Kernel.ImageGroup += data => {
-                        string originalName = null;
-                        int timeStamp = data.TimeDateStamp;
-                        bool sawImageId = false;
-
-                        if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
-                            // The ImageID event showed up earlier in the stream.
-                            sawImageId = true;
-                            originalName = lastImageIdData.OriginalFileName;
-
-                            if (timeStamp == 0) {
-                                timeStamp = lastImageIdData.TimeDateStamp;
-                            }
-                        }
-
-                        var image = new ProfileImage(data.FileName, originalName, (long)data.ImageBase,
-                            (long)data.DefaultBase, data.ImageSize,
-                            timeStamp, data.ImageChecksum);
-
-                        //Trace.WriteLine($"ImageGroup: {image}, Proc: {data.ProcessID}");
-                        int imageId = prof.AddImageToProcess(data.ProcessID, image);
-
-                        if (!sawImageId) {
-                            // The ImageID event may show up later in the stream.
-                            lastProfileImage = prof.FindImage(imageId);
-                            lastProfileImageTime = data.TimeStampQPC;
-                        }
-                        else {
-                            lastProfileImage = null;
-                        }
-                    };
-                        
-                    source.Kernel.ThreadStartGroup += data => {
-                        var thread = new ProfileThread(data.ThreadID, data.ProcessID, data.ThreadName);
-                        prof.AddThreadToProcess(data.ProcessID, thread);
-                        //Trace.WriteLine($"thread: {thread}");
-                    };
-
-                    source.Kernel.EventTraceHeader += data => {
-                        // data.PointerSize;
-                    };
-
-                    source.Kernel.StackWalkStack += data => {
-                        //if (data.ProcessID != mainProcessId) {
-                        //    return;
-                        //}
-                            
-                        //queue.Add((StackWalkStackTraceData)data.Clone());
-                        var context = prof.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
-                        int contextId = prof.AddContext(context);
-
-                        int frameCount = data.FrameCount;
-                        var stack = prof.RentTemporaryStack(frameCount, contextId);
-                            
-                        // Copy data from event to the temp. stack pointer array.
-                        unsafe {
-                            void* ptr = (void*)((IntPtr)(void*)data.DataStart + 16);
-                            int bytes = data.PointerSize * frameCount;
-                            var span = new Span<byte>(ptr, bytes);
-
-                            fixed (long* destPtr = stack.FramePointers) {
-                                var destSpan = new Span<byte>(destPtr, bytes);
-                                span.CopyTo(destSpan);
-                            }
-                        }
-
-                        //for (int i = 0; i < data.FrameCount; i++) {
-                        //    stack.FramePointers[i] = (long)data.InstructionPointer(i);
-                        //}
-                            
-                        int stackId = prof.AddStack(stack, context);
-
-                        // Try to associate with a previous sample from the same context.
-                        int sampleId = perCoreLastSample[data.ProcessorNumber];
-
-                        if (!prof.TrySetSampleStack(sampleId, stackId, contextId)) {
-                            if(perContextLastSample.TryGetValue(contextId, out sampleId)) {
-                                prof.SetSampleStack(sampleId, stackId, contextId);
-                            }
-                        }
-                            
-                        prof.ReturnStack(stackId);
-                        prof.ReturnContext(contextId);
-
-                        //Trace.WriteLine("-------------------------------");
-
-                        //for (int i = 0; i < data.FrameCount; i++) {
-                        //  var frameIP = data.InstructionPointer(i);
-                        //  Trace.WriteLine($"Stack {frameIP:X}, {data.ProcessID}, t {data.ThreadID}, p {data.ProcessorNumber}");
-                        //}
-                        //    break;
-                        //}
-                        //    PrintIPInfo(frameIP, data.ThreadID, out var _, out var _, out var _);
-                        //    Trace.WriteLine("");
-                        //}
-                    };
-
-                    source.Kernel.PerfInfoCollectionStart += data => {
-                        if (data.SampleSource == 0) {
-                            UpdateSamplingInterval(data.NewInterval);
-                            samplingIntervalSet = true;
-                        }
-                    };
-
-                    source.Kernel.PerfInfoSetInterval += data => {
-                        if (data.SampleSource == 0 && !samplingIntervalSet) {
-                            UpdateSamplingInterval(data.OldInterval);
-                            samplingIntervalSet = true;
-                        }
-                    };
-
-                        
-                    source.Kernel.PerfInfoSample += data => {
-                        // if (data.ProcessID != mainProcessId) {
-                        //     return;
-                        // }
-                        int cpu = data.ProcessorNumber;
-                        double timestamp = data.TimeStampRelativeMSec;
-
-                        bool isKernelCode = data.ExecutingDPC || data.ExecutingISR;
-                        double weight = timestamp - perCoreLastTime[cpu];
-
-                        if (weight > samplingIntervalLimitMS) {
-                            weight = samplingIntervalMS;
-                        }
-
-                        perCoreLastTime[cpu] = timestamp;
-                            
-                        // Skip unknown process.
-                        if (data.ProcessID < 0) {
-                            return;
-                        }
-
-                        // Skip idle thread on non-kernel code.
-                        if (data.ThreadID == 0 && !isKernelCode) {
-                            return;
-                        }
-                            
-                        var context = prof.RentTempContext(data.ProcessID, data.ThreadID, cpu);
-                        int contextId = prof.AddContext(context);
-                        var sample = new ProfileSample((long)data.InstructionPointer,
-                            TimeSpan.FromMilliseconds(timestamp),
-                            TimeSpan.FromMilliseconds(weight),
-                            isKernelCode, contextId);
-                        int sampleId = prof.AddSample(sample);
-                        prof.ReturnContext(contextId);
-
-                        perCoreLastSample[cpu] = sampleId;
-                        perContextLastSample[contextId] = sampleId;
-
-                        //Trace.WriteLine("-------------------------------");
-                        //Trace.WriteLine($"Sample {data.InstructionPointer:X}, {data.ProcessID}, t {data.ThreadID}, p {data.ProcessorNumber}");
-                        //Trace.WriteLine($"      Kernel: {data.ExecutingDPC || data.ExecutingISR}");
-                        //bool found = PrintIPInfo(data.InstructionPointer, data.ThreadID, out var funcInfo, out var offset, out var module);
-                        //Trace.WriteLine("");
-
-                        //if (found) {
-                        //    var textFunction = module.FindFunction(funcInfo.StartRVA, out bool isExternalFunc);
-
-                        //    if (textFunction != null) {
-                        //        var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
-                        //        profile.DebugInfo = funcInfo;
-                        //        var sampleWeight = TimeSpan.FromMilliseconds(weight);
-                        //        profile.AddInstructionSample(offset, sampleWeight);
-                        //        profile.Weight += sampleWeight;
-                        //        profile.ExclusiveWeight += sampleWeight;
-                        //    }
-                        //}
-                    };
-
-                    //void ReceivingThread() {
-                    //    try {
-                    //        foreach (var data in queue.GetConsumingEnumerable(cancelableTask.Token)) {
-                    //            var context = new ProfileContext(data.ProcessID, data.ThreadID,
-                    //                                             data.ProcessorNumber);
-                    //            var contextId = prof.AddContext(context);
-                    //            var stack = new ProfileStack(contextId, data.FrameCount);
-
-                    //            for (int i = 0; i < data.FrameCount; i++) {
-                    //                stack.FramePointers[i] = (long)data.InstructionPointer(i);
-                    //            }
-
-                    //            int stackId = prof.AddStack(stack, context);
-
-                    //            //? TODO: maybe set for each not having a context?
-                    //            if (!prof.SetLastSampleStack(stackId, contextId)) {
-                    //                //Trace.WriteLine("---------------------");
-                    //                //Trace.WriteLine($" search ctx {context}");
-                    //                //bool r = prof.SetLastSampleStack(stackId, contextId, 10);
-                    //                //Trace.WriteLine($"Failed to set sample stack, with maxStep {r}");
-                    //            }
-                    //        }
-                    //    }
-                    //    catch (OperationCanceledException) {
-
-                    //    }
-                    //}
-
-                    //var thread = new Thread(ReceivingThread);
-                    //thread.Start();
-                    //queue.CompleteAdding();
-
-                    source.Process();
-                    psw.Stop();
-
-                    // GC.Collect();
-                    // GC.WaitForPendingFinalizers();
-                    // long memoryUseAfter = GC.GetTotalMemory(true);
-                    //Trace.WriteLine($"    Mem usage: {(double)(memoryUseAfter - memoryUse) / (1024 * 1024)} MB");
-
-                    Trace.WriteLine($"Read time: {psw.Elapsed}");
-                    Trace.WriteLine($"    stacks: {prof.stacks_.Count}");
-                    Trace.WriteLine($"    samples: {prof.samples_.Count}");
-                    Trace.WriteLine($"    ctxs: {prof.contexts_.Count}");
-                    Trace.WriteLine($"    procs: {prof.processes_.Count}");
-                    Trace.WriteLine($"    imgs: {prof.imagesMap_.Count}");
-                    Trace.WriteLine($"    threads: {prof.threadsMap_.Count}");
-                        
-                    // Start getting the function address data while the trace is loading.
-                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-                }
+                
+                // Start getting the function address data while the trace is loading.
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
+                
 
                 ProfileImage prevImage = null;
                 ModuleInfo prevModule = null;
@@ -597,10 +289,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     imageLocks[i] = new object();
                 }
 
-                var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
-                binSearchOptions.InsertSymbolPath(initialImageName);
-                binSearchOptions.InsertSymbolPath(tracePath);
-
                 ModuleInfo FindModuleInfo(ProfileImage queryImage) {
                     //if (queryImage == prevImage) {
                     //    return prevModule;
@@ -629,7 +317,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 }
 
                                 //? TODO: New doc not registerd properly with session, reload crashes
-                                if (imageModule.Initialize(FromProfileImage(queryImage), binSearchOptions).
+                                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions).
                                     ConfigureAwait(false).GetAwaiter().GetResult()) {
                                     Trace.WriteLine($"  - Init in {sw2.Elapsed}");
                                     sw2.Restart();
@@ -720,7 +408,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 for (int i = 0; i < imageLimit; i++) {
                     var binaryFile = FromProfileImage(imageList[i]);
-                    binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, binSearchOptions);
+                    binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolOptions);
                     //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
                 }
 
@@ -752,7 +440,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 }
 
                 // Start a new session in the proper ASM mode.
-                await session_.StartNewSession(tracePath, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
+                await session_.StartNewSession(imageName, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
 
                 for (int i = 0; i < imageLimit; i++) {
                     var binaryFilePath = await binTaskList[i].ConfigureAwait(false);
@@ -1122,8 +810,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 await Task.WhenAll(tasks.ToArray());
                 profileData_.CallTree = callTree;
 
-                //profileData_.Complete();
-
                 //Trace.WriteLine(callTree.PrintSamples());
                 //prof.PrintSamples(0);
 
@@ -1133,7 +819,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 //Trace.WriteLine(callTree.Print());
                 //Trace.Flush();
-                // END SAMPLES PROC
+                //? END SAMPLES PROC
 
 #if false
                     Trace.WriteLine($"Start process PMC at {DateTime.Now}");
