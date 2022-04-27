@@ -114,7 +114,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
             catch (Exception ex) {
 #if DEBUG
-                Trace.TraceError($"Failed to disassemble code at RVA {startRVA}, size {size}");
+                Trace.TraceError($"Failed to disassemble code at RVA {startRVA}, size {size}: {ex.Message}");
 #endif
                 return "";
             }
