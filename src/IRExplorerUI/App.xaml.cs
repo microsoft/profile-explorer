@@ -142,13 +142,13 @@ namespace IRExplorerUI {
 
         private static string GetApplicationFilePath(string file) {
             // File relative to the application install directory.
-            string path = Utils.GetApplicationDirectory();
+            string path = App.ApplicationDirectory;
             return Path.Combine(path, file);
         }
 
         private static string GetApplicationFilePath(string subDir, string file, string extension = "") {
             // File relative to the application install directory.
-            string path = Utils.GetApplicationDirectory();
+            string path = App.ApplicationDirectory;
             return Path.Combine(path, subDir, file, extension);
         }
 
@@ -191,7 +191,7 @@ namespace IRExplorerUI {
         }
 
         public static string GetInternalIRSyntaxHighlightingFilePath() {
-            string appDir = Utils.GetApplicationDirectory();
+            string appDir = App.ApplicationDirectory;
             return Path.Combine(appDir, InternalIRSyntaxHighlightingFile);
         }
 
@@ -526,6 +526,37 @@ namespace IRExplorerUI {
             if (!Utils.OpenExternalFile(DocumentationLocation)) {
                 MessageBox.Show($"Failed to open documentation page", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+
+        public static string ApplicationPath => Process.GetCurrentProcess().MainModule.FileName;
+
+        public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);
+        
+        public static bool StartNewApplicationInstance(string args = "", bool adminMode = false) {
+            var psi = new ProcessStartInfo(ApplicationPath);
+            psi.Arguments = args;
+            psi.UseShellExecute = true;
+
+            if (adminMode) {
+                psi.Verb = "runas";
+            }
+            
+            try {
+                using var process = new Process();
+                process.StartInfo = psi;
+                process.Start();
+                return true;
+            }
+            catch (Exception ex) {
+                Debug.WriteLine($"Failed to start new app instance: {ex}");
+                return false;
+            }
+        }
+
+        public static void RestartApplicationAsAdmin(string args = "") {
+            StartNewApplicationInstance(args, true);
+            Application.Current.Shutdown();
         }
     }
 }

@@ -584,32 +584,7 @@ namespace IRExplorerUI {
 
             return info;
         }
-
-        public static string GetApplicationPath() {
-            return Process.GetCurrentProcess().MainModule.FileName;
-        }
-
-        public static string GetApplicationDirectory() {
-            return Path.GetDirectoryName(GetApplicationPath());
-        }
-
-        public static bool StartNewApplicationInstance(string args = "") {
-            var psi = new ProcessStartInfo(GetApplicationPath());
-            psi.Arguments = args;
-            psi.UseShellExecute = true;
-
-            try {
-                using var process = new Process();
-                process.StartInfo = psi;
-                process.Start();
-                return true;
-            }
-            catch (Exception ex) {
-                Debug.WriteLine($"Failed to start new app instance: {ex}");
-                return false;
-            }
-        }
-
+        
         public static IHighlightingDefinition LoadSyntaxHighlightingFile(string filePath) {
             if (string.IsNullOrEmpty(filePath)) {
                 return null; // File couldn't be loaded.

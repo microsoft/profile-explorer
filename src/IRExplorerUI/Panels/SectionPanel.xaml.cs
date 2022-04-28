@@ -1303,6 +1303,7 @@ namespace IRExplorerUI {
         }
 
         private async Task RunFunctionAnalysis() {
+            return;
             if (settings_.ComputeStatistics) {
                 await ComputeFunctionStatistics();
             }
@@ -1898,7 +1899,7 @@ namespace IRExplorerUI {
                 }
             }
             else {
-                var callTree = await Task.Run(() => CreateCallTree(function));
+                //var callTree = await Task.Run(() => CreateCallTree(function));
 
                 //? One flag for Calls, one Profile
                 ProfileControlsVisible = true;
@@ -2607,7 +2608,7 @@ namespace IRExplorerUI {
         private void OpenDocumentInNewInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
             var loadedDoc = Session.SessionState.FindLoadedDocument(Summary);
 
-            if (!Utils.StartNewApplicationInstance(loadedDoc.FilePath)) {
+            if (!App.StartNewApplicationInstance(loadedDoc.FilePath)) {
                 MessageBox.Show($"Failed to start new application instance", "IR Explorer", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

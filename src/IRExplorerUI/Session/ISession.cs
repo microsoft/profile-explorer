@@ -101,6 +101,12 @@ namespace IRExplorerUI {
                                 ProfileLoadProgressHandler progressCallback,
                                 CancelableTask cancelableTask);
 
+        Task<bool> LoadProfileData(RawProfileData data, string binaryFilePath,
+            ProfileDataProviderOptions options,
+            SymbolFileSourceOptions symbolOptions,
+            ProfileLoadProgressHandler progressCallback,
+            CancelableTask cancelableTask);
+
         bool SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, IFunctionTaskOptions options);
         IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo);
         void SetApplicationStatus(string text, string tooltip = "");

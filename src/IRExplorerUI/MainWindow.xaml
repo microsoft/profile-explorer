@@ -140,10 +140,10 @@
             PreviewCanExecute="CanExecuteLoadProfileCommand" />
 
         <CommandBinding
-            CanExecute="CanExecuteProfileCommand"
-            Command="local:AppCommand.ShowProfileCallGraph"
-            Executed="ShowProfileCallGraphExecuted"
-            PreviewCanExecute="CanExecuteProfileCommand" />
+            CanExecute="CanExecuteLoadProfileCommand"
+            Command="local:AppCommand.RecordProfile"
+            Executed="RecordProfileExecuted"
+            PreviewCanExecute="CanExecuteLoadProfileCommand" />
     </Window.CommandBindings>
 
     <Window.InputBindings>
@@ -372,9 +372,10 @@
 
                     <MenuItem Header="Profiling">
                         <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile" />
-                        <MenuItem Header="Recent Profiles" IsEnabled="False" />
+                        <MenuItem Command="local:AppCommand.RecordProfile" Header="Record Profile" />
                         <Separator />
-                        <MenuItem Command="local:AppCommand.ShowProfileCallGraph" Header="Profile Call Graph" />
+
+                        <MenuItem Header="Recent Profiles" IsEnabled="False" />
                     </MenuItem>
 
                     <MenuItem Header="Tools">
