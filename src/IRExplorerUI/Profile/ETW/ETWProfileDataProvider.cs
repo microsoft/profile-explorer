@@ -207,16 +207,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         
         var profile = await Task.Run(() => {
             using var eventProcessor = new ETWEventProcessor(tracePath);
-            return eventProcessor.ProcessEvents(cancelableTask);
+            return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 
-        var binSearchOptions = (SymbolFileSourceOptions)symbolOptions.Clone();
-        binSearchOptions.InsertSymbolPath(imageName);
-        binSearchOptions.InsertSymbolPath(tracePath);
+        var binSearchOptions = symbolOptions.WithSymbolPaths(imageName, tracePath);
         return await LoadTraceAsync(profile, imageName, options, binSearchOptions, progressCallback, cancelableTask);
     }
 
-        public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, string imageName,
+    public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
         ProfileLoadProgressHandler progressCallback,
@@ -543,6 +541,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 continue;
                             }
 
+                            //? TODO: Replace %?
                             if (index % 20000 == 0) {
                                 if (cancelableTask != null && cancelableTask.IsCanceled) {
                                     return;
@@ -912,6 +911,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 return true;
             });
 
+            if (cancelableTask != null && cancelableTask.IsCanceled) {
+                return null;
+            }
+
             // Add 
             if (result) {
                 //ShowGraph(traceProfile);
@@ -938,12 +941,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     otherDocuments.Add(pair.Value.ModuleDocument);
                 }
 
+                if (exeDocument == null) {
+                    Trace.WriteLine($"Failed to find document for process {imageName}");
+                    return null;
+                }
+
                 Trace.WriteLine($"Using exe document {exeDocument?.ModuleName}");
                 session_.SessionState.MainDocument = exeDocument;
                 await session_.SetupNewSession(exeDocument, otherDocuments);
             }
 
-            //trace = null;
+            if (cancelableTask != null && cancelableTask.IsCanceled) {
+                return null;
+            }
+
             return result ? profileData_ : null;
         }
         catch (Exception ex) {

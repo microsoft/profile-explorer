@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Load execution profile trace"
+    Title="Load profile trace"
     Width="500"
     Height="Auto"
     MinWidth="400"
@@ -17,66 +17,143 @@
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="38" />
-        </Grid.RowDefinitions>
-
         <StackPanel Grid.Row="0" Grid.Column="0">
-            <TextBlock Margin="16,8,16,0" Text="Profile data file" />
-            <Grid Margin="16,4,16,0">
-                <controls:FileSystemTextBox
-                    x:Name="ProfileAutocompleteBox"
-                    Height="22"
-                    Margin="0,0,55,0"
-                    HorizontalAlignment="Stretch"
-                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                    FilterMode="StartsWithOrdinal"
-                    IsDropDownOpen="True"
-                    IsEnabled="{Binding InputControlsEnabled}"
-                    IsTextCompletionEnabled="False"
-                    MinimumPrefixLength="1"
-                    TabIndex="1"
-                    Text="{Binding Path=ProfileFilePath, Mode=TwoWay}" />
+            <StackPanel x:Name="ProfileCapturePanel" Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibility}}">
+                <TextBlock Margin="16,8,16,0" Text="Capture system-wide ETW sampling profile" />
 
-                <Button
-                    x:Name="BaseBrowseButton"
-                    Height="22"
-                    Padding="2,2,2,2"
-                    HorizontalAlignment="Right"
-                    Click="ProfileBrowseButton_Click"
-                    Content="Browse..."
-                    IsEnabled="{Binding InputControlsEnabled}"
-                    TabIndex="9" />
-            </Grid>
+                <StackPanel
+                    Margin="16,8,0,8"
+                    Orientation="Horizontal"
+                    Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibility}}">
+                    <TextBlock Text="Sampling frequency" />
+                    <Slider
+                        Width="120"
+                        Margin="16,0,0,0"
+                        Foreground="{DynamicResource DisabledForegroundBrush}"
+                        Interval="1000"
+                        IsEnabled="{Binding RecordingControlsEnabled}"
+                        IsSnapToTickEnabled="True"
+                        LargeChange="2000"
+                        Maximum="8000"
+                        Minimum="1000"
+                        SmallChange="1000"
+                        TickFrequency="1000"
+                        TickPlacement="BottomRight"
+                        Value="{Binding Path=SamplingFrequency}" />
+                    <TextBlock Margin="8,0,0,0" Text="{Binding Path=SamplingFrequency}" />
+                </StackPanel>
 
-            <TextBlock Margin="16,4,16,0" Text="Process binary" />
-            <Grid Margin="16,4,16,0">
-                <controls:FileSystemTextBox
-                    x:Name="BinaryAutocompleteBox"
-                    Height="22"
-                    Margin="0,0,55,0"
-                    HorizontalAlignment="Stretch"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                    FilterMode="StartsWithOrdinal"
-                    IsDropDownOpen="True"
-                    IsEnabled="{Binding InputControlsEnabled}"
-                    IsTextCompletionEnabled="False"
-                    MinimumPrefixLength="1"
-                    TabIndex="2"
-                    Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
+                <StackPanel
+                    Margin="16,8,0,0"
+                    Orientation="Horizontal"
+                    Visibility="{Binding RequiresElevation, Converter={StaticResource BoolToVisibility}}">
+                    <Button
+                        x:Name="RestartAppButton"
+                        Height="22"
+                        Padding="4,0,4,0"
+                        HorizontalAlignment="Left"
+                        Background="#FFFCF4CC"
+                        Click="RestartAppButton_OnClick"
+                        Content="Restart as Admin"
+                        TabIndex="9" />
 
-                <Button
-                    x:Name="DiffBrowseButton"
-                    Height="22"
-                    Padding="2,2,2,2"
-                    HorizontalAlignment="Right"
-                    Click="BinaryBrowseButton_Click"
-                    Content="Browse..."
-                    IsEnabled="{Binding InputControlsEnabled}"
-                    TabIndex="10" />
-            </Grid>
+                    <TextBlock
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        FontWeight="Bold"
+                        Text="IR Explorer must run with Administrator permissions" />
+                </StackPanel>
+
+                <StackPanel
+                    Margin="16,0,0,0"
+                    Orientation="Horizontal"
+                    Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibility}}">
+                    <Button
+                        x:Name="StartCaptureButton"
+                        Height="22"
+                        Padding="4,0,4,0"
+                        HorizontalAlignment="Left"
+                        Background="#FFFCF4CC"
+                        Click="StartCaptureButton_OnClick"
+                        Content="Start capture"
+                        IsEnabled="{Binding RecordingControlsEnabled}"
+                        TabIndex="9" />
+                    <Button
+                        x:Name="StopCaptureButton"
+                        Height="22"
+                        Margin="4,0,0,0"
+                        Padding="4,0,4,0"
+                        HorizontalAlignment="Left"
+                        Click="StopCaptureButton_OnClick"
+                        Content="Stop"
+                        IsEnabled="{Binding RecordingStopControlsEnabled}"
+                        TabIndex="9" />
+
+                    <TextBlock
+                        x:Name="RecordProgressLabel"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        Text="Starting recording..."
+                        Visibility="{Binding IsRecordingProfile, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel x:Name="ProfileLoadPanel" Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibility}}">
+                <TextBlock Margin="16,8,16,0" Text="Profile data file" />
+                <Grid Margin="16,4,16,0">
+                    <controls:FileSystemTextBox
+                        x:Name="ProfileAutocompleteBox"
+                        Height="22"
+                        Margin="0,0,48,0"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        FilterMode="StartsWithOrdinal"
+                        IsDropDownOpen="True"
+                        IsEnabled="{Binding InputControlsEnabled}"
+                        IsTextCompletionEnabled="False"
+                        MinimumPrefixLength="1"
+                        TabIndex="1"
+                        Text="{Binding Path=ProfileFilePath, Mode=TwoWay}" />
+
+                    <Button
+                        x:Name="BaseBrowseButton"
+                        Height="22"
+                        Padding="4,2,4,2"
+                        HorizontalAlignment="Right"
+                        Click="ProfileBrowseButton_Click"
+                        Content="Browse"
+                        IsEnabled="{Binding InputControlsEnabled}"
+                        TabIndex="9" />
+                </Grid>
+
+                <TextBlock Margin="16,4,16,0" Text="Process binary" />
+                <Grid Margin="16,4,16,0">
+                    <controls:FileSystemTextBox
+                        x:Name="BinaryAutocompleteBox"
+                        Height="22"
+                        Margin="0,0,48,0"
+                        HorizontalAlignment="Stretch"
+                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                        FilterMode="StartsWithOrdinal"
+                        IsDropDownOpen="True"
+                        IsEnabled="{Binding InputControlsEnabled}"
+                        IsTextCompletionEnabled="False"
+                        MinimumPrefixLength="1"
+                        TabIndex="2"
+                        Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
+
+                    <Button
+                        x:Name="DiffBrowseButton"
+                        Height="22"
+                        Padding="4,2,4,2"
+                        HorizontalAlignment="Right"
+                        Click="BinaryBrowseButton_Click"
+                        Content="Browse"
+                        IsEnabled="{Binding InputControlsEnabled}"
+                        TabIndex="10" />
+                </Grid>
+            </StackPanel>
 
             <ProgressBar
                 x:Name="SummaryProgressBar"
@@ -88,8 +165,8 @@
                 Visibility="{Binding IsLoadingProcessList, Converter={StaticResource BoolToVisibility}}" />
             <ListView
                 x:Name="ProcessList"
-                MinHeight="80"
-                MaxHeight="80"
+                MinHeight="150"
+                MaxHeight="150"
                 Margin="16,4,16,0"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 IsEnabled="{Binding InputControlsEnabled}"
@@ -138,6 +215,69 @@
                     </Style>
                 </ListView.ItemContainerStyle>
             </ListView>
+
+            <Grid Margin="16,8,16,0">
+                <StackPanel Width="250" HorizontalAlignment="Left">
+                    <Button
+                        x:Name="RecentButton"
+                        Width="80"
+                        Height="24"
+                        Padding="4,0,4,0"
+                        HorizontalAlignment="Left"
+                        Click="RecentButton_Click"
+                        Content="Recent Files"
+                        Visibility="{Binding RecentControlsVisible, Converter={StaticResource BoolToVisibility}}">
+                        <Button.ContextMenu>
+                            <ContextMenu />
+                        </Button.ContextMenu>
+                    </Button>
+                    <ProgressBar
+                        x:Name="LoadProgressBar"
+                        Height="4"
+                        HorizontalAlignment="Stretch"
+                        Maximum="100"
+                        Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}"
+                        Value="40" />
+                    <DockPanel Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock
+                            x:Name="LoadProgressLabel"
+                            DockPanel.Dock="Left"
+                            Text="" />
+                        <TextBlock
+                            x:Name="ProgressPercentLabel"
+                            HorizontalAlignment="Right"
+                            DockPanel.Dock="Right"
+                            Text="0 %" />
+                    </DockPanel>
+                </StackPanel>
+
+                <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                    <Button
+                        x:Name="CancelButton"
+                        Height="24"
+                        Margin="0,0,4,0"
+                        Padding="4,0,4,0"
+                        VerticalAlignment="Top"
+                        Click="CancelButton_Click"
+                        Content="Cancel"
+                        IsCancel="True"
+                        TabIndex="4"
+                        Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                    <Button
+                        x:Name="LoadButton"
+                        Height="24"
+                        Padding="4,0,4,0"
+                        VerticalAlignment="Top"
+                        Background="#FFFCF4CC"
+                        Click="LoadButton_Click"
+                        Content="Load Profile"
+                        IsEnabled="{Binding InputControlsEnabled}"
+                        TabIndex="3"
+                        Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                </StackPanel>
+            </Grid>
+
+            <Separator Margin="0,8,0,0" />
 
             <Expander
                 Margin="16,8,16,0"
@@ -296,69 +436,5 @@
         </StackPanel>
 
 
-        <StackPanel
-            Grid.Row="1"
-            Width="250"
-            Margin="16,4,0,8"
-            HorizontalAlignment="Left">
-            <Button
-                x:Name="RecentButton"
-                Width="80"
-                Height="24"
-                Padding="4,1,4,1"
-                HorizontalAlignment="Left"
-                Click="RecentButton_Click"
-                Content="Recent Files"
-                Visibility="{Binding IsLoadingProfile, Converter={StaticResource InvertedBoolToVisibility}}">
-                <Button.ContextMenu>
-                    <ContextMenu />
-                </Button.ContextMenu>
-            </Button>
-            <ProgressBar
-                x:Name="LoadProgressBar"
-                Height="4"
-                HorizontalAlignment="Stretch"
-                Maximum="100"
-                Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}"
-                Value="40" />
-            <DockPanel Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock
-                    x:Name="LoadProgressLabel"
-                    DockPanel.Dock="Left"
-                    Text="" />
-                <TextBlock
-                    x:Name="ProgressPercentLabel"
-                    HorizontalAlignment="Right"
-                    DockPanel.Dock="Right"
-                    Text="0 %" />
-            </DockPanel>
-        </StackPanel>
-
-        <StackPanel
-            Grid.Row="1"
-            Margin="0,4,16,8"
-            HorizontalAlignment="Right"
-            Orientation="Horizontal">
-            <Button
-                x:Name="CancelButton"
-                Height="24"
-                Margin="0,0,4,0"
-                Padding="4,1,4,1"
-                VerticalAlignment="Top"
-                Click="CancelButton_Click"
-                Content="Cancel"
-                IsCancel="True"
-                TabIndex="4" />
-            <Button
-                x:Name="LoadButton"
-                Height="24"
-                Padding="4,1,4,1"
-                VerticalAlignment="Top"
-                Background="#FFFCF4CC"
-                Click="LoadButton_Click"
-                Content="Load Profile"
-                IsEnabled="{Binding InputControlsEnabled}"
-                TabIndex="3" />
-        </StackPanel>
     </Grid>
 </Window>

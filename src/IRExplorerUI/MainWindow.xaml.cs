@@ -95,6 +95,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "ShowDocumentSearch", typeof(Window));
         public static readonly RoutedUICommand LoadProfile =
             new RoutedUICommand("Untitled", "LoadProfile", typeof(Window));
+        public static readonly RoutedUICommand RecordProfile =
+            new RoutedUICommand("Untitled", "RecordProfile", typeof(Window));
         public static readonly RoutedUICommand ShowProfileCallGraph =
             new RoutedUICommand("Untitled", "ShowProfileCallGraph", typeof(Window));
     }
@@ -1377,8 +1379,36 @@ namespace IRExplorerUI {
             return result != null;
         }
 
+        public async Task<bool> LoadProfileData(RawProfileData data, string binaryFilePath,
+                                                ProfileDataProviderOptions options,
+                                                SymbolFileSourceOptions symbolOptions,
+                                                ProfileLoadProgressHandler progressCallback,
+                                                CancelableTask cancelableTask) {
+            using var profileData = new ETWProfileDataProvider(this);
+            var result = await profileData.LoadTraceAsync(data, binaryFilePath,
+                                                          options, symbolOptions,
+                                                          progressCallback, cancelableTask);
+            if (!IsSessionStarted) {
+                return false;
+            }
+
+            sessionState_.ProfileData = result;
+            return result != null;
+        }
+
         private async void LoadProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var window = new ProfileLoadWindow(this);
+            var window = new ProfileLoadWindow(this, false);
+            window.Owner = this;
+            var result = window.ShowDialog();
+
+            if (result.HasValue && result.Value) {
+                await SectionPanel.RefreshMainSummary();
+                SetOptionalStatus("Profile data loaded");
+            }
+        }
+
+        private async void RecordProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var window = new ProfileLoadWindow(this, true);
             window.Owner = this;
             var result = window.ShowDialog();
 
@@ -1396,79 +1426,6 @@ namespace IRExplorerUI {
         private void CanExecuteLoadProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = sessionState_ == null || sessionState_.ProfileData == null;
             e.Handled = true;
-        }
-
-        private async void ShowProfileCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var loadedDoc = sessionState_.FindLoadedDocument(MainDocumentSummary);
-            var cg = CallGraphUtils.BuildCallGraph(MainDocumentSummary, null, loadedDoc, compilerInfo_);
-            var targetFuncts = new List<IRTextFunction>();
-            var sortedFuncts = ProfileData.GetSortedFunctions();
-
-            foreach (var pair in sortedFuncts) {
-                var func = pair.Item1;
-                var funcProfile = pair.Item2;
-
-                if (funcProfile.ExclusiveWeight.TotalMilliseconds < 1000) {
-                    break;
-                }
-
-                targetFuncts.Add(func);
-
-                if (targetFuncts.Count == 10) {
-                    break;
-                }
-            }
-
-            cg.AugmentGraph(AugmentCallNodeCallback);
-            cg.TrimGraph(targetFuncts, AugmentCallerNodeCallback, FilterCalleeNodeCallback);
-            List<Color> colors = ColorUtils.MakeColorPallete(1, 1, 0.85f, 0.95f, 10);
-
-            foreach (var node in cg.FunctionNodes) {
-                string sizeText = null;
-                var tag = node.GetTag<GraphNodeTag>();
-
-                if (tag != null) {
-                    sizeText = tag.Label;
-                }
-
-                node.RemoveTag<GraphNodeTag>();
-
-                if (node.Function == null) {
-                    continue;
-                }
-
-                var funcProfile = ProfileData.GetFunctionProfile(node.Function);
-
-                if (funcProfile != null) {
-                    double weightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
-                    double inclusiveWeightPercentage = ProfileData.ScaleFunctionWeight(funcProfile.Weight);
-                    var tooltip = $"{Math.Round(weightPercentage * 100, 2)}%  ({Math.Round(funcProfile.ExclusiveWeight.TotalMilliseconds, 2):#,#} ms), {Math.Round(inclusiveWeightPercentage * 100, 2)}%";
-
-                    if (!string.IsNullOrEmpty(sizeText)) {
-                        tooltip += $"\n{sizeText}";
-                    }
-
-                    //int colorIndex = (int)Math.Floor(10 * (1.0 - weightPercentage));
-                    int colorIndex = sortedFuncts.FindIndex(func => node.Function == func.Item1);
-                    colorIndex = Math.Clamp(colorIndex, 0, 10);
-
-                    node.AddTag(GraphNodeTag.MakeColor(tooltip, colors[colorIndex]));
-                }
-            }
-
-            var layoutGraph = await Task.Run(() => CallGraphUtils.BuildCallGraphLayout(cg));
-
-            if (layoutGraph.IsEmpty) {
-                MessageBox.Show("Failed to compute call graph", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var panel = new CallGraphPanel(this);
-            panel.TitlePrefix = "Profile ";
-
-            DisplayFloatingPanel(panel);
-            panel.DisplayGraph(layoutGraph);
         }
     }
 }

@@ -59,6 +59,16 @@ namespace IRExplorerUI.Compilers {
             }
         }
 
+        public SymbolFileSourceOptions WithSymbolPaths(params string[] paths) {
+            var options = (SymbolFileSourceOptions)Clone();
+
+            foreach (var path in paths) {
+                options.InsertSymbolPath(path);
+            }
+
+            return options;
+        }
+
         public SymbolFileSourceOptions() {
             Reset();
         }

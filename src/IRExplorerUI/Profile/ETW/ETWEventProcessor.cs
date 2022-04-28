@@ -11,14 +11,17 @@ using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
 using Microsoft.Diagnostics.Tracing.Parsers;
 using System.Diagnostics;
 using System.IO;
+using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile.ETW;
 
 public class ETWEventProcessor : IDisposable {
     private ETWTraceEventSource source_;
+    private bool isRealTime_;
 
-    public ETWEventProcessor(ETWTraceEventSource source) {
+    public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true) {
         source_ = source;
+        isRealTime_ = isRealTime;
     }
 
     public ETWEventProcessor(string tracePath) {
@@ -64,7 +67,7 @@ public class ETWEventProcessor : IDisposable {
         return list;
     }
 
-    public RawProfileData ProcessEvents(CancelableTask cancelableTask) {
+    public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
         const double samplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
         bool samplingIntervalSet = false;
         int samplingInterval100NS;
@@ -86,6 +89,8 @@ public class ETWEventProcessor : IDisposable {
         double[] perCoreLastTime = new double[4096];
         int[] perCoreLastSample = new int[4096];
         var perContextLastSample = new Dictionary<int, int>();
+        int lastReportedSampleCount = 0;
+        const int sampleReportInterval = 1000;
         
         //? BlockingCollection<StackWalkStackTraceData> queue = new BlockingCollection<StackWalkStackTraceData>();
         var symbolParser = new SymbolTraceEventParser(source_);
@@ -103,7 +108,7 @@ public class ETWEventProcessor : IDisposable {
                 lastImageIdData = (ImageIDTraceData)data.Clone();
             }
         };
-
+        
         //? PDB info - could allow downloading PDBs before EXEs
         //symbolParser.ImageIDDbgID_RSDS
         RawProfileData profile = new();
@@ -120,13 +125,21 @@ public class ETWEventProcessor : IDisposable {
             int timeStamp = data.TimeDateStamp;
             bool sawImageId = false;
 
-            if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
-                // The ImageID event showed up earlier in the stream.
-                sawImageId = true;
-                originalName = lastImageIdData.OriginalFileName;
-
-                if (timeStamp == 0) {
+            if (timeStamp == 0) {
+                if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
+                    // The ImageID event showed up earlier in the stream.
+                    sawImageId = true;
+                    originalName = lastImageIdData.OriginalFileName;
                     timeStamp = lastImageIdData.TimeDateStamp;
+                }
+                else if (isRealTime_) {
+                    // In a capture session, the image is on the local machine,
+                    // so just the the info out of the binary.
+                    var imageInfo = PEBinaryInfoProvider.GetBinaryFileInfo(data.FileName);
+
+                    if (imageInfo != null) {
+                        timeStamp = imageInfo.TimeStamp;
+                    }
                 }
             }
 
@@ -261,6 +274,16 @@ public class ETWEventProcessor : IDisposable {
 
             perCoreLastSample[cpu] = sampleId;
             perContextLastSample[contextId] = sampleId;
+
+            int sampleCount = profile.samples_.Count;
+
+            if (sampleCount - lastReportedSampleCount >= sampleReportInterval) {
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
+                    Total = sampleCount,
+                    Current = sampleCount
+                });
+                lastReportedSampleCount = sampleCount;
+            }
         };
 
         source_.Process();

@@ -761,19 +761,21 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
     [ProtoMember(6)]
     public string OriginalFileName { get; set; }
     [ProtoMember(7)]
-    public long TimeStamp { get; set; }
+    public int TimeStamp { get; set; }
     [ProtoMember(8)]
     public long Checksum { get; set; }
 
     public long BaseAddressEnd => BaseAddress + Size;
 
-    public string ModuleName => !string.IsNullOrWhiteSpace(OriginalFileName) ? Utils.TryGetFileName(OriginalFileName) : FilePath;
+    public string ModuleName => !string.IsNullOrWhiteSpace(OriginalFileName) ? 
+                                Utils.TryGetFileName(OriginalFileName) : 
+                                Utils.TryGetFileName(FilePath);
 
     public ProfileImage() { }
 
     public ProfileImage(string filePath, string originalFileName,
         long baseAddress, long defaultBaseAddress,
-        int size, long timeStamp, long checksum) {
+        int size, int timeStamp, long checksum) {
         Size = size;
         FilePath = filePath;
         OriginalFileName = originalFileName;

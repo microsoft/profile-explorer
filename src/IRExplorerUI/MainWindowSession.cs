@@ -1310,7 +1310,7 @@ namespace IRExplorerUI {
         }
 
         private void OpenNewDocumentExecuted(object sender, ExecutedRoutedEventArgs e) {
-            if (!Utils.StartNewApplicationInstance()) {
+            if (!App.StartNewApplicationInstance()) {
                 using var centerForm = new DialogCenteringHelper(this);
                 MessageBox.Show("Failed to start new IR Explorer instance", "IR Explorer",
                                 MessageBoxButton.OK, MessageBoxImage.Error);

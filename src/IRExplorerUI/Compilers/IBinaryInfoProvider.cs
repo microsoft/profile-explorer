@@ -14,7 +14,7 @@ public class BinaryFileDescription {
     public Machine Architecture { get; set; }
     public BinaryFileKind FileKind { get; set; }
     public long Checksum { get; set; }
-    public long TimeStamp { get; set; }
+    public int TimeStamp { get; set; }
     public long ImageSize { get; set; }
     public long CodeSize { get; set; }
     public long ImageBase { get; set; }
