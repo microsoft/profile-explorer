@@ -10,6 +10,12 @@ using IRExplorerCore;
 using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
+    // native/managed Moduleinfo
+
+    //? DisassemblerSectionLoader makes fake doc ,
+    //? use manual DisassemblerSectionLoader, inject debugInfo for EnumerateFunctions
+    //? - split methods by module
+
     public class ModuleInfo : IDisposable {
         private ISession session_;
         private BinaryFileDescription binaryInfo_;
@@ -34,7 +40,8 @@ namespace IRExplorerUI.Profile {
             session_ = session;
         }
         
-        public async Task<bool> Initialize(BinaryFileDescription binaryInfo, SymbolFileSourceOptions options) {
+        public async Task<bool> Initialize(BinaryFileDescription binaryInfo, SymbolFileSourceOptions options,
+                                            IDebugInfoProvider debugInfo) {
             if (Initialized) {
                 return true;
             }
@@ -42,7 +49,7 @@ namespace IRExplorerUI.Profile {
             binaryInfo_ = binaryInfo;
             var imageName = binaryInfo.ImageName;
             Trace.WriteLine($"ModuleInfo init {imageName}");
-
+            
             var filePath = await FindBinaryFilePath(options).ConfigureAwait(false);
 
             if (filePath == null) {
@@ -53,15 +60,24 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceInformation($"Found local path for image {imageName}: {filePath}");
             }
 
-            var loadedDoc = await session_.LoadBinaryDocument(filePath, binaryInfo.ImageName).ConfigureAwait(false);
+            var localBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
+            bool isManagedImagae = localBinaryInfo != null && localBinaryInfo.IsManagedImage;
+            
+            //? split into providers for each .net moduel, plus a list of all functs
+            var loadedDoc = await session_.LoadBinaryDocument(filePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
             
             if (loadedDoc == null) {
                 Trace.TraceWarning($"Failed to load document for image {imageName}");
                 return false;
             }
-            
+
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
+
+            if (isManagedImagae) {
+                DebugInfo = debugInfo;
+                HasDebugInfo = HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
+            }
 
             Trace.TraceInformation($"Initialized image {imageName}");
             Initialized = true;

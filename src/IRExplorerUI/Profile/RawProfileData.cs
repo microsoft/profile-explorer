@@ -30,28 +30,6 @@ namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
 public class RawProfileData {
-    public List<ProfileProcess> Processes => processes_.ToValueList();
-    public List<PerformanceCounterEvent> PerfCounters { get; set; }
-
-    //? Make fields private
-    public Dictionary<int, ProfileProcess> processes_;
-    public List<ProfileThread> threads_;
-    public Dictionary<ProfileThread, int> threadsMap_;
-
-    public List<ProfileContext> contexts_;
-    public Dictionary<ProfileContext, int> contextsMap_;
-
-    public List<ProfileImage> images_;
-    public Dictionary<ProfileImage, int> imagesMap_;
-
-    public List<ProfileStack> stacks_;
-    public Dictionary<int, Dictionary<ProfileStack, int>> stacksMap_;
-    private HashSet<long[]> stackData_;
-    private Dictionary<ProfileStack, int> lastProcStacks_;
-    private int lastProcId_;
-
-    public List<ProfileSample> samples_;
-
     private static ProfileContext tempContext_ = new ProfileContext();
     private static ProfileStack tempStack_ = new ProfileStack();
 
@@ -59,9 +37,34 @@ public class RawProfileData {
     private static List<(int ProcessId, IpToImageCache Cache)> ipImageCache_;
     [ThreadStatic]
     private static ProfileImage lastIpImage_;
-
     [ThreadStatic]
     private static IpToImageCache globalIpImageCache_;
+
+    private List<ProfileSample> samples_;
+    private Dictionary<int, ProfileProcess> processes_;
+    private List<ProfileThread> threads_;
+    private Dictionary<ProfileThread, int> threadsMap_;
+
+    private List<ProfileContext> contexts_;
+    private Dictionary<ProfileContext, int> contextsMap_;
+
+    private List<ProfileImage> images_;
+    private Dictionary<ProfileImage, int> imagesMap_;
+
+    private List<ProfileStack> stacks_;
+    private Dictionary<int, Dictionary<ProfileStack, int>> stacksMap_;
+    private HashSet<long[]> stackData_;
+    private Dictionary<ProfileStack, int> lastProcStacks_;
+    private int lastProcId_;
+    
+    public List<ProfileSample> Samples => samples_;
+    public List<ProfileProcess> Processes => processes_.ToValueList();
+    public List<ProfileThread> Threads => threads_;
+    public List<ProfileImage> Images => images_;
+    public List<PerformanceCounterEvent> PerfCounters { get; set; }
+
+    //? hack
+    public DotNetDebugInfoProvider debugInfo_;
 
     public RawProfileData() {
         contexts_ = new List<ProfileContext>();
@@ -359,6 +362,23 @@ public class RawProfileData {
 
 
     public void PrintSamples(int processId) {
+
+        var proc = GetOrCreateProcess(processId);
+
+        if (proc != null) {
+            foreach (var image in proc.Images(this)) {
+                Trace.WriteLine($"Image: {image}");
+            }
+        }
+        
+        foreach (var sample in samples_) {
+            var context = sample.GetContext(this);
+            if (context.ProcessId == processId) {
+                Trace.WriteLine($"{sample}");
+            }
+        }
+
+
         //SampleHolder h = new SampleHolder() { samples = samples_ };
 
         //var d = StateSerializer.Serialize(h);
@@ -674,7 +694,7 @@ public struct ProfileSample : IEquatable<ProfileSample> {
     }
 
     public override string ToString() {
-        return $"{IP}, Weight: {Weight.Ticks}, StackId: {StackId}";
+        return $"{IP:X}, Weight: {Weight.Ticks}, StackId: {StackId}";
     }
 }
 

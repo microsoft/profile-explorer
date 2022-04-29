@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using IRExplorerCore;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
 
 namespace IRExplorerUI.Profile.ETW {
@@ -32,6 +33,8 @@ namespace IRExplorerUI.Profile.ETW {
                     return null;
                 }
 
+                bool handleDotNetEvents = true;
+
                 RawProfileData profile = null;
                 var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
                                      KernelTraceEventParser.Keywords.Process |
@@ -43,12 +46,20 @@ namespace IRExplorerUI.Profile.ETW {
                     session_.EnableKernelProvider(capturedEvents, capturedEvents); // With stack sampling.
                     session_.EnableProvider(SymbolTraceEventParser.ProviderGuid, TraceEventLevel.Verbose);
 
-                    //session_.EnableProvider(
-                    //    ClrTraceEventParser.ProviderGuid,
-                    //    TraceEventLevel.Verbose,
-                    //    (ulong)(ClrTraceEventParser.Keywords.Jit | ClrTraceEventParser.Keywords.JittedMethodILToNativeMap));
+                    if (handleDotNetEvents) {
+                        session_.EnableProvider(
+                            ClrTraceEventParser.ProviderGuid,
+                            TraceEventLevel.Verbose,
+                            (ulong)(ClrTraceEventParser.Keywords.Jit |
+                                    ClrTraceEventParser.Keywords.JittedMethodILToNativeMap));
+                        session_.EnableProvider(
+                            ClrRundownTraceEventParser.ProviderGuid,
+                            TraceEventLevel.Verbose,
+                            (ulong)(ClrTraceEventParser.Keywords.Jit |
+                                    ClrTraceEventParser.Keywords.JittedMethodILToNativeMap));
+                    }
 
-                    using var eventProcessor = new ETWEventProcessor(session_.Source);
+                    using var eventProcessor = new ETWEventProcessor(session_.Source, true, handleDotNetEvents);
                     profile = eventProcessor.ProcessEvents(progressCallback, cancelableTask);
                 }
                 catch (Exception ex) {

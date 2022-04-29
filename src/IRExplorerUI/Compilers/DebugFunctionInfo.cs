@@ -12,6 +12,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     public List<DebugSourceLineInfo> SourceLines { get; set; }
     public int Id { get; set; }
     public string ModuleName { get; set; }
+    public object Data { get; set; }
 
     public long StartRVA => RVA;
     public long EndRVA => RVA + Size - 1;
@@ -118,6 +119,10 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
         }
 
         return 0;
+    }
+
+    public override string ToString() {
+        return $"{Name}, RVA: {RVA:X}, Size: {Size}, Id: {Id}, Module: {ModuleName}";
     }
 }
 

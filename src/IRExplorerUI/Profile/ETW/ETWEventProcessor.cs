@@ -12,16 +12,24 @@ using Microsoft.Diagnostics.Tracing.Parsers;
 using System.Diagnostics;
 using System.IO;
 using IRExplorerUI.Compilers;
+using Microsoft.Diagnostics.Runtime;
+using static System.Collections.Specialized.BitVector32;
+using System.Windows.Markup;
+using CSScriptLib;
+using Microsoft.Diagnostics.Tracing.Parsers.Clr;
+using System.Collections;
 
 namespace IRExplorerUI.Profile.ETW;
 
 public class ETWEventProcessor : IDisposable {
     private ETWTraceEventSource source_;
     private bool isRealTime_;
+    private bool handleDotNetEvents_;
 
-    public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true) {
+    public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true, bool handleDotNetEvents = false) {
         source_ = source;
         isRealTime_ = isRealTime;
+        handleDotNetEvents_ = handleDotNetEvents;
     }
 
     public ETWEventProcessor(string tracePath) {
@@ -80,7 +88,7 @@ public class ETWEventProcessor : IDisposable {
             samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
         }
 
-        // Default 1ms sampling interval, 1M ns.
+        // Default 1ms sampling interval 1ms.
         UpdateSamplingInterval(10000);
         ImageIDTraceData lastImageIdData = null;
         ProfileImage lastProfileImage = null;
@@ -91,11 +99,14 @@ public class ETWEventProcessor : IDisposable {
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSampleCount = 0;
         const int sampleReportInterval = 1000;
-        
+        RawProfileData profile = new();
+
         //? BlockingCollection<StackWalkStackTraceData> queue = new BlockingCollection<StackWalkStackTraceData>();
         var symbolParser = new SymbolTraceEventParser(source_);
 
         symbolParser.ImageID += data => {
+            // The image timestamp often is part of this event.
+            // A correct timestamp is needed to locate and download the image.
             if (lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC) {
                 lastProfileImage.OriginalFileName = data.OriginalFileName;
 
@@ -110,8 +121,7 @@ public class ETWEventProcessor : IDisposable {
         };
         
         //? PDB info - could allow downloading PDBs before EXEs
-        //symbolParser.ImageIDDbgID_RSDS
-        RawProfileData profile = new();
+        // symbolParser.ImageIDDbgID_RSDS
 
         source_.Kernel.ProcessStartGroup += data => {
             var proc = new ProfileProcess(data.ProcessID, data.ParentID,
@@ -179,6 +189,11 @@ public class ETWEventProcessor : IDisposable {
             //    return;
             //}
 
+            if (string.IsNullOrEmpty(data.ProcessName) ||
+                !data.ProcessName.Contains(targetProc)) {
+                return;
+            }
+
             //queue.Add((StackWalkStackTraceData)data.Clone());
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
@@ -187,6 +202,7 @@ public class ETWEventProcessor : IDisposable {
             var stack = profile.RentTemporaryStack(frameCount, contextId);
 
             // Copy data from event to the temp. stack pointer array.
+            // Slightly faster to copy the entire array as a whole.
             unsafe {
                 void* ptr = (void*)((IntPtr)(void*)data.DataStart + 16);
                 int bytes = data.PointerSize * frameCount;
@@ -197,11 +213,7 @@ public class ETWEventProcessor : IDisposable {
                     span.CopyTo(destSpan);
                 }
             }
-
-            //for (int i = 0; i < data.FrameCount; i++) {
-            //    stack.FramePointers[i] = (long)data.InstructionPointer(i);
-            //}
-
+            
             int stackId = profile.AddStack(stack, context);
             
             // Try to associate with a previous sample from the same context.
@@ -236,14 +248,19 @@ public class ETWEventProcessor : IDisposable {
             //     return;
             // }
 
+            if (string.IsNullOrEmpty(data.ProcessName) ||
+                !data.ProcessName.Contains(targetProc)) {
+                return;
+            }
+
             if (cancelableTask != null && cancelableTask.IsCanceled) {
                 source_.StopProcessing();
             }
 
+            // If the time since the last sample is greater than the sampling interval + some error margin,
+            // it likely means that some samples were lost, use the sampling interval as the weight.
             int cpu = data.ProcessorNumber;
             double timestamp = data.TimeStampRelativeMSec;
-
-            bool isKernelCode = data.ExecutingDPC || data.ExecutingISR;
             double weight = timestamp - perCoreLastTime[cpu];
 
             if (weight > samplingIntervalLimitMS) {
@@ -258,46 +275,178 @@ public class ETWEventProcessor : IDisposable {
             }
 
             // Skip idle thread on non-kernel code.
+            bool isKernelCode = data.ExecutingDPC || data.ExecutingISR;
+
             if (data.ThreadID == 0 && !isKernelCode) {
                 return;
             }
 
+            // Save sample.
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, cpu);
             int contextId = profile.AddContext(context);
             var sample = new ProfileSample((long)data.InstructionPointer,
-                                           TimeSpan.FromMilliseconds(timestamp),
-                                           TimeSpan.FromMilliseconds(weight),
-                                           isKernelCode, contextId);
+                TimeSpan.FromMilliseconds(timestamp),
+                TimeSpan.FromMilliseconds(weight),
+                isKernelCode, contextId);
             int sampleId = profile.AddSample(sample);
-
             profile.ReturnContext(contextId);
 
+            // Remember the sample, to be matched later with a call stack.
             perCoreLastSample[cpu] = sampleId;
             perContextLastSample[contextId] = sampleId;
 
-            int sampleCount = profile.samples_.Count;
+            // Report progress.
+            int sampleCount = profile.Samples.Count;
 
             if (sampleCount - lastReportedSampleCount >= sampleReportInterval) {
-                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) {
-                    Total = sampleCount,
-                    Current = sampleCount
-                });
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) { Total = sampleCount, Current = sampleCount });
                 lastReportedSampleCount = sampleCount;
             }
         };
+        
+        if (handleDotNetEvents_) {
+            ProcessDotNetEvents(profile);
+        }
 
         source_.Process();
 
         Trace.WriteLine($"Done processing ETW events");
-        Trace.WriteLine($"    stacks: {profile.stacks_.Count}");
-        Trace.WriteLine($"    samples: {profile.samples_.Count}");
-        Trace.WriteLine($"    ctxs: {profile.contexts_.Count}");
-        Trace.WriteLine($"    procs: {profile.processes_.Count}");
-        Trace.WriteLine($"    imgs: {profile.imagesMap_.Count}");
-        Trace.WriteLine($"    threads: {profile.threadsMap_.Count}");
-
         profile.LoadingCompleted();
+
+        profile.debugInfo_ = debugInfo_;
         return profile;
+    }
+
+    private Dictionary<int, ClrRuntime> runtimeMap_;
+    private Dictionary<long, DebugFunctionInfo> funcMap_;
+    private DotNetDebugInfoProvider debugInfo_;
+    //private Dictionary<int, DotNetDebugInfoProvider> debugInfoMap;
+
+    private void ProcessDotNetEvents(RawProfileData profile) {
+        runtimeMap_ = new Dictionary<int, ClrRuntime>();
+        funcMap_ = new Dictionary<long, DebugFunctionInfo>();
+        debugInfo_ = new DotNetDebugInfoProvider();
+        var rundownParser = new ClrRundownTraceEventParser(source_);
+
+        source_.Clr.MethodILToNativeMap += data => {
+            ProcessDotNetILToNativeMap(data);
+        };
+
+        rundownParser.MethodILToNativeMapDCStop += data => {
+            ProcessDotNetILToNativeMap(data);
+        };
+
+        source_.Clr.MethodLoadVerbose += data => {
+            
+            ProcessDotNetMethodLoad(data);
+        };
+
+        rundownParser.MethodDCStopVerbose += data => {        
+            ProcessDotNetMethodLoad(data);
+        };
+
+        // MethodUnloadVerbose
+    }
+
+    private string targetProc = "r2r_test";
+
+    private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data) {
+        if (string.IsNullOrEmpty(data.ProcessName) ||
+            !data.ProcessName.Contains(targetProc)) {
+            return;
+        }
+
+        Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+
+        
+        var runtime = GetRuntime(data.ProcessID);
+
+        if (runtime == null) {
+            return;
+        }
+
+        var method = runtime.GetMethodByHandle((ulong)data.MethodID);
+        // ClrModule module = method?.Type?.Module;
+        // PdbInfo pdbInfo = module?.Pdb;
+    }
+
+    private bool ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data) {
+        if (string.IsNullOrEmpty(data.ProcessName) ||
+            !data.ProcessName.Contains(targetProc)) {
+            return false;
+        }
+
+        Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
+        
+        var runtime = GetRuntime(data.ProcessID);
+
+        if (runtime == null) {
+            return false;
+        }
+
+        var method = runtime.GetMethodByHandle((ulong)data.MethodID);
+
+        var module = method?.Type?.Module;
+
+        if (module == null) {
+            return false;
+        }
+
+        //?var funcRva = data.MethodStartAddress - module.ImageBase;
+        var funcName = method != null ? method.Signature : $"{data.MethodNamespace}.{data.MethodName}";
+        var funcInfo = new DebugFunctionInfo(funcName, (long)data.MethodStartAddress,
+            data.MethodSize, data.MethodToken);
+        var modulePath = module.AssemblyName;
+
+        if (!string.IsNullOrEmpty(modulePath)) {
+            funcInfo.ModuleName = Path.GetFileName(modulePath);
+        }
+
+        var methodCode = CopyDotNetMethod(data.MethodStartAddress, data.MethodSize, runtime);
+        funcInfo.Data = methodCode;
+        funcMap_[data.MethodID] = funcInfo;
+
+        //? split into providers for each .net moduel, plus a list of all functs
+        debugInfo_.AddFunctionInfo(funcInfo);
+        Trace.WriteLine($"=> managed {funcInfo}");
+        Trace.WriteLine($"     module base {method?.Type?.Module?.ImageBase:X}, addr {method?.Type?.Module?.Address:X}");
+        return true;
+    }
+
+    private ClrRuntime GetRuntime(int processId) {
+        if (!runtimeMap_.TryGetValue(processId, out var runtime)) {
+            runtime = TryConnectToDotNetProcess(processId);
+            runtimeMap_[processId] = runtime;
+        }
+
+        return runtime;
+    }
+
+    private ClrRuntime TryConnectToDotNetProcess(int processId) {
+        DataTarget dataTarget = null;
+        
+        try {
+            dataTarget = DataTarget.AttachToProcess(processId, false);
+            return dataTarget.ClrVersions[0].CreateRuntime();
+        }
+        catch (Exception ex) {
+            Trace.WriteLine($"Failed to connect to .NET process {processId}: {ex.Message}");
+            dataTarget?.Dispose();
+            return null;
+        }
+    }
+
+    private byte[] CopyDotNetMethod(ulong address, int size, ClrRuntime runtime) {
+        try {
+            var buffer = new byte[size];
+            runtime.DataTarget.DataReader.Read(address, buffer.AsSpan());
+            return buffer;
+        }
+        catch (Exception ex) {
+            Trace.WriteLine($"Failed to read .NET method {address:X}, size {size}: {ex.Message}");
+            return null;
+        }
     }
 
     public void Dispose() {
