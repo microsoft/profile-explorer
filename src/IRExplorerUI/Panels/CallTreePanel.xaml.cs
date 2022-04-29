@@ -130,9 +130,8 @@ namespace IRExplorerUI {
 
         private List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function, ProfileCallTree callTree) {
             if (combineNodes_) {
-                return new List<ProfileCallTreeNode>() {
-                    callTree.GetCombinedCallTreeNode(function)
-                };
+                var combinbedNode = callTree.GetCombinedCallTreeNode(function);
+                return combinbedNode == null ? null : new List<ProfileCallTreeNode>() { combinbedNode };
             }
             
             return callTree.GetCallTreeNodes(function);

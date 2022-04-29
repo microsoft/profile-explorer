@@ -16,13 +16,17 @@ namespace IRExplorerUI.Compilers {
         private ICompilerInfoProvider compilerInfo_;
         private Dictionary<IRTextFunction, DebugFunctionInfo> funcToDebugInfoMap_;
         private string debugFilePath_;
+        private bool isManagedImage_;
 
         public string DebugFilePath => debugFilePath_;
 
-        public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo) {
+        public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo,
+                                         IDebugInfoProvider debugInfo) {
             Initialize(compilerInfo.IR, cacheEnabled: false);
             binaryFilePath_ = binaryFilePath;
             compilerInfo_ = compilerInfo;
+            debugInfo_ = debugInfo;
+            isManagedImage_ = debugInfo != null;
             summary_ = new IRTextSummary();
             funcToDebugInfoMap_ = new Dictionary<IRTextFunction, DebugFunctionInfo>();
         }
@@ -30,28 +34,51 @@ namespace IRExplorerUI.Compilers {
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {
             progressHandler?.Invoke(null, new SectionReaderProgressInfo(true));
 
-            debugInfo_ = compilerInfo_.CreateDebugInfoProvider(binaryFilePath_);
-            debugFilePath_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
+            if (!InitializeDebugInfo()) {
+                return summary_;
+            }
 
-            if (debugInfo_.LoadDebugInfo(debugFilePath_)) {
+            if (isManagedImage_) {
+                // For managed code, the code data is found on each function.
+                disassembler_ = Disassembler.CreateForMachine(binaryFilePath_, debugInfo_);
+            }
+            else {
+                // This preloads all code sections in the binary.
                 disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_);
+            }
 
-                foreach (var funcInfo in debugInfo_.EnumerateFunctions()) {
-                    if (funcInfo.RVA == 0) {
-                        continue; // Some entries don't represent real functions.
-                    }
-                    
-                    var func = new IRTextFunction(funcInfo.Name);
-                    var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
-                    func.AddSection(section);
-                    summary_.AddFunction(func);
-                    summary_.AddSection(section);
-                    funcToDebugInfoMap_[func] = funcInfo;
+            foreach (var funcInfo in debugInfo_.EnumerateFunctions()) {
+                if (funcInfo.RVA == 0) {
+                    continue; // Some entries don't represent real functions.
                 }
+                
+                var func = new IRTextFunction(funcInfo.Name);
+                var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
+                func.AddSection(section);
+                summary_.AddFunction(func);
+                summary_.AddSection(section);
+                funcToDebugInfoMap_[func] = funcInfo;
             }
 
             progressHandler?.Invoke(null, new SectionReaderProgressInfo(false));
             return summary_;
+        }
+
+        private bool InitializeDebugInfo() {
+            if (debugInfo_ != null) {
+                return true;
+            }
+
+            debugInfo_ = compilerInfo_.CreateDebugInfoProvider(binaryFilePath_);
+            debugFilePath_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
+
+            if (debugInfo_.LoadDebugInfo(debugFilePath_)) {
+                return false;
+            }
+
+            debugInfo_.Dispose();
+            debugInfo_ = null;
+            return false;
         }
 
         public override string GetDocumentOutputText() {
@@ -92,6 +119,12 @@ namespace IRExplorerUI.Compilers {
         public override string GetSectionText(IRTextSection section) {
             if (!funcToDebugInfoMap_.TryGetValue(section.ParentFunction, out var funcInfo)) {
                 return "";
+            }
+
+            if (isManagedImage_) {
+                // For managed code, the code data is found on each function as a byte array.
+                //? TODO: StartRVA is also IP here
+                return disassembler_.DisassembleToTextEmbedded(funcInfo);
             }
 
             return disassembler_.DisassembleToText(funcInfo);

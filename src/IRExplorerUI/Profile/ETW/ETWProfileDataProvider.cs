@@ -219,6 +219,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         SymbolFileSourceOptions symbolOptions,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
+        
         try {
             // Extract just the file name.
             options_ = options;
@@ -287,7 +288,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     imageLocks[i] = new object();
                 }
 
-                ModuleInfo FindModuleInfo(ProfileImage queryImage) {
+                ModuleInfo FindModuleInfo(ProfileImage queryImage, IDebugInfoProvider debugInfo) {
                     //if (queryImage == prevImage) {
                     //    return prevModule;
                     //}
@@ -315,7 +316,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 }
 
                                 //? TODO: New doc not registerd properly with session, reload crashes
-                                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions).
+                                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, debugInfo).
                                     ConfigureAwait(false).GetAwaiter().GetResult()) {
                                     Trace.WriteLine($"  - Init in {sw2.Elapsed}");
                                     sw2.Restart();
@@ -355,12 +356,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 var mainProcessId = mainProcess.ProcessId;
                 //prof.PrintSamples(mainProcessId);
 
+                prof.PrintSamples(mainProcessId);
+
                 var imageList = mainProcess.Images(prof).ToList();
 
                 if (imageList == null || imageList.Count == 0) {
                     var imageSet = new HashSet<ProfileImage>();
 
-                    foreach (var sample in prof.samples_) {
+                    foreach (var sample in prof.Samples) {
                         if (!options.IncludeKernelEvents &&
                             sample.IsKernelCode) {
                             continue; //? TODO: Is this all kernel?
@@ -499,13 +502,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 var sw = Stopwatch.StartNew();
 
                 int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
+
+#if DEBUG
+                chunks = 1;
+#endif
                 Trace.WriteLine($"Using {chunks} threads");
 
                 var tasks = new List<Task>();
                 var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
                 var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
-                int chunkSize = (int)(prof.samples_.Count / chunks);
+                int chunkSize = (int)(prof.Samples.Count / chunks);
                 var lockObject = new object();
 
                 //MessageBox.Show("Start tasks");
@@ -516,7 +523,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 for (int k = 0; k < chunks; k++) {
                     int start = k * chunkSize;
-                    int end = Math.Min((k + 1) * chunkSize, (int)prof.samples_.Count);
+                    int end = Math.Min((k + 1) * chunkSize, (int)prof.Samples.Count);
                     Trace.WriteLine($"Chunk {k}: {start} - {end}");
 
                     tasks.Add(taskFactory.StartNew(() => {
@@ -528,7 +535,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         for (int i = start; i < end; i++) {
                             index++;
 
-                            var sample = prof.samples_[i]; //? Avoid copy, use ref
+                            var sample = prof.Samples[i]; //? Avoid copy, use ref
 
                             if (!options.IncludeKernelEvents &&
                                 sample.IsKernelCode) {
@@ -547,7 +554,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     return;
                                 }
 
-                                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {Total = (int)prof.samples_.Count, Current = index});
+                                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceProcessing) {
+                                    Total = (int)prof.Samples.Count, Current = index
+                                });
                             }
 
                             var sampleWeight = sample.Weight;
@@ -578,7 +587,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-                            if (resolvedStack != null) {
+                            if (false && resolvedStack != null) {
                                 foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                     if (resolvedFrame.IsUnknown) {
                                         // Can at least increment the module weight.
@@ -658,13 +667,60 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 foreach (var frameIp in stackFrames) {
                                     //? Use Frame -> Resolved Frame cache
                                     ProfileImage frameImage = prof.FindImageForIP(frameIp, context);
+                                    IDebugInfoProvider imageDebugInfo = null;
 
                                     if (frameImage == null) {
-                                        resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
-                                        prevStackFunc = null;
-                                        prevStackProfile = null;
-                                        isTopFrame = false;
-                                        continue;
+                                        if (prof.debugInfo_ != null) {
+                                            var managedFunc = prof.debugInfo_.FindFunctionByRVA(frameIp);
+
+                                            if (!managedFunc.IsUnknown) {
+                                                foreach (var image in mainProcess.Images(prof)) {
+                                                    if (image.ModuleName.Contains(managedFunc.ModuleName)) {
+                                                        frameImage = image;
+                                                        imageDebugInfo = prof.debugInfo_;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (frameImage == null) {
+                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
+                                            prevStackFunc = null;
+                                            prevStackProfile = null;
+                                            isTopFrame = false;
+                                            continue;
+                                        }
+                                    }
+                                    else if (frameImage.ModuleName.Contains("r2r_test")) {
+                                        //Trace.WriteLine($"+ Found image {frameImage.ModuleName} for {frameIp:X}, sample {sample.IP:X}");
+
+                                        if (prof.debugInfo_ != null) {
+                                            var managedFunc = prof.debugInfo_.FindFunctionByRVA(frameIp);
+
+                                            if (!managedFunc.IsUnknown) {
+                                                foreach (var image in mainProcess.Images(prof)) {
+                                                    if (image.ModuleName.Contains(managedFunc.ModuleName)) {
+                                                        frameImage = image;
+                                                        imageDebugInfo = prof.debugInfo_;
+                                                        break;
+                                                    }
+                                                }
+                                            }
+                                            else {
+                                                managedFunc = prof.debugInfo_.FindFunctionByRVA(sample.IP);
+
+                                                if (!managedFunc.IsUnknown) {
+                                                    foreach (var image in mainProcess.Images(prof)) {
+                                                        if (image.ModuleName.Contains(managedFunc.ModuleName)) {
+                                                            frameImage = image;
+                                                            imageDebugInfo = prof.debugInfo_;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
 
                                     // Count exclusive time for each module in the executable. 
@@ -683,7 +739,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     DebugFunctionInfo funcInfo = null;
 
                                     //var modSw = Stopwatch.StartNew();
-                                    module = FindModuleInfo(frameImage);
+                                    module = FindModuleInfo(frameImage, imageDebugInfo);
                                     //modSw.Stop();
                                     //if (modSw.ElapsedMilliseconds > 500) {
                                     //    Trace.WriteLine($"=> Slow load {modSw.Elapsed}: {frameImage.Name}");
@@ -691,11 +747,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                                     if (module != null && module.HasDebugInfo) {
                                         //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
-                                        frameRva = frameIp - frameImage.BaseAddress;
 
-                                        //lock (lockObject) {
-                                        funcInfo = module.FindDebugFunctionInfo(frameRva);
-                                        //}
+                                        if (imageDebugInfo != null) {
+                                            frameRva = frameIp; //? Also use RVA in debugFuncInfo
+                                            funcInfo = module.FindDebugFunctionInfo(sample.IP);
+                                        }
+                                        else {
+                                            frameRva = frameIp - frameImage.BaseAddress;
+                                            funcInfo = module.FindDebugFunctionInfo(frameRva);
+                                        }
 
                                         funcName = funcInfo.Name;
                                         funcRva = funcInfo.RVA;
@@ -707,6 +767,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         prevStackProfile = null;
                                         isTopFrame = false;
                                         continue;
+                                    }
+
+                                    if (funcName.Contains("Slow")) {
+                                        ;
                                     }
 
                                     var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);

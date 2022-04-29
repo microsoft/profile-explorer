@@ -91,7 +91,7 @@ namespace IRExplorerUI {
 
         Task<bool> SaveSessionDocument(string filePath);
         Task<LoadedDocument> OpenSessionDocument(string filePath);
-        Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath);
+        Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo = null);
         Task<DisassemberResult> DisassembleBinary(string filePath, DisassemblerProgressHandler progressCallback = null,
                                                     CancelableTask cancelableTask = null);
 

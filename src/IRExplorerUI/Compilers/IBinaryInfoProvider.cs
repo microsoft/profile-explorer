@@ -22,6 +22,8 @@ public class BinaryFileDescription {
     public int MajorVersion { get; set; }
     public int MinorVersion { get; set; }
 
+    public bool IsNativeImage => FileKind == BinaryFileKind.Native;
+    public bool IsManagedImage => FileKind == BinaryFileKind.DotNet;
 }
 
 public enum BinaryFileKind {

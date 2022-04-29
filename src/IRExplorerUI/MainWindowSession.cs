@@ -526,11 +526,17 @@ namespace IRExplorerUI {
                 new DocumentSectionLoader(filePath, compilerInfo_.IR));
         }
 
-        public Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath) {
-            return Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), null));
+        public Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
+            return Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), debugInfo, null));
         }
 
+        private LoadedDocument LoadBinaryDocument(string filePath, string modulePath, Guid id,
+                                                  ProgressInfoHandler progressHandler) {
+            return LoadBinaryDocument(filePath, modulePath, id, null, progressHandler);
+        }
+        
         private LoadedDocument LoadBinaryDocument(string filePath, string modulePath, Guid id, 
+                                                  IDebugInfoProvider debugInfo,
                                                   ProgressInfoHandler progressHandler) {
             if (App.Settings.IsExternalDisassemblerEnabled()) {
                 var disasmResult = DisassembleBinary(filePath).Result;
@@ -549,7 +555,7 @@ namespace IRExplorerUI {
                 return result;
             }
             else {
-                var loader = new DisassemblerSectionLoader(filePath, compilerInfo_);
+                var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
                 var result = LoadDocumentImpl(filePath, modulePath, id, progressHandler, loader);
 
                 if (result != null) {

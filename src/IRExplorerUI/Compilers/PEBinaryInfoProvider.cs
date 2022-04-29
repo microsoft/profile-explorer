@@ -144,11 +144,11 @@ namespace IRExplorerUI.Compilers {
                 BinaryFileKind fileKind = BinaryFileKind.Native;
 
                 if (reader_.HasMetadata && reader_.PEHeaders.CorHeader != null) {
-                    if (reader_.PEHeaders.CorHeader.Flags.HasFlag(CorFlags.ILLibrary)) {
-                        fileKind = BinaryFileKind.DotNetR2R;
+                    if (reader_.PEHeaders.CorHeader.Flags.HasFlag(CorFlags.ILOnly)) {
+                        fileKind = BinaryFileKind.DotNet;
                     }
                     else if (reader_.PEHeaders.CorHeader.Flags.HasFlag(CorFlags.ILLibrary)) {
-                        fileKind = BinaryFileKind.DotNet;
+                        fileKind = BinaryFileKind.DotNetR2R;
                     }
                 }
 

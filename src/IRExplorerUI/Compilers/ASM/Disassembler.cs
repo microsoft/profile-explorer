@@ -44,8 +44,19 @@ namespace IRExplorerUI.Compilers.ASM {
 
             var binaryInfo = peInfo.BinaryFileInfo;
             return new Disassembler(binaryInfo.Architecture, codeSectionData,
-                                    binaryInfo.ImageBase,
-                                    debugInfo);
+                                    binaryInfo.ImageBase, debugInfo);
+        }
+
+        public static Disassembler CreateForMachine(string binaryFilePath, IDebugInfoProvider debugInfo) {
+            using var peInfo = new PEBinaryInfoProvider(binaryFilePath);
+
+            if (!peInfo.Initialize()) {
+                return null;
+            }
+
+            var binaryInfo = peInfo.BinaryFileInfo;
+            return new Disassembler(binaryInfo.Architecture, null,
+                                    binaryInfo.ImageBase, debugInfo);
         }
 
         private Disassembler(Machine architecture, List<(byte[] Data, long StartRVA)> codeSectionData, long baseAddress = 0,
@@ -62,8 +73,7 @@ namespace IRExplorerUI.Compilers.ASM {
             architecture_ = architecture;
             baseAddress_ = baseAddress;
             debugInfo_ = debugInfo;
-            codeSectionData_ = new List<(byte[] Data, long StartRVA)>();
-            codeSectionData_.Add((data, dataStartRva));
+            codeSectionData_ = new List<(byte[] Data, long StartRVA)> { (data, dataStartRva) };
             Initialize();
         }
 
@@ -74,6 +84,21 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public string DisassembleToText(DebugFunctionInfo funcInfo) {
             return DisassembleToText(funcInfo.StartRVA, funcInfo.Size);
+        }
+
+        public string DisassembleToTextEmbedded(DebugFunctionInfo funcInfo) {
+            var data = funcInfo.Data as byte[];
+
+            if (data == null) {
+                return "";
+            }
+
+            //? TODO: Somewhat of a hack, pass list of code sections.
+            Debug.Assert(codeSectionData_ == null);
+            codeSectionData_ = new List<(byte[] Data, long StartRVA)>() {(data, funcInfo.StartRVA)};
+            var result = DisassembleToText(funcInfo.StartRVA, funcInfo.Size);
+            codeSectionData_ = null;
+            return result;
         }
 
         public string DisassembleToText(long startRVA, long size) {

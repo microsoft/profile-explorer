@@ -135,26 +135,27 @@ namespace IRExplorerUI.Compilers.ASM {
                     // Do a simple search otherwise.
                     return Utils.LocateDebugInfoFile(imagePath, ".pdb");
                 }
-                case BinaryFileKind.DotNetR2R: {
-                    if (!string.IsNullOrEmpty(disasmOutputPath)) {
-                        try {
-                            // When using the external disassembler, the output file
-                            // will be a random temp file, not based on image name.
-                            var path = Path.GetDirectoryName(disasmOutputPath);
-                            return Path.Combine(path, Path.GetFileNameWithoutExtension(disasmOutputPath)) + ".json";
-                        }
-                        catch (Exception ex) {
-                            Trace.TraceError($"Failed to get .NET R2R debug file path for {imagePath}: {ex}");
-                        }
-                    }
+                //case BinaryFileKind.DotNetR2R: {
+                //    if (!string.IsNullOrEmpty(disasmOutputPath)) {
+                //        try {
+                //            // When using the external disassembler, the output file
+                //            // will be a random temp file, not based on image name.
+                //            var path = Path.GetDirectoryName(disasmOutputPath);
+                //            return Path.Combine(path, Path.GetFileNameWithoutExtension(disasmOutputPath)) + ".json";
+                //        }
+                //        catch (Exception ex) {
+                //            Trace.TraceError($"Failed to get .NET R2R debug file path for {imagePath}: {ex}");
+                //        }
+                //    }
 
-                    return Utils.LocateDebugInfoFile(imagePath, ".json");
-                }
-                default: {
-                    throw new InvalidOperationException();
-                }
+                //    return Utils.LocateDebugInfoFile(imagePath, ".json");
+                //}
+                //default: {
+                //    throw new InvalidOperationException();
+                //}
             }
-            
+
+            return null;
         }
 
         public async Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
