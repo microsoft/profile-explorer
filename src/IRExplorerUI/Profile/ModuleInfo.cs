@@ -115,6 +115,8 @@ namespace IRExplorerUI.Profile {
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
 
             foreach (var funcInfo in DebugInfo.EnumerateFunctions(false)) {
+                //Trace.WriteLine($"{funcInfo.Name}, {funcInfo.RVA}");
+                
                 if (funcInfo.RVA != 0) {
                     sortedFuncList_.Add(funcInfo);
                 }

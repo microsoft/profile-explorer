@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -73,7 +74,7 @@ namespace IRExplorerUI.Compilers {
             debugFilePath_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
 
             if (debugInfo_.LoadDebugInfo(debugFilePath_)) {
-                return false;
+                return true;
             }
 
             debugInfo_.Dispose();

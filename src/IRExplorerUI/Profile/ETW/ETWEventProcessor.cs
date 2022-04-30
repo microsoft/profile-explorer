@@ -99,7 +99,6 @@ public class ETWEventProcessor : IDisposable {
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSampleCount = 0;
         const int sampleReportInterval = 1000;
-        RawProfileData profile = new();
 
         //? BlockingCollection<StackWalkStackTraceData> queue = new BlockingCollection<StackWalkStackTraceData>();
         var symbolParser = new SymbolTraceEventParser(source_);
@@ -119,10 +118,9 @@ public class ETWEventProcessor : IDisposable {
                 lastImageIdData = (ImageIDTraceData)data.Clone();
             }
         };
-        
-        //? PDB info - could allow downloading PDBs before EXEs
-        // symbolParser.ImageIDDbgID_RSDS
 
+        RawProfileData profile = new();
+        
         source_.Kernel.ProcessStartGroup += data => {
             var proc = new ProfileProcess(data.ProcessID, data.ParentID,
                                           data.ProcessName, data.ImageFileName,
@@ -189,10 +187,10 @@ public class ETWEventProcessor : IDisposable {
             //    return;
             //}
 
-            if (string.IsNullOrEmpty(data.ProcessName) ||
-                !data.ProcessName.Contains(targetProc)) {
-                return;
-            }
+            //if (string.IsNullOrEmpty(data.ProcessName) ||
+            //    !data.ProcessName.Contains(targetProc)) {
+            //    return;
+            //}
 
             //queue.Add((StackWalkStackTraceData)data.Clone());
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
@@ -248,10 +246,10 @@ public class ETWEventProcessor : IDisposable {
             //     return;
             // }
 
-            if (string.IsNullOrEmpty(data.ProcessName) ||
-                !data.ProcessName.Contains(targetProc)) {
-                return;
-            }
+            //if (string.IsNullOrEmpty(data.ProcessName) ||
+            //    !data.ProcessName.Contains(targetProc)) {
+            //    return;
+            //}
 
             if (cancelableTask != null && cancelableTask.IsCanceled) {
                 source_.StopProcessing();
@@ -312,37 +310,32 @@ public class ETWEventProcessor : IDisposable {
 
         Trace.WriteLine($"Done processing ETW events");
         profile.LoadingCompleted();
-
-        profile.debugInfo_ = debugInfo_;
         return profile;
     }
 
     private Dictionary<int, ClrRuntime> runtimeMap_;
     private Dictionary<long, DebugFunctionInfo> funcMap_;
-    private DotNetDebugInfoProvider debugInfo_;
-    //private Dictionary<int, DotNetDebugInfoProvider> debugInfoMap;
 
     private void ProcessDotNetEvents(RawProfileData profile) {
         runtimeMap_ = new Dictionary<int, ClrRuntime>();
         funcMap_ = new Dictionary<long, DebugFunctionInfo>();
-        debugInfo_ = new DotNetDebugInfoProvider();
         var rundownParser = new ClrRundownTraceEventParser(source_);
 
         source_.Clr.MethodILToNativeMap += data => {
-            ProcessDotNetILToNativeMap(data);
+            ProcessDotNetILToNativeMap(data, profile);
         };
 
         rundownParser.MethodILToNativeMapDCStop += data => {
-            ProcessDotNetILToNativeMap(data);
+            ProcessDotNetILToNativeMap(data, profile);
         };
 
         source_.Clr.MethodLoadVerbose += data => {
             
-            ProcessDotNetMethodLoad(data);
+            ProcessDotNetMethodLoad(data, profile);
         };
 
         rundownParser.MethodDCStopVerbose += data => {        
-            ProcessDotNetMethodLoad(data);
+            ProcessDotNetMethodLoad(data, profile);
         };
 
         // MethodUnloadVerbose
@@ -350,13 +343,13 @@ public class ETWEventProcessor : IDisposable {
 
     private string targetProc = "r2r_test";
 
-    private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data) {
-        if (string.IsNullOrEmpty(data.ProcessName) ||
-            !data.ProcessName.Contains(targetProc)) {
-            return;
-        }
+    private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data, RawProfileData profile) {
+        //if (string.IsNullOrEmpty(data.ProcessName) ||
+        //    !data.ProcessName.Contains(targetProc)) {
+        //    return;
+        //}
 
-        Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        //Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
 
         
         var runtime = GetRuntime(data.ProcessID);
@@ -370,14 +363,14 @@ public class ETWEventProcessor : IDisposable {
         // PdbInfo pdbInfo = module?.Pdb;
     }
 
-    private bool ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data) {
-        if (string.IsNullOrEmpty(data.ProcessName) ||
-            !data.ProcessName.Contains(targetProc)) {
-            return false;
-        }
+    private bool ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile) {
+        //if (string.IsNullOrEmpty(data.ProcessName) ||
+        //    !data.ProcessName.Contains(targetProc)) {
+        //    return false;
+        //}
 
-        Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
-        Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
+        //Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        //Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
         
         var runtime = GetRuntime(data.ProcessID);
 
@@ -386,34 +379,36 @@ public class ETWEventProcessor : IDisposable {
         }
 
         var method = runtime.GetMethodByHandle((ulong)data.MethodID);
-
         var module = method?.Type?.Module;
-
+        
         if (module == null) {
             return false;
         }
 
-        //?var funcRva = data.MethodStartAddress - module.ImageBase;
-        var funcName = method != null ? method.Signature : $"{data.MethodNamespace}.{data.MethodName}";
-        var funcInfo = new DebugFunctionInfo(funcName, (long)data.MethodStartAddress,
-            data.MethodSize, data.MethodToken);
-        var modulePath = module.AssemblyName;
+        var moduleName = Utils.TryGetFileName(module.Name);
+        var (moduleDebugInfo, moduleImage) = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName, (long)module.ImageBase);
 
-        if (!string.IsNullOrEmpty(modulePath)) {
-            funcInfo.ModuleName = Path.GetFileName(modulePath);
+        if (moduleDebugInfo == null) {
+            return false;
         }
+        
+        var funcRva = data.MethodStartAddress - module.Address;
+        var funcName = method != null ? method.Signature : $"{data.MethodNamespace}.{data.MethodName}";
+        var funcInfo = new DebugFunctionInfo(funcName, (long)funcRva, data.MethodSize, data.MethodToken);
 
-        var methodCode = CopyDotNetMethod(data.MethodStartAddress, data.MethodSize, runtime);
-        funcInfo.Data = methodCode;
+        // Save method code by copying it from the running process.
+        funcInfo.Data = CopyDotNetMethod(data.MethodStartAddress, data.MethodSize, runtime);
         funcMap_[data.MethodID] = funcInfo;
 
-        //? split into providers for each .net moduel, plus a list of all functs
-        debugInfo_.AddFunctionInfo(funcInfo);
-        Trace.WriteLine($"=> managed {funcInfo}");
-        Trace.WriteLine($"     module base {method?.Type?.Module?.ImageBase:X}, addr {method?.Type?.Module?.Address:X}");
+        //? Alternative is to read the managed PDB
+        moduleDebugInfo.AddFunctionInfo(funcInfo);
+        profile.AddManagedMethodMapping(funcInfo, moduleImage, (long)data.MethodStartAddress, data.MethodSize);
+        
+        //Trace.WriteLine($"=> managed {funcInfo}");
+        //Trace.WriteLine($"     module base {method?.Type?.Module?.ImageBase:X}, addr {method?.Type?.Module?.Address:X}");
         return true;
     }
-
+    
     private ClrRuntime GetRuntime(int processId) {
         if (!runtimeMap_.TryGetValue(processId, out var runtime)) {
             runtime = TryConnectToDotNetProcess(processId);

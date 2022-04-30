@@ -288,7 +288,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     imageLocks[i] = new object();
                 }
 
-                ModuleInfo FindModuleInfo(ProfileImage queryImage, IDebugInfoProvider debugInfo) {
+                ModuleInfo FindModuleInfo(ProfileImage queryImage) {
                     //if (queryImage == prevImage) {
                     //    return prevModule;
                     //}
@@ -315,8 +315,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     return null;
                                 }
 
-                                //? TODO: New doc not registerd properly with session, reload crashes
-                                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, debugInfo).
+                                // Used with managed images.
+                                var imageDebugInfo = prof.GetDebugInfoForImage(queryImage);
+
+                                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, imageDebugInfo).
                                     ConfigureAwait(false).GetAwaiter().GetResult()) {
                                     Trace.WriteLine($"  - Init in {sw2.Elapsed}");
                                     sw2.Restart();
@@ -355,8 +357,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 var mainProcessId = mainProcess.ProcessId;
                 //prof.PrintSamples(mainProcessId);
-
-                prof.PrintSamples(mainProcessId);
 
                 var imageList = mainProcess.Images(prof).ToList();
 
@@ -661,26 +661,21 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                             else {
                                 resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
                                 var stackFrames = stack.FramePointers;
+                                long managedBaseAddress = 0;
 
                                 //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
                                 //? for ex it never gets to main. Easy example is a quicksort impl
                                 foreach (var frameIp in stackFrames) {
                                     //? Use Frame -> Resolved Frame cache
                                     ProfileImage frameImage = prof.FindImageForIP(frameIp, context);
-                                    IDebugInfoProvider imageDebugInfo = null;
 
                                     if (frameImage == null) {
-                                        if (prof.debugInfo_ != null) {
-                                            var managedFunc = prof.debugInfo_.FindFunctionByRVA(frameIp);
-
+                                        if (prof.HasManagedMethods) {
+                                            var managedFunc = prof.FindManagedMethodForIP(frameIp);
+                                            
                                             if (!managedFunc.IsUnknown) {
-                                                foreach (var image in mainProcess.Images(prof)) {
-                                                    if (image.ModuleName.Contains(managedFunc.ModuleName)) {
-                                                        frameImage = image;
-                                                        imageDebugInfo = prof.debugInfo_;
-                                                        break;
-                                                    }
-                                                }
+                                                frameImage = managedFunc.Image;
+                                                managedBaseAddress = managedFunc.IP - managedFunc.DebugInfo.RVA;
                                             }
                                         }
 
@@ -692,37 +687,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                             continue;
                                         }
                                     }
-                                    else if (frameImage.ModuleName.Contains("r2r_test")) {
-                                        //Trace.WriteLine($"+ Found image {frameImage.ModuleName} for {frameIp:X}, sample {sample.IP:X}");
-
-                                        if (prof.debugInfo_ != null) {
-                                            var managedFunc = prof.debugInfo_.FindFunctionByRVA(frameIp);
-
-                                            if (!managedFunc.IsUnknown) {
-                                                foreach (var image in mainProcess.Images(prof)) {
-                                                    if (image.ModuleName.Contains(managedFunc.ModuleName)) {
-                                                        frameImage = image;
-                                                        imageDebugInfo = prof.debugInfo_;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            else {
-                                                managedFunc = prof.debugInfo_.FindFunctionByRVA(sample.IP);
-
-                                                if (!managedFunc.IsUnknown) {
-                                                    foreach (var image in mainProcess.Images(prof)) {
-                                                        if (image.ModuleName.Contains(managedFunc.ModuleName)) {
-                                                            frameImage = image;
-                                                            imageDebugInfo = prof.debugInfo_;
-                                                            break;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-
+                                   
                                     // Count exclusive time for each module in the executable. 
                                     if (isTopFrame && stackModules.Add(frameImage.Id)) {
 
@@ -739,7 +704,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     DebugFunctionInfo funcInfo = null;
 
                                     //var modSw = Stopwatch.StartNew();
-                                    module = FindModuleInfo(frameImage, imageDebugInfo);
+                                    module = FindModuleInfo(frameImage);
                                     //modSw.Stop();
                                     //if (modSw.ElapsedMilliseconds > 500) {
                                     //    Trace.WriteLine($"=> Slow load {modSw.Elapsed}: {frameImage.Name}");
@@ -748,17 +713,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     if (module != null && module.HasDebugInfo) {
                                         //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
 
-                                        if (imageDebugInfo != null) {
-                                            frameRva = frameIp; //? Also use RVA in debugFuncInfo
-                                            funcInfo = module.FindDebugFunctionInfo(sample.IP);
+                                        if (managedBaseAddress != 0) {
+                                            frameRva = frameIp - managedBaseAddress;
+                                            funcInfo = module.FindDebugFunctionInfo(frameRva);
                                         }
                                         else {
                                             frameRva = frameIp - frameImage.BaseAddress;
                                             funcInfo = module.FindDebugFunctionInfo(frameRva);
                                         }
 
-                                        funcName = funcInfo.Name;
-                                        funcRva = funcInfo.RVA;
+                                        if (funcInfo != null) {
+                                            funcName = funcInfo.Name;
+                                            funcRva = funcInfo.RVA;
+                                        }
                                     }
 
                                     if (funcName == null) {
