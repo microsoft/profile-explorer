@@ -16,6 +16,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
+using Microsoft.Diagnostics.Runtime;
 using ProtoBuf;
 using static IRExplorerUI.Profile.ETWProfileDataProvider;
 
@@ -64,7 +65,98 @@ public class RawProfileData {
     public List<PerformanceCounterEvent> PerfCounters { get; set; }
 
     //? hack
-    public DotNetDebugInfoProvider debugInfo_;
+    public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
+
+
+    public struct ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
+        public ManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
+            DebugInfo = debugInfo;
+            Image = image;
+            IP = ip;
+            Size = size;
+        }
+        
+        public DebugFunctionInfo DebugInfo { get; }
+        public ProfileImage Image { get; }
+        public long IP { get; }
+        public int Size { get; }
+
+        public bool IsUnknown => DebugInfo == null;
+
+        public int CompareTo(long value) {
+            if (value < IP) {
+                return 1;
+            }
+            if (value > IP + Size) {
+                return -1;
+            }
+
+            return 0;
+        }
+
+        public bool Equals(ManagedMethodMapping other) {
+            return IP == other.IP;
+        }
+
+        public int CompareTo(ManagedMethodMapping other) {
+            return CompareTo(other.IP);
+        }
+
+        public override bool Equals(object obj) {
+            return obj is ManagedMethodMapping other && Equals(other);
+        }
+
+        public override int GetHashCode() {
+            return IP.GetHashCode();
+        }
+
+        public static bool operator ==(ManagedMethodMapping left, ManagedMethodMapping right) {
+            return left.Equals(right);
+        }
+
+        public static bool operator !=(ManagedMethodMapping left, ManagedMethodMapping right) {
+            return !left.Equals(right);
+        }
+    }
+
+    private List<ManagedMethodMapping> managedMethods_;
+
+    public bool HasManagedMethods => managedMethods_ != null;
+
+    public void AddManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
+        managedMethods_ ??= new List<ManagedMethodMapping>();
+        managedMethods_.Add(new ManagedMethodMapping(debugInfo, image, ip , size));
+    }
+
+    public ManagedMethodMapping FindManagedMethodForIP(long ip) {
+        return DebugFunctionInfo.BinarySearch(managedMethods_, ip);
+    }
+
+    public IDebugInfoProvider GetDebugInfoForImage(ProfileImage image) {
+        return imageDebugInfo_.GetValueOrNull(image);
+    }
+
+    public (DotNetDebugInfoProvider, ProfileImage) 
+        GetOrAddModuleDebugInfo(int processId, string moduleName, long moduleBase) {
+        imageDebugInfo_ ??= new Dictionary<ProfileImage, DotNetDebugInfoProvider>();
+        var proc = GetOrCreateProcess(processId);
+
+        foreach (var image in proc.Images(this)) {
+            if (image.BaseAddress == moduleBase &&
+                image.ModuleName.Equals(moduleName, StringComparison.Ordinal)) {
+                //? TODO: Maybe patch image? What about R2R, that likely have both native and JIT associated
+                
+                if (!imageDebugInfo_.TryGetValue(image, out var debugInfo)) {
+                    debugInfo = new DotNetDebugInfoProvider();
+                    imageDebugInfo_[image] = debugInfo;
+                }
+
+                return (debugInfo, image);
+            }
+        }
+
+        return (null, null);
+    }
 
     public RawProfileData() {
         contexts_ = new List<ProfileContext>();
@@ -86,6 +178,7 @@ public class RawProfileData {
         stacksMap_ = null;
         stackData_ = null;
         lastProcStacks_ = null;
+        managedMethods_?.Sort();
     }
 
     public ProfileProcess GetOrCreateProcess(int id) {

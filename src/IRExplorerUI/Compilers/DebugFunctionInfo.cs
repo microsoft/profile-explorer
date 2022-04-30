@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace IRExplorerUI.Compilers;
 
-public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<DebugFunctionInfo> {
+public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<DebugFunctionInfo>, IComparable<long> {
     public string Name { get; set; }
     public long RVA { get; set; }
     public long Size { get; set; }
@@ -61,7 +61,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
         return SourceLines[high];
     }
 
-    public static DebugFunctionInfo BinarySearch(List<DebugFunctionInfo> ranges, long value) {
+    public static T BinarySearch<T>(List<T> ranges, long value) where T: IComparable<long> {
         int min = 0;
         int max = ranges.Count - 1;
 
@@ -81,7 +81,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
             }
         }
 
-        return DebugFunctionInfo.Unknown;
+        return default(T);
     }
 
     public override bool Equals(object obj) {
