@@ -203,7 +203,7 @@ namespace IRExplorerUI.Controls {
             //? TODO: BeginInvoke prevents the "Dispatcher suspended" assert that happens
             // with profiling, when Source panel shows the open dialog.
             // The dialog code should rather invoke the dispatcher...
-            Dispatcher.BeginInvoke(async () => {
+            await Dispatcher.BeginInvoke(async () => {
                 var result = await Session.OpenDocumentSectionAsync(args);
 
                 //? TODO: Mark the previewed elem in the new doc

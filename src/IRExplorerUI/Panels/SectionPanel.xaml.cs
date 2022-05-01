@@ -2059,9 +2059,9 @@ namespace IRExplorerUI {
 
         #endregion
 
-        private void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
+        private async void FixedToolbar_SettingsClicked(object sender, EventArgs e) {
             if (optionsPanelVisible_) {
-                CloseOptionsPanel();
+                await CloseOptionsPanel();
             }
             else {
                 ShowOptionsPanel();
@@ -2089,15 +2089,15 @@ namespace IRExplorerUI {
             optionsPanelVisible_ = true;
         }
 
-        private void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
+        private async void OptionsPanel_SettingsChanged(object sender, EventArgs e) {
             var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
-            HandleNewSettings(newSettings, false);
+            await HandleNewSettings(newSettings, false);
             optionsPanelWindow_.Settings = null;
             optionsPanelWindow_.Settings = (SectionSettings)settings_.Clone();
         }
 
-        private void OptionsPanel_PanelReset(object sender, EventArgs e) {
-            HandleNewSettings(new SectionSettings(), true);
+        private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
+            await HandleNewSettings(new SectionSettings(), true);
 
             //? TODO: Setting to null should be part of OptionsPanelBase and remove it in all places
             optionsPanelWindow_.Settings = null;
@@ -2276,23 +2276,23 @@ namespace IRExplorerUI {
             FunctionFilterGrid.Width = Math.Max(1, width - reservedWidth);
         }
 
-        private void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
+        private async void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
             // A double-click on the +/- icon doesn't select an actual node.
             var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
 
             if (childInfo != null) {
                 if (!childInfo.IsMarked && childInfo.Function != null) {
-                    SelectFunction(childInfo.Function);
+                    await SelectFunction(childInfo.Function);
                 }
             }
         }
 
-        private void FunctionDoubleClick(object sender, MouseButtonEventArgs e) {
+        private async void FunctionDoubleClick(object sender, MouseButtonEventArgs e) {
             // A double-click on the +/- icon doesn't have an actual node selected.
             var functionEx = ((ListViewItem)sender).Content as IRTextFunctionEx;
 
             if (functionEx != null) {
-                SelectFunction(functionEx.Function);
+                await SelectFunction(functionEx.Function);
 
                 if (functionEx.SectionCount > 0) {
                     OpenSectionImpl(functionEx.Function.Sections[0]);
@@ -2631,11 +2631,11 @@ namespace IRExplorerUI {
             Clipboard.SetText(writer.ToString());
         }
 
-        public void RemoveSummary(IRTextSummary summary) {
-            if (otherSummaries_.Remove(summary_)) {
-                sectionExtensionComputed_ = false;
-                UpdateFunctionListBindings();
-            }
-        }
+        //public async void RemoveSummary(IRTextSummary summary) {
+        //    if (otherSummaries_.Remove(summary_)) {
+        //        sectionExtensionComputed_ = false;
+        //        await UpdateFunctionListBindings();
+        //    }
+        //}
     }
 }

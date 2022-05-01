@@ -1186,27 +1186,27 @@ namespace IRExplorerUI {
             SetupMainWindowCompilerTarget();
         }
 
-        private void LLVMMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget("LLVM");
+        private async void LLVMMenuItem_Click(object sender, RoutedEventArgs e) {
+            await SwitchCompilerTarget("LLVM");
         }
 
-        private void UTCMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget("UTC");
+        private async void UTCMenuItem_Click(object sender, RoutedEventArgs e) {
+            await SwitchCompilerTarget("UTC");
         }
 
-        private void ASMMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget("ASM", IRMode.x86_64);
+        private async void ASMMenuItem_Click(object sender, RoutedEventArgs e) {
+            await SwitchCompilerTarget("ASM", IRMode.x86_64);
         }
 
-        private void ARM64ASMMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget("ASM", IRMode.ARM64);
+        private async void ARM64ASMMenuItem_Click(object sender, RoutedEventArgs e) {
+            await SwitchCompilerTarget("ASM", IRMode.ARM64);
         }
 
-        private void DotNetMenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget("DotNet", IRMode.x86_64);
+        private async void DotNetMenuItem_Click(object sender, RoutedEventArgs e) {
+            await SwitchCompilerTarget("DotNet", IRMode.x86_64);
         }
-        private void DotNetARM64MenuItem_Click(object sender, RoutedEventArgs e) {
-            SwitchCompilerTarget("DotNet", IRMode.ARM64);
+        private async void DotNetARM64MenuItem_Click(object sender, RoutedEventArgs e) {
+            await SwitchCompilerTarget("DotNet", IRMode.ARM64);
         }
 
         private async Task SetupCompilerTarget() {

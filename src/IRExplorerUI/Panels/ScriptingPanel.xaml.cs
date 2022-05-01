@@ -246,7 +246,7 @@ namespace IRExplorerUI {
             var action = new DelayedAction();
             errorHighlightingAction_ = action;
 
-            action.Start(TimeSpan.FromSeconds(SyntaxErrorHighlightingDelay), async () => {
+            await action.Start(TimeSpan.FromSeconds(SyntaxErrorHighlightingDelay), async () => {
                 var errors = await autoComplete_.GetSourceErrorsAsync(text);
                 errorDiagnostics_ = errors;
 
