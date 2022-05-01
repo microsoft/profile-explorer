@@ -41,7 +41,7 @@ namespace IRExplorerUI {
             AfterOutputResult
         }
 
-        public delegate string SectionTextDelegate(SearchResultKind resultKind, IRTextSection section);
+        public delegate Task<string> SectionTextDelegate(SearchResultKind resultKind, IRTextSection section);
 
         private static readonly FontFamily PreviewFont = new FontFamily("Consolas");
         private bool isMarked_;
@@ -78,7 +78,8 @@ namespace IRExplorerUI {
                 preview_.Margin = new Thickness(0, 2, 0, 0);
 
                 // Load text on-demand and extract the line with the result.
-                var sectionText = getSectionText_(ResultKind, Section);
+                //? TODO: use NotifyTask https://stackoverflow.com/a/48217792
+                var sectionText = getSectionText_(ResultKind, Section).Result;
                 (int startOffset, int endOffset) = ExtractTextLine(sectionText);
 
                 // Append text before search result.
@@ -402,7 +403,7 @@ namespace IRExplorerUI {
             searchResults_.Add(resultInfo);
         }
 
-        private string GetSectionText(SearchResultInfo.SearchResultKind resultKind, IRTextSection section) {
+        private async Task<string> GetSectionText(SearchResultInfo.SearchResultKind resultKind, IRTextSection section) {
             switch (resultKind) {
                 case SearchResultInfo.SearchResultKind.SectionResult: {
                         if (previousSection_ == section &&
@@ -410,7 +411,7 @@ namespace IRExplorerUI {
                             return previousSectionText_;
                         }
 
-                        var text = Session.GetSectionTextAsync(section).Result;
+                        var text = await Session.GetSectionTextAsync(section);
                         previousSection_ = section;
                         previousSectionText_ = text;
                         return text;
@@ -421,7 +422,7 @@ namespace IRExplorerUI {
                             return previousSectionBeforeOutput_;
                         }
 
-                        var text = Session.GetSectionOutputTextAsync(section.OutputBefore, section).Result;
+                        var text =  await Session.GetSectionOutputTextAsync(section.OutputBefore, section);
                         previousSection_ = section;
                         previousSectionBeforeOutput_ = text;
                         return text;
@@ -432,7 +433,7 @@ namespace IRExplorerUI {
                             return previousSectionAfterOutput_;
                         }
 
-                        var text = Session.GetSectionOutputTextAsync(section.OutputAfter, section).Result;
+                        var text = await Session.GetSectionOutputTextAsync(section.OutputAfter, section);
                         previousSection_ = section;
                         previousSectionAfterOutput_ = text;
                         return text;

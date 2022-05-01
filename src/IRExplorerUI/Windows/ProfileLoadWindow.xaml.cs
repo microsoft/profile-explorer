@@ -309,12 +309,16 @@ namespace IRExplorerUI {
         }
 
         private void UpdateRecordProgress(Stopwatch stopWatch, ProfileLoadProgress progressInfo) {
-            RecordProgressLabel.Text = progressInfo.Stage switch {
-                ProfileLoadStage.TraceLoading => 
-                    (progressInfo != null) ?
-                    $"{stopWatch.Elapsed.ToString(@"mm\:ss")}, {progressInfo.Total / 1000}K samples" :
-                    $"{stopWatch.Elapsed.ToString(@"mm\:ss")}"
-            };
+            string status = $"{stopWatch.Elapsed.ToString(@"mm\:ss")}";
+
+            if (progressInfo != null) {
+                status += progressInfo.Stage switch {
+                    ProfileLoadStage.TraceLoading => $", {progressInfo.Total / 1000}K samples",
+                    _ => ""
+                };
+            }
+
+            RecordProgressLabel.Text = status;
         }
 
         private async Task DisplayProcessList(Func<Task<List<ETWProfileDataProvider.TraceProcessSummary>>> func) {

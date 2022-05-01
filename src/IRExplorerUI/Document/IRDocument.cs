@@ -1367,7 +1367,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void B_PreviewMouseMove(object sender, MouseEventArgs e) {
+        private async void B_PreviewMouseMove(object sender, MouseEventArgs e) {
             if (ignoreNextBarHover_) {
                 ignoreNextBarHover_ = false;
                 return;
@@ -1388,7 +1388,7 @@ namespace IRExplorerUI {
                 barElement.Style.Border = ColorPens.GetBoldPen(Colors.Black);
                 hoveredBarElement_ = barElement;
                 needsRendering = true;
-                ShowPreviewPopup(barElement.Element);
+                await ShowPreviewPopup(barElement.Element);
             }
             else {
                 HideTemporaryUI();

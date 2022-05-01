@@ -99,20 +99,21 @@ namespace IRExplorerUI {
 
         private async Task<Tuple<LoadedDocument, LoadedDocument>> 
             LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
-            SwitchBinaryCompilerTarget(baseFilePath);
+            await SwitchBinaryCompilerTarget(baseFilePath);
 
             var baseTask = Task.Run(() => LoadBinaryDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
             var diffTask = Task.Run(() => LoadBinaryDocument(diffFilePath, diffModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
-            await Task.WhenAll(baseTask, diffTask);
+            var baseResult = await baseTask;
+            var diffResult = await diffTask;
 
-            if (baseTask.Result != null && diffTask.Result != null) {
-                await SetupOpenedIRDocument(SessionKind.Default, baseTask.Result);
-                await SetupOpenedDiffIRDocument(diffFilePath, diffTask.Result);
-                return new Tuple<LoadedDocument, LoadedDocument>(baseTask.Result, diffTask.Result);
+            if (baseResult!= null && diffResult != null) {
+                await SetupOpenedIRDocument(SessionKind.Default, baseResult);
+                await SetupOpenedDiffIRDocument(diffFilePath, diffResult);
+                return new Tuple<LoadedDocument, LoadedDocument>(baseResult, diffResult);
             }
             else {
                 await EndSession();
-                Trace.TraceWarning($"Failed to load base/diff documents: base {baseTask.Result != null}, diff {diffTask.Result != null}");
+                Trace.TraceWarning($"Failed to load base/diff documents: base {baseResult != null}, diff {diffResult != null}");
             }
 
             return new Tuple<LoadedDocument, LoadedDocument>(null, null);

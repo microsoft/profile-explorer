@@ -469,8 +469,8 @@ namespace IRExplorerUI {
         public event EventHandler<bool> PassOutputVisibilityChanged;
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private void IRDocumentHost_Unloaded(object sender, RoutedEventArgs e) {
-            HideRemarkPanel(true);
+        private async void IRDocumentHost_Unloaded(object sender, RoutedEventArgs e) {
+            await HideRemarkPanel(true);
         }
 
         private async void TextView_PreviewMouseDown(object sender, MouseButtonEventArgs e) {
