@@ -47,16 +47,8 @@ namespace IRExplorerUI.Compilers.ASM {
                                     binaryInfo.ImageBase, debugInfo);
         }
 
-        public static Disassembler CreateForMachine(string binaryFilePath, IDebugInfoProvider debugInfo) {
-            using var peInfo = new PEBinaryInfoProvider(binaryFilePath);
-
-            if (!peInfo.Initialize()) {
-                return null;
-            }
-
-            var binaryInfo = peInfo.BinaryFileInfo;
-            return new Disassembler(binaryInfo.Architecture, null,
-                                    binaryInfo.ImageBase, debugInfo);
+        public static Disassembler CreateForMachine(IDebugInfoProvider debugInfo) {
+            return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo);
         }
 
         private Disassembler(Machine architecture, List<(byte[] Data, long StartRVA)> codeSectionData, long baseAddress = 0,
@@ -109,7 +101,7 @@ namespace IRExplorerUI.Compilers.ASM {
             var builder = new StringBuilder((int)(size / 4) + 1);
 
             try {
-                foreach (var instr in DisassembleInstructions(startRVA, size, baseAddress_ + startRVA)) {
+                foreach (var instr in DisassembleInstructions(startRVA, size, startRVA)) {
                     var addressString = $"{instr.Address:X}:    ";
                     builder.Append(addressString);
                     int startIndex = 0;

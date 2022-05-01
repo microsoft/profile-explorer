@@ -55,15 +55,15 @@ namespace IRExplorerUI.Profile.ETW {
                         session_.EnableProvider(
                             ClrRundownTraceEventParser.ProviderGuid,
                             TraceEventLevel.Verbose,
-                            (ulong)(ClrTraceEventParser.Keywords.Jit |
-                                    ClrTraceEventParser.Keywords.JittedMethodILToNativeMap));
+                            (ulong)(ClrRundownTraceEventParser.Keywords.Jit |
+                                    ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap));
                     }
 
                     using var eventProcessor = new ETWEventProcessor(session_.Source, true, handleDotNetEvents);
                     profile = eventProcessor.ProcessEvents(progressCallback, cancelableTask);
                 }
                 catch (Exception ex) {
-                    Trace.TraceError($"Failed ETW event capture: {ex.Message}");
+                    Trace.TraceError($"Failed ETW event capture: {ex.Message}\n{ex.StackTrace}");
                 }
                 finally {
                     StopSession();
@@ -82,7 +82,7 @@ namespace IRExplorerUI.Profile.ETW {
                 return true;
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to start ETW capture session: {ex.Message}");
+                Trace.TraceError($"Failed to start ETW capture session: {ex.Message}\n{ex.StackTrace}");
                 StopSession();
                 return false;
             }

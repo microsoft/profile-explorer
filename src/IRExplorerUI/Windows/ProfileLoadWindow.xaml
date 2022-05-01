@@ -93,7 +93,7 @@
                         x:Name="RecordProgressLabel"
                         Margin="16,0,0,0"
                         VerticalAlignment="Center"
-                        Text="Starting recording..."
+                        Text="Starting recording"
                         Visibility="{Binding IsRecordingProfile, Converter={StaticResource BoolToVisibility}}" />
                 </StackPanel>
             </StackPanel>

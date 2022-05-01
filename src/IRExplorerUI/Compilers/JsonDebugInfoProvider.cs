@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using IRExplorerCore;
@@ -16,6 +17,7 @@ namespace IRExplorerUI.Compilers {
     public class JsonDebugInfoProvider : IDebugInfoProvider {
         private Dictionary<string, DebugFunctionInfo> functionMap_;
         private List<DebugFunctionInfo> functions_;
+        public Machine? Architecture => null;
         
         public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
             return AnnotateSourceLocations(function, textFunc.Name);

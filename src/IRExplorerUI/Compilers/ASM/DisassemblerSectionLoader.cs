@@ -41,7 +41,7 @@ namespace IRExplorerUI.Compilers {
 
             if (isManagedImage_) {
                 // For managed code, the code data is found on each function.
-                disassembler_ = Disassembler.CreateForMachine(binaryFilePath_, debugInfo_);
+                disassembler_ = Disassembler.CreateForMachine(debugInfo_);
             }
             else {
                 // This preloads all code sections in the binary.
@@ -132,7 +132,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public override ReadOnlyMemory<char> GetSectionTextSpan(IRTextSection section) {
-            return default;
+            return GetSectionText(section).AsMemory();
         }
 
         public override string GetSectionOutputText(IRPassOutput output) {
@@ -148,7 +148,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public override string GetRawSectionText(IRTextSection section) {
-            return null;
+            return GetSectionText(section);
         }
 
         public override string GetRawSectionPassOutput(IRPassOutput output) {
