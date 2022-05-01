@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
@@ -133,11 +134,11 @@ public class RawProfileData {
     }
 
     public IDebugInfoProvider GetDebugInfoForImage(ProfileImage image) {
-        return imageDebugInfo_.GetValueOrNull(image);
+        return imageDebugInfo_?.GetValueOrNull(image);
     }
 
     public (DotNetDebugInfoProvider, ProfileImage) 
-        GetOrAddModuleDebugInfo(int processId, string moduleName, long moduleBase) {
+        GetOrAddModuleDebugInfo(int processId, string moduleName, long moduleBase, Machine architecture) {
         imageDebugInfo_ ??= new Dictionary<ProfileImage, DotNetDebugInfoProvider>();
         var proc = GetOrCreateProcess(processId);
 
@@ -147,7 +148,7 @@ public class RawProfileData {
                 //? TODO: Maybe patch image? What about R2R, that likely have both native and JIT associated
                 
                 if (!imageDebugInfo_.TryGetValue(image, out var debugInfo)) {
-                    debugInfo = new DotNetDebugInfoProvider();
+                    debugInfo = new DotNetDebugInfoProvider(architecture);
                     imageDebugInfo_[image] = debugInfo;
                 }
 
@@ -452,18 +453,19 @@ public class RawProfileData {
     }
 
     //private HashSet<ProfileSample2> sampleSet_ = new HashSet<ProfileSample2>();
-
-
-    public void PrintSamples(int processId) {
-
+    public void PrintProcess(int processId) {
         var proc = GetOrCreateProcess(processId);
 
         if (proc != null) {
+            Trace.WriteLine($"Process {proc}");
+
             foreach (var image in proc.Images(this)) {
                 Trace.WriteLine($"Image: {image}");
             }
         }
-        
+    }
+
+    public void PrintSamples(int processId) {
         foreach (var sample in samples_) {
             var context = sample.GetContext(this);
             if (context.ProcessId == processId) {

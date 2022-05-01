@@ -356,6 +356,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 }
 
                 var mainProcessId = mainProcess.ProcessId;
+                prof.PrintProcess(mainProcessId);
                 //prof.PrintSamples(mainProcessId);
 
                 var imageList = mainProcess.Images(prof).ToList();
@@ -587,6 +588,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
+                            //? TODO: Still disabled
+                            //? TODO: Still disabled
+                            //? TODO: Still disabled//? TODO: Still disabled
                             if (false && resolvedStack != null) {
                                 foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                     if (resolvedFrame.IsUnknown) {
@@ -715,6 +719,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                                         if (managedBaseAddress != 0) {
                                             frameRva = frameIp - managedBaseAddress;
+                                            //frameRva = frameIp;
                                             funcInfo = module.FindDebugFunctionInfo(frameRva);
                                         }
                                         else {
@@ -735,11 +740,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         isTopFrame = false;
                                         continue;
                                     }
-
-                                    if (funcName.Contains("Slow")) {
-                                        ;
-                                    }
-
+                                    
                                     var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
 
                                     if (textFunction == null) {

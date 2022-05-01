@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Threading.Tasks;
 using IRExplorerCore;
@@ -16,11 +17,15 @@ namespace IRExplorerUI.Compilers {
     public class DotNetDebugInfoProvider : IDebugInfoProvider {
         private Dictionary<string, DebugFunctionInfo> functionMap_;
         private List<DebugFunctionInfo> functions_;
+        private Machine architecture_;
 
-        public DotNetDebugInfoProvider() {
+        public DotNetDebugInfoProvider(Machine architecture) {
+            architecture_ = architecture;
             functionMap_ = new Dictionary<string, DebugFunctionInfo>();
             functions_ = new List<DebugFunctionInfo>();
         }
+        
+        public Machine? Architecture => architecture_;
 
         public void AddFunctionInfo(DebugFunctionInfo funcInfo) {
             functions_.Add(funcInfo);

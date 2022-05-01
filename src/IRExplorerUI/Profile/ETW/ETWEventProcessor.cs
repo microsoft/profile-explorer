@@ -18,6 +18,7 @@ using System.Windows.Markup;
 using CSScriptLib;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using System.Collections;
+using System.Reflection.PortableExecutable;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -325,6 +326,10 @@ public class ETWEventProcessor : IDisposable {
             ProcessDotNetILToNativeMap(data, profile);
         };
 
+        //rundownParser.MethodILToNativeMapDCStart += data => {
+        //    ProcessDotNetILToNativeMap(data, profile);
+        //};
+        
         rundownParser.MethodILToNativeMapDCStop += data => {
             ProcessDotNetILToNativeMap(data, profile);
         };
@@ -333,6 +338,10 @@ public class ETWEventProcessor : IDisposable {
             
             ProcessDotNetMethodLoad(data, profile);
         };
+
+        //rundownParser.MethodDCStartVerbose += data => {
+        //    ProcessDotNetMethodLoad(data, profile);
+        //};
 
         rundownParser.MethodDCStopVerbose += data => {        
             ProcessDotNetMethodLoad(data, profile);
@@ -363,14 +372,24 @@ public class ETWEventProcessor : IDisposable {
         // PdbInfo pdbInfo = module?.Pdb;
     }
 
+    private Machine FromArchitecture(Architecture arch) {
+        return arch switch {
+            Architecture.Amd64 => Machine.Amd64,
+            Architecture.X86 => Machine.I386,
+            Architecture.Arm64 => Machine.Arm64,
+            Architecture.Arm => Machine.Arm,
+            _ => throw new InvalidOperationException($"Unknown .NET architecture: {arch}")
+        };
+    }
+
     private bool ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile) {
         //if (string.IsNullOrEmpty(data.ProcessName) ||
         //    !data.ProcessName.Contains(targetProc)) {
         //    return false;
         //}
 
-        //Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
-        //Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
+        Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
         
         var runtime = GetRuntime(data.ProcessID);
 
@@ -384,15 +403,17 @@ public class ETWEventProcessor : IDisposable {
         if (module == null) {
             return false;
         }
-
+        
+        var runtimeArch = FromArchitecture(runtime.ClrInfo.DacInfo.TargetArchitecture);
         var moduleName = Utils.TryGetFileName(module.Name);
-        var (moduleDebugInfo, moduleImage) = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName, (long)module.ImageBase);
-
+        var (moduleDebugInfo, moduleImage) = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName,
+                                                                            (long)module.ImageBase, runtimeArch);
         if (moduleDebugInfo == null) {
             return false;
         }
-        
+
         var funcRva = data.MethodStartAddress - module.Address;
+        //var funcRva = data.MethodStartAddress;
         var funcName = method != null ? method.Signature : $"{data.MethodNamespace}.{data.MethodName}";
         var funcInfo = new DebugFunctionInfo(funcName, (long)funcRva, data.MethodSize, data.MethodToken);
 
@@ -404,8 +425,8 @@ public class ETWEventProcessor : IDisposable {
         moduleDebugInfo.AddFunctionInfo(funcInfo);
         profile.AddManagedMethodMapping(funcInfo, moduleImage, (long)data.MethodStartAddress, data.MethodSize);
         
-        //Trace.WriteLine($"=> managed {funcInfo}");
-        //Trace.WriteLine($"     module base {method?.Type?.Module?.ImageBase:X}, addr {method?.Type?.Module?.Address:X}");
+        Trace.WriteLine($"=> managed {funcInfo}");
+        Trace.WriteLine($"     module base {method?.Type?.Module?.ImageBase:X}, addr {method?.Type?.Module?.Address:X}");
         return true;
     }
     
@@ -426,7 +447,7 @@ public class ETWEventProcessor : IDisposable {
             return dataTarget.ClrVersions[0].CreateRuntime();
         }
         catch (Exception ex) {
-            Trace.WriteLine($"Failed to connect to .NET process {processId}: {ex.Message}");
+            Trace.WriteLine($"Failed to connect to .NET process {processId}: {ex.Message}\n{ex.StackTrace}");
             dataTarget?.Dispose();
             return null;
         }
@@ -439,7 +460,7 @@ public class ETWEventProcessor : IDisposable {
             return buffer;
         }
         catch (Exception ex) {
-            Trace.WriteLine($"Failed to read .NET method {address:X}, size {size}: {ex.Message}");
+            Trace.WriteLine($"Failed to read .NET method {address:X}, size {size}: {ex.Message}\n{ex.StackTrace}");
             return null;
         }
     }

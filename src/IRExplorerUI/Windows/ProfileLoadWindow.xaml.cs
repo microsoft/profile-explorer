@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
@@ -140,12 +141,16 @@ namespace IRExplorerUI {
         }
 
         private async void LoadButton_Click(object sender, RoutedEventArgs e) {
+            await OpenFilesAndComplete();
+        }
+
+        private async Task OpenFilesAndComplete() {
             if (await OpenFiles() && !windowClosed_) {
                 DialogResult = true;
                 Close();
             }
         }
-        
+
         private async Task<bool> OpenFiles() {
             ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
             BinaryFilePath = Utils.CleanupPath(BinaryFilePath);
@@ -262,8 +267,7 @@ namespace IRExplorerUI {
                 var pathPair = menuItem.Tag as Tuple<string, string, string>;
                 ProfileAutocompleteBox.Text = pathPair.Item1;
                 BinaryAutocompleteBox.Text = pathPair.Item2;
-                SymbolAutocompleteBox.Text = pathPair.Item3; //? TODO: Unused
-                await OpenFiles();
+                await OpenFilesAndComplete();
             }
         }
 
@@ -280,16 +284,19 @@ namespace IRExplorerUI {
             
             IsRecordingProfile = true;
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+            ProfileLoadProgress lastProgressInfo = null;
 
+            var stopWatch = Stopwatch.StartNew();
+            DispatcherTimer timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Render,
+                (o, e)=>  UpdateRecordProgress(stopWatch, lastProgressInfo), Dispatcher);
+            timer.Start();
+            
             recordedProfile_ = null;
             recordedProfile_ = await recordingSession.StartRecording(progressInfo => {
-                Dispatcher.BeginInvoke((Action)(() => {
-                    RecordProgressLabel.Text = progressInfo.Stage switch {
-                        ProfileLoadStage.TraceLoading => $"Recording, {progressInfo.Total / 1000}K samples",
-                    };
-                }));
+                lastProgressInfo = progressInfo;
             }, task);
 
+            timer.Stop();
             IsRecordingProfile = false;
 
             if (recordedProfile_ != null) {
@@ -299,6 +306,15 @@ namespace IRExplorerUI {
                 MessageBox.Show("Failed to record ETW sampling profile!", "IR Explorer", 
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
+        }
+
+        private void UpdateRecordProgress(Stopwatch stopWatch, ProfileLoadProgress progressInfo) {
+            RecordProgressLabel.Text = progressInfo.Stage switch {
+                ProfileLoadStage.TraceLoading => 
+                    (progressInfo != null) ?
+                    $"{stopWatch.Elapsed.ToString(@"mm\:ss")}, {progressInfo.Total / 1000}K samples" :
+                    $"{stopWatch.Elapsed.ToString(@"mm\:ss")}"
+            };
         }
 
         private async Task DisplayProcessList(Func<Task<List<ETWProfileDataProvider.TraceProcessSummary>>> func) {

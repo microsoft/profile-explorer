@@ -122,10 +122,14 @@ namespace Aga.Controls.Tree
 			}
 		}
 
-		internal void SetIsExpanded(TreeNode node, bool value)
+        public event EventHandler<TreeNode> NodeExpanded;
+        public event EventHandler<TreeNode> NodeCollapsed;
+
+        internal void SetIsExpanded(TreeNode node, bool value)
 		{
-			if (value)
-			{
+			if (value) {
+                NodeExpanded?.Invoke(this, node);
+
 				if (!node.IsExpandedOnce)
 				{
 					node.IsExpandedOnce = true;
@@ -142,7 +146,8 @@ namespace Aga.Controls.Tree
 			{
 				DropChildrenRows(node, false);
 				node.AssignIsExpanded(value);
-			}
+                NodeCollapsed?.Invoke(this, node);
+            }
 		}
 
 		internal void CreateChildrenNodes(TreeNode node)

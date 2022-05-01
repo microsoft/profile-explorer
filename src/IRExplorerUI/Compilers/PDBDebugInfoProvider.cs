@@ -14,6 +14,7 @@ using Dia2Lib;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading;
@@ -41,6 +42,8 @@ namespace IRExplorerUI.Compilers {
         public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
             options_ = options;
         }
+
+        public Machine? Architecture => null;
 
         public static async Task<string> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
             if (symbolFile == null) {
