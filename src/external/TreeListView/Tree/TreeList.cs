@@ -209,7 +209,7 @@ namespace Aga.Controls.Tree
 				return false;
 		}
 
-		internal void InsertNewNode(TreeNode parent, object tag, int rowIndex, int index)
+        internal void InsertNewNode(TreeNode parent, object tag, int rowIndex, int index)
 		{
 			TreeNode node = new TreeNode(this, tag);
 			if (index >= 0 && index < parent.Children.Count)

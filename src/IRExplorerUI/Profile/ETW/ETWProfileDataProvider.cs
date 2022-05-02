@@ -588,10 +588,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-                            //? TODO: Still disabled
-                            //? TODO: Still disabled
-                            //? TODO: Still disabled//? TODO: Still disabled
-                            if (false && resolvedStack != null) {
+                            if (resolvedStack != null) {
                                 foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                     if (resolvedFrame.IsUnknown) {
                                         // Can at least increment the module weight.
@@ -617,7 +614,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         }
                                     }
 
-                                    var frameRva = resolvedFrame.FrameIP - resolvedFrame.Image.BaseAddress;
+                                    //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.FunctionInfo.Name}, prof func {resolvedFrame.Profile.DebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
+                                    
+                                    var frameRva = resolvedFrame.FrameRVA;
                                     var funcInfo = resolvedFrame.FunctionInfo;
                                     var funcName = funcInfo.Name;
                                     var funcRva = funcInfo.RVA;
@@ -625,7 +624,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     var profile = resolvedFrame.Profile;
 
                                     lock (profile) {
-                                        profile.DebugInfo = funcInfo;
+                                        //profile.DebugInfo = funcInfo; //? REMOVE
                                         var offset = frameRva - funcRva;
 
                                         // Don't count the inclusive time for recursive functions multiple times.
@@ -635,7 +634,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                                             // Add the previous stack frame function as a child
                                             // and current frame as its parent.
-                                            if (prevStackFunc != null) {
+                                            if (prevStackFunc != null) { //? remove
                                                 profile.AddChildSample(prevStackFunc, sampleWeight);
                                             }
                                         }
@@ -770,7 +769,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                                             // Add the previous stack frame function as a child
                                             // and current frame as its parent.
-                                            if (prevStackFunc != null) {
+                                            if (prevStackFunc != null) {//? REMOVE
                                                 profile.AddChildSample(prevStackFunc, sampleWeight);
                                             }
                                         }
@@ -791,7 +790,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                             ProcessInlineeSample(sampleWeight, offset, textFunction, module);
                                         }
 
-                                        resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, funcInfo, textFunction, frameImage, module, profile));
+                                        resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, frameRva, funcInfo, textFunction, frameImage, module, profile));
                                     }
                                     //}
 
@@ -1047,6 +1046,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
 public class ResolvedProfileStackFrame {
     public long FrameIP { get; set; }
+    public long FrameRVA { get; set; }
     public DebugFunctionInfo FunctionInfo { get; set; }
     public IRTextFunction Function { get; set; }
     public ProfileImage Image { get; set; }
@@ -1056,9 +1056,10 @@ public class ResolvedProfileStackFrame {
 
     public ResolvedProfileStackFrame() {}
 
-    public ResolvedProfileStackFrame(long frameIP, DebugFunctionInfo functionInfo, IRTextFunction function,
+    public ResolvedProfileStackFrame(long frameIP, long frameRVA, DebugFunctionInfo functionInfo, IRTextFunction function,
         ProfileImage image, ModuleInfo module, FunctionProfileData profile = null) {
         FrameIP = frameIP;
+        FrameRVA = frameRVA;
         FunctionInfo = functionInfo;
         Function = function;
         Image = image;

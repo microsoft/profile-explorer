@@ -1149,48 +1149,6 @@
                                     <TextBlock Text="Combine" />
                                 </StackPanel>
                             </ToggleButton>
-                            <Separator />
-
-                            <Image Source="{StaticResource SearchIcon}" />
-                            <Grid Height="24">
-                                <TextBox
-                                    x:Name="CallChildrenFilter"
-                                    Width="200"
-                                    Margin="4,0,0,0"
-                                    HorizontalAlignment="Center"
-                                    VerticalContentAlignment="Center"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                    IsEnabled="False"
-                                    TabIndex="4"
-                                    TextChanged="SectionFilter_TextChanged"
-                                    ToolTip="Filter children function list based on a case-insensitive string (Ctrl+F)">
-                                    <TextBox.InputBindings>
-                                        <KeyBinding
-                                            Key="Escape"
-                                            Command="local:Command.ClearTextbox"
-                                            CommandParameter="{Binding ElementName=CallChildrenFilter}" />
-                                    </TextBox.InputBindings>
-                                </TextBox>
-                                <TextBlock
-                                    Margin="8,4"
-                                    Foreground="DimGray"
-                                    IsHitTestVisible="False"
-                                    Text="Search functions"
-                                    Visibility="{Binding ElementName=SectionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
-
-                            </Grid>
-                            <Button
-                                Command="local:Command.ClearTextbox"
-                                CommandParameter="{Binding ElementName=SectionFilter}"
-                                TabIndex="5"
-                                ToolTip="Reset section filter">
-                                <Image
-                                    Width="16"
-                                    Height="16"
-                                    Source="{StaticResource ClearIcon}" />
-                            </Button>
-                            <Separator />
                         </ToolBar>
                     </ToolBarTray>
 

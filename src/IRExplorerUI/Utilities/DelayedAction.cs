@@ -8,7 +8,7 @@ namespace IRExplorerUI {
     public class DelayedAction {
         private bool canceled_;
 
-        public static TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(750);
+        public static TimeSpan DefaultDelay = TimeSpan.FromMilliseconds(500);
         
         public async Task Start(TimeSpan delay, Action action) {
             canceled_ = false;

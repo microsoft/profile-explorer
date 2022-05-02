@@ -31,7 +31,9 @@ using Xceed.Wpf.Toolkit;
 using MessageBox = System.Windows.MessageBox;
 using IRExplorerUI.Compilers.ASM;
 using System.Dynamic;
+using System.Runtime.CompilerServices;
 using IRExplorerCore.Graph;
+using System.Windows.Documents;
 
 namespace IRExplorerUI {
     //? TODo; Commands can be defined in code-behind with this pattern,
@@ -328,10 +330,36 @@ namespace IRExplorerUI {
         public double Percentage { get; set; }
     }
 
-    public class ChildFunctionEx : ITreeModel {
-        public IRTextFunction Function { get; set; }
-        public long Time { get; set; }
-        public string Name { get; set; }
+    public enum ChildFunctionExKind {
+        Root,
+        ChildrenPlaceholder,
+        CallerNode,
+        CalleeNode,
+        CallTreeNode,
+        Header
+    }
+    
+    public class ChildFunctionEx : ITreeModel, INotifyPropertyChanged {
+        private TextBlock name_;
+
+        public TextBlock Name {
+            get {
+                if (name_ == null) {
+                    name_ = CreateOnDemaneName();
+                }
+
+                return name_;
+            }
+        }
+
+        public ChildFunctionExKind Kind { get; set; }
+        public bool IsMarked { get; set; }
+
+        public TextSearchResult? SearchResult { get; set; }
+        public IRTextFunction Function { get; set; } //? TODO: Could use CallTreeNode.Function
+        public ProfileCallTreeNode CallTreeNode { get; set; }
+        public TreeNode TreeNode { get; set; } // Associated UI tree node.
+        public string FunctionName { get; set; }
         public string ModuleName { get; set; }
         public string Text { get; set; }
         public string Text2 { get; set; }
@@ -339,15 +367,13 @@ namespace IRExplorerUI {
         public Brush BackColor { get; set; }
         public Brush BackColor2 { get; set; }
         public List<ChildFunctionEx> Children { get; set; }
-        public int DescendantCount { get; set; }
-        public bool IsMarked { get; set; }
-        public FunctionCodeStatistics Statistics { get; set; }
+        public long Time { get; set; }
         public double Percentage { get; set; }
         public double PercentageExclusive { get; set; }
-        public ProfileCallTreeNode CallTreeNode { get; set; }
 
-        public ChildFunctionEx() {
+        public ChildFunctionEx(ChildFunctionExKind kind) {
             Children = new List<ChildFunctionEx>();
+            Kind = kind;
         }
 
         public IEnumerable GetChildren(object node) {
@@ -363,6 +389,78 @@ namespace IRExplorerUI {
             if (node == null) return false;
             var parentNode = (ChildFunctionEx)node;
             return parentNode.Children != null && parentNode.Children.Count > 0;
+        }
+
+        public void ResetCachedName() {
+            name_ = null;
+            OnPropertyChanged(nameof(Name));
+        }
+
+        private TextBlock CreateOnDemaneName() {
+            var textBlock = new TextBlock();
+            var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.DemiBold;
+
+            if (IsMarked) {
+                textBlock.FontWeight = FontWeights.Bold;
+            }
+
+            if (App.Settings.CallTreeSettings.PrependModuleToFunction) {
+                if (!string.IsNullOrEmpty(ModuleName)) {
+                    textBlock.Inlines.Add(new Run(ModuleName) {
+                        Foreground = Brushes.DimGray,
+                        FontWeight = IsMarked ? FontWeights.DemiBold : FontWeights.Normal
+                    });
+                }
+
+                textBlock.Inlines.Add("!");
+
+                if (SearchResult.HasValue) {
+                    CreateSearchResultName(textBlock, nameFontWeight);
+                }
+                else {
+                    textBlock.Inlines.Add(new Run(FunctionName) {
+                        FontWeight = nameFontWeight
+                    });
+                }
+            }
+            else {
+                if (SearchResult.HasValue) {
+                    CreateSearchResultName(textBlock, nameFontWeight);
+                }
+                else {
+                    textBlock.Inlines.Add(new Run(FunctionName) {
+                        FontWeight = nameFontWeight
+                    });
+                }
+            }
+
+            return textBlock;
+        }
+
+        private void CreateSearchResultName(TextBlock textBlock, FontWeight nameFontWeight) {
+            if (SearchResult.Value.Offset > 0) {
+                textBlock.Inlines.Add(new Run(FunctionName.Substring(0, SearchResult.Value.Offset)) {
+                    FontWeight = nameFontWeight
+                });
+            }
+
+            textBlock.Inlines.Add(new Run(FunctionName.Substring(SearchResult.Value.Offset, SearchResult.Value.Length)) {
+                Background = Brushes.Khaki
+            });
+
+            int remainingLength = FunctionName.Length - (SearchResult.Value.Offset + SearchResult.Value.Length);
+            
+            if (remainingLength > 0) {
+                textBlock.Inlines.Add(new Run(FunctionName.Substring(FunctionName.Length - remainingLength, remainingLength)) {
+                    FontWeight = nameFontWeight
+                });
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 
@@ -1952,7 +2050,7 @@ namespace IRExplorerUI {
             }
 
             var visitedNodes = new HashSet<CallGraphNode>();
-            var rootNode = new ChildFunctionEx();
+            var rootNode = new ChildFunctionEx(ChildFunctionExKind.CallTreeNode);
             rootNode.Children = new List<ChildFunctionEx>();
 
             if (callGraphNode != null) {
@@ -1970,9 +2068,8 @@ namespace IRExplorerUI {
             if (node.HasCallers) {
                 //? TODO: Sort on top of the list
                 var callerInfo = CreateCallTreeChild(node, function);
-                callerInfo.Name = "Callers";
+                callerInfo.FunctionName = "Callers";
                 callerInfo.IsMarked = true;
-                callerInfo.DescendantCount = node.UniqueCallerCount;
                 parentNode.Children.Add(callerInfo);
 
                 foreach (var callerNode in node.UniqueCallers) {
@@ -1981,7 +2078,6 @@ namespace IRExplorerUI {
                         continue;
 
                     var callerNodeEx = CreateCallTreeChild(callerNode, callerFunc);
-                    callerNodeEx.Statistics = GetFunctionStatistics(callerFunc);
                     callerInfo.Children.Add(callerNodeEx);
                 }
             }
@@ -1992,7 +2088,6 @@ namespace IRExplorerUI {
 
                 // Create node and attach statistics if available.
                 var childNode = CreateCallTreeChild(calleeNode, childFunc);
-                childNode.Statistics = GetFunctionStatistics(childFunc);
                 parentNode.Children.Add(childNode);
 
                 var otherCalleeNode = otherNode?.FindCallee(calleeNode);
@@ -2023,7 +2118,7 @@ namespace IRExplorerUI {
                     return -1;
                 }
 
-                return string.Compare(b.Name, a.Name, StringComparison.Ordinal);
+                return string.Compare(b.FunctionName, a.FunctionName, StringComparison.Ordinal);
             });
         }
 
@@ -2033,10 +2128,9 @@ namespace IRExplorerUI {
         }
 
         private ChildFunctionEx CreateCallTreeChild(CallGraphNode childNode, IRTextFunction childFunc) {
-            var childInfo = new ChildFunctionEx() {
+            var childInfo = new ChildFunctionEx(ChildFunctionExKind.CallTreeNode) {
                 Function = childFunc,
-                Name = childNode.FunctionName,
-                DescendantCount = childNode.UniqueCalleeCount,
+                FunctionName = childNode.FunctionName,
                 TextColor = Brushes.Black,
                 BackColor = ColorBrushes.GetBrush(Colors.Transparent),
                 Children = new List<ChildFunctionEx>(),

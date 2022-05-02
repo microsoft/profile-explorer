@@ -8,7 +8,7 @@ using ProtoBuf;
 
 namespace IRExplorerUI {
     [ProtoContract(SkipConstructor = true)]
-    public class DocumentSettings : SettingsBase, INotifyPropertyChanged {
+    public class DocumentSettings : SettingsBase {
         public DocumentSettings() {
             Reset();
         }
@@ -62,7 +62,7 @@ namespace IRExplorerUI {
         [ProtoMember(26)] public bool FilterSourceDefinitions { get; set; }
         [ProtoMember(27)] public bool FilterDestinationUses { get; set; }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        //public event PropertyChangedEventHandler PropertyChanged;
 
         public override void Reset() {
             ShowBlockSeparatorLine = true;
