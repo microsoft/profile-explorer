@@ -102,7 +102,7 @@ namespace IRExplorerUI {
             return await disassembler.DisassembleAsync(filePath, compilerInfo_, progressCallback, cancelableTask);
         }
 
-        private void SwitchBinaryCompilerTarget(string filePath) {
+        private async Task SwitchBinaryCompilerTarget(string filePath) {
             // Identify compiler target and switch IR mode.
             var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
 
@@ -115,12 +115,12 @@ namespace IRExplorerUI {
                 case System.Reflection.PortableExecutable.Machine.Amd64: {
                     switch (binaryInfo.FileKind) {
                         case BinaryFileKind.Native: {
-                            SwitchCompilerTarget("ASM", IRMode.x86_64);
+                            await SwitchCompilerTarget("ASM", IRMode.x86_64);
                             break;
                         }
                         case BinaryFileKind.DotNetR2R:
                         case BinaryFileKind.DotNet: {
-                            SwitchCompilerTarget("DotNet", IRMode.x86_64);
+                            await SwitchCompilerTarget("DotNet", IRMode.x86_64);
                             break;
                         }
                     }
@@ -131,12 +131,12 @@ namespace IRExplorerUI {
                 case System.Reflection.PortableExecutable.Machine.Arm64: {
                     switch (binaryInfo.FileKind) {
                         case BinaryFileKind.Native: {
-                            SwitchCompilerTarget("ASM", IRMode.ARM64);
+                            await SwitchCompilerTarget("ASM", IRMode.ARM64);
                             break;
                         }
                         case BinaryFileKind.DotNetR2R:
                         case BinaryFileKind.DotNet: {
-                            SwitchCompilerTarget("DotNet", IRMode.ARM64);
+                            await SwitchCompilerTarget("DotNet", IRMode.ARM64);
                             break;
                         }
                     }
@@ -147,7 +147,7 @@ namespace IRExplorerUI {
         }
 
         private async Task<LoadedDocument> OpenBinaryDocument(string filePath) {
-            SwitchBinaryCompilerTarget(filePath);
+            await SwitchBinaryCompilerTarget(filePath);
             return await OpenIRDocument(filePath, filePath, LoadBinaryDocument);
         }
 
@@ -386,13 +386,13 @@ namespace IRExplorerUI {
         }
         
         private async Task<LoadedDocument> OpenIRDocument(string filePath, string modulePath,
-                                                          Func<string, string, Guid, ProgressInfoHandler, LoadedDocument> loadFunc) {
+                                                          Func<string, string, Guid, ProgressInfoHandler, Task<LoadedDocument>> loadFunc) {
             try {
                 await EndSession();
                 using var sessionLoading = await BeginSessionStateChange();
                 UpdateUIBeforeLoadDocument(filePath);
-                var result = await Task.Run(() => loadFunc(filePath, modulePath, Guid.NewGuid(),
-                                                           UpdateIRDocumentLoadProgress));
+                var result = await Task.Run(async () => await loadFunc(filePath, modulePath, Guid.NewGuid(),
+                                                                       UpdateIRDocumentLoadProgress));
                 if (result != null) {
                     await SetupOpenedIRDocument(SessionKind.Default, result);
                     return result;
@@ -520,32 +520,32 @@ namespace IRExplorerUI {
             SectionPanel.AddOtherSummary(summary);
         }
 
-        private LoadedDocument LoadDocument(string filePath, string modulePath, Guid id, 
+        private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id, 
                                             ProgressInfoHandler progressHandler) {
-            return LoadDocumentImpl(filePath, modulePath, id, progressHandler,
+            return await LoadDocument(filePath, modulePath, id, progressHandler,
                 new DocumentSectionLoader(filePath, compilerInfo_.IR));
         }
 
-        public Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
-            return Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), debugInfo, null));
+        public async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
+            return await Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), debugInfo, null));
         }
 
-        private LoadedDocument LoadBinaryDocument(string filePath, string modulePath, Guid id,
+        private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                   ProgressInfoHandler progressHandler) {
-            return LoadBinaryDocument(filePath, modulePath, id, null, progressHandler);
+            return await LoadBinaryDocument(filePath, modulePath, id, null, progressHandler);
         }
         
-        private LoadedDocument LoadBinaryDocument(string filePath, string modulePath, Guid id, 
+        private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id, 
                                                   IDebugInfoProvider debugInfo,
                                                   ProgressInfoHandler progressHandler) {
             if (App.Settings.IsExternalDisassemblerEnabled()) {
-                var disasmResult = DisassembleBinary(filePath).Result;
+                var disasmResult = await DisassembleBinary(filePath);
 
                 if (disasmResult == null) {
                     return null;
                 }
 
-                var result = LoadDocument(disasmResult.DisassemblyPath, modulePath, id, progressHandler);
+                var result = await LoadDocument(disasmResult.DisassemblyPath, modulePath, id, progressHandler);
 
                 if (result != null) {
                     result.BinaryFilePath = filePath;
@@ -556,7 +556,7 @@ namespace IRExplorerUI {
             }
             else {
                 var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
-                var result = LoadDocumentImpl(filePath, modulePath, id, progressHandler, loader);
+                var result = await LoadDocument(filePath, modulePath, id, progressHandler, loader);
 
                 if (result != null) {
                     result.BinaryFilePath = filePath;
@@ -567,14 +567,18 @@ namespace IRExplorerUI {
             }
         }
 
-        private LoadedDocument LoadDocumentImpl(string filePath, string modulePath, Guid id, 
+        private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id, 
                                                 ProgressInfoHandler progressHandler, 
                                                 IRTextSectionLoader loader) {
             try {
-                var result = new LoadedDocument(filePath, modulePath, id);
-                result.Loader = loader;
-                result.Summary = result.Loader.LoadDocument(progressHandler);
-                compilerInfo_.HandleLoadedDocument(result, modulePath);
+                var result = await Task.Run(() => {
+                    var result = new LoadedDocument(filePath, modulePath, id);
+                    result.Loader = loader;
+                    result.Summary = result.Loader.LoadDocument(progressHandler);
+                    return result;
+                });
+
+                await compilerInfo_.HandleLoadedDocument(result, modulePath);
                 return result;
             }
             catch (Exception ex) {
