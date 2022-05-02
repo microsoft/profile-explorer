@@ -451,10 +451,6 @@ namespace IRExplorerUI {
         public override ToolPanelKind PanelKind => ToolPanelKind.CallTree;
         public override bool SavesStateToFile => false;
 
-        public override async void OnSessionStart() {
-            base.OnSessionStart();
-        }
-
         public override void OnSessionEnd() {
             base.OnSessionEnd();
             CallTree.Model = null;
