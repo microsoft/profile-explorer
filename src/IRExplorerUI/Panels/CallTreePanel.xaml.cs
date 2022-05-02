@@ -40,6 +40,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("OpenFunction", "OpenFunction", typeof(CallTreePanel));
         public static readonly RoutedUICommand OpenFunctionInNewTab =
             new RoutedUICommand("OpenFunctionInNewTab", "OpenFunctionInNewTab", typeof(CallTreePanel));
+        public static readonly RoutedUICommand FocusSearch =
+            new RoutedUICommand("FocusSearch", "FocusSearch", typeof(CallTreePanel));
     }
     
     public partial class CallTreePanel : ToolPanelControl, INotifyPropertyChanged {
@@ -47,21 +49,37 @@ namespace IRExplorerUI {
             DependencyProperty.Register("ShowToolbar", typeof(bool), typeof(CallTreePanel));
 
         private IRTextFunction function_;
-        private bool combineNodes_;
         private ToolTipHoverPreview stackHoverPreview_;
+        private ChildFunctionEx profileCallTree_;
+        private List<ChildFunctionEx> searchResultNodes_;
+        private CallTreeSettings settings_;
 
         public bool ShowToolbar {
             get => (bool)GetValue(ShowToolbarProperty);
             set => SetValue(ShowToolbarProperty, value);
         }
 
+        public bool PrependModuleToFunction {
+            get => settings_.PrependModuleToFunction;
+            set {
+                if (value != settings_.PrependModuleToFunction) {
+                    settings_.PrependModuleToFunction = value;
+                    OnPropertyChanged();
+                    DisplaProfileCallTree();
+                }
+            }
+        }
+
         public CallTreePanel() {
             InitializeComponent();
+            settings_ = App.Settings.CallTreeSettings;
+            
             PreviewKeyDown += OnPreviewKeyDown;
             ShowToolbar = true;
             DataContext = this;
-            combineNodes_ = true;
+            CallTree.NodeExpanded += CallTreeOnNodeExpanded;
             
+
             stackHoverPreview_ = new ToolTipHoverPreview(CallTree, 
                 mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
                 (previewPoint, element) => {
@@ -72,16 +90,50 @@ namespace IRExplorerUI {
                 });
         }
 
+        private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
+            var funcNode = node.Tag as ChildFunctionEx;
+
+            if (funcNode != null) {
+                // If children not populated yet, there is a single dummy node.
+                if (funcNode.Children.Count == 1 &&
+                    funcNode.Children[0].Kind == ChildFunctionExKind.ChildrenPlaceholder) {
+                    var callNode = funcNode.CallTreeNode;
+                    var visitedNodes = new HashSet<ProfileCallTreeNode>();
+
+                    // Remove the dummy node and add the real children.
+                    // If the children have children on their own, new dummy nodes will be used.
+                    funcNode.Children.Clear();
+
+                    if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
+                        var percentageFunc = PickPercentageFunction(callNode.Weight);
+
+                    foreach (var childNode in callNode.Children) {
+                            CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
+                                                  visitedNodes, percentageFunc);
+                        }
+                    }
+                    else if (funcNode.Kind == ChildFunctionExKind.CallerNode && callNode.HasCallers) {
+                        var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
+
+                    foreach (var childNode in callNode.Callers) {
+                            CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
+                                visitedNodes, percentageFunc);
+                        }
+                    }
+                }
+            }
+        }
+
         public CallTreePanel(ISession session) : this() {
             Session = session;
         }
         
         public bool CombineNodes {
-            get => combineNodes_;
+            get => settings_.CombineInstances;
             set {
-                if (combineNodes_ != value) {
-                    combineNodes_ = value;
-                    OnPropertyChanged(nameof(CombineNodes));
+                if (settings_.CombineInstances != value) {
+                    settings_.CombineInstances = value;
+                    OnPropertyChanged();
 
                     if (function_ != null) {
                         DisplaProfileCallerCalleeTree(function_);
@@ -91,7 +143,7 @@ namespace IRExplorerUI {
         }
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e) {
-            Trace.WriteLine($"Key {e.Key}");
+            //Trace.WriteLine($"Key {e.Key}");
         }
 
         private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {
@@ -107,8 +159,8 @@ namespace IRExplorerUI {
         }
 
         public async Task DisplaProfileCallTree() {
-            var profileCallTree = await Task.Run(() => CreateProfileCallTree());
-            CallTree.Model = profileCallTree;
+            profileCallTree_ = await Task.Run(() => CreateProfileCallTree());
+            CallTree.Model = profileCallTree_;
 
             if (true) {
                 //? TODO: Option 
@@ -118,8 +170,8 @@ namespace IRExplorerUI {
 
         public async Task DisplaProfileCallerCalleeTree(IRTextFunction function) {
             function_ = function;
-            var profileCallTree = await Task.Run(() => CreateProfileCallerCalleeTree(function));
-            CallTree.Model = profileCallTree;
+            profileCallTree_ = await Task.Run(() => CreateProfileCallerCalleeTree(function));
+            CallTree.Model = profileCallTree_;
             ExpandCallTreeTop();
         }
 
@@ -129,17 +181,25 @@ namespace IRExplorerUI {
         }
 
         private List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function, ProfileCallTree callTree) {
-            if (combineNodes_) {
-                var combinbedNode = callTree.GetCombinedCallTreeNode(function);
-                return combinbedNode == null ? null : new List<ProfileCallTreeNode>() { combinbedNode };
+            if (CombineNodes) {
+                var combinedNode = callTree.GetCombinedCallTreeNode(function);
+                return combinedNode == null ? null : new List<ProfileCallTreeNode>() { combinedNode };
             }
             
             return callTree.GetCallTreeNodes(function);
         }
 
+        private ProfileCallTreeNode GetChildCallTreeNode(ProfileCallTreeNode childNode, ProfileCallTree callTree) {
+            if (CombineNodes) {
+                return callTree.GetCombinedCallTreeNode(childNode.Function);
+            }
+
+            return childNode;
+        }
+
         private async Task<ChildFunctionEx> CreateProfileCallerCalleeTree(IRTextFunction function) {
             var visitedNodes = new HashSet<ProfileCallTreeNode>();
-            var rootNode = new ChildFunctionEx();
+            var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
             rootNode.Children = new List<ChildFunctionEx>();
 
             var callTree = Session.ProfileData.CallTree;
@@ -178,14 +238,15 @@ namespace IRExplorerUI {
                     }
 
                     foreach (var childNode in instance.Children) {
-                        CreateProfileCallTree(childNode, childrenNode, visitedNodes, percentageFunc);
+                        CreateProfileCallTree(childNode, childrenNode, ChildFunctionExKind.CalleeNode,
+                                              visitedNodes, percentageFunc);
                     }
                 }
 
                 if (instance.HasCallers) {
                     // Percentage relative to entire profile for callers.
                     percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
-                    var callersNode = CreateProfileCallTreeHeader("Callers", 2);
+                    var callersNode = CreateProfileCallTreeHeader(ChildFunctionExKind.Header, "Callers", 2);
 
                     if (nodeList.Count > 1) {
                         instanceNode.Children.Add(callersNode);
@@ -195,7 +256,8 @@ namespace IRExplorerUI {
                     }
 
                     foreach (var n in instance.Callers) {
-                        CreateProfileCallTree(n, callersNode, visitedNodes, percentageFunc);
+                        CreateProfileCallTree(n, callersNode, ChildFunctionExKind.CallerNode,
+                                              visitedNodes, percentageFunc);
                     }
                 }
 
@@ -208,7 +270,7 @@ namespace IRExplorerUI {
 
         private async Task<ChildFunctionEx> CreateProfileCallTree() {
             var visitedNodes = new HashSet<ProfileCallTreeNode>();
-            var rootNode = new ChildFunctionEx();
+            var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
             rootNode.Children = new List<ChildFunctionEx>();
 
             var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
@@ -216,17 +278,23 @@ namespace IRExplorerUI {
 
             foreach (var node in callTree.RootNodes) {
                 visitedNodes.Clear();
-                CreateProfileCallTree(node, rootNode, visitedNodes, percentageFunc);
+                CreateProfileCallTree(node, rootNode, ChildFunctionExKind.CallTreeNode, 
+                                      visitedNodes, percentageFunc);
             }
 
             return rootNode;
         }
 
         private ChildFunctionEx CreateProfileCallTree(ProfileCallTreeNode node, ChildFunctionEx parentNodeEx,
+                                                      ChildFunctionExKind kind,
                                                       HashSet<ProfileCallTreeNode> visitedNodes,
                                                       Func<TimeSpan, double> percentageFunc) {
+            if (kind == ChildFunctionExKind.CalleeNode) {
+                node = GetChildCallTreeNode(node, Session.ProfileData.CallTree);
+            }
+
             bool newFunc = visitedNodes.Add(node);
-            var nodeEx = CreateProfileCallTreeChild(node, percentageFunc);
+            var nodeEx = CreateProfileCallTreeChild(node, kind, percentageFunc);
             parentNodeEx.Children.Add(nodeEx);
 
             if (!newFunc) {
@@ -234,9 +302,25 @@ namespace IRExplorerUI {
             }
 
             if (node.HasChildren) {
-                foreach (var childNode in node.Children) {
-                    CreateProfileCallTree(childNode, nodeEx, visitedNodes, percentageFunc);
+                if (kind == ChildFunctionExKind.CalleeNode) {
+                    // For caller-callee mode, use a placeholder than when tree gets expanded,
+                    // gets replaced by the real callee nodes.
+                    var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
+                    dummyChildNode.CallTreeNode = node;
+                    nodeEx.Children.Add(dummyChildNode);
                 }
+                else {
+                    foreach (var childNode in node.Children) {
+                        CreateProfileCallTree(childNode, nodeEx, kind, visitedNodes, percentageFunc);
+                    }
+                }
+            }
+            else if (node.HasCallers && kind == ChildFunctionExKind.CallerNode) {
+                // For caller-callee mode, use a placeholder than when tree gets expanded,
+                // gets replaced by the real caller (backtrace) nodes.
+                var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
+                dummyChildNode.CallTreeNode = node;
+                nodeEx.Children.Add(dummyChildNode);
             }
 
             SortCallTreeNodes(parentNodeEx);
@@ -249,7 +333,7 @@ namespace IRExplorerUI {
             // since that is not yet supported by the TreeListView control.
             node.Children.Sort((a, b) => {
                 int result = b.Time.CompareTo(a.Time);
-                return result != 0 ? result : String.Compare(a.Name, a.Name, StringComparison.Ordinal);
+                return result != 0 ? result : String.Compare(a.FunctionName, a.FunctionName, StringComparison.Ordinal);
             });
         }
 
@@ -261,24 +345,24 @@ namespace IRExplorerUI {
             }
         }
 
-        private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node,
+        private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node, ChildFunctionExKind kind,
                                                            Func<TimeSpan, double> percentageFunc) {
-            return CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight, percentageFunc);
+            return CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight, kind, percentageFunc);
         }
 
         private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node, TimeSpan weight, 
-                                                           TimeSpan exclusiveWeight, 
+                                                           TimeSpan exclusiveWeight, ChildFunctionExKind kind,
                                                            Func<TimeSpan, double> percentageFunc) {
             double weightPercentage = percentageFunc(weight);
             double exclusiveWeightPercentage = percentageFunc(exclusiveWeight);
             string funcName = FormatFunctionName(node);
             string toolTip = null;
 
-            return new ChildFunctionEx() {
+            return new ChildFunctionEx(kind) {
                 Function = node.Function,
                 ModuleName = node.ModuleName,
                 Time = weight.Ticks,
-                Name = funcName,
+                FunctionName = funcName,
                 CallTreeNode = node,
                 Percentage = weightPercentage,
                 PercentageExclusive = exclusiveWeightPercentage,
@@ -294,9 +378,9 @@ namespace IRExplorerUI {
                                                             Func<TimeSpan, double> percentageFunc, int priority) {
             double weightPercentage = percentageFunc(weight);
             double exclusiveWeightPercentage = percentageFunc(exclusiveWeight);
-            return new ChildFunctionEx() {
+            return new ChildFunctionEx(ChildFunctionExKind.Header) {
                 Time = TimeSpan.MaxValue.Ticks - priority,
-                Name = name,
+                FunctionName = name,
                 Percentage = weightPercentage,
                 PercentageExclusive = exclusiveWeightPercentage,
                 Text = $"{weightPercentage.AsPercentageString()} ({weight.AsMillisecondsString()})",
@@ -308,10 +392,10 @@ namespace IRExplorerUI {
             };
         }
 
-        private ChildFunctionEx CreateProfileCallTreeHeader(string name, int priority) {
-            return new ChildFunctionEx() {
+        private ChildFunctionEx CreateProfileCallTreeHeader(ChildFunctionExKind kind, string name, int priority) {
+            return new ChildFunctionEx(kind) {
                 Time = TimeSpan.MaxValue.Ticks - priority,
-                Name = name,
+                FunctionName = name,
                 TextColor = Brushes.Black,
                 IsMarked = true
             };
@@ -319,8 +403,9 @@ namespace IRExplorerUI {
 
         private ChildFunctionEx CreateProfileCallTreeInstance(string name, ProfileCallTreeNode node,
                                                               Func<TimeSpan, double> percentageFunc) {
-            var result = CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight, percentageFunc);
-            result.Name = name;
+            var result = CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight, 
+                                                    ChildFunctionExKind.Header, percentageFunc);
+            result.FunctionName = name;
             //result.Time = long.MaxValue;
             result.IsMarked = true;
             return result;
@@ -337,14 +422,7 @@ namespace IRExplorerUI {
                     funcName = nameProvider.DemangleFunctionName(funcName, nameProvider.GlobalDemanglingOptions);
                 }
             }
-
-            if (true) { //? option
-                //? TODO: Use CreatePreviewTextBlock to make module name lighter.
-                // WinDBG style of combining module and func. name.
-                var moduleName = Utils.TryGetFileNameWithoutExtension(node.ModuleName);
-                funcName = $"{moduleName}! {funcName}";
-            }
-
+            
             if (funcName.Length > maxLength) {
                 funcName = $"{funcName.Substring(0, maxLength)}...";
             }
@@ -392,6 +470,16 @@ namespace IRExplorerUI {
                 ExpandHottestFunctionPath();
                 Session.SwitchActiveFunction(childInfo.Function);
             }
+        }
+
+        private void ChildClick(object sender, MouseButtonEventArgs e) {
+            //// A double-click on the +/- icon doesn't select an actual node.
+            //var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
+
+            //if (childInfo != null) {
+            //    ExpandHottestFunctionPath();
+            //    Session.SwitchActiveFunction(childInfo.Function);
+            //}
         }
 
         private void ExpandHottestFunctionPath() {
@@ -462,6 +550,55 @@ namespace IRExplorerUI {
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+        
+        private void FunctionFilter_TextChanged(object sender, TextChangedEventArgs e) {
+            var text = FunctionFilter.Text.Trim();
+
+            if (searchResultNodes_ != null) {
+                // Clear previous search results.
+                foreach (var node in searchResultNodes_) {
+                    node.SearchResult = null;
+                    node.ResetCachedName();
+                }
+            }
+
+            if (text.Length > 1) {
+                SearchCallTree(text);
+            }
+        }
+
+        void SearchCallTree(string text) {
+            var matchingNodes = new List<ChildFunctionEx>();
+            SearchCallTree(text, profileCallTree_, matchingNodes);
+            searchResultNodes_ = matchingNodes;
+            
+            foreach (var node in searchResultNodes_) {
+                node.ResetCachedName();
+
+                // Expand path to the node.
+                for (var treeNode = node.TreeNode; treeNode != null; treeNode = treeNode.Parent) {
+                    treeNode.IsExpanded = true;
+                }
+            }
+        }
+
+        void SearchCallTree(string text, ChildFunctionEx node, List<ChildFunctionEx> matchingNodes) {
+            var result = TextSearcher.FirstIndexOf(node.FunctionName, text, 0, TextSearchKind.CaseInsensitive);
+            
+            if (result.HasValue) {
+                node.SearchResult = result;
+                matchingNodes.Add(node);
+            }
+
+            foreach (var child in node.Children) {
+                SearchCallTree(text, child, matchingNodes);
+            }
+        }
+
+        private void FocusSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
+            FunctionFilter.Focus();
+            FunctionFilter.SelectAll();
         }
     }
 }

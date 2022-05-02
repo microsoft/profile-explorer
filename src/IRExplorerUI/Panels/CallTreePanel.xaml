@@ -15,6 +15,7 @@
         <CommandBinding Command="local:CallTreeCommand.SelectFunction" Executed="SelectFunctionExecuted" />
         <CommandBinding Command="local:CallTreeCommand.OpenFunction" Executed="OpenFunctionExecuted" />
         <CommandBinding Command="local:CallTreeCommand.OpenFunctionInNewTab" Executed="OpenFunctionInNewTab" />
+        <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <local:ToolPanelControl.Resources>
@@ -63,6 +64,12 @@
                     </Button>
                     <Separator />
 
+                    <ToggleButton
+                        Content="m!F"
+                        IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
+                        ToolTip="Show the module name in front of the function name" />
+                    <Separator />
+
                     <Image Source="{StaticResource SearchIcon}" />
                     <Grid Height="24">
                         <TextBox
@@ -73,14 +80,14 @@
                             VerticalContentAlignment="Center"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            IsEnabled="False"
                             TabIndex="4"
+                            TextChanged="FunctionFilter_TextChanged"
                             ToolTip="Search functions based on a case-insensitive string (Ctrl+F)">
                             <TextBox.InputBindings>
                                 <KeyBinding
                                     Key="Escape"
                                     Command="local:Command.ClearTextbox"
-                                    CommandParameter="{Binding ElementName=CallChildrenFilter}" />
+                                    CommandParameter="{Binding ElementName=FunctionFilter}" />
                             </TextBox.InputBindings>
                         </TextBox>
                         <TextBlock
@@ -88,7 +95,7 @@
                             Foreground="DimGray"
                             IsHitTestVisible="False"
                             Text="Search functions"
-                            Visibility="{Binding ElementName=SectionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
 
                     </Grid>
                     <Button
@@ -134,22 +141,7 @@
                             <DataTemplate>
                                 <StackPanel HorizontalAlignment="Stretch" Orientation="Horizontal">
                                     <tree:RowExpander />
-                                    <TextBlock
-                                        Margin="6,2,6,2"
-                                        HorizontalAlignment="Stretch"
-                                        Foreground="{Binding TextColor}"
-                                        Text="{Binding Name}"
-                                        TextTrimming="CharacterEllipsis">
-                                        <TextBlock.Style>
-                                            <Style TargetType="{x:Type TextBlock}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                        <Setter Property="FontWeight" Value="Bold" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                    <ContentPresenter Content="{Binding Name}" />
                                 </StackPanel>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
@@ -251,6 +243,7 @@
             <ListView.ItemContainerStyle>
                 <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                     <EventSetter Event="MouseDoubleClick" Handler="ChildDoubleClick" />
+                    <EventSetter Event="MouseLeftButtonDown" Handler="ChildClick" />
                     <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 </Style>
@@ -328,5 +321,9 @@
             Key="Return"
             Command="local:CallTreeCommand.OpenFunctionInNewTab"
             Modifiers="Shift" />
+        <KeyBinding
+            Key="F"
+            Command="local:CallTreeCommand.FocusSearch"
+            Modifiers="Ctrl" />
     </local:ToolPanelControl.InputBindings>
 </local:ToolPanelControl>

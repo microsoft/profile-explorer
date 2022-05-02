@@ -46,6 +46,7 @@ public partial class CallTreePanel {
                 ShowPreviewPopup(hoveredItem);
             }
         }
+        
         private void ShowPreviewPopup(UIElement hoveredElement) {
             if (previewPopup_ != null) {
                 //if (previewPopup_.PreviewedElement == element) {

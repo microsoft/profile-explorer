@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Collections.Specialized;
+using System.Diagnostics;
 
 namespace Aga.Controls.Tree
 {
@@ -308,11 +309,22 @@ namespace Aga.Controls.Tree
 			if (tree == null)
 				throw new ArgumentNullException("tree");
 
-			_tree = tree;
+            if (tag is ITreeModel treeModel) {
+                treeModel.TreeNode = this;
+            }
+            else {
+                if (tag == null) {
+                    Trace.WriteLine("=> No tag ");
+                }
+                else
+                    Trace.WriteLine($"=> Tag type  {tag.GetType()}");
+            }
+            
+            _tree = tree;
 			_children = new NodeCollection(this);
 			_nodes = new ReadOnlyCollection<TreeNode>(_children);
 			_tag = tag;
-		}
+        }
 
 		public override string ToString()
 		{

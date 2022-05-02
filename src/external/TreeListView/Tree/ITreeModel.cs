@@ -17,5 +17,6 @@ namespace Aga.Controls.Tree
 		/// returns wheather specified parent has any children or not.
 		/// </summary>
 		bool HasChildren(object parent);
+        TreeNode TreeNode { get; set; }
 	}
 }

@@ -82,6 +82,9 @@ namespace IRExplorerUI {
         [ProtoMember(19)]
         public SymbolFileSourceOptions SymbolOptions { get; set; }
 
+        [ProtoMember(20)]
+        public CallTreeSettings CallTreeSettings { get; set; }
+
         public ApplicationSettings() {
             Reset();
         }
@@ -95,6 +98,7 @@ namespace IRExplorerUI {
             RemarkSettings.Reset();
             DiffSettings.Reset();
             SectionSettings.Reset();
+            CallTreeSettings.Reset();
             AutoReloadDocument = true;
             ThemeIndex = 2; // Blue theme.
         }
@@ -115,6 +119,7 @@ namespace IRExplorerUI {
             ExternalDisassemblerOptions ??= new Dictionary<BinaryFileKind, ExternalDisassemblerOptions>();
             ProfileOptions ??= new ProfileDataProviderOptions();
             SymbolOptions ??= new SymbolFileSourceOptions();
+            CallTreeSettings ??= new CallTreeSettings();
         }
 
         public ExternalDisassemblerOptions GetExternalDisassemblerOptions(BinaryFileKind fileKind) {
