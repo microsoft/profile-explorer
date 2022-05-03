@@ -312,13 +312,6 @@ namespace Aga.Controls.Tree
             if (tag is ITreeModel treeModel) {
                 treeModel.TreeNode = this;
             }
-            else {
-                if (tag == null) {
-                    Trace.WriteLine("=> No tag ");
-                }
-                else
-                    Trace.WriteLine($"=> Tag type  {tag.GetType()}");
-            }
             
             _tree = tree;
 			_children = new NodeCollection(this);
