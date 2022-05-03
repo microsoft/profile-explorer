@@ -18,6 +18,8 @@ using System.Windows.Markup;
 using CSScriptLib;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using System.Collections;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 
 namespace IRExplorerUI.Profile.ETW;
@@ -325,10 +327,10 @@ public class ETWEventProcessor : IDisposable {
         source_.Clr.MethodILToNativeMap += data => {
             ProcessDotNetILToNativeMap(data, profile);
         };
-
-        //rundownParser.MethodILToNativeMapDCStart += data => {
-        //    ProcessDotNetILToNativeMap(data, profile);
-        //};
+        
+        rundownParser.MethodILToNativeMapDCStart += data => {
+            ProcessDotNetILToNativeMap(data, profile);
+        };
         
         rundownParser.MethodILToNativeMapDCStop += data => {
             ProcessDotNetILToNativeMap(data, profile);
@@ -339,9 +341,9 @@ public class ETWEventProcessor : IDisposable {
             ProcessDotNetMethodLoad(data, profile);
         };
 
-        //rundownParser.MethodDCStartVerbose += data => {
-        //    ProcessDotNetMethodLoad(data, profile);
-        //};
+        rundownParser.MethodDCStartVerbose += data => {
+            ProcessDotNetMethodLoad(data, profile);
+        };
 
         rundownParser.MethodDCStopVerbose += data => {        
             ProcessDotNetMethodLoad(data, profile);
@@ -350,17 +352,21 @@ public class ETWEventProcessor : IDisposable {
         // MethodUnloadVerbose
     }
 
-    private string targetProc = "r2r_test";
+    private string targetProc = "ConsoleTester";
 
     private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data, RawProfileData profile) {
-        //if (string.IsNullOrEmpty(data.ProcessName) ||
-        //    !data.ProcessName.Contains(targetProc)) {
-        //    return;
-        //}
+        if (string.IsNullOrEmpty(data.ProcessName) ||
+            !data.ProcessName.Contains(targetProc)) {
+            return;
+        }
 
         //Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        var debugInfo = profile.FindManagedMethod(data.MethodID);
 
-        
+        if (debugInfo == null) {
+            return;
+        }
+
         var runtime = GetRuntime(data.ProcessID);
 
         if (runtime == null) {
@@ -368,8 +374,68 @@ public class ETWEventProcessor : IDisposable {
         }
 
         var method = runtime.GetMethodByHandle((ulong)data.MethodID);
-        // ClrModule module = method?.Type?.Module;
-        // PdbInfo pdbInfo = module?.Pdb;
+        var module = method?.Type?.Module;
+        
+        if (module == null) {
+            return;
+        }
+
+        PdbInfo pdbInfo = module.Pdb;
+
+        if (pdbInfo == null) {
+            return;
+        }
+
+        if (File.Exists(pdbInfo.Path)) {
+            using var stream = File.OpenRead(pdbInfo.Path);
+            var mdp = MetadataReaderProvider.FromPortablePdbStream(stream);
+            var md = mdp.GetMetadataReader();
+            var debugHandle = ((MethodDefinitionHandle)MetadataTokens.Handle((int)debugInfo.Id)).ToDebugInformationHandle();
+            var managedDebugInfo = md.GetMethodDebugInformation(debugHandle);
+            var sequencePoints = managedDebugInfo.GetSequencePoints();
+
+            for (int i = 0; i < data.CountOfMapEntries; i++) {
+                var ilOffset = data.ILOffset(i);
+                var nativeOffset = data.NativeOffset(i);
+
+                //if (ilOffset == (int)SpecialILOffset.NoMapping ||
+                //    ilOffset == (int)SpecialILOffset.Epilog ||
+                //    ilOffset == (int)SpecialILOffset.Prolog) {
+                //    continue;
+                //}
+
+                bool found = false;
+                int closestDist = int.MaxValue;
+                SequencePoint? closestPoint = null;
+
+                // Search for exact or closes IL offset based on
+                // https://github.com/dotnet/BenchmarkDotNet/blob/0321a3176b710110af5be04e54702e19a5bee151/src/BenchmarkDotNet.Disassembler.x64/SourceCodeProvider.cs#L131
+                foreach (var point in sequencePoints) { //? TODO: Slow, use some map since most ILoffsets are found exactly
+                    if (point.Offset == ilOffset) {
+                        closestPoint = point;
+                        closestDist = 0;
+                        break;
+                    }
+
+                    int dist = Math.Abs(point.Offset - (int)ilOffset);
+
+                    if (dist < closestDist) {
+                        closestDist = dist;
+                        closestPoint = point;
+                    }
+                }
+
+                if (closestPoint.HasValue) {
+                    var doc = md.GetDocument(closestPoint.Value.Document);
+                    var docName = md.GetString(doc.Name);
+                    var lineInfo = new DebugSourceLineInfo(nativeOffset, closestPoint.Value.StartLine, 
+                        closestPoint.Value.StartColumn, docName);
+                    debugInfo.SourceLines.Add(lineInfo);
+                    debugInfo.StartDebugSourceLine = lineInfo;
+                }
+            }
+        }
+
     }
 
     private Machine FromArchitecture(Architecture arch) {
@@ -388,8 +454,8 @@ public class ETWEventProcessor : IDisposable {
         //    return false;
         //}
 
-        Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
-        Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
+        //Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        //Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
         
         var runtime = GetRuntime(data.ProcessID);
 
@@ -423,10 +489,10 @@ public class ETWEventProcessor : IDisposable {
 
         //? Alternative is to read the managed PDB
         moduleDebugInfo.AddFunctionInfo(funcInfo);
-        profile.AddManagedMethodMapping(funcInfo, moduleImage, (long)data.MethodStartAddress, data.MethodSize);
+        profile.AddManagedMethodMapping(data.MethodID, funcInfo, moduleImage, (long)data.MethodStartAddress, data.MethodSize);
         
-        Trace.WriteLine($"=> managed {funcInfo}");
-        Trace.WriteLine($"     module base {method?.Type?.Module?.ImageBase:X}, addr {method?.Type?.Module?.Address:X}");
+        //Trace.WriteLine($"=> managed {funcInfo}");
+        //Trace.WriteLine($"     module base {method?.Type?.Module?.ImageBase:X}, addr {method?.Type?.Module?.Address:X}");
         return true;
     }
     

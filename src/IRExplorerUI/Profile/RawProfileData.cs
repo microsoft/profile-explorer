@@ -65,9 +65,9 @@ public class RawProfileData {
     public List<ProfileImage> Images => images_;
     public List<PerformanceCounterEvent> PerfCounters { get; set; }
 
-    //? hack
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
-
+    private List<ManagedMethodMapping> managedMethods_;
+    private Dictionary<long, DebugFunctionInfo> managedMethodIdMap_;
 
     public struct ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
         public ManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
@@ -119,18 +119,23 @@ public class RawProfileData {
             return !left.Equals(right);
         }
     }
-
-    private List<ManagedMethodMapping> managedMethods_;
-
+    
     public bool HasManagedMethods => managedMethods_ != null;
 
-    public void AddManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
+    public void AddManagedMethodMapping(int methodId, DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
         managedMethods_ ??= new List<ManagedMethodMapping>();
         managedMethods_.Add(new ManagedMethodMapping(debugInfo, image, ip , size));
+
+        managedMethodIdMap_ ??= new Dictionary<long, DebugFunctionInfo>();
+        managedMethodIdMap_[methodId] = debugInfo;
     }
 
     public ManagedMethodMapping FindManagedMethodForIP(long ip) {
         return DebugFunctionInfo.BinarySearch(managedMethods_, ip);
+    }
+
+    public DebugFunctionInfo FindManagedMethod(long id) {
+        return managedMethodIdMap_.GetValueOrNull(id);
     }
 
     public IDebugInfoProvider GetDebugInfoForImage(ProfileImage image) {
