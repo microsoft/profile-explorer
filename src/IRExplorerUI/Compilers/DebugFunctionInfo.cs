@@ -5,12 +5,12 @@ using System.Linq;
 namespace IRExplorerUI.Compilers;
 
 public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<DebugFunctionInfo>, IComparable<long> {
+    public long Id { get; set; }
     public string Name { get; set; }
     public long RVA { get; set; }
     public long Size { get; set; }
     public DebugSourceLineInfo StartDebugSourceLine { get; set; }
     public List<DebugSourceLineInfo> SourceLines { get; set; }
-    public int Id { get; set; }
     public string ModuleName { get; set; }
     public object Data { get; set; }
 

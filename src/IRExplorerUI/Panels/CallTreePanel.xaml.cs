@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -25,8 +26,10 @@ using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.VisualBasic;
 using IRExplorerUI.Controls;
 using System.Security.Cryptography.Xml;
+using System.Windows.Documents;
 using IRExplorerCore.IR;
 using OxyPlot;
+using FontWeights = System.Windows.FontWeights;
 
 namespace IRExplorerUI {
     public static class CallTreeCommand {
@@ -43,7 +46,144 @@ namespace IRExplorerUI {
         public static readonly RoutedUICommand FocusSearch =
             new RoutedUICommand("FocusSearch", "FocusSearch", typeof(CallTreePanel));
     }
-    
+
+
+    public enum ChildFunctionExKind {
+        Root,
+        ChildrenPlaceholder,
+        CallerNode,
+        CalleeNode,
+        CallTreeNode,
+        Header
+    }
+
+    public class ChildFunctionEx : ITreeModel, INotifyPropertyChanged {
+        private TextBlock name_;
+
+        public TextBlock Name {
+            get {
+                if (name_ == null) {
+                    name_ = CreateOnDemandName();
+                }
+
+                return name_;
+            }
+        }
+
+        public ChildFunctionExKind Kind { get; set; }
+        public bool IsMarked { get; set; }
+
+        public TextSearchResult? SearchResult { get; set; }
+        public IRTextFunction Function { get; set; } //? TODO: Could use CallTreeNode.Function
+        public ProfileCallTreeNode CallTreeNode { get; set; }
+        public TreeNode TreeNode { get; set; } // Associated UI tree node.
+        public string FunctionName { get; set; }
+        public string ModuleName { get; set; }
+        public string Text { get; set; }
+        public string Text2 { get; set; }
+        public Brush TextColor { get; set; }
+        public Brush BackColor { get; set; }
+        public Brush BackColor2 { get; set; }
+        public List<ChildFunctionEx> Children { get; set; }
+        public long Time { get; set; }
+        public double Percentage { get; set; }
+        public double PercentageExclusive { get; set; }
+
+        public ChildFunctionEx(ChildFunctionExKind kind) {
+            Children = new List<ChildFunctionEx>();
+            Kind = kind;
+        }
+
+        public IEnumerable GetChildren(object node) {
+            if (node == null) {
+                return Children;
+            }
+
+            var parentNode = (ChildFunctionEx)node;
+            return parentNode.Children;
+        }
+
+        public bool HasChildren(object node) {
+            if (node == null)
+                return false;
+            var parentNode = (ChildFunctionEx)node;
+            return parentNode.Children != null && parentNode.Children.Count > 0;
+        }
+
+        public void ResetCachedName() {
+            name_ = null;
+            OnPropertyChanged(nameof(Name));
+        }
+
+        private TextBlock CreateOnDemandName() {
+            var textBlock = new TextBlock();
+            var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.Normal;
+
+            if (IsMarked) {
+                textBlock.FontWeight = FontWeights.Bold;
+            }
+
+            if (Kind != ChildFunctionExKind.Header &&
+                App.Settings.CallTreeSettings.PrependModuleToFunction) {
+                if (!string.IsNullOrEmpty(ModuleName)) {
+                    textBlock.Inlines.Add(new Run(ModuleName) {
+                        Foreground = Brushes.DimGray,
+                        FontWeight = IsMarked ? FontWeights.DemiBold : FontWeights.Normal
+                    });
+                }
+
+                textBlock.Inlines.Add("!");
+
+                if (SearchResult.HasValue) {
+                    CreateSearchResultName(textBlock, nameFontWeight);
+                }
+                else {
+                    textBlock.Inlines.Add(new Run(FunctionName) {
+                        FontWeight = nameFontWeight
+                    });
+                }
+            }
+            else {
+                if (SearchResult.HasValue) {
+                    CreateSearchResultName(textBlock, nameFontWeight);
+                }
+                else {
+                    textBlock.Inlines.Add(new Run(FunctionName) {
+                        FontWeight = nameFontWeight
+                    });
+                }
+            }
+
+            return textBlock;
+        }
+
+        private void CreateSearchResultName(TextBlock textBlock, FontWeight nameFontWeight) {
+            if (SearchResult.Value.Offset > 0) {
+                textBlock.Inlines.Add(new Run(FunctionName.Substring(0, SearchResult.Value.Offset)) {
+                    FontWeight = nameFontWeight
+                });
+            }
+
+            textBlock.Inlines.Add(new Run(FunctionName.Substring(SearchResult.Value.Offset, SearchResult.Value.Length)) {
+                Background = Brushes.Khaki
+            });
+
+            int remainingLength = FunctionName.Length - (SearchResult.Value.Offset + SearchResult.Value.Length);
+
+            if (remainingLength > 0) {
+                textBlock.Inlines.Add(new Run(FunctionName.Substring(FunctionName.Length - remainingLength, remainingLength)) {
+                    FontWeight = nameFontWeight
+                });
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null) {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
     public partial class CallTreePanel : ToolPanelControl, INotifyPropertyChanged {
         public static readonly DependencyProperty ShowToolbarProperty =
             DependencyProperty.Register("ShowToolbar", typeof(bool), typeof(CallTreePanel));
