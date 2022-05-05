@@ -63,7 +63,6 @@ namespace IRExplorerUI.Profile {
             var localBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
             bool isManagedImagae = localBinaryInfo != null && localBinaryInfo.IsManagedImage;
             
-            //? split into providers for each .net moduel, plus a list of all functs
             var loadedDoc = await session_.LoadBinaryDocument(filePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
             
             if (loadedDoc == null) {
@@ -77,6 +76,7 @@ namespace IRExplorerUI.Profile {
             if (isManagedImagae) {
                 DebugInfo = debugInfo;
                 HasDebugInfo = HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
+                loadedDoc.DebugInfo = debugInfo;
             }
 
             Trace.TraceInformation($"Initialized image {imageName}");

@@ -89,11 +89,7 @@ namespace IRExplorerUI.Compilers {
                     if (entry.Type == DebugDirectoryEntryType.CodeView) {
                         try {
                             var dir = reader_.ReadCodeViewDebugDirectoryData(entry);
-                            return new SymbolFileDescriptor() {
-                                FileName = dir.Path,
-                                Id = dir.Guid,
-                                Age = dir.Age
-                            };
+                            return new SymbolFileDescriptor(dir.Path, dir.Guid, dir.Age);
                         }
                         catch (BadImageFormatException) {
                             // PE reader has problems with some old binaries.

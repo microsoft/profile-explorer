@@ -15,7 +15,7 @@ namespace IRExplorerCore {
         public static byte[] Compress(byte[] data, CompressionLevel level = CompressionLevel.Fastest) {
             //? TODO: Mapping of compression level
             // https://paulcalvano.com/index.php/2018/07/25/brotli-compression-how-much-will-it-reduce-your-content/
-            level = (CompressionLevel)3;
+            //level = (CompressionLevel)3;
             using var uncompressedStream = new MemoryStream(data);
             using var compressedStream = new MemoryStream();
             using var compressorStream = new BrotliStream(compressedStream, level, true);
@@ -89,31 +89,35 @@ namespace IRExplorerCore {
         }
     }
 
-    public struct CompressedString : IEquatable<CompressedString> {
+    public class CompressedString : IEquatable<CompressedString> {
         private byte[] data_;
         private int hash_;
 
-        public CompressedString(ReadOnlySpan<char> span) {
-            data_ = CompressionUtils.Compress(Encoding.UTF8.GetBytes(span.ToArray()));
+        public CompressedString(ReadOnlySpan<char> span, CompressionLevel level = CompressionLevel.Fastest) {
+            data_ = CompressionUtils.Compress(Encoding.UTF8.GetBytes(span.ToArray()), level);
+            hash_ = 0;
+        }
+
+        public CompressedString(string value, CompressionLevel level = CompressionLevel.Fastest) {
+            data_ = CompressionUtils.Compress(Encoding.UTF8.GetBytes(value), level);
             hash_ = data_.GetHashCode();
         }
 
-        public CompressedString(string value) {
-            data_ = CompressionUtils.Compress(Encoding.UTF8.GetBytes(value));
-            hash_ = data_.GetHashCode();
-        }
-
-        public byte[] GetUniqueId() {
-            return CompressionUtils.CreateSHA256(data_);
-        }
+        public int Size => data_.Length;
+        
+        public byte[] UniqueId => CompressionUtils.CreateSHA256(data_);
 
         public override bool Equals(object obj) {
             return obj is CompressedString other &&
-                hash_ == other.hash_ &&
+                GetHashCode() == other.GetHashCode() &&
                 data_.Equals(other.data_);
         }
 
         public override int GetHashCode() {
+            if (hash_ == 0) {
+                hash_ = data_.GetHashCode();
+            }
+            
             return hash_;
         }
 

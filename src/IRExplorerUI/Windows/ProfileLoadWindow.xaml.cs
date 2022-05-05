@@ -26,7 +26,6 @@ namespace IRExplorerUI {
         private ProfileDataProviderOptions options_;
         private SymbolFileSourceOptions symbolOptions_;
         private RawProfileData recordedProfile_;
-        private int samplingFrequency_;
         private bool isLoadingProcessList_;
         private bool showProcessList_;
         private bool isRecordingProfile_;
@@ -40,7 +39,10 @@ namespace IRExplorerUI {
             Session = session;
             loadTask_ = new CancelableTaskInstance();
             IsRecordMode = recordMode;
-            SamplingFrequency = 1000; //? TODO: Option
+
+            if (IsRecordMode) {
+                Title = "Record profile trace";
+            }
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
@@ -103,16 +105,6 @@ namespace IRExplorerUI {
         public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
         public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
         public bool IsRecordMode { get; }
-
-        public int SamplingFrequency {
-            get => samplingFrequency_;
-            set {
-                if (samplingFrequency_ != value) {
-                    samplingFrequency_ = value;
-                    OnPropertyChange(nameof(SamplingFrequency));
-                }
-            }
-        }
 
         public ProfileDataProviderOptions Options {
             get {
@@ -233,8 +225,11 @@ namespace IRExplorerUI {
             }
         }
 
+        private void ApplicationBrowseButton_Click(object sender, RoutedEventArgs e) =>
+            Utils.ShowExecutableOpenFileDialog(ApplicationAutocompleteBox);
+
         private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
-            Utils.ShowOpenFileDialog(BinaryAutocompleteBox, Session.CompilerInfo.OpenFileFilter);
+            Utils.ShowExecutableOpenFileDialog(BinaryAutocompleteBox);
 
         private void RecentButton_Click(object sender, RoutedEventArgs e) {
             var menu = RecentButton.ContextMenu;
@@ -279,8 +274,7 @@ namespace IRExplorerUI {
         }
 
         private async void StartCaptureButton_OnClick(object sender, RoutedEventArgs e) {
-            using var recordingSession = new ETWRecordingSession();
-            recordingSession.SamplingFrequency = samplingFrequency_;
+            using var recordingSession = new ETWRecordingSession(options_.RecordingSessionOptions);
             
             IsRecordingProfile = true;
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
@@ -292,9 +286,13 @@ namespace IRExplorerUI {
             timer.Start();
             
             recordedProfile_ = null;
-            recordedProfile_ = await recordingSession.StartRecording(progressInfo => {
+            var recordingTask = recordingSession.StartRecording(progressInfo => {
                 lastProgressInfo = progressInfo;
             }, task);
+
+            if (recordingTask != null) {
+                recordedProfile_ = await recordingTask;
+            }
 
             timer.Stop();
             IsRecordingProfile = false;

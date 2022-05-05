@@ -27,6 +27,10 @@ namespace IRExplorerUI.Compilers.ASM {
         private Interop.DisassemblerHandle disasmHandle_;
         private List<DebugFunctionInfo> sortedFuncList_;
         private bool hasExternalSyms_;
+        private bool checkValidCallAddress_;
+        private SymbolNameResolverDelegate symbolNameResolver_;
+
+        public delegate string SymbolNameResolverDelegate(long address);
 
         public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo) {
             using var peInfo = new PEBinaryInfoProvider(binaryFilePath);
@@ -51,25 +55,27 @@ namespace IRExplorerUI.Compilers.ASM {
             return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo);
         }
 
+        public static Disassembler CreateForMachine(Machine architecture, SymbolNameResolverDelegate symbolNameResolver) {
+            return new Disassembler(architecture, symbolNameResolver);
+        }
+
         private Disassembler(Machine architecture, List<(byte[] Data, long StartRVA)> codeSectionData, long baseAddress = 0,
             IDebugInfoProvider debugInfo = null) {
             codeSectionData_ = codeSectionData;
             architecture_ = architecture;
             baseAddress_ = baseAddress;
             debugInfo_ = debugInfo;
-            Initialize();
+            Initialize(true);
         }
 
-        public Disassembler(Machine architecture, byte[] data, long dataStartRva = 0, long baseAddress = 0,
-                            IDebugInfoProvider debugInfo = null) {
+        public Disassembler(Machine architecture, SymbolNameResolverDelegate symbolNameResolver) {
             architecture_ = architecture;
-            baseAddress_ = baseAddress;
-            debugInfo_ = debugInfo;
-            codeSectionData_ = new List<(byte[] Data, long StartRVA)> { (data, dataStartRva) };
-            Initialize();
+            symbolNameResolver_ = symbolNameResolver;
+            Initialize(false);
         }
 
-        private void Initialize() {
+        private void Initialize(bool checkValidCallAddress) {
+            checkValidCallAddress_ = checkValidCallAddress;
             disasmHandle_ = Interop.Create(architecture_);
             BuildFunctionRvaCache(false);
         }
@@ -79,6 +85,10 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         public string DisassembleToTextEmbedded(DebugFunctionInfo funcInfo) {
+            if (funcInfo.Data is CompressedString asmText) {
+                return asmText.ToString();
+            }
+            
             var data = funcInfo.Data as byte[];
 
             if (data == null) {
@@ -93,6 +103,13 @@ namespace IRExplorerUI.Compilers.ASM {
             return result;
         }
 
+        public string DisassembleToText(byte[] data, long startRVA) {
+            codeSectionData_ = new List<(byte[] Data, long StartRVA)>() { (data, startRVA) };
+            var result = DisassembleToText(startRVA, data.Length);
+            codeSectionData_ = null;
+            return result;
+        }
+
         public string DisassembleToText(long startRVA, long size) {
             if (startRVA == 0 || size == 0) {
                 return "";
@@ -101,7 +118,7 @@ namespace IRExplorerUI.Compilers.ASM {
             var builder = new StringBuilder((int)(size / 4) + 1);
 
             try {
-                foreach (var instr in DisassembleInstructions(startRVA, size, startRVA)) {
+                foreach (var instr in DisassembleInstructions(startRVA, size, startRVA + baseAddress_)) {
                     var addressString = $"{instr.Address:X}:    ";
                     builder.Append(addressString);
                     int startIndex = 0;
@@ -188,8 +205,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         }
 
                         if (!replaced) {
-                            if (skippedSharp)
-                                builder.Append('#');
+                            if (skippedSharp) builder.Append('#');
                             builder.Append($"0x{hexValue:X}");
                         }
 
@@ -204,17 +220,36 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         private bool IsValidCallAddress(int hexLength, long hexValue) {
+            if (hexLength == 0) {
+                return false;
+            }
+            
+            if (!checkValidCallAddress_) {
+                return true;
+            }
+            
             long rva = hexValue - baseAddress_;
             return FindCodeSection(rva).Data != null;
         }
 
         private bool TryAppendFunctionName(StringBuilder builder, long rva) {
-            var func = FindFunctionByRva(rva);
+            if (symbolNameResolver_ != null) {
+                var name = symbolNameResolver_(rva);
+                
+                if (!string.IsNullOrEmpty(name)) {
+                    builder.Append(name);
+                    return true;
+                }
+            }
 
-            //? TODO: Option to demangle
-            if (!func.IsUnknown) {
-                builder.Append(func.Name);
-                return true;
+            if (debugInfo_ != null) {
+                var func = FindFunctionByRva(rva);
+
+                //? TODO: Option to demangle
+                if (!func.IsUnknown) {
+                    builder.Append(func.Name);
+                    return true;
+                }
             }
 
             return false;
@@ -256,7 +291,7 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         private bool ShouldLookupAddressByName(Interop.Instruction instr, ref bool isJump) {
-            if (debugInfo_ == null) {
+            if (debugInfo_ == null && symbolNameResolver_ == null) {
                 return false;
             }
 

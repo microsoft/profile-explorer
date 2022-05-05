@@ -778,6 +778,10 @@ namespace IRExplorerUI {
             return false;
         }
 
+        public static bool ShowExecutableOpenFileDialog(AutoCompleteBox box) {
+            return ShowOpenFileDialog(box, "Executables|*.exe|All Files|*.*");
+        }
+
         public static bool ShowOpenFileDialog(TextBox box, string filter, string defaultExt = "*.*", string title = "Open") {
             var path = ShowOpenFileDialog(filter, defaultExt, title);
 

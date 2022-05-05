@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using IRExplorerCore;
+using IRExplorerUI.Compilers;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -70,7 +71,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public bool IsDebugDocument { get; set; }
+        public IDebugInfoProvider DebugInfo { get; set; } // Used for managed binaries.
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
 

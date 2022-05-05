@@ -67,7 +67,7 @@ public class RawProfileData {
 
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
     private List<ManagedMethodMapping> managedMethods_;
-    private Dictionary<long, DebugFunctionInfo> managedMethodIdMap_;
+    private Dictionary<long, ManagedMethodMapping> managedMethodIdMap_;
 
     public struct ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
         public ManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
@@ -83,6 +83,7 @@ public class RawProfileData {
         public int Size { get; }
 
         public bool IsUnknown => DebugInfo == null;
+        public static ManagedMethodMapping Unknown => new ManagedMethodMapping(null, null, 0, 0);
 
         public int CompareTo(long value) {
             if (value < IP) {
@@ -122,20 +123,18 @@ public class RawProfileData {
     
     public bool HasManagedMethods => managedMethods_ != null;
 
-    public void AddManagedMethodMapping(int methodId, DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
-        managedMethods_ ??= new List<ManagedMethodMapping>();
-        managedMethods_.Add(new ManagedMethodMapping(debugInfo, image, ip , size));
-
-        managedMethodIdMap_ ??= new Dictionary<long, DebugFunctionInfo>();
-        managedMethodIdMap_[methodId] = debugInfo;
+    public void AddManagedMethodMapping(long methodId, DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
+        var mapping = new ManagedMethodMapping(debugInfo, image, ip, size);
+        managedMethods_.Add(mapping);
+        managedMethodIdMap_[methodId] = mapping;
     }
 
     public ManagedMethodMapping FindManagedMethodForIP(long ip) {
         return DebugFunctionInfo.BinarySearch(managedMethods_, ip);
     }
 
-    public DebugFunctionInfo FindManagedMethod(long id) {
-        return managedMethodIdMap_.GetValueOrNull(id);
+    public ManagedMethodMapping FindManagedMethod(long id) {
+        return managedMethodIdMap_.GetValueOr(id, ManagedMethodMapping.Unknown);
     }
 
     public IDebugInfoProvider GetDebugInfoForImage(ProfileImage image) {
@@ -148,6 +147,7 @@ public class RawProfileData {
         var proc = GetOrCreateProcess(processId);
 
         foreach (var image in proc.Images(this)) {
+            //? TODO: Avoid linear search
             if (image.BaseAddress == moduleBase &&
                 image.ModuleName.Equals(moduleName, StringComparison.Ordinal)) {
                 //? TODO: Maybe patch image? What about R2R, that likely have both native and JIT associated
@@ -164,7 +164,7 @@ public class RawProfileData {
         return (null, null);
     }
 
-    public RawProfileData() {
+    public RawProfileData(bool handlesDotNetEvents = false) {
         contexts_ = new List<ProfileContext>();
         contextsMap_ = new Dictionary<ProfileContext, int>();
         images_ = new List<ProfileImage>();
@@ -177,14 +177,21 @@ public class RawProfileData {
         stackData_ = new HashSet<long[]>(new StackComparer());
         samples_ = new List<ProfileSample>();
         PerfCounters = new List<PerformanceCounterEvent>();
+
+        if (handlesDotNetEvents) {
+            managedMethods_ = new List<ManagedMethodMapping>();
+            managedMethodIdMap_ = new Dictionary<long, ManagedMethodMapping>();
+        }        
     }
     
     public void LoadingCompleted() {
+        managedMethods_?.Sort();
+        
         // Free objects used while reading the profile.
         stacksMap_ = null;
         stackData_ = null;
         lastProcStacks_ = null;
-        managedMethods_?.Sort();
+        managedMethodIdMap_ = null;
     }
 
     public ProfileProcess GetOrCreateProcess(int id) {

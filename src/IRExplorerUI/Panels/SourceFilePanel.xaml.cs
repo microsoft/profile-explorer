@@ -175,6 +175,22 @@ namespace IRExplorerUI {
             }
         }
 
+        private IDebugInfoProvider GetDebugInfo(LoadedDocument loadedDoc) {
+            if (loadedDoc.DebugInfo != null) {
+                // Used for managed binaries, where the debug info is constructed during profiling.
+                return loadedDoc.DebugInfo;
+            }
+            else if (loadedDoc.DebugInfoFileExists) {
+                var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
+                
+                if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
+                    return debugInfo;
+                }
+            }
+
+            return null;
+        }
+
         private async Task<bool> LoadSourceFileForFunction(IRTextFunction function) {
             if (sourceFileLoaded_ && sourceFileFunc_ == function) {
                 return true; // Right file already loaded.
@@ -183,34 +199,32 @@ namespace IRExplorerUI {
             // Get the associated source file from the debug info if available,
             // since it also includes the start line number.
             var loadedDoc = Session.SessionState.FindLoadedDocument(function);
-            bool funcLoaded = false;
             FunctionProfileData funcProfile = null;
+            bool funcLoaded = false;
 
-            if (loadedDoc.DebugInfoFileExists) {
-                using var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
+            var debugInfo = GetDebugInfo(loadedDoc);
 
-                if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
-                    var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
-                    funcProfile = Session.ProfileData?.GetFunctionProfile(function);
+            if(debugInfo != null) {
+                var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
+                funcProfile = Session.ProfileData?.GetFunctionProfile(function);
 
-                    if (funcProfile != null) {
-                        // Lookup function by RVA, more precise.
-                        if (funcProfile.DebugInfo != null) {
-                            sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
-                        }
-
-                        // Precompute the per-line sample weights.
-                        funcProfile.ProcessSourceLines(debugInfo);
+                if (funcProfile != null) {
+                    // Lookup function by RVA, more precise.
+                    if (funcProfile.DebugInfo != null) {
+                        sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
                     }
 
-                    if (sourceInfo.IsUnknown) {
-                        // Try again using the function name.
-                        sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
-                    }
+                    // Precompute the per-line sample weights.
+                    funcProfile.ProcessSourceLines(debugInfo);
+                }
 
-                    if (sourceInfo.HasFilePath) {
-                        funcLoaded = await LoadSourceFile(sourceInfo, function);
-                    }
+                if (sourceInfo.IsUnknown) {
+                    // Try again using the function name.
+                    sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
+                }
+
+                if (sourceInfo.HasFilePath) {
+                    funcLoaded = await LoadSourceFile(sourceInfo, function);
                 }
             }
 
