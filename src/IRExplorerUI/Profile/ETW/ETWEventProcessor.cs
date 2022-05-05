@@ -552,6 +552,14 @@ public class ETWEventProcessor : IDisposable {
         
         try {
             dataTarget = DataTarget.AttachToProcess(processId, false);
+
+            foreach (var v in dataTarget.ClrVersions) {
+                var dac = v.DacInfo;
+                Trace.WriteLine($"DAC {dac.LocalDacPath}");
+                Trace.WriteLine($"DAC target: {dac.TargetArchitecture}");
+                Trace.WriteLine($"DAC version: {dac.Version}");
+            }
+
             return dataTarget.ClrVersions[0].CreateRuntime();
         }
         catch (Exception ex) {
