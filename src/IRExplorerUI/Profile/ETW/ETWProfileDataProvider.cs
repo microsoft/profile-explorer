@@ -78,7 +78,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         return null;
     }
-        
+    
     private PerformanceCounterInfo ReadPerformanceCounterInfo(ReadOnlySpan<byte> data) {
         // counter id : 4
         // frequency : 4 min
@@ -525,7 +525,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 for (int k = 0; k < chunks; k++) {
                     int start = k * chunkSize;
                     int end = Math.Min((k + 1) * chunkSize, (int)prof.Samples.Count);
-                    Trace.WriteLine($"Chunk {k}: {start} - {end}");
 
                     tasks.Add(taskFactory.StartNew(() => {
                         //{
@@ -678,7 +677,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                             
                                             if (!managedFunc.IsUnknown) {
                                                 frameImage = managedFunc.Image;
-                                                managedBaseAddress = managedFunc.IP - managedFunc.DebugInfo.RVA;
+                                                managedBaseAddress = 1;
                                             }
                                         }
 
@@ -717,7 +716,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         //(funcName, funcRva) = module.FindFunctionByRVA(frameRva);
 
                                         if (managedBaseAddress != 0) {
-                                            frameRva = frameIp - managedBaseAddress;
+                                            frameRva = frameIp;
                                             //frameRva = frameIp;
                                             funcInfo = module.FindDebugFunctionInfo(frameRva);
                                         }
@@ -998,6 +997,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset, 
         IRTextFunction textFunction, ModuleInfo module) {
+        return; //? TODO: Reimplement
+
         // Load current function.
         var loader = module.ModuleDocument.Loader;
         var result = loader.LoadSection(textFunction.Sections[^1]);

@@ -30,7 +30,16 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
         SourceLines = null;
         Id = id;
     }
-    
+
+    public void AddSourceLine(DebugSourceLineInfo sourceLine) {
+        SourceLines ??= new List<DebugSourceLineInfo>();
+        SourceLines.Add(sourceLine);
+
+        if (StartDebugSourceLine.IsUnknown) {
+            StartDebugSourceLine = sourceLine;
+        }
+    }
+
     public DebugSourceLineInfo FindNearestLine(long offset) {
         if (!HasSourceLines) {
             return DebugSourceLineInfo.Unknown;
@@ -91,13 +100,13 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     public bool Equals(DebugFunctionInfo other) {
         return RVA == other.RVA &&
                Size == other.Size &&
+               Id == other.Id &&
                Name.Equals(other.Name, StringComparison.Ordinal);
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Name, RVA, Size);
+        return HashCode.Combine(Id, RVA, Size);
     }
-
 
     public int CompareTo(DebugFunctionInfo other) {
         if (StartRVA < other.StartRVA && EndRVA < other.EndRVA) {

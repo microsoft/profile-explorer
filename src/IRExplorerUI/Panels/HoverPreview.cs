@@ -75,7 +75,8 @@ public partial class CallTreePanel {
         }
             
         private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
-            HidePreviewPopupDelayed();
+            //HidePreviewPopupDelayed();
+            HidePreviewPopup();
         }
     }
 

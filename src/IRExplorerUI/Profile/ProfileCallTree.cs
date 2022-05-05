@@ -98,7 +98,7 @@ public class ProfileCallTree {
         return null;
     }
 
-    public ProfileCallTreeNode GetCombinedCallTreeNode(IRTextFunction function) {
+    public ProfileCallTreeNode GetCombinedCallTreeNode(IRTextFunction function, ProfileCallTreeNode parentNode = null) {
         var nodes = GetCallTreeNodes(function);
 
         if (nodes == null) {
@@ -114,18 +114,32 @@ public class ProfileCallTree {
         TimeSpan excWeight = TimeSpan.Zero;
 
         foreach (var node in nodes) {
+            //if(parentNode != null && node.ha)
+
             weight += node.Weight;
             excWeight += node.ExclusiveWeight;
 
             if (node.HasChildren) {
                 foreach (var childNode in node.Children) {
-                    childrenSet.Add(childNode);
+                    if (!childrenSet.TryGetValue(childNode, out var existingNode)) {
+                        existingNode = new ProfileCallTreeNode(childNode.DebugInfo, childNode.Function);
+                        childrenSet.Add(existingNode);
+                    }                        
+
+                    existingNode.Weight += childNode.Weight;
+                    existingNode.ExclusiveWeight += childNode.ExclusiveWeight;
                 }
             }
 
             if (node.HasCallers) {
                 foreach (var callerNode in node.Callers) {
-                    callersSet.Add(callerNode);
+                    if (!callersSet.TryGetValue(callerNode, out var existingNode)) {
+                        existingNode = new ProfileCallTreeNode(callerNode.DebugInfo, callerNode.Function);
+                        callersSet.Add(existingNode);
+                    }
+
+                    existingNode.Weight += callerNode.Weight;
+                    existingNode.ExclusiveWeight += callerNode.ExclusiveWeight;
                 }
             }
         }

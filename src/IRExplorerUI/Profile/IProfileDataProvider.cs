@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -20,6 +21,39 @@ namespace IRExplorerUI.Profile {
         public ProfileLoadStage Stage { get; set; }
         public int Total { get; set; }
         public int Current { get; set; }
+    }
+
+    public enum ProfileSessionKind {
+        SystemWide,
+        StartProcess,
+        AttachToProcess
+    }
+
+    [ProtoContract(SkipConstructor = true)]    
+    public class ProfileRecordingSessionOptions : SettingsBase {
+        [ProtoMember(1)]
+        public ProfileSessionKind SessionKind { get; set; }
+        [ProtoMember(2)]
+        public string ApplicationPath { get; set; }
+        [ProtoMember(3)]
+        public string ApplicationArguments { get; set; }
+        [ProtoMember(4)]
+        public string WorkingDirectory { get; set; }
+        [ProtoMember(5)]
+        public int SamplingFrequency { get; set; }
+        [ProtoMember(6)]
+        public bool ProfileDotNet { get; set; }
+
+        public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
+
+        public ProfileRecordingSessionOptions() {
+            Reset();
+        }
+
+        public override void Reset() {
+            SessionKind = ProfileSessionKind.SystemWide;
+            SamplingFrequency = 4000; // 4 kHz, Xperf default is 1 kHz.
+        }
     }
 
     public delegate void ProfileLoadProgressHandler(ProfileLoadProgress info);
@@ -44,6 +78,8 @@ namespace IRExplorerUI.Profile {
         public bool IncludeAllProcesses { get; set; }
         [ProtoMember(9)]
         public bool IncludePerformanceCounters { get; set; }
+        [ProtoMember(10)] 
+        public ProfileRecordingSessionOptions RecordingSessionOptions { get; set; }
 
         public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
         public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;
@@ -56,6 +92,7 @@ namespace IRExplorerUI.Profile {
             InitializeReferenceMembers();
             DownloadBinaryFiles = true;
         }
+        
         public bool HasBinaryPath(string path) {
             path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
             return BinarySearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
@@ -77,6 +114,7 @@ namespace IRExplorerUI.Profile {
         private void InitializeReferenceMembers() {
             BinarySearchPaths ??= new List<string>();
             BinaryNameWhitelist ??= new List<string>();
+            RecordingSessionOptions ??= new ProfileRecordingSessionOptions();
         }
         
         public override SettingsBase Clone() {

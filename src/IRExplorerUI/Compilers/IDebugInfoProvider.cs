@@ -95,6 +95,12 @@ namespace IRExplorerUI.Compilers {
 
     //? TODO: Convert to record, similar for other such classes
     public class SymbolFileDescriptor {
+        public SymbolFileDescriptor(string fileName, Guid id, int age) {
+            FileName = fileName;
+            Id = id;
+            Age = age;
+        }
+
         public string FileName { get; set; }
         public Guid Id { get; set; }
         public int Age { get; set; }

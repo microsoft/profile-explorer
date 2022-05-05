@@ -67,7 +67,11 @@ namespace IRExplorerUI.Compilers.ASM {
             var loadedDoc = Session.SessionState.FindLoadedDocument(section);
             var debugFile = loadedDoc.DebugInfoFilePath;
 
-            if (!string.IsNullOrEmpty(debugFile) && File.Exists(debugFile)) {
+            if (loadedDoc.DebugInfo != null) {
+                // Used for managed methods.
+                loadedDoc.DebugInfo.AnnotateSourceLocations(function, section.ParentFunction);
+            }
+            else if (!string.IsNullOrEmpty(debugFile) && File.Exists(debugFile)) {
                 using var debugInfo = CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
 
                 if (debugInfo.LoadDebugInfo(debugFile)) {

@@ -218,16 +218,18 @@ namespace IRExplorerUI {
             ShowToolbar = true;
             DataContext = this;
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
-            
 
-            stackHoverPreview_ = new ToolTipHoverPreview(CallTree, 
-                mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
-                (previewPoint, element) => {
-                    var item = (ListViewItem)element;
-                    var funcNode = ((TreeListItem)item).Node?.Tag as ChildFunctionEx;
-                    var callNode = funcNode?.CallTreeNode;
-                    return callNode != null ? CreateStackToolTip(callNode) : null;
-                });
+
+            //? TODO: Fix positioning
+            // https://docs.microsoft.com/en-us/dotnet/desktop/wpf/controls/how-to-position-a-tooltip?view=netframeworkdesktop-4.8
+            //stackHoverPreview_ = new ToolTipHoverPreview(CallTree, 
+            //    mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
+            //    (previewPoint, element) => {
+            //        var item = (ListViewItem)element;
+            //        var funcNode = ((TreeListItem)item).Node?.Tag as ChildFunctionEx;
+            //        var callNode = funcNode?.CallTreeNode;
+            //        return callNode != null ? CreateStackToolTip(callNode) : null;
+            //    });
         }
 
         private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
@@ -247,7 +249,7 @@ namespace IRExplorerUI {
                     if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
                         var percentageFunc = PickPercentageFunction(callNode.Weight);
 
-                    foreach (var childNode in callNode.Children) {
+                        foreach (var childNode in callNode.Children) {
                             CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
                                                   visitedNodes, percentageFunc);
                         }
@@ -329,9 +331,10 @@ namespace IRExplorerUI {
             return callTree.GetCallTreeNodes(function);
         }
 
-        private ProfileCallTreeNode GetChildCallTreeNode(ProfileCallTreeNode childNode, ProfileCallTree callTree) {
+        private ProfileCallTreeNode GetChildCallTreeNode(ProfileCallTreeNode childNode, ProfileCallTreeNode parentNode, 
+                                                         ProfileCallTree callTree) {
             if (CombineNodes) {
-                return callTree.GetCombinedCallTreeNode(childNode.Function);
+                return callTree.GetCombinedCallTreeNode(childNode.Function, parentNode);
             }
 
             return childNode;
@@ -429,10 +432,6 @@ namespace IRExplorerUI {
                                                       ChildFunctionExKind kind,
                                                       HashSet<ProfileCallTreeNode> visitedNodes,
                                                       Func<TimeSpan, double> percentageFunc) {
-            if (kind == ChildFunctionExKind.CalleeNode) {
-                node = GetChildCallTreeNode(node, Session.ProfileData.CallTree);
-            }
-
             bool newFunc = visitedNodes.Add(node);
             var nodeEx = CreateProfileCallTreeChild(node, kind, percentageFunc);
             parentNodeEx.Children.Add(nodeEx);
@@ -441,9 +440,16 @@ namespace IRExplorerUI {
                 return nodeEx; // Recursion in the call graph.
             }
 
+            //? TODO: This is still not quite right, the selected nodes
+            //? shoud be found on a path that has the current stack frame as a prefix in theirs.
+            if (kind == ChildFunctionExKind.CalleeNode) {
+                node = GetChildCallTreeNode(node, parentNodeEx.CallTreeNode, Session.ProfileData.CallTree);
+                nodeEx.CallTreeNode = node;
+            }
+
             if (node.HasChildren) {
                 if (kind == ChildFunctionExKind.CalleeNode) {
-                    // For caller-callee mode, use a placeholder than when tree gets expanded,
+                    // For caller-callee mode, use a placeholder than when the tree gets expanded,
                     // gets replaced by the real callee nodes.
                     var dummyChildNode = CreateProfileCallTreeHeader(ChildFunctionExKind.ChildrenPlaceholder, "Placeholder", 0);
                     dummyChildNode.CallTreeNode = node;

@@ -6,6 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:profile="clr-namespace:IRExplorerUI.Profile"
     Title="Load profile trace"
     Width="500"
     Height="Auto"
@@ -19,32 +20,116 @@
     <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
         <StackPanel Grid.Row="0" Grid.Column="0">
             <StackPanel x:Name="ProfileCapturePanel" Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibility}}">
-                <TextBlock Margin="16,8,16,0" Text="Capture system-wide ETW sampling profile" />
+                <TextBlock Margin="16,8,16,0" Text="Sampling profiling target" />
+                <RadioButton
+                    x:Name="SystemWideRadioButton"
+                    Margin="16,8,16,0"
+                    Content="System-wide"
+                    IsChecked="{Binding Options.RecordingSessionOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
+                    ToolTip="Profiles every application running on the current machine" />
+                <RadioButton
+                    x:Name="StartAppRadioButton"
+                    Margin="16,4,16,0"
+                    Content="Start application"
+                    IsChecked="{Binding Options.RecordingSessionOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
+                    ToolTip="Start a new process and record only its profile" />
+                <Separator Margin="0,8,0,8" />
 
-                <StackPanel
-                    Margin="16,8,0,8"
-                    Orientation="Horizontal"
-                    Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibility}}">
-                    <TextBlock Text="Sampling frequency" />
-                    <Slider
-                        Width="120"
-                        Margin="16,0,0,0"
-                        Foreground="{DynamicResource DisabledForegroundBrush}"
-                        Interval="1000"
-                        IsEnabled="{Binding RecordingControlsEnabled}"
-                        IsSnapToTickEnabled="True"
-                        LargeChange="2000"
-                        Maximum="8000"
-                        Minimum="1000"
-                        SmallChange="1000"
-                        TickFrequency="1000"
-                        TickPlacement="BottomRight"
-                        Value="{Binding Path=SamplingFrequency}" />
-                    <TextBlock Margin="8,0,0,0" Text="{Binding Path=SamplingFrequency}" />
+                <StackPanel x:Name="StartProcessPanel" Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibility}}">
+                    <TextBlock Margin="16,0,16,0" Text="Application path" />
+                    <Grid Margin="16,4,16,0">
+                        <controls:FileSystemTextBox
+                            x:Name="ApplicationAutocompleteBox"
+                            Height="22"
+                            Margin="0,0,48,0"
+                            HorizontalAlignment="Stretch"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            FilterMode="StartsWithOrdinal"
+                            IsDropDownOpen="True"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            IsTextCompletionEnabled="False"
+                            MinimumPrefixLength="1"
+                            TabIndex="1"
+                            Text="{Binding Path=Options.RecordingSessionOptions.ApplicationPath, Mode=TwoWay}" />
+
+                        <Button
+                            x:Name="ApplicationBrowseButton"
+                            Height="22"
+                            Padding="4,2,4,2"
+                            HorizontalAlignment="Right"
+                            Click="ApplicationBrowseButton_Click"
+                            Content="Browse"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            TabIndex="9" />
+                    </Grid>
+
+                    <TextBlock Margin="16,4,16,0" Text="Arguments" />
+                    <Grid Margin="16,4,16,0">
+                        <TextBox
+                            Height="22"
+                            Margin="0,0,48,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            TabIndex="2"
+                            Text="{Binding Path=Options.RecordingSessionOptions.ApplicationArguments, Mode=TwoWay}" />
+                    </Grid>
+                    <TextBlock Margin="16,4,16,0" Text="Working directory" />
+                    <Grid Margin="16,4,16,0">
+                        <TextBox
+                            Height="22"
+                            Margin="0,0,48,0"
+                            HorizontalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            TabIndex="2"
+                            Text="{Binding Path=Options.RecordingSessionOptions.WorkingDirectory, Mode=TwoWay}" />
+                    </Grid>
                 </StackPanel>
 
+                <Expander
+                    Margin="16,8,16,0"
+                    IsEnabled="{Binding InputControlsEnabled}"
+                    IsExpanded="True">
+                    <Expander.Header>
+                        <TextBlock FontWeight="DemiBold" Text="Recording options" />
+                    </Expander.Header>
+                    <StackPanel>
+                        <CheckBox
+                            Margin="0,8,0,0"
+                            Content="Profile managed (.NET) applications"
+                            IsChecked="{Binding Path=Options.RecordingSessionOptions.ProfileDotNet, Mode=TwoWay}" />
+
+                        <StackPanel
+                            Margin="0,8,0,0"
+                            Orientation="Horizontal"
+                            Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibility}}">
+                            <TextBlock Text="Sampling frequency" />
+                            <Slider
+                                Width="120"
+                                Margin="16,0,0,0"
+                                Foreground="{DynamicResource DisabledForegroundBrush}"
+                                Interval="1000"
+                                IsEnabled="{Binding RecordingControlsEnabled}"
+                                IsSnapToTickEnabled="True"
+                                LargeChange="2000"
+                                Maximum="8000"
+                                Minimum="1000"
+                                SmallChange="1000"
+                                TickFrequency="1000"
+                                TickPlacement="BottomRight"
+                                Value="{Binding Path=Options.RecordingSessionOptions.SamplingFrequency, Mode=TwoWay}" />
+                            <TextBlock Margin="8,0,0,0" Text="{Binding Path=Options.RecordingSessionOptions.SamplingFrequency}" />
+                        </StackPanel>
+
+                    </StackPanel>
+                </Expander>
+
+                <Separator Margin="0,8,0,8" />
                 <StackPanel
-                    Margin="16,8,0,0"
+                    Margin="16,0,0,0"
                     Orientation="Horizontal"
                     Visibility="{Binding RequiresElevation, Converter={StaticResource BoolToVisibility}}">
                     <Button
@@ -126,7 +211,7 @@
                         TabIndex="9" />
                 </Grid>
 
-                <TextBlock Margin="16,4,16,0" Text="Process binary" />
+                <TextBlock Margin="16,4,16,0" Text="Process executable binary" />
                 <Grid Margin="16,4,16,0">
                     <controls:FileSystemTextBox
                         x:Name="BinaryAutocompleteBox"
@@ -165,8 +250,8 @@
                 Visibility="{Binding IsLoadingProcessList, Converter={StaticResource BoolToVisibility}}" />
             <ListView
                 x:Name="ProcessList"
-                MinHeight="150"
-                MaxHeight="150"
+                MinHeight="100"
+                MaxHeight="100"
                 Margin="16,4,16,0"
                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                 IsEnabled="{Binding InputControlsEnabled}"
@@ -277,10 +362,10 @@
                 </StackPanel>
             </Grid>
 
-            <Separator Margin="0,8,0,0" />
+            <Separator Margin="0,8,0,8" />
 
             <Expander
-                Margin="16,8,16,0"
+                Margin="16,0,16,0"
                 IsEnabled="{Binding InputControlsEnabled}"
                 IsExpanded="True">
                 <Expander.Header>
@@ -298,7 +383,8 @@
                     <CheckBox
                         Margin="0,4,0,0"
                         Content="Mark source lines in inlined functions"
-                        IsChecked="{Binding Path=Options.MarkInlinedFunctions, Mode=TwoWay}" />
+                        IsChecked="{Binding Path=Options.MarkInlinedFunctions, Mode=TwoWay}"
+                        IsEnabled="False" />
                 </StackPanel>
             </Expander>
 
