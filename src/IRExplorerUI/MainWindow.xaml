@@ -295,6 +295,12 @@
 
                     <MenuItem Header="View">
                         <MenuItem
+                            Click="MenuItem_Click_3"
+                            Header="Reset Workspace"
+                            ToolTip="Restore default layout of workplace" />
+
+                        <MenuItem Click="MenuItem_Click_3" Header="Manage Workspaces" />
+                        <MenuItem
                             x:Name="AlwaysOnTopCheckbox"
                             Click="AlwaysOnTopMenuClicked"
                             Header="Always on Top"
@@ -363,11 +369,6 @@
                             Header="Expression Graph Panel"
                             IsEnabled="True"
                             Tag="ExpressionGraph" />
-                        <Separator />
-                        <MenuItem
-                            Click="MenuItem_Click_3"
-                            Header="Reset Panel Layout"
-                            IsEnabled="False" />
                     </MenuItem>
 
                     <MenuItem Header="Profiling">
@@ -928,6 +929,24 @@
                                 </avalonDock:LayoutAnchorable>
 
                                 <avalonDock:LayoutAnchorable
+                                    x:Name="CallTreePanelHost"
+                                    Title="Call Tree"
+                                    ContentId="CallTree"
+                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
+                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
+                                    <local:CallTreePanel x:Name="CallTreePanel" />
+                                </avalonDock:LayoutAnchorable>
+
+                                <avalonDock:LayoutAnchorable
+                                    x:Name="CallerCalleePanelHost"
+                                    Title="Caller/Callee"
+                                    ContentId="CallerCallee"
+                                    IsActiveChanged="LayoutAnchorable_IsActiveChanged"
+                                    IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
+                                    <local:CallerCalleePanel x:Name="CallerCalleePanel" />
+                                </avalonDock:LayoutAnchorable>
+
+                                <avalonDock:LayoutAnchorable
                                     x:Name="SearchResultsPanelHost"
                                     Title="Search Results"
                                     ContentId="SearchResults"
@@ -1012,11 +1031,12 @@
                 VerticalContentAlignment="Center"
                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 FontSize="11"
-                SelectedIndex="0">
+                SelectionChanged="WorkspaceCombobox_SelectionChanged">
                 <ComboBoxItem Content="Default" />
-                <ComboBoxItem Content="Side-by-Side" />
+                <ComboBoxItem Content="Profiling" />
             </ComboBox>
             <Separator />
+
             <TextBlock
                 VerticalAlignment="Center"
                 FontSize="11"

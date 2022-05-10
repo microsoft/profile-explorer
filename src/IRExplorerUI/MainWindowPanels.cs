@@ -44,6 +44,8 @@ namespace IRExplorerUI {
             RegisterPanel(SearchResultsPanel, SearchResultsPanelHost);
             RegisterPanel(ScriptingPanel, ScriptingPanelHost);
             RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
+            RegisterPanel(CallTreePanel, CallTreePanelHost);
+            RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
             RenameAllPanels();
         }
 
@@ -493,6 +495,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.ExpressionGraph => "Expression Graph",
                 ToolPanelKind.CallGraph => "Call Graph",
                 ToolPanelKind.CallTree => "Call Tree",
+                ToolPanelKind.CallerCallee => "Caller/Callee",
                 ToolPanelKind.Developer => "Developer",
                 ToolPanelKind.Notes => "Notes",
                 ToolPanelKind.References => "References",
@@ -960,15 +963,19 @@ namespace IRExplorerUI {
         }
 
         private bool RestoreDockLayout() {
-            var dockLayoutFile = App.GetDockLayoutFilePath();
+            var dockLayoutFile = App.GetLastDockLayoutFilePath();
 
             if (!File.Exists(dockLayoutFile)) {
                 return false;
             }
 
+            return RestoreDockLayout(dockLayoutFile);
+        }
+
+        private bool RestoreDockLayout(string dockLayoutFile) {
             try {
                 var serializer = new XmlLayoutSerializer(DockManager);
-
+                
                 serializer.LayoutSerializationCallback += (s, args) => {
                     if (args.Model is LayoutDocument) {
                         args.Cancel = true; // Don't recreate any document panels.
@@ -980,9 +987,22 @@ namespace IRExplorerUI {
                             return;
                         }
 
+                        var panelHost = (LayoutAnchorable)args.Model;
+                        panelHost.IsActiveChanged += LayoutAnchorable_IsActiveChanged;
+                        panelHost.IsSelectedChanged += LayoutAnchorable_IsSelectedChanged;
+                            
                         switch (panel.PanelKind) {
                             case ToolPanelKind.CallTree: {
-                                break; // Don't recreate call tree panels.
+                                CallTreePanel = (CallTreePanel)panel;
+                                CallTreePanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(CallTreePanel, CallTreePanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.CallerCallee: {
+                                CallerCalleePanel = (CallerCalleePanel)panel;
+                                CallerCalleePanelHost = (LayoutAnchorable)args.Model;
+                                RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
+                                break;
                             }
                             case ToolPanelKind.Bookmarks: {
                                 BookmarksPanel = (BookmarksPanel)panel;
@@ -1151,6 +1171,7 @@ namespace IRExplorerUI {
         }
 
         private void MenuItem_OnClick(object sender, RoutedEventArgs e) {
+            Trace.Flush();
             var file = App.GetTraceFilePath();
 
             if (File.Exists(file)) {

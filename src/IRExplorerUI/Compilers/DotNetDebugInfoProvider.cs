@@ -21,6 +21,7 @@ using Microsoft.Diagnostics.Symbols;
 using OxyPlot;
 
 namespace IRExplorerUI.Compilers {
+    //? Provider ASM should return instance instead of JSONDebug
     public class DotNetDebugInfoProvider : IDebugInfoProvider {
         private Dictionary<string, DebugFunctionInfo> functionMap_;
         private List<DebugFunctionInfo> functions_;

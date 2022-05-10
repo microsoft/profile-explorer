@@ -114,7 +114,12 @@ public class ProfileCallTree {
         TimeSpan excWeight = TimeSpan.Zero;
 
         foreach (var node in nodes) {
-            //if(parentNode != null && node.ha)
+            // When the function is a callee, consider only the nodes that are actually being called
+            // by the parent node - by default the list contains every node representing the function,
+            // on all paths through the call tree.
+            if (parentNode != null && !node.HasParent(parentNode)) {
+                continue;
+            }
 
             weight += node.Weight;
             excWeight += node.ExclusiveWeight;
@@ -307,6 +312,14 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         finally {
             lock_.ExitUpgradeableReadLock();
         }
+    }
+
+    public bool HasParent(ProfileCallTreeNode parentNode) {
+        if (Callers == null) {
+            return false;
+        }
+
+        return Callers.IndexOf(parentNode) != -1;
     }
 
     private (ProfileCallTreeNode, bool) GetOrCreateChildNode(DebugFunctionInfo debugInfo, IRTextFunction function) {

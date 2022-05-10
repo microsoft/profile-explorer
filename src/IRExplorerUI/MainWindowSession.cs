@@ -1484,6 +1484,17 @@ namespace IRExplorerUI {
             return Task.Run(() => docInfo.Loader.GetDocumentOutputText());
         }
 
+        public IToolPanel FindAndActivatePanel(ToolPanelKind kind) {
+            var panelInfo = FindTargetPanel(null, kind);
+
+            if (panelInfo != null) {
+                //panelInfo.Host.IsSelected = true;
+                return panelInfo.Panel;
+            }
+
+            return null;
+        }
+
         public async Task<SectionSearchResult> SearchSectionAsync(
             SearchInfo searchInfo, IRTextSection section, IRDocument document) {
             var docInfo = sessionState_.FindLoadedDocument(section);

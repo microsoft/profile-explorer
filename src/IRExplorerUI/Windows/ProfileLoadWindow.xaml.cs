@@ -18,6 +18,7 @@ using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.ETW;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Win32;
+using PEFile;
 
 namespace IRExplorerUI {
     public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
@@ -157,8 +158,18 @@ namespace IRExplorerUI {
             bool success = false;
 
             if (IsRecordMode) {
-                success = await Session.LoadProfileData(recordedProfile_, BinaryFilePath,
-                                                        options_, symbolOptions_, ProfileLoadProgressCallback, task);
+                if (selectedProcSummary_ == null) {
+                    return false;
+                }
+
+                var binSearchOptions = symbolOptions_.WithSymbolPaths(options_.RecordingSessionOptions.ApplicationPath);
+
+                if (options_.RecordingSessionOptions.HasWorkingDirectory) {
+                    binSearchOptions = binSearchOptions.WithSymbolPaths(options_.RecordingSessionOptions.WorkingDirectory);
+                }
+
+                success = await Session.LoadProfileData(recordedProfile_, selectedProcSummary_.Process,
+                                                        options_, binSearchOptions, ProfileLoadProgressCallback, task);
             }
             else {
                 success = await Session.LoadProfileData(ProfileFilePath, BinaryFilePath,
@@ -269,7 +280,7 @@ namespace IRExplorerUI {
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ProcessList.SelectedItem != null) {
                 selectedProcSummary_ = (ETWProfileDataProvider.TraceProcessSummary)ProcessList.SelectedItem;
-                BinaryAutocompleteBox.Text = selectedProcSummary_.ProcessName;
+                BinaryAutocompleteBox.Text = selectedProcSummary_.Process.Name;
             }
         }
 
@@ -286,16 +297,23 @@ namespace IRExplorerUI {
             timer.Start();
             
             recordedProfile_ = null;
+
+#if true
             var recordingTask = recordingSession.StartRecording(progressInfo => {
                 lastProgressInfo = progressInfo;
             }, task);
 
             if (recordingTask != null) {
                 recordedProfile_ = await recordingTask;
+                //StateSerializer.Serialize(@"C:\test\profile.dat", recordedProfile_);
             }
+#else
+            recordedProfile_ = StateSerializer.Deserialize<RawProfileData>(@"C:\test\profile.dat");
+#endif
 
             timer.Stop();
             IsRecordingProfile = false;
+
 
             if (recordedProfile_ != null) {
                 await DisplayProcessList(async () => await Task.Run(() => recordedProfile_.BuildProcessSummary()));

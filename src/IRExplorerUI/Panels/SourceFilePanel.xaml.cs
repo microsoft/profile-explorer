@@ -44,6 +44,7 @@ namespace IRExplorerUI {
         public SourceFilePanel() {
             InitializeComponent();
             DataContext = this;
+            UpdateDocumentStyle();
 
             profileMarker_ = new ElementHighlighter(HighlighingType.Marked);
             TextView.TextArea.TextView.BackgroundRenderers.Add(profileMarker_);
@@ -55,6 +56,14 @@ namespace IRExplorerUI {
             TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
             TextView.TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextView.TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+        }
+
+        private void UpdateDocumentStyle() {
+            var settings = App.Settings.DocumentSettings;
+            TextView.Background = ColorBrushes.GetBrush(settings.BackgroundColor);
+            Foreground = ColorBrushes.GetBrush(settings.TextColor);
+            FontFamily = new FontFamily(settings.FontName);
+            FontSize = settings.FontSize;
         }
 
         public bool HasProfileInfo {
@@ -155,9 +164,7 @@ namespace IRExplorerUI {
 
             if (path != null) {
                 var sourceInfo = new DebugFunctionSourceFileInfo(path, path);
-                if (!await LoadSourceFile(sourceInfo, section_.ParentFunction)) {
-                    HandleMissingSourceFile();
-                }
+                await LoadSourceFile(sourceInfo, section_.ParentFunction);
             }
         }
 
@@ -176,6 +183,7 @@ namespace IRExplorerUI {
         }
 
         private IDebugInfoProvider GetDebugInfo(LoadedDocument loadedDoc) {
+            //? Provider ASM should return instance instead of JSONDebug
             if (loadedDoc.DebugInfo != null) {
                 // Used for managed binaries, where the debug info is constructed during profiling.
                 return loadedDoc.DebugInfo;
@@ -200,6 +208,7 @@ namespace IRExplorerUI {
             // since it also includes the start line number.
             var loadedDoc = Session.SessionState.FindLoadedDocument(function);
             FunctionProfileData funcProfile = null;
+            string failureText = "";
             bool funcLoaded = false;
 
             var debugInfo = GetDebugInfo(loadedDoc);
@@ -215,17 +224,26 @@ namespace IRExplorerUI {
                     }
 
                     // Precompute the per-line sample weights.
-                    funcProfile.ProcessSourceLines(debugInfo);
+                    await Task.Run(() => funcProfile.ProcessSourceLines(debugInfo));
                 }
 
                 if (sourceInfo.IsUnknown) {
                     // Try again using the function name.
                     sourceInfo = debugInfo.FindFunctionSourceFilePath(function);
                 }
+                else {
+                    failureText = $"Could not find debug info for function:\n{function.Name}";
+                }
 
                 if (sourceInfo.HasFilePath) {
                     funcLoaded = await LoadSourceFile(sourceInfo, function);
                 }
+                else {
+                    failureText = $"Missing file path in debug info for function:\n{function.Name}";
+                }
+            }
+            else {
+                failureText = $"Could not find debug info for module:\n{loadedDoc.ModuleName}";
             }
 
             if (funcProfile == null) {
@@ -246,7 +264,7 @@ namespace IRExplorerUI {
             }
 
             if (!funcLoaded) {
-                HandleMissingSourceFile();
+                HandleMissingSourceFile(failureText);
             }
 
             return funcLoaded;
@@ -265,7 +283,7 @@ namespace IRExplorerUI {
                     BrowseSourceFile(filter: $"Source File|{Path.GetFileName(sourceInfo.OriginalFilePath)}",
                                      title: $"Open {sourceInfo.OriginalFilePath}"));
 
-                if (mappedSourceFilePath == null) {
+                if (string.IsNullOrEmpty(mappedSourceFilePath)) {
                     using var centerForm = new DialogCenteringHelper(this);
 
                     if (MessageBox.Show("Continue asking for source file location during this session?", "IR Explorer",
@@ -283,13 +301,19 @@ namespace IRExplorerUI {
                 return true;
             }
             else {
-                HandleMissingSourceFile();
+                HandleMissingSourceFile($"Could not find local copy of source file:\n{sourceInfo.FilePath}");
                 return false;
             }
         }
 
-        private void HandleMissingSourceFile() {
-            TextView.Text = $"Failed to load profile source file";
+        private void HandleMissingSourceFile(string failureText) {
+            var text = $"Failed to load profile source file.";
+
+            if (!string.IsNullOrEmpty(failureText)) {
+                text += $"\n{failureText}";
+            }
+
+            TextView.Text = text;
             SetPanelName("");
             sourceFileLoaded_ = false;
             sourceFileFunc_ = null;

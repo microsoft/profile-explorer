@@ -1097,7 +1097,7 @@ namespace IRExplorerUI {
             AlternateNameColumnVisible = true;
         }
 
-        private void SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
+        private async Task SetFunctionProfileInfo(List<IRTextFunctionEx> functions) {
             var profile = Session.ProfileData;
 
             if (profile == null) {
@@ -1191,6 +1191,13 @@ namespace IRExplorerUI {
             }
 
             UseProfileCallTree = true;
+            
+            // Create the call tree.    
+            var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+
+            if (panel != null) {
+                await panel.DisplaProfileCallTree();
+            }
         }
 
         public async Task Update() {
@@ -1258,7 +1265,7 @@ namespace IRExplorerUI {
 
                 // Attach additional data to the UI.
                 SetDemangledFunctionNames(functionsEx);
-                SetFunctionProfileInfo(functionsEx);
+                await SetFunctionProfileInfo(functionsEx);
             }
 
             if (analyzeFunctions) {
@@ -1809,7 +1816,6 @@ namespace IRExplorerUI {
 
         public override async void OnSessionStart() {
             base.OnSessionStart();
-            CalleCalleePanel.Session = Session;
             var data = Session.LoadPanelState(this, null);
 
             if (data != null) {
@@ -1833,12 +1839,7 @@ namespace IRExplorerUI {
             FunctionFilter.Text = "";
             SectionFilter.Text = "";
         }
-
-        public override void OnSessionEnd() {
-            base.OnSessionEnd();
-            CalleCalleePanel.Reset();
-        }
-
+        
         public async Task SelectFunction(IRTextFunction function) {
             if (function == currentFunction_) {
                 return;
@@ -1856,10 +1857,11 @@ namespace IRExplorerUI {
 
                 if (funcProfile != null) {
                     //?var profileCallTree = await Task.Run(() => CreateProfileCallTree(function));
-                    await CalleCalleePanel.DisplaProfileCallerCalleeTree(function);
-                }
-                else {
-                    CalleCalleePanel.Reset();
+                    var panel = Session.FindAndActivatePanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
+
+                    if (panel != null) {
+                        await panel.DisplaProfileCallerCalleeTree(function);
+                    }
                 }
             }
             else {
@@ -2236,17 +2238,6 @@ namespace IRExplorerUI {
             FunctionFilterGrid.Width = Math.Max(1, width - reservedWidth);
         }
 
-        private async void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
-            // A double-click on the +/- icon doesn't select an actual node.
-            var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
-
-            if (childInfo != null) {
-                if (!childInfo.IsMarked && childInfo.Function != null) {
-                    await SelectFunction(childInfo.Function);
-                }
-            }
-        }
-
         private async void FunctionDoubleClick(object sender, MouseButtonEventArgs e) {
             // A double-click on the +/- icon doesn't have an actual node selected.
             var functionEx = ((ListViewItem)sender).Content as IRTextFunctionEx;
@@ -2555,16 +2546,7 @@ namespace IRExplorerUI {
 
             return sb.ToString();
         }
-
-        private async void CallTreeButton_Click(object sender, RoutedEventArgs e) {
-            if (Session.ProfileData != null) {
-                var panel = new CallTreePanel(Session);
-                panel.Session = Session;
-                Session.DisplayFloatingPanel(panel);
-                await panel.DisplaProfileCallTree();
-            }
-        }
-
+        
         private void OpenDocumentInNewInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
             var loadedDoc = Session.SessionState.FindLoadedDocument(Summary);
 

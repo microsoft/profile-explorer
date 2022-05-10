@@ -18,6 +18,7 @@ namespace IRExplorerUI {
         ExpressionGraph,
         CallGraph,
         CallTree,
+        CallerCallee,
         PassOutput,
         SearchResults,
         Remarks,
