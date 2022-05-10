@@ -31,6 +31,7 @@ using Architecture = Microsoft.Diagnostics.Runtime.Architecture;
 using System.IO.Compression;
 using System.Threading;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
+using System.Windows.Media.Media3D;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -51,6 +52,7 @@ public class ETWEventProcessor : IDisposable {
     private bool isRealTime_;
     private bool handleDotNetEvents_;
     private int acceptedProcessId_;
+    private List<int> childAcceptedProcessIds_;
     private Dictionary<int, ClrRuntime> runtimeMap_;
     BlockingCollection<DisassemblerArgs> disasmTaskQueue_;
 
@@ -60,19 +62,35 @@ public class ETWEventProcessor : IDisposable {
         isRealTime_ = isRealTime;
         acceptedProcessId_ = acceptedProcessId;
         handleDotNetEvents_ = handleDotNetEvents;
+        childAcceptedProcessIds_ = new List<int>();
     }
 
     public ETWEventProcessor(string tracePath) {
         Debug.Assert(File.Exists(tracePath));
         source_ = new ETWTraceEventSource(tracePath);
+        childAcceptedProcessIds_ = new List<int>();
     }
 
     public List<TraceProcessSummary> BuildProcessSummary(CancelableTask cancelableTask) {
-        RawProfileData profile = new();
-        var list = new List<TraceProcessSummary>();
-        var processSamples = new Dictionary<ProfileProcess, int>();
-        int sampleCount = 0;
+// Default 1ms sampling interval 1ms.
+        UpdateSamplingInterval(10000);
+        
+        source_.Kernel.PerfInfoCollectionStart += data => {
+            if (data.SampleSource == 0) {
+                UpdateSamplingInterval(data.NewInterval);
+                samplingIntervalSet = true;
+            }
+        };
 
+        source_.Kernel.PerfInfoSetInterval += data => {
+            if (data.SampleSource == 0 && !samplingIntervalSet) {
+                UpdateSamplingInterval(data.OldInterval);
+                samplingIntervalSet = true;
+            }
+        };
+
+        RawProfileData profile = new();
+        
         source_.Kernel.ProcessStartGroup += data => {
             var proc = new ProfileProcess(data.ProcessID, data.ParentID,
                 data.ProcessName, data.ImageFileName,
@@ -89,35 +107,38 @@ public class ETWEventProcessor : IDisposable {
                 return;
             }
 
-            var process = profile.GetOrCreateProcess(data.ProcessID);
-            processSamples.AccumulateValue(process, data.Count);
-            sampleCount++;
+            // Save sample.
+            var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+            int contextId = profile.AddContext(context);
+
+            //? TODO: Use a pooled sample to avoid alloc (profile.Rent*)
+            var sample = new ProfileSample((long)data.InstructionPointer,
+                TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec),
+                TimeSpan.FromMilliseconds(samplingIntervalMS),
+                false, contextId);
+            int sampleId = profile.AddSample(sample);
+            profile.ReturnContext(contextId);
         };
 
         source_.Process();
-
-        foreach (var pair in processSamples) {
-            list.Add(new TraceProcessSummary(pair.Key, pair.Value) {
-                WeightPercentage = 100 * (double)pair.Value / (double)sampleCount
-            });
-        }
-
-        return list;
+        return profile.BuildProcessSummary();
     }
 
+    const double samplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
+
+    bool samplingIntervalSet = false;
+    int samplingInterval100NS;
+    double samplingIntervalMS;
+    double samplingIntervalLimitMS;
+
+    void UpdateSamplingInterval(int value) {
+        samplingInterval100NS = value;
+        samplingIntervalMS = (double)samplingInterval100NS / 10000;
+        samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
+    }
+
+
     public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
-        const double samplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
-        bool samplingIntervalSet = false;
-        int samplingInterval100NS;
-        double samplingIntervalMS;
-        double samplingIntervalLimitMS;
-
-        void UpdateSamplingInterval(int value) {
-            samplingInterval100NS = value;
-            samplingIntervalMS = (double)samplingInterval100NS / 10000;
-            samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
-        }
-
         // Default 1ms sampling interval 1ms.
         UpdateSamplingInterval(10000);
         ImageIDTraceData lastImageIdData = null;
@@ -156,6 +177,13 @@ public class ETWEventProcessor : IDisposable {
                                           data.ProcessName, data.ImageFileName,
                                           data.CommandLine);
             profile.AddProcess(proc);
+            
+            // If parent is one of the accepted processes, accept the child too.
+            //? TOOD: Option
+            if (IsAcceptedProcess(data.ParentID)) {
+                Trace.WriteLine($"=> Accept child {data.ProcessID} of {data.ParentID}");
+                childAcceptedProcessIds_.Add(data.ProcessID);
+            }
         };
 
         source_.Kernel.ImageGroup += data => {
@@ -212,11 +240,13 @@ public class ETWEventProcessor : IDisposable {
             // data.PointerSize;
         };
 
+        
+
         source_.Kernel.StackWalkStack += data => {
-            if (acceptedProcessId_ != 0 && data.ProcessID != acceptedProcessId_) {
+            if (!IsAcceptedProcess(data.ProcessID)) {
                 return; // Ignore events from other processes.
             }
-            
+
             //queue.Add((StackWalkStackTraceData)data.Clone());
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
@@ -267,7 +297,7 @@ public class ETWEventProcessor : IDisposable {
         };
 
         source_.Kernel.PerfInfoSample += data => {
-            if (acceptedProcessId_ != 0 && data.ProcessID != acceptedProcessId_) {
+            if (!IsAcceptedProcess(data.ProcessID)) {
                 return; // Ignore events from other processes.
             }
 
@@ -357,6 +387,7 @@ public class ETWEventProcessor : IDisposable {
         //Trace.Flush();
         
         profile.LoadingCompleted();
+        //StateSerializer.Serialize(@"C:\test\out.dat", profile);
         return profile;
     }
     
@@ -393,7 +424,7 @@ public class ETWEventProcessor : IDisposable {
     }
     
     private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data, RawProfileData profile) {
-        if (acceptedProcessId_ != 0 && data.ProcessID != acceptedProcessId_) {
+        if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
         }
 
@@ -419,13 +450,13 @@ public class ETWEventProcessor : IDisposable {
             return;
         }
 
-        var methodMapping = profile.FindManagedMethod(data.MethodID);
+        var methodMapping = profile.FindManagedMethod(data.MethodID, data.ProcessID);
 
         if (methodMapping.IsUnknown) {
             return;
         }
         
-        var moduleDebugInfo = profile.GetDebugInfoForImage(methodMapping.Image) as DotNetDebugInfoProvider;
+        var moduleDebugInfo = profile.GetDebugInfoForImage(methodMapping.Image, data.ProcessID) as DotNetDebugInfoProvider;
         if (moduleDebugInfo == null) {
             return; //? Can it fail?
         }
@@ -441,7 +472,7 @@ public class ETWEventProcessor : IDisposable {
     }
 
     private void ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile) {
-        if (acceptedProcessId_ != 0 && data.ProcessID != acceptedProcessId_) {
+        if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
         }
 
@@ -477,7 +508,8 @@ public class ETWEventProcessor : IDisposable {
         var funcName = method.Signature;
         var funcInfo = new DebugFunctionInfo(funcName, (long)funcRva, data.MethodSize, data.MethodToken);
         moduleDebugInfo.AddFunctionInfo(funcInfo);
-        profile.AddManagedMethodMapping(data.MethodID, funcInfo, moduleImage, (long)data.MethodStartAddress, data.MethodSize);
+        profile.AddManagedMethodMapping(data.MethodID, funcInfo, moduleImage, 
+                                        (long)data.MethodStartAddress, data.MethodSize, data.ProcessID);
 
         // Save method code by copying it from the running process.
         var methodCode = CopyDotNetMethod(data.MethodStartAddress, data.MethodSize, runtime);
@@ -490,6 +522,18 @@ public class ETWEventProcessor : IDisposable {
 
     private void DisassembleManagedMethod(DisassemblerArgs disassemblerArgs) {
         try {
+            bool isValid = true;
+
+            for (int i = 0; i < Math.Min(10, disassemblerArgs.MethodCode.Length); i++) {
+                if (disassemblerArgs.MethodCode[i] != 0) {
+                    break;
+                }
+                else if (i >= 8) {
+                    isValid = false;
+                    break;
+                }
+            }
+            
             var runtime = disassemblerArgs.Runtime;
             var runtimeArch = FromRuntimeArchitecture(runtime);
             using var disassembler = Disassembler.CreateForMachine(runtimeArch, address => {
@@ -581,6 +625,18 @@ public class ETWEventProcessor : IDisposable {
         }
     }
 
+    private bool IsAcceptedProcess(int processID) {
+        if (acceptedProcessId_ == 0) {
+            return true; // No filtering.
+        }
+
+        if (processID == acceptedProcessId_) {
+            return true;
+        }
+
+        return childAcceptedProcessIds_.Contains(processID);
+    }
+    
     public void Dispose() {
         source_?.Dispose();
     }

@@ -71,7 +71,7 @@ namespace IRExplorerUI {
                 return true;
             }
             catch (Exception ex) {
-                Trace.TraceError($"Failed to save JSON file: {ex.Message}");
+                Trace.TraceError($"Failed to load JSON file: {ex.Message}");
                 data = default;
                 return false;
             }

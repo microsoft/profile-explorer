@@ -54,6 +54,8 @@ using OxyPlot.Wpf;
 using OxyPlot.SkiaSharp.Wpf;
 using LinearAxis = OxyPlot.Axes.LinearAxis;
 using System.Drawing.Drawing2D;
+using static Google.Protobuf.WellKnownTypes.Field.Types;
+using System.Windows.Documents;
 
 namespace IRExplorerUI {
     public static class AppCommand {
@@ -863,7 +865,7 @@ namespace IRExplorerUI {
         public Task SwitchActiveFunction(IRTextFunction function) {
             return SectionPanel.SelectFunction(function);
         }
-
+        
         private void MenuItem_Click_3(object sender, RoutedEventArgs e) {
             
         }
@@ -1306,15 +1308,19 @@ namespace IRExplorerUI {
             documentSearchVisible_ = false;
         }
 
-        private void SaveDockLayout() {
-            var dockLayoutFile = App.GetDockLayoutFilePath();
+        private bool SaveDockLayout() {
+            return SaveDockLayout(App.GetLastDockLayoutFilePath());
+        }
 
+        private bool SaveDockLayout(string dockLayoutFile) {
             try {
                 var serializer = new XmlLayoutSerializer(DockManager);
                 serializer.Serialize(dockLayoutFile);
+                return true;
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed to save dock layout: {ex}");
+                return false;
             }
         }
 
@@ -1396,6 +1402,23 @@ namespace IRExplorerUI {
             return result != null;
         }
 
+        public async Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
+            ProfileDataProviderOptions options,
+            SymbolFileSourceOptions symbolOptions,
+            ProfileLoadProgressHandler progressCallback,
+            CancelableTask cancelableTask) {
+            using var profileData = new ETWProfileDataProvider(this);
+            var result = await profileData.LoadTraceAsync(data, process,
+                options, symbolOptions,
+                progressCallback, cancelableTask);
+            if (!IsSessionStarted) {
+                return false;
+            }
+
+            sessionState_.ProfileData = result;
+            return result != null;
+        }        
+
         private async void LoadProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
             var window = new ProfileLoadWindow(this, false);
             window.Owner = this;
@@ -1426,6 +1449,23 @@ namespace IRExplorerUI {
         private void CanExecuteLoadProfileCommand(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = sessionState_ == null || sessionState_.ProfileData == null;
             e.Handled = true;
+        }
+
+        private void WorkspaceCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            //LeftPanelGroup.
+            if (WorkspaceCombobox.SelectedIndex == 0) {
+                RestoreDockLayout();
+            }
+            else {
+                var prof = App.GetDockLayoutFilePath("profiling");
+
+                if (File.Exists(prof)) {
+                    RestoreDockLayout(prof);
+                }
+                else {
+                    SaveDockLayout(prof);
+                }
+            }
         }
     }
 }

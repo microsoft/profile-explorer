@@ -11,7 +11,6 @@ namespace IRExplorerCore {
         public int Number { get; set; }
         public string Name { get; }
         public IRTextSummary ParentSummary { get; set; }
-        public int SectionCount => Sections?.Count ?? 0;
         private int hashCode_;
 
         public IRTextFunction(string name) {
@@ -35,6 +34,9 @@ namespace IRExplorerCore {
                 return maxSection?.BlockCount ?? 0;
             }
         }
+
+        public int SectionCount => Sections?.Count ?? 0;
+        public bool HasSections => SectionCount != 0;
 
         public void AddSection(IRTextSection section) {
             section.Number = Sections.Count + 1;

@@ -39,6 +39,10 @@ namespace IRExplorerUI.Profile {
         public string ApplicationArguments { get; set; }
         [ProtoMember(4)]
         public string WorkingDirectory { get; set; }
+        //? Env vars
+        //? Child procs
+        //? Pmc
+        //? PMC config
         [ProtoMember(5)]
         public int SamplingFrequency { get; set; }
         [ProtoMember(6)]
@@ -80,6 +84,7 @@ namespace IRExplorerUI.Profile {
         public bool IncludePerformanceCounters { get; set; }
         [ProtoMember(10)] 
         public ProfileRecordingSessionOptions RecordingSessionOptions { get; set; }
+        //? Recent profile sessions
 
         public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
         public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;

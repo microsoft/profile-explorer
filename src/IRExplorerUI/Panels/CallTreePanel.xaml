@@ -18,33 +18,16 @@
         <CommandBinding Command="local:CallTreeCommand.FocusSearch" Executed="FocusSearchExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
-    <local:ToolPanelControl.Resources>
-        <Style x:Key="ToolbarStyle" TargetType="{x:Type RowDefinition}">
-            <Style.Setters>
-                <Setter Property="Height" Value="28" />
-            </Style.Setters>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding ShowToolbar}" Value="False">
-                    <DataTrigger.Setters>
-                        <Setter Property="Height" Value="0" />
-                        <Setter Property="MaxHeight" Value="0" />
-                    </DataTrigger.Setters>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
-    </local:ToolPanelControl.Resources>
-
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Style="{StaticResource ToolbarStyle}" />
+            <RowDefinition Height="28" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <DockPanel
             Grid.Row="0"
             HorizontalAlignment="Stretch"
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-            Visibility="{Binding ShowToolbar, Converter={StaticResource BoolToVisibility}}">
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <ToolBarTray
                 Grid.Row="0"
                 Grid.Column="2"
@@ -59,7 +42,22 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     Loaded="ToolBar_Loaded">
 
-                    <Button ToolTip="Expand hottest call path">
+
+                    <ToggleButton
+                        IsChecked="{Binding CombineNodes, ElementName=CalleCalleePanel}"
+                        ToolTip="Combine all function instances into one"
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource MergeIcon}" />
+                            <TextBlock Text="Combine" />
+                        </StackPanel>
+                    </ToggleButton>
+
+                    <Button ToolTip="Expand hottest call path" Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibility}}">
                         <Image Source="{StaticResource HotFlameIcon}" />
                     </Button>
                     <Separator />
@@ -69,6 +67,34 @@
                         IsChecked="{Binding Path=PrependModuleToFunction, Mode=TwoWay}"
                         ToolTip="Show the module name in front of the function name" />
                     <Separator />
+
+                    <Button
+                        Click="CallTreeButton_OnClick"
+                        ToolTip="View complete call tree"
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource GraphIcon}" />
+                            <TextBlock Text="Call Tree" />
+                        </StackPanel>
+                    </Button>
+                    <Button
+                        IsEnabled="False"
+                        ToolTip="View flame graph"
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel Orientation="Horizontal">
+                            <Image
+                                Width="16"
+                                Height="16"
+                                Margin="0,1,0,0"
+                                Source="{StaticResource FlameGraphIcon}" />
+                            <TextBlock Text="Flame Graph" />
+                        </StackPanel>
+                    </Button>
+                    <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}" />
 
                     <Image Source="{StaticResource SearchIcon}" />
                     <Grid Height="24">
@@ -279,7 +305,6 @@
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Open Function"
                         InputGestureText="Return"
-                        IsEnabled="False"
                         ToolTip="" />
                     <MenuItem
                         Command="local:CallTreeCommand.OpenFunctionInNewTab"
@@ -287,7 +312,6 @@
                         CommandTarget="{Binding ElementName=CallTree}"
                         Header="Open Function in New Tab"
                         InputGestureText="Shift+Return"
-                        IsEnabled="False"
                         ToolTip="" />
 
                     <MenuItem

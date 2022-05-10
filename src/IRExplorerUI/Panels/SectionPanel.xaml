@@ -202,15 +202,6 @@
 
                         <ToggleButton
                             Margin="-1,0,0,0"
-                            Padding="4,2,4,2"
-                            HorizontalContentAlignment="Stretch"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                            Content="Calls"
-                            IsChecked="{Binding ShowChildren, Mode=TwoWay}"
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
-
-                        <ToggleButton
-                            Margin="-1,0,0,0"
                             Padding="2,2,4,2"
                             HorizontalContentAlignment="Stretch"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
@@ -1086,87 +1077,6 @@
                     </ListView.InputBindings>
                 </ListView>
 
-            </Grid>
-
-            <Grid x:Name="CallChildrenGrid" Visibility="{Binding ShowChildren, Converter={StaticResource BoolToVisibility}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="28" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="25" />
-                    </Grid.ColumnDefinitions>
-
-                    <ToolBarTray
-                        x:Name="CallChildrenToolbar"
-                        Grid.Column="0"
-                        Height="28"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                        IsLocked="True">
-                        <ToolBar
-                            HorizontalAlignment="Stretch"
-                            VerticalAlignment="Top"
-                            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                            Loaded="ToolBar_Loaded">
-                            <Button
-                                Click="CallTreeButton_Click"
-                                ToolTip="View complete call tree"
-                                Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Margin="0,1,0,0"
-                                        Source="{StaticResource GraphIcon}" />
-                                    <TextBlock Text="Call Tree" />
-                                </StackPanel>
-                            </Button>
-                            <Button
-                                IsEnabled="False"
-                                ToolTip="View flame graph"
-                                Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}">
-                                <StackPanel Orientation="Horizontal">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Margin="0,1,0,0"
-                                        Source="{StaticResource FlameGraphIcon}" />
-                                    <TextBlock Text="Flame Graph" />
-                                </StackPanel>
-                            </Button>
-                            <Separator />
-
-                            <ToggleButton IsChecked="{Binding CombineNodes, ElementName=CalleCalleePanel}" ToolTip="Combine all function instances into one">
-                                <StackPanel Orientation="Horizontal">
-                                    <Image
-                                        Width="16"
-                                        Height="16"
-                                        Margin="0,1,0,0"
-                                        Source="{StaticResource MergeIcon}" />
-                                    <TextBlock Text="Combine" />
-                                </StackPanel>
-                            </ToggleButton>
-                        </ToolBar>
-                    </ToolBarTray>
-
-                    <local:PanelToolbarTray
-                        x:Name="FixedToolbar2"
-                        Grid.Column="1"
-                        HasDuplicateButton="False"
-                        HasPinButton="False"
-                        SettingsClicked="FixedToolbar_SettingsClicked" />
-                </Grid>
-
-                <local:CallTreePanel
-                    x:Name="CalleCalleePanel"
-                    Grid.Row="1"
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                    BorderBrush="{x:Null}"
-                    BorderThickness="0,0,0,0"
-                    ShowToolbar="False" />
             </Grid>
         </Grid>
     </Grid>

@@ -59,6 +59,8 @@ namespace IRExplorerUI {
         void SaveDocumentState(object stateObject, IRTextSection section);
         void SavePanelState(object stateObject, IToolPanel panel, 
                             IRTextSection section, IRDocument document = null);
+
+        IToolPanel FindAndActivatePanel(ToolPanelKind kind);
         Task<IRDocumentHost> SwitchDocumentSectionAsync(OpenSectionEventArgs args);
         Task<IRDocumentHost> OpenDocumentSectionAsync(OpenSectionEventArgs args);
         bool SwitchToPreviousSection(IRTextSection section, IRDocument document);
@@ -102,6 +104,12 @@ namespace IRExplorerUI {
                                 CancelableTask cancelableTask);
 
         Task<bool> LoadProfileData(RawProfileData data, string binaryFilePath,
+            ProfileDataProviderOptions options,
+            SymbolFileSourceOptions symbolOptions,
+            ProfileLoadProgressHandler progressCallback,
+            CancelableTask cancelableTask);
+
+        Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
             ProfileDataProviderOptions options,
             SymbolFileSourceOptions symbolOptions,
             ProfileLoadProgressHandler progressCallback,

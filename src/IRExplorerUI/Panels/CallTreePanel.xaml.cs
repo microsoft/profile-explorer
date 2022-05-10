@@ -30,6 +30,7 @@ using System.Windows.Documents;
 using IRExplorerCore.IR;
 using OxyPlot;
 using FontWeights = System.Windows.FontWeights;
+using static SkiaSharp.HarfBuzz.SKShaper;
 
 namespace IRExplorerUI {
     public static class CallTreeCommand {
@@ -117,7 +118,7 @@ namespace IRExplorerUI {
 
         private TextBlock CreateOnDemandName() {
             var textBlock = new TextBlock();
-            var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.Normal;
+            var nameFontWeight = IsMarked ? FontWeights.Bold : FontWeights.SemiBold;
 
             if (IsMarked) {
                 textBlock.FontWeight = FontWeights.Bold;
@@ -193,12 +194,7 @@ namespace IRExplorerUI {
         private ChildFunctionEx profileCallTree_;
         private List<ChildFunctionEx> searchResultNodes_;
         private CallTreeSettings settings_;
-
-        public bool ShowToolbar {
-            get => (bool)GetValue(ShowToolbarProperty);
-            set => SetValue(ShowToolbarProperty, value);
-        }
-
+        
         public bool PrependModuleToFunction {
             get => settings_.PrependModuleToFunction;
             set {
@@ -210,12 +206,13 @@ namespace IRExplorerUI {
             }
         }
 
+        public bool IsCallerCalleePanel => PanelKind == ToolPanelKind.CallerCallee;
+
         public CallTreePanel() {
             InitializeComponent();
             settings_ = App.Settings.CallTreeSettings;
             
             PreviewKeyDown += OnPreviewKeyDown;
-            ShowToolbar = true;
             DataContext = this;
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
@@ -301,6 +298,10 @@ namespace IRExplorerUI {
         }
 
         public async Task DisplaProfileCallTree() {
+            if (profileCallTree_ != null) {
+                return;
+            }
+
             profileCallTree_ = await Task.Run(() => CreateProfileCallTree());
             CallTree.Model = profileCallTree_;
 
@@ -604,24 +605,21 @@ namespace IRExplorerUI {
 
         #endregion
 
-        private void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
-            // A double-click on the +/- icon doesn't select an actual node.
+        private async void ChildDoubleClick(object sender, MouseButtonEventArgs e) {
             var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
 
-            if (childInfo != null) {
-                ExpandHottestFunctionPath();
-                Session.SwitchActiveFunction(childInfo.Function);
+            if (childInfo != null && childInfo.Function.HasSections) {
+                var openMode = Utils.IsShiftModifierActive() ? OpenSectionKind.NewTabDockRight : OpenSectionKind.ReplaceCurrent;
+                await OpenFunction(childInfo, openMode);
             }
         }
 
         private void ChildClick(object sender, MouseButtonEventArgs e) {
-            //// A double-click on the +/- icon doesn't select an actual node.
-            //var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
+            var childInfo = ((ListViewItem)sender).Content as ChildFunctionEx;
 
-            //if (childInfo != null) {
-            //    ExpandHottestFunctionPath();
-            //    Session.SwitchActiveFunction(childInfo.Function);
-            //}
+            if (childInfo != null) {
+                Session.SwitchActiveFunction(childInfo.Function);
+            }
         }
 
         private void ExpandHottestFunctionPath() {
@@ -682,12 +680,27 @@ namespace IRExplorerUI {
             }
         }
 
-        private void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private async void OpenFunctionExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (e.Parameter is TreeNode node) {
+                var childInfo = node.Tag as ChildFunctionEx;
+                await OpenFunction(childInfo, OpenSectionKind.ReplaceCurrent);
+            }
         }
 
-        private void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
+        private async void OpenFunctionInNewTab(object sender, ExecutedRoutedEventArgs e) {
+            if (e.Parameter is TreeNode node) {
+                var childInfo = node.Tag as ChildFunctionEx;
+                await OpenFunction(childInfo, OpenSectionKind.NewTabDockRight);
+            }
         }
-        
+
+        private async Task OpenFunction(ChildFunctionEx childInfo, OpenSectionKind openMode) {
+            if (childInfo != null && childInfo.Function.HasSections) {
+                var args = new OpenSectionEventArgs(childInfo.Function.Sections[0], openMode);
+                await Session.SwitchDocumentSectionAsync(args);
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
@@ -741,6 +754,14 @@ namespace IRExplorerUI {
         private void FocusSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
             FunctionFilter.Focus();
             FunctionFilter.SelectAll();
+        }
+        
+        private async void CallTreeButton_OnClick(object sender, RoutedEventArgs e) {
+            var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
+
+            if (panel != null) {
+                await panel.DisplaProfileCallTree();
+            }
         }
     }
 }
