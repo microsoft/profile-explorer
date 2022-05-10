@@ -58,6 +58,7 @@ public class ETWEventProcessor : IDisposable {
 
     public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true, 
                              int acceptedProcessId = 0, bool handleDotNetEvents = false) {
+        Trace.WriteLine($"New ETWEventProcessor: ProcId {acceptedProcessId}, handleDotNet: {handleDotNetEvents}");
         source_ = source;
         isRealTime_ = isRealTime;
         acceptedProcessId_ = acceptedProcessId;
@@ -228,7 +229,6 @@ public class ETWEventProcessor : IDisposable {
 
         source_.Kernel.ThreadStartGroup += data => {
             if (cancelableTask != null && cancelableTask.IsCanceled) {
-                Trace.WriteLine("CANCELED");
                 source_.StopProcessing();
             }
             
@@ -377,13 +377,14 @@ public class ETWEventProcessor : IDisposable {
 
         // Go over all ETW events, which will call the registered handlers.
         source_.Process();
-
+        
         if (handleDotNetEvents_) {
             disasmTaskQueue_.CompleteAdding();
             disasmTask.Wait();
         }
 
         Trace.WriteLine($"Done processing ETW events");
+        Trace.WriteLine($"  samples: {profile.Samples.Count}");
         //Trace.Flush();
         
         profile.LoadingCompleted();
@@ -597,13 +598,14 @@ public class ETWEventProcessor : IDisposable {
         try {
             dataTarget = DataTarget.AttachToProcess(processId, false);
 
+#if DEBUG
             foreach (var v in dataTarget.ClrVersions) {
                 var dac = v.DacInfo;
                 Trace.WriteLine($"DAC {dac.LocalDacPath}");
                 Trace.WriteLine($"DAC target: {dac.TargetArchitecture}");
                 Trace.WriteLine($"DAC version: {dac.Version}");
             }
-
+#endif
             return dataTarget.ClrVersions[0].CreateRuntime();
         }
         catch (Exception ex) {
