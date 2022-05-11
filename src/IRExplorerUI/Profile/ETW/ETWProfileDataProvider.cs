@@ -531,11 +531,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 var callTree = new ProfileCallTree();
 
-
-                var mb = TimeSpan.Zero;
-                var mbtotal = TimeSpan.Zero;
-
-
                 for (int k = 0; k < chunks; k++) {
                     int start = k * chunkSize;
                     int end = Math.Min((k + 1) * chunkSize, (int)prof.Samples.Count);
@@ -844,11 +839,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 Trace.WriteLine($"Done process samples in {sw.Elapsed}");
                 
-                Trace.WriteLine($"=> mb: {mb.TotalMilliseconds}");
-                Trace.WriteLine($"=> mb total: {mbtotal.TotalMilliseconds}");
-
                 //MessageBox.Show($"Done in {sw.Elapsed}");
-
 
                 //Trace.WriteLine(callTree.Print());
                 //Trace.Flush();

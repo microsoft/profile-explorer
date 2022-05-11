@@ -358,5 +358,13 @@ namespace IRExplorerUI {
         private void RestartAppButton_OnClick(object sender, RoutedEventArgs e) {
             App.RestartApplicationAsAdmin();
         }
+
+        private void DefaultFrequencyButton_Click(object sender, RoutedEventArgs e) {
+            SamplingFrequencySlider.Value = ProfileRecordingSessionOptions.DefaultSamplingFrequency;
+        }
+
+        private void MaxFrequencyButton_Click(object sender, RoutedEventArgs e) {
+            SamplingFrequencySlider.Value = ProfileRecordingSessionOptions.MaximumSamplingFrequency;
+        }
     }
 }

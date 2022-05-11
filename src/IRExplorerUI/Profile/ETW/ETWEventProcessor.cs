@@ -182,7 +182,7 @@ public class ETWEventProcessor : IDisposable {
             // If parent is one of the accepted processes, accept the child too.
             //? TOOD: Option
             if (IsAcceptedProcess(data.ParentID)) {
-                Trace.WriteLine($"=> Accept child {data.ProcessID} of {data.ParentID}");
+                //Trace.WriteLine($"=> Accept child {data.ProcessID} of {data.ParentID}");
                 childAcceptedProcessIds_.Add(data.ProcessID);
             }
         };

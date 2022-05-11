@@ -1114,7 +1114,7 @@ namespace IRExplorerUI {
                     panelHost = DefinitionPanelHost;
                     break;
                 }
-                case "References": {
+                case "References": { 
                     panelHost = ReferencesPanelHost;
                     break;
                 }
@@ -1160,6 +1160,14 @@ namespace IRExplorerUI {
                 }
                 case "ExpressionGraph": {
                     panelHost = ExpressionGraphPanelHost;
+                    break;
+                }
+                case "CallTree": {
+                    panelHost = CallTreePanelHost;
+                    break;
+                }
+                case "CallerCallee": {
+                    panelHost = CallerCalleePanelHost;
                     break;
                 }
             }

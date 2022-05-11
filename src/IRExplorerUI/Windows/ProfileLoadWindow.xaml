@@ -97,7 +97,8 @@
                                 x:Name="EnvironmentVarsCheckbox"
                                 Margin="8,8,0,0"
                                 Content="Optional environment variables (one per line, var=value format)"
-                                IsChecked="{Binding Path=SymbolOptions.SymbolSearchPathsEnabled, Mode=TwoWay}" />
+                                IsChecked="{Binding Path=Options.RecordingSessionOptions.EnableEnvironmentVars, Mode=TwoWay}"
+                                IsEnabled="False" />
                             <TextBox
                                 x:Name="EnvironmentVarsTextBox"
                                 MinHeight="36"
@@ -106,7 +107,7 @@
                                 AcceptsReturn="True"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                IsEnabled="{Binding ElementName=SymbolSearchPathsCheckbox, Path=IsChecked}"
+                                IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
                                 TabIndex="2"
                                 Text="{Binding Path=SymbolOptions.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                 TextWrapping="Wrap" />
@@ -128,11 +129,12 @@
                                 <CheckBox
                                     Margin="0,4,0,0"
                                     Content="Profile child processes"
-                                    IsChecked="{Binding Path=Options.RecordingSessionOptions.ProfileDotNet, Mode=TwoWay}" />
+                                    IsChecked="{Binding Path=Options.RecordingSessionOptions.ProfileChildProcesses, Mode=TwoWay}" />
                                 <CheckBox
                                     Margin="0,4,0,0"
                                     Content="Record CPU performance counter (PMC) events"
-                                    IsChecked="{Binding Path=Options.RecordingSessionOptions.ProfileDotNet, Mode=TwoWay}" />
+                                    IsChecked="{Binding Path=Options.RecordingSessionOptions.EnablePerfCounters, Mode=TwoWay}"
+                                    IsEnabled="False" />
 
                                 <StackPanel
                                     Margin="0,8,0,0"
@@ -140,6 +142,7 @@
                                     Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibility}}">
                                     <TextBlock Text="Sampling frequency" />
                                     <Slider
+                                        x:Name="SamplingFrequencySlider"
                                         Width="120"
                                         Margin="8,0,0,0"
                                         Foreground="{DynamicResource DisabledForegroundBrush}"
@@ -153,12 +156,21 @@
                                         TickFrequency="1000"
                                         TickPlacement="BottomRight"
                                         Value="{Binding Path=Options.RecordingSessionOptions.SamplingFrequency, Mode=TwoWay}" />
+                                    <TextBlock Margin="8,0,0,0" Text="{Binding Path=Options.RecordingSessionOptions.SamplingFrequency}" />
                                     <Button
+                                        x:Name="DefaultFrequencyButton"
                                         Height="22"
                                         Margin="4,0,0,0"
                                         Padding="4,0,4,0"
+                                        Click="DefaultFrequencyButton_Click"
                                         Content="Default" />
-                                    <TextBlock Margin="8,0,0,0" Text="{Binding Path=Options.RecordingSessionOptions.SamplingFrequency}" />
+                                    <Button
+                                        x:Name="MaxFrequencyButton"
+                                        Height="22"
+                                        Margin="4,0,0,0"
+                                        Padding="4,0,4,0"
+                                        Click="MaxFrequencyButton_Click"
+                                        Content="Max" />
                                 </StackPanel>
 
                             </StackPanel>
@@ -288,7 +300,7 @@
                     <ListView
                         x:Name="ProcessList"
                         MinHeight="100"
-                        MaxHeight="100"
+                        MaxHeight="150"
                         Margin="8,4,8,0"
                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                         IsEnabled="{Binding InputControlsEnabled}"

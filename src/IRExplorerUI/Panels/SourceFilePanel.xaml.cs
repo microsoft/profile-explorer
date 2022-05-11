@@ -224,7 +224,10 @@ namespace IRExplorerUI {
                     }
 
                     // Precompute the per-line sample weights.
-                    await Task.Run(() => funcProfile.ProcessSourceLines(debugInfo));
+                    //? TODO: Using DIA on another thread than where it was initialized (Task.Run
+                    //? seems not supported? Assert about invalid DIA session, while FindSourceFilePathByRVA is fine.
+                    //await Task.Run(() => funcProfile.ProcessSourceLines(debugInfo));
+                    funcProfile.ProcessSourceLines(debugInfo);
                 }
 
                 if (sourceInfo.IsUnknown) {
