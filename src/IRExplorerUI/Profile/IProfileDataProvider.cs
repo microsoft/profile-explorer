@@ -31,6 +31,9 @@ namespace IRExplorerUI.Profile {
 
     [ProtoContract(SkipConstructor = true)]    
     public class ProfileRecordingSessionOptions : SettingsBase {
+        public const int DefaultSamplingFrequency = 4000;
+        public const int MaximumSamplingFrequency = 8000;
+
         [ProtoMember(1)]
         public ProfileSessionKind SessionKind { get; set; }
         [ProtoMember(2)]
@@ -39,14 +42,18 @@ namespace IRExplorerUI.Profile {
         public string ApplicationArguments { get; set; }
         [ProtoMember(4)]
         public string WorkingDirectory { get; set; }
-        //? Env vars
-        //? Child procs
-        //? Pmc
-        //? PMC config
         [ProtoMember(5)]
         public int SamplingFrequency { get; set; }
         [ProtoMember(6)]
         public bool ProfileDotNet { get; set; }
+        [ProtoMember(7)]
+        public bool ProfileChildProcesses { get; set; }
+        [ProtoMember(8)]
+        public bool EnablePerfCounters { get; set; }//? PMC config
+        [ProtoMember(9)]        
+        public bool EnableEnvironmentVars { get; set; }
+        [ProtoMember(10)]
+        public List<(string Variable, string Name)> EnvironmentVariables { get; set; }
 
         public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
 
@@ -55,8 +62,19 @@ namespace IRExplorerUI.Profile {
         }
 
         public override void Reset() {
+            ResetAndInitializeReferenceMembers();
             SessionKind = ProfileSessionKind.SystemWide;
             SamplingFrequency = 4000; // 4 kHz, Xperf default is 1 kHz.
+        }
+
+        [ProtoAfterDeserialization]
+        private void InitializeReferenceMembers() {
+            EnvironmentVariables ??= new List<(string Variable, string Name)>();
+        }
+
+        private void ResetAndInitializeReferenceMembers() {
+            EnvironmentVariables?.Clear();
+            InitializeReferenceMembers();
         }
     }
 
@@ -94,7 +112,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public override void Reset() {
-            InitializeReferenceMembers();
+            ResetAndInitializeReferenceMembers();
             DownloadBinaryFiles = true;
         }
         
@@ -121,7 +139,15 @@ namespace IRExplorerUI.Profile {
             BinaryNameWhitelist ??= new List<string>();
             RecordingSessionOptions ??= new ProfileRecordingSessionOptions();
         }
-        
+
+        private void ResetAndInitializeReferenceMembers() {
+            BinarySearchPaths?.Clear();
+            BinaryNameWhitelist?.Clear();
+            RecordingSessionOptions?.Reset();
+            InitializeReferenceMembers();
+        }
+
+
         public override SettingsBase Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<ProfileDataProviderOptions>(serialized);

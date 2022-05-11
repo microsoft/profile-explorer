@@ -1452,7 +1452,6 @@ namespace IRExplorerUI {
         }
 
         private void WorkspaceCombobox_SelectionChanged(object sender, SelectionChangedEventArgs e) {
-            //LeftPanelGroup.
             if (WorkspaceCombobox.SelectedIndex == 0) {
                 RestoreDockLayout();
             }
@@ -1462,9 +1461,9 @@ namespace IRExplorerUI {
                 if (File.Exists(prof)) {
                     RestoreDockLayout(prof);
                 }
-                else {
-                    SaveDockLayout(prof);
-                }
+                //else {
+                //    SaveDockLayout(prof);
+                //}
             }
         }
     }

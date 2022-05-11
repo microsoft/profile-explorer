@@ -369,14 +369,32 @@
                             Header="Expression Graph Panel"
                             IsEnabled="True"
                             Tag="ExpressionGraph" />
+                        <Separator />
+
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Call Tree Panel"
+                            Tag="CallTree" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Caller/Callee Panel"
+                            Tag="CallerCallee" />
                     </MenuItem>
 
                     <MenuItem Header="Profiling">
                         <MenuItem Command="local:AppCommand.LoadProfile" Header="Load Profile" />
                         <MenuItem Command="local:AppCommand.RecordProfile" Header="Record Profile" />
+                        <MenuItem Header="Recent Profiles" IsEnabled="False" />
                         <Separator />
 
-                        <MenuItem Header="Recent Profiles" IsEnabled="False" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Call Tree Panel"
+                            Tag="CallTree" />
+                        <MenuItem
+                            Click="ShowPanelMenuClicked"
+                            Header="Caller/Callee Panel"
+                            Tag="CallerCallee" />
                     </MenuItem>
 
                     <MenuItem Header="Tools">

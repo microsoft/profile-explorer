@@ -505,10 +505,12 @@ namespace IRExplorerUI.Compilers {
         public void Dispose() {
             if (session_ != null) {
                 Marshal.ReleaseComObject(session_);
+                session_ = null;
             }
 
             if (diaSource_ != null) {
                 Marshal.ReleaseComObject(diaSource_);
+                diaSource_ = null;
             }
         }
     }

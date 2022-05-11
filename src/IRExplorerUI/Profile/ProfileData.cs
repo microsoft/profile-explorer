@@ -181,10 +181,9 @@ public class FunctionProfileData {
         }
 
         SourceLineWeight ??= new Dictionary<int, TimeSpan>();
-        var funcInfo = debugInfo.FindFunctionByRVA(DebugInfo.RVA);
 
         foreach (var pair in InstructionWeight) {
-            long rva = pair.Key + funcInfo.RVA;
+            long rva = pair.Key + DebugInfo.RVA;
             var lineInfo = debugInfo.FindSourceLineByRVA(rva);
 
             if (!lineInfo.IsUnknown) {
