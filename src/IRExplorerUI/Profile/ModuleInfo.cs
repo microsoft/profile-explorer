@@ -200,7 +200,7 @@ namespace IRExplorerUI.Profile {
         
         public DebugFunctionInfo FindDebugFunctionInfo(long funcAddress) {
             if (!HasDebugInfo) {
-                return DebugFunctionInfo.Unknown;
+                return null;
             }
 
             //? TODO: Enable sorted list, integrate in PDBProvider

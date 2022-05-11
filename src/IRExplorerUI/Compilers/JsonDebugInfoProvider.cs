@@ -32,7 +32,7 @@ namespace IRExplorerUI.Compilers {
 
             var funcInfo = FindFunction(functionName);
 
-            if (funcInfo.IsUnknown || !funcInfo.HasSourceLines) {
+            if (funcInfo == null || !funcInfo.HasSourceLines) {
                 return false;
             }
 
@@ -50,7 +50,7 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
         public DebugFunctionInfo FindFunction(string functionName) {
-            return functionMap_.GetValueOr(functionName, DebugFunctionInfo.Unknown);
+            return functionMap_.GetValueOrDefault(functionName);
         }
 
         public void Dispose() {
@@ -68,7 +68,7 @@ namespace IRExplorerUI.Compilers {
                 }
             }
 
-            return DebugFunctionInfo.Unknown;
+            return null;
         }
 
         public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
@@ -93,7 +93,7 @@ namespace IRExplorerUI.Compilers {
         public DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva) {
             var funcInfo = FindFunctionByRVA(rva);
 
-            if (!funcInfo.IsUnknown && funcInfo.HasSourceLines) {
+            if (funcInfo != null && funcInfo.HasSourceLines) {
                 return GetSourceFileInfo(funcInfo);
             }
 
@@ -103,7 +103,7 @@ namespace IRExplorerUI.Compilers {
         public DebugSourceLineInfo FindSourceLineByRVA(long rva) {
             var funcInfo = FindFunctionByRVA(rva);
 
-            if (!funcInfo.IsUnknown && funcInfo.HasSourceLines) {
+            if (funcInfo != null && funcInfo.HasSourceLines) {
                 long offset = rva - funcInfo.StartRVA;
                 return funcInfo.FindNearestLine(offset);
             }
