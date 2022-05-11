@@ -317,7 +317,7 @@ namespace IRExplorerUI.Compilers {
                 Trace.TraceError($"Failed to find function for RVA {rva}: {ex.Message}");
             }
 
-            return DebugFunctionInfo.Unknown;
+            return null;
         }
 
         public DebugFunctionInfo FindFunction(string functionName) {
@@ -327,7 +327,7 @@ namespace IRExplorerUI.Compilers {
                 return new DebugFunctionInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
             }
 
-            return DebugFunctionInfo.Unknown;
+            return null;
         }
 
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {

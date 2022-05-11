@@ -246,7 +246,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 var func = FindFunctionByRva(rva);
 
                 //? TODO: Option to demangle
-                if (!func.IsUnknown) {
+                if (func != null) {
                     builder.Append(func.Name);
                     return true;
                 }
@@ -262,13 +262,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             var result = DebugFunctionInfo.BinarySearch(sortedFuncList_, rva);
-
-            if (!result.IsUnknown) {
-                return result;
-            }
-
-            Trace.WriteLine($"=> NOTHING FOR {rva}");
-            return debugInfo_.FindFunctionByRVA(rva);
+            return result != null ? result : debugInfo_.FindFunctionByRVA(rva);
         }
 
         private void BuildFunctionRvaCache(bool includeExternalSyms) {

@@ -11,16 +11,11 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     public long Size { get; set; }
     public DebugSourceLineInfo StartDebugSourceLine { get; set; }
     public List<DebugSourceLineInfo> SourceLines { get; set; }
-    public string ModuleName { get; set; }
     public object Data { get; set; }
 
     public long StartRVA => RVA;
     public long EndRVA => RVA + Size - 1;
-
-    public static DebugFunctionInfo Unknown = new(null, 0, 0);
-    public bool IsUnknown => Name == null;
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
-    public bool HasModuleName => !string.IsNullOrEmpty(ModuleName);
 
     public DebugFunctionInfo(string name, long rva, long size, int id = -1) {
         Name = name;
@@ -131,7 +126,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     }
 
     public override string ToString() {
-        return $"{Name}, RVA: {RVA:X}, Size: {Size}, Id: {Id}, Module: {ModuleName}";
+        return $"{Name}, RVA: {RVA:X}, Size: {Size}, Id: {Id}";
     }
 }
 

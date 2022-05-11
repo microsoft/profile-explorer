@@ -49,7 +49,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         private bool EnsureHasSourceLines(DebugFunctionInfo debugInfo) {
-            if (debugInfo.IsUnknown) {
+            if (debugInfo == null) {
                 return false;
             }
             else if (debugInfo.HasSourceLines) {
@@ -147,7 +147,7 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
         public DebugFunctionInfo FindFunction(string functionName) {
-            return functionMap_.GetValueOr(functionName, DebugFunctionInfo.Unknown);
+            return functionMap_.GetValueOrDefault(functionName);
         }
 
         public void Dispose() {
@@ -166,7 +166,7 @@ namespace IRExplorerUI.Compilers {
                 }
             }
 
-            return DebugFunctionInfo.Unknown;
+            return null;
         }
 
         public DebugFunctionSourceFileInfo FindFunctionSourceFilePath(IRTextFunction textFunc) {
