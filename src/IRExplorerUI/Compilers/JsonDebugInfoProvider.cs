@@ -18,7 +18,8 @@ namespace IRExplorerUI.Compilers {
         private Dictionary<string, DebugFunctionInfo> functionMap_;
         private List<DebugFunctionInfo> functions_;
         public Machine? Architecture => null;
-        
+        public SymbolFileSourceOptions SymbolOptions { get; set; }
+
         public bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc) {
             return AnnotateSourceLocations(function, textFunc.Name);
         }

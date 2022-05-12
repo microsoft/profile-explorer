@@ -335,7 +335,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 var imageDebugInfo = prof.GetDebugInfoForImage(queryImage, processId);
 
                                 if (imageDebugInfo != null) {
-                                    Trace.WriteLine("   o has managed debug");
+                                    imageDebugInfo.SymbolOptions = symbolOptions;
                                 }
 
                                 if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, imageDebugInfo).
