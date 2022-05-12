@@ -10,8 +10,8 @@ namespace IRExplorerUI.Compilers {
         bool LoadDebugInfo(string debugFilePath);
         bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
         bool AnnotateSourceLocations(FunctionIR function, string functionName);
-        void Dispose();
         public Machine? Architecture { get; }
+        public SymbolFileSourceOptions SymbolOptions { get; set; }
         IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal = false);
         DebugFunctionInfo FindFunction(string functionName);
         DebugFunctionInfo FindFunctionByRVA(long rva);
@@ -19,6 +19,8 @@ namespace IRExplorerUI.Compilers {
         DebugFunctionSourceFileInfo FindFunctionSourceFilePath(string functionName);
         DebugFunctionSourceFileInfo FindSourceFilePathByRVA(long rva);
         DebugSourceLineInfo FindSourceLineByRVA(long rva);
+        void Dispose();
+
     }
 
     [ProtoContract(SkipConstructor = true)]
