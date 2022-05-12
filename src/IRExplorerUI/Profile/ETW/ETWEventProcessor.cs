@@ -391,6 +391,8 @@ public class ETWEventProcessor : IDisposable {
         
         profile.LoadingCompleted();
         //StateSerializer.Serialize(@"C:\test\out.dat", profile);
+
+        profile.PrintAllProcesses();
         return profile;
     }
     
@@ -402,26 +404,26 @@ public class ETWEventProcessor : IDisposable {
             ProcessDotNetILToNativeMap(data, profile);
         };
         
-        rundownParser.MethodILToNativeMapDCStart += data => {
-            ProcessDotNetILToNativeMap(data, profile);
-        };
+        //rundownParser.MethodILToNativeMapDCStart += data => {
+        //    ProcessDotNetILToNativeMap(data, profile);
+        //};
         
-        rundownParser.MethodILToNativeMapDCStop += data => {
-            ProcessDotNetILToNativeMap(data, profile);
-        };
+        //rundownParser.MethodILToNativeMapDCStop += data => {
+        //    ProcessDotNetILToNativeMap(data, profile);
+        //};
 
         source_.Clr.MethodLoadVerbose += data => {
             
             ProcessDotNetMethodLoad(data, profile);
         };
 
-        rundownParser.MethodDCStartVerbose += data => {
-            ProcessDotNetMethodLoad(data, profile);
-        };
+        //rundownParser.MethodDCStartVerbose += data => {
+        //    ProcessDotNetMethodLoad(data, profile);
+        //};
 
-        rundownParser.MethodDCStopVerbose += data => {        
-            ProcessDotNetMethodLoad(data, profile);
-        };
+        //rundownParser.MethodDCStopVerbose += data => {        
+        //    ProcessDotNetMethodLoad(data, profile);
+        //};
 
         // MethodUnloadVerbose
     }
@@ -441,6 +443,7 @@ public class ETWEventProcessor : IDisposable {
             return;
         }
 
+        runtime.FlushCachedData();
         var method = runtime.GetMethodByHandle((ulong)data.MethodID);
         var module = method?.Type?.Module;
         
@@ -496,6 +499,7 @@ public class ETWEventProcessor : IDisposable {
         
         // runtime.FlushCachedData();
         
+        runtime.FlushCachedData();
         var method = runtime.GetMethodByHandle((ulong)data.MethodID);
         var module = method?.Type?.Module;
         

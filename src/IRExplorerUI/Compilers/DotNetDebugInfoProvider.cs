@@ -36,7 +36,7 @@ namespace IRExplorerUI.Compilers {
         }
         
         public Machine? Architecture => architecture_;
-
+        public SymbolFileSourceOptions SymbolOptions { get; set;  }
         public SymbolFileDescriptor ManagedSymbolFile { get; set; }
 
         public void AddFunctionInfo(DebugFunctionInfo funcInfo) {
@@ -60,7 +60,8 @@ namespace IRExplorerUI.Compilers {
             }
 
             //? TODO: Make async
-            var options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
+            var options = SymbolOptions != null ? SymbolOptions :
+                          (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
             options.InsertSymbolPath(Utils.TryGetDirectoryName(ManagedSymbolFile.FileName));
 
             var symbolSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);

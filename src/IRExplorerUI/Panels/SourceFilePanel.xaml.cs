@@ -211,6 +211,7 @@ namespace IRExplorerUI {
             string failureText = "";
             bool funcLoaded = false;
 
+            //? TODO: Make async too
             var debugInfo = GetDebugInfo(loadedDoc);
 
             if(debugInfo != null) {
@@ -218,16 +219,7 @@ namespace IRExplorerUI {
                 funcProfile = Session.ProfileData?.GetFunctionProfile(function);
 
                 if (funcProfile != null) {
-                    // Lookup function by RVA, more precise.
-                    if (funcProfile.DebugInfo != null) {
-                        sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
-                    }
-
-                    // Precompute the per-line sample weights.
-                    //? TODO: Using DIA on another thread than where it was initialized (Task.Run
-                    //? seems not supported? Assert about invalid DIA session, while FindSourceFilePathByRVA is fine.
-                    //await Task.Run(() => funcProfile.ProcessSourceLines(debugInfo));
-                    funcProfile.ProcessSourceLines(debugInfo);
+                    sourceInfo = await LocateSourceFile(funcProfile, debugInfo);
                 }
 
                 if (sourceInfo.IsUnknown) {
@@ -272,7 +264,23 @@ namespace IRExplorerUI {
 
             return funcLoaded;
         }
-        
+
+        private async Task<DebugFunctionSourceFileInfo> LocateSourceFile(FunctionProfileData funcProfile,
+                                                                         IDebugInfoProvider debugInfo) {
+            return await Task.Run(() => {
+                var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
+
+                // Lookup function by RVA, more precise.
+                if (funcProfile.DebugInfo != null) {
+                    sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
+                }
+
+                // Precompute the per-line sample weights.
+                funcProfile.ProcessSourceLines(debugInfo);
+                return sourceInfo;
+            });
+        }
+
         private async Task<bool> LoadSourceFile(DebugFunctionSourceFileInfo sourceInfo, IRTextFunction function) {
             // Check if the file can be found. If it's from another machine,
             // a mapping is done after the user is asked to pick the new location of the file.

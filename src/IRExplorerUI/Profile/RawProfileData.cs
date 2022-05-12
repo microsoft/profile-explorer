@@ -518,6 +518,14 @@ public class RawProfileData {
         }
     }
 
+    public void PrintAllProcesses() {
+        Trace.WriteLine($"Profile processes: {processes_.Count}");
+
+        foreach(var proc in processes_) {
+            Trace.WriteLine($"- {proc}");
+        }
+    }
+
     public void PrintSamples(int processId) {
         foreach (var sample in samples_) {
             var context = sample.GetContext(this);
