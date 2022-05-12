@@ -85,11 +85,11 @@ namespace IRExplorerUI.Profile.ETW {
                             TraceEventLevel.Verbose,
                             (ulong)(ClrTraceEventParser.Keywords.Jit |
                                     ClrTraceEventParser.Keywords.JittedMethodILToNativeMap));
-                        session_.EnableProvider(
-                            ClrRundownTraceEventParser.ProviderGuid,
-                            TraceEventLevel.Verbose,
-                            (ulong)(ClrRundownTraceEventParser.Keywords.Jit |
-                                    ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap));
+                        //session_.EnableProvider(
+                        //    ClrRundownTraceEventParser.ProviderGuid,
+                        //    TraceEventLevel.Verbose,
+                        //    (ulong)(ClrRundownTraceEventParser.Keywords.Jit |
+                        //            ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap));
                     }
 
                     //? / The Profile event requires the SeSystemProfilePrivilege to succeed, so set it.  
@@ -121,7 +121,12 @@ namespace IRExplorerUI.Profile.ETW {
             try {
                 Debug.Assert(session_ == null);
                 session_ = new TraceEventSession(sessionName_ ?? $"IRX-ETW-{Guid.NewGuid()}");
+                session_.BufferSizeMB = 512;
                 session_.CpuSampleIntervalMSec = 1000.0f / options_.SamplingFrequency;
+
+                Trace.WriteLine("Started ETW session:");
+                Trace.WriteLine($"   Buffer size: {session_.BufferSizeMB} MB");
+
                 return true;
             }
             catch (Exception ex) {
