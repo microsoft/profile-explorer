@@ -334,6 +334,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 // Used with managed images.
                                 var imageDebugInfo = prof.GetDebugInfoForImage(queryImage, processId);
 
+                                if (imageDebugInfo != null) {
+                                    Trace.WriteLine("   o has managed debug");
+                                }
+
                                 if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, imageDebugInfo).
                                     ConfigureAwait(false).GetAwaiter().GetResult()) {
                                     Trace.WriteLine($"  - Init in {sw2.Elapsed}");
@@ -365,7 +369,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     Current = 0
                 });
 
-                //prof.PrintProcess(mainProcessId);
+                prof.PrintProcess(mainProcessId);
                 //prof.PrintSamples(mainProcessId);
 
                 var imageList = mainProcess.Images(prof).ToList();
@@ -415,7 +419,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 // from the symbol server if option activated and not yet on local machine.
                 var binTaskList = new Task<string>[imageLimit];
                 var pdbTaskList = new Task<string>[imageLimit];
-                    
+
+                for (int i = 0; i < imageLimit; i++) {
+                    var imagePath = imageList[i].FilePath;
+
+                    if (File.Exists(imagePath)) {
+                        symbolOptions.InsertSymbolPath(imagePath);
+                    }
+                }
+
 
                 for (int i = 0; i < imageLimit; i++) {
                     var binaryFile = FromProfileImage(imageList[i]);
@@ -675,11 +687,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 frameImage = managedFunc.Image;
                                                 managedBaseAddress = 1;
 
-                                                //if (managedFunc.Image.FilePath.Contains("MicroBenchmarks.dll")) {
-                                                //    Trace.WriteLine($"Found managed top {isTopFrame}: {managedFunc.Image}");
+                                                //if (managedFunc.Image.FilePath.Contains("MicroBenchmarks")) {
+                                                    Trace.WriteLine($"Found managed top {isTopFrame}: {managedFunc.Image}");
                                                 //    mbtotal += sample.Weight;
                                                 //    if (isTopFrame) mb += sample.Weight;
-                                                //    found = true;
+                                                    found = true;
                                                 //}
                                             }
                                         }
@@ -731,19 +743,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         }
                                     }
                                     else {
-                                        //if (found) {
-                                        //    if (module == null) {
-                                        //        Utils.WaitForDebugger(true);
-                                        //        ;
-                                        //    }
-                                        //    else if (!module.HasDebugInfo) {
-                                        //        Utils.WaitForDebugger(true);
-                                        //        ;                                                
-                                        //    }
-                                        //}
+                                        if (found) {
+                                            if (module == null) {
+                                                Trace.WriteLine($"  o no module for {frameImage.FilePath}");
+                                            }
+                                            else if (!module.HasDebugInfo) {
+                                                Trace.WriteLine($"  o no debug for {frameImage.FilePath}");
+                                            }
+                                        }
                                     }
 
                                     if (funcName == null) {
+                                        Trace.WriteLine($"  o no func for {frameImage.FilePath}");
+
                                         resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                         isTopFrame = false;
                                         continue;
@@ -752,9 +764,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
 
                                     if (textFunction == null) {
-                                        //if (found) {
-                                        //    Trace.WriteLine($"  - Skip missing frame {funcName}");
-                                        //}
+                                        if (found) {
+                                            Trace.WriteLine($"  o Skip missing IR func {funcName}");
+                                        }
                                         
                                         resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                         isTopFrame = false;
