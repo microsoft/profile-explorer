@@ -53,11 +53,11 @@ namespace IRExplorerUI.Profile {
             var filePath = await FindBinaryFilePath(options).ConfigureAwait(false);
 
             if (filePath == null) {
-                Trace.TraceWarning($"Could not find local path for image {imageName}");
+                Trace.TraceWarning($"  Could not find local path for image {imageName}");
                 return false;
             }
             else {
-                Trace.TraceInformation($"Found local path for image {imageName}: {filePath}");
+                Trace.TraceInformation($"  Found local path for image {imageName}: {filePath}");
             }
 
             var localBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
@@ -66,16 +66,21 @@ namespace IRExplorerUI.Profile {
             var loadedDoc = await session_.LoadBinaryDocument(filePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
             
             if (loadedDoc == null) {
-                Trace.TraceWarning($"Failed to load document for image {imageName}");
+                Trace.TraceWarning($"  Failed to load document for image {imageName}");
                 return false;
+            }
+            else {
+                Trace.TraceWarning($"  Loaded document for image {imageName}");
             }
 
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
 
             if (isManagedImagae) {
+                Trace.TraceInformation($"  Has managed debug {imageName}");
                 DebugInfo = debugInfo;
-                HasDebugInfo = HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
+                HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
+                Trace.TraceInformation($"      has debug info {HasDebugInfo}, functs {sortedFuncList_.Count}");
                 loadedDoc.DebugInfo = debugInfo;
             }
 
