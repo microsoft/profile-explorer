@@ -210,16 +210,6 @@ namespace IRExplorerUI.Compilers {
         }
         
         public bool LoadDebugInfo(string debugFilePath) {
-            if (!JsonUtils.DeserializeFromFile(debugFilePath, out functions_)) {
-                return false;
-            }
-
-            functionMap_ = new Dictionary<string, DebugFunctionInfo>(functions_.Count);
-
-            foreach (var func in functions_) {
-                functionMap_[func.Name] = func;
-            }
-
             return true;
         }
 

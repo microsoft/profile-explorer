@@ -684,14 +684,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                             var managedFunc = prof.FindManagedMethodForIP(frameIp, context.ProcessId);
                                             
                                             if (!managedFunc.IsUnknown) {
+
                                                 frameImage = managedFunc.Image;
                                                 managedBaseAddress = 1;
 
                                                 //if (managedFunc.Image.FilePath.Contains("MicroBenchmarks")) {
-                                                    Trace.WriteLine($"Found managed top {isTopFrame}: {managedFunc.Image}");
+                                                    //Trace.WriteLine($"Found managed top {isTopFrame}: {managedFunc.Image}");
                                                 //    mbtotal += sample.Weight;
                                                 //    if (isTopFrame) mb += sample.Weight;
-                                                    found = true;
+                                                    //found = true;
                                                 //}
                                             }
                                         }
