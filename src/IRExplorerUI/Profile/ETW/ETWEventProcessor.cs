@@ -483,10 +483,10 @@ public class ETWEventProcessor : IDisposable {
             return; // Ignore events from other processes.
         }
 
-//#if DEBUG
-        //Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
-        //Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
-//#endif
+#if DEBUG
+        Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
+#endif
         var runtime = GetRuntime(data.ProcessID);
 
         if (runtime == null) {
@@ -513,6 +513,7 @@ public class ETWEventProcessor : IDisposable {
 
         var funcRva = data.MethodStartAddress;
         var funcName = method.Signature;
+        var funcName = $"{method.Signature}_{data.OptimizationTier}";
         var funcInfo = new DebugFunctionInfo(funcName, (long)funcRva, data.MethodSize, data.MethodToken);
         moduleDebugInfo.AddFunctionInfo(funcInfo);
         profile.AddManagedMethodMapping(data.MethodID, funcInfo, moduleImage, 
