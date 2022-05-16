@@ -109,6 +109,7 @@ public class RawProfileData {
             return null;
         }
 
+        Trace.WriteLine($"=> Query IDebugInfoProvider for {image.FilePath}");
         var data = GetOrCreateManagedData(processId);
         return data.imageDebugInfo_?.GetValueOrNull(image);
     }
@@ -118,12 +119,20 @@ public class RawProfileData {
         var data = GetOrCreateManagedData(processId);
         var proc = GetOrCreateProcess(processId);
 
+        Trace.WriteLine($"GetOrAddModuleDebugInfo for {moduleBase}: {moduleName} in proc {processId}");
+
+        //? Use baseAddr -> image map
+
         foreach (var image in proc.Images(this)) {
             //? TODO: Avoid linear search
-            if (image.BaseAddress == moduleBase &&
-                image.ModuleName.Equals(moduleName, StringComparison.Ordinal)) {
+            
+            if (image.ModuleName.Equals(moduleName, StringComparison.Ordinal)) {
                 //? TODO: Maybe patch image? What about R2R, that likely have both native and JIT associated
-                
+
+                if (image.BaseAddress != moduleBase) {
+                    Trace.WriteLine($"=> MISMATCH {image.BaseAddress}, {moduleBase}");
+                }
+
                 if (!data.imageDebugInfo_.TryGetValue(image, out var debugInfo)) {
                     debugInfo = new DotNetDebugInfoProvider(architecture);
                     data.imageDebugInfo_[image] = debugInfo;
@@ -499,7 +508,21 @@ public class RawProfileData {
 
             foreach (var image in proc.Images(this)) {
                 Trace.WriteLine($"Image: {image}");
+
+                if (HasManagedMethods(proc.ProcessId)) {
+                    var data = GetOrCreateManagedData(proc.ProcessId);
+                    Trace.WriteLine($"   o methods: {data.managedMethods_.Count}");
+                    Trace.WriteLine($"   o hasDebug: {data.imageDebugInfo_ != null && data.imageDebugInfo_.ContainsKey(image)}");
+                }
             }
+        }
+    }
+
+    public void PrintAllProcesses() {
+        Trace.WriteLine($"Profile processes: {processes_.Count}");
+
+        foreach(var proc in processes_) {
+            Trace.WriteLine($"- {proc}");
         }
     }
 
