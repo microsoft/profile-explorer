@@ -90,7 +90,7 @@ namespace IRExplorerUI {
             }
 
             Trace.WriteLine("  > start waiting\n");
-            if(!await Task.Run(() => sessionStartTask_.WaitToComplete(TimeSpan.FromSeconds(30)))) {
+            if(!await Task.Run(() => sessionStartTask_.WaitToComplete(TimeSpan.FromSeconds(30))).ConfigureAwait(false)) {
                 Trace.WriteLine("    < timeout\n");
                 return false;
             }
@@ -100,7 +100,7 @@ namespace IRExplorerUI {
         }
 
         private async void DebugService__OnUpdateCurrentStackFrame(object sender, CurrentStackFrameRequest e) {
-            if (!(await WaitForSessionInitialization())) {
+            if (!(await WaitForSessionInitialization().ConfigureAwait(false))) {
                 return;
             }
 
@@ -110,7 +110,7 @@ namespace IRExplorerUI {
         }
 
         private async void DebugService__OnClearTemporaryHighlighting(object sender, ClearHighlightingRequest e) {
-            if (!(await WaitForSessionInitialization())) {
+            if (!(await WaitForSessionInitialization().ConfigureAwait(false))) {
                 return;
             }
 
@@ -128,7 +128,7 @@ namespace IRExplorerUI {
 
         private async void DebugService_OnHasActiveBreakpoint(object sender,
                                                         RequestResponsePair<ActiveBreakpointRequest, bool> e) {
-            if (!(await WaitForSessionInitialization())) {
+            if (!(await WaitForSessionInitialization().ConfigureAwait(false))) {
                 return;
             }
 
@@ -162,7 +162,7 @@ namespace IRExplorerUI {
         }
 
         private async void DebugService_OnExecuteCommand(object sender, ElementCommandRequest e) {
-            if (!(await WaitForSessionInitialization())) {
+            if (!(await WaitForSessionInitialization().ConfigureAwait(false))) {
                 return;
             }
 
@@ -203,7 +203,7 @@ namespace IRExplorerUI {
         }
 
         private async void DebugService_OnSetCurrentElement(object sender, SetCurrentElementRequest e) {
-            if (!(await WaitForSessionInitialization())) {
+            if (!(await WaitForSessionInitialization().ConfigureAwait(false))) {
                 return;
             }
 
@@ -279,7 +279,7 @@ namespace IRExplorerUI {
         }
 
         private async void DebugService_OnElementMarked(object sender, MarkElementRequest e) {
-            if (!(await WaitForSessionInitialization())) {
+            if (!(await WaitForSessionInitialization().ConfigureAwait(false))) {
                 return;
             }
 
@@ -288,7 +288,7 @@ namespace IRExplorerUI {
             }
 
             if (addressTag_.AddressToElementMap.TryGetValue(e.ElementAddress, out var element)) {
-                await Dispatcher.BeginInvoke(new Action(async () => {
+                Dispatcher.BeginInvoke(new Action(async () => {
                     var activeDoc = await GetDebugSessionDocument();
                     var notesTag = AppendNotesTag(element, e.Label);
 
@@ -378,7 +378,7 @@ namespace IRExplorerUI {
         }
 
         private async void DebugService_OnIRUpdated(object sender, UpdateIRRequest e) {
-            if (!(await WaitForSessionInitialization())) {
+            if (!(await WaitForSessionInitialization().ConfigureAwait(false))) {
                 return;
             }
 
@@ -482,20 +482,21 @@ namespace IRExplorerUI {
             return builder.ToString();
         }
 
-        private void DebugService_OnSessionStarted(object sender, StartSessionRequest e) {
+        private async void DebugService_OnSessionStarted(object sender, StartSessionRequest e) {
             if (e.ProcessId == debugProcessId_) {
                 return;
             }
 
             // Mark that session is about to start.
-            WaitForSessionInitialization().Wait();
+            await WaitForSessionInitialization().ConfigureAwait(false);
             sessionStartTask_ = new CancelableTask();
             Trace.WriteLine("=> OnSessionStarted\n");
 
-            Dispatcher.Invoke(new Action(() => {
+            Dispatcher.BeginInvoke(new Action(async () => {
                 try {
+                    Trace.WriteLine("=> BeginInvoke OnSessionStarted\n");
                     SetOptionalStatus($"Client connected to process #{e.ProcessId}");
-                    EndSession().Wait();
+                    await EndSession();
 
                     FunctionAnalysisCache.DisableCache(); // Reduce memory usage.
                     var result = new LoadedDocument("Debug session", "", Guid.NewGuid());
@@ -522,7 +523,7 @@ namespace IRExplorerUI {
                     SetOptionalStatus($"Failed to start debug session", ex.Message, Brushes.Red);
                     sessionStartTask_.Cancel();
                 }
-            }));
+            }), DispatcherPriority.Send);
         }
     }
 }
