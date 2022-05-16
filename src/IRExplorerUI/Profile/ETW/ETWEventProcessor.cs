@@ -365,7 +365,9 @@ public class ETWEventProcessor : IDisposable {
             disasmTask = Task.Run(() => {
                 try {
                     foreach (var data in disasmTaskQueue_.GetConsumingEnumerable(cancelableTask.Token)) {
-                        Trace.WriteLine($"=> Process {data.FuncInfo.Name}");
+//#if DEBUG
+                        Trace.WriteLine($"=> Disassemble {data.FuncInfo.Name}");
+//#endif
                         DisassembleManagedMethod(data);
                     }
                 }
@@ -389,6 +391,8 @@ public class ETWEventProcessor : IDisposable {
         
         profile.LoadingCompleted();
         //StateSerializer.Serialize(@"C:\test\out.dat", profile);
+
+        profile.PrintAllProcesses();
         return profile;
     }
     
@@ -400,26 +404,26 @@ public class ETWEventProcessor : IDisposable {
             ProcessDotNetILToNativeMap(data, profile);
         };
         
-        rundownParser.MethodILToNativeMapDCStart += data => {
-            ProcessDotNetILToNativeMap(data, profile);
-        };
+        //rundownParser.MethodILToNativeMapDCStart += data => {
+        //    ProcessDotNetILToNativeMap(data, profile);
+        //};
         
-        rundownParser.MethodILToNativeMapDCStop += data => {
-            ProcessDotNetILToNativeMap(data, profile);
-        };
+        //rundownParser.MethodILToNativeMapDCStop += data => {
+        //    ProcessDotNetILToNativeMap(data, profile);
+        //};
 
         source_.Clr.MethodLoadVerbose += data => {
             
             ProcessDotNetMethodLoad(data, profile);
         };
 
-        rundownParser.MethodDCStartVerbose += data => {
-            ProcessDotNetMethodLoad(data, profile);
-        };
+        //rundownParser.MethodDCStartVerbose += data => {
+        //    ProcessDotNetMethodLoad(data, profile);
+        //};
 
-        rundownParser.MethodDCStopVerbose += data => {        
-            ProcessDotNetMethodLoad(data, profile);
-        };
+        //rundownParser.MethodDCStopVerbose += data => {        
+        //    ProcessDotNetMethodLoad(data, profile);
+        //};
 
         // MethodUnloadVerbose
     }
@@ -429,25 +433,29 @@ public class ETWEventProcessor : IDisposable {
             return; // Ignore events from other processes.
         }
 
-#if DEBUG
-        Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
-#endif
+//#if DEBUG
+        //Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+//#endif
         var runtime = GetRuntime(data.ProcessID);
 
         if (runtime == null) {
+            Trace.WriteLine($"  ! FAILED runtime");
             return;
         }
 
+        runtime.FlushCachedData();
         var method = runtime.GetMethodByHandle((ulong)data.MethodID);
         var module = method?.Type?.Module;
         
         if (module == null) {
+            Trace.WriteLine($"  ! FAILED module");
             return;
         }
 
         PdbInfo pdbInfo = module.Pdb;
 
         if (pdbInfo == null) {
+            Trace.WriteLine($"  ! FAILED pdbInfo");
             return;
         }
 
@@ -459,6 +467,7 @@ public class ETWEventProcessor : IDisposable {
         
         var moduleDebugInfo = profile.GetDebugInfoForImage(methodMapping.Image, data.ProcessID) as DotNetDebugInfoProvider;
         if (moduleDebugInfo == null) {
+            Trace.WriteLine($"  ! FAILED moduleDebugInfo");
             return; //? Can it fail?
         }
 
@@ -477,10 +486,10 @@ public class ETWEventProcessor : IDisposable {
             return; // Ignore events from other processes.
         }
 
-#if DEBUG
-        Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
-        Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
-#endif
+//#if DEBUG
+        //Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
+        //Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
+//#endif
         var runtime = GetRuntime(data.ProcessID);
 
         if (runtime == null) {
@@ -490,6 +499,7 @@ public class ETWEventProcessor : IDisposable {
         
         // runtime.FlushCachedData();
         
+        runtime.FlushCachedData();
         var method = runtime.GetMethodByHandle((ulong)data.MethodID);
         var module = method?.Type?.Module;
         
@@ -598,14 +608,14 @@ public class ETWEventProcessor : IDisposable {
         try {
             dataTarget = DataTarget.AttachToProcess(processId, false);
 
-#if DEBUG
+//#if DEBUG
             foreach (var v in dataTarget.ClrVersions) {
                 var dac = v.DacInfo;
                 Trace.WriteLine($"DAC {dac.LocalDacPath}");
                 Trace.WriteLine($"DAC target: {dac.TargetArchitecture}");
                 Trace.WriteLine($"DAC version: {dac.Version}");
             }
-#endif
+//#endif
             return dataTarget.ClrVersions[0].CreateRuntime();
         }
         catch (Exception ex) {

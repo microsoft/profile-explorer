@@ -43,6 +43,7 @@ namespace IRExplorerUI.Compilers {
             options_ = options;
         }
 
+        public SymbolFileSourceOptions SymbolOptions { get; set; }
         public Machine? Architecture => null;
 
         public static async Task<string> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {

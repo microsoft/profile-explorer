@@ -667,6 +667,10 @@ namespace IRExplorerUI {
         }
 
         public static void WaitForDebugger(bool showMessageBox = false) {
+            if(Debugger.IsAttached) {
+                return;
+            }
+
             if (showMessageBox) {
                 MessageBox.Show($"Waiting for debugger PID {Environment.ProcessId}", "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Warning);
