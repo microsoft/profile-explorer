@@ -18,15 +18,54 @@ using IRExplorerCore.Utilities;
 using Microsoft.Diagnostics.Runtime;
 using Microsoft.CodeAnalysis;
 using Microsoft.Diagnostics.Symbols;
-using OxyPlot;
 
 namespace IRExplorerUI.Compilers {
     //? Provider ASM should return instance instead of JSONDebug
     public class DotNetDebugInfoProvider : IDebugInfoProvider {
+        public class AddressNamePair {
+            public long Address { get; set; }
+            public string Name { get; set; }
+        }
+
+        class ManagedProcessCode {
+            public int ProcessId { get; set; }
+            public int MachineType { get; set; }
+            public List<MethodCode> Methods { get; set; }
+        }
+
+        public class MethodCode {
+            public long Address { get; set; }
+            public int Size { get; set; }
+            public string CodeB64 { get; set; }
+            public List<AddressNamePair> CallTargets { get; set; }
+
+            public byte[] GetCodeBytes() {
+                try {
+                    return Convert.FromBase64String(CodeB64);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to convert Base64: {ex.Message}\n{ex.StackTrace}");
+                    return null;
+                }
+            }
+
+            public string FindCallTarget(long address) {
+                //? TODO: Map
+
+                var index = CallTargets.FindIndex(item => item.Address == address);
+                if (index != -1) {
+                    return CallTargets[index].Name;
+                }
+
+                return null;
+            }
+        }
+        
         private Dictionary<string, DebugFunctionInfo> functionMap_;
         private List<DebugFunctionInfo> functions_;
         private Machine architecture_;
         private Dictionary<DebugFunctionInfo, List<(int ILOffset, int NativeOffset)>> methodILNativeMap_;
+        private Dictionary<long, MethodCode> methodCodeMap_;
 
         public DotNetDebugInfoProvider(Machine architecture) {
             architecture_ = architecture;
@@ -38,6 +77,11 @@ namespace IRExplorerUI.Compilers {
         public Machine? Architecture => architecture_;
         public SymbolFileSourceOptions SymbolOptions { get; set;  }
         public SymbolFileDescriptor ManagedSymbolFile { get; set; }
+        public string ManagedAsmFilePath { get; set; }
+
+        public MethodCode FindMethodCode(DebugFunctionInfo funcInfo) {
+            return methodCodeMap_.GetValueOrNull(funcInfo.RVA);
+        }
 
         public void AddFunctionInfo(DebugFunctionInfo funcInfo) {
             functions_.Add(funcInfo);
@@ -77,44 +121,48 @@ namespace IRExplorerUI.Compilers {
                     return debugInfo.HasSourceLines;
                 }
 
-                
-                using var stream = File.OpenRead(debugFile);
-                var mdp = MetadataReaderProvider.FromPortablePdbStream(stream);
-                var md = mdp.GetMetadataReader();
-                var debugHandle = MetadataTokens.MethodDebugInformationHandle((int)debugInfo.Id);
-                        
-                var managedDebugInfo = md.GetMethodDebugInformation(debugHandle);
-                var sequencePoints = managedDebugInfo.GetSequencePoints();
-                        
-                foreach (var pair in ilOffsets) {
-                    int closestDist = int.MaxValue;
-                    SequencePoint? closestPoint = null;
+                try {
+                    using var stream = File.OpenRead(debugFile);
+                    var mdp = MetadataReaderProvider.FromPortablePdbStream(stream);
+                    var md = mdp.GetMetadataReader();
+                    var debugHandle = MetadataTokens.MethodDebugInformationHandle((int)debugInfo.Id);
 
-                    // Search for exact or closes IL offset based on
-                    //? TODO: Slow, use map combined with bin search since most ILoffsets are found exactly
-                    foreach (var point in sequencePoints) {
-                        if (point.Offset == pair.ILOffset) {
-                            closestPoint = point;
-                            closestDist = 0;
-                            break;
+                    var managedDebugInfo = md.GetMethodDebugInformation(debugHandle);
+                    var sequencePoints = managedDebugInfo.GetSequencePoints();
+
+                    foreach (var pair in ilOffsets) {
+                        int closestDist = int.MaxValue;
+                        SequencePoint? closestPoint = null;
+
+                        // Search for exact or closes IL offset based on
+                        //? TODO: Slow, use map combined with bin search since most ILoffsets are found exactly
+                        foreach (var point in sequencePoints) {
+                            if (point.Offset == pair.ILOffset) {
+                                closestPoint = point;
+                                closestDist = 0;
+                                break;
+                            }
+
+                            int dist = Math.Abs(point.Offset - pair.ILOffset);
+
+                            if (dist < closestDist) {
+                                closestDist = dist;
+                                closestPoint = point;
+                            }
                         }
 
-                        int dist = Math.Abs(point.Offset - pair.ILOffset);
-
-                        if (dist < closestDist) {
-                            closestDist = dist;
-                            closestPoint = point;
+                        if (closestPoint.HasValue) {
+                            //Trace.WriteLine($"Using closest {closestPoint.Value.StartLine}");
+                            var doc = md.GetDocument(closestPoint.Value.Document);
+                            var docName = md.GetString(doc.Name);
+                            var lineInfo = new DebugSourceLineInfo(pair.NativeOffset, closestPoint.Value.StartLine,
+                                closestPoint.Value.StartColumn, docName);
+                            debugInfo.AddSourceLine(lineInfo);
                         }
                     }
-
-                    if (closestPoint.HasValue) {
-                        //Trace.WriteLine($"Using closest {closestPoint.Value.StartLine}");
-                        var doc = md.GetDocument(closestPoint.Value.Document);
-                        var docName = md.GetString(doc.Name);
-                        var lineInfo = new DebugSourceLineInfo(pair.NativeOffset, closestPoint.Value.StartLine,
-                            closestPoint.Value.StartColumn, docName);
-                        debugInfo.AddSourceLine(lineInfo);
-                    }
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to read managed PDB from {debugFile}: {ex.Message}\n{ex.StackTrace}");
                 }
 
                 return debugInfo.HasSourceLines;
@@ -211,6 +259,23 @@ namespace IRExplorerUI.Compilers {
         }
         
         public bool LoadDebugInfo(string debugFilePath) {
+            if (!File.Exists(ManagedAsmFilePath)) {
+                return true;
+            }
+
+            ManagedProcessCode processCode;
+
+            if (!JsonUtils.DeserializeFromFile(ManagedAsmFilePath, out processCode)) {
+                return true;
+            }
+
+            architecture_ = (Machine)processCode.MachineType;
+            methodCodeMap_ = new Dictionary<long, MethodCode>(processCode.Methods.Count);
+
+            foreach (var method in processCode.Methods) {
+                methodCodeMap_[method.Address] = method;
+            }
+
             return true;
         }
 

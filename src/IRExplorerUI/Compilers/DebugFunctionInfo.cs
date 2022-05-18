@@ -11,16 +11,19 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     public long Size { get; set; }
     public DebugSourceLineInfo StartDebugSourceLine { get; set; }
     public List<DebugSourceLineInfo> SourceLines { get; set; }
+    public string OptimizationLevel { get; set; }
     public object Data { get; set; }
 
     public long StartRVA => RVA;
     public long EndRVA => RVA + Size - 1;
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
+    public bool HasOptimizationLevel => !string.IsNullOrEmpty(OptimizationLevel);
 
-    public DebugFunctionInfo(string name, long rva, long size, int id = -1) {
+    public DebugFunctionInfo(string name, long rva, long size, string optLevel = null, int id = -1) {
         Name = name;
         RVA = rva;
         Size = size;
+        OptimizationLevel = optLevel;
         StartDebugSourceLine = DebugSourceLineInfo.Unknown;
         SourceLines = null;
         Id = id;
@@ -40,7 +43,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
             return DebugSourceLineInfo.Unknown;
         }
 
-        if (offset < SourceLines[0].Offset) {
+        if (offset < SourceLines[0].OffsetStart) {
             return DebugSourceLineInfo.Unknown;
         }
 
@@ -51,10 +54,10 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
         while (low <= high) {
             var middle = low + (high - low) / 2;
 
-            if (SourceLines[middle].Offset == offset) {
+            if (SourceLines[middle].OffsetStart == offset) {
                 return SourceLines[middle];
             }
-            else if (SourceLines[middle].Offset > offset) {
+            else if (SourceLines[middle].OffsetStart > offset) {
                 high = middle - 1;
             }
             else {
@@ -165,7 +168,8 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
 }
 
 public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
-    public long Offset { get; set; } // Offset in bytes relative to function start.
+    public int OffsetStart { get; set; } // Offset in bytes relative to function start.
+    public int OffsetEnd { get; set; } // Offset in bytes relative to function start.
     public int Line { get; set; }
     public int Column { get; set; }
     public string FilePath { get; set; }
@@ -173,15 +177,16 @@ public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
     public static DebugSourceLineInfo Unknown = new DebugSourceLineInfo(-1, -1);
     public bool IsUnknown => Line == -1;
 
-    public DebugSourceLineInfo(long offset, int line, int column = 0, string filePath = null) {
-        Offset = offset;
+    public DebugSourceLineInfo(int offsetStart, int line, int column = 0, string filePath = null) {
+        OffsetStart = offsetStart;
+        OffsetEnd = offsetStart;
         Line = line;
         Column = column;
         FilePath = filePath;
     }
 
     public bool Equals(DebugSourceLineInfo other) {
-        return Offset == other.Offset && Line == other.Line && 
+        return OffsetStart == other.OffsetStart && Line == other.Line && 
                Column == other.Column && FilePath == other.FilePath;
     }
 

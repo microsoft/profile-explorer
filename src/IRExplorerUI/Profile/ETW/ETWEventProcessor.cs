@@ -32,6 +32,7 @@ using System.IO.Compression;
 using System.Threading;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using System.Windows.Media.Media3D;
+using Microsoft.Diagnostics.Tracing.Etlx;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -52,17 +53,20 @@ public class ETWEventProcessor : IDisposable {
     private bool isRealTime_;
     private bool handleDotNetEvents_;
     private int acceptedProcessId_;
+    private string managedAsmDir_;
     private List<int> childAcceptedProcessIds_;
     private Dictionary<int, ClrRuntime> runtimeMap_;
     BlockingCollection<DisassemblerArgs> disasmTaskQueue_;
 
     public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true, 
-                             int acceptedProcessId = 0, bool handleDotNetEvents = false) {
+                             int acceptedProcessId = 0, bool handleDotNetEvents = false,
+                              string managedAsmDir = null) {
         Trace.WriteLine($"New ETWEventProcessor: ProcId {acceptedProcessId}, handleDotNet: {handleDotNetEvents}");
         source_ = source;
         isRealTime_ = isRealTime;
         acceptedProcessId_ = acceptedProcessId;
         handleDotNetEvents_ = handleDotNetEvents;
+        managedAsmDir_ = managedAsmDir;
         childAcceptedProcessIds_ = new List<int>();
     }
 
@@ -73,7 +77,7 @@ public class ETWEventProcessor : IDisposable {
     }
 
     public List<TraceProcessSummary> BuildProcessSummary(CancelableTask cancelableTask) {
-// Default 1ms sampling interval 1ms.
+        // Default 1ms sampling interval 1ms.
         UpdateSamplingInterval(10000);
         
         source_.Kernel.PerfInfoCollectionStart += data => {
@@ -138,7 +142,6 @@ public class ETWEventProcessor : IDisposable {
         samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
     }
 
-
     public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
         // Default 1ms sampling interval 1ms.
         UpdateSamplingInterval(10000);
@@ -178,7 +181,8 @@ public class ETWEventProcessor : IDisposable {
                                           data.ProcessName, data.ImageFileName,
                                           data.CommandLine);
             profile.AddProcess(proc);
-            
+            //Trace.WriteLine($"=> proc {proc}");
+
             // If parent is one of the accepted processes, accept the child too.
             //? TOOD: Option
             if (IsAcceptedProcess(data.ParentID)) {
@@ -239,8 +243,6 @@ public class ETWEventProcessor : IDisposable {
         source_.Kernel.EventTraceHeader += data => {
             // data.PointerSize;
         };
-
-        
 
         source_.Kernel.StackWalkStack += data => {
             if (!IsAcceptedProcess(data.ProcessID)) {
@@ -365,9 +367,9 @@ public class ETWEventProcessor : IDisposable {
             disasmTask = Task.Run(() => {
                 try {
                     foreach (var data in disasmTaskQueue_.GetConsumingEnumerable(cancelableTask.Token)) {
-//#if DEBUG
+#if DEBUG
                         Trace.WriteLine($"=> Disassemble {data.FuncInfo.Name}");
-//#endif
+#endif
                         DisassembleManagedMethod(data);
                     }
                 }
@@ -390,20 +392,32 @@ public class ETWEventProcessor : IDisposable {
         //Trace.Flush();
         
         profile.LoadingCompleted();
-        //StateSerializer.Serialize(@"C:\test\out.dat", profile);
+        if (handleDotNetEvents_) {
+            profile.ManagedLoadingCompleted(managedAsmDir_);
+        }
 
         profile.PrintAllProcesses();
+        //StateSerializer.Serialize(@"C:\test\out.dat", profile);
+
         return profile;
     }
     
     private void ProcessDotNetEvents(RawProfileData profile) {
         runtimeMap_ = new Dictionary<int, ClrRuntime>();
-        var rundownParser = new ClrRundownTraceEventParser(source_);
-        
+        //var rundownParser = new ClrRundownTraceEventParser(source_);
+
+        source_.Clr.LoaderModuleLoad += data => {
+            ProcessLoaderModuleLoad(data, profile);
+        };
+
+        source_.Clr.MethodLoadVerbose += data => {
+            ProcessDotNetMethodLoad(data, profile);
+        };
+
         source_.Clr.MethodILToNativeMap += data => {
             ProcessDotNetILToNativeMap(data, profile);
         };
-        
+
         //rundownParser.MethodILToNativeMapDCStart += data => {
         //    ProcessDotNetILToNativeMap(data, profile);
         //};
@@ -412,11 +426,6 @@ public class ETWEventProcessor : IDisposable {
         //    ProcessDotNetILToNativeMap(data, profile);
         //};
 
-        source_.Clr.MethodLoadVerbose += data => {
-            
-            ProcessDotNetMethodLoad(data, profile);
-        };
-
         //rundownParser.MethodDCStartVerbose += data => {
         //    ProcessDotNetMethodLoad(data, profile);
         //};
@@ -424,10 +433,31 @@ public class ETWEventProcessor : IDisposable {
         //rundownParser.MethodDCStopVerbose += data => {        
         //    ProcessDotNetMethodLoad(data, profile);
         //};
-
-        // MethodUnloadVerbose
     }
-    
+
+    public void SetManagedAsmFiles() {
+
+    }
+
+    public static bool IsRunning(int processId) {
+        try { Process.GetProcessById(processId); }
+        catch (InvalidOperationException) { return false; }
+        catch (ArgumentException) { return false; }
+        return true;
+    }
+
+    private void ProcessLoaderModuleLoad(ModuleLoadUnloadTraceData data, RawProfileData profile) {
+        Trace.WriteLine($"=> Managed module {data.ModuleID}, {data.ModuleILFileName} in proc {data.ProcessID}");
+        var runtimeArch = Machine.Amd64;
+        var moduleName = data.ModuleILFileName;
+        var moduleDebugInfo = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName, data.ModuleID, runtimeArch);
+        
+        if (moduleDebugInfo != null) {
+            moduleDebugInfo.ManagedSymbolFile = FromModuleLoad(data);
+            Trace.WriteLine($"Set managed symbol {moduleDebugInfo.ManagedSymbolFile}");
+        }
+    }
+
     private void ProcessDotNetILToNativeMap(MethodILToNativeMapTraceData data, RawProfileData profile) {
         if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
@@ -436,147 +466,137 @@ public class ETWEventProcessor : IDisposable {
 //#if DEBUG
         //Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
 //#endif
-        var runtime = GetRuntime(data.ProcessID);
-
-        if (runtime == null) {
-            Trace.WriteLine($"  ! FAILED runtime");
-            return;
-        }
-
-        runtime.FlushCachedData();
-        var method = runtime.GetMethodByHandle((ulong)data.MethodID);
-        var module = method?.Type?.Module;
-        
-        if (module == null) {
-            Trace.WriteLine($"  ! FAILED module");
-            return;
-        }
-
-        PdbInfo pdbInfo = module.Pdb;
-
-        if (pdbInfo == null) {
-            Trace.WriteLine($"  ! FAILED pdbInfo");
-            return;
-        }
+        //var runtime = GetRuntime(data.ProcessID);
+        //
+        //if (runtime == null) {
+        //    return;
+        //}
+        //
+        ////runtime.FlushCachedData();
+        //var method = runtime.GetMethodByHandle((ulong)data.MethodID);
+        //var module = method?.Type?.Module;
+        //
+        //if (module == null) {
+        //    return;
+        //}
+        //
+        //PdbInfo pdbInfo = module.Pdb;
+        //
+        //if (pdbInfo == null) {
+        //    return;
+        //}
 
         var methodMapping = profile.FindManagedMethod(data.MethodID, data.ProcessID);
 
-        if (methodMapping.IsUnknown) {
+        if (methodMapping == null) {
             return;
         }
         
-        var moduleDebugInfo = profile.GetDebugInfoForImage(methodMapping.Image, data.ProcessID) as DotNetDebugInfoProvider;
-        if (moduleDebugInfo == null) {
-            Trace.WriteLine($"  ! FAILED moduleDebugInfo");
-            return; //? Can it fail?
-        }
-
-        moduleDebugInfo.ManagedSymbolFile = FromRuntimePdbInfo(pdbInfo);
         var ilOffsets = new List<(int ILOffset, int NativeOffset)>(data.CountOfMapEntries);
         
         for (int i = 0; i < data.CountOfMapEntries; i++) {
             ilOffsets.Add((data.ILOffset(i), data.NativeOffset(i)));
         }
 
-        moduleDebugInfo.AddMethodILToNativeMap(methodMapping.DebugInfo, ilOffsets);
+        methodMapping.DebugInfoProvider.AddMethodILToNativeMap(methodMapping.DebugInfo, ilOffsets);
     }
 
     private void ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile) {
         if (!IsAcceptedProcess(data.ProcessID)) {
             return; // Ignore events from other processes.
         }
-
+        
 #if DEBUG
         Trace.WriteLine($"=> Load at {data.MethodStartAddress:X}: {data.MethodName} {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
         Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
 #endif
-        var runtime = GetRuntime(data.ProcessID);
-
-        if (runtime == null) {
-            return;
-        }
+        //var runtime = GetRuntime(data.ProcessID);
+        //
+        //if (runtime == null) {
+        //    return;
+        //}
+        //
+        ////runtime.FlushCachedData();
+        //var method = runtime.GetMethodByHandle((ulong)data.MethodID);
+        //var module = method?.Type?.Module;
+        //
+        //if (module == null) {
+        //    return;
+        //}
         
-        
-        // runtime.FlushCachedData();
-        
-        runtime.FlushCachedData();
-        var method = runtime.GetMethodByHandle((ulong)data.MethodID);
-        var module = method?.Type?.Module;
-        
-        if (module == null) {
-            return;
-        }
-        
-        var runtimeArch = FromRuntimeArchitecture(runtime);
-        var moduleName = Utils.TryGetFileName(module.Name);
-        var (moduleDebugInfo, moduleImage) = profile.GetOrAddModuleDebugInfo(data.ProcessID, moduleName,
-                                                                            (long)module.ImageBase, runtimeArch);
-        if (moduleDebugInfo == null) {
-            return;
-        }
-
         var funcRva = data.MethodStartAddress;
-        var funcName = method.Signature;
-        var funcName = $"{method.Signature}_{data.OptimizationTier}";
-        var funcInfo = new DebugFunctionInfo(funcName, (long)funcRva, data.MethodSize, data.MethodToken);
-        moduleDebugInfo.AddFunctionInfo(funcInfo);
-        profile.AddManagedMethodMapping(data.MethodID, funcInfo, moduleImage, 
+        var funcName = data.MethodSignature;
+        var funcInfo = new DebugFunctionInfo(funcName, (long)funcRva, data.MethodSize,
+                                             ToOptimizationLevel(data.OptimizationTier), data.MethodToken);
+        profile.AddManagedMethodMapping(data.ModuleID, data.MethodID, funcInfo,
                                         (long)data.MethodStartAddress, data.MethodSize, data.ProcessID);
 
         // Save method code by copying it from the running process.
-        var methodCode = CopyDotNetMethod(data.MethodStartAddress, data.MethodSize, runtime);
-        funcInfo.Data = methodCode;
+        //var methodCode = CopyDotNetMethod(data.MethodStartAddress, data.MethodSize, runtime);
+        //funcInfo.Data = methodCode;
 
         // Use separate thread to disassemble the native code,
         // since it would slow down the general event processing.
-        disasmTaskQueue_.Add(new DisassemblerArgs(methodCode, funcInfo, runtime));
+        //disasmTaskQueue_.Add(new DisassemblerArgs(methodCode, funcInfo, runtime));
+    }
+
+    private string ToOptimizationLevel(OptimizationTier tier) {
+        return tier switch {
+            OptimizationTier.MinOptJitted => "MinOptJitted",
+            OptimizationTier.Optimized => "Optimized",
+            OptimizationTier.OptimizedTier1 => "OptimizedTier1",
+            OptimizationTier.PreJIT => "PreJIT",
+            OptimizationTier.QuickJitted => "QuickJitted",
+            OptimizationTier.ReadyToRun => "ReadyToRun",
+            _ => null
+        };
     }
 
     private void DisassembleManagedMethod(DisassemblerArgs disassemblerArgs) {
-        try {
-            bool isValid = true;
+        //try {
+        //    bool isValid = true;
 
-            for (int i = 0; i < Math.Min(10, disassemblerArgs.MethodCode.Length); i++) {
-                if (disassemblerArgs.MethodCode[i] != 0) {
-                    break;
-                }
-                else if (i >= 8) {
-                    isValid = false;
-                    break;
-                }
-            }
+        //    for (int i = 0; i < Math.Min(10, disassemblerArgs.MethodCode.Length); i++) {
+        //        if (disassemblerArgs.MethodCode[i] != 0) {
+        //            break;
+        //        }
+        //        else if (i >= 8) {
+        //            isValid = false;
+        //            break;
+        //        }
+        //    }
             
-            var runtime = disassemblerArgs.Runtime;
-            var runtimeArch = FromRuntimeArchitecture(runtime);
-            using var disassembler = Disassembler.CreateForMachine(runtimeArch, address => {
-                if (address == 0) {
-                    return null;
-                }
+        //    var runtime = disassemblerArgs.Runtime;
+        //    var runtimeArch = FromRuntimeArchitecture(runtime);
+        //    using var disassembler = Disassembler.CreateForMachine(runtimeArch, address => {
+        //        if (address == 0) {
+        //            return null;
+        //        }
 
-                // Assuming the address is a managed entry point,
-                // this will return the method that gets called.
-                var targetMethod = runtime.GetMethodByInstructionPointer((ulong)address);
+        //        // Assuming the address is a managed entry point,
+        //        // this will return the method that gets called.
+        //        var targetMethod = runtime.GetMethodByInstructionPointer((ulong)address);
 
-                if (targetMethod != null) {
-                    return targetMethod.Signature;
-                }
+        //        if (targetMethod != null) {
+        //            return targetMethod.Signature;
+        //        }
                 
-                // Check if it's one of the JIT helpers.
-                return runtime.GetJitHelperFunctionName((ulong)address);
-            });
+        //        // Check if it's one of the JIT helpers.
+        //        return runtime.GetJitHelperFunctionName((ulong)address);
+        //    });
 
-            var asmText = disassembler.DisassembleToText(disassemblerArgs.MethodCode,
-                                                         disassemblerArgs.FuncInfo.RVA);
-            var cs = new CompressedString(asmText);
-            disassemblerArgs.FuncInfo.Data = cs;
+        //    var asmText = disassembler.DisassembleToText(disassemblerArgs.MethodCode,
+        //                                                 disassemblerArgs.FuncInfo.RVA);
+        //    var cs = new CompressedString(asmText);
+        //    disassemblerArgs.FuncInfo.Data = cs;
 
-            //Trace.WriteLine($"Length: {asmText.Length}, Size {asmText.Length * 2}, Compressed: {cs.Size}");
-            //Trace.WriteLine(asmText);
-            //Trace.WriteLine("===========================");
-        }
-        catch (Exception ex) {
-            Trace.WriteLine($"Failed to disasm managed method at {disassemblerArgs.FuncInfo.RVA}: {ex.ToString()}");
-        }
+        //    //Trace.WriteLine($"Length: {asmText.Length}, Size {asmText.Length * 2}, Compressed: {cs.Size}");
+        //    //Trace.WriteLine(asmText);
+        //    //Trace.WriteLine("===========================");
+        //}
+        //catch (Exception ex) {
+        //    Trace.WriteLine($"Failed to disasm managed method at {disassemblerArgs.FuncInfo.RVA}: {ex.ToString()}");
+        //}
     }
 
     private Machine FromRuntimeArchitecture(ClrRuntime runtime) {
@@ -594,10 +614,16 @@ public class ETWEventProcessor : IDisposable {
         return new SymbolFileDescriptor(info.Path, info.Guid, info.Revision);
     }
 
+    private SymbolFileDescriptor FromModuleLoad(ModuleLoadUnloadTraceData data) {
+        return new SymbolFileDescriptor(data.ManagedPdbBuildPath, data.ManagedPdbSignature, data.ManagedPdbAge);
+    }
+
+
     private ClrRuntime GetRuntime(int processId) {
+        
         if (!runtimeMap_.TryGetValue(processId, out var runtime)) {
             runtime = TryConnectToDotNetProcess(processId);
-            runtimeMap_[processId] = runtime;
+            runtimeMap_[processId] = runtime; 
         }
 
         return runtime;
@@ -609,14 +635,14 @@ public class ETWEventProcessor : IDisposable {
         try {
             dataTarget = DataTarget.AttachToProcess(processId, false);
 
-//#if DEBUG
+#if DEBUG
             foreach (var v in dataTarget.ClrVersions) {
                 var dac = v.DacInfo;
                 Trace.WriteLine($"DAC {dac.LocalDacPath}");
                 Trace.WriteLine($"DAC target: {dac.TargetArchitecture}");
                 Trace.WriteLine($"DAC version: {dac.Version}");
             }
-//#endif
+#endif
             return dataTarget.ClrVersions[0].CreateRuntime();
         }
         catch (Exception ex) {

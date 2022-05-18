@@ -109,7 +109,7 @@
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
                                 TabIndex="2"
-                                Text="{Binding Path=SymbolOptions.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                                Text="{Binding Path=SymbolOptions.SymbolSearchPaths2, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                 TextWrapping="Wrap" />
 
                         </StackPanel>
