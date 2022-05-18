@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -16,13 +17,14 @@ namespace IRExplorerUI.Profile.ETW {
         private TraceEventSession session_;
         private ProfileRecordingSessionOptions options_;
         private string sessionName_;
+        private string managedAsmDir_;
 
         public static bool RequiresElevation => TraceEventSession.IsElevated() != true;
         
         public ETWRecordingSession(ProfileRecordingSessionOptions options, string sessionName = null) {
             Debug.Assert(!RequiresElevation);
             options_ = options;
-            sessionName_ = sessionName;
+            sessionName_ = sessionName ?? $"IRX-ETW-{Guid.NewGuid()}";
         }
 
         public Task<RawProfileData> StartRecording(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
@@ -61,12 +63,11 @@ namespace IRExplorerUI.Profile.ETW {
             //var pmcs = TraceEventProfileSources.GetInfo();
 
 
-                // The entire ETW processing must be done on the same thread.
+            // The entire ETW processing must be done on the same thread.
             return Task.Run(() => {
                 if (!StartSession()) {
                     return null;
                 }
-
 
                 RawProfileData profile = null;
                 var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
@@ -84,7 +85,8 @@ namespace IRExplorerUI.Profile.ETW {
                             ClrTraceEventParser.ProviderGuid,
                             TraceEventLevel.Verbose,
                             (ulong)(ClrTraceEventParser.Keywords.Jit |
-                                    ClrTraceEventParser.Keywords.JittedMethodILToNativeMap));
+                                    ClrTraceEventParser.Keywords.JittedMethodILToNativeMap |
+                                    ClrTraceEventParser.Keywords.Loader));
                         //session_.EnableProvider(
                         //    ClrRundownTraceEventParser.ProviderGuid,
                         //    TraceEventLevel.Verbose,
@@ -98,8 +100,9 @@ namespace IRExplorerUI.Profile.ETW {
 
                     // Resume all profiled app threads and start waiting for it to close.
                     threadSuspender?.Dispose();
-                    using var eventProcessor = new ETWEventProcessor(session_.Source, true,
-                                                                      acceptedProcessId, options_.ProfileDotNet);
+                    using var eventProcessor = 
+                        new ETWEventProcessor(session_.Source, true, acceptedProcessId, 
+                                              options_.ProfileDotNet, managedAsmDir_);
                     profile = eventProcessor.ProcessEvents(progressCallback, cancelableTask);
                 }
                 catch (Exception ex) {
@@ -112,6 +115,11 @@ namespace IRExplorerUI.Profile.ETW {
                     profiledProcess?.Dispose();
                 }
 
+                if (options_.ProfileDotNet) {
+
+                }
+
+
                 return profile;
             });
         }
@@ -120,8 +128,8 @@ namespace IRExplorerUI.Profile.ETW {
             // Start a new in-memory session.
             try {
                 Debug.Assert(session_ == null);
-                session_ = new TraceEventSession(sessionName_ ?? $"IRX-ETW-{Guid.NewGuid()}");
-                session_.BufferSizeMB = 512;
+                session_ = new TraceEventSession(sessionName_);
+                session_.BufferSizeMB = 256;
                 session_.CpuSampleIntervalMSec = 1000.0f / options_.SamplingFrequency;
 
                 Trace.WriteLine("Started ETW session:");
@@ -148,6 +156,25 @@ namespace IRExplorerUI.Profile.ETW {
                     //RedirectStandardOutput = true
                 };
 
+                if (options_.ProfileDotNet) {
+                    var profilerPath = Path.Combine(App.ApplicationDirectory, "DotNext.Profiler.Windows.dll");
+
+                    try {
+                        var tempPath = Path.GetTempPath();
+                        managedAsmDir_ = Path.Combine(tempPath, sessionName_);
+                        Directory.CreateDirectory(managedAsmDir_);
+                    }
+                    catch (Exception ex) {
+                        Trace.TraceError($"Failed to create session ASM dir:{managedAsmDir_}: {ex.Message}\n{ex.StackTrace}");
+                    }
+
+                    procInfo.EnvironmentVariables["CORECLR_ENABLE_PROFILING"] = "1";
+                    procInfo.EnvironmentVariables["CORECLR_PROFILER"] = "{805A308B-061C-47F3-9B30-F785C3186E81}";
+                    procInfo.EnvironmentVariables["CORECLR_PROFILER_PATH"] = profilerPath;
+                    procInfo.EnvironmentVariables["IRX_MANAGED_ASM_DIR"] = managedAsmDir_;
+                    Trace.WriteLine($"Using profiler {profilerPath}");
+                }
+
                 var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
                 process.Start();
                 return (process, process.Id);
@@ -167,7 +194,7 @@ namespace IRExplorerUI.Profile.ETW {
                             break;
                         }
                     }
-
+                    
                     StopSession();
                 }
                 catch (Exception ex) {

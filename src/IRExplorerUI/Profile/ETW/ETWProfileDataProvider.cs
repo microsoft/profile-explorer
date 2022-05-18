@@ -683,17 +683,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         if (prof.HasManagedMethods(context.ProcessId)) {
                                             var managedFunc = prof.FindManagedMethodForIP(frameIp, context.ProcessId);
                                             
-                                            if (!managedFunc.IsUnknown) {
-
+                                            if (managedFunc != null) {
                                                 frameImage = managedFunc.Image;
                                                 managedBaseAddress = 1;
-
-                                                //if (managedFunc.Image.FilePath.Contains("MicroBenchmarks")) {
-                                                    //Trace.WriteLine($"Found managed top {isTopFrame}: {managedFunc.Image}");
-                                                //    mbtotal += sample.Weight;
-                                                //    if (isTopFrame) mb += sample.Weight;
-                                                    //found = true;
-                                                //}
                                             }
                                         }
 
@@ -743,20 +735,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                             funcRva = funcInfo.RVA;
                                         }
                                     }
-                                    else {
-                                        if (found) {
-                                            if (module == null) {
-                                                Trace.WriteLine($"  o no module for {frameImage.FilePath}");
-                                            }
-                                            else if (!module.HasDebugInfo) {
-                                                Trace.WriteLine($"  o no debug for {frameImage.FilePath}");
-                                            }
-                                        }
-                                    }
+                                    //else {
+                                    //    if (found) {
+                                    //        if (module == null) {
+                                    //            Trace.WriteLine($"  o no module for {frameImage.FilePath}");
+                                    //        }
+                                    //        else if (!module.HasDebugInfo) {
+                                    //            Trace.WriteLine($"  o no debug for {frameImage.FilePath}");
+                                    //        }
+                                    //    }
+                                    //}
 
                                     if (funcName == null) {
-                                        Trace.WriteLine($"  o no func for {frameImage.FilePath}");
-
+                                        //Trace.WriteLine($"  o no func for {frameImage.FilePath}");
                                         resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                         isTopFrame = false;
                                         continue;

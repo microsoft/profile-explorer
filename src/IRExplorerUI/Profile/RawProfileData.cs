@@ -4,6 +4,7 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
@@ -18,8 +19,10 @@ using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using Microsoft.Diagnostics.Runtime;
+using PEFile;
 using ProtoBuf;
 using static IRExplorerUI.Profile.ETWProfileDataProvider;
+using Architecture = Microsoft.Diagnostics.Runtime.Architecture;
 
 namespace IRExplorerUI.Profile;
 
@@ -73,8 +76,6 @@ public class RawProfileData {
     public List<ProfileImage> Images => images_;
     public List<PerformanceCounterEvent> PerfCounters { get; set; }
 
-
-
     public bool HasManagedMethods(int processId) => procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
 
     private ManagedData GetOrCreateManagedData(int processId) {
@@ -86,12 +87,38 @@ public class RawProfileData {
         return data;
     }
 
-    public void AddManagedMethodMapping(long methodId, DebugFunctionInfo debugInfo, ProfileImage image, 
-                                        long ip, int size, int processId) {
-        var mapping = new ManagedMethodMapping(debugInfo, image, ip, size);
+    public void AddManagedMethodMapping(long moduleId, long methodId,
+                                         DebugFunctionInfo debugInfo, 
+                                         long ip, int size, int processId) {
+        var (moduleDebugInfo, moduleImage) = GetModuleDebugInfo(processId, moduleId);
+
+        var mapping = new ManagedMethodMapping(debugInfo, moduleDebugInfo, moduleImage, ip, size);
         var data = GetOrCreateManagedData(processId);
         data.managedMethods_.Add(mapping);
+
+        if (moduleImage == null) {
+            // A placeholder is created for cases where the method load event
+            // is triggered before the module load one, add mapping to patch list
+            // to have the image filled in later.
+            data.patchedMappings_.Add((moduleId, mapping));
+        }
+
+        //? TODO: MethodID is identical between opt levels, either split by level or use time like TraceEvent
+        var initialName = debugInfo.Name;
+
+        if (data.managedMethodsMap_.TryGetValue(initialName, out var other)) {
+            if (other.DebugInfo.HasOptimizationLevel) {
+                other.DebugInfo.Name = $"{other.DebugInfo.Name}_{other.DebugInfo.OptimizationLevel}";
+            }
+
+            if (debugInfo.HasOptimizationLevel) {
+                debugInfo.Name = $"{debugInfo.Name}_{debugInfo.OptimizationLevel}";
+            }
+        }
+
+        moduleDebugInfo.AddFunctionInfo(debugInfo);
         data.managedMethodIdMap_[methodId] = mapping;
+        data.managedMethodsMap_[initialName] = mapping;
     }
 
     public ManagedMethodMapping FindManagedMethodForIP(long ip, int processId) {
@@ -101,7 +128,7 @@ public class RawProfileData {
 
     public ManagedMethodMapping FindManagedMethod(long id, int processId) {
         var data = GetOrCreateManagedData(processId);
-        return data.managedMethodIdMap_.GetValueOr(id, ManagedMethodMapping.Unknown);
+        return data.managedMethodIdMap_.GetValueOrNull(id);
     }
 
     public IDebugInfoProvider GetDebugInfoForImage(ProfileImage image, int processId) {
@@ -109,40 +136,60 @@ public class RawProfileData {
             return null;
         }
 
-        Trace.WriteLine($"=> Query IDebugInfoProvider for {image.FilePath}");
         var data = GetOrCreateManagedData(processId);
         return data.imageDebugInfo_?.GetValueOrNull(image);
     }
 
-    public (DotNetDebugInfoProvider, ProfileImage) 
-        GetOrAddModuleDebugInfo(int processId, string moduleName, long moduleBase, Machine architecture) {
+    public DotNetDebugInfoProvider GetOrAddModuleDebugInfo(int processId, string moduleName,
+                                                           long moduleId, Machine architecture) {
         var data = GetOrCreateManagedData(processId);
         var proc = GetOrCreateProcess(processId);
-
-        Trace.WriteLine($"GetOrAddModuleDebugInfo for {moduleBase}: {moduleName} in proc {processId}");
-
+        
         //? Use baseAddr -> image map
-
         foreach (var image in proc.Images(this)) {
             //? TODO: Avoid linear search
             
             if (image.ModuleName.Equals(moduleName, StringComparison.Ordinal)) {
-                //? TODO: Maybe patch image? What about R2R, that likely have both native and JIT associated
-
-                if (image.BaseAddress != moduleBase) {
-                    Trace.WriteLine($"=> MISMATCH {image.BaseAddress}, {moduleBase}");
-                }
-
                 if (!data.imageDebugInfo_.TryGetValue(image, out var debugInfo)) {
-                    debugInfo = new DotNetDebugInfoProvider(architecture);
+                    // A placeholder is created for cases where the method load event
+                    // is triggered before the module load one, use that provider.
+                    if (!data.moduleDebugInfoMap_.TryGetValue(moduleId, out debugInfo)) {
+                        debugInfo = new DotNetDebugInfoProvider(architecture);
+                    }
+                    else {
+                        foreach (var pair in data.patchedMappings_) {
+                            //? TODO: List shouldn't grow too much
+                            if (pair.ModuleId == moduleId) {
+                                pair.Mapping.Image = image;
+                            }
+                        }
+                    }
+
                     data.imageDebugInfo_[image] = debugInfo;
+                    data.moduleDebugInfoMap_[moduleId] = debugInfo;
+                    data.moduleImageMap_[moduleId] = image;
                 }
 
-                return (debugInfo, image);
+                return debugInfo;
             }
         }
 
-        return (null, null);
+        return null;
+    }
+
+    public (DotNetDebugInfoProvider, ProfileImage) GetModuleDebugInfo(int processId, long moduleId) {
+        var data = GetOrCreateManagedData(processId);
+
+        var debugInfo = data.moduleDebugInfoMap_.GetValueOrNull(moduleId);
+        var image = data.moduleImageMap_.GetValueOrNull(moduleId);
+
+        if (debugInfo == null) {
+            // Module loaded event not triggered yet, create a placeholder for now.
+            debugInfo = new DotNetDebugInfoProvider(Machine.Unknown);
+            data.moduleDebugInfoMap_[moduleId] = debugInfo;
+        }
+
+        return (debugInfo, image);
     }
 
     public RawProfileData(bool handlesDotNetEvents = false) {
@@ -165,12 +212,6 @@ public class RawProfileData {
     }
     
     public void LoadingCompleted() {
-        if (procManagedDataMap_ != null) {
-            foreach (var pair in procManagedDataMap_) {
-                pair.Value.managedMethods_.Sort();
-            }
-        }
-
         // Free objects used while reading the profile.
         stacksMap_ = null;
         contextsMap_ = null;
@@ -178,6 +219,14 @@ public class RawProfileData {
         threadsMap_ = null;
         stackData_ = null;
         lastProcStacks_ = null;
+    }
+
+    public void ManagedLoadingCompleted(string managedAsmDir) {
+        if (procManagedDataMap_ != null) {
+            foreach (var pair in procManagedDataMap_) {
+                pair.Value.LoadingCompleted(pair.Key, managedAsmDir);
+            }
+        }
     }
 
     public ProfileProcess GetOrCreateProcess(int id) {
@@ -609,9 +658,11 @@ public class RawProfileData {
 }
 
 [ProtoContract(SkipConstructor = true)]
-public struct ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
-    public ManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, long ip, int size) {
+public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
+    public ManagedMethodMapping(DebugFunctionInfo debugInfo, DotNetDebugInfoProvider provider,
+                                 ProfileImage image, long ip, int size) {
         DebugInfo = debugInfo;
+        DebugInfoProvider = provider;
         Image = image;
         IP = ip;
         Size = size;
@@ -620,15 +671,14 @@ public struct ManagedMethodMapping : IComparable<ManagedMethodMapping>, ICompara
     [ProtoMember(1)]
     public DebugFunctionInfo DebugInfo { get; }
     [ProtoMember(2)]
-    public ProfileImage Image { get; }
+    public DotNetDebugInfoProvider DebugInfoProvider { get; }
     [ProtoMember(3)]
-    public long IP { get; }
+    public ProfileImage Image { get; set; }
     [ProtoMember(4)]
+    public long IP { get; }
+    [ProtoMember(5)]
     public int Size { get; }
-
-    public bool IsUnknown => DebugInfo == null;
-    public static ManagedMethodMapping Unknown => new ManagedMethodMapping(null, null, 0, 0);
-
+    
     public int CompareTo(long value) {
         if (value < IP) {
             return 1;
@@ -641,6 +691,7 @@ public struct ManagedMethodMapping : IComparable<ManagedMethodMapping>, ICompara
     }
 
     public bool Equals(ManagedMethodMapping other) {
+        if (other == null) return false;
         return IP == other.IP;
     }
 
@@ -655,25 +706,40 @@ public struct ManagedMethodMapping : IComparable<ManagedMethodMapping>, ICompara
     public override int GetHashCode() {
         return IP.GetHashCode();
     }
-
-    public static bool operator ==(ManagedMethodMapping left, ManagedMethodMapping right) {
-        return left.Equals(right);
-    }
-
-    public static bool operator !=(ManagedMethodMapping left, ManagedMethodMapping right) {
-        return !left.Equals(right);
-    }
 }
 
 public class ManagedData {
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
+    public Dictionary<long /* moduleId */, DotNetDebugInfoProvider> moduleDebugInfoMap_;
+    public Dictionary<long /* moduleId */, ProfileImage> moduleImageMap_;
     public List<ManagedMethodMapping> managedMethods_;
-    public Dictionary<long, ManagedMethodMapping> managedMethodIdMap_;
+    public Dictionary<string, ManagedMethodMapping> managedMethodsMap_;
+    public Dictionary<long /* methodId */, ManagedMethodMapping> managedMethodIdMap_;
+    public List<(long ModuleId, ManagedMethodMapping Mapping)> patchedMappings_;
 
     public ManagedData() {
         imageDebugInfo_ = new Dictionary<ProfileImage, DotNetDebugInfoProvider>();
+        moduleDebugInfoMap_ = new Dictionary<long, DotNetDebugInfoProvider>();
+        moduleImageMap_ = new Dictionary<long, ProfileImage>();
         managedMethods_ = new List<ManagedMethodMapping>();
+        managedMethodsMap_ = new Dictionary<string, ManagedMethodMapping>();
         managedMethodIdMap_ = new Dictionary<long, ManagedMethodMapping>();
+        patchedMappings_ = new List<(long ModuleId, ManagedMethodMapping Mapping)>();
+    }
+
+    public void LoadingCompleted(int processId, string managedAsmDir) {
+        managedMethods_.Sort();
+
+        foreach (var debugInfo in moduleDebugInfoMap_.Values) {
+            var asmFilePath = Path.Combine(managedAsmDir, $"{processId}.asm");
+            debugInfo.ManagedAsmFilePath = asmFilePath;
+        }
+
+        // A placeholder is created for cases where the method load event
+        // is triggered before the module load one, try assign the image now.
+        foreach (var pair in patchedMappings_) {
+            pair.Mapping.Image = moduleImageMap_.GetValueOrNull(pair.ModuleId);
+        }
     }
 }
 

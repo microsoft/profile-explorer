@@ -39,11 +39,7 @@ namespace IRExplorerUI.Compilers {
                 return summary_;
             }
 
-            if (isManagedImage_) {
-                // For managed code, the code data is found on each function.
-                disassembler_ = Disassembler.CreateForMachine(debugInfo_);
-            }
-            else {
+            if (!isManagedImage_) {
                 // This preloads all code sections in the binary.
                 disassembler_ = Disassembler.CreateForBinary(binaryFilePath_, debugInfo_);
             }
@@ -67,6 +63,11 @@ namespace IRExplorerUI.Compilers {
 
         private bool InitializeDebugInfo() {
             if (debugInfo_ != null) {
+                if (debugInfo_.LoadDebugInfo(null)) {
+                    // For managed code, the code data is found on each function.
+                    disassembler_ = Disassembler.CreateForMachine(debugInfo_);
+                }
+
                 return true;
             }
 
@@ -124,8 +125,18 @@ namespace IRExplorerUI.Compilers {
 
             if (isManagedImage_) {
                 // For managed code, the code data is found on each function as a byte array.
-                //? TODO: StartRVA is also IP here
-                return disassembler_.DisassembleToTextEmbedded(funcInfo);
+                var methodCode = ((DotNetDebugInfoProvider)debugInfo_).FindMethodCode(funcInfo);
+
+                if (methodCode != null) {
+                    var code = methodCode.GetCodeBytes();
+
+                    if (code != null) {
+                        disassembler_.UseSymbolNameResolver(address => methodCode.FindCallTarget(address));
+                        return disassembler_.DisassembleToText(code, funcInfo.StartRVA);
+                    }
+                }
+
+                return "";
             }
 
             return disassembler_.DisassembleToText(funcInfo);

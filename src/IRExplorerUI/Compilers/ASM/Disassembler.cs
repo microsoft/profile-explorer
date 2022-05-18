@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading;
-using IntervalTree;
 using IRExplorerCore;
 using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
-using IRExplorerUI.Compilers;
 using Microsoft.Win32.SafeHandles;
 
 namespace IRExplorerUI.Compilers.ASM {
@@ -31,6 +27,11 @@ namespace IRExplorerUI.Compilers.ASM {
         private SymbolNameResolverDelegate symbolNameResolver_;
 
         public delegate string SymbolNameResolverDelegate(long address);
+
+        public void UseSymbolNameResolver(SymbolNameResolverDelegate symbolNameResolver) {
+            symbolNameResolver_ = symbolNameResolver;
+            checkValidCallAddress_ = false;
+        }
 
         public static Disassembler CreateForBinary(string binaryFilePath, IDebugInfoProvider debugInfo) {
             using var peInfo = new PEBinaryInfoProvider(binaryFilePath);
@@ -53,10 +54,6 @@ namespace IRExplorerUI.Compilers.ASM {
 
         public static Disassembler CreateForMachine(IDebugInfoProvider debugInfo) {
             return new Disassembler(debugInfo.Architecture.Value, null, 0, debugInfo);
-        }
-
-        public static Disassembler CreateForMachine(Machine architecture, SymbolNameResolverDelegate symbolNameResolver) {
-            return new Disassembler(architecture, symbolNameResolver);
         }
 
         private Disassembler(Machine architecture, List<(byte[] Data, long StartRVA)> codeSectionData, long baseAddress = 0,
@@ -84,21 +81,11 @@ namespace IRExplorerUI.Compilers.ASM {
             return DisassembleToText(funcInfo.StartRVA, funcInfo.Size);
         }
 
-        public string DisassembleToTextEmbedded(DebugFunctionInfo funcInfo) {
-            if (funcInfo.Data is CompressedString asmText) {
-                return asmText.ToString();
-            }
-            
-            var data = funcInfo.Data as byte[];
-
-            if (data == null) {
-                return "";
-            }
-
+        public string DisassembleToText(byte[] data, int size, long startRVA) {
             //? TODO: Somewhat of a hack, pass list of code sections.
             Debug.Assert(codeSectionData_ == null);
-            codeSectionData_ = new List<(byte[] Data, long StartRVA)>() {(data, funcInfo.StartRVA)};
-            var result = DisassembleToText(funcInfo.StartRVA, funcInfo.Size);
+            codeSectionData_ = new List<(byte[] Data, long StartRVA)>() {(data, startRVA)};
+            var result = DisassembleToText(startRVA, size);
             codeSectionData_ = null;
             return result;
         }

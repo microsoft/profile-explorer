@@ -251,7 +251,7 @@ namespace IRExplorerUI.Compilers {
                     }
 
                     var sourceFile = lineNumber.sourceFile;
-                    return (new DebugSourceLineInfo(lineNumber.addressOffset, (int)lineNumber.lineNumber,
+                    return (new DebugSourceLineInfo((int)lineNumber.addressOffset, (int)lineNumber.lineNumber,
                                              (int)lineNumber.columnNumber, sourceFile.fileName), sourceFile);
                 }
             }
