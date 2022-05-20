@@ -80,7 +80,7 @@ namespace IRExplorerUI.Compilers {
         public string ManagedAsmFilePath { get; set; }
 
         public MethodCode FindMethodCode(DebugFunctionInfo funcInfo) {
-            return methodCodeMap_.GetValueOrNull(funcInfo.RVA);
+            return methodCodeMap_?.GetValueOrNull(funcInfo.RVA);
         }
 
         public void AddFunctionInfo(DebugFunctionInfo funcInfo) {
@@ -260,6 +260,7 @@ namespace IRExplorerUI.Compilers {
         
         public bool LoadDebugInfo(string debugFilePath) {
             if (!File.Exists(ManagedAsmFilePath)) {
+                Trace.TraceError($"Missing managed ASM file: {ManagedAsmFilePath}");
                 return true;
             }
 

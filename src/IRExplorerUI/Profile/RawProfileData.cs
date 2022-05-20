@@ -145,7 +145,6 @@ public class RawProfileData {
         var data = GetOrCreateManagedData(processId);
         var proc = GetOrCreateProcess(processId);
         
-        //? Use baseAddr -> image map
         foreach (var image in proc.Images(this)) {
             //? TODO: Avoid linear search
             

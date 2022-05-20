@@ -157,7 +157,7 @@ namespace IRExplorerUI.Profile.ETW {
                 };
 
                 if (options_.ProfileDotNet) {
-                    var profilerPath = Path.Combine(App.ApplicationDirectory, "DotNext.Profiler.Windows.dll");
+                    var profilerPath = Path.Combine(App.ApplicationDirectory, "irexplorer_profiler.dll");
 
                     try {
                         var tempPath = Path.GetTempPath();
