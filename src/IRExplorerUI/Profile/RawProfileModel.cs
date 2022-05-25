@@ -374,7 +374,7 @@ public sealed class ProfileImage : IEquatable<ProfileImage>, IComparable<Profile
     }
 
     public override string ToString() {
-        return $"{FilePath}, Id: {Id}, Base: {BaseAddress:X}, Size: {Size}";
+        return $"{FilePath}, Id: {Id}, Base: {BaseAddress:X}, DefaultBase: {DefaultBaseAddress:X} Size: {Size}";
     }
 }
 
@@ -471,7 +471,7 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
     }
 
     public override string ToString() {
-        return $"{Name}, ID: {ProcessId}, ParentID: {ParentId}, Images: {ImageIds.Count}, Threads: {ThreadIds.Count}";
+        return $"{Name}, ImageFileName {ImageFileName}, ID: {ProcessId}, ParentID: {ParentId}, Images: {ImageIds.Count}, Threads: {ThreadIds.Count}";
     }
 }
 

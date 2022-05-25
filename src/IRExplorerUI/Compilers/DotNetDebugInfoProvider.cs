@@ -9,8 +9,10 @@ using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Data;
 using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
@@ -106,11 +108,22 @@ namespace IRExplorerUI.Compilers {
             //? TODO: Make async
             var options = SymbolOptions != null ? SymbolOptions :
                           (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
-            options.InsertSymbolPath(Utils.TryGetDirectoryName(ManagedSymbolFile.FileName));
+            if (File.Exists(ManagedSymbolFile.FileName)) {
+                options.InsertSymbolPath(ManagedSymbolFile.FileName);
+            }
 
             var symbolSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
-            using var symbolReader = new SymbolReader(TextWriter.Null, symbolSearchPath);
+            
+            using var logWriter = new StringWriter();
+            using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+            symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
             var debugFile = symbolReader.FindSymbolFilePath(ManagedSymbolFile.FileName, ManagedSymbolFile.Id, ManagedSymbolFile.Age);
+
+            Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {ManagedSymbolFile.FileName}: {debugFile}");
+            Trace.IndentLevel = 1;
+            Trace.WriteLine(logWriter.ToString());
+            Trace.IndentLevel = 0;
+            Trace.WriteLine($"<< TraceEvent");
 
             if (!File.Exists(debugFile)) {
                 return debugInfo.HasSourceLines;
@@ -261,13 +274,13 @@ namespace IRExplorerUI.Compilers {
         public bool LoadDebugInfo(string debugFilePath) {
             if (!File.Exists(ManagedAsmFilePath)) {
                 Trace.TraceError($"Missing managed ASM file: {ManagedAsmFilePath}");
-                return true;
+                return false;
             }
 
             ManagedProcessCode processCode;
 
             if (!JsonUtils.DeserializeFromFile(ManagedAsmFilePath, out processCode)) {
-                return true;
+                return false;
             }
 
             architecture_ = (Machine)processCode.MachineType;

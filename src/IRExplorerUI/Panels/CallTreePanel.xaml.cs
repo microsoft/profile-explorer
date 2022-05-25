@@ -201,6 +201,7 @@ namespace IRExplorerUI {
                 if (value != settings_.PrependModuleToFunction) {
                     settings_.PrependModuleToFunction = value;
                     OnPropertyChanged();
+                    profileCallTree_ = null;
                     DisplaProfileCallTree();
                 }
             }

@@ -107,7 +107,8 @@ public class RawProfileData {
         var initialName = debugInfo.Name;
 
         if (data.managedMethodsMap_.TryGetValue(initialName, out var other)) {
-            if (other.DebugInfo.HasOptimizationLevel) {
+            if (other.DebugInfo.HasOptimizationLevel &&
+                !other.DebugInfo.Name.EndsWith(other.DebugInfo.OptimizationLevel)) {
                 other.DebugInfo.Name = $"{other.DebugInfo.Name}_{other.DebugInfo.OptimizationLevel}";
             }
 
@@ -729,9 +730,11 @@ public class ManagedData {
     public void LoadingCompleted(int processId, string managedAsmDir) {
         managedMethods_.Sort();
 
-        foreach (var debugInfo in moduleDebugInfoMap_.Values) {
-            var asmFilePath = Path.Combine(managedAsmDir, $"{processId}.asm");
-            debugInfo.ManagedAsmFilePath = asmFilePath;
+        if (!string.IsNullOrEmpty(managedAsmDir)) {
+            foreach (var debugInfo in moduleDebugInfoMap_.Values) {
+                var asmFilePath = Path.Combine(managedAsmDir, $"{processId}.asm");
+                debugInfo.ManagedAsmFilePath = asmFilePath;
+            }
         }
 
         // A placeholder is created for cases where the method load event

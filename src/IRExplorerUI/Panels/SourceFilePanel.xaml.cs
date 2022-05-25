@@ -219,7 +219,7 @@ namespace IRExplorerUI {
                 funcProfile = Session.ProfileData?.GetFunctionProfile(function);
 
                 if (funcProfile != null) {
-                    sourceInfo = await LocateSourceFile(funcProfile, debugInfo);
+                    sourceInfo = LocateSourceFile(funcProfile, debugInfo);
                 }
 
                 if (sourceInfo.IsUnknown) {
@@ -265,20 +265,18 @@ namespace IRExplorerUI {
             return funcLoaded;
         }
 
-        private async Task<DebugFunctionSourceFileInfo> LocateSourceFile(FunctionProfileData funcProfile,
-                                                                         IDebugInfoProvider debugInfo) {
-            return await Task.Run(() => {
-                var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
+        private DebugFunctionSourceFileInfo LocateSourceFile(FunctionProfileData funcProfile,
+                                                              IDebugInfoProvider debugInfo) {
+            var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
 
-                // Lookup function by RVA, more precise.
-                if (funcProfile.DebugInfo != null) {
-                    sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
-                }
+            // Lookup function by RVA, more precise.
+            if (funcProfile.DebugInfo != null) {
+                sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
+            }
 
-                // Precompute the per-line sample weights.
-                funcProfile.ProcessSourceLines(debugInfo);
-                return sourceInfo;
-            });
+            // Precompute the per-line sample weights.
+            funcProfile.ProcessSourceLines(debugInfo);
+            return sourceInfo;
         }
 
         private async Task<bool> LoadSourceFile(DebugFunctionSourceFileInfo sourceInfo, IRTextFunction function) {

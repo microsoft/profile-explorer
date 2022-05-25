@@ -33,6 +33,7 @@ namespace IRExplorerUI {
             var newFoldings = new List<NewFolding>(Function.Blocks.Count);
             BlockIR lastBlock = null;
             int lastOffset = 0;
+            int textLength = document.TextLength;
             bool sorted = true;
 
             foreach (var block in Function.Blocks) {
@@ -40,7 +41,10 @@ namespace IRExplorerUI {
                 int foldingLength = offset - lastOffset;
 
                 if (lastBlock != null && foldingLength > 1 && lastBlock.Tuples.Count > 0) {
-                    newFoldings.Add(new NewFolding(lastOffset, offset - 2));
+                    //? TODO: This seems to be a bug with diff mode
+                    if (offset + foldingLength < textLength) {
+                        newFoldings.Add(new NewFolding(lastOffset, offset - 2));
+                    }
                 }
 
                 if (offset < lastOffset) {

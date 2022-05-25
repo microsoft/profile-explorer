@@ -57,7 +57,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public static async Task<string> LocateBinaryFile(BinaryFileDescription binaryFile,
-                                                          SymbolFileSourceOptions options) {
+                                                            SymbolFileSourceOptions options) {
             string result = null;
 #if DEBUG
             using var logWriter = new StringWriter();
@@ -68,9 +68,43 @@ namespace IRExplorerUI.Compilers {
                 options = options.WithSymbolPaths(binaryFile.ImagePath);
                 var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
                 using var symbolReader = new SymbolReader(logWriter, userSearchPath);
+                symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+                
                 result = await Task.Run(() => symbolReader.FindExecutableFilePath(binaryFile.ImageName,
                     (int)binaryFile.TimeStamp,
                     (int)binaryFile.ImageSize)).ConfigureAwait(false);
+
+                if (result == null) {
+                    // Manually search in the provided directories.
+                    // This helps in cases where the original fine name doesn't match
+                    // the one on disk, like it seems to happen sometimes with the SPEC runner.
+                    result = await Task.Run(() => {
+                        foreach (var path in options.SymbolSearchPaths) {
+                            try {
+                                var searchPath = Utils.TryGetDirectoryName(path);
+
+                                foreach (var file in Directory.EnumerateFiles(searchPath, $"*.*", SearchOption.TopDirectoryOnly)) {
+                                    if (!Utils.IsBinaryFile(file)) {
+                                        continue;
+                                    }
+
+                                    var fileInfo = GetBinaryFileInfo(file);
+
+                                    if (fileInfo != null &&
+                                        fileInfo.TimeStamp == binaryFile.TimeStamp &&
+                                        fileInfo.ImageSize == binaryFile.ImageSize) {
+                                        return file;
+                                    }
+                                }
+                            }
+                            catch (Exception ex) {
+                                Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
+                            }
+                        }
+
+                        return null;
+                    });
+                }
             }
             catch (Exception ex) {
                 Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
