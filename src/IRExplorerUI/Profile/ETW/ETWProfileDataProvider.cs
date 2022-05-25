@@ -10,6 +10,7 @@ using System.Threading;
 using System.Text;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Windows.Forms.VisualStyles;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using Microsoft.Diagnostics.Tracing;
@@ -304,7 +305,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     imageLocks[i] = new object();
                 }
 
-                ModuleInfo FindModuleInfo(ProfileImage queryImage, int processId) {
+                ModuleInfo FindModuleInfo(ProfileImage queryImage, int processId, SymbolFileSourceOptions symbolOptions) {
                     //if (queryImage == prevImage) {
                     //    return prevModule;
                     //}
@@ -424,6 +425,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     var imagePath = imageList[i].FilePath;
 
                     if (File.Exists(imagePath)) {
+                        Trace.WriteLine($"Adding symbol path: {imagePath}");
                         symbolOptions.InsertSymbolPath(imagePath);
                     }
                 }
@@ -605,7 +607,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-                            if (resolvedStack != null) {
+                            if (false && resolvedStack != null) {
                                 foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                     if (resolvedFrame.IsUnknown) {
                                         // Can at least increment the module weight.
@@ -635,7 +637,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     
                                     var frameRva = resolvedFrame.FrameRVA;
                                     var funcInfo = resolvedFrame.FunctionInfo;
-                                    var funcName = funcInfo.Name;
                                     var funcRva = funcInfo.RVA;
                                     var textFunction = resolvedFrame.Function;
                                     var profile = resolvedFrame.Profile;
@@ -670,13 +671,18 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 resolvedStack = new ResolvedProfileStack(stack.FrameCount, context);
                                 var stackFrames = stack.FramePointers;
                                 long managedBaseAddress = 0;
+                                int frameIndex = 0;
 
                                 //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
                                 //? for ex it never gets to main. Easy example is a quicksort impl
-                                foreach (var frameIp in stackFrames) {
+                                for(; frameIndex < stackFrames.Length; frameIndex++) {
+                                    var frameIp = stackFrames[frameIndex];
+
+                                //foreach (var frameIp in stackFrames) {
                                     //? Use Frame -> Resolved Frame cache
                                     ProfileImage frameImage = prof.FindImageForIP(frameIp, context);
 
+                                    //frameIndex++;
                                     bool found = false;
                                     
                                     if (frameImage == null) {
@@ -710,7 +716,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     DebugFunctionInfo funcInfo = null;
 
                                     //var modSw = Stopwatch.StartNew();
-                                    module = FindModuleInfo(frameImage, context.ProcessId);
+                                    module = FindModuleInfo(frameImage, context.ProcessId, symbolOptions);
                                     //modSw.Stop();
                                     //if (modSw.ElapsedMilliseconds > 500) {
                                     //    Trace.WriteLine($"=> Slow load {modSw.Elapsed}: {frameImage.Name}");
@@ -735,6 +741,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                             funcRva = funcInfo.RVA;
                                         }
                                     }
+
+                                    //if (funcName.Contains("Base64Encode_Opt")) {
+                                    //    frameIndex = -1;
+                                    //    continue;
+                                    //}
                                     //else {
                                     //    if (found) {
                                     //        if (module == null) {
@@ -746,14 +757,41 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     //    }
                                     //}
 
+                                    IRTextFunction textFunction = null;
+
                                     if (funcName == null) {
-                                        //Trace.WriteLine($"  o no func for {frameImage.FilePath}");
-                                        resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
-                                        isTopFrame = false;
-                                        continue;
+#if false
+                                        if (managedBaseAddress == 0) {
+                                            Trace.WriteLine($"=> No func for {frameImage.ModuleName}, frameIP {frameIp}");
+                                            Trace.WriteLine($"     frameRVA {frameIp - frameImage.BaseAddress}");
+                                            Trace.WriteLine($"     image: {frameImage}");
+                                            if (module != null && module.sortedFuncList_ != null && module.sortedFuncList_.Count > 0) {
+                                                Trace.WriteLine($"    RVA range: {module.sortedFuncList_[0].StartRVA:X},{ module.sortedFuncList_[^1].StartRVA:X}");
+                                            }
+                                        }
+
+                                        bool addedPlaceholder = false;
+
+                                        if (module != null) {
+                                            var placeholderName = $"{frameIp:X}";
+                                            textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
+                                            funcInfo = new DebugFunctionInfo(placeholderName, frameIp, 0);
+                                            addedPlaceholder = textFunction != null;
+                                        }
+
+                                        if(!addedPlaceholder) {
+                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
+                                            isTopFrame = false;
+                                            continue;
+                                        }
+#else
+                                        //resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
+                                        //isTopFrame = false;
+#endif
                                     }
-                                    
-                                    var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
+                                    else {
+                                        textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
+                                    }
 
                                     if (textFunction == null) {
                                         if (found) {

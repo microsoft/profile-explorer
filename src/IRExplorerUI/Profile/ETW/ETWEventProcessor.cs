@@ -157,10 +157,25 @@ public class ETWEventProcessor : IDisposable {
 
         var symbolParser = new SymbolTraceEventParser(source_);
 
+        //symbolParser.All += data => {
+        //    Trace.WriteLine($"SymbolParser event\n{data.Dump(true)}");
+        //};
+
         symbolParser.ImageID += data => {
             // The image timestamp often is part of this event.
             // A correct timestamp is needed to locate and download the image.
-            if (lastProfileImage != null && 
+
+            //Trace.WriteLine($"ImageID: orig {data.OriginalFileName}, QPC {data.TimeStampQPC}");
+            //Trace.WriteLine($"ImageID: has lastProfileImage {lastProfileImage != null}");
+            //Trace.WriteLine($"    matching {lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC}");
+            //
+            //if (lastProfileImage != null) {
+            //    Trace.WriteLine($"    last image: {lastProfileImage.FilePath}");
+            //    Trace.WriteLine($"    last orign: {lastProfileImage.OriginalFileName}");
+            //    Trace.WriteLine($"    qpc {lastProfileImageTime} vs current {data.TimeStampQPC}");
+            //}
+
+            if (lastProfileImage != null &&
                 lastProfileImageTime == data.TimeStampQPC) {
                 lastProfileImage.OriginalFileName = data.OriginalFileName;
 
@@ -181,7 +196,9 @@ public class ETWEventProcessor : IDisposable {
                                           data.ProcessName, data.ImageFileName,
                                           data.CommandLine);
             profile.AddProcess(proc);
-            //Trace.WriteLine($"=> proc {proc}");
+#if DEBUG
+            Trace.WriteLine($"ProcessStartGroup: {proc}");
+#endif
 
             // If parent is one of the accepted processes, accept the child too.
             //? TOOD: Option
@@ -196,7 +213,16 @@ public class ETWEventProcessor : IDisposable {
             int timeStamp = data.TimeDateStamp;
             bool sawImageId = false;
 
-            if (timeStamp == 0) {
+            //if (timeStamp == 0) {
+                //Trace.WriteLine($"ImageGroup: name {data.FileName}, QPC {data.TimeStampQPC}");
+                //Trace.WriteLine($"   has last {lastImageIdData != null}");
+                //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
+                //
+                //if (lastImageIdData != null) {
+                //    Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
+                //    Trace.WriteLine($"    qpc {lastImageIdData.TimeDateStamp} vs current {data.TimeStampQPC}");
+                //}
+
                 if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
                     // The ImageID event showed up earlier in the stream.
                     sawImageId = true;
@@ -205,22 +231,23 @@ public class ETWEventProcessor : IDisposable {
                 }
                 else if (isRealTime_) {
                     // In a capture session, the image is on the local machine,
-                    // so just the the info out of the binary.
+                    // so just take the info out of the binary.
                     var imageInfo = PEBinaryInfoProvider.GetBinaryFileInfo(data.FileName);
 
                     if (imageInfo != null) {
                         timeStamp = imageInfo.TimeStamp;
                     }
                 }
-            }
+            //}
 
             var image = new ProfileImage(data.FileName, originalName, (long)data.ImageBase,
                 (long)data.DefaultBase, data.ImageSize,
                 timeStamp, data.ImageChecksum);
-
-            //Trace.WriteLine($"ImageGroup: {image}, Proc: {data.ProcessID}");
             int imageId = profile.AddImageToProcess(data.ProcessID, image);
 
+#if DEBUG
+            Trace.WriteLine($"ImageGroup: {image}, Proc: {data.ProcessID}");
+#endif
             if (!sawImageId) {
                 // The ImageID event may show up later in the stream.
                 lastProfileImage = profile.FindImage(imageId);

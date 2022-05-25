@@ -58,11 +58,14 @@ namespace IRExplorerUI.Compilers {
             var logWriter = StringWriter.Null;
 #endif
             using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+            symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
             var result = await Task.Run(() => symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age)).ConfigureAwait(false);
 
 #if DEBUG
             Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
+            Trace.IndentLevel = 1;
             Trace.WriteLine(logWriter.ToString());
+            Trace.IndentLevel = 0;
             Trace.WriteLine($"<< TraceEvent");
 #endif
             return result;
@@ -199,6 +202,7 @@ namespace IRExplorerUI.Compilers {
             if ((!localFileFound || hasChecksumMismatch) && options_.SourceServerEnabled) {
                 using var logWriter = new StringWriter();
                 using var symbolReader = new SymbolReader(logWriter);
+                symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
                 using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
                 var sourceLine = pdb.SourceLocationForRva(rva);
 

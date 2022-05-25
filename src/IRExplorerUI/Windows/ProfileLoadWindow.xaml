@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
     Title="Load profile trace"
-    Width="500"
+    Width="550"
     Height="Auto"
     MinWidth="400"
     ResizeMode="CanResizeWithGrip"
@@ -312,7 +312,7 @@
                         Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibility}}">
                         <ListView.View>
                             <GridView>
-                                <GridViewColumn Width="200" DisplayMemberBinding="{Binding Process.Name}">
+                                <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.Name}">
                                     <GridViewColumnHeader Content="Process" />
                                     <GridViewColumn.HeaderContainerStyle>
                                         <Style TargetType="{x:Type GridViewColumnHeader}">

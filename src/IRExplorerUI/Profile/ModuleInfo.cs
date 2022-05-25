@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using CSharpTest.Net.Collections;
@@ -20,7 +21,7 @@ namespace IRExplorerUI.Profile {
         private ISession session_;
         private BinaryFileDescription binaryInfo_;
         private ProfileDataProviderOptions options_;
-        private List<DebugFunctionInfo> sortedFuncList_;
+        public List<DebugFunctionInfo> sortedFuncList_;
         private Dictionary<long, IRTextFunction> addressFuncMap_;
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
@@ -164,47 +165,11 @@ namespace IRExplorerUI.Profile {
         public async Task<string> FindBinaryFilePath(SymbolFileSourceOptions options) {
             // Use the symbol server to locate the image,
             // this will also attempt to download it if not found locally.
-            if (options_.DownloadBinaryFiles) {
-                var imagePath = await session_.CompilerInfo.FindBinaryFile(binaryInfo_, options).ConfigureAwait(false);
-
-                if (File.Exists(imagePath)) {
-                    return imagePath;
-                }
-            }
-
-            // Manually search in the provided directories.
-            // Give priority to the user directories.
-            var imageName = binaryInfo_.ImageName.ToLowerInvariant();
-            var imageExtension = Utils.GetFileExtension(imageName);
-            var searchPattern = $"*{imageExtension}";
-
-            foreach (var path in options_.BinarySearchPaths) {
-                try {
-                    var searchPath = Utils.TryGetDirectoryName(path);
-
-                    foreach (var file in Directory.EnumerateFiles(searchPath, searchPattern, SearchOption.TopDirectoryOnly)) {
-                        //? TODO: Should also do a checksum match
-                        if (Path.GetFileName(file).ToLowerInvariant() == imageName) {
-                            Trace.WriteLine($"Using unchecked local file {file}");
-                            return file;
-                        }
-                    }
-                }
-                catch (Exception ex) {
-                    Trace.TraceError($"Exception searching for binary {imageName} in {path}: {ex.Message}");
-                }
-            }
-
-            //? TODO: Should also do a checksum match
-            if (File.Exists(binaryInfo_.ImagePath)) {
-                return binaryInfo_.ImagePath;
-            }
-
-            return null;
+            return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, options).ConfigureAwait(false);
         }
         
         public DebugFunctionInfo FindDebugFunctionInfo(long funcAddress) {
-            if (!HasDebugInfo) {
+            if (!HasDebugInfo || sortedFuncList_ == null) {
                 return null;
             }
 
@@ -255,12 +220,29 @@ namespace IRExplorerUI.Profile {
 
             if (!externalFuncNames_.TryGetValue(externalFuncName, out var textFunction)) {
                 // Create a dummy external function that will have no sections. 
-                textFunction = new IRTextFunction(externalFuncName);
-                Summary.AddFunction(textFunction);
-                externalFuncNames_[externalFuncName] = textFunction;
+                textFunction = AddPlaceholderFunction(externalFuncName, funcAddress);
             }
 
             return textFunction;
+        }
+
+        public IRTextFunction AddPlaceholderFunction(string name, long funcAddress) {
+            if (ModuleDocument == null) {
+                return null;
+            }
+
+            var func = new IRTextFunction(name);
+            var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
+            func.AddSection(section);
+            
+            ModuleDocument.Summary.AddFunction(func);
+            ModuleDocument.Summary.AddSection(section);
+            externalFuncNames_ ??= new Dictionary<string, IRTextFunction>();
+            externalsFuncMap_ ??= new Dictionary<long, string>();
+            externalFuncNames_[name] = func;
+            externalsFuncMap_[funcAddress] = name;
+            HasDebugInfo = true;
+            return func;
         }
 
         public void Dispose() {

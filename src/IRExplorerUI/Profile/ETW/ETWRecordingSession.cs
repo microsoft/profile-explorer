@@ -151,6 +151,8 @@ namespace IRExplorerUI.Profile.ETW {
                     WorkingDirectory = options_.HasWorkingDirectory ?
                         options_.WorkingDirectory :
                         Utils.TryGetDirectoryName(options_.ApplicationPath),
+                    //? The Process object must have the UseShellExecute property set to false in order to use environment variables
+                    //UseShellExecute = true,
                     Verb = "runas"
                     //RedirectStandardError = false,
                     //RedirectStandardOutput = true
@@ -163,6 +165,7 @@ namespace IRExplorerUI.Profile.ETW {
                         var tempPath = Path.GetTempPath();
                         managedAsmDir_ = Path.Combine(tempPath, sessionName_);
                         Directory.CreateDirectory(managedAsmDir_);
+                        Trace.WriteLine($"Using managed ASM dir {managedAsmDir_}");
                     }
                     catch (Exception ex) {
                         Trace.TraceError($"Failed to create session ASM dir:{managedAsmDir_}: {ex.Message}\n{ex.StackTrace}");
@@ -172,7 +175,7 @@ namespace IRExplorerUI.Profile.ETW {
                     procInfo.EnvironmentVariables["CORECLR_PROFILER"] = "{805A308B-061C-47F3-9B30-F785C3186E81}";
                     procInfo.EnvironmentVariables["CORECLR_PROFILER_PATH"] = profilerPath;
                     procInfo.EnvironmentVariables["IRX_MANAGED_ASM_DIR"] = managedAsmDir_;
-                    Trace.WriteLine($"Using profiler {profilerPath}");
+                    Trace.WriteLine($"Using managed profiler {profilerPath}");
                 }
 
                 var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
@@ -194,6 +197,10 @@ namespace IRExplorerUI.Profile.ETW {
                             break;
                         }
                     }
+
+                    //? TODO: Extra time needed? Some way to get notified about last ETW event for proc
+                    //? Alternative is to use ETW file
+                    Thread.Sleep(1000);
                     
                     StopSession();
                 }
