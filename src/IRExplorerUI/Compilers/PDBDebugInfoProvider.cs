@@ -17,7 +17,6 @@ using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Threading;
 using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers {
@@ -59,7 +58,16 @@ namespace IRExplorerUI.Compilers {
 #endif
             using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
             symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
-            var result = await Task.Run(() => symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age)).ConfigureAwait(false);
+
+            var result = await Task.Run(() => {
+                try {
+                    return symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
+                    return null;
+                }
+            }).ConfigureAwait(false);
 
 #if DEBUG
             Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
@@ -200,31 +208,37 @@ namespace IRExplorerUI.Compilers {
 
             // Try to use the source server if no exact local file found.
             if ((!localFileFound || hasChecksumMismatch) && options_.SourceServerEnabled) {
-                using var logWriter = new StringWriter();
-                using var symbolReader = new SymbolReader(logWriter);
-                symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
-                using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
-                var sourceLine = pdb.SourceLocationForRva(rva);
+                try {
+                    using var logWriter = new StringWriter();
+                    using var symbolReader = new SymbolReader(logWriter);
+                    symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+                    using var pdb = symbolReader.OpenNativeSymbolFile(debugFilePath_);
+                    var sourceLine = pdb.SourceLocationForRva(rva);
 
-                Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
+                    Trace.WriteLine($"Query source server for {sourceLine?.SourceFile?.BuildTimeFilePath}");
 
-                if (sourceLine?.SourceFile != null) {
-                    if (options_.HasAuthorizationToken) {
-                        // SourceLink HTTP personal authentication token.
-                        var token = string.Format("{0}:{1}", "", options_.AuthorizationToken);
-                        var tokenB64 = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(token));
-                        pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
+                    if (sourceLine?.SourceFile != null) {
+                        if (options_.HasAuthorizationToken) {
+                            // SourceLink HTTP personal authentication token.
+                            var token = $":{options_.AuthorizationToken}";
+                            var tokenB64 = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(token));
+                            pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
+                        }
+
+                        // Download the source file.
+                        // The checksum should match, but do a check just in case.
+                        var filePath = sourceLine.SourceFile.GetSourceFile();
+
+                        if (File.Exists(filePath)) {
+                            Trace.WriteLine($"Downloaded source file {filePath}");
+                            localFilePath = filePath;
+                            hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
+                        }
                     }
-
-                    // Download the source file.
-                    // The checksum should match, but do a check just in case.
-                    var filePath = sourceLine.SourceFile.GetSourceFile();
-
-                    if (File.Exists(filePath)) {
-                        Trace.WriteLine($" - downloded {filePath}");
-                        localFilePath = filePath;
-                        hasChecksumMismatch = !SourceFileChecksumMatchesPDB(sourceFile, localFilePath);
-                    }
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to locate source file for {debugFilePath_}: {ex.Message}");
+                    return DebugFunctionSourceFileInfo.Unknown;
                 }
             }
 
@@ -236,7 +250,7 @@ namespace IRExplorerUI.Compilers {
             var pdbChecksum = GetSourceFileChecksum(sourceFile);
             var fileChecksum = ComputeSourceFileChecksum(filePath, hashAlgo);
             return pdbChecksum != null && fileChecksum != null &&
-                   Enumerable.SequenceEqual(pdbChecksum, fileChecksum);
+                   pdbChecksum.SequenceEqual(fileChecksum);
         }
 
         public DebugSourceLineInfo FindSourceLineByRVA(long rva) {
@@ -277,16 +291,14 @@ namespace IRExplorerUI.Compilers {
 
         private unsafe byte[] GetSourceFileChecksum(IDiaSourceFile sourceFile) {
             // Call once to get the size of the hash.
-            uint hashSizeInBytes;
             byte* dummy = null;
-            sourceFile.get_checksum(0, out hashSizeInBytes, out *dummy);
+            sourceFile.get_checksum(0, out uint hashSizeInBytes, out *dummy);
 
             // Allocate buffer and get the actual hash.
             var hash = new byte[hashSizeInBytes];
-            uint bytesFetched;
 
             fixed (byte* bufferPtr = hash) {
-                sourceFile.get_checksum((uint)hash.Length, out bytesFetched, out *bufferPtr);
+                sourceFile.get_checksum((uint)hash.Length, out var bytesFetched, out *bufferPtr);
             }
 
             return hash;
@@ -327,12 +339,7 @@ namespace IRExplorerUI.Compilers {
 
         public DebugFunctionInfo FindFunction(string functionName) {
             var funcSym = FindFunctionSymbol(functionName);
-
-            if (funcSym != null) {
-                return new DebugFunctionInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
-            }
-
-            return null;
+            return funcSym != null ? new DebugFunctionInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length) : null;
         }
 
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {
