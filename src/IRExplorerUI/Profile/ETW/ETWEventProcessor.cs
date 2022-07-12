@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Buffers;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using IRExplorerCore;
-using System.Windows.Documents;
 using Microsoft.Diagnostics.Tracing;
 using static IRExplorerUI.Profile.ETWProfileDataProvider;
 using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
@@ -14,25 +9,8 @@ using System.Diagnostics;
 using System.IO;
 using IRExplorerUI.Compilers;
 using Microsoft.Diagnostics.Runtime;
-using static System.Collections.Specialized.BitVector32;
-using System.Windows.Markup;
-using CSScriptLib;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
-using System.Collections;
-using System.Collections.Concurrent;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
-using IRExplorerUI.Compilers.ASM;
-using Microsoft.Diagnostics.Runtime.DacInterface;
-using System.Net;
-using System.Runtime.InteropServices;
-using Architecture = Microsoft.Diagnostics.Runtime.Architecture;
-using System.IO.Compression;
-using System.Threading;
-using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
-using System.Windows.Media.Media3D;
-using Microsoft.Diagnostics.Tracing.Etlx;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -56,7 +34,6 @@ public class ETWEventProcessor : IDisposable {
     private string managedAsmDir_;
     private List<int> childAcceptedProcessIds_;
     private Dictionary<int, ClrRuntime> runtimeMap_;
-    BlockingCollection<DisassemblerArgs> disasmTaskQueue_;
 
     public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true, 
                              int acceptedProcessId = 0, bool handleDotNetEvents = false,
@@ -153,7 +130,7 @@ public class ETWEventProcessor : IDisposable {
         int[] perCoreLastSample = new int[4096];
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSampleCount = 0;
-        const int sampleReportInterval = 1000;
+        const int sampleReportInterval = 100;
 
         var symbolParser = new SymbolTraceEventParser(source_);
 
@@ -213,32 +190,30 @@ public class ETWEventProcessor : IDisposable {
             int timeStamp = data.TimeDateStamp;
             bool sawImageId = false;
 
-            //if (timeStamp == 0) {
-                //Trace.WriteLine($"ImageGroup: name {data.FileName}, QPC {data.TimeStampQPC}");
-                //Trace.WriteLine($"   has last {lastImageIdData != null}");
-                //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
-                //
-                //if (lastImageIdData != null) {
-                //    Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
-                //    Trace.WriteLine($"    qpc {lastImageIdData.TimeDateStamp} vs current {data.TimeStampQPC}");
-                //}
-
-                if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
-                    // The ImageID event showed up earlier in the stream.
-                    sawImageId = true;
-                    originalName = lastImageIdData.OriginalFileName;
-                    timeStamp = lastImageIdData.TimeDateStamp;
-                }
-                else if (isRealTime_) {
-                    // In a capture session, the image is on the local machine,
-                    // so just take the info out of the binary.
-                    var imageInfo = PEBinaryInfoProvider.GetBinaryFileInfo(data.FileName);
-
-                    if (imageInfo != null) {
-                        timeStamp = imageInfo.TimeStamp;
-                    }
-                }
+            //Trace.WriteLine($"ImageGroup: name {data.FileName}, QPC {data.TimeStampQPC}");
+            //Trace.WriteLine($"   has last {lastImageIdData != null}");
+            //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
+            //
+            //if (lastImageIdData != null) {
+            //    Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
+            //    Trace.WriteLine($"    qpc {lastImageIdData.TimeDateStamp} vs current {data.TimeStampQPC}");
             //}
+
+            if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
+                // The ImageID event showed up earlier in the stream.
+                sawImageId = true;
+                originalName = lastImageIdData.OriginalFileName;
+                timeStamp = lastImageIdData.TimeDateStamp;
+            }
+            else if (isRealTime_) {
+                // In a capture session, the image is on the local machine,
+                // so just take the info out of the binary.
+                var imageInfo = PEBinaryInfoProvider.GetBinaryFileInfo(data.FileName);
+
+                if (imageInfo != null) {
+                    timeStamp = imageInfo.TimeStamp;
+                }
+            }
 
             var image = new ProfileImage(data.FileName, originalName, (long)data.ImageBase,
                 (long)data.DefaultBase, data.ImageSize,
@@ -382,38 +357,19 @@ public class ETWEventProcessor : IDisposable {
                 lastReportedSampleCount = sampleCount;
             }
         };
-
-        Task disasmTask = null;
         
         if (handleDotNetEvents_) {
             ProcessDotNetEvents(profile);
-
-            // Use separate thread to disassemble the native code,
-            // since it would slow down the general event processing.
-            disasmTaskQueue_ = new BlockingCollection<DisassemblerArgs>();
-            disasmTask = Task.Run(() => {
-                try {
-                    foreach (var data in disasmTaskQueue_.GetConsumingEnumerable(cancelableTask.Token)) {
-#if DEBUG
-                        Trace.WriteLine($"=> Disassemble {data.FuncInfo.Name}");
-#endif
-                        DisassembleManagedMethod(data);
-                    }
-                }
-                catch (OperationCanceledException) {
-                    // Canceled by client, ignore.
-                }
-            });
         }
 
         // Go over all ETW events, which will call the registered handlers.
-        source_.Process();
-        
-        if (handleDotNetEvents_) {
-            disasmTaskQueue_.CompleteAdding();
-            disasmTask.Wait();
+        try {
+            source_.Process();
         }
-
+        catch (Exception ex) {
+            Trace.TraceError($"Failed to process ETW events: {ex.Message}");
+        }
+        
         Trace.WriteLine($"Done processing ETW events");
         Trace.WriteLine($"  samples: {profile.Samples.Count}");
         //Trace.Flush();
@@ -461,18 +417,7 @@ public class ETWEventProcessor : IDisposable {
         //    ProcessDotNetMethodLoad(data, profile);
         //};
     }
-
-    public void SetManagedAsmFiles() {
-
-    }
-
-    public static bool IsRunning(int processId) {
-        try { Process.GetProcessById(processId); }
-        catch (InvalidOperationException) { return false; }
-        catch (ArgumentException) { return false; }
-        return true;
-    }
-
+    
     private void ProcessLoaderModuleLoad(ModuleLoadUnloadTraceData data, RawProfileData profile) {
         Trace.WriteLine($"=> Managed module {data.ModuleID}, {data.ModuleILFileName} in proc {data.ProcessID}");
         var runtimeArch = Machine.Amd64;
@@ -493,26 +438,6 @@ public class ETWEventProcessor : IDisposable {
 //#if DEBUG
         //Trace.WriteLine($"=> ILMap token: {data.MethodID}, entries: {data.CountOfMapEntries}, ProcessID: {data.ProcessID}, name: {data.ProcessName}");
 //#endif
-        //var runtime = GetRuntime(data.ProcessID);
-        //
-        //if (runtime == null) {
-        //    return;
-        //}
-        //
-        ////runtime.FlushCachedData();
-        //var method = runtime.GetMethodByHandle((ulong)data.MethodID);
-        //var module = method?.Type?.Module;
-        //
-        //if (module == null) {
-        //    return;
-        //}
-        //
-        //PdbInfo pdbInfo = module.Pdb;
-        //
-        //if (pdbInfo == null) {
-        //    return;
-        //}
-
         var methodMapping = profile.FindManagedMethod(data.MethodID, data.ProcessID);
 
         if (methodMapping == null) {
@@ -537,19 +462,6 @@ public class ETWEventProcessor : IDisposable {
         Trace.WriteLine($"=> Load at {data.MethodStartAddress}: {data.MethodNamespace}.{data.MethodName}, {data.MethodSignature},ProcessID: {data.ProcessID}, name: {data.ProcessName}");
         Trace.WriteLine($"     id/token: {data.MethodID}/{data.MethodToken}, opts: {data.OptimizationTier}, size: {data.MethodSize}");
 #endif
-        //var runtime = GetRuntime(data.ProcessID);
-        //
-        //if (runtime == null) {
-        //    return;
-        //}
-        //
-        ////runtime.FlushCachedData();
-        //var method = runtime.GetMethodByHandle((ulong)data.MethodID);
-        //var module = method?.Type?.Module;
-        //
-        //if (module == null) {
-        //    return;
-        //}
         
         var funcRva = data.MethodStartAddress;
         //var funcName = data.MethodSignature;
@@ -558,14 +470,6 @@ public class ETWEventProcessor : IDisposable {
                                              ToOptimizationLevel(data.OptimizationTier), data.MethodToken);
         profile.AddManagedMethodMapping(data.ModuleID, data.MethodID, funcInfo,
                                         (long)data.MethodStartAddress, data.MethodSize, data.ProcessID);
-
-        // Save method code by copying it from the running process.
-        //var methodCode = CopyDotNetMethod(data.MethodStartAddress, data.MethodSize, runtime);
-        //funcInfo.Data = methodCode;
-
-        // Use separate thread to disassemble the native code,
-        // since it would slow down the general event processing.
-        //disasmTaskQueue_.Add(new DisassemblerArgs(methodCode, funcInfo, runtime));
     }
 
     private string ToOptimizationLevel(OptimizationTier tier) {
@@ -579,119 +483,11 @@ public class ETWEventProcessor : IDisposable {
             _ => null
         };
     }
-
-    private void DisassembleManagedMethod(DisassemblerArgs disassemblerArgs) {
-        //try {
-        //    bool isValid = true;
-
-        //    for (int i = 0; i < Math.Min(10, disassemblerArgs.MethodCode.Length); i++) {
-        //        if (disassemblerArgs.MethodCode[i] != 0) {
-        //            break;
-        //        }
-        //        else if (i >= 8) {
-        //            isValid = false;
-        //            break;
-        //        }
-        //    }
-            
-        //    var runtime = disassemblerArgs.Runtime;
-        //    var runtimeArch = FromRuntimeArchitecture(runtime);
-        //    using var disassembler = Disassembler.CreateForMachine(runtimeArch, address => {
-        //        if (address == 0) {
-        //            return null;
-        //        }
-
-        //        // Assuming the address is a managed entry point,
-        //        // this will return the method that gets called.
-        //        var targetMethod = runtime.GetMethodByInstructionPointer((ulong)address);
-
-        //        if (targetMethod != null) {
-        //            return targetMethod.Signature;
-        //        }
-                
-        //        // Check if it's one of the JIT helpers.
-        //        return runtime.GetJitHelperFunctionName((ulong)address);
-        //    });
-
-        //    var asmText = disassembler.DisassembleToText(disassemblerArgs.MethodCode,
-        //                                                 disassemblerArgs.FuncInfo.RVA);
-        //    var cs = new CompressedString(asmText);
-        //    disassemblerArgs.FuncInfo.Data = cs;
-
-        //    //Trace.WriteLine($"Length: {asmText.Length}, Size {asmText.Length * 2}, Compressed: {cs.Size}");
-        //    //Trace.WriteLine(asmText);
-        //    //Trace.WriteLine("===========================");
-        //}
-        //catch (Exception ex) {
-        //    Trace.WriteLine($"Failed to disasm managed method at {disassemblerArgs.FuncInfo.RVA}: {ex.ToString()}");
-        //}
-    }
-
-    private Machine FromRuntimeArchitecture(ClrRuntime runtime) {
-        var arch = runtime.ClrInfo.DacInfo.TargetArchitecture;
-        return arch switch {
-            Architecture.Amd64 => Machine.Amd64,
-            Architecture.X86 => Machine.I386,
-            Architecture.Arm64 => Machine.Arm64,
-            Architecture.Arm => Machine.Arm,
-            _ => throw new InvalidOperationException($"Unknown .NET architecture: {arch}")
-        };
-    }
-
-    private SymbolFileDescriptor FromRuntimePdbInfo(PdbInfo info) {
-        return new SymbolFileDescriptor(info.Path, info.Guid, info.Revision);
-    }
-
+    
     private SymbolFileDescriptor FromModuleLoad(ModuleLoadUnloadTraceData data) {
         return new SymbolFileDescriptor(data.ManagedPdbBuildPath, data.ManagedPdbSignature, data.ManagedPdbAge);
     }
-
-
-    private ClrRuntime GetRuntime(int processId) {
-        
-        if (!runtimeMap_.TryGetValue(processId, out var runtime)) {
-            runtime = TryConnectToDotNetProcess(processId);
-            runtimeMap_[processId] = runtime; 
-        }
-
-        return runtime;
-    }
-
-    private ClrRuntime TryConnectToDotNetProcess(int processId) {
-        DataTarget dataTarget = null;
-        
-        try {
-            dataTarget = DataTarget.AttachToProcess(processId, false);
-
-#if DEBUG
-            foreach (var v in dataTarget.ClrVersions) {
-                var dac = v.DacInfo;
-                Trace.WriteLine($"DAC {dac.LocalDacPath}");
-                Trace.WriteLine($"DAC target: {dac.TargetArchitecture}");
-                Trace.WriteLine($"DAC version: {dac.Version}");
-            }
-#endif
-            return dataTarget.ClrVersions[0].CreateRuntime();
-        }
-        catch (Exception ex) {
-            Trace.WriteLine($"Failed to connect to .NET process {processId}: {ex.Message}\n{ex.StackTrace}");
-            dataTarget?.Dispose();
-            return null;
-        }
-    }
-
-    private byte[] CopyDotNetMethod(ulong address, int size, ClrRuntime runtime) {
-        try {
-            var buffer = new byte[size];
-            runtime.DataTarget.DataReader.Read(address, buffer.AsSpan());
-            return buffer;
-        }
-        catch (Exception ex) {
-            Trace.WriteLine($"Failed to read .NET method {address:X}, size {size}: {ex.Message}\n{ex.StackTrace}");
-            return null;
-        }
-    }
-
+    
     private bool IsAcceptedProcess(int processID) {
         if (acceptedProcessId_ == 0) {
             return true; // No filtering.
@@ -707,17 +503,4 @@ public class ETWEventProcessor : IDisposable {
     public void Dispose() {
         source_?.Dispose();
     }
-
-    //runtime.DacLibrary.SOSDacInterface.GetMethodDescData(method.MethodDesc, data.MethodStartAddress, out var x);
-    //runtime.DacLibrary.SOSDacInterface.GetMethodTableData(data.MethodStartAddress, out var mt);
-    //var slot = runtime.DacLibrary.SOSDacInterface.GetMethodTableSlot(mt.Token, x.SlotNumber);
-    //var slotPtr = x.AddressOfNativeCodeSlot.Value;
-    //var buffer = new byte[8];
-    //runtime.DataTarget.DataReader.Read((ulong)slotPtr, buffer.AsSpan());
-    //var slotAddr = MemoryMarshal.Read<long>(buffer);
-    //Trace.WriteLine($"Found slot {slotAddr:X} for ptr {slotPtr:X}");
-
-    //runtime.DacLibrary.SOSDacInterface.GetCodeHeaderData(data.MethodStartAddress, out var codeHeader);
-    //runtime.DacLibrary.SOSDacInterface.meth
-    //var back = runtime.DacLibrary.SOSDacInterface.GetMethodDescPtrFromIP(data.MethodStartAddress);
 }
