@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using Microsoft.Diagnostics.Tracing;
 using Microsoft.Diagnostics.Tracing.Parsers;
-using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using Microsoft.Diagnostics.Tracing.Session;
 
 namespace IRExplorerUI.Profile.ETW {
@@ -39,6 +35,9 @@ namespace IRExplorerUI.Profile.ETW {
                     if (profiledProcess == null) {
                         return null;
                     }
+
+                    // Start task that waits for the process to exit,
+                    // which will stop the ETW session.
                     CreateApplicationExitTask(profiledProcess, cancelableTask);
 
                     // Suspend the application before the session starts,
@@ -59,24 +58,25 @@ namespace IRExplorerUI.Profile.ETW {
                     throw new NotImplementedException();
                 }
             }
-            
+
             //var pmcs = TraceEventProfileSources.GetInfo();
 
-
             // The entire ETW processing must be done on the same thread.
-            return Task.Run(() => {
-                if (!StartSession()) {
-                    return null;
-                }
+            RawProfileData profile = null;
+            var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
+                                 KernelTraceEventParser.Keywords.Process |
+                                 KernelTraceEventParser.Keywords.Thread |
+                                 //KernelTraceEventParser.Keywords.ContextSwitch |
+                                 KernelTraceEventParser.Keywords.Profile;
 
-                RawProfileData profile = null;
-                var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
-                                     KernelTraceEventParser.Keywords.Process |
-                                     KernelTraceEventParser.Keywords.Thread |
-                                     //KernelTraceEventParser.Keywords.ContextSwitch |
-                                     KernelTraceEventParser.Keywords.Profile;
+            Trace.WriteLine($"=> Start task {DateTime.Now}");
 
+            var eventTask = Task.Run(() => {
                 try {
+                    if (!CreateSession()) {
+                        return null;
+                    }
+
                     session_.EnableKernelProvider(capturedEvents, capturedEvents); // With stack sampling.
                     session_.EnableProvider(SymbolTraceEventParser.ProviderGuid, TraceEventLevel.Verbose);
 
@@ -94,47 +94,73 @@ namespace IRExplorerUI.Profile.ETW {
                         //            ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap));
                     }
 
-                    //? / The Profile event requires the SeSystemProfilePrivilege to succeed, so set it.  
+
+                    //? The Profile event requires the SeSystemProfilePrivilege to succeed, so set it.  
                     //if ((flags & (KernelTraceEventParser.Keywords.Profile | KernelTraceEventParser.Keywords.PMCProfile)) != 0) {
                     //    TraceEventNativeMethods.SetPrivilege(TraceEventNativeMethods.SE_SYSTEM_PROFILE_PRIVILEGE);
 
-                    // Resume all profiled app threads and start waiting for it to close.
-                    threadSuspender?.Dispose();
-                    using var eventProcessor = 
-                        new ETWEventProcessor(session_.Source, true, acceptedProcessId, 
-                                              options_.ProfileDotNet, managedAsmDir_);
-                    profile = eventProcessor.ProcessEvents(progressCallback, cancelableTask);
+                    // Start the ETW session.
+                    using var eventProcessor =
+                        new ETWEventProcessor(session_.Source, true, acceptedProcessId,
+                            options_.ProfileDotNet, managedAsmDir_);
+
+                    Trace.WriteLine($"=> ProcessEvents");
+                    return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed ETW event capture: {ex.Message}\n{ex.StackTrace}");
                     threadSuspender?.Dispose(); // This resume all profiled app threads.
-                    profiledProcess?.Dispose();
+                    return null;
                 }
                 finally {
                     StopSession();
                     profiledProcess?.Dispose();
+                    profiledProcess = null;
                 }
+            });
 
-                if (options_.ProfileDotNet) {
+            return Task.Run(() => {
+                try {
+                    var sw = Stopwatch.StartNew();
+                    Trace.WriteLine($"=> Start tracing {DateTime.Now}");
 
+                    // Resume all profiled app threads and start waiting for it to close,
+                    // then wait for ETW session to complete.
+                    Trace.WriteLine($"=> Resume app");
+                    threadSuspender?.Dispose();
+
+                    Trace.WriteLine($"=> Wait for results {DateTime.Now}");
+                    eventTask.Wait();
+                    profile = eventTask.Result;
+                    Trace.WriteLine($"Tracing took {sw.ElapsedMilliseconds}");
+                    Trace.Flush();
                 }
-
-
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed ETW event capture: {ex.Message}\n{ex.StackTrace}");
+                    threadSuspender?.Dispose(); // This resume all profiled app threads.
+                }
+                finally {
+                    StopSession();
+                    profiledProcess?.Dispose();
+                    profiledProcess = null;
+                }
+                
                 return profile;
             });
         }
 
-        private bool StartSession() {
+        private bool CreateSession() {
             // Start a new in-memory session.
             try {
                 Debug.Assert(session_ == null);
                 session_ = new TraceEventSession(sessionName_);
-                session_.BufferSizeMB = 256;
+                //session_.BufferSizeMB = 256;
                 session_.CpuSampleIntervalMSec = 1000.0f / options_.SamplingFrequency;
 
                 Trace.WriteLine("Started ETW session:");
                 Trace.WriteLine($"   Buffer size: {session_.BufferSizeMB} MB");
-
+                Trace.WriteLine($"   Sampling freq: {session_.CpuSampleIntervalMSec} ms / {options_.SamplingFrequency}");
+                Trace.Flush();
                 return true;
             }
             catch (Exception ex) {
@@ -200,9 +226,14 @@ namespace IRExplorerUI.Profile.ETW {
 
                     //? TODO: Extra time needed? Some way to get notified about last ETW event for proc
                     //? Alternative is to use ETW file
-                    Thread.Sleep(1000);
+                    Thread.Sleep(5000);
+
+                    Trace.WriteLine($"=> Stop");
+                    var sw = Stopwatch.StartNew();
                     
                     StopSession();
+                    Trace.WriteLine($"=> Stop took {sw.ElapsedMilliseconds}");
+                    Trace.Flush();
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed to wait for profiled application exit {options_.ApplicationPath}: {ex.Message}\n{ex.StackTrace}");
@@ -211,13 +242,16 @@ namespace IRExplorerUI.Profile.ETW {
         }
 
         private void StopSession() {
-            session_?.Stop();
-            session_?.Dispose();
-            session_ = null;
+            if (session_ != null) {
+                session_.Flush();
+                session_.Stop();
+                session_.Dispose();
+                session_ = null;
+            }
         }
 
         public void Dispose() {
-            session_?.Dispose();
+            StopSession();
         }
     }
 }
