@@ -12,6 +12,8 @@ namespace IRExplorerUI.Profile.ETW {
     public class ETWRecordingSession : IDisposable {
         private TraceEventSession session_;
         private ProfileRecordingSessionOptions options_;
+        private ProfileLoadProgressHandler progressCallback_;
+        private DateTime lastEventTime_;
         private string sessionName_;
         private string managedAsmDir_;
 
@@ -23,59 +25,69 @@ namespace IRExplorerUI.Profile.ETW {
             sessionName_ = sessionName ?? $"IRX-ETW-{Guid.NewGuid()}";
         }
 
+        void SessionProgressHandler(ProfileLoadProgress info) {
+            // Record the last time samples were processed, this is used in
+            // CreateApplicationExitTask to keep the ETW session running after the app exits,
+            // but ETW events for the app are still incoming.
+            lastEventTime_ = DateTime.UtcNow;
+            progressCallback_?.Invoke(info);
+        }
+
         public Task<RawProfileData> StartRecording(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
             int acceptedProcessId = 0;
             Process profiledProcess = null;
             WindowsThreadSuspender threadSuspender = null;
-
-            switch (options_.SessionKind) {
-                case ProfileSessionKind.StartProcess: {
-                    (profiledProcess, acceptedProcessId) = StartProfiledApplication();
-
-                    if (profiledProcess == null) {
-                        return null;
-                    }
-
-                    // Start task that waits for the process to exit,
-                    // which will stop the ETW session.
-                    CreateApplicationExitTask(profiledProcess, cancelableTask);
-
-                    // Suspend the application before the session starts,
-                    // then resume it once everything is set up.
-                    try {
-                        threadSuspender = new WindowsThreadSuspender(acceptedProcessId);
-                    }
-                    catch (Exception ex) {
-                        Trace.TraceError($"Failed to suspend application threads {options_.ApplicationPath}: {ex.Message}\n{ex.StackTrace}");
-                    }
-                    break;
-                }
-                case ProfileSessionKind.SystemWide: {
-                    // ETW sessions are system-wide by default.
-                    break;
-                }
-                default: {
-                    throw new NotImplementedException();
-                }
-            }
-
-            //var pmcs = TraceEventProfileSources.GetInfo();
+            var sessionStarted = new ManualResetEvent(false);
+            
+            //? var pmcs = TraceEventProfileSources.GetInfo();
 
             // The entire ETW processing must be done on the same thread.
             RawProfileData profile = null;
-            var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
-                                 KernelTraceEventParser.Keywords.Process |
-                                 KernelTraceEventParser.Keywords.Thread |
-                                 //KernelTraceEventParser.Keywords.ContextSwitch |
-                                 KernelTraceEventParser.Keywords.Profile;
 
-            Trace.WriteLine($"=> Start task {DateTime.Now}");
-
+            // Start a task that runs the ETW session and captures the events.
             var eventTask = Task.Run(() => {
                 try {
                     if (!CreateSession()) {
                         return null;
                     }
+
+                    // Start the profiled application.
+                    switch (options_.SessionKind) {
+                        case ProfileSessionKind.StartProcess: {
+                            (profiledProcess, acceptedProcessId) = StartProfiledApplication();
+
+                            if (profiledProcess == null) {
+                                return null;
+                            }
+
+                            // Start task that waits for the process to exit,
+                            // which will stop the ETW session.
+                            CreateApplicationExitTask(profiledProcess, cancelableTask);
+
+                            // Suspend the application before the session starts,
+                            // then resume it once everything is set up.
+                            try {
+                                threadSuspender = new WindowsThreadSuspender(acceptedProcessId);
+                            }
+                            catch (Exception ex) {
+                                Trace.TraceError($"Failed to suspend application threads {options_.ApplicationPath}: {ex.Message}\n{ex.StackTrace}");
+                            }
+                            break;
+                        }
+                        case ProfileSessionKind.SystemWide: {
+                            // ETW sessions are system-wide by default.
+                            break;
+                        }
+                        default: {
+                            throw new NotImplementedException();
+                        }
+                    }
+
+                    var capturedEvents = KernelTraceEventParser.Keywords.ImageLoad |
+                                                KernelTraceEventParser.Keywords.Process |
+                                                KernelTraceEventParser.Keywords.Thread |
+                                                //KernelTraceEventParser.Keywords.ContextSwitch |
+                                                KernelTraceEventParser.Keywords.Profile;
 
                     session_.EnableKernelProvider(capturedEvents, capturedEvents); // With stack sampling.
                     session_.EnableProvider(SymbolTraceEventParser.ProviderGuid, TraceEventLevel.Verbose);
@@ -102,10 +114,13 @@ namespace IRExplorerUI.Profile.ETW {
                     // Start the ETW session.
                     using var eventProcessor =
                         new ETWEventProcessor(session_.Source, true, acceptedProcessId,
-                            options_.ProfileDotNet, managedAsmDir_);
+                                              options_.ProfileChildProcesses,
+                                              options_.ProfileDotNet, managedAsmDir_);
 
-                    Trace.WriteLine($"=> ProcessEvents");
-                    return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
+                    sessionStarted.Set();
+                    progressCallback_ = progressCallback;
+                    lastEventTime_ = DateTime.MinValue;
+                    return eventProcessor.ProcessEvents(SessionProgressHandler, cancelableTask);
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed ETW event capture: {ex.Message}\n{ex.StackTrace}");
@@ -119,21 +134,17 @@ namespace IRExplorerUI.Profile.ETW {
                 }
             });
 
+            // Start a task that waits for the ETW session task to complete.
             return Task.Run(() => {
                 try {
-                    var sw = Stopwatch.StartNew();
-                    Trace.WriteLine($"=> Start tracing {DateTime.Now}");
+                    // Wait until the ETW session task starts.
+                    while (!cancelableTask.IsCanceled &&
+                           !sessionStarted.WaitOne(100)) { }
 
                     // Resume all profiled app threads and start waiting for it to close,
                     // then wait for ETW session to complete.
-                    Trace.WriteLine($"=> Resume app");
                     threadSuspender?.Dispose();
-
-                    Trace.WriteLine($"=> Wait for results {DateTime.Now}");
-                    eventTask.Wait();
                     profile = eventTask.Result;
-                    Trace.WriteLine($"Tracing took {sw.ElapsedMilliseconds}");
-                    Trace.Flush();
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed ETW event capture: {ex.Message}\n{ex.StackTrace}");
@@ -206,6 +217,8 @@ namespace IRExplorerUI.Profile.ETW {
 
                 var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
                 process.Start();
+                Trace.WriteLine($"=> started {options_.ApplicationPath}");
+
                 return (process, process.Id);
             }
             catch (Exception ex) {
@@ -223,17 +236,30 @@ namespace IRExplorerUI.Profile.ETW {
                             break;
                         }
                     }
-
-                    //? TODO: Extra time needed? Some way to get notified about last ETW event for proc
-                    //? Alternative is to use ETW file
-                    Thread.Sleep(5000);
-
-                    Trace.WriteLine($"=> Stop");
-                    var sw = Stopwatch.StartNew();
                     
+                    // Once the app exits, wait until no more ETW events are arriving
+                    // to be processed, then stop the session.
+                    int waitCount = 0;
+
+                    while (!task.IsCanceled) {
+                        // If no events arrived yet at all, wait a while longer.
+                        if (lastEventTime_ == DateTime.MinValue) {
+                            Thread.Sleep(500);
+
+                            if (waitCount++ > 10) break;
+                        }
+                        else {
+                            var timeSinceLastSample = DateTime.UtcNow - lastEventTime_;
+
+                            if (timeSinceLastSample.TotalMilliseconds > 1000) {
+                                break;
+                            }
+
+                            Thread.Sleep(100);
+                        }
+                    }
+
                     StopSession();
-                    Trace.WriteLine($"=> Stop took {sw.ElapsedMilliseconds}");
-                    Trace.Flush();
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed to wait for profiled application exit {options_.ApplicationPath}: {ex.Message}\n{ex.StackTrace}");

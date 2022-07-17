@@ -54,7 +54,6 @@
                                     IsEnabled="{Binding InputControlsEnabled}"
                                     IsTextCompletionEnabled="False"
                                     MinimumPrefixLength="1"
-                                    TabIndex="1"
                                     Text="{Binding Path=Options.RecordingSessionOptions.ApplicationPath, Mode=TwoWay}" />
 
                                 <Button
@@ -64,8 +63,7 @@
                                     HorizontalAlignment="Right"
                                     Click="ApplicationBrowseButton_Click"
                                     Content="Browse"
-                                    IsEnabled="{Binding InputControlsEnabled}"
-                                    TabIndex="9" />
+                                    IsEnabled="{Binding InputControlsEnabled}" />
                             </Grid>
 
                             <TextBlock Margin="8,4,8,0" Text="Arguments" />
@@ -77,7 +75,6 @@
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     IsEnabled="{Binding InputControlsEnabled}"
-                                    TabIndex="2"
                                     Text="{Binding Path=Options.RecordingSessionOptions.ApplicationArguments, Mode=TwoWay}" />
                             </Grid>
                             <TextBlock Margin="8,4,8,0" Text="Working directory" />
@@ -89,7 +86,6 @@
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     IsEnabled="{Binding InputControlsEnabled}"
-                                    TabIndex="2"
                                     Text="{Binding Path=Options.RecordingSessionOptions.WorkingDirectory, Mode=TwoWay}" />
                             </Grid>
 
@@ -108,7 +104,6 @@
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
-                                TabIndex="2"
                                 Text="{Binding Path=SymbolOptions.SymbolSearchPaths2, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                 TextWrapping="Wrap" />
 
@@ -188,8 +183,7 @@
                                 HorizontalAlignment="Left"
                                 Background="#FFFCF4CC"
                                 Click="RestartAppButton_OnClick"
-                                Content="Restart as Admin"
-                                TabIndex="9" />
+                                Content="Restart as Admin" />
 
                             <TextBlock
                                 Margin="8,0,0,0"
@@ -210,8 +204,7 @@
                                 Background="#FFFCF4CC"
                                 Click="StartCaptureButton_OnClick"
                                 Content="Start capture"
-                                IsEnabled="{Binding RecordingControlsEnabled}"
-                                TabIndex="9" />
+                                IsEnabled="{Binding RecordingControlsEnabled}" />
                             <Button
                                 x:Name="StopCaptureButton"
                                 Height="22"
@@ -220,8 +213,7 @@
                                 HorizontalAlignment="Left"
                                 Click="StopCaptureButton_OnClick"
                                 Content="Stop"
-                                IsEnabled="{Binding RecordingStopControlsEnabled}"
-                                TabIndex="9" />
+                                IsEnabled="{Binding RecordingStopControlsEnabled}" />
 
                             <TextBlock
                                 x:Name="RecordProgressLabel"
@@ -246,7 +238,6 @@
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 IsTextCompletionEnabled="False"
                                 MinimumPrefixLength="1"
-                                TabIndex="1"
                                 Text="{Binding Path=ProfileFilePath, Mode=TwoWay}" />
 
                             <Button
@@ -256,8 +247,7 @@
                                 HorizontalAlignment="Right"
                                 Click="ProfileBrowseButton_Click"
                                 Content="Browse"
-                                IsEnabled="{Binding InputControlsEnabled}"
-                                TabIndex="9" />
+                                IsEnabled="{Binding InputControlsEnabled}" />
                         </Grid>
 
                         <TextBlock Margin="8,4,8,0" Text="Process executable binary" />
@@ -274,7 +264,6 @@
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 IsTextCompletionEnabled="False"
                                 MinimumPrefixLength="1"
-                                TabIndex="2"
                                 Text="{Binding Path=BinaryFilePath, Mode=TwoWay}" />
 
                             <Button
@@ -284,8 +273,7 @@
                                 HorizontalAlignment="Right"
                                 Click="BinaryBrowseButton_Click"
                                 Content="Browse"
-                                IsEnabled="{Binding InputControlsEnabled}"
-                                TabIndex="10" />
+                                IsEnabled="{Binding InputControlsEnabled}" />
                         </Grid>
                     </StackPanel>
 
@@ -413,7 +401,6 @@
                                 Click="CancelButton_Click"
                                 Content="Cancel"
                                 IsCancel="True"
-                                TabIndex="4"
                                 Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibility}}" />
                             <Button
                                 x:Name="LoadButton"
@@ -424,7 +411,6 @@
                                 Click="LoadButton_Click"
                                 Content="Load Profile"
                                 IsEnabled="{Binding InputControlsEnabled}"
-                                TabIndex="3"
                                 Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibility}}" />
                         </StackPanel>
                     </Grid>
@@ -494,7 +480,6 @@
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     IsEnabled="{Binding ElementName=SymbolSearchPathsCheckbox, Path=IsChecked}"
-                                    TabIndex="2"
                                     Text="{Binding Path=SymbolOptions.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                     TextWrapping="Wrap" />
                             </Grid>
@@ -529,7 +514,6 @@
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}"
-                                TabIndex="2"
                                 Text="{Binding Path=SymbolOptions.AuthorizationToken, Mode=TwoWay}"
                                 TextWrapping="Wrap" />
                         </StackPanel>
@@ -563,7 +547,6 @@
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     IsEnabled="{Binding ElementName=BinarySearchPathsCheckbox, Path=IsChecked}"
-                                    TabIndex="2"
                                     Text="{Binding Path=Options.BinarySearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                     TextWrapping="Wrap" />
                             </Grid>
@@ -582,7 +565,6 @@
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     IsEnabled="{Binding ElementName=BinaryNameWhitelistCheckbox, Path=IsChecked}"
-                                    TabIndex="2"
                                     Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
                                     TextWrapping="Wrap" />
                             </Grid>

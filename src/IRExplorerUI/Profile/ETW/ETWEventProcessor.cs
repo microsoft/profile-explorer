@@ -11,6 +11,7 @@ using IRExplorerUI.Compilers;
 using Microsoft.Diagnostics.Runtime;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using System.Reflection.PortableExecutable;
+using System.Windows.Documents;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -31,13 +32,15 @@ public class ETWEventProcessor : IDisposable {
     private bool isRealTime_;
     private bool handleDotNetEvents_;
     private int acceptedProcessId_;
+    private bool handleChildProcesses_;
     private string managedAsmDir_;
     private List<int> childAcceptedProcessIds_;
     private Dictionary<int, ClrRuntime> runtimeMap_;
 
     public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true, 
-                             int acceptedProcessId = 0, bool handleDotNetEvents = false,
-                              string managedAsmDir = null) {
+                             int acceptedProcessId = 0, bool handleChildProcesses = false,
+                             bool handleDotNetEvents = false,
+                             string managedAsmDir = null) {
         Trace.WriteLine($"New ETWEventProcessor: ProcId {acceptedProcessId}, handleDotNet: {handleDotNetEvents}");
         source_ = source;
         isRealTime_ = isRealTime;
@@ -88,8 +91,7 @@ public class ETWEventProcessor : IDisposable {
             if (data.ProcessID < 0) {
                 return;
             }
-
-            // Save sample.
+            
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
 
@@ -100,6 +102,18 @@ public class ETWEventProcessor : IDisposable {
                 false, contextId);
             int sampleId = profile.AddSample(sample);
             profile.ReturnContext(contextId);
+        };
+
+        source_.Kernel.PerfInfoPMCSample += data => {
+            if (cancelableTask.IsCanceled) {
+                source_.StopProcessing();
+            }
+
+            if (data.ProcessID < 0) {
+                return;
+            }
+
+            
         };
 
         source_.Process();
@@ -130,7 +144,7 @@ public class ETWEventProcessor : IDisposable {
         int[] perCoreLastSample = new int[4096];
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSampleCount = 0;
-        const int sampleReportInterval = 100;
+        const int sampleReportInterval = 1000;
 
         var symbolParser = new SymbolTraceEventParser(source_);
 
@@ -178,13 +192,12 @@ public class ETWEventProcessor : IDisposable {
 #endif
 
             // If parent is one of the accepted processes, accept the child too.
-            //? TOOD: Option
-            if (IsAcceptedProcess(data.ParentID)) {
+            if (handleChildProcesses_ && IsAcceptedProcess(data.ParentID)) {
                 //Trace.WriteLine($"=> Accept child {data.ProcessID} of {data.ParentID}");
                 childAcceptedProcessIds_.Add(data.ProcessID);
             }
         };
-
+        
         source_.Kernel.ImageGroup += data => {
             string originalName = null;
             int timeStamp = data.TimeDateStamp;
@@ -198,7 +211,7 @@ public class ETWEventProcessor : IDisposable {
             //    Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
             //    Trace.WriteLine($"    qpc {lastImageIdData.TimeDateStamp} vs current {data.TimeStampQPC}");
             //}
-
+            
             if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
                 // The ImageID event showed up earlier in the stream.
                 sawImageId = true;
@@ -364,6 +377,7 @@ public class ETWEventProcessor : IDisposable {
 
         // Go over all ETW events, which will call the registered handlers.
         try {
+            Trace.WriteLine("Start processing ETW events");
             source_.Process();
         }
         catch (Exception ex) {
