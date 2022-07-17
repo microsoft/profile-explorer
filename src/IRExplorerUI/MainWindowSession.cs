@@ -331,6 +331,7 @@ namespace IRExplorerUI {
                     sessionState_.RegisterLoadedDocument(loadedDoc);
                 }
 
+                UpdateWindowTitle();
                 await SetupPanels();
             });
 

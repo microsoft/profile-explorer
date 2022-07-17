@@ -846,7 +846,7 @@ namespace IRExplorerUI {
 
             if (path.Length >= 2 &&
                 path[0] == '"' &&
-                path[path.Length - 1] == '"') {
+                path[^1] == '"') {
                 path = path.Substring(1, path.Length - 2);
             }
 

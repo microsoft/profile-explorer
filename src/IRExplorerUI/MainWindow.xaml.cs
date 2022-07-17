@@ -505,6 +505,11 @@ namespace IRExplorerUI {
 
             if (sessionState_.Info.IsFileSession) {
                 title += $" - {sessionState_.Info.FilePath}";
+
+                if (sessionState_.MainDocument != null &&
+                    sessionState_.MainDocument.BinaryFileExists) {
+                    title += $" ({sessionState_.MainDocument.BinaryFilePath})";
+                }
             }
             else {
                 if (sessionState_.Documents.Count == 1) {

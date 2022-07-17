@@ -285,6 +285,9 @@ namespace IRExplorerUI {
         }
 
         private async void StartCaptureButton_OnClick(object sender, RoutedEventArgs e) {
+            options_.RecordingSessionOptions.ApplicationPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
+            options_.RecordingSessionOptions.WorkingDirectory = Utils.CleanupPath(options_.RecordingSessionOptions.WorkingDirectory);
+
             using var recordingSession = new ETWRecordingSession(options_.RecordingSessionOptions);
             
             IsRecordingProfile = true;

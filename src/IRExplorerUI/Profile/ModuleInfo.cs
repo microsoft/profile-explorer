@@ -62,7 +62,7 @@ namespace IRExplorerUI.Profile {
             }
 
             var localBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
-            bool isManagedImagae = localBinaryInfo != null && localBinaryInfo.IsManagedImage;
+            bool isManagedImage = localBinaryInfo != null && localBinaryInfo.IsManagedImage;
             
             var loadedDoc = await session_.LoadBinaryDocument(filePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
             
@@ -77,11 +77,10 @@ namespace IRExplorerUI.Profile {
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
 
-            if (isManagedImagae) {
+            if (isManagedImage && debugInfo != null) {
                 Trace.TraceInformation($"  Has managed debug {imageName}");
                 DebugInfo = debugInfo;
                 HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
-                Trace.TraceInformation($"      has debug info {HasDebugInfo}, functs {sortedFuncList_.Count}");
                 loadedDoc.DebugInfo = debugInfo;
             }
 
