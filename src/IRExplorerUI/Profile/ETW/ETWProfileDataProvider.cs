@@ -6,16 +6,11 @@ using IRExplorerCore;
 using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using System.Linq;
-using System.Threading;
 using System.Text;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Windows.Forms.VisualStyles;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
-using Microsoft.Diagnostics.Tracing;
-using Microsoft.Diagnostics.Tracing.Parsers;
-using Microsoft.Diagnostics.Tracing.Parsers.Symbol;
 using IRExplorerUI.Profile.ETW;
 
 namespace IRExplorerUI.Profile; 
@@ -607,7 +602,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-                            if (false && resolvedStack != null) {
+                            if (resolvedStack != null) {
                                 foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                     if (resolvedFrame.IsUnknown) {
                                         // Can at least increment the module weight.
@@ -673,18 +668,19 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 long managedBaseAddress = 0;
                                 int frameIndex = 0;
 
+                                bool trace = false;
+
                                 //? TODO: Stacks with >256 frames are truncated, inclusive time computation is not right then
                                 //? for ex it never gets to main. Easy example is a quicksort impl
                                 for(; frameIndex < stackFrames.Length; frameIndex++) {
                                     var frameIp = stackFrames[frameIndex];
 
-                                //foreach (var frameIp in stackFrames) {
-                                    //? Use Frame -> Resolved Frame cache
+                                    if (trace) {
+                                        Trace.WriteLine($"  at frame {frameIndex}: {frameIp}");
+                                    }
+
                                     ProfileImage frameImage = prof.FindImageForIP(frameIp, context);
 
-                                    //frameIndex++;
-                                    bool found = false;
-                                    
                                     if (frameImage == null) {
                                         if (prof.HasManagedMethods(context.ProcessId)) {
                                             var managedFunc = prof.FindManagedMethodForIP(frameIp, context.ProcessId);
@@ -696,6 +692,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         }
 
                                         if (frameImage == null) {
+                                            if (trace) {
+                                                Trace.WriteLine($"  ! no frameImage");
+                                            }
+
                                             resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                             isTopFrame = false;
                                             continue;
@@ -723,10 +723,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     //}
 
                                     if (module != null && module.HasDebugInfo) {
-                                        if (found) {
-                                            Trace.WriteLine($"  - mod with debug");
-                                        }
-
                                         if (managedBaseAddress != 0) {
                                             frameRva = frameIp;
                                             funcInfo = module.FindDebugFunctionInfo(frameRva);
@@ -739,22 +735,28 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         if (funcInfo != null) {
                                             funcName = funcInfo.Name;
                                             funcRva = funcInfo.RVA;
+
+                                            if (trace) {
+                                                Trace.WriteLine($"  => {funcName} at RVA {funcRva} in {frameImage.ModuleName} ");
+                                            }
+                                        }
+                                        else {
+                                            if (trace) {
+                                                Trace.WriteLine($"  ! no funcInfo in frame RVA {frameRva} {frameImage.ModuleName}");
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        if (trace) {
+                                            Trace.WriteLine($"  ! no module for {frameImage.ModuleName}");
+                                            Trace.WriteLine($"      debug issue: {module != null && !module.HasDebugInfo}");
                                         }
                                     }
 
-                                    //if (funcName.Contains("Base64Encode_Opt")) {
-                                    //    frameIndex = -1;
-                                    //    continue;
-                                    //}
-                                    //else {
-                                    //    if (found) {
-                                    //        if (module == null) {
-                                    //            Trace.WriteLine($"  o no module for {frameImage.FilePath}");
-                                    //        }
-                                    //        else if (!module.HasDebugInfo) {
-                                    //            Trace.WriteLine($"  o no debug for {frameImage.FilePath}");
-                                    //        }
-                                    //    }
+                                    //? Tracing
+                                    //if (funcName != null && funcName.Contains("_PyObject_Malloc")) {
+                                    //    Trace.WriteLine($"At {funcName}");
+                                    //    trace = true;
                                     //}
 
                                     IRTextFunction textFunction = null;
@@ -794,10 +796,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     }
 
                                     if (textFunction == null) {
-                                        if (found) {
-                                            Trace.WriteLine($"  o Skip missing IR func {funcName}");
-                                        }
-                                        
                                         resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
                                         isTopFrame = false;
                                         continue;
@@ -838,7 +836,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 stack.SetOptionalData(resolvedStack);
                             }
 
-                            // Build call tree.
+                            // Build call tree. Note that the call tree methods themselves are thread-safe.
                             bool isRootFrame = true;
                             ProfileCallTreeNode prevNode = null;
 
@@ -876,7 +874,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 await Task.WhenAll(tasks.ToArray());
                 profileData_.CallTree = callTree;
 
-                //Trace.WriteLine(callTree.PrintSamples());
+                //callTree.Print();
                 //prof.PrintSamples(0);
 
                 Trace.WriteLine($"Done process samples in {sw.Elapsed}");

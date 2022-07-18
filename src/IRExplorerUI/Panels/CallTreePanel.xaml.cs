@@ -255,7 +255,7 @@ namespace IRExplorerUI {
                     else if (funcNode.Kind == ChildFunctionExKind.CallerNode && callNode.HasCallers) {
                         var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
-                    foreach (var childNode in callNode.Callers) {
+                        foreach (var childNode in callNode.Callers) {
                             CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
                                 visitedNodes, percentageFunc);
                         }

@@ -9,15 +9,27 @@ using IRExplorerUI.Compilers;
 namespace IRExplorerUI.Profile;
 
 public class ProfileCallTree {
+    // Comparer used for the root nodes in order to ignore the ID part.
+    private class ProfileCallTreeNodeComparer : IEqualityComparer<ProfileCallTreeNode> {
+        public bool Equals(ProfileCallTreeNode x, ProfileCallTreeNode y) {
+            return x.Equals(y.DebugInfo, y.Function);
+        }
+
+        public int GetHashCode(ProfileCallTreeNode obj) {
+            return HashCode.Combine(obj.Function, obj.DebugInfo);
+        }
+    }
+
     private HashSet<ProfileCallTreeNode> rootNodes_;
     private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
     private ReaderWriterLockSlim lock_;
     private ReaderWriterLockSlim funcLock_;
+    private long nextNodeId_;
 
     public HashSet<ProfileCallTreeNode> RootNodes => rootNodes_;
 
     public ProfileCallTree() {
-        rootNodes_ = new HashSet<ProfileCallTreeNode>();
+        rootNodes_ = new HashSet<ProfileCallTreeNode>(new ProfileCallTreeNodeComparer());
         funcToNodesMap_ = new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
         lock_ = new ReaderWriterLockSlim();
         funcLock_ = new ReaderWriterLockSlim();
@@ -34,6 +46,10 @@ public class ProfileCallTree {
 
             lock_.EnterWriteLock();
             try {
+                if (rootNodes_.TryGetValue(node, out existingNode)) {
+                    return existingNode;
+                }
+
                 rootNodes_.Add(node);
                 RegisterFunctionTreeNode(node);
             }
@@ -59,6 +75,8 @@ public class ProfileCallTree {
     }
 
     public void RegisterFunctionTreeNode(ProfileCallTreeNode node) {
+        node.Id = Interlocked.Increment(ref nextNodeId_);
+
         List<ProfileCallTreeNode> nodeList = null;
         funcLock_.EnterUpgradeableReadLock();
 
@@ -214,6 +232,7 @@ public class ProfileCallTree {
 
 
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
+    public long Id { get; set; }
     public IRTextFunction Function { get; set; }
     public DebugFunctionInfo DebugInfo { get; set; }
     public TimeSpan Weight { get; set; }
@@ -224,7 +243,6 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     private ReaderWriterLockSlim lock_;
 
     public List<ProfileCallTreeNode> Children => children_;
-
     public List<ProfileCallTreeNode> Callers => callers_;
 
     public bool HasChildren => Children != null && Children.Count > 0;
@@ -294,14 +312,21 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     private void AddParent(ProfileCallTreeNode parentNode) {
         lock_.EnterUpgradeableReadLock();
         ref var list = ref callers_;
+
         try {
-            var childNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
-            if (childNode != null) {
+            var callerNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
+            if (callerNode != null) {
                 return;
             }
 
             lock_.EnterWriteLock();
             try {
+                // Check again if another thread added the parent in the meantime.
+                callerNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
+                if (callerNode != null) {
+                    return;
+                }
+
                 list ??= new List<ProfileCallTreeNode>();
                 list.Add(parentNode);
             }
@@ -335,6 +360,13 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
             lock_.EnterWriteLock();
             try {
+                // Check again if another thread added the child in the meantime.
+                childNode = FindExistingNode(ref list, debugInfo, function);
+
+                if (childNode != null) {
+                    return (childNode, false);
+                }
+
                 list ??= new List<ProfileCallTreeNode>();
                 childNode = new ProfileCallTreeNode(debugInfo, function);
                 list.Add(childNode);
@@ -364,9 +396,9 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     internal void Print(StringBuilder builder, int level = 0, bool caller = false) {
         builder.Append(new string(' ', level * 4));
-        builder.AppendLine($"{DebugInfo.Name}, RVA {DebugInfo.RVA}");
+        builder.AppendLine($"{DebugInfo.Name}, RVA {DebugInfo.RVA}, Id {Id}");
         builder.Append(new string(' ', level * 4));
-        builder.AppendLine($"        weight {Weight.TotalMilliseconds}");
+        builder.AppendLine($"    weight {Weight.TotalMilliseconds}");
         builder.Append(new string(' ', level * 4));
         builder.AppendLine($"    exc weight {ExclusiveWeight.TotalMilliseconds}");
         builder.Append(new string(' ', level * 4));
@@ -376,15 +408,6 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             foreach (var child in Children) {
                 child.Print(builder, level + 1);
             }
-        }
-
-        if (Callers != null) {
-            builder.AppendLine($"Callers: {Callers.Count}");
-            foreach (var child in Callers) {
-                child.Print(builder, level + 1, true);
-            }
-
-            builder.AppendLine("-------------------------------------------------");
         }
     }
 
@@ -412,7 +435,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             return true;
         }
 
-        return Function.Equals(other.Function) &&
+        return Id == other.Id &&
+               Function.Equals(other.Function) && //? TODO: Still needed?
                DebugInfo.Equals(other.DebugInfo);
     }
 
@@ -433,7 +457,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Function, DebugInfo);
+        return HashCode.Combine(Id, Function, DebugInfo);
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {
