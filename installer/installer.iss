@@ -12,6 +12,7 @@
 AppName=IR Explorer
 AppVersion={#APP_VERSION}
 WizardStyle=modern
+DisableDirPage=no
 DefaultDirName={autopf}\IR Explorer
 DefaultGroupName=IR Explorer
 UninstallDisplayIcon={app}\irexplorer.exe

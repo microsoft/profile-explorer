@@ -144,7 +144,7 @@ public class ETWEventProcessor : IDisposable {
         int[] perCoreLastSample = new int[4096];
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSampleCount = 0;
-        const int sampleReportInterval = 1000;
+        const int sampleReportInterval = 500;
 
         var symbolParser = new SymbolTraceEventParser(source_);
 

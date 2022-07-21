@@ -26,10 +26,9 @@ namespace IRExplorerUI {
     }
 
     public class DiffModeInfo {
-        public ManualResetEvent DiffModeChangeCompleted;
+        public SemaphoreSlim DiffModeChangeCompleted = new SemaphoreSlim(1);
 
         public DiffModeInfo() {
-            DiffModeChangeCompleted = new ManualResetEvent(true);
             PassOutputShowBefore = true; //? TODO: Restore settings
         }
 
@@ -49,14 +48,13 @@ namespace IRExplorerUI {
 
         public async Task StartModeChange() {
             // If a diff-mode change is in progress, wait until it's done.
-            await DiffModeChangeCompleted.AsTask();
-            DiffModeChangeCompleted.Reset();
+            await DiffModeChangeCompleted.WaitAsync();
             IsChangeCompleted = false;
         }
 
         public void EndModeChange() {
-            DiffModeChangeCompleted.Set();
             IsChangeCompleted = true;
+            DiffModeChangeCompleted.Release();
         }
 
         public void End() {

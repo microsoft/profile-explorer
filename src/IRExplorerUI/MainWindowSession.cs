@@ -350,9 +350,10 @@ namespace IRExplorerUI {
         }
 
         private async Task EndSession(bool showStartPage = false) {
-            using var sessionUnloading = await BeginSessionStateChange();
+            await BeginSessionStateChange();
 
             if (!IsSessionStarted) {
+                EndSessionStateChange();
                 return;
             }
 
@@ -379,6 +380,8 @@ namespace IRExplorerUI {
             if (showStartPage) {
                 ShowStartPage();
             }
+
+            EndSessionStateChange();
         }
 
         private void CloseDocument(DocumentHostInfo docHostInfo) {
@@ -390,7 +393,7 @@ namespace IRExplorerUI {
                                                           Func<string, string, Guid, ProgressInfoHandler, Task<LoadedDocument>> loadFunc) {
             try {
                 await EndSession();
-                using var sessionLoading = await BeginSessionStateChange();
+                await BeginSessionStateChange();
                 UpdateUIBeforeLoadDocument(filePath);
                 var result = await Task.Run(async () => await loadFunc(filePath, modulePath, Guid.NewGuid(),
                                                                        UpdateIRDocumentLoadProgress));
@@ -405,6 +408,7 @@ namespace IRExplorerUI {
             }
             finally {
                 UpdateUIAfterLoadDocument();
+                EndSessionStateChange();
             }
 
             // Failed to start a session.
@@ -412,14 +416,17 @@ namespace IRExplorerUI {
         }
 
 
-        private async Task<ScopedResetEvent> BeginSessionStateChange() {
+        private async Task BeginSessionStateChange() {
             // Wait for any running state changes.
-            await SessionLoadCompleted.AsTask();
+            await SessionLoadCompleted.WaitAsync();
 
             loadingDocuments_ = true;
             documentLoadStartTime_ = DateTime.UtcNow;
             lastDocumentLoadTime_ = DateTime.UtcNow;
-            return new ScopedResetEvent(SessionLoadCompleted);
+        }
+
+        private void EndSessionStateChange() {
+            SessionLoadCompleted.Release();
         }
 
         private DateTime lastDocumentLoadUpdate_;
@@ -1209,38 +1216,23 @@ namespace IRExplorerUI {
             return result?.DocumentHost;
         }
 
-        private ManualResetEvent SessionLoadCompleted = new ManualResetEvent(true);
+        private SemaphoreSlim SessionLoadCompleted = new SemaphoreSlim(1);
 
         private async void DocumentState_DocumentChangedEvent(object sender, EventArgs e) {
             var loadedDoc = (LoadedDocument)sender;
             var eventTime = DateTime.UtcNow;
 
+            // Queue for later, when the application gets focus back.
+            // A lock is needed, since the event can fire concurrently.
+            lock (lockObject_) {
+                changedDocuments_[loadedDoc.FilePath] = eventTime;
+            }
+
             if (appIsActivated_) {
                 // The event doesn't run on the main thread, redirect.
                 await Dispatcher.BeginInvoke(new Action(async () => {
-                    await SessionLoadCompleted.AsTask();
-
-                    if (eventTime < lastDocumentLoadTime_ ||
-                        eventTime < lastDocumentReloadQueryTime_) {
-                        return; // Event happened before the last document reload, ignore.
-                    }
-
-                    // Session may get unloaded before this fires, ignore.
-                    if (!IsSessionStarted) {
-                        return;
-                    }
-
-                    if (ShowDocumentReloadQuery(loadedDoc.FilePath)) {
-                        await ReloadDocument(loadedDoc.FilePath);
-                    }
+                    await HandleChangedDocuments();
                 }));
-            }
-            else {
-                // Queue for later, when the application gets focus back.
-                // A lock is needed, since the event can fire concurrently.
-                lock (lockObject_) {
-                    changedDocuments_[loadedDoc.FilePath] = eventTime;
-                }
             }
         }
 
