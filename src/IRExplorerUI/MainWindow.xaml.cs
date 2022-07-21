@@ -302,6 +302,10 @@ namespace IRExplorerUI {
                 panel.BringToFront();
             });
 
+            await HandleChangedDocuments();
+        }
+
+        private async Task HandleChangedDocuments() {
             var reloadedDocuments = new List<string>();
 
             lock (lockObject_) {
@@ -320,6 +324,10 @@ namespace IRExplorerUI {
             foreach (var documentPath in reloadedDocuments) {
                 if (ShowDocumentReloadQuery(documentPath)) {
                     await ReloadDocument(documentPath);
+                }
+                else {
+                    // Don't keep showing the dialog if no reload is wanted.
+                    changedDocuments_.Clear();
                 }
             }
         }
