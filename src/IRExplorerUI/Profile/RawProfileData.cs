@@ -59,6 +59,10 @@ public class RawProfileData {
     [ProtoMember(6)]
     private List<ProfileStack> stacks_;
 
+    //? TODO: Switch to a segmented list
+    [ProtoMember(7)]
+    public List<PerformanceCounterEvent> perfCounters_ { get; set; }
+
     // Objects used only while building the profile.
     private Dictionary<ProfileThread, int> threadsMap_;
     private Dictionary<ProfileContext, int> contextsMap_;
@@ -74,7 +78,7 @@ public class RawProfileData {
     public List<ProfileProcess> Processes => processes_.ToValueList();
     public List<ProfileThread> Threads => threads_;
     public List<ProfileImage> Images => images_;
-    public List<PerformanceCounterEvent> PerfCounters { get; set; }
+    public List<PerformanceCounterEvent> PerformanceCounters => perfCounters_;
 
     public bool HasManagedMethods(int processId) => procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
 
@@ -204,7 +208,7 @@ public class RawProfileData {
         stacksMap_ = new Dictionary<int, Dictionary<ProfileStack, int>>();
         stackData_ = new HashSet<long[]>(new StackComparer());
         samples_ = new List<ProfileSample>();
-        PerfCounters = new List<PerformanceCounterEvent>();
+        perfCounters_ = new List<PerformanceCounterEvent>();
 
         if (handlesDotNetEvents) {
             procManagedDataMap_ = new Dictionary<int, ManagedData>();

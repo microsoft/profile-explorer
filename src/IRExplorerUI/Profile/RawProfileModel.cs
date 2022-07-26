@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -54,8 +55,35 @@ public class ProfileStack : IEquatable<ProfileStack> {
     public void SetOptionalData(object value) {
         optionalData_ = value;
         Interlocked.MemoryBarrierProcessWide();
-
     }
+
+    //public void SetOptionalData(object value) {
+    //    lock (this) {
+    //        if (optionalData_ != null) {
+    //            if (optionalData_ is ResolvedProfileStack resolved &&
+    //                value is ResolvedProfileStack other) {
+
+    //                if (resolved.FrameCount != other.FrameCount) {
+    //                    Trace.WriteLine($"Mismatch {resolved.FrameCount}, {other.FrameCount}");
+    //                    Trace.Flush();
+    //                }
+
+    //                else {
+    //                    for (int i = 0; i < resolved.FrameCount; i++) {
+    //                        if (resolved.StackFrames[i] != other.StackFrames[i]) {
+    //                            Trace.WriteLine($"Mismatch {resolved.StackFrames[i]}, {other.StackFrames[i]}");
+    //                            Utils.WaitForDebugger(true);
+    //                            Trace.Flush();
+
+    //                        }
+    //                    }
+    //                }
+    //            }
+    //        }
+
+    //        optionalData_ = value;
+    //    }
+    //}
 
     public long[] CloneFramePointers() {
         long[] clone = new long[FramePointers.Length];
@@ -540,20 +568,14 @@ public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {
     public long Time;
     [ProtoMember(2)]
     public long IP;
-    //? TODO: everything after is shared by many, use flyweight
-    //? Use ProfileEventContext
     [ProtoMember(3)]
-    public int ProcessId;
+    public int ContextId { get; set; }
     [ProtoMember(4)]
-    public int ThreadId;
-    [ProtoMember(5)]
     public short ProfilerSource;
 
     public bool Equals(PerformanceCounterEvent other) {
         return Time == other.Time && IP == other.IP &&
-               ProcessId == other.ProcessId &&
-               ThreadId == other.ThreadId &&
-               ProfilerSource == other.ProfilerSource;
+               ContextId == other.ContextId;
     }
 
     public override bool Equals(object obj) {
@@ -566,116 +588,3 @@ public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {
 
     /// enum eventType (pmc, context switch, etc)
 }
-
-[ProtoContract(SkipConstructor = true)]
-public class PerformanceCounterInfo {
-    [ProtoMember(1)]
-    public int Id { get; set; }
-    [ProtoMember(2)]
-    public int Number { get; set; }
-    [ProtoMember(3)]
-    public string Name { get; set; }
-    [ProtoMember(4)]
-    public string Description { get; set; }
-    [ProtoMember(5)]
-    public int Frequency { get; set; }
-}
-
-//? TODO: Can't be changed to struct because updating Value
-//? needs a new instance of the struct when used in List<T>.
-//? Make a List<T> alternative that allows getting the inner array,
-//? then ref locals will work.
-// https://devblogs.microsoft.com/premier-developer/performance-traps-of-ref-locals-and-ref-returns-in-c/
-[ProtoContract(SkipConstructor = true)]
-public class PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
-    [ProtoMember(1)]
-    public int CounterId { get; set; }
-    [ProtoMember(2)]
-    public long Value { get; set; }
-
-    public PerformanceCounterValue(int counterId, long value = 0) {
-        CounterId = counterId;
-        Value = value;
-    }
-
-    public bool Equals(PerformanceCounterValue other) {
-        return CounterId == other.CounterId && Value == other.Value;
-    }
-
-    public override bool Equals(object obj) {
-        return obj is PerformanceCounterValue other && Equals(other);
-    }
-
-    public override int GetHashCode() {
-        return HashCode.Combine(CounterId, Value);
-    }
-}
-
-[ProtoContract(SkipConstructor = true)]
-public class PerformanceCounterSet {
-    //? Use smth like https://github.com/faustodavid/ListPool/blob/main/src/ListPool/ValueListPool.cs
-    //? and make PerformanceCounterSet as struct.
-    [ProtoMember(1)]
-    public List<PerformanceCounterValue> Counters { get; set; }
-
-    public PerformanceCounterSet() {
-        InitializeReferenceMembers();
-    }
-
-    [ProtoAfterDeserialization]
-    private void InitializeReferenceMembers() {
-        Counters ??= new List<PerformanceCounterValue>();
-    }
-
-    public void AddCounterSample(int perfCounterId, long value) {
-        PerformanceCounterValue counter;
-        var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
-
-        if (index != -1) {
-            counter = Counters[index];
-        }
-        else {
-            // Keep the list sorted so that it is in sync
-            // with the sorted counter definition list.
-            counter = new PerformanceCounterValue(perfCounterId);
-            int insertionIndex = 0;
-
-            for (int i = 0; i < Counters.Count; i++, insertionIndex++) {
-                if (Counters[i].CounterId >= perfCounterId) {
-                    break;
-                }
-            }
-
-            Counters.Insert(insertionIndex, counter);
-        }
-
-        counter.Value += value;
-    }
-
-    public long FindCounterValue(int perfCounterId) {
-        var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
-        return index != -1 ? Counters[index].Value : 0;
-    }
-
-    public long FindCounterValue(PerformanceCounterInfo counter) {
-        return FindCounterValue(counter.Id);
-    }
-
-    //? TODO: Use Utils.Accumulate, and some small dict
-    public void Add(PerformanceCounterSet other) {
-        foreach (var counter in other.Counters) {
-            var index = Counters.FindIndex((item) => item.CounterId == counter.CounterId);
-
-            if (index != -1) {
-                //? TODO: Once List is replaced use a ref local to change only the Value field.
-                Counters[index].Value += counter.Value;
-            }
-            else {
-                Counters.Add(new PerformanceCounterValue(counter.CounterId, counter.Value));
-            }
-        }
-    }
-
-    public long this[int perfCounterId] => FindCounterValue(perfCounterId);
-}
-

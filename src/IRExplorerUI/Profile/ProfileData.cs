@@ -19,6 +19,169 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Profile; 
 
+
+public class ProfileData {
+    [ProtoContract(SkipConstructor = true)]
+    public class ProfileDataState {
+        [ProtoMember(1)]
+        public TimeSpan ProfileWeight { get; set; }
+            
+        [ProtoMember(2)]
+        public TimeSpan TotalWeight { get; set; }
+
+        [ProtoMember(3)]
+        public Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData> FunctionProfiles { get; set; }
+
+        [ProtoMember(4)]
+        public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
+            
+        [ProtoMember(5)]
+        public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+
+        public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
+            ProfileWeight = profileWeight;
+            TotalWeight = totalWeight;
+            FunctionProfiles = new Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData>();
+        }
+    }
+
+    public TimeSpan ProfileWeight { get; set; }
+    public TimeSpan TotalWeight { get; set; }
+    public ConcurrentDictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
+    public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+    public Dictionary<string, PerformanceCounterSet> ModuleCounters { get; set; }
+    public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
+        
+    public ProfileCallTree CallTree { get; set; }
+
+    public List<PerformanceCounterInfo> SortedPerformanceCounters {
+        get {
+            var list = PerformanceCounters.ToValueList();
+            list.Sort((a, b) => b.Id.CompareTo(a.Id));
+            return list;
+        }
+    }
+
+    public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {
+        ProfileWeight = profileWeight;
+        TotalWeight = totalWeight;
+    }
+
+    public ProfileData() {
+        ProfileWeight = TimeSpan.Zero;
+        FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
+        ModuleWeights = new Dictionary<string, TimeSpan>();
+        PerformanceCounters = new Dictionary<int, PerformanceCounterInfo>();
+        ModuleCounters = new Dictionary<string, PerformanceCounterSet>();
+    }
+
+    public void AddModuleSample(string moduleName, TimeSpan weight) {
+        if (ModuleWeights.TryGetValue(moduleName, out var currentWeight)) {
+            ModuleWeights[moduleName] = currentWeight + weight;
+        }
+        else {
+            ModuleWeights[moduleName] = weight;
+        }
+    }
+        
+    public void AddModuleCounter(string moduleName, int perfCounterId, long value) {
+        if (!ModuleCounters.TryGetValue(moduleName, out var counterSet)) {
+            counterSet = new PerformanceCounterSet();
+            ModuleCounters[moduleName] = counterSet;
+        }
+            
+        counterSet.AddCounterSample(perfCounterId, value);
+    }
+
+    public void RegisterPerformanceCounter(PerformanceCounterInfo perfCounter) {
+        perfCounter.Number = PerformanceCounters.Count;
+        PerformanceCounters[perfCounter.Id] = perfCounter;
+    }
+
+    public PerformanceCounterInfo GetPerformanceCounter(int id) {
+        if (PerformanceCounters.TryGetValue(id, out var counter)) {
+            return counter;
+        }
+
+        return null;
+    }
+        
+    public double ScaleFunctionWeight(TimeSpan weight) {
+        return (double)weight.Ticks / (double)ProfileWeight.Ticks;
+    }
+
+    public double ScaleModuleWeight(TimeSpan weight) {
+        return (double)weight.Ticks / (double)TotalWeight.Ticks;
+    }
+
+    public FunctionProfileData GetFunctionProfile(IRTextFunction function) {
+        if (FunctionProfiles.TryGetValue(function, out var profile)) {
+            return profile;
+        }
+
+        return null;
+    }
+
+    public bool HasFunctionProfile(IRTextFunction function) {
+        return GetFunctionProfile(function) != null;
+    }
+
+    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function, string sourceFile) {
+        if (!FunctionProfiles.TryGetValue(function, out var profile)) {
+            profile = new FunctionProfileData(sourceFile);
+            FunctionProfiles.TryAdd(function, profile);
+        }
+
+        return profile;
+    }
+
+    public byte[] Serialize() {
+        var profileState = new ProfileDataState(ProfileWeight, TotalWeight);
+        profileState.PerformanceCounters = PerformanceCounters;
+        profileState.ModuleWeights = ModuleWeights;
+
+        foreach (var pair in FunctionProfiles) {
+            var func = pair.Key;
+            profileState.FunctionProfiles[(func.ParentSummary.Id, func.Number)] = pair.Value;
+        }
+
+        return StateSerializer.Serialize(profileState);
+    }
+
+    public static ProfileData Deserialize(byte[] data, List<IRTextSummary> summaries) {
+        var state = StateSerializer.Deserialize<ProfileDataState>(data);
+        var profileData = new ProfileData(state.ProfileWeight, state.TotalWeight);
+        profileData.PerformanceCounters = state.PerformanceCounters;
+        profileData.ModuleWeights = state.ModuleWeights;
+
+        var summaryMap = new Dictionary<Guid, IRTextSummary>();
+
+        foreach (var summary in summaries) {
+            summaryMap[summary.Id] = summary;
+        }
+
+        foreach(var pair in state.FunctionProfiles) {
+            var summary = summaryMap[pair.Key.summaryId];
+            var function = summary.GetFunctionWithId(pair.Key.funcNumber);
+
+            if (function == null) {
+                Trace.TraceWarning($"No func for {pair.Value.SourceFilePath}");
+                continue;
+            }
+
+            profileData.FunctionProfiles[function] = pair.Value;
+        }
+
+        return profileData;
+    }
+
+    public List<Tuple<IRTextFunction, FunctionProfileData>> GetSortedFunctions() {
+        var list = FunctionProfiles.ToList();
+        list.Sort((a, b) => -a.Item2.ExclusiveWeight.CompareTo(b.Item2.ExclusiveWeight));
+        return list;
+    }
+}
+
 [ProtoContract(SkipConstructor = true)]
 public class FunctionProfileData {
     [ProtoMember(1)]
@@ -192,7 +355,7 @@ public class FunctionProfileData {
         }
     }
 
-    public PerformanceCounterSet ComputeFunctionCounters() {
+    public PerformanceCounterSet ComputeFunctionTotalCounters() {
         var result = new PerformanceCounterSet();
 
         foreach (var pair in InstructionCounters) {
@@ -218,164 +381,116 @@ public class FunctionProfileData {
     }
 }
 
-public class ProfileData {
-    [ProtoContract(SkipConstructor = true)]
-    public class ProfileDataState {
-        [ProtoMember(1)]
-        public TimeSpan ProfileWeight { get; set; }
-            
-        [ProtoMember(2)]
-        public TimeSpan TotalWeight { get; set; }
 
-        [ProtoMember(3)]
-        public Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData> FunctionProfiles { get; set; }
+[ProtoContract(SkipConstructor = true)]
+public class PerformanceCounterInfo {
+    [ProtoMember(1)]
+    public int Id { get; set; }
+    [ProtoMember(2)]
+    public int Number { get; set; }
+    [ProtoMember(3)]
+    public string Name { get; set; }
+    [ProtoMember(4)]
+    public string Description { get; set; }
+    [ProtoMember(5)]
+    public int Frequency { get; set; }
+}
 
-        [ProtoMember(4)]
-        public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
-            
-        [ProtoMember(5)]
-        public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
+// https://devblogs.microsoft.com/premier-developer/performance-traps-of-ref-locals-and-ref-returns-in-c/
+[ProtoContract(SkipConstructor = true)]
+public struct PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
+    [ProtoMember(1)]
+    public int CounterId { get; set; }
+    [ProtoMember(2)]
+    public long Value { get; set; }
 
-        public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
-            ProfileWeight = profileWeight;
-            TotalWeight = totalWeight;
-            FunctionProfiles = new Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData>();
-        }
+    public PerformanceCounterValue(int counterId, long value = 0) {
+        CounterId = counterId;
+        Value = value;
     }
 
-    public TimeSpan ProfileWeight { get; set; }
-    public TimeSpan TotalWeight { get; set; }
-    public ConcurrentDictionary<IRTextFunction, FunctionProfileData> FunctionProfiles { get; set; }
-    public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
-    public Dictionary<string, PerformanceCounterSet> ModuleCounters { get; set; }
-    public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
-        
-    public ProfileCallTree CallTree { get; set; }
-
-    public List<PerformanceCounterInfo> SortedPerformanceCounters {
-        get {
-            var list = PerformanceCounters.ToValueList();
-            list.Sort((a, b) => b.Id.CompareTo(a.Id));
-            return list;
-        }
+    public bool Equals(PerformanceCounterValue other) {
+        return CounterId == other.CounterId && Value == other.Value;
     }
 
-    public ProfileData(TimeSpan profileWeight, TimeSpan totalWeight) : this() {
-        ProfileWeight = profileWeight;
-        TotalWeight = totalWeight;
+    public override bool Equals(object obj) {
+        return obj is PerformanceCounterValue other && Equals(other);
     }
 
-    public ProfileData() {
-        ProfileWeight = TimeSpan.Zero;
-        FunctionProfiles = new ConcurrentDictionary<IRTextFunction, FunctionProfileData>();
-        ModuleWeights = new Dictionary<string, TimeSpan>();
-        PerformanceCounters = new Dictionary<int, PerformanceCounterInfo>();
-        ModuleCounters = new Dictionary<string, PerformanceCounterSet>();
+    public override int GetHashCode() {
+        return HashCode.Combine(CounterId, Value);
+    }
+}
+
+// Groups a set of counters associated with a single instruction.
+// There is one PerformanceCounterValue for each counter type
+// that accumulates all instances of the raw events.
+[ProtoContract(SkipConstructor = true)]
+public class PerformanceCounterSet {
+    //? Use smth like https://github.com/faustodavid/ListPool/blob/main/src/ListPool/ValueListPool.cs
+    //? and make PerformanceCounterSet as struct.
+    [ProtoMember(1)]
+    public List<PerformanceCounterValue> Counters { get; set; }
+
+    public PerformanceCounterSet() {
+        InitializeReferenceMembers();
     }
 
-    public void AddModuleSample(string moduleName, TimeSpan weight) {
-        if (ModuleWeights.TryGetValue(moduleName, out var currentWeight)) {
-            ModuleWeights[moduleName] = currentWeight + weight;
+    [ProtoAfterDeserialization]
+    private void InitializeReferenceMembers() {
+        Counters ??= new List<PerformanceCounterValue>();
+    }
+
+    public void AddCounterSample(int perfCounterId, long value) {
+        PerformanceCounterValue counter;
+        var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
+
+        if (index != -1) {
+            counter = Counters[index];
         }
         else {
-            ModuleWeights[moduleName] = weight;
-        }
-    }
-        
-    public void AddModuleCounter(string moduleName, int perfCounterId, long value) {
-        if (!ModuleCounters.TryGetValue(moduleName, out var counterSet)) {
-            counterSet = new PerformanceCounterSet();
-            ModuleCounters[moduleName] = counterSet;
-        }
-            
-        counterSet.AddCounterSample(perfCounterId, value);
-    }
+            // Keep the list sorted so that it is in sync
+            // with the sorted counter definition list.
+            counter = new PerformanceCounterValue(perfCounterId);
+            int insertionIndex = 0;
 
-    public void RegisterPerformanceCounter(PerformanceCounterInfo perfCounter) {
-        perfCounter.Number = PerformanceCounters.Count;
-        PerformanceCounters[perfCounter.Id] = perfCounter;
-    }
-
-    public PerformanceCounterInfo GetPerformanceCounter(int id) {
-        if (PerformanceCounters.TryGetValue(id, out var counter)) {
-            return counter;
-        }
-
-        return null;
-    }
-        
-    public double ScaleFunctionWeight(TimeSpan weight) {
-        return (double)weight.Ticks / (double)ProfileWeight.Ticks;
-    }
-
-    public double ScaleModuleWeight(TimeSpan weight) {
-        return (double)weight.Ticks / (double)TotalWeight.Ticks;
-    }
-
-    public FunctionProfileData GetFunctionProfile(IRTextFunction function) {
-        if (FunctionProfiles.TryGetValue(function, out var profile)) {
-            return profile;
-        }
-
-        return null;
-    }
-
-    public bool HasFunctionProfile(IRTextFunction function) {
-        return GetFunctionProfile(function) != null;
-    }
-
-    public FunctionProfileData GetOrCreateFunctionProfile(IRTextFunction function, string sourceFile) {
-        if (!FunctionProfiles.TryGetValue(function, out var profile)) {
-            profile = new FunctionProfileData(sourceFile);
-            FunctionProfiles.TryAdd(function, profile);
-        }
-
-        return profile;
-    }
-
-    public byte[] Serialize() {
-        var profileState = new ProfileDataState(ProfileWeight, TotalWeight);
-        profileState.PerformanceCounters = PerformanceCounters;
-        profileState.ModuleWeights = ModuleWeights;
-
-        foreach (var pair in FunctionProfiles) {
-            var func = pair.Key;
-            profileState.FunctionProfiles[(func.ParentSummary.Id, func.Number)] = pair.Value;
-        }
-
-        return StateSerializer.Serialize(profileState);
-    }
-
-    public static ProfileData Deserialize(byte[] data, List<IRTextSummary> summaries) {
-        var state = StateSerializer.Deserialize<ProfileDataState>(data);
-        var profileData = new ProfileData(state.ProfileWeight, state.TotalWeight);
-        profileData.PerformanceCounters = state.PerformanceCounters;
-        profileData.ModuleWeights = state.ModuleWeights;
-
-        var summaryMap = new Dictionary<Guid, IRTextSummary>();
-
-        foreach (var summary in summaries) {
-            summaryMap[summary.Id] = summary;
-        }
-
-        foreach(var pair in state.FunctionProfiles) {
-            var summary = summaryMap[pair.Key.summaryId];
-            var function = summary.GetFunctionWithId(pair.Key.funcNumber);
-
-            if (function == null) {
-                Trace.TraceWarning($"No func for {pair.Value.SourceFilePath}");
-                continue;
+            for (int i = 0; i < Counters.Count; i++, insertionIndex++) {
+                if (Counters[i].CounterId >= perfCounterId) {
+                    break;
+                }
             }
 
-            profileData.FunctionProfiles[function] = pair.Value;
+            Counters.Insert(insertionIndex, counter);
         }
 
-        return profileData;
+        counter.Value += value;
     }
 
-    public List<Tuple<IRTextFunction, FunctionProfileData>> GetSortedFunctions() {
-        var list = FunctionProfiles.ToList();
-        list.Sort((a, b) => -a.Item2.ExclusiveWeight.CompareTo(b.Item2.ExclusiveWeight));
-        return list;
+    public long FindCounterValue(int perfCounterId) {
+        var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
+        return index != -1 ? Counters[index].Value : 0;
     }
+
+    public long FindCounterValue(PerformanceCounterInfo counter) {
+        return FindCounterValue(counter.Id);
+    }
+
+    public void Add(PerformanceCounterSet other) {
+        //? TODO: This assumes there are not many counters being collected,
+        //? switch to dict if dozens get to be collected one day.
+        foreach (var counter in other.Counters) {
+            var index = Counters.FindIndex((item) => item.CounterId == counter.CounterId);
+
+            if (index != -1) {
+                var countersSpan = CollectionsMarshal.AsSpan(Counters);
+                ref var counterRef = ref countersSpan[index];
+                counterRef.Value += counter.Value;
+            }
+            else {
+                Counters.Add(new PerformanceCounterValue(counter.CounterId, counter.Value));
+            }
+        }
+    }
+
+    public long this[int perfCounterId] => FindCounterValue(perfCounterId);
 }
