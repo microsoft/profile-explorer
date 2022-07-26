@@ -567,7 +567,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                             }
 
                             //? TODO: Replace %?
-                            if (index % 20000 == 0) {
+                            if (index % 10000 == 0) {
                                 if (cancelableTask != null && cancelableTask.IsCanceled) {
                                     return;
                                 }
@@ -801,7 +801,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         continue;
                                     }
 
-                                    var profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                                    FunctionProfileData profile = null;
+
+                                    //? TODO: Use RW lock
+                                    lock (profileData_) {
+                                        profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                                    }
 
                                     lock (profile) {
                                         profile.DebugInfo = funcInfo;

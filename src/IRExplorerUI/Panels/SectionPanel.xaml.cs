@@ -1165,7 +1165,7 @@ namespace IRExplorerUI {
 
                     //? TODO: Can be expensive, do in background
                     if (funcProfile.HasPerformanceCounters) {
-                        funcEx.Counters = funcProfile.ComputeFunctionCounters();
+                        funcEx.Counters = funcProfile.ComputeFunctionTotalCounters();
 
                         if (!counterColumnsAdded) {
                             AddCountersFunctionListColumns(false);
