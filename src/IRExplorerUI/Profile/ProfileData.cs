@@ -394,11 +394,17 @@ public class PerformanceCounterInfo {
     public string Description { get; set; }
     [ProtoMember(5)]
     public int Frequency { get; set; }
+
+    public PerformanceCounterInfo(int id, string name, int frequency) {
+        Id = id;
+        Name = name;
+        Frequency = frequency;
+    }
 }
 
 // https://devblogs.microsoft.com/premier-developer/performance-traps-of-ref-locals-and-ref-returns-in-c/
 [ProtoContract(SkipConstructor = true)]
-public struct PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
+public class PerformanceCounterValue : IEquatable<PerformanceCounterValue> {
     [ProtoMember(1)]
     public int CounterId { get; set; }
     [ProtoMember(2)]
@@ -463,6 +469,7 @@ public class PerformanceCounterSet {
             Counters.Insert(insertionIndex, counter);
         }
 
+        //? FIX
         counter.Value += value;
     }
 
