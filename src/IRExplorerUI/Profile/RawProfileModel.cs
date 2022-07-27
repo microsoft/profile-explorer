@@ -565,17 +565,29 @@ public sealed class ProfileThread : IEquatable<ProfileThread> {
 [ProtoContract(SkipConstructor = true)]
 public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {
     [ProtoMember(1)]
-    public long Time;
+    public long IP { get; set; }
     [ProtoMember(2)]
-    public long IP;
+    public TimeSpan Time { get; set; }
     [ProtoMember(3)]
     public int ContextId { get; set; }
     [ProtoMember(4)]
-    public short ProfilerSource;
+    public short CounterId;
+
+    public PerformanceCounterEvent(long ip, TimeSpan time, int contextId, short counterId) {
+        IP = ip;
+        Time = time;
+        ContextId = contextId;
+        CounterId = counterId;
+    }
+
+    public ProfileContext GetContext(RawProfileData profileData) {
+        return profileData.FindContext(ContextId);
+    }
 
     public bool Equals(PerformanceCounterEvent other) {
         return Time == other.Time && IP == other.IP &&
-               ContextId == other.ContextId;
+               ContextId == other.ContextId &&
+               CounterId == other.CounterId;
     }
 
     public override bool Equals(object obj) {
@@ -583,8 +595,60 @@ public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Time, IP);
+        return HashCode.Combine(Time, IP, ContextId, CounterId);
+    }
+
+    public override string ToString() {
+        return $"PMC {CounterId}: {IP:X}, {Time}";
     }
 
     /// enum eventType (pmc, context switch, etc)
+}
+
+[ProtoContract(SkipConstructor = true)]
+public class PerformanceCounter : IEquatable<PerformanceCounter> {
+    [ProtoMember(1)]
+    public int Id { get; set; }
+    [ProtoMember(2)]
+    public string Name { get; set; }
+    [ProtoMember(3)]
+    public int Frequency { get; set; }
+
+    public PerformanceCounter(int id, string name, int frequency) {
+        Id = id;
+        Name = name;
+        Frequency = frequency;
+    }
+
+    public bool Equals(PerformanceCounter other) {
+        if (ReferenceEquals(null, other)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+
+        return Id == other.Id && Name == other.Name && Frequency == other.Frequency;
+    }
+
+    public override bool Equals(object obj) {
+        if (ReferenceEquals(null, obj)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj)) {
+            return true;
+        }
+
+        if (obj.GetType() != this.GetType()) {
+            return false;
+        }
+
+        return Equals((PerformanceCounter)obj);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(Id, Name, Frequency);
+    }
 }

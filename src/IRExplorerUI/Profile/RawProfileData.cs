@@ -59,9 +59,11 @@ public class RawProfileData {
     [ProtoMember(6)]
     private List<ProfileStack> stacks_;
 
-    //? TODO: Switch to a segmented list
     [ProtoMember(7)]
-    public List<PerformanceCounterEvent> perfCounters_ { get; set; }
+    private List<PerformanceCounter> perfCounters_ { get; set; }
+    //? TODO: Switch to a segmented list
+    [ProtoMember(8)]
+    private List<PerformanceCounterEvent> perfCountersEvents_ { get; set; }
 
     // Objects used only while building the profile.
     private Dictionary<ProfileThread, int> threadsMap_;
@@ -78,7 +80,8 @@ public class RawProfileData {
     public List<ProfileProcess> Processes => processes_.ToValueList();
     public List<ProfileThread> Threads => threads_;
     public List<ProfileImage> Images => images_;
-    public List<PerformanceCounterEvent> PerformanceCounters => perfCounters_;
+    public List<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
+    public List<PerformanceCounter> PerformanceCounters => perfCounters_;
 
     public bool HasManagedMethods(int processId) => procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
 
@@ -208,7 +211,8 @@ public class RawProfileData {
         stacksMap_ = new Dictionary<int, Dictionary<ProfileStack, int>>();
         stackData_ = new HashSet<long[]>(new StackComparer());
         samples_ = new List<ProfileSample>();
-        perfCounters_ = new List<PerformanceCounterEvent>();
+        perfCounters_ = new List<PerformanceCounter>();
+        perfCountersEvents_ = new List<PerformanceCounterEvent>();
 
         if (handlesDotNetEvents) {
             procManagedDataMap_ = new Dictionary<int, ManagedData>();
@@ -292,8 +296,7 @@ public class RawProfileData {
     public int AddSample(ProfileSample sample) {
         Debug.Assert(sample.ContextId != 0);
         samples_.Add(sample);
-
-        return (int)samples_.Count;
+        return samples_.Count;
     }
 
     public bool TrySetSampleStack(int sampleId, int stackId, int contextId) {
@@ -315,6 +318,17 @@ public class RawProfileData {
         var span = CollectionsMarshal.AsSpan(samples_);
         ref var sampleRef = ref span[sampleId - 1];
         sampleRef.StackId = stackId;
+    }
+
+    public int AddPerformanceCounter(PerformanceCounter counter) {
+        perfCounters_.Add(counter);
+        return perfCounters_.Count;
+    }
+
+    public int AddPerformanceCounterEvent(PerformanceCounterEvent counterEvent) {
+        Debug.Assert(counterEvent.ContextId != 0);
+        perfCountersEvents_.Add(counterEvent);
+        return perfCountersEvents_.Count;
     }
 
     internal ProfileContext RentTempContext(int processId, int threadId, int processorNumber) {
@@ -552,7 +566,6 @@ public class RawProfileData {
         return list;
     }
 
-    //private HashSet<ProfileSample2> sampleSet_ = new HashSet<ProfileSample2>();
     public void PrintProcess(int processId) {
         var proc = GetOrCreateProcess(processId);
 
@@ -576,6 +589,20 @@ public class RawProfileData {
 
         foreach(var proc in processes_) {
             Trace.WriteLine($"- {proc}");
+
+            //if (proc.Value.Name.Contains("bench")) {
+            //    PrintPerfCounters(proc.Value.ProcessId);
+            //    Trace.WriteLine("================================================\n");
+            //}
+        }
+    }
+
+    public void PrintPerfCounters(int processId) {
+        foreach (var sample in perfCountersEvents_) {
+            var context = sample.GetContext(this);
+            if (context.ProcessId == processId) {
+                Trace.WriteLine($"{sample}");
+            }
         }
     }
 
@@ -716,9 +743,9 @@ public class ManagedData {
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
     public Dictionary<long /* moduleId */, DotNetDebugInfoProvider> moduleDebugInfoMap_;
     public Dictionary<long /* moduleId */, ProfileImage> moduleImageMap_;
-    public List<ManagedMethodMapping> managedMethods_;
-    public Dictionary<string, ManagedMethodMapping> managedMethodsMap_;
     public Dictionary<long /* methodId */, ManagedMethodMapping> managedMethodIdMap_;
+    public Dictionary<string, ManagedMethodMapping> managedMethodsMap_;
+    public List<ManagedMethodMapping> managedMethods_;
     public List<(long ModuleId, ManagedMethodMapping Mapping)> patchedMappings_;
 
     public ManagedData() {
@@ -742,7 +769,7 @@ public class ManagedData {
         }
 
         // A placeholder is created for cases where the method load event
-        // is triggered before the module load one, try assign the image now.
+        // is triggered before the module load one, try to assign the image now.
         foreach (var pair in patchedMappings_) {
             pair.Mapping.Image = moduleImageMap_.GetValueOrNull(pair.ModuleId);
         }

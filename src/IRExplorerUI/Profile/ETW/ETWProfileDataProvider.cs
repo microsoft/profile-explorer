@@ -34,125 +34,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         return LoadTraceAsync(tracePath, imageName, options, symbolOptions,
             progressCallback, cancelableTask).Result;
     }
-        
-    private unsafe static long ReadInt64(ReadOnlySpan<byte> data, int offset = 0) {
-        fixed (byte* dataPtr = data) {
-            return *((long*)(dataPtr + offset));
-        }
-    }
-
-    private unsafe static short ReadInt16(ReadOnlySpan<byte> data, int offset = 0) {
-        fixed (byte* dataPtr = data) {
-            return *((short*)(dataPtr + offset));
-        }
-    }
-
-    private unsafe static int ReadInt32(ReadOnlySpan<byte> data, int offset = 0) {
-        fixed (byte* dataPtr = data) {
-            return *((int*)(dataPtr + offset));
-        }
-    }
-
-    private unsafe static string ReadWideString(ReadOnlySpan<byte> data, int offset = 0) {
-        fixed (byte* dataPtr = data) {
-            var sb = new StringBuilder();
-
-            while(offset < data.Length - 1) {
-                byte first = dataPtr[offset];
-                byte second = dataPtr[offset + 1];
-
-                if(first == 0 && second == 0) {
-                    break; // Found string null terminator.
-                }
-
-                sb.Append((char)((short)first | ((short)second << 8)));
-                offset += 2;
-            }
-
-            return sb.ToString();
-        }
-
-        return null;
-    }
     
-    private PerformanceCounterInfo ReadPerformanceCounterInfo(ReadOnlySpan<byte> data) {
-        // counter id : 4
-        // frequency : 4 min
-        // frequency: 4 max
-        // name : 12+
-        var counter = new PerformanceCounterInfo();
-        counter.Id = ReadInt32(data, 0);
-        counter.Frequency = ReadInt32(data, 4);
-        // counter.Frequency = ReadInt32(data, 8);
-        counter.Name = ReadWideString(data, 12);
-        return counter;
-    }
-    
-    private long times_;
-        
-    //private void CollectPerformanceCounterEvents(EventContext e) {
-    //    if (e.Event.Id == 47) {
-    //        if (e.Event.Data.Length > 0) {
-    //            events_.Add(new PerformanceCounterEvent() {
-    //                Time = e.Event.Timestamp.Nanoseconds,
-    //                IP = ReadInt64(e.Event.Data), 
-    //                ProfilerSource = ReadInt16(e.Event.Data, 12), 
-    //                ProcessId = e.Event.ProcessId ?? -1,
-    //                ThreadId = e.Event.ThreadId ?? ReadInt32(e.Event.Data, 8),
-    //            });
-
-    //            //if (times_++ % 50000 == 0) {
-    //            //    Trace.WriteLine($"Events {times_}, {(double)times_ / 1000000} M");
-    //            //    long memory2 = GC.GetTotalMemory(true);
-    //            //    Trace.WriteLine($"    Mem usage: {(double)(memory2 - memory_) / (1024 * 1024 * 1024)} GB");
-    //            //    var objSize = GetSizeOfObject(new PerformanceCounterEvent());
-    //            //    Trace.WriteLine($"    Events mem: {(double)((long)events_.Count * objSize) / (1024 * 1024 * 1024)} GB, event size: {objSize} b");
-    //            //    Trace.Flush();
-    //            //}
-    //        }
-    //    }
-    //    else if (e.Event.Id == 50) {
-    //        ; // DispatcherReadyThreadTraceData needs THREAD+PROC xperf
-    //    }
-    //    else if (e.Event.Id == 0x49) {
-    //        if (e.Event.Data.Length > 0) {
-    //            var counter = ReadPerformanceCounterInfo(e.Event.Data);
-    //            profileData_.RegisterPerformanceCounter(counter);
-
-    //            //if (times_++ % 50000 == 0) {
-    //            //    Trace.WriteLine($"Events {times_}, {(double)times_ / 1000000} M");
-    //            //    long memory2 = GC.GetTotalMemory(true);
-    //            //    Trace.WriteLine($"    Mem usage: {(double)(memory2 - memory_) / (1024 * 1024 * 1024)} GB");
-    //            //    var objSize = GetSizeOfObject(new PerformanceCounterEvent());
-    //            //    Trace.WriteLine($"    Events mem: {(double)((long)events_.Count * objSize) / (1024 * 1024 * 1024)} GB, event size: {objSize} b");
-    //            //    Trace.Flush();
-    //            //}
-    //        }
-    //    }
-    //}
-
-    //private BinaryFileDescription FromETLImage(IImage image) {
-    //    if (image == null) {
-    //        return new BinaryFileDescription(); // Main module
-    //    }
-
-    //    var imageName = image.OriginalFileName;
-
-    //    if (string.IsNullOrEmpty(imageName)) {
-    //        imageName = image.FileName;
-    //    }
-
-    //    return new BinaryFileDescription() {
-    //        ImageName = imageName,
-    //        ImagePath = image.Path,
-    //        Checksum = image.Checksum,
-    //        TimeStamp = image.Timestamp,
-    //        ImageSize = image.Size.Bytes,
-    //        MajorVersion = image.FileVersionNumber?.Major ?? 0,
-    //        MinorVersion = image.FileVersionNumber?.Minor ?? 0
-    //    };
-    //}
-
     private BinaryFileDescription FromProfileImage(ProfileImage image) {
         return new BinaryFileDescription() {
             ImageName = image.ModuleName,
@@ -236,7 +118,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         try {
             options_ = options;
-            times_ = 0;
             var imageName = Utils.TryGetFileNameWithoutExtension(mainProcess.ImageFileName);
 
             //var imageModuleMap = new Dictionary<int, ModuleInfo>();
@@ -890,32 +771,57 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 //Trace.Flush();
                 //? END SAMPLES PROC
 
-#if false
+#if true
                     Trace.WriteLine($"Start process PMC at {DateTime.Now}");
                     Trace.Flush();
+                    sw.Restart();
 
                     // Process performance counters.
                     index = 0;
 
-                    foreach (var counter in events_) {
+                    foreach (var counter in prof.PerformanceCounters) {
+                        var counterInfo = new PerformanceCounterInfo(counter.Id, counter.Name, counter.Frequency);
+                        profileData_.RegisterPerformanceCounter(counterInfo);
+                    }
+
+                    foreach (var counter in prof.PerformanceCountersEvents) {
                         if (index % 10000 == 0) {
                             if (cancelableTask != null && cancelableTask.IsCanceled) {
-                                return false;
+                            break;
                             }
 
                             progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.PerfCounterProcessing) {
-                                Total = events_.Count,
+                                Total = prof.PerformanceCountersEvents.Count,
                                 Current = index
                             });
                         }
 
-                        index++;
-                        var image = procCache.FindImageForIP(counter.IP, counter.ThreadId, mainProcessId);
+                        var context = counter.GetContext(prof);
 
-                        if (image != null) {
-                            profileData_.AddModuleCounter(image.FileName, counter.ProfilerSource, 1);
+                        if (context.ProcessId != mainProcessId) {
+                            continue;
+                        }
 
-                            var module = await FindModuleInfo(image);
+                    index++;
+                    int managedBaseAddress = 0;
+                        ProfileImage frameImage = prof.FindImageForIP(counter.IP, context);
+
+                        if (frameImage == null) {
+                            if (prof.HasManagedMethods(context.ProcessId)) {
+                                var managedFunc = prof.FindManagedMethodForIP(counter.IP, context.ProcessId);
+
+                                if (managedFunc != null) {
+                                    frameImage = managedFunc.Image;
+                                    managedBaseAddress = 1;
+                                }
+                            }
+                        }
+
+                        if (frameImage != null) {
+                            //? FIX LOCK
+                            profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
+
+                            var module = FindModuleInfo(frameImage, context.ProcessId, symbolOptions);
 
                             if (module == null) {
                                 continue;
@@ -925,45 +831,48 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 continue;
                             }
 
-                            long counterRVA = counter.IP - image.AddressRange.BaseAddress.Value;
-                            var funcInfo = module.FindDebugFunctionInfo(counterRVA);
+                            long frameRva = 0;
+                            long funcRva = 0;
+                            string funcName = null;
+                            DebugFunctionInfo funcInfo = null;
 
-                            if (funcInfo.Name == null) {
+                            if (managedBaseAddress != 0) {
+                                frameRva = counter.IP;
+                                funcInfo = module.FindDebugFunctionInfo(frameRva);
+                            }
+                            else {
+                                frameRva = counter.IP - frameImage.BaseAddress;
+                                funcInfo = module.FindDebugFunctionInfo(frameRva);
+                            }
+
+                            if (funcInfo != null) {
+                                funcName = funcInfo.Name;
+                                funcRva = funcInfo.RVA;
+                            }
+
+                            if (funcName == null) {
                                 continue;
                             }
 
-                            var textFunction = module.FindFunction(funcInfo.RVA);
+                            var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
 
                             if (textFunction != null) {
-                                var funcOffset = counterRVA - funcInfo.RVA;
-                                var profile = profileData_.GetOrCreateFunctionProfile(textFunction, "");
-                                profile.AddCounterSample(funcOffset, counter.ProfilerSource, 1);
+                                var offset = frameRva - funcRva;
+
+                                FunctionProfileData profile = null;
+
+                                //? TODO: Use RW lock
+                                lock (profileData_) {
+                                    profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                                }
+
+                                profile.AddCounterSample(offset, counter.CounterId, 1);
                             }
                         }
                     }
 
                     Trace.WriteLine($"Done process PMC in {sw.Elapsed}");
-                    Trace.WriteLine($"Done loading profile in {swTotal.Elapsed}");
 #endif
-
-
-                //foreach (var proc in allProcs) {
-                //    var procProfile = new ProfileProcess() { Id = proc.Id, Name = proc.ImageName };
-
-                //    foreach (var image in proc.Images) {
-                //        var imageProfile = new ProfileImage() {
-                //            Id = image.ProcessId,
-                //            Name = image.FileName,
-                //            Path = image.Path,
-                //            // ...
-                //        };
-                //        procProfile.Images.Add(imageProfile);
-                //    }
-
-                //    proto.Processes.Add(procProfile);
-                //}
-
-
 
                 //var data = StateSerializer.Serialize(@"C:\work\pmc.dat", proto);
                 //Trace.WriteLine($"Serialized");

@@ -11,7 +11,9 @@ using IRExplorerUI.Compilers;
 using Microsoft.Diagnostics.Runtime;
 using Microsoft.Diagnostics.Tracing.Parsers.Clr;
 using System.Reflection.PortableExecutable;
+using System.Runtime.InteropServices;
 using System.Windows.Documents;
+using System.Text;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -148,12 +150,8 @@ public class ETWEventProcessor : IDisposable {
 
         var symbolParser = new SymbolTraceEventParser(source_);
 
-        //symbolParser.All += data => {
-        //    Trace.WriteLine($"SymbolParser event\n{data.Dump(true)}");
-        //};
-
         symbolParser.ImageID += data => {
-            // The image timestamp often is part of this event.
+            // The image timestamp often is part of this event when reading an ETL file.
             // A correct timestamp is needed to locate and download the image.
 
             //Trace.WriteLine($"ImageID: orig {data.OriginalFileName}, QPC {data.TimeStampQPC}");
@@ -170,8 +168,7 @@ public class ETWEventProcessor : IDisposable {
                 lastProfileImageTime == data.TimeStampQPC) {
                 lastProfileImage.OriginalFileName = data.OriginalFileName;
 
-                if (lastProfileImage.TimeStamp == 0) {
-                    lastProfileImage.TimeStamp = data.TimeDateStamp;
+                if (lastProfileImage.TimeStamp == 0) { lastProfileImage.TimeStamp = data.TimeDateStamp;
                 }
             }
             else {
@@ -234,7 +231,7 @@ public class ETWEventProcessor : IDisposable {
             int imageId = profile.AddImageToProcess(data.ProcessID, image);
 
 #if DEBUG
-            Trace.WriteLine($"ImageGroup: {image}, Proc: {data.ProcessID}");
+            //Trace.WriteLine($"ImageGroup: {image}, Proc: {data.ProcessID}");
 #endif
             if (!sawImageId) {
                 // The ImageID event may show up later in the stream.
@@ -304,6 +301,13 @@ public class ETWEventProcessor : IDisposable {
                 UpdateSamplingInterval(data.NewInterval);
                 samplingIntervalSet = true;
             }
+            else {
+                // The description of a PMC event.
+                var dataSpan = data.EventData().AsSpan();
+                string name = ReadWideString(dataSpan, 12);
+                var counterInfo = new PerformanceCounter(data.SampleSource, name, data.NewInterval);
+                profile.AddPerformanceCounter(counterInfo);
+            }
         };
 
         source_.Kernel.PerfInfoSetInterval += data => {
@@ -363,14 +367,41 @@ public class ETWEventProcessor : IDisposable {
             perContextLastSample[contextId] = sampleId;
 
             // Report progress.
-            int sampleCount = profile.Samples.Count;
-
-            if (sampleCount - lastReportedSampleCount >= sampleReportInterval) {
-                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) { Total = sampleCount, Current = sampleCount });
-                lastReportedSampleCount = sampleCount;
+            if (sampleId - lastReportedSampleCount >= sampleReportInterval) {
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) { Total = sampleId, Current = sampleId });
+                lastReportedSampleCount = sampleId;
             }
         };
-        
+
+        source_.Kernel.PerfInfoPMCSample += data => {
+            if (!IsAcceptedProcess(data.ProcessID)) {
+                return; // Ignore events from other processes.
+            }
+
+            //if (cancelableTask != null && cancelableTask.IsCanceled) {
+            //    source_.StopProcessing();
+            //}
+
+            // Skip unknown process.
+            if (data.ProcessID < 0) {
+                return;
+            }
+
+            var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+            int contextId = profile.AddContext(context);
+            double timestamp = data.TimeStampRelativeMSec;
+
+            //? TODO: Use a pooled sample to avoid alloc (profile.Rent*)
+            var counterEvent = new PerformanceCounterEvent((long)data.InstructionPointer,
+                                                            TimeSpan.FromMilliseconds(timestamp), 
+                                                            contextId, (short)data.ProfileSource);
+            profile.AddPerformanceCounterEvent(counterEvent);
+            profile.ReturnContext(contextId);
+
+            //Trace.WriteLine($"PMC {data.ProfileSource}: {data.InstructionPointer}");
+
+        };
+
         if (handleDotNetEvents_) {
             ProcessDotNetEvents(profile);
         }
@@ -386,6 +417,7 @@ public class ETWEventProcessor : IDisposable {
         
         Trace.WriteLine($"Done processing ETW events");
         Trace.WriteLine($"  samples: {profile.Samples.Count}");
+        Trace.WriteLine($"  events: {profile.PerformanceCountersEvents.Count}");
         //Trace.Flush();
         
         profile.LoadingCompleted();
@@ -513,7 +545,27 @@ public class ETWEventProcessor : IDisposable {
 
         return childAcceptedProcessIds_.Contains(processID);
     }
-    
+
+    private unsafe static string ReadWideString(ReadOnlySpan<byte> data, int offset = 0) {
+        fixed (byte* dataPtr = data) {
+            var sb = new StringBuilder();
+
+            while (offset < data.Length - 1) {
+                byte first = dataPtr[offset];
+                byte second = dataPtr[offset + 1];
+
+                if (first == 0 && second == 0) {
+                    break; // Found string null terminator.
+                }
+
+                sb.Append((char)((short)first | ((short)second << 8)));
+                offset += 2;
+            }
+
+            return sb.ToString();
+        }
+    }
+
     public void Dispose() {
         source_?.Dispose();
     }

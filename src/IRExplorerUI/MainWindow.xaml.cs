@@ -986,7 +986,7 @@ namespace IRExplorerUI {
             //{
             //    using var ts = new StreamWriter(@"C:\work\pmc_counters.csv");
             //    foreach (var s in profile.PerfCounters) {
-            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.ProfilerSource}");
+            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.CounterId}");
             //    }
             //}
 
@@ -994,7 +994,7 @@ namespace IRExplorerUI {
             //    using var ts = new StreamWriter(@"C:\work\pmc_counters2.csv");
             //    for(int i = 0; i < profile.PerfCounters.Count / 8; i++) {
             //        var s = profile.PerfCounters[i];
-            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.ProfilerSource}");
+            //        ts.WriteLine($"{s.Time}, {s.IP}, {s.RVA}, {s.ProcessId}, {s.ThreadId}, {s.CounterId}");
             //    }
             //}
 
