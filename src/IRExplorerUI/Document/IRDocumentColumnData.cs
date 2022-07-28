@@ -66,6 +66,7 @@ namespace IRExplorerUI {
             TextWeight = FontWeights.Normal;
             TextColor = Brushes.Black;
             ToolTip = tooltip;
+            ShowPercentageBar = true;
         }
 
         public static ElementColumnValue Empty => new ElementColumnValue(string.Empty);

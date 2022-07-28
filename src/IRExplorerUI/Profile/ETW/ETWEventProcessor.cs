@@ -14,6 +14,7 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Windows.Documents;
 using System.Text;
+using System.Windows.Controls.Ribbon.Primitives;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -373,6 +374,16 @@ public class ETWEventProcessor : IDisposable {
             }
         };
 
+#if false
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        long memory = GC.GetTotalMemory(true);
+
+        var pmcDict = new Dictionary<Tuple<long, int, int>, List<PerformanceCounterEvent>>();
+        int small = 0;
+        int large = 0;
+#endif
+
         source_.Kernel.PerfInfoPMCSample += data => {
             if (!IsAcceptedProcess(data.ProcessID)) {
                 return; // Ignore events from other processes.
@@ -398,6 +409,33 @@ public class ETWEventProcessor : IDisposable {
             profile.AddPerformanceCounterEvent(counterEvent);
             profile.ReturnContext(contextId);
 
+#if false
+            var key = new Tuple<long, int, int>((long)data.InstructionPointer, contextId, data.ProfileSource);
+
+            if (!pmcDict.TryGetValue(key, out var list)) {
+                list = new List<PerformanceCounterEvent>();
+                pmcDict.Add(key, list);
+            }
+
+            if (list.Count > 0) {
+                var last = list[^1];
+                if ((counterEvent.Time - last.Time).TotalMilliseconds < 100) {
+                    small++;
+                    
+                }
+                else {
+                    large++;
+                    list.Add(counterEvent);
+
+                }
+            }
+            else {
+                list.Add(counterEvent);
+
+            }
+
+#endif
+
             //Trace.WriteLine($"PMC {data.ProfileSource}: {data.InstructionPointer}");
 
         };
@@ -408,8 +446,11 @@ public class ETWEventProcessor : IDisposable {
 
         // Go over all ETW events, which will call the registered handlers.
         try {
-            Trace.WriteLine("Start processing ETW events");
+            //Trace.WriteLine("Start processing ETW events");
+            //var sw = Stopwatch.StartNew();
             source_.Process();
+            //sw.Stop();
+            //Trace.WriteLine($"Took: {sw.ElapsedMilliseconds} ms");
         }
         catch (Exception ex) {
             Trace.TraceError($"Failed to process ETW events: {ex.Message}");
@@ -426,6 +467,21 @@ public class ETWEventProcessor : IDisposable {
         }
 
         profile.PrintAllProcesses();
+
+#if false
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        long memory2 = GC.GetTotalMemory(true);
+        Trace.WriteLine($"Memory diff: {(memory2 - memory) / (1024 * 1024):F2}, MB");
+        Trace.Flush();
+
+        Trace.WriteLine($"PMC dict keys: {pmcDict.Count}");
+        Trace.WriteLine($"   small diff: {small}");
+        Trace.WriteLine($"   large diff: {large}");
+        Trace.WriteLine($"   small perc: {((double)small / (small + large)) * 100:F4}");
+        Trace.Flush();
+#endif
+
         //StateSerializer.Serialize(@"C:\test\out.dat", profile);
 
         return profile;
