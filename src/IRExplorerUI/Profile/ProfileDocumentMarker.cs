@@ -459,9 +459,9 @@ namespace IRExplorerUI.Compilers.ASM {
                 counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]", "TimePercentageColumnValueTemplate",
                     $"CounterHeader{counterInfo.Id}", $"{ShortenPerfCounterName(counterInfo.Name)}", 
                     counterInfo.Description != null ? $"{counterInfo.Description}" : $"{counterInfo.Name}",
-                    null, 100.0, "TimeColumnHeaderTemplate",
+                    null, 50, "TimeColumnHeaderTemplate",
                     new OptionalColumnAppearance() {
-                        ShowPercentageBar = false,
+                        ShowPercentageBar = true,
                         ShowMainColumnPercentageBar = true,
                         UseBackColor = false,
                         UseMainColumnBackColor = true,
@@ -496,16 +496,36 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 for (int k = 0; k < perfCounters.Count; k++) {
                     var counter = perfCounters[k];
-                    var value = counterSet.FindCounterValue(counter);
+                    long value = 0;
+                    double valuePercentage = 0;
+                    string tooltip = "";
 
-                    if (value == 0) {
-                        continue;
+                    if (counter.IsMetric) {
+                        var metric = counter as PerformanceMetricInfo;
+
+                        var baseValue = counterSet.FindCounterValue(metric.BaseCounter);
+                        var relativeValue = counterSet.FindCounterValue(metric.RelativeCounter);
+
+                        if (baseValue == 0) {
+                            continue;
+                        }
+
+                        valuePercentage = (double)relativeValue / (double)baseValue;
+                    }
+                    else {
+                        value = counterSet.FindCounterValue(counter);
+
+                        if (value == 0) {
+                            continue;
+                        }
+
+                        valuePercentage = result.ScaleCounterValue(value, counter);
+                        tooltip = $"{value * counter.Frequency}";
                     }
 
                     //? Could have a config for all/per-counter to pick % or value as label
-                    double valuePercentage = result.ScaleCounterValue(value, counter);
                     var label = valuePercentage.AsPercentageString();
-                    var tooltip = $"{value * counter.Frequency}";
+                    //var label = $"{value * counter.Frequency}";
                     var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
 
                     var color = colors[counter.Number % colors.Length];
@@ -543,8 +563,8 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         static readonly (string,string)[] PerfCounterNameReplacements = new (string, string)[] {
-            ("Instructions", "Instrs"),
-            ("Mispredictions", "Mispred"),
+            ("Instruction", "Instr"),
+            ("Misprediction", "Mispred"),
         };
 
         public static string ShortenPerfCounterName(string name) {
@@ -552,7 +572,13 @@ namespace IRExplorerUI.Compilers.ASM {
                 int index = name.LastIndexOf(replacement.Item1);
 
                 if (index != -1) {
-                    return name.Substring(0, index) + replacement.Item2;
+                    string suffix = "";
+
+                    if (index + replacement.Item1.Length < name.Length) {
+                        suffix = name.Substring(index + replacement.Item1.Length);
+                    }
+
+                    return name.Substring(0, index) + replacement.Item2 + suffix;
                 }
             }
 

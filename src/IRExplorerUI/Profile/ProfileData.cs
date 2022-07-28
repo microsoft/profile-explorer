@@ -105,6 +105,30 @@ public class ProfileData {
 
         return null;
     }
+
+    public PerformanceCounterInfo FindPerformanceCounter(string name) {
+        foreach (var pair in PerformanceCounters) {
+            if (pair.Value.Name == name) {
+                return pair.Value;
+            }
+        }
+
+        return null;
+    }
+
+    public PerformanceMetricInfo RegisterPerformanceMetric(int id, string metricName, string baseName, string relativeName) {
+        var baseCounter = FindPerformanceCounter(baseName);
+        var relativeCounter = FindPerformanceCounter(relativeName);
+
+        if (baseCounter != null && relativeCounter != null) {
+            var metric = new PerformanceMetricInfo(id, metricName, baseCounter, relativeCounter);
+            //metric.Number = Math.Max()
+            PerformanceCounters[id] = metric;
+            return metric;
+        }
+
+        return null;
+    }
         
     public double ScaleFunctionWeight(TimeSpan weight) {
         return (double)weight.Ticks / (double)ProfileWeight.Ticks;
@@ -381,24 +405,43 @@ public class FunctionProfileData {
     }
 }
 
-
 [ProtoContract(SkipConstructor = true)]
 public class PerformanceCounterInfo {
     [ProtoMember(1)]
     public int Id { get; set; }
     [ProtoMember(2)]
-    public int Number { get; set; }
-    [ProtoMember(3)]
     public string Name { get; set; }
-    [ProtoMember(4)]
+    [ProtoMember(3)]
     public string Description { get; set; }
+    [ProtoMember(4)]
+    public int Number { get; set; }
     [ProtoMember(5)]
     public int Frequency { get; set; }
 
-    public PerformanceCounterInfo(int id, string name, int frequency) {
+    public virtual bool IsMetric => false;
+
+    public PerformanceCounterInfo() {
+
+    }
+
+    public PerformanceCounterInfo(int id, string name, int frequency = 0) {
         Id = id;
         Name = name;
         Frequency = frequency;
+    }
+}
+
+public class PerformanceMetricInfo : PerformanceCounterInfo {
+    public PerformanceCounterInfo BaseCounter { get; set; }
+    public PerformanceCounterInfo RelativeCounter { get; set; }
+
+    public override bool IsMetric => true;
+
+    public PerformanceMetricInfo(int id, string name, 
+                                 PerformanceCounterInfo baseCounter, 
+                                 PerformanceCounterInfo relativeCounter) : base(id, name) {
+        BaseCounter = baseCounter;
+        RelativeCounter = relativeCounter;
     }
 }
 

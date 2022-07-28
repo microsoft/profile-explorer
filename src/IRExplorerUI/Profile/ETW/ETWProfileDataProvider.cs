@@ -779,97 +779,102 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     // Process performance counters.
                     index = 0;
 
-                    foreach (var counter in prof.PerformanceCounters) {
-                        var counterInfo = new PerformanceCounterInfo(counter.Id, counter.Name, counter.Frequency);
-                        profileData_.RegisterPerformanceCounter(counterInfo);
-                    }
+                        foreach (var counter in prof.PerformanceCounters) {
+                            var counterInfo = new PerformanceCounterInfo(counter.Id, counter.Name, counter.Frequency);
 
-                    foreach (var counter in prof.PerformanceCountersEvents) {
-                        if (index % 10000 == 0) {
-                            if (cancelableTask != null && cancelableTask.IsCanceled) {
-                            break;
+                            lock (profileData_) {
+                                profileData_.RegisterPerformanceCounter(counterInfo);
+                            }
+                        }
+
+                        profileData_.RegisterPerformanceMetric(123, "Cache miss rate", "DcacheAccesses", "DcacheMisses");
+                        profileData_.RegisterPerformanceMetric(124, "CPI", "InstructionRetired", "TotalCycles");
+
+                foreach (var counter in prof.PerformanceCountersEvents) {
+                            if (index % 50000 == 0) {
+                                if (cancelableTask != null && cancelableTask.IsCanceled) {
+                                    break;
+                                }
+                                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.PerfCounterProcessing) {
+                                    Total = (int)prof.PerformanceCountersEvents.Count, Current = index
+                                });
                             }
 
-                            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.PerfCounterProcessing) {
-                                Total = prof.PerformanceCountersEvents.Count,
-                                Current = index
-                            });
-                        }
+                            var context = counter.GetContext(prof);
 
-                        var context = counter.GetContext(prof);
+                            if (context.ProcessId != mainProcessId) {
+                                continue;
+                            }
 
-                        if (context.ProcessId != mainProcessId) {
-                            continue;
-                        }
+                            index++;
+                            int managedBaseAddress = 0;
+                            ProfileImage frameImage = prof.FindImageForIP(counter.IP, context);
 
-                    index++;
-                    int managedBaseAddress = 0;
-                        ProfileImage frameImage = prof.FindImageForIP(counter.IP, context);
+                            if (frameImage == null) {
+                                if (prof.HasManagedMethods(context.ProcessId)) {
+                                    var managedFunc = prof.FindManagedMethodForIP(counter.IP, context.ProcessId);
 
-                        if (frameImage == null) {
-                            if (prof.HasManagedMethods(context.ProcessId)) {
-                                var managedFunc = prof.FindManagedMethodForIP(counter.IP, context.ProcessId);
-
-                                if (managedFunc != null) {
-                                    frameImage = managedFunc.Image;
-                                    managedBaseAddress = 1;
+                                    if (managedFunc != null) {
+                                        frameImage = managedFunc.Image;
+                                        managedBaseAddress = 1;
+                                    }
                                 }
                             }
-                        }
 
-                        if (frameImage != null) {
-                            //? FIX LOCK
-                            profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
-
-                            var module = FindModuleInfo(frameImage, context.ProcessId, symbolOptions);
-
-                            if (module == null) {
-                                continue;
-                            }
-                            else if (!module.Initialized || !module.HasDebugInfo) {
-                                //Trace.WriteLine($"Uninitialized module {image.FileName}");
-                                continue;
-                            }
-
-                            long frameRva = 0;
-                            long funcRva = 0;
-                            string funcName = null;
-                            DebugFunctionInfo funcInfo = null;
-
-                            if (managedBaseAddress != 0) {
-                                frameRva = counter.IP;
-                                funcInfo = module.FindDebugFunctionInfo(frameRva);
-                            }
-                            else {
-                                frameRva = counter.IP - frameImage.BaseAddress;
-                                funcInfo = module.FindDebugFunctionInfo(frameRva);
-                            }
-
-                            if (funcInfo != null) {
-                                funcName = funcInfo.Name;
-                                funcRva = funcInfo.RVA;
-                            }
-
-                            if (funcName == null) {
-                                continue;
-                            }
-
-                            var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
-
-                            if (textFunction != null) {
-                                var offset = frameRva - funcRva;
-
-                                FunctionProfileData profile = null;
-
-                                //? TODO: Use RW lock
+                            if (frameImage != null) {
                                 lock (profileData_) {
-                                    profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                                    profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
                                 }
 
-                                profile.AddCounterSample(offset, counter.CounterId, 1);
+                                var module = FindModuleInfo(frameImage, context.ProcessId, symbolOptions);
+
+                                if (module == null) {
+                                    continue;
+                                }
+                                else if (!module.Initialized || !module.HasDebugInfo) {
+                                    //Trace.WriteLine($"Uninitialized module {image.FileName}");
+                                    continue;
+                                }
+
+                                long frameRva = 0;
+                                long funcRva = 0;
+                                string funcName = null;
+                                DebugFunctionInfo funcInfo = null;
+
+                                if (managedBaseAddress != 0) {
+                                    frameRva = counter.IP;
+                                    funcInfo = module.FindDebugFunctionInfo(frameRva);
+                                }
+                                else {
+                                    frameRva = counter.IP - frameImage.BaseAddress;
+                                    funcInfo = module.FindDebugFunctionInfo(frameRva);
+                                }
+
+                                if (funcInfo != null) {
+                                    funcName = funcInfo.Name;
+                                    funcRva = funcInfo.RVA;
+                                }
+
+                                if (funcName == null) {
+                                    continue;
+                                }
+
+                                var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
+
+                                if (textFunction != null) {
+                                    var offset = frameRva - funcRva;
+
+                                    FunctionProfileData profile = null;
+
+                                    //? TODO: Use RW lock
+                                    lock (profileData_) {
+                                        profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                                    }
+
+                                    profile.AddCounterSample(offset, counter.CounterId, 1);
+                                }
                             }
                         }
-                    }
 
                     Trace.WriteLine($"Done process PMC in {sw.Elapsed}");
 #endif

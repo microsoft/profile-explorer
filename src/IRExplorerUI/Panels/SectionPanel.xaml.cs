@@ -2420,9 +2420,16 @@ namespace IRExplorerUI {
 
                 var name = $"{ProfileDocumentMarker.ShortenPerfCounterName(counter.Name)}";
                 var tooltip = counter.Description != null ? $"{counter.Description}" : $"{counter.Name}";
+                int insertionIndex = -1;
+
+                // Insert before the demangled func name column.
+                if (AlternateNameColumnVisible) {
+                    insertionIndex = OptionalColumn.FindListViewColumnIndex("AlternateNameColumnHeader", FunctionList);
+                }
+
                 var gridColumn = OptionalColumn.AddListViewColumn(FunctionList,
                     OptionalColumn.Binding($"Counters[{counter.Id}]", $"PerfCounters{i}",
-                        name, tooltip), functionValueSorter_);
+                        name, tooltip), functionValueSorter_, "", " counter", true, insertionIndex);
                 gridColumn.Header.Tag = counter;
             }
         }

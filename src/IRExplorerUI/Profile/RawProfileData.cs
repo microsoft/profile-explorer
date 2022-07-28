@@ -63,7 +63,7 @@ public class RawProfileData {
     private List<PerformanceCounter> perfCounters_ { get; set; }
     //? TODO: Switch to a segmented list
     [ProtoMember(8)]
-    private List<PerformanceCounterEvent> perfCountersEvents_ { get; set; }
+    private SegmentedList<PerformanceCounterEvent> perfCountersEvents_ { get; set; }
 
     // Objects used only while building the profile.
     private Dictionary<ProfileThread, int> threadsMap_;
@@ -80,7 +80,7 @@ public class RawProfileData {
     public List<ProfileProcess> Processes => processes_.ToValueList();
     public List<ProfileThread> Threads => threads_;
     public List<ProfileImage> Images => images_;
-    public List<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
+    public SegmentedList<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
     public List<PerformanceCounter> PerformanceCounters => perfCounters_;
 
     public bool HasManagedMethods(int processId) => procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
@@ -212,7 +212,7 @@ public class RawProfileData {
         stackData_ = new HashSet<long[]>(new StackComparer());
         samples_ = new List<ProfileSample>();
         perfCounters_ = new List<PerformanceCounter>();
-        perfCountersEvents_ = new List<PerformanceCounterEvent>();
+        perfCountersEvents_ = new SegmentedList<PerformanceCounterEvent>(4096);
 
         if (handlesDotNetEvents) {
             procManagedDataMap_ = new Dictionary<int, ManagedData>();
@@ -328,7 +328,7 @@ public class RawProfileData {
     public int AddPerformanceCounterEvent(PerformanceCounterEvent counterEvent) {
         Debug.Assert(counterEvent.ContextId != 0);
         perfCountersEvents_.Add(counterEvent);
-        return perfCountersEvents_.Count;
+        return (int)perfCountersEvents_.Count;
     }
 
     internal ProfileContext RentTempContext(int processId, int threadId, int processorNumber) {
