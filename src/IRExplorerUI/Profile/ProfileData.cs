@@ -116,12 +116,14 @@ public class ProfileData {
         return null;
     }
 
-    public PerformanceMetricInfo RegisterPerformanceMetric(int id, string metricName, string baseName, string relativeName) {
+    public PerformanceMetricInfo RegisterPerformanceMetric(int id, string metricName, 
+        string baseName, string relativeName, bool isPercentage = true, string description = "") {
         var baseCounter = FindPerformanceCounter(baseName);
         var relativeCounter = FindPerformanceCounter(relativeName);
 
         if (baseCounter != null && relativeCounter != null) {
-            var metric = new PerformanceMetricInfo(id, metricName, baseCounter, relativeCounter);
+            var metric = new PerformanceMetricInfo(id, metricName, baseCounter, relativeCounter, 
+                                                   isPercentage, description);
             //metric.Number = Math.Max()
             PerformanceCounters[id] = metric;
             return metric;
@@ -424,24 +426,41 @@ public class PerformanceCounterInfo {
 
     }
 
-    public PerformanceCounterInfo(int id, string name, int frequency = 0) {
+    public PerformanceCounterInfo(int id, string name, int frequency = 0, string description = "") {
         Id = id;
         Name = name;
         Frequency = frequency;
+        Description = description;
     }
 }
 
 public class PerformanceMetricInfo : PerformanceCounterInfo {
     public PerformanceCounterInfo BaseCounter { get; set; }
     public PerformanceCounterInfo RelativeCounter { get; set; }
+    public bool IsPercentage { get; set; }
 
     public override bool IsMetric => true;
 
     public PerformanceMetricInfo(int id, string name, 
                                  PerformanceCounterInfo baseCounter, 
-                                 PerformanceCounterInfo relativeCounter) : base(id, name) {
+                                 PerformanceCounterInfo relativeCounter,
+                                 bool isPercentage = true, string description = "") : base(id, name, 0, description) {
         BaseCounter = baseCounter;
         RelativeCounter = relativeCounter;
+        IsPercentage = isPercentage;
+    }
+
+    public double ComputeMetric(PerformanceCounterSet counterSet, out long baseValue, out long relativeValue) {
+        baseValue = counterSet.FindCounterValue(BaseCounter);
+        relativeValue = counterSet.FindCounterValue(RelativeCounter);
+
+        if (baseValue == 0) {
+            return 0;
+        }
+
+        // Counters may not be accurate and the percentage can end up more than 100%.
+        double result = (double)relativeValue / (double)baseValue;
+        return IsPercentage ? Math.Min (result, 1) : result;
     }
 }
 
@@ -480,6 +499,8 @@ public class PerformanceCounterSet {
     //? and make PerformanceCounterSet as struct.
     [ProtoMember(1)]
     public List<PerformanceCounterValue> Counters { get; set; }
+
+    public int Count => Counters.Count;
 
     public PerformanceCounterSet() {
         InitializeReferenceMembers();

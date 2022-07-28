@@ -34,7 +34,7 @@ namespace IRExplorerUI.Compilers.ASM {
         public double ElementWeightCutoff { get; set; }
         public double LineWeightCutoff {  get; set; }
         public int TopOrderCutoff { get; set; }
-        public double IcongBarWeightCutoff { get; set; }
+        public double IconBarWeightCutoff { get; set; }
         
         public Brush ColumnTextColor { get; set; }
         public Brush ElementOverlayTextColor { get; set; }
@@ -65,7 +65,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 ElementWeightCutoff = 0.003, // 0.3%
                 LineWeightCutoff = 0.005, // 0.5%,
                 TopOrderCutoff = 10,
-                IcongBarWeightCutoff = 0.03,
+                IconBarWeightCutoff = 0.03,
                 MaxPercentageBarWidth = 100,
                 DisplayIcons = true,
                 RemoveEmptyColumns = true,
@@ -128,7 +128,7 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         public bool IsSignificantValue(int order, double percentage) {
-            return order < TopOrderCutoff && percentage >= IcongBarWeightCutoff;
+            return order < TopOrderCutoff && percentage >= IconBarWeightCutoff;
         }
 
         public Color PickBackColorForOrder(int order, double percentage, bool inverted) {
@@ -209,7 +209,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             // Don't use a bar if it ends up only a few pixels.
-            return percentage >= IcongBarWeightCutoff;
+            return percentage >= IconBarWeightCutoff;
         }
 
         public bool ShowPercentageBar(double percentage) {
@@ -218,7 +218,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             // Don't use a bar if it ends up only a few pixels.
-            return percentage >= IcongBarWeightCutoff;
+            return percentage >= IconBarWeightCutoff;
         }
 
         public Brush PickPercentageBarColor(OptionalColumn column) {
@@ -380,7 +380,8 @@ namespace IRExplorerUI.Compilers.ASM {
                 value.TextWeight = options_.PickTextWeight(column, order, percentage);
 
                 value.Icon = options_.PickIcon(column, value.ValueOrder, value.ValuePercentage).Icon;
-                value.ShowPercentageBar = options_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
+                value.ShowPercentageBar = value.ShowPercentageBar && // Disabled per value
+                                          options_.ShowPercentageBar(column, value.ValueOrder, value.ValuePercentage);
                 value.PercentageBarBackColor = options_.PickPercentageBarColor(column);
             }
 
@@ -463,7 +464,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     new OptionalColumnAppearance() {
                         ShowPercentageBar = true,
                         ShowMainColumnPercentageBar = true,
-                        UseBackColor = false,
+                        UseBackColor = counterInfo.IsMetric,
                         UseMainColumnBackColor = true,
                         PickColorForPercentage = false,
                         ShowIcon = false,
@@ -498,19 +499,27 @@ namespace IRExplorerUI.Compilers.ASM {
                     var counter = perfCounters[k];
                     long value = 0;
                     double valuePercentage = 0;
-                    string tooltip = "";
+                    string label = "";
+                    string tooltip = null;
+                    bool isValueBasedMetric = false;
 
                     if (counter.IsMetric) {
                         var metric = counter as PerformanceMetricInfo;
+                        valuePercentage = metric.ComputeMetric(counterSet, out var baseValue, out var relativeValue);
 
-                        var baseValue = counterSet.FindCounterValue(metric.BaseCounter);
-                        var relativeValue = counterSet.FindCounterValue(metric.RelativeCounter);
+                        // Don't show metrics for counters with few hits,
+                        // they tend to be the ones the most inaccurate.
+                        double metricBasePercentage = result.ScaleCounterValue(baseValue, metric.BaseCounter);
 
-                        if (baseValue == 0) {
-                            continue;
+                        if (metricBasePercentage > 0.01 && valuePercentage > 0.01) {
+                            label = FormatPerformanceMetric(valuePercentage, metric);
+                            value = (long)(valuePercentage * 10000);
+                            isValueBasedMetric = !metric.IsPercentage;
+                            tooltip = "Per instruction";
                         }
-
-                        valuePercentage = (double)relativeValue / (double)baseValue;
+                        else {
+                            valuePercentage = 0;
+                        }
                     }
                     else {
                         value = counterSet.FindCounterValue(counter);
@@ -520,19 +529,20 @@ namespace IRExplorerUI.Compilers.ASM {
                         }
 
                         valuePercentage = result.ScaleCounterValue(value, counter);
-                        tooltip = $"{value * counter.Frequency}";
+                        label = valuePercentage.AsPercentageString();
+                        tooltip = FormatPerformanceCounter(value, counter);
                     }
 
                     //? Could have a config for all/per-counter to pick % or value as label
-                    var label = valuePercentage.AsPercentageString();
                     //var label = $"{value * counter.Frequency}";
                     var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
 
                     var color = colors[counter.Number % colors.Length];
-                    columnValue.TextColor = color;
-                    columnValue.TextWeight = FontWeights.DemiBold;
+                    //columnValue.TextColor = color;
+                    if (counter.IsMetric) columnValue.BackColor = Brushes.Beige;
                     columnValue.ValuePercentage = valuePercentage;
-                    columnValue.ShowPercentageBar = valuePercentage >= 0.03;
+                    //? TODO: SHow bar only if any value is much higher? Std dev
+                    columnValue.ShowPercentageBar = !isValueBasedMetric && valuePercentage >= 0.03;
                     columnValue.PercentageBarBackColor = color;
                     columnData.AddValue(columnValue, element, counterColumns[k]);
 
@@ -560,6 +570,24 @@ namespace IRExplorerUI.Compilers.ASM {
         public static bool IsPerfCounterVisible(PerformanceCounterInfo counterInfo) {
             //? TODO: Use a filter list from options
             return counterInfo.Name != "Timer";
+        }
+
+        public static string FormatPerformanceMetric(double value, PerformanceMetricInfo metric) {
+            if (value == 0) {
+                return "";
+            }
+
+            return metric.IsPercentage ? value.AsPercentageString() : $"{value:##}";
+        }
+
+        public static string FormatPerformanceCounter(long value, PerformanceCounterInfo counter) {
+            if (counter.Frequency > 1000) {
+                double valueK = (double)(value * counter.Frequency) / 1000;
+                return $"{valueK:##}K";
+            }
+            else {
+                return $"{value * counter.Frequency}";
+            }
         }
 
         static readonly (string,string)[] PerfCounterNameReplacements = new (string, string)[] {

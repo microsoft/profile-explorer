@@ -34,6 +34,7 @@ using System.Dynamic;
 using System.Runtime.CompilerServices;
 using IRExplorerCore.Graph;
 using System.Windows.Documents;
+using static SkiaSharp.HarfBuzz.SKShaper;
 
 namespace IRExplorerUI {
     //? TODo; Commands can be defined in code-behind with this pattern,
@@ -264,6 +265,36 @@ namespace IRExplorerUI {
         }
     }
 
+    public class PerformanceCounterSetEx {
+        public class PerformanceCounterValueEx {
+            public int CounterId { get; set; }
+            public double Value { get; set; }
+            public string Label { get; set; }
+        }
+
+        public List<PerformanceCounterValueEx> Counters { get; set; }
+
+        public PerformanceCounterSetEx(int count) {
+            Counters = new List<PerformanceCounterValueEx>(count);
+        }
+
+        public string FindCounterLabel(int perfCounterId) {
+            var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
+            return index != -1 ? Counters[index].Label: null;
+        }
+
+        public double FindCounterValue(int perfCounterId) {
+            var index = Counters.FindIndex((item) => item.CounterId == perfCounterId);
+            return index != -1 ? Counters[index].Value : 0;
+        }
+
+        public string this[int perfCounterId] => FindCounterLabel(perfCounterId);
+
+        public void Add(PerformanceCounterValueEx counterEx) {
+            Counters.Add(counterEx);
+        }
+    }
+
     public class IRTextFunctionEx : IRTextDiffBaseEx, INotifyPropertyChanged {
         public IRTextFunctionEx(IRTextFunction function, int index) : base(DiffKind.None) {
             Function = function;
@@ -299,8 +330,7 @@ namespace IRExplorerUI {
         public int SectionCount => Function.SectionCount;
         public FunctionCodeStatistics Statistics { get; set; }
         public FunctionCodeStatistics DiffStatistics { get; set; }
-
-        public PerformanceCounterSet Counters { get; set; }
+        public PerformanceCounterSetEx Counters { get; set; }
 
 
         public DiffKind FunctionDiffKind {
@@ -1165,7 +1195,30 @@ namespace IRExplorerUI {
 
                     //? TODO: Can be expensive, do in background
                     if (funcProfile.HasPerformanceCounters) {
-                        funcEx.Counters = funcProfile.ComputeFunctionTotalCounters();
+                        var counters = funcProfile.ComputeFunctionTotalCounters();
+                        funcEx.Counters = new PerformanceCounterSetEx(counters.Count);
+
+                        // Add values for metrics first.
+                        foreach (var counter in profile.SortedPerformanceCounters) {
+                            if (counter.IsMetric) {
+                                var counterEx = new PerformanceCounterSetEx.PerformanceCounterValueEx() { CounterId = counter.Id };
+                                var metric = counter as PerformanceMetricInfo;
+                                counterEx.Value = metric.ComputeMetric(counters, out var _, out var _);
+                                counterEx.Label = ProfileDocumentMarker.FormatPerformanceMetric(counterEx.Value, metric);
+                                funcEx.Counters.Add(counterEx);
+                            }
+                        }
+
+                        foreach (var counter in counters.Counters) {
+                            var counterInfo = profile.GetPerformanceCounter(counter.CounterId);
+
+                            if (!counterInfo.IsMetric) {
+                                var counterEx = new PerformanceCounterSetEx.PerformanceCounterValueEx() { CounterId = counter.CounterId };
+                                counterEx.Value = counter.Value;
+                                counterEx.Label = ProfileDocumentMarker.FormatPerformanceCounter(counter.Value, counterInfo);
+                                funcEx.Counters.Add(counterEx);
+                            }
+                        }
 
                         if (!counterColumnsAdded) {
                             AddCountersFunctionListColumns(false);
@@ -2406,7 +2459,7 @@ namespace IRExplorerUI {
             OptionalColumn.Binding("FunctionDiffKind",
                 "DiffHeader", $"Diff", "Difference kind (only in left/right document or modified)", DiffKindConverter),
         };
-        
+
         public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
             //? TODO: to remove, check tag is counter type 
             var counters = Session.ProfileData.SortedPerformanceCounters;
