@@ -192,6 +192,10 @@ namespace IRExplorerUI {
 
         private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
             Dispatcher.BeginInvoke((Action)(() => {
+                if (progressInfo == null) {
+                    return;
+                }
+
                 LoadProgressBar.Maximum = progressInfo.Total;
                 LoadProgressBar.Value = progressInfo.Current;
 
@@ -199,7 +203,8 @@ namespace IRExplorerUI {
                     ProfileLoadStage.TraceLoading => "Loading trace",
                     ProfileLoadStage.TraceProcessing => "Processing trace",
                     ProfileLoadStage.SymbolLoading => "Loading symbols",
-                    ProfileLoadStage.PerfCounterProcessing => "Processing perf. counters"
+                    ProfileLoadStage.PerfCounterProcessing => "Processing CPU perf. counters",
+                    _ => ""
                 };
 
                 if (progressInfo.Total != 0 && progressInfo.Total != progressInfo.Current) {

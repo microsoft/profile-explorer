@@ -183,6 +183,22 @@ namespace IRExplorerUI {
             return (columnHeader, gridColumn);
         }
 
+        public static int FindListViewColumnIndex(string name, ListView listView) {
+            var functionGrid = (GridView)listView.View;
+            int index = 0;
+
+            foreach (var column in functionGrid.Columns) {
+                if (column.Header is GridViewColumnHeader columnHeader &&
+                    columnHeader.Name == name) {
+                    return index;
+                }
+
+                index++;
+            }
+
+            return -1;
+        }
+
         private static DataTemplate CreateGridColumnBindingTemplate(string propertyName, IValueConverter valueConverter = null) {
             var template = new DataTemplate();
             var factory = new FrameworkElementFactory(typeof(TextBlock));
