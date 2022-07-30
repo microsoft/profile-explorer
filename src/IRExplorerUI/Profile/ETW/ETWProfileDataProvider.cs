@@ -534,10 +534,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                                         //? TODO: Expensive, do as post-processing
                                         // Try to map the sample to all the inlined functions.
-                                        if (options_.MarkInlinedFunctions && resolvedFrame.Module.HasDebugInfo &&
-                                            textFunction.Sections.Count > 0) {
-                                            ProcessInlineeSample(sampleWeight, offset, textFunction, resolvedFrame.Module);
-                                        }
+                                        //if (options_.MarkInlinedFunctions && resolvedFrame.Module.HasDebugInfo &&
+                                        //    textFunction.Sections.Count > 0) {
+                                        //    ProcessInlineeSample(sampleWeight, offset, textFunction, resolvedFrame.Module);
+                                        //}
                                     }
 
                                     isTopFrame = false;
@@ -706,10 +706,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                                         //? TODO: Expensive, do as post-processing
                                         // Try to map the sample to all the inlined functions.
-                                        if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
-                                            textFunction.Sections.Count > 0) {
-                                            ProcessInlineeSample(sampleWeight, offset, textFunction, module);
-                                        }
+                                        //if (options_.MarkInlinedFunctions && module.HasDebugInfo &&
+                                        //    textFunction.Sections.Count > 0) {
+                                        //    ProcessInlineeSample(sampleWeight, offset, textFunction, module);
+                                        //}
 
                                         resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, frameRva, funcInfo, 
                                                                                              textFunction, frameImage, module, profile));
@@ -764,7 +764,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 //prof.PrintSamples(0);
 
                 Trace.WriteLine($"Done process samples in {sw.Elapsed}");
-                
+
                 //MessageBox.Show($"Done in {sw.Elapsed}");
 
                 //Trace.WriteLine(callTree.Print());
@@ -772,7 +772,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 //? END SAMPLES PROC
 
 #if true
-                    Trace.WriteLine($"Start process PMC at {DateTime.Now}");
+                //? TODO: Check options.IncludePerformanceCounters
+                Trace.WriteLine($"Start process PMC at {DateTime.Now}");
                     //Trace.Flush();
                     sw.Restart();
 
@@ -952,50 +953,50 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
-    private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset, 
-        IRTextFunction textFunction, ModuleInfo module) {
-        return; //? TODO: Reimplement
+    //private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset, 
+    //    IRTextFunction textFunction, ModuleInfo module) {
+    //    return; //? TODO: Reimplement
 
-        // Load current function.
-        var loader = module.ModuleDocument.Loader;
-        var result = loader.LoadSection(textFunction.Sections[^1]);
-        var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
-        bool hasInstrOffsetMetadata =
-            metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
+    //    // Load current function.
+    //    var loader = module.ModuleDocument.Loader;
+    //    var result = loader.LoadSection(textFunction.Sections[^1]);
+    //    var metadataTag = result.Function.GetTag<AssemblyMetadataTag>();
+    //    bool hasInstrOffsetMetadata =
+    //        metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
-        if (hasInstrOffsetMetadata && !result.IsCached) {
-            // Add source location info only once, can be slow.
-            module.DebugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
-        }
+    //    if (hasInstrOffsetMetadata && !result.IsCached) {
+    //        // Add source location info only once, can be slow.
+    //        module.DebugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
+    //    }
 
-        // Try to find instr. referenced by RVA, then go over all inlinees.
-        if (!hasInstrOffsetMetadata ||
-            !metadataTag.OffsetToElementMap.TryGetValue(sampleOffset, out var rvaInstr)) {
-            return;
-        }
+    //    // Try to find instr. referenced by RVA, then go over all inlinees.
+    //    if (!hasInstrOffsetMetadata ||
+    //        !metadataTag.OffsetToElementMap.TryGetValue(sampleOffset, out var rvaInstr)) {
+    //        return;
+    //    }
 
-        var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
+    //    var lineInfo = rvaInstr.GetTag<SourceLocationTag>();
 
-        if (lineInfo == null || !lineInfo.HasInlinees) {
-            return;
-        }
+    //    if (lineInfo == null || !lineInfo.HasInlinees) {
+    //        return;
+    //    }
 
-        // For each inlinee, add the sample to its line.
-        foreach (var inlinee in lineInfo.Inlinees) {
-            if (!module.unmangledFuncNamesMap_.TryGetValue(inlinee.Function, out var inlineeTextFunc)) {
-                // The function may have been inlined at all call sites
-                // and not be found in the binary, make a dummy func. for it.
-                inlineeTextFunc = new IRTextFunction(inlinee.Function);
-                module.Summary.AddFunction(inlineeTextFunc);
-                module.unmangledFuncNamesMap_[inlinee.Function] = inlineeTextFunc;
-            }
+    //    // For each inlinee, add the sample to its line.
+    //    foreach (var inlinee in lineInfo.Inlinees) {
+    //        if (!module.unmangledFuncNamesMap_.TryGetValue(inlinee.Function, out var inlineeTextFunc)) {
+    //            // The function may have been inlined at all call sites
+    //            // and not be found in the binary, make a dummy func. for it.
+    //            inlineeTextFunc = new IRTextFunction(inlinee.Function);
+    //            module.Summary.AddFunction(inlineeTextFunc);
+    //            module.unmangledFuncNamesMap_[inlinee.Function] = inlineeTextFunc;
+    //        }
 
-            var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
-                inlineeTextFunc, inlinee.FilePath);
-            inlineeProfile.AddLineSample(inlinee.Line, sampleWeight);
-            inlineeProfile.Weight += sampleWeight;
-        }
-    }
+    //        var inlineeProfile = profileData_.GetOrCreateFunctionProfile(
+    //            inlineeTextFunc, inlinee.FilePath);
+    //        inlineeProfile.AddLineSample(inlinee.Line, sampleWeight);
+    //        inlineeProfile.Weight += sampleWeight;
+    //    }
+    //}
 
     public void Dispose() {
         //DebugInfo?.Dispose();

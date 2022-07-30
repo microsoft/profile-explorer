@@ -350,10 +350,12 @@ namespace IRExplorerUI {
         }
 
         private void TextViewOnCaretChanged(object? sender, int offset) {
-            var line = TextView.Document.GetLineByOffset(offset);
+            if (columnsVisible_) {
+                var line = TextView.Document.GetLineByOffset(offset);
 
-            if (ColumnsList.Items.Count >= line.LineNumber) {
-                ColumnsList.SelectedIndex = line.LineNumber - 1;
+                if (ColumnsList.Items.Count >= line.LineNumber) {
+                    ColumnsList.SelectedIndex = line.LineNumber - 1;
+                }
             }
         }
 

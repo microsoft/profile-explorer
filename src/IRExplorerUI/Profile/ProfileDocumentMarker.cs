@@ -183,14 +183,16 @@ namespace IRExplorerUI.Compilers.ASM {
 
 
         public IconDrawing PickIconForOrder(int order, double percentage) {
+            // Even if instr is the n-th hottest one, don't use an icon
+            // if the percentage is small.
+            if (!IsSignificantValue(order, percentage)) {
+                return IconDrawing.FromIconResource("HotFlameIconTransparent");
+            }
+
             return order switch {
                 0 => IconDrawing.FromIconResource("HotFlameIcon1"),
                 1 => IconDrawing.FromIconResource("HotFlameIcon2"),
-                // Even if instr is the n-th hottest one, don't use an icon
-                // if the percentage is small.
-                _ => (IsSignificantValue(order, percentage)) ?
-                    IconDrawing.FromIconResource("HotFlameIcon3") :
-                    IconDrawing.FromIconResource("HotFlameIconTransparent")
+                _ => IconDrawing.FromIconResource("HotFlameIcon3")
             };
         }
 
@@ -264,17 +266,15 @@ namespace IRExplorerUI.Compilers.ASM {
             //? TODO: Make async
             if (hasInstrOffsetMetadata) {
                 var result = profile_.Process(function, ir_);
-                MarkProfiledElements(result, document);
+                document.ColumnData = MarkProfiledElements(result, function, document);
                 MarkProfiledBlocks(result.BlockSampledElements, document);
             }
 
-            // Without precise instruction info, try to derive it
-            // from line number info if that's available.
-            if (!hasInstrOffsetMetadata) {
-                MarkProfiledLines(document);
-            }
-
             document.ResumeUpdate();
+        }
+
+        public async Task<IRDocumentColumnData> MarkSourceLines(FunctionIR function, FunctionProfileData.ProcessingResult result) {
+            return MarkProfiledElements(result, function, null);
         }
 
         private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, IRDocument document) {
@@ -356,10 +356,9 @@ namespace IRExplorerUI.Compilers.ASM {
             });
         
         public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
-                                     IRDocument document) {
+                                     FunctionIR function, IRDocument document) {
             Trace.WriteLine($"Apply {column.ColumnName}, main {column.IsMainColumn}");
 
-            var function = document.Function;
             var style = column.Appearance;
             var elementColorPairs = new List<ValueTuple<IRElement, Color>>(function.TupleCount);
 
@@ -388,7 +387,7 @@ namespace IRExplorerUI.Compilers.ASM {
             // Mark the elements themselves with a color.
             //? option in appearance
             //? Needs a tag so later a RemoveMarkedElements(tag) can be done
-            if (column.IsMainColumn) {
+            if (column.IsMainColumn && document != null) {
                 document.ClearInstructionMarkers();
                 document.MarkElements(elementColorPairs);
             }
@@ -404,11 +403,13 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        private void MarkProfiledElements(FunctionProfileData.ProcessingResult result, IRDocument document) {
+        private IRDocumentColumnData 
+            MarkProfiledElements(FunctionProfileData.ProcessingResult result, 
+                                 FunctionIR function, IRDocument document) {
             var elements = result.SampledElements;
 
             // Add a time column.
-            var columnData = document.ColumnData;
+            var columnData = new IRDocumentColumnData(function.InstructionCount);
             var percentageColumn = columnData.AddColumn(TIME_PERCENTAGE_COLUMN);
             var timeColumn = columnData.AddColumn(TIME_COLUMN);
 
@@ -429,8 +430,8 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             percentageColumn.IsMainColumn = true;
-            ApplyColumnStyle(percentageColumn, columnData, document);
-            ApplyColumnStyle(timeColumn, columnData, document);
+            ApplyColumnStyle(percentageColumn, columnData, function, document);
+            ApplyColumnStyle(timeColumn, columnData, function, document);
 
             percentageColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, columnData);
             timeColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, columnData);
@@ -438,7 +439,7 @@ namespace IRExplorerUI.Compilers.ASM {
             var counterElements = result.CounterElements;
 
             if (counterElements.Count == 0) {
-                return;
+                return columnData;
             }
 
 
@@ -563,8 +564,10 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             foreach (var column in counterColumns) {
-                ApplyColumnStyle(column, columnData, document);
+                ApplyColumnStyle(column, columnData, function, document);
             }
+
+            return columnData;
         }
 
         public static bool IsPerfCounterVisible(PerformanceCounterInfo counterInfo) {
@@ -623,36 +626,12 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 if (currentMainColumn != null) {
                     currentMainColumn.IsMainColumn = false;
-                    ApplyColumnStyle(currentMainColumn, columnData, document);
+                    ApplyColumnStyle(currentMainColumn, columnData, document.Function, document);
                 }
 
                 column.IsMainColumn = true;
-                ApplyColumnStyle(column, columnData, document);
+                ApplyColumnStyle(column, columnData, document.Function, document);
             };
-        }
-
-        private void MarkProfiledLines(IRDocument document) {
-            var lines = new List<Tuple<int, TimeSpan>>(profile_.SourceLineWeight.Count);
-
-            foreach (var pair in profile_.SourceLineWeight) {
-                lines.Add(new Tuple<int, TimeSpan>(pair.Key, pair.Value));
-            }
-
-            lines.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-            document.SuspendUpdate();
-
-            foreach (var pair in lines) {
-                double weightPercentage = profile_.ScaleWeight(pair.Item2);
-
-                if (weightPercentage < options_.LineWeightCutoff) {
-                    continue;
-                }
-
-                var color = options_.PickColorForPercentage(weightPercentage);
-                document.MarkElementsOnSourceLine(pair.Item1, color);
-            }
-
-            document.ResumeUpdate();
         }
     }
 }
