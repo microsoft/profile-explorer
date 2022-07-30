@@ -355,7 +355,6 @@ public class ETWEventProcessor : IDisposable {
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, cpu);
             int contextId = profile.AddContext(context);
 
-            //? TODO: Use a pooled sample to avoid alloc (profile.Rent*)
             var sample = new ProfileSample((long)data.InstructionPointer,
                                            TimeSpan.FromMilliseconds(timestamp),
                                            TimeSpan.FromMilliseconds(weight),
@@ -384,6 +383,7 @@ public class ETWEventProcessor : IDisposable {
         int large = 0;
 #endif
 
+        //? TODO: Check IncludePerformanceCounters
         source_.Kernel.PerfInfoPMCSample += data => {
             if (!IsAcceptedProcess(data.ProcessID)) {
                 return; // Ignore events from other processes.
@@ -402,7 +402,6 @@ public class ETWEventProcessor : IDisposable {
             int contextId = profile.AddContext(context);
             double timestamp = data.TimeStampRelativeMSec;
 
-            //? TODO: Use a pooled sample to avoid alloc (profile.Rent*)
             var counterEvent = new PerformanceCounterEvent((long)data.InstructionPointer,
                                                             TimeSpan.FromMilliseconds(timestamp), 
                                                             contextId, (short)data.ProfileSource);
@@ -446,11 +445,11 @@ public class ETWEventProcessor : IDisposable {
 
         // Go over all ETW events, which will call the registered handlers.
         try {
-            //Trace.WriteLine("Start processing ETW events");
-            //var sw = Stopwatch.StartNew();
+            Trace.WriteLine("Start processing ETW events");
+            var sw = Stopwatch.StartNew();
             source_.Process();
-            //sw.Stop();
-            //Trace.WriteLine($"Took: {sw.ElapsedMilliseconds} ms");
+            sw.Stop();
+            Trace.WriteLine($"Took: {sw.ElapsedMilliseconds} ms");
         }
         catch (Exception ex) {
             Trace.TraceError($"Failed to process ETW events: {ex.Message}");

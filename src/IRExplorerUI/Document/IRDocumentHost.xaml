@@ -557,7 +557,7 @@
                                 <TextBlock
                                     Margin="2,0,0,0"
                                     VerticalAlignment="Center"
-                                    Text="Filter" />
+                                    Text="Columns" />
                                 <Button
                                     Margin="4,0,0,0"
                                     Padding="1"

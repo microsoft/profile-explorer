@@ -197,7 +197,6 @@ namespace IRExplorerUI.Compilers.ASM {
         public async Task HandleLoadedSection(IRDocument document, FunctionIR function, IRTextSection section) {
             // Since the ASM blocks don't have a number in the text,
             // attach an overlay label next to the first instr. in the block.
-            document.ColumnData = new IRDocumentColumnData(function.InstructionCount);
             var overlayHeight = document.TextArea.TextView.DefaultLineHeight;
             var options = ProfileDocumentMarkerOptions.Default; //? TODO: App.Settings...
             var blockPen = ColorPens.GetPen(options.BlockOverlayBorderColor,
