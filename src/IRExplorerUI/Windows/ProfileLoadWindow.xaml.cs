@@ -354,6 +354,10 @@ namespace IRExplorerUI {
                 processList_.Sort((a, b) => b.SampleCount.CompareTo(a.SampleCount));
                 ProcessList.ItemsSource = new ListCollectionView(processList_);
             }
+            else {
+                MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
+                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            }
 
             IsLoadingProcessList = false;
             ShowProcessList = true;

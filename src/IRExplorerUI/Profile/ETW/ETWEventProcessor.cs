@@ -55,8 +55,8 @@ public class ETWEventProcessor : IDisposable {
 
     public ETWEventProcessor(string tracePath) {
         Debug.Assert(File.Exists(tracePath));
-        source_ = new ETWTraceEventSource(tracePath);
         childAcceptedProcessIds_ = new List<int>();
+        source_ = new ETWTraceEventSource(tracePath);
     }
 
     public List<TraceProcessSummary> BuildProcessSummary(CancelableTask cancelableTask) {
