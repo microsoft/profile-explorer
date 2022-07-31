@@ -5,6 +5,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:document="clr-namespace:IRExplorerUI.Document"
     d:DesignHeight="450"
     d:DesignWidth="1000"
     mc:Ignorable="d">
@@ -180,87 +181,10 @@
                 Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 ResizeBehavior="PreviousAndNext" />
 
-            <ListView
-                x:Name="ColumnsList"
-                Grid.Column="2"
-                Padding="-1,0,0,0"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                BorderThickness="0,1,0,0"
-                ScrollViewer.CanContentScroll="True"
-                ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                SelectionMode="Single"
-                UseLayoutRounding="False"
-                VirtualizingPanel.CacheLengthUnit="Pixel"
-                VirtualizingPanel.ScrollUnit="Pixel"
-                VirtualizingStackPanel.CacheLength="0,0"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
-                <ListView.View>
-                    <GridView>
-                        <GridView.ColumnHeaderContainerStyle>
-                            <Style TargetType="GridViewColumnHeader">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
-                                            <Border
-                                                Height="21"
-                                                Margin="-1,-1,0,0"
-                                                HorizontalAlignment="Stretch"
-                                                VerticalAlignment="Stretch"
-                                                Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
-                                                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                                BorderThickness="0,0,1,1">
-                                                <TextBlock
-                                                    x:Name="ContentHeader"
-                                                    Width="{TemplateBinding Width}"
-                                                    Margin="4,0,4,0"
-                                                    HorizontalAlignment="Left"
-                                                    VerticalAlignment="Center"
-                                                    Text="{TemplateBinding Content}" />
-                                            </Border>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </GridView.ColumnHeaderContainerStyle>
-                    </GridView>
-                </ListView.View>
-
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="{x:Type ListViewItem}">
-                        <Setter Property="OverridesDefaultStyle" Value="true" />
-                        <Setter Property="Height" Value="{Binding ColumnsListItemHeight, RelativeSource={RelativeSource AncestorType={x:Type local:ToolPanelControl}}}" />
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                        <Setter Property="Background" Value="{Binding BackColor}" />
-                        <Setter Property="BorderBrush" Value="{Binding BorderBrush}" />
-                        <Setter Property="BorderThickness" Value="{Binding BorderThickness}" />
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="ListBoxItem">
-                                    <Border
-                                        Name="Border"
-                                        Padding="0"
-                                        Background="{TemplateBinding Background}"
-                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="{TemplateBinding BorderThickness}">
-                                        <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                                    </Border>
-
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="true">
-                                            <Setter TargetName="Border" Property="Background" Value="{Binding SelectedLineBrush, RelativeSource={RelativeSource AncestorType={x:Type local:IRDocumentHost}}}" />
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </ListView.ItemContainerStyle>
-            </ListView>
+            <document:DocumentColumns Grid.Column="2" HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Stretch"
+                                      x:Name="ProfileColumns"
+                                      Padding="-1,0,0,0"/>
         </Grid>
     </Grid>
 </local:ToolPanelControl>

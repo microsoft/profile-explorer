@@ -12,6 +12,7 @@ using System.IO;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Profile.ETW;
+using Microsoft.Diagnostics.Tracing;
 
 namespace IRExplorerUI.Profile; 
 
@@ -69,8 +70,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, CancelableTask cancelableTask) {
-        using var eventProcessor = new ETWEventProcessor(tracePath);
-        return await Task.Run(() => eventProcessor.BuildProcessSummary(cancelableTask));
+        try {
+            using var eventProcessor = new ETWEventProcessor(tracePath);
+            return await Task.Run(() => eventProcessor.BuildProcessSummary(cancelableTask));
+        }
+        catch (Exception ex) {
+            Trace.WriteLine($"Failed to open ETL file {tracePath}: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
