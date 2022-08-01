@@ -69,9 +69,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
-    public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, CancelableTask cancelableTask) {
+    public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, ProfileDataProviderOptions options, 
+                                                                        CancelableTask cancelableTask) {
         try {
-            using var eventProcessor = new ETWEventProcessor(tracePath);
+            using var eventProcessor = new ETWEventProcessor(tracePath, options);
             return await Task.Run(() => eventProcessor.BuildProcessSummary(cancelableTask));
         }
         catch (Exception ex) {
@@ -92,7 +93,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
         
         var profile = await Task.Run(() => {
-            using var eventProcessor = new ETWEventProcessor(tracePath);
+            using var eventProcessor = new ETWEventProcessor(tracePath, options);
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 

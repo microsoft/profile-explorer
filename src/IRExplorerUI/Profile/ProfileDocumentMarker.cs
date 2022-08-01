@@ -78,7 +78,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 LineWeightCutoff = 0.005, // 0.5%,
                 TopOrderCutoff = 10,
                 IconBarWeightCutoff = 0.03,
-                MaxPercentageBarWidth = 100,
+                MaxPercentageBarWidth = 50,
                 DisplayIcons = true,
                 RemoveEmptyColumns = true,
                 DisplayPercentageBar = true,
@@ -345,7 +345,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
         private static readonly OptionalColumn TIME_COLUMN = 
             OptionalColumn.Template("[TimeHeader]", "TimePercentageColumnValueTemplate",
-                                    "TimeHeader", "Time (ms)", "Instruction time", null, 100.0, "TimeColumnHeaderTemplate",
+                                    "TimeHeader", "Time (ms)", "Instruction time", null, 50.0, "TimeColumnHeaderTemplate",
             new OptionalColumnAppearance() {
                 ShowPercentageBar = false,
                 ShowMainColumnPercentageBar = false,
@@ -358,7 +358,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
         private static readonly OptionalColumn TIME_PERCENTAGE_COLUMN = 
             OptionalColumn.Template("[TimePercentageHeader]", "TimePercentageColumnValueTemplate",
-            "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time", null, 100.0, "TimeColumnHeaderTemplate",
+            "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time", null, 50.0, "TimeColumnHeaderTemplate",
             new OptionalColumnAppearance() {
                 ShowPercentageBar = true,
                 ShowMainColumnPercentageBar = true, 
@@ -526,7 +526,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         // they tend to be the ones the most inaccurate.
                         double metricBasePercentage = result.ScaleCounterValue(baseValue, metric.BaseCounter);
 
-                        if (metricBasePercentage > 0.01 && valuePercentage > 0.01) {
+                        if (metricBasePercentage > 0.01) {
                             label = FormatPerformanceMetric(valuePercentage, metric);
                             value = (long)(valuePercentage * 10000);
                             isValueBasedMetric = !metric.IsPercentage;
@@ -594,7 +594,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 return "";
             }
 
-            return metric.IsPercentage ? value.AsPercentageString() : $"{value:F2}";
+            return metric.IsPercentage ? value.AsPercentageString(2, false) : $"{value:F2}";
         }
 
         public static string FormatPerformanceCounter(long value, PerformanceCounterInfo counter) {

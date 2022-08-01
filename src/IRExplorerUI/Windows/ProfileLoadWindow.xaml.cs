@@ -234,15 +234,13 @@ namespace IRExplorerUI {
             if (!Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*")) {
                 return;
             }
-
-            await DisplayProcessList();
         }
 
         private async Task DisplayProcessList() {
             if (File.Exists(ProfileFilePath))
             {
                 var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-                await DisplayProcessList(async () => await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, task));
+                await DisplayProcessList(async () => await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, options_, task));
             }
         }
 
@@ -298,7 +296,7 @@ namespace IRExplorerUI {
             options_.RecordingSessionOptions.ApplicationPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
             options_.RecordingSessionOptions.WorkingDirectory = Utils.CleanupPath(options_.RecordingSessionOptions.WorkingDirectory);
 
-            using var recordingSession = new ETWRecordingSession(options_.RecordingSessionOptions);
+            using var recordingSession = new ETWRecordingSession(options_);
             
             IsRecordingProfile = true;
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
