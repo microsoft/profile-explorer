@@ -12,6 +12,7 @@ namespace IRExplorerUI.Profile.ETW {
     public class ETWRecordingSession : IDisposable {
         private TraceEventSession session_;
         private ProfileRecordingSessionOptions options_;
+        private ProfileDataProviderOptions providerOptions_;
         private ProfileLoadProgressHandler progressCallback_;
         private DateTime lastEventTime_;
         private string sessionName_;
@@ -19,9 +20,11 @@ namespace IRExplorerUI.Profile.ETW {
 
         public static bool RequiresElevation => TraceEventSession.IsElevated() != true;
         
-        public ETWRecordingSession(ProfileRecordingSessionOptions options, string sessionName = null) {
+        public ETWRecordingSession(ProfileDataProviderOptions providerOptions,
+                                   string sessionName = null) {
             Debug.Assert(!RequiresElevation);
-            options_ = options;
+            options_ = providerOptions.RecordingSessionOptions;
+            providerOptions_ = providerOptions;
             sessionName_ = sessionName ?? $"IRX-ETW-{Guid.NewGuid()}";
         }
 
@@ -113,7 +116,8 @@ namespace IRExplorerUI.Profile.ETW {
 
                     // Start the ETW session.
                     using var eventProcessor =
-                        new ETWEventProcessor(session_.Source, true, acceptedProcessId,
+                        new ETWEventProcessor(session_.Source, providerOptions_,
+                                     true, acceptedProcessId,
                                               options_.ProfileChildProcesses,
                                               options_.ProfileDotNet, managedAsmDir_);
 

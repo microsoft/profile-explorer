@@ -35,6 +35,7 @@ namespace IRExplorerUI {
         private bool hasProfileInfo_;
         private bool sourceFileLoaded_;
         private IRTextFunction sourceFileFunc_;
+        private string sourceFilePath_;
         private int hottestSourceLine_;
         private IRExplorerCore.IR.StackFrame currentInlinee_;
         private bool sourceMapperDisabled_;
@@ -355,6 +356,7 @@ namespace IRExplorerUI {
                 await LoadSourceFileImpl(mappedSourceFilePath, sourceInfo.OriginalFilePath, sourceInfo.StartLine)) {
                 sourceFileLoaded_ = true;
                 sourceFileFunc_ = function;
+                sourceFilePath_ = mappedSourceFilePath;
                 return true;
             }
             else {
@@ -733,6 +735,18 @@ namespace IRExplorerUI {
 
         private void JumpToPreviousProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = HasProfileElement(1);
+        }
+
+        private void SourceFile_CopyPath(object sender, RoutedEventArgs e) {
+            if (!string.IsNullOrEmpty(sourceFilePath_)) {
+                Clipboard.SetText(sourceFilePath_);
+            }
+        }
+
+        private void SourceFile_Open(object sender, RoutedEventArgs e) {
+            if (!string.IsNullOrEmpty(sourceFilePath_)) {
+                Utils.OpenExternalFile(sourceFilePath_);
+            }
         }
     }
 }
