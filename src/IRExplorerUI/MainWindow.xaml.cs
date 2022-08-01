@@ -262,7 +262,7 @@ namespace IRExplorerUI {
                 documentHost = await OpenDocumentSectionAsync(args);
             }
 
-            SectionPanel.SelectSection(args.Section, false);
+            await SectionPanel.SelectSection(args.Section, false);
             return documentHost;
         }
 
@@ -610,7 +610,7 @@ namespace IRExplorerUI {
                                     var section = func.FindSection(sectionName);
 
                                     if (section != null) {
-                                        SectionPanel.SelectSection(section);
+                                        await SectionPanel.SelectSection(section);
                                         SectionPanel.DiffSelectedSection();
                                     }
                                 }

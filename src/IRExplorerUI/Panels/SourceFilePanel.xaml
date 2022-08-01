@@ -3,14 +3,22 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:document="clr-namespace:IRExplorerUI.Document"
     xmlns:local="clr-namespace:IRExplorerUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:document="clr-namespace:IRExplorerUI.Document"
     d:DesignHeight="450"
     d:DesignWidth="1000"
     mc:Ignorable="d">
     <local:ToolPanelControl.CommandBindings>
-        <!--<CommandBinding Command="local:Command.ClearTextbox" Executed="ExecuteClearTextbox" CanExecute="CommandBinding_CanExecute"/>-->
+        <CommandBinding Command="local:DocumentHostCommand.JumpToProfiledElement" Executed="JumpToProfiledElementExecuted" />
+        <CommandBinding
+            CanExecute="JumpToNextProfiledElementCanExecute"
+            Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+            Executed="JumpToNextProfiledElementExecuted" />
+        <CommandBinding
+            CanExecute="JumpToPreviousProfiledElementCanExecute"
+            Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
+            Executed="JumpToPreviousProfiledElementExecuted" />
     </local:ToolPanelControl.CommandBindings>
 
     <local:ToolPanelControl.Resources>
@@ -74,7 +82,7 @@
                             <Image
                                 Width="16"
                                 Height="16"
-                                Margin="0,1,0,0"
+                                Margin="0,1,1,0"
                                 Source="{StaticResource FolderIcon}" />
                             <TextBlock Text="Open" />
                         </StackPanel>
@@ -91,39 +99,10 @@
                     </Button>
                     <Separator />
 
-                    <Button
-                        Click="ButtonBase_OnClick"
-                        ToolTip="Jump to hottest source line"
-                        Visibility="{Binding HasProfileInfo, Converter={StaticResource BoolToVisibility}}">
-                        <Image Source="{StaticResource HotFlameIcon}" />
-                    </Button>
-                    <Button
-                        Padding="1"
-                        Command="local:DocumentHostCommand.JumpToNextProfiledElement"
-                        CommandTarget="{Binding ElementName=TextView}"
-                        ToolTip="Jump to previous bookmark (Shift+F2)">
-                        <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    </Button>
-                    <Button
-                        Padding="1"
-                        Command="local:DocumentHostCommand.JumpToNextProfiledElement"
-                        CommandTarget="{Binding ElementName=TextView}"
-                        ToolTip="Jump to previous bookmark (Shift+F2)">
-                        <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    </Button>
-                    <Separator />
-
                     <TextBlock
                         Margin="0,0,4,0"
                         VerticalAlignment="Center"
                         Text="Inlinees" />
-                    <Button
-                        Padding="1"
-                        Command="local:DocumentHostCommand.JumpToNextProfiledElement"
-                        CommandTarget="{Binding ElementName=TextView}"
-                        ToolTip="Jump to previous bookmark (Shift+F2)">
-                        <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
-                    </Button>
                     <ComboBox
                         Name="InlineeCombobox"
                         Width="200"
@@ -161,18 +140,86 @@
                 <ColumnDefinition Style="{StaticResource ColumnsStyle}" />
             </Grid.ColumnDefinitions>
 
-            <avalonEdit:TextEditor
-                xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
-                x:Name="TextView"
-                Grid.Column="0"
-                Margin="0,23,0,0"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                FontFamily="Consolas"
-                FontSize="12"
-                HorizontalScrollBarVisibility="Auto"
-                ShowLineNumbers="True"
-                SyntaxHighlighting="C++"
-                VerticalScrollBarVisibility="Auto" />
+            <DockPanel Grid.Column="0" LastChildFill="True">
+                <Border
+                    Height="23"
+                    HorizontalAlignment="Stretch"
+                    VerticalAlignment="Top"
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                    BorderThickness="0,1,0,1"
+                    DockPanel.Dock="Top"
+                    Visibility="{Binding ColumnsVisible, Converter={StaticResource BoolToVisibility}}">
+                    <ToolBarTray
+                        x:Name="ProfileToolbar"
+                        HorizontalAlignment="Stretch"
+                        VerticalAlignment="Stretch"
+                        Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                        IsLocked="True">
+                        <ToolBar
+                            Height="22"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                            Loaded="ToolBar_Loaded">
+                            <TextBlock VerticalAlignment="Center" Text="Profile" />
+                            <Button
+                                Margin="4,0,0,0"
+                                Padding="1"
+                                VerticalAlignment="Center"
+                                Command="local:DocumentHostCommand.JumpToProfiledElement"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to hottest profiled line"
+                                Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                                <Image Source="{StaticResource HotFlameIcon}" />
+                            </Button>
+                            <Button
+                                Margin="2,0,0,0"
+                                Padding="1"
+                                Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to previous less hot line (Shift+F2)">
+                                <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
+                            </Button>
+                            <Button
+                                Padding="1"
+                                Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                ToolTip="Jump to next hotter line (Shift+F2)">
+                                <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
+                            </Button>
+                            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />
+
+                            <TextBlock
+                                Margin="2,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="Columns" />
+                            <Button
+                                Margin="4,0,0,0"
+                                Padding="1"
+                                VerticalAlignment="Center"
+                                Command="local:DocumentHostCommand.JumpToNextProfiledBlock"
+                                CommandTarget="{Binding ElementName=TextView}"
+                                IsEnabled="False"
+                                ToolTip="Jump to hottest profiled instruction"
+                                Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                                <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
+                            </Button>
+                        </ToolBar>
+                    </ToolBarTray>
+                </Border>
+
+                <avalonEdit:TextEditor
+                    xmlns:avalonEdit="http://icsharpcode.net/sharpdevelop/avalonedit"
+                    x:Name="TextView"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                    DockPanel.Dock="Bottom"
+                    FontFamily="Consolas"
+                    FontSize="12"
+                    HorizontalScrollBarVisibility="Auto"
+                    ShowLineNumbers="True"
+                    SyntaxHighlighting="C++"
+                    VerticalScrollBarVisibility="Auto" />
+            </DockPanel>
 
             <GridSplitter
                 Grid.Column="1"
@@ -181,10 +228,12 @@
                 Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                 ResizeBehavior="PreviousAndNext" />
 
-            <document:DocumentColumns Grid.Column="2" HorizontalAlignment="Stretch"
-                                      VerticalAlignment="Stretch"
-                                      x:Name="ProfileColumns"
-                                      Padding="-1,0,0,0"/>
+            <document:DocumentColumns
+                x:Name="ProfileColumns"
+                Grid.Column="2"
+                Padding="-1,0,0,0"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Stretch" />
         </Grid>
     </Grid>
 </local:ToolPanelControl>

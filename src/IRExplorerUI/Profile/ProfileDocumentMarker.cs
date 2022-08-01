@@ -20,6 +20,18 @@ using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 
 namespace IRExplorerUI.Compilers.ASM {
+    public interface MarkedDocument {
+        double DefaultLineHeight { get; }
+        public void SuspendUpdate();
+        public void ResumeUpdate();
+        public void ClearInstructionMarkers();
+        public void MarkElements(ICollection<ValueTuple<IRElement, Color>> elementColorPairs);
+        public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true);
+        public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
+            double width, double height,
+            string label, string tooltip);
+    }
+
     //? TODO: Move to application settings
     public class ProfileDocumentMarkerOptions {
         public enum ValueUnitKind {
@@ -257,29 +269,31 @@ namespace IRExplorerUI.Compilers.ASM {
             ir_ = ir;
         }
 
-        public async Task Mark(IRDocument document, FunctionIR function) {
+        public async Task<IRDocumentColumnData> Mark(MarkedDocument document, FunctionIR function) {
             document.SuspendUpdate();
-
+            IRDocumentColumnData columnData = null;
             var metadataTag = function.GetTag<AssemblyMetadataTag>();
             bool hasInstrOffsetMetadata = metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
             //? TODO: Make async
             if (hasInstrOffsetMetadata) {
                 var result = profile_.Process(function, ir_);
-                document.ColumnData = MarkProfiledElements(result, function, document);
+                columnData = MarkProfiledElements(result, function, document);
                 MarkProfiledBlocks(result.BlockSampledElements, document);
             }
 
             document.ResumeUpdate();
+            return columnData;
         }
 
-        public async Task<IRDocumentColumnData> MarkSourceLines(FunctionIR function, FunctionProfileData.ProcessingResult result) {
-            return MarkProfiledElements(result, function, null);
+        public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function, 
+                                                                FunctionProfileData.ProcessingResult result) {
+            return MarkProfiledElements(result, function, document);
         }
 
-        private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, IRDocument document) {
+        private void MarkProfiledBlocks(List<Tuple<BlockIR, TimeSpan>> blockWeights, MarkedDocument document) {
             document.SuspendUpdate();
-            var overlayHeight = document.TextArea.TextView.DefaultLineHeight;
+            var overlayHeight = document.DefaultLineHeight;
             var blockPen = ColorPens.GetPen(options_.BlockOverlayBorderColor,
                                                options_.BlockOverlayBorderThickness);
 
@@ -300,7 +314,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 bool markOnFlowGraph = options_.IsSignificantValue(i, weightPercentage);
                 var label = $"{weightPercentage.AsPercentageString()}";
-                var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label);
+                var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, "");
                 overlay.Background = color.AsBrush();
                 overlay.Border = blockPen;
 
@@ -347,7 +361,7 @@ namespace IRExplorerUI.Compilers.ASM {
             "TimePercentageHeader", "Time (%)", "Instruction time percentage relative to function time", null, 100.0, "TimeColumnHeaderTemplate",
             new OptionalColumnAppearance() {
                 ShowPercentageBar = true,
-                ShowMainColumnPercentageBar = true,
+                ShowMainColumnPercentageBar = true, 
                 UseBackColor = true,
                 UseMainColumnBackColor = true,
                 ShowIcon = true,
@@ -356,7 +370,7 @@ namespace IRExplorerUI.Compilers.ASM {
             });
         
         public void ApplyColumnStyle(OptionalColumn column, IRDocumentColumnData columnData,
-                                     FunctionIR function, IRDocument document) {
+                                     FunctionIR function, MarkedDocument document) {
             Trace.WriteLine($"Apply {column.ColumnName}, main {column.IsMainColumn}");
 
             var style = column.Appearance;
@@ -405,7 +419,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
         private IRDocumentColumnData 
             MarkProfiledElements(FunctionProfileData.ProcessingResult result, 
-                                 FunctionIR function, IRDocument document) {
+                                 FunctionIR function, MarkedDocument document) {
             var elements = result.SampledElements;
 
             // Add a time column.
@@ -433,8 +447,8 @@ namespace IRExplorerUI.Compilers.ASM {
             ApplyColumnStyle(percentageColumn, columnData, function, document);
             ApplyColumnStyle(timeColumn, columnData, function, document);
 
-            percentageColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, columnData);
-            timeColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, columnData);
+            percentageColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
+            timeColumn.HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
 
             var counterElements = result.CounterElements;
 
@@ -477,7 +491,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     });
 
                 counterColumns[k].IsVisible = IsPerfCounterVisible(counterInfo);
-                counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, columnData);
+                counterColumns[k].HeaderClickHandler += ColumnHeaderClickHandler(document, function, columnData);
                 columnData.AddColumn(counterColumns[k]);
             }
 
@@ -580,7 +594,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 return "";
             }
 
-            return metric.IsPercentage ? value.AsPercentageString() : $"{value:##}";
+            return metric.IsPercentage ? value.AsPercentageString() : $"{value:F2}";
         }
 
         public static string FormatPerformanceCounter(long value, PerformanceCounterInfo counter) {
@@ -616,7 +630,8 @@ namespace IRExplorerUI.Compilers.ASM {
             return name;
         }
 
-        private OptionalColumnEventHandler ColumnHeaderClickHandler(IRDocument document, IRDocumentColumnData columnData) {
+        private OptionalColumnEventHandler ColumnHeaderClickHandler(MarkedDocument document, FunctionIR function,
+                                                                    IRDocumentColumnData columnData) {
             return column => {
                 var currentMainColumn = columnData.MainColumn;
 
@@ -626,11 +641,11 @@ namespace IRExplorerUI.Compilers.ASM {
 
                 if (currentMainColumn != null) {
                     currentMainColumn.IsMainColumn = false;
-                    ApplyColumnStyle(currentMainColumn, columnData, document.Function, document);
+                    ApplyColumnStyle(currentMainColumn, columnData, function, document);
                 }
 
                 column.IsMainColumn = true;
-                ApplyColumnStyle(column, columnData, document.Function, document);
+                ApplyColumnStyle(column, columnData, function, document);
             };
         }
     }
