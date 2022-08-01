@@ -26,6 +26,7 @@ using IRExplorerCore.Graph;
 using IRExplorerCore.IR;
 using IRExplorerCore.Graph;
 using IRExplorerCore.IR.Tags;
+using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Controls;
 
 namespace IRExplorerUI {
@@ -65,7 +66,7 @@ namespace IRExplorerUI {
         public int TotalBookmarks { get; set; }
     }
 
-    public sealed class IRDocument : TextEditor, INotifyPropertyChanged {
+    public sealed class IRDocument : TextEditor, MarkedDocument, INotifyPropertyChanged {
         private const float ParentStyleLightAdjustment = 1.20f;
         private const int DefaultMaxExpressionLevel = 4;
         private const int ExpressionLevelIncrement = 2;
@@ -180,11 +181,9 @@ namespace IRExplorerUI {
         public ISession Session { get; private set; }
         public FunctionIR Function { get; set; }
         public IRTextSection Section { get; set; }
-
         public ReadOnlyMemory<char> SectionText { get; set; }
 
         public double DefaultLineHeight => TextArea.TextView.DefaultLineHeight;
-
         public bool DiffModeEnabled { get; set; }
         public bool DuringSectionLoading => duringSectionLoading_;
 
@@ -3756,11 +3755,11 @@ namespace IRExplorerUI {
         }
 
         public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
-                                                             double width = 16, double height = 0,
-                                          string label = "", string tooltip = "",
-                                          HorizontalAlignment alignmentX = HorizontalAlignment.Right,
-                                          VerticalAlignment alignmentY = VerticalAlignment.Center,
-                                          double marginX = 8, double marginY = 4) {
+                                                             double width, double height,
+                                          string label, string tooltip,
+                                          HorizontalAlignment alignmentX,
+                                          VerticalAlignment alignmentY,
+                                          double marginX, double marginY) {
             var overlay = IconElementOverlay.CreateDefault(icon, width, height,
                                                        Brushes.Transparent,
                                                        selectedStyle_.BackColor,
@@ -3769,6 +3768,21 @@ namespace IRExplorerUI {
                                                        alignmentX, alignmentY,
                                                        marginX, marginY);
             return (IconElementOverlay)RegisterElementOverlay(element, overlay);
+        }
+
+        public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
+            double width, double height,
+            string label, string tooltip) {
+            var overlay = IconElementOverlay.CreateDefault(icon, width, height,
+                Brushes.Transparent,
+                selectedStyle_.BackColor,
+                selectedStyle_.Border,
+                label, tooltip);
+            return (IconElementOverlay)RegisterElementOverlay(element, overlay);
+        }
+
+        public IElementOverlay RegisterElementOverlay(IRElement element, string label, string tooltip) {
+            return RegisterIconElementOverlay(element, null, 0, 0, label, tooltip);
         }
 
         public IElementOverlay RegisterElementOverlay(IRElement element, IElementOverlay overlay) {

@@ -37,8 +37,9 @@ namespace IRExplorerUI.Document {
             profileDataRows_ = new List<ElementRowValue>();
         }
 
-        private double columnsListItemHeight_;
+        public event EventHandler<ScrollChangedEventArgs> ScrollChanged;
 
+        private double columnsListItemHeight_;
         public double ColumnsListItemHeight {
             get => columnsListItemHeight_;
             set {
@@ -63,9 +64,13 @@ namespace IRExplorerUI.Document {
             }
         }
 
+        public void Reset() {
+            OptionalColumn.RemoveListViewColumns(ColumnsList);
+        }
+
         public void Display(IRDocumentColumnData columnData, int rowCount,
                                          FunctionIR function) {
-            OptionalColumn.RemoveListViewColumns(ColumnsList);
+            Reset();
             ColumnsList.ItemsSource = null;
 
             if (columnData.HasData) {
@@ -111,8 +116,6 @@ namespace IRExplorerUI.Document {
                     }
                 }
 
-                const double maxBarWidth = 100;
-                const double columnMargin = 4;
                 profileDataRows_ = new List<ElementRowValue>();
 
                 foreach (var block in function.SortedBlocks) {
@@ -196,10 +199,13 @@ namespace IRExplorerUI.Document {
                 foreach (var columnHeader in profileColumnHeaders_) {
                     columnHeader.Header.Click += ColumnHeaderOnClick;
                     columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
+                    columnHeader.Header.ContextMenu = new ContextMenu();
+                    
+                    //? TODO: Add context menu
+                    //? columnHeader.Header.ContextMenu.Items.Add(new MenuItem() { Header = "hey" });
                 }
 
                 UpdateColumnWidths();
-
                 ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
                 ColumnsList.Background = settings_.BackgroundColor.AsBrush();
             }
@@ -217,7 +223,7 @@ namespace IRExplorerUI.Document {
             var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
             var font = new FontFamily(settings_.FontName);
             var fontSize = settings_.FontSize;
-            const double maxBarWidth = 100;
+            const double maxBarWidth = 50; //? TODO: Shared def with Styles.xaml TimePercentageColumnValueTemplate
             const double columnMargin = 4;
 
             foreach (var rowValues in profileDataRows_) {
@@ -321,6 +327,14 @@ namespace IRExplorerUI.Document {
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        private void ColumnsList_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+            if(Math.Abs(e.VerticalChange) < double.Epsilon) {
+                return;
+            }
+
+            ScrollChanged?.Invoke(this, e);
         }
     }
 }

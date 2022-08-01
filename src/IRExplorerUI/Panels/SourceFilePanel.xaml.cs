@@ -11,8 +11,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
-using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -20,15 +20,10 @@ using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
-using Microsoft.Diagnostics.Symbols;
 using Microsoft.Win32;
-using static IRExplorerUI.ModuleReportPanel;
 
 namespace IRExplorerUI {
-    /// <summary>
-    ///     Interaction logic for SectionPanel.xaml
-    /// </summary>
-    public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged {
+    public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotifyPropertyChanged {
         private SourceFileMapper sourceFileMapper_ = new SourceFileMapper();
         private IRTextSection section_;
         private IRElement element_;
@@ -45,6 +40,8 @@ namespace IRExplorerUI {
         private bool sourceMapperDisabled_;
         private bool columnsVisible_;
         private double previousVerticalOffset_;
+        private List<Tuple<IRElement, TimeSpan>> profileElements_;
+        private int profileElementIndex_;
 
         public SourceFilePanel() {
             InitializeComponent();
@@ -60,9 +57,18 @@ namespace IRExplorerUI {
             overlayRenderer_ = new OverlayRenderer(profileMarker_);
             TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
             TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
+            ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
 
             TextView.TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextView.TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+        }
+
+        private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+            if (Math.Abs(e.VerticalChange) < double.Epsilon) {
+                return;
+            }
+
+            TextView.ScrollToVerticalOffset(e.VerticalOffset);
         }
 
         private void UpdateDocumentStyle() {
@@ -387,7 +393,6 @@ namespace IRExplorerUI {
         private void ResetProfileMarking() {
             overlayRenderer_.Clear();
             profileMarker_.Clear();
-            HasProfileInfo = false;
         }
 
         private void ResetSelectedLine() {
@@ -455,7 +460,10 @@ namespace IRExplorerUI {
             if (inlineeFunc != null) {
                 fileLoaded = await LoadSourceFileForFunction(inlineeFunc);
             }
-            
+            else {
+                //? TODO: Warning that the func can't be found (likely not present in binary at all, inlined everywhere)
+            }
+
             if (fileLoaded) {
                 ScrollToLine(inlinee.Line);
             }
@@ -508,8 +516,6 @@ namespace IRExplorerUI {
             dummyFunc.Blocks.Add(dummyBlock);
             dummyFunc.AssignBlockIndices();
 
-            var data = new IRDocumentColumnData(totalLines);
-
             var processingResult = new FunctionProfileData.ProcessingResult();
 
             for (int lineNumber = 1; lineNumber <= totalLines; lineNumber++) {
@@ -538,44 +544,19 @@ namespace IRExplorerUI {
             processingResult.FunctionCounters = result.FunctionCounters;
             var profileOptions = ProfileDocumentMarkerOptions.Default;
             var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo.IR);
-            var columnData = await profileMarker.MarkSourceLines(dummyFunc, processingResult);
+            var columnData = await profileMarker.MarkSourceLines(this, dummyFunc, processingResult);
 
             ColumnsVisible = columnData.HasData;
 
-#if true
-            ProfileColumns.Display(columnData, Document.LineCount, dummyFunc);
-#else
-            sourceLineWeights.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-            hottestSourceLine_ = sourceLineWeights.Count > 0 ? sourceLineWeights[0].Item1 : 0;
-            int lineIndex = 0;
-
-            foreach (var pair in sourceLineWeights) {
-                int sourceLine = pair.Item1;
-
-                if (sourceLine <= 0 || sourceLine > TextView.Document.LineCount) {
-                    continue;
-                }
-
-                double weightPercentage = profile.ScaleWeight(pair.Item2);
-                var color = markerOptions.PickColorForPercentage(weightPercentage);
-                var style = new HighlightingStyle(color);
-                IconDrawing icon = markerOptions.PickIconForOrder(lineIndex, weightPercentage);
-                
-                var documentLine = TextView.Document.GetLineByNumber(sourceLine);
-                var location = new TextLocation(documentLine.Offset, sourceLine, 0);
-                var element = new IRElement(location, documentLine.Length);
-                element.Id = nextElementId.NextOperand();
-
-                var group = new HighlightedGroup(style);
-                group.Add(element);
-                profileMarker_.Add(group);
-
-                var tooltip = $"{weightPercentage.AsPercentageString()} ({pair.Item2.AsMillisecondsString()})";
-                AddElementOverlay(element, icon, lineIndex, 16, 16, tooltip, markerOptions);
-                lineIndex++;
+            if (ColumnsVisible) {
+                ProfileColumns.Display(columnData, Document.LineCount, dummyFunc);
+                profileElements_ = processingResult.SampledElements;
+                UpdateHighlighting();
             }
-#endif
-            UpdateHighlighting();
+            else {
+                ProfileColumns.Reset();
+            }
+
             HasProfileInfo = true;
         }
 
@@ -667,6 +648,91 @@ namespace IRExplorerUI {
             if (await LoadSourceFileForFunction(section_.ParentFunction)) {
                 ScrollToLine(hottestSourceLine_);
             }
+        }
+
+        public double DefaultLineHeight => TextView.TextArea.TextView.DefaultLineHeight;
+
+        public void SuspendUpdate() {
+            
+        }
+
+        public void ResumeUpdate() {
+            
+        }
+
+        public void ClearInstructionMarkers() {
+            ResetProfileMarking();
+        }
+
+        public void MarkElements(ICollection<(IRElement, Color)> elementColorPairs) {
+            foreach (var pair in elementColorPairs) {
+                var style = new HighlightingStyle(pair.Item2);
+                var group = new HighlightedGroup(style);
+                group.Add(pair.Item1);
+                profileMarker_.Add(group);
+            }
+            
+            UpdateHighlighting();
+        }
+
+        public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true) {
+            throw new NotImplementedException();
+        }
+
+        public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
+            double width, double height,
+            string label, string tooltip) {
+            throw new NotImplementedException();
+        }
+
+        private void JumpToProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (!HasProfileElements()) {
+                return;
+            }
+
+            profileElementIndex_ = 0;
+            JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+        }
+
+        private bool HasProfileElements() {
+            return ColumnsVisible && profileElements_ != null && profileElements_.Count > 0;
+        }
+
+        private bool HasProfileElement(int offset) {
+            return ColumnsVisible && profileElements_ != null &&
+                   profileElementIndex_ + offset >= 0 &&
+                   profileElementIndex_ + offset < profileElements_.Count;
+        }
+
+        private void JumpToNextProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledElement(-1);
+        }
+
+        private void JumpToPreviousProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledElement(1);
+        }
+
+        private void JumpToProfiledElement(int offset) {
+            if (!HasProfileElement(offset)) {
+                return;
+            }
+
+            profileElementIndex_ += offset;
+            JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+        }
+
+        private void JumpToProfiledElement(IRElement element) {
+            TextView.ScrollToLine(element.TextLocation.Line);
+            double offset = TextView.TextArea.TextView.VerticalOffset;
+            SyncColumnsVerticalScrollOffset(offset);
+        }
+
+        private void JumpToNextProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfileElement(-1);
+        }
+
+        private void JumpToPreviousProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfileElement(1);
         }
     }
 }

@@ -69,7 +69,7 @@
                     Text="{Binding PrefixText}"
                     ToolTip="{Binding ToolTip}" />
                 <Rectangle
-                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
                     Height="Auto"
                     Margin="4,0,2,0"
                     HorizontalAlignment="Left"

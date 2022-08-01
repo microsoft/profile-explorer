@@ -238,7 +238,8 @@
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 IsTextCompletionEnabled="False"
                                 MinimumPrefixLength="1"
-                                Text="{Binding Path=ProfileFilePath, Mode=TwoWay}" />
+                                Text="{Binding Path=ProfileFilePath, Mode=TwoWay}" 
+                                TextChanged="ProfileAutocompleteBox_TextChanged"/>
 
                             <Button
                                 x:Name="BaseBrowseButton"

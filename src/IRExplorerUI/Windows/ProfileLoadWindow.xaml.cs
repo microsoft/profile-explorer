@@ -235,7 +235,12 @@ namespace IRExplorerUI {
                 return;
             }
 
-            if (File.Exists(ProfileFilePath)) {
+            await DisplayProcessList();
+        }
+
+        private async Task DisplayProcessList() {
+            if (File.Exists(ProfileFilePath))
+            {
                 var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
                 await DisplayProcessList(async () => await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, task));
             }
@@ -377,6 +382,12 @@ namespace IRExplorerUI {
 
         private void MaxFrequencyButton_Click(object sender, RoutedEventArgs e) {
             SamplingFrequencySlider.Value = ProfileRecordingSessionOptions.MaximumSamplingFrequency;
+        }
+
+        private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
+            if (!string.IsNullOrEmpty(ProfileFilePath)) {
+                await DisplayProcessList();
+            }
         }
     }
 }

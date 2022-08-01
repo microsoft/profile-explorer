@@ -1,29 +1,32 @@
-﻿<UserControl x:Class="IRExplorerUI.Document.DocumentColumns"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:IRExplorerUI.Document"
-             xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+﻿<UserControl
+    x:Class="IRExplorerUI.Document.DocumentColumns"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
+    xmlns:local="clr-namespace:IRExplorerUI.Document"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
 
     <ListView
-                x:Name="ColumnsList"
-                HorizontalAlignment="Stretch"
-                VerticalAlignment="Stretch"
-                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                BorderThickness="0,1,0,0"
-                ScrollViewer.CanContentScroll="True"
-                ScrollViewer.VerticalScrollBarVisibility="Hidden"
-                SelectionMode="Single"
-                UseLayoutRounding="False"
-                VirtualizingPanel.CacheLengthUnit="Pixel"
-                VirtualizingPanel.ScrollUnit="Pixel"
-                VirtualizingStackPanel.CacheLength="0,0"
-                VirtualizingStackPanel.IsVirtualizing="True"
-                VirtualizingStackPanel.VirtualizationMode="Recycling">
+        x:Name="ColumnsList"
+        HorizontalAlignment="Stretch"
+        VerticalAlignment="Stretch"
+        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+        BorderThickness="0,1,0,0"
+        ScrollViewer.CanContentScroll="True"
+        ScrollViewer.ScrollChanged="ColumnsList_ScrollChanged"
+        ScrollViewer.VerticalScrollBarVisibility="Hidden"
+        SelectionMode="Single"
+        UseLayoutRounding="False"
+        VirtualizingPanel.CacheLengthUnit="Pixel"
+        VirtualizingPanel.ScrollUnit="Pixel"
+        VirtualizingStackPanel.CacheLength="0,0"
+        VirtualizingStackPanel.IsVirtualizing="True"
+        VirtualizingStackPanel.VirtualizationMode="Recycling">
         <ListView.View>
             <GridView>
                 <GridView.ColumnHeaderContainerStyle>
@@ -32,20 +35,20 @@
                             <Setter.Value>
                                 <ControlTemplate TargetType="{x:Type GridViewColumnHeader}">
                                     <Border
-                                                Height="21"
-                                                Margin="-1,-1,0,0"
-                                                HorizontalAlignment="Stretch"
-                                                VerticalAlignment="Stretch"
-                                                Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
-                                                BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                                BorderThickness="0,0,1,1">
+                                        Height="21"
+                                        Margin="-1,-1,0,0"
+                                        HorizontalAlignment="Stretch"
+                                        VerticalAlignment="Stretch"
+                                        Background="{DynamicResource {x:Static SystemColors.MenuBarBrushKey}}"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                        BorderThickness="0,0,1,1">
                                         <TextBlock
-                                                    x:Name="ContentHeader"
-                                                    Width="{TemplateBinding Width}"
-                                                    Margin="4,0,4,0"
-                                                    HorizontalAlignment="Left"
-                                                    VerticalAlignment="Center"
-                                                    Text="{TemplateBinding Content}" />
+                                            x:Name="ContentHeader"
+                                            Width="{TemplateBinding Width}"
+                                            Margin="4,0,4,0"
+                                            HorizontalAlignment="Left"
+                                            VerticalAlignment="Center"
+                                            Text="{TemplateBinding Content}" />
                                     </Border>
                                 </ControlTemplate>
                             </Setter.Value>
@@ -68,11 +71,11 @@
                     <Setter.Value>
                         <ControlTemplate TargetType="ListBoxItem">
                             <Border
-                                        Name="Border"
-                                        Padding="0"
-                                        Background="{TemplateBinding Background}"
-                                        BorderBrush="{TemplateBinding BorderBrush}"
-                                        BorderThickness="{TemplateBinding BorderThickness}">
+                                Name="Border"
+                                Padding="0"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
                                 <GridViewRowPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
                             </Border>
 
