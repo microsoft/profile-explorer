@@ -128,8 +128,7 @@
                                 <CheckBox
                                     Margin="0,4,0,0"
                                     Content="Record CPU performance counter (PMC) events"
-                                    IsChecked="{Binding Path=Options.RecordingSessionOptions.EnablePerfCounters, Mode=TwoWay}"
-                                    IsEnabled="False" />
+                                    IsChecked="{Binding Path=Options.RecordingSessionOptions.EnablePerformanceCounters, Mode=TwoWay}" />
 
                                 <StackPanel
                                     Margin="0,8,0,0"
@@ -238,8 +237,8 @@
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 IsTextCompletionEnabled="False"
                                 MinimumPrefixLength="1"
-                                Text="{Binding Path=ProfileFilePath, Mode=TwoWay}" 
-                                TextChanged="ProfileAutocompleteBox_TextChanged"/>
+                                Text="{Binding Path=ProfileFilePath, Mode=TwoWay}"
+                                TextChanged="ProfileAutocompleteBox_TextChanged" />
 
                             <Button
                                 x:Name="BaseBrowseButton"
@@ -419,7 +418,6 @@
             </TabItem>
             <TabItem Header="Options">
                 <StackPanel Margin="0,4,0,8" Orientation="Vertical">
-
                     <Expander
                         Margin="8,0,8,0"
                         IsEnabled="{Binding InputControlsEnabled}"
@@ -574,6 +572,92 @@
                 </StackPanel>
             </TabItem>
 
+            <TabItem Header="CPU counters">
+                <StackPanel Margin="0,4,0,8" Orientation="Vertical">
+                    <Expander
+                        Margin="8,0,8,0"
+                        Header="CPU performance counters"
+                        IsExpanded="True">
+                        <ListView
+                            x:Name="PerfCounterList"
+                            Height="200"
+                            MinHeight="100"
+                            Margin="0,8,0,0"
+                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            SelectionMode="Single"
+                            VirtualizingStackPanel.IsVirtualizing="True"
+                            VirtualizingStackPanel.VirtualizationMode="Recycling">
+                            <ListView.View>
+                                <GridView>
+                                    <GridViewColumn Width="180">
+                                        <GridViewColumnHeader Content="Counter" />
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+
+                                        <GridViewColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <CheckBox Background="Transparent" IsChecked="{Binding IsEnabled, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                                    <TextBlock Margin="4,0,0,0" Text="{Binding Counter.Name}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </GridViewColumn.CellTemplate>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn Width="50" DisplayMemberBinding="{Binding Counter.Id}">
+                                        <GridViewColumnHeader Content="Id" />
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn Width="80" DisplayMemberBinding="{Binding Counter.Frequency}">
+                                        <GridViewColumnHeader Content="Frequency" />
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+                                    </GridViewColumn>
+
+                                    <GridViewColumn Width="70" DisplayMemberBinding="{Binding IsBuiltin}">
+                                        <GridViewColumnHeader Content="Is builtin" />
+                                        <GridViewColumn.HeaderContainerStyle>
+                                            <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                            </Style>
+                                        </GridViewColumn.HeaderContainerStyle>
+                                    </GridViewColumn>
+                                </GridView>
+                            </ListView.View>
+
+                            <ListView.ItemContainerStyle>
+                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                    <Setter Property="ToolTip" Value="{Binding Counter.Description}" />
+
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Path=IsEnabled}" Value="True">
+                                            <Setter Property="FontWeight" Value="Bold" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                    </Expander>
+                    <Expander
+                        Margin="8,8,8,0"
+                        Header="Metrics"
+                        IsExpanded="True" />
+                </StackPanel>
+            </TabItem>
         </TabControl>
 
 

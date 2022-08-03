@@ -33,6 +33,7 @@ namespace IRExplorerUI {
         private List<ETWProfileDataProvider.TraceProcessSummary> processList_;
         private ETWProfileDataProvider.TraceProcessSummary selectedProcSummary_;
         private bool windowClosed_;
+        private List<PerformanceCounterConfig> counterConfigList_;
 
         public ProfileLoadWindow(ISession session, bool recordMode) {
             InitializeComponent();
@@ -47,6 +48,7 @@ namespace IRExplorerUI {
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
+            UpdatePerfCounterList();
         }
 
         public ISession Session { get; set; }
@@ -124,6 +126,29 @@ namespace IRExplorerUI {
             set {
                 symbolOptions_ = value;
                 OnPropertyChange(nameof(SymbolOptions));
+            }
+        }
+
+        public void UpdatePerfCounterList() {
+            var counters = ETWRecordingSession.BuiltinPerformanceCounters;
+            counterConfigList_ = new List<PerformanceCounterConfig>(counters.Count);
+
+            foreach (var counter in counters) {
+                counterConfigList_.Add(new PerformanceCounterConfig() {
+                    Counter = counter,
+                    IsBuiltin = true
+                });
+            }
+
+            //? TODO: Custom counters
+
+            PerfCounterList.ItemsSource = new ListCollectionView(counterConfigList_);
+        }
+
+        public void SetSessionPerfCounters() {
+            if (options_.RecordingSessionOptions.EnablePerformanceCounters) {
+                options_.RecordingSessionOptions.PerformanceCounters = 
+                    counterConfigList_.FindAll(counter => counter.IsEnabled);
             }
         }
 
@@ -295,6 +320,7 @@ namespace IRExplorerUI {
         private async void StartCaptureButton_OnClick(object sender, RoutedEventArgs e) {
             options_.RecordingSessionOptions.ApplicationPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
             options_.RecordingSessionOptions.WorkingDirectory = Utils.CleanupPath(options_.RecordingSessionOptions.WorkingDirectory);
+            SetSessionPerfCounters();
 
             using var recordingSession = new ETWRecordingSession(options_);
             
