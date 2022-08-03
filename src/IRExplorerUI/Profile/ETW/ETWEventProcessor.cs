@@ -375,6 +375,8 @@ public class ETWEventProcessor : IDisposable {
 #endif
 
         if (providerOptions_.IncludePerformanceCounters) {
+            Trace.WriteLine("Collecting PMC events");
+
             source_.Kernel.PerfInfoPMCSample += data => {
                 if (!IsAcceptedProcess(data.ProcessID)) {
                     return; // Ignore events from other processes.

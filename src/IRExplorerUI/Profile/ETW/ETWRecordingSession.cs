@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading;
@@ -19,13 +20,20 @@ namespace IRExplorerUI.Profile.ETW {
         private string managedAsmDir_;
 
         public static bool RequiresElevation => TraceEventSession.IsElevated() != true;
-        
+
         public ETWRecordingSession(ProfileDataProviderOptions providerOptions,
                                    string sessionName = null) {
             Debug.Assert(!RequiresElevation);
             options_ = providerOptions.RecordingSessionOptions;
             providerOptions_ = providerOptions;
-            sessionName_ = sessionName ?? $"IRX-ETW-{Guid.NewGuid()}";
+
+            if (options_.EnablePerformanceCounters) {
+                // To record CPU perf. counters, a kernel session is needed.
+                sessionName_ = KernelTraceEventParser.KernelSessionName;
+            }
+            else {
+                sessionName_ = sessionName ?? $"IRX-ETW-{Guid.NewGuid()}";
+            }
         }
 
         void SessionProgressHandler(ProfileLoadProgress info) {
@@ -36,14 +44,33 @@ namespace IRExplorerUI.Profile.ETW {
             progressCallback_?.Invoke(info);
         }
 
-        public Task<RawProfileData> StartRecording(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
+        public static List<PerformanceCounterInfo> BuiltinPerformanceCounters {
+            get {
+                var list = new List<PerformanceCounterInfo>();
+
+                try {
+                    var counters = TraceEventProfileSources.GetInfo();
+
+                    foreach (var counter in counters) {
+                        list.Add(new PerformanceCounterInfo(counter.Value.ID, counter.Value.Name,
+                                                            counter.Value.MinInterval));
+                    }
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to get CPU perf counters: {ex.Message}");
+                }
+                
+                return list;
+            }
+        }
+
+        public Task<RawProfileData> StartRecording(ProfileLoadProgressHandler progressCallback, 
+                                                   CancelableTask cancelableTask) {
             int acceptedProcessId = 0;
             Process profiledProcess = null;
             WindowsThreadSuspender threadSuspender = null;
             var sessionStarted = new ManualResetEvent(false);
             
-            //? var pmcs = TraceEventProfileSources.GetInfo();
-
             // The entire ETW processing must be done on the same thread.
             RawProfileData profile = null;
 
@@ -92,8 +119,31 @@ namespace IRExplorerUI.Profile.ETW {
                                                 //KernelTraceEventParser.Keywords.ContextSwitch |
                                                 KernelTraceEventParser.Keywords.Profile;
 
-                    session_.EnableKernelProvider(capturedEvents, capturedEvents); // With stack sampling.
-                    session_.EnableProvider(SymbolTraceEventParser.ProviderGuid, TraceEventLevel.Verbose);
+                    if (options_.EnablePerformanceCounters && options_.PerformanceCounters.Count > 0) {
+                        // Enable the CPU perf. counters to collect.
+                        capturedEvents |= KernelTraceEventParser.Keywords.PMCProfile;
+
+                        var counterIds = new int[options_.PerformanceCounters.Count];
+                        var frequencyCounts = new int[options_.PerformanceCounters.Count];
+                        int index = 0;
+
+                        foreach (var counter in options_.PerformanceCounters) {
+                            counterIds[index] = counter.Counter.Id;
+                            frequencyCounts[index] = 65536;
+                            //? TODO: frequencyCounts[0] = counter.Frequency;
+                            index++;
+
+                            Trace.WriteLine($"Enabled counter {counter.Counter.Name}");
+                        }
+
+                        TraceEventProfileSources.Set(counterIds, frequencyCounts);
+                        session_.EnableKernelProvider(capturedEvents, capturedEvents); // With stack sampling.
+
+                    }
+                    else {
+                        session_.EnableKernelProvider(capturedEvents, capturedEvents); // With stack sampling.
+                        session_.EnableProvider(SymbolTraceEventParser.ProviderGuid, TraceEventLevel.Verbose);
+                    }
 
                     if (options_.ProfileDotNet) {
                         session_.EnableProvider(
@@ -108,11 +158,6 @@ namespace IRExplorerUI.Profile.ETW {
                         //    (ulong)(ClrRundownTraceEventParser.Keywords.Jit |
                         //            ClrRundownTraceEventParser.Keywords.JittedMethodILToNativeMap));
                     }
-
-
-                    //? The Profile event requires the SeSystemProfilePrivilege to succeed, so set it.  
-                    //if ((flags & (KernelTraceEventParser.Keywords.Profile | KernelTraceEventParser.Keywords.PMCProfile)) != 0) {
-                    //    TraceEventNativeMethods.SetPrivilege(TraceEventNativeMethods.SE_SYSTEM_PROFILE_PRIVILEGE);
 
                     // Start the ETW session.
                     using var eventProcessor =

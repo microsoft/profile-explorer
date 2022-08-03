@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile {
@@ -48,19 +49,22 @@ namespace IRExplorerUI.Profile {
         public bool ProfileDotNet { get; set; }
         [ProtoMember(7)]
         public bool ProfileChildProcesses { get; set; }
-        [ProtoMember(8)]
-        public bool EnablePerfCounters { get; set; }//? PMC config
+
+        [ProtoMember(8)] public bool EnablePerformanceCounters { get; set; }
+
         [ProtoMember(9)]        
         public bool EnableEnvironmentVars { get; set; }
         [ProtoMember(10)]
         public List<(string Variable, string Name)> EnvironmentVariables { get; set; }
+        [ProtoMember(11)]
+        public List<PerformanceCounterConfig> PerformanceCounters { get; set; }
 
         public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
 
         public ProfileRecordingSessionOptions() {
             Reset();
         }
-
+        
         public override void Reset() {
             ResetAndInitializeReferenceMembers();
             SessionKind = ProfileSessionKind.SystemWide;
@@ -168,3 +172,13 @@ namespace IRExplorerUI.Profile {
                                          CancelableTask cancelableTask = null);
     }
 }
+
+
+[ProtoContract(SkipConstructor = true)]
+public class PerformanceCounterConfig {
+    public PerformanceCounterInfo Counter { get; set; }
+    public bool IsEnabled { get; set; }
+    public bool IsBuiltin { get; set; }
+    public int Frequency { get; set; }
+}
+
