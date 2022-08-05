@@ -473,8 +473,8 @@ namespace IRExplorerUI.Compilers.ASM {
             for (int k = 0; k < perfCounters.Count; k++) {
                 var counterInfo = perfCounters[k];
                 counterColumns[k] = OptionalColumn.Template($"[CounterHeader{counterInfo.Id}]", "TimePercentageColumnValueTemplate",
-                    $"CounterHeader{counterInfo.Id}", $"{ShortenPerfCounterName(counterInfo.Name)}", 
-                    counterInfo.Description != null ? $"{counterInfo.Description}" : $"{counterInfo.Name}",
+                    $"CounterHeader{counterInfo.Id}", $"{ShortenPerfCounterName(counterInfo.Name)}",
+                    counterInfo?.Config?.Description != null ? $"{counterInfo.Config.Description}" : $"{counterInfo.Name}",
                     null, 50, "TimeColumnHeaderTemplate",
                     new OptionalColumnAppearance() {
                         ShowPercentageBar = true,
@@ -549,10 +549,10 @@ namespace IRExplorerUI.Compilers.ASM {
                     }
 
                     //? Could have a config for all/per-counter to pick % or value as label
-                    //var label = $"{value * counter.Frequency}";
+                    //var label = $"{value * counter.Interval}";
                     var columnValue = new ElementColumnValue(label, value, valuePercentage, i, tooltip);
 
-                    var color = colors[counter.Number % colors.Length];
+                    var color = colors[counter.Index % colors.Length];
                     //columnValue.TextColor = color;
                     if (counter.IsMetric) columnValue.BackColor = Brushes.Beige;
                     columnValue.ValuePercentage = valuePercentage;

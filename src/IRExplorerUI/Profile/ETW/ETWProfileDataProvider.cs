@@ -796,11 +796,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         }
                     }
 
-                    profileData_.RegisterPerformanceMetric(1000, "DCacheMiss", "DcacheAccesses", "DcacheMisses", true, "Data cache miss percentage");
-                    profileData_.RegisterPerformanceMetric(1001, "ICacheMiss", "ICFetch", "ICMiss", true, "Instruction cache miss percentage");
-                    profileData_.RegisterPerformanceMetric(1002, "MispredBr", "BranchInstructions", "BranchMispredictions", true, "Branch misprediction percentage");
-                    profileData_.RegisterPerformanceMetric(1003, "CPI", "InstructionRetired", "TotalCycles", false, "Clockticks per Instructions retired rate");
+                    // Try to register the metrics.
+                    int metricIndex = 1000;
 
+                    foreach (var metric in options_.PerformanceMetrics) {
+                        if (metric.IsEnabled) {
+                            profileData_.RegisterPerformanceMetric(metricIndex++, metric);
+                        }
+                    }
+                    
                     foreach (var counter in prof.PerformanceCountersEvents) {
                         index++;
 

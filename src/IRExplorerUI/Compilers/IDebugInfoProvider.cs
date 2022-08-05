@@ -95,16 +95,53 @@ namespace IRExplorerUI.Compilers {
         }
     }
 
-    //? TODO: Convert to record, similar for other such classes
-    public class SymbolFileDescriptor {
+    public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
+        public string FileName { get; set; }
+        public Guid Id { get; set; }
+        public int Age { get; set; }
+
+        public override string ToString() {
+            return $"{Id}:{FileName}";
+        }
+
+        public bool Equals(SymbolFileDescriptor other) {
+            return FileName.Equals(other.FileName, StringComparison.OrdinalIgnoreCase) &&
+                   Id == other.Id &&
+                   Age == other.Age;
+        }
+
+        public override bool Equals(object obj) {
+            if (ReferenceEquals(null, obj)) {
+                return false;
+            }
+
+            if (ReferenceEquals(this, obj)) {
+                return true;
+            }
+
+            if (obj.GetType() != this.GetType()) {
+                return false;
+            }
+
+            return Equals((SymbolFileDescriptor)obj);
+        }
+
+        public override int GetHashCode() {
+            return HashCode.Combine(FileName.ToLower(), Id, Age);
+        }
+
+        public static bool operator ==(SymbolFileDescriptor left, SymbolFileDescriptor right) {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(SymbolFileDescriptor left, SymbolFileDescriptor right) {
+            return !Equals(left, right);
+        }
+
         public SymbolFileDescriptor(string fileName, Guid id, int age) {
             FileName = fileName;
             Id = id;
             Age = age;
         }
-
-        public string FileName { get; set; }
-        public Guid Id { get; set; }
-        public int Age { get; set; }
     }
 }
