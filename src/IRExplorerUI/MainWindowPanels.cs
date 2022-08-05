@@ -264,14 +264,14 @@ namespace IRExplorerUI {
             sessionState_.DocumentHosts.Remove(docHostInfo);
 
             if (sessionState_.DocumentHosts.Count > 0) {
-                SetActiveDocument(sessionState_.DocumentHosts[0]);
+                await SetActiveDocument(sessionState_.DocumentHosts[0]);
             }
             else {
                 ResetActiveDocument();
             }
         }
 
-        private void SetActiveDocument(DocumentHostInfo newActivePanel, bool updateUI = true) {
+        private async Task SetActiveDocument(DocumentHostInfo newActivePanel, bool updateUI = true) {
             activeDocumentPanel_ = newActivePanel.HostParent;
 
             foreach (var item in sessionState_.DocumentHosts) {
@@ -284,7 +284,7 @@ namespace IRExplorerUI {
                 var docHost = newActivePanel.DocumentHost;
 
                 if (docHost.Section != null) {
-                    SectionPanel.SelectSection(docHost.Section, false);
+                    await SectionPanel.SelectSection(docHost.Section, false);
                     NotifyPanelsOfSectionLoad(docHost.Section, docHost, false);
                 }
             }
@@ -304,7 +304,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void DocumentHost_IsActiveChanged(object sender, EventArgs e) {
+        private async void DocumentHost_IsActiveChanged(object sender, EventArgs e) {
             if (!(sender is LayoutDocument docHost)) {
                 return;
             }
@@ -325,7 +325,7 @@ namespace IRExplorerUI {
                 }
 
                 var hostDocPair = FindDocumentHostPair(document);
-                SetActiveDocument(hostDocPair);
+                await SetActiveDocument(hostDocPair);
             }
         }
 
@@ -785,7 +785,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private DocumentHostInfo AddNewDocument(OpenSectionKind kind) {
+        private async Task<DocumentHostInfo> AddNewDocument(OpenSectionKind kind) {
             var document = new IRDocumentHost(this);
             var host = new LayoutDocument {
                 Content = document
@@ -831,7 +831,7 @@ namespace IRExplorerUI {
             documentHost.HostParent = activeDocumentPanel_;
             sessionState_.DocumentHosts.Add(documentHost);
 
-            SetActiveDocument(documentHost, false);
+            await SetActiveDocument(documentHost, false);
             host.IsActiveChanged += DocumentHost_IsActiveChanged;
             host.Closed += DocumentHost_Closed;
             host.IsSelected = true;

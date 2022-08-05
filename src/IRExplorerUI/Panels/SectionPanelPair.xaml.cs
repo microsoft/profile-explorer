@@ -249,7 +249,8 @@ namespace IRExplorerUI {
             SelectSectionPanel(section).SetSectionAnnotationState(section, hasAnnotations);
         }
 
-        public void SelectSection(IRTextSection section, bool focus = true) {
+        public async Task SelectSection(IRTextSection section, bool focus = true) {
+            await SelectFunction(section.ParentFunction);
             SelectSectionPanel(section).SelectSection(section, focus);
         }
 

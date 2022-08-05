@@ -504,16 +504,16 @@
                                 <Button
                                     Margin="2,0,0,0"
                                     Padding="1"
-                                    Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
+                                    Command="local:DocumentHostCommand.JumpToNextProfiledElement"
                                     CommandTarget="{Binding ElementName=TextView}"
-                                    ToolTip="Jump to previous bookmark (Shift+F2)">
+                                    ToolTip="Jump to previous less hot instruction (Shift+F2)">
                                     <Image Source="{StaticResource MinusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Button
                                     Padding="1"
-                                    Command="local:DocumentHostCommand.JumpToNextProfiledElement"
+                                    Command="local:DocumentHostCommand.JumpToPreviousProfiledElement"
                                     CommandTarget="{Binding ElementName=TextView}"
-                                    ToolTip="Jump to previous bookmark (Shift+F2)">
+                                    ToolTip="Jump to next hotter instruction (Shift+F2)">
                                     <Image Source="{StaticResource PlusIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                                 <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" />

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -70,7 +71,8 @@ namespace IRExplorerUI.Utilities {
                 return 0.0;
             }
 
-            return doubleValue * double.Parse((string)parameter);
+            double maxValue = double.Parse((string)parameter);
+            return Math.Min(doubleValue * maxValue, maxValue);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {

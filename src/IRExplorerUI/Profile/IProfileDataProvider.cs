@@ -1,8 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile {
@@ -48,19 +50,22 @@ namespace IRExplorerUI.Profile {
         public bool ProfileDotNet { get; set; }
         [ProtoMember(7)]
         public bool ProfileChildProcesses { get; set; }
-        [ProtoMember(8)]
-        public bool EnablePerfCounters { get; set; }//? PMC config
+        [ProtoMember(8)] 
+        public bool RecordPerformanceCounters { get; set; }
         [ProtoMember(9)]        
         public bool EnableEnvironmentVars { get; set; }
         [ProtoMember(10)]
         public List<(string Variable, string Name)> EnvironmentVariables { get; set; }
+        [ProtoMember(11)]
+        public List<PerformanceCounterConfig> PerformanceCounters { get; set; }
 
+        public List<PerformanceCounterConfig> EnabledPerformanceCounters => PerformanceCounters.FindAll(c => c.IsEnabled);
         public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
 
         public ProfileRecordingSessionOptions() {
             Reset();
         }
-
+        
         public override void Reset() {
             ResetAndInitializeReferenceMembers();
             SessionKind = ProfileSessionKind.SystemWide;
@@ -75,6 +80,15 @@ namespace IRExplorerUI.Profile {
         private void ResetAndInitializeReferenceMembers() {
             EnvironmentVariables?.Clear();
             InitializeReferenceMembers();
+        }
+
+        public bool AddPerformanceCounter(PerformanceCounterConfig config) {
+            if (!PerformanceCounters.Contains(config)) {
+                PerformanceCounters.Add(config);
+                return true;
+            }
+
+            return false;
         }
     }
 
@@ -102,6 +116,8 @@ namespace IRExplorerUI.Profile {
         public bool IncludePerformanceCounters { get; set; }
         [ProtoMember(10)] 
         public ProfileRecordingSessionOptions RecordingSessionOptions { get; set; }
+        [ProtoMember(11)]
+        public List<PerformanceMetricConfig> PerformanceMetrics { get; set; }
         //? Recent profile sessions
 
         public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
@@ -115,7 +131,16 @@ namespace IRExplorerUI.Profile {
             ResetAndInitializeReferenceMembers();
             DownloadBinaryFiles = true;
         }
-        
+
+        public bool AddPerformanceMetric(PerformanceMetricConfig config) {
+            if (!PerformanceMetrics.Contains(config)) {
+                PerformanceMetrics.Add(config);
+                return true;
+            }
+
+            return false;
+        }
+
         public bool HasBinaryPath(string path) {
             path = Utils.TryGetDirectoryName(path).ToLowerInvariant();
             return BinarySearchPaths.Find(item => item.ToLowerInvariant() == path) != null;
@@ -138,6 +163,7 @@ namespace IRExplorerUI.Profile {
             BinarySearchPaths ??= new List<string>();
             BinaryNameWhitelist ??= new List<string>();
             RecordingSessionOptions ??= new ProfileRecordingSessionOptions();
+            PerformanceMetrics = new List<PerformanceMetricConfig>();
         }
 
         private void ResetAndInitializeReferenceMembers() {
@@ -146,7 +172,6 @@ namespace IRExplorerUI.Profile {
             RecordingSessionOptions?.Reset();
             InitializeReferenceMembers();
         }
-
 
         public override SettingsBase Clone() {
             var serialized = StateSerializer.Serialize(this);
@@ -166,5 +191,145 @@ namespace IRExplorerUI.Profile {
                                          SymbolFileSourceOptions symbolOptions,
                                          ProfileLoadProgressHandler progressCallback,
                                          CancelableTask cancelableTask = null);
+    }
+}
+
+
+[ProtoContract(SkipConstructor = true)]
+public class PerformanceCounterConfig : IEquatable<PerformanceCounterConfig> {
+    [ProtoMember(1)]
+    public bool IsEnabled { get; set; }
+    [ProtoMember(2)]
+    public bool IsBuiltin { get; set; }
+    [ProtoMember(3)]
+    public int Id { get; set; }
+    [ProtoMember(4)]
+    public string Name { get; set; }
+    [ProtoMember(5)]
+    public string Description { get; set; }
+    [ProtoMember(6)]
+    public int Interval { get; set; }
+    [ProtoMember(7)]
+    public int MinInterval { get; set; }
+    [ProtoMember(8)]
+    public int MaxInterval { get; set; }
+    [ProtoMember(9)]
+    public int DefaultInterval { get; set; }
+
+    public PerformanceCounterConfig(int id, string name, int defaultInterval,
+                                    int minInterval, int maxInterval, bool isBuiltin) {
+        Id = id;
+        Name = name;
+        Interval = defaultInterval;
+        DefaultInterval = defaultInterval;
+        MinInterval = minInterval;
+        MaxInterval = maxInterval;
+        IsBuiltin = isBuiltin;
+    }
+
+    public bool Equals(PerformanceCounterConfig other) {
+        if (ReferenceEquals(null, other)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+
+        return Id == other.Id && Name == other.Name;
+    }
+
+    public override bool Equals(object obj) {
+        if (ReferenceEquals(null, obj)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj)) {
+            return true;
+        }
+
+        if (obj.GetType() != this.GetType()) {
+            return false;
+        }
+
+        return Equals((PerformanceCounterConfig)obj);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(Id, Name);
+    }
+
+    public static bool operator ==(PerformanceCounterConfig left, PerformanceCounterConfig right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(PerformanceCounterConfig left, PerformanceCounterConfig right) {
+        return !Equals(left, right);
+    }
+}
+
+[ProtoContract(SkipConstructor = true)]
+public class PerformanceMetricConfig : IEquatable<PerformanceMetricConfig> {
+    [ProtoMember(1)]
+    public string Name { get; set; }
+    [ProtoMember(2)]
+    public string BaseCounterName { get; set; }
+    [ProtoMember(3)]
+    public string RelativeCounterName { get; set; }
+    [ProtoMember(4)]
+    public string Description { get; set; }
+    [ProtoMember(5)]
+    public bool IsPercentage { get; set; }
+    [ProtoMember(6)]
+    public bool IsEnabled { get; set; }
+
+    public PerformanceMetricConfig(string name, string baseCounterName, string relativeCounterName, 
+                                   bool isPercentage, string description) {
+        Name = name;
+        BaseCounterName = baseCounterName;
+        RelativeCounterName = relativeCounterName;
+        Description = description;
+        IsPercentage = isPercentage;
+        IsEnabled = true;
+    }
+
+    public bool Equals(PerformanceMetricConfig other) {
+        if (ReferenceEquals(null, other)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+
+        return Name == other.Name && BaseCounterName == other.BaseCounterName && RelativeCounterName == other.RelativeCounterName;
+    }
+
+    public override bool Equals(object obj) {
+        if (ReferenceEquals(null, obj)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj)) {
+            return true;
+        }
+
+        if (obj.GetType() != this.GetType()) {
+            return false;
+        }
+
+        return Equals((PerformanceMetricConfig)obj);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(Name, BaseCounterName, RelativeCounterName);
+    }
+
+    public static bool operator ==(PerformanceMetricConfig left, PerformanceMetricConfig right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(PerformanceMetricConfig left, PerformanceMetricConfig right) {
+        return !Equals(left, right);
     }
 }

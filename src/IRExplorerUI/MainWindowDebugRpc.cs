@@ -431,7 +431,7 @@ namespace IRExplorerUI {
 
                 SectionPanel.MainSummary = null;
                 SectionPanel.MainSummary = debugSummary_;
-                SectionPanel.SelectSection(section);
+                await SectionPanel.SelectSection(section);
 
                 //? TODO: After switch, try to restore same position in doc
                 //? Markers, bookmarks, notes, etc should be copied over
