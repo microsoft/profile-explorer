@@ -75,6 +75,7 @@ namespace IRExplorerUI.Profile {
         [ProtoAfterDeserialization]
         private void InitializeReferenceMembers() {
             EnvironmentVariables ??= new List<(string Variable, string Name)>();
+            PerformanceCounters ??= new List<PerformanceCounterConfig>();
         }
 
         private void ResetAndInitializeReferenceMembers() {
@@ -302,7 +303,9 @@ public class PerformanceMetricConfig : IEquatable<PerformanceMetricConfig> {
             return true;
         }
 
-        return Name == other.Name && BaseCounterName == other.BaseCounterName && RelativeCounterName == other.RelativeCounterName;
+        return Name == other.Name && 
+               BaseCounterName == other.BaseCounterName && 
+               RelativeCounterName == other.RelativeCounterName;
     }
 
     public override bool Equals(object obj) {
@@ -322,7 +325,7 @@ public class PerformanceMetricConfig : IEquatable<PerformanceMetricConfig> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Name, BaseCounterName, RelativeCounterName);
+        return HashCode.Combine(Name, BaseCounterName, RelativeCounterName, IsPercentage);
     }
 
     public static bool operator ==(PerformanceMetricConfig left, PerformanceMetricConfig right) {

@@ -527,7 +527,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         if (metricBasePercentage > 0.01) {
                             label = FormatPerformanceMetric(valuePercentage, metric);
                             value = (long)(valuePercentage * 10000);
-                            isValueBasedMetric = !metric.IsPercentage;
+                            isValueBasedMetric = !metric.Config.IsPercentage;
                             tooltip = "Per instruction";
                         }
                         else {
@@ -592,7 +592,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 return "";
             }
 
-            return metric.IsPercentage ? value.AsPercentageString(2, false) : $"{value:F2}";
+            return metric.Config.IsPercentage ? value.AsPercentageString(2, false) : $"{value:F2}";
         }
 
         public static string FormatPerformanceCounter(long value, PerformanceCounterInfo counter) {
