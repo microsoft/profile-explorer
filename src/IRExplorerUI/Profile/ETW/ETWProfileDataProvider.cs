@@ -12,6 +12,7 @@ using System.IO;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Profile.ETW;
+using Microsoft.Diagnostics.Tracing;
 
 namespace IRExplorerUI.Profile; 
 
@@ -68,9 +69,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
-    public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, CancelableTask cancelableTask) {
-        using var eventProcessor = new ETWEventProcessor(tracePath);
-        return await Task.Run(() => eventProcessor.BuildProcessSummary(cancelableTask));
+    public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, ProfileDataProviderOptions options, 
+                                                                        CancelableTask cancelableTask) {
+        try {
+            using var eventProcessor = new ETWEventProcessor(tracePath, options);
+            return await Task.Run(() => eventProcessor.BuildProcessSummary(cancelableTask));
+        }
+        catch (Exception ex) {
+            Trace.WriteLine($"Failed to open ETL file {tracePath}: {ex.Message}");
+            return null;
+        }
     }
 
     public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
@@ -85,7 +93,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
         
         var profile = await Task.Run(() => {
-            using var eventProcessor = new ETWEventProcessor(tracePath);
+            using var eventProcessor = new ETWEventProcessor(tracePath, options);
             return eventProcessor.ProcessEvents(progressCallback, cancelableTask);
         });
 
@@ -788,11 +796,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         }
                     }
 
-                    profileData_.RegisterPerformanceMetric(1000, "DCacheMiss", "DcacheAccesses", "DcacheMisses", true, "Data cache miss percentage");
-                    profileData_.RegisterPerformanceMetric(1001, "ICacheMiss", "ICFetch", "ICMiss", true, "Instruction cache miss percentage");
-                    profileData_.RegisterPerformanceMetric(1002, "MispredBr", "BranchInstructions", "BranchMispredictions", true, "Branch misprediction percentage");
-                    profileData_.RegisterPerformanceMetric(1003, "CPI", "InstructionRetired", "TotalCycles", false, "Clockticks per Instructions retired rate");
+                    // Try to register the metrics.
+                    int metricIndex = 1000;
 
+                    foreach (var metric in options_.PerformanceMetrics) {
+                        if (metric.IsEnabled) {
+                            profileData_.RegisterPerformanceMetric(metricIndex++, metric);
+                        }
+                    }
+                    
                     foreach (var counter in prof.PerformanceCountersEvents) {
                         index++;
 

@@ -38,14 +38,16 @@ public class ETWEventProcessor : IDisposable {
     private bool handleChildProcesses_;
     private string managedAsmDir_;
     private List<int> childAcceptedProcessIds_;
-    private Dictionary<int, ClrRuntime> runtimeMap_;
+    private ProfileDataProviderOptions providerOptions_;
 
-    public ETWEventProcessor(ETWTraceEventSource source, bool isRealTime = true, 
+    public ETWEventProcessor(ETWTraceEventSource source, ProfileDataProviderOptions providerOptions,
+                             bool isRealTime = true, 
                              int acceptedProcessId = 0, bool handleChildProcesses = false,
                              bool handleDotNetEvents = false,
                              string managedAsmDir = null) {
         Trace.WriteLine($"New ETWEventProcessor: ProcId {acceptedProcessId}, handleDotNet: {handleDotNetEvents}");
         source_ = source;
+        providerOptions_ = providerOptions;
         isRealTime_ = isRealTime;
         acceptedProcessId_ = acceptedProcessId;
         handleDotNetEvents_ = handleDotNetEvents;
@@ -53,10 +55,11 @@ public class ETWEventProcessor : IDisposable {
         childAcceptedProcessIds_ = new List<int>();
     }
 
-    public ETWEventProcessor(string tracePath) {
+    public ETWEventProcessor(string tracePath, ProfileDataProviderOptions providerOptions) {
         Debug.Assert(File.Exists(tracePath));
-        source_ = new ETWTraceEventSource(tracePath);
         childAcceptedProcessIds_ = new List<int>();
+        source_ = new ETWTraceEventSource(tracePath);
+        providerOptions_ = providerOptions;
     }
 
     public List<TraceProcessSummary> BuildProcessSummary(CancelableTask cancelableTask) {
@@ -106,24 +109,12 @@ public class ETWEventProcessor : IDisposable {
             int sampleId = profile.AddSample(sample);
             profile.ReturnContext(contextId);
         };
-
-        source_.Kernel.PerfInfoPMCSample += data => {
-            if (cancelableTask.IsCanceled) {
-                source_.StopProcessing();
-            }
-
-            if (data.ProcessID < 0) {
-                return;
-            }
-
-            
-        };
-
+        
         source_.Process();
         return profile.BuildProcessSummary();
     }
 
-    const double samplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
+    const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
 
     bool samplingIntervalSet = false;
     int samplingInterval100NS;
@@ -133,7 +124,7 @@ public class ETWEventProcessor : IDisposable {
     void UpdateSamplingInterval(int value) {
         samplingInterval100NS = value;
         samplingIntervalMS = (double)samplingInterval100NS / 10000;
-        samplingIntervalLimitMS = samplingIntervalMS * samplingErrorMargin;
+        samplingIntervalLimitMS = samplingIntervalMS * SamplingErrorMargin;
     }
 
     public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
@@ -383,30 +374,32 @@ public class ETWEventProcessor : IDisposable {
         int large = 0;
 #endif
 
-        //? TODO: Check IncludePerformanceCounters
-        source_.Kernel.PerfInfoPMCSample += data => {
-            if (!IsAcceptedProcess(data.ProcessID)) {
-                return; // Ignore events from other processes.
-            }
+        if (providerOptions_.IncludePerformanceCounters) {
+            Trace.WriteLine("Collecting PMC events");
 
-            //if (cancelableTask != null && cancelableTask.IsCanceled) {
-            //    source_.StopProcessing();
-            //}
+            source_.Kernel.PerfInfoPMCSample += data => {
+                if (!IsAcceptedProcess(data.ProcessID)) {
+                    return; // Ignore events from other processes.
+                }
 
-            // Skip unknown process.
-            if (data.ProcessID < 0) {
-                return;
-            }
+                //if (cancelableTask != null && cancelableTask.IsCanceled) {
+                //    source_.StopProcessing();
+                //}
 
-            var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
-            int contextId = profile.AddContext(context);
-            double timestamp = data.TimeStampRelativeMSec;
+                // Skip unknown process.
+                if (data.ProcessID < 0) {
+                    return;
+                }
 
-            var counterEvent = new PerformanceCounterEvent((long)data.InstructionPointer,
-                                                            TimeSpan.FromMilliseconds(timestamp), 
-                                                            contextId, (short)data.ProfileSource);
-            profile.AddPerformanceCounterEvent(counterEvent);
-            profile.ReturnContext(contextId);
+                var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
+                int contextId = profile.AddContext(context);
+                double timestamp = data.TimeStampRelativeMSec;
+
+                var counterEvent = new PerformanceCounterEvent((long)data.InstructionPointer,
+                    TimeSpan.FromMilliseconds(timestamp),
+                    contextId, (short)data.ProfileSource);
+                profile.AddPerformanceCounterEvent(counterEvent);
+                profile.ReturnContext(contextId);
 
 #if false
             var key = new Tuple<long, int, int>((long)data.InstructionPointer, contextId, data.ProfileSource);
@@ -435,9 +428,10 @@ public class ETWEventProcessor : IDisposable {
 
 #endif
 
-            //Trace.WriteLine($"PMC {data.ProfileSource}: {data.InstructionPointer}");
+                //Trace.WriteLine($"PMC {data.ProfileSource}: {data.InstructionPointer}");
 
-        };
+            };
+        }
 
         if (handleDotNetEvents_) {
             ProcessDotNetEvents(profile);
@@ -447,7 +441,9 @@ public class ETWEventProcessor : IDisposable {
         try {
             Trace.WriteLine("Start processing ETW events");
             var sw = Stopwatch.StartNew();
+            
             source_.Process();
+            
             sw.Stop();
             Trace.WriteLine($"Took: {sw.ElapsedMilliseconds} ms");
         }
@@ -461,11 +457,14 @@ public class ETWEventProcessor : IDisposable {
         //Trace.Flush();
         
         profile.LoadingCompleted();
+
         if (handleDotNetEvents_) {
             profile.ManagedLoadingCompleted(managedAsmDir_);
         }
 
+#if DEBUG
         profile.PrintAllProcesses();
+#endif
 
 #if false
         GC.Collect();
@@ -480,14 +479,10 @@ public class ETWEventProcessor : IDisposable {
         Trace.WriteLine($"   small perc: {((double)small / (small + large)) * 100:F4}");
         Trace.Flush();
 #endif
-
-        //StateSerializer.Serialize(@"C:\test\out.dat", profile);
-
         return profile;
     }
     
     private void ProcessDotNetEvents(RawProfileData profile) {
-        runtimeMap_ = new Dictionary<int, ClrRuntime>();
         //var rundownParser = new ClrRundownTraceEventParser(source_);
 
         source_.Clr.LoaderModuleLoad += data => {

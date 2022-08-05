@@ -684,7 +684,7 @@ namespace IRExplorerUI {
                  (args.OpenKind == OpenSectionKind.NewTab ||
                   args.OpenKind == OpenSectionKind.NewTabDockLeft ||
                   args.OpenKind == OpenSectionKind.NewTabDockRight))) {
-                document = AddNewDocument(args.OpenKind).DocumentHost;
+                document = (await AddNewDocument(args.OpenKind)).DocumentHost;
             }
 
             // In diff mode, reload both left/right sections and redo the diffs.

@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -47,6 +48,13 @@ namespace IRExplorerUI {
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
+            UpdatePerfCounterList();
+
+            this.Closing += ProfileLoadWindow_Closing;
+        }
+
+        private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
+            App.SaveApplicationSettings();
         }
 
         public ISession Session { get; set; }
@@ -102,6 +110,17 @@ namespace IRExplorerUI {
             }
         }
 
+        private int enabledPerfCounters_;
+        public int EnabledPerfCounters {
+            get => enabledPerfCounters_;
+            set {
+                if (enabledPerfCounters_ != value) {
+                    enabledPerfCounters_ = value;
+                    OnPropertyChange(nameof(EnabledPerfCounters));
+                }
+            }
+        }
+
         public bool InputControlsEnabled => !IsLoadingProfile;
         public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
         public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
@@ -125,6 +144,23 @@ namespace IRExplorerUI {
                 symbolOptions_ = value;
                 OnPropertyChange(nameof(SymbolOptions));
             }
+        }
+
+        public void UpdatePerfCounterList() {
+            var counters = ETWRecordingSession.BuiltinPerformanceCounters;
+
+            foreach (var counter in counters) {
+                options_.RecordingSessionOptions.AddPerformanceCounter(counter);
+            }
+
+            var metrics = ETWRecordingSession.BuiltinPerformanceMetrics;
+
+            foreach (var metric in metrics) {
+                options_.AddPerformanceMetric(metric);
+            }
+            
+            PerfCounterList.ItemsSource = new ObservableCollectionRefresh<PerformanceCounterConfig>(options_.RecordingSessionOptions.PerformanceCounters);
+            PerfMetricsList.ItemsSource = new ObservableCollectionRefresh<PerformanceMetricConfig> (options_.PerformanceMetrics);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -153,8 +189,8 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            IsLoadingProfile = true;
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+            IsLoadingProfile = true;
             bool success = false;
 
             if (IsRecordMode) {
@@ -162,6 +198,7 @@ namespace IRExplorerUI {
                     return false;
                 }
 
+                //options_.PerformanceMetrics
                 var binSearchOptions = symbolOptions_.WithSymbolPaths(options_.RecordingSessionOptions.ApplicationPath);
 
                 if (options_.RecordingSessionOptions.HasWorkingDirectory) {
@@ -198,7 +235,6 @@ namespace IRExplorerUI {
 
                 LoadProgressBar.Maximum = progressInfo.Total;
                 LoadProgressBar.Value = progressInfo.Current;
-
                 LoadProgressLabel.Text = progressInfo.Stage switch {
                     ProfileLoadStage.TraceLoading => "Loading trace",
                     ProfileLoadStage.TraceProcessing => "Processing trace",
@@ -234,10 +270,13 @@ namespace IRExplorerUI {
             if (!Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*")) {
                 return;
             }
+        }
 
-            if (File.Exists(ProfileFilePath)) {
+        private async Task DisplayProcessList() {
+            if (File.Exists(ProfileFilePath))
+            {
                 var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-                await DisplayProcessList(async () => await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, task));
+                await DisplayProcessList(async () => await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, options_, task));
             }
         }
 
@@ -293,7 +332,11 @@ namespace IRExplorerUI {
             options_.RecordingSessionOptions.ApplicationPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
             options_.RecordingSessionOptions.WorkingDirectory = Utils.CleanupPath(options_.RecordingSessionOptions.WorkingDirectory);
 
-            using var recordingSession = new ETWRecordingSession(options_.RecordingSessionOptions);
+            if (options_.RecordingSessionOptions.RecordPerformanceCounters) {
+                options_.IncludePerformanceCounters = true;
+            }
+
+            using var recordingSession = new ETWRecordingSession(options_);
             
             IsRecordingProfile = true;
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
@@ -321,7 +364,6 @@ namespace IRExplorerUI {
 
             timer.Stop();
             IsRecordingProfile = false;
-
 
             if (recordedProfile_ != null) {
                 await DisplayProcessList(async () => await Task.Run(() => recordedProfile_.BuildProcessSummary()));
@@ -354,6 +396,10 @@ namespace IRExplorerUI {
                 processList_.Sort((a, b) => b.SampleCount.CompareTo(a.SampleCount));
                 ProcessList.ItemsSource = new ListCollectionView(processList_);
             }
+            else {
+                MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
+                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
+            }
 
             IsLoadingProcessList = false;
             ShowProcessList = true;
@@ -373,6 +419,30 @@ namespace IRExplorerUI {
 
         private void MaxFrequencyButton_Click(object sender, RoutedEventArgs e) {
             SamplingFrequencySlider.Value = ProfileRecordingSessionOptions.MaximumSamplingFrequency;
+        }
+
+        private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
+            if (!string.IsNullOrEmpty(ProfileFilePath)) {
+                await DisplayProcessList();
+            }
+        }
+
+        private void ResetButton_OnClick(object sender, RoutedEventArgs e) {
+            var config = (sender as Button).DataContext as PerformanceCounterConfig;
+
+            if (config != null) {
+                config.Interval = config.DefaultInterval;
+                var list = (ObservableCollectionRefresh<PerformanceCounterConfig>)PerfCounterList.ItemsSource;
+                list.Refresh();
+            }
+        }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e) {
+            EnabledPerfCounters = options_.RecordingSessionOptions.EnabledPerformanceCounters.Count;
+        }
+
+        private void CheckBox_Unchecked(object sender, RoutedEventArgs e) {
+            EnabledPerfCounters = options_.RecordingSessionOptions.EnabledPerformanceCounters.Count;
         }
     }
 }

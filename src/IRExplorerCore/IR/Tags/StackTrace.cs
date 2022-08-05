@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace IRExplorerCore.IR {
-    public sealed class StackFrame {
+    public sealed class StackFrame : IEquatable<StackFrame> {
         public StackFrame(string function, string filePath, int line, int column) {
             Function = function;
             FilePath = filePath;
@@ -20,11 +20,24 @@ namespace IRExplorerCore.IR {
         public int Column { get; set; }
 
         public override bool Equals(object obj) {
-            return obj is StackFrame frame &&
-                   Function == frame.Function &&
-                   FilePath == frame.FilePath &&
-                   Line == frame.Line &&
-                   Column == frame.Column;
+            return ReferenceEquals(this, obj) || obj is StackFrame other && Equals(other);
+        }
+
+        public bool Equals(StackFrame other) {
+            if (ReferenceEquals(null, other))
+                return false;
+            if (ReferenceEquals(this, other))
+                return true;
+            return Function == other.Function && FilePath == other.FilePath && 
+                   Line == other.Line && Column == other.Column;
+        }
+
+        public static bool operator ==(StackFrame left, StackFrame right) {
+            return Equals(left, right);
+        }
+
+        public static bool operator !=(StackFrame left, StackFrame right) {
+            return !Equals(left, right);
         }
 
         public override int GetHashCode() {

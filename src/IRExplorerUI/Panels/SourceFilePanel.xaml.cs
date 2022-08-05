@@ -11,8 +11,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Input;
 using System.Windows.Media;
-using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -20,16 +20,12 @@ using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
-using Microsoft.Diagnostics.Symbols;
 using Microsoft.Win32;
 using static IRExplorerUI.ModuleReportPanel;
 using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI {
-    /// <summary>
-    ///     Interaction logic for SectionPanel.xaml
-    /// </summary>
-    public partial class SourceFilePanel : ToolPanelControl, INotifyPropertyChanged {
+    public partial class SourceFilePanel : ToolPanelControl, MarkedDocument, INotifyPropertyChanged {
         private SourceFileMapper sourceFileMapper_ = new SourceFileMapper();
         private IRTextSection section_;
         private IRElement element_;
@@ -41,11 +37,14 @@ namespace IRExplorerUI {
         private bool hasProfileInfo_;
         private bool sourceFileLoaded_;
         private IRTextFunction sourceFileFunc_;
+        private string sourceFilePath_;
         private int hottestSourceLine_;
         private IRExplorerCore.IR.StackFrame currentInlinee_;
         private bool sourceMapperDisabled_;
         private bool columnsVisible_;
         private double previousVerticalOffset_;
+        private List<Tuple<IRElement, TimeSpan>> profileElements_;
+        private int profileElementIndex_;
 
         public SourceFilePanel() {
             InitializeComponent();
@@ -61,9 +60,18 @@ namespace IRExplorerUI {
             overlayRenderer_ = new OverlayRenderer(profileMarker_);
             TextView.TextArea.Caret.PositionChanged += Caret_PositionChanged;
             TextView.TextArea.TextView.ScrollOffsetChanged += TextViewOnScrollOffsetChanged;
+            ProfileColumns.ScrollChanged += ProfileColumns_ScrollChanged;
 
             TextView.TextArea.TextView.BackgroundRenderers.Add(overlayRenderer_);
             TextView.TextArea.TextView.InsertLayer(overlayRenderer_, KnownLayer.Text, LayerInsertionPosition.Above);
+        }
+
+        private void ProfileColumns_ScrollChanged(object sender, ScrollChangedEventArgs e) {
+            if (Math.Abs(e.VerticalChange) < double.Epsilon) {
+                return;
+            }
+
+            TextView.ScrollToVerticalOffset(e.VerticalOffset);
         }
 
         private void UpdateDocumentStyle() {
@@ -119,10 +127,7 @@ namespace IRExplorerUI {
         private void Caret_PositionChanged(object sender, EventArgs e) {
             if (columnsVisible_) {
                 var line = TextView.Document.GetLineByOffset(TextView.TextArea.Caret.Offset);
-
-                if (ColumnsList.Items.Count >= line.LineNumber) {
-                    ColumnsList.SelectedIndex = line.LineNumber - 1;
-                }
+                ProfileColumns.SelectRow(line.LineNumber - 1);
             }
 
             if (ignoreNextCaretEvent_) {
@@ -353,6 +358,7 @@ namespace IRExplorerUI {
                 await LoadSourceFileImpl(mappedSourceFilePath, sourceInfo.OriginalFilePath, sourceInfo.StartLine)) {
                 sourceFileLoaded_ = true;
                 sourceFileFunc_ = function;
+                sourceFilePath_ = mappedSourceFilePath;
                 return true;
             }
             else {
@@ -391,7 +397,6 @@ namespace IRExplorerUI {
         private void ResetProfileMarking() {
             overlayRenderer_.Clear();
             profileMarker_.Clear();
-            HasProfileInfo = false;
         }
 
         private void ResetSelectedLine() {
@@ -459,7 +464,10 @@ namespace IRExplorerUI {
             if (inlineeFunc != null) {
                 fileLoaded = await LoadSourceFileForFunction(inlineeFunc);
             }
-            
+            else {
+                //? TODO: Warning that the func can't be found (likely not present in binary at all, inlined everywhere)
+            }
+
             if (fileLoaded) {
                 ScrollToLine(inlinee.Line);
             }
@@ -512,8 +520,6 @@ namespace IRExplorerUI {
             dummyFunc.Blocks.Add(dummyBlock);
             dummyFunc.AssignBlockIndices();
 
-            var data = new IRDocumentColumnData(totalLines);
-
             var processingResult = new FunctionProfileData.ProcessingResult();
 
             TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1)
@@ -552,269 +558,20 @@ namespace IRExplorerUI {
             processingResult.FunctionCounters = result.FunctionCounters;
             var profileOptions = ProfileDocumentMarkerOptions.Default;
             var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo.IR);
-            var columnData = await profileMarker.MarkSourceLines(dummyFunc, processingResult);
+            var columnData = await profileMarker.MarkSourceLines(this, dummyFunc, processingResult);
 
             ColumnsVisible = columnData.HasData;
-            var settings_ = App.Settings.DocumentSettings;
-            List<ElementRowValue> profileDataRows_;
-            List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_;
 
-#if true
-            OptionalColumn.RemoveListViewColumns(ColumnsList);
-            ColumnsList.ItemsSource = null;
-
-            if (columnData.HasData) {
-                var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
-                var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
-                var font = new FontFamily(settings_.FontName);
-                var fontSize = settings_.FontSize;
-
-                ElementColumnValue MakeDummyCell() {
-                    var columnValue = ElementColumnValue.Empty;
-
-                    //? if (showColumnSeparators) {
-                    columnValue.BorderBrush = blockSeparatorColor;
-                    columnValue.BorderThickness = new Thickness(0, 0, 1, 0);
-                    columnValue.TextFont = font;
-                    columnValue.TextSize = fontSize;
-                    return columnValue;
-                }
-
-                ElementRowValue MakeDummyRow(Brush backColor = null) {
-                    var row = new ElementRowValue(null) {
-                        BackColor = backColor,
-                        BorderBrush = blockSeparatorColor
-                    };
-
-                    foreach (var column in columnData.Columns) {
-                        row.ColumnValues[column] = MakeDummyCell();
-                    }
-                    return row;
-                }
-
-
-                var elementValueList = new List<ElementRowValue>(dummyFunc.TupleCount);
-                var dummyValues = MakeDummyRow();
-                var oddDummyValues = MakeDummyRow(oddBackColor);
-
-                int prevLine = -1;
-                bool prevIsOddBlock = false;
-
-                void AddDummyRows(int count, bool isOddBlock) {
-                    for (int i = 0; i < count; i++) {
-                        elementValueList.Add(isOddBlock ? oddDummyValues : dummyValues);
-                    }
-                }
-
-                const double maxBarWidth = 100;
-                const double columnMargin = 4;
-                profileDataRows_ = new List<ElementRowValue>();
-
-                foreach (var block in dummyFunc.SortedBlocks) {
-                    bool isOddBlock = block.HasOddIndexInFunction;
-
-                    for (int i = 0; i < block.Tuples.Count; i++) {
-                        var tuple = block.Tuples[i];
-                        int currentLine = tuple.TextLocation.Line;
-                        bool isSeparatorLine = settings_.ShowBlockSeparatorLine &&
-                                               i == block.Tuples.Count - 1;
-
-                        // Add dummy empty list view lines to match document text.
-                        if (currentLine > prevLine + 1) {
-                            AddDummyRows(currentLine - prevLine - 1, isOddBlock);
-                        }
-
-                        // Check if there is any data associated with the element.
-                        // Have the row match the background color used in the doc.
-                        var rowValues = columnData.GetValues(tuple);
-
-                        if (rowValues != null) {
-                            rowValues.BorderBrush = blockSeparatorColor;
-
-                            if (rowValues.BackColor == null && isOddBlock) {
-                                rowValues.BackColor = oddBackColor;
-                            }
-
-                            foreach (var columnValue in rowValues.ColumnValues) {
-                                columnValue.Value.TextFont = font;
-                                columnValue.Value.TextSize = fontSize;
-                            }
-
-                            // Add dummy cells for the missing ones, needed for column separators.
-                            if (rowValues.ColumnValues.Count != columnData.Columns.Count) {
-                                foreach (var column in columnData.Columns) {
-                                    if (!rowValues.Columns.Contains(column)) {
-                                        rowValues.ColumnValues[column] = MakeDummyCell();
-                                    }
-                                }
-                            }
-
-                            profileDataRows_.Add(rowValues);
-                        }
-                        else {
-                            if (isSeparatorLine) {
-                                rowValues = isOddBlock ? MakeDummyRow(oddBackColor) : MakeDummyRow();
-                            }
-                            else {
-                                rowValues = isOddBlock ? oddDummyValues : dummyValues;
-                            }
-                        }
-
-                        // Add a separator line at the bottom of the current row
-                        // if the next instr. is found in another block.
-                        if (isSeparatorLine) {
-                            rowValues.BorderThickness = new Thickness(0, 0, 0, 1);
-                            rowValues.BorderBrush = blockSeparatorColor;
-                        }
-
-                        //? if (showColumnSeparators) {
-                        foreach (var value in rowValues.Values) {
-                            value.BorderBrush = blockSeparatorColor;
-                            value.BorderThickness = new Thickness(0, 0, 1, 0);
-                        }
-
-                        elementValueList.Add(rowValues);
-                        prevLine = currentLine;
-                    }
-
-                    prevIsOddBlock = isOddBlock;
-                }
-
-                // Add empty lines at the end to match document,
-                // otherwise scrolling can get out of sync.
-                if (TextView.LineCount != prevLine + 1) {
-                    AddDummyRows(TextView.LineCount - prevLine, prevIsOddBlock);
-                }
-
-                profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
-
-                foreach (var columnHeader in profileColumnHeaders_) {
-                    //columnHeader.Header.Click += ColumnHeaderOnClick;
-                    //columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
-                }
-
-                UpdateProfileDataColumnWidths(profileDataRows_, profileColumnHeaders_, settings_);
-
-                ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
-                ColumnsList.Background = settings_.BackgroundColor.AsBrush();
-                //profileLoaded_ = true;
+            if (ColumnsVisible) {
+                ProfileColumns.Display(columnData, Document.LineCount, dummyFunc);
+                profileElements_ = processingResult.SampledElements;
+                UpdateHighlighting();
+            }
+            else {
+                ProfileColumns.Reset();
             }
 
-            UpdateColumnsList(settings_);
-#else
-            sourceLineWeights.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-            hottestSourceLine_ = sourceLineWeights.Count > 0 ? sourceLineWeights[0].Item1 : 0;
-            int lineIndex = 0;
-
-            foreach (var pair in sourceLineWeights) {
-                int sourceLine = pair.Item1;
-
-                if (sourceLine <= 0 || sourceLine > TextView.Document.LineCount) {
-                    continue;
-                }
-
-                double weightPercentage = profile.ScaleWeight(pair.Item2);
-                var color = markerOptions.PickColorForPercentage(weightPercentage);
-                var style = new HighlightingStyle(color);
-                IconDrawing icon = markerOptions.PickIconForOrder(lineIndex, weightPercentage);
-                
-                var documentLine = TextView.Document.GetLineByNumber(sourceLine);
-                var location = new TextLocation(documentLine.Offset, sourceLine, 0);
-                var element = new IRElement(location, documentLine.Length);
-                element.Id = nextElementId.NextOperand();
-
-                var group = new HighlightedGroup(style);
-                group.Add(element);
-                profileMarker_.Add(group);
-
-                var tooltip = $"{weightPercentage.AsPercentageString()} ({pair.Item2.AsMillisecondsString()})";
-                AddElementOverlay(element, icon, lineIndex, 16, 16, tooltip, markerOptions);
-                lineIndex++;
-            }
-#endif
-            UpdateHighlighting();
             HasProfileInfo = true;
-        }
-
-        public void UpdateProfileDataColumnWidths(List<ElementRowValue> profileDataRows_, 
-            List<(GridViewColumnHeader Header, GridViewColumn Column)> profileColumnHeaders_, 
-            DocumentSettings settings_) {
-            if (profileDataRows_ == null ||
-                profileColumnHeaders_ == null) {
-                return;
-            }
-
-            var maxColumnTextSize = new Dictionary<OptionalColumn, double>();
-            var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
-            var font = new FontFamily(settings_.FontName);
-            var fontSize = settings_.FontSize;
-            const double maxBarWidth = 100;
-            const double columnMargin = 4;
-
-            foreach (var rowValues in profileDataRows_) {
-                foreach (var columnValue in rowValues.ColumnValues) {
-                    columnValue.Value.TextFont = font;
-                    columnValue.Value.TextSize = fontSize;
-
-                    // Remember the max text length for each column
-                    // to later set the MinWidth for alignment.
-                    maxColumnTextSize.CollectMaxValue(columnValue.Key, columnValue.Value.Text.Length);
-
-                    if (columnValue.Value.ShowPercentageBar ||
-                        columnValue.Value.ShowIcon) {
-                        double extraColumnWidth = columnMargin;
-
-                        if (columnValue.Value.ShowPercentageBar) {
-                            extraColumnWidth += columnValue.Value.ValuePercentage * maxBarWidth;
-                        }
-
-                        if (columnValue.Value.ShowIcon) {
-                            // Width of the icon is at most the height of the row.
-                            extraColumnWidth += ColumnsListItemHeight + columnMargin;
-                        }
-
-                        maxColumnExtraSize.CollectMaxValue(columnValue.Key, extraColumnWidth);
-                    }
-                }
-            }
-
-            // Set the MinWidth of the text for each cell.
-            foreach (var pair in maxColumnTextSize) {
-                var columnContentSize = Utils.MeasureString((int)pair.Value, settings_.FontName, settings_.FontSize);
-                double columnWidth = columnContentSize.Width + columnMargin;
-                maxColumnTextSize[pair.Key] = Math.Ceiling(columnWidth);
-
-                // Also set the initial width of each column header.
-                // For the header, consider image and percentage bar too.
-                if (maxColumnExtraSize.TryGetValue(pair.Key, out var extraSize)) {
-                    columnWidth += extraSize;
-                }
-
-                //? TODO: Pass options and check RemoveEmptyColumns
-                if (columnWidth == 0) {
-                    pair.Key.IsVisible = false;
-                }
-                else {
-                    var columnTitleSize = Utils.MeasureString(pair.Key.Title, settings_.FontName, settings_.FontSize);
-                    var gridColumn = profileColumnHeaders_.Find(item => item.Header.Tag.Equals(pair.Key));
-
-                    if (gridColumn.Column == null || gridColumn.Header == null) {
-                        continue;
-                    }
-
-                    columnWidth = Math.Max(columnWidth, columnTitleSize.Width + columnMargin);
-                    gridColumn.Header.Width = columnWidth;
-                    gridColumn.Column.Width = columnWidth;
-                }
-
-                //Trace.WriteLine($"Column width {columnWidth} for {pair.Key.ColumnName}");
-            }
-
-            foreach (var row in profileDataRows_) {
-                foreach (var columnValue in row.ColumnValues) {
-                    columnValue.Value.MinTextWidth = maxColumnTextSize[columnValue.Key];
-                }
-            }
         }
 
         private void TextViewOnScrollOffsetChanged(object? sender, EventArgs e) {
@@ -830,20 +587,8 @@ namespace IRExplorerUI {
         private void SyncColumnsVerticalScrollOffset(double offset) {
             // Sync scrolling with the optional columns.
             if (columnsVisible_) {
-                var columnScrollViewer = Utils.FindChild<ScrollViewer>(ColumnsList);
-
-                if (columnScrollViewer != null) {
-                    columnScrollViewer.ScrollToVerticalOffset(offset);
-                }
+                ProfileColumns.ScrollToVerticalOffset(offset);
             }
-        }
-
-        private void UpdateColumnsList(DocumentSettings settings) {
-            SelectedLineBrush = settings.SelectedValueColor.AsBrush();
-            ColumnsList.Background = ColorBrushes.GetBrush(settings.BackgroundColor);
-            double h = Utils.MeasureString("0123456789ABCFEFGH", settings.FontName, settings.FontSize).Height;
-
-            ColumnsListItemHeight = h;
         }
 
         public void AddElementOverlay(IRElement element, IconDrawing icon, int index,
@@ -916,6 +661,103 @@ namespace IRExplorerUI {
 
             if (await LoadSourceFileForFunction(section_.ParentFunction)) {
                 ScrollToLine(hottestSourceLine_);
+            }
+        }
+
+        public double DefaultLineHeight => TextView.TextArea.TextView.DefaultLineHeight;
+
+        public void SuspendUpdate() {
+            
+        }
+
+        public void ResumeUpdate() {
+            
+        }
+
+        public void ClearInstructionMarkers() {
+            ResetProfileMarking();
+        }
+
+        public void MarkElements(ICollection<(IRElement, Color)> elementColorPairs) {
+            foreach (var pair in elementColorPairs) {
+                var style = new HighlightingStyle(pair.Item2);
+                var group = new HighlightedGroup(style);
+                group.Add(pair.Item1);
+                profileMarker_.Add(group);
+            }
+            
+            UpdateHighlighting();
+        }
+
+        public void MarkBlock(IRElement element, Color selectedColor, bool raiseEvent = true) {
+            throw new NotImplementedException();
+        }
+
+        public IconElementOverlay RegisterIconElementOverlay(IRElement element, IconDrawing icon,
+            double width, double height,
+            string label, string tooltip) {
+            throw new NotImplementedException();
+        }
+
+        private void JumpToProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (!HasProfileElements()) {
+                return;
+            }
+
+            profileElementIndex_ = 0;
+            JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+        }
+
+        private bool HasProfileElements() {
+            return ColumnsVisible && profileElements_ != null && profileElements_.Count > 0;
+        }
+
+        private bool HasProfileElement(int offset) {
+            return ColumnsVisible && profileElements_ != null &&
+                   profileElementIndex_ + offset >= 0 &&
+                   profileElementIndex_ + offset < profileElements_.Count;
+        }
+
+        private void JumpToNextProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledElement(-1);
+        }
+
+        private void JumpToPreviousProfiledElementExecuted(object sender, ExecutedRoutedEventArgs e) {
+            JumpToProfiledElement(1);
+        }
+
+        private void JumpToProfiledElement(int offset) {
+            if (!HasProfileElement(offset)) {
+                return;
+            }
+
+            profileElementIndex_ += offset;
+            JumpToProfiledElement(profileElements_[profileElementIndex_].Item1);
+        }
+
+        private void JumpToProfiledElement(IRElement element) {
+            TextView.ScrollToLine(element.TextLocation.Line);
+            double offset = TextView.TextArea.TextView.VerticalOffset;
+            SyncColumnsVerticalScrollOffset(offset);
+        }
+
+        private void JumpToNextProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfileElement(-1);
+        }
+
+        private void JumpToPreviousProfiledElementCanExecute(object sender, CanExecuteRoutedEventArgs e) {
+            e.CanExecute = HasProfileElement(1);
+        }
+
+        private void SourceFile_CopyPath(object sender, RoutedEventArgs e) {
+            if (!string.IsNullOrEmpty(sourceFilePath_)) {
+                Clipboard.SetText(sourceFilePath_);
+            }
+        }
+
+        private void SourceFile_Open(object sender, RoutedEventArgs e) {
+            if (!string.IsNullOrEmpty(sourceFilePath_)) {
+                Utils.OpenExternalFile(sourceFilePath_);
             }
         }
     }

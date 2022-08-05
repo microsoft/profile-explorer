@@ -1043,7 +1043,7 @@ namespace IRExplorerUI {
             var maxColumnExtraSize = new Dictionary<OptionalColumn, double>();
             var font = new FontFamily(settings_.FontName);
             var fontSize = settings_.FontSize;
-            const double maxBarWidth = 100;
+            const double maxBarWidth = 50;
             const double columnMargin = 4;
 
             foreach (var rowValues in profileDataRows_) {
@@ -1184,7 +1184,7 @@ namespace IRExplorerUI {
                     }
                 }
 
-                const double maxBarWidth = 100;
+                const double maxBarWidth = 50;
                 const double columnMargin = 4;
                 profileDataRows_ = new List<ElementRowValue>();
 

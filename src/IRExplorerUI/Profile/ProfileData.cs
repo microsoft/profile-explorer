@@ -94,7 +94,7 @@ public class ProfileData {
     }
 
     public void RegisterPerformanceCounter(PerformanceCounterInfo perfCounter) {
-        perfCounter.Number = PerformanceCounters.Count;
+        perfCounter.Index = PerformanceCounters.Count;
         PerformanceCounters[perfCounter.Id] = perfCounter;
     }
 
@@ -116,15 +116,12 @@ public class ProfileData {
         return null;
     }
 
-    public PerformanceMetricInfo RegisterPerformanceMetric(int id, string metricName, 
-        string baseName, string relativeName, bool isPercentage = true, string description = "") {
-        var baseCounter = FindPerformanceCounter(baseName);
-        var relativeCounter = FindPerformanceCounter(relativeName);
+    public PerformanceMetricInfo RegisterPerformanceMetric(int id, PerformanceMetricConfig config) {
+        var baseCounter = FindPerformanceCounter(config.BaseCounterName);
+        var relativeCounter = FindPerformanceCounter(config.RelativeCounterName);
 
         if (baseCounter != null && relativeCounter != null) {
-            var metric = new PerformanceMetricInfo(id, metricName, baseCounter, relativeCounter, 
-                                                   isPercentage, description);
-            //metric.Number = Math.Max()
+            var metric = new PerformanceMetricInfo(id, config, baseCounter, relativeCounter);
             PerformanceCounters[id] = metric;
             return metric;
         }
@@ -414,15 +411,13 @@ public class FunctionProfileData {
 
 [ProtoContract(SkipConstructor = true)]
 public class PerformanceCounterInfo {
+    public PerformanceCounterConfig Config { get;set; }
+    public int Index { get; set; }
     [ProtoMember(1)]
     public int Id { get; set; }
     [ProtoMember(2)]
     public string Name { get; set; }
     [ProtoMember(3)]
-    public string Description { get; set; }
-    [ProtoMember(4)]
-    public int Number { get; set; }
-    [ProtoMember(5)]
     public int Frequency { get; set; }
 
     public virtual bool IsMetric => false;
@@ -431,25 +426,25 @@ public class PerformanceCounterInfo {
 
     }
 
-    public PerformanceCounterInfo(int id, string name, int frequency = 0, string description = "") {
+    public PerformanceCounterInfo(int id, string name, int frequency = 0) {
         Id = id;
         Name = name;
         Frequency = frequency;
-        Description = description;
     }
 }
 
 public class PerformanceMetricInfo : PerformanceCounterInfo {
+    public PerformanceMetricConfig Config { get; set; }
     public PerformanceCounterInfo BaseCounter { get; set; }
     public PerformanceCounterInfo RelativeCounter { get; set; }
     public bool IsPercentage { get; set; }
 
     public override bool IsMetric => true;
 
-    public PerformanceMetricInfo(int id, string name, 
+    public PerformanceMetricInfo(int id, PerformanceMetricConfig config,
                                  PerformanceCounterInfo baseCounter, 
                                  PerformanceCounterInfo relativeCounter,
-                                 bool isPercentage = true, string description = "") : base(id, name, 0, description) {
+                                 bool isPercentage = true) : base(id, config.Name) {
         BaseCounter = baseCounter;
         RelativeCounter = relativeCounter;
         IsPercentage = isPercentage;
