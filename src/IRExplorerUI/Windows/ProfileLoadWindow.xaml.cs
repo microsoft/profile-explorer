@@ -11,6 +11,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
@@ -33,7 +34,6 @@ namespace IRExplorerUI {
         private List<ETWProfileDataProvider.TraceProcessSummary> processList_;
         private ETWProfileDataProvider.TraceProcessSummary selectedProcSummary_;
         private bool windowClosed_;
-        private List<PerformanceCounterConfig> counterConfigList_;
 
         public ProfileLoadWindow(ISession session, bool recordMode) {
             InitializeComponent();
@@ -49,6 +49,12 @@ namespace IRExplorerUI {
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
             UpdatePerfCounterList();
+
+            this.Closing += ProfileLoadWindow_Closing;
+        }
+
+        private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
+            App.SaveApplicationSettings();
         }
 
         public ISession Session { get; set; }
@@ -104,6 +110,17 @@ namespace IRExplorerUI {
             }
         }
 
+        private int enabledPerfCounters_;
+        public int EnabledPerfCounters {
+            get => enabledPerfCounters_;
+            set {
+                if (enabledPerfCounters_ != value) {
+                    enabledPerfCounters_ = value;
+                    OnPropertyChange(nameof(EnabledPerfCounters));
+                }
+            }
+        }
+
         public bool InputControlsEnabled => !IsLoadingProfile;
         public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
         public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
@@ -131,25 +148,19 @@ namespace IRExplorerUI {
 
         public void UpdatePerfCounterList() {
             var counters = ETWRecordingSession.BuiltinPerformanceCounters;
-            counterConfigList_ = new List<PerformanceCounterConfig>(counters.Count);
 
             foreach (var counter in counters) {
-                counterConfigList_.Add(new PerformanceCounterConfig() {
-                    Counter = counter,
-                    IsBuiltin = true
-                });
+                options_.RecordingSessionOptions.AddPerformanceCounter(counter);
             }
 
-            //? TODO: Custom counters
+            var metrics = ETWRecordingSession.BuiltinPerformanceMetrics;
 
-            PerfCounterList.ItemsSource = new ListCollectionView(counterConfigList_);
-        }
-
-        public void SetSessionPerfCounters() {
-            if (options_.RecordingSessionOptions.EnablePerformanceCounters) {
-                options_.RecordingSessionOptions.PerformanceCounters = 
-                    counterConfigList_.FindAll(counter => counter.IsEnabled);
+            foreach (var metric in metrics) {
+                options_.AddPerformanceMetric(metric);
             }
+            
+            PerfCounterList.ItemsSource = new ObservableCollectionRefresh<PerformanceCounterConfig>(options_.RecordingSessionOptions.PerformanceCounters);
+            PerfMetricsList.ItemsSource = new ObservableCollectionRefresh<PerformanceMetricConfig> (options_.PerformanceMetrics);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -178,8 +189,8 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            IsLoadingProfile = true;
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+            IsLoadingProfile = true;
             bool success = false;
 
             if (IsRecordMode) {
@@ -187,6 +198,7 @@ namespace IRExplorerUI {
                     return false;
                 }
 
+                //options_.PerformanceMetrics
                 var binSearchOptions = symbolOptions_.WithSymbolPaths(options_.RecordingSessionOptions.ApplicationPath);
 
                 if (options_.RecordingSessionOptions.HasWorkingDirectory) {
@@ -223,7 +235,6 @@ namespace IRExplorerUI {
 
                 LoadProgressBar.Maximum = progressInfo.Total;
                 LoadProgressBar.Value = progressInfo.Current;
-
                 LoadProgressLabel.Text = progressInfo.Stage switch {
                     ProfileLoadStage.TraceLoading => "Loading trace",
                     ProfileLoadStage.TraceProcessing => "Processing trace",
@@ -320,7 +331,10 @@ namespace IRExplorerUI {
         private async void StartCaptureButton_OnClick(object sender, RoutedEventArgs e) {
             options_.RecordingSessionOptions.ApplicationPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
             options_.RecordingSessionOptions.WorkingDirectory = Utils.CleanupPath(options_.RecordingSessionOptions.WorkingDirectory);
-            SetSessionPerfCounters();
+
+            if (options_.RecordingSessionOptions.RecordPerformanceCounters) {
+                options_.IncludePerformanceCounters = true;
+            }
 
             using var recordingSession = new ETWRecordingSession(options_);
             
@@ -350,7 +364,6 @@ namespace IRExplorerUI {
 
             timer.Stop();
             IsRecordingProfile = false;
-
 
             if (recordedProfile_ != null) {
                 await DisplayProcessList(async () => await Task.Run(() => recordedProfile_.BuildProcessSummary()));
@@ -412,6 +425,24 @@ namespace IRExplorerUI {
             if (!string.IsNullOrEmpty(ProfileFilePath)) {
                 await DisplayProcessList();
             }
+        }
+
+        private void ResetButton_OnClick(object sender, RoutedEventArgs e) {
+            var config = (sender as Button).DataContext as PerformanceCounterConfig;
+
+            if (config != null) {
+                config.Interval = config.DefaultInterval;
+                var list = (ObservableCollectionRefresh<PerformanceCounterConfig>)PerfCounterList.ItemsSource;
+                list.Refresh();
+            }
+        }
+
+        private void CheckBox_Checked(object sender, RoutedEventArgs e) {
+            EnabledPerfCounters = options_.RecordingSessionOptions.EnabledPerformanceCounters.Count;
+        }
+
+        private void CheckBox_Unchecked(object sender, RoutedEventArgs e) {
+            EnabledPerfCounters = options_.RecordingSessionOptions.EnabledPerformanceCounters.Count;
         }
     }
 }

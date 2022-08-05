@@ -27,7 +27,7 @@ namespace IRExplorerUI.Profile.ETW {
             options_ = providerOptions.RecordingSessionOptions;
             providerOptions_ = providerOptions;
 
-            if (options_.EnablePerformanceCounters) {
+            if (options_.RecordPerformanceCounters) {
                 // To record CPU perf. counters, a kernel session is needed.
                 sessionName_ = KernelTraceEventParser.KernelSessionName;
             }
@@ -44,22 +44,40 @@ namespace IRExplorerUI.Profile.ETW {
             progressCallback_?.Invoke(info);
         }
 
-        public static List<PerformanceCounterInfo> BuiltinPerformanceCounters {
+        public static List<PerformanceCounterConfig> BuiltinPerformanceCounters {
             get {
-                var list = new List<PerformanceCounterInfo>();
+                var list = new List<PerformanceCounterConfig>();
 
                 try {
                     var counters = TraceEventProfileSources.GetInfo();
 
                     foreach (var counter in counters) {
-                        list.Add(new PerformanceCounterInfo(counter.Value.ID, counter.Value.Name,
-                                                            counter.Value.MinInterval));
+                        // Filter out the Timer.
+                        if (counter.Value.ID == 0) {
+                            continue;
+                        }
+
+                        list.Add(new PerformanceCounterConfig(counter.Value.ID, counter.Value.Name,
+                                                              counter.Value.Interval,
+                                                              counter.Value.MinInterval, 
+                                                              counter.Value.MaxInterval, true));
                     }
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed to get CPU perf counters: {ex.Message}");
                 }
                 
+                return list;
+            }
+        }
+
+        public static List<PerformanceMetricConfig> BuiltinPerformanceMetrics {
+            get {
+                var list = new List<PerformanceMetricConfig>();
+                list.Add(new PerformanceMetricConfig("DCacheMiss", "DcacheAccesses", "DcacheMisses", true, "Data cache miss percentage"));
+                list.Add(new PerformanceMetricConfig("ICacheMiss", "ICFetch", "ICMiss", true, "Instruction cache miss percentage"));
+                list.Add(new PerformanceMetricConfig("MispredBr", "BranchInstructions", "BranchMispredictions", true, "Branch misprediction percentage"));
+                list.Add(new PerformanceMetricConfig("CPI", "InstructionRetired", "TotalCycles", false, "Clockticks per Instructions retired rate"));
                 return list;
             }
         }
@@ -119,24 +137,10 @@ namespace IRExplorerUI.Profile.ETW {
                                                 //KernelTraceEventParser.Keywords.ContextSwitch |
                                                 KernelTraceEventParser.Keywords.Profile;
 
-                    if (options_.EnablePerformanceCounters && options_.PerformanceCounters.Count > 0) {
+                    if (options_.RecordPerformanceCounters && options_.PerformanceCounters.Count > 0) {
                         // Enable the CPU perf. counters to collect.
                         capturedEvents |= KernelTraceEventParser.Keywords.PMCProfile;
-
-                        var counterIds = new int[options_.PerformanceCounters.Count];
-                        var frequencyCounts = new int[options_.PerformanceCounters.Count];
-                        int index = 0;
-
-                        foreach (var counter in options_.PerformanceCounters) {
-                            counterIds[index] = counter.Counter.Id;
-                            frequencyCounts[index] = 65536;
-                            //? TODO: frequencyCounts[0] = counter.Frequency;
-                            index++;
-
-                            Trace.WriteLine($"Enabled counter {counter.Counter.Name}");
-                        }
-
-                        TraceEventProfileSources.Set(counterIds, frequencyCounts);
+                        EnablePerformanceCounters();
                         session_.EnableKernelProvider(capturedEvents, capturedEvents); // With stack sampling.
 
                     }
@@ -162,7 +166,7 @@ namespace IRExplorerUI.Profile.ETW {
                     // Start the ETW session.
                     using var eventProcessor =
                         new ETWEventProcessor(session_.Source, providerOptions_,
-                                     true, acceptedProcessId,
+                                              true, acceptedProcessId,
                                               options_.ProfileChildProcesses,
                                               options_.ProfileDotNet, managedAsmDir_);
 
@@ -208,6 +212,22 @@ namespace IRExplorerUI.Profile.ETW {
                 
                 return profile;
             });
+        }
+
+        private void EnablePerformanceCounters() {
+            var enabledCounters = options_.EnabledPerformanceCounters;
+            var counterIds = new int[enabledCounters.Count];
+            var frequencyCounts = new int[enabledCounters.Count];
+            int index = 0;
+
+            foreach (var counter in enabledCounters) {
+                counterIds[index] = counter.Id;
+                frequencyCounts[index] = counter.Interval;
+                index++;
+                Trace.WriteLine($"Enabled counter {counter.Name}");
+            }
+
+            TraceEventProfileSources.Set(counterIds, frequencyCounts);
         }
 
         private bool CreateSession() {

@@ -2472,7 +2472,7 @@ namespace IRExplorerUI {
                 }
 
                 var name = $"{ProfileDocumentMarker.ShortenPerfCounterName(counter.Name)}";
-                var tooltip = counter.Description != null ? $"{counter.Description}" : $"{counter.Name}";
+                var tooltip = counter?.Config?.Description != null ? $"{counter.Config.Description}" : $"{counter.Name}";
                 int insertionIndex = -1;
 
                 // Insert before the demangled func name column.
