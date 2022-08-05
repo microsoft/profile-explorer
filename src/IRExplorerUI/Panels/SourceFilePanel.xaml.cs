@@ -13,6 +13,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
 using IRExplorerCore.IR;
@@ -21,7 +22,6 @@ using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;
-using static IRExplorerUI.ModuleReportPanel;
 using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI {
@@ -538,8 +538,6 @@ namespace IRExplorerUI {
                 //? TODO: Tuples not needed for all lines, AddDummyRow below
                 TupleIR dummyTuple = null;
 
-                
-
                 if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
                     //Trace.WriteLine($"Time on line {lineNumber}");
                     dummyTuple = MakeDummyTuple(location, documentLine);
@@ -552,9 +550,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            //? Pass lambda that marks elems on document (begind, mark, end handlers)
-            //?    or use events if class
-
+            processingResult.SortSampledElements();
             processingResult.FunctionCounters = result.FunctionCounters;
             var profileOptions = ProfileDocumentMarkerOptions.Default;
             var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo.IR);
@@ -563,7 +559,7 @@ namespace IRExplorerUI {
             ColumnsVisible = columnData.HasData;
 
             if (ColumnsVisible) {
-                ProfileColumns.Display(columnData, Document.LineCount, dummyFunc);
+                ProfileColumns.Display(columnData, TextView.LineCount, dummyFunc);
                 profileElements_ = processingResult.SampledElements;
                 UpdateHighlighting();
             }

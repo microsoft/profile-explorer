@@ -224,7 +224,7 @@ namespace IRExplorerUI.Profile.ETW {
                 counterIds[index] = counter.Id;
                 frequencyCounts[index] = counter.Interval;
                 index++;
-                Trace.WriteLine($"Enabled counter {counter.Name}");
+                Trace.WriteLine($"Enabling counter {counter.Name}");
             }
 
             TraceEventProfileSources.Set(counterIds, frequencyCounts);

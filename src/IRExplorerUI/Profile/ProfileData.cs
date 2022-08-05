@@ -240,13 +240,19 @@ public class FunctionProfileData {
         public ProcessingResult(int capacity = 0) {
             SampledElements = new List<Tuple<IRElement, TimeSpan>>(capacity);
             BlockSampledElementsMap = new Dictionary<BlockIR, TimeSpan>(capacity);
+            BlockSampledElements = new List<Tuple<BlockIR, TimeSpan>>();
             CounterElements = new List<Tuple<IRElement, PerformanceCounterSet>>(capacity);
-            FunctionCounters = new PerformanceCounterSet();
+            FunctionCounters = new PerformanceCounterSet(); 
         }
 
         public double ScaleCounterValue(long value, PerformanceCounterInfo counter) {
             var total = FunctionCounters.FindCounterValue(counter);
             return total > 0 ? (double)value / (double)total : 0;
+        }
+
+        public void SortSampledElements() {
+            BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+            SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
         }
     }
 
@@ -352,8 +358,7 @@ public class FunctionProfileData {
         }
 
         result.BlockSampledElements = result.BlockSampledElementsMap.ToList();
-        result.BlockSampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
-        result.SampledElements.Sort((a, b) => b.Item2.CompareTo(a.Item2));
+        result.SortSampledElements();
         return result;
     }
 
@@ -437,17 +442,15 @@ public class PerformanceMetricInfo : PerformanceCounterInfo {
     public PerformanceMetricConfig Config { get; set; }
     public PerformanceCounterInfo BaseCounter { get; set; }
     public PerformanceCounterInfo RelativeCounter { get; set; }
-    public bool IsPercentage { get; set; }
 
     public override bool IsMetric => true;
 
     public PerformanceMetricInfo(int id, PerformanceMetricConfig config,
                                  PerformanceCounterInfo baseCounter, 
-                                 PerformanceCounterInfo relativeCounter,
-                                 bool isPercentage = true) : base(id, config.Name) {
+                                 PerformanceCounterInfo relativeCounter) : base(id, config.Name) {
+        Config = config;
         BaseCounter = baseCounter;
         RelativeCounter = relativeCounter;
-        IsPercentage = isPercentage;
     }
 
     public double ComputeMetric(PerformanceCounterSet counterSet, out long baseValue, out long relativeValue) {
@@ -460,7 +463,7 @@ public class PerformanceMetricInfo : PerformanceCounterInfo {
 
         // Counters may not be accurate and the percentage can end up more than 100%.
         double result = (double)relativeValue / (double)baseValue;
-        return IsPercentage ? Math.Min (result, 1) : result;
+        return Config.IsPercentage ? Math.Min (result, 1) : result;
     }
 }
 
