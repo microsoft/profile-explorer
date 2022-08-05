@@ -23,6 +23,7 @@ using IRExplorerUI.Profile;
 using Microsoft.Diagnostics.Symbols;
 using Microsoft.Win32;
 using static IRExplorerUI.ModuleReportPanel;
+using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI {
     /// <summary>
@@ -515,23 +516,33 @@ namespace IRExplorerUI {
 
             var processingResult = new FunctionProfileData.ProcessingResult();
 
+            TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1)
+            {
+                var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
+                tupleIr.TextLocation = textLocation;
+                tupleIr.TextLength = documentLine1.Length;
+                dummyBlock.Tuples.Add(tupleIr);
+                return tupleIr;
+            }
+
             for (int lineNumber = 1; lineNumber <= totalLines; lineNumber++) {
                 var documentLine = TextView.Document.GetLineByNumber(lineNumber);
                 var location = new IRExplorerCore.TextLocation(documentLine.Offset, lineNumber - 1, 0);
-                
+
                 //? TODO: Tuples not needed for all lines, AddDummyRow below
-                var element = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
-                element.TextLocation = location;
-                element.TextLength = documentLine.Length;
-                dummyBlock.Tuples.Add(element);
+                TupleIR dummyTuple = null;
+
+                
 
                 if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-                    Trace.WriteLine($"Time on line {lineNumber}");
-                    processingResult.SampledElements.Add(new Tuple<IRElement, TimeSpan>(element, lineWeight));
+                    //Trace.WriteLine($"Time on line {lineNumber}");
+                    dummyTuple = MakeDummyTuple(location, documentLine);
+                    processingResult.SampledElements.Add(new Tuple<IRElement, TimeSpan>(dummyTuple, lineWeight));
                 }
 
                 if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
-                    processingResult.CounterElements.Add(new Tuple<IRElement, PerformanceCounterSet>(element, counters));
+                    dummyTuple ??= MakeDummyTuple(location, documentLine);
+                    processingResult.CounterElements.Add(new Tuple<IRElement, PerformanceCounterSet>(dummyTuple, counters));
                 }
             }
 

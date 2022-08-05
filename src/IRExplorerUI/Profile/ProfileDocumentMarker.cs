@@ -183,16 +183,14 @@ namespace IRExplorerUI.Compilers.ASM {
 
 
         public IconDrawing PickIconForOrder(int order, double percentage) {
-            // Even if instr is the n-th hottest one, don't use an icon
-            // if the percentage is small.
-            if (!IsSignificantValue(order, percentage)) {
-                return IconDrawing.FromIconResource("HotFlameIconTransparent");
-            }
-
             return order switch {
                 0 => IconDrawing.FromIconResource("HotFlameIcon1"),
                 1 => IconDrawing.FromIconResource("HotFlameIcon2"),
-                _ => IconDrawing.FromIconResource("HotFlameIcon3")
+                // Even if instr is the n-th hottest one, don't use an icon
+                // if the percentage is small.
+                _ => (IsSignificantValue(order, percentage)) ?
+                    IconDrawing.FromIconResource("HotFlameIcon3") :
+                    IconDrawing.FromIconResource("HotFlameIconTransparent")
             };
         }
 
