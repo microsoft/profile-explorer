@@ -441,8 +441,6 @@ namespace IRExplorerUI {
             currentInlinee_ = null;
         }
 
-        //? TODO: Option to stop before STL functs (just my code like)
-
         //? TODO: Select source line must go through inlinee mapping to select proper asm 
         //     all instrs that have the line on the inlinee list for this func
 
@@ -465,7 +463,8 @@ namespace IRExplorerUI {
                 fileLoaded = await LoadSourceFileForFunction(inlineeFunc);
             }
             else {
-                //? TODO: Warning that the func can't be found (likely not present in binary at all, inlined everywhere)
+                //? TODO: The func ASM is not needed, profile is created by mapping ASM lines in main func
+                //? to corresponding lines in the selected inlinee
             }
 
             if (fileLoaded) {
