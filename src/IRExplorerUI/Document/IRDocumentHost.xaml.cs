@@ -29,6 +29,7 @@ using IRExplorerUI.Query;
 using IRExplorerUI.Controls;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerCore.IR.Tags;
+using ClosedXML.Excel;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -1276,6 +1277,8 @@ namespace IRExplorerUI {
                 ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
                 ColumnsList.Background = settings_.BackgroundColor.AsBrush();
                 profileLoaded_ = true;
+
+                ExportFunctionAsExcel(@"C:\work\out.xlsx");
             }
         }
 
@@ -2419,6 +2422,107 @@ namespace IRExplorerUI {
 
         private void JumpToPreviousProfiledBlockCanExecute(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = HasProfiledBlock(1);
+        }
+
+        private void ExportFunctionAsExcel(string filePath) {
+            var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Function");
+            var columnData = TextView.ColumnData;
+
+            int rowId = 2;
+            int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
+            int maxLineLength = 0;
+
+            foreach (var block in Function.Blocks) {
+                ws.Cell(rowId, 1).Value = $"Block {block.Number}";
+                ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                ws.Cell(rowId, 1).Style.Font.Bold = true;
+                ws.Cell(rowId, 1).Style.Font.FontColor = XLColor.DarkBlue;
+
+                for (int i = 1; i <= maxColumn; i++) {
+                    ws.Cell(rowId, i).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
+                }
+
+                //? TODO: Take block annotation
+                rowId++;
+
+                foreach (var tuple in block.Tuples) {
+                    var line = TextView.Document.GetLineByNumber(tuple.TextLocation.Line +1);
+                    var text = TextView.Document.GetText(line.Offset, line.Length);
+                    ws.Cell(rowId, 1).Value = text;
+                    ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                    maxLineLength = Math.Max(text.Length, maxLineLength);
+
+                    if (columnData != null) {
+
+                        var sourceTag = tuple.GetTag<SourceLocationTag>();
+
+                        if (sourceTag != null) {
+                            ws.Cell(rowId, 2).Value = sourceTag.Line;
+                            ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                            ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
+                        }
+
+                        int columnId = 3;
+
+                        foreach (var column in columnData.Columns) {
+                            var value = columnData.GetColumnValue(tuple, column);
+                            if (value != null) {
+                                ws.Cell(rowId, columnId).Value = value.Text;
+                                if (value.BackColor != null && value.BackColor is SolidColorBrush colorBrush) {
+                                    var color = XLColor.FromArgb(colorBrush.Color.A, colorBrush.Color.R, colorBrush.Color.G, colorBrush.Color.B);
+                                    ws.Cell(rowId, columnId).Style.Fill.BackgroundColor = color;
+
+                                    if (column.IsMainColumn) {
+                                        ws.Cell(rowId, 1).Style.Fill.BackgroundColor = color;
+                                    }
+                                }
+
+                                if (value.TextWeight != FontWeights.Normal) {
+                                    ws.Cell(rowId, columnId).Style.Font.Bold = true;
+
+                                    if (column.IsMainColumn) {
+                                        ws.Cell(rowId, 1).Style.Font.Bold = true;
+                                    }
+                                }
+                            }
+
+                            columnId++;
+                        }
+                    }
+
+                    rowId++;
+                }
+            }
+
+            var firstCell = ws.Cell(1, 1);
+            var lastCell = ws.LastCellUsed();
+            var range = ws.Range(firstCell.Address, lastCell.Address);
+            var table = range.CreateTable();
+            table.Theme = XLTableTheme.None;
+
+            foreach (var cell in table.HeadersRow().Cells()) {
+                if (cell.Address.ColumnNumber == 1) {
+                    cell.Value = "Instruction";
+                }
+                else if (cell.Address.ColumnNumber == 2) {
+                    cell.Value = "Line";
+                }
+                else if(columnData != null && (cell.Address.ColumnNumber - 3) < columnData.Columns.Count) {
+                    cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
+                }
+
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+            }
+
+
+            for (int i = 1; i <= 1; i++) {
+                ws.Column(i).AdjustToContents((double)1, maxLineLength);
+            }
+
+            wb.SaveAs(filePath);
+
         }
     }
 }
