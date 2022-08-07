@@ -111,6 +111,9 @@ namespace IRExplorerUI {
         }
 
         private int enabledPerfCounters_;
+        private ICollectionView perfCountersFilter_;
+        private ICollectionView metricsFilter_;
+
         public int EnabledPerfCounters {
             get => enabledPerfCounters_;
             set {
@@ -159,8 +162,47 @@ namespace IRExplorerUI {
                 options_.AddPerformanceMetric(metric);
             }
             
-            PerfCounterList.ItemsSource = new ObservableCollectionRefresh<PerformanceCounterConfig>(options_.RecordingSessionOptions.PerformanceCounters);
-            PerfMetricsList.ItemsSource = new ObservableCollectionRefresh<PerformanceMetricConfig> (options_.PerformanceMetrics);
+            var counterList = new ObservableCollectionRefresh<PerformanceCounterConfig>(options_.RecordingSessionOptions.PerformanceCounters);
+            perfCountersFilter_ = counterList.GetFilterView();
+            perfCountersFilter_.Filter = FilterCounterList;
+            PerfCounterList.ItemsSource = perfCountersFilter_;
+
+            var metricList = new ObservableCollectionRefresh<PerformanceMetricConfig>(options_.PerformanceMetrics);
+            metricsFilter_ = metricList.GetFilterView();
+            metricsFilter_.Filter = FilterMetricsList;
+            PerfMetricsList.ItemsSource = metricsFilter_;
+        }
+
+        private bool FilterCounterList(object value) {
+            var text = CounterFilter.Text.Trim();
+
+            if (text.Length < 2) {
+                return true;
+            }
+
+            var counter = (PerformanceCounterConfig)value;
+
+            if (counter.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool FilterMetricsList(object value) {
+            var text = MetricFilter.Text.Trim();
+
+            if (text.Length < 2) {
+                return true;
+            }
+
+            var counter = (PerformanceMetricConfig)value;
+
+            if (counter.Name.Contains(text, StringComparison.OrdinalIgnoreCase)) {
+                return true;
+            }
+
+            return false;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -443,6 +485,14 @@ namespace IRExplorerUI {
 
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e) {
             EnabledPerfCounters = options_.RecordingSessionOptions.EnabledPerformanceCounters.Count;
+        }
+
+        private void CounterFilter_TextChanged(object sender, TextChangedEventArgs e) {
+            perfCountersFilter_.Refresh();
+        }
+
+        private void MetricFilter_TextChanged(object sender, TextChangedEventArgs e) {
+            metricsFilter_.Refresh();
         }
     }
 }
