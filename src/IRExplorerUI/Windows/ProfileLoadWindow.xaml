@@ -574,17 +574,42 @@
             </TabItem>
 
             <TabItem Header="CPU counters">
-                <StackPanel Margin="0,4,0,8" Orientation="Vertical">
+                <Grid Margin="0,4,0,8">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="2" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
                     <Expander
+                        Grid.Row="0"
                         Margin="8,0,8,0"
-                        Header="CPU performance counters"
                         IsExpanded="True">
-                        <StackPanel>
+                        <Expander.Header>
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Left" Text="CPU performance counters" />
+                                <StackPanel
+                                    VerticalAlignment="Center"
+                                    DockPanel.Dock="Right"
+                                    Orientation="Horizontal">
+                                    <TextBlock Margin="4,0,0,0" Text="(" />
+                                    <TextBlock Margin="2,0,0,0" Text="{Binding EnabledPerfCounters}" />
+                                    <TextBlock Text=")" />
+                                </StackPanel>
+                            </DockPanel>
+                        </Expander.Header>
+                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="32" />
+                            </Grid.RowDefinitions>
                             <ListView
                                 x:Name="PerfCounterList"
-                                Height="200"
+                                Grid.Row="0"
                                 MinHeight="100"
                                 Margin="0,8,0,0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -615,7 +640,7 @@
                                             </GridViewColumn.CellTemplate>
                                         </GridViewColumn>
 
-                                        <GridViewColumn Width="120">
+                                        <GridViewColumn Width="110">
                                             <GridViewColumnHeader Content="Interval" />
                                             <GridViewColumn.CellTemplate>
                                                 <DataTemplate>
@@ -653,7 +678,7 @@
                                             </GridViewColumn.HeaderContainerStyle>
                                         </GridViewColumn>
 
-                                        <GridViewColumn Width="50" DisplayMemberBinding="{Binding Id}">
+                                        <GridViewColumn Width="40" DisplayMemberBinding="{Binding Id}">
                                             <GridViewColumnHeader Content="Id" />
                                             <GridViewColumn.HeaderContainerStyle>
                                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -686,23 +711,20 @@
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>
-                            <DockPanel Margin="0,4,0,4">
-                                <StackPanel
-                                    VerticalAlignment="Center"
-                                    DockPanel.Dock="Left"
-                                    Orientation="Horizontal">
-                                    <TextBlock Text="Enabled counters: " />
-                                    <TextBlock Margin="2,0,0,0" Text="{Binding EnabledPerfCounters}" />
-                                </StackPanel>
+                            <Grid
+                                Grid.Row="1"
+                                Height="24"
+                                MinHeight="24"
+                                Margin="0,4,0,4">
                                 <StackPanel
                                     HorizontalAlignment="Right"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Top"
                                     DockPanel.Dock="Right"
                                     Orientation="Horizontal">
                                     <Image Source="{StaticResource SearchIcon}" />
                                     <Grid x:Name="FunctionFilterGrid" Height="24">
                                         <TextBox
-                                            Name="FunctionFilter"
+                                            Name="CounterFilter"
                                             Width="200"
                                             Height="24"
                                             MaxWidth="300"
@@ -711,7 +733,8 @@
                                             VerticalAlignment="Center"
                                             VerticalContentAlignment="Center"
                                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                            ToolTip="Filter function list based on a case-insensitive substring">
+                                            TextChanged="CounterFilter_TextChanged"
+                                            ToolTip="Filter counters list based on a case-insensitive substring">
                                             <TextBox.InputBindings>
                                                 <KeyBinding
                                                     Key="Escape"
@@ -725,78 +748,133 @@
                                             Foreground="DimGray"
                                             IsHitTestVisible="False"
                                             Text="Filter counters"
-                                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                                            Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
                                     </Grid>
                                 </StackPanel>
-                            </DockPanel>
-                        </StackPanel>
+                            </Grid>
+                        </Grid>
                     </Expander>
+
+                    <GridSplitter
+                        Grid.Row="1"
+                        HorizontalAlignment="Stretch"
+                        ResizeBehavior="PreviousAndNext" />
+
                     <Expander
+                        Grid.Row="2"
                         Margin="8,8,8,0"
                         Header="Metrics"
                         IsExpanded="True">
-                        <ListView
-                            x:Name="PerfMetricsList"
-                            Height="200"
-                            MinHeight="100"
-                            Margin="0,8,0,0"
-                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                            IsEnabled="{Binding InputControlsEnabled}"
-                            ScrollViewer.VerticalScrollBarVisibility="Auto"
-                            SelectionMode="Single"
-                            VirtualizingPanel.IsVirtualizing="True"
-                            VirtualizingPanel.VirtualizationMode="Recycling">
-                            <ListView.View>
-                                <GridView>
-                                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding Name}">
-                                        <GridViewColumn.HeaderContainerStyle>
-                                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                            </Style>
-                                        </GridViewColumn.HeaderContainerStyle>
-                                        <GridViewColumnHeader Content="Name" />
-                                    </GridViewColumn>
+                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="32" />
+                            </Grid.RowDefinitions>
+                            <ListView
+                                x:Name="PerfMetricsList"
+                                MinHeight="100"
+                                MaxHeight="300"
+                                Margin="0,8,0,0"
+                                HorizontalAlignment="Stretch"
+                                VerticalAlignment="Stretch"
+                                Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                IsEnabled="{Binding InputControlsEnabled}"
+                                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                SelectionMode="Single"
+                                VirtualizingPanel.IsVirtualizing="True"
+                                VirtualizingPanel.VirtualizationMode="Recycling">
+                                <ListView.View>
+                                    <GridView>
+                                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Name}">
+                                            <GridViewColumn.HeaderContainerStyle>
+                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                </Style>
+                                            </GridViewColumn.HeaderContainerStyle>
+                                            <GridViewColumnHeader Content="Name" />
+                                        </GridViewColumn>
 
 
-                                    <GridViewColumn Width="100" DisplayMemberBinding="{Binding RelativeCounterName}">
-                                        <GridViewColumn.HeaderContainerStyle>
-                                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                            </Style>
-                                        </GridViewColumn.HeaderContainerStyle>
-                                        <GridViewColumnHeader Content="Relative counter" />
-                                    </GridViewColumn>
+                                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding RelativeCounterName}">
+                                            <GridViewColumn.HeaderContainerStyle>
+                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                </Style>
+                                            </GridViewColumn.HeaderContainerStyle>
+                                            <GridViewColumnHeader Content="Relative counter" />
+                                        </GridViewColumn>
 
-                                    <GridViewColumn Width="100" DisplayMemberBinding="{Binding BaseCounterName}">
-                                        <GridViewColumn.HeaderContainerStyle>
-                                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                            </Style>
-                                        </GridViewColumn.HeaderContainerStyle>
-                                        <GridViewColumnHeader Content="Base counter" />
-                                    </GridViewColumn>
+                                        <GridViewColumn Width="100" DisplayMemberBinding="{Binding BaseCounterName}">
+                                            <GridViewColumn.HeaderContainerStyle>
+                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                </Style>
+                                            </GridViewColumn.HeaderContainerStyle>
+                                            <GridViewColumnHeader Content="Base counter" />
+                                        </GridViewColumn>
 
-                                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding Description}">
-                                        <GridViewColumn.HeaderContainerStyle>
-                                            <Style TargetType="{x:Type GridViewColumnHeader}">
-                                                <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                            </Style>
-                                        </GridViewColumn.HeaderContainerStyle>
-                                        <GridViewColumnHeader Content="Description" />
-                                    </GridViewColumn>
-                                </GridView>
-                            </ListView.View>
+                                        <GridViewColumn Width="150" DisplayMemberBinding="{Binding Description}">
+                                            <GridViewColumn.HeaderContainerStyle>
+                                                <Style TargetType="{x:Type GridViewColumnHeader}">
+                                                    <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                                </Style>
+                                            </GridViewColumn.HeaderContainerStyle>
+                                            <GridViewColumnHeader Content="Description" />
+                                        </GridViewColumn>
+                                    </GridView>
+                                </ListView.View>
 
-                            <ListView.ItemContainerStyle>
-                                <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                                    <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                                    <Setter Property="ToolTip" Value="{Binding Description}" />
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                        </ListView>
+                                <ListView.ItemContainerStyle>
+                                    <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                                        <Setter Property="ToolTip" Value="{Binding Description}" />
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                            </ListView>
+                            <Grid
+                                Grid.Row="1"
+                                Height="24"
+                                MinHeight="24"
+                                Margin="0,4,0,4">
+                                <StackPanel
+                                    HorizontalAlignment="Right"
+                                    VerticalAlignment="Top"
+                                    DockPanel.Dock="Right"
+                                    Orientation="Horizontal">
+                                    <Image Source="{StaticResource SearchIcon}" />
+                                    <Grid Height="24">
+                                        <TextBox
+                                            Name="MetricFilter"
+                                            Width="200"
+                                            Height="24"
+                                            MaxWidth="300"
+                                            Margin="4,0,0,0"
+                                            HorizontalAlignment="Stretch"
+                                            VerticalAlignment="Center"
+                                            VerticalContentAlignment="Center"
+                                            Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                            TextChanged="MetricFilter_TextChanged"
+                                            ToolTip="Filter counters list based on a case-insensitive substring">
+                                            <TextBox.InputBindings>
+                                                <KeyBinding
+                                                    Key="Escape"
+                                                    Command="local:Command.ClearTextbox"
+                                                    CommandParameter="{Binding ElementName=FunctionFilter}" />
+                                            </TextBox.InputBindings>
 
+                                        </TextBox>
+                                        <TextBlock
+                                            Margin="8,4"
+                                            Foreground="DimGray"
+                                            IsHitTestVisible="False"
+                                            Text="Filter counters"
+                                            Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Grid>
+                        </Grid>
                     </Expander>
-                </StackPanel>
+                </Grid>
             </TabItem>
         </TabControl>
 
