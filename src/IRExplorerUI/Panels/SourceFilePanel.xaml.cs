@@ -500,10 +500,6 @@ namespace IRExplorerUI {
 
         private async Task AnnotateProfilerData(FunctionProfileData profile, IDebugInfoProvider debugInfo) {
             ResetProfileMarking();
-
-            var markerOptions = ProfileDocumentMarkerOptions.Default;
-            var nextElementId = new IRElementId();
-
             var result = profile.ProcessSourceLines(debugInfo);
             var sourceLineWeights = result.SourceLineWeightList;
 
@@ -512,7 +508,6 @@ namespace IRExplorerUI {
             }
 
             int totalLines = TextView.Document.LineCount;
-            var dummyElements = new List<IRElement>(totalLines);
             var ids = IRElementId.NewFunctionId();
             var dummyFunc = new FunctionIR();
             var dummyBlock = new BlockIR(ids.NewBlock(0), 0, dummyFunc);
@@ -521,8 +516,7 @@ namespace IRExplorerUI {
 
             var processingResult = new FunctionProfileData.ProcessingResult();
 
-            TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1)
-            {
+            TupleIR MakeDummyTuple(TextLocation textLocation, DocumentLine documentLine1) {
                 var tupleIr = new TupleIR(ids.NextTuple(), TupleKind.Other, dummyBlock);
                 tupleIr.TextLocation = textLocation;
                 tupleIr.TextLength = documentLine1.Length;
@@ -532,13 +526,11 @@ namespace IRExplorerUI {
 
             for (int lineNumber = 1; lineNumber <= totalLines; lineNumber++) {
                 var documentLine = TextView.Document.GetLineByNumber(lineNumber);
-                var location = new IRExplorerCore.TextLocation(documentLine.Offset, lineNumber - 1, 0);
+                var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
 
-                //? TODO: Tuples not needed for all lines, AddDummyRow below
                 TupleIR dummyTuple = null;
 
                 if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
-                    //Trace.WriteLine($"Time on line {lineNumber}");
                     dummyTuple = MakeDummyTuple(location, documentLine);
                     processingResult.SampledElements.Add(new Tuple<IRElement, TimeSpan>(dummyTuple, lineWeight));
                 }
@@ -549,7 +541,7 @@ namespace IRExplorerUI {
                 }
             }
 
-            processingResult.SortSampledElements();
+            processingResult.SortSampledElements(); // Used for ordering.
             processingResult.FunctionCounters = result.FunctionCounters;
             var profileOptions = ProfileDocumentMarkerOptions.Default;
             var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo.IR);
@@ -585,29 +577,6 @@ namespace IRExplorerUI {
                 ProfileColumns.ScrollToVerticalOffset(offset);
             }
         }
-
-        public void AddElementOverlay(IRElement element, IconDrawing icon, int index,
-                                    double width, double height, string label,
-                                    ProfileDocumentMarkerOptions options,
-                                    HorizontalAlignment alignmentX = HorizontalAlignment.Right,
-                                    VerticalAlignment alignmentY = VerticalAlignment.Center,
-                                    double marginX = 8, double marginY = 2) {
-            var overlay = IconElementOverlay.CreateDefault(icon, width, height,
-                                                            Brushes.Transparent, Brushes.Transparent, null,
-                                                            label, null, alignmentX, alignmentY, marginX, marginY);
-            overlay.IsLabelPinned = true;
-
-            if (index <= 2) {
-                overlay.TextColor = options.HotBlockOverlayTextColor;
-                overlay.TextWeight = FontWeights.Bold;
-            }
-            else {
-                overlay.TextColor = options.BlockOverlayTextColor;
-            }
-
-            overlayRenderer_.AddElementOverlay(element, overlay);
-        }
-
 
         private void UpdateHighlighting() {
             TextView.TextArea.TextView.Redraw();
@@ -754,6 +723,10 @@ namespace IRExplorerUI {
             if (!string.IsNullOrEmpty(sourceFilePath_)) {
                 Utils.OpenExternalFile(sourceFilePath_);
             }
+        }
+
+        private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+
         }
     }
 }

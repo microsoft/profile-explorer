@@ -332,16 +332,6 @@
                             <EventSetter Event="MouseDoubleClick" Handler="ModuleDoubleClick" />
                         </Style>
                     </ListView.ItemContainerStyle>
-                    <ListView.ContextMenu>
-                        <ContextMenu>
-                            <MenuItem
-                                Command="local:Command.ExportFunctionList"
-                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
-                                CommandTarget="{Binding ElementName=FunctionList}"
-                                Header="Export Function List as CSV"
-                                ToolTip="Save the list of functions and associated column data as a CSV file" />
-                        </ContextMenu>
-                    </ListView.ContextMenu>
                 </ListView>
 
                 <GridSplitter
@@ -523,8 +513,8 @@
                                 Command="local:Command.ExportFunctionList"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
-                                Header="Export Function List as CSV"
-                                ToolTip="Save the list of functions and associated column data as a CSV file" />
+                                Header="Export Function List as Excel File"
+                                ToolTip="Save the list of functions and associated column data as an Excel worksheet" />
                             <Separator />
 
                             <MenuItem
