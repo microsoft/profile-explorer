@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
+using ClosedXML.Excel;
 using IRExplorerCore.IR;
 using IRExplorerCore.Utilities;
 
@@ -52,6 +53,39 @@ namespace IRExplorerUI {
 
         public void Reset() {
 
+        }
+
+        public static void ExportColumnsToExcel(IRDocumentColumnData columnData, IRElement tuple,
+                                                IXLWorksheet ws, int rowId, int columnId) {
+            foreach (var column in columnData.Columns) {
+                var value = columnData.GetColumnValue(tuple, column);
+
+                if (value != null) {
+                    ws.Cell(rowId, columnId).Value = value.Text.Replace(" ms", "");
+
+                    if (value.BackColor != null && value.BackColor is SolidColorBrush colorBrush) {
+                        var color = XLColor.FromArgb(colorBrush.Color.A, colorBrush.Color.R, colorBrush.Color.G,
+                            colorBrush.Color.B);
+                        ws.Cell(rowId, columnId).Style.Fill.BackgroundColor = color;
+
+                        if (column.IsMainColumn) {
+                            ws.Cell(rowId, 1).Style.Fill.BackgroundColor = color;
+                            ws.Cell(rowId, 2).Style.Fill.BackgroundColor = color;
+                        }
+                    }
+
+                    if (value.TextWeight != FontWeights.Normal) {
+                        ws.Cell(rowId, columnId).Style.Font.Bold = true;
+
+                        if (column.IsMainColumn) {
+                            ws.Cell(rowId, 1).Style.Font.Bold = true;
+                            ws.Cell(rowId, 2).Style.Font.Bold = true;
+                        }
+                    }
+                }
+
+                columnId++;
+            }
         }
     }
 

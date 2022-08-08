@@ -13,6 +13,8 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
+using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Spreadsheet;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using IRExplorerCore;
@@ -22,6 +24,8 @@ using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Document;
 using IRExplorerUI.Profile;
 using Microsoft.Win32;
+using Color = System.Windows.Media.Color;
+using FontFamily = System.Windows.Media.FontFamily;
 using TextLocation = IRExplorerCore.TextLocation;
 
 namespace IRExplorerUI {
@@ -39,12 +43,16 @@ namespace IRExplorerUI {
         private IRTextFunction sourceFileFunc_;
         private string sourceFilePath_;
         private int hottestSourceLine_;
+        private int firstSourceLineIndex_;
+        private int lastSourceLineIndex_;
         private IRExplorerCore.IR.StackFrame currentInlinee_;
         private bool sourceMapperDisabled_;
         private bool columnsVisible_;
         private double previousVerticalOffset_;
         private List<Tuple<IRElement, TimeSpan>> profileElements_;
         private int profileElementIndex_;
+        private FunctionProfileData.ProcessingResult sourceProfileResult_;
+        private IRDocumentColumnData sourceColumnData_;
 
         public SourceFilePanel() {
             InitializeComponent();
@@ -507,6 +515,8 @@ namespace IRExplorerUI {
                 return;
             }
 
+            firstSourceLineIndex_ = result.FirstLineIndex;
+            lastSourceLineIndex_ = result.LastLineIndex;
             int totalLines = TextView.Document.LineCount;
             var ids = IRElementId.NewFunctionId();
             var dummyFunc = new FunctionIR();
@@ -524,18 +534,20 @@ namespace IRExplorerUI {
                 return tupleIr;
             }
 
+            //? TODO: Should be enough to iter over result.First/LastLineIndex
             for (int lineNumber = 1; lineNumber <= totalLines; lineNumber++) {
-                var documentLine = TextView.Document.GetLineByNumber(lineNumber);
-                var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
-
                 TupleIR dummyTuple = null;
 
                 if (result.SourceLineWeight.TryGetValue(lineNumber, out var lineWeight)) {
+                    var documentLine = TextView.Document.GetLineByNumber(lineNumber);
+                    var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
                     dummyTuple = MakeDummyTuple(location, documentLine);
                     processingResult.SampledElements.Add(new Tuple<IRElement, TimeSpan>(dummyTuple, lineWeight));
                 }
 
                 if (result.SourceLineCounters.TryGetValue(lineNumber, out var counters)) {
+                    var documentLine = TextView.Document.GetLineByNumber(lineNumber);
+                    var location = new TextLocation(documentLine.Offset, lineNumber - 1, 0);
                     dummyTuple ??= MakeDummyTuple(location, documentLine);
                     processingResult.CounterElements.Add(new Tuple<IRElement, PerformanceCounterSet>(dummyTuple, counters));
                 }
@@ -543,10 +555,13 @@ namespace IRExplorerUI {
 
             processingResult.SortSampledElements(); // Used for ordering.
             processingResult.FunctionCounters = result.FunctionCounters;
+            sourceProfileResult_ = processingResult;
+
             var profileOptions = ProfileDocumentMarkerOptions.Default;
             var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData, profileOptions, Session.CompilerInfo.IR);
             var columnData = await profileMarker.MarkSourceLines(this, dummyFunc, processingResult);
 
+            sourceColumnData_ = columnData;
             ColumnsVisible = columnData.HasData;
 
             if (ColumnsVisible) {
@@ -726,7 +741,89 @@ namespace IRExplorerUI {
         }
 
         private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
 
+            if (!string.IsNullOrEmpty(path)) {
+                try {
+                    ExportFunctionAsExcelFile(path);
+                }
+                catch (Exception ex) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Failed to save source profiling results to {path}: {ex.Message}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                }
+            }
+        }
+
+        private void ExportFunctionAsExcelFile(string filePath) {
+            var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Source");
+            var columnData = sourceColumnData_;
+            int rowId = 2; // First row is for the table column names.
+            int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
+            int maxLineLength = 0;
+
+            for (int i = firstSourceLineIndex_; i <= lastSourceLineIndex_; i++) {
+                var line = TextView.Document.GetLineByNumber(i);
+                var text = TextView.Document.GetText(line.Offset, line.Length);
+                ws.Cell(rowId, 1).Value = text;
+                ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                maxLineLength = Math.Max(text.Length, maxLineLength);
+
+                ws.Cell(rowId, 2).Value = i;
+                ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
+
+                if (columnData != null) {
+                    IRElement tuple = null;
+                    tuple = FindTupleOnSourceLine(i);
+
+                    if (tuple != null) {
+                        IRDocumentColumnData.ExportColumnsToExcel(columnData, tuple, ws, rowId, 3);
+                    }
+                }
+
+                rowId++;
+            }
+
+            var firstCell = ws.Cell(1, 1);
+            var lastCell = ws.LastCellUsed();
+            var range = ws.Range(firstCell.Address, lastCell.Address);
+            var table = range.CreateTable();
+            table.Theme = XLTableTheme.None;
+
+            foreach (var cell in table.HeadersRow().Cells()) {
+                if (cell.Address.ColumnNumber == 1) {
+                    cell.Value = "Source";
+                }
+                else if (cell.Address.ColumnNumber == 2) {
+                    cell.Value = "Line";
+                }
+                else if (columnData != null && (cell.Address.ColumnNumber - 3) < columnData.Columns.Count) {
+                    cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
+                }
+
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+            }
+
+            for (int i = 1; i <= 1; i++) {
+                ws.Column(i).AdjustToContents((double)1, maxLineLength);
+            }
+
+            wb.SaveAs(filePath);
+
+        }
+
+        private IRElement FindTupleOnSourceLine(int line) {
+            var pair = sourceProfileResult_.SampledElements.Find(e => e.Item1.TextLocation.Line == line - 1);
+
+            if (pair != null) {
+                return pair.Item1;
+            }
+
+            var pair2 = sourceProfileResult_.CounterElements.Find(e => e.Item1.TextLocation.Line == line - 1);
+            return pair2 != null ? pair2.Item1 : null;
         }
     }
 }

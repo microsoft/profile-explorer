@@ -212,7 +212,6 @@
                                 Padding="0"
                                 Command="local:DocumentHostCommand.ExportFunctionProfile"
                                 CommandTarget="{Binding ElementName=TextView}"
-                                IsEnabled="False"
                                 ToolTip="Export profiling results as an Excel sheet">
                                 <Image Source="{StaticResource ClipboardIcon}" Style="{StaticResource DisabledImageStyle}" />
                             </Button>
