@@ -30,6 +30,8 @@ using IRExplorerUI.Controls;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerCore.IR.Tags;
 using ClosedXML.Excel;
+using static IRExplorerUI.ModuleReportPanel;
+using System.IO;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -57,6 +59,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "JumpToNextProfiledBlock", typeof(IRDocumentHost));
         public static readonly RoutedUICommand JumpToPreviousProfiledBlock =
             new RoutedUICommand("Untitled", "JumpToPreviousProfiledBlock", typeof(IRDocumentHost));
+        public static readonly RoutedUICommand ExportFunctionProfile =
+            new RoutedUICommand("Untitled", "ExportFunctionProfile", typeof(IRDocumentHost));
     }
 
     [ProtoContract]
@@ -1278,7 +1282,7 @@ namespace IRExplorerUI {
                 ColumnsList.Background = settings_.BackgroundColor.AsBrush();
                 profileLoaded_ = true;
 
-                ExportFunctionAsExcel(@"C:\work\out.xlsx");
+                ExportFunctionAsExcelFile(@"C:\work\out.xlsx");
             }
         }
 
@@ -2424,12 +2428,11 @@ namespace IRExplorerUI {
             e.CanExecute = HasProfiledBlock(1);
         }
 
-        private void ExportFunctionAsExcel(string filePath) {
+        private void ExportFunctionAsExcelFile(string filePath) {
             var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Function");
             var columnData = TextView.ColumnData;
-
-            int rowId = 2;
+            int rowId = 2; // First row is for the table column names.
             int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
             int maxLineLength = 0;
 
@@ -2443,10 +2446,8 @@ namespace IRExplorerUI {
                     ws.Cell(rowId, i).Style.Border.BottomBorder = XLBorderStyleValues.Thin;
                 }
 
-                //? TODO: Take block annotation
-                rowId++;
-
                 foreach (var tuple in block.Tuples) {
+                    rowId++;
                     var line = TextView.Document.GetLineByNumber(tuple.TextLocation.Line +1);
                     var text = TextView.Document.GetText(line.Offset, line.Length);
                     ws.Cell(rowId, 1).Value = text;
@@ -2454,7 +2455,6 @@ namespace IRExplorerUI {
                     maxLineLength = Math.Max(text.Length, maxLineLength);
 
                     if (columnData != null) {
-
                         var sourceTag = tuple.GetTag<SourceLocationTag>();
 
                         if (sourceTag != null) {
@@ -2467,14 +2467,17 @@ namespace IRExplorerUI {
 
                         foreach (var column in columnData.Columns) {
                             var value = columnData.GetColumnValue(tuple, column);
+
                             if (value != null) {
-                                ws.Cell(rowId, columnId).Value = value.Text;
+                                ws.Cell(rowId, columnId).Value = value.Text.Replace(" ms", "");
+
                                 if (value.BackColor != null && value.BackColor is SolidColorBrush colorBrush) {
                                     var color = XLColor.FromArgb(colorBrush.Color.A, colorBrush.Color.R, colorBrush.Color.G, colorBrush.Color.B);
                                     ws.Cell(rowId, columnId).Style.Fill.BackgroundColor = color;
 
                                     if (column.IsMainColumn) {
                                         ws.Cell(rowId, 1).Style.Fill.BackgroundColor = color;
+                                        ws.Cell(rowId, 2).Style.Fill.BackgroundColor = color;
                                     }
                                 }
 
@@ -2490,8 +2493,6 @@ namespace IRExplorerUI {
                             columnId++;
                         }
                     }
-
-                    rowId++;
                 }
             }
 
@@ -2523,6 +2524,21 @@ namespace IRExplorerUI {
 
             wb.SaveAs(filePath);
 
+        }
+
+        private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
+            var path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
+
+            if (!string.IsNullOrEmpty(path)) {
+                try {
+                    ExportFunctionAsExcelFile(path);
+                }
+                catch (Exception ex) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Failed to save profiling results to {path}: {ex.Message}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                }
+            }
         }
     }
 }

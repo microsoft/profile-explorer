@@ -35,6 +35,8 @@ using System.Runtime.CompilerServices;
 using IRExplorerCore.Graph;
 using System.Windows.Documents;
 using static SkiaSharp.HarfBuzz.SKShaper;
+using ClosedXML.Excel;
+using ICSharpCode.AvalonEdit.Rendering;
 
 namespace IRExplorerUI {
     //? TODo; Commands can be defined in code-behind with this pattern,
@@ -2175,12 +2177,9 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var fileDialog = new SaveFileDialog { DefaultExt = "*.txt|All Files|*.*", Filter = "IR text|*.txt" };
-            var result = fileDialog.ShowDialog();
+            var path = Utils.ShowSaveFileDialog("IR text|*.txt", "*.txt|All Files|*.*");
 
-            if (result.HasValue && result.Value) {
-                var path = fileDialog.FileName;
-
+            if (!string.IsNullOrEmpty(path)) {
                 try {
                     var text = await Session.GetSectionTextAsync(sectionEx.Section);
                     await File.WriteAllTextAsync(path, text);
@@ -2198,14 +2197,11 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var fileDialog = new SaveFileDialog { DefaultExt = "*.txt|All Files|*.*", Filter = "IR text|*.txt" };
-            var result = fileDialog.ShowDialog();
+            var path = Utils.ShowSaveFileDialog("IR text|*.txt", "*.txt|All Files|*.*");
 
-            if (result.HasValue && result.Value) {
-                var path = fileDialog.FileName;
-
+            if (!string.IsNullOrEmpty(path)) {
                 try {
-                    using var writer = new StreamWriter(path);
+                    await using var writer = new StreamWriter(path);
                     await CombineFunctionText(functionEx.Function, writer);
                 }
                 catch (Exception ex) {
@@ -2536,75 +2532,110 @@ namespace IRExplorerUI {
         }
 
         private void ExportFunctionListExecuted(object sender, ExecutedRoutedEventArgs e) {
-            var filePath = Utils.ShowSaveFileDialog("CSV File|*.csv", "*.csv");
+            var path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
 
-            if (filePath == null) {
-                return;
-            }
-
-            try {
-                var text = ExportFunctionList();
-                File.WriteAllText(filePath, text);
-            }
-            catch (Exception ex) {
-                using var centerForm = new DialogCenteringHelper(this);
-                MessageBox.Show($"Failed to save CSV to file {filePath}", "IR Explorer", MessageBoxButton.OK,
-                    MessageBoxImage.Exclamation);
+            if (!string.IsNullOrEmpty(path)) {
+                try {
+                    ExportFunctionListAsExcelFile(path);
+                }
+                catch (Exception ex) {
+                    using var centerForm = new DialogCenteringHelper(this);
+                    MessageBox.Show($"Failed to save function list to {path}: {ex.Message}", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                }
             }
         }
 
-        private string ExportFunctionList() {
-            var sb = new StringBuilder();
-            sb.Append("Function,Module,Sections");
-
-            if (ProfileControlsVisible) {
-                sb.Append(",Time,Time Perc,Time Inc,Time Inc Perc");
-            }
-            else {
-                if (OptionalDataColumnVisible) {
-                    sb.Append($",{OptionalDataColumnName}");
-                }
-
-                if (OptionalDataColumnVisible2) {
-                    sb.Append($",{OptionalDataColumnName2}");
-                }
-            }
-
-            if (AlternateNameColumnVisible) {
-                sb.Append(",Unmangled");
-            }
-
-            sb.AppendLine();
-
+        private void ExportFunctionListAsExcelFile(string filePath) {
+            var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("Functions");
+            int rowId = 1; // First row is for the table column names.
+            int maxLineLength = 0;
             var funcList = ((ListCollectionView)FunctionList.ItemsSource);
 
             foreach (IRTextFunctionEx func in funcList) {
-                sb.Append($"{func.Name},{func.ModuleName},{func.SectionCount}");
+                rowId++;
+                ws.Cell(rowId, 1).Value = func.Name;
+                ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                maxLineLength = Math.Max(func.Name.Length, maxLineLength);
+                ws.Cell(rowId, 2).Value = func.ModuleName;
 
-                if (ProfileControlsVisible) {
-                    sb.Append($",{TimeSpan.FromTicks((long)func.OptionalData).TotalMilliseconds}");
-                    sb.Append($",{func.ExclusivePercentage.AsPercentageString(2, false, "")}");
-                    sb.Append($",{TimeSpan.FromTicks((long)func.OptionalData2).TotalMilliseconds}");
-                    sb.Append($",{func.InclusivePercentage.AsPercentageString(2, false, "")}");
-                }
-                else {
-                    if (OptionalDataColumnVisible) {
-                        sb.Append($",{func.OptionalData}");
+                if (profileControlsVisible_) {
+                    int columnId = 3;
+                    ws.Cell(rowId, columnId + 0).Value = $"{TimeSpan.FromTicks((long)func.OptionalData).TotalMilliseconds}";
+                    ws.Cell(rowId, columnId + 1).Value = $"{func.ExclusivePercentage.AsPercentageString(2, false, "")}";
+                    ws.Cell(rowId, columnId + 2).Value = $"{TimeSpan.FromTicks((long)func.OptionalData2).TotalMilliseconds}";
+                    ws.Cell(rowId, columnId + 3).Value = $"{func.InclusivePercentage.AsPercentageString(2, false, "")}";
+
+                    if (func.BackColor != null && func.BackColor is SolidColorBrush colorBrush) {
+                        var color = XLColor.FromArgb(colorBrush.Color.A, colorBrush.Color.R, colorBrush.Color.G, colorBrush.Color.B);
+                        ws.Cell(rowId, 1).Style.Fill.BackgroundColor = color;
+                        ws.Cell(rowId, 2).Style.Fill.BackgroundColor = color;
+                        ws.Cell(rowId, columnId + 0).Style.Fill.BackgroundColor = color;
+                        ws.Cell(rowId, columnId + 1).Style.Fill.BackgroundColor = color;
+                        ws.Cell(rowId, columnId + 2).Style.Fill.BackgroundColor = color;
+                        ws.Cell(rowId, columnId + 3).Style.Fill.BackgroundColor = color;
                     }
 
-                    if (OptionalDataColumnVisible2) {
-                        sb.Append($",{func.OptionalData2}");
+                    if (alternateNameColumnVisible_) {
+                        ws.Cell(rowId, columnId + 4).Value = func.AlternateName;
                     }
                 }
-
-                if (AlternateNameColumnVisible) {
-                    sb.Append($",\"{func.AlternateName}\"");
-                }
-
-                sb.AppendLine();
             }
 
-            return sb.ToString();
+            var firstCell = ws.Cell(1, 1);
+            var lastCell = ws.LastCellUsed();
+            var range = ws.Range(firstCell.Address, lastCell.Address);
+            var table = range.CreateTable();
+            table.Theme = XLTableTheme.None;
+
+            foreach (var cell in table.HeadersRow().Cells()) {
+                if (cell.Address.ColumnNumber == 1) {
+                    cell.Value = "Function";
+                }
+                else if (cell.Address.ColumnNumber == 2) {
+                    cell.Value = "Module";
+                }
+                else if (profileControlsVisible_ && (cell.Address.ColumnNumber - 3) <= 3) {
+                    switch (cell.Address.ColumnNumber - 3) {
+                        case 0: {
+                            cell.Value = "Time (ms)";
+                            break;
+                        }
+                        case 1: {
+                            cell.Value = "Time (%)";
+                            break;
+                        }
+                        case 2: {
+                            cell.Value = "Time incl (ms)";
+                            break;
+                        }
+                        case 3: {
+                            cell.Value = "Time incl (%)";
+                            break;
+                        }
+                    }
+                }
+                else if (alternateNameColumnVisible_) {
+                    cell.Value = "Unmangled";
+                }
+                //else if (columnData != null && (cell.Address.ColumnNumber - 3) < columnData.Columns.Count) {
+                //    cell.Value = columnData.Columns[cell.Address.ColumnNumber - 3].Title;
+                //}
+
+                cell.Style.Font.Bold = true;
+                cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+            }
+
+            for (int i = 1; i <= 1; i++) {
+                ws.Column(i).AdjustToContents((double)1, Math.Min(50, maxLineLength));
+            }
+
+            for (int i = 2; i <= lastCell.Address.ColumnNumber; i++) {
+                ws.Column(i).AdjustToContents();
+            }
+
+            wb.SaveAs(filePath);
         }
         
         private void OpenDocumentInNewInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
