@@ -261,6 +261,8 @@ public class FunctionProfileData {
         public Dictionary<int, PerformanceCounterSet> SourceLineCounters { get; set; } // Line number mapping
         public PerformanceCounterSet FunctionCounters { get; set; }
         public List<(int LineNumber, TimeSpan Weight)> SourceLineWeightList => SourceLineWeight.ToKeyValueList();
+        public int FirstLineIndex { get; set; }
+        public int LastLineIndex { get; set; }
 
         public SourceLineProcessingResult() {
             SourceLineWeight = new Dictionary<int, TimeSpan>();
@@ -364,6 +366,8 @@ public class FunctionProfileData {
 
     public SourceLineProcessingResult ProcessSourceLines(IDebugInfoProvider debugInfo) {
         var result = new SourceLineProcessingResult();
+        int firstLine = int.MaxValue;
+        int lastLine = int.MinValue;
 
         foreach (var pair in InstructionWeight) {
             long rva = pair.Key + DebugInfo.RVA;
@@ -371,6 +375,8 @@ public class FunctionProfileData {
 
             if (!lineInfo.IsUnknown) {
                 result.SourceLineWeight.AccumulateValue(lineInfo.Line, pair.Value);
+                firstLine = Math.Min(lineInfo.Line, firstLine);
+                lastLine = Math.Max(lineInfo.Line, lastLine);
             }
         }
 
@@ -385,6 +391,8 @@ public class FunctionProfileData {
             result.FunctionCounters.Add(pair.Value);
         }
 
+        result.FirstLineIndex = firstLine;
+        result.LastLineIndex = lastLine;
         return result;
     }
 

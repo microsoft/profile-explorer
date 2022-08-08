@@ -2454,44 +2454,16 @@ namespace IRExplorerUI {
                     ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
                     maxLineLength = Math.Max(text.Length, maxLineLength);
 
+                    var sourceTag = tuple.GetTag<SourceLocationTag>();
+
+                    if (sourceTag != null) {
+                        ws.Cell(rowId, 2).Value = sourceTag.Line;
+                        ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+                        ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
+                    }
+
                     if (columnData != null) {
-                        var sourceTag = tuple.GetTag<SourceLocationTag>();
-
-                        if (sourceTag != null) {
-                            ws.Cell(rowId, 2).Value = sourceTag.Line;
-                            ws.Cell(rowId, 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
-                            ws.Cell(rowId, 2).Style.Font.FontColor = XLColor.DarkGreen;
-                        }
-
-                        int columnId = 3;
-
-                        foreach (var column in columnData.Columns) {
-                            var value = columnData.GetColumnValue(tuple, column);
-
-                            if (value != null) {
-                                ws.Cell(rowId, columnId).Value = value.Text.Replace(" ms", "");
-
-                                if (value.BackColor != null && value.BackColor is SolidColorBrush colorBrush) {
-                                    var color = XLColor.FromArgb(colorBrush.Color.A, colorBrush.Color.R, colorBrush.Color.G, colorBrush.Color.B);
-                                    ws.Cell(rowId, columnId).Style.Fill.BackgroundColor = color;
-
-                                    if (column.IsMainColumn) {
-                                        ws.Cell(rowId, 1).Style.Fill.BackgroundColor = color;
-                                        ws.Cell(rowId, 2).Style.Fill.BackgroundColor = color;
-                                    }
-                                }
-
-                                if (value.TextWeight != FontWeights.Normal) {
-                                    ws.Cell(rowId, columnId).Style.Font.Bold = true;
-
-                                    if (column.IsMainColumn) {
-                                        ws.Cell(rowId, 1).Style.Font.Bold = true;
-                                    }
-                                }
-                            }
-
-                            columnId++;
-                        }
+                        IRDocumentColumnData.ExportColumnsToExcel(columnData, tuple, ws, rowId, 3);
                     }
                 }
             }
@@ -2517,15 +2489,14 @@ namespace IRExplorerUI {
                 cell.Style.Fill.BackgroundColor = XLColor.LightGray;
             }
 
-
             for (int i = 1; i <= 1; i++) {
                 ws.Column(i).AdjustToContents((double)1, maxLineLength);
             }
 
             wb.SaveAs(filePath);
-
         }
 
+        
         private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
             var path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
 
