@@ -867,7 +867,7 @@
                                             Margin="8,4"
                                             Foreground="DimGray"
                                             IsHitTestVisible="False"
-                                            Text="Filter counters"
+                                            Text="Filter metrics"
                                             Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
                                     </Grid>
                                 </StackPanel>
