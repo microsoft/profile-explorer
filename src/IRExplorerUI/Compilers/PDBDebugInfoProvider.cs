@@ -259,7 +259,7 @@ namespace IRExplorerUI.Compilers {
 
         private (DebugSourceLineInfo, IDiaSourceFile) FindSourceLineByRVAImpl(long rva) {
             try {
-                session_.findLinesByRVA((uint)rva, 1, out var lineEnum);
+                session_.findLinesByRVA((uint)rva, 0, out var lineEnum);
 
                 while (true) {
                     lineEnum.Next(1, out var lineNumber, out var retrieved);

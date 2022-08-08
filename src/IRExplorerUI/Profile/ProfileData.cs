@@ -370,7 +370,10 @@ public class FunctionProfileData {
         int lastLine = int.MinValue;
 
         foreach (var pair in InstructionWeight) {
-            long rva = pair.Key + DebugInfo.RVA;
+            //? The profile offset is set on the instr. following the one intended,
+            //? TryFindElementForOffset account for this but here the FunctionIR
+            //? is not being used, subtract 1 to end in that range of the right instr.
+            long rva = pair.Key + DebugInfo.RVA - 1;
             var lineInfo = debugInfo.FindSourceLineByRVA(rva);
 
             if (!lineInfo.IsUnknown) {
