@@ -52,11 +52,16 @@ namespace IRExplorerCore {
         }
 
         public override bool Equals(object obj) {
+            return Equals(obj, true);
+        }
+
+        public bool Equals(object obj, bool checkParent) {
             return obj is IRTextFunction function &&
                    Name == function.Name &&
-                   ((ParentSummary != null && function.ParentSummary != null &&
+                   (!checkParent ||
+                   (((ParentSummary != null && function.ParentSummary != null &&
                      ParentSummary.ModuleName == function.ParentSummary.ModuleName) ||
-                    (ParentSummary == null && function.ParentSummary == null));
+                    (ParentSummary == null && function.ParentSummary == null))));
         }
 
         public override int GetHashCode() {

@@ -1395,7 +1395,7 @@ namespace IRExplorerUI {
         }
 
         private void UpdateSectionListBindings(IRTextFunction function, bool force = false) {
-            if (function == currentFunction_ && !force) {
+            if (function.Equals(currentFunction_, false) && !force) {
                 return;
             }
 
@@ -1417,7 +1417,7 @@ namespace IRExplorerUI {
             foreach (var section in currentFunction_.Sections) {
                 var sectionEx = sectionExtMap_[section];
                 sectionEx = new IRTextSectionEx(section, sectionEx.Index);
-                sectionEx.Name = CompilerInfo.NameProvider.GetSectionName(section);
+                sectionEx.Name = CompilerInfo.NameProvider.GetSectionName(section, false);
 
                 sectionExtMap_[section] = sectionEx;
                 sections.Add(sectionEx);
@@ -1896,7 +1896,7 @@ namespace IRExplorerUI {
         }
         
         public async Task SelectFunction(IRTextFunction function) {
-            if (function == currentFunction_) {
+            if (function.Equals(currentFunction_, false)) {
                 return;
             }
 

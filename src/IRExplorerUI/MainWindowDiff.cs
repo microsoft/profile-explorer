@@ -31,12 +31,12 @@ namespace IRExplorerUI {
             var result = openWindow.ShowDialog();
 
             if (result.HasValue && result.Value) {
-                await OpenBaseDiffsDocuments(openWindow.BaseFilePath, openWindow.DiffFilePath);
+                await OpenBaseDiffDocuments(openWindow.BaseFilePath, openWindow.DiffFilePath);
             }
         }
 
         private async Task<Tuple<LoadedDocument, LoadedDocument>> 
-        OpenBaseDiffsDocuments(string baseFilePath, string diffFilePath) {
+        OpenBaseDiffDocuments(string baseFilePath, string diffFilePath) {
             var (baseDoc, diffDoc) = await OpenBaseDiffIRDocumentsImpl(baseFilePath, diffFilePath);
 
             if (baseDoc == null || diffDoc == null) {
@@ -98,7 +98,7 @@ namespace IRExplorerUI {
         }
 
         private async Task<Tuple<LoadedDocument, LoadedDocument>> 
-            LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
+            LoadBinaryBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
             await SwitchBinaryCompilerTarget(baseFilePath);
 
             var baseTask = Task.Run(() => LoadBinaryDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
@@ -120,12 +120,32 @@ namespace IRExplorerUI {
         }
 
         private async Task<Tuple<LoadedDocument, LoadedDocument>>
+            LoadBaseDiffIRDocuments(string baseFilePath, string baseModuleName, string diffFilePath, string diffModuleName) {
+            var baseTask = Task.Run(() => LoadDocument(baseFilePath, baseModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
+            var diffTask = Task.Run(() => LoadDocument(diffFilePath, diffModuleName, Guid.NewGuid(), UpdateIRDocumentLoadProgress));
+            var baseResult = await baseTask;
+            var diffResult = await diffTask;
+
+            if (baseResult != null && diffResult != null) {
+                await SetupOpenedIRDocument(SessionKind.Default, baseResult);
+                await SetupOpenedDiffIRDocument(diffFilePath, diffResult);
+                return new Tuple<LoadedDocument, LoadedDocument>(baseResult, diffResult);
+            }
+            else {
+                await EndSession();
+                Trace.TraceWarning($"Failed to load base/diff documents: base {baseResult != null}, diff {diffResult != null}");
+            }
+
+            return new Tuple<LoadedDocument, LoadedDocument>(null, null);
+        }
+
+        private async Task<Tuple<LoadedDocument, LoadedDocument>>
             OpenBinaryBaseDiffIRDocuments(string baseFilePath, string diffFilePath) {
             //? HACK: Set the module name of both docs to be the same,
             //? otherwise lookup by IRTextFunction in the diff doc will fail the hash checks.
             var (baseLoadedDoc, diffLoadedDoc) = 
-                await LoadBaseDiffIRDocuments(baseFilePath, baseFilePath,
-                                              diffFilePath, baseFilePath);
+                await LoadBinaryBaseDiffIRDocuments(baseFilePath, baseFilePath,
+                                                    diffFilePath, baseFilePath);
 
             UpdateWindowTitle();
             return new Tuple<LoadedDocument, LoadedDocument>(baseLoadedDoc, diffLoadedDoc);

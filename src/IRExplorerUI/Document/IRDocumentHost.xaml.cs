@@ -2432,11 +2432,12 @@ namespace IRExplorerUI {
             var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("Function");
             var columnData = TextView.ColumnData;
-            int rowId = 2; // First row is for the table column names.
+            int rowId = 1; // First row is for the table column names.
             int maxColumn = 2 + (columnData != null ? columnData.Columns.Count : 0);
             int maxLineLength = 0;
 
             foreach (var block in Function.Blocks) {
+                rowId++;
                 ws.Cell(rowId, 1).Value = $"Block {block.Number}";
                 ws.Cell(rowId, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
                 ws.Cell(rowId, 1).Style.Font.Bold = true;
