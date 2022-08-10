@@ -3561,8 +3561,8 @@ namespace IRExplorerUI {
                     target = op.BlockLabelValue;
                     show = target != null && (alwaysShow || IsElementOutsideView(target));
                 }
-                else if (op.ParentInstruction is var instr) {
-                    if (op == Session.CompilerInfo.IR.GetCallTarget(instr)) {
+                else if (op.ParentInstruction != null) {
+                    if (op.Equals(Session.CompilerInfo.IR.GetCallTarget(op.ParentInstruction))) {
                         target = op;
                         isCallTarget = true;
                         show = true;
