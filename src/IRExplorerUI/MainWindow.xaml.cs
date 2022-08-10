@@ -691,7 +691,7 @@ namespace IRExplorerUI {
         }
 
         private async void StartPage_OpenRecentDiffDocuments(object sender, Tuple<string, string> e) {
-            await OpenBaseDiffsDocuments(e.Item1, e.Item2);
+            await OpenBaseDiffDocuments(e.Item1, e.Item2);
         }
 
         private async void StartPage_OpenRecentDocument(object sender, string e) {
