@@ -565,7 +565,7 @@ namespace IRExplorerUI {
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
-            if (element_ == null) {
+            if (element_ == null || section_ != section) {
                 return;
             }
 

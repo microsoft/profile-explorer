@@ -2539,6 +2539,7 @@ namespace IRExplorerUI {
             StartDiffSegmentAdding();
             Function = diffResult.DiffFunction;
             Section = newSection;
+            SectionText = diffResult.DiffText.AsMemory();
 
             // Compute the element lists before removing the block folding.
             // If done after, the UI may update during the async call
@@ -3814,11 +3815,13 @@ namespace IRExplorerUI {
 
         public void EnterDiffMode() {
             DiffModeEnabled = true;
+            SectionText = ReadOnlyMemory<char>.Empty;
         }
 
         public void ExitDiffMode() {
             margin_.ClearMarkers();
             diffHighlighter_.Clear();
+            SectionText = ReadOnlyMemory<char>.Empty;
             DiffModeEnabled = false;
         }
 

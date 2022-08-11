@@ -991,6 +991,10 @@ namespace IRExplorerUI {
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            if (Section != section) {
+                return;
+            }
+
             HidePreviewPopup(true);
             HideQueryPanel();
             Utils.DisableControl(GraphHost);
