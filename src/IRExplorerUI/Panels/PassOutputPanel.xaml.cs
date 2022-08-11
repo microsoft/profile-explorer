@@ -108,6 +108,7 @@ namespace IRExplorerUI {
             }
         }
 
+        //? TODO: Use Document?.Section
         public IRTextSection Section { get; set; }
 
         public bool SearchPanelVisible {
@@ -357,7 +358,7 @@ namespace IRExplorerUI {
         }
 
         public override async void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
-            if (HasPinnedContent) {
+            if (HasPinnedContent || Section != section) {
                 return;
             }
 

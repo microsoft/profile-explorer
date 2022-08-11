@@ -838,7 +838,7 @@
                                         <Condition Binding="{Binding Path=LowerIdenticalToPreviousOpacity}" Value="True" />
                                         <Condition Binding="{Binding Path=IsSelected}" Value="False" />
                                     </MultiDataTrigger.Conditions>
-                                    <Setter Property="Opacity" Value="0.7" />
+                                    <Setter Property="Opacity" Value="0.6" />
                                 </MultiDataTrigger>
 
                                 <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
