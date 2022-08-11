@@ -287,20 +287,20 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var leftDocument = sessionState_.SectionDiffState.LeftDocument;
-            var rightDocument = sessionState_.SectionDiffState.RightDocument;
-            sessionState_.SectionDiffState.End();
-
             if (!isSessionEnding) {
                 // Reload sections in the same documents.
                 Trace.TraceInformation("Diff mode: Reload original sections");
+                var leftDocument = sessionState_.SectionDiffState.LeftDocument;
+                var rightDocument = sessionState_.SectionDiffState.RightDocument;
+                await DisableDocumentDiffState(sessionState_.SectionDiffState);
+
                 var leftArgs = new OpenSectionEventArgs(leftDocument.Section, OpenSectionKind.ReplaceCurrent);
                 var rightArgs = new OpenSectionEventArgs(rightDocument.Section, OpenSectionKind.ReplaceCurrent);
-
                 await OpenDocumentSectionAsync(leftArgs, leftDocument, false);
-                await leftDocument.ExitDiffMode();
                 await OpenDocumentSectionAsync(rightArgs, rightDocument, false);
-                await rightDocument.ExitDiffMode();
+            }
+            else {
+                sessionState_.SectionDiffState.End();
             }
 
             if (disableControls) {
@@ -373,6 +373,20 @@ namespace IRExplorerUI {
             await diffState.LeftDocument.EnterDiffMode();
             await diffState.RightDocument.EnterDiffMode();
             sessionState_.SectionDiffState.IsEnabled = true;
+        }
+
+        private async Task DisableDocumentDiffState(DiffModeInfo diffState) {
+            // Notify panels about the current sections being unloaded
+            // before diff mode is ended, since otherwise those sections
+            // may be wrongly be associated with diff mode, for ex. the panel states.
+            var leftDocumentHost = FindDocumentHost(diffState.LeftDocument.TextView);
+            var rightDocumentHost = FindDocumentHost(diffState.RightDocument.TextView);
+            NotifyPanelsOfSectionUnload(diffState.LeftDocument.Section, leftDocumentHost, true);
+            NotifyPanelsOfSectionUnload(diffState.RightDocument.Section, rightDocumentHost, true);
+
+            await diffState.LeftDocument.ExitDiffMode();
+            await diffState.RightDocument.ExitDiffMode();
+            sessionState_.SectionDiffState.End();
         }
 
         private Task<DiffMarkingResult> 

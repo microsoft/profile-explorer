@@ -357,7 +357,7 @@ namespace IRExplorerUI {
         }
 
         public override async void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
-            if (HasPinnedContent) {
+            if (HasPinnedContent || Section != section) {
                 return;
             }
 
