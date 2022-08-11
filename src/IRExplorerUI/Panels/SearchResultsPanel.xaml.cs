@@ -406,37 +406,37 @@ namespace IRExplorerUI {
         private async Task<string> GetSectionText(SearchResultInfo.SearchResultKind resultKind, IRTextSection section) {
             switch (resultKind) {
                 case SearchResultInfo.SearchResultKind.SectionResult: {
-                        if (previousSection_ == section &&
-                            previousSectionText_ != null) {
-                            return previousSectionText_;
-                        }
-
-                        var text = await Session.GetSectionTextAsync(section);
-                        previousSection_ = section;
-                        previousSectionText_ = text;
-                        return text;
+                    if (previousSection_ == section &&
+                        previousSectionText_ != null) {
+                        return previousSectionText_;
                     }
+
+                    var text = await Session.GetSectionTextAsync(section).ConfigureAwait(false);
+                    previousSection_ = section;
+                    previousSectionText_ = text;
+                    return text;
+                }
                 case SearchResultInfo.SearchResultKind.BeforeOutputResult: {
-                        if (previousSection_ == section &&
-                            previousSectionBeforeOutput_ != null) {
-                            return previousSectionBeforeOutput_;
-                        }
-
-                        var text =  await Session.GetSectionOutputTextAsync(section.OutputBefore, section);
-                        previousSection_ = section;
-                        previousSectionBeforeOutput_ = text;
-                        return text;
+                    if (previousSection_ == section &&
+                        previousSectionBeforeOutput_ != null) {
+                        return previousSectionBeforeOutput_;
                     }
-                case SearchResultInfo.SearchResultKind.AfterOutputResult: {
-                        if (previousSection_ == section &&
-                            previousSectionAfterOutput_ != null) {
-                            return previousSectionAfterOutput_;
-                        }
 
-                        var text = await Session.GetSectionOutputTextAsync(section.OutputAfter, section);
-                        previousSection_ = section;
-                        previousSectionAfterOutput_ = text;
-                        return text;
+                    var text =  await Session.GetSectionOutputTextAsync(section.OutputBefore, section).ConfigureAwait(false);
+                    previousSection_ = section;
+                    previousSectionBeforeOutput_ = text;
+                    return text;
+                }
+                case SearchResultInfo.SearchResultKind.AfterOutputResult: {
+                    if (previousSection_ == section &&
+                        previousSectionAfterOutput_ != null) {
+                        return previousSectionAfterOutput_;
+                    }
+
+                    var text = await Session.GetSectionOutputTextAsync(section.OutputAfter, section).ConfigureAwait(false);
+                    previousSection_ = section;
+                    previousSectionAfterOutput_ = text;
+                    return text;
                     }
             }
 
