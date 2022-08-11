@@ -82,12 +82,17 @@ namespace IRExplorerUI {
             //? TODO: Go through the NameProvider
             SymbolName.Text = op.GetText(Document.Text).ToString();
             TextView.MarkElementWithDefaultStyle(defOp);
+            TextView.BringElementIntoView(defOp);
             definedOperand_ = op;
         }
 
         public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+            if (TextView.Section == section) {
+                return;
+            }
+
             TextView.InitializeFromDocument(document, false);
-            Document = document;    
+            Document = document;
 
             if (Session.LoadPanelState(this, section, document) is DefinitionPanelState savedState) {
 #if DEBUG
@@ -101,7 +106,8 @@ namespace IRExplorerUI {
                 }
 
                 if (!found) {
-                    Trace.WriteLine($"=> ERROR for {savedState.DefinedOperand}");
+                    Trace.WriteLine($"=> ERROR for {savedState.DefinedOperand}, offset {savedState.DefinedOperand.TextLocation.Offset}");
+                    Trace.WriteLine($"     doc length: {TextView.Text.Length}");
                     MessageBox.Show("Definition panel offset error, attach debugger");
                     Utils.WaitForDebugger();
                 }
@@ -123,23 +129,16 @@ namespace IRExplorerUI {
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            if (TextView.Section != section) {
+                return;
+            }
+
             if (definedOperand_ != null) {
                 var savedState = new DefinitionPanelState();
                 savedState.DefinedOperand = definedOperand_;
                 savedState.VerticalOffset = TextView.VerticalOffset;
                 savedState.HorizontalOffset = TextView.HorizontalOffset;
                 savedState.CaretOffset = TextView.CaretOffset;
-
-                if (savedState.CaretOffset > TextView.Text.Length) {
-                    MessageBox.Show("Invalid offset in state, attach debugger");
-                    Utils.WaitForDebugger();
-                }
-
-                if (section != document.Section) {
-                    MessageBox.Show("Invalid section in state, attach debugger");
-                    Utils.WaitForDebugger();
-                }
-
                 savedState.HasPinnedContent = HasPinnedContent;
                 Session.SavePanelState(savedState, this, section, Document);
                 ResetDefinedOperand();

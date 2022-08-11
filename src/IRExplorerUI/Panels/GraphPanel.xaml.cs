@@ -126,7 +126,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public IRTextSection Section => Document.Section;
+        public IRTextSection Section => Document?.Section;
 
         private void OptionsPanel_PanelReset(object sender, EventArgs e) {
             Settings.Reset();
@@ -991,6 +991,10 @@ namespace IRExplorerUI {
         }
 
         public override void OnDocumentSectionUnloaded(IRTextSection section, IRDocument document) {
+            if (Section != section) {
+                return;
+            }
+
             HidePreviewPopup(true);
             HideQueryPanel();
             Utils.DisableControl(GraphHost);

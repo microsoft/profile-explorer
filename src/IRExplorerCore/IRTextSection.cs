@@ -71,7 +71,9 @@ namespace IRExplorerCore {
             return obj is IRTextSection section &&
                    Id == section.Id &&
                    Number == section.Number &&
-                   Name == section.Name;
+                   Name == section.Name &&
+                   ((ParentFunction == null && section.ParentFunction == null) ||
+                    (ParentFunction != null && ParentFunction.Equals(section.ParentFunction)));
         }
 
         public override int GetHashCode() {
