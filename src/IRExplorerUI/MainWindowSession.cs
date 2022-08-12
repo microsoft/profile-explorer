@@ -90,18 +90,6 @@ namespace IRExplorerUI {
             return loadedDoc;
         }
 
-        public async Task<DisassemberResult> DisassembleBinary(string filePath, DisassemblerProgressHandler progressCallback = null,
-                                                               CancelableTask cancelableTask = null) {
-            // Try to run disassembler.
-            var disassembler = compilerInfo_.CreateDisassembler(filePath);
-
-            if (disassembler == null || !disassembler.EnsureDisassemblerAvailable()) {
-                return null;
-            }
-
-            return await disassembler.DisassembleAsync(filePath, compilerInfo_, progressCallback, cancelableTask);
-        }
-
         private async Task SwitchBinaryCompilerTarget(string filePath) {
             // Identify compiler target and switch IR mode.
             var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
@@ -546,33 +534,15 @@ namespace IRExplorerUI {
         private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id, 
                                                   IDebugInfoProvider debugInfo,
                                                   ProgressInfoHandler progressHandler) {
-            if (App.Settings.IsExternalDisassemblerEnabled()) {
-                var disasmResult = await DisassembleBinary(filePath);
+            var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
+            var result = await LoadDocument(filePath, modulePath, id, progressHandler, loader);
 
-                if (disasmResult == null) {
-                    return null;
-                }
-
-                var result = await LoadDocument(disasmResult.DisassemblyPath, modulePath, id, progressHandler);
-
-                if (result != null) {
-                    result.BinaryFilePath = filePath;
-                    result.DebugInfoFilePath = disasmResult.DebugInfoFilePath;
-                }
-
-                return result;
+            if (result != null) {
+                result.BinaryFilePath = filePath;
+                result.DebugInfoFilePath = loader.DebugFilePath;
             }
-            else {
-                var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
-                var result = await LoadDocument(filePath, modulePath, id, progressHandler, loader);
-
-                if (result != null) {
-                    result.BinaryFilePath = filePath;
-                    result.DebugInfoFilePath = loader.DebugFilePath;
-                }
-                
-                return result;
-            }
+            
+            return result;
         }
 
         private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id, 

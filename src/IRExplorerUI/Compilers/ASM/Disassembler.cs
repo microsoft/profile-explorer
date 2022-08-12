@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading.Tasks;
 using IRExplorerCore;
 using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
@@ -14,6 +15,44 @@ namespace IRExplorerUI.Compilers.ASM {
         public bool IncludeBytes { get; set; }
 
     }
+    public enum DisassemblerStage {
+        Disassembling,
+        PostProcessing
+    }
+
+    public class DisassemblerProgress {
+        public DisassemblerProgress(DisassemblerStage stage) {
+            Stage = stage;
+        }
+
+        public DisassemblerStage Stage { get; set; }
+        public int Total { get; set; }
+        public int Current { get; set; }
+    }
+
+    public delegate void DisassemblerProgressHandler(DisassemblerProgress info);
+
+    public interface IDisassembler {
+        DisassemberResult Disassemble(string imagePath, ICompilerInfoProvider compilerInfo,
+            DisassemblerProgressHandler progressCallback = null,
+            CancelableTask cancelableTask = null);
+        Task<DisassemberResult> DisassembleAsync(string imagePath, ICompilerInfoProvider compilerInfo,
+            DisassemblerProgressHandler progressCallback = null,
+            CancelableTask cancelableTask = null);
+
+        bool EnsureDisassemblerAvailable();
+    }
+
+    public class DisassemberResult {
+        public DisassemberResult(string disassemblyPath, string debugInfoFilePath) {
+            DisassemblyPath = disassemblyPath;
+            DebugInfoFilePath = debugInfoFilePath;
+        }
+
+        public string DisassemblyPath { get; set; }
+        public string DebugInfoFilePath { get; set; }
+    }
+
 
     public class Disassembler : IDisposable {
         private List<(byte[] Data, long StartRVA)> codeSectionData_;

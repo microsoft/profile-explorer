@@ -1366,8 +1366,8 @@ namespace IRExplorerUI {
             functionStatMap_ = null;
         }
 
-        private void SetupSectionExtension() {
-            if (sectionExtensionComputed_) {
+        private void SetupSectionExtension(bool force = false) {
+            if (sectionExtensionComputed_ && !force) {
                 return;
             }
 
@@ -1405,8 +1405,8 @@ namespace IRExplorerUI {
             FunctionSwitched?.Invoke(this, currentFunction_);
         }
 
-        public List<IRTextSectionEx> CreateSectionsExtension() {
-            SetupSectionExtension();
+        public List<IRTextSectionEx> CreateSectionsExtension(bool force = false) {
+            SetupSectionExtension(force);
             var sections = new List<IRTextSectionEx>();
             int sectionIndex = 0;
 

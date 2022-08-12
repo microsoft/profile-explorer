@@ -70,10 +70,6 @@ namespace IRExplorerUI.Compilers.UTC {
             return null;
         }
 
-        public IDisassembler CreateDisassembler(string imagePath) {
-            return null;
-        }
-
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() {
             UTCBuiltinInterferenceQuery.GetDefinition(),
             UTCRegisterQuery.GetDefinition(),
