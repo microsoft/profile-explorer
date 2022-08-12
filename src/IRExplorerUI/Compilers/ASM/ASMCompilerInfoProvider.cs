@@ -172,16 +172,6 @@ namespace IRExplorerUI.Compilers.ASM {
             return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options).ConfigureAwait(false);
         }
 
-        public IDisassembler CreateDisassembler(string modulePath) {
-            var info = PEBinaryInfoProvider.GetBinaryFileInfo(modulePath);
-
-            if (info != null) {
-                return new ExternalDisassembler(App.Settings.GetExternalDisassemblerOptions(info.FileKind));
-            }
-
-            // Assume it's a native image.
-            return new ExternalDisassembler(App.Settings.GetExternalDisassemblerOptions(BinaryFileKind.Native));
-        }
         //? TODO: << Debug/Binary related functs should not be part of CompilerInfoProvider
 
         public IBlockFoldingStrategy CreateFoldingStrategy(FunctionIR function) {

@@ -74,15 +74,12 @@ namespace IRExplorerUI {
         public IRMode DefaultIRMode;
 
         [ProtoMember(17)]
-        public Dictionary<BinaryFileKind, ExternalDisassemblerOptions> ExternalDisassemblerOptions;
-
-        [ProtoMember(18)]
         public ProfileDataProviderOptions ProfileOptions;
 
-        [ProtoMember(19)]
+        [ProtoMember(18)]
         public SymbolFileSourceOptions SymbolOptions { get; set; }
 
-        [ProtoMember(20)]
+        [ProtoMember(19)]
         public CallTreeSettings CallTreeSettings { get; set; }
 
         public ApplicationSettings() {
@@ -116,32 +113,9 @@ namespace IRExplorerUI {
             DiffSettings ??= new DiffSettings();
             SectionSettings ??= new SectionSettings();
             FunctionTaskOptions ??= new Dictionary<Guid, byte[]>();
-            ExternalDisassemblerOptions ??= new Dictionary<BinaryFileKind, ExternalDisassemblerOptions>();
             ProfileOptions ??= new ProfileDataProviderOptions();
             SymbolOptions ??= new SymbolFileSourceOptions();
             CallTreeSettings ??= new CallTreeSettings();
-        }
-
-        public ExternalDisassemblerOptions GetExternalDisassemblerOptions(BinaryFileKind fileKind) {
-            if (ExternalDisassemblerOptions.TryGetValue(fileKind, out var options)) {
-                return options;
-            }
-
-            options = new ExternalDisassemblerOptions(fileKind);
-            ExternalDisassemblerOptions[fileKind] = options;
-            return options;
-        }
-
-        public bool IsExternalDisassemblerEnabled(BinaryFileKind fileKind) {
-            return GetExternalDisassemblerOptions(fileKind).IsEnabled;
-        }
-
-        public bool IsExternalDisassemblerEnabled() {
-            foreach (var options in ExternalDisassemblerOptions.Values) {
-                if (options.IsEnabled) return true;
-            }
-
-            return false;
         }
 
         public void AddRecentFile(string path) {

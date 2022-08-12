@@ -61,10 +61,6 @@ namespace IRExplorerUI.Compilers.LLVM {
             return null;
         }
 
-        public IDisassembler CreateDisassembler(string modulePath) {
-            return null;
-        }
-
         public List<QueryDefinition> BuiltinQueries => new List<QueryDefinition>() { };
         public List<FunctionTaskDefinition> BuiltinFunctionTasks => new List<FunctionTaskDefinition>() { };
         public List<FunctionTaskDefinition> ScriptFunctionTasks => new List<FunctionTaskDefinition>() { };

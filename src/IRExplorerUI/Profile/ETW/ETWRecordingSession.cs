@@ -285,6 +285,12 @@ namespace IRExplorerUI.Profile.ETW {
                     Trace.WriteLine($"Using managed profiler {profilerPath}");
                 }
 
+                if (options_.EnableEnvironmentVars) {
+                    foreach (var pair in options_.EnvironmentVariables) {
+                        procInfo.EnvironmentVariables[pair.Value] = pair.Variable;
+                    }
+                }
+
                 var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
                 process.Start();
                 Trace.WriteLine($"=> started {options_.ApplicationPath}");

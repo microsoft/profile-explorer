@@ -38,6 +38,5 @@ namespace IRExplorerUI {
         IDebugInfoProvider CreateDebugInfoProvider(string imagePath);
         Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null, string disasmOutputPath = null);
         Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null);
-        IDisassembler CreateDisassembler(string modulePath);
     }
 }

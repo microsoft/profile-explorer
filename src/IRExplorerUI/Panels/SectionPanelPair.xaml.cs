@@ -89,7 +89,7 @@ namespace IRExplorerUI {
                         DiffPanel.Visibility = Visibility.Collapsed;
 
                         // Restore original section list, without diff placeholders/annotations.
-                        MainPanel.Sections = MainPanel.CreateSectionsExtension();
+                        MainPanel.Sections = MainPanel.CreateSectionsExtension(true);
                         diffModeEnabled_ = false;
                     }
                 }

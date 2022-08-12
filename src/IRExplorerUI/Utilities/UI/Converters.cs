@@ -148,4 +148,40 @@ namespace IRExplorerUI.Utilities {
 
         }
     }
+
+    public class DictionaryToStringConverter : IValueConverter {
+        static private char[] SPLIT_CHARS = new char[] { '=', ':' };
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+            var sb = new StringBuilder();
+
+            if (value is List<string> list) {
+                foreach (var line in list) {
+                    sb.AppendLine(line);
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+            var dict = new Dictionary<string, string>();
+
+            if (value is string text) {
+                var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var line in lines) {
+                    int splitIndex = line.IndexOfAny(SPLIT_CHARS);
+
+                    if (splitIndex > 0) {
+
+                    }
+                }
+
+            }
+
+            return dict;
+
+        }
+    }
 }

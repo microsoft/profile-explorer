@@ -55,7 +55,7 @@ namespace IRExplorerUI.Profile {
         [ProtoMember(9)]        
         public bool EnableEnvironmentVars { get; set; }
         [ProtoMember(10)]
-        public List<(string Variable, string Name)> EnvironmentVariables { get; set; }
+        public List<(string Variable, string Value)> EnvironmentVariables { get; set; }
         [ProtoMember(11)]
         public List<PerformanceCounterConfig> PerformanceCounters { get; set; }
 
@@ -74,7 +74,7 @@ namespace IRExplorerUI.Profile {
 
         [ProtoAfterDeserialization]
         private void InitializeReferenceMembers() {
-            EnvironmentVariables ??= new List<(string Variable, string Name)>();
+            EnvironmentVariables ??= new List<(string Variable, string Value)>();
             PerformanceCounters ??= new List<PerformanceCounterConfig>();
         }
 
