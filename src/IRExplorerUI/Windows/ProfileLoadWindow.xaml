@@ -94,8 +94,7 @@
                                 x:Name="EnvironmentVarsCheckbox"
                                 Margin="8,8,0,0"
                                 Content="Optional environment variables (one per line, var=value format)"
-                                IsChecked="{Binding Path=Options.RecordingSessionOptions.EnableEnvironmentVars, Mode=TwoWay}"
-                                IsEnabled="False" />
+                                IsChecked="{Binding Path=Options.RecordingSessionOptions.EnableEnvironmentVars, Mode=TwoWay}" />
                             <TextBox
                                 x:Name="EnvironmentVarsTextBox"
                                 MinHeight="36"
@@ -105,7 +104,7 @@
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
-                                Text="{Binding Path=SymbolOptions.SymbolSearchPaths2, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                                Text="{Binding Path=Options.RecordingSessionOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
                                 TextWrapping="Wrap" />
 
                         </StackPanel>

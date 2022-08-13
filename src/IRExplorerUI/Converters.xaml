@@ -19,5 +19,7 @@
     <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacity" />
     <utils:MillisecondTimeConverter x:Key="MillisecondTime" />
     <utils:ListToStringConverter x:Key="StringListConverter" />
+    <utils:ListPairToStringConverter x:Key="StringListPairConverter" />
+    <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />
     <utils:InvertedBooleanConverter x:Key="InvertedBool" />
 </ResourceDictionary>

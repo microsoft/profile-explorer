@@ -51,6 +51,7 @@ public class ETWEventProcessor : IDisposable {
         isRealTime_ = isRealTime;
         acceptedProcessId_ = acceptedProcessId;
         handleDotNetEvents_ = handleDotNetEvents;
+        handleChildProcesses_ = handleChildProcesses;
         managedAsmDir_ = managedAsmDir;
         childAcceptedProcessIds_ = new List<int>();
     }
