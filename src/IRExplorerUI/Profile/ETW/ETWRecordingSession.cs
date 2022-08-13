@@ -126,6 +126,9 @@ namespace IRExplorerUI.Profile.ETW {
                             // ETW sessions are system-wide by default.
                             break;
                         }
+                        case ProfileSessionKind.AttachToProcess: {
+                            break;
+                        }
                         default: {
                             throw new NotImplementedException();
                         }
