@@ -104,7 +104,7 @@
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
-                                Text="{Binding Path=Options.RecordingSessionOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
+                                Text="{Binding Path=Options.RecordingSessionOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringDictionaryConverter}}"
                                 TextWrapping="Wrap" />
 
                         </StackPanel>

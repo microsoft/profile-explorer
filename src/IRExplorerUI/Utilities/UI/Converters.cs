@@ -155,7 +155,6 @@ public class ListToStringConverter : IValueConverter {
         }
 
         return list;
-
     }
 }
 
