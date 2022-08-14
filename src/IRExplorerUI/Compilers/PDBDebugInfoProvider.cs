@@ -18,13 +18,36 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Microsoft.Diagnostics.Symbols;
+using ProtoBuf;
 
 namespace IRExplorerUI.Compilers {
+    //? TODO: Use for-each iterators everywhere
+    [ProtoContract]
+    public class DebugFileSearchResult {
+        [ProtoMember(1)]
+        public bool Found { get; set; }
+        [ProtoMember(2)]
+        public SymbolFileDescriptor SymbolFile { get; set; }
+        [ProtoMember(3)]
+         public string FilePath { get; set; }
+         [ProtoMember(4)]
+        public string Details { get; set; }
 
-    //? https://stackoverflow.com/questions/34960989/how-can-i-hide-dll-registration-message-window-in-my-application
-    
-    //? Use for-each iterators everywhere
-    //? Free more COM?
+        public static DebugFileSearchResult None =
+            new DebugFileSearchResult();
+
+        public static DebugFileSearchResult Success(SymbolFileDescriptor symbolFile, string filePath, string details = null) {
+            return new DebugFileSearchResult() { Found = true, SymbolFile = symbolFile, FilePath = filePath };
+        }
+
+        public static DebugFileSearchResult Success(string filePath) {
+            return Success(new SymbolFileDescriptor(Path.GetFileName(filePath)), filePath);
+        }
+
+        public static DebugFileSearchResult Failure(SymbolFileDescriptor symbolFile, string details) {
+            return new DebugFileSearchResult() { SymbolFile = symbolFile, Details = details };
+        }
+    }
 
     public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
@@ -45,17 +68,13 @@ namespace IRExplorerUI.Compilers {
         public SymbolFileSourceOptions SymbolOptions { get; set; }
         public Machine? Architecture => null;
 
-        public static async Task<string> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
+        public static async Task<DebugFileSearchResult> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
             if (symbolFile == null) {
-                return null;
+                return DebugFileSearchResult.None;
             }
 
             string symbolSearchPath = ConstructSymbolSearchPath(options);
-#if DEBUG
             using var logWriter = new StringWriter();
-#else
-            var logWriter = StringWriter.Null;
-#endif
             using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
             symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
 
@@ -76,7 +95,11 @@ namespace IRExplorerUI.Compilers {
             Trace.IndentLevel = 0;
             Trace.WriteLine($"<< TraceEvent");
 #endif
-            return result;
+            if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+                return DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+            }
+
+            return DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
         }
 
         public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
@@ -105,7 +128,7 @@ namespace IRExplorerUI.Compilers {
             return symbolSearchPath;
         }
 
-        public static async Task<string> LocateDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
+        public static async Task<DebugFileSearchResult> LocateDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
             using var binaryInfo = new PEBinaryInfoProvider(imagePath);
 
             if (binaryInfo.Initialize()) {
@@ -113,6 +136,14 @@ namespace IRExplorerUI.Compilers {
             }
 
             return null;
+        }
+
+        public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
+            if (!debugFile.Found) {
+                return false;
+            }
+
+            return LoadDebugInfo(debugFile.FilePath);
         }
 
         public bool LoadDebugInfo(string debugFilePath) {

@@ -65,16 +65,16 @@ namespace IRExplorerUI.Compilers.ASM {
             // Annotate the instructions with debug info (line numbers, source files)
             // if the debug file is specified and available.
             var loadedDoc = Session.SessionState.FindLoadedDocument(section);
-            var debugFile = loadedDoc.DebugInfoFilePath;
+            var debugFile = loadedDoc.DebugInfoFile;
 
             if (loadedDoc.DebugInfo != null) {
                 // Used for managed methods.
                 loadedDoc.DebugInfo.AnnotateSourceLocations(function, section.ParentFunction);
             }
-            else if (!string.IsNullOrEmpty(debugFile) && File.Exists(debugFile)) {
+            else if (debugFile != null && debugFile.Found) {
                 using var debugInfo = CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
 
-                if (debugInfo.LoadDebugInfo(debugFile)) {
+                if (debugInfo.LoadDebugInfo(debugFile.FilePath)) {
                     debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
                 }
             }
@@ -114,7 +114,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
         }
 
-        public async Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null, string disasmOutputPath = null) {
+        public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null) {
             using var info = new PEBinaryInfoProvider(imagePath);
 
             if (!info.Initialize()) {
@@ -131,7 +131,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
                     var result = await PDBDebugInfoProvider.LocateDebugInfoFile(info.SymbolFileInfo, options).ConfigureAwait(false);
 
-                    if (File.Exists(result)) {
+                    if (result != null) {
                         return result;
                     }
 
@@ -139,30 +139,12 @@ namespace IRExplorerUI.Compilers.ASM {
                     // Do a simple search otherwise.
                     return Utils.LocateDebugInfoFile(imagePath, ".pdb");
                 }
-                //case BinaryFileKind.DotNetR2R: {
-                //    if (!string.IsNullOrEmpty(disasmOutputPath)) {
-                //        try {
-                //            // When using the external disassembler, the output file
-                //            // will be a random temp file, not based on image name.
-                //            var path = Path.GetDirectoryName(disasmOutputPath);
-                //            return Path.Combine(path, Path.GetFileNameWithoutExtension(disasmOutputPath)) + ".json";
-                //        }
-                //        catch (Exception ex) {
-                //            Trace.TraceError($"Failed to get .NET R2R debug file path for {imagePath}: {ex}");
-                //        }
-                //    }
-
-                //    return Utils.LocateDebugInfoFile(imagePath, ".json");
-                //}
-                //default: {
-                //    throw new InvalidOperationException();
-                //}
             }
 
             return null;
         }
 
-        public async Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
+        public async Task<string> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null) {
             if (options == null) {
                 // Make sure the binary directory is also included in the symbol search.
                 options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();

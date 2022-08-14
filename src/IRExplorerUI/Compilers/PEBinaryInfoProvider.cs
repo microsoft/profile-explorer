@@ -36,7 +36,7 @@ namespace IRExplorerUI.Compilers {
             }
         }
 
-        public static BinaryFileDescription GetBinaryFileInfo(string filePath) {
+        public static BinaryFileDescriptor GetBinaryFileInfo(string filePath) {
             using var binaryInfo = new PEBinaryInfoProvider(filePath);
 
             if (binaryInfo.Initialize()) {
@@ -56,7 +56,7 @@ namespace IRExplorerUI.Compilers {
             return null;
         }
 
-        public static async Task<string> LocateBinaryFile(BinaryFileDescription binaryFile,
+        public static async Task<string> LocateBinaryFile(BinaryFileDescriptor binaryFile,
                                                             SymbolFileSourceOptions options) {
             string result = null;
 #if DEBUG
@@ -165,7 +165,7 @@ namespace IRExplorerUI.Compilers {
             //? TODO: return Unsafe.As<byte[]>(array);
         }
 
-        public BinaryFileDescription BinaryFileInfo {
+        public BinaryFileDescriptor BinaryFileInfo {
             get {
                 if (reader_.PEHeaders.PEHeader == null) {
                     return null;
@@ -182,7 +182,7 @@ namespace IRExplorerUI.Compilers {
                     }
                 }
 
-                return new BinaryFileDescription() {
+                return new BinaryFileDescriptor() {
                     ImageName = Utils.TryGetFileName(filePath_),
                     ImagePath = filePath_,
                     Architecture = reader_.PEHeaders.CoffHeader.Machine,

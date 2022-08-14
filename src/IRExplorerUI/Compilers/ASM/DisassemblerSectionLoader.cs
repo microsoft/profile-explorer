@@ -16,10 +16,10 @@ namespace IRExplorerUI.Compilers {
         private IDebugInfoProvider debugInfo_;
         private ICompilerInfoProvider compilerInfo_;
         private Dictionary<IRTextFunction, DebugFunctionInfo> funcToDebugInfoMap_;
-        private string debugFilePath_;
+        private DebugFileSearchResult debugInfoFile_;
         private bool isManagedImage_;
 
-        public string DebugFilePath => debugFilePath_;
+        public DebugFileSearchResult DebugInfoFile => debugInfoFile_;
 
         public DisassemblerSectionLoader(string binaryFilePath, ICompilerInfoProvider compilerInfo,
                                          IDebugInfoProvider debugInfo) {
@@ -63,7 +63,7 @@ namespace IRExplorerUI.Compilers {
 
         private bool InitializeDebugInfo() {
             if (debugInfo_ != null) {
-                if (debugInfo_.LoadDebugInfo(null)) {
+                if (debugInfo_.LoadDebugInfo("")) {
                     // For managed code, the code data is found on each function.
                     disassembler_ = Disassembler.CreateForMachine(debugInfo_);
                 }
@@ -72,9 +72,9 @@ namespace IRExplorerUI.Compilers {
             }
 
             debugInfo_ = compilerInfo_.CreateDebugInfoProvider(binaryFilePath_);
-            debugFilePath_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
+            debugInfoFile_ = compilerInfo_.FindDebugInfoFile(binaryFilePath_).Result;
 
-            if (debugInfo_.LoadDebugInfo(debugFilePath_)) {
+            if (debugInfoFile_.Found && debugInfo_.LoadDebugInfo(debugInfoFile_)) {
                 return true;
             }
 

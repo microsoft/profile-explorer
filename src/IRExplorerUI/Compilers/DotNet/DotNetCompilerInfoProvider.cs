@@ -30,7 +30,7 @@ namespace IRExplorerUI.Compilers.ASM {
         public override string OpenDebugFileFilter => "Debug Files|*.json|All Files|*.*";
         
         public override async Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
-            document.DebugInfoFilePath = await FindDebugInfoFile(modulePath);
+            document.DebugInfoFile = await FindDebugInfoFile(modulePath);
         }
     }
 }

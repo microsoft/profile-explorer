@@ -4,11 +4,11 @@ namespace IRExplorerUI.Compilers;
 
 public interface IBinaryInfoProvider {
     SymbolFileDescriptor SymbolFileInfo { get; }
-    BinaryFileDescription BinaryFileInfo { get; }
+    BinaryFileDescriptor BinaryFileInfo { get; }
     //? TODO: Add finding of binary here
 }
 
-public class BinaryFileDescription {
+public class BinaryFileDescriptor {
     public string ImageName { get; set; }
     public string ImagePath { get; set; }
     public Machine Architecture { get; set; }

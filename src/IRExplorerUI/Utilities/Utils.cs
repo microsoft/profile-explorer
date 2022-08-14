@@ -25,6 +25,7 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using IRExplorerCore;
 using IRExplorerCore.Analysis;
 using IRExplorerCore.IR;
+using IRExplorerUI.Compilers;
 using Microsoft.Win32;
 
 namespace IRExplorerUI {
@@ -103,7 +104,6 @@ namespace IRExplorerUI {
 
             return foundChild;
         }
-
 
         public static T FindChildLogical<T>(DependencyObject parent, string childName = null)
             where T : DependencyObject {
@@ -960,24 +960,25 @@ namespace IRExplorerUI {
             return null;
         }
 
-        public static string LocateDebugInfoFile(string imagePath, string extension) {
+        public static DebugFileSearchResult LocateDebugInfoFile(string imagePath, string extension) {
             try {
                 if (!File.Exists(imagePath)) {
-                    return null;
+                    return DebugFileSearchResult.None;
                 }
 
                 var path = Path.GetDirectoryName(imagePath);
-                var pdbPath = Path.Combine(path, Path.GetFileNameWithoutExtension(imagePath)) + extension;
+                var imageName = Path.GetFileNameWithoutExtension(imagePath);
+                var pdbPath = Path.Combine(path, imageName) + extension;
 
                 if (File.Exists(pdbPath)) {
-                    return pdbPath;
+                    return DebugFileSearchResult.Success(pdbPath);
                 }
             }
             catch (Exception ex) {
-
+                Trace.TraceError($"Failed to find debug file for {imagePath}: {ex.Message}");
             }
 
-            return null;
+            return DebugFileSearchResult.None;
         }
 
         public static bool IsBinaryFile(string filePath) {

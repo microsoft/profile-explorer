@@ -21,14 +21,13 @@ namespace IRExplorerUI {
         [ProtoMember(4)]
         public string BinaryFilePath;
         [ProtoMember(5)]
-        public string DebugInfoFilePath;
+        public DebugFileSearchResult DebugInfoFile;
         [ProtoMember(6)]
         public byte[] DocumentText;
         [ProtoMember(7)]
         public List<Tuple<int, byte[]>> SectionStates;
         [ProtoMember(8)]
         public List<Tuple<int, PanelObjectPairState>> PanelStates;
-        
 
         public LoadedDocumentState() {
             SectionStates = new List<Tuple<int, byte[]>>();
@@ -57,7 +56,7 @@ namespace IRExplorerUI {
         public string ModuleName { get; set; }
         public string FilePath { get; set; }
         public string BinaryFilePath { get; set; }
-        public string DebugInfoFilePath { get; set; }
+        public DebugFileSearchResult DebugInfoFile { get; set; }
         public IRTextSectionLoader Loader { get; set; }
 
         public IRTextSummary Summary {
@@ -75,8 +74,7 @@ namespace IRExplorerUI {
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
 
-        public bool DebugInfoFileExists => !string.IsNullOrEmpty(DebugInfoFilePath) &&
-                                            File.Exists(DebugInfoFilePath);
+        public bool DebugInfoFileExists => DebugInfoFile != null && DebugInfoFile.Found;
         public bool BinaryFileExists => !string.IsNullOrEmpty(BinaryFilePath) &&
                                          File.Exists(BinaryFilePath);
         public string FileName => Utils.TryGetFileName(FilePath);
@@ -133,7 +131,7 @@ namespace IRExplorerUI {
         public LoadedDocumentState SerializeDocument() {
             var state = new LoadedDocumentState(Id) {
                 ModuleName = ModuleName, FilePath = FilePath, BinaryFilePath = BinaryFilePath,
-                DebugInfoFilePath = DebugInfoFilePath,
+                DebugInfoFile = DebugInfoFile,
                 DocumentText = Loader.GetDocumentTextBytes()
             };
 
