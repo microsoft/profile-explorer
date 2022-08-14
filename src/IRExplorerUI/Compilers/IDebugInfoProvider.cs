@@ -8,6 +8,7 @@ using ProtoBuf;
 namespace IRExplorerUI.Compilers {
     public interface IDebugInfoProvider : IDisposable {
         bool LoadDebugInfo(string debugFilePath);
+        bool LoadDebugInfo(DebugFileSearchResult debugFile);
         bool AnnotateSourceLocations(FunctionIR function, IRTextFunction textFunc);
         bool AnnotateSourceLocations(FunctionIR function, string functionName);
         public Machine? Architecture { get; }
@@ -93,9 +94,13 @@ namespace IRExplorerUI.Compilers {
         }
     }
 
+    [ProtoContract]
     public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
+        [ProtoMember(1)]
         public string FileName { get; set; }
+        [ProtoMember(2)]
         public Guid Id { get; set; }
+        [ProtoMember(3)]
         public int Age { get; set; }
 
         public override string ToString() {
@@ -140,6 +145,10 @@ namespace IRExplorerUI.Compilers {
             FileName = fileName;
             Id = id;
             Age = age;
+        }
+
+        public SymbolFileDescriptor(string fileName) {
+            FileName = fileName;
         }
     }
 }

@@ -90,7 +90,6 @@ namespace IRExplorerUI {
             FontSize = settings.FontSize;
         }
 
-
         public bool ColumnsVisible {
             get => columnsVisible_;
             set {
@@ -252,7 +251,7 @@ namespace IRExplorerUI {
             else if (loadedDoc.DebugInfoFileExists) {
                 var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
                 
-                if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFilePath)) {
+                if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFile)) {
                     return debugInfo;
                 }
             }
@@ -584,7 +583,6 @@ namespace IRExplorerUI {
             // Sync scrolling with the optional columns.
             SyncColumnsVerticalScrollOffset(offset);
         }
-
 
         private void SyncColumnsVerticalScrollOffset(double offset) {
             // Sync scrolling with the optional columns.

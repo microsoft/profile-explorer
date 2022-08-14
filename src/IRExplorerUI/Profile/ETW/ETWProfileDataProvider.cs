@@ -18,6 +18,7 @@ namespace IRExplorerUI.Profile;
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     private ProfileDataProviderOptions options_;
+    private ProfileDataProviderReport report_;
     private ISession session_;
     private ICompilerInfoProvider compilerInfo_;
     private ProfileData profileData_;
@@ -29,15 +30,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     public ProfileData LoadTrace(string tracePath, string imageName, 
         ProfileDataProviderOptions options,
-        SymbolFileSourceOptions symbolOptions, 
+        SymbolFileSourceOptions symbolOptions,
+        ProfileDataProviderReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
         return LoadTraceAsync(tracePath, imageName, options, symbolOptions,
-            progressCallback, cancelableTask).Result;
+                              report, progressCallback, cancelableTask).Result;
     }
     
-    private BinaryFileDescription FromProfileImage(ProfileImage image) {
-        return new BinaryFileDescription() {
+    private BinaryFileDescriptor FromProfileImage(ProfileImage image) {
+        return new BinaryFileDescriptor() {
             ImageName = image.ModuleName,
             ImagePath = image.FilePath,
             Checksum = image.Checksum,
@@ -46,8 +48,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         };
     }
 
-    private BinaryFileDescription FromSummary(IRTextSummary summary) {
-        return new BinaryFileDescription();
+    private BinaryFileDescriptor FromSummary(IRTextSummary summary) {
+        return new BinaryFileDescriptor();
     }
 
     public class TraceProcessSummary {
@@ -84,6 +86,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
+        ProfileDataProviderReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
 
@@ -98,15 +101,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
 
         var binSearchOptions = symbolOptions.WithSymbolPaths(imageName, tracePath);
-        return await LoadTraceAsync(profile, imageName, options, binSearchOptions, progressCallback, cancelableTask);
+        return await LoadTraceAsync(profile, imageName, options, binSearchOptions, 
+                                    report, progressCallback, cancelableTask);
     }
 
     public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
+        ProfileDataProviderReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
-
 
         var mainProcess = prof.FindProcess(imageName, true);
 
@@ -114,14 +118,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             return null;
         }
 
-        return await LoadTraceAsync(prof, mainProcess, options, symbolOptions, progressCallback, cancelableTask);
+        return await LoadTraceAsync(prof, mainProcess, options, symbolOptions, 
+            report, progressCallback, cancelableTask);
     }
 
     public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, ProfileProcess mainProcess,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
+        ProfileDataProviderReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
+        report_ = report;
         var mainProcessId = mainProcess.ProcessId;
 
         try {
@@ -139,7 +146,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 
                 // Start getting the function address data while the trace is loading.
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading));
-                
 
                 ProfileImage prevImage = null;
                 ModuleInfo prevModule = null;
@@ -202,7 +208,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                         lock (imageLocks[queryImage.Id % IMAGE_LOCK_COUNT]) {
                             if (!imageModuleMap.TryGetValue(queryImage.Id, out imageModule)) {
-                                imageModule = new ModuleInfo(options_, session_);
+                                imageModule = new ModuleInfo(options_, report_, session_);
 
                                 //? Needs some delay-load, can't disasm every dll for no reason
                                 //? - now Initialize uses a whitelist
@@ -303,7 +309,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 // Locate the referenced binary files. This will download them
                 // from the symbol server if option activated and not yet on local machine.
                 var binTaskList = new Task<string>[imageLimit];
-                var pdbTaskList = new Task<string>[imageLimit];
+                var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
                 for (int i = 0; i < imageLimit; i++) {
                     var imagePath = imageList[i].FilePath;
@@ -313,7 +319,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         symbolOptions.InsertSymbolPath(imagePath);
                     }
                 }
-
 
                 for (int i = 0; i < imageLimit; i++) {
                     var binaryFile = FromProfileImage(imageList[i]);
@@ -372,7 +377,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     }
                 }
 #else
-
 
                     for (int i = 0; i < imageLimit; i++) {
                         progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
@@ -437,7 +441,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         //{
                         var stackFuncts = new HashSet<IRTextFunction>();
                         var stackModules = new HashSet<int>();
-
 
                         for (int i = start; i < end; i++) {
                             index++;

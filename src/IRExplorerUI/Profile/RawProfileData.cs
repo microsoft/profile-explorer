@@ -436,7 +436,7 @@ public class RawProfileData {
         return null;
     }
 
-    public ProfileImage FindImage(ProfileProcess process, BinaryFileDescription info) {
+    public ProfileImage FindImage(ProfileProcess process, BinaryFileDescriptor info) {
         foreach (var image in process.Images(this)) {
             if (image.FilePath == info.ImageName &&
                 image.TimeStamp == info.TimeStamp &&
@@ -613,7 +613,6 @@ public class RawProfileData {
                 Trace.WriteLine($"{sample}");
             }
         }
-
 
         //SampleHolder h = new SampleHolder() { samples = samples_ };
 

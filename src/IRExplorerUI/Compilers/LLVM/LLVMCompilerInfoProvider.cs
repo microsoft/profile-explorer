@@ -53,11 +53,11 @@ namespace IRExplorerUI.Compilers.LLVM {
             return new PDBDebugInfoProvider(App.Settings.SymbolOptions);
         }
 
-        public async Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options, string disasmOutputPath) {
+        public async Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options) {
             return Utils.LocateDebugInfoFile(imagePath, ".pdb");
         }
 
-        public Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null) {
+        public Task<string> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null) {
             return null;
         }
 

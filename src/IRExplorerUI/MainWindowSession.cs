@@ -145,11 +145,11 @@ namespace IRExplorerUI {
 
         private void OpenDebugExecuted(object sender, ExecutedRoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb", "Open debug info file",
-                (path) => sessionState_.MainDocument.DebugInfoFilePath = path);
+                (path) => sessionState_.MainDocument.DebugInfoFile = DebugFileSearchResult.Success(path));
 
         private void OpenDiffDebugExecuted(object sender, ExecutedRoutedEventArgs e) =>
             Utils.ShowOpenFileDialog(CompilerInfo.OpenDebugFileFilter, "*.pdb", "Open debug info file",
-                (path) => sessionState_.DiffDocument.DebugInfoFilePath = path);
+                (path) => sessionState_.DiffDocument.DebugInfoFile = DebugFileSearchResult.Success(path));
 
         private void CanExecuteDiffDocumentCommand(object sender, CanExecuteRoutedEventArgs e) {
             e.CanExecute = sessionState_ != null && sessionState_.IsInTwoDocumentsDiffMode;
@@ -403,7 +403,6 @@ namespace IRExplorerUI {
             return null;
         }
 
-
         private async Task BeginSessionStateChange() {
             // Wait for any running state changes.
             await SessionLoadCompleted.WaitAsync();
@@ -539,7 +538,7 @@ namespace IRExplorerUI {
 
             if (result != null) {
                 result.BinaryFilePath = filePath;
-                result.DebugInfoFilePath = loader.DebugFilePath;
+                result.DebugInfoFile = loader.DebugInfoFile;
             }
             
             return result;
@@ -882,7 +881,6 @@ namespace IRExplorerUI {
             return graphLayout_[kind];
         }
 
-
         private DelayedAction UpdateUIBeforeSectionLoad(IRTextSection section, IRDocumentHost document) {
             var delayedAction = new DelayedAction();
             //delayedAction.Start(TimeSpan.FromMilliseconds(500), () => { document.Opacity = 0.5; });
@@ -916,7 +914,6 @@ namespace IRExplorerUI {
 
             return FindActiveDocumentHost();
         }
-
 
         private void SetupDocumentEvents(IRDocumentHost document) {
             document.TextView.ActionPerformed += TextView_ActionPerformed;
@@ -1180,7 +1177,6 @@ namespace IRExplorerUI {
             Utils.EnableControl(StartPage);
         }
 
-
         private IRDocumentHost FindDocumentWithSection(IRTextSection section) {
             var result = sessionState_.DocumentHosts.Find(item => item.DocumentHost.Section == section);
             return result?.DocumentHost;
@@ -1381,7 +1377,6 @@ namespace IRExplorerUI {
             e.CanExecute = sessionState_ != null;
             e.Handled = true;
         }
-
 
         public void ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
             foreach (var docHostInfo in sessionState_.DocumentHosts) {

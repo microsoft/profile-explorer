@@ -125,5 +125,13 @@ namespace IRExplorerUI.Compilers {
 
             return true;
         }
+
+        public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
+            if (!debugFile.Found) {
+                return false;
+            }
+
+            return LoadDebugInfo(debugFile.FilePath);
+        }
     }
 }

@@ -19,12 +19,13 @@ namespace IRExplorerUI.Profile {
 
     public class ModuleInfo : IDisposable {
         private ISession session_;
-        private BinaryFileDescription binaryInfo_;
+        private BinaryFileDescriptor binaryInfo_;
         private ProfileDataProviderOptions options_;
         public List<DebugFunctionInfo> sortedFuncList_;
         private Dictionary<long, IRTextFunction> addressFuncMap_;
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
+        private ProfileDataProviderReport report_;
 
         public IRTextSummary Summary { get; set; }
         public LoadedDocument ModuleDocument { get; set; }
@@ -36,12 +37,13 @@ namespace IRExplorerUI.Profile {
         //? TODO: Needed only for inlinee samples
         public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
-        public ModuleInfo(ProfileDataProviderOptions options, ISession session) {
+        public ModuleInfo(ProfileDataProviderOptions options, ProfileDataProviderReport report,  ISession session) {
             options_ = options;
+            report_ = report;
             session_ = session;
         }
         
-        public async Task<bool> Initialize(BinaryFileDescription binaryInfo, SymbolFileSourceOptions options,
+        public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceOptions options,
                                             IDebugInfoProvider debugInfo) {
             if (Initialized) {
                 return true;
@@ -55,6 +57,7 @@ namespace IRExplorerUI.Profile {
 
             if (filePath == null) {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");
+                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadStatus.NotFound);
                 return false;
             }
             else {
@@ -68,10 +71,12 @@ namespace IRExplorerUI.Profile {
             
             if (loadedDoc == null) {
                 Trace.TraceWarning($"  Failed to load document for image {imageName}");
+                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadStatus.Failed, filePath);
                 return false;
             }
             else {
                 Trace.TraceWarning($"  Loaded document for image {imageName}");
+                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadStatus.Success, filePath);
             }
 
             ModuleDocument = loadedDoc;
@@ -95,7 +100,7 @@ namespace IRExplorerUI.Profile {
             }
 
             DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.BinaryFilePath);
-            HasDebugInfo = await Task.Run(() => DebugInfo.LoadDebugInfo(ModuleDocument.DebugInfoFilePath)).ConfigureAwait(false);
+            HasDebugInfo = await Task.Run(() => DebugInfo.LoadDebugInfo(ModuleDocument.DebugInfoFile)).ConfigureAwait(false);
 
             if (HasDebugInfo) {
                 HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
@@ -103,7 +108,7 @@ namespace IRExplorerUI.Profile {
                 // BuildUnmangledFunctionNameMap();
             }
             else {
-                Trace.TraceWarning($"Failed to load debug info: {ModuleDocument.DebugInfoFilePath}");
+                Trace.TraceWarning($"Failed to load debug info: {ModuleDocument.DebugInfoFile}");
             }
 
             return HasDebugInfo;
@@ -117,7 +122,7 @@ namespace IRExplorerUI.Profile {
             externalFuncNames_ = new Dictionary<string, IRTextFunction>();
             sortedFuncList_ = new List<DebugFunctionInfo>();
 
-            Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFilePath}");
+            Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFile}");
 
             foreach (var funcInfo in DebugInfo.EnumerateFunctions(false)) {
                 //Trace.WriteLine($"{funcInfo.Name}, {funcInfo.RVA}");
@@ -159,7 +164,6 @@ namespace IRExplorerUI.Profile {
 
             return true;
         }
-
 
         public async Task<string> FindBinaryFilePath(SymbolFileSourceOptions options) {
             // Use the symbol server to locate the image,

@@ -232,6 +232,7 @@ namespace IRExplorerUI {
             }
 
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+            var report = new ProfileDataProviderReport();
             IsLoadingProfile = true;
             bool success = false;
 
@@ -248,11 +249,13 @@ namespace IRExplorerUI {
                 }
 
                 success = await Session.LoadProfileData(recordedProfile_, selectedProcSummary_.Process,
-                                                        options_, binSearchOptions, ProfileLoadProgressCallback, task);
+                                                        options_, binSearchOptions, report,
+                                                        ProfileLoadProgressCallback, task);
             }
             else {
                 success = await Session.LoadProfileData(ProfileFilePath, BinaryFilePath,
-                                                       options_, symbolOptions_, ProfileLoadProgressCallback, task);
+                                                        options_, symbolOptions_, report,
+                                                        ProfileLoadProgressCallback, task);
             }
             IsLoadingProfile = false;
 

@@ -293,6 +293,9 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
 
+        public bool LoadDebugInfo(DebugFileSearchResult debugFile) {
+            return LoadDebugInfo(debugFile.FilePath);
+        }
 
         public void AddMethodILToNativeMap(DebugFunctionInfo debugInfo, List<(int ILOffset, int NativeOffset)> ilOffsets) {
             methodILNativeMap_[debugInfo] = ilOffsets;

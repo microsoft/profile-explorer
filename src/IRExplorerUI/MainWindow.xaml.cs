@@ -164,7 +164,6 @@ namespace IRExplorerUI {
 
 #if false
             var pdb = new PDBDebugInfoProvider(SymbolFileSourceOptions.Default);
-            
 
             var d = Disassembler.CreateForBinary(@"D:\work\blender\LTCG\blender.exe", pdb);
             if (pdb.LoadDebugInfo(@"D:\work\blender\LTCG\blender.pdb")) {
@@ -447,7 +446,6 @@ namespace IRExplorerUI {
                 }));
             });
 
-          
         }
 
         private static void CheckForUpdate() {
@@ -964,7 +962,6 @@ namespace IRExplorerUI {
             //sw.Restart();
             //var dict2 = new Dictionary<int, TimeSpan>();
 
-
             //for (int k = 0; k < 5; k++) {
             //    dict2.Clear();
             //    var sw4 = Stopwatch.StartNew();
@@ -981,7 +978,6 @@ namespace IRExplorerUI {
             //{
             //    Trace.Write($"{keyValuePair.Key}, ");
             //}
-
 
             //{
             //    using var ts = new StreamWriter(@"C:\work\pmc_counters.csv");
@@ -1013,7 +1009,6 @@ namespace IRExplorerUI {
             //? - per-proc core timeline
             //? o time range filter
             //? o group samples by process (cache)
-
 
             // 1 tick = 100 ns
             long resolution = 100;
@@ -1059,7 +1054,6 @@ namespace IRExplorerUI {
 
             Trace.WriteLine($"Samples: {profile.samples_.Count}");
             Trace.WriteLine($"Time: {timeDiff}, {timeDiff.TotalMinutes}");
-
 
             //foreach (var pair in list) {
             //    var p = profile.FindProcess(pair.Item1);
@@ -1115,7 +1109,6 @@ namespace IRExplorerUI {
                 IsZoomEnabled = true,
             });
 
-
             plotView.Model = model;
             w.Content = plotView;
             w.Show();
@@ -1154,7 +1147,6 @@ namespace IRExplorerUI {
             }
         }
 
-
         private void MenuItem_Click_9(object sender, RoutedEventArgs e) {
             InstallExtension();
         }
@@ -1166,7 +1158,6 @@ namespace IRExplorerUI {
         private void AlwaysOnTopMenuClicked(object sender, RoutedEventArgs e) {
             SetAlwaysOnTop(AlwaysOnTopCheckbox.IsChecked);
         }
-
 
         private void AlwaysOnTopButton_Click(object sender, RoutedEventArgs e) {
             SetAlwaysOnTop(AlwaysOnTopButton.IsChecked.HasValue && AlwaysOnTopButton.IsChecked.Value);
@@ -1339,7 +1330,6 @@ namespace IRExplorerUI {
 
         public ProfileData ProfileData => sessionState_.ProfileData;
 
-
         private bool AugmentCallerNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
             List<IRTextFunction> targetFuncts) {
             return ProfileData.HasFunctionProfile(node.Function);
@@ -1384,12 +1374,13 @@ namespace IRExplorerUI {
         public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
                                                 ProfileDataProviderOptions options,
                                                 SymbolFileSourceOptions symbolOptions,
+                                                ProfileDataProviderReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
             var result = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
-                                                                         options, symbolOptions,
-                                                                         progressCallback, cancelableTask);
+                                                          options, symbolOptions,
+                                                          report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
                 return false;
             }
@@ -1401,12 +1392,13 @@ namespace IRExplorerUI {
         public async Task<bool> LoadProfileData(RawProfileData data, string binaryFilePath,
                                                 ProfileDataProviderOptions options,
                                                 SymbolFileSourceOptions symbolOptions,
+                                                ProfileDataProviderReport report,
                                                 ProfileLoadProgressHandler progressCallback,
                                                 CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
             var result = await profileData.LoadTraceAsync(data, binaryFilePath,
                                                           options, symbolOptions,
-                                                          progressCallback, cancelableTask);
+                                                          report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
                 return false;
             }
@@ -1418,12 +1410,13 @@ namespace IRExplorerUI {
         public async Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
             ProfileDataProviderOptions options,
             SymbolFileSourceOptions symbolOptions,
+            ProfileDataProviderReport report,
             ProfileLoadProgressHandler progressCallback,
             CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
             var result = await profileData.LoadTraceAsync(data, process,
                 options, symbolOptions,
-                progressCallback, cancelableTask);
+                report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
                 return false;
             }

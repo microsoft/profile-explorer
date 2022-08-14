@@ -36,7 +36,7 @@ namespace IRExplorerUI {
         IDiffInputFilter CreateDiffInputFilter();
         IDiffOutputFilter CreateDiffOutputFilter();
         IDebugInfoProvider CreateDebugInfoProvider(string imagePath);
-        Task<string> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null, string disasmOutputPath = null);
-        Task<string> FindBinaryFile(BinaryFileDescription binaryFile, SymbolFileSourceOptions options = null);
+        Task<DebugFileSearchResult> FindDebugInfoFile(string imagePath, SymbolFileSourceOptions options = null);
+        Task<string> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null);
     }
 }

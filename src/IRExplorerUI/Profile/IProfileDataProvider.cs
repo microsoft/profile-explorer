@@ -13,12 +13,14 @@ public interface IProfileDataProvider {
     ProfileData LoadTrace(string tracePath, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
+        ProfileDataProviderReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask = null);
 
     Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
+        ProfileDataProviderReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask = null);
 }
@@ -28,6 +30,25 @@ public class ProfileDataProviderReport {
     //? list of PDB status (found, file, hash)
     //? other errors
     //? - similar to the UTC parser errors
+
+    public enum LoadStatus {
+        Success,
+        NotFound,
+        Failed
+    }
+
+    // SymbolFileSourceOptions
+    // ProfileRecordingSessionOptions
+
+    // dict -> {bin status, optional, debugSearch}
+
+    public void AddModuleInfo(BinaryFileDescriptor binaryInfo, LoadStatus status, string optional = "") {
+
+    }
+
+    public void AddDebugInfo(BinaryFileDescriptor binaryInfo, DebugFileSearchResult searchResult) {
+
+    }
 }
 
 public enum ProfileLoadStage {
