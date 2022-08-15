@@ -26,15 +26,26 @@ public interface IProfileDataProvider {
         CancelableTask cancelableTask = null);
 }
 
-public class TraceProcessSummary {
+[ProtoContract(SkipConstructor = true)]
+public class ProcessSummary {
+    [ProtoMember(1)]
     public ProfileProcess Process { get; set; }
+    [ProtoMember(2)]
     public TimeSpan Weight { get; set; }
+    [ProtoMember(3)]
     public double WeightPercentage { get; set; }
+    [ProtoMember(4)]
     public TimeSpan Duration { get; set; }
+    [ProtoMember(5)]
     public int SampleCount { get; set; }
+    [ProtoMember(6)]
     public List<(ProfileImage Image, TimeSpan Weight)> ImageWeights;
 
-    public TraceProcessSummary(ProfileProcess process, int sampleCount) {
+    public ProcessSummary() {
+        
+    }
+
+    public ProcessSummary(ProfileProcess process, int sampleCount) {
         Process = process;
         SampleCount = sampleCount;
         ImageWeights = new List<(ProfileImage Image, TimeSpan Weight)>();
@@ -45,6 +56,7 @@ public class TraceProcessSummary {
     }
 }
 
+[ProtoContract(SkipConstructor = true)]
 public class ProfileDataProviderReport {
     //? other errors
 
@@ -64,11 +76,9 @@ public class ProfileDataProviderReport {
     private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_;
     private List<string> errorList_;
 
-    public TraceProcessSummary Process { get; set; }
+    public ProfileProcess Process { get; set; }
     public SymbolFileSourceOptions SymbolOptions { get; set; }
     public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
-
-    // dict -> {bin status, optional, debugSearch}
 
     public ProfileDataProviderReport(SymbolFileSourceOptions symbolOptions) {
         SymbolOptions = symbolOptions;
