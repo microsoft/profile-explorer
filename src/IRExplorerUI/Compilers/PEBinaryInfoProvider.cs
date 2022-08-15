@@ -56,14 +56,11 @@ namespace IRExplorerUI.Compilers {
             return null;
         }
 
-        public static async Task<string> LocateBinaryFile(BinaryFileDescriptor binaryFile,
-                                                            SymbolFileSourceOptions options) {
+        public static async Task<BinaryFileSearchResult> LocateBinaryFile(BinaryFileDescriptor binaryFile,
+                                                                          SymbolFileSourceOptions options) {
             string result = null;
-#if DEBUG
             using var logWriter = new StringWriter();
-#else
-            var logWriter = StringWriter.Null;
-#endif
+     
             try {
                 options = options.WithSymbolPaths(binaryFile.ImagePath);
                 var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
@@ -114,7 +111,13 @@ namespace IRExplorerUI.Compilers {
             Trace.WriteLine(logWriter.ToString());
             Trace.WriteLine($"<< TraceEvent");
 #endif
-            return result;
+            if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+                // Read the binary info from the local file to fill in all fields.
+                binaryFile = PEBinaryInfoProvider.GetBinaryFileInfo(result);
+                return BinaryFileSearchResult.Success(binaryFile, result, logWriter.ToString());
+            }
+
+            return BinaryFileSearchResult.Failure(binaryFile, logWriter.ToString());
         }
 
         public SymbolFileDescriptor SymbolFileInfo {

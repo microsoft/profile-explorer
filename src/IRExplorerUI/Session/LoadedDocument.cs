@@ -19,7 +19,7 @@ namespace IRExplorerUI {
         [ProtoMember(3)]
         public string FilePath;
         [ProtoMember(4)]
-        public string BinaryFilePath;
+        public BinaryFileSearchResult BinaryFile;
         [ProtoMember(5)]
         public DebugFileSearchResult DebugInfoFile;
         [ProtoMember(6)]
@@ -55,7 +55,7 @@ namespace IRExplorerUI {
         public Guid Id { get; set; }
         public string ModuleName { get; set; }
         public string FilePath { get; set; }
-        public string BinaryFilePath { get; set; }
+        public BinaryFileSearchResult BinaryFile { get; set; }
         public DebugFileSearchResult DebugInfoFile { get; set; }
         public IRTextSectionLoader Loader { get; set; }
 
@@ -75,8 +75,7 @@ namespace IRExplorerUI {
         public Dictionary<IRTextSection, object> SectionStates;
 
         public bool DebugInfoFileExists => DebugInfoFile != null && DebugInfoFile.Found;
-        public bool BinaryFileExists => !string.IsNullOrEmpty(BinaryFilePath) &&
-                                         File.Exists(BinaryFilePath);
+        public bool BinaryFileExists => BinaryFile != null && BinaryFile.Found;
         public string FileName => Utils.TryGetFileName(FilePath);
 
         public event EventHandler DocumentChanged;
@@ -130,7 +129,7 @@ namespace IRExplorerUI {
 
         public LoadedDocumentState SerializeDocument() {
             var state = new LoadedDocumentState(Id) {
-                ModuleName = ModuleName, FilePath = FilePath, BinaryFilePath = BinaryFilePath,
+                ModuleName = ModuleName, FilePath = FilePath, BinaryFile = BinaryFile,
                 DebugInfoFile = DebugInfoFile,
                 DocumentText = Loader.GetDocumentTextBytes()
             };

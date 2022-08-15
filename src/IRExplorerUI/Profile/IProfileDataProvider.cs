@@ -26,6 +26,25 @@ public interface IProfileDataProvider {
         CancelableTask cancelableTask = null);
 }
 
+public class TraceProcessSummary {
+    public ProfileProcess Process { get; set; }
+    public TimeSpan Weight { get; set; }
+    public double WeightPercentage { get; set; }
+    public TimeSpan Duration { get; set; }
+    public int SampleCount { get; set; }
+    public List<(ProfileImage Image, TimeSpan Weight)> ImageWeights;
+
+    public TraceProcessSummary(ProfileProcess process, int sampleCount) {
+        Process = process;
+        SampleCount = sampleCount;
+        ImageWeights = new List<(ProfileImage Image, TimeSpan Weight)>();
+    }
+
+    public override string ToString() {
+        return Process.ToString();
+    }
+}
+
 public class ProfileDataProviderReport {
     //? other errors
 
@@ -37,16 +56,17 @@ public class ProfileDataProviderReport {
 
     public class ModuleStatus {
         public LoadState State { get; set; }
-        public BinaryFileDescriptor ImageFile { get; set; }
+        public BinaryFileDescriptor ImageFile { get; set; }    // Info used for lookup.
+        public BinaryFileSearchResult BinaryFile { get; set; } // Lookup result with local file.
         public DebugFileSearchResult DebugInfoFile { get; set; }
     }
 
     private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_;
     private List<string> errorList_;
 
+    public TraceProcessSummary Process { get; set; }
     public SymbolFileSourceOptions SymbolOptions { get; set; }
     public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
-    public string Executable { get; set; }
 
     // dict -> {bin status, optional, debugSearch}
 
@@ -56,8 +76,9 @@ public class ProfileDataProviderReport {
         errorList_ = new List<string>();
     }
 
-    public void AddModuleInfo(BinaryFileDescriptor binaryInfo, LoadState state, string optional = "") {
+    public void AddModuleInfo(BinaryFileDescriptor binaryInfo, BinaryFileSearchResult binaryFile, LoadState state) {
         var status = GetOrCreateModuleStatus(binaryInfo);
+        status.BinaryFile = binaryFile;
         status.State = state;
     }
 
@@ -80,7 +101,12 @@ public class ProfileDataProviderReport {
         foreach (var pair in moduleStatusMap_) {
             Trace.WriteLine($"Module {pair.Value.ImageFile.ImageName}");
             Trace.WriteLine($"   - state: {pair.Value.State}");
-            Trace.WriteLine($"   - path: {pair.Value.ImageFile.ImagePath}");
+
+            if (pair.Value.BinaryFile != null) {
+                Trace.WriteLine($"   - found: {pair.Value.BinaryFile.Found}");
+                Trace.WriteLine($"   - path: {pair.Value.BinaryFile.FilePath}");
+                Trace.WriteLine($"   - details: {pair.Value.BinaryFile.Details}");
+            }
             
             if (pair.Value.DebugInfoFile != null) {
                 Trace.WriteLine($"   - debug: {pair.Value.DebugInfoFile.Found}");

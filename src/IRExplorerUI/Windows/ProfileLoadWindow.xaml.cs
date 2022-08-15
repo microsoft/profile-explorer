@@ -31,8 +31,8 @@ namespace IRExplorerUI {
         private bool isLoadingProcessList_;
         private bool showProcessList_;
         private bool isRecordingProfile_;
-        private List<ETWProfileDataProvider.TraceProcessSummary> processList_;
-        private ETWProfileDataProvider.TraceProcessSummary selectedProcSummary_;
+        private List<TraceProcessSummary> processList_;
+        private TraceProcessSummary selectedProcSummary_;
         private bool windowClosed_;
 
         public ProfileLoadWindow(ISession session, bool recordMode) {
@@ -370,7 +370,7 @@ namespace IRExplorerUI {
 
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ProcessList.SelectedItem != null) {
-                selectedProcSummary_ = (ETWProfileDataProvider.TraceProcessSummary)ProcessList.SelectedItem;
+                selectedProcSummary_ = (TraceProcessSummary)ProcessList.SelectedItem;
                 BinaryAutocompleteBox.Text = selectedProcSummary_.Process.Name;
             }
         }
@@ -434,7 +434,7 @@ namespace IRExplorerUI {
             RecordProgressLabel.Text = status;
         }
 
-        private async Task DisplayProcessList(Func<Task<List<ETWProfileDataProvider.TraceProcessSummary>>> func) {
+        private async Task DisplayProcessList(Func<Task<List<TraceProcessSummary>>> func) {
             IsLoadingProcessList = true;
             ShowProcessList = false;
             processList_ = await func();

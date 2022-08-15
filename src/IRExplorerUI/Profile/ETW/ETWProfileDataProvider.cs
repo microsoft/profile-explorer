@@ -14,7 +14,7 @@ using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Profile.ETW;
 using Microsoft.Diagnostics.Tracing;
 
-namespace IRExplorerUI.Profile; 
+namespace IRExplorerUI.Profile;
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     private ProfileDataProviderOptions options_;
@@ -50,25 +50,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     private BinaryFileDescriptor FromSummary(IRTextSummary summary) {
         return new BinaryFileDescriptor();
-    }
-
-    public class TraceProcessSummary {
-        public ProfileProcess Process { get; set; }
-        public TimeSpan Weight { get; set; }
-        public double WeightPercentage { get; set; }
-        public TimeSpan Duration { get; set; }
-        public int SampleCount { get; set; }
-        public List<(ProfileImage Image, TimeSpan Weight)> ImageWeights;
-
-        public TraceProcessSummary(ProfileProcess process, int sampleCount) {
-            Process = process;
-            SampleCount = sampleCount;
-            ImageWeights = new List<(ProfileImage Image, TimeSpan Weight)>();
-        }
-
-        public override string ToString() {
-            return Process.ToString();
-        }
     }
 
     public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, ProfileDataProviderOptions options, 
@@ -308,7 +289,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 #if true
                 // Locate the referenced binary files. This will download them
                 // from the symbol server if option activated and not yet on local machine.
-                var binTaskList = new Task<string>[imageLimit];
+                var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
                 var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
 
                 for (int i = 0; i < imageLimit; i++) {
@@ -331,10 +312,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                 for (int i = 0; i < imageLimit; i++) {
                     if (binTaskList[i] == null) continue;
-                    var binaryFilePath = await binTaskList[i].ConfigureAwait(false);
+                    var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
-                    if (irMode == IRMode.Default && File.Exists(binaryFilePath)) {
-                        var binaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(binaryFilePath);
+                    if (irMode == IRMode.Default && binaryFile != null && binaryFile.Found) {
+                        var binaryInfo = binaryFile.BinaryFile;
 
                         if (binaryInfo != null) {
                             switch (binaryInfo.Architecture) {
@@ -357,14 +338,13 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 await session_.StartNewSession(imageName, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
 
                 for (int i = 0; i < imageLimit; i++) {
-                    var binaryFilePath = await binTaskList[i].ConfigureAwait(false);
+                    var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
-                    if (File.Exists(binaryFilePath)) {
-                        Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
+                    if (binaryFile != null && binaryFile.Found) {
                         var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FilePath);
                         acceptedImages.Add(name.ToLowerInvariant());
 
-                        pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
+                        pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath);
                     }
                 }
 
@@ -929,7 +909,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         continue;
                     }
 
-                    if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFilePath)) {
+                    if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFile?.FilePath)) {
                         if (exeDocument == null) {
                             exeDocument = pair.Value.ModuleDocument;
                             continue;

@@ -537,7 +537,7 @@ namespace IRExplorerUI {
             var result = await LoadDocument(filePath, modulePath, id, progressHandler, loader);
 
             if (result != null) {
-                result.BinaryFilePath = filePath;
+                result.BinaryFile = BinaryFileSearchResult.Success(filePath);
                 result.DebugInfoFile = loader.DebugInfoFile;
             }
             
