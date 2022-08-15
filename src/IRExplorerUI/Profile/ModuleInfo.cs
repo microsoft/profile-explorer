@@ -53,30 +53,26 @@ namespace IRExplorerUI.Profile {
             var imageName = binaryInfo.ImageName;
             Trace.WriteLine($"ModuleInfo init {imageName}");
             
-            var filePath = await FindBinaryFilePath(options).ConfigureAwait(false);
+            var binFile = await FindBinaryFilePath(options).ConfigureAwait(false);
 
-            if (filePath == null) {
+            if (binFile == null || !binFile.Found) {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadState.NotFound);
+                report_.AddModuleInfo(binaryInfo, binFile, ProfileDataProviderReport.LoadState.NotFound);
                 return false;
             }
-            else {
-                Trace.TraceInformation($"  Found local path for image {imageName}: {filePath}");
-            }
 
-            var localBinaryInfo = PEBinaryInfoProvider.GetBinaryFileInfo(filePath);
-            bool isManagedImage = localBinaryInfo != null && localBinaryInfo.IsManagedImage;
+            bool isManagedImage = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
             
-            var loadedDoc = await session_.LoadBinaryDocument(filePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
+            var loadedDoc = await session_.LoadBinaryDocument(binFile.FilePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
             
             if (loadedDoc == null) {
                 Trace.TraceWarning($"  Failed to load document for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadState.Failed, filePath);
+                report_.AddModuleInfo(binaryInfo, binFile, ProfileDataProviderReport.LoadState.Failed);
                 return false;
             }
             else {
                 Trace.TraceWarning($"  Loaded document for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadState.Loaded, filePath);
+                report_.AddModuleInfo(binaryInfo, binFile, ProfileDataProviderReport.LoadState.Loaded);
             }
 
             ModuleDocument = loadedDoc;
@@ -99,7 +95,7 @@ namespace IRExplorerUI.Profile {
                 return HasDebugInfo;
             }
 
-            DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.BinaryFilePath);
+            DebugInfo = session_.CompilerInfo.CreateDebugInfoProvider(ModuleDocument.BinaryFile.FilePath);
             HasDebugInfo = await Task.Run(() => DebugInfo.LoadDebugInfo(ModuleDocument.DebugInfoFile)).ConfigureAwait(false);
 
             if (HasDebugInfo) {
@@ -166,7 +162,7 @@ namespace IRExplorerUI.Profile {
             return true;
         }
 
-        public async Task<string> FindBinaryFilePath(SymbolFileSourceOptions options) {
+        public async Task<BinaryFileSearchResult> FindBinaryFilePath(SymbolFileSourceOptions options) {
             // Use the symbol server to locate the image,
             // this will also attempt to download it if not found locally.
             return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, options).ConfigureAwait(false);

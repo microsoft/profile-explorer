@@ -22,33 +22,6 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Compilers {
     //? TODO: Use for-each iterators everywhere
-    [ProtoContract]
-    public class DebugFileSearchResult {
-        [ProtoMember(1)]
-        public bool Found { get; set; }
-        [ProtoMember(2)]
-        public SymbolFileDescriptor SymbolFile { get; set; }
-        [ProtoMember(3)]
-         public string FilePath { get; set; }
-         [ProtoMember(4)]
-        public string Details { get; set; }
-
-        public static DebugFileSearchResult None =
-            new DebugFileSearchResult();
-
-        public static DebugFileSearchResult Success(SymbolFileDescriptor symbolFile, string filePath, string details = null) {
-            return new DebugFileSearchResult() { Found = true, SymbolFile = symbolFile, FilePath = filePath, Details = details };
-        }
-
-        public static DebugFileSearchResult Success(string filePath) {
-            return Success(new SymbolFileDescriptor(Path.GetFileName(filePath)), filePath);
-        }
-
-        public static DebugFileSearchResult Failure(SymbolFileDescriptor symbolFile, string details) {
-            return new DebugFileSearchResult() { SymbolFile = symbolFile, Details = details };
-        }
-    }
-
     public sealed class PDBDebugInfoProvider : IDisposable, IDebugInfoProvider {
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
         private const string DefaultSymbolSource = @"SRV*https://msdl.microsoft.com/download/symbols";

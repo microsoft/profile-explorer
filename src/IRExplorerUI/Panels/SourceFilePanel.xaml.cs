@@ -249,7 +249,7 @@ namespace IRExplorerUI {
                 return loadedDoc.DebugInfo;
             }
             else if (loadedDoc.DebugInfoFileExists) {
-                var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
+                var debugInfo = Session.CompilerInfo.CreateDebugInfoProvider(loadedDoc.BinaryFile.FilePath);
                 
                 if (debugInfo.LoadDebugInfo(loadedDoc.DebugInfoFile)) {
                     return debugInfo;

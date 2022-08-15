@@ -72,9 +72,9 @@ namespace IRExplorerUI.Compilers.ASM {
                 loadedDoc.DebugInfo.AnnotateSourceLocations(function, section.ParentFunction);
             }
             else if (debugFile != null && debugFile.Found) {
-                using var debugInfo = CreateDebugInfoProvider(loadedDoc.BinaryFilePath);
+                using var debugInfo = CreateDebugInfoProvider(loadedDoc.BinaryFile.FilePath);
 
-                if (debugInfo.LoadDebugInfo(debugFile.FilePath)) {
+                if (debugInfo.LoadDebugInfo(debugFile)) {
                     debugInfo.AnnotateSourceLocations(function, section.ParentFunction);
                 }
             }
@@ -144,7 +144,7 @@ namespace IRExplorerUI.Compilers.ASM {
             return null;
         }
 
-        public async Task<string> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null) {
+        public async Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null) {
             if (options == null) {
                 // Make sure the binary directory is also included in the symbol search.
                 options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
