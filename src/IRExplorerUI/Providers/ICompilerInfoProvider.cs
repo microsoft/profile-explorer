@@ -73,6 +73,10 @@ namespace IRExplorerUI {
         public static BinaryFileSearchResult Failure(BinaryFileDescriptor file, string details) {
             return new BinaryFileSearchResult() { BinaryFile = file, Details = details };
         }
+
+        public override string ToString() {
+            return FilePath;
+        }
     }
 
     [ProtoContract]
@@ -99,6 +103,10 @@ namespace IRExplorerUI {
 
         public static DebugFileSearchResult Failure(SymbolFileDescriptor symbolFile, string details) {
             return new DebugFileSearchResult() { SymbolFile = symbolFile, Details = details };
+        }
+
+        public override string ToString() {
+            return FilePath;
         }
     }
 }
