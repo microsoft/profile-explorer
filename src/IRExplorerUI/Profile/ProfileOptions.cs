@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using IRExplorerUI.Compilers;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
@@ -64,6 +65,11 @@ public class ProfileRecordingSessionOptions : SettingsBase {
         }
 
         return false;
+    }
+
+    public override SettingsBase Clone() {
+        var serialized = StateSerializer.Serialize(this);
+        return StateSerializer.Deserialize<ProfileRecordingSessionOptions>(serialized);
     }
 }
 

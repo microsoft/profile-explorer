@@ -375,9 +375,26 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void StartCaptureButton_OnClick(object sender, RoutedEventArgs e) {
-            options_.RecordingSessionOptions.ApplicationPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
+        private string SetSessionApplicationPath() {
             options_.RecordingSessionOptions.WorkingDirectory = Utils.CleanupPath(options_.RecordingSessionOptions.WorkingDirectory);
+            var appPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
+
+            if (!File.Exists(appPath) && options_.RecordingSessionOptions.HasWorkingDirectory) {
+                appPath = Path.Combine(options_.RecordingSessionOptions.WorkingDirectory, appPath);
+            }
+
+            options_.RecordingSessionOptions.ApplicationPath = appPath;
+            return appPath;
+        }
+
+        private async void StartCaptureButton_OnClick(object sender, RoutedEventArgs e) {
+            var appPath = SetSessionApplicationPath();
+
+            if (!File.Exists(appPath)) {
+                MessageBox.Show($"Could not find profiled application: {appPath}", "IR Explorer",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             if (options_.RecordingSessionOptions.RecordPerformanceCounters) {
                 options_.IncludePerformanceCounters = true;
@@ -396,7 +413,6 @@ namespace IRExplorerUI {
             
             recordedProfile_ = null;
 
-#if true
             var recordingTask = recordingSession.StartRecording(progressInfo => {
                 lastProgressInfo = progressInfo;
             }, task);
@@ -405,9 +421,6 @@ namespace IRExplorerUI {
                 recordedProfile_ = await recordingTask;
                 //StateSerializer.Serialize(@"C:\test\profile.dat", recordedProfile_);
             }
-#else
-            recordedProfile_ = StateSerializer.Deserialize<RawProfileData>(@"C:\test\profile.dat");
-#endif
 
             timer.Stop();
             IsRecordingProfile = false;
