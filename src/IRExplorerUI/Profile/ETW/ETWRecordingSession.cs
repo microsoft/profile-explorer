@@ -256,12 +256,6 @@ namespace IRExplorerUI.Profile.ETW {
 
         private (Process, int) StartProfiledApplication() {
             try {
-                var appPath = options_.ApplicationPath;
-
-                if (!File.Exists(appPath) && options_.HasWorkingDirectory) {
-                    appPath = Path.Combine(options_.WorkingDirectory, appPath);
-                }
-
                 var procInfo = new ProcessStartInfo(options_.ApplicationPath) {
                     Arguments = options_.ApplicationArguments,
                     WorkingDirectory = options_.HasWorkingDirectory ?
