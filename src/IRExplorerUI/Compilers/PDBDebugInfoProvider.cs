@@ -37,7 +37,7 @@ namespace IRExplorerUI.Compilers {
             new DebugFileSearchResult();
 
         public static DebugFileSearchResult Success(SymbolFileDescriptor symbolFile, string filePath, string details = null) {
-            return new DebugFileSearchResult() { Found = true, SymbolFile = symbolFile, FilePath = filePath };
+            return new DebugFileSearchResult() { Found = true, SymbolFile = symbolFile, FilePath = filePath, Details = details };
         }
 
         public static DebugFileSearchResult Success(string filePath) {

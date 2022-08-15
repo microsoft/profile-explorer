@@ -57,7 +57,7 @@ namespace IRExplorerUI.Profile {
 
             if (filePath == null) {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadStatus.NotFound);
+                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadState.NotFound);
                 return false;
             }
             else {
@@ -71,12 +71,12 @@ namespace IRExplorerUI.Profile {
             
             if (loadedDoc == null) {
                 Trace.TraceWarning($"  Failed to load document for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadStatus.Failed, filePath);
+                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadState.Failed, filePath);
                 return false;
             }
             else {
                 Trace.TraceWarning($"  Loaded document for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadStatus.Success, filePath);
+                report_.AddModuleInfo(binaryInfo, ProfileDataProviderReport.LoadState.Loaded, filePath);
             }
 
             ModuleDocument = loadedDoc;
@@ -111,6 +111,7 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceWarning($"Failed to load debug info: {ModuleDocument.DebugInfoFile}");
             }
 
+            report_.AddDebugInfo(binaryInfo_, ModuleDocument.DebugInfoFile);
             return HasDebugInfo;
         }
 
