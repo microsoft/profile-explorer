@@ -2303,6 +2303,9 @@ namespace IRExplorerUI {
 
             bool highlightElement = settings_.ShowInfoOnHover &&
                                     (!settings_.ShowInfoOnHoverWithModifier || Utils.IsKeyboardModifierActive());
+            if (!highlightElement) {
+                return;
+            }
 
             var position = e.GetPosition(TextArea.TextView);
             var element = FindPointedElement(position, out _);
@@ -2323,12 +2326,12 @@ namespace IRExplorerUI {
                     !(element is InstructionIR)) {
                     bool previewDisplayed = await ShowDefinitionPreview(element);
 
-                    if (highlightElement || previewDisplayed) {
+                    if (previewDisplayed) {
                         HideHoverHighlighting();
                         hoveredElement_ = element;
                         HandleElement(element, hoverHighlighter_,
-                                      markExpression: Utils.IsControlModifierActive(),
-                                      markReferences: Utils.IsShiftModifierActive());
+                            markExpression: Utils.IsControlModifierActive(),
+                            markReferences: Utils.IsShiftModifierActive());
                         UpdateHighlighting();
                         return;
                     }
@@ -3550,8 +3553,7 @@ namespace IRExplorerUI {
             bool show = false;
 
             if (!alwaysShow) {
-                if (!settings_.ShowPreviewPopup ||
-                    (settings_.ShowPreviewPopupWithModifier && !Utils.IsKeyboardModifierActive())) {
+                if (!settings_.ShowPreviewPopup) {
                     HidePreviewPopup();
                     return false;
                 }
