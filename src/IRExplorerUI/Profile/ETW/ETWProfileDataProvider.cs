@@ -52,7 +52,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         return new BinaryFileDescriptor();
     }
 
-    public static async Task<List<TraceProcessSummary>> FindTraceImages(string tracePath, ProfileDataProviderOptions options, 
+    public static async Task<List<ProcessSummary>> FindTraceImages(string tracePath, ProfileDataProviderOptions options, 
                                                                         CancelableTask cancelableTask) {
         try {
             using var eventProcessor = new ETWEventProcessor(tracePath, options);
@@ -110,6 +110,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
         report_ = report;
+        report_.Process = mainProcess;
         var mainProcessId = mainProcess.ProcessId;
 
         try {

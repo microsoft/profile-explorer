@@ -102,13 +102,6 @@ namespace IRExplorerUI {
                                     ProfileLoadProgressHandler progressCallback,
                                     CancelableTask cancelableTask);
 
-        Task<bool> LoadProfileData(RawProfileData data, string binaryFilePath,
-            ProfileDataProviderOptions options,
-            SymbolFileSourceOptions symbolOptions,
-            ProfileDataProviderReport report,
-            ProfileLoadProgressHandler progressCallback,
-            CancelableTask cancelableTask);
-
         Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
             ProfileDataProviderOptions options,
             SymbolFileSourceOptions symbolOptions,

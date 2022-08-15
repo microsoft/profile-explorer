@@ -31,8 +31,8 @@ namespace IRExplorerUI {
         private bool isLoadingProcessList_;
         private bool showProcessList_;
         private bool isRecordingProfile_;
-        private List<TraceProcessSummary> processList_;
-        private TraceProcessSummary selectedProcSummary_;
+        private List<ProcessSummary> processList_;
+        private ProcessSummary selectedProcSummary_;
         private bool windowClosed_;
 
         public ProfileLoadWindow(ISession session, bool recordMode) {
@@ -233,8 +233,8 @@ namespace IRExplorerUI {
 
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
             var report = new ProfileDataProviderReport((SymbolFileSourceOptions)symbolOptions_.Clone());
-            IsLoadingProfile = true;
             bool success = false;
+            IsLoadingProfile = true;
 
             if (IsRecordMode) {
                 if (selectedProcSummary_ == null) {
@@ -260,6 +260,7 @@ namespace IRExplorerUI {
 
             IsLoadingProfile = false;
             report.Dump();
+            ShowProfileReport(report);
 
             if (!success && !task.IsCanceled) {
                 MessageBox.Show($"Failed to load profile file {ProfileFilePath}", "IR Explorer",
@@ -272,6 +273,13 @@ namespace IRExplorerUI {
             }
             
             return success;
+        }
+
+        public void ShowProfileReport(ProfileDataProviderReport report) {
+            var panel = new ProfileReportPanel(Session);
+            panel.TitleSuffix = $"Profile report";
+            Session.DisplayFloatingPanel(panel);
+            panel.ShowReport(report);
         }
 
         private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
@@ -370,7 +378,7 @@ namespace IRExplorerUI {
 
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ProcessList.SelectedItem != null) {
-                selectedProcSummary_ = (TraceProcessSummary)ProcessList.SelectedItem;
+                selectedProcSummary_ = (ProcessSummary)ProcessList.SelectedItem;
                 BinaryAutocompleteBox.Text = selectedProcSummary_.Process.Name;
             }
         }
@@ -447,7 +455,7 @@ namespace IRExplorerUI {
             RecordProgressLabel.Text = status;
         }
 
-        private async Task DisplayProcessList(Func<Task<List<TraceProcessSummary>>> func) {
+        private async Task DisplayProcessList(Func<Task<List<ProcessSummary>>> func) {
             IsLoadingProcessList = true;
             ShowProcessList = false;
             processList_ = await func();

@@ -498,8 +498,8 @@ public class RawProfileData {
         return globalIpImageCache_.Find(ip);
     }
 
-    public List<TraceProcessSummary> BuildProcessSummary() {
-        var list = new List<TraceProcessSummary>();
+    public List<ProcessSummary> BuildProcessSummary() {
+        var list = new List<ProcessSummary>();
         var processSamples = new Dictionary<ProfileProcess, int>();
         //var procImageW = new Dictionary<ProfileProcess, Dictionary<ProfileImage, TimeSpan>>();
         var procDuration = new Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)>();
@@ -540,7 +540,7 @@ public class RawProfileData {
         };
         
         foreach (var pair in processSamples) {
-            var item = new TraceProcessSummary(pair.Key, pair.Value);
+            var item = new ProcessSummary(pair.Key, pair.Value);
             
             item.WeightPercentage = 100 * (double)pair.Value / (double)samples_.Count;
             list.Add(item);

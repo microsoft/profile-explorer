@@ -1389,24 +1389,6 @@ namespace IRExplorerUI {
             return result != null;
         }
 
-        public async Task<bool> LoadProfileData(RawProfileData data, string binaryFilePath,
-                                                ProfileDataProviderOptions options,
-                                                SymbolFileSourceOptions symbolOptions,
-                                                ProfileDataProviderReport report,
-                                                ProfileLoadProgressHandler progressCallback,
-                                                CancelableTask cancelableTask) {
-            using var profileData = new ETWProfileDataProvider(this);
-            var result = await profileData.LoadTraceAsync(data, binaryFilePath,
-                                                          options, symbolOptions,
-                                                          report, progressCallback, cancelableTask);
-            if (!IsSessionStarted) {
-                return false;
-            }
-
-            sessionState_.ProfileData = result;
-            return result != null;
-        }
-
         public async Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
             ProfileDataProviderOptions options,
             SymbolFileSourceOptions symbolOptions,

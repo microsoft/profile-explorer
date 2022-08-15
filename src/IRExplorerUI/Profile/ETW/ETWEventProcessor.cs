@@ -63,7 +63,7 @@ public class ETWEventProcessor : IDisposable {
         providerOptions_ = providerOptions;
     }
 
-    public List<TraceProcessSummary> BuildProcessSummary(CancelableTask cancelableTask) {
+    public List<ProcessSummary> BuildProcessSummary(CancelableTask cancelableTask) {
         // Default 1ms sampling interval 1ms.
         UpdateSamplingInterval(10000);
         

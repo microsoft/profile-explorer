@@ -1329,7 +1329,6 @@ namespace IRExplorerUI {
         }
 
         private async Task RunFunctionAnalysis() {
-            return;
             if (settings_.ComputeStatistics) {
                 await ComputeFunctionStatistics();
             }
@@ -2371,9 +2370,9 @@ namespace IRExplorerUI {
             moduleReport_ = new ModuleReport(functionStatMap_);
             moduleReport_.Generate();
 
-            var panel = new ModuleReportPanel();
+            var panel = new ModuleReportPanel(Session);
             panel.TitleSuffix = $"Function report";
-            panel.ShowReport(moduleReport_, summary_, Session);
+            panel.ShowReport(moduleReport_, summary_);
             Session.DisplayFloatingPanel(panel);
         }
 

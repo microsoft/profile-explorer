@@ -31,8 +31,9 @@ namespace IRExplorerUI {
         private IRTextSummary summary_;
         private ISession session_;
 
-        public ModuleReportPanel() {
+        public ModuleReportPanel(ISession session) {
             InitializeComponent();
+            session_ = session;
         }
 
         //? TODO:
@@ -40,11 +41,10 @@ namespace IRExplorerUI {
         //? - show function list on the right side
         //? - selecting distrib range shows functs
 
-        public void ShowReport(ModuleReport report, IRTextSummary summary, ISession session) {
+        public void ShowReport(ModuleReport report, IRTextSummary summary) {
             report_ = report;
             summary_ = summary;
             DataContext = report;
-            session_ = session;
 
             SingleCallerExpander.DataContext = report.ComputeGroupStatistics(report.SingleCallerFunctions);
             LeafExpander.DataContext = report.ComputeGroupStatistics(report.LeafFunctions);
