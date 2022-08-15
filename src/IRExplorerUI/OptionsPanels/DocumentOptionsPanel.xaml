@@ -231,22 +231,18 @@
                 Margin="0,2,0,2"
                 Content="Show value information on hover"
                 IsChecked="{Binding Path=ShowInfoOnHover, Mode=TwoWay}" />
+
+            <CheckBox
+                x:Name="ShowPreviewCheckbox"
+                Margin="20,2,0,2"
+                Content="Show definition preview popup on hover"
+                IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}"
+                IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}"/>
             <CheckBox
                 Margin="20,2,0,2"
                 Content="Only when the Alt key is pressed"
                 IsChecked="{Binding Path=ShowInfoOnHoverWithModifier, Mode=TwoWay}"
                 IsEnabled="{Binding ElementName=HoverCheckbox, Path=IsChecked}" />
-
-            <CheckBox
-                x:Name="ShowPreviewCheckbox"
-                Margin="0,2,0,2"
-                Content="Show definition preview popup on hover"
-                IsChecked="{Binding Path=ShowPreviewPopup, Mode=TwoWay}" />
-            <CheckBox
-                Margin="20,2,0,2"
-                Content="Only when the Alt key is pressed"
-                IsChecked="{Binding Path=ShowPreviewPopupWithModifier, Mode=TwoWay}"
-                IsEnabled="{Binding ElementName=ShowPreviewCheckbox, Path=IsChecked}" />
             <Separator Margin="0,4,0,4" />
 
             <DockPanel>

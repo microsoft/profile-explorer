@@ -35,7 +35,8 @@ namespace IRExplorerUI {
 
         [ProtoMember(11)] public bool ShowPreviewPopup { get; set; }
 
-        [ProtoMember(12)] public bool ShowPreviewPopupWithModifier { get; set; }
+        //? TODO: REMOVE
+        //? [ProtoMember(12)] public bool ShowPreviewPopupWithModifier { get; set; }
 
         [ProtoMember(13)] public Color BackgroundColor { get; set; }
 
@@ -74,9 +75,8 @@ namespace IRExplorerUI {
             HighlightDestinationUses = true;
             HighlightInstructionOperands = true;
             ShowInfoOnHover = true;
-            ShowInfoOnHoverWithModifier = true;
+            ShowInfoOnHoverWithModifier = false;
             ShowPreviewPopup = true;
-            ShowPreviewPopupWithModifier = false;
             FilterSourceDefinitions = true;
             FilterDestinationUses = true;
             BackgroundColor = Utils.ColorFromString("#FFFAFA");
@@ -109,7 +109,6 @@ namespace IRExplorerUI {
                    ShowInfoOnHover == settings.ShowInfoOnHover &&
                    ShowInfoOnHoverWithModifier == settings.ShowInfoOnHoverWithModifier &&
                    ShowPreviewPopup == settings.ShowPreviewPopup &&
-                   ShowPreviewPopupWithModifier == settings.ShowPreviewPopupWithModifier &&
                    FilterSourceDefinitions == settings.FilterSourceDefinitions &&
                    FilterDestinationUses == settings.FilterDestinationUses &&
                    BackgroundColor.Equals(settings.BackgroundColor) &&

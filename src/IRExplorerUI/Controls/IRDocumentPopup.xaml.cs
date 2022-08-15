@@ -136,7 +136,7 @@ namespace IRExplorerUI.Controls {
                 document.MarkElementWithDefaultStyle(PreviewedElement);
                 return;
             }
-                
+            
             document.BringElementIntoView(PreviewedElement, BringIntoViewStyle.FirstLine);
         }
 
