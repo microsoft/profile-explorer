@@ -69,6 +69,7 @@ namespace IRExplorerUI {
                 }
 
                 App.SaveApplicationSettings();
+                DialogResult = true;
                 Close();
             }
         }

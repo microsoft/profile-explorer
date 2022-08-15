@@ -720,7 +720,7 @@
                                     VerticalAlignment="Top"
                                     DockPanel.Dock="Right"
                                     Orientation="Horizontal">
-                                    <Image Source="{StaticResource SearchIcon}" />
+                                    <Image Source="{StaticResource SearchIcon}" Height="16"/>
                                     <Grid x:Name="FunctionFilterGrid" Height="24">
                                         <TextBox
                                             Name="CounterFilter"
@@ -840,7 +840,7 @@
                                     VerticalAlignment="Top"
                                     DockPanel.Dock="Right"
                                     Orientation="Horizontal">
-                                    <Image Source="{StaticResource SearchIcon}" />
+                                    <Image Source="{StaticResource SearchIcon}" Height="16"/>
                                     <Grid Height="24">
                                         <TextBox
                                             Name="MetricFilter"

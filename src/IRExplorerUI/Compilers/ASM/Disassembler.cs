@@ -413,10 +413,6 @@ namespace IRExplorerUI.Compilers.ASM {
             return count;
         }
 
-        private void SetDisassemblerOption(Interop.DisassemblerOptionType option, Interop.DisassemblerOptionValue value) {
-            Interop.SetDisassemblerOption(disasmHandle_, option, (IntPtr)value);
-        }
-
         private (byte[] Data, long StartRVA) FindCodeSection(long rva) {
             foreach (var section in codeSectionData_) {
                 if (rva >= section.StartRVA && rva < section.StartRVA + section.Data.Length) {
@@ -695,7 +691,9 @@ namespace IRExplorerUI.Compilers.ASM {
                 var resultCode = CreateDisassembler(architecture, mode, ref disasmPtr);
 
                 if (resultCode == CapstoneResultCode.Ok) {
-                    return new DisassemblerHandle(disasmPtr);
+                    var handle = new DisassemblerHandle(disasmPtr);
+                    //SetDisassemblerOption(handle, DisassemblerOptionType.SetSkipData, (IntPtr)DisassemblerOptionValue.Enable);
+                    return handle;
                 }
 
                 Trace.WriteLine($"Failed to create Capstone disassembler: {resultCode}");

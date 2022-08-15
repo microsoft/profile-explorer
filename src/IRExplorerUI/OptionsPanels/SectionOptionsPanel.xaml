@@ -92,7 +92,14 @@
                 Margin="0,4,0,2"
                 Content="Compute instruction statistics"
                 IsChecked="{Binding ComputeStatistics, Mode=TwoWay}"
-                ToolTip="Compute IR statistics on document load and show extra columns" />
+                ToolTip="Compute function IR statistics on document load and show extra columns" />
+            <CheckBox
+                x:Name="CallGraphStatisticsCheckbox"
+                Margin="20,2,0,2"
+                Content="Include call statistics"
+                IsChecked="{Binding IncludeCallGraphStatistics, Mode=TwoWay}"
+                IsEnabled="{Binding ElementName=StatisticsCheckbox, Path=IsChecked}"
+                ToolTip="Include caller/callee count function statistics" />
             <CheckBox
                 x:Name="DemanglingCheckbox"
                 Margin="0,2,0,2"

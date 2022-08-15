@@ -2328,7 +2328,7 @@ namespace IRExplorerUI {
             var tasks = new List<Task>();
             var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, 16);
             var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
-            var callGraph = await GenerateCallGraph(summary_);
+            var callGraph = settings_.IncludeCallGraphStatistics ? await GenerateCallGraph(summary_) : null;
 
             Session.SetApplicationProgress(true, double.NaN, "Computing statistics");
             functionStatMap_ = new ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>();
@@ -2449,7 +2449,21 @@ namespace IRExplorerUI {
         private static IValueConverter DiffValueConverter = new FunctionDiffValueConverter();
         private static IValueConverter DiffKindConverter = new FunctionDiffKindConverter();
 
-        private static OptionalColumn[] StatisticsColumns = new OptionalColumn[] { OptionalColumn.Binding("Statistics.Instructions", "InstructionsHeader", "Instrs{0}", "Instruction number{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.Size", "SizeHeader", "Size{0}", "Function size in bytes{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.Loads", "LoadsHeader", "Loads{0}", "Number of instructions reading memory{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.Stores", "StoresHeader", "Stores{0}", "Number of instructions writing memory{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.Branches", "BranchesHeader", "Branches{0}", "Number of branch/jump instructions{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.Callees", "CalleesHeader", "Callees{0}", "Number of unique called functions{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.Callers", "CallersHeader", "Callers{0}", "Number of unique caller functions{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.Calls", "CallsHeader", "Calls{0}", "Number of call instructions{0}", DiffValueConverter), OptionalColumn.Binding("Statistics.IndirectCalls", "IndirectCallsHeader", "IndirectCalls{0}", "Number of indirect/virtual call instructions{0}", DiffValueConverter) };
+        private static OptionalColumn[] StatisticsColumns = new OptionalColumn[] {
+            OptionalColumn.Binding("Statistics.Instructions", "InstructionsHeader", "Instrs{0}", "Instruction number{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Size", "SizeHeader", "Size{0}", "Function size in bytes{0}", DiffValueConverter), 
+            OptionalColumn.Binding("Statistics.Loads", "LoadsHeader", "Loads{0}", "Number of instructions reading memory{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Stores", "StoresHeader", "Stores{0}", "Number of instructions writing memory{0}", DiffValueConverter), 
+            OptionalColumn.Binding("Statistics.Branches", "BranchesHeader", "Branches{0}", "Number of branch/jump instructions{0}", DiffValueConverter)
+        };
+
+        private static OptionalColumn[] CallStatisticsColumns = new OptionalColumn[] {
+            OptionalColumn.Binding("Statistics.Callees", "CalleesHeader", "Callees{0}", "Number of unique called functions{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Callers", "CallersHeader", "Callers{0}", "Number of unique caller functions{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.Calls", "CallsHeader", "Calls{0}", "Number of call instructions{0}", DiffValueConverter),
+            OptionalColumn.Binding("Statistics.IndirectCalls", "IndirectCallsHeader", "IndirectCalls{0}", "Number of indirect/virtual call instructions{0}", DiffValueConverter)
+        };
+
         private static OptionalColumn[] StatisticsDiffColumns = new OptionalColumn[] {
             OptionalColumn.Binding("FunctionDiffKind",
                 "DiffHeader", $"Diff", "Difference kind (only in left/right document or modified)", DiffKindConverter),
@@ -2484,9 +2498,14 @@ namespace IRExplorerUI {
 
         public void AddStatisticsFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
             OptionalColumn.RemoveListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_);
+            OptionalColumn.RemoveListViewColumns(FunctionList, CallStatisticsColumns, functionValueSorter_);
             OptionalColumn.RemoveListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
 
             OptionalColumn.AddListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn);
+
+            if (settings_.IncludeCallGraphStatistics) {
+                OptionalColumn.AddListViewColumns(FunctionList, CallStatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn);
+            }
 
             if (addDiffColumn) {
                 OptionalColumn.AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);

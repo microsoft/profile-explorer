@@ -1328,7 +1328,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public ProfileData ProfileData => sessionState_.ProfileData;
+        public ProfileData ProfileData => sessionState_?.ProfileData;
 
         private bool AugmentCallerNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
             List<IRTextFunction> targetFuncts) {

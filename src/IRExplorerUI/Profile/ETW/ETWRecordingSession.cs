@@ -256,6 +256,12 @@ namespace IRExplorerUI.Profile.ETW {
 
         private (Process, int) StartProfiledApplication() {
             try {
+                var appPath = options_.ApplicationPath;
+
+                if (!File.Exists(appPath) && options_.HasWorkingDirectory) {
+                    appPath = Path.Combine(options_.WorkingDirectory, appPath);
+                }
+
                 var procInfo = new ProcessStartInfo(options_.ApplicationPath) {
                     Arguments = options_.ApplicationArguments,
                     WorkingDirectory = options_.HasWorkingDirectory ?
@@ -348,9 +354,14 @@ namespace IRExplorerUI.Profile.ETW {
 
         private void StopSession() {
             if (session_ != null) {
-                session_.Flush();
-                session_.Stop();
-                session_.Dispose();
+                try {
+                    session_.Stop();
+                    session_.Dispose();
+                }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed to stop ETW session: {ex.Message}");
+                }
+
                 session_ = null;
             }
         }

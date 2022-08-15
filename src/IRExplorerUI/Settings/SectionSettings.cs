@@ -30,6 +30,7 @@ namespace IRExplorerUI {
         [ProtoMember(19)] public bool DemangleNoReturnType { get; set; }
         [ProtoMember(20)] public bool DemangleNoSpecialKeywords { get; set; }
         [ProtoMember(21)] public bool ComputeStatistics { get; set; }
+        [ProtoMember(22)] public bool IncludeCallGraphStatistics { get; set; }
 
         public FunctionNameDemanglingOptions DemanglingOptions {
             get {
