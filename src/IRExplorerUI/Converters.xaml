@@ -21,5 +21,7 @@
     <utils:ListToStringConverter x:Key="StringListConverter" />
     <utils:ListPairToStringConverter x:Key="StringListPairConverter" />
     <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />
+    <utils:PerformanceCounterListConverter x:Key="PerformanceCounterConverter" />
+
     <utils:InvertedBooleanConverter x:Key="InvertedBool" />
 </ResourceDictionary>

@@ -80,6 +80,8 @@ public class ProfileDataProviderReport {
     public SymbolFileSourceOptions SymbolOptions { get; set; }
     public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
 
+    public bool IsRecordingSession => SessionOptions != null;
+
     public ProfileDataProviderReport(SymbolFileSourceOptions symbolOptions) {
         SymbolOptions = symbolOptions;
         moduleStatusMap_ = new Dictionary<BinaryFileDescriptor, ModuleStatus>();

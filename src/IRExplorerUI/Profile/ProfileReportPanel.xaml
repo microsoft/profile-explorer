@@ -44,7 +44,11 @@
                     Text="{Binding Process.CommandLine}" />
             </Grid>
             <Separator Margin="0,8,0,0" />
-            <Expander Margin="0,8,0,0" Header="Recording session">
+
+            <Expander
+                Margin="0,8,0,0"
+                Header="Recording session"
+                Visibility="{Binding IsRecordingSession, Converter={StaticResource BoolToVisibility}}">
                 <StackPanel Margin="0,4,0,0">
                     <Grid>
                         <TextBlock VerticalAlignment="Center" Text="Application path" />
@@ -95,7 +99,7 @@
                             BorderBrush="LightGray"
                             Foreground="DarkBlue"
                             IsReadOnly="True"
-                            Text="{Binding Path=SessionOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
+                            Text="{Binding Path=SessionOptions.EnvironmentVariables, Converter={StaticResource StringListPairConverter}}"
                             Visibility="{Binding SessionOptions.EnableEnvironmentVars, Converter={StaticResource BoolToVisibility}}" />
                     </Grid>
                     <Separator Margin="0,4,0,4" />
@@ -147,13 +151,16 @@
                             BorderBrush="LightGray"
                             Foreground="DarkBlue"
                             IsReadOnly="True"
-                            Text="{Binding Path=SessionOptions.EnabledPerformanceCounters, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
+                            Text="{Binding Path=SessionOptions.EnabledPerformanceCounters, Mode=OneWay, Converter={StaticResource PerformanceCounterConverter}}"
                             Visibility="{Binding SessionOptions.RecordPerformanceCounters, Converter={StaticResource BoolToVisibility}}" />
                     </Grid>
                 </StackPanel>
             </Expander>
-            <Separator Margin="0,8,0,0" />
-            <Expander Margin="0,8,0,0" Header="Modules">
+            <Separator Margin="0,8,0,0" Visibility="{Binding IsRecordingSession, Converter={StaticResource BoolToVisibility}}" />
+            <Expander
+                Margin="0,8,0,0"
+                Header="Modules"
+                IsExpanded="True">
                 <StackPanel Margin="0,4,0,0">
                     <ListView
                         x:Name="ModuleList"
