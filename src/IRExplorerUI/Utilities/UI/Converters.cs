@@ -10,6 +10,7 @@ using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Media;
 using DocumentFormat.OpenXml.Bibliography;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Utilities; 
 
@@ -259,5 +260,31 @@ public class DictionaryToStringConverter : IValueConverter {
         }
 
         return dict;
+    }
+}
+
+public class PerformanceCounterListConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+        var sb = new StringBuilder();
+        bool first = true;
+
+        if (value is List<PerformanceCounterConfig> list) {
+            foreach (var line in list) {
+                if (!first) {
+                    sb.AppendLine();
+                }
+                else {
+                    first = false;
+                }
+
+                sb.Append($"{line.Name}, Id {line.Id}");
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+        return null;
     }
 }
