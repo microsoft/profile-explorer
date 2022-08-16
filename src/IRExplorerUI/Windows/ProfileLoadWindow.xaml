@@ -104,7 +104,7 @@
                                 Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
-                                Text="{Binding Path=Options.RecordingSessionOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringDictionaryConverter}}"
+                                Text="{Binding Path=Options.RecordingSessionOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
                                 TextWrapping="Wrap" />
 
                         </StackPanel>
@@ -720,7 +720,7 @@
                                     VerticalAlignment="Top"
                                     DockPanel.Dock="Right"
                                     Orientation="Horizontal">
-                                    <Image Source="{StaticResource SearchIcon}" Height="16"/>
+                                    <Image Height="16" Source="{StaticResource SearchIcon}" />
                                     <Grid x:Name="FunctionFilterGrid" Height="24">
                                         <TextBox
                                             Name="CounterFilter"
@@ -793,7 +793,6 @@
                                             <GridViewColumnHeader Content="Name" />
                                         </GridViewColumn>
 
-
                                         <GridViewColumn Width="100" DisplayMemberBinding="{Binding RelativeCounterName}">
                                             <GridViewColumn.HeaderContainerStyle>
                                                 <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -840,7 +839,7 @@
                                     VerticalAlignment="Top"
                                     DockPanel.Dock="Right"
                                     Orientation="Horizontal">
-                                    <Image Source="{StaticResource SearchIcon}" Height="16"/>
+                                    <Image Height="16" Source="{StaticResource SearchIcon}" />
                                     <Grid Height="24">
                                         <TextBox
                                             Name="MetricFilter"
