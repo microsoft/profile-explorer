@@ -69,9 +69,9 @@ public class ProfileDataReport {
         [ProtoMember(1)]
         public ModuleLoadState State { get; set; }
         [ProtoMember(2)]
-        public BinaryFileDescriptor ImageFile { get; set; }    // Info used for lookup.
+        public BinaryFileDescriptor ImageFileInfo { get; set; }    // Info used for lookup.
         [ProtoMember(3)]
-        public BinaryFileSearchResult BinaryFile { get; set; } // Lookup result with local file.
+        public BinaryFileSearchResult BinaryFileInfo { get; set; } // Lookup result with local file.
         [ProtoMember(4)]
         public DebugFileSearchResult DebugInfoFile { get; set; }
     }
@@ -103,14 +103,14 @@ public class ProfileDataReport {
 
     public void AddModuleInfo(BinaryFileDescriptor binaryInfo, BinaryFileSearchResult binaryFile, ModuleLoadState state) {
         var status = GetOrCreateModuleStatus(binaryInfo);
-        status.BinaryFile = binaryFile;
+        status.BinaryFileInfo = binaryFile;
         status.State = state;
     }
 
     private ModuleStatus GetOrCreateModuleStatus(BinaryFileDescriptor binaryInfo) {
         if (!moduleStatusMap_.TryGetValue(binaryInfo, out var status)) {
             status = new ModuleStatus();
-            status.ImageFile = binaryInfo;
+            status.ImageFileInfo = binaryInfo;
             moduleStatusMap_[binaryInfo] = status;
         }
 
@@ -124,13 +124,13 @@ public class ProfileDataReport {
 
     public void Dump() {
         foreach (var pair in moduleStatusMap_) {
-            Trace.WriteLine($"Module {pair.Value.ImageFile.ImageName}");
+            Trace.WriteLine($"Module {pair.Value.ImageFileInfo.ImageName}");
             Trace.WriteLine($"   - state: {pair.Value.State}");
 
-            if (pair.Value.BinaryFile != null) {
-                Trace.WriteLine($"   - found: {pair.Value.BinaryFile.Found}");
-                Trace.WriteLine($"   - path: {pair.Value.BinaryFile.FilePath}");
-                Trace.WriteLine($"   - details: {pair.Value.BinaryFile.Details}");
+            if (pair.Value.BinaryFileInfo != null) {
+                Trace.WriteLine($"   - found: {pair.Value.BinaryFileInfo.Found}");
+                Trace.WriteLine($"   - path: {pair.Value.BinaryFileInfo.FilePath}");
+                Trace.WriteLine($"   - details: {pair.Value.BinaryFileInfo.Details}");
             }
             
             if (pair.Value.DebugInfoFile != null) {

@@ -188,7 +188,7 @@
                             VirtualizingStackPanel.VirtualizationMode="Recycling">
                             <ListView.View>
                                 <GridView>
-                                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding ImageFile.ImageName}">
+                                    <GridViewColumn Width="150" DisplayMemberBinding="{Binding ImageFileInfo.ImageName}">
                                         <GridViewColumnHeader Content="Module" />
                                         <GridViewColumn.HeaderContainerStyle>
                                             <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -327,7 +327,7 @@
                             Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
                             TabStripPlacement="Top">
                             <TabItem Header="Image file">
-                                <StackPanel>
+                                <StackPanel Margin="4,2,4,0">
                                     <Grid>
                                         <TextBlock VerticalAlignment="Center" Text="Name" />
                                         <TextBox
@@ -337,7 +337,7 @@
                                             BorderBrush="Transparent"
                                             Foreground="DarkBlue"
                                             IsReadOnly="True"
-                                            Text="{Binding SelectedItem.ImageFile.ImageName, ElementName=ModuleList}" />
+                                            Text="{Binding SelectedItem.ImageFileInfo.ImageName, ElementName=ModuleList}" />
                                     </Grid>
                                     <Grid>
                                         <TextBlock VerticalAlignment="Center" Text="Local path" />
@@ -348,7 +348,7 @@
                                             BorderBrush="Transparent"
                                             Foreground="DarkBlue"
                                             IsReadOnly="True"
-                                            Text="{Binding SelectedItem.BinaryFile.FilePath, ElementName=ModuleList}" />
+                                            Text="{Binding SelectedItem.BinaryFileInfo.FilePath, ElementName=ModuleList}" />
                                     </Grid>
                                     <Grid>
                                         <TextBlock VerticalAlignment="Center" Text="Architecture" />
@@ -359,7 +359,7 @@
                                             BorderBrush="Transparent"
                                             Foreground="DarkBlue"
                                             IsReadOnly="True"
-                                            Text="{Binding SelectedItem.BinaryFile.Architecture, ElementName=ModuleList}" />
+                                            Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.Architecture, ElementName=ModuleList}" />
                                     </Grid>
                                     <Grid>
                                         <TextBlock VerticalAlignment="Center" Text="Image size" />
@@ -370,7 +370,7 @@
                                             BorderBrush="Transparent"
                                             Foreground="DarkBlue"
                                             IsReadOnly="True"
-                                            Text="{Binding SelectedItem.BinaryFile.ImageSize, ElementName=ModuleList}" />
+                                            Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.ImageSize, ElementName=ModuleList}" />
                                     </Grid>
                                     <Grid>
                                         <TextBlock VerticalAlignment="Center" Text="Code size" />
@@ -381,7 +381,7 @@
                                             BorderBrush="Transparent"
                                             Foreground="DarkBlue"
                                             IsReadOnly="True"
-                                            Text="{Binding SelectedItem.BinaryFile.CodeSize, ElementName=ModuleList}" />
+                                            Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.CodeSize, ElementName=ModuleList}" />
                                     </Grid>
                                     <Expander Margin="0,4,0,0" Header="Logs">
                                         <Grid>
@@ -393,14 +393,14 @@
                                                 BorderBrush="Transparent"
                                                 Foreground="DarkBlue"
                                                 IsReadOnly="True"
-                                                Text="{Binding SelectedItem.BinaryFile.Details, ElementName=ModuleList}"
+                                                Text="{Binding SelectedItem.BinaryFileInfo.Details, ElementName=ModuleList}"
                                                 VerticalScrollBarVisibility="Auto" />
                                         </Grid>
                                     </Expander>
                                 </StackPanel>
                             </TabItem>
                             <TabItem Header="Debug file">
-                                <StackPanel>
+                                <StackPanel Margin="4,2,4,0">
                                     <Grid>
                                         <TextBlock VerticalAlignment="Center" Text="Name" />
                                         <TextBox
