@@ -37,6 +37,9 @@ public class ProfileData {
         [ProtoMember(5)]
         public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
 
+        [ProtoMember(6)]
+        public ProfileDataReport Report { get; set; }
+
         public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
             ProfileWeight = profileWeight;
             TotalWeight = totalWeight;
@@ -161,6 +164,7 @@ public class ProfileData {
         var profileState = new ProfileDataState(ProfileWeight, TotalWeight);
         profileState.PerformanceCounters = PerformanceCounters;
         profileState.ModuleWeights = ModuleWeights;
+        profileState.Report = Report;
 
         foreach (var pair in FunctionProfiles) {
             var func = pair.Key;
@@ -268,8 +272,6 @@ public class FunctionProfileData {
             FunctionCounters = new PerformanceCounterSet();
         }
     }
-
-    //? TODO: Module ID referencing ProfileData
 
     //? TODO
     //? - save unique stacks with inclusive samples for each frame
@@ -424,14 +426,17 @@ public class FunctionProfileData {
 }
 
 [ProtoContract(SkipConstructor = true)]
+[ProtoInclude(100, typeof(PerformanceMetricInfo))]
 public class PerformanceCounterInfo {
-    public PerformanceCounterConfig Config { get;set; }
-    public int Index { get; set; }
     [ProtoMember(1)]
-    public int Id { get; set; }
+    public PerformanceCounterConfig Config { get;set; }
     [ProtoMember(2)]
-    public string Name { get; set; }
+    public int Index { get; set; }
     [ProtoMember(3)]
+    public int Id { get; set; }
+    [ProtoMember(4)]
+    public string Name { get; set; }
+    [ProtoMember(5)]
     public int Frequency { get; set; }
 
     public virtual bool IsMetric => false;
@@ -447,9 +452,13 @@ public class PerformanceCounterInfo {
     }
 }
 
+[ProtoContract(SkipConstructor = true)]
 public class PerformanceMetricInfo : PerformanceCounterInfo {
+    [ProtoMember(1)]
     public PerformanceMetricConfig Config { get; set; }
+    [ProtoMember(2)]
     public PerformanceCounterInfo BaseCounter { get; set; }
+    [ProtoMember(3)]
     public PerformanceCounterInfo RelativeCounter { get; set; }
 
     public override bool IsMetric => true;
@@ -545,7 +554,6 @@ public class PerformanceCounterSet {
             Counters.Insert(insertionIndex, counter);
         }
 
-        //? FIX
         counter.Value += value;
     }
 

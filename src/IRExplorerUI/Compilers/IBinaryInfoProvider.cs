@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Reflection.PortableExecutable;
+using ProtoBuf;
 
 namespace IRExplorerUI.Compilers;
 
@@ -9,18 +10,31 @@ public interface IBinaryInfoProvider {
     //? TODO: Add finding of binary here
 }
 
+[ProtoContract(SkipConstructor = true)]
 public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
+    [ProtoMember(1)]
     public string ImageName { get; set; }
+    [ProtoMember(2)]
     public string ImagePath { get; set; }
+    [ProtoMember(3)]
     public Machine Architecture { get; set; }
+    [ProtoMember(4)]
     public BinaryFileKind FileKind { get; set; }
+    [ProtoMember(5)]
     public long Checksum { get; set; }
+    [ProtoMember(6)]
     public int TimeStamp { get; set; }
+    [ProtoMember(7)]
     public long ImageSize { get; set; }
+    [ProtoMember(8)]
     public long CodeSize { get; set; }
+    [ProtoMember(9)]
     public long ImageBase { get; set; }
+    [ProtoMember(10)]
     public long BaseOfCode { get; set; }
+    [ProtoMember(11)]
     public int MajorVersion { get; set; }
+    [ProtoMember(12)]
     public int MinorVersion { get; set; }
 
     public bool IsNativeImage => FileKind == BinaryFileKind.Native;
