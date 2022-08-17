@@ -198,6 +198,7 @@ public class ProfileData {
             profileData.FunctionProfiles[function] = pair.Value;
         }
 
+        profileData.CallTree ??= new ProfileCallTree();
         return profileData;
     }
 
