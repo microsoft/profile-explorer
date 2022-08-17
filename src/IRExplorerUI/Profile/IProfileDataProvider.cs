@@ -14,14 +14,14 @@ public interface IProfileDataProvider {
     ProfileData LoadTrace(string tracePath, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
-        ProfileDataProviderReport report,
+        ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask = null);
 
     Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
-        ProfileDataProviderReport report,
+        ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask = null);
 }
@@ -56,39 +56,48 @@ public class ProcessSummary {
     }
 }
 
+public enum ModuleLoadState {
+    Loaded,
+    NotFound,
+    Failed
+}
+
 [ProtoContract(SkipConstructor = true)]
-public class ProfileDataProviderReport {
-    //? other errors
-
-    public enum LoadState {
-        Loaded,
-        NotFound,
-        Failed
-    }
-
+public class ProfileDataReport {
+    [ProtoContract(SkipConstructor = true)]
     public class ModuleStatus {
-        public LoadState State { get; set; }
+        [ProtoMember(1)]
+        public ModuleLoadState State { get; set; }
+        [ProtoMember(2)]
         public BinaryFileDescriptor ImageFile { get; set; }    // Info used for lookup.
+        [ProtoMember(3)]
         public BinaryFileSearchResult BinaryFile { get; set; } // Lookup result with local file.
+        [ProtoMember(4)]
         public DebugFileSearchResult DebugInfoFile { get; set; }
     }
 
-    private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_;
-    private List<string> errorList_;
-
+    [ProtoMember(1)]
+    public DateTime ProfileTime { get; set; }
+    [ProtoMember(2)]
     public ProfileProcess Process { get; set; }
+    [ProtoMember(3)]
     public SymbolFileSourceOptions SymbolOptions { get; set; }
+    [ProtoMember(4)]
     public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
 
-    public bool IsRecordingSession => SessionOptions != null;
+    [ProtoMember(1)]
+    private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_;
 
-    public ProfileDataProviderReport(SymbolFileSourceOptions symbolOptions) {
+    public bool IsRecordingSession => SessionOptions != null;
+    public List<ModuleStatus> Modules => moduleStatusMap_.ToValueList();
+
+    public ProfileDataReport(SymbolFileSourceOptions symbolOptions) {
         SymbolOptions = symbolOptions;
+        ProfileTime = DateTime.Now;
         moduleStatusMap_ = new Dictionary<BinaryFileDescriptor, ModuleStatus>();
-        errorList_ = new List<string>();
     }
 
-    public void AddModuleInfo(BinaryFileDescriptor binaryInfo, BinaryFileSearchResult binaryFile, LoadState state) {
+    public void AddModuleInfo(BinaryFileDescriptor binaryInfo, BinaryFileSearchResult binaryFile, ModuleLoadState state) {
         var status = GetOrCreateModuleStatus(binaryInfo);
         status.BinaryFile = binaryFile;
         status.State = state;

@@ -16,7 +16,7 @@ using IRExplorerCore;
 
 namespace IRExplorerUI.Profile {
     public partial class ProfileReportPanel : ToolPanelControl {
-        ProfileDataProviderReport report_;
+        ProfileDataReport report_;
         ISession session_;
 
         public ProfileReportPanel(ISession session) {
@@ -24,9 +24,17 @@ namespace IRExplorerUI.Profile {
             session_ = session;
         }
 
-        public void ShowReport(ProfileDataProviderReport report) {
+        public void ShowReport(ProfileDataReport report) {
             report_ = report;
             DataContext = report;
+            ModuleList.ItemsSource = new ListCollectionView(report.Modules);
+        }
+
+        public static void ShowReport(ProfileDataReport report, ISession session) {
+            var panel = new ProfileReportPanel(session);
+            panel.TitleSuffix = $"Profile report";
+            session.DisplayFloatingPanel(panel);
+            panel.ShowReport(report);
         }
     }
 }

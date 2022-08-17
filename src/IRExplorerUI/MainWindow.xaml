@@ -144,6 +144,12 @@
             Command="local:AppCommand.RecordProfile"
             Executed="RecordProfileExecuted"
             PreviewCanExecute="CanExecuteLoadProfileCommand" />
+
+        <CommandBinding
+            CanExecute="CanExecuteProfileCommand"
+            Command="local:AppCommand.ViewProfileReport"
+            Executed="ViewProfileReportExecuted"
+            PreviewCanExecute="CanExecuteProfileCommand" />
     </Window.CommandBindings>
 
     <Window.InputBindings>
@@ -387,6 +393,7 @@
                         <MenuItem Header="Recent Profiles" IsEnabled="False" />
                         <Separator />
 
+                        <MenuItem Command="local:AppCommand.ViewProfileReport" Header=" Open profiling report" />
                         <MenuItem
                             Click="ShowPanelMenuClicked"
                             Header="Call Tree Panel"
@@ -432,7 +439,6 @@
                                 Click="DotNetARM64MenuItem_Click"
                                 Header=".NET ASM ARM64" />
                         </MenuItem>
-
 
                         <MenuItem Click="MenuItem_OnClick2" Header="Function report" />
                         <Separator />
@@ -750,7 +756,6 @@
                 <StaticResource ResourceKey="DockingWindowTitleDataTemplate" />
             </avalonDock:DockingManager.AnchorableTitleTemplate>-->
 
-
             <!--<avalonDock:DockingManager.Theme>
                 <avalonDock:Vs2013LightTheme />
             </avalonDock:DockingManager.Theme>-->
@@ -858,7 +863,7 @@
                             <avalonDock:LayoutAnchorablePane>
                                 <avalonDock:LayoutAnchorable
                                     x:Name="SectionPanelHost"
-                                    Title="Sections"
+                                    Title="Summary"
                                     CanClose="False"
                                     ContentId="Sections"
                                     FloatingWidth="400"
@@ -875,7 +880,6 @@
                                     IsSelectedChanged="LayoutAnchorable_IsSelectedChanged">
                                     <local:PassOutputPanel x:Name="PassOutputPanel" />
                                 </avalonDock:LayoutAnchorable>
-
 
                                 <avalonDock:LayoutAnchorable
                                     x:Name="DefinitionPanelHost"
@@ -1115,7 +1119,6 @@
                 </StackPanel>
             </ToggleButton>
 
-
             <Button
                 x:Name="ScreenshotButton"
                 Width="18"
@@ -1189,7 +1192,6 @@
                 Content="Diff with previous"
                 IsChecked="False"
                 Visibility="Collapsed" />
-
 
         </StatusBar>
     </Grid>

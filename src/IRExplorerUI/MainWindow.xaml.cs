@@ -99,6 +99,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("Untitled", "LoadProfile", typeof(Window));
         public static readonly RoutedUICommand RecordProfile =
             new RoutedUICommand("Untitled", "RecordProfile", typeof(Window));
+        public static readonly RoutedUICommand ViewProfileReport =
+            new RoutedUICommand("Untitled", "ViewProfileReport", typeof(Window));
         public static readonly RoutedUICommand ShowProfileCallGraph =
             new RoutedUICommand("Untitled", "ShowProfileCallGraph", typeof(Window));
     }
@@ -161,48 +163,6 @@ namespace IRExplorerUI {
             Closing += MainWindow_Closing;
             Activated += MainWindow_Activated;
             Deactivated += MainWindow_Deactivated;
-
-#if false
-            var pdb = new PDBDebugInfoProvider(SymbolFileSourceOptions.Default);
-
-            var d = Disassembler.CreateForBinary(@"D:\work\blender\LTCG\blender.exe", pdb);
-            if (pdb.LoadDebugInfo(@"D:\work\blender\LTCG\blender.pdb")) {
-
-                //var d = Disassembler.CreateForBinary(@"C:\work\xc.exe", pdb);
-                //if (pdb.LoadDebugInfo(@"C:\work\xc.pdb")) {
-
-                //var d = Disassembler.CreateForBinary(@"C:\work\s\imagick_r.exe", pdb);
-
-                //if (pdb.LoadDebugInfo(@"C:\work\s\imagick_r.pdb")) {
-                //var func2 = pdb.FindFunction("wmain");
-                 //d.DisassembleToText(func2);
-
-                var sw = Stopwatch.StartNew();
-
-                var functs = pdb.EnumerateFunctions(false).ToList();
-
-                for(int i = 0; i < functs.Count; i++) {
-                    var func = functs[i];
-
-                    if (func.Size > 0) {
-                        //fif (i % 1000 == 0) {
-                        //    Trace.TraceError($"At {i} of {functs.Count}");
-                        //    Trace.Flush();
-                        //}
-
-                        //Trace.WriteLine($"{func.Name}:");
-
-                        var r = d.DisassembleToText(func);
-                        //Trace.WriteLine(r);
-                    }
-                }
-
-                sw.Stop();
-                MessageBox.Show($"Took {sw.ElapsedMilliseconds} ms");
-                Trace.Flush();
-                Environment.Exit(0);
-            }
-#endif
         }
 
         protected override AutomationPeer OnCreateAutomationPeer() {
@@ -1372,37 +1332,39 @@ namespace IRExplorerUI {
         }
 
         public async Task<bool> LoadProfileData(string profileFilePath, string binaryFilePath, 
-                                                ProfileDataProviderOptions options,
-                                                SymbolFileSourceOptions symbolOptions,
-                                                ProfileDataProviderReport report,
-                                                ProfileLoadProgressHandler progressCallback,
-                                                CancelableTask cancelableTask) {
+                                              ProfileDataProviderOptions options,
+                                              SymbolFileSourceOptions symbolOptions,
+                                              ProfileDataReport report,
+                                              ProfileLoadProgressHandler progressCallback,
+                                              CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
             var result = await profileData.LoadTraceAsync(profileFilePath, binaryFilePath, 
-                                                          options, symbolOptions,
-                                                          report, progressCallback, cancelableTask);
+                                                      options, symbolOptions,
+                                                      report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
                 return false;
             }
 
+            result.Report = report;
             sessionState_.ProfileData = result;
             return result != null;
         }
 
         public async Task<bool> LoadProfileData(RawProfileData data, ProfileProcess process,
-            ProfileDataProviderOptions options,
-            SymbolFileSourceOptions symbolOptions,
-            ProfileDataProviderReport report,
-            ProfileLoadProgressHandler progressCallback,
-            CancelableTask cancelableTask) {
+                                              ProfileDataProviderOptions options,
+                                              SymbolFileSourceOptions symbolOptions,
+                                              ProfileDataReport report,
+                                              ProfileLoadProgressHandler progressCallback,
+                                              CancelableTask cancelableTask) {
             using var profileData = new ETWProfileDataProvider(this);
             var result = await profileData.LoadTraceAsync(data, process,
-                options, symbolOptions,
-                report, progressCallback, cancelableTask);
+                                                      options, symbolOptions, 
+                                                      report, progressCallback, cancelableTask);
             if (!IsSessionStarted) {
                 return false;
             }
 
+            result.Report = report;
             sessionState_.ProfileData = result;
             return result != null;
         }        
@@ -1452,6 +1414,12 @@ namespace IRExplorerUI {
                 //else {
                 //    SaveDockLayout(prof);
                 //}
+            }
+        }
+
+        private void ViewProfileReportExecuted(object sender, ExecutedRoutedEventArgs e) {
+            if (ProfileData?.Report != null) {
+                ProfileReportPanel.ShowReport(ProfileData.Report, this);
             }
         }
     }

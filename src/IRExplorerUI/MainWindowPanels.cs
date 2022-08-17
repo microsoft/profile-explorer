@@ -947,7 +947,6 @@ namespace IRExplorerUI {
                 }
             }
 
-            //await SectionPanel.Update();
             SectionPanel.OnSessionStart();
         }
 
@@ -984,6 +983,12 @@ namespace IRExplorerUI {
                         args.Content = args.Content;
 
                         if (args.Content is not IToolPanel panel) {
+                            args.Cancel = true;
+                            return;
+                        }
+
+                        if (panel.PanelKind == ToolPanelKind.Other) {
+                            args.Cancel = true;
                             return;
                         }
 

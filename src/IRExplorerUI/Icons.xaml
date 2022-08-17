@@ -242,7 +242,6 @@
         </DrawingImage.Drawing>
     </DrawingImage>
 
-
     <DrawingImage x:Key="PinIconColor">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V16 H16 V0 H0 Z">
@@ -834,6 +833,30 @@
                     <GeometryDrawing Brush="#FFEFEA00" Geometry="F1 M16,16z M0,0z M5.4313215,4.3744537L4.3744537,4.3744537 4.3744537,5.4313215 5.4313215,5.4313215z" />
                     <GeometryDrawing Brush="#FFCB0000" Geometry="F1 M16,16z M0,0z M12.829396,7.5450572L11.772529,7.5450572 11.772529,8.6019251 12.829396,8.6019251z" />
                     <GeometryDrawing Brush="#FFFF6E00" Geometry="F1 M16,16z M0,0z M8.6019251,4.3744537L7.5450572,4.3744537 7.5450572,3.3175858 8.6019251,3.3175858z" />
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="CheckIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H12 V0 H0 Z">
+                <DrawingGroup Opacity="1">
+                    <DrawingGroup Opacity="1">
+                        <GeometryDrawing Brush="#FF006E00" Geometry="F0 M12,16z M0,0z M12,5L12,5 4,13 0,9 1.5,7.5 4,10 10.5,3.5z" />
+                    </DrawingGroup>
+                </DrawingGroup>
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
+
+    <DrawingImage x:Key="VoidIcon">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V16 H14 V0 H0 Z">
+                <DrawingGroup Opacity="1">
+                    <DrawingGroup Opacity="1">
+                        <GeometryDrawing Brush="#FFCB0000" Geometry="F0 M14,16z M0,0z M7,1C3.14,1 0,4.14 0,8 0,11.86 3.14,15 7,15 10.86,15 14,11.86 14,8 14,4.14 10.86,1 7,1L7,1z M7,2.3C8.3,2.3,9.5,2.74,10.47,3.47L2.47,11.47C1.74,10.5 1.3,9.3 1.3,8 1.3,4.86 3.86,2.3 7,2.3L7,2.3z M7,13.71C5.7,13.71,4.5,13.27,3.53,12.54L11.53,4.54C12.26,5.51 12.7,6.71 12.7,8.01 12.7,11.15 10.14,13.71 7,13.71L7,13.71z" />
+                    </DrawingGroup>
                 </DrawingGroup>
             </DrawingGroup>
         </DrawingImage.Drawing>
