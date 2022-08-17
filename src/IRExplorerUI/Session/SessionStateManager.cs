@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using AvalonDock.Layout;
 using ICSharpCode.AvalonEdit.Document;
@@ -18,7 +19,7 @@ namespace IRExplorerUI {
         DebugSession = 2
     }
 
-    [ProtoContract]
+    [ProtoContract(SkipConstructor = true)]
     public class SessionInfo {
         [ProtoMember(1)]
         public string FilePath;
@@ -26,26 +27,31 @@ namespace IRExplorerUI {
         public SessionKind Kind;
         [ProtoMember(3)]
         public string Notes;
+        [ProtoMember(4)]
+        public string IRName;
+        [ProtoMember(5)] 
+        public IRMode IRMode;
 
-        public SessionInfo() { }
+        public SessionInfo() {}
 
-        public SessionInfo(string filePath, SessionKind kind) {
+        public SessionInfo(string filePath, SessionKind kind, string irName, IRMode irMode) {
             FilePath = filePath;
             Kind = kind;
+            IRName = irName;
+            IRMode = irMode;
         }
 
         public bool IsDebugSession => Kind == SessionKind.DebugSession;
         public bool IsFileSession => Kind == SessionKind.FileSession;
+        public bool IsSavedFileSession => IsFileSession && File.Exists(FilePath);
     }
 
-    [ProtoContract]
+    [ProtoContract(SkipConstructor = true)]
     public class PanelObjectPairState {
         [ProtoMember(1)]
         public ToolPanelKind PanelKind;
         [ProtoMember(2)]
         public byte[] StateObject;
-
-        public PanelObjectPairState() { }
 
         //? TODO: state objects should be just byte[] everywhere
         public PanelObjectPairState(ToolPanelKind panelKind, object stateObject) {
@@ -184,11 +190,13 @@ namespace IRExplorerUI {
         private Dictionary<ToolPanelKind, object> globalPanelStates_;
         private Dictionary<BaseDiffSectionGroup, List<PanelObjectPair>> diffPanelStates_;
         private List<CancelableTask> pendingTasks_;
+        private ICompilerInfoProvider compilerInfo_;
         private bool watchDocumentChanges_;
 
-        public SessionStateManager(string filePath, SessionKind sessionKind) {
+        public SessionStateManager(string filePath, SessionKind sessionKind, ICompilerInfoProvider compilerInfo) {
             lockObject_ = new object();
-            Info = new SessionInfo(filePath, sessionKind);
+            compilerInfo_ = compilerInfo;
+            Info = new SessionInfo(filePath, sessionKind, compilerInfo.CompilerIRName, compilerInfo.IR.Mode);
             Info.Notes = "";
             documents_ = new List<LoadedDocument>();
             globalPanelStates_ = new Dictionary<ToolPanelKind, object>();

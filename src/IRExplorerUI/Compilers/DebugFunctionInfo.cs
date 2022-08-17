@@ -1,18 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using ProtoBuf;
 
 namespace IRExplorerUI.Compilers;
 
+[ProtoContract(SkipConstructor = true)]
 public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<DebugFunctionInfo>, IComparable<long> {
+    [ProtoMember(1)]
     public long Id { get; set; }
+    [ProtoMember(2)]
     public string Name { get; set; }
+    [ProtoMember(3)]
     public long RVA { get; set; }
+    [ProtoMember(4)]
     public long Size { get; set; }
+    [ProtoMember(5)]
     public DebugSourceLineInfo StartDebugSourceLine { get; set; }
+    [ProtoMember(6)]
     public List<DebugSourceLineInfo> SourceLines { get; set; }
+    [ProtoMember(7)]
     public string OptimizationLevel { get; set; }
-    public object Data { get; set; }
 
     public long StartRVA => RVA;
     public long EndRVA => RVA + Size - 1;
@@ -133,6 +141,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     }
 }
 
+[ProtoContract(SkipConstructor = true)]
 public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileInfo> {
     public DebugFunctionSourceFileInfo(string filePath, string originalFilePath, int startLine = 0, bool hasChecksumMismatch = false) {
         FilePath = filePath;
@@ -141,9 +150,13 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
         HasChecksumMismatch = hasChecksumMismatch;
     }
 
+    [ProtoMember(1)]
     public string FilePath { get; set; }
+    [ProtoMember(2)]
     public string OriginalFilePath { get; set; }
+    [ProtoMember(3)]
     public int StartLine { get; set; }
+    [ProtoMember(4)]
     public bool HasChecksumMismatch { get; set; }
     public static DebugFunctionSourceFileInfo Unknown => new(null, null, -1);
 
@@ -167,11 +180,17 @@ public struct DebugFunctionSourceFileInfo : IEquatable<DebugFunctionSourceFileIn
     }
 }
 
+[ProtoContract(SkipConstructor = true)]
 public struct DebugSourceLineInfo : IEquatable<DebugSourceLineInfo> {
+    [ProtoMember(1)]
     public int OffsetStart { get; set; } // Offset in bytes relative to function start.
+    [ProtoMember(2)]
     public int OffsetEnd { get; set; } // Offset in bytes relative to function start.
+    [ProtoMember(3)]
     public int Line { get; set; }
+    [ProtoMember(4)]
     public int Column { get; set; }
+    [ProtoMember(5)]
     public string FilePath { get; set; }
 
     public static DebugSourceLineInfo Unknown = new DebugSourceLineInfo(-1, -1);

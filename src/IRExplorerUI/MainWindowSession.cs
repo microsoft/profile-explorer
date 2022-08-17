@@ -284,7 +284,7 @@ namespace IRExplorerUI {
         }
 
         private bool RequestSessionFilePath(bool forceNewFile = false) {
-            if (!forceNewFile && sessionState_.Info.IsFileSession) {
+            if (!forceNewFile && sessionState_.Info.IsSavedFileSession) {
                 return true; // Save over same session file.
             }
 
@@ -304,6 +304,7 @@ namespace IRExplorerUI {
             await Dispatcher.InvokeAsync(async () =>  {
                 UpdateUIBeforeLoadDocument("profile");
                 await SwitchCompilerTarget(compilerInfo);
+
                 StartSession(sessionName, sessionKind);
                 UpdateUIAfterLoadDocument();
             });
@@ -327,7 +328,7 @@ namespace IRExplorerUI {
         }
 
         private void StartSession(string filePath, SessionKind sessionKind) {
-            sessionState_ = new SessionStateManager(filePath, sessionKind);
+            sessionState_ = new SessionStateManager(filePath, sessionKind, compilerInfo_);
             sessionState_.DocumentChanged += DocumentState_DocumentChangedEvent;
             sessionState_.ChangeDocumentWatcherState(App.Settings.AutoReloadDocument);
             ClearGraphLayoutCache();
@@ -580,13 +581,27 @@ namespace IRExplorerUI {
 
         private async Task<LoadedDocument> LoadSessionDocument(SessionState state) {
             try {
+                if (!string.IsNullOrEmpty(state.Info.IRName)) {
+                    await SwitchCompilerTarget(state.Info.IRName, state.Info.IRMode);
+                }
+
                 StartSession(state.Info.FilePath, SessionKind.FileSession);
                 var idToDocumentMap = new Dictionary<Guid, LoadedDocument>();
 
                 foreach (var docState in state.Documents) {
-                    var result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath,
-                                                                   docState.ModuleName, docState.Id,
-                                                                   UpdateIRDocumentLoadProgress));
+                    LoadedDocument result = null;
+
+                    if (docState.DocumentText != null && docState.DocumentText.Length > 0) {
+                        result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath,
+                            docState.ModuleName, docState.Id,
+                            UpdateIRDocumentLoadProgress));
+                    }
+                    else if(docState.BinaryFile != null) {
+                        result = await Task.Run(() => LoadBinaryDocument(docState.BinaryFile.FilePath, 
+                                                                                 docState.ModuleName, docState.Id,
+                                                                                 UpdateIRDocumentLoadProgress));
+                    }
+
                     if (result == null) {
                         UpdateUIAfterLoadDocument();
                         return null;
@@ -1581,6 +1596,7 @@ namespace IRExplorerUI {
                 }
                 else if (!visible && documentLoadProgressVisible_) {
                     HideProgressBar();
+                    return;
                 }
 
                 if (double.IsNaN(percentage)) {

@@ -198,6 +198,7 @@ public class ProfileData {
             profileData.FunctionProfiles[function] = pair.Value;
         }
 
+        profileData.Report = state.Report;
         profileData.CallTree ??= new ProfileCallTree();
         return profileData;
     }
@@ -225,7 +226,7 @@ public class FunctionProfileData {
     public Dictionary<(Guid, int), TimeSpan> CallerWeights { get; set; } // {Summary,Function ID} mapping
     [ProtoMember(7)]
     public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
-
+    [ProtoMember(8)]
     public DebugFunctionInfo DebugInfo { get; set; }
 
     public bool HasPerformanceCounters => InstructionCounters.Count > 0;
