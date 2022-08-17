@@ -32,7 +32,9 @@ namespace IRExplorerUI {
                 LeaderRemark = remark;
             }
             else if (remark.Priority == LeaderRemark.Priority &&
-                     remark.Section == currentSection) {
+                     remark.Section == currentSection &&
+                     remark.IsInstructionRemark && !LeaderRemark.IsInstructionRemark) {
+                // Prefer a whole instruction remark if same priority.
                 LeaderRemark = remark;
             }
         }

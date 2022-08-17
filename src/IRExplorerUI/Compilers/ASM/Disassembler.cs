@@ -453,6 +453,7 @@ namespace IRExplorerUI.Compilers.ASM {
                     yield return instruction;
                 }
                 else {
+                    dataBuffer.Free();
                     yield break;
                 }
             }

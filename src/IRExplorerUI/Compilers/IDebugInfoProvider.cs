@@ -94,7 +94,7 @@ namespace IRExplorerUI.Compilers {
         }
     }
 
-    [ProtoContract]
+    [ProtoContract(SkipConstructor = true)]
     public class SymbolFileDescriptor : IEquatable<SymbolFileDescriptor> {
         [ProtoMember(1)]
         public string FileName { get; set; }
@@ -102,7 +102,7 @@ namespace IRExplorerUI.Compilers {
         public Guid Id { get; set; }
         [ProtoMember(3)]
         public int Age { get; set; }
-
+        
         public override string ToString() {
             return $"{Id}:{FileName}";
         }

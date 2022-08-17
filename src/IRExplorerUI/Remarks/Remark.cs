@@ -93,12 +93,13 @@ namespace IRExplorerUI {
     public class Remark {
         public Remark(RemarkCategory category, IRTextSection section, 
                       string remarkText, string remarkLine,
-                      TextLocation remarkLocation) {
+                      TextLocation remarkLocation, bool isInstr) {
             Category = category;
             Section = section;
             RemarkText = remarkText;
             RemarkLine = remarkLine;
             RemarkLocation = remarkLocation;
+            IsInstructionRemark = true;
             ReferencedElements = new List<IRElement>(1);
             OutputElements = new List<IRElement>(1);
         }
@@ -111,7 +112,8 @@ namespace IRExplorerUI {
         public TextLocation RemarkLocation { get; set; }
         public List<IRElement> ReferencedElements { get; set; }
         public List<IRElement> OutputElements { get; set; }
-        public RemarkContext Context;
+        public RemarkContext Context { get; set; }
+        public bool IsInstructionRemark { get; set; }
 
         public int Priority => Kind switch
         {

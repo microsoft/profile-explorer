@@ -629,7 +629,7 @@ namespace IRExplorerUI {
 
                 actionPanelFromClick_ = fromClickEvent;
                 actionPanelVisible_ = true;
-                remarkPanelLocation_ = PointToScreen(new Point(x, y + ActionPanelHeight));
+                remarkPanelLocation_ = new Point(x, y + ActionPanelHeight);
             }
         }
 

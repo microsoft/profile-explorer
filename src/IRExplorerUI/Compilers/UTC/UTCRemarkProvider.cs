@@ -268,8 +268,8 @@ namespace IRExplorerUI.UTC {
                             instr.TextLocation = location; // Set actual location in output text.
 
                             var remarkKind = FindRemarkKind(line, isInstructionElement: true);
-                            var remark = new Remark(remarkKind, section, 
-                                                    line.Trim(), line, remarkLocation);
+                            var remark = new Remark(remarkKind, section, line.Trim(), line, 
+                                                    remarkLocation, true);
                             remark.ReferencedElements.Add(similarInstr);
                             remark.OutputElements.Add(instr);
                             remarks.Add(remark);
@@ -313,9 +313,8 @@ namespace IRExplorerUI.UTC {
 
                             var remarkLocation = new TextLocation(lineStartOffset, i, 0);
                             var remarkKind = FindRemarkKind(line, isInstructionElement: false);
-                            var remark = new Remark(remarkKind, section,
-                                                    line.Trim(), line, remarkLocation);
-
+                            var remark = new Remark(remarkKind, section, line.Trim(), line,
+                                                    remarkLocation, false);
                             remark.ReferencedElements.Add(value);
                             remark.OutputElements.Add(op);
                             remarks.Add(remark);
