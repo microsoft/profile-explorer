@@ -77,19 +77,23 @@ public class ProfileDataReport {
     }
 
     [ProtoMember(1)]
-    public DateTime ProfileTime { get; set; }
-    [ProtoMember(2)]
-    public ProfileProcess Process { get; set; }
-    [ProtoMember(3)]
-    public SymbolFileSourceOptions SymbolOptions { get; set; }
-    [ProtoMember(4)]
-    public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
-
-    [ProtoMember(1)]
     private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_;
+
+    [ProtoMember(2)]
+    public DateTime ProfileTime { get; set; }
+    [ProtoMember(3)]
+    public ProfileProcess Process { get; set; }
+    [ProtoMember(4)]
+    public SymbolFileSourceOptions SymbolOptions { get; set; }
+    [ProtoMember(5)]
+    public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
 
     public bool IsRecordingSession => SessionOptions != null;
     public List<ModuleStatus> Modules => moduleStatusMap_.ToValueList();
+
+    public ProfileDataReport() {
+
+    }
 
     public ProfileDataReport(SymbolFileSourceOptions symbolOptions) {
         SymbolOptions = symbolOptions;
