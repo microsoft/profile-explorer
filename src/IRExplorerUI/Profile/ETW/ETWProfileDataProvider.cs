@@ -18,7 +18,7 @@ namespace IRExplorerUI.Profile;
 
 public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     private ProfileDataProviderOptions options_;
-    private ProfileDataProviderReport report_;
+    private ProfileDataReport report_;
     private ISession session_;
     private ICompilerInfoProvider compilerInfo_;
     private ProfileData profileData_;
@@ -31,7 +31,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     public ProfileData LoadTrace(string tracePath, string imageName, 
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
-        ProfileDataProviderReport report,
+        ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
         return LoadTraceAsync(tracePath, imageName, options, symbolOptions,
@@ -67,7 +67,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     public async Task<ProfileData> LoadTraceAsync(string tracePath, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
-        ProfileDataProviderReport report,
+        ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
 
@@ -89,7 +89,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, string imageName,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
-        ProfileDataProviderReport report,
+        ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
 
@@ -106,7 +106,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, ProfileProcess mainProcess,
         ProfileDataProviderOptions options,
         SymbolFileSourceOptions symbolOptions,
-        ProfileDataProviderReport report,
+        ProfileDataReport report,
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
         report_ = report;

@@ -19,7 +19,6 @@ using ProtoBuf;
 
 namespace IRExplorerUI.Profile; 
 
-
 public class ProfileData {
     [ProtoContract(SkipConstructor = true)]
     public class ProfileDataState {
@@ -51,8 +50,8 @@ public class ProfileData {
     public Dictionary<string, TimeSpan> ModuleWeights { get; set; }
     public Dictionary<string, PerformanceCounterSet> ModuleCounters { get; set; }
     public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
-        
     public ProfileCallTree CallTree { get; set; }
+    public ProfileDataReport Report { get; set; }
 
     public List<PerformanceCounterInfo> SortedPerformanceCounters {
         get {
@@ -227,7 +226,6 @@ public class FunctionProfileData {
     public bool HasPerformanceCounters => InstructionCounters.Count > 0;
     public bool HasCallers => CallerWeights != null && CallerWeights.Count > 0;
     public bool HasCallees => CalleesWeights != null && CalleesWeights.Count > 0;
-    
 
     public class ProcessingResult {
         public List<Tuple<IRElement, TimeSpan>> SampledElements { get; set; }

@@ -25,7 +25,7 @@ namespace IRExplorerUI.Profile {
         private Dictionary<long, IRTextFunction> addressFuncMap_;
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
-        private ProfileDataProviderReport report_;
+        private ProfileDataReport report_;
 
         public IRTextSummary Summary { get; set; }
         public LoadedDocument ModuleDocument { get; set; }
@@ -37,7 +37,7 @@ namespace IRExplorerUI.Profile {
         //? TODO: Needed only for inlinee samples
         public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
-        public ModuleInfo(ProfileDataProviderOptions options, ProfileDataProviderReport report,  ISession session) {
+        public ModuleInfo(ProfileDataProviderOptions options, ProfileDataReport report,  ISession session) {
             options_ = options;
             report_ = report;
             session_ = session;
@@ -57,7 +57,7 @@ namespace IRExplorerUI.Profile {
 
             if (binFile == null || !binFile.Found) {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, binFile, ProfileDataProviderReport.LoadState.NotFound);
+                report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.NotFound);
                 return false;
             }
 
@@ -67,12 +67,12 @@ namespace IRExplorerUI.Profile {
             
             if (loadedDoc == null) {
                 Trace.TraceWarning($"  Failed to load document for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, binFile, ProfileDataProviderReport.LoadState.Failed);
+                report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.Failed);
                 return false;
             }
             else {
                 Trace.TraceWarning($"  Loaded document for image {imageName}");
-                report_.AddModuleInfo(binaryInfo, binFile, ProfileDataProviderReport.LoadState.Loaded);
+                report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.Loaded);
             }
 
             ModuleDocument = loadedDoc;

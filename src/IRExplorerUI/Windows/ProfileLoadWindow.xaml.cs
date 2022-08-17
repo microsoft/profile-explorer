@@ -232,7 +232,7 @@ namespace IRExplorerUI {
             }
 
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-            var report = new ProfileDataProviderReport((SymbolFileSourceOptions)symbolOptions_.Clone());
+            var report = new ProfileDataReport((SymbolFileSourceOptions)symbolOptions_.Clone());
             bool success = false;
             IsLoadingProfile = true;
 
@@ -259,12 +259,11 @@ namespace IRExplorerUI {
             }
 
             IsLoadingProfile = false;
-            report.Dump();
-            ShowProfileReport(report);
 
             if (!success && !task.IsCanceled) {
                 MessageBox.Show($"Failed to load profile file {ProfileFilePath}", "IR Explorer",
                     MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                ProfileReportPanel.ShowReport(report, Session);
             }
 
             if (success && !IsRecordMode) {
@@ -273,13 +272,6 @@ namespace IRExplorerUI {
             }
             
             return success;
-        }
-
-        public void ShowProfileReport(ProfileDataProviderReport report) {
-            var panel = new ProfileReportPanel(Session);
-            panel.TitleSuffix = $"Profile report";
-            Session.DisplayFloatingPanel(panel);
-            panel.ShowReport(report);
         }
 
         private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
