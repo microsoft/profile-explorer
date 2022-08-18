@@ -799,7 +799,7 @@ namespace IRExplorerUI {
                 if (value != summary_) {
                     summary_ = value;
                     sectionExtensionComputed_ = false;
-                    UpdateFunctionListBindings();
+                    //UpdateFunctionListBindings();
                 }
             }
         }
@@ -809,7 +809,7 @@ namespace IRExplorerUI {
             set {
                 if (value != otherSummary_) {
                     otherSummary_ = value;
-                    UpdateFunctionListBindings(false);
+                    //UpdateFunctionListBindings(false);
                 }
             }
         }
@@ -1261,7 +1261,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
+        public async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
             if (summary_ == null) {
                 ResetSectionPanel();
                 ResetStatistics();
@@ -1278,6 +1278,7 @@ namespace IRExplorerUI {
             // only in the left or in the right document and mark them as diffs.
             if (otherSummary_ != null) {
                 foreach (var function in summary_.Functions) {
+                    //? TODO: Use CreateFunctionExtensions
                     var funcEx = new IRTextFunctionEx(function, index++);
                     functionExtMap_[function] = funcEx;
                     functionsEx.Add(funcEx);

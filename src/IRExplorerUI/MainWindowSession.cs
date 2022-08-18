@@ -509,7 +509,8 @@ namespace IRExplorerUI {
         private async Task SetupOpenedDiffIRDocument(string diffFilePath, LoadedDocument result) {
             sessionState_.RegisterLoadedDocument(result);
             sessionState_.EnterTwoDocumentDiffMode(result);
-            await ShowSectionPanelDiffs(result);
+            await SetupPanels();
+            //await ShowSectionPanelDiffs(result);
         }
 
         public void AddOtherSummary(IRTextSummary summary) {
