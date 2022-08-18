@@ -932,22 +932,31 @@ namespace IRExplorerUI {
         }
 
         private async Task SetupSectionPanel() {
-            SectionPanel.CompilerInfo = compilerInfo_;
-            SectionPanel.MainSummary = sessionState_.MainDocument.Summary;
-            SectionPanel.MainTitle = sessionState_.MainDocument.ModuleName;
+            if (SectionPanel.MainSummary == null) {
+                SectionPanel.CompilerInfo = compilerInfo_;
+                SectionPanel.MainSummary = sessionState_.MainDocument.Summary;
+                SectionPanel.MainTitle = sessionState_.MainDocument.ModuleName;
+
+                foreach (var doc in sessionState_.Documents) {
+                    if (doc != sessionState_.MainDocument &&
+                        doc != sessionState_.DiffDocument) {
+                        SectionPanel.AddOtherSummary(doc.Summary);
+                    }
+                }
+
+                SectionPanel.OnSessionStart();
+            }
+
+            if (sessionState_.IsInTwoDocumentsDiffMode) {
+                SectionPanel.DiffSummary = sessionState_.DiffDocument.Summary;
+                SectionPanel.DiffTitle = sessionState_.DiffDocument.ModuleName;
+            }
+
+            await SectionPanel.Update();
 
             if (sessionState_.IsInTwoDocumentsDiffMode) {
                 await ShowSectionPanelDiffs(sessionState_.DiffDocument);
             }
-
-            foreach (var doc in sessionState_.Documents) {
-                if (doc != sessionState_.MainDocument &&
-                    doc != sessionState_.DiffDocument) {
-                    SectionPanel.AddOtherSummary(doc.Summary);
-                }
-            }
-
-            SectionPanel.OnSessionStart();
         }
 
         public void RegisterDetachedPanel(DraggablePopup panel) {

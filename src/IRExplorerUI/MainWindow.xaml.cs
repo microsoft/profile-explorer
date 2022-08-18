@@ -439,8 +439,7 @@ namespace IRExplorerUI {
         }
 
         private async Task ShowSectionPanelDiffs(LoadedDocument result) {
-            SectionPanel.DiffSummary = result.Summary;
-            SectionPanel.DiffTitle = result.ModuleName;
+            
             await SectionPanel.AnalyzeDocumentDiffs();
             await SectionPanel.RefreshDocumentsDiffs();
         }
