@@ -32,7 +32,8 @@ namespace IRExplorerCore.ASM {
         TBZ,
         TBNZ,
         CBZ,
-        CBNZ
+        CBNZ,
+        NOP
     }
 
     public struct ARMOpcodeInfo {
@@ -74,6 +75,7 @@ namespace IRExplorerCore.ASM {
                 {"CBNZ", new ARMOpcodeInfo(ARMOpcode.CBNZ, InstructionKind.Branch)},
                 {"BL", new ARMOpcodeInfo(ARMOpcode.BL, InstructionKind.Call)},
                 {"BLR", new ARMOpcodeInfo(ARMOpcode.BLR, InstructionKind.Call)},
+                {"NOP", new ARMOpcodeInfo(ARMOpcode.NOP, InstructionKind.Other)},
             };
 
         private static readonly StringTrie<ARMOpcodeInfo> opcodesTrie_ = new StringTrie<ARMOpcodeInfo>(opcodes_);

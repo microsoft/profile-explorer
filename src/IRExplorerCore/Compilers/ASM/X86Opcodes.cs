@@ -42,6 +42,7 @@ namespace IRExplorerCore.ASM {
         JCXZ,
         JECXZ,
         CALL,
+        NOP
     }
 
     public struct x86OpcodeInfo {
@@ -92,6 +93,7 @@ namespace IRExplorerCore.ASM {
                 {"JCXZ", new x86OpcodeInfo(x86Opcode.JCXZ, InstructionKind.Branch)},
                 {"JECXZ", new x86OpcodeInfo(x86Opcode.JECXZ, InstructionKind.Branch)},
                 {"CALL", new x86OpcodeInfo(x86Opcode.CALL, InstructionKind.Call)},
+                {"NOP", new x86OpcodeInfo(x86Opcode.NOP, InstructionKind.Other)},
             };
 
         private static readonly StringTrie<x86OpcodeInfo> opcodesTrie_ = new StringTrie<x86OpcodeInfo>(opcodes_);

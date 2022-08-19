@@ -507,7 +507,7 @@ namespace IRExplorerUI {
 
         private async Task AnnotateProfilerData(FunctionProfileData profile, IDebugInfoProvider debugInfo) {
             ResetProfileMarking();
-            var result = profile.ProcessSourceLines(debugInfo);
+            var result = await Task.Run(() => profile.ProcessSourceLines(debugInfo));
             var sourceLineWeights = result.SourceLineWeightList;
 
             if (sourceLineWeights.Count == 0) {

@@ -3142,6 +3142,7 @@ namespace IRExplorerUI {
             if (offset < Document.TextLength) {
                 ignoreNextCaretEvent_ = true;
                 TextArea.Caret.Offset = offset;
+                BringTextOffsetIntoView(offset);
             }
         }
 
@@ -3667,7 +3668,6 @@ namespace IRExplorerUI {
                 previewPopup_.DetachPopup();
             }
         }
-
 
         private IRTextSection FindCallTargetSection(IRElement element) {
             if (!element.HasName) {

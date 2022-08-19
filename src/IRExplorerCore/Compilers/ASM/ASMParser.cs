@@ -166,8 +166,6 @@ namespace IRExplorerCore.ASM {
             Debug.Assert(function.TupleCount == instrCount_);
             
             SetLastInstructionSize();
-            function.InstructionCount = instrCount_;
-            function.TupleCount = instrCount_;
             FixBlockReferences(function);
             AssignBlockNumbers(function);
             AddMetadata(function);
@@ -214,15 +212,15 @@ namespace IRExplorerCore.ASM {
                 // In practice this is fast, although in worst case it's #labels * #blocks complexity.
                 bool blockAdded = false;
 
-                if (potentialLabelMap_.TryGetValue(refAddress, out var location)) {
+                if (potentialLabelMap_.TryGetValue(refAddress, out var labelLocation)) {
                     var label = GetOrCreateBlockLabel(refBlock);
-                    label.TextLocation = location.Item1;
-                    label.TextLength = location.Item2;
-                    refBlock.TextLocation = location.Item1;
+                    label.TextLocation = labelLocation.Item1;
+                    label.TextLength = labelLocation.Item2;
+                    refBlock.TextLocation = labelLocation.Item1;
 
                     // Check if there is an overlapping block and split it at the label,
                     // move the tuples following the label to the new block.
-                    // |otherBlock|1|2|..|label|3|4|..|  =>  |otherBlock|1|2|..| -> |label|1|2|..|
+                    // |otherBlock|1|2|..|refBlock label|3|4|..|  =>  |otherBlock|1|2|..| -> |refBlock label|1|2|..|
                     for (int i = 0; i < function.Blocks.Count; i++) {
                         var otherBlock = function.Blocks[i];
 
@@ -230,9 +228,9 @@ namespace IRExplorerCore.ASM {
                             continue;
                         }
 
-                        if (otherBlock.TextLocation <= location.Item1 &&
-                            otherBlock.TextLocation.Offset + otherBlock.TextLength > location.Item1.Offset) {
-                            var offsetDiff = location.Item1.Offset - otherBlock.TextLocation.Offset;
+                        if (otherBlock.TextLocation <= labelLocation.Item1 &&
+                            otherBlock.TextLocation.Offset + otherBlock.TextLength > labelLocation.Item1.Offset) {
+                            var offsetDiff = labelLocation.Item1.Offset - otherBlock.TextLocation.Offset;
                             refBlock.TextLength = otherBlock.TextLength - offsetDiff;
 
                             // Move successor blocks from otherBlock to refBlock.
@@ -243,21 +241,30 @@ namespace IRExplorerCore.ASM {
                             }
 
                             otherBlock.Successors.Clear();
-                            ConnectBlocks(otherBlock, refBlock);
 
                             // Move the tuples to the new block.
                             int splitIndex = 0;
                             int copiedTuples = 0;
+                            bool isNopBlock = true;
 
                             for (; splitIndex < otherBlock.Tuples.Count; splitIndex++) {
                                 var tuple = otherBlock.Tuples[splitIndex];
 
-                                if (tuple.TextLocation >= location.Item1) {
+                                if (tuple.TextLocation >= labelLocation.Item1) {
                                     refBlock.Tuples.Add(tuple);
                                     tuple.Parent = refBlock;
                                     tuple.IndexInBlock = copiedTuples;
                                     copiedTuples++;
                                 }
+                                else if(tuple is InstructionIR instr && !irInfo_.IsNOP(instr)) {
+                                    isNopBlock = false;
+                                }
+                            }
+
+                            // If the block has only NOP, don't connect it, it leaves
+                            // the NOP block without any predecessor.
+                            if (!isNopBlock) {
+                                ConnectBlocks(otherBlock, refBlock);
                             }
 
                             if (copiedTuples > 0) {
