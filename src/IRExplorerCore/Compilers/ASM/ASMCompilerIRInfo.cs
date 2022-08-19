@@ -6,6 +6,7 @@ using IRExplorerCore.ASM;
 using IRExplorerCore.IR;
 using IRExplorerCore.Analysis;
 using System;
+using System.Diagnostics;
 
 namespace IRExplorerCore.ASM {
     public sealed class ASMCompilerIRInfo : ICompilerIRInfo {
@@ -140,6 +141,19 @@ namespace IRExplorerCore.ASM {
         }
 
         public bool IsNOP(InstructionIR instr) {
+            if (instr.Opcode == null) {
+                return false;
+            }
+
+            switch (Mode) {
+                case IRMode.x86_64: {
+                    return instr.OpcodeAs<x86Opcode>() == x86Opcode.NOP;
+                }
+                case IRMode.ARM64: {
+                    return instr.OpcodeAs<ARMOpcode>() == ARMOpcode.NOP;
+                }
+            }
+
             return false;
         }
 

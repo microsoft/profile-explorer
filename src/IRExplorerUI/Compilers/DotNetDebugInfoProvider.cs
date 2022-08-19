@@ -68,6 +68,7 @@ namespace IRExplorerUI.Compilers {
         private Machine architecture_;
         private Dictionary<DebugFunctionInfo, List<(int ILOffset, int NativeOffset)>> methodILNativeMap_;
         private Dictionary<long, MethodCode> methodCodeMap_;
+        private bool hasManagedSymbolFileFailure_;
 
         public DotNetDebugInfoProvider(Machine architecture) {
             architecture_ = architecture;
@@ -101,7 +102,7 @@ namespace IRExplorerUI.Compilers {
             else if (debugInfo.HasSourceLines) {
                 return true;
             }
-            else if (ManagedSymbolFile == null) {
+            else if (ManagedSymbolFile == null || hasManagedSymbolFileFailure_) {
                 return false;
             }
 
@@ -126,6 +127,8 @@ namespace IRExplorerUI.Compilers {
             Trace.WriteLine($"<< TraceEvent");
 
             if (!File.Exists(debugFile)) {
+                // Don't try again if PDB not found.
+                hasManagedSymbolFileFailure_ = true;
                 return debugInfo.HasSourceLines;
             }
 
@@ -176,6 +179,7 @@ namespace IRExplorerUI.Compilers {
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed to read managed PDB from {debugFile}: {ex.Message}\n{ex.StackTrace}");
+                    hasManagedSymbolFileFailure_ = true;
                 }
 
                 return debugInfo.HasSourceLines;

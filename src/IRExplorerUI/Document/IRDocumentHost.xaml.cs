@@ -127,7 +127,6 @@ namespace IRExplorerUI {
         public event PropertyChangedEventHandler PropertyChanged;
     }
 
-
     public class DummyVirtualizingStackPanel : VirtualizingStackPanel {
         protected override Size MeasureOverride(Size constraint) {
             //Trace.WriteLine($"Measure {constraint}");
@@ -351,6 +350,10 @@ namespace IRExplorerUI {
         }
 
         private void TextViewOnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            if (!Utils.IsControlModifierActive()) {
+                return;
+            }
+
             SearchSymbolImpl(Utils.IsShiftModifierActive());
         }
 
@@ -820,7 +823,6 @@ namespace IRExplorerUI {
             //ColumnsList.InvalidateVisual();
             //ColumnsList.UpdateLayout();
         }
-        
 
         private void TextView_GotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e) {
             //CloseSectionPanel();
@@ -1034,7 +1036,6 @@ namespace IRExplorerUI {
         private int profileElementIndex_;
         private int profileBlockIndex_;
 
-
         private static readonly OptionalColumn TIME_COLUMN = OptionalColumn.Template("[TimeHeader]", "TimeColumnValueTemplate",
             "TimeHeader", "Time (ms)", "Instruction time");
 
@@ -1174,7 +1175,6 @@ namespace IRExplorerUI {
 
                     return row;
                 }
-
 
                 var elementValueList = new List<ElementRowValue>(Function.TupleCount);
                 var dummyValues = MakeDummyRow();
@@ -2024,7 +2024,6 @@ namespace IRExplorerUI {
             CreateQueryActionButtons(query.Data);
         }
 
-
         private QueryPanel CreateQueryPanel() {
             //? TODO: Create panel over the document
             var documentHost = this;
@@ -2497,7 +2496,6 @@ namespace IRExplorerUI {
             wb.SaveAs(filePath);
         }
 
-        
         private void ExportFunctionProfileExecuted(object sender, ExecutedRoutedEventArgs e) {
             var path = Utils.ShowSaveFileDialog("Excel Worksheets|*.xlsx", "*.xlsx|All Files|*.*");
 

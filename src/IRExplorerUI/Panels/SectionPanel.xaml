@@ -168,7 +168,6 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-
             <Grid Grid.Row="0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -374,7 +373,7 @@
                             </GridViewColumn>
 
                             <GridViewColumn
-                                Width="50"
+                                Width="100"
                                 local:GridViewColumnVisibility.IsVisible="{Binding ModuleControlsVisible}"
                                 DisplayMemberBinding="{Binding ModuleName}">
                                 <GridViewColumnHeader x:Name="FunctionModuleColumnHeader" Content="Module" />
@@ -579,7 +578,6 @@
             </Grid>
         </Grid>
 
-
         <GridSplitter
             x:Name="MainGridSplitter"
             Grid.Column="1"
@@ -702,7 +700,6 @@
                         HasPinButton="False"
                         SettingsClicked="FixedToolbar_SettingsClicked" />
                 </Grid>
-
 
                 <ListView
                     x:Name="SectionList"
@@ -1070,7 +1067,6 @@
             </Grid>
         </Grid>
     </Grid>
-
 
     <local:ToolPanelControl.InputBindings>
         <KeyBinding
