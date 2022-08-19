@@ -922,10 +922,6 @@ namespace IRExplorerUI {
             }
         }
 
-        private void DockManager_LayoutUpdated(object sender, EventArgs e) {
-            UpdateStartPagePanelPosition();
-        }
-
         private async Task SetupPanels() {
             await SetupSectionPanel();
             NotifyPanelsOfSessionStart();

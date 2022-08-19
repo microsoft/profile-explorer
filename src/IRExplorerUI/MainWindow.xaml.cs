@@ -156,13 +156,17 @@ namespace IRExplorerUI {
             SetupMainWindow();
             SetupGraphLayoutCache();
             
-            DockManager.LayoutUpdated += DockManager_LayoutUpdated;
             ContentRendered += MainWindow_ContentRendered;
             StateChanged += MainWindow_StateChanged;
             LocationChanged += MainWindow_LocationChanged;
             Closing += MainWindow_Closing;
             Activated += MainWindow_Activated;
             Deactivated += MainWindow_Deactivated;
+            SizeChanged += MainWindow_SizeChanged;
+        }
+
+        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e) {
+            UpdateStartPagePanelPosition();
         }
 
         protected override AutomationPeer OnCreateAutomationPeer() {
@@ -1344,8 +1348,11 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            result.Report = report;
-            sessionState_.ProfileData = result;
+            if (result != null) {
+                result.Report = report;
+                sessionState_.ProfileData = result;
+            }
+
             return result != null;
         }
 
@@ -1363,8 +1370,11 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            result.Report = report;
-            sessionState_.ProfileData = result;
+            if (result != null) {
+                result.Report = report;
+                sessionState_.ProfileData = result;
+            }
+            
             return result != null;
         }        
 
