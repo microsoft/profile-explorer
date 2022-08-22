@@ -5,9 +5,11 @@ using System.Text;
 using System.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
+using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
 
+[ProtoContract(SkipConstructor = true)]
 public class ProfileCallTree {
     // Comparer used for the root nodes in order to ignore the ID part.
     private class ProfileCallTreeNodeComparer : IEqualityComparer<ProfileCallTreeNode> {
@@ -20,11 +22,15 @@ public class ProfileCallTree {
         }
     }
 
+    [ProtoMember(1)]
     private HashSet<ProfileCallTreeNode> rootNodes_;
+    [ProtoMember(2)]
+    //?  public Dictionary<(Guid summaryId, int funcNumber),
     private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
+    [ProtoMember(3)]
+    private long nextNodeId_;
     private ReaderWriterLockSlim lock_;
     private ReaderWriterLockSlim funcLock_;
-    private long nextNodeId_;
 
     public HashSet<ProfileCallTreeNode> RootNodes => rootNodes_;
 
@@ -229,7 +235,6 @@ public class ProfileCallTree {
         return builder.ToString();
     }
 }
-
 
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     public long Id { get; set; }

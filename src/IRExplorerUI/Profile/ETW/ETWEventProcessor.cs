@@ -19,18 +19,6 @@ using System.Windows.Controls.Ribbon.Primitives;
 namespace IRExplorerUI.Profile.ETW;
 
 public class ETWEventProcessor : IDisposable {
-    class DisassemblerArgs {
-        public DisassemblerArgs(byte[] methodCode, DebugFunctionInfo funcInfo, ClrRuntime runtime) {
-            MethodCode = methodCode;
-            FuncInfo = funcInfo;
-            Runtime = runtime;
-        }
-
-        public byte[] MethodCode { get; }
-        public DebugFunctionInfo FuncInfo { get; }
-        public ClrRuntime Runtime { get; }
-    }
-    
     private ETWTraceEventSource source_;
     private bool isRealTime_;
     private bool handleDotNetEvents_;
@@ -171,7 +159,7 @@ public class ETWEventProcessor : IDisposable {
         };
 
         RawProfileData profile = new(handleDotNetEvents_);
-        
+
         source_.Kernel.ProcessStartGroup += data => {
             var proc = new ProfileProcess(data.ProcessID, data.ParentID,
                                           data.ProcessName, data.ImageFileName,
@@ -187,7 +175,7 @@ public class ETWEventProcessor : IDisposable {
                 childAcceptedProcessIds_.Add(data.ProcessID);
             }
         };
-        
+
         source_.Kernel.ImageGroup += data => {
             string originalName = null;
             int timeStamp = data.TimeDateStamp;
@@ -246,7 +234,17 @@ public class ETWEventProcessor : IDisposable {
         };
 
         source_.Kernel.EventTraceHeader += data => {
-            // data.PointerSize;
+            profile.TraceInfo.PointerSize = data.PointerSize;
+            profile.TraceInfo.CpuSpeed = data.CPUSpeed;
+            profile.TraceInfo.CpuCount = data.ProcessorNumber;
+            profile.TraceInfo.ProfileStartTime = data.StartTime;
+            profile.TraceInfo.ProfileEndTime = data.EndTime;
+        };
+
+        source_.Kernel.SystemConfigCPU += data => {
+            profile.TraceInfo.ComputerName = data.ComputerName;
+            profile.TraceInfo.DomainName = data.DomainName;
+            profile.TraceInfo.MemorySize = data.MemSize;
         };
 
         source_.Kernel.StackWalkStack += data => {

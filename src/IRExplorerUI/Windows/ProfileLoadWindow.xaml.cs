@@ -33,6 +33,7 @@ namespace IRExplorerUI {
         private bool isRecordingProfile_;
         private List<ProcessSummary> processList_;
         private ProcessSummary selectedProcSummary_;
+        private List<ProcessSummary> recoredProcSummaries_;
         private bool windowClosed_;
 
         public ProfileLoadWindow(ISession session, bool recordMode) {
@@ -232,7 +233,10 @@ namespace IRExplorerUI {
             }
 
             var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-            var report = new ProfileDataReport((SymbolFileSourceOptions)symbolOptions_.Clone());
+            var report = new ProfileDataReport();
+            report.RunningProcesses = processList_;
+            report.SymbolOptions = (SymbolFileSourceOptions)symbolOptions_.Clone();
+
             bool success = false;
             IsLoadingProfile = true;
 
@@ -313,17 +317,16 @@ namespace IRExplorerUI {
             Close();
         }
 
-        private async void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) {
-            if (!Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*")) {
-                return;
-            }
+        private void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) {
+            Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*");
         }
 
-        private async Task DisplayProcessList() {
+        private async Task LoadProcessList() {
             if (File.Exists(ProfileFilePath))
             {
                 var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-                await DisplayProcessList(async () => await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, options_, task));
+                processList_ = await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, options_, task);
+                await DisplayProcessList();
             }
         }
 
@@ -426,7 +429,8 @@ namespace IRExplorerUI {
             IsRecordingProfile = false;
 
             if (recordedProfile_ != null) {
-                await DisplayProcessList(async () => await Task.Run(() => recordedProfile_.BuildProcessSummary()));
+                processList_ = await Task.Run(() => recordedProfile_.BuildProcessSummary());
+                await DisplayProcessList();
             }
             else {
                 MessageBox.Show("Failed to record ETW sampling profile!", "IR Explorer", 
@@ -447,10 +451,9 @@ namespace IRExplorerUI {
             RecordProgressLabel.Text = status;
         }
 
-        private async Task DisplayProcessList(Func<Task<List<ProcessSummary>>> func) {
+        private async Task DisplayProcessList() {
             IsLoadingProcessList = true;
             ShowProcessList = false;
-            processList_ = await func();
             
             if (processList_ != null) {
                 processList_.Sort((a, b) => b.SampleCount.CompareTo(a.SampleCount));
@@ -483,7 +486,7 @@ namespace IRExplorerUI {
 
         private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
             if (!string.IsNullOrEmpty(ProfileFilePath)) {
-                await DisplayProcessList();
+                await LoadProcessList();
             }
         }
 
