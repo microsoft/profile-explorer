@@ -13,6 +13,7 @@ using IRExplorerUI.Compilers;
 using IRExplorerUI.Compilers.ASM;
 using IRExplorerUI.Profile.ETW;
 using Microsoft.Diagnostics.Tracing;
+using static SkiaSharp.HarfBuzz.SKShaper;
 
 namespace IRExplorerUI.Profile;
 
@@ -111,6 +112,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         CancelableTask cancelableTask) {
         report_ = report;
         report_.Process = mainProcess;
+        report.TraceInfo = prof.TraceInfo;
         var mainProcessId = mainProcess.ProcessId;
 
         try {

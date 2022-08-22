@@ -35,8 +35,8 @@ namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
 public class RawProfileData {
-    private static ProfileContext tempContext_ = new ProfileContext();
-    private static ProfileStack tempStack_ = new ProfileStack();
+    private static ProfileContext tempContext_ = new();
+    private static ProfileStack tempStack_ = new();
 
     // Per-thread caches to speed up lookups.
     [ThreadStatic]
@@ -58,12 +58,12 @@ public class RawProfileData {
     private List<ProfileImage> images_;
     [ProtoMember(6)]
     private List<ProfileStack> stacks_;
-
     [ProtoMember(7)]
-    private List<PerformanceCounter> perfCounters_ { get; set; }
-    //? TODO: Switch to a segmented list
+    private List<PerformanceCounter> perfCounters_;
     [ProtoMember(8)]
-    private SegmentedList<PerformanceCounterEvent> perfCountersEvents_ { get; set; }
+    private SegmentedList<PerformanceCounterEvent> perfCountersEvents_;
+    [ProtoMember(8)]
+    private ProfileTraceInfo traceInfo_;
 
     // Objects used only while building the profile.
     private Dictionary<ProfileThread, int> threadsMap_;
@@ -76,6 +76,7 @@ public class RawProfileData {
     private Dictionary<ProfileStack, int> lastProcStacks_;
     private int lastProcId_;
 
+    public ProfileTraceInfo TraceInfo => traceInfo_;
     public List<ProfileSample> Samples => samples_;
     public List<ProfileProcess> Processes => processes_.ToValueList();
     public List<ProfileThread> Threads => threads_;
@@ -200,6 +201,7 @@ public class RawProfileData {
     }
 
     public RawProfileData(bool handlesDotNetEvents = false) {
+        traceInfo_ = new ProfileTraceInfo();
         contexts_ = new List<ProfileContext>();
         contextsMap_ = new Dictionary<ProfileContext, int>();
         images_ = new List<ProfileImage>();
@@ -290,8 +292,6 @@ public class RawProfileData {
         proc.AddImage(result);
         return result;
     }
-
-    //? TODO: Per-process samples, reduces dict pressure
 
     public int AddSample(ProfileSample sample) {
         Debug.Assert(sample.ContextId != 0);
@@ -518,25 +518,6 @@ public class RawProfileData {
                 duration.Last = sample.Time;
                 procDuration[process] = duration;
             }
-
-            //var image = FindImageForIP(sample.IP, context);
-
-            //if (image == null && HasManagedMethods(context.ProcessId)) {
-            //    var managedFunc = FindManagedMethodForIP(sample.IP, context.ProcessId);
-
-            //    if (!managedFunc.IsUnknown) {
-            //        image = managedFunc.Image;
-            //    }
-            //}
-            
-            //if (image != null) {
-            //    if (!procImageW.TryGetValue(process, out var set)) {
-            //        set = new Dictionary<ProfileImage, TimeSpan>();
-            //        procImageW[process] = set;
-            //    }
-
-            //    set.AccumulateValue(image, sample.Weight);
-            //}
         };
         
         foreach (var pair in processSamples) {
@@ -549,18 +530,6 @@ public class RawProfileData {
                 item.Duration = duration.Last - duration.First;
                 Trace.WriteLine($"Proc {pair.Key.Name}, duration {item.Duration}");
             }
-
-            //if (procImageW.TryGetValue(pair.Key, out var images)) {
-            //    foreach (var imagePair in images) {
-            //        item.ImageWeights.Add((imagePair.Key, imagePair.Value));
-            //    }
-                
-            //    Trace.WriteLine($"Proc {pair.Key.Name}, {pair.Key.ProcessId}");
-
-            //    foreach (var img in images) {
-            //        Trace.WriteLine($"  {Utils.TryGetFileName(img.Key.FilePath)}, {img.Value.TotalMilliseconds} ms");
-            //    }
-            //}
         }
 
         return list;
@@ -613,47 +582,6 @@ public class RawProfileData {
                 Trace.WriteLine($"{sample}");
             }
         }
-
-        //SampleHolder h = new SampleHolder() { samples = samples_ };
-
-        //var d = StateSerializer.Serialize(h);
-        //Trace.WriteLine($"Serialized to {d.Length}b");
-        //Trace.Flush();
-        //File.WriteAllBytes(@"C:\test\samples.dat", d);
-
-        // foreach (var s in samples_) {
-        //     var s2 = new ProfileSample2() {
-        //         IP = s.IP,
-        //         StackId = s.StackId,
-        //         ContextId = s.ContextId,
-        //         IsKernelCode = s.IsKernelCode
-        //     };
-        // 
-        //     if (!sampleSet_.TryGetValue(s2, out var es2)) {
-        //         sampleSet_.Add(s2);
-        //         es2 = s2;
-        //     }
-        // 
-        //     es2.Weight += s.Weight;
-        //     es2.Time.Add(s.Time);
-        // }
-        // 
-        // List<int> counts = sampleSet_.Select(s => s.Time.Count).ToList();
-        // int max = sampleSet_.Max(s => s.Time.Count);
-        // counts.Sort();
-        // int med = counts[counts.Count / 2];
-        // 
-        // int memUsage = samples_.Count * Unsafe.SizeOf<ProfileSample>();
-        // int memUsage2 = sampleSet_.Count * Unsafe.SizeOf<ProfileSample>() +
-        //                 sampleSet_.Select(s => s.Time.Count * 8).Sum();
-        // int memUsage3 = sampleSet_.Count * Unsafe.SizeOf<ProfileSample>() +
-        //                 sampleSet_.Select(s => s.Time.Capacity * 8).Sum();
-        // 
-        // Trace.WriteLine($"Total samples: {samples_.Count}");
-        // Trace.WriteLine($"    same IP: {sampleSet_.Count}, {100*(double)sampleSet_.Count / samples_.Count}%, median {med}, max {max}");
-        // Trace.WriteLine($"    memUsage:           {memUsage}, {(double)memUsage / (1024 * 1024)} MB");
-        // Trace.WriteLine($"    memUsage2 size:     {memUsage2}, {(double)memUsage2 / (1024 * 1024)} MB");
-        // Trace.WriteLine($"    memUsage2 capacity: {memUsage3}, {(double)memUsage3 / (1024 * 1024)} MB");
 
     }
 

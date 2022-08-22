@@ -13,14 +13,14 @@ namespace IRExplorerUI.Profile;
 [ProtoContract(SkipConstructor = true)]
 public class ProfileStack : IEquatable<ProfileStack> {
     private const int MaxFrameNumber = 256;
-    private static long[][] tempFrameArrays_ = new long[MaxFrameNumber + 1][];
+    private static long[][] TempFrameArrays = new long[MaxFrameNumber + 1][];
 
     static ProfileStack() {
         // The frame ptr. array is being interned (unique instance)
         // later, use a pre-allocated array initially to reduce GC pressure.
         // Note: this also means creating ProfileStack must be single-threaded.
         for (int i = 0; i <= MaxFrameNumber; i++) {
-            tempFrameArrays_[i] = new long[i];
+            TempFrameArrays[i] = new long[i];
         }
     }
 
@@ -44,7 +44,6 @@ public class ProfileStack : IEquatable<ProfileStack> {
 
     public bool IsUnknown => FramePointers == null;
     public int FrameCount => FramePointers.Length;
-
     public static ProfileStack Unknown => new ProfileStack();
 
     public object GetOptionalData() {
@@ -56,34 +55,6 @@ public class ProfileStack : IEquatable<ProfileStack> {
         optionalData_ = value;
         Interlocked.MemoryBarrierProcessWide();
     }
-
-    //public void SetOptionalData(object value) {
-    //    lock (this) {
-    //        if (optionalData_ != null) {
-    //            if (optionalData_ is ResolvedProfileStack resolved &&
-    //                value is ResolvedProfileStack other) {
-
-    //                if (resolved.FrameCount != other.FrameCount) {
-    //                    Trace.WriteLine($"Mismatch {resolved.FrameCount}, {other.FrameCount}");
-    //                    Trace.Flush();
-    //                }
-
-    //                else {
-    //                    for (int i = 0; i < resolved.FrameCount; i++) {
-    //                        if (resolved.StackFrames[i] != other.StackFrames[i]) {
-    //                            Trace.WriteLine($"Mismatch {resolved.StackFrames[i]}, {other.StackFrames[i]}");
-    //                            Utils.WaitForDebugger(true);
-    //                            Trace.Flush();
-
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-
-    //        optionalData_ = value;
-    //    }
-    //}
 
     public long[] CloneFramePointers() {
         long[] clone = new long[FramePointers.Length];
@@ -109,10 +80,10 @@ public class ProfileStack : IEquatable<ProfileStack> {
         long[] array;
 
         if (frameCount <= MaxFrameNumber) {
-            array = tempFrameArrays_[frameCount];
+            array = TempFrameArrays[frameCount];
 #if DEBUG
                 Debug.Assert(array != null);
-                tempFrameArrays_[frameCount] = null;
+                TempFrameArrays[frameCount] = null;
 #endif
         }
         else {
@@ -125,7 +96,7 @@ public class ProfileStack : IEquatable<ProfileStack> {
     private void ReturnArray(long[] array) {
 #if DEBUG
             if (array.Length <= MaxFrameNumber) {
-                tempFrameArrays_[array.Length] = array;
+                TempFrameArrays[array.Length] = array;
             }
 #endif
     }
@@ -161,6 +132,29 @@ public class ProfileStack : IEquatable<ProfileStack> {
     public override string ToString() {
         return $"#{FrameCount}, ContextId: {ContextId}";
     }
+}
+
+[ProtoContract(SkipConstructor = true)]
+public class ProfileTraceInfo {
+    [ProtoMember(1)]
+    public DateTime ProfileStartTime { get; set; }
+    [ProtoMember(2)]
+    public DateTime ProfileEndTime { get; set; }
+    [ProtoMember(3)]
+    public int CpuCount { get; set; }
+    [ProtoMember(4)]
+    public int CpuSpeed { get; set; }
+    [ProtoMember(5)]
+    public int PointerSize { get; set; }
+    [ProtoMember(6)]
+    public int MemorySize { get; set; }
+    [ProtoMember(7)]
+    public string ComputerName { get; set; }
+    [ProtoMember(8)]
+    public string DomainName { get; set; }
+
+    public bool Is64Bit => PointerSize == 8;
+    public TimeSpan ProfileDuration => ProfileEndTime - ProfileStartTime;
 }
 
 [ProtoContract(SkipConstructor = true)]
@@ -560,7 +554,6 @@ public sealed class ProfileThread : IEquatable<ProfileThread> {
         return $"{ThreadId}, ProcessId: {ProcessId}, Name: {Name}";
     }
 }
-
 
 [ProtoContract(SkipConstructor = true)]
 public struct PerformanceCounterEvent : IEquatable<PerformanceCounterEvent> {

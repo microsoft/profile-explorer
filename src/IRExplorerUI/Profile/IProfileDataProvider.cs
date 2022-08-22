@@ -38,8 +38,8 @@ public class ProcessSummary {
     public TimeSpan Duration { get; set; }
     [ProtoMember(5)]
     public int SampleCount { get; set; }
-    [ProtoMember(6)]
-    public List<(ProfileImage Image, TimeSpan Weight)> ImageWeights;
+    //[ProtoMember(6)]
+    //public List<(ProfileImage Image, TimeSpan Weight)> ImageWeights;
 
     public ProcessSummary() {
         
@@ -48,7 +48,7 @@ public class ProcessSummary {
     public ProcessSummary(ProfileProcess process, int sampleCount) {
         Process = process;
         SampleCount = sampleCount;
-        ImageWeights = new List<(ProfileImage Image, TimeSpan Weight)>();
+        //ImageWeights = new List<(ProfileImage Image, TimeSpan Weight)>();
     }
 
     public override string ToString() {
@@ -78,26 +78,21 @@ public class ProfileDataReport {
 
     [ProtoMember(1)]
     private Dictionary<BinaryFileDescriptor, ModuleStatus> moduleStatusMap_;
-
     [ProtoMember(2)]
-    public DateTime ProfileTime { get; set; }
+    public ProfileTraceInfo TraceInfo { get; set; }
     [ProtoMember(3)]
-    public ProfileProcess Process { get; set; }
+    public List<ProcessSummary> RunningProcesses { get; set; }
     [ProtoMember(4)]
-    public SymbolFileSourceOptions SymbolOptions { get; set; }
+    public ProfileProcess Process { get; set; }
     [ProtoMember(5)]
+    public SymbolFileSourceOptions SymbolOptions { get; set; }
+    [ProtoMember(6)]
     public ProfileRecordingSessionOptions SessionOptions { get; set; } // For recording mode
 
     public bool IsRecordingSession => SessionOptions != null;
     public List<ModuleStatus> Modules => moduleStatusMap_.ToValueList();
 
     public ProfileDataReport() {
-
-    }
-
-    public ProfileDataReport(SymbolFileSourceOptions symbolOptions) {
-        SymbolOptions = symbolOptions;
-        ProfileTime = DateTime.Now;
         moduleStatusMap_ = new Dictionary<BinaryFileDescriptor, ModuleStatus>();
     }
 
