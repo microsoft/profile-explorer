@@ -28,6 +28,10 @@ namespace IRExplorerUI.Profile {
             report_ = report;
             DataContext = report;
             ModuleList.ItemsSource = new ListCollectionView(report.Modules);
+
+            if (report.RunningProcesses != null) {
+                ProcessList.ItemsSource = new ListCollectionView(report.RunningProcesses);
+            }
         }
 
         public static void ShowReport(ProfileDataReport report, ISession session) {

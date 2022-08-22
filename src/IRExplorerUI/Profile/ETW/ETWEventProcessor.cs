@@ -236,7 +236,7 @@ public class ETWEventProcessor : IDisposable {
         source_.Kernel.EventTraceHeader += data => {
             profile.TraceInfo.PointerSize = data.PointerSize;
             profile.TraceInfo.CpuSpeed = data.CPUSpeed;
-            profile.TraceInfo.CpuCount = data.ProcessorNumber;
+            profile.TraceInfo.CpuCount = data.NumberOfProcessors;
             profile.TraceInfo.ProfileStartTime = data.StartTime;
             profile.TraceInfo.ProfileEndTime = data.EndTime;
         };
