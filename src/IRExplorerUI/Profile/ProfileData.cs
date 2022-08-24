@@ -17,7 +17,7 @@ using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
 
-namespace IRExplorerUI.Profile; 
+namespace IRExplorerUI.Profile;
 
 public class ProfileData {
     [ProtoContract(SkipConstructor = true)]
@@ -29,7 +29,7 @@ public class ProfileData {
         public TimeSpan TotalWeight { get; set; }
 
         [ProtoMember(3)]
-        public Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData> FunctionProfiles { get; set; }
+        public Dictionary<IRTextFunctionId, FunctionProfileData> FunctionProfiles { get; set; }
 
         [ProtoMember(4)]
         public Dictionary<int, PerformanceCounterInfo> PerformanceCounters { get; set; }
@@ -40,10 +40,13 @@ public class ProfileData {
         [ProtoMember(6)]
         public ProfileDataReport Report { get; set; }
 
+        [ProtoMember(7)]
+        public byte[] CallTreeState;
+
         public ProfileDataState(TimeSpan profileWeight, TimeSpan totalWeight) {
             ProfileWeight = profileWeight;
             TotalWeight = totalWeight;
-            FunctionProfiles = new Dictionary<(Guid summaryId, int funcNumber), FunctionProfileData>();
+            FunctionProfiles = new Dictionary<IRTextFunctionId, FunctionProfileData>();
         }
     }
 
@@ -161,17 +164,18 @@ public class ProfileData {
     }
 
     public byte[] Serialize() {
-        var profileState = new ProfileDataState(ProfileWeight, TotalWeight);
-        profileState.PerformanceCounters = PerformanceCounters;
-        profileState.ModuleWeights = ModuleWeights;
-        profileState.Report = Report;
+        var state = new ProfileDataState(ProfileWeight, TotalWeight);
+        state.PerformanceCounters = PerformanceCounters;
+        state.ModuleWeights = ModuleWeights;
+        state.Report = Report;
+        state.CallTreeState = CallTree.Serialize();
 
         foreach (var pair in FunctionProfiles) {
-            var func = pair.Key;
-            profileState.FunctionProfiles[(func.ParentSummary.Id, func.Number)] = pair.Value;
+            var funcId = new IRTextFunctionId(pair.Key);
+            state.FunctionProfiles[funcId] = pair.Value;
         }
 
-        return StateSerializer.Serialize(profileState);
+        return StateSerializer.Serialize(state);
     }
 
     public static ProfileData Deserialize(byte[] data, List<IRTextSummary> summaries) {
@@ -187,8 +191,8 @@ public class ProfileData {
         }
 
         foreach(var pair in state.FunctionProfiles) {
-            var summary = summaryMap[pair.Key.summaryId];
-            var function = summary.GetFunctionWithId(pair.Key.funcNumber);
+            var summary = summaryMap[pair.Key.SummaryId];
+            var function = summary.GetFunctionWithId(pair.Key.FunctionNumber);
 
             if (function == null) {
                 Trace.TraceWarning($"No func for {pair.Value.SourceFilePath}");
@@ -199,7 +203,7 @@ public class ProfileData {
         }
 
         profileData.Report = state.Report;
-        profileData.CallTree ??= new ProfileCallTree();
+        profileData.CallTree = ProfileCallTree.Deserialize(state.CallTreeState, summaryMap);
         return profileData;
     }
 
@@ -221,9 +225,9 @@ public class FunctionProfileData {
     [ProtoMember(4)]
     public Dictionary<long, TimeSpan> InstructionWeight { get; set; } // Instr. offset mapping
     [ProtoMember(5)]
-    public Dictionary<(Guid, int), TimeSpan> CalleesWeights { get; set; } // {Summary,Function ID} mapping
+    public Dictionary<IRTextFunctionId, TimeSpan> CalleesWeights { get; set; } // {Summary,Function ID} mapping
     [ProtoMember(6)]
-    public Dictionary<(Guid, int), TimeSpan> CallerWeights { get; set; } // {Summary,Function ID} mapping
+    public Dictionary<IRTextFunctionId, TimeSpan> CallerWeights { get; set; } // {Summary,Function ID} mapping
     [ProtoMember(7)]
     public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
     [ProtoMember(8)]
@@ -292,8 +296,8 @@ public class FunctionProfileData {
     [ProtoAfterDeserialization]
     private void InitializeReferenceMembers() {
         InstructionWeight ??= new Dictionary<long, TimeSpan>();
-        CalleesWeights ??= new Dictionary<(Guid, int), TimeSpan>();
-        CallerWeights ??= new Dictionary<(Guid, int), TimeSpan>();
+        CalleesWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
+        CallerWeights ??= new Dictionary<IRTextFunctionId, TimeSpan>();
         InstructionCounters ??= new Dictionary<long, PerformanceCounterSet>();
     }
 
@@ -308,7 +312,7 @@ public class FunctionProfileData {
 
     public void AddChildSample(IRTextFunction childFunc, TimeSpan weight) {
         lock (CalleesWeights) {
-            var key = (childFunc.ParentSummary.Id, childFunc.Number);
+            var key = new IRTextFunctionId(childFunc);
 
             if (CalleesWeights.TryGetValue(key, out var currentWeight)) {
                 CalleesWeights[key] = currentWeight + weight;
@@ -321,7 +325,7 @@ public class FunctionProfileData {
 
     public void AddCallerSample(IRTextFunction callerFunc, TimeSpan weight) {
         lock (CallerWeights) {
-            var key = (callerFunc.ParentSummary.Id, callerFunc.Number);
+            var key = new IRTextFunctionId(callerFunc);
 
             if (CallerWeights.TryGetValue(key, out var currentWeight)) {
                 CallerWeights[key] = currentWeight + weight;
@@ -424,6 +428,77 @@ public class FunctionProfileData {
         } while (multiplier * offsetData.OffsetAdjustIncrement < offsetData.MaxOffsetAdjust);
 
         return false;
+    }
+}
+
+[ProtoContract(SkipConstructor = true)]
+public struct IRTextFunctionId : IEquatable<IRTextFunctionId> {
+    [ProtoMember(1)]
+    public Guid SummaryId { get; set; }
+    [ProtoMember(2)]
+    public int FunctionNumber { get; set; }
+
+    public IRTextFunctionId(Guid summaryId, int funcNumber) {
+        SummaryId = summaryId;
+        FunctionNumber = funcNumber;
+    }
+
+    public IRTextFunctionId(IRTextFunction func) {
+        SummaryId = func.ParentSummary.Id;
+        FunctionNumber = func.Number;
+    }
+
+    public bool Equals(IRTextFunctionId other) {
+        return FunctionNumber == other.FunctionNumber && SummaryId.Equals(other.SummaryId);
+    }
+
+    public override bool Equals(object obj) {
+        return obj is IRTextFunctionId other && Equals(other);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(SummaryId, FunctionNumber);
+    }
+
+    public override string ToString() {
+        return $"{FunctionNumber}@{SummaryId}";
+    }
+
+    public static bool operator ==(IRTextFunctionId left, IRTextFunctionId right) {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(IRTextFunctionId left, IRTextFunctionId right) {
+        return !left.Equals(right);
+    }
+}
+
+[ProtoContract(SkipConstructor = true)]
+public class IRTextFunctionReference {
+    [ProtoMember(1)]
+    public IRTextFunctionId Id;
+    public IRTextFunction Value;
+
+    public IRTextFunctionReference() {
+
+    }
+
+    public IRTextFunctionReference(IRTextFunction element) {
+        Id = new IRTextFunctionId(element);
+        Value = element;
+    }
+
+    public IRTextFunctionReference(IRTextFunctionId id, IRTextFunction element = null) {
+        Id = id;
+        Value = element;
+    }
+
+    public static implicit operator IRTextFunctionReference(IRTextFunction element) {
+        return new IRTextFunctionReference(element);
+    }
+
+    public static implicit operator IRTextFunction(IRTextFunctionReference elementRef) {
+        return elementRef.Value;
     }
 }
 

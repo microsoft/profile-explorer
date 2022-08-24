@@ -5,7 +5,7 @@ using IRExplorerCore.IR;
 using ProtoBuf;
 
 namespace IRExplorerUI {
-    [ProtoContract]
+    [ProtoContract(SkipConstructor = true)]
     public class IRElementReference {
         [ProtoMember(1)]
         public ulong Id;

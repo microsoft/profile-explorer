@@ -31,6 +31,8 @@ namespace IRExplorerUI {
         public string IRName;
         [ProtoMember(5)] 
         public IRMode IRMode;
+        [ProtoMember(6)]
+        public bool IsSaved;
 
         public SessionInfo() {}
 
@@ -43,7 +45,7 @@ namespace IRExplorerUI {
 
         public bool IsDebugSession => Kind == SessionKind.DebugSession;
         public bool IsFileSession => Kind == SessionKind.FileSession;
-        public bool IsSavedFileSession => IsFileSession && File.Exists(FilePath);
+        public bool IsSavedFileSession => IsFileSession && IsSaved;
     }
 
     [ProtoContract(SkipConstructor = true)]

@@ -86,7 +86,7 @@ namespace IRExplorerUI {
             definedOperand_ = op;
         }
 
-        public override async void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
+        public override void OnDocumentSectionLoaded(IRTextSection section, IRDocument document) {
             if (TextView.Section == section) {
                 return;
             }

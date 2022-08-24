@@ -269,6 +269,7 @@ namespace IRExplorerUI {
             try {
                 NotifyPanelsOfSessionSave();
                 NotifyDocumentsOfSessionSave();
+                sessionState_.Info.IsSaved = true;
                 var data = await sessionState_.SerializeSession().ConfigureAwait(false);
 
                 if (data != null) {
@@ -1394,7 +1395,7 @@ namespace IRExplorerUI {
             e.Handled = true;
         }
 
-        public void ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
+        public Task ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document) {
             foreach (var docHostInfo in sessionState_.DocumentHosts) {
                 if (docHostInfo.DocumentHost.TextView != document) {
                     docHostInfo.DocumentHost.Settings = newSettings;
@@ -1402,12 +1403,13 @@ namespace IRExplorerUI {
             }
 
             CompilerInfo.ReloadSettings();
+            return Task.CompletedTask;
         }
 
-        public void ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document) {
+        public async Task ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document) {
             foreach (var docHostInfo in sessionState_.DocumentHosts) {
                 if (docHostInfo.DocumentHost.TextView != document) {
-                    docHostInfo.DocumentHost.RemarkSettings = newSettings;
+                    await docHostInfo.DocumentHost.UpdateRemarkSettings(newSettings);
                 }
             }
         }

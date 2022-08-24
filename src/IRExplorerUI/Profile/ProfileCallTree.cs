@@ -6,11 +6,25 @@ using System.Threading;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
+using static IRExplorerUI.Profile.ProfileData;
 
 namespace IRExplorerUI.Profile;
 
-[ProtoContract(SkipConstructor = true)]
 public class ProfileCallTree {
+    [ProtoContract(SkipConstructor = true)]
+    public class ProfileCallTreeState {
+        [ProtoMember(1)]
+        public HashSet<ProfileCallTreeNode> RootNodes;
+        [ProtoMember(2)]
+        public Dictionary<IRTextFunctionId, List<ProfileCallTreeNode>> FuncToNodesMap;
+        [ProtoMember(3)]
+        public long NextNodeId; 
+
+        public ProfileCallTreeState(int funcCount) {
+            FuncToNodesMap = new Dictionary<IRTextFunctionId, List<ProfileCallTreeNode>>(funcCount);
+        }
+    }
+
     // Comparer used for the root nodes in order to ignore the ID part.
     private class ProfileCallTreeNodeComparer : IEqualityComparer<ProfileCallTreeNode> {
         public bool Equals(ProfileCallTreeNode x, ProfileCallTreeNode y) {
@@ -22,23 +36,109 @@ public class ProfileCallTree {
         }
     }
 
-    [ProtoMember(1)]
     private HashSet<ProfileCallTreeNode> rootNodes_;
-    [ProtoMember(2)]
-    //?  public Dictionary<(Guid summaryId, int funcNumber),
     private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
-    [ProtoMember(3)]
     private long nextNodeId_;
     private ReaderWriterLockSlim lock_;
     private ReaderWriterLockSlim funcLock_;
 
     public HashSet<ProfileCallTreeNode> RootNodes => rootNodes_;
 
+    public byte[] Serialize() {
+        var state = new ProfileCallTreeState(funcToNodesMap_.Count);
+        state.RootNodes = rootNodes_;
+        state.NextNodeId = nextNodeId_;
+        
+        foreach (var pair in funcToNodesMap_) {
+            var funcId = new IRTextFunctionId(pair.Key);
+            state.FuncToNodesMap[funcId] = pair.Value;
+        }
+
+        return StateSerializer.Serialize(state);
+    }
+
+    public static ProfileCallTree Deserialize(byte[] data, Dictionary<Guid, IRTextSummary> summaryMap) {
+        var state = StateSerializer.Deserialize<ProfileCallTreeState>(data);
+        var callTree = new ProfileCallTree();
+        var nodesSet = new HashSet<ProfileCallTreeNode>();
+
+        // The call tree has an unique node for each function.
+        // Sadly deserializing doesn't guarantee this is the case, so collect
+        // all nodes and replace all root nodes and children with the unique instances.
+        foreach (var pair in state.FuncToNodesMap) {
+            foreach (var node in pair.Value) {
+                nodesSet.Add(node);
+            }
+        }
+
+        callTree.nextNodeId_ = state.NextNodeId;
+        callTree.rootNodes_ = new HashSet<ProfileCallTreeNode>(callTree.rootNodes_.Count);
+
+        foreach(var node in state.RootNodes) {
+            if (nodesSet.TryGetValue(node, out var uniqueNode)) {
+                callTree.rootNodes_.Add(uniqueNode);
+                uniqueNode.InitializeFunction(summaryMap);
+            }
+        }
+
+        foreach (var pair in state.FuncToNodesMap) {
+            var summary = summaryMap[pair.Key.SummaryId];
+            var function = summary.GetFunctionWithId(pair.Key.FunctionNumber);
+
+            if (function == null) {
+                Debug.Assert(false, "Could not find node for func");
+                continue;
+            }
+
+            var nodeList = new List<ProfileCallTreeNode>(pair.Value.Count);
+
+            foreach (var node in pair.Value) {
+                var funcNode = node;
+
+                if (!nodesSet.TryGetValue(node, out funcNode)) {
+                    Debug.Assert(false, "Could not find node for func");
+                    continue;
+                }
+
+                nodeList.Add(funcNode);
+                funcNode.InitializeFunction(summaryMap);
+
+                // Reconstruct the parent node list, since it can't be
+                // serialized due to recursion issues.
+                if (funcNode.HasChildren) {
+                    int count = funcNode.Children.Count;
+
+                    for(int i = 0; i < count; i++) {
+                        var childNode = funcNode.Children[i];
+
+                        if (nodesSet.TryGetValue(childNode, out var uniqueNode) && 
+                            !ReferenceEquals(childNode, uniqueNode)) {
+                            funcNode.Children[i] = uniqueNode;
+                            childNode = uniqueNode;
+                        }
+
+                        childNode.InitializeFunction(summaryMap);
+                        childNode.AddParentNoLock(funcNode);
+                    }
+                }
+            }
+
+            callTree.funcToNodesMap_[function] = nodeList;
+        }
+        
+        return callTree;
+    }
+
     public ProfileCallTree() {
-        rootNodes_ = new HashSet<ProfileCallTreeNode>(new ProfileCallTreeNodeComparer());
-        funcToNodesMap_ = new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
-        lock_ = new ReaderWriterLockSlim();
-        funcLock_ = new ReaderWriterLockSlim();
+        InitializeReferenceMembers();
+    }
+
+    [ProtoAfterDeserialization]
+    private void InitializeReferenceMembers() {
+        rootNodes_ ??= new HashSet<ProfileCallTreeNode>(new ProfileCallTreeNodeComparer());
+        funcToNodesMap_ ??= new Dictionary<IRTextFunction, List<ProfileCallTreeNode>>();
+        lock_ ??= new ReaderWriterLockSlim();
+        funcLock_ ??= new ReaderWriterLockSlim();
     }
 
     public ProfileCallTreeNode AddRootNode(DebugFunctionInfo funcInfo, IRTextFunction function) {
@@ -81,6 +181,7 @@ public class ProfileCallTree {
     }
 
     public void RegisterFunctionTreeNode(ProfileCallTreeNode node) {
+        // Add an unique instance of the node for a function.
         node.Id = Interlocked.Increment(ref nextNodeId_);
 
         List<ProfileCallTreeNode> nodeList = null;
@@ -236,16 +337,27 @@ public class ProfileCallTree {
     }
 }
 
+[ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
+    [ProtoMember(1)]
     public long Id { get; set; }
-    public IRTextFunction Function { get; set; }
+    [ProtoMember(2)]
     public DebugFunctionInfo DebugInfo { get; set; }
+    [ProtoMember(3)]
     public TimeSpan Weight { get; set; }
+    [ProtoMember(4)]
     public TimeSpan ExclusiveWeight { get; set; }
-
+    [ProtoMember(5)]
+    private IRTextFunctionReference functionRef_ { get; set; }
+    [ProtoMember(6)]
     private List<ProfileCallTreeNode> children_;
-    private List<ProfileCallTreeNode> callers_;
+    private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
     private ReaderWriterLockSlim lock_;
+
+    public IRTextFunction Function {
+        get => functionRef_;
+        set => functionRef_ = value;
+    }
 
     public List<ProfileCallTreeNode> Children => children_;
     public List<ProfileCallTreeNode> Callers => callers_;
@@ -277,7 +389,25 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         Function = function;
         children_ = children;
         callers_ = callers;
-        lock_ = new ReaderWriterLockSlim();
+        InitializeReferenceMembers();
+    }
+
+    [ProtoAfterDeserialization]
+    private void InitializeReferenceMembers() {
+        lock_ ??= new ReaderWriterLockSlim();
+        functionRef_ ??= new IRTextFunctionReference();
+    }
+
+    internal void InitializeFunction(Dictionary<Guid, IRTextSummary> summaryMap) {
+        var summary = summaryMap[functionRef_.Id.SummaryId];
+        var func = summary.GetFunctionWithId(functionRef_.Id.FunctionNumber);
+
+        if (func == null) {
+            Trace.WriteLine($"No func for {functionRef_.Id}");
+            return;
+        }
+
+        Function = func;
     }
 
     public void AccumulateWeight(TimeSpan weight) {
@@ -342,6 +472,17 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         finally {
             lock_.ExitUpgradeableReadLock();
         }
+    }
+
+    internal void AddParentNoLock(ProfileCallTreeNode parentNode) {
+        ref var list = ref callers_;
+        var callerNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
+        if (callerNode != null) {
+            return;
+        }
+
+        list ??= new List<ProfileCallTreeNode>();
+        list.Add(parentNode);
     }
 
     public bool HasParent(ProfileCallTreeNode parentNode) {
@@ -441,7 +582,6 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         }
 
         return Id == other.Id &&
-               Function.Equals(other.Function) && //? TODO: Still needed?
                DebugInfo.Equals(other.DebugInfo);
     }
 
@@ -462,7 +602,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Id, Function, DebugInfo);
+        return HashCode.Combine(Id);
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {

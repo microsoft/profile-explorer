@@ -334,7 +334,6 @@ namespace IRExplorerUI {
         public FunctionCodeStatistics DiffStatistics { get; set; }
         public PerformanceCounterSetEx Counters { get; set; }
 
-
         public DiffKind FunctionDiffKind {
             get => diffKind_;
             set {
@@ -2244,7 +2243,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private async void DisplayCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private void DisplayCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (e.Parameter is IRTextSectionEx sectionEx) {
                 DisplayCallGraph?.Invoke(this, new DisplayCallGraphEventArgs(Summary, sectionEx.Section, false));
             }
@@ -2261,7 +2260,7 @@ namespace IRExplorerUI {
             return null;
         }
 
-        private async void DisplayPartialCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
+        private void DisplayPartialCallGraphExecuted(object sender, ExecutedRoutedEventArgs e) {
             if (e.Parameter is IRTextSectionEx sectionEx) {
                 DisplayCallGraph?.Invoke(this, new DisplayCallGraphEventArgs(Summary, sectionEx.Section, true));
             }

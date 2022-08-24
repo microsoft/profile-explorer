@@ -32,6 +32,7 @@ using IRExplorerCore.IR.Tags;
 using ClosedXML.Excel;
 using static IRExplorerUI.ModuleReportPanel;
 using System.IO;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
     public static class DocumentHostCommand {
@@ -443,9 +444,13 @@ namespace IRExplorerUI {
 
                     NotifyPropertyChanged(nameof(ShowRemarks));
                     NotifyPropertyChanged(nameof(ShowPreviousSections));
-                    HandleNewRemarkSettings(value, false);
                 }
             }
+        }
+
+        public async Task UpdateRemarkSettings(RemarkSettings newSettings) {
+            RemarkSettings = newSettings;
+            await HandleNewRemarkSettings(newSettings, false);
         }
 
         public bool ShowRemarks {
@@ -1119,8 +1124,6 @@ namespace IRExplorerUI {
         }
 
         private async Task ReloadProfile() {
-            profileLoaded_ = false;
-
             if (Session.ProfileData == null) {
                 return;
             }
@@ -1132,10 +1135,9 @@ namespace IRExplorerUI {
                 return;
             }
 
-            var result = funcProfile.Process(Function, Session.CompilerInfo.IR);
-            profileElements_ = result.SampledElements;
-
+            var result = await Task.Run(() => funcProfile.Process(Function, Session.CompilerInfo.IR));
             BuildProfileBlocksList(funcProfile, result);
+            profileElements_ = result.SampledElements;
             ProfileVisible = true;
 
             // Show optional columns with timing, counters, etc.
@@ -1146,7 +1148,14 @@ namespace IRExplorerUI {
             var columnData = TextView.ColumnData;
             ColumnsVisible = columnData.HasData;
 
-            if (columnData.HasData) {
+            if (!columnData.HasData) {
+                return;
+            }
+
+            int docLineCount = TextView.LineCount;
+
+            var elementValueList  = await Task.Run(() => {
+                var elementValueList = new List<ElementRowValue>(Function.TupleCount);
                 var oddBackColor = settings_.AlternateBackgroundColor.AsBrush();
                 var blockSeparatorColor = settings_.ShowBlockSeparatorLine ? settings_.BlockSeparatorColor.AsBrush() : null;
                 var font = new FontFamily(settings_.FontName);
@@ -1164,10 +1173,7 @@ namespace IRExplorerUI {
                 }
 
                 ElementRowValue MakeDummyRow(Brush backColor = null) {
-                    var row = new ElementRowValue(null) {
-                        BackColor = backColor,
-                        BorderBrush = blockSeparatorColor
-                    };
+                    var row = new ElementRowValue(null) { BackColor = backColor, BorderBrush = blockSeparatorColor };
 
                     foreach (var column in columnData.Columns) {
                         row.ColumnValues[column] = MakeDummyCell();
@@ -1176,7 +1182,6 @@ namespace IRExplorerUI {
                     return row;
                 }
 
-                var elementValueList = new List<ElementRowValue>(Function.TupleCount);
                 var dummyValues = MakeDummyRow();
                 var oddDummyValues = MakeDummyRow(oddBackColor);
 
@@ -1262,31 +1267,30 @@ namespace IRExplorerUI {
 
                     prevIsOddBlock = isOddBlock;
                 }
-                
+
                 // Add empty lines at the end to match document,
                 // otherwise scrolling can get out of sync.
-                if (TextView.LineCount != prevLine + 1) {
-                    AddDummyRows(TextView.LineCount - prevLine, prevIsOddBlock);
-                }
-
-                profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
-
-                foreach (var columnHeader in profileColumnHeaders_) {
-                    columnHeader.Header.Click += ColumnHeaderOnClick;
-                    columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
+                if (docLineCount != prevLine + 1) {
+                    AddDummyRows(docLineCount - prevLine, prevIsOddBlock);
                 }
 
                 UpdateProfileDataColumnWidths();
+                return elementValueList;
+            });
 
-                ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
-                ColumnsList.Background = settings_.BackgroundColor.AsBrush();
-                profileLoaded_ = true;
+            profileColumnHeaders_ = OptionalColumn.AddListViewColumns(ColumnsList, columnData.Columns);
 
-                ExportFunctionAsExcelFile(@"C:\work\out.xlsx");
+            foreach (var columnHeader in profileColumnHeaders_) {
+                columnHeader.Header.Click += ColumnHeaderOnClick;
+                columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
             }
+
+            ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
+            ColumnsList.Background = settings_.BackgroundColor.AsBrush();
         }
 
-        private void BuildProfileBlocksList(Profile.FunctionProfileData funcProfile, Profile.FunctionProfileData.ProcessingResult result) {
+        private void BuildProfileBlocksList(FunctionProfileData funcProfile, 
+                                             FunctionProfileData.ProcessingResult result) {
             profileBlocks_ = result.BlockSampledElements;
             var list = new List<ProfiledBlockEx>(result.BlockSampledElements.Count);
             double maxWidth = 0;
@@ -1830,7 +1834,6 @@ namespace IRExplorerUI {
         private DelayedAction delayedHideActionPanel_;
         private bool profileVisible_;
         private double columnsListItemHeight_;
-        private bool profileLoaded_;
 
         private void ShowRemarkOptionsPanel() {
             if (remarkOptionsPanelVisible_) {
@@ -1893,7 +1896,7 @@ namespace IRExplorerUI {
                                     (newSettings.StopAtSectionBoundaries != remarkSettings_.StopAtSectionBoundaries ||
                                      newSettings.SectionHistoryDepth != remarkSettings_.SectionHistoryDepth));
             App.Settings.RemarkSettings = newSettings;
-            RemarkSettings = newSettings;
+            await UpdateRemarkSettings(newSettings);
 
             if (rebuildRemarkList) {
                 Trace.TraceInformation($"Document {ObjectTracker.Track(this)}: Find and load remarks");

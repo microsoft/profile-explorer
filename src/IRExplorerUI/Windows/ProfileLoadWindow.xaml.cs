@@ -321,13 +321,16 @@ namespace IRExplorerUI {
             Utils.ShowOpenFileDialog(ProfileAutocompleteBox, "ETW Trace Files|*.etl|All Files|*.*");
         }
 
-        private async Task LoadProcessList() {
-            if (File.Exists(ProfileFilePath))
-            {
+        private async Task<bool> LoadProcessList() {
+            ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
+
+            if (File.Exists(ProfileFilePath)) {
                 var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
                 processList_ = await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, options_, task);
-                await DisplayProcessList();
+                return processList_ != null;
             }
+
+            return false;
         }
 
         private void ApplicationBrowseButton_Click(object sender, RoutedEventArgs e) =>
@@ -367,6 +370,7 @@ namespace IRExplorerUI {
                 var pathPair = menuItem.Tag as Tuple<string, string, string>;
                 ProfileAutocompleteBox.Text = pathPair.Item1;
                 BinaryAutocompleteBox.Text = pathPair.Item2;
+                await LoadProcessList();
                 await OpenFilesAndComplete();
             }
         }
@@ -430,7 +434,7 @@ namespace IRExplorerUI {
 
             if (recordedProfile_ != null) {
                 processList_ = await Task.Run(() => recordedProfile_.BuildProcessSummary());
-                await DisplayProcessList();
+                DisplayProcessList();
             }
             else {
                 MessageBox.Show("Failed to record ETW sampling profile!", "IR Explorer", 
@@ -451,7 +455,7 @@ namespace IRExplorerUI {
             RecordProgressLabel.Text = status;
         }
 
-        private async Task DisplayProcessList() {
+        private void DisplayProcessList() {
             IsLoadingProcessList = true;
             ShowProcessList = false;
             
@@ -486,7 +490,9 @@ namespace IRExplorerUI {
 
         private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
             if (!string.IsNullOrEmpty(ProfileFilePath)) {
-                await LoadProcessList();
+                if (await LoadProcessList()) {
+                    DisplayProcessList();
+                }
             }
         }
 
