@@ -59,7 +59,7 @@ namespace IRExplorerUI.Compilers {
         public static async Task<BinaryFileSearchResult> LocateBinaryFile(BinaryFileDescriptor binaryFile,
                                                                           SymbolFileSourceOptions options) {
             string result = null;
-            using var logWriter = new StringWriter();
+            await using var logWriter = new StringWriter();
      
             try {
                 options = options.WithSymbolPaths(binaryFile.ImagePath);
@@ -76,7 +76,24 @@ namespace IRExplorerUI.Compilers {
                     // This helps in cases where the original fine name doesn't match
                     // the one on disk, like it seems to happen sometimes with the SPEC runner.
                     result = await Task.Run(() => {
+                        var winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+                        var sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
+                        var sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
+
+                        // Don't search in the system dirs though, it's pointless
+                        // and takes a long time checking thousands of binaries.
+                        bool PathIsSubPath(string subPath, string basePath) {
+                            var rel = Path.GetRelativePath(basePath, subPath);
+                            return !rel.StartsWith('.') && !Path.IsPathRooted(rel);
+                        }
+
                         foreach (var path in options.SymbolSearchPaths) {
+                            if (PathIsSubPath(path, winPath)||
+                                PathIsSubPath(path, sysPath) ||
+                                PathIsSubPath(path, sysx86Path)) {
+                                continue;
+                            }
+
                             try {
                                 var searchPath = Utils.TryGetDirectoryName(path);
 
@@ -90,6 +107,7 @@ namespace IRExplorerUI.Compilers {
                                     if (fileInfo != null &&
                                         fileInfo.TimeStamp == binaryFile.TimeStamp &&
                                         fileInfo.ImageSize == binaryFile.ImageSize) {
+                                        Trace.Flush();
                                         return file;
                                     }
                                 }
@@ -98,6 +116,7 @@ namespace IRExplorerUI.Compilers {
                                 Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
                             }
                         }
+                        Trace.Flush();
 
                         return null;
                     });

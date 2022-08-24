@@ -325,8 +325,10 @@ namespace IRExplorerUI {
             ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
 
             if (File.Exists(ProfileFilePath)) {
+                IsLoadingProcessList = true;
                 var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
                 processList_ = await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, options_, task);
+                IsLoadingProcessList = false;
                 return processList_ != null;
             }
 
@@ -456,7 +458,6 @@ namespace IRExplorerUI {
         }
 
         private void DisplayProcessList() {
-            IsLoadingProcessList = true;
             ShowProcessList = false;
             
             if (processList_ != null) {
@@ -468,7 +469,6 @@ namespace IRExplorerUI {
                                 MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
 
-            IsLoadingProcessList = false;
             ShowProcessList = true;
         }
 
