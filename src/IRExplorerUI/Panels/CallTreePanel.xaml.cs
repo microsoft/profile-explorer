@@ -48,7 +48,6 @@ namespace IRExplorerUI {
             new RoutedUICommand("FocusSearch", "FocusSearch", typeof(CallTreePanel));
     }
 
-
     public enum ChildFunctionExKind {
         Root,
         ChildrenPlaceholder,
@@ -217,7 +216,6 @@ namespace IRExplorerUI {
             DataContext = this;
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
-
             //? TODO: Fix positioning
             // https://docs.microsoft.com/en-us/dotnet/desktop/wpf/controls/how-to-position-a-tooltip?view=netframeworkdesktop-4.8
             //stackHoverPreview_ = new ToolTipHoverPreview(CallTree, 
@@ -342,7 +340,7 @@ namespace IRExplorerUI {
             return childNode;
         }
 
-        private async Task<ChildFunctionEx> CreateProfileCallerCalleeTree(IRTextFunction function) {
+        private ChildFunctionEx CreateProfileCallerCalleeTree(IRTextFunction function) {
             var visitedNodes = new HashSet<ProfileCallTreeNode>();
             var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
             rootNode.Children = new List<ChildFunctionEx>();
@@ -413,7 +411,7 @@ namespace IRExplorerUI {
             return rootNode;
         }
 
-        private async Task<ChildFunctionEx> CreateProfileCallTree() {
+        private ChildFunctionEx CreateProfileCallTree() {
             var visitedNodes = new HashSet<ProfileCallTreeNode>();
             var rootNode = new ChildFunctionEx(ChildFunctionExKind.Root);
             rootNode.Children = new List<ChildFunctionEx>();

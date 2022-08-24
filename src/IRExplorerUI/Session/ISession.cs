@@ -85,8 +85,8 @@ namespace IRExplorerUI {
                                                      IRDocument document);
         Task SwitchActiveFunction(IRTextFunction function);
 
-        void ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document);
-        void ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document);
+        Task ReloadDocumentSettings(DocumentSettings newSettings, IRDocument document);
+        Task ReloadRemarkSettings(RemarkSettings newSettings, IRDocument document);
 
         void RegisterDetachedPanel(DraggablePopup panel);
         void UnregisterDetachedPanel(DraggablePopup panel);

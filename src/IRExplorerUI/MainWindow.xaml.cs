@@ -1293,43 +1293,6 @@ namespace IRExplorerUI {
 
         public ProfileData ProfileData => sessionState_?.ProfileData;
 
-        private bool AugmentCallerNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
-            List<IRTextFunction> targetFuncts) {
-            return ProfileData.HasFunctionProfile(node.Function);
-        }
-
-        private bool AugmentCallNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
-                                             List<IRTextFunction> targetFuncts) {
-            var funcProfile = ProfileData.GetFunctionProfile(node.Function);
-
-            if(funcProfile == null) {
-                return false;
-            }
-
-            foreach(var pair in funcProfile.CalleesWeights) {
-                var childFunc = FindFunctionWithId(pair.Key.Item2, pair.Key.Item1);
-                if (childFunc == null) {
-                    continue;
-                }
-
-                if(node.FindCallee(childFunc) == null) {
-                    var childNode = callGraph.GetOrCreateNode(childFunc);
-                    node.AddCallee(childNode);
-                }
-            }
-
-            return false;
-        }
-
-        private bool FilterCalleeNodeCallback(CallGraphNode node, CallGraphNode parentNode, CallGraph callGraph,
-                                              List<IRTextFunction> targetFuncts) {
-            if(node.Function == null) {
-                return false;
-            }
-
-            return targetFuncts.Contains(parentNode.Function);
-        }
-
         private async void MenuItem_OnClick2(object sender, RoutedEventArgs e) {
             SectionPanel.ShowModuleReport();
         }
