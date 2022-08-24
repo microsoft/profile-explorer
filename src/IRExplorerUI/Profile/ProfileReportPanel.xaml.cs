@@ -37,8 +37,18 @@ namespace IRExplorerUI.Profile {
         public static void ShowReport(ProfileDataReport report, ISession session) {
             var panel = new ProfileReportPanel(session);
             panel.TitleSuffix = $"Profile report";
-            session.DisplayFloatingPanel(panel);
+
+            var window = new Window();
+            window.Content = panel;
+            window.Title = "Profile report";
+            window.WindowStyle = WindowStyle.ToolWindow;
+            window.ResizeMode = ResizeMode.CanResize;
+            window.Width = 800;
+            window.Height = 600;
+            window.Owner = App.Current.MainWindow;
+            window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
             panel.ShowReport(report);
+            window.Show();
         }
     }
 }

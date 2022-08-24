@@ -18,6 +18,7 @@ using IRExplorerCore.IR;
 using IRExplorerCore.IR.Tags;
 using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Utilities;
 using Microsoft.Diagnostics.Runtime;
 using PEFile;
 using ProtoBuf;
@@ -61,7 +62,7 @@ public class RawProfileData {
     [ProtoMember(7)]
     private List<PerformanceCounter> perfCounters_;
     [ProtoMember(8)]
-    private SegmentedList<PerformanceCounterEvent> perfCountersEvents_;
+    private CompressedSegmentedList<PerformanceCounterEvent> perfCountersEvents_;
     [ProtoMember(8)]
     private ProfileTraceInfo traceInfo_;
 
@@ -81,7 +82,7 @@ public class RawProfileData {
     public List<ProfileProcess> Processes => processes_.ToValueList();
     public List<ProfileThread> Threads => threads_;
     public List<ProfileImage> Images => images_;
-    public SegmentedList<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
+    public CompressedSegmentedList<PerformanceCounterEvent> PerformanceCountersEvents => perfCountersEvents_;
     public List<PerformanceCounter> PerformanceCounters => perfCounters_;
 
     public bool HasManagedMethods(int processId) => procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
@@ -214,7 +215,7 @@ public class RawProfileData {
         stackData_ = new HashSet<long[]>(new StackComparer());
         samples_ = new List<ProfileSample>();
         perfCounters_ = new List<PerformanceCounter>();
-        perfCountersEvents_ = new SegmentedList<PerformanceCounterEvent>(4096);
+        perfCountersEvents_ = new CompressedSegmentedList<PerformanceCounterEvent>();
 
         if (handlesDotNetEvents) {
             procManagedDataMap_ = new Dictionary<int, ManagedData>();
