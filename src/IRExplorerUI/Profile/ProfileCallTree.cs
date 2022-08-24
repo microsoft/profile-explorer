@@ -403,7 +403,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         var func = summary.GetFunctionWithId(functionRef_.Id.FunctionNumber);
 
         if (func == null) {
-            Trace.WriteLine($"No func for {functionRef_.Id}");
+            Debug.Assert(false, "Could not find func");
             return;
         }
 
@@ -602,7 +602,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Id);
+        return HashCode.Combine(Id, DebugInfo);
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {
