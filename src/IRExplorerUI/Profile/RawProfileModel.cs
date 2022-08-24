@@ -418,8 +418,13 @@ public sealed class ProfileProcess : IEquatable<ProfileProcess> {
     public List<int> ThreadIds { get; set; }
 
     public ProfileProcess() {
-        ImageIds = new List<int>();
-        ThreadIds = new List<int>();
+        InitializeReferenceMembers();
+    }
+
+    [ProtoAfterDeserialization]
+    private void InitializeReferenceMembers() {
+        ImageIds ??= new List<int>();
+        ThreadIds ??= new List<int>();
     }
 
     public IEnumerable<ProfileImage> Images(RawProfileData profileData) {
