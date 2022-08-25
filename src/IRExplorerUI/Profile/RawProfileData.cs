@@ -48,7 +48,7 @@ public class RawProfileData {
     private static IpToImageCache globalIpImageCache_;
 
     [ProtoMember(1)]
-    private List<ProfileSample> samples_;
+    private CompressedSegmentedList<ProfileSample> samples_;
     [ProtoMember(2)]
     private Dictionary<int, ProfileProcess> processes_;
     [ProtoMember(3)]
@@ -78,7 +78,7 @@ public class RawProfileData {
     private int lastProcId_;
 
     public ProfileTraceInfo TraceInfo => traceInfo_;
-    public List<ProfileSample> Samples => samples_;
+    public CompressedSegmentedList<ProfileSample> Samples => samples_;
     public List<ProfileProcess> Processes => processes_.ToValueList();
     public List<ProfileThread> Threads => threads_;
     public List<ProfileImage> Images => images_;
@@ -213,7 +213,7 @@ public class RawProfileData {
         stacks_ = new List<ProfileStack>();
         stacksMap_ = new Dictionary<int, Dictionary<ProfileStack, int>>();
         stackData_ = new HashSet<long[]>(new StackComparer());
-        samples_ = new List<ProfileSample>();
+        samples_ = new CompressedSegmentedList<ProfileSample>();
         perfCounters_ = new List<PerformanceCounter>();
         perfCountersEvents_ = new CompressedSegmentedList<PerformanceCounterEvent>();
 
@@ -230,6 +230,10 @@ public class RawProfileData {
         threadsMap_ = null;
         stackData_ = null;
         lastProcStacks_ = null;
+
+        // Wait for any compression tasks.
+        samples_.Wait();
+        perfCountersEvents_.Wait();
     }
 
     public void ManagedLoadingCompleted(string managedAsmDir) {
@@ -316,8 +320,7 @@ public class RawProfileData {
     public void SetSampleStack(int sampleId, int stackId, int contextId) {
         // Change the stack ID in-place in the array.
         Debug.Assert(samples_[sampleId - 1].ContextId == contextId);
-        var span = CollectionsMarshal.AsSpan(samples_);
-        ref var sampleRef = ref span[sampleId - 1];
+        ref var sampleRef = ref samples_.GetValueRef(sampleId - 1);
         sampleRef.StackId = stackId;
     }
 

@@ -67,6 +67,22 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ref T GetValueRef(int index) {
+            Debug.Assert(index < count_);
+            DecompressValues();
+
+            // If the values were compressed before, discard the data
+            // since it doesn't match the current values anymore.
+            if (WasCompressed) {
+                lock (this) {
+                    data_ = null;
+                }
+            }
+
+            return ref values_[index];
+        }
+
         public void DecompressValues(bool prefetch = false) {
             if (!IsCompressed) {
                 // Already decompressed.
@@ -161,7 +177,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
             var tempBuffer = ArrayPool<byte>.Shared.Rent(bufferSize);
             var bufferSpan = tempBuffer.AsSpan();
 
-            var encoder = new BrotliEncoder(5, 24);
+            var encoder = new BrotliEncoder(5, 10);
             var result = encoder.Compress(byteSpan, bufferSpan, out int bytesConsumed, out int bytesWritten, true);
             Debug.Assert(result == OperationStatus.Done);
             encoder.Flush(bufferSpan, out int extraBytesWritten);
@@ -174,6 +190,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
             // Return array to the pool.
             ArrayPool<byte>.Shared.Return(tempBuffer);
             ArrayPool<T>.Shared.Return(values);
+            encoder.Dispose();
             return outBuffer;
         }
 
@@ -213,15 +230,27 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 
         if (useThreads) {
             prefetchLimit_ = prefetch ? prefetchLimit : 0;
-            taskQueue_ = new BlockingCollection<Task>();
-            taskQueueThreadTasks_ = new List<Task>();
             SetupCompressionThreads();
         }
     }
 
-    public void Wait() {
+    public void Wait(bool reset = true) {
         taskQueue_.CompleteAdding();
         Task.WhenAll(taskQueueThreadTasks_);
+
+        if (reset) {
+            SetupCompressionThreads();
+        }
+    }
+
+    public void CompressRange(int startIndex, int endIndex) {
+        Debug.Assert(endIndex >= startIndex);
+        int startSegment = startIndex / segmentLength_;
+        int endSegment = endIndex / segmentLength_;
+
+        for (int i = startIndex; i <= endSegment; i++) {
+            segments_[i].CompressValues();
+        }
     }
 
     public int Count => count_;
@@ -261,6 +290,8 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
     }
 
     private void SetupCompressionThreads() {
+        taskQueue_ = new BlockingCollection<Task>();
+        taskQueueThreadTasks_ = new List<Task>();
         int threads = 1 + prefetchLimit_; // 1 used for compression.
 
         for (int i = 0; i < threads; i++) {
@@ -339,18 +370,58 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public T GetValue(int index) {
         Debug.Assert(index < count_);
+        int activeIndex = GetActiveSegmentIndex(index);
+
+        if (activeIndex != -1) {
+            return activeSegment_.GetValue(activeIndex);
+        }
+
         var segment = segments_[index / segmentLength_];
         return segment.GetValue(index % segmentLength_);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public ref T GetValueRef(int index) {
+        Debug.Assert(index < count_);
+        int activeIndex = GetActiveSegmentIndex(index);
+
+        if (activeIndex != -1) {
+            return ref activeSegment_.GetValueRef(activeIndex);
+        }
+
+        var segment = segments_[index / segmentLength_];
+        return ref segment.GetValueRef(index % segmentLength_);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetValue(int index, T value) {
         Debug.Assert(index < count_);
-        var segment = segments_[index / segmentLength_];
-        segment.SetValue(index % segmentLength_, value);
+        int activeIndex = GetActiveSegmentIndex(index);
+
+        if (activeIndex != -1) {
+            activeSegment_.SetValue(activeIndex, value);
+        }
+        else {
+            var segment = segments_[index / segmentLength_];
+            segment.SetValue(index % segmentLength_, value);
+        }
 #if DEBUG
         version_++;
 #endif
+    }
+
+    private int GetActiveSegmentIndex(int index) {
+        // Check if index is in the active segment to avoid the expensive DIV below.
+        if (activeSegment_ != null) {
+            int startIndex = segments_.Count * segmentLength_;
+
+            if (index >= startIndex &&
+                index < startIndex + segments_[^1].Count) {
+                return index - startIndex;
+            }
+        }
+
+        return -1;
     }
 
     public T this[int index] {
