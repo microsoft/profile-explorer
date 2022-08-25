@@ -14,7 +14,9 @@ using System.Reflection.PortableExecutable;
 using System.Runtime.InteropServices;
 using System.Windows.Documents;
 using System.Text;
+using System.Windows;
 using System.Windows.Controls.Ribbon.Primitives;
+using CSScriptLib;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -125,9 +127,10 @@ public class ETWEventProcessor : IDisposable {
 
         double[] perCoreLastTime = new double[4096];
         int[] perCoreLastSample = new int[4096];
+        int oldestCompressedSample = 0;
         var perContextLastSample = new Dictionary<int, int>();
         int lastReportedSampleCount = 0;
-        const int sampleReportInterval = 500;
+        const int sampleReportInterval = 10000;
 
         var symbolParser = new SymbolTraceEventParser(source_);
 
@@ -360,6 +363,23 @@ public class ETWEventProcessor : IDisposable {
             if (sampleId - lastReportedSampleCount >= sampleReportInterval) {
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) { Total = sampleId, Current = sampleId });
                 lastReportedSampleCount = sampleId;
+
+                // Updating the stack associated with a sample often ends up
+                // decompressing a segment and it remains in that state until the end, wasting memory.
+                // Since sample IDs are increasing, compress all segments that may have been
+                // accessed since the last time and cannot be anymore.
+                int earliestSample = int.MaxValue;
+
+                for (int i = 0; i < profile.TraceInfo.CpuCount; i++) {
+                    int value = perCoreLastSample[i];
+                    earliestSample = Math.Min(value, earliestSample);
+                }
+
+                //Trace.WriteLine($"Compress {earliestSample}");
+                if (earliestSample > oldestCompressedSample) {
+                    profile.Samples.CompressRange(oldestCompressedSample, earliestSample);
+                    oldestCompressedSample = earliestSample;
+                }
             }
         };
 
@@ -399,36 +419,6 @@ public class ETWEventProcessor : IDisposable {
                     contextId, (short)data.ProfileSource);
                 profile.AddPerformanceCounterEvent(counterEvent);
                 profile.ReturnContext(contextId);
-
-#if false
-            var key = new Tuple<long, int, int>((long)data.InstructionPointer, contextId, data.ProfileSource);
-
-            if (!pmcDict.TryGetValue(key, out var list)) {
-                list = new List<PerformanceCounterEvent>();
-                pmcDict.Add(key, list);
-            }
-
-            if (list.Count > 0) {
-                var last = list[^1];
-                if ((counterEvent.Time - last.Time).TotalMilliseconds < 100) {
-                    small++;
-                    
-                }
-                else {
-                    large++;
-                    list.Add(counterEvent);
-
-                }
-            }
-            else {
-                list.Add(counterEvent);
-
-            }
-
-#endif
-
-                //Trace.WriteLine($"PMC {data.ProfileSource}: {data.InstructionPointer}");
-
             };
         }
 
@@ -454,7 +444,7 @@ public class ETWEventProcessor : IDisposable {
         Trace.WriteLine($"  samples: {profile.Samples.Count}");
         Trace.WriteLine($"  events: {profile.PerformanceCountersEvents.Count}");
         //Trace.Flush();
-        
+        MessageBox.Show("Done");
         profile.LoadingCompleted();
 
         if (handleDotNetEvents_) {
