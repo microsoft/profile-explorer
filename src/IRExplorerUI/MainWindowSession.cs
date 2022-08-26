@@ -525,12 +525,12 @@ namespace IRExplorerUI {
         }
 
         public async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, IDebugInfoProvider debugInfo) {
-            return await Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), debugInfo, null));
+            return await Task.Run(() => LoadBinaryDocument(filePath, modulePath, Guid.NewGuid(), debugInfo, null)).ConfigureAwait(false);
         }
 
         private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                   ProgressInfoHandler progressHandler) {
-            return await LoadBinaryDocument(filePath, modulePath, id, null, progressHandler);
+            return await LoadBinaryDocument(filePath, modulePath, id, null, progressHandler).ConfigureAwait(false);
         }
         
         private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id, 
@@ -1597,7 +1597,7 @@ namespace IRExplorerUI {
                 if (visible && !documentLoadProgressVisible_) {
                     ShowProgressBar(title);
                 }
-                else if (!visible && documentLoadProgressVisible_) {
+                else if (!visible) {
                     HideProgressBar();
                     return;
                 }
