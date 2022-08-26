@@ -50,7 +50,9 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
             return true;
         }
 
-        return ImageName == other.ImageName && Architecture == other.Architecture && FileKind == other.FileKind && ImageSize == other.ImageSize && MajorVersion == other.MajorVersion && MinorVersion == other.MinorVersion;
+        return ImageName.Equals(other.ImageName, StringComparison.OrdinalIgnoreCase) &&
+               TimeStamp == other.TimeStamp &&
+               ImageSize == other.ImageSize;
     }
 
     public override bool Equals(object obj) {
@@ -70,7 +72,7 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(ImageName, (int)Architecture, (int)FileKind, ImageSize, MajorVersion, MinorVersion);
+        return HashCode.Combine(ImageName, TimeStamp, ImageSize);
     }
 
     public static bool operator ==(BinaryFileDescriptor left, BinaryFileDescriptor right) {
@@ -79,6 +81,10 @@ public class BinaryFileDescriptor : IEquatable<BinaryFileDescriptor> {
 
     public static bool operator !=(BinaryFileDescriptor left, BinaryFileDescriptor right) {
         return !Equals(left, right);
+    }
+
+    public override string ToString() {
+        return $"{ImageName}, Version: {MajorVersion}.{MinorVersion}, ImageSze: {ImageSize}";
     }
 
 }
