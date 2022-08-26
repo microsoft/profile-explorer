@@ -23,7 +23,6 @@ using Microsoft.Diagnostics.Runtime;
 using PEFile;
 using ProtoBuf;
 using static IRExplorerUI.Profile.ETWProfileDataProvider;
-using Architecture = Microsoft.Diagnostics.Runtime.Architecture;
 
 namespace IRExplorerUI.Profile;
 

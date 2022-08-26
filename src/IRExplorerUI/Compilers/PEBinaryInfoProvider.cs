@@ -2,17 +2,23 @@
 // // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Reflection.PortableExecutable;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
+using DocumentFormat.OpenXml.Office2016.Word.Symex;
 using Microsoft.CodeAnalysis;
 using Microsoft.Diagnostics.Symbols;
 
 namespace IRExplorerUI.Compilers {
     public sealed class PEBinaryInfoProvider : IBinaryInfoProvider, IDisposable {
+        private static ConcurrentDictionary<BinaryFileDescriptor, BinaryFileSearchResult> resolvedBinariesCache_ = new();
+
         private string filePath_;
         private PEReader reader_;
 
@@ -58,24 +64,30 @@ namespace IRExplorerUI.Compilers {
 
         public static async Task<BinaryFileSearchResult> LocateBinaryFile(BinaryFileDescriptor binaryFile,
                                                                           SymbolFileSourceOptions options) {
-            string result = null;
-            await using var logWriter = new StringWriter();
-     
-            try {
-                options = options.WithSymbolPaths(binaryFile.ImagePath);
-                var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
-                using var symbolReader = new SymbolReader(logWriter, userSearchPath);
-                symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
-                
-                result = await Task.Run(() => symbolReader.FindExecutableFilePath(binaryFile.ImageName,
-                    (int)binaryFile.TimeStamp,
-                    (int)binaryFile.ImageSize)).ConfigureAwait(false);
+            // Check if the binary was requested before.
+            if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
+                Trace.WriteLine($"Get BIN from cache {binaryFile}");
+                return searchResult;
+            }
 
-                if (result == null) {
-                    // Manually search in the provided directories.
-                    // This helps in cases where the original fine name doesn't match
-                    // the one on disk, like it seems to happen sometimes with the SPEC runner.
-                    result = await Task.Run(() => {
+            return await Task.Run(() => {
+                string result = null;
+                using var logWriter = new StringWriter();
+
+                try {
+                    options = options.WithSymbolPaths(binaryFile.ImagePath);
+                    var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
+
+                    using var symbolReader = new SymbolReader(logWriter, userSearchPath);
+                    symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+
+                    result = symbolReader.FindExecutableFilePath(binaryFile.ImageName,
+                        (int)binaryFile.TimeStamp,
+                        (int)binaryFile.ImageSize);
+                    if (result == null) {
+                        // Manually search in the provided directories.
+                        // This helps in cases where the original fine name doesn't match
+                        // the one on disk, like it seems to happen sometimes with the SPEC runner.
                         var winPath = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
                         var sysPath = Environment.GetFolderPath(Environment.SpecialFolder.System);
                         var sysx86Path = Environment.GetFolderPath(Environment.SpecialFolder.SystemX86);
@@ -88,7 +100,7 @@ namespace IRExplorerUI.Compilers {
                         }
 
                         foreach (var path in options.SymbolSearchPaths) {
-                            if (PathIsSubPath(path, winPath)||
+                            if (PathIsSubPath(path, winPath) ||
                                 PathIsSubPath(path, sysPath) ||
                                 PathIsSubPath(path, sysx86Path)) {
                                 continue;
@@ -107,8 +119,7 @@ namespace IRExplorerUI.Compilers {
                                     if (fileInfo != null &&
                                         fileInfo.TimeStamp == binaryFile.TimeStamp &&
                                         fileInfo.ImageSize == binaryFile.ImageSize) {
-                                        Trace.Flush();
-                                        return file;
+                                        result = file;
                                     }
                                 }
                             }
@@ -116,27 +127,30 @@ namespace IRExplorerUI.Compilers {
                                 Trace.TraceError($"Exception searching for binary {binaryFile.ImageName} in {path}: {ex.Message}");
                             }
                         }
-                        Trace.Flush();
-
-                        return null;
-                    });
+                    }
                 }
-            }
-            catch (Exception ex) {
-                Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
-            }
+                catch (Exception ex) {
+                    Trace.TraceError($"Failed FindExecutableFilePath: {ex.Message}");
+                }
 #if DEBUG
             Trace.WriteLine($">> TraceEvent FindExecutableFilePath for {binaryFile.ImageName}");
             Trace.WriteLine(logWriter.ToString());
             Trace.WriteLine($"<< TraceEvent");
 #endif
-            if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-                // Read the binary info from the local file to fill in all fields.
-                binaryFile = PEBinaryInfoProvider.GetBinaryFileInfo(result);
-                return BinaryFileSearchResult.Success(binaryFile, result, logWriter.ToString());
-            }
+                BinaryFileSearchResult searchResult;
 
-            return BinaryFileSearchResult.Failure(binaryFile, logWriter.ToString());
+                if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+                    // Read the binary info from the local file to fill in all fields.
+                    binaryFile = GetBinaryFileInfo(result);
+                    searchResult = BinaryFileSearchResult.Success(binaryFile, result, logWriter.ToString());
+                }
+                else {
+                    searchResult = BinaryFileSearchResult.Failure(binaryFile, logWriter.ToString());
+                }
+
+                resolvedBinariesCache_.TryAdd(binaryFile, searchResult);
+                return searchResult;
+            }).ConfigureAwait(false);
         }
 
         public SymbolFileDescriptor SymbolFileInfo {

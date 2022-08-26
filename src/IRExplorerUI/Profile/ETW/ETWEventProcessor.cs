@@ -444,7 +444,7 @@ public class ETWEventProcessor : IDisposable {
         Trace.WriteLine($"  samples: {profile.Samples.Count}");
         Trace.WriteLine($"  events: {profile.PerformanceCountersEvents.Count}");
         //Trace.Flush();
-        MessageBox.Show("Done");
+
         profile.LoadingCompleted();
 
         if (handleDotNetEvents_) {

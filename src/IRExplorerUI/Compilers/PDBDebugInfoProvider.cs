@@ -19,6 +19,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Microsoft.Diagnostics.Symbols;
 using ProtoBuf;
+using System.Collections.Concurrent;
 
 namespace IRExplorerUI.Compilers {
     //? TODO: Use for-each iterators everywhere
@@ -26,6 +27,8 @@ namespace IRExplorerUI.Compilers {
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/debugger/symbol-path
         private const string DefaultSymbolSource = @"SRV*https://msdl.microsoft.com/download/symbols";
         private const string DefaultSymbolCachePath = @"C:\Symbols";
+
+        private static ConcurrentDictionary<SymbolFileDescriptor, DebugFileSearchResult> resolvedSymbolsCache_ = new();
 
         private SymbolFileSourceOptions options_;
         private string debugFilePath_;
@@ -41,38 +44,67 @@ namespace IRExplorerUI.Compilers {
         public SymbolFileSourceOptions SymbolOptions { get; set; }
         public Machine? Architecture => null;
 
+
+        //? HttpHandler will be needed for the auth token with recent TraceEvent version
+        //public class HttpHandler : DelegatingHandler {
+        //    public HttpHandler(HttpMessageHandler h) : base(h) { }
+
+        //    protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken) {
+        //        var r = base.Send(request, cancellationToken);
+        //        return r;
+        //    }
+
+        //    protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
+        //        var r = await base.SendAsync(request, cancellationToken);
+        //        return r;
+        //    }
+        //}
+
+
         public static async Task<DebugFileSearchResult> LocateDebugInfoFile(SymbolFileDescriptor symbolFile, SymbolFileSourceOptions options) {
             if (symbolFile == null) {
                 return DebugFileSearchResult.None;
             }
 
-            string symbolSearchPath = ConstructSymbolSearchPath(options);
-            using var logWriter = new StringWriter();
-            using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
-            symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+            if (resolvedSymbolsCache_.TryGetValue(symbolFile, out var searchResult)) {
+                Trace.WriteLine($"Get PDB from cache {symbolFile}");
+                return searchResult;
+            }
 
-            var result = await Task.Run(() => {
+            return await Task.Run(() => {
+                string result = null;
+                using var logWriter = new StringWriter();
+
+                string symbolSearchPath = ConstructSymbolSearchPath(options);
+                using var symbolReader = new SymbolReader(logWriter, symbolSearchPath);
+                symbolReader.SecurityCheck += s => true; // Allow symbols from "unsafe" locations.
+
                 try {
-                    return symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
+                    result = symbolReader.FindSymbolFilePath(symbolFile.FileName, symbolFile.Id, symbolFile.Age);
                 }
                 catch (Exception ex) {
                     Trace.TraceError($"Failed FindSymbolFilePath for {symbolFile.FileName}: {ex.Message}");
-                    return null;
                 }
-            }).ConfigureAwait(false);
 
 #if DEBUG
-            Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
-            Trace.IndentLevel = 1;
-            Trace.WriteLine(logWriter.ToString());
-            Trace.IndentLevel = 0;
-            Trace.WriteLine($"<< TraceEvent");
+                Trace.WriteLine($">> TraceEvent FindSymbolFilePath for {symbolFile.FileName}");
+                Trace.IndentLevel = 1;
+                Trace.WriteLine(logWriter.ToString());
+                Trace.IndentLevel = 0;
+                Trace.WriteLine($"<< TraceEvent");
 #endif
-            if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
-                return DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
-            }
+                DebugFileSearchResult searchResult;
 
-            return DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
+                if (!string.IsNullOrEmpty(result) && File.Exists(result)) {
+                    searchResult =DebugFileSearchResult.Success(symbolFile, result, logWriter.ToString());
+                }
+                else {
+                    searchResult = DebugFileSearchResult.Failure(symbolFile, logWriter.ToString());
+                }
+
+                resolvedSymbolsCache_.TryAdd(symbolFile, searchResult);
+                return searchResult;
+            }).ConfigureAwait(false);
         }
 
         public static string ConstructSymbolSearchPath(SymbolFileSourceOptions options) {
@@ -226,7 +258,7 @@ namespace IRExplorerUI.Compilers {
                             // SourceLink HTTP personal authentication token.
                             var token = $":{options_.AuthorizationToken}";
                             var tokenB64 = Convert.ToBase64String(ASCIIEncoding.ASCII.GetBytes(token));
-                            pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
+                            //pdb.SymbolReader.AuthorizationHeaderForSourceLink = $"Basic {tokenB64}";
                         }
 
                         // Download the source file.
