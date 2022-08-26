@@ -2313,6 +2313,7 @@ namespace IRExplorerUI {
 
             AddStatisticsFunctionListColumns(false);
             RefreshFunctionList();
+            Session.SetApplicationProgress(false, double.NaN);
         }
 
         private async Task<ConcurrentDictionary<IRTextFunction, FunctionCodeStatistics>>
