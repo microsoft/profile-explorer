@@ -22,6 +22,37 @@ using Microsoft.Win32;
 using PEFile;
 
 namespace IRExplorerUI {
+    public class RecordingSessionEx : BindableObject {
+        private ProfileDataReport report_;
+
+        public RecordingSessionEx(ProfileDataReport report,
+                                  bool isNewSession = false,
+                                  string title = null, string description = null) {
+            report_ = report;
+            isNewSession_ = isNewSession;
+            title_ = title;
+            description_ = description;
+        }
+
+        private bool isNewSession_;
+        public bool IsNewSession {
+            get => isNewSession_;
+            set => SetAndNotify(ref isNewSession_, value);
+        }
+
+        private string title_;
+        public string Title {
+            get => !string.IsNullOrEmpty(title_) ? title_ : Utils.TryGetFileName(report_.SessionOptions.ApplicationPath);
+            set => SetAndNotify(ref title_, value);
+        }
+
+        private string description_;
+        public string Description {
+            get => !string.IsNullOrEmpty(description_) ? description_ : $"Args: {report_.SessionOptions.ApplicationArguments}";
+            set => SetAndNotify(ref description_, value);
+        }
+    }
+
     public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingProfile_;
@@ -50,8 +81,20 @@ namespace IRExplorerUI {
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
             UpdatePerfCounterList();
-
+            SetupSessionList();
             this.Closing += ProfileLoadWindow_Closing;
+        }
+
+        private void SetupSessionList() {
+            var sessionList = new List<RecordingSessionEx>();
+            sessionList.Add(new RecordingSessionEx(null, true,
+                "Record", "Start a new session"));
+
+            foreach (var prevSession in Options.PreviousRecordingSessions) {
+                sessionList.Add(new RecordingSessionEx(prevSession));
+            }
+
+            SessionList.ItemsSource = new ListCollectionView(sessionList);
         }
 
         private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
@@ -270,15 +313,22 @@ namespace IRExplorerUI {
                 ProfileReportPanel.ShowReport(report, Session);
             }
 
-            if (success && !IsRecordMode) {
-                App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, "");
+            if (success) {
+                if (IsRecordMode) {
+                    App.Settings.ProfileOptions.PreviousRecordingSessions.Add(report);
+                }
+                else {
+                    App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, "");
+                }
+
+
                 App.SaveApplicationSettings();
             }
             
             return success;
         }
-
-        private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
+        
+        private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) { 
             Dispatcher.BeginInvoke((Action)(() => {
                 if (progressInfo == null) {
                     return;

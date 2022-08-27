@@ -248,7 +248,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
         int startSegment = startIndex / segmentLength_;
         int endSegment = endIndex / segmentLength_;
 
-        for (int i = startIndex; i <= endSegment; i++) {
+        for (int i = startSegment; i <= endSegment; i++) {
             segments_[i].CompressValues();
         }
     }

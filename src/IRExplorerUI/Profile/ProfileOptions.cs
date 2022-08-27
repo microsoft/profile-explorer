@@ -100,7 +100,7 @@ public class ProfileDataProviderOptions : SettingsBase {
     [ProtoMember(11)]
     public List<PerformanceMetricConfig> PerformanceMetrics { get; set; }
     [ProtoMember(12)]
-    public List<ProfileRecordingSessionOptions> PreviousRecordingSessions { get; set; }
+    public List<ProfileDataReport> PreviousRecordingSessions { get; set; }
 
     public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
     public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;
@@ -145,8 +145,8 @@ public class ProfileDataProviderOptions : SettingsBase {
         BinarySearchPaths ??= new List<string>();
         BinaryNameWhitelist ??= new List<string>();
         RecordingSessionOptions ??= new ProfileRecordingSessionOptions();
-        PerformanceMetrics = new List<PerformanceMetricConfig>();
-        PreviousRecordingSessions = new List<ProfileRecordingSessionOptions>();
+        PerformanceMetrics ??= new List<PerformanceMetricConfig>();
+        PreviousRecordingSessions ??= new List<ProfileDataReport>();
     }
 
     private void ResetAndInitializeReferenceMembers() {
