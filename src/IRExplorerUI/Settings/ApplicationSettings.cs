@@ -65,21 +65,18 @@ namespace IRExplorerUI {
         public Dictionary<Guid, byte[]> FunctionTaskOptions;
 
         [ProtoMember(14)]
-        public List<Tuple<string, string, string>> RecentProfileFiles;
-
-        [ProtoMember(15)]
         public string DefaultCompilerIR;
 
-        [ProtoMember(16)]
+        [ProtoMember(15)]
         public IRMode DefaultIRMode;
 
-        [ProtoMember(17)]
+        [ProtoMember(16)]
         public ProfileDataProviderOptions ProfileOptions;
 
-        [ProtoMember(18)]
+        [ProtoMember(17)]
         public SymbolFileSourceOptions SymbolOptions { get; set; }
 
-        [ProtoMember(19)]
+        [ProtoMember(18)]
         public CallTreeSettings CallTreeSettings { get; set; }
 
         public ApplicationSettings() {
@@ -105,7 +102,6 @@ namespace IRExplorerUI {
             RecentFiles ??= new List<string>();
             RecentTextSearches ??= new List<string>();
             RecentComparedFiles ??= new List<Tuple<string, string>>();
-            RecentProfileFiles ??= new List<Tuple<string, string, string>>();
             DocumentSettings ??= new DocumentSettings();
             FlowGraphSettings ??= new FlowGraphSettings();
             ExpressionGraphSettings ??= new ExpressionGraphSettings();
@@ -177,23 +173,32 @@ namespace IRExplorerUI {
         public void ClearRecentComparedFiles() {
             RecentComparedFiles.Clear();
         }
-
-        public void AddRecentProfileFiles(string profilePath, string binaryPath, string debugPath) {
-            // Keep at most N recent files, and move this one on the top of the list.
-            var pair = new Tuple<string, string, string>(profilePath, binaryPath, debugPath);
-
-            if (RecentProfileFiles.Contains(pair)) {
-                RecentProfileFiles.Remove(pair);
-            }
-            else if (RecentProfileFiles.Count >= 10) {
-                RecentProfileFiles.RemoveAt(RecentProfileFiles.Count - 1);
-            }
-
-            RecentProfileFiles.Insert(0, pair);
+        
+        public void AddRecordedProfileSession(ProfileDataReport report) {
+            AddProfilingSession(report, ProfileOptions.PreviousRecordingSessions);
         }
 
-        public void ClearRecentProfileFiles() {
-            RecentProfileFiles.Clear();
+        public void AddLoadedProfileSession(ProfileDataReport report) {
+            AddProfilingSession(report, ProfileOptions.PreviousLoadedSessions);
+        }
+
+        private void AddProfilingSession(ProfileDataReport report, List<ProfileDataReport> list) {
+            if (list.Contains(report)) {
+                list.Remove(report);
+            }
+            else if (list.Count >= 10) {
+                list.RemoveAt(ProfileOptions.PreviousRecordingSessions.Count - 1);
+            }
+
+            list.Insert(0, report);
+        }
+
+        public void RemoveRecordedProfileSession(ProfileDataReport report) {
+            ProfileOptions.PreviousRecordingSessions.Remove(report);
+        }
+
+        public void RemoveLoadedProfileSession(ProfileDataReport report) {
+            ProfileOptions.PreviousLoadedSessions.Remove(report);
         }
 
         public void SaveFunctionTaskOptions(FunctionTaskInfo taskInfo, byte[] data) {

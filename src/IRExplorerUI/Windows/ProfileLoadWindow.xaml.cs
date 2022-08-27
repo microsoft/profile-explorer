@@ -34,6 +34,8 @@ namespace IRExplorerUI {
             description_ = description;
         }
 
+        public ProfileDataReport Report => report_;
+
         private bool isNewSession_;
         public bool IsNewSession {
             get => isNewSession_;
@@ -315,10 +317,10 @@ namespace IRExplorerUI {
 
             if (success) {
                 if (IsRecordMode) {
-                    App.Settings.ProfileOptions.PreviousRecordingSessions.Add(report);
+                    App.Settings.AddRecordedProfileSession(report);
                 }
                 else {
-                    App.Settings.AddRecentProfileFiles(ProfileFilePath, BinaryFilePath, "");
+                    App.Settings.AddLoadedProfileSession(report);
                 }
 
 
@@ -390,33 +392,12 @@ namespace IRExplorerUI {
 
         private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowExecutableOpenFileDialog(BinaryAutocompleteBox);
-
-        private void RecentButton_Click(object sender, RoutedEventArgs e) {
-            var menu = RecentButton.ContextMenu;
-            menu.Items.Clear();
-
-            foreach (var pathPair in App.Settings.RecentProfileFiles) {
-                var item = new MenuItem();
-                item.Header = $"Trace: {pathPair.Item1}\nBinary: {pathPair.Item2}";
-                item.Tag = pathPair;
-                item.Click += RecentMenuItem_Click;
-                menu.Items.Add(item);
-                menu.Items.Add(new Separator());
-            }
-
-            var clearMenuItem = new MenuItem { Header = "Clear" };
-
-            clearMenuItem.Click += RecentMenuItem_Click;
-            menu.Items.Add(clearMenuItem);
-            menu.IsOpen = true;
-        }
-
+        
         private async void RecentMenuItem_Click(object sender, RoutedEventArgs e) {
-            RecentButton.ContextMenu.IsOpen = false;
             var menuItem = sender as MenuItem;
 
             if (menuItem.Tag == null) {
-                App.Settings.ClearRecentProfileFiles();
+                
             }
             else {
                 var pathPair = menuItem.Tag as Tuple<string, string, string>;
@@ -570,6 +551,36 @@ namespace IRExplorerUI {
 
         private void MetricFilter_TextChanged(object sender, TextChangedEventArgs e) {
             metricsFilter_.Refresh();
+        }
+
+        private void SessionReportButton_Click(object sender, RoutedEventArgs e) {
+            var sessionEx = ((Button)sender).DataContext as RecordingSessionEx;
+            var report = sessionEx?.Report;
+
+            if (report != null) {
+                ProfileReportPanel.ShowReport(report, Session);
+            }
+        }
+
+        private void SessionRemoveButton_Click(object sender, RoutedEventArgs e) {
+            var sessionEx = ((Button)sender).DataContext as RecordingSessionEx;
+            var report = sessionEx?.Report;
+
+            if (report != null) {
+                using var centerForm = new DialogCenteringHelper(this);
+
+                if (MessageBox.Show("Do you want to remove the session?", "IR Explorer",
+                        MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) {
+                    return;
+                }
+
+                if (IsRecordMode) {
+                    App.Settings.RemoveRecordedProfileSession(report);
+                }
+                else {
+                    App.Settings.RemoveLoadedProfileSession(report);
+                }
+            }
         }
     }
 }

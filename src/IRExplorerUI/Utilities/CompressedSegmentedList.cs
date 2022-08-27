@@ -248,6 +248,12 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
         int startSegment = startIndex / segmentLength_;
         int endSegment = endIndex / segmentLength_;
 
+        if (startSegment >= segments_.Count ||
+            endSegment >= segments_.Count) {
+            Debug.Assert(false, "Invalid segment range");
+            return;
+        }
+
         for (int i = startSegment; i <= endSegment; i++) {
             segments_[i].CompressValues();
         }
