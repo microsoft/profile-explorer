@@ -21,6 +21,8 @@ using CSScriptLib;
 namespace IRExplorerUI.Profile.ETW;
 
 public class ETWEventProcessor : IDisposable {
+    const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
+
     private ETWTraceEventSource source_;
     private bool isRealTime_;
     private bool handleDotNetEvents_;
@@ -29,6 +31,11 @@ public class ETWEventProcessor : IDisposable {
     private string managedAsmDir_;
     private List<int> childAcceptedProcessIds_;
     private ProfileDataProviderOptions providerOptions_;
+
+    bool samplingIntervalSet_;
+    int samplingInterval100NS_;
+    double samplingIntervalMS_;
+    double samplingIntervalLimitMS_;
 
     public ETWEventProcessor(ETWTraceEventSource source, ProfileDataProviderOptions providerOptions,
                              bool isRealTime = true, 
@@ -60,19 +67,23 @@ public class ETWEventProcessor : IDisposable {
         source_.Kernel.PerfInfoCollectionStart += data => {
             if (data.SampleSource == 0) {
                 UpdateSamplingInterval(data.NewInterval);
-                samplingIntervalSet = true;
+                samplingIntervalSet_ = true;
             }
         };
 
         source_.Kernel.PerfInfoSetInterval += data => {
-            if (data.SampleSource == 0 && !samplingIntervalSet) {
+            if (data.SampleSource == 0 && !samplingIntervalSet_) {
                 UpdateSamplingInterval(data.OldInterval);
-                samplingIntervalSet = true;
+                samplingIntervalSet_ = true;
             }
         };
 
         RawProfileData profile = new();
-        
+
+        if (isRealTime_) {
+            profile.TraceInfo.ProfileStartTime = DateTime.Now;
+        }
+
         source_.Kernel.ProcessStartGroup += data => {
             var proc = new ProfileProcess(data.ProcessID, data.ParentID,
                 data.ProcessName, data.ImageFileName,
@@ -95,7 +106,7 @@ public class ETWEventProcessor : IDisposable {
             //? TODO: Use a pooled sample to avoid alloc (profile.Rent*)
             var sample = new ProfileSample((long)data.InstructionPointer,
                 TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec),
-                TimeSpan.FromMilliseconds(samplingIntervalMS),
+                TimeSpan.FromMilliseconds(samplingIntervalMS_),
                 false, contextId);
             int sampleId = profile.AddSample(sample);
             profile.ReturnContext(contextId);
@@ -105,17 +116,10 @@ public class ETWEventProcessor : IDisposable {
         return profile.BuildProcessSummary();
     }
 
-    const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
-
-    bool samplingIntervalSet = false;
-    int samplingInterval100NS;
-    double samplingIntervalMS;
-    double samplingIntervalLimitMS;
-
     void UpdateSamplingInterval(int value) {
-        samplingInterval100NS = value;
-        samplingIntervalMS = (double)samplingInterval100NS / 10000;
-        samplingIntervalLimitMS = samplingIntervalMS * SamplingErrorMargin;
+        samplingInterval100NS_ = value;
+        samplingIntervalMS_ = (double)samplingInterval100NS_ / 10000;
+        samplingIntervalLimitMS_ = samplingIntervalMS_ * SamplingErrorMargin;
     }
 
     public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
@@ -237,14 +241,14 @@ public class ETWEventProcessor : IDisposable {
         };
 
         source_.Kernel.EventTraceHeader += data => {
-            profile.TraceInfo.PointerSize = data.PointerSize;
             profile.TraceInfo.CpuSpeed = data.CPUSpeed;
-            profile.TraceInfo.CpuCount = data.NumberOfProcessors;
             profile.TraceInfo.ProfileStartTime = data.StartTime;
             profile.TraceInfo.ProfileEndTime = data.EndTime;
         };
 
         source_.Kernel.SystemConfigCPU += data => {
+            profile.TraceInfo.PointerSize = data.PointerSize;
+            profile.TraceInfo.CpuCount = data.NumberOfProcessors;
             profile.TraceInfo.ComputerName = data.ComputerName;
             profile.TraceInfo.DomainName = data.DomainName;
             profile.TraceInfo.MemorySize = data.MemSize;
@@ -293,7 +297,7 @@ public class ETWEventProcessor : IDisposable {
         source_.Kernel.PerfInfoCollectionStart += data => {
             if (data.SampleSource == 0) {
                 UpdateSamplingInterval(data.NewInterval);
-                samplingIntervalSet = true;
+                samplingIntervalSet_ = true;
             }
             else {
                 // The description of a PMC event.
@@ -305,9 +309,9 @@ public class ETWEventProcessor : IDisposable {
         };
 
         source_.Kernel.PerfInfoSetInterval += data => {
-            if (data.SampleSource == 0 && !samplingIntervalSet) {
+            if (data.SampleSource == 0 && !samplingIntervalSet_) {
                 UpdateSamplingInterval(data.OldInterval);
-                samplingIntervalSet = true;
+                samplingIntervalSet_ = true;
             }
         };
 
@@ -326,8 +330,8 @@ public class ETWEventProcessor : IDisposable {
             double timestamp = data.TimeStampRelativeMSec;
             double weight = timestamp - perCoreLastTime[cpu];
 
-            if (weight > samplingIntervalLimitMS) {
-                weight = samplingIntervalMS;
+            if (weight > samplingIntervalLimitMS_) {
+                weight = samplingIntervalMS_;
             }
 
             perCoreLastTime[cpu] = timestamp;
@@ -368,17 +372,19 @@ public class ETWEventProcessor : IDisposable {
                 // decompressing a segment and it remains in that state until the end, wasting memory.
                 // Since sample IDs are increasing, compress all segments that may have been
                 // accessed since the last time and cannot be anymore.
-                int earliestSample = int.MaxValue;
+                if (profile.TraceInfo.CpuCount > 0) {
+                    int earliestSample = int.MaxValue;
 
-                for (int i = 0; i < profile.TraceInfo.CpuCount; i++) {
-                    int value = perCoreLastSample[i];
-                    earliestSample = Math.Min(value, earliestSample);
-                }
+                    for (int i = 0; i < profile.TraceInfo.CpuCount; i++) {
+                        int value = perCoreLastSample[i];
+                        earliestSample = Math.Min(value, earliestSample);
+                    }
 
-                //Trace.WriteLine($"Compress {earliestSample}");
-                if (earliestSample > oldestCompressedSample) {
-                    profile.Samples.CompressRange(oldestCompressedSample, earliestSample);
-                    oldestCompressedSample = earliestSample;
+                    //Trace.WriteLine($"Compress {earliestSample}");
+                    if (earliestSample > oldestCompressedSample) {
+                        profile.Samples.CompressRange(oldestCompressedSample, earliestSample);
+                        oldestCompressedSample = earliestSample;
+                    }
                 }
             }
         };
@@ -432,7 +438,11 @@ public class ETWEventProcessor : IDisposable {
             var sw = Stopwatch.StartNew();
             
             source_.Process();
-            
+
+            if (isRealTime_) {
+                profile.TraceInfo.ProfileEndTime = DateTime.Now;
+            }
+
             sw.Stop();
             Trace.WriteLine($"Took: {sw.ElapsedMilliseconds} ms");
         }

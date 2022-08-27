@@ -63,7 +63,7 @@ public enum ModuleLoadState {
 }
 
 [ProtoContract(SkipConstructor = true)]
-public class ProfileDataReport {
+public class ProfileDataReport : IEquatable<ProfileDataReport> {
     [ProtoContract(SkipConstructor = true)]
     public class ModuleStatus {
         [ProtoMember(1)]
@@ -115,6 +115,46 @@ public class ProfileDataReport {
     public void AddDebugInfo(BinaryFileDescriptor binaryInfo, DebugFileSearchResult searchResult) {
         var status = GetOrCreateModuleStatus(binaryInfo);
         status.DebugInfoFile = searchResult;
+    }
+
+    public bool Equals(ProfileDataReport other) {
+        if (ReferenceEquals(null, other)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+
+        return Equals(SessionOptions, other.SessionOptions);
+    }
+
+    public override bool Equals(object obj) {
+        if (ReferenceEquals(null, obj)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj)) {
+            return true;
+        }
+
+        if (obj.GetType() != this.GetType()) {
+            return false;
+        }
+
+        return Equals((ProfileDataReport)obj);
+    }
+
+    public override int GetHashCode() {
+        return HashCode.Combine(SessionOptions);
+    }
+
+    public static bool operator ==(ProfileDataReport left, ProfileDataReport right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(ProfileDataReport left, ProfileDataReport right) {
+        return !Equals(left, right);
     }
 
     public void Dump() {

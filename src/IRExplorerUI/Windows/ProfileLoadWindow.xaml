@@ -54,20 +54,24 @@
                                     </StackPanel.Style>
 
                                     <Button
+                                        Name="SessionReportButton"
                                         Width="20"
                                         Height="20"
                                         Padding="1"
                                         Background="Transparent"
                                         BorderThickness="0"
+                                        Click="SessionReportButton_Click"
                                         ToolTip="Open session report">
                                         <Image Height="16" Source="{StaticResource WindowIcon}" />
                                     </Button>
                                     <Button
+                                        Name="SessionRemoveButton"
                                         Width="20"
                                         Height="20"
                                         Padding="1"
                                         Background="Transparent"
                                         BorderThickness="0"
+                                        Click="SessionRemoveButton_Click"
                                         ToolTip="Remove session from history">
                                         <Image Height="16" Source="{StaticResource ClearIcon}" />
                                     </Button>
@@ -424,19 +428,6 @@
 
                         <Grid Margin="8,8,8,0">
                             <StackPanel Width="250" HorizontalAlignment="Left">
-                                <Button
-                                    x:Name="RecentButton"
-                                    Width="80"
-                                    Height="24"
-                                    Padding="4,0,4,0"
-                                    HorizontalAlignment="Left"
-                                    Click="RecentButton_Click"
-                                    Content="Recent Files"
-                                    Visibility="{Binding RecentControlsVisible, Converter={StaticResource BoolToVisibility}}">
-                                    <Button.ContextMenu>
-                                        <ContextMenu />
-                                    </Button.ContextMenu>
-                                </Button>
                                 <ProgressBar
                                     x:Name="LoadProgressBar"
                                     Height="4"

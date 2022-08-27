@@ -7,7 +7,7 @@ using ProtoBuf;
 namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
-public class ProfileRecordingSessionOptions : SettingsBase {
+public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRecordingSessionOptions> {
     public const int DefaultSamplingFrequency = 4000;
     public const int MaximumSamplingFrequency = 8000;
 
@@ -71,6 +71,54 @@ public class ProfileRecordingSessionOptions : SettingsBase {
         var serialized = StateSerializer.Serialize(this);
         return StateSerializer.Deserialize<ProfileRecordingSessionOptions>(serialized);
     }
+
+    public bool Equals(ProfileRecordingSessionOptions other) {
+        if (ReferenceEquals(null, other)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+
+        return SessionKind == other.SessionKind && ApplicationPath == other.ApplicationPath && ApplicationArguments == other.ApplicationArguments && WorkingDirectory == other.WorkingDirectory && SamplingFrequency == other.SamplingFrequency && ProfileDotNet == other.ProfileDotNet && ProfileChildProcesses == other.ProfileChildProcesses && RecordPerformanceCounters == other.RecordPerformanceCounters && EnableEnvironmentVars == other.EnableEnvironmentVars && Equals(EnvironmentVariables, other.EnvironmentVariables) && Equals(PerformanceCounters, other.PerformanceCounters);
+    }
+
+    public override bool Equals(object obj) {
+        if (ReferenceEquals(null, obj)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj)) {
+            return true;
+        }
+
+        if (obj.GetType() != this.GetType()) {
+            return false;
+        }
+
+        return Equals((ProfileRecordingSessionOptions)obj);
+    }
+
+    public override int GetHashCode() {
+        var hashCode = new HashCode();
+        hashCode.Add((int)SessionKind);
+        hashCode.Add(ApplicationPath);
+        hashCode.Add(ApplicationArguments);
+        hashCode.Add(WorkingDirectory);
+        hashCode.Add(ProfileChildProcesses);
+        hashCode.Add(RecordPerformanceCounters);
+        hashCode.Add(EnableEnvironmentVars);
+        return hashCode.ToHashCode();
+    }
+
+    public static bool operator ==(ProfileRecordingSessionOptions left, ProfileRecordingSessionOptions right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(ProfileRecordingSessionOptions left, ProfileRecordingSessionOptions right) {
+        return !Equals(left, right);
+    }
 }
 
 public delegate void ProfileLoadProgressHandler(ProfileLoadProgress info);
@@ -101,6 +149,8 @@ public class ProfileDataProviderOptions : SettingsBase {
     public List<PerformanceMetricConfig> PerformanceMetrics { get; set; }
     [ProtoMember(12)]
     public List<ProfileDataReport> PreviousRecordingSessions { get; set; }
+    [ProtoMember(13)]
+    public List<ProfileDataReport> PreviousLoadedSessions { get; set; }
 
     public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;
     public bool HasBinarySearchPaths => BinarySearchPathsEnabled && BinarySearchPaths.Count > 0;
@@ -147,6 +197,7 @@ public class ProfileDataProviderOptions : SettingsBase {
         RecordingSessionOptions ??= new ProfileRecordingSessionOptions();
         PerformanceMetrics ??= new List<PerformanceMetricConfig>();
         PreviousRecordingSessions ??= new List<ProfileDataReport>();
+        PreviousLoadedSessions ??= new List<ProfileDataReport>();
     }
 
     private void ResetAndInitializeReferenceMembers() {
