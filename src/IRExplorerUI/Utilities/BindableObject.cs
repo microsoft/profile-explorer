@@ -29,8 +29,4 @@ namespace IRExplorerUI {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-
-    public class BindableToolPanelControl : BindableObject {
-        
-    }
 }
