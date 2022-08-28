@@ -67,7 +67,6 @@ namespace IRExplorerUI.Compilers {
             }
 
             if (resolvedSymbolsCache_.TryGetValue(symbolFile, out var searchResult)) {
-                Trace.WriteLine($"Get PDB from cache {symbolFile}");
                 return searchResult;
             }
 

@@ -105,6 +105,7 @@ namespace IRExplorerUI.Profile.ETW {
                             (profiledProcess, acceptedProcessId) = StartProfiledApplication();
 
                             if (profiledProcess == null) {
+                                sessionStarted.Set(); // Unblock waiting task below.
                                 return null;
                             }
 
@@ -181,7 +182,7 @@ namespace IRExplorerUI.Profile.ETW {
                 catch (Exception ex) {
                     Trace.TraceError($"Failed ETW event capture: {ex.Message}\n{ex.StackTrace}");
                     threadSuspender?.Dispose(); // This resume all profiled app threads.
-                    sessionStarted.Set();
+                    sessionStarted.Set(); // Unblock waiting task below.
                     return null;
                 }
                 finally {

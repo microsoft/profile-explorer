@@ -126,7 +126,9 @@ public class ProfileDataReport : IEquatable<ProfileDataReport> {
             return true;
         }
 
-        return Equals(SessionOptions, other.SessionOptions);
+
+        return Equals(SessionOptions, other.SessionOptions) &&
+               TraceInfo.HasSameTraceFilePath(other.TraceInfo);
     }
 
     public override bool Equals(object obj) {
