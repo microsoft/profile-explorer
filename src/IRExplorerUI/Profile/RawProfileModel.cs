@@ -152,9 +152,21 @@ public class ProfileTraceInfo {
     public string ComputerName { get; set; }
     [ProtoMember(8)]
     public string DomainName { get; set; }
+    [ProtoMember(9)]
+    public string TraceFilePath { get; set; }
 
     public bool Is64Bit => PointerSize == 8;
     public TimeSpan ProfileDuration => ProfileEndTime - ProfileStartTime;
+
+    public bool HasSameTraceFilePath(ProfileTraceInfo other) {
+        if (!string.IsNullOrEmpty(TraceFilePath) &&
+            !string.IsNullOrEmpty(other.TraceFilePath)) {
+            return string.Equals(TraceFilePath, other.TraceFilePath, StringComparison.OrdinalIgnoreCase);
+        }
+
+        return string.IsNullOrEmpty(TraceFilePath) &&
+               string.IsNullOrEmpty(other.TraceFilePath);
+    }
 }
 
 [ProtoContract(SkipConstructor = true)]

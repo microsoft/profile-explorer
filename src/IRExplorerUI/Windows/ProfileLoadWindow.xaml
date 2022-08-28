@@ -10,11 +10,11 @@
     xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     Title="Load profile trace"
     Width="750"
-    Height="Auto"
+    Height="600"
     MinWidth="600"
     ResizeMode="CanResizeWithGrip"
     ShowInTaskbar="False"
-    SizeToContent="Height"
+    SizeToContent="Manual"
     WindowStartupLocation="CenterOwner"
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
@@ -28,11 +28,12 @@
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                     IsEnabled="{Binding InputControlsEnabled}"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    SelectionChanged="SessionList_SelectionChanged"
                     SelectionMode="Single">
 
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <DockPanel HorizontalAlignment="Stretch">
+                            <DockPanel HorizontalAlignment="Stretch" ToolTip="{Binding ToolTip}">
                                 <StackPanel DockPanel.Dock="Left">
                                     <TextBlock FontWeight="DemiBold" Text="{Binding Title}" />
                                     <TextBlock Text="{Binding Description}" />
@@ -82,6 +83,7 @@
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <EventSetter Event="MouseDoubleClick" Handler="SessionList_MouseDoubleClick" />
 
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=IsNewSession}" Value="True">
@@ -101,13 +103,13 @@
                                 x:Name="SystemWideRadioButton"
                                 Margin="8,8,8,0"
                                 Content="System-wide"
-                                IsChecked="{Binding Options.RecordingSessionOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
+                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
                                 ToolTip="Profiles every application running on the current machine" />
                             <RadioButton
                                 x:Name="StartAppRadioButton"
                                 Margin="8,4,8,0"
                                 Content="Start application"
-                                IsChecked="{Binding Options.RecordingSessionOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
+                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
                                 ToolTip="Start a new process and record only its profile" />
                             <Separator Margin="0,8,0,8" />
 
@@ -125,7 +127,7 @@
                                         IsEnabled="{Binding InputControlsEnabled}"
                                         IsTextCompletionEnabled="False"
                                         MinimumPrefixLength="1"
-                                        Text="{Binding Path=Options.RecordingSessionOptions.ApplicationPath, Mode=TwoWay}" />
+                                        Text="{Binding Path=RecordingOptions.ApplicationPath, Mode=TwoWay}" />
 
                                     <Button
                                         x:Name="ApplicationBrowseButton"
@@ -146,7 +148,7 @@
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                         IsEnabled="{Binding InputControlsEnabled}"
-                                        Text="{Binding Path=Options.RecordingSessionOptions.ApplicationArguments, Mode=TwoWay}" />
+                                        Text="{Binding Path=RecordingOptions.ApplicationArguments, Mode=TwoWay}" />
                                 </Grid>
                                 <TextBlock Margin="8,4,8,0" Text="Working directory" />
                                 <Grid Margin="8,4,8,0">
@@ -157,14 +159,14 @@
                                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                         IsEnabled="{Binding InputControlsEnabled}"
-                                        Text="{Binding Path=Options.RecordingSessionOptions.WorkingDirectory, Mode=TwoWay}" />
+                                        Text="{Binding Path=RecordingOptions.WorkingDirectory, Mode=TwoWay}" />
                                 </Grid>
 
                                 <CheckBox
                                     x:Name="EnvironmentVarsCheckbox"
                                     Margin="8,8,0,0"
                                     Content="Optional environment variables (one per line, var=value format)"
-                                    IsChecked="{Binding Path=Options.RecordingSessionOptions.EnableEnvironmentVars, Mode=TwoWay}" />
+                                    IsChecked="{Binding Path=RecordingOptions.EnableEnvironmentVars, Mode=TwoWay}" />
                                 <TextBox
                                     x:Name="EnvironmentVarsTextBox"
                                     MinHeight="36"
@@ -174,7 +176,7 @@
                                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                                     BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                     IsEnabled="{Binding ElementName=EnvironmentVarsCheckbox, Path=IsChecked}"
-                                    Text="{Binding Path=Options.RecordingSessionOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
+                                    Text="{Binding Path=RecordingOptions.EnvironmentVariables, Mode=TwoWay, Converter={StaticResource StringListPairConverter}}"
                                     TextWrapping="Wrap" />
 
                             </StackPanel>
@@ -190,15 +192,15 @@
                                     <CheckBox
                                         Margin="0,8,0,0"
                                         Content="Profile managed (.NET) applications"
-                                        IsChecked="{Binding Path=Options.RecordingSessionOptions.ProfileDotNet, Mode=TwoWay}" />
+                                        IsChecked="{Binding Path=RecordingOptions.ProfileDotNet, Mode=TwoWay}" />
                                     <CheckBox
                                         Margin="0,4,0,0"
                                         Content="Profile child processes"
-                                        IsChecked="{Binding Path=Options.RecordingSessionOptions.ProfileChildProcesses, Mode=TwoWay}" />
+                                        IsChecked="{Binding Path=RecordingOptions.ProfileChildProcesses, Mode=TwoWay}" />
                                     <CheckBox
                                         Margin="0,4,0,0"
                                         Content="Record CPU performance counter (PMC) events"
-                                        IsChecked="{Binding Path=Options.RecordingSessionOptions.RecordPerformanceCounters, Mode=TwoWay}" />
+                                        IsChecked="{Binding Path=RecordingOptions.RecordPerformanceCounters, Mode=TwoWay}" />
 
                                     <StackPanel
                                         Margin="0,8,0,0"
@@ -219,8 +221,8 @@
                                             SmallChange="1000"
                                             TickFrequency="1000"
                                             TickPlacement="BottomRight"
-                                            Value="{Binding Path=Options.RecordingSessionOptions.SamplingFrequency, Mode=TwoWay}" />
-                                        <TextBlock Margin="8,0,0,0" Text="{Binding Path=Options.RecordingSessionOptions.SamplingFrequency}" />
+                                            Value="{Binding Path=RecordingOptions.SamplingFrequency, Mode=TwoWay}" />
+                                        <TextBlock Margin="8,0,0,0" Text="{Binding Path=RecordingOptions.SamplingFrequency}" />
                                         <Button
                                             x:Name="DefaultFrequencyButton"
                                             Height="22"
@@ -358,7 +360,7 @@
                         <ListView
                             x:Name="ProcessList"
                             MinHeight="100"
-                            MaxHeight="150"
+                            MaxHeight="400"
                             Margin="8,4,8,0"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                             IsEnabled="{Binding InputControlsEnabled}"

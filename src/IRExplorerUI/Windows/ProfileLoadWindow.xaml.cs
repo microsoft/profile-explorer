@@ -13,6 +13,7 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using DocumentFormat.OpenXml.Office2010.PowerPoint;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
@@ -24,11 +25,13 @@ using PEFile;
 namespace IRExplorerUI {
     public class RecordingSessionEx : BindableObject {
         private ProfileDataReport report_;
+        private bool isLoadedFile_;
 
-        public RecordingSessionEx(ProfileDataReport report,
+        public RecordingSessionEx(ProfileDataReport report, bool isLoadedFile,
                                   bool isNewSession = false,
                                   string title = null, string description = null) {
             report_ = report;
+            isLoadedFile_ = isLoadedFile;
             isNewSession_ = isNewSession;
             title_ = title;
             description_ = description;
@@ -44,13 +47,26 @@ namespace IRExplorerUI {
 
         private string title_;
         public string Title {
-            get => !string.IsNullOrEmpty(title_) ? title_ : Utils.TryGetFileName(report_.SessionOptions.ApplicationPath);
+            get => !string.IsNullOrEmpty(title_) ? title_ : 
+                    Utils.TryGetFileName(isLoadedFile_ ? report_.TraceInfo.TraceFilePath :
+                                         report_.SessionOptions.ApplicationPath);
             set => SetAndNotify(ref title_, value);
+        }
+
+        public string ToolTip {
+            get => isLoadedFile_ ? report_?.TraceInfo.TraceFilePath : 
+                $"{report_?.SessionOptions.ApplicationPath} {report_?.SessionOptions.ApplicationArguments}";
         }
 
         private string description_;
         public string Description {
-            get => !string.IsNullOrEmpty(description_) ? description_ : $"Args: {report_.SessionOptions.ApplicationArguments}";
+            get {
+                if(!string.IsNullOrEmpty(description_)) {
+                    return description_;
+                }
+                else return isLoadedFile_ ? $"Process: {report_?.Process.ImageFileName}" :
+                                            $"Args: {report_.SessionOptions.ApplicationArguments}";
+            }
             set => SetAndNotify(ref description_, value);
         }
     }
@@ -59,6 +75,7 @@ namespace IRExplorerUI {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingProfile_;
         private ProfileDataProviderOptions options_;
+        private ProfileRecordingSessionOptions recordingOptions_;
         private SymbolFileSourceOptions symbolOptions_;
         private RawProfileData recordedProfile_;
         private bool isLoadingProcessList_;
@@ -68,6 +85,7 @@ namespace IRExplorerUI {
         private ProcessSummary selectedProcSummary_;
         private List<ProcessSummary> recoredProcSummaries_;
         private bool windowClosed_;
+        private RecordingSessionEx currentSession_;
 
         public ProfileLoadWindow(ISession session, bool recordMode) {
             InitializeComponent();
@@ -82,6 +100,7 @@ namespace IRExplorerUI {
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
+            RecordingOptions = (ProfileRecordingSessionOptions)App.Settings.ProfileOptions.RecordingSessionOptions.Clone();
             UpdatePerfCounterList();
             SetupSessionList();
             this.Closing += ProfileLoadWindow_Closing;
@@ -89,23 +108,52 @@ namespace IRExplorerUI {
 
         private void SetupSessionList() {
             var sessionList = new List<RecordingSessionEx>();
-            sessionList.Add(new RecordingSessionEx(null, true,
-                "Record", "Start a new session"));
 
-            foreach (var prevSession in Options.PreviousRecordingSessions) {
-                sessionList.Add(new RecordingSessionEx(prevSession));
+            if (IsRecordMode) {
+                sessionList.Add(new RecordingSessionEx(null, false, true,
+                                "Record", "Start a new session"));
+                foreach (var prevSession in Options.PreviousRecordingSessions) {
+                    sessionList.Add(new RecordingSessionEx(prevSession, false));
+                }
+
+                currentSession_ = sessionList[0];
+            }
+            else {
+                foreach (var prevSession in Options.PreviousLoadedSessions) {
+                    sessionList.Add(new RecordingSessionEx(prevSession, true));
+                }
             }
 
+            SessionList.ItemsSource = null; // Force update.
             SessionList.ItemsSource = new ListCollectionView(sessionList);
         }
 
         private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
+            SaveCurrentOptions();
             App.SaveApplicationSettings();
         }
 
+        private void SaveCurrentOptions() {
+            options_.RecordingSessionOptions = recordingOptions_;
+        }
+
         public ISession Session { get; set; }
-        public string ProfileFilePath { get; set; }
-        public string BinaryFilePath { get; set; }
+
+        public string ProfileFilePath {
+            get => profileFilePath_;
+            set {
+                profileFilePath_ = value;
+                OnPropertyChange(nameof(ProfileFilePath));
+            }
+        }
+
+        public string BinaryFilePath {
+            get => binaryFilePath_;
+            set {
+                binaryFilePath_ = value;
+                OnPropertyChange(nameof(BinaryFilePath));
+            }
+        }
 
         public bool RequiresElevation => ETWRecordingSession.RequiresElevation;
         public bool LoadingControlsVisible => !IsRecordMode || ShowProcessList;
@@ -159,6 +207,9 @@ namespace IRExplorerUI {
         private int enabledPerfCounters_;
         private ICollectionView perfCountersFilter_;
         private ICollectionView metricsFilter_;
+        private string profileFilePath_;
+        private string binaryFilePath_;
+        private bool ignoreProfilePathChange_;
 
         public int EnabledPerfCounters {
             get => enabledPerfCounters_;
@@ -174,6 +225,16 @@ namespace IRExplorerUI {
         public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
         public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
         public bool IsRecordMode { get; }
+
+        public ProfileRecordingSessionOptions RecordingOptions {
+            get {
+                return recordingOptions_;
+            }
+            set {
+                recordingOptions_ = value;
+                OnPropertyChange(nameof(RecordingOptions));
+            }
+        }
 
         public ProfileDataProviderOptions Options {
             get {
@@ -199,7 +260,7 @@ namespace IRExplorerUI {
             var counters = ETWRecordingSession.BuiltinPerformanceCounters;
 
             foreach (var counter in counters) {
-                options_.RecordingSessionOptions.AddPerformanceCounter(counter);
+                recordingOptions_.AddPerformanceCounter(counter);
             }
 
             var metrics = ETWRecordingSession.BuiltinPerformanceMetrics;
@@ -208,7 +269,7 @@ namespace IRExplorerUI {
                 options_.AddPerformanceMetric(metric);
             }
             
-            var counterList = new ObservableCollectionRefresh<PerformanceCounterConfig>(options_.RecordingSessionOptions.PerformanceCounters);
+            var counterList = new ObservableCollectionRefresh<PerformanceCounterConfig>(recordingOptions_.PerformanceCounters);
             perfCountersFilter_ = counterList.GetFilterView();
             perfCountersFilter_.Filter = FilterCounterList;
             PerfCounterList.ItemsSource = perfCountersFilter_;
@@ -290,11 +351,11 @@ namespace IRExplorerUI {
                     return false;
                 }
 
-                report.SessionOptions = (ProfileRecordingSessionOptions)options_.RecordingSessionOptions.Clone();
-                var binSearchOptions = symbolOptions_.WithSymbolPaths(options_.RecordingSessionOptions.ApplicationPath);
+                report.SessionOptions = (ProfileRecordingSessionOptions)recordingOptions_.Clone();
+                var binSearchOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
 
-                if (options_.RecordingSessionOptions.HasWorkingDirectory) {
-                    binSearchOptions = binSearchOptions.WithSymbolPaths(options_.RecordingSessionOptions.WorkingDirectory);
+                if (recordingOptions_.HasWorkingDirectory) {
+                    binSearchOptions = binSearchOptions.WithSymbolPaths(recordingOptions_.WorkingDirectory);
                 }
 
                 success = await Session.LoadProfileData(recordedProfile_, selectedProcSummary_.Process,
@@ -307,6 +368,8 @@ namespace IRExplorerUI {
                                                         ProfileLoadProgressCallback, task);
             }
 
+            report.TraceInfo ??= new ProfileTraceInfo(); // Not set on failure.
+            report.TraceInfo.TraceFilePath = ProfileFilePath;
             IsLoadingProfile = false;
 
             if (!success && !task.IsCanceled) {
@@ -416,18 +479,23 @@ namespace IRExplorerUI {
         }
 
         private string SetSessionApplicationPath() {
-            options_.RecordingSessionOptions.WorkingDirectory = Utils.CleanupPath(options_.RecordingSessionOptions.WorkingDirectory);
-            var appPath = Utils.CleanupPath(options_.RecordingSessionOptions.ApplicationPath);
+            recordingOptions_.WorkingDirectory = Utils.CleanupPath(recordingOptions_.WorkingDirectory);
+            var appPath = Utils.CleanupPath(recordingOptions_.ApplicationPath);
 
-            if (!File.Exists(appPath) && options_.RecordingSessionOptions.HasWorkingDirectory) {
-                appPath = Path.Combine(options_.RecordingSessionOptions.WorkingDirectory, appPath);
+            if (!File.Exists(appPath) && recordingOptions_.HasWorkingDirectory) {
+                appPath = Path.Combine(recordingOptions_.WorkingDirectory, appPath);
             }
 
-            options_.RecordingSessionOptions.ApplicationPath = appPath;
+            recordingOptions_.ApplicationPath = appPath;
+            SaveCurrentOptions();
             return appPath;
         }
 
         private async void StartCaptureButton_OnClick(object sender, RoutedEventArgs e) {
+            await StartRecordingSession();
+        }
+
+        private async Task StartRecordingSession() {
             var appPath = SetSessionApplicationPath();
 
             if (!File.Exists(appPath)) {
@@ -436,32 +504,31 @@ namespace IRExplorerUI {
                 return;
             }
 
-            if (options_.RecordingSessionOptions.RecordPerformanceCounters) {
+            if (recordingOptions_.RecordPerformanceCounters) {
                 options_.IncludePerformanceCounters = true;
             }
 
-            using var recordingSession = new ETWRecordingSession(options_);
-            
+            // Start ETW recording session.
             IsRecordingProfile = true;
-            var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
             ProfileLoadProgress lastProgressInfo = null;
+            var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+            using var recordingSession = new ETWRecordingSession(options_);
 
+            // Show elapsed time in UI.
             var stopWatch = Stopwatch.StartNew();
             DispatcherTimer timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Render,
-                (o, e)=>  UpdateRecordProgress(stopWatch, lastProgressInfo), Dispatcher);
+                (o, e) => UpdateRecordProgress(stopWatch, lastProgressInfo), Dispatcher);
             timer.Start();
-            
-            recordedProfile_ = null;
 
-            var recordingTask = recordingSession.StartRecording(progressInfo => {
-                lastProgressInfo = progressInfo;
-            }, task);
+            // Start recording on another thread.
+            recordedProfile_ = null;
+            var recordingTask = recordingSession.StartRecording(progressInfo => { lastProgressInfo = progressInfo; }, task);
 
             if (recordingTask != null) {
                 recordedProfile_ = await recordingTask;
-                //StateSerializer.Serialize(@"C:\test\profile.dat", recordedProfile_);
             }
 
+            // Show process list if recording successful.
             timer.Stop();
             IsRecordingProfile = false;
 
@@ -470,8 +537,8 @@ namespace IRExplorerUI {
                 DisplayProcessList();
             }
             else {
-                MessageBox.Show("Failed to record ETW sampling profile!", "IR Explorer", 
-                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                MessageBox.Show("Failed to record ETW sampling profile!", "IR Explorer",
+                    MessageBoxButton.OK, MessageBoxImage.Exclamation);
             }
         }
 
@@ -521,6 +588,11 @@ namespace IRExplorerUI {
 
         private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
             if (!string.IsNullOrEmpty(ProfileFilePath)) {
+                if (ignoreProfilePathChange_) {
+                    ignoreProfilePathChange_ = false;
+                    return;
+                }
+
                 if (await LoadProcessList()) {
                     DisplayProcessList();
                 }
@@ -538,11 +610,11 @@ namespace IRExplorerUI {
         }
 
         private void CheckBox_Checked(object sender, RoutedEventArgs e) {
-            EnabledPerfCounters = options_.RecordingSessionOptions.EnabledPerformanceCounters.Count;
+            EnabledPerfCounters = recordingOptions_.EnabledPerformanceCounters.Count;
         }
 
         private void CheckBox_Unchecked(object sender, RoutedEventArgs e) {
-            EnabledPerfCounters = options_.RecordingSessionOptions.EnabledPerformanceCounters.Count;
+            EnabledPerfCounters = recordingOptions_.EnabledPerformanceCounters.Count;
         }
 
         private void CounterFilter_TextChanged(object sender, TextChangedEventArgs e) {
@@ -580,6 +652,53 @@ namespace IRExplorerUI {
                 else {
                     App.Settings.RemoveLoadedProfileSession(report);
                 }
+
+                UpdatePerfCounterList();
+            }
+        }
+
+        private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
+            var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
+            var report = sessionEx?.Report;
+
+            if (report != null) { // Not set for a new session.
+                LoadPreviousSession(report);
+            }
+
+            if (IsRecordMode) {
+                await StartRecordingSession();
+            }
+            else {
+                await OpenFilesAndComplete();
+            }
+        }
+
+        private void SessionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
+            var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
+            var report = sessionEx?.Report;
+
+            if (report != null) {
+                LoadPreviousSession(report);
+            }
+            else {
+                RecordingOptions = (ProfileRecordingSessionOptions)App.Settings.ProfileOptions.RecordingSessionOptions.Clone();
+            }
+
+            currentSession_ = sessionEx;
+        }
+
+        private void LoadPreviousSession(ProfileDataReport report) {
+            if (IsRecordMode) {
+                if (currentSession_.IsNewSession) {
+                    SaveCurrentOptions();
+                }
+
+                RecordingOptions = report.SessionOptions;
+            }
+            else {
+                ignoreProfilePathChange_ = true;
+                ProfileFilePath = report.TraceInfo.TraceFilePath;
+                BinaryFilePath = report.Process.ImageFileName;
             }
         }
     }

@@ -66,7 +66,6 @@ namespace IRExplorerUI.Compilers {
                                                                           SymbolFileSourceOptions options) {
             // Check if the binary was requested before.
             if (resolvedBinariesCache_.TryGetValue(binaryFile, out var searchResult)) {
-                Trace.WriteLine($"Get BIN from cache {binaryFile}");
                 return searchResult;
             }
 

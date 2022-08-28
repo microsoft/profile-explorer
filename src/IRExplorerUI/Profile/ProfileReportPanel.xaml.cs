@@ -42,7 +42,7 @@ namespace IRExplorerUI.Profile {
             window.Content = panel;
             window.Title = "Profile report";
             window.WindowStyle = WindowStyle.ToolWindow;
-            window.ResizeMode = ResizeMode.CanResize;
+            window.ResizeMode = ResizeMode.CanResizeWithGrip;
             window.Width = 800;
             window.Height = 600;
             window.Owner = App.Current.MainWindow;

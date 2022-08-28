@@ -94,6 +94,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         ProfileLoadProgressHandler progressCallback,
         CancelableTask cancelableTask) {
 
+        imageName = Utils.TryGetFileNameWithoutExtension(imageName);
         var mainProcess = prof.FindProcess(imageName, true);
 
         if (mainProcess == null) {
@@ -101,7 +102,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
 
         return await LoadTraceAsync(prof, mainProcess, options, symbolOptions, 
-            report, progressCallback, cancelableTask);
+                                    report, progressCallback, cancelableTask);
     }
 
     public async Task<ProfileData> LoadTraceAsync(RawProfileData prof, ProfileProcess mainProcess,
@@ -118,6 +119,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         try {
             options_ = options;
             var imageName = Utils.TryGetFileNameWithoutExtension(mainProcess.ImageFileName);
+
+            if (options.HasBinarySearchPaths) {
+                symbolOptions.InsertSymbolPaths(options.BinarySearchPaths);
+            }
 
             //var imageModuleMap = new Dictionary<int, ModuleInfo>();
             var imageModuleMap = new ConcurrentDictionary<int, ModuleInfo>();
@@ -192,7 +197,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                         lock (imageLocks[queryImage.Id % IMAGE_LOCK_COUNT]) {
                             if (!imageModuleMap.TryGetValue(queryImage.Id, out imageModule)) {
-                                imageModule = new ModuleInfo(options_, report_, session_);
+                                imageModule = new ModuleInfo(report_, session_);
 
                                 //? Needs some delay-load, can't disasm every dll for no reason
                                 //? - now Initialize uses a whitelist

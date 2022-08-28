@@ -20,8 +20,7 @@ namespace IRExplorerUI.Profile {
     public class ModuleInfo : IDisposable {
         private ISession session_;
         private BinaryFileDescriptor binaryInfo_;
-        private ProfileDataProviderOptions options_;
-        public List<DebugFunctionInfo> sortedFuncList_;
+        private List<DebugFunctionInfo> sortedFuncList_;
         private Dictionary<long, IRTextFunction> addressFuncMap_;
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
@@ -37,13 +36,12 @@ namespace IRExplorerUI.Profile {
         //? TODO: Needed only for inlinee samples
         public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
 
-        public ModuleInfo(ProfileDataProviderOptions options, ProfileDataReport report,  ISession session) {
-            options_ = options;
+        public ModuleInfo(ProfileDataReport report,  ISession session) {
             report_ = report;
             session_ = session;
         }
         
-        public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceOptions options,
+        public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceOptions symbolOptions,
                                             IDebugInfoProvider debugInfo) {
             if (Initialized) {
                 return true;
@@ -53,7 +51,7 @@ namespace IRExplorerUI.Profile {
             var imageName = binaryInfo.ImageName;
             Trace.WriteLine($"ModuleInfo init {imageName}");
             
-            var binFile = await FindBinaryFilePath(options).ConfigureAwait(false);
+            var binFile = await FindBinaryFilePath(symbolOptions).ConfigureAwait(false);
 
             if (binFile == null || !binFile.Found) {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");

@@ -140,16 +140,14 @@ public class ProfileDataProviderOptions : SettingsBase {
     [ProtoMember(7)]
     public bool IncludeKernelEvents { get; set; }
     [ProtoMember(8)]
-    public bool IncludeAllProcesses { get; set; }
-    [ProtoMember(9)]
     public bool IncludePerformanceCounters { get; set; }
-    [ProtoMember(10)]
+    [ProtoMember(9)]
     public ProfileRecordingSessionOptions RecordingSessionOptions { get; set; }
-    [ProtoMember(11)]
+    [ProtoMember(10)]
     public List<PerformanceMetricConfig> PerformanceMetrics { get; set; }
-    [ProtoMember(12)]
+    [ProtoMember(11)]
     public List<ProfileDataReport> PreviousRecordingSessions { get; set; }
-    [ProtoMember(13)]
+    [ProtoMember(12)]
     public List<ProfileDataReport> PreviousLoadedSessions { get; set; }
 
     public bool HasBinaryNameWhitelist => BinaryNameWhitelistEnabled && BinaryNameWhitelist.Count > 0;

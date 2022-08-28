@@ -61,6 +61,12 @@ namespace IRExplorerUI.Compilers {
             }
         }
 
+        public void InsertSymbolPaths(IEnumerable<string> paths) {
+            foreach (var path in paths) {
+                InsertSymbolPath(path);
+            }
+        }
+
         public SymbolFileSourceOptions WithSymbolPaths(params string[] paths) {
             var options = (SymbolFileSourceOptions)Clone();
 
