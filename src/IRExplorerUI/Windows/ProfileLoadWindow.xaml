@@ -475,163 +475,8 @@
                         </Grid>
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Options">
-                    <StackPanel Margin="0,4,0,8" Orientation="Vertical">
-                        <Expander
-                            Margin="8,0,8,0"
-                            IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True">
-                            <Expander.Header>
-                                <TextBlock FontWeight="DemiBold" Text="Processing report" />
-                            </Expander.Header>
-                            <StackPanel>
-                                <CheckBox
-                                    Margin="0,8,0,0"
-                                    Content="Consider Kernel profile samples"
-                                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
-                                <CheckBox
-                                    Margin="0,4,0,0"
-                                    Content="Consider CPU performance counter samples"
-                                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
-                                <CheckBox
-                                    Margin="0,4,0,0"
-                                    Content="Mark source lines in inlined functions"
-                                    IsChecked="{Binding Path=Options.MarkInlinedFunctions, Mode=TwoWay}"
-                                    IsEnabled="False" />
-                            </StackPanel>
-                        </Expander>
 
-                        <Expander
-                            Margin="8,8,8,0"
-                            IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True">
-                            <Expander.Header>
-                                <TextBlock FontWeight="DemiBold" Text="Symbol report" />
-                            </Expander.Header>
-
-                            <StackPanel>
-                                <CheckBox
-                                    Margin="0,8,0,0"
-                                    Content="Enable default Symbol Server"
-                                    IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
-                                    ToolTip="https://msdl.microsoft.com/download/symbols" />
-
-                                <CheckBox
-                                    Margin="0,4,0,0"
-                                    Content="Cache symbol files locally"
-                                    IsChecked="{Binding Path=SymbolOptions.UseSymbolCache, Mode=TwoWay}"
-                                    IsEnabled="False"
-                                    ToolTip="C:\Symbols" />
-
-                                <CheckBox
-                                    x:Name="SymbolSearchPathsCheckbox"
-                                    Margin="0,4,0,0"
-                                    Content="Optional symbol locations (one per line)"
-                                    IsChecked="{Binding Path=SymbolOptions.SymbolSearchPathsEnabled, Mode=TwoWay}" />
-                                <Grid Margin="0,4,0,0">
-                                    <TextBox
-                                        x:Name="SymbolAutocompleteBox"
-                                        MinHeight="36"
-                                        Margin="20,4,55,0"
-                                        HorizontalAlignment="Stretch"
-                                        AcceptsReturn="True"
-                                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        IsEnabled="{Binding ElementName=SymbolSearchPathsCheckbox, Path=IsChecked}"
-                                        Text="{Binding Path=SymbolOptions.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
-                                        TextWrapping="Wrap" />
-                                </Grid>
-                            </StackPanel>
-                        </Expander>
-
-                        <Expander
-                            Margin="8,8,8,0"
-                            IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True">
-                            <Expander.Header>
-                                <TextBlock FontWeight="DemiBold" Text="Source file report" />
-                            </Expander.Header>
-
-                            <StackPanel>
-                                <CheckBox
-                                    Margin="0,8,0,0"
-                                    Content="Download source files from Source Server"
-                                    IsChecked="{Binding Path=SymbolOptions.SourceServerEnabled, Mode=TwoWay}"
-                                    ToolTip="Download source files using the SourceLink info from the symbol files" />
-
-                                <CheckBox
-                                    x:Name="AuthorizationTokenCheckbox"
-                                    Margin="0,4,0,0"
-                                    Content="Use Source Server authentication token (PAT)"
-                                    IsChecked="{Binding Path=SymbolOptions.AuthorizationTokenEnabled, Mode=TwoWay}"
-                                    ToolTip="Personal Authentication Token used with private SourceLink servers" />
-
-                                <TextBox
-                                    Margin="20,4,55,0"
-                                    HorizontalAlignment="Stretch"
-                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                    IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}"
-                                    Text="{Binding Path=SymbolOptions.AuthorizationToken, Mode=TwoWay}"
-                                    TextWrapping="Wrap" />
-                            </StackPanel>
-                        </Expander>
-                        <Expander
-                            Margin="8,8,8,8"
-                            IsEnabled="{Binding InputControlsEnabled}"
-                            IsExpanded="True">
-                            <Expander.Header>
-                                <TextBlock FontWeight="DemiBold" Text="Binary file report" />
-                            </Expander.Header>
-
-                            <StackPanel>
-                                <CheckBox
-                                    Margin="0,8,0,0"
-                                    Content="Download binaries from Symbol Server"
-                                    IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
-                                    ToolTip="https://msdl.microsoft.com/download/symbols" />
-
-                                <CheckBox
-                                    x:Name="BinarySearchPathsCheckbox"
-                                    Margin="0,4,0,0"
-                                    Content="Optional binary directories (one per line)"
-                                    IsChecked="{Binding Path=Options.BinarySearchPathsEnabled, Mode=TwoWay}" />
-                                <Grid Margin="0,4,0,0">
-                                    <TextBox
-                                        MinHeight="36"
-                                        Margin="20,4,55,0"
-                                        HorizontalAlignment="Stretch"
-                                        AcceptsReturn="True"
-                                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        IsEnabled="{Binding ElementName=BinarySearchPathsCheckbox, Path=IsChecked}"
-                                        Text="{Binding Path=Options.BinarySearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
-                                        TextWrapping="Wrap" />
-                                </Grid>
-
-                                <CheckBox
-                                    x:Name="BinaryNameWhitelistCheckbox"
-                                    Margin="0,8,0,0"
-                                    Content="Processed binary whitelist (one per line)"
-                                    IsChecked="{Binding Path=Options.BinaryNameWhitelistEnabled, Mode=TwoWay}" />
-                                <Grid Margin="0,4,0,0">
-                                    <TextBox
-                                        MinHeight="36"
-                                        Margin="20,4,55,0"
-                                        HorizontalAlignment="Stretch"
-                                        AcceptsReturn="True"
-                                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
-                                        IsEnabled="{Binding ElementName=BinaryNameWhitelistCheckbox, Path=IsChecked}"
-                                        Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
-                                        TextWrapping="Wrap" />
-                                </Grid>
-                            </StackPanel>
-                        </Expander>
-                    </StackPanel>
-                </TabItem>
-
-                <TabItem Header="CPU counters">
+                <TabItem Header="CPU counters" Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibility}}">
                     <Grid Margin="0,4,0,8">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
@@ -932,6 +777,162 @@
                             </Grid>
                         </Expander>
                     </Grid>
+                </TabItem>
+
+                <TabItem Header="Options">
+                    <StackPanel Margin="0,4,0,8" Orientation="Vertical">
+                        <Expander
+                            Margin="8,0,8,0"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            IsExpanded="True">
+                            <Expander.Header>
+                                <TextBlock FontWeight="DemiBold" Text="Processing report" />
+                            </Expander.Header>
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,8,0,0"
+                                    Content="Consider Kernel profile samples"
+                                    IsChecked="{Binding Path=Options.IncludeKernelEvents, Mode=TwoWay}" />
+                                <CheckBox
+                                    Margin="0,4,0,0"
+                                    Content="Consider CPU performance counter samples"
+                                    IsChecked="{Binding Path=Options.IncludePerformanceCounters, Mode=TwoWay}" />
+                                <CheckBox
+                                    Margin="0,4,0,0"
+                                    Content="Mark source lines in inlined functions"
+                                    IsChecked="{Binding Path=Options.MarkInlinedFunctions, Mode=TwoWay}"
+                                    IsEnabled="False" />
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander
+                            Margin="8,8,8,0"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            IsExpanded="True">
+                            <Expander.Header>
+                                <TextBlock FontWeight="DemiBold" Text="Symbol report" />
+                            </Expander.Header>
+
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,8,0,0"
+                                    Content="Enable default Symbol Server"
+                                    IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
+                                    ToolTip="https://msdl.microsoft.com/download/symbols" />
+
+                                <CheckBox
+                                    Margin="0,4,0,0"
+                                    Content="Cache symbol files locally"
+                                    IsChecked="{Binding Path=SymbolOptions.UseSymbolCache, Mode=TwoWay}"
+                                    IsEnabled="False"
+                                    ToolTip="C:\Symbols" />
+
+                                <CheckBox
+                                    x:Name="SymbolSearchPathsCheckbox"
+                                    Margin="0,4,0,0"
+                                    Content="Optional symbol locations (one per line)"
+                                    IsChecked="{Binding Path=SymbolOptions.SymbolSearchPathsEnabled, Mode=TwoWay}" />
+                                <Grid Margin="0,4,0,0">
+                                    <TextBox
+                                        x:Name="SymbolAutocompleteBox"
+                                        MinHeight="36"
+                                        Margin="20,4,55,0"
+                                        HorizontalAlignment="Stretch"
+                                        AcceptsReturn="True"
+                                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                        IsEnabled="{Binding ElementName=SymbolSearchPathsCheckbox, Path=IsChecked}"
+                                        Text="{Binding Path=SymbolOptions.SymbolSearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                                        TextWrapping="Wrap" />
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
+
+                        <Expander
+                            Margin="8,8,8,0"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            IsExpanded="True">
+                            <Expander.Header>
+                                <TextBlock FontWeight="DemiBold" Text="Source file report" />
+                            </Expander.Header>
+
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,8,0,0"
+                                    Content="Download source files from Source Server"
+                                    IsChecked="{Binding Path=SymbolOptions.SourceServerEnabled, Mode=TwoWay}"
+                                    ToolTip="Download source files using the SourceLink info from the symbol files" />
+
+                                <CheckBox
+                                    x:Name="AuthorizationTokenCheckbox"
+                                    Margin="0,4,0,0"
+                                    Content="Use Source Server authentication token (PAT)"
+                                    IsChecked="{Binding Path=SymbolOptions.AuthorizationTokenEnabled, Mode=TwoWay}"
+                                    ToolTip="Personal Authentication Token used with private SourceLink servers" />
+
+                                <TextBox
+                                    Margin="20,4,55,0"
+                                    HorizontalAlignment="Stretch"
+                                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                    BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                    IsEnabled="{Binding ElementName=AuthorizationTokenCheckbox, Path=IsChecked}"
+                                    Text="{Binding Path=SymbolOptions.AuthorizationToken, Mode=TwoWay}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Expander>
+                        <Expander
+                            Margin="8,8,8,8"
+                            IsEnabled="{Binding InputControlsEnabled}"
+                            IsExpanded="True">
+                            <Expander.Header>
+                                <TextBlock FontWeight="DemiBold" Text="Binary file report" />
+                            </Expander.Header>
+
+                            <StackPanel>
+                                <CheckBox
+                                    Margin="0,8,0,0"
+                                    Content="Download binaries from Symbol Server"
+                                    IsChecked="{Binding Path=SymbolOptions.UseDefaultSymbolSource, Mode=TwoWay}"
+                                    ToolTip="https://msdl.microsoft.com/download/symbols" />
+
+                                <CheckBox
+                                    x:Name="BinarySearchPathsCheckbox"
+                                    Margin="0,4,0,0"
+                                    Content="Optional binary directories (one per line)"
+                                    IsChecked="{Binding Path=Options.BinarySearchPathsEnabled, Mode=TwoWay}" />
+                                <Grid Margin="0,4,0,0">
+                                    <TextBox
+                                        MinHeight="36"
+                                        Margin="20,4,55,0"
+                                        HorizontalAlignment="Stretch"
+                                        AcceptsReturn="True"
+                                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                        IsEnabled="{Binding ElementName=BinarySearchPathsCheckbox, Path=IsChecked}"
+                                        Text="{Binding Path=Options.BinarySearchPaths, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                                        TextWrapping="Wrap" />
+                                </Grid>
+
+                                <CheckBox
+                                    x:Name="BinaryNameWhitelistCheckbox"
+                                    Margin="0,8,0,0"
+                                    Content="Processed binary whitelist (one per line)"
+                                    IsChecked="{Binding Path=Options.BinaryNameWhitelistEnabled, Mode=TwoWay}" />
+                                <Grid Margin="0,4,0,0">
+                                    <TextBox
+                                        MinHeight="36"
+                                        Margin="20,4,55,0"
+                                        HorizontalAlignment="Stretch"
+                                        AcceptsReturn="True"
+                                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                                        BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
+                                        IsEnabled="{Binding ElementName=BinaryNameWhitelistCheckbox, Path=IsChecked}"
+                                        Text="{Binding Path=Options.BinaryNameWhitelist, Mode=TwoWay, Converter={StaticResource StringListConverter}}"
+                                        TextWrapping="Wrap" />
+                                </Grid>
+                            </StackPanel>
+                        </Expander>
+                    </StackPanel>
                 </TabItem>
             </TabControl>
         </DockPanel>
