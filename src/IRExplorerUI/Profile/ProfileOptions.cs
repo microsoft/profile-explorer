@@ -81,7 +81,14 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
             return true;
         }
 
-        return SessionKind == other.SessionKind && ApplicationPath == other.ApplicationPath && ApplicationArguments == other.ApplicationArguments && WorkingDirectory == other.WorkingDirectory && SamplingFrequency == other.SamplingFrequency && ProfileDotNet == other.ProfileDotNet && ProfileChildProcesses == other.ProfileChildProcesses && RecordPerformanceCounters == other.RecordPerformanceCounters && EnableEnvironmentVars == other.EnableEnvironmentVars && Equals(EnvironmentVariables, other.EnvironmentVariables) && Equals(PerformanceCounters, other.PerformanceCounters);
+        return SessionKind == other.SessionKind && ApplicationPath == other.ApplicationPath && 
+               ApplicationArguments == other.ApplicationArguments && WorkingDirectory == other.WorkingDirectory && 
+               SamplingFrequency == other.SamplingFrequency && ProfileDotNet == other.ProfileDotNet &&
+               ProfileChildProcesses == other.ProfileChildProcesses && 
+               RecordPerformanceCounters == other.RecordPerformanceCounters && 
+               EnableEnvironmentVars == other.EnableEnvironmentVars && 
+               Equals(EnvironmentVariables, other.EnvironmentVariables) && 
+               Equals(PerformanceCounters, other.PerformanceCounters);
     }
 
     public override bool Equals(object obj) {

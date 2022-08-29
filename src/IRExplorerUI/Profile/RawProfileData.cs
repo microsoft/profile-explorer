@@ -669,21 +669,18 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
     }
 }
 
-[ProtoContract(SkipConstructor = true)]
 public class ManagedData {
-    [ProtoMember(1)]
+    [ProtoContract(SkipConstructor = true)]
+    public class ManagedDataState {
+
+    }
+
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
-    [ProtoMember(2)]
     public Dictionary<long /* moduleId */, DotNetDebugInfoProvider> moduleDebugInfoMap_;
-    [ProtoMember(3)]
     public Dictionary<long /* moduleId */, ProfileImage> moduleImageMap_;
-    [ProtoMember(4)]
     public Dictionary<long /* methodId */, ManagedMethodMapping> managedMethodIdMap_;
-    [ProtoMember(5)]
     public Dictionary<string, ManagedMethodMapping> managedMethodsMap_;
-    [ProtoMember(6)]
     public List<ManagedMethodMapping> managedMethods_;
-    [ProtoMember(7)]
     public List<(long ModuleId, ManagedMethodMapping Mapping)> patchedMappings_;
 
     public ManagedData() {

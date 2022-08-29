@@ -100,7 +100,8 @@ namespace IRExplorerUI {
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
-            RecordingOptions = (ProfileRecordingSessionOptions)App.Settings.ProfileOptions.RecordingSessionOptions.Clone();
+            RecordingOptions = (ProfileRecordingSessionOptions)options_.RecordingSessionOptions.Clone();
+
             UpdatePerfCounterList();
             SetupSessionList();
             this.Closing += ProfileLoadWindow_Closing;
@@ -115,26 +116,28 @@ namespace IRExplorerUI {
                 foreach (var prevSession in Options.PreviousRecordingSessions) {
                     sessionList.Add(new RecordingSessionEx(prevSession, false));
                 }
-
-                currentSession_ = sessionList[0];
             }
             else {
+                sessionList.Add(new RecordingSessionEx(null, false, true,
+                                "Open", "Load a trace"));
+
                 foreach (var prevSession in Options.PreviousLoadedSessions) {
                     sessionList.Add(new RecordingSessionEx(prevSession, true));
                 }
             }
 
+            currentSession_ = sessionList[0];
             SessionList.ItemsSource = null; // Force update.
             SessionList.ItemsSource = new ListCollectionView(sessionList);
         }
 
         private void ProfileLoadWindow_Closing(object sender, CancelEventArgs e) {
             SaveCurrentOptions();
-            App.SaveApplicationSettings();
         }
 
         private void SaveCurrentOptions() {
             options_.RecordingSessionOptions = recordingOptions_;
+            App.SaveApplicationSettings();
         }
 
         public ISession Session { get; set; }
@@ -272,11 +275,13 @@ namespace IRExplorerUI {
             var counterList = new ObservableCollectionRefresh<PerformanceCounterConfig>(recordingOptions_.PerformanceCounters);
             perfCountersFilter_ = counterList.GetFilterView();
             perfCountersFilter_.Filter = FilterCounterList;
+            PerfCounterList.ItemsSource = null;
             PerfCounterList.ItemsSource = perfCountersFilter_;
 
             var metricList = new ObservableCollectionRefresh<PerformanceMetricConfig>(options_.PerformanceMetrics);
             metricsFilter_ = metricList.GetFilterView();
             metricsFilter_.Filter = FilterMetricsList;
+            PerfMetricsList.ItemsSource = null;
             PerfMetricsList.ItemsSource = metricsFilter_;
         }
 
@@ -560,6 +565,7 @@ namespace IRExplorerUI {
             
             if (processList_ != null) {
                 processList_.Sort((a, b) => b.SampleCount.CompareTo(a.SampleCount));
+                ProcessList.ItemsSource = null;
                 ProcessList.ItemsSource = new ListCollectionView(processList_);
             }
             else {
@@ -587,11 +593,13 @@ namespace IRExplorerUI {
         }
 
         private async void ProfileAutocompleteBox_TextChanged(object sender, RoutedEventArgs e) {
+            ShowProcessList = false;
+
             if (!string.IsNullOrEmpty(ProfileFilePath)) {
-                if (ignoreProfilePathChange_) {
-                    ignoreProfilePathChange_ = false;
-                    return;
-                }
+                //if (ignoreProfilePathChange_) {
+                //    ignoreProfilePathChange_ = false;
+                //    return;
+                //}
 
                 if (await LoadProcessList()) {
                     DisplayProcessList();
@@ -653,13 +661,18 @@ namespace IRExplorerUI {
                     App.Settings.RemoveLoadedProfileSession(report);
                 }
 
-                UpdatePerfCounterList();
+                SetupSessionList();
+                SaveCurrentOptions();
             }
         }
 
         private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
-            var report = sessionEx?.Report;
+            if (sessionEx == null) {
+                return;
+            }
+
+            var report = sessionEx.Report;
 
             if (report != null) { // Not set for a new session.
                 LoadPreviousSession(report);
@@ -675,28 +688,39 @@ namespace IRExplorerUI {
 
         private void SessionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
-            var report = sessionEx?.Report;
+            if (sessionEx == null) {
+                return;
+            }
+
+            var report = sessionEx.Report;
+
+            if (IsRecordMode && currentSession_.IsNewSession) {
+                SaveCurrentOptions();
+            }
 
             if (report != null) {
                 LoadPreviousSession(report);
             }
             else {
-                RecordingOptions = (ProfileRecordingSessionOptions)App.Settings.ProfileOptions.RecordingSessionOptions.Clone();
+                // Reload default new options.
+                if (IsRecordMode) {
+                    RecordingOptions = (ProfileRecordingSessionOptions)options_.RecordingSessionOptions.Clone();
+                }
+                else {
+                    ProfileFilePath = "";
+                    BinaryFilePath = "";
+                }
             }
 
+            UpdatePerfCounterList();
             currentSession_ = sessionEx;
         }
 
         private void LoadPreviousSession(ProfileDataReport report) {
             if (IsRecordMode) {
-                if (currentSession_.IsNewSession) {
-                    SaveCurrentOptions();
-                }
-
-                RecordingOptions = report.SessionOptions;
+                RecordingOptions = (ProfileRecordingSessionOptions)report.SessionOptions.Clone();
             }
             else {
-                ignoreProfilePathChange_ = true;
                 ProfileFilePath = report.TraceInfo.TraceFilePath;
                 BinaryFilePath = report.Process.ImageFileName;
             }

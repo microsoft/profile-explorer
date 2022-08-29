@@ -220,6 +220,11 @@ namespace IRExplorerUI.Profile.ETW {
 
         private void EnablePerformanceCounters() {
             var enabledCounters = options_.EnabledPerformanceCounters;
+
+            if (enabledCounters.Count == 0) {
+                return;
+            }
+
             var counterIds = new int[enabledCounters.Count];
             var frequencyCounts = new int[enabledCounters.Count];
             int index = 0;
