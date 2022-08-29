@@ -2100,7 +2100,7 @@ namespace IRExplorerUI {
             optionsPanelWindow_.PanelClosed += OptionsPanel_PanelClosed;
             optionsPanelWindow_.PanelReset += OptionsPanel_PanelReset;
             optionsPanelWindow_.SettingsChanged += OptionsPanel_SettingsChanged;
-            optionsPanelWindow_.Settings = (SectionSettings)settings_.Clone();
+            optionsPanelWindow_.Settings = settings_.Clone();
             optionsPanelWindow_.IsOpen = true;
             optionsPanelVisible_ = true;
         }
@@ -2109,7 +2109,7 @@ namespace IRExplorerUI {
             var newSettings = (SectionSettings)optionsPanelWindow_.Settings;
             await HandleNewSettings(newSettings, false);
             optionsPanelWindow_.Settings = null;
-            optionsPanelWindow_.Settings = (SectionSettings)settings_.Clone();
+            optionsPanelWindow_.Settings = settings_.Clone();
         }
 
         private async void OptionsPanel_PanelReset(object sender, EventArgs e) {
@@ -2117,7 +2117,7 @@ namespace IRExplorerUI {
 
             //? TODO: Setting to null should be part of OptionsPanelBase and remove it in all places
             optionsPanelWindow_.Settings = null;
-            optionsPanelWindow_.Settings = (SectionSettings)settings_.Clone();
+            optionsPanelWindow_.Settings = settings_.Clone();
         }
 
         private async void OptionsPanel_PanelClosed(object sender, EventArgs e) {

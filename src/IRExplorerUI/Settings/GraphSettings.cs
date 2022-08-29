@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Windows.Media;
 using ProtoBuf;
 
@@ -40,6 +41,14 @@ namespace IRExplorerUI {
         [ProtoMember(13)] public Color NodeBorderColor { get; set; }
 
         [ProtoMember(14)] public Color EdgeColor { get; set; }
+
+        public GraphSettings Clone() {
+            return MakeClone();
+        }
+
+        protected virtual GraphSettings MakeClone() {
+            throw new NotImplementedException();
+        }
 
         public override void Reset() {
             SyncSelectedNodes = true;

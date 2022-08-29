@@ -79,7 +79,7 @@ namespace IRExplorerUI {
             ChangedSectionColor = Utils.ColorFromString("#DE8000");
         }
 
-        public override SettingsBase Clone() {
+        public SectionSettings Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<SectionSettings>(serialized);
         }

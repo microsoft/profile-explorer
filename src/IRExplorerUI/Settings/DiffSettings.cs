@@ -73,7 +73,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public override SettingsBase Clone() {
+        public DiffSettings Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<DiffSettings>(serialized);
         }

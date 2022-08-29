@@ -94,7 +94,7 @@ namespace IRExplorerUI.Compilers {
             SymbolSearchPaths ??= new List<string>();
         }
 
-        public override SettingsBase Clone() {
+        public SymbolFileSourceOptions Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<SymbolFileSourceOptions>(serialized);
         }
