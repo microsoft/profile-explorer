@@ -33,9 +33,12 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     public List<(string Variable, string Value)> EnvironmentVariables { get; set; }
     [ProtoMember(11)]
     public List<PerformanceCounterConfig> PerformanceCounters { get; set; }
+    [ProtoMember(12)]
+    public string Title { get; set; }
 
     public List<PerformanceCounterConfig> EnabledPerformanceCounters => PerformanceCounters.FindAll(c => c.IsEnabled);
     public bool HasWorkingDirectory => Directory.Exists(WorkingDirectory);
+    public bool HasTitle => !string.IsNullOrEmpty(Title);
 
     public ProfileRecordingSessionOptions() {
         Reset();
@@ -81,7 +84,7 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
             return true;
         }
 
-        return SessionKind == other.SessionKind && ApplicationPath == other.ApplicationPath && 
+        return SessionKind == other.SessionKind && ApplicationPath == other.ApplicationPath && Title == other.Title &&
                ApplicationArguments == other.ApplicationArguments && WorkingDirectory == other.WorkingDirectory && 
                SamplingFrequency == other.SamplingFrequency && ProfileDotNet == other.ProfileDotNet &&
                ProfileChildProcesses == other.ProfileChildProcesses && 
@@ -110,6 +113,7 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
     public override int GetHashCode() {
         var hashCode = new HashCode();
         hashCode.Add((int)SessionKind);
+        hashCode.Add(Title);
         hashCode.Add(ApplicationPath);
         hashCode.Add(ApplicationArguments);
         hashCode.Add(WorkingDirectory);
