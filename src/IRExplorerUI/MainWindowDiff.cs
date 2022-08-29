@@ -790,7 +790,7 @@ namespace IRExplorerUI {
             diffOptionsPanelHost_.PanelClosed += DiffOptionsPanel_PanelClosed;
             diffOptionsPanelHost_.PanelReset += DiffOptionsPanel_PanelReset;
             diffOptionsPanelHost_.SettingsChanged += DiffOptionsPanel_SettingsChanged;
-            diffOptionsPanelHost_.Settings = (DiffSettings)App.Settings.DiffSettings.Clone();
+            diffOptionsPanelHost_.Settings = App.Settings.DiffSettings.Clone();
             diffOptionsPanelHost_.IsOpen = true;
             diffOptionsVisible_ = true;
         }
@@ -999,7 +999,7 @@ namespace IRExplorerUI {
         }
 
         private async void ExternalDiffButton_Click(object sender, RoutedEventArgs e) {
-            var newSettings = (DiffSettings)App.Settings.DiffSettings.Clone();
+            var newSettings = App.Settings.DiffSettings.Clone();
             newSettings.DiffImplementation = newSettings.DiffImplementation == DiffImplementationKind.Internal ?
                                              DiffImplementationKind.External : DiffImplementationKind.Internal;
             await HandleNewDiffSettings(newSettings, false);

@@ -91,7 +91,7 @@ namespace IRExplorerUI {
             SyntaxHighlightingName = "";
         }
 
-        public override SettingsBase Clone() {
+        public DocumentSettings Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<DocumentSettings>(serialized);
         }

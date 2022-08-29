@@ -94,7 +94,7 @@ namespace IRExplorerUI {
         public string SearchedText { get; set; }
         public bool HasCategoryFilters => CategoryFilter != null && CategoryFilter.Count > 0;
 
-        public override SettingsBase Clone() {
+        public RemarkSettings Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<RemarkSettings>(serialized);
         }

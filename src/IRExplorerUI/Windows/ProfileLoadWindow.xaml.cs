@@ -100,7 +100,7 @@ namespace IRExplorerUI {
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
-            RecordingOptions = (ProfileRecordingSessionOptions)options_.RecordingSessionOptions.Clone();
+            RecordingOptions = options_.RecordingSessionOptions.Clone();
 
             UpdatePerfCounterList();
             SetupSessionList();
@@ -356,7 +356,7 @@ namespace IRExplorerUI {
                     return false;
                 }
 
-                report.SessionOptions = (ProfileRecordingSessionOptions)recordingOptions_.Clone();
+                report.SessionOptions = recordingOptions_.Clone();
                 var binSearchOptions = symbolOptions_.WithSymbolPaths(recordingOptions_.ApplicationPath);
 
                 if (recordingOptions_.HasWorkingDirectory) {
@@ -704,7 +704,7 @@ namespace IRExplorerUI {
             else {
                 // Reload default new options.
                 if (IsRecordMode) {
-                    RecordingOptions = (ProfileRecordingSessionOptions)options_.RecordingSessionOptions.Clone();
+                    RecordingOptions = options_.RecordingSessionOptions.Clone();
                 }
                 else {
                     ProfileFilePath = "";
@@ -718,7 +718,7 @@ namespace IRExplorerUI {
 
         private void LoadPreviousSession(ProfileDataReport report) {
             if (IsRecordMode) {
-                RecordingOptions = (ProfileRecordingSessionOptions)report.SessionOptions.Clone();
+                RecordingOptions = report.SessionOptions.Clone();
             }
             else {
                 ProfileFilePath = report.TraceInfo.TraceFilePath;

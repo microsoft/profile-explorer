@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 using ProtoBuf;
@@ -53,9 +54,13 @@ namespace IRExplorerUI {
             DominatorEdgeColor = Utils.ColorFromString("#0042B6");
         }
 
-        public override SettingsBase Clone() {
+        public FlowGraphSettings Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<FlowGraphSettings>(serialized);
+        }
+
+        protected override GraphSettings MakeClone() {
+            return Clone();
         }
 
         public override bool Equals(object obj) {

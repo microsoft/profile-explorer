@@ -852,7 +852,7 @@ namespace IRExplorerUI.Document {
         public void Initialize(IRElement element, Point position, IRDocumentHost parent,
                                RemarkSettings filter) {
             parentDocument_ = parent;
-            filter = (RemarkSettings)filter.Clone();
+            filter = filter.Clone();
             remarkFilter_ = new RemarkSettingsEx(filter);
             ToolbarPanel.DataContext = remarkFilter_;
 

@@ -67,7 +67,7 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
         return false;
     }
 
-    public override SettingsBase Clone() {
+    public ProfileRecordingSessionOptions Clone() {
         var serialized = StateSerializer.Serialize(this);
         return StateSerializer.Deserialize<ProfileRecordingSessionOptions>(serialized);
     }
@@ -212,7 +212,7 @@ public class ProfileDataProviderOptions : SettingsBase {
         InitializeReferenceMembers();
     }
 
-    public override SettingsBase Clone() {
+    public ProfileDataProviderOptions Clone() {
         var serialized = StateSerializer.Serialize(this);
         return StateSerializer.Deserialize<ProfileDataProviderOptions>(serialized);
     }

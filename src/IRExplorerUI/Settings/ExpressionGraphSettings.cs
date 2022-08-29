@@ -79,9 +79,13 @@ namespace IRExplorerUI {
             MaxExpressionDepth = 8;
         }
 
-        public override SettingsBase Clone() {
+        public ExpressionGraphSettings Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<ExpressionGraphSettings>(serialized);
+        }
+        
+        protected override GraphSettings MakeClone() {
+            return Clone();
         }
 
         public override bool Equals(object obj) {

@@ -22,7 +22,7 @@ namespace IRExplorerUI {
             ShowTimeAfterPercentage = true;
         }
 
-        public override SettingsBase Clone() {
+        public CallTreeSettings Clone() {
             var serialized = StateSerializer.Serialize(this);
             return StateSerializer.Deserialize<CallTreeSettings>(serialized);
         }

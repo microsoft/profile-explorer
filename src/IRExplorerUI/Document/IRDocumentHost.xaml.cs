@@ -80,7 +80,7 @@ namespace IRExplorerUI {
         private RemarkSettings remarkSettings_;
 
         public RemarksButtonState(RemarkSettings settings) {
-            remarkSettings_ = (RemarkSettings)settings.Clone();
+            remarkSettings_ = settings.Clone();
         }
 
         public RemarkSettings Settings {
@@ -93,7 +93,7 @@ namespace IRExplorerUI {
                     NotifyPropertyChanged(nameof(ShowPreviousSections));
                 }
 
-                remarkSettings_ = (RemarkSettings)value.Clone();
+                remarkSettings_ = value.Clone();
             }
         }
 
@@ -440,7 +440,7 @@ namespace IRExplorerUI {
             get => remarkSettings_;
             set {
                 if (!value.Equals(remarkSettings_)) {
-                    remarkSettings_ = (RemarkSettings)value.Clone();
+                    remarkSettings_ = value.Clone();
 
                     NotifyPropertyChanged(nameof(ShowRemarks));
                     NotifyPropertyChanged(nameof(ShowPreviousSections));
