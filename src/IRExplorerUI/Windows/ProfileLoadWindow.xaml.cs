@@ -47,9 +47,19 @@ namespace IRExplorerUI {
 
         private string title_;
         public string Title {
-            get => !string.IsNullOrEmpty(title_) ? title_ : 
-                    Utils.TryGetFileName(isLoadedFile_ ? report_.TraceInfo.TraceFilePath :
-                                         report_.SessionOptions.ApplicationPath);
+            get {
+                if (!string.IsNullOrEmpty(title_)) {
+                    return title_;
+                }
+                else if (isLoadedFile_) {
+                    return report_.TraceInfo.TraceFilePath;
+                }
+                else if (report_.SessionOptions.HasTitle) {
+                    return report_.SessionOptions.Title;
+                }
+
+                return Utils.TryGetFileName(report_.SessionOptions.ApplicationPath);
+            }
             set => SetAndNotify(ref title_, value);
         }
 
@@ -100,7 +110,7 @@ namespace IRExplorerUI {
 
             Options = App.Settings.ProfileOptions;
             SymbolOptions = App.Settings.SymbolOptions;
-            RecordingOptions = options_.RecordingSessionOptions.Clone();
+            RecordingOptions = new ProfileRecordingSessionOptions();
 
             UpdatePerfCounterList();
             SetupSessionList();
