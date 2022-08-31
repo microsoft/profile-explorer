@@ -545,7 +545,11 @@ public class ETWEventProcessor : IDisposable {
             ilOffsets.Add((data.ILOffset(i), data.NativeOffset(i)));
         }
 
-        methodMapping.DebugInfoProvider.AddMethodILToNativeMap(methodMapping.DebugInfo, ilOffsets);
+        var (debugInfo, _)= profile.GetModuleDebugInfo(data.ProcessID, methodMapping.ModuleId);
+
+        if (debugInfo != null) {
+            debugInfo.AddMethodILToNativeMap(methodMapping.DebugInfo, ilOffsets);
+        }
     }
 
     private void ProcessDotNetMethodLoad(MethodLoadUnloadVerboseTraceData data, RawProfileData profile) {

@@ -100,7 +100,7 @@ public class RawProfileData {
                                          long ip, int size, int processId) {
         var (moduleDebugInfo, moduleImage) = GetModuleDebugInfo(processId, moduleId);
 
-        var mapping = new ManagedMethodMapping(debugInfo, moduleDebugInfo, moduleImage, ip, size);
+        var mapping = new ManagedMethodMapping(debugInfo, moduleImage, moduleId, ip, size);
         var data = GetOrCreateManagedData(processId);
         data.managedMethods_.Add(mapping);
 
@@ -157,7 +157,7 @@ public class RawProfileData {
         foreach (var image in proc.Images(this)) {
             //? TODO: Avoid linear search
             
-            if (image.ModuleName.Equals(moduleName, StringComparison.Ordinal)) {
+            if (image.ModuleName.Equals(moduleName, StringComparison.OrdinalIgnoreCase)) {
                 if (!data.imageDebugInfo_.TryGetValue(image, out var debugInfo)) {
                     // A placeholder is created for cases where the method load event
                     // is triggered before the module load one, use that provider.
@@ -620,11 +620,11 @@ public class RawProfileData {
 
 [ProtoContract(SkipConstructor = true)]
 public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
-    public ManagedMethodMapping(DebugFunctionInfo debugInfo, DotNetDebugInfoProvider provider,
-                                 ProfileImage image, long ip, int size) {
+    public ManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, 
+                                long moduleId, long ip, int size) {
         DebugInfo = debugInfo;
-        DebugInfoProvider = provider;
         Image = image;
+        ModuleId = moduleId;
         IP = ip;
         Size = size;
     }
@@ -632,14 +632,14 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
     [ProtoMember(1)]
     public DebugFunctionInfo DebugInfo { get; }
     [ProtoMember(2)]
-    public DotNetDebugInfoProvider DebugInfoProvider { get; }
-    [ProtoMember(3)]
     public ProfileImage Image { get; set; }
+    [ProtoMember(3)]
+    public long ModuleId { get; }
     [ProtoMember(4)]
     public long IP { get; }
     [ProtoMember(5)]
     public int Size { get; }
-    
+
     public int CompareTo(long value) {
         if (value < IP) {
             return 1;
@@ -672,7 +672,7 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
 public class ManagedData {
     [ProtoContract(SkipConstructor = true)]
     public class ManagedDataState {
-
+        // list of DotNetDebugInfoProvider {id, file_name, arch}
     }
 
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
