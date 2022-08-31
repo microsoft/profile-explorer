@@ -125,7 +125,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 case BinaryFileKind.Native: {
                     if (options == null) {
                         // Make sure the binary directory is also included in the symbol search.
-                        options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
+                        options = App.Settings.SymbolOptions.Clone();
                         options.InsertSymbolPath(imagePath);
                     }
 
@@ -147,8 +147,7 @@ namespace IRExplorerUI.Compilers.ASM {
         public async Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null) {
             if (options == null) {
                 // Make sure the binary directory is also included in the symbol search.
-                options = (SymbolFileSourceOptions)App.Settings.SymbolOptions.Clone();
-                options.InsertSymbolPath(binaryFile.ImagePath);
+                options = App.Settings.SymbolOptions.Clone();
             }
 
             return await PEBinaryInfoProvider.LocateBinaryFile(binaryFile, options).ConfigureAwait(false);
