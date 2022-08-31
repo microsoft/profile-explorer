@@ -74,7 +74,10 @@ namespace IRExplorerUI.Compilers {
                 using var logWriter = new StringWriter();
 
                 try {
-                    options = options.WithSymbolPaths(binaryFile.ImagePath);
+                    if (File.Exists(binaryFile.ImagePath)) {
+                        options = options.WithSymbolPaths(binaryFile.ImagePath);
+                    }
+
                     var userSearchPath = PDBDebugInfoProvider.ConstructSymbolSearchPath(options);
 
                     using var symbolReader = new SymbolReader(logWriter, userSearchPath);

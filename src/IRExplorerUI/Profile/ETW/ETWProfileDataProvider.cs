@@ -287,9 +287,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                     imageList = imageSet.ToList();
 
-                    foreach (var image in imageList) {
-                        prof.AddImageToProcess(mainProcessId, image);
-                    }
+                    //foreach (var image in imageList) {
+                    //    prof.AddImageToProcess(mainProcessId, image);
+                    //}
                 }
 
                 int imageLimit = imageList.Count;
@@ -305,6 +305,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                     if (File.Exists(imagePath)) {
                         Trace.WriteLine($"Adding symbol path: {imagePath}");
+                        //? TODO: Not needed anymore, done by LocateBinaryFile
                         symbolOptions.InsertSymbolPath(imagePath);
                     }
                 }

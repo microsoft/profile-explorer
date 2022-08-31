@@ -1238,8 +1238,8 @@ namespace IRExplorerUI {
                 return;
             }
 
-            if (sessionState_ == null) {
-                // No session started yet.
+            if (sessionState_ == null || sessionState_.Documents.Count == 0) {
+                // No proper session started yet.
                 return;
             }
 
