@@ -17,6 +17,8 @@ using System.Text;
 using System.Windows;
 using System.Windows.Controls.Ribbon.Primitives;
 using CSScriptLib;
+using System.Net;
+using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 
 namespace IRExplorerUI.Profile.ETW;
 
@@ -188,7 +190,7 @@ public class ETWEventProcessor : IDisposable {
             int timeStamp = data.TimeDateStamp;
             bool sawImageId = false;
 
-            //Trace.WriteLine($"ImageGroup: name {data.FileName}, QPC {data.TimeStampQPC}");
+            Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
             //Trace.WriteLine($"   has last {lastImageIdData != null}");
             //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
             //
@@ -254,7 +256,22 @@ public class ETWEventProcessor : IDisposable {
             profile.TraceInfo.MemorySize = data.MemSize;
         };
 
+        bool IsWindowsKernelAddress(ulong ip, int pointerSize) {
+            return ip >= 0xFFFF000000000000;
+        }
+
         source_.Kernel.StackWalkStack += data => {
+            if (data.FrameCount > 0 &&
+                IsWindowsKernelAddress(data.InstructionPointer(0), 8)) {
+                Trace.WriteLine($"Kernel stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
+                if (data.FrameCount > 1 && !IsWindowsKernelAddress(data.InstructionPointer(data.FrameCount - 1), 8)) {
+                    Trace.WriteLine("     ends in user");
+                }
+            }
+            else {
+                Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
+            }
+
             if (!IsAcceptedProcess(data.ProcessID)) {
                 return; // Ignore events from other processes.
             }
@@ -346,6 +363,14 @@ public class ETWEventProcessor : IDisposable {
 
             if (data.ThreadID == 0 && !isKernelCode) {
                 return;
+            }
+
+
+            if (IsWindowsKernelAddress(data.InstructionPointer, 8)) {
+                Trace.WriteLine($"Kernel sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}, isKernel {isKernelCode}");
+            }
+            else {
+                Trace.WriteLine($"User sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}");
             }
 
             // Save sample.
