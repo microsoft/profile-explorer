@@ -480,10 +480,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                             bool isTopFrame = true;
                             stackFuncts.Clear();
                             stackModules.Clear();
+                            bool hask = false;
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-                            if (resolvedStack != null) {
+                            if (false && resolvedStack != null) {
                                 foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                     if (resolvedFrame.IsUnknown) {
                                         // Can at least increment the module weight.
@@ -560,7 +561,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         Trace.WriteLine($"  at frame {frameIndex}: {frameIp}");
                                     }
 
-                                    ProfileImage frameImage = prof.FindImageForIP(frameIp, context);
+                                    bool IsWindowsKernelAddress(ulong ip, int pointerSize) {
+                                        return ip >= 0xFFFF000000000000;
+                                    }
+
+                                    ProfileImage frameImage = null;
+
+                                    if (IsWindowsKernelAddress((ulong)frameIp, 8)) {
+                                        //Utils.WaitForDebugger(true);
+                                        hask = true;
+                                        frameImage = prof.FindImageForIP(frameIp, 0);
+                                    }
+                                    else {
+                                        frameImage = prof.FindImageForIP(frameIp, context.ProcessId);
+                                    }
 
                                     if (frameImage == null) {
                                         if (prof.HasManagedMethods(context.ProcessId)) {
@@ -595,6 +609,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     string funcName = null;
                                     ModuleInfo module = null;
                                     DebugFunctionInfo funcInfo = null;
+                                    IRTextFunction textFunction = null;
 
                                     //var modSw = Stopwatch.StartNew();
                                     module = FindModuleInfo(frameImage, context.ProcessId, symbolOptions);
@@ -603,14 +618,37 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     //    Trace.WriteLine($"=> Slow load {modSw.Elapsed}: {frameImage.Name}");
                                     //}
 
-                                    if (module != null && module.HasDebugInfo) {
+                                    if (module != null) {
                                         if (managedBaseAddress != 0) {
                                             frameRva = frameIp;
-                                            funcInfo = module.FindDebugFunctionInfo(frameRva);
+
+                                            if (module.HasDebugInfo) {
+                                                funcInfo = module.FindDebugFunctionInfo(frameRva);
+                                            }
+                                            else {
+
+                                            }
                                         }
                                         else {
                                             frameRva = frameIp - frameImage.BaseAddress;
-                                            funcInfo = module.FindDebugFunctionInfo(frameRva);
+
+                                            if (module.HasDebugInfo) {
+                                                funcInfo = module.FindDebugFunctionInfo(frameRva);
+                                            }
+                                            
+                                            if(funcInfo == null) {
+                                                textFunction = module.FindFunction(frameRva, out _);
+
+                                                if (textFunction == null) {
+                                                    var placeholderName = $"{frameIp:X}";
+                                                    textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
+                                                    if (trace) {
+                                                        Trace.WriteLine($"New placehodler {placeholderName} in {frameImage.ModuleName} ");
+                                                    }
+                                                }
+
+                                                funcInfo = new DebugFunctionInfo(textFunction.Name, frameIp, 0);
+                                            }
                                         }
 
                                         if (funcInfo != null) {
@@ -639,8 +677,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     //    Trace.WriteLine($"At {funcName}");
                                     //    trace = true;
                                     //}
-
-                                    IRTextFunction textFunction = null;
 
                                     if (funcName == null) {
 #if false
@@ -673,7 +709,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 #endif
                                     }
                                     else {
-                                        textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
+                                        if (textFunction == null) {
+                                            textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
+                                        }
                                     }
 
                                     if (textFunction == null) {
@@ -726,6 +764,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                             bool isRootFrame = true;
                             ProfileCallTreeNode prevNode = null;
 
+                            //if (hask) {
+                            //    Utils.WaitForDebugger();
+                            //}
+
                             for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
                                 var resolvedFrame = resolvedStack.StackFrames[k];
 
@@ -760,7 +802,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 await Task.WhenAll(tasks.ToArray());
                 profileData_.CallTree = callTree;
 
-                //callTree.Print();
+               // Utils.WaitForDebugger(true);
+                Trace.WriteLine(callTree.Print());
                 //prof.PrintSamples(0);
 
                 Trace.WriteLine($"Done process samples in {sw.Elapsed}");

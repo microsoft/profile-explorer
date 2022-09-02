@@ -56,6 +56,11 @@ namespace IRExplorerUI.Profile {
             if (binFile == null || !binFile.Found) {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");
                 report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.NotFound);
+
+                ModuleDocument = new LoadedDocument(binaryInfo.ImageName, binaryInfo.ImageName, Guid.NewGuid());
+                ModuleDocument.Summary = new IRTextSummary(binaryInfo.ImageName);
+                Summary = ModuleDocument.Summary;
+
                 return false;
             }
 
@@ -116,6 +121,10 @@ namespace IRExplorerUI.Profile {
             externalsFuncMap_ = new Dictionary<long, string>();
             externalFuncNames_ = new Dictionary<string, IRTextFunction>();
             sortedFuncList_ = new List<DebugFunctionInfo>();
+
+            if (!HasDebugInfo) {
+                return false;
+            }
 
             Trace.WriteLine($"Building address mapping for {Summary.ModuleName}, PDB {ModuleDocument.DebugInfoFile}");
 
@@ -239,7 +248,6 @@ namespace IRExplorerUI.Profile {
             externalsFuncMap_ ??= new Dictionary<long, string>();
             externalFuncNames_[name] = func;
             externalsFuncMap_[funcAddress] = name;
-            HasDebugInfo = true;
             return func;
         }
 

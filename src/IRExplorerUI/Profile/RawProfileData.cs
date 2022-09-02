@@ -452,10 +452,10 @@ public class RawProfileData {
     }
 
     public ProfileImage FindImageForIP(long ip, ProfileContext context) {
-        return FindImageForIP(ip, context.ProcessId, context.ThreadId);
+        return FindImageForIP(ip, context.ProcessId);
     }
 
-    private ProfileImage FindImageForIP(long ip, int processId, int threadId) {
+    public ProfileImage FindImageForIP(long ip, int processId) {
         // lastIpImage_ and ipImageCache_ are thread-local,
         // making this function thread-safe.
         if (lastIpImage_ != null && lastIpImage_.HasAddress(ip)) {
@@ -673,6 +673,14 @@ public class ManagedData {
     [ProtoContract(SkipConstructor = true)]
     public class ManagedDataState {
         // list of DotNetDebugInfoProvider {id, file_name, arch}
+
+        public Dictionary<ProfileImage, int /* providerId */> ImageDebugInfo;
+        public Dictionary<long /* moduleId */, int /* providerId */> moduleDebugInfoMap_;
+        public Dictionary<long /* methodId */, int /* mappingId */> managedMethodIdMap_;
+        public Dictionary<string, int /* mappingId */> managedMethodsMap_;
+        public List<ManagedMethodMapping> managedMethods_;
+
+
     }
 
     public Dictionary<ProfileImage, DotNetDebugInfoProvider> imageDebugInfo_;
@@ -708,6 +716,8 @@ public class ManagedData {
         foreach (var pair in patchedMappings_) {
             pair.Mapping.Image = moduleImageMap_.GetValueOrNull(pair.ModuleId);
         }
+
+        patchedMappings_ = null;
     }
 }
 

@@ -666,7 +666,7 @@ namespace IRExplorerUI {
             public bool IsAlt;
         }
 
-        public static void WaitForDebugger(bool showMessageBox = false) {
+        public static void WaitForDebugger(bool showMessageBox = true) {
             if(Debugger.IsAttached) {
                 return;
             }
