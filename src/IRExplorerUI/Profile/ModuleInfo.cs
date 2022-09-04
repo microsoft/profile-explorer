@@ -84,7 +84,8 @@ namespace IRExplorerUI.Profile {
             if (isManagedImage && debugInfo != null) {
                 Trace.TraceInformation($"  Has managed debug {imageName}");
                 DebugInfo = debugInfo;
-                HasDebugInfo = await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
+                HasDebugInfo = true;
+                await Task.Run(() => BuildAddressFunctionMap()).ConfigureAwait(false);
                 loadedDoc.DebugInfo = debugInfo;
             }
 
@@ -238,17 +239,19 @@ namespace IRExplorerUI.Profile {
                 return null;
             }
 
-            var func = new IRTextFunction(name);
-            var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
-            func.AddSection(section);
-            
-            ModuleDocument.Summary.AddFunction(func);
-            ModuleDocument.Summary.AddSection(section);
-            externalFuncNames_ ??= new Dictionary<string, IRTextFunction>();
-            externalsFuncMap_ ??= new Dictionary<long, string>();
-            externalFuncNames_[name] = func;
-            externalsFuncMap_[funcAddress] = name;
-            return func;
+            lock (this) {
+                var func = new IRTextFunction(name);
+                var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
+                func.AddSection(section);
+
+                ModuleDocument.Summary.AddFunction(func);
+                ModuleDocument.Summary.AddSection(section);
+                externalFuncNames_ ??= new Dictionary<string, IRTextFunction>();
+                externalsFuncMap_ ??= new Dictionary<long, string>();
+                externalFuncNames_[name] = func;
+                externalsFuncMap_[funcAddress] = name;
+                return func;
+            }
         }
 
         public void Dispose() {

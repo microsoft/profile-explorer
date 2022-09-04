@@ -378,10 +378,11 @@ public class RawProfileData {
         }
     }
 
-    //? TODO: Per-process stack, reduces dict pressure
     public int AddStack(ProfileStack stack, ProfileContext context) {
         Debug.Assert(stack.ContextId != 0);
 
+        // De-duplicate the stack frame pointer array,
+        // since lots of samples have identical stacks.
         if (!stackData_.TryGetValue(stack.FramePointers, out var framePtrData)) {
             // Make a clone since the temporary stack uses a static array.
             framePtrData = stack.CloneFramePointers();
@@ -495,6 +496,7 @@ public class RawProfileData {
 
     public ProfileImage FindImageForIP(long ip) {
         if (globalIpImageCache_ == null) {
+            // Per-thread, no locks needed.
             globalIpImageCache_ = IpToImageCache.Create(images_);
         }
 
@@ -502,36 +504,37 @@ public class RawProfileData {
     }
 
     public List<ProcessSummary> BuildProcessSummary() {
-        var list = new List<ProcessSummary>();
-        var processSamples = new Dictionary<ProfileProcess, int>();
-        //var procImageW = new Dictionary<ProfileProcess, Dictionary<ProfileImage, TimeSpan>>();
+        var processSamples = new Dictionary<ProfileProcess, TimeSpan>();
         var procDuration = new Dictionary<ProfileProcess, (TimeSpan First, TimeSpan Last)>();
+        var totalWeight = TimeSpan.Zero;
 
         foreach (var sample in samples_) {
             var context = sample.GetContext(this);
             var process = GetOrCreateProcess(context.ProcessId);
-            processSamples.AccumulateValue(process, 1);
+            processSamples.AccumulateValue(process, sample.Weight);
+            totalWeight += sample.Weight;
 
-            if (!procDuration.TryGetValue(process, out var duration)) {
-                duration = (sample.Time, sample.Time);
-                procDuration[process] = duration;
+            // Modify in-place.
+            ref var durationRef = ref CollectionsMarshal.GetValueRefOrAddDefault(procDuration, process, out bool found);
+
+            if (!found) {
+                durationRef.First = sample.Time;
             }
-            else {
-                //? TODO: Inefficient, use ref to value to change in place
-                duration.Last = sample.Time;
-                procDuration[process] = duration;
-            }
+
+            durationRef.Last = sample.Time;
         };
-        
+
+        var list = new List<ProcessSummary>(procDuration.Count);
+
         foreach (var pair in processSamples) {
-            var item = new ProcessSummary(pair.Key, pair.Value);
-            
-            item.WeightPercentage = 100 * (double)pair.Value / (double)samples_.Count;
+            var item = new ProcessSummary(pair.Key, pair.Value) {
+                WeightPercentage = 100 * (double)pair.Value.Ticks / (double)totalWeight.Ticks
+            };
+
             list.Add(item);
 
             if (procDuration.TryGetValue(pair.Key, out var duration)) {
                 item.Duration = duration.Last - duration.First;
-                Trace.WriteLine($"Proc {pair.Key.Name}, duration {item.Duration}");
             }
         }
 

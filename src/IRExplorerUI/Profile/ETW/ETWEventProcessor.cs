@@ -19,11 +19,16 @@ using System.Windows.Controls.Ribbon.Primitives;
 using CSScriptLib;
 using System.Net;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
+using Microsoft.Diagnostics.Tracing.AutomatedAnalysis;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace IRExplorerUI.Profile.ETW;
 
 public class ETWEventProcessor : IDisposable {
     const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
+    const int SampleReportingInterval = 10000;
+    const int EventReportingInterval = 10000;
+    const int MaxCoreCount = 4096;
 
     private ETWTraceEventSource source_;
     private bool isRealTime_;
@@ -62,9 +67,10 @@ public class ETWEventProcessor : IDisposable {
         providerOptions_ = providerOptions;
     }
 
-    public List<ProcessSummary> BuildProcessSummary(CancelableTask cancelableTask) {
+    public List<ProcessSummary> BuildProcessSummary(ProcessListProgressHandler progressCallback,
+                                                    CancelableTask cancelableTask) {
         // Default 1ms sampling interval 1ms.
-        UpdateSamplingInterval(10000);
+        UpdateSamplingInterval(SampleReportingInterval);
         
         source_.Kernel.PerfInfoCollectionStart += data => {
             if (data.SampleSource == 0) {
@@ -81,6 +87,9 @@ public class ETWEventProcessor : IDisposable {
         };
 
         RawProfileData profile = new();
+        int lastReportedSample = 0;
+        int lastProcessListSample = 0;
+        int nextProcessListSample = SampleReportingInterval * 10;
 
         if (isRealTime_) {
             profile.TraceInfo.ProfileStartTime = DateTime.Now;
@@ -101,17 +110,43 @@ public class ETWEventProcessor : IDisposable {
             if (data.ProcessID < 0) {
                 return;
             }
-            
+
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
-
-            //? TODO: Use a pooled sample to avoid alloc (profile.Rent*)
+            
             var sample = new ProfileSample((long)data.InstructionPointer,
                 TimeSpan.FromMilliseconds(data.TimeStampRelativeMSec),
                 TimeSpan.FromMilliseconds(samplingIntervalMS_),
                 false, contextId);
             int sampleId = profile.AddSample(sample);
             profile.ReturnContext(contextId);
+
+            
+            if (sampleId - lastReportedSample >= SampleReportingInterval) {
+                List<ProcessSummary> processList = null;
+
+
+                if (sampleId - lastProcessListSample >= nextProcessListSample) {
+                    var sw = Stopwatch.StartNew();
+
+                    processList = profile.BuildProcessSummary();
+                    lastProcessListSample = sampleId;
+                    nextProcessListSample *= 2;
+
+                    Trace.WriteLine($"Took {sw.ElapsedMilliseconds} for {profile.Samples.Count / 10000} K");
+
+                }
+
+                progressCallback?.Invoke(new ProcessListProgress() {
+                    Total = (int)source_.SessionDuration.TotalMilliseconds,
+                    Current = (int)data.TimeStampRelativeMSec,
+                    Processes = processList
+                });
+
+                lastReportedSample = sampleId;
+            }
+
+            Trace.Flush();
         };
         
         source_.Process();
@@ -124,19 +159,20 @@ public class ETWEventProcessor : IDisposable {
         samplingIntervalLimitMS_ = samplingIntervalMS_ * SamplingErrorMargin;
     }
 
-    public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, CancelableTask cancelableTask) {
-        // Default 1ms sampling interval 1ms.
-        UpdateSamplingInterval(10000);
+    public RawProfileData ProcessEvents(ProfileLoadProgressHandler progressCallback, 
+                                        CancelableTask cancelableTask) {
+        UpdateSamplingInterval(SampleReportingInterval);
         ImageIDTraceData lastImageIdData = null;
         ProfileImage lastProfileImage = null;
         long lastProfileImageTime = 0;
 
-        double[] perCoreLastTime = new double[4096];
-        int[] perCoreLastSample = new int[4096];
+
+        double[] perCoreLastTime = new double[MaxCoreCount];
+        int[] perCoreLastSample = new int[MaxCoreCount];
+        (int StackId, long Timestamp)[] perCoreLastKernelStack = new (int StackId, long Timestamp)[MaxCoreCount];
         int oldestCompressedSample = 0;
         var perContextLastSample = new Dictionary<int, int>();
-        int lastReportedSampleCount = 0;
-        const int sampleReportInterval = 10000;
+        int lastReportedSample = 0;
 
         var symbolParser = new SymbolTraceEventParser(source_);
 
@@ -158,7 +194,8 @@ public class ETWEventProcessor : IDisposable {
                 lastProfileImageTime == data.TimeStampQPC) {
                 lastProfileImage.OriginalFileName = data.OriginalFileName;
 
-                if (lastProfileImage.TimeStamp == 0) { lastProfileImage.TimeStamp = data.TimeDateStamp;
+                if (lastProfileImage.TimeStamp == 0) {
+                    lastProfileImage.TimeStamp = data.TimeDateStamp;
                 }
             }
             else {
@@ -232,7 +269,7 @@ public class ETWEventProcessor : IDisposable {
                 lastProfileImage = null;
             }
         };
-
+        
         source_.Kernel.ThreadStartGroup += data => {
             if (cancelableTask != null && cancelableTask.IsCanceled) {
                 source_.StopProcessing();
@@ -256,20 +293,27 @@ public class ETWEventProcessor : IDisposable {
             profile.TraceInfo.MemorySize = data.MemSize;
         };
 
-        bool IsWindowsKernelAddress(ulong ip, int pointerSize) {
+        bool IsKernelAddress(ulong ip, int pointerSize) {
+            //? TODO: Check pointerSize
             return ip >= 0xFFFF000000000000;
         }
 
         source_.Kernel.StackWalkStack += data => {
+            bool isKernelStack = false;
+
             if (data.FrameCount > 0 &&
-                IsWindowsKernelAddress(data.InstructionPointer(0), 8)) {
-                Trace.WriteLine($"Kernel stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
-                if (data.FrameCount > 1 && !IsWindowsKernelAddress(data.InstructionPointer(data.FrameCount - 1), 8)) {
-                    Trace.WriteLine("     ends in user");
+                IsKernelAddress(data.InstructionPointer(0), 8)) {
+                isKernelStack = true;
+                
+                //Trace.WriteLine($"Kernel stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
+                
+                
+                if (data.FrameCount > 1 && !IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), 8)) {
+                  //  Trace.WriteLine("     ends in user");
                 }
             }
             else {
-                Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
+                //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
             }
 
             if (!IsAcceptedProcess(data.ProcessID)) {
@@ -279,35 +323,66 @@ public class ETWEventProcessor : IDisposable {
             //queue.Add((StackWalkStackTraceData)data.Clone());
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, data.ProcessorNumber);
             int contextId = profile.AddContext(context);
-
             int frameCount = data.FrameCount;
-            var stack = profile.RentTemporaryStack(frameCount, contextId);
 
-            // Copy data from event to the temp. stack pointer array.
-            // Slightly faster to copy the entire array as a whole.
-            unsafe {
-                void* ptr = (void*)((IntPtr)(void*)data.DataStart + 16);
-                int bytes = data.PointerSize * frameCount;
-                var span = new Span<byte>(ptr, bytes);
+            ProfileStack kstack = null;
 
-                fixed (long* destPtr = stack.FramePointers) {
-                    var destSpan = new Span<byte>(destPtr, bytes);
-                    span.CopyTo(destSpan);
+            //if (!isKernelStack) {
+            //    var lastKernelStack = perCoreLastKernelStack[data.ProcessorNumber];
+
+            //    if (lastKernelStack.StackId != 0 &&
+            //        lastKernelStack.Timestamp == data.EventTimeStampQPC) {
+            //        Trace.WriteLine($"Found kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
+
+
+            //        // Append at the end of the kernel stack.
+            //        kstack = profile.FindStack(lastKernelStack.StackId);
+            //        int kstackFrameCount = kstack.FrameCount;
+            //        long[] frames = new long[kstack.FrameCount + data.FrameCount];
+            //        kstack.FramePointers.CopyTo(frames, 0);
+
+            //        for (int i = 0; i < frameCount; i++) {
+            //            frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
+            //        }
+
+            //        kstack.FramePointers = frames;
+            //    }
+            //}
+
+            if (kstack == null) {
+                var stack = profile.RentTemporaryStack(frameCount, contextId);
+
+                // Copy data from event to the temp. stack pointer array.
+                // Slightly faster to copy the entire array as a whole.
+                unsafe {
+                    void* ptr = (void*)((IntPtr)(void*)data.DataStart + 16);
+                    int bytes = data.PointerSize * frameCount;
+                    var span = new Span<byte>(ptr, bytes);
+
+                    fixed (long* destPtr = stack.FramePointers) {
+                        var destSpan = new Span<byte>(destPtr, bytes);
+                        span.CopyTo(destSpan);
+                    }
                 }
-            }
-            
-            int stackId = profile.AddStack(stack, context);
-            
-            // Try to associate with a previous sample from the same context.
-            int sampleId = perCoreLastSample[data.ProcessorNumber];
 
-            if (!profile.TrySetSampleStack(sampleId, stackId, contextId)) {
-                if (perContextLastSample.TryGetValue(contextId, out sampleId)) {
-                    profile.SetSampleStack(sampleId, stackId, contextId);
+                int stackId = profile.AddStack(stack, context);
+
+                // Try to associate with a previous sample from the same context.
+                int sampleId = perCoreLastSample[data.ProcessorNumber];
+
+                if (!profile.TrySetSampleStack(sampleId, stackId, contextId)) {
+                    if (perContextLastSample.TryGetValue(contextId, out sampleId)) {
+                        profile.SetSampleStack(sampleId, stackId, contextId);
+                    }
                 }
+
+                if (isKernelStack) {
+                    perCoreLastKernelStack[data.ProcessorNumber] = (stackId, data.EventTimeStampQPC);
+                }
+
+                profile.ReturnStack(stackId);
             }
 
-            profile.ReturnStack(stackId);
             profile.ReturnContext(contextId);
         };
 
@@ -366,12 +441,12 @@ public class ETWEventProcessor : IDisposable {
             }
 
 
-            if (IsWindowsKernelAddress(data.InstructionPointer, 8)) {
-                Trace.WriteLine($"Kernel sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}, isKernel {isKernelCode}");
-            }
-            else {
-                Trace.WriteLine($"User sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}");
-            }
+            //if (IsKernelAddress(data.InstructionPointer, 8)) {
+            //    Trace.WriteLine($"Kernel sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}, isKernel {isKernelCode}");
+            //}
+            //else {
+            //    Trace.WriteLine($"User sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}");
+            //}
 
             // Save sample.
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, cpu);
@@ -389,9 +464,9 @@ public class ETWEventProcessor : IDisposable {
             perContextLastSample[contextId] = sampleId;
 
             // Report progress.
-            if (sampleId - lastReportedSampleCount >= sampleReportInterval) {
+            if (sampleId - lastReportedSample >= SampleReportingInterval) {
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.TraceLoading) { Total = sampleId, Current = sampleId });
-                lastReportedSampleCount = sampleId;
+                lastReportedSample = sampleId;
 
                 // Updating the stack associated with a sample often ends up
                 // decompressing a segment and it remains in that state until the end, wasting memory.

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using IRExplorerUI.Compilers;
+using System.Linq;
 using ProtoBuf;
 
 namespace IRExplorerUI.Profile;
@@ -90,8 +90,8 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
                ProfileChildProcesses == other.ProfileChildProcesses && 
                RecordPerformanceCounters == other.RecordPerformanceCounters && 
                EnableEnvironmentVars == other.EnableEnvironmentVars && 
-               Equals(EnvironmentVariables, other.EnvironmentVariables) && 
-               Equals(PerformanceCounters, other.PerformanceCounters);
+               Enumerable.SequenceEqual(EnvironmentVariables, other.EnvironmentVariables) &&
+               Enumerable.SequenceEqual(PerformanceCounters, other.PerformanceCounters);
     }
 
     public override bool Equals(object obj) {
@@ -131,8 +131,6 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
         return !Equals(left, right);
     }
 }
-
-public delegate void ProfileLoadProgressHandler(ProfileLoadProgress info);
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileDataProviderOptions : SettingsBase {

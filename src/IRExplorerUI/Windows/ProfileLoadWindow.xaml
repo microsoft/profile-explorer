@@ -380,7 +380,6 @@
                             Height="4"
                             Margin="8,4,8,0"
                             HorizontalAlignment="Stretch"
-                            IsIndeterminate="True"
                             Maximum="100"
                             Visibility="{Binding IsLoadingProcessList, Converter={StaticResource BoolToVisibility}}" />
                         <ListView

@@ -419,6 +419,7 @@ namespace IRExplorerUI {
                 LoadProgressLabel.Text = progressInfo.Stage switch {
                     ProfileLoadStage.TraceLoading => "Loading trace",
                     ProfileLoadStage.TraceProcessing => "Processing trace",
+                    ProfileLoadStage.BinaryLoading => "Loading binaries",
                     ProfileLoadStage.SymbolLoading => "Loading symbols",
                     ProfileLoadStage.PerfCounterProcessing => "Processing CPU perf. counters",
                     _ => ""
@@ -431,6 +432,30 @@ namespace IRExplorerUI {
                 }
                 else {
                     LoadProgressBar.IsIndeterminate = true;
+                }
+            }));
+        }
+
+        private void ProcessListProgressCallback(ProcessListProgress progressInfo) {
+            Dispatcher.BeginInvoke((Action)(() => {
+                if (progressInfo == null) {
+                    return;
+                }
+
+                SummaryProgressBar.Maximum = progressInfo.Total;
+                SummaryProgressBar.Value = progressInfo.Current;
+
+                if (progressInfo.Total != 0 && progressInfo.Total != progressInfo.Current) {
+                    double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
+                    ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
+                    SummaryProgressBar.IsIndeterminate = false;
+                }
+                else {
+                    SummaryProgressBar.IsIndeterminate = true;
+                }
+
+                if (progressInfo.Processes != null) {
+                    DisplayProcessList(progressInfo.Processes);
                 }
             }));
         }
@@ -456,8 +481,11 @@ namespace IRExplorerUI {
 
             if (File.Exists(ProfileFilePath)) {
                 IsLoadingProcessList = true;
+                BinaryFilePath = "";
+
                 var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
-                processList_ = await ETWProfileDataProvider.FindTraceImages(ProfileFilePath, options_, task);
+                processList_ = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
+                
                 IsLoadingProcessList = false;
                 return processList_ != null;
             }
@@ -471,25 +499,10 @@ namespace IRExplorerUI {
         private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowExecutableOpenFileDialog(BinaryAutocompleteBox);
         
-        private async void RecentMenuItem_Click(object sender, RoutedEventArgs e) {
-            var menuItem = sender as MenuItem;
-
-            if (menuItem.Tag == null) {
-                
-            }
-            else {
-                var pathPair = menuItem.Tag as Tuple<string, string, string>;
-                ProfileAutocompleteBox.Text = pathPair.Item1;
-                BinaryAutocompleteBox.Text = pathPair.Item2;
-                await LoadProcessList();
-                await OpenFilesAndComplete();
-            }
-        }
-
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ProcessList.SelectedItem != null) {
                 selectedProcSummary_ = (ProcessSummary)ProcessList.SelectedItem;
-                BinaryAutocompleteBox.Text = selectedProcSummary_.Process.Name;
+                BinaryFilePath = selectedProcSummary_.Process.Name;
             }
         }
 
@@ -532,7 +545,7 @@ namespace IRExplorerUI {
             // Show elapsed time in UI.
             var stopWatch = Stopwatch.StartNew();
             DispatcherTimer timer = new DispatcherTimer(TimeSpan.FromMilliseconds(500), DispatcherPriority.Render,
-                (o, e) => UpdateRecordProgress(stopWatch, lastProgressInfo), Dispatcher);
+                (o, e) => UpdateRecordingProgress(stopWatch, lastProgressInfo), Dispatcher);
             timer.Start();
 
             // Start recording on another thread.
@@ -549,7 +562,7 @@ namespace IRExplorerUI {
 
             if (recordedProfile_ != null) {
                 processList_ = await Task.Run(() => recordedProfile_.BuildProcessSummary());
-                DisplayProcessList();
+                DisplayProcessList(processList_);
             }
             else {
                 MessageBox.Show("Failed to record ETW sampling profile!", "IR Explorer",
@@ -557,7 +570,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void UpdateRecordProgress(Stopwatch stopWatch, ProfileLoadProgress progressInfo) {
+        private void UpdateRecordingProgress(Stopwatch stopWatch, ProfileLoadProgress progressInfo) {
             string status = $"{stopWatch.Elapsed.ToString(@"mm\:ss")}";
 
             if (progressInfo != null) {
@@ -570,19 +583,10 @@ namespace IRExplorerUI {
             RecordProgressLabel.Text = status;
         }
 
-        private void DisplayProcessList() {
-            ShowProcessList = false;
-            
-            if (processList_ != null) {
-                processList_.Sort((a, b) => b.SampleCount.CompareTo(a.SampleCount));
-                ProcessList.ItemsSource = null;
-                ProcessList.ItemsSource = new ListCollectionView(processList_);
-            }
-            else {
-                MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
-                                MessageBoxButton.OK, MessageBoxImage.Exclamation);
-            }
-
+        private void DisplayProcessList(List<ProcessSummary> list) {
+            list.Sort((a, b) => b.Weight.CompareTo(a.Weight));
+            ProcessList.ItemsSource = null;
+            ProcessList.ItemsSource = new ListCollectionView(list);
             ShowProcessList = true;
         }
 
@@ -612,7 +616,11 @@ namespace IRExplorerUI {
                 //}
 
                 if (await LoadProcessList()) {
-                    DisplayProcessList();
+                    DisplayProcessList(processList_);
+                }
+                else {
+                    MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
+                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
             }
         }

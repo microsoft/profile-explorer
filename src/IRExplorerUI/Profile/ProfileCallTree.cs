@@ -446,10 +446,9 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     private void AddParent(ProfileCallTreeNode parentNode) {
         lock_.EnterUpgradeableReadLock();
-        ref var list = ref callers_;
 
         try {
-            var callerNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
+            var callerNode = FindExistingNode(callers_, parentNode.DebugInfo, parentNode.Function);
             if (callerNode != null) {
                 return;
             }
@@ -457,13 +456,13 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             lock_.EnterWriteLock();
             try {
                 // Check again if another thread added the parent in the meantime.
-                callerNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
+                callerNode = FindExistingNode(callers_, parentNode.DebugInfo, parentNode.Function);
                 if (callerNode != null) {
                     return;
                 }
 
-                list ??= new List<ProfileCallTreeNode>();
-                list.Add(parentNode);
+                callers_ ??= new List<ProfileCallTreeNode>();
+                callers_.Add(parentNode);
             }
             finally {
                 lock_.ExitWriteLock();
@@ -475,14 +474,13 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     internal void AddParentNoLock(ProfileCallTreeNode parentNode) {
-        ref var list = ref callers_;
-        var callerNode = FindExistingNode(ref list, parentNode.DebugInfo, parentNode.Function);
+        var callerNode = FindExistingNode(callers_, parentNode.DebugInfo, parentNode.Function);
         if (callerNode != null) {
             return;
         }
 
-        list ??= new List<ProfileCallTreeNode>();
-        list.Add(parentNode);
+        callers_ ??= new List<ProfileCallTreeNode>();
+        callers_.Add(parentNode);
     }
 
     public bool HasParent(ProfileCallTreeNode parentNode) {
@@ -495,10 +493,9 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     private (ProfileCallTreeNode, bool) GetOrCreateChildNode(DebugFunctionInfo debugInfo, IRTextFunction function) {
         lock_.EnterUpgradeableReadLock();
-        ref var list = ref children_;
 
         try {
-            var childNode = FindExistingNode(ref list, debugInfo, function);
+            var childNode = FindExistingNode(children_, debugInfo, function);
 
             if (childNode != null) {
                 return (childNode, false);
@@ -507,15 +504,15 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             lock_.EnterWriteLock();
             try {
                 // Check again if another thread added the child in the meantime.
-                childNode = FindExistingNode(ref list, debugInfo, function);
+                childNode = FindExistingNode(children_, debugInfo, function);
 
                 if (childNode != null) {
                     return (childNode, false);
                 }
 
-                list ??= new List<ProfileCallTreeNode>();
+                children_ ??= new List<ProfileCallTreeNode>();
                 childNode = new ProfileCallTreeNode(debugInfo, function);
-                list.Add(childNode);
+                children_.Add(childNode);
                 return (childNode, true);
             }
             finally {
@@ -527,7 +524,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         }
     }
 
-    private ProfileCallTreeNode FindExistingNode(ref List<ProfileCallTreeNode> list,
+    private ProfileCallTreeNode FindExistingNode(List<ProfileCallTreeNode> list,
         DebugFunctionInfo debugInfo, IRTextFunction function) {
         if (list != null) {
             foreach (var child in list) {

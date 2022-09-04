@@ -12,7 +12,7 @@ namespace IRExplorerUI.Profile;
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileStack : IEquatable<ProfileStack> {
-    private const int MaxFrameNumber = 256;
+    private const int MaxFrameNumber = 512;
     private static long[][] TempFrameArrays = new long[MaxFrameNumber + 1][];
 
     static ProfileStack() {
