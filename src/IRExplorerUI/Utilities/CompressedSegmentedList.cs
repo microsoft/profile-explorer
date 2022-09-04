@@ -17,7 +17,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
         CompressedSegmentedList<T> parent_;
         Task activeTask_; // Task used to (de)compress, null if no pending task.
         byte[] data_;     // Compressed value data.
-        T[] values_;      // Decompressed values, if null in compressed state.
+        public T[] values_;      // Decompressed values, if null in compressed state.
         int count_;       // Number of values < capacity.
         int size_;        // Size in bytes of uncompressed capacity.
 
@@ -264,7 +264,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Add(T value) {
-        EnsureSegment();
+        EnsureSegmentReady();
         activeSegment_.AddValue(value);
         count_++;
 #if DEBUG
@@ -272,7 +272,7 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 #endif
     }
 
-    private void EnsureSegment() {
+    private void EnsureSegmentReady() {
         // Allocate a new segment if the current one is full,
         // then compress the previous one.
         if (activeSegment_ == null || activeSegment_.Count == segmentLength_) {
@@ -282,6 +282,9 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 
             activeSegment_ = new Segment(this, segmentLength_);
             segments_.Add(activeSegment_);
+        }
+        else if(activeSegment_.IsCompressed) {
+            activeSegment_.DecompressValues();
         }
     }
 
@@ -436,38 +439,11 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
     }
 
     public IEnumerator<T> GetEnumerator() {
-        int segmentIndex = 0;
-        int lastPrefetchIndex = 0;
+        return Enumerate(0, Count).GetEnumerator();
+    }
 
-#if DEBUG
-        int initialVersion = version_;
-#endif
-
-        foreach (var segment in segments_) {
-            segment.DecompressValues();
-            int count = segment.Count;
-
-            for (int i = 0; i < count; i++) {
-#if DEBUG
-                if(initialVersion != version_) {
-                    throw new InvalidOperationException("List modified, potential thread racing bug");
-                }
-#endif
-
-                yield return segment.GetValueDirect(i);
-            }
-
-            // Prefetch segments in advance on another thread
-            // to hide the delay of decompressing the data.
-            if(prefetchLimit_ > 0 && segmentIndex + prefetchLimit_ < segments_.Count) {
-                for(; lastPrefetchIndex < segmentIndex + prefetchLimit_; lastPrefetchIndex++) {
-                    segments_[lastPrefetchIndex].DecompressValues(true);
-                }
-            }
-
-            // Re-compress the values, done on another thread.
-            segment.CompressValues();
-        }
+    public RangeEnumerator Enumerate(int rangeStart, int rangeEnd) {
+        return new RangeEnumerator(this, rangeStart, rangeEnd);
     }
 
     IEnumerator IEnumerable.GetEnumerator() {
@@ -476,12 +452,89 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 
     public override bool Equals(object? obj) {
         return obj is CompressedSegmentedList<T> list &&
-               EqualityComparer<List<CompressedSegmentedList<T>.Segment>>.Default.Equals(segments_, list.segments_) &&
+               EqualityComparer<List<Segment>>.Default.Equals(segments_, list.segments_) &&
                count_ == list.count_ &&
                segmentLength_ == list.segmentLength_;
     }
 
     public override int GetHashCode() {
         return HashCode.Combine(segments_, count_, segmentLength_);
+    }
+
+    public struct RangeEnumerator : IEnumerable<T> {
+        private CompressedSegmentedList<T> target_;
+        private int rangeStart_;
+        private int rangeEnd_;
+        private int segmentStart_;
+        private int segmentEnd_;
+
+        public RangeEnumerator(CompressedSegmentedList<T> target, int rangeStart, int rangeEnd) {
+            Debug.Assert(rangeStart <= target.Count);
+            Debug.Assert(rangeEnd <= target.Count);
+            Debug.Assert(rangeEnd >= rangeStart);
+            target_ = target;
+            rangeStart_ = rangeStart;
+            rangeEnd_ = rangeEnd;
+            segmentStart_ = rangeStart / target.segmentLength_;
+            segmentEnd_ = rangeEnd / target.segmentLength_;
+        }
+
+        public IEnumerator<T> GetEnumerator() {
+            if (target_.segments_.Count == 0) {
+                yield break;
+            }
+
+            int lastPrefetchIndex = segmentStart_;
+            Segment prevSegment = null;
+
+#if DEBUG
+            int initialVersion = target_.version_;
+#endif
+
+            for (int segmentIndex = segmentStart_; segmentIndex <= segmentEnd_; segmentIndex++) {
+                var segment = target_.segments_[segmentIndex];
+                segment.DecompressValues();
+
+                // // Ignore values in the segment before rangeStart and after rangeEnd.
+                int segmentValueIndex = segmentIndex * target_.segmentLength_;
+                int segmentValueStart = segmentValueIndex < rangeStart_ ? rangeStart_ - segmentValueIndex : 0;
+                int segmentValueEnd = (segmentValueIndex + segment.Count) > rangeEnd_ ? rangeEnd_ - segmentValueIndex : segment.Count;
+
+                for (int i = segmentValueStart; i < segmentValueEnd; i++) {
+#if DEBUG
+                    if (initialVersion != target_.version_) {
+                        throw new InvalidOperationException("List modified, potential thread racing bug");
+                    }
+#endif
+                    if (segment == null || segment.values_ == null ||
+                        i >= segment.Count) {
+                        Utils.WaitForDebugger();
+                        ;
+                    }
+
+                    yield return segment.GetValueDirect(i);
+                }
+
+                // Prefetch segments in advance on another thread
+                // to hide the delay of decompressing the data.
+                int prefetchEnd = segmentIndex + target_.prefetchLimit_;
+
+                if (target_.prefetchLimit_ > 0 && prefetchEnd < segmentEnd_) {
+                    for (; lastPrefetchIndex < prefetchEnd; lastPrefetchIndex++) {
+                        target_.segments_[lastPrefetchIndex].DecompressValues(true);
+                        lastPrefetchIndex = prefetchEnd;
+                    }
+                }
+
+                // Re-compress the values, done on another thread.
+                // Don't compress the last segment, it's likely that more values are added to it.
+                prevSegment?.CompressValues();
+                prevSegment = segment;
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            return GetEnumerator();
+        }
     }
 }

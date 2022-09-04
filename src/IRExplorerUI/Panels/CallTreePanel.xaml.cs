@@ -357,7 +357,7 @@ namespace IRExplorerUI {
 
             foreach (var instance in nodeList) {
                 bool isSelf = nodeList.Count == 1;
-                var name =  isSelf ? "Self" : $"Instance {index++}";
+                var name =  isSelf ? "Function" : $"Function instance {index++}";
                 var percentageFunc = PickPercentageFunction(combinedWeight);
                 var instanceNode = CreateProfileCallTreeInstance(name, instance, percentageFunc);
 

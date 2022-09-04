@@ -38,26 +38,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         return LoadTraceAsync(tracePath, imageName, options, symbolOptions,
                               report, progressCallback, cancelableTask).Result;
     }
-    
-    private BinaryFileDescriptor FromProfileImage(ProfileImage image) {
-        return new BinaryFileDescriptor() {
-            ImageName = image.ModuleName,
-            ImagePath = image.FilePath,
-            Checksum = image.Checksum,
-            TimeStamp = image.TimeStamp,
-            ImageSize = image.Size,
-        };
-    }
 
-    private BinaryFileDescriptor FromSummary(IRTextSummary summary) {
-        return new BinaryFileDescriptor();
-    }
-
-    public static async Task<List<ProcessSummary>> FindTraceImages(string tracePath, ProfileDataProviderOptions options, 
-                                                                        CancelableTask cancelableTask) {
+    public static async Task<List<ProcessSummary>> 
+        FindTraceProcesses(string tracePath, ProfileDataProviderOptions options,
+                           ProcessListProgressHandler progressCallback,
+                           CancelableTask cancelableTask) {
         try {
             using var eventProcessor = new ETWEventProcessor(tracePath, options);
-            return await Task.Run(() => eventProcessor.BuildProcessSummary(cancelableTask));
+            return await Task.Run(() => eventProcessor.BuildProcessSummary(progressCallback, cancelableTask));
         }
         catch (Exception ex) {
             Trace.WriteLine($"Failed to open ETL file {tracePath}: {ex.Message}");
@@ -244,7 +232,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     
                 Trace.WriteLine($"Start preload symbols {DateTime.Now}");
 
-                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
                     Total = 0,
                     Current = 0
                 });
@@ -341,10 +329,20 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                             }
                         }
                     }
+
+                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
+                        Total = imageLimit,
+                        Current = i
+                    });
                 }
 
                 // Start a new session in the proper ASM mode.
                 await session_.StartNewSession(imageName, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
+
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                    Total = 0,
+                    Current = 0
+                });
 
                 for (int i = 0; i < imageLimit; i++) {
                     var binaryFile = await binTaskList[i].ConfigureAwait(false);
@@ -364,6 +362,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
                         Trace.WriteLine($"Loaded PDB: {pdbPath}");
                     }
+
+                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                        Total = imageLimit,
+                        Current = i
+                    });
                 }
 #else
 
@@ -407,7 +410,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 #if DEBUG
                 chunks = 1;
 #endif
+                chunks = 1;
+
                 Trace.WriteLine($"Using {chunks} threads");
+                //? TODO: Round up to chunk size to avoid thread issues
+                //?    CompressedList API to give chunk size for T
 
                 var tasks = new List<Task>();
                 var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
@@ -431,10 +438,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                         var stackFuncts = new HashSet<IRTextFunction>();
                         var stackModules = new HashSet<int>();
 
-                        for (int i = start; i < end; i++) {
+                        foreach(var sample in prof.Samples.Enumerate(start, end)) {
                             index++;
-
-                            var sample = prof.Samples[i]; //? Avoid copy, use ref
 
                             if (!options.IncludeKernelEvents &&
                                 sample.IsKernelCode) {
@@ -484,7 +489,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                             var resolvedStack = stack.GetOptionalData() as ResolvedProfileStack;
 
-                            if (false && resolvedStack != null) {
+                            if (resolvedStack != null) {
                                 foreach (var resolvedFrame in resolvedStack.StackFrames) {
                                     if (resolvedFrame.IsUnknown) {
                                         // Can at least increment the module weight.
@@ -621,12 +626,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     if (module != null) {
                                         if (managedBaseAddress != 0) {
                                             frameRva = frameIp;
+                                            Trace.WriteLine($"Check managed image {frameImage.ModuleName}");
+                                            Trace.WriteLine($"   for IP {frameIp}");
+                                            //trace = true;
 
                                             if (module.HasDebugInfo) {
                                                 funcInfo = module.FindDebugFunctionInfo(frameRva);
                                             }
                                             else {
-
+                                                //? TODO: merge with below to add +HEX func names
                                             }
                                         }
                                         else {
@@ -803,7 +811,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 profileData_.CallTree = callTree;
 
                // Utils.WaitForDebugger(true);
-                Trace.WriteLine(callTree.Print());
+                //Trace.WriteLine(callTree.Print());
                 //prof.PrintSamples(0);
 
                 Trace.WriteLine($"Done process samples in {sw.Elapsed}");
@@ -998,6 +1006,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             Trace.Flush();
             return null;
         }
+    }
+
+    private BinaryFileDescriptor FromProfileImage(ProfileImage image) {
+        return new BinaryFileDescriptor() {
+            ImageName = image.ModuleName,
+            ImagePath = image.FilePath,
+            Checksum = image.Checksum,
+            TimeStamp = image.TimeStamp,
+            ImageSize = image.Size,
+        };
     }
 
     //private void ProcessInlineeSample(TimeSpan sampleWeight, long sampleOffset, 
