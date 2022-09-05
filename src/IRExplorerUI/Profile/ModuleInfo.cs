@@ -14,13 +14,13 @@ namespace IRExplorerUI.Profile {
     // native/managed Moduleinfo
 
     //? DisassemblerSectionLoader makes fake doc ,
-    //? use manual DisassemblerSectionLoader, inject debugInfo for EnumerateFunctions
+    //? use manual DisassemblerSectionLoader, inject functionDebugInfo for EnumerateFunctions
     //? - split methods by module
 
     public class ModuleInfo : IDisposable {
         private ISession session_;
         private BinaryFileDescriptor binaryInfo_;
-        private List<DebugFunctionInfo> sortedFuncList_;
+        private List<FunctionDebugInfo> sortedFuncList_;
         private Dictionary<long, IRTextFunction> addressFuncMap_;
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
@@ -121,7 +121,7 @@ namespace IRExplorerUI.Profile {
             addressFuncMap_ = new Dictionary<long, IRTextFunction>(Summary.Functions.Count);
             externalsFuncMap_ = new Dictionary<long, string>();
             externalFuncNames_ = new Dictionary<string, IRTextFunction>();
-            sortedFuncList_ = new List<DebugFunctionInfo>();
+            sortedFuncList_ = new List<FunctionDebugInfo>();
 
             if (!HasDebugInfo) {
                 return false;
@@ -176,13 +176,13 @@ namespace IRExplorerUI.Profile {
             return await session_.CompilerInfo.FindBinaryFile(binaryInfo_, options).ConfigureAwait(false);
         }
         
-        public DebugFunctionInfo FindDebugFunctionInfo(long funcAddress) {
+        public FunctionDebugInfo FindFunctionDebugInfo(long funcAddress) {
             if (!HasDebugInfo || sortedFuncList_ == null) {
                 return null;
             }
 
             //? TODO: Enable sorted list, integrate in PDBProvider
-            return DebugFunctionInfo.BinarySearch(sortedFuncList_, funcAddress);
+            return FunctionDebugInfo.BinarySearch(sortedFuncList_, funcAddress);
         }
 
         public IRTextFunction FindFunction(long funcAddress) {
@@ -218,20 +218,23 @@ namespace IRExplorerUI.Profile {
         }
 
         private IRTextFunction FindExternalFunction(long funcAddress) {
-            if (!HasDebugInfo) {
-                return null;
-            }
+            //? TODO: Make RW lock
+            lock (this) {
+                if (externalsFuncMap_ == null || externalFuncNames_ == null) {
+                    return null;
+                }
 
-            if (!externalsFuncMap_.TryGetValue(funcAddress, out var externalFuncName)) {
-                return null;
-            }
+                if (!externalsFuncMap_.TryGetValue(funcAddress, out var externalFuncName)) {
+                    return null;
+                }
 
-            if (!externalFuncNames_.TryGetValue(externalFuncName, out var textFunction)) {
-                // Create a dummy external function that will have no sections. 
-                textFunction = AddPlaceholderFunction(externalFuncName, funcAddress);
-            }
+                if (!externalFuncNames_.TryGetValue(externalFuncName, out var textFunction)) {
+                    // Create a dummy external function that will have no sections. 
+                    textFunction = AddPlaceholderFunction(externalFuncName, funcAddress);
+                }
 
-            return textFunction;
+                return textFunction;
+            }
         }
 
         public IRTextFunction AddPlaceholderFunction(string name, long funcAddress) {
@@ -240,7 +243,14 @@ namespace IRExplorerUI.Profile {
             }
 
             lock (this) {
-                var func = new IRTextFunction(name);
+                // Search again under the lock.
+                var func = FindExternalFunction(funcAddress);
+
+                if (func != null) {
+                    return func;
+                }
+
+                func = new IRTextFunction(name);
                 var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
                 func.AddSection(section);
 

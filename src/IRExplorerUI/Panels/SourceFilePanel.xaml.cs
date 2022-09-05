@@ -330,8 +330,8 @@ namespace IRExplorerUI {
             var sourceInfo = DebugFunctionSourceFileInfo.Unknown;
 
             // Lookup function by RVA, more precise.
-            if (funcProfile.DebugInfo != null) {
-                sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.DebugInfo.RVA);
+            if (funcProfile.FunctionDebugInfo != null) {
+                sourceInfo = debugInfo.FindSourceFilePathByRVA(funcProfile.FunctionDebugInfo.RVA);
             }
 
             return sourceInfo;

@@ -60,7 +60,7 @@ namespace IRExplorerUI.Compilers.ASM {
         private Machine architecture_;
         private IDebugInfoProvider debugInfo_;
         private Interop.DisassemblerHandle disasmHandle_;
-        private List<DebugFunctionInfo> sortedFuncList_;
+        private List<FunctionDebugInfo> sortedFuncList_;
         private bool hasExternalSyms_;
         private bool checkValidCallAddress_;
         private SymbolNameResolverDelegate symbolNameResolver_;
@@ -116,7 +116,7 @@ namespace IRExplorerUI.Compilers.ASM {
             BuildFunctionRvaCache(false);
         }
 
-        public string DisassembleToText(DebugFunctionInfo funcInfo) {
+        public string DisassembleToText(FunctionDebugInfo funcInfo) {
             return DisassembleToText(funcInfo.StartRVA, funcInfo.Size);
         }
 
@@ -281,20 +281,20 @@ namespace IRExplorerUI.Compilers.ASM {
             return false;
         }
 
-        private DebugFunctionInfo FindFunctionByRva(long rva) {
+        private FunctionDebugInfo FindFunctionByRva(long rva) {
             // Rebuild RVA tree with all symbol info when symbol name lookup is done.
             if (!hasExternalSyms_) {
                 BuildFunctionRvaCache(true);
             }
 
-            var result = DebugFunctionInfo.BinarySearch(sortedFuncList_, rva);
+            var result = FunctionDebugInfo.BinarySearch(sortedFuncList_, rva);
             return result != null ? result : debugInfo_.FindFunctionByRVA(rva);
         }
 
         private void BuildFunctionRvaCache(bool includeExternalSyms) {
             // Cache RVA -> function mapping, much faster to query.
             int capacity = sortedFuncList_ != null ? sortedFuncList_.Count * 2 : 1;
-            sortedFuncList_ = new List<DebugFunctionInfo>(capacity);
+            sortedFuncList_ = new List<FunctionDebugInfo>(capacity);
             hasExternalSyms_ = includeExternalSyms;
 
             if (debugInfo_ == null) {

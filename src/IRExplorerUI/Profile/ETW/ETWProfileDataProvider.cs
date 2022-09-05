@@ -183,8 +183,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 var callTree = new ProfileCallTree();
 
                 for (int k = 0; k < chunks; k++) {
-                    int start = k * chunkSize;
+                    int start = Math.Min(k * chunkSize, (int)prof.Samples.Count);
                     int end = Math.Min((k + 1) * chunkSize, (int)prof.Samples.Count);
+
+                    if (start == end)
+                        continue;
 
                     tasks.Add(taskFactory.StartNew(() => {
                         //{
@@ -268,16 +271,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         }
                                     }
 
-                                    //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.FunctionInfo.Name}, prof func {resolvedFrame.Profile.DebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
+                                    //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.Info.Name}, prof func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
                                     
                                     var frameRva = resolvedFrame.FrameRVA;
-                                    var funcInfo = resolvedFrame.FunctionInfo;
+                                    var funcInfo = resolvedFrame.Info;
                                     var funcRva = funcInfo.RVA;
                                     var textFunction = resolvedFrame.Function;
                                     var profile = resolvedFrame.Profile;
 
                                     lock (profile) {
-                                        //profile.DebugInfo = funcInfo; //? REMOVE
+                                        //profile.FunctionDebugInfo = funcInfo; //? REMOVE
                                         var offset = frameRva - funcRva;
 
                                         // Don't count the inclusive time for recursive functions multiple times.
@@ -363,7 +366,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     long funcRva = 0;
                                     string funcName = null;
                                     ModuleInfo module = null;
-                                    DebugFunctionInfo funcInfo = null;
+                                    FunctionDebugInfo funcInfo = null;
                                     IRTextFunction textFunction = null;
 
                                     //var modSw = Stopwatch.StartNew();
@@ -376,12 +379,12 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     if (module != null) {
                                         if (managedBaseAddress != 0) {
                                             frameRva = frameIp;
-                                            Trace.WriteLine($"Check managed image {frameImage.ModuleName}");
-                                            Trace.WriteLine($"   for IP {frameIp}");
+                                            // Trace.WriteLine($"Check managed image {frameImage.ModuleName}");
+                                            // Trace.WriteLine($"   for IP {frameIp}");
                                             //trace = true;
 
                                             if (module.HasDebugInfo) {
-                                                funcInfo = module.FindDebugFunctionInfo(frameRva);
+                                                funcInfo = module.FindFunctionDebugInfo(frameRva);
                                             }
                                             else {
                                                 //? TODO: merge with below to add +HEX func names
@@ -391,7 +394,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                             frameRva = frameIp - frameImage.BaseAddress;
 
                                             if (module.HasDebugInfo) {
-                                                funcInfo = module.FindDebugFunctionInfo(frameRva);
+                                                funcInfo = module.FindFunctionDebugInfo(frameRva);
                                             }
                                             
                                             if(funcInfo == null) {
@@ -405,7 +408,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                     }
                                                 }
 
-                                                funcInfo = new DebugFunctionInfo(textFunction.Name, frameIp, 0);
+                                                funcInfo = new FunctionDebugInfo(textFunction.Name, frameIp, 0);
                                             }
                                         }
 
@@ -452,7 +455,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         if (module != null) {
                                             var placeholderName = $"{frameIp:X}";
                                             textFunction = module.AddPlaceholderFunction(placeholderName, frameIp);
-                                            funcInfo = new DebugFunctionInfo(placeholderName, frameIp, 0);
+                                            funcInfo = new FunctionDebugInfo(placeholderName, frameIp, 0);
                                             addedPlaceholder = textFunction != null;
                                         }
 
@@ -486,7 +489,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     }
 
                                     lock (profile) {
-                                        profile.DebugInfo = funcInfo;
+                                        profile.FunctionDebugInfo = funcInfo;
                                         var offset = frameRva - funcRva;
 
                                         // Don't count the inclusive time for recursive functions multiple times.
@@ -536,11 +539,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 ProfileCallTreeNode node = null;
 
                                 if (isRootFrame) {
-                                    node = callTree.AddRootNode(resolvedFrame.FunctionInfo, resolvedFrame.Function);
+                                    node = callTree.AddRootNode(resolvedFrame.Info, resolvedFrame.Function);
                                     isRootFrame = false;
                                 }
                                 else {
-                                    node = callTree.AddChildNode(prevNode, resolvedFrame.FunctionInfo, resolvedFrame.Function);
+                                    node = callTree.AddChildNode(prevNode, resolvedFrame.Info, resolvedFrame.Function);
                                 }
 
                                 node.AccumulateWeight(sampleWeight);
@@ -851,15 +854,15 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 long frameRva = 0;
                 long funcRva = 0;
                 string funcName = null;
-                DebugFunctionInfo funcInfo = null;
+                FunctionDebugInfo funcInfo = null;
 
                 if (managedBaseAddress != 0) {
                     frameRva = counter.IP;
-                    funcInfo = module.FindDebugFunctionInfo(frameRva);
+                    funcInfo = module.FindFunctionDebugInfo(frameRva);
                 }
                 else {
                     frameRva = counter.IP - frameImage.BaseAddress;
-                    funcInfo = module.FindDebugFunctionInfo(frameRva);
+                    funcInfo = module.FindFunctionDebugInfo(frameRva);
                 }
 
                 if (funcInfo != null) {
@@ -914,7 +917,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
     //    if (hasInstrOffsetMetadata && !result.IsCached) {
     //        // Add source location info only once, can be slow.
-    //        module.DebugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
+    //        module.FunctionDebugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
     //    }
 
     //    // Try to find instr. referenced by RVA, then go over all inlinees.
@@ -947,14 +950,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     //}
 
     public void Dispose() {
-        //DebugInfo?.Dispose();
+        //FunctionDebugInfo?.Dispose();
     }
 }
 
 public class ResolvedProfileStackFrame {
     public long FrameIP { get; set; }
     public long FrameRVA { get; set; }
-    public DebugFunctionInfo FunctionInfo { get; set; }
+    public FunctionDebugInfo Info { get; set; }
     public IRTextFunction Function { get; set; }
     public ProfileImage Image { get; set; }
     public ModuleInfo Module { get; set; }
@@ -963,11 +966,11 @@ public class ResolvedProfileStackFrame {
 
     public ResolvedProfileStackFrame() {}
 
-    public ResolvedProfileStackFrame(long frameIP, long frameRVA, DebugFunctionInfo functionInfo, IRTextFunction function,
+    public ResolvedProfileStackFrame(long frameIP, long frameRVA, FunctionDebugInfo info, IRTextFunction function,
         ProfileImage image, ModuleInfo module, FunctionProfileData profile = null) {
         FrameIP = frameIP;
         FrameRVA = frameRVA;
-        FunctionInfo = functionInfo;
+        Info = info;
         Function = function;
         Image = image;
         Module = module;

@@ -160,7 +160,7 @@ namespace IRExplorerUI.Compilers.ASM {
         }
 
         public virtual Task HandleLoadedDocument(LoadedDocument document, string modulePath) {
-            //? TODO: This could assign the DebugFunctionInfo to each IRTextFunction
+            //? TODO: This could assign the FunctionDebugInfo to each IRTextFunction
             //? instead of attaching it to FunctionProfileData
             return Task.CompletedTask;
         }

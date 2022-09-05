@@ -231,7 +231,7 @@ public class FunctionProfileData {
     [ProtoMember(7)]
     public Dictionary<long, PerformanceCounterSet> InstructionCounters { get; set; }
     [ProtoMember(8)]
-    public DebugFunctionInfo DebugInfo { get; set; }
+    public FunctionDebugInfo FunctionDebugInfo { get; set; }
 
     public bool HasPerformanceCounters => InstructionCounters.Count > 0;
     public bool HasCallers => CallerWeights != null && CallerWeights.Count > 0;
@@ -379,7 +379,7 @@ public class FunctionProfileData {
             //? The profile offset is set on the instr. following the one intended,
             //? TryFindElementForOffset account for this but here the FunctionIR
             //? is not being used, subtract 1 to end in that range of the right instr.
-            long rva = pair.Key + DebugInfo.RVA - 1;
+            long rva = pair.Key + FunctionDebugInfo.RVA - 1;
             var lineInfo = debugInfo.FindSourceLineByRVA(rva);
 
             if (!lineInfo.IsUnknown) {
@@ -390,7 +390,7 @@ public class FunctionProfileData {
         }
 
         foreach (var pair in InstructionCounters) {
-            long rva = pair.Key + DebugInfo.RVA;
+            long rva = pair.Key + FunctionDebugInfo.RVA;
             var lineInfo = debugInfo.FindSourceLineByRVA(rva);
 
             if (!lineInfo.IsUnknown) {
@@ -483,22 +483,22 @@ public class IRTextFunctionReference {
 
     }
 
-    public IRTextFunctionReference(IRTextFunction element) {
-        Id = new IRTextFunctionId(element);
-        Value = element;
+    public IRTextFunctionReference(IRTextFunction func) {
+        Id = new IRTextFunctionId(func);
+        Value = func;
     }
 
-    public IRTextFunctionReference(IRTextFunctionId id, IRTextFunction element = null) {
+    public IRTextFunctionReference(IRTextFunctionId id, IRTextFunction func = null) {
         Id = id;
-        Value = element;
+        Value = func;
     }
 
-    public static implicit operator IRTextFunctionReference(IRTextFunction element) {
-        return new IRTextFunctionReference(element);
+    public static implicit operator IRTextFunctionReference(IRTextFunction func) {
+        return new IRTextFunctionReference(func);
     }
 
-    public static implicit operator IRTextFunction(IRTextFunctionReference elementRef) {
-        return elementRef.Value;
+    public static implicit operator IRTextFunction(IRTextFunctionReference funcRef) {
+        return funcRef.Value;
     }
 }
 

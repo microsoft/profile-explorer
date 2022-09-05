@@ -6,7 +6,7 @@ using ProtoBuf;
 namespace IRExplorerUI.Compilers;
 
 [ProtoContract(SkipConstructor = true)]
-public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<DebugFunctionInfo>, IComparable<long> {
+public class FunctionDebugInfo : IEquatable<FunctionDebugInfo>, IComparable<FunctionDebugInfo>, IComparable<long> {
     [ProtoMember(1)]
     public long Id { get; set; }
     [ProtoMember(2)]
@@ -27,7 +27,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     public bool HasSourceLines => SourceLines != null && SourceLines.Count > 0;
     public bool HasOptimizationLevel => !string.IsNullOrEmpty(OptimizationLevel);
 
-    public DebugFunctionInfo(string name, long rva, long size, string optLevel = null, int id = -1) {
+    public FunctionDebugInfo(string name, long rva, long size, string optLevel = null, int id = -1) {
         Name = name;
         RVA = rva;
         Size = size;
@@ -100,10 +100,10 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
     }
 
     public override bool Equals(object obj) {
-        return obj is DebugFunctionInfo info && Equals(info);
+        return obj is FunctionDebugInfo info && Equals(info);
     }
 
-    public bool Equals(DebugFunctionInfo other) {
+    public bool Equals(FunctionDebugInfo other) {
         return RVA == other.RVA &&
                Size == other.Size &&
                Id == other.Id &&
@@ -114,7 +114,7 @@ public class DebugFunctionInfo : IEquatable<DebugFunctionInfo>, IComparable<Debu
         return HashCode.Combine(Id, RVA, Size);
     }
 
-    public int CompareTo(DebugFunctionInfo other) {
+    public int CompareTo(FunctionDebugInfo other) {
         if (StartRVA < other.StartRVA && EndRVA < other.EndRVA) {
             return -1;
         }

@@ -641,7 +641,7 @@ public class ETWEventProcessor : IDisposable {
         var (debugInfo, _)= profile.GetModuleDebugInfo(data.ProcessID, methodMapping.ModuleId);
 
         if (debugInfo != null) {
-            debugInfo.AddMethodILToNativeMap(methodMapping.DebugInfo, ilOffsets);
+            debugInfo.AddMethodILToNativeMap(methodMapping.FunctionDebugInfo, ilOffsets);
         }
     }
 
@@ -658,7 +658,7 @@ public class ETWEventProcessor : IDisposable {
         var funcRva = data.MethodStartAddress;
         //var funcName = data.MethodSignature;
         var funcName = $"{data.MethodNamespace}.{data.MethodName}";
-        var funcInfo = new DebugFunctionInfo(funcName, (long)funcRva, data.MethodSize,
+        var funcInfo = new FunctionDebugInfo(funcName, (long)funcRva, data.MethodSize,
                                              ToOptimizationLevel(data.OptimizationTier), data.MethodToken);
         profile.AddManagedMethodMapping(data.ModuleID, data.MethodID, funcInfo,
                                         (long)data.MethodStartAddress, data.MethodSize, data.ProcessID);

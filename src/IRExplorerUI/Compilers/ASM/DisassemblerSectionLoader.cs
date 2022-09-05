@@ -15,7 +15,7 @@ namespace IRExplorerUI.Compilers {
         private Disassembler disassembler_;
         private IDebugInfoProvider debugInfo_;
         private ICompilerInfoProvider compilerInfo_;
-        private Dictionary<IRTextFunction, DebugFunctionInfo> funcToDebugInfoMap_;
+        private Dictionary<IRTextFunction, FunctionDebugInfo> funcToDebugInfoMap_;
         private DebugFileSearchResult debugInfoFile_;
         private bool isManagedImage_;
 
@@ -29,7 +29,7 @@ namespace IRExplorerUI.Compilers {
             debugInfo_ = debugInfo;
             isManagedImage_ = debugInfo != null;
             summary_ = new IRTextSummary();
-            funcToDebugInfoMap_ = new Dictionary<IRTextFunction, DebugFunctionInfo>();
+            funcToDebugInfoMap_ = new Dictionary<IRTextFunction, FunctionDebugInfo>();
         }
 
         public override IRTextSummary LoadDocument(ProgressInfoHandler progressHandler) {

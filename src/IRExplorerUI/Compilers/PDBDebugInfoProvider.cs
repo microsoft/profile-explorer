@@ -35,7 +35,7 @@ namespace IRExplorerUI.Compilers {
         private IDiaDataSource diaSource_;
         private IDiaSession session_;
         private IDiaSymbol globalSymbol_;
-        private List<DebugFunctionInfo> cachedFunctionList_;
+        private List<FunctionDebugInfo> cachedFunctionList_;
 
         public PDBDebugInfoProvider(SymbolFileSourceOptions options) {
             options_ = options;
@@ -350,19 +350,19 @@ namespace IRExplorerUI.Compilers {
             }
         }
 
-        public DebugFunctionInfo FindFunctionByRVA(long rva) {
+        public FunctionDebugInfo FindFunctionByRVA(long rva) {
             try {
                 session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagFunction, out var funcSym);
 
                 if(funcSym != null) {
-                    return new DebugFunctionInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
+                    return new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length);
                 }
 
                 // Do another lookup as a public symbol.
                 session_.findSymbolByRVA((uint)rva, SymTagEnum.SymTagPublicSymbol, out var funcSym2);
 
                 if (funcSym2 != null) {
-                    return new DebugFunctionInfo(funcSym2.name, funcSym2.relativeVirtualAddress, (long)funcSym2.length);
+                    return new FunctionDebugInfo(funcSym2.name, funcSym2.relativeVirtualAddress, (long)funcSym2.length);
                 }
             }
             catch (Exception ex) { 
@@ -372,9 +372,9 @@ namespace IRExplorerUI.Compilers {
             return null;
         }
 
-        public DebugFunctionInfo FindFunction(string functionName) {
+        public FunctionDebugInfo FindFunction(string functionName) {
             var funcSym = FindFunctionSymbol(functionName);
-            return funcSym != null ? new DebugFunctionInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length) : null;
+            return funcSym != null ? new FunctionDebugInfo(funcSym.name, funcSym.relativeVirtualAddress, (long)funcSym.length) : null;
         }
 
         private bool AnnotateInstructionSourceLocation(IRElement instr, uint instrRVA, IDiaSymbol funcSymbol) {
@@ -431,14 +431,14 @@ namespace IRExplorerUI.Compilers {
             return true;
         }
         
-        public IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal) {
+        public IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal) {
             if (cachedFunctionList_ != null) {
                 foreach (var entry in cachedFunctionList_) {
                     yield return entry;
                 }
             }
             else {
-                cachedFunctionList_ = new List<DebugFunctionInfo>();
+                cachedFunctionList_ = new List<FunctionDebugInfo>();
                 IDiaEnumSymbols symbolEnum;
 
                 try {
@@ -451,7 +451,7 @@ namespace IRExplorerUI.Compilers {
 
                 foreach (IDiaSymbol sym in symbolEnum) {
                     //Trace.WriteLine($" FuncSym {sym.name}: RVA {sym.relativeVirtualAddress:X}, size {sym.length}");
-                    var funcInfo = new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+                    var funcInfo = new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
                     cachedFunctionList_.Add(funcInfo);
                     yield return funcInfo;
                 }
@@ -470,7 +470,7 @@ namespace IRExplorerUI.Compilers {
 
                 foreach (IDiaSymbol sym in publicSymbolEnum) {
                     //Trace.WriteLine($" PublicSym {sym.name}: RVA {sym.relativeVirtualAddress:X} size {sym.length}");
-                    yield return new DebugFunctionInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
+                    yield return new FunctionDebugInfo(sym.name, sym.relativeVirtualAddress, (long)sym.length);
                 }
             }
         }
