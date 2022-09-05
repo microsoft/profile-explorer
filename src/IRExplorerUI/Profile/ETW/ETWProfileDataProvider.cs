@@ -157,13 +157,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 prof.PrintProcess(mainProcessId);
                 //prof.PrintSamples(mainProcessId);
 
-                await LoadBinaryAndDebugFiles(prof, mainProcess, imageName, symbolOptions, progressCallback);
+                await LoadBinaryAndDebugFiles(prof, mainProcess, imageName, symbolOptions, progressCallback, cancelableTask);
+
+                if (cancelableTask != null && cancelableTask.IsCanceled) {
+                    return false;
+                }
 
                 var sw = Stopwatch.StartNew();
                 int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
 
 #if DEBUG
-                //chunks = 1;
+                chunks = 1;
 #endif
 
                 Trace.WriteLine($"Using {chunks} threads");
@@ -254,7 +258,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
                                             if (frameImage != null && stackModules.Add(frameImage.Id)) {
 
-                                                //? TODO: Use info from FindModuleInfo
+                                                //? TODO: Use debugInfo from FindModuleInfo
                                                 lock (lockObject) {
                                                     profileData_.AddModuleSample(frameImage.ModuleName, sampleWeight);
                                                 }
@@ -271,10 +275,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         }
                                     }
 
-                                    //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.Info.Name}, prof func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
+                                    //Trace.WriteLine($"Resolved image {resolvedFrame.Image.ModuleName}m {resolvedFrame.DebugInfo.Name}, prof func {resolvedFrame.Profile.FunctionDebugInfo.Name}, rva {resolvedFrame.FrameRVA}, ip {resolvedFrame.FrameIP}");
                                     
                                     var frameRva = resolvedFrame.FrameRVA;
-                                    var funcInfo = resolvedFrame.Info;
+                                    var funcInfo = resolvedFrame.DebugInfo;
                                     var funcRva = funcInfo.RVA;
                                     var textFunction = resolvedFrame.Function;
                                     var profile = resolvedFrame.Profile;
@@ -521,39 +525,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 stack.SetOptionalData(resolvedStack);
                             }
 
-                            // Build call tree. Note that the call tree methods themselves are thread-safe.
-                            bool isRootFrame = true;
-                            ProfileCallTreeNode prevNode = null;
-
-                            //if (hask) {
-                            //    Utils.WaitForDebugger();
-                            //}
-
-                            for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
-                                var resolvedFrame = resolvedStack.StackFrames[k];
-
-                                if (resolvedFrame.IsUnknown) {
-                                    continue;
-                                }
-
-                                ProfileCallTreeNode node = null;
-
-                                if (isRootFrame) {
-                                    node = callTree.AddRootNode(resolvedFrame.Info, resolvedFrame.Function);
-                                    isRootFrame = false;
-                                }
-                                else {
-                                    node = callTree.AddChildNode(prevNode, resolvedFrame.Info, resolvedFrame.Function);
-                                }
-
-                                node.AccumulateWeight(sampleWeight);
-                                //node.RecordSample(sample, resolvedFrame); //? Remove
-                                prevNode = node;
-                            }
-
-                            if (prevNode != null) {
-                                prevNode.AccumulateExclusiveWeight(sampleWeight);
-                            }
+                            UpdateCallTree(resolvedStack, callTree, sampleWeight);
                         }
                     }));
                 }
@@ -605,6 +577,41 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
+    private void UpdateCallTree(ResolvedProfileStack resolvedStack, ProfileCallTree callTree, TimeSpan sampleWeight) {
+        // Build call tree. Note that the call tree methods themselves are thread-safe.
+        bool isRootFrame = true;
+        ProfileCallTreeNode prevNode = null;
+        ResolvedProfileStackFrame prevFrame = null;
+
+        for (int k = resolvedStack.FrameCount - 1; k >= 0; k--) {
+            var resolvedFrame = resolvedStack.StackFrames[k];
+
+            if (resolvedFrame.IsUnknown) {
+                continue;
+            }
+
+            ProfileCallTreeNode node = null;
+
+            if (isRootFrame) {
+                node = callTree.AddRootNode(resolvedFrame.DebugInfo, resolvedFrame.Function);
+                isRootFrame = false;
+            }
+            else {
+                node = callTree.AddChildNode(prevNode, resolvedFrame.DebugInfo, resolvedFrame.Function);
+                prevNode.AddCallSite(node, prevFrame.FrameRVA, sampleWeight);
+            }
+
+            node.AccumulateWeight(sampleWeight);
+            //node.RecordSample(sample, resolvedFrame); //? Remove
+            prevNode = node;
+            prevFrame = resolvedFrame;
+        }
+
+        if (prevNode != null) {
+            prevNode.AccumulateExclusiveWeight(sampleWeight);
+        }
+    }
+
     private LoadedDocument FindSessionDocuments(string imageName, out List<LoadedDocument> otherDocuments) {
         LoadedDocument exeDocument = null;
         otherDocuments = new List<LoadedDocument>();
@@ -633,7 +640,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     }
 
     private async Task LoadBinaryAndDebugFiles(RawProfileData prof, ProfileProcess mainProcess, string mainImageName,
-                                               SymbolFileSourceOptions symbolOptions, ProfileLoadProgressHandler progressCallback) {
+                                               SymbolFileSourceOptions symbolOptions, 
+                                               ProfileLoadProgressHandler progressCallback,
+                                               CancelableTask cancelableTask) {
         var imageList = mainProcess.Images(prof).ToList();
         int imageLimit = imageList.Count;
 
@@ -652,6 +661,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         IRMode irMode = IRMode.Default;
 
         for (int i = 0; i < imageLimit; i++) {
+            if (cancelableTask != null && cancelableTask.IsCanceled) {
+                return;
+            }
+
             Debug.Assert(binTaskList[i] != null);
             var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
@@ -692,6 +705,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         });
 
         for (int i = 0; i < imageLimit; i++) {
+            if (cancelableTask != null && cancelableTask.IsCanceled) {
+                return;
+            }
+
             var binaryFile = await binTaskList[i].ConfigureAwait(false);
 
             if (binaryFile != null && binaryFile.Found) {
@@ -701,6 +718,10 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
 
         // Wait for the PDBs to be loaded.
         for (int i = 0; i < imageLimit; i++) {
+            if (cancelableTask != null && cancelableTask.IsCanceled) {
+                return;
+            }
+
             if (pdbTaskList[i] != null) {
                 var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
                 Trace.WriteLine($"Loaded PDB: {pdbPath}");
@@ -763,7 +784,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                     .ConfigureAwait(false).GetAwaiter().GetResult()) {
 
                     if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
-                        Trace.TraceWarning($"Failed to load debug info for image: {queryImage.FilePath}");
+                        Trace.TraceWarning($"Failed to load debug debugInfo for image: {queryImage.FilePath}");
                     }
                 }
 
@@ -916,7 +937,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     //        metadataTag != null && metadataTag.OffsetToElementMap.Count > 0;
 
     //    if (hasInstrOffsetMetadata && !result.IsCached) {
-    //        // Add source location info only once, can be slow.
+    //        // Add source location debugInfo only once, can be slow.
     //        module.FunctionDebugInfo.AnnotateSourceLocations(result.Function, textFunction.Name);
     //    }
 
@@ -952,48 +973,50 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     public void Dispose() {
         //FunctionDebugInfo?.Dispose();
     }
-}
 
-public class ResolvedProfileStackFrame {
-    public long FrameIP { get; set; }
-    public long FrameRVA { get; set; }
-    public FunctionDebugInfo Info { get; set; }
-    public IRTextFunction Function { get; set; }
-    public ProfileImage Image { get; set; }
-    public ModuleInfo Module { get; set; }
-    public FunctionProfileData Profile { get; set; }
-    public bool IsUnknown => Image == null;
 
-    public ResolvedProfileStackFrame() {}
+    sealed class ResolvedProfileStackFrame {
+        public long FrameIP { get; set; }
+        public long FrameRVA { get; set; }
+        public FunctionDebugInfo DebugInfo { get; set; }
+        public IRTextFunction Function { get; set; }
+        public ProfileImage Image { get; set; }
+        public ModuleInfo Module { get; set; }
+        public FunctionProfileData Profile { get; set; }
+        public bool IsUnknown => Image == null;
 
-    public ResolvedProfileStackFrame(long frameIP, long frameRVA, FunctionDebugInfo info, IRTextFunction function,
-        ProfileImage image, ModuleInfo module, FunctionProfileData profile = null) {
-        FrameIP = frameIP;
-        FrameRVA = frameRVA;
-        Info = info;
-        Function = function;
-        Image = image;
-        Module = module;
-        Profile = profile;
-    }
-        
-    public static ResolvedProfileStackFrame Unknown => new ResolvedProfileStackFrame();
-}
+        public ResolvedProfileStackFrame() { }
 
-public class ResolvedProfileStack {
-    public List<ResolvedProfileStackFrame> StackFrames { get; set; }
-    public ProfileContext Context { get; set; }
-    public int FrameCount => StackFrames.Count;
+        public ResolvedProfileStackFrame(long frameIP, long frameRVA, FunctionDebugInfo debugInfo, IRTextFunction function,
+            ProfileImage image, ModuleInfo module, FunctionProfileData profile = null) {
+            FrameIP = frameIP;
+            FrameRVA = frameRVA;
+            DebugInfo = debugInfo;
+            Function = function;
+            Image = image;
+            Module = module;
+            Profile = profile;
+        }
 
-    private static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ = new();
-
-    public void AddFrame(ResolvedProfileStackFrame frame) {
-        var existingFrame = frameInstances_.GetOrAdd(frame.FrameIP, frame);
-        StackFrames.Add(existingFrame);
+        public static ResolvedProfileStackFrame Unknown => new ResolvedProfileStackFrame();
     }
 
-    public ResolvedProfileStack(int frameCount, ProfileContext context) {
-        StackFrames = new List<ResolvedProfileStackFrame>(frameCount);
-        Context = context;
+    sealed class ResolvedProfileStack {
+        public List<ResolvedProfileStackFrame> StackFrames { get; set; }
+        public ProfileContext Context { get; set; }
+        public int FrameCount => StackFrames.Count;
+
+        private static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ = new();
+
+        public void AddFrame(ResolvedProfileStackFrame frame) {
+            var existingFrame = frameInstances_.GetOrAdd(frame.FrameIP, frame);
+            StackFrames.Add(existingFrame);
+        }
+
+        public ResolvedProfileStack(int frameCount, ProfileContext context) {
+            StackFrames = new List<ResolvedProfileStackFrame>(frameCount);
+            Context = context;
+        }
     }
+
 }

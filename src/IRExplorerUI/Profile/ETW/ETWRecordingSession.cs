@@ -10,7 +10,7 @@ using Microsoft.Diagnostics.Tracing.Parsers;
 using Microsoft.Diagnostics.Tracing.Session;
 
 namespace IRExplorerUI.Profile.ETW {
-    public class ETWRecordingSession : IDisposable {
+    public sealed class ETWRecordingSession : IDisposable {
         private TraceEventSession session_;
         private ProfileRecordingSessionOptions options_;
         private ProfileDataProviderOptions providerOptions_;

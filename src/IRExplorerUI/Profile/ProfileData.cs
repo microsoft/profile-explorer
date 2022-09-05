@@ -310,6 +310,7 @@ public class FunctionProfileData {
         }
     }
 
+    //? TODO: Dead
     public void AddChildSample(IRTextFunction childFunc, TimeSpan weight) {
         lock (CalleesWeights) {
             var key = new IRTextFunctionId(childFunc);
@@ -323,6 +324,7 @@ public class FunctionProfileData {
         }
     }
 
+    //? TODO: Dead
     public void AddCallerSample(IRTextFunction callerFunc, TimeSpan weight) {
         lock (CallerWeights) {
             var key = new IRTextFunctionId(callerFunc);
@@ -415,8 +417,8 @@ public class FunctionProfileData {
         return result;
     }
 
-    private bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
-        ICompilerIRInfo ir, out IRElement element) {
+    public static bool TryFindElementForOffset(AssemblyMetadataTag metadataTag, long offset,
+                                               ICompilerIRInfo ir, out IRElement element) {
         int multiplier = 1;
         var offsetData = ir.InstructionOffsetData;
 

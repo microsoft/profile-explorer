@@ -713,6 +713,9 @@ namespace IRExplorerUI {
             if (report != null) { // Not set for a new session.
                 LoadPreviousSession(report);
             }
+            else {
+                return;
+            }
 
             if (IsRecordMode) {
                 await StartRecordingSession();

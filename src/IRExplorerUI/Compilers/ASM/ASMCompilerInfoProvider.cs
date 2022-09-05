@@ -206,7 +206,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 var profileOptions = ProfileDocumentMarkerOptions.Default;
                 var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData,
                                                               profileOptions, ir_);
-                document.ColumnData = await profileMarker.Mark(document, function);
+                document.ColumnData = await profileMarker.Mark(document, function, section.ParentFunction);
             }
 
             // Annotate instrs. with source line numbers if debug info is available.

@@ -2377,8 +2377,7 @@ namespace IRExplorerUI {
             Session.DisplayFloatingPanel(panel);
         }
 
-        private FunctionCodeStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader,
-            CallGraph callGraph) {
+        private FunctionCodeStatistics ComputeFunctionStatistics(IRTextSection section, IRTextSectionLoader loader, CallGraph callGraph) {
             var result = loader.LoadSection(section);
 
             if (result == null) {

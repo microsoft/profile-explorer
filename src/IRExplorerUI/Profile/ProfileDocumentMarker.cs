@@ -18,8 +18,10 @@ using System.Windows.Documents;
 using System.IO;
 using System.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
+using System.Text;
 
 namespace IRExplorerUI.Compilers.ASM {
+    // Used as the interface for both the full IR document and lightweight version (source file).
     public interface MarkedDocument {
         double DefaultLineHeight { get; }
         public void SuspendUpdate();
@@ -267,7 +269,7 @@ namespace IRExplorerUI.Compilers.ASM {
             ir_ = ir;
         }
 
-        public async Task<IRDocumentColumnData> Mark(MarkedDocument document, FunctionIR function) {
+        public async Task<IRDocumentColumnData> Mark(MarkedDocument document, FunctionIR function, IRTextFunction textFunction) {
             document.SuspendUpdate();
             IRDocumentColumnData columnData = null;
             var metadataTag = function.GetTag<AssemblyMetadataTag>();
@@ -278,10 +280,70 @@ namespace IRExplorerUI.Compilers.ASM {
                 var result = profile_.Process(function, ir_);
                 columnData = MarkProfiledElements(result, function, document);
                 MarkProfiledBlocks(result.BlockSampledElements, document);
+                MarkCallSites(document, function, textFunction, metadataTag);
             }
 
             document.ResumeUpdate();
             return columnData;
+        }
+
+        private void MarkCallSites(MarkedDocument document, FunctionIR function, IRTextFunction textFunction, AssemblyMetadataTag metadataTag) {
+            var callTree = globalProfile_.CallTree;
+
+            if (callTree == null) {
+                return;
+            }
+
+            //? TODO: Call sites should be unified
+            var nodes = callTree.GetCallTreeNodes(textFunction);
+
+            foreach (var node in nodes) {
+                if (!node.HasCallSites) continue;
+
+                foreach (var callsite in node.CallSites.Values) {
+                    if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA- profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
+                        //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
+
+                        // Skip over direct calls.
+                        if (element is InstructionIR instr &&
+                            ir_.IsCallInstruction(instr)) {
+                            var callTarget = ir_.GetCallTarget(instr);
+
+                            if (callTarget != null && callTarget.HasName) {
+                                Trace.WriteLine($"Ckip {callTarget}");
+                                continue;
+                            }
+                        }
+
+                        var sb = new StringBuilder();
+                        int index = 0;
+
+                        foreach (var target in callsite.Targets) {
+                            if (++index > 1) {
+                                sb.AppendLine();
+                            }
+
+                            double weightPercentage = callsite.ScaleWeight(target.Weight);
+                            sb.Append($"{weightPercentage.AsPercentageString(2, false).PadLeft(6)}  {target.Node.FunctionName}");
+                        }
+
+                        var label = callsite.HasSingleTarget ? sb.ToString() : "Indirect call targets";
+                        var overlay = document.RegisterIconElementOverlay(element, IconDrawing.FromIconResource("ExecuteIconColor"), 16,
+                            16, label, sb.ToString());
+
+                        //overlay.Background = color.AsBrush();
+                        //overlay.Border = blockPen;
+                        overlay.IsLabelPinned = false;
+                        overlay.UseLabelBackground = true;
+                        overlay.ShowBackgroundOnMouseOverOnly = true;
+                        overlay.ShowBorderOnMouseOverOnly = true;
+                        overlay.AlignmentX = HorizontalAlignment.Right;
+                        overlay.MarginX = 8;
+                        overlay.Padding = 2;
+                        
+                    }
+                }
+            }
         }
 
         public async Task<IRDocumentColumnData> MarkSourceLines(MarkedDocument document, FunctionIR function, 
@@ -304,6 +366,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 var color = options_.PickBackColorForOrder(i, weightPercentage, true);
 
                 if (color == Colors.Transparent) {
+                    // 
                     color = block.HasEvenIndexInFunction ?
                         App.Settings.DocumentSettings.BackgroundColor :
                         App.Settings.DocumentSettings.AlternateBackgroundColor;

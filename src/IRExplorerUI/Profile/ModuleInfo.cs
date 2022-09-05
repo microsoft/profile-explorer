@@ -8,7 +8,7 @@ using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
-    public class ModuleInfo {
+    public sealed class ModuleInfo {
         private ISession session_;
         private BinaryFileDescriptor binaryInfo_;
         private List<FunctionDebugInfo> sortedFuncList_;
@@ -50,10 +50,12 @@ namespace IRExplorerUI.Profile {
                 Trace.TraceWarning($"  Could not find local path for image {imageName}");
                 report_.AddModuleInfo(binaryInfo, binFile, ModuleLoadState.NotFound);
 
+                // Create a dummy document to represent the module,
+                // AddPlaceholderFunction will populate it.
                 ModuleDocument = new LoadedDocument(binaryInfo.ImageName, binaryInfo.ImageName, Guid.NewGuid());
                 ModuleDocument.Summary = new IRTextSummary(binaryInfo.ImageName);
+                ModuleDocument.Loader = new DummySectionLoader(); // Placeholder used to prevent null pointers.
                 Summary = ModuleDocument.Summary;
-
                 return false;
             }
 
@@ -210,9 +212,12 @@ namespace IRExplorerUI.Profile {
             return null;
         }
 
-        private IRTextFunction FindExternalFunction(long funcAddress) {
+        private IRTextFunction FindExternalFunction(long funcAddress, bool useLock = true) {
             try {
-                lock_.EnterReadLock();
+                if (useLock) {
+                    lock_.EnterReadLock();
+                }
+
                 if (externalsFuncMap_ == null || externalFuncNames_ == null) {
                     return null;
                 }
@@ -224,7 +229,9 @@ namespace IRExplorerUI.Profile {
                 return externalFuncNames_.GetValueOrNull(externalFuncName);
             }
             finally {
-                lock_.ExitReadLock();
+                if (useLock) {
+                    lock_.ExitReadLock();
+                }
             }
         }
 
@@ -236,7 +243,7 @@ namespace IRExplorerUI.Profile {
             try {
                 // Search again under the lock.
                 lock_.EnterWriteLock();
-                var func = FindExternalFunction(funcAddress);
+                var func = FindExternalFunction(funcAddress, false);
 
                 if (func != null) {
                     return func;
