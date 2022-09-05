@@ -15,8 +15,8 @@ using IRExplorerCore.Utilities;
 
 namespace IRExplorerUI.Compilers {
     public class JsonDebugInfoProvider : IDebugInfoProvider {
-        private Dictionary<string, DebugFunctionInfo> functionMap_;
-        private List<DebugFunctionInfo> functions_;
+        private Dictionary<string, FunctionDebugInfo> functionMap_;
+        private List<FunctionDebugInfo> functions_;
         public Machine? Architecture => null;
         public SymbolFileSourceOptions SymbolOptions { get; set; }
 
@@ -50,7 +50,7 @@ namespace IRExplorerUI.Compilers {
 
             return true;
         }
-        public DebugFunctionInfo FindFunction(string functionName) {
+        public FunctionDebugInfo FindFunction(string functionName) {
             return functionMap_.GetValueOrDefault(functionName);
         }
 
@@ -58,11 +58,11 @@ namespace IRExplorerUI.Compilers {
             
         }
 
-        public IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal) {
+        public IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal) {
             return functions_;
         }
 
-        public DebugFunctionInfo FindFunctionByRVA(long rva) {
+        public FunctionDebugInfo FindFunctionByRVA(long rva) {
             foreach (var func in functions_) {
                 if (func.StartRVA >= rva && func.EndRVA < rva) {
                     return func;
@@ -84,7 +84,7 @@ namespace IRExplorerUI.Compilers {
             return DebugFunctionSourceFileInfo.Unknown;
         }
 
-        private static DebugFunctionSourceFileInfo GetSourceFileInfo(DebugFunctionInfo info)
+        private static DebugFunctionSourceFileInfo GetSourceFileInfo(FunctionDebugInfo info)
         {
             return new DebugFunctionSourceFileInfo(info.StartDebugSourceLine.FilePath,
                 info.StartDebugSourceLine.FilePath,
@@ -117,7 +117,7 @@ namespace IRExplorerUI.Compilers {
                 return false;
             }
 
-            functionMap_ = new Dictionary<string, DebugFunctionInfo>(functions_.Count);
+            functionMap_ = new Dictionary<string, FunctionDebugInfo>(functions_.Count);
 
             foreach (var func in functions_) {
                 functionMap_[func.Name] = func;

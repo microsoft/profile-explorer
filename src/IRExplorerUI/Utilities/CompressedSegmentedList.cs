@@ -513,12 +513,6 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
                         throw new InvalidOperationException("List modified, potential thread racing bug");
                     }
 #endif
-                    if (segment == null || segment.values_ == null ||
-                        i >= segment.Count) {
-                        Utils.WaitForDebugger();
-                        ;
-                    }
-
                     yield return segment.GetValueDirect(i);
                 }
 

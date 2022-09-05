@@ -63,18 +63,18 @@ namespace IRExplorerUI.Compilers {
             }
         }
         
-        private Dictionary<string, DebugFunctionInfo> functionMap_;
-        private List<DebugFunctionInfo> functions_;
+        private Dictionary<string, FunctionDebugInfo> functionMap_;
+        private List<FunctionDebugInfo> functions_;
         private Machine architecture_;
-        private Dictionary<DebugFunctionInfo, List<(int ILOffset, int NativeOffset)>> methodILNativeMap_;
+        private Dictionary<FunctionDebugInfo, List<(int ILOffset, int NativeOffset)>> methodILNativeMap_;
         private Dictionary<long, MethodCode> methodCodeMap_;
         private bool hasManagedSymbolFileFailure_;
 
         public DotNetDebugInfoProvider(Machine architecture) {
             architecture_ = architecture;
-            functionMap_ = new Dictionary<string, DebugFunctionInfo>();
-            functions_ = new List<DebugFunctionInfo>();
-            methodILNativeMap_ = new Dictionary<DebugFunctionInfo, List<(int ILOffset, int NativeOffset)>>();
+            functionMap_ = new Dictionary<string, FunctionDebugInfo>();
+            functions_ = new List<FunctionDebugInfo>();
+            methodILNativeMap_ = new Dictionary<FunctionDebugInfo, List<(int ILOffset, int NativeOffset)>>();
         }
         
         public Machine? Architecture => architecture_;
@@ -82,11 +82,11 @@ namespace IRExplorerUI.Compilers {
         public SymbolFileDescriptor ManagedSymbolFile { get; set; }
         public string ManagedAsmFilePath { get; set; }
 
-        public MethodCode FindMethodCode(DebugFunctionInfo funcInfo) {
+        public MethodCode FindMethodCode(FunctionDebugInfo funcInfo) {
             return methodCodeMap_?.GetValueOrNull(funcInfo.RVA);
         }
 
-        public void AddFunctionInfo(DebugFunctionInfo funcInfo) {
+        public void AddFunctionInfo(FunctionDebugInfo funcInfo) {
             functions_.Add(funcInfo);
             functionMap_[funcInfo.Name] = funcInfo;
         }
@@ -95,11 +95,11 @@ namespace IRExplorerUI.Compilers {
             return AnnotateSourceLocations(function, textFunc.Name);
         }
 
-        private bool EnsureHasSourceLines(DebugFunctionInfo debugInfo) {
-            if (debugInfo == null) {
+        private bool EnsureHasSourceLines(FunctionDebugInfo functionDebugInfo) {
+            if (functionDebugInfo == null) {
                 return false;
             }
-            else if (debugInfo.HasSourceLines) {
+            else if (functionDebugInfo.HasSourceLines) {
                 return true;
             }
             else if (ManagedSymbolFile == null || hasManagedSymbolFileFailure_) {
@@ -129,19 +129,19 @@ namespace IRExplorerUI.Compilers {
             if (!File.Exists(debugFile)) {
                 // Don't try again if PDB not found.
                 hasManagedSymbolFileFailure_ = true;
-                return debugInfo.HasSourceLines;
+                return functionDebugInfo.HasSourceLines;
             }
 
-            lock (debugInfo) {
-                if (!methodILNativeMap_.TryGetValue(debugInfo, out var ilOffsets)) {
-                    return debugInfo.HasSourceLines;
+            lock (functionDebugInfo) {
+                if (!methodILNativeMap_.TryGetValue(functionDebugInfo, out var ilOffsets)) {
+                    return functionDebugInfo.HasSourceLines;
                 }
 
                 try {
                     using var stream = File.OpenRead(debugFile);
                     var mdp = MetadataReaderProvider.FromPortablePdbStream(stream);
                     var md = mdp.GetMetadataReader();
-                    var debugHandle = MetadataTokens.MethodDebugInformationHandle((int)debugInfo.Id);
+                    var debugHandle = MetadataTokens.MethodDebugInformationHandle((int)functionDebugInfo.Id);
 
                     var managedDebugInfo = md.GetMethodDebugInformation(debugHandle);
                     var sequencePoints = managedDebugInfo.GetSequencePoints();
@@ -173,7 +173,7 @@ namespace IRExplorerUI.Compilers {
                             var docName = md.GetString(doc.Name);
                             var lineInfo = new DebugSourceLineInfo(pair.NativeOffset, closestPoint.Value.StartLine,
                                 closestPoint.Value.StartColumn, docName);
-                            debugInfo.AddSourceLine(lineInfo);
+                            functionDebugInfo.AddSourceLine(lineInfo);
                         }
                     }
                 }
@@ -182,7 +182,7 @@ namespace IRExplorerUI.Compilers {
                     hasManagedSymbolFileFailure_ = true;
                 }
 
-                return debugInfo.HasSourceLines;
+                return functionDebugInfo.HasSourceLines;
             }
         }
 
@@ -212,7 +212,7 @@ namespace IRExplorerUI.Compilers {
 
             return true;
         }
-        public DebugFunctionInfo FindFunction(string functionName) {
+        public FunctionDebugInfo FindFunction(string functionName) {
             return functionMap_.GetValueOrDefault(functionName);
         }
 
@@ -220,11 +220,11 @@ namespace IRExplorerUI.Compilers {
             
         }
 
-        public IEnumerable<DebugFunctionInfo> EnumerateFunctions(bool includeExternal) {
+        public IEnumerable<FunctionDebugInfo> EnumerateFunctions(bool includeExternal) {
             return functions_;
         }
 
-        public DebugFunctionInfo FindFunctionByRVA(long rva) {
+        public FunctionDebugInfo FindFunctionByRVA(long rva) {
             //? TODO: BinSearch
             foreach (var func in functions_) {
                 if (rva >= func.StartRVA  && rva < func.EndRVA) {
@@ -247,7 +247,7 @@ namespace IRExplorerUI.Compilers {
             return DebugFunctionSourceFileInfo.Unknown;
         }
 
-        private static DebugFunctionSourceFileInfo GetSourceFileInfo(DebugFunctionInfo info)
+        private static DebugFunctionSourceFileInfo GetSourceFileInfo(FunctionDebugInfo info)
         {
             return new DebugFunctionSourceFileInfo(info.StartDebugSourceLine.FilePath,
                 info.StartDebugSourceLine.FilePath,
@@ -301,8 +301,8 @@ namespace IRExplorerUI.Compilers {
             return LoadDebugInfo(debugFile.FilePath);
         }
 
-        public void AddMethodILToNativeMap(DebugFunctionInfo debugInfo, List<(int ILOffset, int NativeOffset)> ilOffsets) {
-            methodILNativeMap_[debugInfo] = ilOffsets;
+        public void AddMethodILToNativeMap(FunctionDebugInfo functionDebugInfo, List<(int ILOffset, int NativeOffset)> ilOffsets) {
+            methodILNativeMap_[functionDebugInfo] = ilOffsets;
         }
     }
 }

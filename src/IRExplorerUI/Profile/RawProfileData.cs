@@ -108,11 +108,11 @@ public class RawProfileData {
     }
 
     public void AddManagedMethodMapping(long moduleId, long methodId,
-                                         DebugFunctionInfo debugInfo, 
+                                         FunctionDebugInfo functionDebugInfo, 
                                          long ip, int size, int processId) {
         var (moduleDebugInfo, moduleImage) = GetModuleDebugInfo(processId, moduleId);
 
-        var mapping = new ManagedMethodMapping(debugInfo, moduleImage, moduleId, ip, size);
+        var mapping = new ManagedMethodMapping(functionDebugInfo, moduleImage, moduleId, ip, size);
         var data = GetOrCreateManagedData(processId);
         data.managedMethods_.Add(mapping);
 
@@ -124,27 +124,27 @@ public class RawProfileData {
         }
 
         //? TODO: MethodID is identical between opt levels, either split by level or use time like TraceEvent
-        var initialName = debugInfo.Name;
+        var initialName = functionDebugInfo.Name;
 
         if (data.managedMethodsMap_.TryGetValue(initialName, out var other)) {
-            if (other.DebugInfo.HasOptimizationLevel &&
-                !other.DebugInfo.Name.EndsWith(other.DebugInfo.OptimizationLevel)) {
-                other.DebugInfo.Name = $"{other.DebugInfo.Name}_{other.DebugInfo.OptimizationLevel}";
+            if (other.FunctionDebugInfo.HasOptimizationLevel &&
+                !other.FunctionDebugInfo.Name.EndsWith(other.FunctionDebugInfo.OptimizationLevel)) {
+                other.FunctionDebugInfo.Name = $"{other.FunctionDebugInfo.Name}_{other.FunctionDebugInfo.OptimizationLevel}";
             }
 
-            if (debugInfo.HasOptimizationLevel) {
-                debugInfo.Name = $"{debugInfo.Name}_{debugInfo.OptimizationLevel}";
+            if (functionDebugInfo.HasOptimizationLevel) {
+                functionDebugInfo.Name = $"{functionDebugInfo.Name}_{functionDebugInfo.OptimizationLevel}";
             }
         }
 
-        moduleDebugInfo.AddFunctionInfo(debugInfo);
+        moduleDebugInfo.AddFunctionInfo(functionDebugInfo);
         data.managedMethodIdMap_[methodId] = mapping;
         data.managedMethodsMap_[initialName] = mapping;
     }
 
     public ManagedMethodMapping FindManagedMethodForIP(long ip, int processId) {
         var data = GetOrCreateManagedData(processId);
-        return DebugFunctionInfo.BinarySearch(data.managedMethods_, ip);
+        return FunctionDebugInfo.BinarySearch(data.managedMethods_, ip);
     }
 
     public ManagedMethodMapping FindManagedMethod(long id, int processId) {
@@ -635,9 +635,9 @@ public class RawProfileData {
 
 [ProtoContract(SkipConstructor = true)]
 public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparable<long>, IEquatable<ManagedMethodMapping> {
-    public ManagedMethodMapping(DebugFunctionInfo debugInfo, ProfileImage image, 
+    public ManagedMethodMapping(FunctionDebugInfo functionDebugInfo, ProfileImage image, 
                                 long moduleId, long ip, int size) {
-        DebugInfo = debugInfo;
+        FunctionDebugInfo = functionDebugInfo;
         Image = image;
         ModuleId = moduleId;
         IP = ip;
@@ -645,7 +645,7 @@ public class ManagedMethodMapping : IComparable<ManagedMethodMapping>, IComparab
     }
 
     [ProtoMember(1)]
-    public DebugFunctionInfo DebugInfo { get; }
+    public FunctionDebugInfo FunctionDebugInfo { get; }
     [ProtoMember(2)]
     public ProfileImage Image { get; set; }
     [ProtoMember(3)]
