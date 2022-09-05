@@ -31,11 +31,13 @@ namespace IRExplorerCore {
         private ManualResetEvent taskCompletedEvent_;
         private CancellationTokenSource tokenSource_;
         private bool disposed_;
+        private bool completeOnCancel_;
 
-        public CancelableTask() {
+        public CancelableTask(bool completeOnCancel = true) {
             taskCompletedEvent_ = new ManualResetEvent(false);
             tokenSource_ = new CancellationTokenSource();
             cancelToken_ = tokenSource_.Token;
+            completeOnCancel_ = completeOnCancel;
 
             //Debug.WriteLine($"+ Create task {ObjectTracker.Track(this)}");
             //Debug.WriteLine($"{Environment.StackTrace}\n-------------------------------------------\n");
@@ -113,11 +115,18 @@ namespace IRExplorerCore {
             }
 
             tokenSource_.Cancel();
-            taskCompletedEvent_.Set();
+
+            if (completeOnCancel_) {
+                taskCompletedEvent_.Set();
+            }
         }
 
         protected virtual void Dispose(bool disposing) {
             if (!disposed_) {
+                if (!(IsCanceled && completeOnCancel_)) {
+                    taskCompletedEvent_.Set(); // May not be marked as completed yet.
+                }
+
                 tokenSource_.Dispose();
                 taskCompletedEvent_.Dispose();
                 disposed_ = true;

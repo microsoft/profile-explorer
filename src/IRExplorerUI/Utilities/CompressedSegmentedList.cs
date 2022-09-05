@@ -218,10 +218,17 @@ public sealed class CompressedSegmentedList<T> : IList<T> where T : struct {
 
     // The GC Large Object Heap is used for allocations > 85 KB,
     // ensure each segments stays below that limit.
-    static int LOHObjectSize = 80 * 1024;
+    private const int LOHObjectSize = 80 * 1024;
+    private static readonly int SegmentLength = Math.Max(1, LOHObjectSize / Unsafe.SizeOf<T>());
+
+    // Round up number to the nearest multiple of the segment length.
+    public static int RoundUpToSegmentLength(int n) {
+        Debug.Assert(n > 0);
+        return ((n - 1) / SegmentLength + 1) * SegmentLength;
+    }
 
     public CompressedSegmentedList(bool useThreads = true, bool prefetch = true, int prefetchLimit = 2) :
-        this(Math.Max(1, LOHObjectSize / Unsafe.SizeOf<T>()), useThreads, prefetch, prefetchLimit) { }
+        this(SegmentLength, useThreads, prefetch, prefetchLimit) { }
 
     public CompressedSegmentedList(int segmentLength, bool useThreads = true,
                                    bool prefetch = true, int prefetchLimit = 2) {

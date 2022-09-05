@@ -7,6 +7,11 @@ namespace IRExplorerCore {
     public class CancelableTaskInstance : IDisposable {
         private object lockObject_ = new object();
         private CancelableTask taskInstance_;
+        private bool completeOnCancel_;
+
+        public CancelableTaskInstance(bool completeOnCancel = true) {
+            completeOnCancel_ = completeOnCancel;
+        }
 
         public delegate void CancelableTaskDelegate(CancelableTask task);
 
@@ -17,7 +22,7 @@ namespace IRExplorerCore {
                     CancelTask();
                 }
 
-                taskInstance_ = new CancelableTask();
+                taskInstance_ = new CancelableTask(completeOnCancel_);
                 registerAction?.Invoke(taskInstance_);
                 return taskInstance_;
             }
@@ -36,7 +41,7 @@ namespace IRExplorerCore {
             }
 
             lock (lockObject_) {
-                taskInstance_ = new CancelableTask();
+                taskInstance_ = new CancelableTask(completeOnCancel_);
                 registerAction?.Invoke(taskInstance_);
                 return taskInstance_;
             }

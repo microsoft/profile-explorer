@@ -9,12 +9,14 @@
     xmlns:profile="clr-namespace:IRExplorerUI.Profile"
     xmlns:xctk="clr-namespace:Xceed.Wpf.Toolkit;assembly=DotNetProjects.Wpf.Extended.Toolkit"
     Title="Load profile trace"
-    Width="750"
+    Width="800"
     Height="600"
     MinWidth="600"
+    MinHeight="500"
+    d:DesignHeight="800"
     ResizeMode="CanResizeWithGrip"
     ShowInTaskbar="False"
-    SizeToContent="Manual"
+    SizeToContent="Height"
     WindowStartupLocation="CenterOwner"
     WindowStyle="ToolWindow"
     mc:Ignorable="d">
@@ -26,7 +28,7 @@
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                    IsEnabled="{Binding InputControlsEnabled}"
+                    IsEnabled="{Binding ProcessListEnabled}"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                     SelectionChanged="SessionList_SelectionChanged"
                     SelectionMode="Single">
@@ -54,17 +56,6 @@
                                         </Style>
                                     </StackPanel.Style>
 
-                                    <Button
-                                        Name="EditReportButton"
-                                        Width="20"
-                                        Height="20"
-                                        Padding="1"
-                                        Background="Transparent"
-                                        BorderThickness="0"
-                                        Click="SessionReportButton_Click"
-                                        ToolTip="Open session report">
-                                        <Image Height="16" Source="{StaticResource EditIcon}" />
-                                    </Button>
                                     <Button
                                         Name="SessionReportButton"
                                         Width="20"
@@ -98,7 +89,7 @@
 
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=IsNewSession}" Value="True">
-                                    <Setter Property="Foreground" Value="DarkBlue" />
+                                    <Setter Property="Foreground" Value="MediumBlue" />
                                 </DataTrigger>
                             </Style.Triggers>
                         </Style>
@@ -112,6 +103,23 @@
                 <TabItem Header="Session">
                     <StackPanel Margin="0,0,0,8" Orientation="Vertical">
                         <StackPanel x:Name="ProfileCapturePanel" Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibility}}">
+
+                            <TextBlock Margin="8,6,8,0" Text="Profiling target" />
+
+                            <RadioButton
+                                x:Name="StartAppRadioButton"
+                                Margin="8,6,8,0"
+                                Content="Start application"
+                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
+                                IsEnabled="{Binding InputControlsEnabled}"
+                                ToolTip="Start a new process and record only its profile" />
+                            <RadioButton
+                                x:Name="SystemWideRadioButton"
+                                Margin="8,4,8,0"
+                                Content="System-wide"
+                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
+                                IsEnabled="{Binding InputControlsEnabled}"
+                                ToolTip="Profiles every application running on the current machine" />
                             <TextBlock Margin="8,8,8,0" Text="Session name" />
                             <TextBox
                                 Height="22"
@@ -121,21 +129,6 @@
                                 BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 Text="{Binding Path=RecordingOptions.Title, Mode=TwoWay}" />
-                            <TextBlock Margin="8,6,8,0" Text="Profiling target" />
-                            <RadioButton
-                                x:Name="SystemWideRadioButton"
-                                Margin="8,6,8,0"
-                                Content="System-wide"
-                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
-                                IsEnabled="{Binding InputControlsEnabled}"
-                                ToolTip="Profiles every application running on the current machine" />
-                            <RadioButton
-                                x:Name="StartAppRadioButton"
-                                Margin="8,4,8,0"
-                                Content="Start application"
-                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
-                                IsEnabled="{Binding InputControlsEnabled}"
-                                ToolTip="Start a new process and record only its profile" />
                             <Separator Margin="0,8,0,8" />
 
                             <StackPanel x:Name="StartProcessPanel" Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibility}}">
@@ -375,13 +368,6 @@
                             </Grid>
                         </StackPanel>
 
-                        <ProgressBar
-                            x:Name="SummaryProgressBar"
-                            Height="4"
-                            Margin="8,4,8,0"
-                            HorizontalAlignment="Stretch"
-                            Maximum="100"
-                            Visibility="{Binding IsLoadingProcessList, Converter={StaticResource BoolToVisibility}}" />
                         <ListView
                             x:Name="ProcessList"
                             MinHeight="100"
@@ -389,7 +375,7 @@
                             Margin="8,4,8,0"
                             VerticalAlignment="Stretch"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                            IsEnabled="{Binding InputControlsEnabled}"
+                            IsEnabled="{Binding ProcessListEnabled}"
                             ScrollViewer.VerticalScrollBarVisibility="Auto"
                             SelectionChanged="ProcessList_OnSelectionChanged"
                             SelectionMode="Single"
@@ -485,7 +471,6 @@
                                     VerticalAlignment="Top"
                                     Click="CancelButton_Click"
                                     Content="Cancel"
-                                    IsCancel="True"
                                     Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibility}}" />
                                 <Button
                                     x:Name="LoadButton"

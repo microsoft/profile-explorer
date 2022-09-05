@@ -1274,7 +1274,6 @@ namespace IRExplorerUI {
                     AddDummyRows(docLineCount - prevLine, prevIsOddBlock);
                 }
 
-                UpdateProfileDataColumnWidths();
                 return elementValueList;
             });
 
@@ -1285,6 +1284,7 @@ namespace IRExplorerUI {
                 columnHeader.Header.MouseDoubleClick += ColumnHeaderOnDoubleClick;
             }
 
+            UpdateProfileDataColumnWidths();
             ColumnsList.ItemsSource = new ListCollectionView(elementValueList);
             ColumnsList.Background = settings_.BackgroundColor.AsBrush();
         }
