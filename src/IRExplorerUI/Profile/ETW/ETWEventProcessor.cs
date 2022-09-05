@@ -24,7 +24,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace IRExplorerUI.Profile.ETW;
 
-public class ETWEventProcessor : IDisposable {
+public sealed class ETWEventProcessor : IDisposable {
     const double SamplingErrorMargin = 1.1; // 10% deviation from sampling interval allowed.
     const int SampleReportingInterval = 10000;
     const int EventReportingInterval = 10000;
@@ -235,7 +235,7 @@ public class ETWEventProcessor : IDisposable {
             int timeStamp = data.TimeDateStamp;
             bool sawImageId = false;
 
-            Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
+            //Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
             //Trace.WriteLine($"   has last {lastImageIdData != null}");
             //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
             //

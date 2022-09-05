@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using IRExplorerCore;
@@ -177,15 +179,15 @@ public class ProfileCallTree {
 
         return childNode;
     }
-
+    
     public void RegisterFunctionTreeNode(ProfileCallTreeNode node) {
         // Add an unique instance of the node for a function.
         node.Id = Interlocked.Increment(ref nextNodeId_);
-
         List<ProfileCallTreeNode> nodeList = null;
-        funcLock_.EnterUpgradeableReadLock();
 
         try {
+            funcLock_.EnterUpgradeableReadLock();
+
             if (!funcToNodesMap_.TryGetValue(node.Function, out nodeList)) {
                 funcLock_.EnterWriteLock();
                 try {
@@ -207,9 +209,9 @@ public class ProfileCallTree {
     }
 
     public List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function) {
-        funcLock_.EnterReadLock();
-
         try {
+            funcLock_.EnterReadLock();
+
             if (funcToNodesMap_.TryGetValue(function, out var nodeList)) {
                 return nodeList;
             }
@@ -337,20 +339,51 @@ public class ProfileCallTree {
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
+    [ProtoContract(SkipConstructor = true)]
+    public class CallSite {
+        [ProtoMember(1)] 
+        public long RVA { get; set; }
+        [ProtoMember(2)] 
+        public TimeSpan Weight { get; set; }
+        [ProtoMember(3)] 
+        public List<(ProfileCallTreeNode Node, TimeSpan Weight)> Targets { get; set; }
+
+        public bool HasSingleTarget => Targets.Count == 1;
+
+        public CallSite(long rva) {
+            InitializeReferenceMembers();
+            RVA = rva;
+            Weight = TimeSpan.Zero;
+        }
+
+        public double ScaleWeight(TimeSpan weight) {
+            return (double)weight.Ticks / (double)Weight.Ticks;
+        }
+
+        [ProtoAfterDeserialization]
+        private void InitializeReferenceMembers() {
+            Targets ??= new List<(ProfileCallTreeNode Node, TimeSpan Weight)>();
+        }
+    }
+
     [ProtoMember(1)]
     private IRTextFunctionReference functionRef_ { get; set; }
     [ProtoMember(2)]
     private List<ProfileCallTreeNode> children_;
-    private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
-    private ReaderWriterLockSlim lock_;
+    //? stack overflow
+    //[ProtoMember(3)] 
+    private Dictionary<long, CallSite> callSites_;
 
-    [ProtoMember(3)]
-    public long Id { get; set; }
+    private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
+    private ReaderWriterLockSlim lock_; // Lock for updating children, callers, call sites.
+
     [ProtoMember(4)]
-    public FunctionDebugInfo FunctionDebugInfo { get; set; }
+    public long Id { get; set; }
     [ProtoMember(5)]
-    public TimeSpan Weight { get; set; }
+    public FunctionDebugInfo FunctionDebugInfo { get; set; }
     [ProtoMember(6)]
+    public TimeSpan Weight { get; set; }
+    [ProtoMember(7)]
     public TimeSpan ExclusiveWeight { get; set; }
 
     public IRTextFunction Function {
@@ -360,9 +393,11 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     public List<ProfileCallTreeNode> Children => children_;
     public List<ProfileCallTreeNode> Callers => callers_;
+    public Dictionary<long, CallSite> CallSites => callSites_;
 
     public bool HasChildren => Children != null && Children.Count > 0;
     public bool HasCallers => Callers != null && Callers.Count > 0;
+    public bool HasCallSites => CallSites != null && CallSites.Count > 0;
     public string FunctionName => Function.Name;
     public string ModuleName => Function.ParentSummary.ModuleName;
 
@@ -382,8 +417,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public ProfileCallTreeNode(FunctionDebugInfo funcInfo, IRTextFunction function,
-        List<ProfileCallTreeNode> children = null,
-        List<ProfileCallTreeNode> callers = null) {
+                               List<ProfileCallTreeNode> children = null,
+                               List<ProfileCallTreeNode> callers = null) {
         InitializeReferenceMembers();
         FunctionDebugInfo = funcInfo;
         Function = function;
@@ -430,19 +465,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
         return (childNode, isNewNode);
     }
-        
-    public void RecordSample(ProfileSample sample, ResolvedProfileStackFrame stackFrame) {
-        //lock_.EnterWriteLock();
-        //try {
-        //    samples_ ??= new Dictionary<long, ProfileSample>();
-        //    samples_[stackFrame.FrameIP] = sample;
-        //    sampleCount_++;
-        //}
-        //finally {
-        //    lock_.ExitWriteLock();
-        //}
-    }
-
+    
     private void AddParent(ProfileCallTreeNode parentNode) {
         try {
             lock_.EnterUpgradeableReadLock();
@@ -521,8 +544,34 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         }
     }
 
+    public void AddCallSite(ProfileCallTreeNode childNode, long rva, TimeSpan weight) {
+        try {
+            lock_.EnterWriteLock();
+
+            if (callSites_ == null || !callSites_.TryGetValue(rva, out var callsite)) {
+                callSites_ ??= new Dictionary<long, CallSite>();
+                callsite = new CallSite(rva);
+                callSites_[rva] = callsite;
+            }
+
+            callsite.Weight += weight; // Weight of all targets.
+            int index = callsite.Targets.FindIndex(item => item.Node == childNode);
+
+            if (index != -1) {
+                var span = CollectionsMarshal.AsSpan(callsite.Targets);
+                span[index].Weight += weight; // Modify in-place per-target weight.
+            }
+            else {
+                callsite.Targets.Add((childNode, weight));
+            }
+        }
+        finally {
+            lock_.ExitWriteLock();
+        }
+    }
+
     private ProfileCallTreeNode FindExistingNode(List<ProfileCallTreeNode> list,
-        FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
+                                                 FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
         if (list != null) {
             foreach (var child in list) {
                 if (child.Equals(functionDebugInfo, function)) {

@@ -171,7 +171,7 @@ namespace IRExplorerUI.Compilers {
         }
 
         public override ReadOnlyMemory<char> GetRawSectionPassOutputSpan(IRPassOutput output) {
-            return default;
+            return ReadOnlyMemory<char>.Empty;
         }
 
         protected override void Dispose(bool disposing) {

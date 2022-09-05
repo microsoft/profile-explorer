@@ -514,6 +514,8 @@ namespace IRExplorerUI {
                 return;
             }
 
+            //? Pretty hacky approach that makes a fake function
+            //? wirh IR elements to represent each source line.
             firstSourceLineIndex_ = result.FirstLineIndex;
             lastSourceLineIndex_ = result.LastLineIndex;
             int totalLines = TextView.Document.LineCount;

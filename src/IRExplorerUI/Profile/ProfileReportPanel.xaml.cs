@@ -12,6 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using IRExplorerCore;
 
 namespace IRExplorerUI.Profile {
@@ -27,9 +28,13 @@ namespace IRExplorerUI.Profile {
         public void ShowReport(ProfileDataReport report) {
             report_ = report;
             DataContext = report;
-            ModuleList.ItemsSource = new ListCollectionView(report.Modules);
+
+            var modules = report.Modules;
+            modules.Sort((a, b) => a.ImageFileInfo.ImageName.CompareTo(b.ImageFileInfo.ImageName));
+            ModuleList.ItemsSource = new ListCollectionView(modules);
 
             if (report.RunningProcesses != null) {
+                // Process list is already sorted by weight.
                 ProcessList.ItemsSource = new ListCollectionView(report.RunningProcesses);
             }
         }
