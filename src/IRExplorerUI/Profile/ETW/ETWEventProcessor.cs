@@ -67,6 +67,14 @@ public class ETWEventProcessor : IDisposable {
         providerOptions_ = providerOptions;
     }
 
+    public static bool IsKernelAddress(ulong ip, int pointerSize) {
+        if (pointerSize == 4) {
+            return ip >= 0x80000000;
+        }
+
+        return ip >= 0xFFFF000000000000;
+    }
+
     public List<ProcessSummary> BuildProcessSummary(ProcessListProgressHandler progressCallback,
                                                     CancelableTask cancelableTask) {
         // Default 1ms sampling interval 1ms.
@@ -293,24 +301,17 @@ public class ETWEventProcessor : IDisposable {
             profile.TraceInfo.MemorySize = data.MemSize;
         };
 
-        bool IsKernelAddress(ulong ip, int pointerSize) {
-            //? TODO: Check pointerSize
-            return ip >= 0xFFFF000000000000;
-        }
-
         source_.Kernel.StackWalkStack += data => {
             bool isKernelStack = false;
 
             if (data.FrameCount > 0 &&
-                IsKernelAddress(data.InstructionPointer(0), 8)) {
+                IsKernelAddress(data.InstructionPointer(0), data.PointerSize)) {
                 isKernelStack = true;
                 
                 //Trace.WriteLine($"Kernel stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
-                
-                
-                if (data.FrameCount > 1 && !IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), 8)) {
-                  //  Trace.WriteLine("     ends in user");
-                }
+                //if (data.FrameCount > 1 && !IsKernelAddress(data.InstructionPointer(data.FrameCount - 1), 8)) {
+                //  //  Trace.WriteLine("     ends in user");
+                //}
             }
             else {
                 //Trace.WriteLine($"User stack {data.InstructionPointer(0):X}, proc {data.ProcessID}, name {data.ProcessName}, TS {data.EventTimeStampQPC}");
@@ -327,27 +328,27 @@ public class ETWEventProcessor : IDisposable {
 
             ProfileStack kstack = null;
 
-            //if (!isKernelStack) {
-            //    var lastKernelStack = perCoreLastKernelStack[data.ProcessorNumber];
+            if (!isKernelStack) {
+                var lastKernelStack = perCoreLastKernelStack[data.ProcessorNumber];
 
-            //    if (lastKernelStack.StackId != 0 &&
-            //        lastKernelStack.Timestamp == data.EventTimeStampQPC) {
-            //        Trace.WriteLine($"Found kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
+                if (lastKernelStack.StackId != 0 &&
+                    lastKernelStack.Timestamp == data.EventTimeStampQPC) {
+                    //Trace.WriteLine($"Found kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
 
 
-            //        // Append at the end of the kernel stack.
-            //        kstack = profile.FindStack(lastKernelStack.StackId);
-            //        int kstackFrameCount = kstack.FrameCount;
-            //        long[] frames = new long[kstack.FrameCount + data.FrameCount];
-            //        kstack.FramePointers.CopyTo(frames, 0);
+                    // Append at the end of the kernel stack.
+                    kstack = profile.FindStack(lastKernelStack.StackId);
+                    int kstackFrameCount = kstack.FrameCount;
+                    long[] frames = new long[kstack.FrameCount + data.FrameCount];
+                    kstack.FramePointers.CopyTo(frames, 0);
 
-            //        for (int i = 0; i < frameCount; i++) {
-            //            frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
-            //        }
+                    for (int i = 0; i < frameCount; i++) {
+                        frames[kstackFrameCount + i] = (long)data.InstructionPointer(i);
+                    }
 
-            //        kstack.FramePointers = frames;
-            //    }
-            //}
+                    kstack.FramePointers = frames;
+                }
+            }
 
             if (kstack == null) {
                 var stack = profile.RentTemporaryStack(frameCount, contextId);
@@ -439,14 +440,6 @@ public class ETWEventProcessor : IDisposable {
             if (data.ThreadID == 0 && !isKernelCode) {
                 return;
             }
-
-
-            //if (IsKernelAddress(data.InstructionPointer, 8)) {
-            //    Trace.WriteLine($"Kernel sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}, isKernel {isKernelCode}");
-            //}
-            //else {
-            //    Trace.WriteLine($"User sample {data.InstructionPointer:X}, proc {data.ProcessID}, name {data.ProcessName}");
-            //}
 
             // Save sample.
             var context = profile.RentTempContext(data.ProcessID, data.ThreadID, cpu);

@@ -46,7 +46,7 @@ public class ProfileRecordingSessionOptions : SettingsBase, IEquatable<ProfileRe
 
     public override void Reset() {
         ResetAndInitializeReferenceMembers();
-        SessionKind = ProfileSessionKind.SystemWide;
+        SessionKind = ProfileSessionKind.StartProcess;
         SamplingFrequency = 4000; // 4 kHz, Xperf default is 1 kHz.
     }
 

@@ -86,6 +86,18 @@ public class RawProfileData {
 
     public bool HasManagedMethods(int processId) => procManagedDataMap_ != null && procManagedDataMap_.ContainsKey(processId);
 
+    public int ComputeSampleChunkLength(int chunks) {
+        int chunkSize = Math.Max(1, samples_.Count / chunks);
+        chunkSize = CompressedSegmentedList<ProfileSample>.RoundUpToSegmentLength(chunkSize);
+        return Math.Min(chunkSize, samples_.Count);
+    }
+
+    public int ComputePerfCounterChunkLength(int chunks) {
+        int chunkSize = Math.Max(1, perfCountersEvents_.Count / chunks);
+        chunkSize = CompressedSegmentedList<PerformanceCounterEvent>.RoundUpToSegmentLength(chunkSize);
+        return Math.Min(chunkSize, perfCountersEvents_.Count);
+    }
+
     private ManagedData GetOrCreateManagedData(int processId) {
         if (!procManagedDataMap_.TryGetValue(processId, out var data)) {
             data = new ManagedData();

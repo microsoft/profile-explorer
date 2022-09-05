@@ -23,10 +23,22 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     private ISession session_;
     private ICompilerInfoProvider compilerInfo_;
     private ProfileData profileData_;
-    
+
+    private const int IMAGE_LOCK_COUNT = 64;
+    private object[] imageLocks;
+    private ConcurrentDictionary<int, ModuleInfo> imageModuleMap_;
+
     public ETWProfileDataProvider(ISession session) {
         session_ = session;
         profileData_ = new ProfileData();
+
+        // Data structs used for module loading.
+        imageModuleMap_ = new ConcurrentDictionary<int, ModuleInfo>();
+        imageLocks = new object[IMAGE_LOCK_COUNT];
+
+        for (int i = 0; i < imageLocks.Length; i++) {
+            imageLocks[i] = new object();
+        }
     }
 
     public ProfileData LoadTrace(string tracePath, string imageName, 
@@ -112,9 +124,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 symbolOptions.InsertSymbolPaths(options.BinarySearchPaths);
             }
 
-            //var imageModuleMap = new Dictionary<int, ModuleInfo>();
-            var imageModuleMap = new ConcurrentDictionary<int, ModuleInfo>();
-
             // The entire ETW processing must be done on the same thread.
             bool result = await Task.Run(async () => {
                 Trace.WriteLine($"Init at {DateTime.Now}");
@@ -137,99 +146,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 }
 
                 // Process the samples.
-                int index = 0;
-                var acceptedImages = new List<string>();
 
-                bool IsAcceptedModule(string name) {
-                    //name = Utils.TryGetFileNameWithoutExtension(name);
-                    //name = name.ToLowerInvariant();
-
-                    //if (acceptedImages.Contains(name)) {
-                    //    Trace.WriteLine($"=> Accept image {name}");
-                    //    return true;
-                    //}
-
-                    if (!options_.HasBinaryNameWhitelist) {
-                        return true;
-                    }
-
-                    foreach (var file in options_.BinaryNameWhitelist) {
-                        var fileName = Utils.TryGetFileNameWithoutExtension(file);
-
-                        if (fileName.ToLowerInvariant() == name) {
-                            return true;
-                        }
-                    }
-
-                    return false;
-                }
-
-                var moduleLockObject = new object();
-                const int IMAGE_LOCK_COUNT = 64;
-                var imageLocks = new object[IMAGE_LOCK_COUNT];
-
-                for (int i = 0; i < imageLocks.Length; i++) {
-                    imageLocks[i] = new object();
-                }
-
-                ModuleInfo FindModuleInfo(ProfileImage queryImage, int processId, SymbolFileSourceOptions symbolOptions) {
-                    //if (queryImage == prevImage) {
-                    //    return prevModule;
-                    //}
-                    //else {
-                    ModuleInfo imageModule = null;
-
-                    if(!imageModuleMap.TryGetValue(queryImage.Id, out imageModule)) {
-                        //Trace.WriteLine($"Lock2 {queryImage}");
-                        //Trace.Flush();
-
-                        lock (imageLocks[queryImage.Id % IMAGE_LOCK_COUNT]) {
-                            if (!imageModuleMap.TryGetValue(queryImage.Id, out imageModule)) {
-                                imageModule = new ModuleInfo(report_, session_);
-
-                                //? Needs some delay-load, can't disasm every dll for no reason
-                                //? - now Initialize uses a whitelist
-                                var sw2 = Stopwatch.StartNew();
-                                Trace.WriteLine($"Start loading image {queryImage.FilePath}");
-
-                                if (!IsAcceptedModule(queryImage.FilePath)) {
-                                    imageModuleMap.TryAdd(queryImage.Id, imageModule);
-
-                                    Trace.TraceInformation($"Ignore not whitelisted image {queryImage.FilePath}");
-                                    return null;
-                                }
-
-                                // Used with managed images.
-                                var imageDebugInfo = prof.GetDebugInfoForImage(queryImage, processId);
-
-                                if (imageDebugInfo != null) {
-                                    imageDebugInfo.SymbolOptions = symbolOptions;
-                                }
-
-                                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, imageDebugInfo).
-                                    ConfigureAwait(false).GetAwaiter().GetResult()) {
-                                    Trace.WriteLine($"  - Init in {sw2.Elapsed}");
-                                    sw2.Restart();
-
-                                    if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
-                                        Trace.TraceWarning($"Failed to load debug info for image: {queryImage.FilePath}");
-                                    }
-                                    else {
-                                        Trace.WriteLine($"  - Loaded debug info in {sw2.Elapsed}");
-                                    }
-                                }
-                                        
-                                imageModuleMap.TryAdd(queryImage.Id, imageModule);
-                            }
-                        }
-                    }
-
-                    prevImage = queryImage;
-                    prevModule = imageModule;
-                    return imageModule;
-                    //}
-                }
-                    
                 Trace.WriteLine($"Start preload symbols {DateTime.Now}");
 
                 progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
@@ -240,177 +157,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 prof.PrintProcess(mainProcessId);
                 //prof.PrintSamples(mainProcessId);
 
-                var imageList = mainProcess.Images(prof).ToList();
+                await LoadBinaryAndDebugFiles(prof, mainProcess, imageName, symbolOptions, progressCallback);
 
-                if (imageList == null || imageList.Count == 0) {
-                    var imageSet = new HashSet<ProfileImage>();
-
-                    foreach (var sample in prof.Samples) {
-                        if (!options.IncludeKernelEvents &&
-                            sample.IsKernelCode) {
-                            continue; //? TODO: Is this all kernel?
-                        }
-
-                        var context = sample.GetContext(prof);
-
-                        if (context.ProcessId != mainProcessId) {
-                            continue;
-                        }
-
-                        var stack = sample.GetStack(prof);
-
-                        if (stack == null || stack.IsUnknown) {
-                            continue;
-                        }
-
-                        foreach (var frameIp in stack.FramePointers) {
-                            //? Use Frame -> Resolved Frame cache
-                            ProfileImage frameImage = prof.FindImageForIP(frameIp);
-
-                            if (frameImage != null) {
-                                imageSet.Add(frameImage);
-                            }
-                        }
-                    }
-
-                    imageList = imageSet.ToList();
-
-                    //foreach (var image in imageList) {
-                    //    prof.AddImageToProcess(mainProcessId, image);
-                    //}
-                }
-
-                int imageLimit = imageList.Count;
-
-#if true
-                // Locate the referenced binary files. This will download them
-                // from the symbol server if option activated and not yet on local machine.
-                var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
-                var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
-
-                for (int i = 0; i < imageLimit; i++) {
-                    var imagePath = imageList[i].FilePath;
-
-                    if (File.Exists(imagePath)) {
-                        Trace.WriteLine($"Adding symbol path: {imagePath}");
-                        //? TODO: Not needed anymore, done by LocateBinaryFile
-                        symbolOptions.InsertSymbolPath(imagePath);
-                    }
-                }
-
-                for (int i = 0; i < imageLimit; i++) {
-                    var binaryFile = FromProfileImage(imageList[i]);
-                    binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolOptions);
-                    //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
-                }
-
-                // Determine the compiler target for the new session.
-                IRMode irMode = IRMode.Default;
-
-                for (int i = 0; i < imageLimit; i++) {
-                    if (binTaskList[i] == null) continue;
-                    var binaryFile = await binTaskList[i].ConfigureAwait(false);
-
-                    if (irMode == IRMode.Default && binaryFile != null && binaryFile.Found) {
-                        var binaryInfo = binaryFile.BinaryFile;
-
-                        if (binaryInfo != null) {
-                            switch (binaryInfo.Architecture) {
-                                case System.Reflection.PortableExecutable.Machine.Arm:
-                                case System.Reflection.PortableExecutable.Machine.Arm64: {
-                                    irMode = IRMode.ARM64;
-                                    break;
-                                }
-                                case System.Reflection.PortableExecutable.Machine.I386:
-                                case System.Reflection.PortableExecutable.Machine.Amd64: {
-                                    irMode = IRMode.x86_64;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
-                        Total = imageLimit,
-                        Current = i
-                    });
-                }
-
-                // Start a new session in the proper ASM mode.
-                await session_.StartNewSession(imageName, SessionKind.FileSession, new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
-
-                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                    Total = 0,
-                    Current = 0
-                });
-
-                for (int i = 0; i < imageLimit; i++) {
-                    var binaryFile = await binTaskList[i].ConfigureAwait(false);
-
-                    if (binaryFile != null && binaryFile.Found) {
-                        var name = Utils.TryGetFileNameWithoutExtension(imageList[i].FilePath);
-                        acceptedImages.Add(name.ToLowerInvariant());
-
-                        pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath);
-                    }
-                }
-
-                // Wait for the PDBs to be loaded.
-                //? TODO: Processing could continue
-                for (int i = 0; i < imageLimit; i++) {
-                    if (pdbTaskList[i] != null) {
-                        var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
-                        Trace.WriteLine($"Loaded PDB: {pdbPath}");
-                    }
-
-                    progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                        Total = imageLimit,
-                        Current = i
-                    });
-                }
-#else
-
-                    for (int i = 0; i < imageLimit; i++) {
-                        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
-                            Total = imageLimit,
-                            Current = i
-                        });
-
-                        var name = Utils.TryGetFileNameWithoutExtension(imageTimeList[i].Item1.FileName);
-                        acceptedImages.Add(name.ToLowerInvariant());
-
-                        var binaryFile = FromETLImage(imageTimeList[i].Item1);
-                        var binaryFilePath = await session_.CompilerInfo.FindBinaryFile(binaryFile);
-
-                        if (File.Exists(binaryFilePath)) {
-                            Trace.WriteLine($"Loaded BIN: {binaryFilePath}");
-
-                            var pdbPath = await session_.CompilerInfo.FindDebugInfoFile(binaryFilePath);
-                            Trace.WriteLine($"Loaded PDB: {pdbPath}");
-                        }
-                    }
-#endif
-                //Trace.WriteLine($"Done preload symbols in {sw.Elapsed} at {DateTime.Now}");
-                //Trace.Flush();
-                //sw.Restart();
-
-                //Trace.WriteLine($"Start process samples {DateTime.Now}");
-                //Trace.Flush();
-                //sw.Restart();
-
-                // Trace.WriteLine($"Done process samples in {sw.Elapsed} at {DateTime.Now}");
-
-                //MessageBox.Show("Start samples");
-
-                int temp = 0;
                 var sw = Stopwatch.StartNew();
-
                 int chunks = Math.Min(16, (Environment.ProcessorCount * 3) / 4);
 
 #if DEBUG
-                chunks = 1;
+                //chunks = 1;
 #endif
-                chunks = 1;
 
                 Trace.WriteLine($"Using {chunks} threads");
                 //? TODO: Round up to chunk size to avoid thread issues
@@ -420,12 +174,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 var taskScheduler = new ConcurrentExclusiveSchedulerPair(TaskScheduler.Default, chunks);
                 var taskFactory = new TaskFactory(taskScheduler.ConcurrentScheduler);
 
-                int chunkSize = (int)(prof.Samples.Count / chunks);
+                int chunkSize = prof.ComputeSampleChunkLength(chunks);
+                Trace.WriteLine($"Using chunk {chunkSize}");
+
                 var lockObject = new object();
-
-                //MessageBox.Show("Start tasks");
-
-                //var resolvedStacks = new ConcurrentDictionary<int, ResolvedProfileStack>();
+                int index = 0;
 
                 var callTree = new ProfileCallTree();
 
@@ -554,6 +307,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 var stackFrames = stack.FramePointers;
                                 long managedBaseAddress = 0;
                                 int frameIndex = 0;
+                                int pointerSize = prof.TraceInfo.PointerSize;
 
                                 bool trace = false;
 
@@ -566,13 +320,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         Trace.WriteLine($"  at frame {frameIndex}: {frameIp}");
                                     }
 
-                                    bool IsWindowsKernelAddress(ulong ip, int pointerSize) {
-                                        return ip >= 0xFFFF000000000000;
-                                    }
-
                                     ProfileImage frameImage = null;
 
-                                    if (IsWindowsKernelAddress((ulong)frameIp, 8)) {
+                                    if (ETWEventProcessor.IsKernelAddress((ulong)frameIp, pointerSize)) {
                                         //Utils.WaitForDebugger(true);
                                         hask = true;
                                         frameImage = prof.FindImageForIP(frameIp, 0);
@@ -617,7 +367,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     IRTextFunction textFunction = null;
 
                                     //var modSw = Stopwatch.StartNew();
-                                    module = FindModuleInfo(frameImage, context.ProcessId, symbolOptions);
+                                    module = FindModuleInfo(prof, frameImage, context.ProcessId, symbolOptions);
                                     //modSw.Stop();
                                     //if (modSw.ElapsedMilliseconds > 500) {
                                     //    Trace.WriteLine($"=> Slow load {modSw.Elapsed}: {frameImage.Name}");
@@ -794,8 +544,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 }
 
                                 node.AccumulateWeight(sampleWeight);
-
-                                node.RecordSample(sample, resolvedFrame); //? Remove
+                                //node.RecordSample(sample, resolvedFrame); //? Remove
                                 prevNode = node;
                             }
 
@@ -804,150 +553,17 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                             }
                         }
                     }));
-                    //}
                 }
 
                 await Task.WhenAll(tasks.ToArray());
                 profileData_.CallTree = callTree;
+                Trace.WriteLine($"Done processing samples in {sw.Elapsed}");
 
-               // Utils.WaitForDebugger(true);
-                //Trace.WriteLine(callTree.Print());
-                //prof.PrintSamples(0);
-
-                Trace.WriteLine($"Done process samples in {sw.Elapsed}");
-
-                //MessageBox.Show($"Done in {sw.Elapsed}");
-
-                //Trace.WriteLine(callTree.Print());
-                //Trace.Flush();
-                //? END SAMPLES PROC
-
-#if true
-                //? TODO: Check options.IncludePerformanceCounters
-                Trace.WriteLine($"Start process PMC at {DateTime.Now}");
-                    //Trace.Flush();
-                    sw.Restart();
-
+                if (options_.IncludePerformanceCounters) {
                     // Process performance counters.
-                    index = 0;
+                    ProcessPerformanceCounters(prof, mainProcessId, symbolOptions, progressCallback, cancelableTask);
 
-                    foreach (var counter in prof.PerformanceCounters) {
-                        var counterInfo = new PerformanceCounterInfo(counter.Id, counter.Name, counter.Frequency);
-
-                        lock (profileData_) {
-                            profileData_.RegisterPerformanceCounter(counterInfo);
-                        }
-                    }
-
-                    // Try to register the metrics.
-                    int metricIndex = 1000;
-
-                    foreach (var metric in options_.PerformanceMetrics) {
-                        if (metric.IsEnabled) {
-                            profileData_.RegisterPerformanceMetric(metricIndex++, metric);
-                        }
-                    }
-                    
-                    foreach (var counter in prof.PerformanceCountersEvents) {
-                        index++;
-
-                        if (index % 50000 == 0) {
-                            if (cancelableTask != null && cancelableTask.IsCanceled) {
-                                break;
-                            }
-                            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.PerfCounterProcessing) {
-                                Total = (int)prof.PerformanceCountersEvents.Count, Current = index
-                            });
-                        }
-
-                        var context = counter.GetContext(prof);
-
-                        if (context.ProcessId != mainProcessId) {
-                            continue;
-                        }
-
-                        int managedBaseAddress = 0;
-                        ProfileImage frameImage = prof.FindImageForIP(counter.IP, context);
-
-                        if (frameImage == null) {
-                            if (prof.HasManagedMethods(context.ProcessId)) {
-                                var managedFunc = prof.FindManagedMethodForIP(counter.IP, context.ProcessId);
-
-                                if (managedFunc != null) {
-                                    frameImage = managedFunc.Image;
-                                    managedBaseAddress = 1;
-                                }
-                            }
-                        }
-
-                        if (frameImage != null) {
-                            lock (profileData_) {
-                                profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
-                            }
-
-                            var module = FindModuleInfo(frameImage, context.ProcessId, symbolOptions);
-
-                            if (module == null) {
-                                continue;
-                            }
-                            else if (!module.Initialized || !module.HasDebugInfo) {
-                                //Trace.WriteLine($"Uninitialized module {image.FileName}");
-                                continue;
-                            }
-
-                            long frameRva = 0;
-                            long funcRva = 0;
-                            string funcName = null;
-                            DebugFunctionInfo funcInfo = null;
-
-                            if (managedBaseAddress != 0) {
-                                frameRva = counter.IP;
-                                funcInfo = module.FindDebugFunctionInfo(frameRva);
-                            }
-                            else {
-                                frameRva = counter.IP - frameImage.BaseAddress;
-                                funcInfo = module.FindDebugFunctionInfo(frameRva);
-                            }
-
-                            if (funcInfo != null) {
-                                funcName = funcInfo.Name;
-                                funcRva = funcInfo.RVA;
-                            }
-
-                            if (funcName == null) {
-                                continue;
-                            }
-
-                            var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
-
-                            if (textFunction != null) {
-                                var offset = frameRva - funcRva;
-
-                                FunctionProfileData profile = null;
-
-                                //? TODO: Use RW lock
-                                lock (profileData_) {
-                                    profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
-                                }
-
-                                profile.AddCounterSample(offset, counter.CounterId, 1);
-                            }
-                        }
-                    }
-
-                    Trace.WriteLine($"Done process PMC in {sw.Elapsed}");
-#endif
-
-                //var data = StateSerializer.Serialize(@"C:\work\pmc.dat", proto);
-                //Trace.WriteLine($"Serialized");
-                //Trace.Flush();
-
-                //GC.Collect();
-                //GC.WaitForPendingFinalizers();
-                //
-                //long memory2 = GC.GetTotalMemory(true);
-                //Trace.WriteLine($"Diff: {(memory2 - memory) / 1024}, kb");
-                //Trace.Flush();
+                }
 
                 Trace.WriteLine($"Done in {totalSw.Elapsed}");
                 //Trace.Flush();
@@ -958,38 +574,16 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                 return null;
             }
 
-            // Add 
+            // Setup session documents.
             if (result) {
-                //ShowGraph(traceProfile);
-                LoadedDocument exeDocument = null;
-                var otherDocuments = new List<LoadedDocument>();
-
-                foreach (var pair in imageModuleMap) {
-                    if (pair.Value.ModuleDocument == null) {
-                        continue;
-                    }
-
-                    if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFile?.FilePath)) {
-                        if (exeDocument == null) {
-                            exeDocument = pair.Value.ModuleDocument;
-                            continue;
-                        }
-                        else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName)) {
-                            otherDocuments.Add(exeDocument);
-                            exeDocument = pair.Value.ModuleDocument;
-                            continue;
-                        }
-                    }
-
-                    otherDocuments.Add(pair.Value.ModuleDocument);
-                }
+                var exeDocument = FindSessionDocuments(imageName, out var otherDocuments);
 
                 if (exeDocument == null) {
-                    Trace.WriteLine($"Failed to find document for process {imageName}");
+                    Trace.WriteLine($"Failed to find main EXE document");
                     return null;
                 }
 
-                Trace.WriteLine($"Using exe document {exeDocument?.ModuleName}");
+                Trace.WriteLine($"Using exe document {exeDocument.ModuleName}");
                 session_.SessionState.MainDocument = exeDocument;
                 await session_.SetupNewSession(exeDocument, otherDocuments);
             }
@@ -1006,6 +600,295 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             Trace.Flush();
             return null;
         }
+    }
+
+    private LoadedDocument FindSessionDocuments(string imageName, out List<LoadedDocument> otherDocuments) {
+        LoadedDocument exeDocument = null;
+        otherDocuments = new List<LoadedDocument>();
+
+        foreach (var pair in imageModuleMap_) {
+            if (pair.Value.ModuleDocument == null) {
+                continue;
+            }
+
+            if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFile?.FilePath)) {
+                if (exeDocument == null) {
+                    exeDocument = pair.Value.ModuleDocument;
+                    continue;
+                }
+                else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName)) {
+                    otherDocuments.Add(exeDocument);
+                    exeDocument = pair.Value.ModuleDocument;
+                    continue;
+                }
+            }
+
+            otherDocuments.Add(pair.Value.ModuleDocument);
+        }
+
+        return exeDocument;
+    }
+
+    private async Task LoadBinaryAndDebugFiles(RawProfileData prof, ProfileProcess mainProcess, string mainImageName,
+                                               SymbolFileSourceOptions symbolOptions, ProfileLoadProgressHandler progressCallback) {
+        var imageList = mainProcess.Images(prof).ToList();
+        int imageLimit = imageList.Count;
+
+        // Locate the referenced binary files in parallel. This will download them
+        // from the symbol server if not yet on local machine and enabled.
+        var binTaskList = new Task<BinaryFileSearchResult>[imageLimit];
+        var pdbTaskList = new Task<DebugFileSearchResult>[imageLimit];
+
+        for (int i = 0; i < imageLimit; i++) {
+            var binaryFile = FromProfileImage(imageList[i]);
+            binTaskList[i] = PEBinaryInfoProvider.LocateBinaryFile(binaryFile, symbolOptions);
+            //? TODO: Immediately after bin download PDB can be too binTaskList[i].ContinueWith()
+        }
+
+        // Determine the compiler target for the new session.
+        IRMode irMode = IRMode.Default;
+
+        for (int i = 0; i < imageLimit; i++) {
+            Debug.Assert(binTaskList[i] != null);
+            var binaryFile = await binTaskList[i].ConfigureAwait(false);
+
+            if (irMode == IRMode.Default && binaryFile != null && binaryFile.Found) {
+                var binaryInfo = binaryFile.BinaryFile;
+
+                if (binaryInfo != null) {
+                    switch (binaryInfo.Architecture) {
+                        case System.Reflection.PortableExecutable.Machine.Arm:
+                        case System.Reflection.PortableExecutable.Machine.Arm64: {
+                            irMode = IRMode.ARM64;
+                            break;
+                        }
+                        case System.Reflection.PortableExecutable.Machine.I386:
+                        case System.Reflection.PortableExecutable.Machine.Amd64: {
+                            irMode = IRMode.x86_64;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.BinaryLoading) {
+                Total = imageLimit,
+                Current = i
+            });
+        }
+
+        // Start a new session in the proper ASM mode.
+        await session_.StartNewSession(mainImageName, SessionKind.FileSession,
+                                       new ASMCompilerInfoProvider(irMode, session_)).ConfigureAwait(false);
+
+        // Locate the needed debug files, in parallel. This will download them
+        // from the symbol server if not yet on local machine and enabled.
+        progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+            Total = 0,
+            Current = 0
+        });
+
+        for (int i = 0; i < imageLimit; i++) {
+            var binaryFile = await binTaskList[i].ConfigureAwait(false);
+
+            if (binaryFile != null && binaryFile.Found) {
+                pdbTaskList[i] = session_.CompilerInfo.FindDebugInfoFile(binaryFile.FilePath);
+            }
+        }
+
+        // Wait for the PDBs to be loaded.
+        for (int i = 0; i < imageLimit; i++) {
+            if (pdbTaskList[i] != null) {
+                var pdbPath = await pdbTaskList[i].ConfigureAwait(false);
+                Trace.WriteLine($"Loaded PDB: {pdbPath}");
+            }
+
+            progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.SymbolLoading) {
+                Total = imageLimit,
+                Current = i
+            });
+        }
+    }
+
+    private bool IsAcceptedModule(string name) {
+        if (!options_.HasBinaryNameWhitelist) {
+            return true;
+        }
+
+        foreach (var file in options_.BinaryNameWhitelist) {
+            var fileName = Utils.TryGetFileNameWithoutExtension(file);
+
+            if (fileName.ToLowerInvariant() == name) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private ModuleInfo FindModuleInfo(RawProfileData prof, ProfileImage queryImage, int processId,
+                                      SymbolFileSourceOptions symbolOptions) {
+        //? TODO: thread-local
+        //if (queryImage == prevImage) {
+        //    return prevModule;
+        //}
+
+        if (!imageModuleMap_.TryGetValue(queryImage.Id, out var imageModule)) {
+            lock (imageLocks[queryImage.Id % IMAGE_LOCK_COUNT]) {
+                if (imageModuleMap_.TryGetValue(queryImage.Id, out imageModule)) {
+                    return imageModule;
+                }
+
+                Trace.WriteLine($"Start loading image {queryImage.FilePath}");
+                imageModule = new ModuleInfo(report_, session_);
+
+                if (!IsAcceptedModule(queryImage.FilePath)) {
+                    imageModuleMap_.TryAdd(queryImage.Id, imageModule);
+
+                    Trace.TraceInformation($"Ignore not whitelisted image {queryImage.FilePath}");
+                    return null;
+                }
+
+                // Used with managed images.
+                var imageDebugInfo = prof.GetDebugInfoForImage(queryImage, processId);
+
+                if (imageDebugInfo != null) {
+                    imageDebugInfo.SymbolOptions = symbolOptions;
+                }
+
+                if (imageModule.Initialize(FromProfileImage(queryImage), symbolOptions, imageDebugInfo)
+                    .ConfigureAwait(false).GetAwaiter().GetResult()) {
+
+                    if (!imageModule.InitializeDebugInfo().ConfigureAwait(false).GetAwaiter().GetResult()) {
+                        Trace.TraceWarning($"Failed to load debug info for image: {queryImage.FilePath}");
+                    }
+                }
+
+                imageModuleMap_.TryAdd(queryImage.Id, imageModule);
+            }
+        }
+
+        //prevImage = queryImage;
+        //prevModule = imageModule;
+        return imageModule;
+    }
+
+    private void ProcessPerformanceCounters(RawProfileData prof, int mainProcessId,
+                                            SymbolFileSourceOptions symbolOptions,
+                                            ProfileLoadProgressHandler progressCallback, 
+                                            CancelableTask cancelableTask) {
+        // Register the counters found in the trace.
+        foreach (var counter in prof.PerformanceCounters) {
+            var counterInfo = new PerformanceCounterInfo(counter.Id, counter.Name, counter.Frequency);
+
+            lock (profileData_) {
+                profileData_.RegisterPerformanceCounter(counterInfo);
+            }
+        }
+
+        // Try to register the metrics.
+        int metricIndex = 1000;
+        int index = 0;
+
+        foreach (var metric in options_.PerformanceMetrics) {
+            if (metric.IsEnabled) {
+                profileData_.RegisterPerformanceMetric(metricIndex++, metric);
+            }
+        }
+
+        //? TODO: Parallel
+        Trace.WriteLine($"Start process PMC at {DateTime.Now}");
+        var sw = Stopwatch.StartNew();
+
+        foreach (var counter in prof.PerformanceCountersEvents) {
+            index++;
+
+            if (index % 50000 == 0) {
+                if (cancelableTask != null && cancelableTask.IsCanceled) {
+                    break;
+                }
+
+                progressCallback?.Invoke(new ProfileLoadProgress(ProfileLoadStage.PerfCounterProcessing) {
+                    Total = (int)prof.PerformanceCountersEvents.Count, Current = index
+                });
+            }
+
+            var context = counter.GetContext(prof);
+
+            if (context.ProcessId != mainProcessId) {
+                continue;
+            }
+
+            int managedBaseAddress = 0;
+            ProfileImage frameImage = prof.FindImageForIP(counter.IP, context);
+
+            if (frameImage == null) {
+                if (prof.HasManagedMethods(context.ProcessId)) {
+                    var managedFunc = prof.FindManagedMethodForIP(counter.IP, context.ProcessId);
+
+                    if (managedFunc != null) {
+                        frameImage = managedFunc.Image;
+                        managedBaseAddress = 1;
+                    }
+                }
+            }
+
+            if (frameImage != null) {
+                lock (profileData_) {
+                    profileData_.AddModuleCounter(frameImage.ModuleName, counter.CounterId, 1);
+                }
+
+                var module = FindModuleInfo(prof, frameImage, context.ProcessId, symbolOptions);
+
+                if (module == null) {
+                    continue;
+                }
+                else if (!module.Initialized || !module.HasDebugInfo) {
+                    //Trace.WriteLine($"Uninitialized module {image.FileName}");
+                    continue;
+                }
+
+                long frameRva = 0;
+                long funcRva = 0;
+                string funcName = null;
+                DebugFunctionInfo funcInfo = null;
+
+                if (managedBaseAddress != 0) {
+                    frameRva = counter.IP;
+                    funcInfo = module.FindDebugFunctionInfo(frameRva);
+                }
+                else {
+                    frameRva = counter.IP - frameImage.BaseAddress;
+                    funcInfo = module.FindDebugFunctionInfo(frameRva);
+                }
+
+                if (funcInfo != null) {
+                    funcName = funcInfo.Name;
+                    funcRva = funcInfo.RVA;
+                }
+
+                if (funcName == null) {
+                    continue;
+                }
+
+                var textFunction = module.FindFunction(funcRva, out bool isExternalFunc);
+
+                if (textFunction != null) {
+                    var offset = frameRva - funcRva;
+
+                    FunctionProfileData profile = null;
+
+                    //? TODO: Use RW lock
+                    lock (profileData_) {
+                        profile = profileData_.GetOrCreateFunctionProfile(textFunction, null);
+                    }
+
+                    profile.AddCounterSample(offset, counter.CounterId, 1);
+                }
+            }
+        }
+
+        Trace.WriteLine($"Done process PMC in {sw.Elapsed}");
     }
 
     private BinaryFileDescriptor FromProfileImage(ProfileImage image) {

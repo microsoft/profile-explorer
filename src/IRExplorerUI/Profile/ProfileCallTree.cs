@@ -385,11 +385,11 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     public ProfileCallTreeNode(DebugFunctionInfo funcInfo, IRTextFunction function,
         List<ProfileCallTreeNode> children = null,
         List<ProfileCallTreeNode> callers = null) {
+        InitializeReferenceMembers();
         DebugInfo = funcInfo;
         Function = function;
         children_ = children;
         callers_ = callers;
-        InitializeReferenceMembers();
     }
 
     [ProtoAfterDeserialization]

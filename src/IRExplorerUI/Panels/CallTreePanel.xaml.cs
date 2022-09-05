@@ -46,6 +46,8 @@ namespace IRExplorerUI {
             new RoutedUICommand("OpenFunctionInNewTab", "OpenFunctionInNewTab", typeof(CallTreePanel));
         public static readonly RoutedUICommand FocusSearch =
             new RoutedUICommand("FocusSearch", "FocusSearch", typeof(CallTreePanel));
+        public static readonly RoutedUICommand ClearSearch =
+            new RoutedUICommand("ClearSearch", "ClearSearch", typeof(CallTreePanel));
     }
 
     public enum ChildFunctionExKind {
@@ -201,7 +203,13 @@ namespace IRExplorerUI {
                     settings_.PrependModuleToFunction = value;
                     OnPropertyChanged();
                     profileCallTree_ = null;
-                    DisplaProfileCallTree();
+
+                    if (IsCallerCalleePanel) {
+                        DisplaProfileCallerCalleeTree(function_);
+                    }
+                    else {
+                        DisplaProfileCallTree();
+                    }
                 }
             }
         }
@@ -216,16 +224,15 @@ namespace IRExplorerUI {
             DataContext = this;
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
-            //? TODO: Fix positioning
             // https://docs.microsoft.com/en-us/dotnet/desktop/wpf/controls/how-to-position-a-tooltip?view=netframeworkdesktop-4.8
-            //stackHoverPreview_ = new ToolTipHoverPreview(CallTree, 
-            //    mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
-            //    (previewPoint, element) => {
-            //        var item = (ListViewItem)element;
-            //        var funcNode = ((TreeListItem)item).Node?.Tag as ChildFunctionEx;
-            //        var callNode = funcNode?.CallTreeNode;
-            //        return callNode != null ? CreateStackToolTip(callNode) : null;
-            //    });
+            stackHoverPreview_ = new ToolTipHoverPreview(CallTree,
+                mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
+                (previewPoint, element) => {
+                    var item = (ListViewItem)element;
+                    var funcNode = ((TreeListItem)item).Node?.Tag as ChildFunctionEx;
+                    var callNode = funcNode?.CallTreeNode;
+                    return callNode != null ? CreateStackToolTip(callNode) : null;
+                });
         }
 
         private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
@@ -276,6 +283,28 @@ namespace IRExplorerUI {
                     if (function_ != null) {
                         DisplaProfileCallerCalleeTree(function_);
                     }
+                }
+            }
+        }
+
+        private bool showSearchSection_;
+        public bool ShowSearchSection {
+            get => showSearchSection_;
+            set {
+                if (showSearchSection_ != value) {
+                    showSearchSection_ = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private string searchResultText_;
+        public string SearchResultText {
+            get => searchResultText_;
+            set {
+                if (searchResultText_ != value) {
+                    searchResultText_ = value;
+                    OnPropertyChanged();
                 }
             }
         }
@@ -588,8 +617,14 @@ namespace IRExplorerUI {
             }
 
             var percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight);
+            var funcName = FormatFunctionName(node, 80);
+
+            if (settings_.PrependModuleToFunction) {
+                funcName = $"{node.ModuleName}!{funcName}";
+            }
+
             builder.Append($"{percentage.AsPercentageString(2, false).PadLeft(6)}  ");
-            builder.AppendLine(FormatFunctionName(node, 80));
+            builder.AppendLine(funcName);
         }
 
         #region IToolPanel
@@ -718,11 +753,16 @@ namespace IRExplorerUI {
             }
 
             if (text.Length > 1) {
-                SearchCallTree(text);
+                int results = SearchCallTree(text);
+                ShowSearchSection = true;
+                SearchResultText = results != 0 ? $"{searchResultNodes_.Count}" : "Not found";
+            }
+            else {
+                ShowSearchSection = false;
             }
         }
 
-        void SearchCallTree(string text) {
+        int SearchCallTree(string text) {
             var matchingNodes = new List<ChildFunctionEx>();
             SearchCallTree(text, profileCallTree_, matchingNodes);
             searchResultNodes_ = matchingNodes;
@@ -735,6 +775,8 @@ namespace IRExplorerUI {
                     treeNode.IsExpanded = true;
                 }
             }
+
+            return searchResultNodes_.Count;
         }
 
         void SearchCallTree(string text, ChildFunctionEx node, List<ChildFunctionEx> matchingNodes) {
@@ -761,6 +803,10 @@ namespace IRExplorerUI {
             if (panel != null) {
                 await panel.DisplaProfileCallTree();
             }
+        }
+
+        private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
+            ((TextBox)e.Parameter).Text = string.Empty;
         }
     }
 }

@@ -101,7 +101,7 @@ namespace IRExplorerUI {
             InitializeComponent();
             DataContext = this;
             Session = session;
-            loadTask_ = new CancelableTaskInstance();
+            loadTask_ = new CancelableTaskInstance(false);
             IsRecordMode = recordMode;
 
             if (IsRecordMode) {
@@ -179,6 +179,7 @@ namespace IRExplorerUI {
                     isLoadingProfile_ = value;
                     OnPropertyChange(nameof(IsLoadingProfile));
                     OnPropertyChange(nameof(InputControlsEnabled));
+                    OnPropertyChange(nameof(ProcessListEnabled));
                 }
             }
         }
@@ -235,6 +236,7 @@ namespace IRExplorerUI {
         }
 
         public bool InputControlsEnabled => !IsLoadingProfile;
+        public bool ProcessListEnabled => !IsLoadingProfile || IsLoadingProcessList;
         public bool RecordingControlsEnabled => !IsLoadingProfile && !IsRecordingProfile;
         public bool RecordingStopControlsEnabled => !IsLoadingProfile && IsRecordingProfile;
         public bool IsRecordMode { get; }
@@ -353,13 +355,14 @@ namespace IRExplorerUI {
                 return false;
             }
 
-            var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+            using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
             var report = new ProfileDataReport();
             report.RunningProcesses = processList_;
-            report.SymbolOptions = (SymbolFileSourceOptions)symbolOptions_.Clone();
+            report.SymbolOptions = symbolOptions_.Clone();
 
             bool success = false;
             IsLoadingProfile = true;
+            LoadProgressBar.Value = 0;
 
             if (IsRecordMode) {
                 if (selectedProcSummary_ == null) {
@@ -442,16 +445,17 @@ namespace IRExplorerUI {
                     return;
                 }
 
-                SummaryProgressBar.Maximum = progressInfo.Total;
-                SummaryProgressBar.Value = progressInfo.Current;
+                LoadProgressBar.Maximum = progressInfo.Total;
+                LoadProgressBar.Value = progressInfo.Current;
 
                 if (progressInfo.Total != 0 && progressInfo.Total != progressInfo.Current) {
                     double percentage = (double)progressInfo.Current / (double)progressInfo.Total;
                     ProgressPercentLabel.Text = $"{Math.Round(percentage * 100)} %";
-                    SummaryProgressBar.IsIndeterminate = false;
+                    LoadProgressLabel.Text = "Building process list";
+                    LoadProgressBar.IsIndeterminate = false;
                 }
                 else {
-                    SummaryProgressBar.IsIndeterminate = true;
+                    LoadProgressBar.IsIndeterminate = true;
                 }
 
                 if (progressInfo.Processes != null) {
@@ -461,15 +465,23 @@ namespace IRExplorerUI {
         }
 
         private async void CancelButton_Click(object sender, RoutedEventArgs e) {
+            bool closeWindow = !IsLoadingProfile; // Canceling task resets flags, decide now.
+
             if (isLoadingProfile_) {
-                loadTask_.CancelTask();
-                await loadTask_.WaitForTaskAsync();
+                await CancelLoadingTask();
             }
 
-            App.SaveApplicationSettings();
-            DialogResult = false;
-            windowClosed_ = true;
-            Close();
+            if (closeWindow) {
+                App.SaveApplicationSettings();
+                DialogResult = false;
+                windowClosed_ = true;
+                Close();
+            }
+        }
+
+        private async Task CancelLoadingTask() {
+            loadTask_.CancelTask();
+            await loadTask_.WaitForTaskAsync();
         }
 
         private void ProfileBrowseButton_Click(object sender, RoutedEventArgs e) {
@@ -477,16 +489,25 @@ namespace IRExplorerUI {
         }
 
         private async Task<bool> LoadProcessList() {
+            await CancelLoadingTask();
             ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
 
             if (File.Exists(ProfileFilePath)) {
                 IsLoadingProcessList = true;
+                IsLoadingProfile = true;
                 BinaryFilePath = "";
+                LoadProgressBar.Value = 0;
 
-                var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+                using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
                 processList_ = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
                 
+                IsLoadingProfile = false;
                 IsLoadingProcessList = false;
+
+                if (task.IsCanceled) {
+                    return true;
+                }
+
                 return processList_ != null;
             }
 
@@ -539,7 +560,7 @@ namespace IRExplorerUI {
             // Start ETW recording session.
             IsRecordingProfile = true;
             ProfileLoadProgress lastProgressInfo = null;
-            var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+            using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
             using var recordingSession = new ETWRecordingSession(options_);
 
             // Show elapsed time in UI.
@@ -560,7 +581,7 @@ namespace IRExplorerUI {
             timer.Stop();
             IsRecordingProfile = false;
 
-            if (recordedProfile_ != null) {
+            if (recordedProfile_ != null && !task.IsCanceled) {
                 processList_ = await Task.Run(() => recordedProfile_.BuildProcessSummary());
                 DisplayProcessList(processList_);
             }
@@ -590,8 +611,8 @@ namespace IRExplorerUI {
             ShowProcessList = true;
         }
 
-        private void StopCaptureButton_OnClick(object sender, RoutedEventArgs e) {
-            loadTask_.CancelTask();
+        private async void StopCaptureButton_OnClick(object sender, RoutedEventArgs e) {
+            await CancelLoadingTask();
         }
 
         private void RestartAppButton_OnClick(object sender, RoutedEventArgs e) {
@@ -616,11 +637,12 @@ namespace IRExplorerUI {
                 //}
 
                 if (await LoadProcessList()) {
+                    if (processList_ == null) {
+                        MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
+                            MessageBoxButton.OK, MessageBoxImage.Exclamation);
+                    }
+
                     DisplayProcessList(processList_);
-                }
-                else {
-                    MessageBox.Show("Failed to load ETL process list!", "IR Explorer",
-                        MessageBoxButton.OK, MessageBoxImage.Exclamation);
                 }
             }
         }
@@ -686,10 +708,6 @@ namespace IRExplorerUI {
 
         private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
-            if (sessionEx == null) {
-                return;
-            }
-
             var report = sessionEx.Report;
 
             if (report != null) { // Not set for a new session.
@@ -706,10 +724,6 @@ namespace IRExplorerUI {
 
         private void SessionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
-            if (sessionEx == null) {
-                return;
-            }
-
             var report = sessionEx.Report;
 
             if (IsRecordMode && currentSession_.IsNewSession) {

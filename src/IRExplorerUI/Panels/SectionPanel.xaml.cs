@@ -1914,22 +1914,14 @@ namespace IRExplorerUI {
                     var panel = Session.FindAndActivatePanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
 
                     if (panel != null) {
-                        //? REMEMBER MODE
-                        //? REMEMBER MODE
-                        //? REMEMBER MODE
-                        //? REMEMBER MODE
                         await panel.DisplaProfileCallerCalleeTree(function);
                     }
                 }
                 else {
-                    //var callTree = await Task.Run(() => CreateCallTree(function));
-
-                    //? One flag for Calls, one Profile
                     ProfileControlsVisible = true;
                     ChildTimeColumnVisible = false;
-
                     var panel = Session.FindAndActivatePanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
-                    panel?.Reset();
+                    panel?.Reset(); // Hide previous func.
                 }
             }
            
