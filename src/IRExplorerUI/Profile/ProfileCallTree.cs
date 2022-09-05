@@ -93,9 +93,7 @@ public class ProfileCallTree {
             var nodeList = new List<ProfileCallTreeNode>(pair.Value.Count);
 
             foreach (var node in pair.Value) {
-                var funcNode = node;
-
-                if (!nodesSet.TryGetValue(node, out funcNode)) {
+                if (!nodesSet.TryGetValue(node, out var funcNode)) {
                     Debug.Assert(false, "Could not find node for func");
                     continue;
                 }
@@ -340,19 +338,20 @@ public class ProfileCallTree {
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     [ProtoMember(1)]
-    public long Id { get; set; }
-    [ProtoMember(2)]
-    public FunctionDebugInfo FunctionDebugInfo { get; set; }
-    [ProtoMember(3)]
-    public TimeSpan Weight { get; set; }
-    [ProtoMember(4)]
-    public TimeSpan ExclusiveWeight { get; set; }
-    [ProtoMember(5)]
     private IRTextFunctionReference functionRef_ { get; set; }
-    [ProtoMember(6)]
+    [ProtoMember(2)]
     private List<ProfileCallTreeNode> children_;
     private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
     private ReaderWriterLockSlim lock_;
+
+    [ProtoMember(3)]
+    public long Id { get; set; }
+    [ProtoMember(4)]
+    public FunctionDebugInfo FunctionDebugInfo { get; set; }
+    [ProtoMember(5)]
+    public TimeSpan Weight { get; set; }
+    [ProtoMember(6)]
+    public TimeSpan ExclusiveWeight { get; set; }
 
     public IRTextFunction Function {
         get => functionRef_;
@@ -445,17 +444,16 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     private void AddParent(ProfileCallTreeNode parentNode) {
-        lock_.EnterUpgradeableReadLock();
-
         try {
+            lock_.EnterUpgradeableReadLock();
             var callerNode = FindExistingNode(callers_, parentNode.FunctionDebugInfo, parentNode.Function);
             if (callerNode != null) {
                 return;
             }
 
-            lock_.EnterWriteLock();
             try {
                 // Check again if another thread added the parent in the meantime.
+                lock_.EnterWriteLock();
                 callerNode = FindExistingNode(callers_, parentNode.FunctionDebugInfo, parentNode.Function);
                 if (callerNode != null) {
                     return;
@@ -492,18 +490,17 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     private (ProfileCallTreeNode, bool) GetOrCreateChildNode(FunctionDebugInfo functionDebugInfo, IRTextFunction function) {
-        lock_.EnterUpgradeableReadLock();
-
         try {
+            lock_.EnterUpgradeableReadLock();
             var childNode = FindExistingNode(children_, functionDebugInfo, function);
 
             if (childNode != null) {
                 return (childNode, false);
             }
 
-            lock_.EnterWriteLock();
             try {
                 // Check again if another thread added the child in the meantime.
+                lock_.EnterWriteLock();
                 childNode = FindExistingNode(children_, functionDebugInfo, function);
 
                 if (childNode != null) {

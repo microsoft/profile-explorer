@@ -1,23 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
-using CSharpTest.Net.Collections;
-using IntervalTree;
 using IRExplorerCore;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 
 namespace IRExplorerUI.Profile {
-    // native/managed Moduleinfo
-
-    //? DisassemblerSectionLoader makes fake doc ,
-    //? use manual DisassemblerSectionLoader, inject functionDebugInfo for EnumerateFunctions
-    //? - split methods by module
-
-    public class ModuleInfo : IDisposable {
+    public class ModuleInfo {
         private ISession session_;
         private BinaryFileDescriptor binaryInfo_;
         private List<FunctionDebugInfo> sortedFuncList_;
@@ -25,6 +16,7 @@ namespace IRExplorerUI.Profile {
         private Dictionary<long, string> externalsFuncMap_;
         private Dictionary<string, IRTextFunction> externalFuncNames_;
         private ProfileDataReport report_;
+        private ReaderWriterLockSlim lock_;
 
         public IRTextSummary Summary { get; set; }
         public LoadedDocument ModuleDocument { get; set; }
@@ -39,6 +31,7 @@ namespace IRExplorerUI.Profile {
         public ModuleInfo(ProfileDataReport report,  ISession session) {
             report_ = report;
             session_ = session;
+            lock_ = new ReaderWriterLockSlim();
         }
         
         public async Task<bool> Initialize(BinaryFileDescriptor binaryInfo, SymbolFileSourceOptions symbolOptions,
@@ -218,8 +211,8 @@ namespace IRExplorerUI.Profile {
         }
 
         private IRTextFunction FindExternalFunction(long funcAddress) {
-            //? TODO: Make RW lock
-            lock (this) {
+            try {
+                lock_.EnterReadLock();
                 if (externalsFuncMap_ == null || externalFuncNames_ == null) {
                     return null;
                 }
@@ -228,12 +221,10 @@ namespace IRExplorerUI.Profile {
                     return null;
                 }
 
-                if (!externalFuncNames_.TryGetValue(externalFuncName, out var textFunction)) {
-                    // Create a dummy external function that will have no sections. 
-                    textFunction = AddPlaceholderFunction(externalFuncName, funcAddress);
-                }
-
-                return textFunction;
+                return externalFuncNames_.GetValueOrNull(externalFuncName);
+            }
+            finally {
+                lock_.ExitReadLock();
             }
         }
 
@@ -242,8 +233,9 @@ namespace IRExplorerUI.Profile {
                 return null;
             }
 
-            lock (this) {
+            try {
                 // Search again under the lock.
+                lock_.EnterWriteLock();
                 var func = FindExternalFunction(funcAddress);
 
                 if (func != null) {
@@ -262,9 +254,9 @@ namespace IRExplorerUI.Profile {
                 externalsFuncMap_[funcAddress] = name;
                 return func;
             }
-        }
-
-        public void Dispose() {
+            finally {
+                lock_.ExitWriteLock();
+            }
         }
     }
 }

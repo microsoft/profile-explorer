@@ -271,6 +271,7 @@
                     <ListView
                         x:Name="ModuleList"
                         MinHeight="100"
+                        MaxHeight="500"
                         Margin="0,4,0,0"
                         Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
                         IsEnabled="{Binding InputControlsEnabled}"
