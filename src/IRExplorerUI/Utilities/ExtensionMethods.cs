@@ -327,7 +327,11 @@ namespace IRExplorerUI {
                 return "";
             }
 
-            return $"{value}{suffix}";
+            return digits switch {
+                1 => $"{value:.0}{suffix}",
+                2 => $"{value:.00}{suffix}",
+                _ => String.Format("0:." + new string('0', digits), value) + suffix
+            };
         }
 
         public static string AsMillisecondsString(this TimeSpan value, int digits = 2, 
@@ -344,7 +348,7 @@ namespace IRExplorerUI {
 
         public static double TruncateToDigits(this double value, int digits) {
             double factor = Math.Pow(10, digits);
-            value = value * factor;
+            value *= factor;
             value = Math.Truncate(value);
             return value / factor;
         }

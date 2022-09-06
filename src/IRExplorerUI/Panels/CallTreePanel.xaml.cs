@@ -623,7 +623,7 @@ namespace IRExplorerUI {
                 funcName = $"{node.ModuleName}!{funcName}";
             }
 
-            builder.Append($"{percentage.AsPercentageString(2, false).PadLeft(6)}  ");
+            builder.Append($"{percentage.AsPercentageString(2, false).PadLeft(6)} | {node.Weight.AsMillisecondsString()} | {funcName}");
             builder.AppendLine(funcName);
         }
 

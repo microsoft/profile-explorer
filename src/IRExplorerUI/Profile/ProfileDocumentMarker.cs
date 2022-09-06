@@ -294,64 +294,63 @@ namespace IRExplorerUI.Compilers.ASM {
                 return;
             }
 
-            //? TODO: Call sites should be unified
             var icon = IconDrawing.FromIconResource("ExecuteIconColor");
-            var nodes = callTree.GetCallTreeNodes(textFunction);
+            var node = callTree.GetCombinedCallTreeNode(textFunction);
 
-            foreach (var node in nodes) {
-                if (!node.HasCallSites) continue;
+            if (node == null || !node.HasCallSites) {
+                return;
+            }
 
-                foreach (var callsite in node.CallSites.Values) {
-                    if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA- profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
-                        //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
-                        var instr = element as InstructionIR;
-                        if (instr == null) continue;
+            foreach (var callsite in node.CallSites.Values) {
+                if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA- profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
+                    //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
+                    var instr = element as InstructionIR;
+                    if (instr == null) continue;
 
-                        // Skip over direct calls.
-                        if (ir_.IsCallInstruction(instr)) {
-                            var callTarget = ir_.GetCallTarget(instr);
+                    // Skip over direct calls.
+                    if (ir_.IsCallInstruction(instr)) {
+                        var callTarget = ir_.GetCallTarget(instr);
 
-                            if (callTarget != null && callTarget.HasName) {
-                                continue;
-                            }
+                        if (callTarget != null && callTarget.HasName) {
+                            continue;
                         }
-
-                        var sb = new StringBuilder();
-                        int index = 0;
-
-                        foreach (var target in callsite.Targets) {
-                            if (++index > 1) {
-                                sb.AppendLine();
-                            }
-
-                            var targetNode = callTree.FindNode(target.NodeId);
-                            double weightPercentage = callsite.ScaleWeight(target.Weight);
-                            sb.Append($"{weightPercentage.AsPercentageString(2, false).PadLeft(6)}  {targetNode.FunctionName}");
-                        }
-
-                        var label = $"Call targets:\n{sb}";
-                        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, "");
-
-                        Color color = App.Settings.DocumentSettings.BackgroundColor;
-
-                        if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
-                            color = App.Settings.DocumentSettings.AlternateBackgroundColor;
-                        }
-
-                        overlay.Background = color.AsBrush();
-                        //overlay.Border = blockPen;
-                        overlay.IsLabelPinned = false;
-                        overlay.UseLabelBackground = true;
-                        overlay.ShowBackgroundOnMouseOverOnly = true;
-                        overlay.ShowBorderOnMouseOverOnly = true;
-                        overlay.AlignmentX = HorizontalAlignment.Left;
-
-                        // Place before the opcode.
-                        int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
-                        overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
-                                                              App.Settings.DocumentSettings.FontSize).Width - 16 - 4;
-                        overlay.MarginY = 1;
                     }
+
+                    var sb = new StringBuilder();
+                    int index = 0;
+
+                    foreach (var target in callsite.Targets) {
+                        if (++index > 1) {
+                            sb.AppendLine();
+                        }
+
+                        var targetNode = callTree.FindNode(target.NodeId);
+                        double weightPercentage = callsite.ScaleWeight(target.Weight);
+                        sb.Append($"{weightPercentage.AsPercentageString(2, false).PadLeft(6)} | {target.Weight.AsMillisecondsString()} | {targetNode.FunctionName}");
+                    }
+
+                    var label = $"Indirect call targets:\n{sb}";
+                    var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, "");
+
+                    Color color = App.Settings.DocumentSettings.BackgroundColor;
+
+                    if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
+                        color = App.Settings.DocumentSettings.AlternateBackgroundColor;
+                    }
+
+                    overlay.Background = color.AsBrush();
+                    //overlay.Border = blockPen;
+                    overlay.IsLabelPinned = false;
+                    overlay.UseLabelBackground = true;
+                    overlay.ShowBackgroundOnMouseOverOnly = true;
+                    overlay.ShowBorderOnMouseOverOnly = true;
+                    overlay.AlignmentX = HorizontalAlignment.Left;
+
+                    // Place before the opcode.
+                    int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+                    overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+                                                          App.Settings.DocumentSettings.FontSize).Width - 16 - 4;
+                    overlay.MarginY = 1;
                 }
             }
         }
