@@ -141,6 +141,7 @@ namespace IRExplorerUI {
         private Point previousWindowPosition_;
         private DateTime lastDocumentLoadTime_;
         private DateTime lastDocumentReloadQueryTime_;
+        private DelayedAction statusTextAction_;
         private object lockObject_;
 
         public MainWindow() {
@@ -875,17 +876,31 @@ namespace IRExplorerUI {
 
         private void MenuItem_Click_5(object sender, RoutedEventArgs e) {
             string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-
-            SetupStartPagePanel();
-
-            MessageBox.Show($"IR Explorer\n© 2019 Microsoft Corporation\n\nVersion: {version}", "About",
+            MessageBox.Show($"IR Explorer\n© 2022 Microsoft Corporation\n\nVersion: {version}", "About",
                             MessageBoxButton.OK);
         }
 
+        private void SetOptionalStatus(TimeSpan duration, string text, string tooltip = "", Brush textBrush = null) {
+            SetOptionalStatus(text, tooltip, textBrush);
+            statusTextAction_ = DelayedAction.StartNew(duration, () => SetOptionalStatus(""));
+        }
+
         private void SetOptionalStatus(string text, string tooltip = "", Brush textBrush = null) {
+            statusTextAction_?.Cancel();
+
+            if (!Dispatcher.CheckAccess()) {
+                Dispatcher.Invoke(() => SetOptionalStatusImpl(text, tooltip, textBrush));
+            }
+            else {
+                SetOptionalStatusImpl(text, tooltip, textBrush);
+            }
+        }
+
+        private void SetOptionalStatusImpl(string text, string tooltip = "", Brush textBrush = null) {
             OptionalStatusText.Text = text;
             OptionalStatusText.Foreground = textBrush ?? Brushes.Black;
             OptionalStatusText.ToolTip = tooltip;
+            OptionalStatusText.Visibility = !string.IsNullOrEmpty(text) ? Visibility.Visible : Visibility.Collapsed;
         }
 
         private void MenuItem_Click_8(object sender, RoutedEventArgs e) {
@@ -1348,7 +1363,7 @@ namespace IRExplorerUI {
 
             if (result.HasValue && result.Value) {
                 await SectionPanel.RefreshMainSummary();
-                SetOptionalStatus("Profile data loaded");
+                SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
             }
         }
 
@@ -1359,7 +1374,7 @@ namespace IRExplorerUI {
 
             if (result.HasValue && result.Value) {
                 await SectionPanel.RefreshMainSummary();
-                SetOptionalStatus("Profile data loaded");
+                SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
             }
         }
 

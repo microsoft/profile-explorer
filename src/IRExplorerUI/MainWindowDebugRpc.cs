@@ -495,7 +495,7 @@ namespace IRExplorerUI {
             Dispatcher.BeginInvoke(new Action(async () => {
                 try {
                     Trace.WriteLine("=> BeginInvoke OnSessionStarted\n");
-                    SetOptionalStatus($"Client connected to process #{e.ProcessId}");
+                    SetOptionalStatus(TimeSpan.FromSeconds(10), $"Client connected to process #{e.ProcessId}");
                     await EndSession();
 
                     FunctionAnalysisCache.DisableCache(); // Reduce memory usage.

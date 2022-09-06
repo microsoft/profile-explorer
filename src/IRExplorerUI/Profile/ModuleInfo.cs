@@ -52,9 +52,7 @@ namespace IRExplorerUI.Profile {
 
                 // Create a dummy document to represent the module,
                 // AddPlaceholderFunction will populate it.
-                ModuleDocument = new LoadedDocument(binaryInfo.ImageName, binaryInfo.ImageName, Guid.NewGuid());
-                ModuleDocument.Summary = new IRTextSummary(binaryInfo.ImageName);
-                ModuleDocument.Loader = new DummySectionLoader(); // Placeholder used to prevent null pointers.
+                ModuleDocument = LoadedDocument.CreateDummyDocument(binaryInfo.ImageName);
                 Summary = ModuleDocument.Summary;
                 return false;
             }
@@ -249,12 +247,7 @@ namespace IRExplorerUI.Profile {
                     return func;
                 }
 
-                func = new IRTextFunction(name);
-                var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
-                func.AddSection(section);
-
-                ModuleDocument.Summary.AddFunction(func);
-                ModuleDocument.Summary.AddSection(section);
+                func = ModuleDocument.AddDummyFunction(name);
                 externalFuncNames_ ??= new Dictionary<string, IRTextFunction>();
                 externalsFuncMap_ ??= new Dictionary<long, string>();
                 externalFuncNames_[name] = func;

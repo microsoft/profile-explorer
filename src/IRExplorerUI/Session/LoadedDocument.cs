@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using IRExplorerCore;
 using IRExplorerUI.Compilers;
+using IRExplorerUI.Profile;
 using ProtoBuf;
 
 namespace IRExplorerUI {
@@ -28,10 +29,13 @@ namespace IRExplorerUI {
         public List<Tuple<int, byte[]>> SectionStates;
         [ProtoMember(8)]
         public List<Tuple<int, PanelObjectPairState>> PanelStates;
+        [ProtoMember(9)]
+        public List<string> FunctionNames;
 
         public LoadedDocumentState() {
             SectionStates = new List<Tuple<int, byte[]>>();
             PanelStates = new List<Tuple<int, PanelObjectPairState>>();
+            FunctionNames = new List<string>();
         }
 
         public LoadedDocumentState(Guid id) : this() {
@@ -51,7 +55,7 @@ namespace IRExplorerUI {
             PanelStates = new Dictionary<IRTextSection, List<PanelObjectPair>>();
             SectionStates = new Dictionary<IRTextSection, object>();
         }
-
+      
         public Guid Id { get; set; }
         public string ModuleName { get; set; }
         public string FilePath { get; set; }
@@ -74,11 +78,41 @@ namespace IRExplorerUI {
         public Dictionary<IRTextSection, List<PanelObjectPair>> PanelStates;
         public Dictionary<IRTextSection, object> SectionStates;
 
+        public bool IsDummyDocument => Loader is DummySectionLoader;
         public bool DebugInfoFileExists => DebugInfoFile != null && DebugInfoFile.Found;
         public bool BinaryFileExists => BinaryFile != null && BinaryFile.Found;
         public string FileName => Utils.TryGetFileName(FilePath);
 
         public event EventHandler DocumentChanged;
+
+        public static LoadedDocument CreateDummyDocument(string name) {
+            return CreateDummyDocument(name, Guid.NewGuid());
+        }
+
+        public static LoadedDocument CreateDummyDocument(string name, Guid id) {
+            var doc = new LoadedDocument(name, name, id);
+            doc.Summary = new IRTextSummary(name);
+            doc.Loader = new DummySectionLoader(); // Placeholder used to prevent null pointers.
+            return doc;
+        }
+
+        public IRTextFunction AddDummyFunction(string name) {
+            var func = new IRTextFunction(name);
+            var section = new IRTextSection(func, func.Name, IRPassOutput.Empty);
+            func.AddSection(section);
+            summary_.AddFunction(func);
+            summary_.AddSection(section);
+            return func;
+        }
+
+        public void AddDummyFunctions(List<string> funcNames) {
+            foreach (var name in funcNames) {
+                if (summary_.FindFunction(name) == null) {
+                    Trace.WriteLine($"add dummy {name}");
+                    AddDummyFunction(name);
+                }
+            }
+        }
 
         public void SavePanelState(object stateObject, IToolPanel panel, IRTextSection section) {
             if (!PanelStates.TryGetValue(section, out var list)) {
@@ -149,6 +183,13 @@ namespace IRExplorerUI {
                     }
                 }
             }
+
+            //if (IsDummyDocument) {
+                // Used by profiling to represent missing binaries.
+                foreach (var func in summary_.Functions) {
+                    state.FunctionNames.Add(func.Name);
+                }
+            //}
 
             return state;
         }

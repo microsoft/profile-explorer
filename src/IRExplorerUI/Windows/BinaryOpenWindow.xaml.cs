@@ -136,12 +136,6 @@ namespace IRExplorerUI {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyname));
         }
 
-        private void ResetButton_Click(object sender, RoutedEventArgs e) {
-            App.SaveApplicationSettings();
-            DataContext = null;
-            DataContext = this;
-        }
-        
         public void NotifyPropertyChanged(string propertyName) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
