@@ -38,7 +38,9 @@
                             <DockPanel HorizontalAlignment="Stretch" ToolTip="{Binding ToolTip}">
                                 <StackPanel DockPanel.Dock="Left">
                                     <TextBlock FontWeight="DemiBold" Text="{Binding Title}" />
-                                    <TextBlock Text="{Binding Description}" />
+                                    <TextBlock Text="{Binding Description}" Visibility="{Binding ShowDescription, Converter={StaticResource BoolToVisibility}}" />
+                                    <TextBlock Text="{Binding Time}" Visibility="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibility}}" />
+
                                 </StackPanel>
                                 <StackPanel
                                     Margin="20,0,0,0"

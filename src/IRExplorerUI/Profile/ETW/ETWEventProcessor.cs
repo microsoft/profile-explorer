@@ -529,7 +529,11 @@ public sealed class ETWEventProcessor : IDisposable {
         try {
             Trace.WriteLine("Start processing ETW events");
             var sw = Stopwatch.StartNew();
-            
+
+            if (isRealTime_) {
+                profile.TraceInfo.ProfileStartTime = DateTime.Now;
+            }
+
             source_.Process();
 
             if (isRealTime_) {

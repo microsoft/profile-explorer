@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -28,8 +29,8 @@ namespace IRExplorerUI {
         private bool isLoadedFile_;
 
         public RecordingSessionEx(ProfileDataReport report, bool isLoadedFile,
-                                  bool isNewSession = false,
-                                  string title = null, string description = null) {
+            bool isNewSession = false,
+            string title = null, string description = null) {
             report_ = report;
             isLoadedFile_ = isLoadedFile;
             isNewSession_ = isNewSession;
@@ -40,12 +41,14 @@ namespace IRExplorerUI {
         public ProfileDataReport Report => report_;
 
         private bool isNewSession_;
+
         public bool IsNewSession {
             get => isNewSession_;
             set => SetAndNotify(ref isNewSession_, value);
         }
 
         private string title_;
+
         public string Title {
             get {
                 if (!string.IsNullOrEmpty(title_)) {
@@ -64,22 +67,67 @@ namespace IRExplorerUI {
         }
 
         public string ToolTip {
-            get => isLoadedFile_ ? report_?.TraceInfo.TraceFilePath : 
-                $"{report_?.SessionOptions.ApplicationPath} {report_?.SessionOptions.ApplicationArguments}";
+            get => isLoadedFile_ ? report_?.TraceInfo.TraceFilePath : $"{report_?.SessionOptions.ApplicationPath} {report_?.SessionOptions.ApplicationArguments}";
         }
 
         private string description_;
+
         public string Description {
             get {
-                if(!string.IsNullOrEmpty(description_)) {
+                if (!string.IsNullOrEmpty(description_)) {
                     return description_;
                 }
-                else return isLoadedFile_ ? $"Process: {report_?.Process.ImageFileName}" :
-                                            $"Args: {report_.SessionOptions.ApplicationArguments}";
+                else if (!IsNewSession) {
+                    return isLoadedFile_ ? $"Process: {report_?.Process.ImageFileName}" : $"Args: {report_.SessionOptions.ApplicationArguments}";
+                }
+
+                return "";
             }
             set => SetAndNotify(ref description_, value);
         }
+
+        public bool ShowDescription {
+            get {
+                if (!string.IsNullOrEmpty(description_)) {
+                    return true;
+                }
+                else if (!IsNewSession) {
+                    return !string.IsNullOrEmpty(isLoadedFile_ ? report_?.Process.ImageFileName : report_.SessionOptions.ApplicationArguments);
+                }
+
+                return false;
+            }
+        }
+
+        public string Time {
+            get {
+                return IsNewSession ? "" : $"{report_.TraceInfo.ProfileStartTime.ToShortDateString()}, {ToRelativeDate(report_.TraceInfo.ProfileStartTime)}";
+            }
+        }
+
+        static readonly SortedList<double, Func<TimeSpan, string>> offsets =
+            new SortedList<double, Func<TimeSpan, string>>
+            {
+                { 0.75, x => $"{x.TotalSeconds:F0} seconds"},
+                { 1.5, x => "a minute"},
+                { 45, x => $"{x.TotalMinutes:F0} minutes"},
+                { 90, x => "an hour"},
+                { 1440, x => $"{x.TotalHours:F0} hours"},
+                { 2880, x => "a day"},
+                { 43200, x => $"{x.TotalDays:F0} days"},
+                { 86400, x => "a month"},
+                { 525600, x => $"{x.TotalDays / 30:F0} months"},
+                { 1051200, x => "a year"},
+                { double.MaxValue, x => $"{x.TotalDays / 365:F0} years"}
+            };
+
+        public static string ToRelativeDate(DateTime input) {
+            TimeSpan x = DateTime.Now - input;
+            x = new TimeSpan(Math.Abs(x.Ticks));
+            return offsets.First(n => x.TotalMinutes < n.Key).Value(x) + " ago";
+        }
     }
+
 
     public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
