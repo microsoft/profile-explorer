@@ -418,6 +418,8 @@ namespace IRExplorerUI {
         public override void OnSessionEnd() {
             DiffSummary = null;
             MainSummary = null;
+            MainPanel.RefreshSummary();
+            DiffPanel.RefreshSummary();
         }
 
         public async Task AnalyzeDocumentDiffs() {

@@ -2526,7 +2526,11 @@ namespace IRExplorerUI {
 
         public async Task RefreshSummary() {
             ResetSectionPanel();
-            await UpdateFunctionListBindings();
+            ResetStatistics();
+
+            if (summary_ != null) {
+                await UpdateFunctionListBindings();
+            }
         }
 
         private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
