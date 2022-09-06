@@ -295,6 +295,7 @@ namespace IRExplorerUI.Compilers.ASM {
             }
 
             //? TODO: Call sites should be unified
+            var icon = IconDrawing.FromIconResource("ExecuteIconColor");
             var nodes = callTree.GetCallTreeNodes(textFunction);
 
             foreach (var node in nodes) {
@@ -303,14 +304,14 @@ namespace IRExplorerUI.Compilers.ASM {
                 foreach (var callsite in node.CallSites.Values) {
                     if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA- profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
                         //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
+                        var instr = element as InstructionIR;
+                        if (instr == null) continue;
 
                         // Skip over direct calls.
-                        if (element is InstructionIR instr &&
-                            ir_.IsCallInstruction(instr)) {
+                        if (ir_.IsCallInstruction(instr)) {
                             var callTarget = ir_.GetCallTarget(instr);
 
                             if (callTarget != null && callTarget.HasName) {
-                                Trace.WriteLine($"Ckip {callTarget}");
                                 continue;
                             }
                         }
@@ -323,24 +324,33 @@ namespace IRExplorerUI.Compilers.ASM {
                                 sb.AppendLine();
                             }
 
+                            var targetNode = callTree.FindNode(target.NodeId);
                             double weightPercentage = callsite.ScaleWeight(target.Weight);
-                            sb.Append($"{weightPercentage.AsPercentageString(2, false).PadLeft(6)}  {target.Node.FunctionName}");
+                            sb.Append($"{weightPercentage.AsPercentageString(2, false).PadLeft(6)}  {targetNode.FunctionName}");
                         }
 
-                        var label = callsite.HasSingleTarget ? sb.ToString() : "Indirect call targets";
-                        var overlay = document.RegisterIconElementOverlay(element, IconDrawing.FromIconResource("ExecuteIconColor"), 16,
-                            16, label, sb.ToString());
+                        var label = $"Call targets:\n{sb}";
+                        var overlay = document.RegisterIconElementOverlay(element, icon, 16, 16, label, "");
 
-                        //overlay.Background = color.AsBrush();
+                        Color color = App.Settings.DocumentSettings.BackgroundColor;
+
+                        if (instr.ParentBlock != null && !instr.ParentBlock.HasEvenIndexInFunction) {
+                            color = App.Settings.DocumentSettings.AlternateBackgroundColor;
+                        }
+
+                        overlay.Background = color.AsBrush();
                         //overlay.Border = blockPen;
                         overlay.IsLabelPinned = false;
                         overlay.UseLabelBackground = true;
                         overlay.ShowBackgroundOnMouseOverOnly = true;
                         overlay.ShowBorderOnMouseOverOnly = true;
-                        overlay.AlignmentX = HorizontalAlignment.Right;
-                        overlay.MarginX = 8;
-                        overlay.Padding = 2;
-                        
+                        overlay.AlignmentX = HorizontalAlignment.Left;
+
+                        // Place before the opcode.
+                        int lineOffset = lineOffset = instr.OpcodeLocation.Offset - instr.TextLocation.Offset;
+                        overlay.MarginX = Utils.MeasureString(lineOffset, App.Settings.DocumentSettings.FontName,
+                                                              App.Settings.DocumentSettings.FontSize).Width - 16 - 4;
+                        overlay.MarginY = 1;
                     }
                 }
             }
@@ -355,7 +365,7 @@ namespace IRExplorerUI.Compilers.ASM {
             document.SuspendUpdate();
             var overlayHeight = document.DefaultLineHeight;
             var blockPen = ColorPens.GetPen(options_.BlockOverlayBorderColor,
-                                               options_.BlockOverlayBorderThickness);
+                                            options_.BlockOverlayBorderThickness);
 
             for(int i = 0; i < blockWeights.Count; i++) {
                 var block = blockWeights[i].Item1;

@@ -274,10 +274,12 @@ namespace IRExplorerUI {
 
                 if (data != null) {
                     await File.WriteAllBytesAsync(filePath, data).ConfigureAwait(false);
+                    SetOptionalStatus(TimeSpan.FromSeconds(10), "Session saved");
                     return true;
                 }
             }
             catch (Exception ex) {
+                SetOptionalStatus(TimeSpan.FromSeconds(10), "Failed to save session", ex.Message, Colors.DarkRed.AsBrush());
                 Trace.TraceError($"Failed to save session, exception: {ex}");
             }
 
@@ -595,18 +597,27 @@ namespace IRExplorerUI {
 
                     if (docState.DocumentText != null && docState.DocumentText.Length > 0) {
                         result = await Task.Run(() => LoadDocument(docState.DocumentText, docState.FilePath,
-                            docState.ModuleName, docState.Id,
-                            UpdateIRDocumentLoadProgress));
+                                                                   docState.ModuleName, docState.Id,
+                                                                   UpdateIRDocumentLoadProgress));
                     }
                     else if(docState.BinaryFile != null) {
                         result = await Task.Run(() => LoadBinaryDocument(docState.BinaryFile.FilePath, 
-                                                                                 docState.ModuleName, docState.Id,
-                                                                                 UpdateIRDocumentLoadProgress));
+                                                                         docState.ModuleName, docState.Id,
+                                                                         UpdateIRDocumentLoadProgress));
+                    }
+                    else if(!string.IsNullOrEmpty(docState.ModuleName)) {
+                        // Fake document used by profiling to represent missing binaries.
+                        result = LoadedDocument.CreateDummyDocument(docState.ModuleName, docState.Id);
                     }
 
                     if (result == null) {
                         UpdateUIAfterLoadDocument();
                         return null;
+                    }
+
+                    // Profiling can add extra dummy functions to a document, restore them.
+                    if (docState.FunctionNames != null) {
+                        result.AddDummyFunctions(docState.FunctionNames);
                     }
 
                     sessionState_.RegisterLoadedDocument(result);

@@ -107,17 +107,6 @@
                         <ContextMenu />
                     </Button.ContextMenu>
                 </Button>
-                <Button
-                    Width="50"
-                    Height="24"
-                    Margin="4,0,0,0"
-                    Padding="4,1,4,1"
-                    HorizontalAlignment="Left"
-                    Click="ResetButton_Click"
-                    Content="Reset"
-                    TabIndex="5"
-                    ToolTip="Reset options to default values"
-                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}" />
             </StackPanel>
             <ProgressBar
                 x:Name="LoadProgressBar"

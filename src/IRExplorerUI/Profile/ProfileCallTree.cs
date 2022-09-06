@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using IRExplorerCore;
+using IRExplorerCore.Utilities;
 using IRExplorerUI.Compilers;
 using ProtoBuf;
 using static IRExplorerUI.Profile.ProfileData;
@@ -40,6 +41,7 @@ public class ProfileCallTree {
 
     private HashSet<ProfileCallTreeNode> rootNodes_;
     private Dictionary<IRTextFunction, List<ProfileCallTreeNode>> funcToNodesMap_;
+    private Dictionary<long, ProfileCallTreeNode> nodeIdMap_;
     private long nextNodeId_;
     private ReaderWriterLockSlim lock_;
     private ReaderWriterLockSlim funcLock_;
@@ -208,6 +210,30 @@ public class ProfileCallTree {
         }
     }
 
+    public ProfileCallTreeNode FindNode(long nodeId) {
+        // Build mapping on-demand.
+        if (nodeIdMap_ == null) {
+            try {
+                funcLock_.EnterWriteLock();
+
+                if (nodeIdMap_ == null) {
+                    nodeIdMap_ = new Dictionary<long, ProfileCallTreeNode>(funcToNodesMap_.Count);
+
+                    foreach (var list in funcToNodesMap_.Values) {
+                        foreach (var node in list) {
+                            nodeIdMap_[node.Id] = node;
+                        }
+                    }
+                }
+            }
+            finally {
+                funcLock_.ExitWriteLock();
+            }
+        }
+
+        return nodeIdMap_.GetValueOrNull(nodeId);
+    }
+
     public List<ProfileCallTreeNode> GetCallTreeNodes(IRTextFunction function) {
         try {
             funcLock_.EnterReadLock();
@@ -339,40 +365,12 @@ public class ProfileCallTree {
 
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
-    [ProtoContract(SkipConstructor = true)]
-    public class CallSite {
-        [ProtoMember(1)] 
-        public long RVA { get; set; }
-        [ProtoMember(2)] 
-        public TimeSpan Weight { get; set; }
-        [ProtoMember(3)] 
-        public List<(ProfileCallTreeNode Node, TimeSpan Weight)> Targets { get; set; }
-
-        public bool HasSingleTarget => Targets.Count == 1;
-
-        public CallSite(long rva) {
-            InitializeReferenceMembers();
-            RVA = rva;
-            Weight = TimeSpan.Zero;
-        }
-
-        public double ScaleWeight(TimeSpan weight) {
-            return (double)weight.Ticks / (double)Weight.Ticks;
-        }
-
-        [ProtoAfterDeserialization]
-        private void InitializeReferenceMembers() {
-            Targets ??= new List<(ProfileCallTreeNode Node, TimeSpan Weight)>();
-        }
-    }
-
     [ProtoMember(1)]
     private IRTextFunctionReference functionRef_ { get; set; }
     [ProtoMember(2)]
     private List<ProfileCallTreeNode> children_;
-    //? stack overflow
-    //[ProtoMember(3)] 
-    private Dictionary<long, CallSite> callSites_;
+    [ProtoMember(3)] 
+    private Dictionary<long, ProfileCallSite> callSites_;
 
     private List<ProfileCallTreeNode> callers_; // Can't be serialized, reconstructed.
     private ReaderWriterLockSlim lock_; // Lock for updating children, callers, call sites.
@@ -393,7 +391,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     public List<ProfileCallTreeNode> Children => children_;
     public List<ProfileCallTreeNode> Callers => callers_;
-    public Dictionary<long, CallSite> CallSites => callSites_;
+    public Dictionary<long, ProfileCallSite> CallSites => callSites_;
 
     public bool HasChildren => Children != null && Children.Count > 0;
     public bool HasCallers => Callers != null && Callers.Count > 0;
@@ -549,20 +547,20 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
             lock_.EnterWriteLock();
 
             if (callSites_ == null || !callSites_.TryGetValue(rva, out var callsite)) {
-                callSites_ ??= new Dictionary<long, CallSite>();
-                callsite = new CallSite(rva);
+                callSites_ ??= new Dictionary<long, ProfileCallSite>();
+                callsite = new ProfileCallSite(rva);
                 callSites_[rva] = callsite;
             }
 
             callsite.Weight += weight; // Weight of all targets.
-            int index = callsite.Targets.FindIndex(item => item.Node == childNode);
+            int index = callsite.Targets.FindIndex(item => item.NodeId == childNode.Id);
 
             if (index != -1) {
                 var span = CollectionsMarshal.AsSpan(callsite.Targets);
                 span[index].Weight += weight; // Modify in-place per-target weight.
             }
             else {
-                callsite.Targets.Add((childNode, weight));
+                callsite.Targets.Add((childNode.Id, weight));
             }
         }
         finally {
@@ -658,5 +656,72 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
 
     public override string ToString() {
         return $"{FunctionName}, weight: {Weight}, exc weight {ExclusiveWeight}, children: {(HasCallers ? Children.Count : 0)}";
+    }
+}
+
+[ProtoContract(SkipConstructor = true)]
+public class ProfileCallSite : IEquatable<ProfileCallSite> {
+    [ProtoMember(1)]
+    public long RVA { get; set; }
+    [ProtoMember(2)]
+    public TimeSpan Weight { get; set; }
+    [ProtoMember(3)]
+    public List<(long NodeId, TimeSpan Weight)> Targets { get; set; }
+
+    public bool HasSingleTarget => Targets.Count == 1;
+
+    public ProfileCallSite(long rva) {
+        InitializeReferenceMembers();
+        RVA = rva;
+        Weight = TimeSpan.Zero;
+    }
+
+    public double ScaleWeight(TimeSpan weight) {
+        return (double)weight.Ticks / (double)Weight.Ticks;
+    }
+
+    [ProtoAfterDeserialization]
+    private void InitializeReferenceMembers() {
+        Targets ??= new List<(long NodeId, TimeSpan Weight)>();
+    }
+
+    public bool Equals(ProfileCallSite other) {
+        if (ReferenceEquals(null, other)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, other)) {
+            return true;
+        }
+
+        return RVA == other.RVA;
+    }
+
+    public override bool Equals(object obj) {
+        if (ReferenceEquals(null, obj)) {
+            return false;
+        }
+
+        if (ReferenceEquals(this, obj)) {
+            return true;
+        }
+
+        if (obj.GetType() != this.GetType()) {
+            return false;
+        }
+
+        return Equals((ProfileCallSite)obj);
+    }
+
+    public override int GetHashCode() {
+        return RVA.GetHashCode();
+    }
+
+    public static bool operator ==(ProfileCallSite left, ProfileCallSite right) {
+        return Equals(left, right);
+    }
+
+    public static bool operator !=(ProfileCallSite left, ProfileCallSite right) {
+        return !Equals(left, right);
     }
 }

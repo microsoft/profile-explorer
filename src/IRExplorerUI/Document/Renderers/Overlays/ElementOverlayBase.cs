@@ -155,11 +155,14 @@ namespace IRExplorerUI.Document {
             
             var text = DocumentUtils.CreateFormattedText(host, Label, DefaultFont, fontSize,
                                                         ActiveTextBrush, TextWeight);
-            double textX = elementRect.Left + elementRect.Width + Padding;
-            double textY = (elementRect.Top + elementRect.Height / 2) - text.Height / 2;
+            var lines = Label.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            double extraHeight = lines.Length > 1 ? elementRect.Height * (lines.Length - 1) : 0;
+            
+            double height = elementRect.Height + extraHeight;
             double width = elementRect.Width + text.WidthIncludingTrailingWhitespace + 2 * Padding;
-            labelBounds_ = Utils.SnapRectToPixels(elementRect.X, elementRect.Y, width, elementRect.Height);
-
+            double textX = elementRect.Left + elementRect.Width + Padding;
+            double textY = (elementRect.Top + (height) / 2) - text.Height / 2;
+            labelBounds_ = Utils.SnapRectToPixels(elementRect.X, elementRect.Y, width, height);
             drawingContext.PushOpacity(opacity);
 
             if (UseLabelBackground) {
@@ -208,13 +211,13 @@ namespace IRExplorerUI.Document {
 
         protected double ComputePositionY(Rect rect, IElementOverlay previousOveraly) {
             if (AlignmentY == VerticalAlignment.Top) {
-                return Utils.SnapToPixels(rect.Top - ComputeHeight(rect) - MarginY);
+                return Utils.SnapToPixels(rect.Top - ComputeHeight(rect) + MarginY);
             }
             else if(AlignmentY == VerticalAlignment.Bottom) {
-                return Utils.SnapToPixels(rect.Right + MarginX);
+                return Utils.SnapToPixels(rect.Bottom + MarginY);
             }
             else {
-                return Utils.SnapToPixels(rect.Top + (rect.Height - ComputeHeight(rect)) / 2);
+                return Utils.SnapToPixels(rect.Top + (rect.Height - ComputeHeight(rect)) / 2 + MarginY);
             }
         }
 

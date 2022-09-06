@@ -60,7 +60,7 @@ namespace IRExplorerUI.Document {
                     Bounds = Utils.SnapRectToPixels(Bounds.X + Bounds.Width, Bounds.Y, 0, Bounds.Height);
                 }
                 
-                Bounds = DrawLabel(Bounds, opacity, drawingContext);
+                DrawLabel(Bounds, opacity, drawingContext);
             }
 
             if (Icon != null) {
