@@ -302,7 +302,10 @@ public class ProfileCallTree {
 
             if (node.HasCallSites) {
                 foreach (var pair in node.CallSites) {
-                    var callsite = callSiteMap.GetValueOrDefault(pair.Key);
+                    if (!callSiteMap.TryGetValue(pair.Key, out var callsite)) {
+                        callsite = new ProfileCallSite(pair.Key);
+                        callSiteMap[pair.Key] = callsite;
+                    }
 
                     foreach (var target in pair.Value.Targets) {
                         callsite.AddTarget(target.NodeId, target.Weight);

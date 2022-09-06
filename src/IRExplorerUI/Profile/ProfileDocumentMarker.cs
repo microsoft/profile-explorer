@@ -305,15 +305,13 @@ namespace IRExplorerUI.Compilers.ASM {
                 if (FunctionProfileData.TryFindElementForOffset(metadataTag, callsite.RVA- profile_.FunctionDebugInfo.RVA, ir_, out var element)) {
                     //Trace.WriteLine($"Found CS for elem at RVA {callsite.RVA}, weight {callsite.Weight}: {element}");
                     var instr = element as InstructionIR;
-                    if (instr == null) continue;
+                    if (instr == null || !ir_.IsCallInstruction(instr)) continue;
 
                     // Skip over direct calls.
-                    if (ir_.IsCallInstruction(instr)) {
-                        var callTarget = ir_.GetCallTarget(instr);
+                    var callTarget = ir_.GetCallTarget(instr);
 
-                        if (callTarget != null && callTarget.HasName) {
-                            continue;
-                        }
+                    if (callTarget != null && callTarget.HasName) {
+                        continue;
                     }
 
                     var sb = new StringBuilder();
