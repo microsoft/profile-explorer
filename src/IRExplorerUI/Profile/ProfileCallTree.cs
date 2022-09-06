@@ -261,6 +261,7 @@ public class ProfileCallTree {
 
         var childrenSet = new HashSet<ProfileCallTreeNode>();
         var callersSet = new HashSet<ProfileCallTreeNode>();
+        var callSiteMap = new Dictionary<long, ProfileCallSite>();
         TimeSpan weight = TimeSpan.Zero;
         TimeSpan excWeight = TimeSpan.Zero;
 
@@ -298,11 +299,21 @@ public class ProfileCallTree {
                     existingNode.ExclusiveWeight += callerNode.ExclusiveWeight;
                 }
             }
+
+            if (node.HasCallSites) {
+                foreach (var pair in node.CallSites) {
+                    var callsite = callSiteMap.GetValueOrDefault(pair.Key);
+
+                    foreach (var target in pair.Value.Targets) {
+                        callsite.AddTarget(target.NodeId, target.Weight);
+                    }
+                }
+            }
         }
 
         return new ProfileCallTreeNode(nodes[0].FunctionDebugInfo, nodes[0].Function,
-                                       childrenSet.ToList(), callersSet.ToList()) {
-            Weight = weight, ExclusiveWeight = excWeight
+                                       childrenSet.ToList(), callersSet.ToList(), callSiteMap) {
+            Weight = weight, ExclusiveWeight = excWeight,
         };
     }
 
@@ -415,13 +426,15 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public ProfileCallTreeNode(FunctionDebugInfo funcInfo, IRTextFunction function,
-                               List<ProfileCallTreeNode> children = null,
-                               List<ProfileCallTreeNode> callers = null) {
+        List<ProfileCallTreeNode> children = null,
+        List<ProfileCallTreeNode> callers = null,
+        Dictionary<long, ProfileCallSite> callSites = null) {
         InitializeReferenceMembers();
         FunctionDebugInfo = funcInfo;
         Function = function;
         children_ = children;
         callers_ = callers;
+        callSites_ = callSites;
     }
 
     [ProtoAfterDeserialization]
@@ -552,16 +565,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
                 callSites_[rva] = callsite;
             }
 
-            callsite.Weight += weight; // Weight of all targets.
-            int index = callsite.Targets.FindIndex(item => item.NodeId == childNode.Id);
-
-            if (index != -1) {
-                var span = CollectionsMarshal.AsSpan(callsite.Targets);
-                span[index].Weight += weight; // Modify in-place per-target weight.
-            }
-            else {
-                callsite.Targets.Add((childNode.Id, weight));
-            }
+            callsite.AddTarget(childNode.Id, weight);
         }
         finally {
             lock_.ExitWriteLock();
@@ -679,6 +683,20 @@ public class ProfileCallSite : IEquatable<ProfileCallSite> {
     public double ScaleWeight(TimeSpan weight) {
         return (double)weight.Ticks / (double)Weight.Ticks;
     }
+
+    public void AddTarget(long nodeId, TimeSpan weight) {
+        Weight += weight; // Total weight of targets.
+        int index = Targets.FindIndex(item => item.NodeId == nodeId);
+
+        if (index != -1) {
+            var span = CollectionsMarshal.AsSpan(Targets);
+            span[index].Weight += weight; // Modify in-place per-target weight.
+        }
+        else {
+            Targets.Add((nodeId, weight));
+        }
+    }
+
 
     [ProtoAfterDeserialization]
     private void InitializeReferenceMembers() {

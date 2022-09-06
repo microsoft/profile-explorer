@@ -54,18 +54,19 @@ namespace IRExplorerUI.Document {
             double y = ComputePositionY(elementRect, previousOverlay);
             double opacity = ActiveOpacity;
             Bounds = Utils.SnapRectToPixels(x, y, ActualWidth, ComputeHeight(elementRect));
+            double iconHeight = Bounds.Height;
 
             if (ShowLabel) {
                 if (Icon == null) {
                     Bounds = Utils.SnapRectToPixels(Bounds.X + Bounds.Width, Bounds.Y, 0, Bounds.Height);
                 }
                 
-                DrawLabel(Bounds, opacity, drawingContext);
+                Bounds = DrawLabel(Bounds, opacity, drawingContext);
             }
 
             if (Icon != null) {
                 DrawBackground(Bounds, opacity, drawingContext);
-                Icon.Draw(x + 1, y - 1, Width, Width, ComputeHeight(Bounds), opacity, drawingContext);
+                Icon.Draw(x + 1, y - 1, Width, Width, iconHeight, opacity, drawingContext);
             }
         }
     }
