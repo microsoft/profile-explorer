@@ -266,301 +266,302 @@
             </ScrollViewer>
         </TabItem>
         <TabItem Header="Modules">
-            <ScrollViewer Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
-                <StackPanel>
-                    <ListView
-                        x:Name="ModuleList"
-                        MinHeight="100"
-                        MaxHeight="500"
-                        Margin="0,4,0,0"
-                        Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
-                        IsEnabled="{Binding InputControlsEnabled}"
-                        ScrollViewer.VerticalScrollBarVisibility="Auto"
-                        SelectionMode="Single"
-                        VirtualizingStackPanel.IsVirtualizing="True"
-                        VirtualizingStackPanel.VirtualizationMode="Recycling">
-                        <ListView.View>
-                            <GridView>
-                                <GridViewColumn Width="150" DisplayMemberBinding="{Binding ImageFileInfo.ImageName}">
-                                    <GridViewColumnHeader Content="Module" />
-                                    <GridViewColumn.HeaderContainerStyle>
-                                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                        </Style>
-                                    </GridViewColumn.HeaderContainerStyle>
-                                </GridViewColumn>
+            <DockPanel LastChildFill="True">
+                <ListView
+                    x:Name="ModuleList"
+                    Height="300"
+                    MinHeight="100"
+                    MaxHeight="500"
+                    Margin="0,4,0,0"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}"
+                    DockPanel.Dock="Top"
+                    IsEnabled="{Binding InputControlsEnabled}"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    SelectionMode="Single"
+                    VirtualizingStackPanel.IsVirtualizing="True"
+                    VirtualizingStackPanel.VirtualizationMode="Recycling">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="150" DisplayMemberBinding="{Binding ImageFileInfo.ImageName}">
+                                <GridViewColumnHeader Content="Module" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                            </GridViewColumn>
 
-                                <GridViewColumn Width="85">
-                                    <GridViewColumnHeader Content="Loaded" />
-                                    <GridViewColumn.HeaderContainerStyle>
-                                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                        </Style>
-                                    </GridViewColumn.HeaderContainerStyle>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border Margin="-6,-2,-6,-2">
-                                                <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
-                                                    <Image Width="16" Height="16">
-                                                        <Image.Style>
-                                                            <Style TargetType="{x:Type Image}">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
-                                                                        <Setter Property="Source" Value="{StaticResource CheckIcon}" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
-                                                                        <Setter Property="Source" Value="{StaticResource VoidIcon}" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
-                                                                        <Setter Property="Source" Value="{StaticResource WarningYellow}" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
+                            <GridViewColumn Width="85">
+                                <GridViewColumnHeader Content="Loaded" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="-6,-2,-6,-2">
+                                            <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
+                                                <Image Width="16" Height="16">
+                                                    <Image.Style>
+                                                        <Style TargetType="{x:Type Image}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                                                    <Setter Property="Source" Value="{StaticResource CheckIcon}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                                                    <Setter Property="Source" Value="{StaticResource VoidIcon}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
+                                                                    <Setter Property="Source" Value="{StaticResource WarningYellow}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
 
-                                                    <TextBlock>
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="{x:Type TextBlock}">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
-                                                                        <Setter Property="Text" Value="Yes" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
-                                                                        <Setter Property="Text" Value="Not Found" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
-                                                                        <Setter Property="Text" Value="Failed" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
+                                                <TextBlock>
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="{x:Type TextBlock}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Loaded}">
+                                                                    <Setter Property="Text" Value="Yes" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.NotFound}">
+                                                                    <Setter Property="Text" Value="Not Found" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding State}" Value="{x:Static profile:ModuleLoadState.Failed}">
+                                                                    <Setter Property="Text" Value="Failed" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
 
-                                <GridViewColumn Width="120" DisplayMemberBinding="{Binding DebugInfoFile.SymbolFile.FileName, StringFormat={}{0:mm\\:ss\\.ff}}">
-                                    <GridViewColumnHeader Content="Debug file" />
-                                    <GridViewColumn.HeaderContainerStyle>
-                                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                        </Style>
-                                    </GridViewColumn.HeaderContainerStyle>
-                                </GridViewColumn>
+                            <GridViewColumn Width="120" DisplayMemberBinding="{Binding DebugInfoFile.SymbolFile.FileName, StringFormat={}{0:mm\\:ss\\.ff}}">
+                                <GridViewColumnHeader Content="Debug file" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                            </GridViewColumn>
 
-                                <GridViewColumn Width="85">
-                                    <GridViewColumnHeader Content="Debug loaded" />
-                                    <GridViewColumn.HeaderContainerStyle>
-                                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                        </Style>
-                                    </GridViewColumn.HeaderContainerStyle>
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <Border Margin="-6,-2,-6,-2">
-                                                <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
-                                                    <Image Width="16" Height="16">
-                                                        <Image.Style>
-                                                            <Style TargetType="{x:Type Image}">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
-                                                                        <Setter Property="Source" Value="{StaticResource CheckIcon}" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
-                                                                        <Setter Property="Source" Value="{StaticResource VoidIcon}" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </Image.Style>
-                                                    </Image>
+                            <GridViewColumn Width="85">
+                                <GridViewColumnHeader Content="Debug loaded" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="-6,-2,-6,-2">
+                                            <StackPanel Margin="6,2,6,2" Orientation="Horizontal">
+                                                <Image Width="16" Height="16">
+                                                    <Image.Style>
+                                                        <Style TargetType="{x:Type Image}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
+                                                                    <Setter Property="Source" Value="{StaticResource CheckIcon}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
+                                                                    <Setter Property="Source" Value="{StaticResource VoidIcon}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Image.Style>
+                                                </Image>
 
-                                                    <TextBlock>
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="{x:Type TextBlock}">
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
-                                                                        <Setter Property="Text" Value="Yes" />
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
-                                                                        <Setter Property="Text" Value="Not Found" />
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
+                                                <TextBlock>
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="{x:Type TextBlock}">
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="True">
+                                                                    <Setter Property="Text" Value="Yes" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding DebugInfoFile.Found}" Value="False">
+                                                                    <Setter Property="Text" Value="Not Found" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
 
-                                <GridViewColumn Width="250" DisplayMemberBinding="{Binding DebugInfoFile.FilePath}">
-                                    <GridViewColumnHeader Content="Debug file local path" />
-                                    <GridViewColumn.HeaderContainerStyle>
-                                        <Style TargetType="{x:Type GridViewColumnHeader}">
-                                            <Setter Property="HorizontalContentAlignment" Value="Left" />
-                                            <Setter Property="ToolTip" Value="{Binding DebugInfoFile.FilePath}" />
-                                        </Style>
-                                    </GridViewColumn.HeaderContainerStyle>
-                                </GridViewColumn>
-                            </GridView>
-                        </ListView.View>
+                            <GridViewColumn Width="250" DisplayMemberBinding="{Binding DebugInfoFile.FilePath}">
+                                <GridViewColumnHeader Content="Debug file local path" />
+                                <GridViewColumn.HeaderContainerStyle>
+                                    <Style TargetType="{x:Type GridViewColumnHeader}">
+                                        <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                        <Setter Property="ToolTip" Value="{Binding DebugInfoFile.FilePath}" />
+                                    </Style>
+                                </GridViewColumn.HeaderContainerStyle>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
 
-                        <ListView.ItemContainerStyle>
-                            <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
-                                <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                    </ListView>
-                    <TabControl
-                        Margin="0,4,0,0"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        TabStripPlacement="Top">
-                        <TabItem Header="Image file">
-                            <StackPanel Margin="4,2,4,0">
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Name" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.ImageFileInfo.ImageName, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Local path" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.FilePath, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Architecture" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.Architecture, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Image size" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.ImageSize, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Code size" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.CodeSize, ElementName=ModuleList}" />
-                                </Grid>
+                    <ListView.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+                <TabControl
+                    Margin="0,4,0,0"
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    DockPanel.Dock="Bottom"
+                    TabStripPlacement="Top">
+                    <TabItem Header="Image file">
+                        <StackPanel Margin="4,2,4,0">
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Name" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.ImageFileInfo.ImageName, ElementName=ModuleList}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Local path" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.BinaryFileInfo.FilePath, ElementName=ModuleList}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Architecture" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.Architecture, ElementName=ModuleList}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Image size" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.ImageSize, ElementName=ModuleList}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Code size" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.BinaryFileInfo.BinaryFile.CodeSize, ElementName=ModuleList}" />
+                            </Grid>
 
-                                <Expander
-                                    Margin="0,10,0,0"
-                                    Header="Logs"
-                                    IsExpanded="True">
-                                    <Grid>
-                                        <TextBox
-                                            MaxHeight="100"
-                                            Margin="0,2,0,0"
-                                            VerticalAlignment="Center"
-                                            Background="Transparent"
-                                            BorderBrush="Transparent"
-                                            Foreground="DarkBlue"
-                                            IsReadOnly="True"
-                                            Text="{Binding SelectedItem.BinaryFileInfo.Details, ElementName=ModuleList}"
-                                            VerticalScrollBarVisibility="Auto" />
-                                    </Grid>
-                                </Expander>
-                            </StackPanel>
-                        </TabItem>
-                        <TabItem Header="Debug file">
-                            <StackPanel Margin="4,2,4,0">
+                            <Expander
+                                Margin="0,10,0,0"
+                                Header="Logs"
+                                IsExpanded="True">
                                 <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Name" />
                                     <TextBox
-                                        Margin="100,1,0,1"
+                                        MaxHeight="100"
+                                        Margin="0,2,0,0"
                                         VerticalAlignment="Center"
                                         Background="Transparent"
                                         BorderBrush="Transparent"
                                         Foreground="DarkBlue"
                                         IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.FileName, ElementName=ModuleList}" />
+                                        Text="{Binding SelectedItem.BinaryFileInfo.Details, ElementName=ModuleList}"
+                                        VerticalScrollBarVisibility="Auto" />
                                 </Grid>
+                            </Expander>
+                        </StackPanel>
+                    </TabItem>
+                    <TabItem Header="Debug file">
+                        <StackPanel Margin="4,2,4,0">
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Name" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.FileName, ElementName=ModuleList}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Local path" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.DebugInfoFile.FilePath, ElementName=ModuleList}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Guid" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Id, ElementName=ModuleList}" />
+                            </Grid>
+                            <Grid>
+                                <TextBlock VerticalAlignment="Center" Text="Age" />
+                                <TextBox
+                                    Margin="100,1,0,1"
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Foreground="DarkBlue"
+                                    IsReadOnly="True"
+                                    Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Age, ElementName=ModuleList}" />
+                            </Grid>
+                            <Expander Margin="0,10,0,0" Header="Logs">
                                 <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Local path" />
                                     <TextBox
-                                        Margin="100,1,0,1"
+                                        MaxHeight="100"
+                                        Margin="0,2,0,0"
                                         VerticalAlignment="Center"
                                         Background="Transparent"
                                         BorderBrush="Transparent"
                                         Foreground="DarkBlue"
                                         IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.FilePath, ElementName=ModuleList}" />
+                                        Text="{Binding SelectedItem.DebugInfoFile.Details, ElementName=ModuleList}"
+                                        VerticalScrollBarVisibility="Auto" />
                                 </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Guid" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Id, ElementName=ModuleList}" />
-                                </Grid>
-                                <Grid>
-                                    <TextBlock VerticalAlignment="Center" Text="Age" />
-                                    <TextBox
-                                        Margin="100,1,0,1"
-                                        VerticalAlignment="Center"
-                                        Background="Transparent"
-                                        BorderBrush="Transparent"
-                                        Foreground="DarkBlue"
-                                        IsReadOnly="True"
-                                        Text="{Binding SelectedItem.DebugInfoFile.SymbolFile.Age, ElementName=ModuleList}" />
-                                </Grid>
-                                <Expander Margin="0,10,0,0" Header="Logs">
-                                    <Grid>
-                                        <TextBox
-                                            MaxHeight="100"
-                                            Margin="0,2,0,0"
-                                            VerticalAlignment="Center"
-                                            Background="Transparent"
-                                            BorderBrush="Transparent"
-                                            Foreground="DarkBlue"
-                                            IsReadOnly="True"
-                                            Text="{Binding SelectedItem.DebugInfoFile.Details, ElementName=ModuleList}"
-                                            VerticalScrollBarVisibility="Auto" />
-                                    </Grid>
-                                </Expander>
-                            </StackPanel>
-                        </TabItem>
-                    </TabControl>
-                </StackPanel>
-            </ScrollViewer>
+                            </Expander>
+                        </StackPanel>
+                    </TabItem>
+                </TabControl>
+            </DockPanel>
         </TabItem>
         <TabItem Header="Process list">
             <ListView
