@@ -19,6 +19,7 @@ using IRExplorerCore;
 using IRExplorerUI.Compilers;
 using IRExplorerUI.Profile;
 using IRExplorerUI.Profile.ETW;
+using Microsoft.Diagnostics.Tracing.Parsers.FrameworkEventSource;
 using Microsoft.Diagnostics.Tracing.Parsers.Kernel;
 using Microsoft.Win32;
 using PEFile;
@@ -331,7 +332,7 @@ namespace IRExplorerUI {
             foreach (var metric in metrics) {
                 options_.AddPerformanceMetric(metric);
             }
-            
+
             var counterList = new ObservableCollectionRefresh<PerformanceCounterConfig>(recordingOptions_.PerformanceCounters);
             perfCountersFilter_ = counterList.GetFilterView();
             perfCountersFilter_.Filter = FilterCounterList;
@@ -455,11 +456,11 @@ namespace IRExplorerUI {
 
                 App.SaveApplicationSettings();
             }
-            
+
             return success;
         }
-        
-        private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) { 
+
+        private void ProfileLoadProgressCallback(ProfileLoadProgress progressInfo) {
             Dispatcher.BeginInvoke((Action)(() => {
                 if (progressInfo == null) {
                     return;
@@ -548,7 +549,7 @@ namespace IRExplorerUI {
 
                 using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
                 processList_ = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
-                
+
                 IsLoadingProfile = false;
                 IsLoadingProcessList = false;
 
@@ -567,7 +568,7 @@ namespace IRExplorerUI {
 
         private void BinaryBrowseButton_Click(object sender, RoutedEventArgs e) =>
             Utils.ShowExecutableOpenFileDialog(BinaryAutocompleteBox);
-        
+
         private void ProcessList_OnSelectionChanged(object sender, SelectionChangedEventArgs e) {
             if (ProcessList.SelectedItem != null) {
                 selectedProcSummary_ = (ProcessSummary)ProcessList.SelectedItem;
@@ -756,14 +757,11 @@ namespace IRExplorerUI {
 
         private async void SessionList_MouseDoubleClick(object sender, MouseButtonEventArgs e) {
             var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
-            var report = sessionEx.Report;
-
-            if (report != null) { // Not set for a new session.
-                LoadPreviousSession(report);
-            }
-            else {
+            if (sessionEx?.Report == null) {
                 return;
             }
+
+            LoadPreviousSession(sessionEx.Report);
 
             if (IsRecordMode) {
                 await StartRecordingSession();
@@ -775,6 +773,10 @@ namespace IRExplorerUI {
 
         private void SessionList_SelectionChanged(object sender, SelectionChangedEventArgs e) {
             var sessionEx = SessionList.SelectedItem as RecordingSessionEx;
+            if (sessionEx == null) {
+                return;
+            }
+
             var report = sessionEx.Report;
 
             if (IsRecordMode && currentSession_.IsNewSession) {

@@ -20,7 +20,6 @@ namespace IRExplorerUI {
         public static Pen DefaultPen = ColorPens.GetPen(Colors.Black, 0.025);
         public static Pen DefaultBoldPen = ColorPens.GetPen(Colors.Black, 0.06);
         private readonly double GraphMargin = 0.15;
-
         private readonly double ScaleFactor = 50;
 
         private IRElement element_;

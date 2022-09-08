@@ -64,7 +64,7 @@ namespace IRExplorerUI {
 
         public static T FindChild<T>(DependencyObject parent, string childName = null)
             where T : DependencyObject {
-            // Confirm parent and childName are valid. 
+            // Confirm parent and childName are valid.
             if (parent == null) {
                 return null;
             }
@@ -82,7 +82,7 @@ namespace IRExplorerUI {
                     // recursively drill down the tree
                     foundChild = FindChild<T>(child, childName);
 
-                    // If the child is found, break so we do not overwrite the found child. 
+                    // If the child is found, break so we do not overwrite the found child.
                     if (foundChild != null) {
                         break;
                     }
@@ -107,7 +107,7 @@ namespace IRExplorerUI {
 
         public static T FindChildLogical<T>(DependencyObject parent, string childName = null)
             where T : DependencyObject {
-            // Confirm parent and childName are valid. 
+            // Confirm parent and childName are valid.
             if (parent == null) {
                 return null;
             }
@@ -127,7 +127,7 @@ namespace IRExplorerUI {
                     // recursively drill down the tree
                     foundChild = FindChildLogical<T>(child, childName);
 
-                    // If the child is found, break so we do not overwrite the found child. 
+                    // If the child is found, break so we do not overwrite the found child.
                     if (foundChild != null) {
                         break;
                     }
@@ -364,7 +364,7 @@ namespace IRExplorerUI {
                     return element.ToString();
             }
         }
-        
+
         //? TODO: This should be part of the IR NameProvider
         public static string GetSymbolName(OperandIR op) {
             if (op.HasName) {
@@ -584,7 +584,7 @@ namespace IRExplorerUI {
 
             return info;
         }
-        
+
         public static IHighlightingDefinition LoadSyntaxHighlightingFile(string filePath) {
             if (string.IsNullOrEmpty(filePath)) {
                 return null; // File couldn't be loaded.
@@ -898,7 +898,7 @@ namespace IRExplorerUI {
 
             try {
                 using var process = new Process { StartInfo = procInfo, EnableRaisingEvents = true };
-                
+
                 process.OutputDataReceived += (sender, e) => {
                     outputText.AppendLine(e.Data);
                 };
@@ -939,7 +939,7 @@ namespace IRExplorerUI {
                 @"-latest -prerelease -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath";
 
             vswherePath = Environment.ExpandEnvironmentVariables(vswherePath);
-            
+
             try {
                 var vsPath = ExecuteToolWithOutput(vswherePath, vswhereArgs);
 
@@ -1025,7 +1025,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public static Size MeasureString(string text, string fontName, double fontSize, 
+        public static Size MeasureString(string text, string fontName, double fontSize,
                                          FontWeight? fontWeight = null) {
             var formattedText = new FormattedText(text, CultureInfo.CurrentCulture,
                 FlowDirection.LeftToRight,
@@ -1035,10 +1035,28 @@ namespace IRExplorerUI {
             return new Size(formattedText.WidthIncludingTrailingWhitespace, formattedText.Height);
         }
 
+        public static Size MeasureString(string text, Typeface font, double fontSize,
+            FontWeight? fontWeight = null) {
+            var formattedText = new FormattedText(text, CultureInfo.CurrentCulture,
+                FlowDirection.LeftToRight, font, fontSize, Brushes.Black,
+                new NumberSubstitution(), 1);
+            return new Size(formattedText.WidthIncludingTrailingWhitespace, formattedText.Height);
+        }
+
         public static Size MeasureString(int letterCount, string fontName, double fontSize,
             FontWeight? fontWeight = null) {
             var dummyString = new string('X', letterCount);
             return MeasureString(dummyString, fontName, fontSize, fontWeight);
+        }
+
+        public static Size MeasureString(int letterCount, Typeface font, double fontSize,
+            FontWeight? fontWeight = null) {
+            if (letterCount == 1) {
+                return MeasureString("X", font, fontSize, fontWeight);
+            }
+
+            var dummyString = new string('X', letterCount);
+            return MeasureString(dummyString, font, fontSize, fontWeight);
         }
     }
 }
