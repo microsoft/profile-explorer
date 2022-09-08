@@ -16,12 +16,9 @@ namespace IRExplorerUI.Profile;
 public class ProfileCallTree {
     [ProtoContract(SkipConstructor = true)]
     public class ProfileCallTreeState {
-        [ProtoMember(1)]
-        public HashSet<ProfileCallTreeNode> RootNodes;
-        [ProtoMember(2)]
-        public Dictionary<IRTextFunctionId, List<ProfileCallTreeNode>> FuncToNodesMap;
-        [ProtoMember(3)]
-        public long NextNodeId; 
+        [ProtoMember(1)] public HashSet<ProfileCallTreeNode> RootNodes;
+        [ProtoMember(2)] public Dictionary<IRTextFunctionId, List<ProfileCallTreeNode>> FuncToNodesMap;
+        [ProtoMember(3)] public long NextNodeId;
 
         public ProfileCallTreeState(int funcCount) {
             FuncToNodesMap = new Dictionary<IRTextFunctionId, List<ProfileCallTreeNode>>(funcCount);
@@ -47,6 +44,15 @@ public class ProfileCallTree {
     private ReaderWriterLockSlim funcLock_;
 
     public HashSet<ProfileCallTreeNode> RootNodes => rootNodes_;
+    public TimeSpan TotalRootNodesWeight {
+        get {
+            TimeSpan sum = TimeSpan.Zero;
+            foreach (var node in rootNodes_) {
+                sum += node.Weight;
+            }
+            return sum;
+        }
+    }
 
     public byte[] Serialize() {
         var state = new ProfileCallTreeState(funcToNodesMap_.Count);

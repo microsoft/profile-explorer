@@ -2300,6 +2300,8 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
+            return;
+
             using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
             var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
 
@@ -2339,15 +2341,21 @@ namespace IRExplorerUI {
                 }
 
                 tasks.Add(taskFactory.StartNew(() => {
-                    if (cancelableTask.IsCanceled) {
-                        return;
+                    try {
+                        if (cancelableTask.IsCanceled) {
+                            return;
+                        }
+
+                        var section = function.Sections[0];
+                        var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
+
+                        if (sectionStats != null) {
+                            functionStatMap_.TryAdd(function, sectionStats);
+                        }
                     }
-
-                    var section = function.Sections[0];
-                    var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
-
-                    if (sectionStats != null) {
-                        functionStatMap_.TryAdd(function, sectionStats);
+                    catch (Exception ex) {
+                        Utils.WaitForDebugger();
+                        Trace.WriteLine(ex.ToString());
                     }
                 }, cancelableTask.Token));
             }

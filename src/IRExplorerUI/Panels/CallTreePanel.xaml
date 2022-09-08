@@ -83,7 +83,7 @@
                         </StackPanel>
                     </Button>
                     <Button
-                        IsEnabled="False"
+                        Click="Button_Click"
                         ToolTip="View flame graph"
                         Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}">
                         <StackPanel Orientation="Horizontal">

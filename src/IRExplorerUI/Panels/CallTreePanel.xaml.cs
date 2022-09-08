@@ -195,7 +195,7 @@ namespace IRExplorerUI {
         private ChildFunctionEx profileCallTree_;
         private List<ChildFunctionEx> searchResultNodes_;
         private CallTreeSettings settings_;
-        
+
         public bool PrependModuleToFunction {
             get => settings_.PrependModuleToFunction;
             set {
@@ -219,7 +219,7 @@ namespace IRExplorerUI {
         public CallTreePanel() {
             InitializeComponent();
             settings_ = App.Settings.CallTreeSettings;
-            
+
             PreviewKeyDown += OnPreviewKeyDown;
             DataContext = this;
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
@@ -272,7 +272,7 @@ namespace IRExplorerUI {
         public CallTreePanel(ISession session) : this() {
             Session = session;
         }
-        
+
         public bool CombineNodes {
             get => settings_.CombineInstances;
             set {
@@ -334,7 +334,7 @@ namespace IRExplorerUI {
             CallTree.Model = profileCallTree_;
 
             if (true) {
-                //? TODO: Option 
+                //? TODO: Option
                 ExpandHottestFunctionPath();
             }
         }
@@ -356,11 +356,11 @@ namespace IRExplorerUI {
                 var combinedNode = callTree.GetCombinedCallTreeNode(function);
                 return combinedNode == null ? null : new List<ProfileCallTreeNode>() { combinedNode };
             }
-            
+
             return callTree.GetCallTreeNodes(function);
         }
 
-        private ProfileCallTreeNode GetChildCallTreeNode(ProfileCallTreeNode childNode, ProfileCallTreeNode parentNode, 
+        private ProfileCallTreeNode GetChildCallTreeNode(ProfileCallTreeNode childNode, ProfileCallTreeNode parentNode,
                                                          ProfileCallTree callTree) {
             if (CombineNodes) {
                 return callTree.GetCombinedCallTreeNode(childNode.Function, parentNode);
@@ -393,7 +393,7 @@ namespace IRExplorerUI {
                 if (isSelf) {
                     instanceNode.Time = Int64.MaxValue; // Ensure Self is on top.
                 }
-                
+
                 rootNode.Children.Add(instanceNode);
 
                 if (instance.HasChildren) {
@@ -450,7 +450,7 @@ namespace IRExplorerUI {
 
             foreach (var node in callTree.RootNodes) {
                 visitedNodes.Clear();
-                CreateProfileCallTree(node, rootNode, ChildFunctionExKind.CallTreeNode, 
+                CreateProfileCallTree(node, rootNode, ChildFunctionExKind.CallTreeNode,
                                       visitedNodes, percentageFunc);
             }
 
@@ -525,7 +525,7 @@ namespace IRExplorerUI {
             return CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight, kind, percentageFunc);
         }
 
-        private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node, TimeSpan weight, 
+        private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node, TimeSpan weight,
                                                            TimeSpan exclusiveWeight, ChildFunctionExKind kind,
                                                            Func<TimeSpan, double> percentageFunc) {
             double weightPercentage = percentageFunc(weight);
@@ -578,7 +578,7 @@ namespace IRExplorerUI {
 
         private ChildFunctionEx CreateProfileCallTreeInstance(string name, ProfileCallTreeNode node,
                                                               Func<TimeSpan, double> percentageFunc) {
-            var result = CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight, 
+            var result = CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight,
                                                     ChildFunctionExKind.Header, percentageFunc);
             result.FunctionName = name;
             //result.Time = long.MaxValue;
@@ -597,7 +597,7 @@ namespace IRExplorerUI {
                     funcName = nameProvider.DemangleFunctionName(funcName, nameProvider.GlobalDemanglingOptions);
                 }
             }
-            
+
             if (funcName.Length > maxLength) {
                 funcName = $"{funcName.Substring(0, maxLength)}...";
             }
@@ -740,7 +740,7 @@ namespace IRExplorerUI {
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null) {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
-        
+
         private void FunctionFilter_TextChanged(object sender, TextChangedEventArgs e) {
             var text = FunctionFilter.Text.Trim();
 
@@ -766,7 +766,7 @@ namespace IRExplorerUI {
             var matchingNodes = new List<ChildFunctionEx>();
             SearchCallTree(text, profileCallTree_, matchingNodes);
             searchResultNodes_ = matchingNodes;
-            
+
             foreach (var node in searchResultNodes_) {
                 node.ResetCachedName();
 
@@ -781,7 +781,7 @@ namespace IRExplorerUI {
 
         void SearchCallTree(string text, ChildFunctionEx node, List<ChildFunctionEx> matchingNodes) {
             var result = TextSearcher.FirstIndexOf(node.FunctionName, text, 0, TextSearchKind.CaseInsensitive);
-            
+
             if (result.HasValue) {
                 node.SearchResult = result;
                 matchingNodes.Add(node);
@@ -796,7 +796,7 @@ namespace IRExplorerUI {
             FunctionFilter.Focus();
             FunctionFilter.SelectAll();
         }
-        
+
         private async void CallTreeButton_OnClick(object sender, RoutedEventArgs e) {
             var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
 
@@ -807,6 +807,87 @@ namespace IRExplorerUI {
 
         private void ClearSearchExecuted(object sender, ExecutedRoutedEventArgs e) {
             ((TextBox)e.Parameter).Text = string.Empty;
+        }
+
+        public class VisualHost : UIElement {
+            public Visual Visual { get; set; }
+            public Rect Bounds { get; set; }
+
+            protected override int VisualChildrenCount {
+                get { return Visual != null ? 1 : 0; }
+            }
+
+            protected override Visual GetVisualChild(int index) {
+                return Visual;
+            }
+
+            protected override Size MeasureCore(Size availableSize) {
+                return new Size(Bounds.Width, Bounds.Height);
+            }
+        }
+
+        private VisualHost fgHost_;
+        FlameGraph fg_;
+        private FlameGraphRenderer fgRenderer_;
+        private DrawingVisual fgVisual_;
+        double fgWidth_;
+
+        private void Button_Click(object sender, RoutedEventArgs e) {
+            Window w = new Window();
+            w.Width = 1000;
+            w.Height = 500;
+            w.PreviewKeyDown += W_PreviewKeyDown;
+            fgWidth_ = w.Width;
+
+            CreateFlameGraph(w, fgWidth_);
+            w.Show();
+        }
+
+        private void CreateFlameGraph(Window w, double width)
+        {
+            var host = RenderFlameGraph(width);
+            var scrollView = new ScrollViewerClickable();
+            scrollView.Content = host;
+            scrollView.Background = Brushes.Gray;
+            scrollView.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
+            scrollView.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
+            w.Content = scrollView;
+            w.InvalidateMeasure();
+        }
+
+        private VisualHost RenderFlameGraph(double width)
+        {
+            fg_ = new FlameGraph();
+            fg_.Build(Session.ProfileData.CallTree);
+            fgRenderer_ = new FlameGraphRenderer(fg_, width);
+            fgVisual_ = fgRenderer_.Render();
+            fgHost_ = new VisualHost { Visual = fgVisual_};
+            UpdateFlameGraphBounds();
+            return fgHost_;
+        }
+
+        private void UpdateFlameGraphBounds() {
+            var bounds = fgVisual_.ContentBounds;
+            bounds.Union(fgVisual_.DescendantBounds);
+            fgHost_.Bounds = bounds;
+            fgHost_.InvalidateMeasure();
+        }
+
+        private void W_PreviewKeyDown(object sender, KeyEventArgs e) {
+            switch (e.Key) {
+                case Key.A: {
+                    fgWidth_ = Math.Max(0, fgWidth_ - 100);
+                    fgRenderer_.UpdateMaxWidth(fgWidth_);
+                    UpdateFlameGraphBounds();
+                    break;
+                }
+                case Key.B: {
+                    fgWidth_ = Math.Max(0, fgWidth_ + 100);
+                    fgRenderer_.UpdateMaxWidth(fgWidth_);
+                    UpdateFlameGraphBounds();
+                    break;
+                }
+            }
         }
     }
 }
