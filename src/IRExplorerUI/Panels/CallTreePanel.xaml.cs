@@ -27,10 +27,11 @@ using Microsoft.VisualBasic;
 using IRExplorerUI.Controls;
 using System.Security.Cryptography.Xml;
 using System.Windows.Documents;
+using System.Windows.Media.Animation;
 using IRExplorerCore.IR;
 using OxyPlot;
 using FontWeights = System.Windows.FontWeights;
-using static SkiaSharp.HarfBuzz.SKShaper;
+using System.Diagnostics;
 
 namespace IRExplorerUI {
     public static class CallTreeCommand {
@@ -809,84 +810,83 @@ namespace IRExplorerUI {
             ((TextBox)e.Parameter).Text = string.Empty;
         }
 
-        public class VisualHost : UIElement {
-            public Visual Visual { get; set; }
-            public Rect Bounds { get; set; }
-
-            protected override int VisualChildrenCount {
-                get { return Visual != null ? 1 : 0; }
-            }
-
-            protected override Visual GetVisualChild(int index) {
-                return Visual;
-            }
-
-            protected override Size MeasureCore(Size availableSize) {
-                return new Size(Bounds.Width, Bounds.Height);
-            }
-        }
-
-        private VisualHost fgHost_;
-        FlameGraph fg_;
-        private FlameGraphRenderer fgRenderer_;
-        private DrawingVisual fgVisual_;
         double fgWidth_;
+        private Window window_;
+        private static CallTreePanel instance_;
+        private FlameGraphViewer fgViewer_;
 
-        private void Button_Click(object sender, RoutedEventArgs e) {
+        private async void Button_Click(object sender, RoutedEventArgs e) {
             Window w = new Window();
             w.Width = 1000;
             w.Height = 500;
             w.PreviewKeyDown += W_PreviewKeyDown;
             fgWidth_ = w.Width;
+            instance_ = this;
+            window_ = w;
 
-            CreateFlameGraph(w, fgWidth_);
+            await CreateFlameGraph(w, fgWidth_);
             w.Show();
         }
 
-        private void CreateFlameGraph(Window w, double width)
-        {
-            var host = RenderFlameGraph(width);
+        private async Task CreateFlameGraph(Window w, double width) {
+
+            fgViewer_ = new FlameGraphViewer();
+            await fgViewer_.Initialize(Session.ProfileData.CallTree, width);
+
             var scrollView = new ScrollViewerClickable();
-            scrollView.Content = host;
+            scrollView.Content = fgViewer_;
             scrollView.Background = Brushes.Gray;
             scrollView.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
             scrollView.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
             w.Content = scrollView;
-            w.InvalidateMeasure();
-        }
-
-        private VisualHost RenderFlameGraph(double width)
-        {
-            fg_ = new FlameGraph();
-            fg_.Build(Session.ProfileData.CallTree);
-            fgRenderer_ = new FlameGraphRenderer(fg_, width);
-            fgVisual_ = fgRenderer_.Render();
-            fgHost_ = new VisualHost { Visual = fgVisual_};
-            UpdateFlameGraphBounds();
-            return fgHost_;
-        }
-
-        private void UpdateFlameGraphBounds() {
-            var bounds = fgVisual_.ContentBounds;
-            bounds.Union(fgVisual_.DescendantBounds);
-            fgHost_.Bounds = bounds;
-            fgHost_.InvalidateMeasure();
         }
 
         private void W_PreviewKeyDown(object sender, KeyEventArgs e) {
             switch (e.Key) {
                 case Key.A: {
-                    fgWidth_ = Math.Max(0, fgWidth_ - 100);
-                    fgRenderer_.UpdateMaxWidth(fgWidth_);
-                    UpdateFlameGraphBounds();
+                    fgWidth_ = Math.Max(100, fgWidth_ - 100);
+                    fgViewer_.UpdateMaxWidth(fgWidth_);
                     break;
                 }
                 case Key.B: {
-                    fgWidth_ = Math.Max(0, fgWidth_ + 100);
-                    fgRenderer_.UpdateMaxWidth(fgWidth_);
-                    UpdateFlameGraphBounds();
+                    fgWidth_ = Math.Max(100, fgWidth_ + 100);
+                    fgViewer_.UpdateMaxWidth(fgWidth_);
                     break;
                 }
+                case Key.P: {
+                    var targetValue = fgWidth_ * 2;
+                    var animation = new DoubleAnimation(fgWidth_, targetValue, TimeSpan.FromMilliseconds(180));
+                    BeginAnimation(FlameGraphWeightProperty, animation);
+                    break;
+                }
+                case Key.Q: {
+                    var targetValue = Math.Max(100, fgWidth_ / 2);
+                    var animation = new DoubleAnimation(fgWidth_, targetValue, TimeSpan.FromMilliseconds(180));
+                    BeginAnimation(FlameGraphWeightProperty, animation);
+                    break;
+                }
+            }
+        }
+
+        public static DependencyProperty FlameGraphWeightProperty =
+            DependencyProperty.Register(nameof(FlameGraphWeight), typeof(double), typeof(CallTreePanel),
+                new PropertyMetadata(0.0, FlameGraphWeightChanged));
+
+
+        private static void FlameGraphWeightChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+            instance_.FlameGraphWeight = (double)e.NewValue;
+        }
+
+        public double FlameGraphWeight
+        {
+            get
+            {
+                return (double)GetValue(FlameGraphWeightProperty);
+            }
+            set {
+                SetValue(FlameGraphWeightProperty, value);
+                fgViewer_.UpdateMaxWidth(value);
+                fgWidth_ = value;
             }
         }
     }

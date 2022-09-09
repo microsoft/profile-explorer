@@ -66,7 +66,7 @@ namespace IRExplorerUI {
             LoadedDocument loadedDoc = null;
             bool failed = false;
 
-            if (Path.HasExtension(filePath)) { 
+            if (Path.HasExtension(filePath)) {
                 if(Utils.FileHasExtension(filePath, ".irx")) {
                     loadedDoc = await OpenSessionDocument(filePath);
                     failed = loadedDoc == null;
@@ -380,7 +380,7 @@ namespace IRExplorerUI {
             ResetDocumentEvents(docHostInfo.DocumentHost);
             docHostInfo.HostParent.Children.Remove(docHostInfo.Host);
         }
-        
+
         private async Task<LoadedDocument> OpenIRDocument(string filePath, string modulePath,
                                                           Func<string, string, Guid, ProgressInfoHandler, Task<LoadedDocument>> loadFunc) {
             try {
@@ -423,6 +423,9 @@ namespace IRExplorerUI {
         private DateTime lastDocumentLoadUpdate_;
 
         private void UpdateIRDocumentLoadProgress(IRSectionReader reader, SectionReaderProgressInfo info) {
+            Trace.WriteLine($"Set indeter {info.IsIndeterminate} at\n{Environment.StackTrace}");
+            Trace.WriteLine("===================================================\n");
+
             if (info.IsIndeterminate) {
                 Dispatcher.BeginInvoke(new Action(() => {
                     SetApplicationProgress(true, Double.NaN);
@@ -520,7 +523,7 @@ namespace IRExplorerUI {
             SectionPanel.AddOtherSummary(summary);
         }
 
-        private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id, 
+        private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
                                             ProgressInfoHandler progressHandler) {
             return await LoadDocument(filePath, modulePath, id, progressHandler,
                 new DocumentSectionLoader(filePath, compilerInfo_.IR));
@@ -534,8 +537,8 @@ namespace IRExplorerUI {
                                                   ProgressInfoHandler progressHandler) {
             return await LoadBinaryDocument(filePath, modulePath, id, null, progressHandler).ConfigureAwait(false);
         }
-        
-        private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id, 
+
+        private async Task<LoadedDocument> LoadBinaryDocument(string filePath, string modulePath, Guid id,
                                                   IDebugInfoProvider debugInfo,
                                                   ProgressInfoHandler progressHandler) {
             var loader = new DisassemblerSectionLoader(filePath, compilerInfo_, debugInfo);
@@ -545,12 +548,12 @@ namespace IRExplorerUI {
                 result.BinaryFile = BinaryFileSearchResult.Success(filePath);
                 result.DebugInfoFile = loader.DebugInfoFile;
             }
-            
+
             return result;
         }
 
-        private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id, 
-                                                ProgressInfoHandler progressHandler, 
+        private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
+                                                ProgressInfoHandler progressHandler,
                                                 IRTextSectionLoader loader) {
             try {
                 var result = await Task.Run(() => {
@@ -569,7 +572,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private LoadedDocument LoadDocument(byte[] data, string filePath, string modulePath, Guid id, 
+        private LoadedDocument LoadDocument(byte[] data, string filePath, string modulePath, Guid id,
                                             ProgressInfoHandler progressHandler) {
             try {
                 var result = new LoadedDocument(filePath, modulePath, id);
@@ -601,7 +604,7 @@ namespace IRExplorerUI {
                                                                    UpdateIRDocumentLoadProgress));
                     }
                     else if(docState.BinaryFile != null) {
-                        result = await Task.Run(() => LoadBinaryDocument(docState.BinaryFile.FilePath, 
+                        result = await Task.Run(() => LoadBinaryDocument(docState.BinaryFile.FilePath,
                                                                          docState.ModuleName, docState.Id,
                                                                          UpdateIRDocumentLoadProgress));
                     }
@@ -660,7 +663,7 @@ namespace IRExplorerUI {
             return await OpenDocumentSectionAsync(args, args.TargetDocument, false);
         }
 
-        private async Task<IRDocumentHost> 
+        private async Task<IRDocumentHost>
         OpenDocumentSectionAsync(OpenSectionEventArgs args, IRDocumentHost targetDocument = null,
                             bool runExtraTasks = true) {
             var document = targetDocument;
@@ -695,7 +698,7 @@ namespace IRExplorerUI {
             return document;
         }
 
-        private async Task<ParsedIRTextSection> 
+        private async Task<ParsedIRTextSection>
         SwitchSection(IRTextSection section, IRDocumentHost document, bool runExtraTasks) {
             Trace.TraceInformation(
                 $"Document {ObjectTracker.Track(document)}: Switch to section ({section.Number}) {section.Name}");
@@ -864,12 +867,12 @@ namespace IRExplorerUI {
             return graphLayout.GenerateGraph(function, section, loadTask, (object)null);
         }
 
-        public async Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section, 
+        public async Task<Graph> ComputeGraphAsync(GraphKind kind, IRTextSection section,
                                                    IRDocument document, CancelableTask loadTask = null,
                                                    object options = null) {
             var graphLayout = GetGraphLayoutCache(kind);
             loadTask ??= new CancelableTask(); // Required, but client may not care about canceling.
-            return await Task.Run(() => graphLayout.GenerateGraph(document.Function, section, 
+            return await Task.Run(() => graphLayout.GenerateGraph(document.Function, section,
                                                                   loadTask, options));
         }
 
@@ -1045,7 +1048,7 @@ namespace IRExplorerUI {
             // Move the caret in the other document to the same position.
             var document = sender as IRDocument;
             var docHost = FindDocumentHost(document);
-            
+
             if(!sessionState_.SectionDiffState.IsDiffDocument(docHost)) {
                 return;
             }
@@ -1178,6 +1181,7 @@ namespace IRExplorerUI {
             Utils.DisableControl(DockManager, 0.85);
             Utils.DisableControl(StartPage, 0.85);
             Mouse.OverrideCursor = Cursors.Wait;
+            SetApplicationProgress(true, Double.NaN, "Loading session");
         }
 
         private void UpdateUIBeforeLoadDocument(string documentTitle) {
@@ -1588,7 +1592,7 @@ namespace IRExplorerUI {
             App.Settings.SaveFunctionTaskOptions(taskInfo, data);
             return true;
         }
-        
+
         public IFunctionTaskOptions LoadFunctionTaskOptions(FunctionTaskInfo taskInfo) {
             var data = App.Settings.LoadFunctionTaskOptions(taskInfo);
 
@@ -1604,6 +1608,8 @@ namespace IRExplorerUI {
         }
 
         public void SetApplicationProgress(bool visible, double percentage, string title = null) {
+            System.Diagnostics.Trace.WriteLine(Environment.StackTrace);
+
             Dispatcher.BeginInvoke(() => {
                 if (visible && !documentLoadProgressVisible_) {
                     ShowProgressBar(title);

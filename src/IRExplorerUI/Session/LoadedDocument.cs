@@ -55,7 +55,7 @@ namespace IRExplorerUI {
             PanelStates = new Dictionary<IRTextSection, List<PanelObjectPair>>();
             SectionStates = new Dictionary<IRTextSection, object>();
         }
-      
+
         public Guid Id { get; set; }
         public string ModuleName { get; set; }
         public string FilePath { get; set; }
@@ -108,7 +108,6 @@ namespace IRExplorerUI {
         public void AddDummyFunctions(List<string> funcNames) {
             foreach (var name in funcNames) {
                 if (summary_.FindFunction(name) == null) {
-                    Trace.WriteLine($"add dummy {name}");
                     AddDummyFunction(name);
                 }
             }
