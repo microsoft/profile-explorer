@@ -29,12 +29,12 @@ namespace IRExplorerUI {
         private GraphNode hoveredNode_;
         private Dictionary<GraphNode, HighlightingStyle> hoverNodes_;
         private Dictionary<GraphNode, HighlightingStyle> markedNodes_;
+        private Dictionary<GraphNode, HighlightingStyle> selectedNodes_;
 
         private HighlightingStyleCyclingCollection nodeStyles_;
 
         //? TODO: Allow color change
         private Pen predecessorNodeBorder_ = ColorPens.GetPen("#6927CC", 0.05);
-        private Dictionary<GraphNode, HighlightingStyle> selectedNodes_;
 
         private HighlightingStyle selectedNodeStyle =
             new HighlightingStyle(Color.FromRgb(174, 220, 244), DefaultBoldPen);
