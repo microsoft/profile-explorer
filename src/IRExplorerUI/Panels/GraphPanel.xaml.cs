@@ -60,14 +60,14 @@ namespace IRExplorerUI {
     }
 
     public partial class GraphPanel : ToolPanelControl {
-        private static readonly double FastPanOffset = 80;
-        private static readonly double FastZoomFactor = 4;
-        private static readonly double MaxZoomLevel = 2.0;
-        private static readonly double MinZoomLevel = 0.05;
-        private static readonly double PanOffset = 20;
-        private static readonly double ZoomAdjustment = 0.05;
-        private static readonly double HorizontalViewMargin = 50;
-        private static readonly double VerticalViewMargin = 100;
+        private const double FastPanOffset = 80;
+        private const double FastZoomFactor = 4;
+        private const double MaxZoomLevel = 2.0;
+        private const double MinZoomLevel = 0.05;
+        private const double PanOffset = 20;
+        private const double ZoomAdjustment = 0.05;
+        private const double HorizontalViewMargin = 50;
+        private const double VerticalViewMargin = 100;
         private bool delayFitSize_;
         private bool delayRestoreState_;
         private object lockObject_;
@@ -89,9 +89,20 @@ namespace IRExplorerUI {
         public GraphPanel() {
             InitializeComponent();
             lockObject_ = new object();
-
             GraphViewer.HostPanel = this;
             GraphViewer.MaxZoomLevel = MaxZoomLevel;
+            SetupEvents();
+
+
+            //? TODO: No context menu for expr graph yet, don't show CFG one.
+            if (PanelKind == ToolPanelKind.ExpressionGraph) {
+                GraphViewer.ContextMenu = null;
+            }
+
+            SetupCommands();
+        }
+
+        private void SetupEvents()         {
             GraphViewer.BlockSelected += GraphViewer_BlockSelected;
             PreviewMouseWheel += GraphPanel_PreviewMouseWheel;
             PreviewMouseLeftButtonDown += GraphPanel_PreviewMouseLeftButtonDown;
@@ -106,13 +117,6 @@ namespace IRExplorerUI {
             var hover = new MouseHoverLogic(this);
             hover.MouseHover += Hover_MouseHover;
             hover.MouseHoverStopped += Hover_MouseHoverStopped;
-
-            //? TODO: No context menu for expr graph yet, don't show CFG one.
-            if (PanelKind == ToolPanelKind.ExpressionGraph) {
-                GraphViewer.ContextMenu = null;
-            }
-
-            SetupCommands();
         }
 
         public IRElement Element {
@@ -512,7 +516,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            SetZoom(GraphViewer.ZoomLevel * (1 + e.Delta / 1000.0));
+            SetZoom(GraphViewer.ZoomLevel * Math.CopySign(1 + e.Delta / 1000.0, e.Delta));
             e.Handled = true;
         }
 
@@ -832,21 +836,21 @@ namespace IRExplorerUI {
                 if (hoveredNode_ == node) {
                     return;
                 }
-                
+
                 HidePreviewPopup();
             }
 
             if (node == null) {
                 return;
             }
-            
+
             if (removeHoveredAction_ != null) {
                 removeHoveredAction_.Cancel();
                 removeHoveredAction_ = null;
             }
 
             var position = Mouse.GetPosition(GraphHost).AdjustForMouseCursor();
-            previewPopup_ = IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData, 
+            previewPopup_ = IRDocumentPopup.CreateNew(Document, node.NodeInfo.ElementData,
                                                       position, 500, 150, GraphHost, "Block ");
             previewPopup_.PopupDetached += Popup_PopupDetached;
             previewPopup_.ShowPopup();
@@ -857,7 +861,7 @@ namespace IRExplorerUI {
 
             if (popup == previewPopup_) {
                 previewPopup_ = null; // Prevent automatic closing.
-            } 
+            }
         }
 
         private void ToolBar_Loaded(object sender, RoutedEventArgs e) {

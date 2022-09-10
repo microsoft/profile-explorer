@@ -50,6 +50,10 @@ namespace IRExplorerUI.Profile {
         private double lastWidth_;
         private Size lastSize_;
 
+        public void Clear() {
+            using var dc = Visual.RenderOpen();
+        }
+
         public void Draw() {
             using var dc = Visual.RenderOpen();
 
@@ -230,16 +234,19 @@ namespace IRExplorerUI.Profile {
 
     public class FlameGraphRenderer {
         private FlameGraph flameGraph_;
-        private double maxWidth_;
         private double nodeHeight_;
+        internal double maxWidth_;
+        internal Rect visibleArea_;
         private Typeface font_;
         private ColorPalette palette_;
         private Pen defaultBorder_;
+        private DrawingVisual graphVisual_;
 
-        public FlameGraphRenderer(FlameGraph flameGraph, double maxWidth) {
+        public FlameGraphRenderer(FlameGraph flameGraph, double maxWidth, Rect visibleArea) {
             flameGraph_ = flameGraph;
             maxWidth_ = maxWidth;
-            nodeHeight_ = 20;
+            visibleArea_ = visibleArea;
+            nodeHeight_ = 20; //? Option
             font_ = new Typeface("Verdana");
             palette_ = ColorPalette.Profile;
             defaultBorder_ = ColorPens.GetPen(Colors.Black);
@@ -253,8 +260,15 @@ namespace IRExplorerUI.Profile {
         }
 
         private DrawingVisual SetupNodeVisual(FlameGraphNode node) {
+            graphVisual_ = new DrawingVisual();
+            SetupNodeVisual(node, graphVisual_);
+            return graphVisual_;
+        }
+
+        private DrawingVisual SetupNodeVisual(FlameGraphNode node, DrawingVisual graphVisual) {
             node.Visual = new DrawingVisual();
             node.Visual.SetValue(FrameworkElement.TagProperty, node);
+            graphVisual.Children.Add(node.Visual);
 
             //? TODO: Palette based on module
             int colorIndex = Math.Min(node.Depth, palette_.Count - 1);
@@ -266,7 +280,7 @@ namespace IRExplorerUI.Profile {
 
             if (node.Children != null) {
                 foreach (var childNode in node.Children) {
-                    node.Visual.Children.Add(SetupNodeVisual(childNode));
+                    SetupNodeVisual(childNode, graphVisual);
                 }
             }
 
@@ -275,15 +289,21 @@ namespace IRExplorerUI.Profile {
 
         public void UpdateMaxWidth(double maxWidth) {
             maxWidth_ = maxWidth;
+            Redraw();
+        }
+
+        public void Redraw() {
+            using var dc = graphVisual_.RenderOpen();
             UpdateNodeWidth(flameGraph_.RootNode, 0, 0);
         }
 
         private void UpdateNodeWidth(FlameGraphNode node, double x, double y) {
             double width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
             width = Math.Max(width, 1);
+            var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);
 
-            if (node.Children != null) {
+            if (node.Children != null && width > 1) {
                 // Children are sorted by weight.
                 foreach (var childNode in node.Children) {
                     UpdateNodeWidth(childNode, x, y + nodeHeight_);
@@ -295,7 +315,10 @@ namespace IRExplorerUI.Profile {
             //? TODO: if node has < 2 width, don't bother to iterate over nodes
             //? - if nodes outside view, don't need update
 
-            node.Draw();
+            if (node.Bounds.IntersectsWith(visibleArea_) ||
+                prevBounds.IntersectsWith(visibleArea_)) {
+                node.Draw();
+            }
         }
     }
 }

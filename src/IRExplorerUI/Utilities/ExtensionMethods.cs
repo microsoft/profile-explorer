@@ -23,7 +23,7 @@ namespace IRExplorerUI {
 
             foreach (char c in value) {
                 if (Array.IndexOf(charList, c) == -1) {
-                    sb.Append(c); 
+                    sb.Append(c);
                 }
             }
 
@@ -193,7 +193,7 @@ namespace IRExplorerUI {
             return Color.FromRgb((byte)color.R, (byte)color.G, (byte)color.B);
         }
 
-        public static bool AreEqual<TKey, TValue>(this Dictionary<TKey, TValue> first, 
+        public static bool AreEqual<TKey, TValue>(this Dictionary<TKey, TValue> first,
                                                   Dictionary<TKey, TValue> second) {
             if (first == second)
                 return true;
@@ -319,7 +319,7 @@ namespace IRExplorerUI {
             return ColorPens.GetBoldPen(color);
         }
 
-        public static string AsPercentageString(this double value, int digits = 2, 
+        public static string AsPercentageString(this double value, int digits = 2,
                                                 bool trim = true, string suffix="%") {
             value = Math.Round(value * 100, digits);
 
@@ -328,19 +328,19 @@ namespace IRExplorerUI {
             }
 
             return digits switch {
-                1 => $"{value:.0}{suffix}",
-                2 => $"{value:.00}{suffix}",
-                _ => String.Format("0:." + new string('0', digits), value) + suffix
+                1 => $"{value:0.0}{suffix}",
+                2 => $"{value:0.00}{suffix}",
+                _ => String.Format("0:0." + new string('0', digits), value) + suffix
             };
         }
 
-        public static string AsMillisecondsString(this TimeSpan value, int digits = 2, 
+        public static string AsMillisecondsString(this TimeSpan value, int digits = 2,
                                                   string suffix=" ms") {
             var roundedValue = value.TotalMilliseconds.TruncateToDigits(digits);
             return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
         }
 
-        public static string AsSecondsString(this TimeSpan value, int digits = 2, 
+        public static string AsSecondsString(this TimeSpan value, int digits = 2,
                                              string suffix = " s") {
             var roundedValue = value.TotalSeconds.TruncateToDigits(digits);
             return string.Format("{0:N" + Math.Abs(digits) + "}", roundedValue) + suffix;
@@ -356,15 +356,15 @@ namespace IRExplorerUI {
         public static Point AdjustForMouseCursor(this Point value) {
             return new Point(value.X + SystemParameters.CursorWidth / 2,
                              value.Y + SystemParameters.CursorHeight / 2);
-        } 
-        
-        public static object GetObjectAtPoint<ItemContainer>(this ItemsControl control, Point p) 
+        }
+
+        public static object GetObjectAtPoint<ItemContainer>(this ItemsControl control, Point p)
             where ItemContainer : DependencyObject         {
             // ItemContainer - can be ListViewItem, or TreeViewItem and so on(depends on control)
             return control.GetContainerAtPoint<ItemContainer>(p);
         }
 
-        private static ItemContainer GetContainerAtPoint<ItemContainer>(this ItemsControl control, Point p) 
+        private static ItemContainer GetContainerAtPoint<ItemContainer>(this ItemsControl control, Point p)
             where ItemContainer : DependencyObject         {
             var result = VisualTreeHelper.HitTest(control, p);
             var obj = result?.VisualHit;
@@ -372,7 +372,7 @@ namespace IRExplorerUI {
             if (obj == null) {
                 return null;
             }
-            
+
             while (VisualTreeHelper.GetParent(obj) != null && !(obj is ItemContainer))             {
                 obj = VisualTreeHelper.GetParent(obj);
             }

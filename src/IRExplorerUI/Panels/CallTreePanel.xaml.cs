@@ -221,7 +221,6 @@ namespace IRExplorerUI {
             InitializeComponent();
             settings_ = App.Settings.CallTreeSettings;
 
-            PreviewKeyDown += OnPreviewKeyDown;
             DataContext = this;
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
@@ -308,10 +307,6 @@ namespace IRExplorerUI {
                     OnPropertyChanged();
                 }
             }
-        }
-
-        private void OnPreviewKeyDown(object sender, KeyEventArgs e) {
-            //Trace.WriteLine($"Key {e.Key}");
         }
 
         private void PanelToolbarTray_DuplicateClicked(object sender, DuplicateEventArgs e) {
@@ -810,84 +805,23 @@ namespace IRExplorerUI {
             ((TextBox)e.Parameter).Text = string.Empty;
         }
 
-        double fgWidth_;
-        private Window window_;
-        private static CallTreePanel instance_;
         private FlameGraphViewer fgViewer_;
 
         private async void Button_Click(object sender, RoutedEventArgs e) {
             Window w = new Window();
             w.Width = 1000;
             w.Height = 500;
-            w.PreviewKeyDown += W_PreviewKeyDown;
-            fgWidth_ = w.Width;
-            instance_ = this;
-            window_ = w;
 
-            await CreateFlameGraph(w, fgWidth_);
+            await CreateFlameGraph(w, w.Width);
             w.Show();
         }
 
         private async Task CreateFlameGraph(Window w, double width) {
 
-            fgViewer_ = new FlameGraphViewer();
-            await fgViewer_.Initialize(Session.ProfileData.CallTree, width);
-
-            var scrollView = new ScrollViewerClickable();
-            scrollView.Content = fgViewer_;
-            scrollView.Background = Brushes.Gray;
-            scrollView.HorizontalScrollBarVisibility = ScrollBarVisibility.Visible;
-            scrollView.VerticalScrollBarVisibility = ScrollBarVisibility.Visible;
-            w.Content = scrollView;
-        }
-
-        private void W_PreviewKeyDown(object sender, KeyEventArgs e) {
-            switch (e.Key) {
-                case Key.A: {
-                    fgWidth_ = Math.Max(100, fgWidth_ - 100);
-                    fgViewer_.UpdateMaxWidth(fgWidth_);
-                    break;
-                }
-                case Key.B: {
-                    fgWidth_ = Math.Max(100, fgWidth_ + 100);
-                    fgViewer_.UpdateMaxWidth(fgWidth_);
-                    break;
-                }
-                case Key.P: {
-                    var targetValue = fgWidth_ * 2;
-                    var animation = new DoubleAnimation(fgWidth_, targetValue, TimeSpan.FromMilliseconds(180));
-                    BeginAnimation(FlameGraphWeightProperty, animation);
-                    break;
-                }
-                case Key.Q: {
-                    var targetValue = Math.Max(100, fgWidth_ / 2);
-                    var animation = new DoubleAnimation(fgWidth_, targetValue, TimeSpan.FromMilliseconds(180));
-                    BeginAnimation(FlameGraphWeightProperty, animation);
-                    break;
-                }
-            }
-        }
-
-        public static DependencyProperty FlameGraphWeightProperty =
-            DependencyProperty.Register(nameof(FlameGraphWeight), typeof(double), typeof(CallTreePanel),
-                new PropertyMetadata(0.0, FlameGraphWeightChanged));
-
-
-        private static void FlameGraphWeightChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-            instance_.FlameGraphWeight = (double)e.NewValue;
-        }
-
-        public double FlameGraphWeight
-        {
-            get
-            {
-                return (double)GetValue(FlameGraphWeightProperty);
-            }
-            set {
-                SetValue(FlameGraphWeightProperty, value);
-                fgViewer_.UpdateMaxWidth(value);
-                fgWidth_ = value;
-            }
+            var panel = new FlameGraphPanel();
+            await panel.GraphViewer.Initialize(Session.ProfileData.CallTree, width,
+                new Rect(0, 0, width, Double.MaxValue));
+            w.Content = panel;
         }
     }
 }
