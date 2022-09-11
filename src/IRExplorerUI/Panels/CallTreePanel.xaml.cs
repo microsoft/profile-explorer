@@ -32,6 +32,8 @@ using IRExplorerCore.IR;
 using OxyPlot;
 using FontWeights = System.Windows.FontWeights;
 using System.Diagnostics;
+using HorizontalAlignment = System.Windows.HorizontalAlignment;
+using VerticalAlignment = System.Windows.VerticalAlignment;
 
 namespace IRExplorerUI {
     public static class CallTreeCommand {
@@ -808,20 +810,23 @@ namespace IRExplorerUI {
         private FlameGraphViewer fgViewer_;
 
         private async void Button_Click(object sender, RoutedEventArgs e) {
-            Window w = new Window();
-            w.Width = 1000;
-            w.Height = 500;
+            var fg = await CreateFlameGraph(800,500);
+            //w.Content = fg;
+            //w.Show();
 
-            await CreateFlameGraph(w, w.Width);
-            w.Show();
+            Session.DisplayFloatingPanel(fg);
         }
 
-        private async Task CreateFlameGraph(Window w, double width) {
+        private async Task<FlameGraphPanel> CreateFlameGraph( double width, double height) {
 
             var panel = new FlameGraphPanel();
+            panel.Width = width;
+            panel.Height = height;
+            panel.HorizontalAlignment = HorizontalAlignment.Stretch;
+            panel.VerticalAlignment = VerticalAlignment.Stretch;
             await panel.GraphViewer.Initialize(Session.ProfileData.CallTree, width,
                 new Rect(0, 0, width, Double.MaxValue));
-            w.Content = panel;
+            return panel;
         }
     }
 }

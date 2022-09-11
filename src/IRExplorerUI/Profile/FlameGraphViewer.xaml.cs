@@ -14,12 +14,14 @@ public partial class FlameGraphViewer : FrameworkElement {
     private FlameGraphRenderer renderer_;
     private DrawingVisual graphVisual_;
     private FlameGraphNode hoveredNode_;
+    private FlameGraphNode selectedNode_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> selectedNodes_;
 
-    public double MaxWidth => renderer_.maxWidth_;
+    public FlameGraph FlameGraph => flameGraph_;
+    public double MaxGraphWidth => renderer_.maxWidth_;
     public Rect VisibleArea => renderer_.visibleArea_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
@@ -61,6 +63,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
         else {
             ResetHighlightedNodes(HighlighingType.Hovered);
+            hoveredNode_ = null;
         }
     }
 
@@ -123,15 +126,17 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         if (graphNode != null) {
             //Trace.WriteLine($"Over {graphNode.Node?.FunctionName}");
-            if (!selectedNodes_.ContainsKey(graphNode)) {
+            if (selectedNode_ != graphNode) {
                 ResetHighlightedNodes(HighlighingType.Hovered);
                 ResetHighlightedNodes(HighlighingType.Selected);
                 HighlightNode(graphNode, HighlighingType.Selected, true);
+                selectedNode_ = graphNode;
             }
         }
         else {
             ResetHighlightedNodes(HighlighingType.Hovered);
             ResetHighlightedNodes(HighlighingType.Selected, true);
+            selectedNode_ = null;
         }
     }
 
@@ -140,7 +145,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         await Task.Run(() => flameGraph_.Build(callTree));
 
         renderer_ = new FlameGraphRenderer(flameGraph_, maxWidth, visibleArea);
-        graphVisual_ = renderer_.Render();
+        graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
         UpdateMaxWidth(maxWidth);
@@ -175,8 +180,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     protected override int VisualChildrenCount => 1;
 
     public void UpdateVisibleArea(Rect visibleArea) {
-        renderer_.visibleArea_ = visibleArea;
-        renderer_.Redraw();
+        renderer_.UpdateVisibleArea(visibleArea);
     }
 
     protected override Visual GetVisualChild(int index) {

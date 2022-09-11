@@ -7,17 +7,21 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Diagnostics;
+using System.Windows.Documents;
+using Brush = System.Windows.Media.Brush;
+using Brushes = System.Windows.Media.Brushes;
+using Pen = System.Windows.Media.Pen;
+using Size = System.Windows.Size;
 
 namespace IRExplorerUI.Profile {
     public class FlameGraphNode {
-        private const double DefaultTextSize = 12;
-        private const double DefaultMargin = 4;
-        private const double ExtraValueMargin = 20;
-        private const double MinVisibleWidth = 2;
+        internal const double DefaultMargin = 4;
+        internal const double ExtraValueMargin = 20;
+        internal const double MinVisibleRectWidth = 2;
+        internal const double MinVisibleWidth = 1;
 
-        public FlameGraphNode(ProfileCallTreeNode node, FlameGraph owner, TimeSpan weight, int depth) {
+        public FlameGraphNode(ProfileCallTreeNode node, TimeSpan weight, int depth) {
             Node = node;
-            Owner = owner;
             Weight = weight;
             Depth = depth;
 
@@ -26,7 +30,7 @@ namespace IRExplorerUI.Profile {
             lastWidth_ = double.MaxValue;
         }
 
-        public FlameGraph Owner { get; }
+        public FlameGraphRenderer Owner { get; set; }
         public ProfileCallTreeNode Node { get; }
         public FlameGraphNode Parent { get; set; }
         public List<FlameGraphNode> Children { get; set; }
@@ -37,7 +41,6 @@ namespace IRExplorerUI.Profile {
 
         public DrawingVisual Visual { get; set; }
         public HighlightingStyle Style { get; set; }
-        public Typeface TextFont { get; set; }
         public Brush TextColor { get; set; }
         public Brush WeightTextColor { get; set; }
         public Rect Bounds { get; set; }
@@ -49,10 +52,8 @@ namespace IRExplorerUI.Profile {
 
         private double lastWidth_;
         private Size lastSize_;
-
-        public void Clear() {
-            using var dc = Visual.RenderOpen();
-        }
+        private GlyphRun lastGlyphs_;
+        private bool isCleared_;
 
         public void Draw() {
             using var dc = Visual.RenderOpen();
@@ -69,6 +70,8 @@ namespace IRExplorerUI.Profile {
             // guidelines.GuidelinesY.Add(Bounds.Top + halfPenWidth);
             // guidelines.GuidelinesY.Add(Bounds.Bottom + halfPenWidth);
             // dc.PushGuidelineSet(guidelines);
+
+            isCleared_ = false;
             dc.DrawRectangle(Style.BackColor, Style.Border, Bounds);
 
             // ...
@@ -110,15 +113,15 @@ namespace IRExplorerUI.Profile {
                 };
 
                 //? todo: trim text, tooltip, click event handler, double-click to open func (or instance in tree with filter)
-                var (text, textTrimmed, textSize) = TrimTextToWidth(label, maxWidth - margin, index == 0);
+                var (text, glyphs, textTrimmed, textSize) = TrimTextToWidth(label, maxWidth - margin, index == 0);
 
                 if (text.Length > 0) {
-                    var styledText = new FormattedText(text, CultureInfo.InvariantCulture,
-                        FlowDirection.LeftToRight, TextFont, DefaultTextSize, textColor,
-                        VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
                     double x = Bounds.Left + offsetX + margin;
-                    double y = Bounds.Top + (Bounds.Height - textSize.Height) / 2;
-                    dc.DrawText(styledText, new Point(x, y));
+                    double y = Bounds.Top + Bounds.Height - Math.Floor(textSize.Height / 2);
+
+                    dc.PushTransform(new TranslateTransform(x, y + 1));
+                    dc.DrawGlyphRun(textColor, glyphs);
+                    dc.Pop();
                 }
 
                 trimmed = textTrimmed;
@@ -128,14 +131,24 @@ namespace IRExplorerUI.Profile {
             }
         }
 
-        private (string  Text, bool Trimmed, Size TextSize) TrimTextToWidth(string text, double maxWidth, bool useCache = false) {
-            if (maxWidth <= 0) {
-                return ("", true, Size.Empty);
+        public void Clear() {
+            if (isCleared_) {
+                return;
+            }
+
+            using var dc = Visual.RenderOpen();
+            isCleared_ = true;
+        }
+
+        private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
+            TrimTextToWidth(string text, double maxWidth, bool useCache = false) {
+            if (maxWidth <= 0 || string.IsNullOrEmpty(text)) {
+                return ("", Owner.GlyphsCache.GetGlyphs("").Glyphs, true, Size.Empty);
             }
 
             if (useCache) {
                 if (maxWidth >= lastWidth_) {
-                    return (text, false, lastSize_);
+                    return (text, lastGlyphs_, false, lastSize_);
                 }
             }
 
@@ -144,39 +157,39 @@ namespace IRExplorerUI.Profile {
             //  - size is smaller, but less than a delta that's some multiple of avg letter width
             //? could also remember based on # of letter,  letters -> Size mapping
 
-            var size = Utils.MeasureString(text, TextFont, DefaultTextSize);
+            var (glyphs, textWidth, textHeight) = Owner.GlyphsCache.GetGlyphs(text);
             bool trimmed = false;
 
-            if (size.Width > maxWidth) {
-                var letterSize = Utils.MeasureString(1, TextFont, DefaultTextSize);
-                var extraWidth = size.Width - maxWidth;
-                var extraLetters = Math.Max(1, (int)Math.Ceiling(extraWidth / letterSize.Width));
+            if (textWidth > maxWidth) {
+                var letterWidth = Math.Ceiling(textWidth / text.Length);
+                var extraWidth = textWidth - maxWidth;
+                var extraLetters = Math.Max(1, (int)Math.Ceiling(extraWidth / letterWidth));
                 extraLetters += 1; // . suffix
                 trimmed = true;
 
                 if (text.Length > extraLetters) {
                     text = text.Substring(0, text.Length - extraLetters) + ".";
-
-                    //? TODO: instead measure the cut part, or the shorter one
-                    size = Utils.MeasureString(text, TextFont, DefaultTextSize);
+                    (glyphs, textWidth, textHeight) = Owner.GlyphsCache.GetGlyphs(text);
                 }
                 else {
                     text = "";
-                    size = new Size(maxWidth, size.Height);
+                    (glyphs, textWidth, textHeight) = Owner.GlyphsCache.GetGlyphs(text);
+                    textWidth = maxWidth;
                 }
             }
 
             if (useCache) {
                 if (!trimmed) {
                     lastWidth_ = maxWidth;
-                    lastSize_ = size;
+                    lastGlyphs_ = glyphs;
+                    lastSize_ = new Size(textWidth, textHeight);
                 }
                 else {
                     lastWidth_ = Double.MaxValue; // Invalidate.
                 }
             }
 
-            return (text, trimmed, size);
+            return (text, glyphs, trimmed, new Size(textWidth, textHeight));
         }
     }
 
@@ -195,7 +208,7 @@ namespace IRExplorerUI.Profile {
 
         public FlameGraphNode Build(ProfileCallTreeNode node, TimeSpan weight,
                                     ICollection<ProfileCallTreeNode> children, int depth) {
-            var flameNode = new FlameGraphNode(node, this, weight, depth);
+            var flameNode = new FlameGraphNode(node, weight, depth);
 
             if(children == null || children.Count == 0) {
                 return flameNode;
@@ -226,55 +239,66 @@ namespace IRExplorerUI.Profile {
         public double ScaleWeight(TimeSpan weight) {
             return (double)weight.Ticks / (double)RootWeight.Ticks;
         }
-
-        private double ComputeUnit(double baseUnit, TimeSpan weight, TimeSpan totalWeight) {
-            return (baseUnit * (double)weight.Ticks) / (double)totalWeight.Ticks;
-        }
     }
 
     public class FlameGraphRenderer {
+        internal const double DefaultTextSize = 12;
+
         private FlameGraph flameGraph_;
         private double nodeHeight_;
         internal double maxWidth_;
         internal Rect visibleArea_;
+        private Rect previousVisibleArea_;
         private Typeface font_;
+        private double fontSize_;
         private ColorPalette palette_;
         private Pen defaultBorder_;
+        private Brush placeholderColor_;
         private DrawingVisual graphVisual_;
+        private GlyphRunCache glyphs_;
+
+        public GlyphRunCache GlyphsCache => glyphs_;
 
         public FlameGraphRenderer(FlameGraph flameGraph, double maxWidth, Rect visibleArea) {
             flameGraph_ = flameGraph;
             maxWidth_ = maxWidth;
             visibleArea_ = visibleArea;
-            nodeHeight_ = 20; //? Option
-            font_ = new Typeface("Verdana");
             palette_ = ColorPalette.Profile;
             defaultBorder_ = ColorPens.GetPen(Colors.Black);
+            placeholderColor_ = ColorBrushes.GetBrush(Colors.DarkGray);
+
+            nodeHeight_ = 20; //? Option
+            font_ = new Typeface("Verdana");
+            fontSize_ = DefaultTextSize;
         }
 
-        public DrawingVisual Render() {
+        public DrawingVisual Setup() {
             var visual = SetupNodeVisual(flameGraph_.RootNode);
-            UpdateNodeWidth(flameGraph_.RootNode, 0, 0);
+            glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual).PixelsPerDip);
+
+            Redraw();
             visual.Drawing?.Freeze();
             return visual;
         }
 
         private DrawingVisual SetupNodeVisual(FlameGraphNode node) {
+            //? Option to sort by timeline
             graphVisual_ = new DrawingVisual();
             SetupNodeVisual(node, graphVisual_);
             return graphVisual_;
         }
 
         private DrawingVisual SetupNodeVisual(FlameGraphNode node, DrawingVisual graphVisual) {
+            node.Owner = this;
             node.Visual = new DrawingVisual();
             node.Visual.SetValue(FrameworkElement.TagProperty, node);
             graphVisual.Children.Add(node.Visual);
 
             //? TODO: Palette based on module
-            int colorIndex = Math.Min(node.Depth, palette_.Count - 1);
+            //? int colorIndex = Math.Min(node.Depth, palette_.Count - 1);
+            int colorIndex = node.Depth % palette_.Count;
             var backColor = palette_[palette_.Count - colorIndex - 1];
             node.Style = new HighlightingStyle(backColor, defaultBorder_);
-            node.TextFont = font_;
             node.TextColor = Brushes.Black;
             node.WeightTextColor = Brushes.DarkBlue;
 
@@ -292,32 +316,65 @@ namespace IRExplorerUI.Profile {
             Redraw();
         }
 
-        public void Redraw() {
-            using var dc = graphVisual_.RenderOpen();
-            UpdateNodeWidth(flameGraph_.RootNode, 0, 0);
+        public void UpdateVisibleArea(Rect visibleArea) {
+            previousVisibleArea_ = visibleArea_;
+            visibleArea_ = visibleArea;
+            Redraw();
         }
 
-        private void UpdateNodeWidth(FlameGraphNode node, double x, double y) {
+        public double ScaleWeight(TimeSpan weight) {
+            return flameGraph_.ScaleWeight(weight);
+        }
+
+        public void Redraw() {
+            using var graphDC = graphVisual_.RenderOpen();
+            UpdateNodeWidth(flameGraph_.RootNode, 0, 0, graphDC, true);
+        }
+
+        private void UpdateNodeWidth(FlameGraphNode node, double x, double y, DrawingContext graphDC, bool redraw) {
             double width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
-            width = Math.Max(width, 1);
             var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);
 
-            if (node.Children != null && width > 1) {
+            if (redraw && width < FlameGraphNode.MinVisibleRectWidth) {
+                //throw new InvalidOperationException(); //? REMOVE
+                redraw = false;
+            }
+
+            if (node.Children != null) {
+                bool redrawChildren = redraw;
+
                 // Children are sorted by weight.
-                foreach (var childNode in node.Children) {
-                    UpdateNodeWidth(childNode, x, y + nodeHeight_);
+                for(int i = 0; i < node.Children.Count; i++) {
+                    //? If multiple children below width, single patterned rect
+                    var childNode = node.Children[i];
                     var childWidth = flameGraph_.ScaleWeight(childNode.Weight) * maxWidth_;
+
+                    if (redrawChildren && childWidth < FlameGraphNode.MinVisibleRectWidth) {
+                        double remainingWidth = childWidth;
+
+                        for (int k = i + 1; k < node.Children.Count; k++) {
+                            remainingWidth += flameGraph_.ScaleWeight(node.Children[k].Weight) * maxWidth_;
+                        }
+
+                        var replacement = new Rect(x, y + nodeHeight_, remainingWidth, nodeHeight_);
+                        //? Could make color darker than level
+                        //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
+                        graphDC.DrawRectangle(placeholderColor_, childNode.Style.Border, replacement);
+                        redrawChildren = false;
+                    }
+
+                    UpdateNodeWidth(childNode, x, y + nodeHeight_, graphDC, redrawChildren);
                     x += childWidth;
                 }
             }
 
-            //? TODO: if node has < 2 width, don't bother to iterate over nodes
-            //? - if nodes outside view, don't need update
-
-            if (node.Bounds.IntersectsWith(visibleArea_) ||
-                prevBounds.IntersectsWith(visibleArea_)) {
+            if (redraw && (node.Bounds.IntersectsWith(visibleArea_) ||
+                           prevBounds.IntersectsWith(previousVisibleArea_))) {
                 node.Draw();
+            }
+            else {
+                node.Clear();
             }
         }
     }
