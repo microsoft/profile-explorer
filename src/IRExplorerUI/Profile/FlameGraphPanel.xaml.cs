@@ -15,7 +15,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
     public double FlameGraphWeight
     {
         get {
-            return GraphViewer.MaxWidth;
+            return GraphViewer.MaxGraphWidth;
         }
         set {
             GraphViewer.UpdateMaxWidth(value);
@@ -31,9 +31,9 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private bool dragging_;
     private Point draggingStart_;
     private Point draggingViewStart_;
-    private const double ZoomAmount = 200;
-    private const double ScrollWheelZoomAmount = 100;
-    private const double FastPanOffset = 500;
+    private const double ZoomAmount = 500;
+    private const double ScrollWheelZoomAmount = 300;
+    private const double FastPanOffset = 1000;
     private const double PanOffset = 100;
     private const double ZoomAnimationDuration = 240;
     private const double ScrollWheelZoomAAnimationDuration = 60;
@@ -43,12 +43,39 @@ public partial class FlameGraphPanel : ToolPanelControl {
         SetupEvents();
     }
 
+    private double GraphAreaWidth => GraphHost.ViewportWidth;
+    private double GraphAreaHeight=> GraphHost.ViewportHeight;
+
     private void SetupEvents() {
         PreviewMouseWheel += GraphPanel_PreviewMouseWheel;
-        PreviewKeyDown += GraphPanel_PreviewKeyDown;
+        KeyDown += GraphPanel_PreviewKeyDown;
         MouseLeftButtonDown += GraphPanel_MouseLeftButtonDown;
         MouseLeftButtonUp += GraphPanel_MouseLeftButtonUp;
+        MouseDoubleClick += OnMouseDoubleClick;
         MouseMove += GraphPanel_MouseMove;
+    }
+
+    private void OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+        var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
+
+        if (pointedNode != null) {
+            EnlargeNode(pointedNode);
+        }
+    }
+
+    public void EnlargeNode(FlameGraphNode node) {
+        //? Also update horizontal scroll
+        //?   use stack to go back
+        // y = maxWidth * (rootWeight / weight)
+
+        double proportion = (double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks;
+        double newMaxWidth = GraphAreaWidth * ((double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks);
+        double newNodeX = node.Bounds.Left * proportion;
+        SetMaxWidth(newMaxWidth, false);
+
+        Trace.WriteLine(($"predicted X = {newNodeX}, actual {node.Bounds.Left}"));
+        double newOffsetX = node.Bounds.Left;
+        GraphHost.ScrollToHorizontalOffset(Math.Min(newOffsetX, GraphViewer.MaxGraphWidth));
     }
 
     private void GraphPanel_MouseMove(object sender, MouseEventArgs e) {
@@ -88,7 +115,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
 
         dragging_ = true;
-        draggingStart_ = e.GetPosition(GraphHost);
+        draggingStart_ = point;
         draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset); CaptureMouse();
         CaptureMouse();
         e.Handled = true;
@@ -147,7 +174,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
     private void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
         if (animate) {
-            var animation = new DoubleAnimation(GraphViewer.MaxWidth, maxWidth, TimeSpan.FromMilliseconds(duration));
+            var animation = new DoubleAnimation(GraphViewer.MaxGraphWidth, maxWidth, TimeSpan.FromMilliseconds(duration));
             BeginAnimation(FlameGraphWeightProperty, animation);
         }
         else {
@@ -156,7 +183,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private void AdjustMaxWidth(double amount, bool animate = true, double duration = ZoomAnimationDuration) {
-        SetMaxWidth(GraphViewer.MaxWidth + amount, animate, duration);
+        double newWidth = Math.Max(0, GraphViewer.MaxGraphWidth + amount);
+        SetMaxWidth(newWidth, animate, duration);
     }
 
     private void GraphPanel_PreviewMouseWheel(object sender, MouseWheelEventArgs e) {
@@ -165,7 +193,16 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
 
         double step = ScrollWheelZoomAmount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
-        AdjustMaxWidth(step, true, ScrollWheelZoomAAnimationDuration);
+        double initialWidth = GraphViewer.MaxGraphWidth;
+        double initialOffsetX = GraphHost.HorizontalOffset;
+        AdjustMaxWidth(step, false);
+
+        // Maintain the zoom point under the mouse by adjusting the horizontal offset.
+        double zoom = GraphViewer.MaxGraphWidth / initialWidth;
+        double zoomPointX = e.GetPosition(GraphViewer).X;
+        double offsetAdjustment = (initialOffsetX / zoom  + zoomPointX);
+
+        GraphHost.ScrollToHorizontalOffset(offsetAdjustment * zoom - zoomPointX);
         e.Handled = true;
     }
 
@@ -177,11 +214,11 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
-        SetMaxWidth(ActualWidth);
+        SetMaxWidth(GraphAreaWidth);
     }
 
     private void ExecuteGraphFitAll(object sender, ExecutedRoutedEventArgs e) {
-        SetMaxWidth(ActualWidth);
+        SetMaxWidth(GraphAreaWidth);
     }
 
     private void ExecuteGraphZoomIn(object sender, ExecutedRoutedEventArgs e) {
@@ -202,7 +239,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
     private void GraphHost_OnScrollChanged(object sender, ScrollChangedEventArgs e) {
         var area = new Rect(GraphHost.HorizontalOffset, GraphHost.VerticalOffset,
-            GraphHost.ActualWidth, GraphHost.ActualHeight);
+            GraphAreaWidth, GraphAreaHeight);
         GraphViewer.UpdateVisibleArea(area);
     }
 }
