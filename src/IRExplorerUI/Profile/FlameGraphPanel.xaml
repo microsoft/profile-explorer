@@ -1,6 +1,6 @@
 ﻿<irExplorerUi:ToolPanelControl
     d:DesignHeight="300"
-    d:DesignWidth="300"
+    d:DesignWidth="500"
     mc:Ignorable="d"
     x:Class="IRExplorerUI.Profile.FlameGraphPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -42,26 +42,6 @@
             Command="irExplorerUi:GraphCommand.MarkGroup"
             CommandTarget="{Binding ElementName=GraphHost}"
             Key="M"
-            Modifiers="Shift+Ctrl" />
-        <KeyBinding
-            Command="irExplorerUi:GraphCommand.MarkPredecessors"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            Key="P"
-            Modifiers="Ctrl" />
-        <KeyBinding
-            Command="irExplorerUi:GraphCommand.MarkSuccessors"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            Key="S"
-            Modifiers="Ctrl" />
-        <KeyBinding
-            Command="irExplorerUi:GraphCommand.MarkLoop"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            Key="L"
-            Modifiers="Ctrl" />
-        <KeyBinding
-            Command="irExplorerUi:GraphCommand.MarkLoopNest"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            Key="L"
             Modifiers="Shift+Ctrl" />
     </irExplorerUi:ToolPanelControl.InputBindings>
 
@@ -108,22 +88,22 @@
                     </Button>
                     <Separator />
                     <Button
-                        Command="irExplorerUi:GraphCommand.GraphFitWidth"
+                        Click="ButtonBase_OnClick"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         Margin="4,0,0,0"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource FitWidthIcon}" />
-                            <TextBlock Margin="4,0,0,0" Text="Fit Width" />
+                            <Image Source="{StaticResource DockLeftIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Back" />
                         </StackPanel>
                     </Button>
                     <Button
-                        Command="irExplorerUi:GraphCommand.GraphFitAll"
+                        Click="ButtonBase_OnClick2"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom the view to show the entire graph (Ctrl+A)">
                         <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource FitAllIcon}" />
-                            <TextBlock Margin="4,0,0,0" Text="Fit All" />
+                            <Image Source="{StaticResource UpArrowIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Caller" />
                         </StackPanel>
                     </Button>
                     <Button
