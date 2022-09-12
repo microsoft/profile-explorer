@@ -7,6 +7,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Interop;
+using System.Windows.Media;
 using System.Xml;
 
 namespace IRExplorerUI {
@@ -352,7 +354,7 @@ namespace IRExplorerUI {
         public static string GetSyntaxHighlightingFilePath() {
             // If a file is not set yet (first run for ex), set the default one.
             var docSettings = Settings.DocumentSettings;
-            
+
             //? TODO: Each compiler mode should have its own syntax saved
             if (string.IsNullOrEmpty(docSettings.SyntaxHighlightingName)) {
                 docSettings.SyntaxHighlightingName = Session.CompilerInfo.DefaultSyntaxHighlightingFile;
@@ -471,6 +473,9 @@ namespace IRExplorerUI {
         }
 
         protected override void OnStartup(StartupEventArgs e) {
+            //? TODO: Needed to run under Wine on Linux
+            //RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+
             AppStartTime = DateTime.UtcNow;
             base.OnStartup(e);
 
@@ -539,7 +544,7 @@ namespace IRExplorerUI {
         public static string ApplicationPath => Process.GetCurrentProcess().MainModule.FileName;
 
         public static string ApplicationDirectory => Path.GetDirectoryName(ApplicationPath);
-        
+
         public static bool StartNewApplicationInstance(string args = "", bool adminMode = false) {
             var psi = new ProcessStartInfo(ApplicationPath);
             psi.Arguments = args;
@@ -548,7 +553,7 @@ namespace IRExplorerUI {
             if (adminMode) {
                 psi.Verb = "runas";
             }
-            
+
             try {
                 using var process = new Process();
                 process.StartInfo = psi;
