@@ -108,6 +108,14 @@ public partial class FlameGraphViewer : FrameworkElement {
         group.Clear();
     }
 
+
+    public void ResetNodeHighlighting() {
+        hoveredNode_.Clear();
+        selectedNode_.Clear();
+        hoveredNode_ = null;
+        selectedNode_ = null;
+    }
+
     private HighlightingStyle ApplyBorderToStyle(HighlightingStyle style, Pen border) {
         return new HighlightingStyle(style.BackColor, border);
     }
@@ -140,15 +148,25 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
     }
 
-    public async Task Initialize(ProfileCallTree callTree, double maxWidth, Rect visibleArea) {
-        flameGraph_ = new FlameGraph();
-        await Task.Run(() => flameGraph_.Build(callTree));
+    public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode, Rect visibleArea) {
+        flameGraph_ = new FlameGraph(callTree);
+        await Task.Run(() => flameGraph_.Build(rootNode));
 
-        renderer_ = new FlameGraphRenderer(flameGraph_, maxWidth, visibleArea);
+        if (graphVisual_ != null) {
+            RemoveVisualChild(graphVisual_);
+            RemoveLogicalChild(graphVisual_);
+            graphVisual_ = null;
+        }
+
+        renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
-        UpdateMaxWidth(maxWidth);
+        UpdateMaxWidth(renderer_.maxWidth_);
+    }
+
+    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea) {
+        await Initialize(callTree, null, visibleArea);
     }
 
     public void UpdateMaxWidth(double maxWidth) {
@@ -194,6 +212,6 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         var bounds = graphVisual_.ContentBounds;
         bounds.Union(graphVisual_.DescendantBounds);
-        return new Size(bounds.Width, bounds.Height);
+        return new Size(bounds.Left + bounds.Width, bounds.Top + bounds.Height);
     }
 }

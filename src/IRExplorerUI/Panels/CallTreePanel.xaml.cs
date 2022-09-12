@@ -824,7 +824,7 @@ namespace IRExplorerUI {
             panel.Height = height;
             panel.HorizontalAlignment = HorizontalAlignment.Stretch;
             panel.VerticalAlignment = VerticalAlignment.Stretch;
-            await panel.GraphViewer.Initialize(Session.ProfileData.CallTree, width,
+            await panel.Initialize(Session.ProfileData.CallTree,
                 new Rect(0, 0, width, Double.MaxValue));
             return panel;
         }

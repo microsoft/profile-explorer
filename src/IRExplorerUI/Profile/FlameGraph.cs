@@ -20,8 +20,8 @@ namespace IRExplorerUI.Profile {
         internal const double MinVisibleRectWidth = 2;
         internal const double MinVisibleWidth = 1;
 
-        public FlameGraphNode(ProfileCallTreeNode node, TimeSpan weight, int depth) {
-            Node = node;
+        public FlameGraphNode(ProfileCallTreeNode callTreeNode, TimeSpan weight, int depth) {
+            CallTreeNode = callTreeNode;
             Weight = weight;
             Depth = depth;
 
@@ -31,7 +31,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public FlameGraphRenderer Owner { get; set; }
-        public ProfileCallTreeNode Node { get; }
+        public ProfileCallTreeNode CallTreeNode { get; }
         public FlameGraphNode Parent { get; set; }
         public List<FlameGraphNode> Children { get; set; }
 
@@ -88,12 +88,12 @@ namespace IRExplorerUI.Profile {
                 //? font color, bold
                 switch(index) {
                     case 0: {
-                        label = Node != null ? Node.FunctionName : "All";
+                        label = CallTreeNode != null ? CallTreeNode.FunctionName : "All";
                         break;
                     }
                     case 1: {
-                        if (ShowWeightPercentage && Node != null) {
-                            label = Owner.ScaleWeight(Node.Weight).AsPercentageString();
+                        if (ShowWeightPercentage && CallTreeNode != null) {
+                            label = Owner.ScaleWeight(CallTreeNode.Weight).AsPercentageString();
                             margin = ExtraValueMargin;
                             textColor = WeightTextColor;
                         }
@@ -102,8 +102,8 @@ namespace IRExplorerUI.Profile {
                     }
 
                     case 2: {
-                        if (ShowWeight && Node != null) {
-                            label = $"({Node.Weight.AsMillisecondsString()})";
+                        if (ShowWeight && CallTreeNode != null) {
+                            label = $"({CallTreeNode.Weight.AsMillisecondsString()})";
                             margin = ExtraValueMargin;
                             textColor = WeightTextColor;
                         }
@@ -199,17 +199,28 @@ namespace IRExplorerUI.Profile {
         public double NodeHeight { get; set; }
         public FlameGraphNode RootNode { get; set; }
         public TimeSpan RootWeight { get; set; }
+        public ProfileCallTree CallTree { get; set; }
 
-        public void Build(ProfileCallTree callTree) {
-            // Make on dummy root node that hosts all real root nodes.
-            RootWeight = callTree.TotalRootNodesWeight;
-            RootNode = Build(null, RootWeight, callTree.RootNodes, 0);
+        public FlameGraph(ProfileCallTree callTree) {
+            CallTree = callTree;
         }
 
-        public FlameGraphNode Build(ProfileCallTreeNode node, TimeSpan weight,
-                                    ICollection<ProfileCallTreeNode> children, int depth) {
-            var flameNode = new FlameGraphNode(node, weight, depth);
+        public void Build(ProfileCallTreeNode rootNode) {
+            if (rootNode == null) {
+                // Make on dummy root node that hosts all real root nodes.
+                RootWeight = CallTree.TotalRootNodesWeight;
+                var flameNode = new FlameGraphNode(null, RootWeight, 0);
+                RootNode = Build(flameNode, RootWeight, CallTree.RootNodes, 0);
+            }
+            else {
+                RootWeight = rootNode.Weight;
+                var flameNode = new FlameGraphNode(rootNode, rootNode.Weight, 0);
+                RootNode = Build(flameNode, RootWeight, rootNode.Children, 0);
+            }
+        }
 
+        private FlameGraphNode Build(FlameGraphNode flameNode, TimeSpan weight,
+                                     ICollection<ProfileCallTreeNode> children, int depth) {
             if(children == null || children.Count == 0) {
                 return flameNode;
             }
@@ -228,7 +239,8 @@ namespace IRExplorerUI.Profile {
             flameNode.ChildrenWeight = childrenWeight;
 
             foreach (var child in sortedChildren) {
-                var childNode = Build(child, child.Weight, child.Children, depth + 1);
+                var childFlameNode = new FlameGraphNode(child, child.Weight, depth + 1);
+                var childNode = Build(childFlameNode, child.Weight, child.Children, depth + 1);
                 childNode.Parent = flameNode;
                 flameNode.Children.Add(childNode);
             }
@@ -259,9 +271,9 @@ namespace IRExplorerUI.Profile {
 
         public GlyphRunCache GlyphsCache => glyphs_;
 
-        public FlameGraphRenderer(FlameGraph flameGraph, double maxWidth, Rect visibleArea) {
+        public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea) {
             flameGraph_ = flameGraph;
-            maxWidth_ = maxWidth;
+            maxWidth_ = visibleArea.Width;
             visibleArea_ = visibleArea;
             palette_ = ColorPalette.Profile;
             defaultBorder_ = ColorPens.GetPen(Colors.Black);

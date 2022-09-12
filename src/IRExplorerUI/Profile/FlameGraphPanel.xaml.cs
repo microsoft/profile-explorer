@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
+using IRExplorerCore.Graph;
 
 namespace IRExplorerUI.Profile;
 
@@ -28,9 +32,6 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
     }
 
-    private bool dragging_;
-    private Point draggingStart_;
-    private Point draggingViewStart_;
     private const double ZoomAmount = 500;
     private const double ScrollWheelZoomAmount = 300;
     private const double FastPanOffset = 1000;
@@ -38,13 +39,24 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private const double ZoomAnimationDuration = 240;
     private const double ScrollWheelZoomAAnimationDuration = 60;
 
+    private bool dragging_;
+    private Point draggingStart_;
+    private Point draggingViewStart_;
+    private Stack<FlameGraphState> stateStack_;
+
     public FlameGraphPanel() {
         InitializeComponent();
+        stateStack_ = new Stack<FlameGraphState>();
+
         SetupEvents();
     }
 
-    private double GraphAreaWidth => GraphHost.ViewportWidth;
+    private double GraphAreaWidth => GraphHost.ViewportWidth - 1;
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
+
+    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea) {
+        await GraphViewer.Initialize(callTree, visibleArea);
+    }
 
     private void SetupEvents() {
         PreviewMouseWheel += GraphPanel_PreviewMouseWheel;
@@ -63,19 +75,90 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
     }
 
-    public void EnlargeNode(FlameGraphNode node) {
-        //? Also update horizontal scroll
-        //?   use stack to go back
-        // y = maxWidth * (rootWeight / weight)
+    private FlameGraphNode enlargedNode_;
 
-        double proportion = (double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks;
+    public void EnlargeNode(FlameGraphNode node, bool saveState = true) {
+        if (Utils.IsControlModifierActive()) {
+            SwapNode(node, true);
+            return;
+        }
+
+        if (saveState) {
+            SaveCurrentState();
+        }
+
+        enlargedNode_ = node;
         double newMaxWidth = GraphAreaWidth * ((double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks);
-        double newNodeX = node.Bounds.Left * proportion;
         SetMaxWidth(newMaxWidth, false);
+        double newNodeX = node.Bounds.Left;
 
-        Trace.WriteLine(($"predicted X = {newNodeX}, actual {node.Bounds.Left}"));
-        double newOffsetX = node.Bounds.Left;
-        GraphHost.ScrollToHorizontalOffset(Math.Min(newOffsetX, GraphViewer.MaxGraphWidth));
+        // Updating scroll viewer offset must be delayed until
+        // it adjusts to the change in size of the graph...
+        //! TOOD: Needed for other places?
+        Dispatcher.BeginInvoke(() => {
+            double offset = Math.Min(newNodeX, newMaxWidth);
+            GraphHost.ScrollToHorizontalOffset(offset);
+
+        });
+    }
+
+    public async Task SwapNode(FlameGraphNode node, bool saveState = true) {
+        ResetState();
+        await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
+            new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight));
+    }
+
+    enum FlameGraphStateKind {
+        Default,
+        EnlargeNode,
+        ChangeRootNode
+    }
+
+    class FlameGraphState {
+        public FlameGraphStateKind Kind { get; set; }
+        public FlameGraphNode Node { get; set; }
+        public double MaxGraphWidth { get; set; }
+        public double HorizontalOffset { get; set; }
+        public double VerticalOffset { get; set; }
+    }
+
+    private void SaveCurrentState() {
+        var state = new FlameGraphState() {
+            MaxGraphWidth = GraphViewer.MaxGraphWidth,
+            HorizontalOffset = GraphHost.HorizontalOffset,
+            VerticalOffset = GraphHost.VerticalOffset
+        };
+
+        if (enlargedNode_ != null) {
+            state.Kind = FlameGraphStateKind.EnlargeNode;
+            state.Node = enlargedNode_;
+        }
+
+        stateStack_.Push(state);
+    }
+
+    void RestorePreviousState() {
+        if (!stateStack_.TryPop(out var state)) {
+            return;
+        }
+
+        switch (state.Kind) {
+            case FlameGraphStateKind.EnlargeNode: {
+                EnlargeNode(state.Node, false);
+                break;
+            }
+            default: {
+                SetMaxWidth(state.MaxGraphWidth, false);
+                GraphHost.ScrollToHorizontalOffset(state.HorizontalOffset);
+                GraphHost.ScrollToVerticalOffset(state.VerticalOffset);
+                break;
+            }
+        }
+    }
+
+    void ResetState() {
+        GraphViewer.ResetNodeHighlighting();
+
     }
 
     private void GraphPanel_MouseMove(object sender, MouseEventArgs e) {
@@ -215,6 +298,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
         SetMaxWidth(GraphAreaWidth);
+        ResetState();
     }
 
     private void ExecuteGraphFitAll(object sender, ExecutedRoutedEventArgs e) {
@@ -242,4 +326,16 @@ public partial class FlameGraphPanel : ToolPanelControl {
             GraphAreaWidth, GraphAreaHeight);
         GraphViewer.UpdateVisibleArea(area);
     }
+
+    private void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
+        RestorePreviousState();
+    }
+
+    private void ButtonBase_OnClick2(object sender, RoutedEventArgs e) {
+        if (enlargedNode_ != null &&  enlargedNode_.Parent != null) {
+            Trace.WriteLine($"Parent {enlargedNode_.Parent.CallTreeNode?.FunctionName}, w {enlargedNode_.Parent.Weight}  VS  {enlargedNode_.Weight}");
+            EnlargeNode(enlargedNode_.Parent);
+        }
+    }
+
 }
