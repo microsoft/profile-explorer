@@ -428,9 +428,8 @@ namespace IRExplorerUI {
                 debugFunction_.AddSection(section);
                 debugSummary_.AddSection(section);
                 debugSections_.AddSection(section, filteredText);
-
-                SectionPanel.MainSummary = null;
-                SectionPanel.MainSummary = debugSummary_;
+                
+                await SectionPanel.SetMainSummary(debugSummary_);
                 await SectionPanel.SelectSection(section);
 
                 //? TODO: After switch, try to restore same position in doc

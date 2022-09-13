@@ -1875,7 +1875,7 @@ namespace IRExplorerUI {
 
         private async Task HandleNewRemarkSettings(RemarkSettings newSettings, bool commit, bool force = false) {
             if (commit) {
-                Session.ReloadRemarkSettings(newSettings, TextView);
+                await Session.ReloadRemarkSettings(newSettings, TextView);
                 App.Settings.RemarkSettings = newSettings;
                 App.SaveApplicationSettings();
             }

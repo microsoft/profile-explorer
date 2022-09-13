@@ -444,7 +444,6 @@ namespace IRExplorerUI {
         }
 
         private async Task ShowSectionPanelDiffs(LoadedDocument result) {
-            
             await SectionPanel.AnalyzeDocumentDiffs();
             await SectionPanel.RefreshDocumentsDiffs();
         }

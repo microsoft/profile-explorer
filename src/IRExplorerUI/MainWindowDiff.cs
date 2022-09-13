@@ -198,7 +198,7 @@ namespace IRExplorerUI {
                 sessionState_.RemoveLoadedDocuemnt(sessionState_.DiffDocument);
 
                 // Reset the section panel.
-                SectionPanel.DiffSummary = null;
+                await SectionPanel.SetDiffSummary(null);
                 sessionState_.ExitTwoDocumentDiffMode();
                 UpdateWindowTitle();
             }

@@ -48,54 +48,17 @@ namespace IRExplorerUI {
         public bool SyncDiffedDocuments => MainPanel.SyncDiffedDocuments;
 
         public async Task RefreshMainSummary() {
-            await MainPanel.RefreshSummary();
+            await MainPanel.Update(true);
         }
 
         public IRTextSummary MainSummary {
             get => MainPanel.Summary;
-            set {
-                if (MainPanel.Summary != value) {
-                    MainPanel.Summary = value;
-                }
-            }
         }
 
         public IRTextSummary DiffSummary {
             get => DiffPanel.Summary;
-            set {
-                if (DiffPanel.Summary != value) {
-                    DiffPanel.Summary = value;
-
-                    if (!diffModeEnabled_) {
-                        MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
-                        MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
-                        MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
-                        MainPanel.IsDiffModeEnabled = true;
-                        DiffPanel.IsDiffModeEnabled = true;
-                        DiffPanel.Visibility = Visibility.Visible;
-                        MainPanel.OtherSummary = value;
-
-                        DiffPanel.FunctionPartVisible = false;
-                        DiffPanel.OtherSummary = MainSummary;
-                        diffModeEnabled_ = true;
-                    }
-                    else if (value == null) {
-                        MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
-                        MainGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Pixel);
-                        MainGrid.ColumnDefinitions[2].Width = new GridLength(0, GridUnitType.Star);
-                        MainPanel.IsDiffModeEnabled = false;
-                        DiffPanel.IsDiffModeEnabled = false;
-                        MainPanel.IsFunctionListVisible = true;
-                        DiffPanel.Visibility = Visibility.Collapsed;
-
-                        // Restore original section list, without diff placeholders/annotations.
-                        MainPanel.Sections = MainPanel.CreateSectionsExtension(true);
-                        diffModeEnabled_ = false;
-                    }
-                }
-            }
         }
-
+        
         public string MainTitle {
             get => MainPanel.DocumentTitle;
             set => MainPanel.DocumentTitle = value;
@@ -114,6 +77,59 @@ namespace IRExplorerUI {
             set {
                 MainPanel.Session = value;
                 DiffPanel.Session = value;
+            }
+        }
+        public async Task SetMainSummary(IRTextSummary summary) {
+            if (MainPanel.Summary == summary) {
+                return;
+            }
+
+            MainPanel.Summary = summary;
+
+            if (summary != null) {
+                await Update();
+            }
+        }
+
+        public async Task SetDiffSummary(IRTextSummary summary) {
+            if (DiffPanel.Summary == summary) {
+                return;
+            }
+
+            DiffPanel.Summary = summary;
+
+            if (summary != null) {
+                await Update();
+            }
+
+            if (!diffModeEnabled_) {
+                MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+                MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
+                MainGrid.ColumnDefinitions[2].Width = new GridLength(1, GridUnitType.Star);
+                MainPanel.IsDiffModeEnabled = true;
+                DiffPanel.IsDiffModeEnabled = true;
+                DiffPanel.Visibility = Visibility.Visible;
+                MainPanel.OtherSummary = summary;
+
+                DiffPanel.FunctionPartVisible = false;
+                DiffPanel.OtherSummary = MainSummary;
+                diffModeEnabled_ = true;
+            }
+            else if (summary == null) {
+                MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
+                MainGrid.ColumnDefinitions[1].Width = new GridLength(0, GridUnitType.Pixel);
+                MainGrid.ColumnDefinitions[2].Width = new GridLength(0, GridUnitType.Star);
+                MainPanel.IsDiffModeEnabled = false;
+                DiffPanel.IsDiffModeEnabled = false;
+                MainPanel.IsFunctionListVisible = true;
+                DiffPanel.Visibility = Visibility.Collapsed;
+
+                // Restore original section list, without diff placeholders/annotations.
+                if (MainPanel.Summary != null) { // If there was a prev. failure, may not be set up.
+                    MainPanel.Sections = MainPanel.CreateSectionsExtension(true);
+                }
+
+                diffModeEnabled_ = false;
             }
         }
 
@@ -416,10 +432,10 @@ namespace IRExplorerUI {
         }
 
         public override void OnSessionEnd() {
-            DiffSummary = null;
-            MainSummary = null;
-            MainPanel.RefreshSummary();
-            DiffPanel.RefreshSummary();
+            SetMainSummary(null).Wait();
+            SetDiffSummary(null).Wait();
+            MainPanel.ResetUI();
+            DiffPanel.ResetUI();
         }
 
         public async Task AnalyzeDocumentDiffs() {

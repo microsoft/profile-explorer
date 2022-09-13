@@ -918,14 +918,14 @@ namespace IRExplorerUI {
             return delayedAction;
         }
 
-        private void UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
-                                                DelayedAction delayedAction = null) {
+        private async Task UpdateUIAfterSectionSwitch(IRTextSection section, IRDocumentHost document,
+                                                      DelayedAction delayedAction = null) {
             var docHostPair = FindDocumentHostPair(document);
             docHostPair.Host.Title = GetDocumentTitle(document, section);
             docHostPair.Host.ToolTip = GetDocumentDescription(document, section);
 
             RenameAllPanels(); // For bound panels.
-            SectionPanel.SelectSection(section, false);
+            await SectionPanel.SelectSection(section, false);
 
             if(delayedAction != null) {
                 UpdateUIAfterSectionLoad(section, document, delayedAction);
