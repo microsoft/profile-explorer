@@ -1254,16 +1254,29 @@ namespace IRExplorerUI {
             }
         }
 
-        public async Task Update() {
+        public async Task Update(bool resetUI = false) {
+            if (resetUI) {
+                ResetUI();
+            }
+
             if (summary_ != null) {
                 await UpdateFunctionListBindings();
             }
+        }
+
+        public void ResetUI() {
+            ResetSectionPanel();
+            ResetStatistics();
         }
 
         public async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
             if (summary_ == null) {
                 ResetSectionPanel();
                 ResetStatistics();
+                return;
+            }
+
+            if (sectionExtensionComputed_) {
                 return;
             }
 
@@ -2531,16 +2544,7 @@ namespace IRExplorerUI {
                 index++;
             }
         }
-
-        public async Task RefreshSummary() {
-            ResetSectionPanel();
-            ResetStatistics();
-
-            if (summary_ != null) {
-                await UpdateFunctionListBindings();
-            }
-        }
-
+        
         private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
             var moduleEx = ((ListViewItem)sender).Content as ModuleEx;
 
