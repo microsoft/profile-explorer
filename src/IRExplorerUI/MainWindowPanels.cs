@@ -26,6 +26,7 @@ using IRExplorerUI.Controls;
 using AvalonDock.Controls;
 using System.Linq;
 using AvalonDock.Layout.Serialization;
+using IRExplorerUI.Profile;
 
 namespace IRExplorerUI {
     public partial class MainWindow : Window, ISession {
@@ -46,6 +47,7 @@ namespace IRExplorerUI {
             RegisterPanel(ExpressionGraphPanel, ExpressionGraphPanelHost);
             RegisterPanel(CallTreePanel, CallTreePanelHost);
             RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
+            RegisterPanel(FlameGraphPanel, FlameGraphPanelHost);
             RenameAllPanels();
         }
 
@@ -142,7 +144,7 @@ namespace IRExplorerUI {
             });
         }
 
-        private bool ShouldNotifyPanel(IToolPanel panel, IRDocument document, 
+        private bool ShouldNotifyPanel(IToolPanel panel, IRDocument document,
                                        bool notifyAll = false,
                                        bool ignoreBoundPanels = false) {
             // Don't notify panels bound to another document or with pinned content.
@@ -496,6 +498,7 @@ namespace IRExplorerUI {
                 ToolPanelKind.CallGraph => "Call Graph",
                 ToolPanelKind.CallTree => "Call Tree",
                 ToolPanelKind.CallerCallee => "Caller/Callee",
+                ToolPanelKind.FlameGraph => "Flame Graph",
                 ToolPanelKind.Developer => "Developer",
                 ToolPanelKind.Notes => "Notes",
                 ToolPanelKind.References => "References",
@@ -875,7 +878,7 @@ namespace IRExplorerUI {
             return FindActiveDocumentHost();
         }
 
-        public void SavePanelState(object stateObject, IToolPanel panel, 
+        public void SavePanelState(object stateObject, IToolPanel panel,
                                    IRTextSection section, IRDocument document) {
             //? TODO: Find a way to at least temporarily save state for the two diffed docs
             //? Issue is that in diff mode a section can have a different FunctionIR depending
@@ -890,7 +893,7 @@ namespace IRExplorerUI {
                 if(sessionState_.SectionDiffState.IsDiffDocument(docHost)) {
                     sessionState_.SaveDiffModePanelState(stateObject, panel, section);
                     return;
-                }               
+                }
             }
 
             sessionState_.SavePanelState(stateObject, panel, section);
@@ -979,7 +982,7 @@ namespace IRExplorerUI {
         private bool RestoreDockLayout(string dockLayoutFile) {
             try {
                 var serializer = new XmlLayoutSerializer(DockManager);
-                
+
                 serializer.LayoutSerializationCallback += (s, args) => {
                     if (args.Model is LayoutDocument) {
                         args.Cancel = true; // Don't recreate any document panels.
@@ -1000,7 +1003,7 @@ namespace IRExplorerUI {
                         var panelHost = (LayoutAnchorable)args.Model;
                         panelHost.IsActiveChanged += LayoutAnchorable_IsActiveChanged;
                         panelHost.IsSelectedChanged += LayoutAnchorable_IsSelectedChanged;
-                            
+
                         switch (panel.PanelKind) {
                             case ToolPanelKind.CallTree: {
                                 CallTreePanel = (CallTreePanel)panel;
@@ -1012,6 +1015,12 @@ namespace IRExplorerUI {
                                 CallerCalleePanel = (CallerCalleePanel)panel;
                                 CallerCalleePanelHost = (LayoutAnchorable)args.Model;
                                 RegisterPanel(CallerCalleePanel, CallerCalleePanelHost);
+                                break;
+                            }
+                            case ToolPanelKind.FlameGraph: {
+                                FlameGraphPanel = (FlameGraphPanel)panel;
+                                FlameGraphPanelHost= (LayoutAnchorable)args.Model;
+                                RegisterPanel(FlameGraphPanel, FlameGraphPanelHost);
                                 break;
                             }
                             case ToolPanelKind.Bookmarks: {
@@ -1124,7 +1133,7 @@ namespace IRExplorerUI {
                     panelHost = DefinitionPanelHost;
                     break;
                 }
-                case "References": { 
+                case "References": {
                     panelHost = ReferencesPanelHost;
                     break;
                 }
@@ -1178,6 +1187,10 @@ namespace IRExplorerUI {
                 }
                 case "CallerCallee": {
                     panelHost = CallerCalleePanelHost;
+                    break;
+                }
+                case "FlameGraph": {
+                    panelHost = FlameGraphPanelHost;
                     break;
                 }
             }

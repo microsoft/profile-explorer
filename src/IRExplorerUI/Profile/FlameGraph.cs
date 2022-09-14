@@ -55,7 +55,7 @@ namespace IRExplorerUI.Profile {
         private GlyphRun lastGlyphs_;
         private bool isCleared_;
 
-        public void Draw() {
+        public void Draw(Rect visibleArea) {
             using var dc = Visual.RenderOpen();
 
             if (Bounds.Width < MinVisibleWidth) {
@@ -78,17 +78,34 @@ namespace IRExplorerUI.Profile {
             int index = 0;
             bool trimmed = false;
             double margin = DefaultMargin;
-            double offsetX = 0;
+
+            // Start the text in the visible area.
+            bool startsInView = Bounds.Left >= visibleArea.Left;
+            double offsetX = startsInView? Bounds.Left : visibleArea.Left;
             double maxWidth = Bounds.Width - 2 * DefaultMargin;
+
+            if (!startsInView) {
+                maxWidth -= visibleArea.Left - Bounds.Left;
+            }
 
             while (maxWidth > 8 && index < 3 && !trimmed) {
                 string label = "";
+                string moduleLabel = null;
                 Brush textColor = TextColor;
 
                 //? font color, bold
                 switch(index) {
                     case 0: {
-                        label = CallTreeNode != null ? CallTreeNode.FunctionName : "All";
+                        if (CallTreeNode != null) {
+                            label = CallTreeNode.FunctionName;
+
+                            if (true) { //? TODO: option and cache
+                              //?  moduleLabel = CallTreeNode.ModuleName + "!";
+                            }
+                        }
+                        else {
+                            label = "All";
+                        }
                         break;
                     }
                     case 1: {
@@ -113,10 +130,29 @@ namespace IRExplorerUI.Profile {
                 };
 
                 //? todo: trim text, tooltip, click event handler, double-click to open func (or instance in tree with filter)
+                if (moduleLabel != null) {
+                    var (modText, modGlyphs, modTextTrimmed, modTextSize) = TrimTextToWidth(moduleLabel, maxWidth - margin);
+
+                    if (modText.Length > 0) {
+                        double x = offsetX + margin;
+                        double y = Bounds.Top + Bounds.Height - Math.Floor(modTextSize.Height / 2);
+
+                        dc.PushTransform(new TranslateTransform(x, y + 1));
+                        //dc.PushOpacity(0.5);
+                        dc.DrawGlyphRun(textColor, modGlyphs);
+                        //dc.Pop();
+                        dc.Pop();
+                    }
+
+                    maxWidth -= modTextSize.Width;
+                    offsetX += modTextSize.Width;
+                }
+
+                //? Extend cache to all text parts, saved in array by index
                 var (text, glyphs, textTrimmed, textSize) = TrimTextToWidth(label, maxWidth - margin, index == 0);
 
                 if (text.Length > 0) {
-                    double x = Bounds.Left + offsetX + margin;
+                    double x = offsetX + margin;
                     double y = Bounds.Top + Bounds.Height - Math.Floor(textSize.Height / 2);
 
                     dc.PushTransform(new TranslateTransform(x, y + 1));
@@ -383,7 +419,7 @@ namespace IRExplorerUI.Profile {
 
             if (redraw && (node.Bounds.IntersectsWith(visibleArea_) ||
                            prevBounds.IntersectsWith(previousVisibleArea_))) {
-                node.Draw();
+                node.Draw(visibleArea_);
             }
             else {
                 node.Clear();

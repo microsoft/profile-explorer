@@ -15,11 +15,13 @@ public partial class FlameGraphViewer : FrameworkElement {
     private DrawingVisual graphVisual_;
     private FlameGraphNode hoveredNode_;
     private FlameGraphNode selectedNode_;
+    private bool initialized_;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> hoverNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> markedNodes_;
     private Dictionary<FlameGraphNode, HighlightingStyle> selectedNodes_;
 
+    public bool IsInitialized => initialized_;
     public FlameGraph FlameGraph => flameGraph_;
     public double MaxGraphWidth => renderer_.maxWidth_;
     public Rect VisibleArea => renderer_.visibleArea_;
@@ -76,7 +78,7 @@ public partial class FlameGraphViewer : FrameworkElement {
         group[node] = node.Style;
 
         node.Style = PickHoveredNodeStyle(node.Style);
-        node.Draw();
+        node.Draw(renderer_.visibleArea_);
 
         if (includeParents && node.Parent != null) {
             HighlightNode(node.Parent, type, true);
@@ -89,7 +91,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         foreach (var pair in group) {
             pair.Key.Style = pair.Value;
-            pair.Key.Draw();
+            pair.Key.Draw(renderer_.visibleArea_);
 
             if (includeParents) {
                 FlameGraphNode parentNode = pair.Key.Parent;
@@ -97,7 +99,7 @@ public partial class FlameGraphViewer : FrameworkElement {
                 while (parentNode != null) {
                     if (group.TryGetValue(parentNode, out var oldStyle)) {
                         parentNode.Style = oldStyle;
-                        parentNode.Draw();
+                        parentNode.Draw(renderer_.visibleArea_);
                     }
 
                     parentNode = parentNode.Parent;
@@ -110,8 +112,8 @@ public partial class FlameGraphViewer : FrameworkElement {
 
 
     public void ResetNodeHighlighting() {
-        hoveredNode_.Clear();
-        selectedNode_.Clear();
+        hoveredNode_?.Clear();
+        selectedNode_?.Clear();
         hoveredNode_ = null;
         selectedNode_ = null;
     }
@@ -149,20 +151,24 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode, Rect visibleArea) {
+        if (graphVisual_ != null) {
+            Reset();
+        }
+
+        Trace.WriteLine($"Make FG");
+
         flameGraph_ = new FlameGraph(callTree);
         await Task.Run(() => flameGraph_.Build(rootNode));
 
-        if (graphVisual_ != null) {
-            RemoveVisualChild(graphVisual_);
-            RemoveLogicalChild(graphVisual_);
-            graphVisual_ = null;
-        }
+        Trace.WriteLine($"Init with visible {visibleArea}");
 
         renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
         UpdateMaxWidth(renderer_.maxWidth_);
+        Trace.WriteLine($"Done");
+        initialized_ = true;
     }
 
     public async Task Initialize(ProfileCallTree callTree, Rect visibleArea) {
@@ -213,5 +219,14 @@ public partial class FlameGraphViewer : FrameworkElement {
         var bounds = graphVisual_.ContentBounds;
         bounds.Union(graphVisual_.DescendantBounds);
         return new Size(bounds.Left + bounds.Width, bounds.Top + bounds.Height);
+    }
+
+    public void Reset() {
+        RemoveVisualChild(graphVisual_);
+        RemoveLogicalChild(graphVisual_);
+        graphVisual_ = null;
+        flameGraph_ = null;
+        renderer_ = null;
+        initialized_ = false;
     }
 }

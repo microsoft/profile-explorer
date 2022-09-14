@@ -97,7 +97,7 @@ namespace IRExplorerUI {
         public static readonly RoutedUICommand ExportModuleList =
             new RoutedUICommand("Untitled", "ExportModuleList", typeof(SectionPanel));
     }
-    
+
     public enum OpenSectionKind {
         ReplaceCurrent,
         ReplaceLeft,
@@ -323,7 +323,7 @@ namespace IRExplorerUI {
                 OnPropertyChange(nameof(IsMarked));
             }
         }
-        
+
         public Brush TextColor { get; set; }
         public Brush BackColor { get; set; }
         public Brush BackColor2 { get; set; }
@@ -360,7 +360,7 @@ namespace IRExplorerUI {
         public Brush BackColor { get; set; }
         public double Percentage { get; set; }
     }
-    
+
     public enum SectionFieldKind {
         Number,
         Name,
@@ -386,7 +386,7 @@ namespace IRExplorerUI {
         StatisticDiff,
         PerformanceCounter
     }
-    
+
     public enum ChildFunctionFieldKind {
         Name,
         AlternateName,
@@ -398,7 +398,7 @@ namespace IRExplorerUI {
         Name,
         Time
     }
-    
+
     [ProtoContract]
     public class SectionPanelState {
         [ProtoMember(1)]
@@ -656,7 +656,7 @@ namespace IRExplorerUI {
                                 throw new ArgumentOutOfRangeException();
                         }
                     });
-            
+
             moduleValueSorter_ =
                 new GridViewColumnValueSorter<ModuleFieldKind>(ModulesList,
                     name => name switch {
@@ -1245,12 +1245,18 @@ namespace IRExplorerUI {
             }
 
             UseProfileCallTree = true;
-            
-            // Create the call tree.    
+
+            // Create the call tree.
             var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
 
             if (panel != null) {
                 await panel.DisplaProfileCallTree();
+            }
+
+            var fgPanel = Session.FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
+
+            if (fgPanel != null) {
+                await fgPanel.DisplayFlameGraph();
             }
         }
 
@@ -1910,7 +1916,7 @@ namespace IRExplorerUI {
             FunctionFilter.Text = "";
             SectionFilter.Text = "";
         }
-        
+
         public async Task SelectFunction(IRTextFunction function) {
             if (function.Equals(currentFunction_, false)) {
                 return;
@@ -1933,6 +1939,13 @@ namespace IRExplorerUI {
                     if (panel != null) {
                         await panel.DisplaProfileCallerCalleeTree(function);
                     }
+
+                    //? TODO: Select instance(s) in flame graph
+                    //var panel = Session.FindAndActivatePanel(ToolPanelKind.CallerCallee) as CallerCalleePanel;
+                    //
+                    //if (panel != null) {
+                    //    await panel.DisplaProfileCallerCalleeTree(function);
+                    //}
                 }
                 else {
                     ProfileControlsVisible = true;
@@ -1941,11 +1954,11 @@ namespace IRExplorerUI {
                     panel?.Reset(); // Hide previous func.
                 }
             }
-           
+
 
             await ComputeConsecutiveSectionDiffs();
         }
-        
+
         private async Task<(CallGraph, CallGraphNode)> GenerateFunctionCallGraph(IRTextSummary summary, IRTextFunction function) {
             var callGraph = await GenerateCallGraph(summary);
             var callGraphNode = callGraph.FindNode(function);
@@ -2076,7 +2089,7 @@ namespace IRExplorerUI {
             };
             return childInfo;
         }
-        
+
         public override void OnSessionSave() {
             base.OnSessionStart();
             var state = new SectionPanelState();
@@ -2378,7 +2391,7 @@ namespace IRExplorerUI {
             }
 
             await Task.WhenAll(tasks.ToArray());
-            
+
             Session.SetApplicationProgress(false, double.NaN);
             return functionStatMap_;
         }
@@ -2475,9 +2488,9 @@ namespace IRExplorerUI {
 
         private static OptionalColumn[] StatisticsColumns = new OptionalColumn[] {
             OptionalColumn.Binding("Statistics.Instructions", "InstructionsHeader", "Instrs{0}", "Instruction number{0}", DiffValueConverter),
-            OptionalColumn.Binding("Statistics.Size", "SizeHeader", "Size{0}", "Function size in bytes{0}", DiffValueConverter), 
+            OptionalColumn.Binding("Statistics.Size", "SizeHeader", "Size{0}", "Function size in bytes{0}", DiffValueConverter),
             OptionalColumn.Binding("Statistics.Loads", "LoadsHeader", "Loads{0}", "Number of instructions reading memory{0}", DiffValueConverter),
-            OptionalColumn.Binding("Statistics.Stores", "StoresHeader", "Stores{0}", "Number of instructions writing memory{0}", DiffValueConverter), 
+            OptionalColumn.Binding("Statistics.Stores", "StoresHeader", "Stores{0}", "Number of instructions writing memory{0}", DiffValueConverter),
             OptionalColumn.Binding("Statistics.Branches", "BranchesHeader", "Branches{0}", "Number of branch/jump instructions{0}", DiffValueConverter)
         };
 
@@ -2494,7 +2507,7 @@ namespace IRExplorerUI {
         };
 
         public void AddCountersFunctionListColumns(bool addDiffColumn, string titleSuffix = "", string tooltipSuffix = "", double columnWidth = double.NaN) {
-            //? TODO: to remove, check tag is counter type 
+            //? TODO: to remove, check tag is counter type
             var counters = Session.ProfileData.SortedPerformanceCounters;
 
             for (int i = 0; i < counters.Count; i++) {
@@ -2535,7 +2548,7 @@ namespace IRExplorerUI {
                 OptionalColumn.AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
             }
         }
-        
+
         private void AutoResizeColumns(ListView listView, int skipCount) {
             int index = 0;
 
@@ -2548,7 +2561,7 @@ namespace IRExplorerUI {
                 index++;
             }
         }
-        
+
         private void ModuleDoubleClick(object sender, MouseButtonEventArgs e) {
             var moduleEx = ((ListViewItem)sender).Content as ModuleEx;
 
@@ -2674,7 +2687,7 @@ namespace IRExplorerUI {
 
             wb.SaveAs(filePath);
         }
-        
+
         private void OpenDocumentInNewInstanceExecuted(object sender, ExecutedRoutedEventArgs e) {
             var loadedDoc = Session.SessionState.FindLoadedDocument(Summary);
 

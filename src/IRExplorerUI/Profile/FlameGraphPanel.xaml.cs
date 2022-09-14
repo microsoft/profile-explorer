@@ -51,11 +51,13 @@ public partial class FlameGraphPanel : ToolPanelControl {
         SetupEvents();
     }
 
+    public override ToolPanelKind PanelKind => ToolPanelKind.FlameGraph;
     private double GraphAreaWidth => GraphHost.ViewportWidth - 1;
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
+    private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
 
-    public async Task Initialize(ProfileCallTree callTree, Rect visibleArea) {
-        await GraphViewer.Initialize(callTree, visibleArea);
+    public async Task Initialize(ProfileCallTree callTree) {
+        await GraphViewer.Initialize(callTree, GraphArea);
     }
 
     private void SetupEvents() {
@@ -67,24 +69,24 @@ public partial class FlameGraphPanel : ToolPanelControl {
         MouseMove += GraphPanel_MouseMove;
     }
 
-    private void OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
+    private async void OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
         var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
         if (pointedNode != null) {
-            EnlargeNode(pointedNode);
+            await EnlargeNode(pointedNode);
         }
     }
 
     private FlameGraphNode enlargedNode_;
 
-    public void EnlargeNode(FlameGraphNode node, bool saveState = true) {
+    public async Task EnlargeNode(FlameGraphNode node, bool saveState = true) {
         if (Utils.IsControlModifierActive()) {
-            SwapNode(node, true);
+            await ChangeRootNode(node, true);
             return;
         }
 
         if (saveState) {
-            SaveCurrentState();
+            SaveCurrentState(FlameGraphStateKind.EnlargeNode);
         }
 
         enlargedNode_ = node;
@@ -102,8 +104,12 @@ public partial class FlameGraphPanel : ToolPanelControl {
         });
     }
 
-    public async Task SwapNode(FlameGraphNode node, bool saveState = true) {
-        ResetState();
+    public async Task ChangeRootNode(FlameGraphNode node, bool saveState = true) {
+        if (saveState) {
+            SaveCurrentState(FlameGraphStateKind.ChangeRootNode);
+        }
+
+        ResetHighlightedNodes();
         await GraphViewer.Initialize(GraphViewer.FlameGraph.CallTree, node.CallTreeNode,
             new Rect(0, 0, GraphHost.ActualWidth, GraphHost.ActualHeight));
     }
@@ -122,22 +128,29 @@ public partial class FlameGraphPanel : ToolPanelControl {
         public double VerticalOffset { get; set; }
     }
 
-    private void SaveCurrentState() {
+    private void SaveCurrentState(FlameGraphStateKind changeKind) {
         var state = new FlameGraphState() {
+            Kind = changeKind,
             MaxGraphWidth = GraphViewer.MaxGraphWidth,
             HorizontalOffset = GraphHost.HorizontalOffset,
             VerticalOffset = GraphHost.VerticalOffset
         };
 
-        if (enlargedNode_ != null) {
-            state.Kind = FlameGraphStateKind.EnlargeNode;
-            state.Node = enlargedNode_;
+        switch (changeKind) {
+            case FlameGraphStateKind.EnlargeNode: {
+                state.Node = enlargedNode_;
+                break;
+            }
+            case FlameGraphStateKind.ChangeRootNode: {
+                state.Node = GraphViewer.FlameGraph.RootNode;
+                break;
+            }
         }
 
         stateStack_.Push(state);
     }
 
-    void RestorePreviousState() {
+    async Task RestorePreviousState() {
         if (!stateStack_.TryPop(out var state)) {
             return;
         }
@@ -145,6 +158,10 @@ public partial class FlameGraphPanel : ToolPanelControl {
         switch (state.Kind) {
             case FlameGraphStateKind.EnlargeNode: {
                 EnlargeNode(state.Node, false);
+                break;
+            }
+            case FlameGraphStateKind.ChangeRootNode: {
+                await ChangeRootNode(state.Node);
                 break;
             }
             default: {
@@ -156,9 +173,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
     }
 
-    void ResetState() {
+    void ResetHighlightedNodes() {
         GraphViewer.ResetNodeHighlighting();
-
     }
 
     private void GraphPanel_MouseMove(object sender, MouseEventArgs e) {
@@ -298,7 +314,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
         SetMaxWidth(GraphAreaWidth);
-        ResetState();
+        ResetHighlightedNodes();
     }
 
     private void ExecuteGraphFitAll(object sender, ExecutedRoutedEventArgs e) {
@@ -322,20 +338,34 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private void GraphHost_OnScrollChanged(object sender, ScrollChangedEventArgs e) {
+        if (!GraphViewer.IsInitialized) {
+            return;
+        }
+
         var area = new Rect(GraphHost.HorizontalOffset, GraphHost.VerticalOffset,
             GraphAreaWidth, GraphAreaHeight);
         GraphViewer.UpdateVisibleArea(area);
     }
 
-    private void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
-        RestorePreviousState();
+    private async void ButtonBase_OnClick(object sender, RoutedEventArgs e) {
+        await RestorePreviousState();
     }
 
     private void ButtonBase_OnClick2(object sender, RoutedEventArgs e) {
         if (enlargedNode_ != null &&  enlargedNode_.Parent != null) {
-            Trace.WriteLine($"Parent {enlargedNode_.Parent.CallTreeNode?.FunctionName}, w {enlargedNode_.Parent.Weight}  VS  {enlargedNode_.Weight}");
             EnlargeNode(enlargedNode_.Parent);
         }
     }
 
+    public async Task DisplayFlameGraph() {
+        await Dispatcher.BeginInvoke(async () => {
+            await Initialize(Session.ProfileData.CallTree);
+        }, DispatcherPriority.Background);
+    }
+
+    public override void OnSessionEnd() {
+        base.OnSessionEnd();
+        ResetHighlightedNodes();
+        GraphViewer.Reset();
+    }
 }
