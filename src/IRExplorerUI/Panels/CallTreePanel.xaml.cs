@@ -818,14 +818,12 @@ namespace IRExplorerUI {
         }
 
         private async Task<FlameGraphPanel> CreateFlameGraph( double width, double height) {
-
             var panel = new FlameGraphPanel();
             panel.Width = width;
             panel.Height = height;
             panel.HorizontalAlignment = HorizontalAlignment.Stretch;
             panel.VerticalAlignment = VerticalAlignment.Stretch;
-            await panel.Initialize(Session.ProfileData.CallTree,
-                new Rect(0, 0, width, Double.MaxValue));
+            await panel.Initialize(Session.ProfileData.CallTree);
             return panel;
         }
     }
