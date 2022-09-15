@@ -55,6 +55,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private double GraphAreaWidth => GraphHost.ViewportWidth - 1;
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
+    private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
 
     public async Task Initialize(ProfileCallTree callTree) {
         await GraphViewer.Initialize(callTree, GraphArea);
@@ -291,6 +292,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             return;
         }
 
+        double amount = ScrollWheelZoomAmount * GraphZoomRatio; // Keep step consistent.
         double step = ScrollWheelZoomAmount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
         double initialWidth = GraphViewer.MaxGraphWidth;
         double initialOffsetX = GraphHost.HorizontalOffset;

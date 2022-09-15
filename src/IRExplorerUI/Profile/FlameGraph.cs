@@ -331,6 +331,8 @@ namespace IRExplorerUI.Profile {
 
         private DrawingVisual SetupNodeVisual(FlameGraphNode node) {
             //? Option to sort by timeline
+            //? invert graph, tooltips, options struct with node height, font, histogram etc
+            //! keyboard, cener zoom if not mouse
             graphVisual_ = new DrawingVisual();
             SetupNodeVisual(node, graphVisual_);
             return graphVisual_;

@@ -211,6 +211,8 @@ public partial class FlameGraphViewer : FrameworkElement {
         return graphVisual_;
     }
 
+    private Size previousGraphSize_;
+
     protected override Size MeasureOverride(Size availableSize) {
         if (graphVisual_ == null) {
             return new Size(0, 0);
@@ -218,7 +220,15 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         var bounds = graphVisual_.ContentBounds;
         bounds.Union(graphVisual_.DescendantBounds);
-        return new Size(bounds.Left + bounds.Width, bounds.Top + bounds.Height);
+
+        if (bounds.IsEmpty) {
+            // Sometimes (WPF bug?) the bounds are empty.
+            return previousGraphSize_;
+        }
+
+        var graphSize = new Size(bounds.Left + bounds.Width, bounds.Top + bounds.Height);
+        previousGraphSize_ = Size.Empty;
+        return graphSize;
     }
 
     public void Reset() {
