@@ -83,7 +83,7 @@ namespace IRExplorerUI {
             }
 
             Trace.WriteLine("=> WaitForSessionInitialization\n");
-            
+
             if (sessionStartTask_.IsCompleted) {
                 Trace.WriteLine("  < already completed\n");
                 return true;
@@ -116,7 +116,7 @@ namespace IRExplorerUI {
 
             await Dispatcher.BeginInvoke(new Action(async () => {
                 var activeDoc = await GetDebugSessionDocument();
-                
+
                 if (activeDoc == null) {
                     return;
                 }
@@ -428,9 +428,9 @@ namespace IRExplorerUI {
                 debugFunction_.AddSection(section);
                 debugSummary_.AddSection(section);
                 debugSections_.AddSection(section, filteredText);
-                
+
                 // Force function list update when updating summary.
-                await SectionPanel.SetMainSummary(debugSummary_, force:true);
+                await SectionPanel.SetMainSummary(debugSummary_, updateFunctionList:true);
                 await SectionPanel.SelectSection(section);
 
                 //? TODO: After switch, try to restore same position in doc

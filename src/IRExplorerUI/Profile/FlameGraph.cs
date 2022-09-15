@@ -315,7 +315,7 @@ namespace IRExplorerUI.Profile {
             defaultBorder_ = ColorPens.GetPen(Colors.Black);
             placeholderColor_ = ColorBrushes.GetBrush(Colors.DarkGray);
 
-            nodeHeight_ = 20; //? Option
+            nodeHeight_ = 18; //? Option
             font_ = new Typeface("Verdana");
             fontSize_ = DefaultTextSize;
         }
