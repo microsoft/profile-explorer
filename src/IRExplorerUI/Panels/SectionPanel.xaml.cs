@@ -798,7 +798,7 @@ namespace IRExplorerUI {
                 if (value != summary_) {
                     summary_ = value;
                     sectionExtensionComputed_ = false;
-                    //UpdateFunctionListBindings();
+                    //SetupFunctionList();
                 }
             }
         }
@@ -808,7 +808,7 @@ namespace IRExplorerUI {
             set {
                 if (value != otherSummary_) {
                     otherSummary_ = value;
-                    //UpdateFunctionListBindings(false);
+                    //SetupFunctionList(false);
                 }
             }
         }
@@ -1053,7 +1053,7 @@ namespace IRExplorerUI {
         }
 
         public void SelectSection(IRTextSection section, bool focus = true, bool force = false) {
-            UpdateSectionListBindings(section.ParentFunction, force);
+            SetupSectionList(section.ParentFunction, force);
             var sectionEx = GetSectionExtension(section);
             SectionList.SelectedItem = sectionEx;
 
@@ -1266,7 +1266,7 @@ namespace IRExplorerUI {
             }
 
             if (summary_ != null) {
-                await UpdateFunctionListBindings();
+                await SetupFunctionList();
             }
         }
 
@@ -1275,7 +1275,7 @@ namespace IRExplorerUI {
             ResetStatistics();
         }
 
-        public async Task UpdateFunctionListBindings(bool analyzeFunctions = true) {
+        public async Task SetupFunctionList(bool analyzeFunctions = true) {
             if (summary_ == null) {
                 ResetSectionPanel();
                 ResetStatistics();
@@ -1289,8 +1289,8 @@ namespace IRExplorerUI {
             SetupSectionExtension();
 
             // Create for each function a wrapper with more properties for the UI.
-            int index = 0;
             var functionsEx = new List<IRTextFunctionEx>();
+            int index = 0;
 
             // In two-document diff mode, also add entries for functions that are found
             // only in the left or in the right document and mark them as diffs.
@@ -1412,7 +1412,7 @@ namespace IRExplorerUI {
             }
         }
 
-        private void UpdateSectionListBindings(IRTextFunction function, bool force = false) {
+        private void SetupSectionList(IRTextFunction function, bool force = false) {
             if (function.Equals(currentFunction_, false) && !force) {
                 return;
             }
@@ -1433,6 +1433,10 @@ namespace IRExplorerUI {
             }
 
             foreach (var section in currentFunction_.Sections) {
+                if (!sectionExtMap_.ContainsKey(section)) {
+                    Utils.WaitForDebugger(true);
+                }
+
                 var sectionEx = sectionExtMap_[section];
                 sectionEx = new IRTextSectionEx(section, sectionEx.Index);
                 sectionEx.Name = CompilerInfo.NameProvider.GetSectionName(section, false);
@@ -1918,7 +1922,7 @@ namespace IRExplorerUI {
                 return;
             }
 
-            UpdateSectionListBindings(function);
+            SetupSectionList(function);
             var funcEx = GetFunctionExtension(function);
             FunctionList.SelectedItem = funcEx;
             FunctionList.ScrollIntoView(FunctionList.SelectedItem);
@@ -2182,10 +2186,10 @@ namespace IRExplorerUI {
             settings_ = newSettings;
 
             if (updateFunctionList) {
-                await UpdateFunctionListBindings();
+                await SetupFunctionList();
             }
 
-            UpdateSectionListBindings(currentFunction_, true);
+            SetupSectionList(currentFunction_, true);
             RefreshSectionList();
             await ComputeConsecutiveSectionDiffs();
         }
@@ -2713,7 +2717,7 @@ namespace IRExplorerUI {
         //public async void RemoveSummary(IRTextSummary summary) {
         //    if (otherSummaries_.Remove(summary_)) {
         //        sectionExtensionComputed_ = false;
-        //        await UpdateFunctionListBindings();
+        //        await SetupFunctionList();
         //    }
         //}
     }

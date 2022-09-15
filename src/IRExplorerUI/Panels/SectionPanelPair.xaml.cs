@@ -79,14 +79,18 @@ namespace IRExplorerUI {
                 DiffPanel.Session = value;
             }
         }
-        public async Task SetMainSummary(IRTextSummary summary) {
-            if (MainPanel.Summary == summary) {
+        public async Task SetMainSummary(IRTextSummary summary, bool updateFunctionList = false) {
+            if (MainPanel.Summary == summary && !updateFunctionList) {
                 return;
             }
 
             MainPanel.Summary = summary;
 
             if (summary != null) {
+                if (updateFunctionList) {
+                    await MainPanel.SetupFunctionList();
+                }
+
                 await Update();
             }
         }

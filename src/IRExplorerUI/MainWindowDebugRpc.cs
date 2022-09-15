@@ -429,7 +429,8 @@ namespace IRExplorerUI {
                 debugSummary_.AddSection(section);
                 debugSections_.AddSection(section, filteredText);
                 
-                await SectionPanel.SetMainSummary(debugSummary_);
+                // Force function list update when updating summary.
+                await SectionPanel.SetMainSummary(debugSummary_, force:true);
                 await SectionPanel.SelectSection(section);
 
                 //? TODO: After switch, try to restore same position in doc
