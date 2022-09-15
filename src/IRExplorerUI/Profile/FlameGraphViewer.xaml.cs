@@ -70,6 +70,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     protected override void OnMouseLeave(MouseEventArgs e) {
+        if (!IsInitialized) {
+            return;
+        }
+
         ResetHighlightedNodes(HighlighingType.Hovered);
     }
 

@@ -10,7 +10,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <irExplorerUi:ToolPanelControl.CommandBindings>
-        <CommandBinding Command="irExplorerUi:GraphCommand.GraphFitWidth" Executed="ExecuteGraphFitWidth" />
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth" Executed="ExecuteGraphResetWidth" />
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphFitAll" Executed="ExecuteGraphFitAll" />
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphZoomIn" Executed="ExecuteGraphZoomIn" />
@@ -18,11 +17,6 @@
     </irExplorerUi:ToolPanelControl.CommandBindings>
 
     <irExplorerUi:ToolPanelControl.InputBindings>
-        <KeyBinding
-            Command="irExplorerUi:GraphCommand.GraphFitWidth"
-            CommandTarget="{Binding ElementName=GraphHost}"
-            Key="W"
-            Modifiers="Ctrl" />
         <KeyBinding
             Command="irExplorerUi:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=GraphHost}"
