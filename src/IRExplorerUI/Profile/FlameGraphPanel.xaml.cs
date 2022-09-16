@@ -109,6 +109,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private double endOffsetX_;
     private FlameGraphNode offsetNode_;
 
+
     private async Task EnlargeNode(FlameGraphNode node, bool saveState = true) {
         if (Utils.IsControlModifierActive()) {
             await ChangeRootNode(node, true);
@@ -120,26 +121,27 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
 
         enlargedNode_ = node;
+
+        // How wide the entire graph needs to be so that the node fils the view.
         double newMaxWidth = GraphAreaWidth * ((double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks);
 
+        // nmw = area * * ratio
+        // ration = nmw / area
+        // cr = maxwidth/area
 
         if (true) {
-            SetMaxWidth(newMaxWidth, true, ZoomAnimationDuration*10);
+            SetMaxWidth(newMaxWidth, true, ZoomAnimationDuration);
 
             double ratio = ((double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks);
-            Trace.WriteLine($"RATIO: {ratio}");
-            Trace.WriteLine($" GraphHost.HorizontalOffset: {GraphHost.HorizontalOffset}");
-            Trace.WriteLine($" newMaxWidth: {newMaxWidth}");
-            Trace.WriteLine($" node.Bounds.Left: {node.Bounds.Left}");
+            double prevRatio = GraphViewer.MaxGraphWidth / GraphAreaWidth;
+            double offsetRatio = prevRatio > 0 ? ratio / prevRatio : ratio;
 
             offsetNode_ = node;
             initialWidth_ = newMaxWidth;
-            initialOffsetX_ = Math.Min(GraphHost.HorizontalOffset, node.Bounds.Left);
-            endOffsetX_ = initialOffsetX_ + (node.Bounds.Left - initialOffsetX_) * ratio;
-            Trace.WriteLine($"PREDICT END: {endOffsetX_}");
-            Trace.WriteLine($"PREDICT END2: {initialOffsetX_ + (node.Bounds.Left ) * ratio}");
+            initialOffsetX_ = GraphHost.HorizontalOffset;
+            endOffsetX_ = node.Bounds.Left * offsetRatio;
 
-            var animation = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(ZoomAnimationDuration*10));
+            var animation = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(ZoomAnimationDuration));
 
             animation.Completed += (sender, args) => {
                 offsetNode_ = null;
@@ -148,10 +150,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
                 endOffsetX_ = 0;
                 Dispatcher.BeginInvoke(() => {
                     double newNodeX = node.Bounds.Left;
-
                     double offset = Math.Min(newNodeX, newMaxWidth);
                     GraphHost.ScrollToHorizontalOffset(offset);
-                    Trace.WriteLine($"END: {offset}");
 
                 });
             };
@@ -420,7 +420,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
             offset = Lerp(initialOffsetX_, endOffsetX_, progress);
 
-            Trace.WriteLine($"{offset}, {Math.Min(newNodeX, initialWidth_)}");
+            //Trace.WriteLine($"{offset}, {Math.Min(newNodeX, initialWidth_)}");
             //offset = Math.Min(offset, initialOffsetX_);
             GraphHost.ScrollToHorizontalOffset(offset);
             return;
