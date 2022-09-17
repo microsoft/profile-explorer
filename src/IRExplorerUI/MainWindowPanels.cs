@@ -982,6 +982,7 @@ namespace IRExplorerUI {
         private bool RestoreDockLayout(string dockLayoutFile) {
             try {
                 var serializer = new XmlLayoutSerializer(DockManager);
+                var visiblePanels = new List<IToolPanel>();
 
                 serializer.LayoutSerializationCallback += (s, args) => {
                     if (args.Model is LayoutDocument) {
@@ -1003,6 +1004,10 @@ namespace IRExplorerUI {
                         var panelHost = (LayoutAnchorable)args.Model;
                         panelHost.IsActiveChanged += LayoutAnchorable_IsActiveChanged;
                         panelHost.IsSelectedChanged += LayoutAnchorable_IsSelectedChanged;
+
+                        if (panelHost.IsVisible && panelHost.IsSelected) {
+                            visiblePanels.Add(panel);
+                        }
 
                         switch (panel.PanelKind) {
                             case ToolPanelKind.CallTree: {
@@ -1107,6 +1112,12 @@ namespace IRExplorerUI {
                                 RegisterPanel(ScriptingPanel, ScriptingPanelHost);
                                 break;
                             }
+                        }
+
+                        // Manually invoke the events, they are not triggered automatically.
+                        foreach (var visiblePanel in visiblePanels) {
+                            visiblePanel.OnShowPanel();
+                            visiblePanel.OnActivatePanel();
                         }
                     }
                 };
