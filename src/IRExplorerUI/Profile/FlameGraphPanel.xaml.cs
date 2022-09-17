@@ -55,12 +55,14 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
     }
 
+    private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
     private const double ZoomAmount = 500;
     private const double ScrollWheelZoomAmount = 300;
     private const double FastPanOffset = 1000;
     private const double PanOffset = 100;
-    private const double ZoomAnimationDuration = 240;
-    private const double ScrollWheelZoomAAnimationDuration = 120;
+    private const double ZoomAnimationDuration = TimePerFrame * 20;
+    private const double EnlargeAnimationDuration = TimePerFrame * 30;
+    private const double ScrollWheelZoomAAnimationDuration = TimePerFrame * 5;
 
     private bool dragging_;
     private Point draggingStart_;
@@ -80,6 +82,39 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
 
+    private bool panelVisible_;
+    private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
+
+    public override void OnShowPanel() {
+        base.OnShowPanel();
+        panelVisible_ = true;
+
+        Trace.WriteLine($"FG panel visible");
+
+        InitializePendingCallTree();
+    }
+
+    private void InitializePendingCallTree() {
+        if (pendingCallTree_ != null) {
+            Trace.WriteLine($"Init pending FG");
+
+            Dispatcher.BeginInvoke(async () => {
+                Trace.WriteLine($"Init pending FG in areaa {GraphArea}");
+
+                if (pendingCallTree_ != null) {
+                    await GraphViewer.Initialize(pendingCallTree_, GraphArea);
+                    pendingCallTree_ = null;
+                }
+            }, DispatcherPriority.Background);
+        }
+    }
+
+    public override void OnSessionStart() {
+        base.OnSessionStart();
+        Trace.WriteLine($"FG OnSessionStart");
+
+    }
+
     public async Task Initialize(ProfileCallTree callTree) {
         try {
             var x = GraphArea;
@@ -88,8 +123,10 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
         catch (Exception ex) {
             Trace.WriteLine(ex.Message);
+            return;
         }
 
+        Trace.WriteLine("Creat FG graph");
         await GraphViewer.Initialize(callTree, GraphArea);
     }
 
@@ -139,7 +176,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
         // cr = maxwidth/area
 
         if (true) {
-            SetMaxWidth(newMaxWidth, true, ZoomAnimationDuration);
+            SetMaxWidth(newMaxWidth, true, EnlargeAnimationDuration);
 
             double ratio = ((double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks);
             double prevRatio = GraphViewer.MaxGraphWidth / GraphAreaWidth;
@@ -150,7 +187,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             initialOffsetX_ = GraphHost.HorizontalOffset;
             endOffsetX_ = node.Bounds.Left * offsetRatio;
 
-            var animation = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(ZoomAnimationDuration));
+            var animation = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(EnlargeAnimationDuration));
 
             animation.Completed += (sender, args) => {
                 offsetNode_ = null;
@@ -234,7 +271,9 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
         switch (state.Kind) {
             case FlameGraphStateKind.EnlargeNode: {
-                EnlargeNode(state.Node, false);
+                // IF there is no node the root node should be selected.
+                var node = state.Node ?? GraphViewer.FlameGraph.RootNode;
+                await EnlargeNode(node, false);
                 break;
             }
             case FlameGraphStateKind.ChangeRootNode: {
@@ -505,13 +544,21 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     public async Task DisplayFlameGraph() {
-        await Dispatcher.BeginInvoke(async () => {
-            await Initialize(Session.ProfileData.CallTree);
-        }, DispatcherPriority.Background);
+        if (panelVisible_) {
+            Trace.WriteLine($"=> DisplayFlameGraph visible");
+            Dispatcher.BeginInvoke(async () => {
+                await Initialize(Session.ProfileData.CallTree);
+            }, DispatcherPriority.Background);
+        }
+        else {
+            Trace.WriteLine($"=> DisplayFlameGraph not visible");
+            pendingCallTree_ = Session.ProfileData.CallTree;
+        }
     }
 
     public override void OnSessionEnd() {
         base.OnSessionEnd();
+        pendingCallTree_ = null;
         ResetHighlightedNodes();
         GraphViewer.Reset();
     }

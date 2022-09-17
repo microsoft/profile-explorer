@@ -236,6 +236,10 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public void Reset() {
+        if (graphVisual_ == null) {
+            return;
+        }
+
         RemoveVisualChild(graphVisual_);
         RemoveLogicalChild(graphVisual_);
         graphVisual_ = null;

@@ -304,6 +304,7 @@ namespace IRExplorerUI.Profile {
         private Brush placeholderColor_;
         private DrawingVisual graphVisual_;
         private GlyphRunCache glyphs_;
+        private QuadTree<FlameGraphNode> nodesQuadTree_;
 
         public GlyphRunCache GlyphsCache => glyphs_;
 
@@ -315,7 +316,7 @@ namespace IRExplorerUI.Profile {
             defaultBorder_ = ColorPens.GetPen(Colors.Black);
             placeholderColor_ = ColorBrushes.GetBrush(Colors.DarkGray);
 
-            nodeHeight_ = 18; //? Option
+            nodeHeight_ = 20; //? Option
             font_ = new Typeface("Verdana");
             fontSize_ = DefaultTextSize;
         }
@@ -324,7 +325,7 @@ namespace IRExplorerUI.Profile {
             var visual = SetupNodeVisual(flameGraph_.RootNode);
             glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual).PixelsPerDip);
 
-            Redraw();
+            Redraw(true);
             visual.Drawing?.Freeze();
             return visual;
         }
@@ -363,28 +364,54 @@ namespace IRExplorerUI.Profile {
 
         public void UpdateMaxWidth(double maxWidth) {
             maxWidth_ = maxWidth;
-            Redraw();
+            Redraw(true);
         }
 
         public void UpdateVisibleArea(Rect visibleArea) {
             previousVisibleArea_ = visibleArea_;
             visibleArea_ = visibleArea;
-            Redraw();
+            Redraw(false);
         }
 
         public double ScaleWeight(TimeSpan weight) {
             return flameGraph_.ScaleWeight(weight);
         }
 
-        public void Redraw() {
+        private void Redraw(bool resized) {
             using var graphDC = graphVisual_.RenderOpen();
-            UpdateNodeWidth(flameGraph_.RootNode, 0, 0, graphDC, true);
+
+            if (!resized && nodesQuadTree_ != null) {
+                Trace.WriteLine($"QD: nodes inside: {nodesQuadTree_.HasNodesInside(visibleArea_)}");
+                int total = 0;
+
+                foreach (var n in nodesQuadTree_.GetNodesInside(visibleArea_)) {
+                    Trace.WriteLine($"   - inside {n.Bounds}, func {n.CallTreeNode?.FunctionName}");
+                    total++;
+                }
+
+                Trace.WriteLine($"QD inside {total} out of {nodesQuadTree_.Count}");
+                //return;
+            }
+
+            nodesQuadTree_ = new QuadTree<FlameGraphNode>();
+            nodesQuadTree_.Bounds = new Rect(0, 0, 1000, maxWidth_); //? Should be depth
+
+            try {
+                UpdateNodeWidth(flameGraph_.RootNode, 0, 0, graphDC, true);
+            }
+            catch (Exception ex) {
+                Trace.WriteLine($"Error: {ex.Message}\n {ex.StackTrace}");
+            }
         }
 
         private void UpdateNodeWidth(FlameGraphNode node, double x, double y, DrawingContext graphDC, bool redraw) {
             double width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
             var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);
+
+            if (node.Bounds.Width > 0 && node.Bounds.Height > 0) {
+                nodesQuadTree_.Insert(node, node.Bounds);
+            }
 
             if (redraw && width < FlameGraphNode.MinVisibleRectWidth) {
                 //throw new InvalidOperationException(); //? REMOVE

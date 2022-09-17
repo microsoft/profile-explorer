@@ -80,6 +80,16 @@
                         ToolTip="Zoom In (Ctrl+=)">
                         <Image Source="{StaticResource PlusIcon}" />
                     </Button>
+                    <Button
+                        Command="irExplorerUi:GraphCommand.GraphResetWidth"
+                        CommandTarget="{Binding ElementName=GraphHost}"
+                        ToolTip="Zoom the graph view to 100% (Ctrl+R)">
+                        <StackPanel Orientation="Horizontal">
+                            <Image Source="{StaticResource ResetWidthIcon}" />
+                            <TextBlock Margin="4,0,0,0" Text="Reset" />
+                        </StackPanel>
+                    </Button>
+
                     <Separator />
                     <Button
                         Click="ButtonBase_OnClick"
@@ -100,15 +110,7 @@
                             <TextBlock Margin="4,0,0,0" Text="Caller" />
                         </StackPanel>
                     </Button>
-                    <Button
-                        Command="irExplorerUi:GraphCommand.GraphResetWidth"
-                        CommandTarget="{Binding ElementName=GraphHost}"
-                        ToolTip="Zoom the graph view to 100% (Ctrl+R)">
-                        <StackPanel Orientation="Horizontal">
-                            <Image Source="{StaticResource ResetWidthIcon}" />
-                            <TextBlock Margin="4,0,0,0" Text="Reset" />
-                        </StackPanel>
-                    </Button>
+
                     <Separator />
                     <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" VerticalAlignment="Center">
                         <MenuItem
