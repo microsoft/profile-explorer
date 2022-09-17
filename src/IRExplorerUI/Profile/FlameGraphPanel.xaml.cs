@@ -81,6 +81,15 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
 
     public async Task Initialize(ProfileCallTree callTree) {
+        try {
+            var x = GraphArea;
+            Trace.WriteLine("Using graph");
+            Trace.WriteLine($"{x}");
+        }
+        catch (Exception ex) {
+            Trace.WriteLine(ex.Message);
+        }
+
         await GraphViewer.Initialize(callTree, GraphArea);
     }
 
@@ -431,12 +440,16 @@ public partial class FlameGraphPanel : ToolPanelControl {
         GraphHost.ScrollToHorizontalOffset(offsetAdjustment * zoom - zoomPointX_);
     }
 
-
     private double GetPanOffset() {
         return Utils.IsKeyboardModifierActive() ? FastPanOffset : PanOffset;
     }
 
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
+        //? TODO: Buttons should be disabled
+        if (!GraphViewer.IsInitialized) {
+            return;
+        }
+
         SetMaxWidth(GraphAreaWidth);
         ResetHighlightedNodes();
     }
