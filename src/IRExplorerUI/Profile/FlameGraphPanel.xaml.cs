@@ -38,7 +38,22 @@ public partial class FlameGraphPanel : ToolPanelControl {
         DependencyProperty.Register(nameof(FlameGraphOffset), typeof(double), typeof(FlameGraphPanel),
             new PropertyMetadata(0.0, FlameGraphOffsetChanged));
 
+    public static DependencyProperty FlameGraphVerticalOffsetProperty =
+        DependencyProperty.Register(nameof(FlameGraphVerticalOffset), typeof(double), typeof(FlameGraphPanel),
+            new PropertyMetadata(0.0, FlameGraphVerticalOffsetChanged));
+
+
     public double FlameGraphOffset
+    {
+        get {
+            return 0;
+        }
+        set {
+            //GraphViewer.UpdateMaxWidth(value);
+        }
+    }
+
+    public double FlameGraphVerticalOffset
     {
         get {
             return 0;
@@ -55,19 +70,29 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
     }
 
+    private static void FlameGraphVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphPanel panel) {
+
+            panel.GraphHost.ScrollToVerticalOffset((double)e.NewValue);
+        }
+    }
+
     private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
     private const double ZoomAmount = 500;
     private const double ScrollWheelZoomAmount = 300;
     private const double FastPanOffset = 1000;
     private const double PanOffset = 100;
-    private const double ZoomAnimationDuration = TimePerFrame * 20;
-    private const double EnlargeAnimationDuration = TimePerFrame * 30;
+    private const double ZoomAnimationDuration = TimePerFrame * 10;
+    private const double EnlargeAnimationDuration = TimePerFrame * 15;
     private const double ScrollWheelZoomAAnimationDuration = TimePerFrame * 5;
 
     private bool dragging_;
     private Point draggingStart_;
     private Point draggingViewStart_;
     private Stack<FlameGraphState> stateStack_;
+    private bool panelVisible_;
+    private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
+    private FlameGraphNode enlargedNode_;
 
     public FlameGraphPanel() {
         InitializeComponent();
@@ -82,51 +107,41 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
 
-    private bool panelVisible_;
-    private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
-
     public override void OnShowPanel() {
         base.OnShowPanel();
         panelVisible_ = true;
-
-        Trace.WriteLine($"FG panel visible");
-
         InitializePendingCallTree();
+    }
+
+    private void SchedulePendingCallTree(ProfileCallTree callTree) {
+        // Display flame graph once the panel is visible and visible area is valid.
+        if (pendingCallTree_ == null) {
+            pendingCallTree_ = callTree;
+            InitializePendingCallTree();
+        }
     }
 
     private void InitializePendingCallTree() {
         if (pendingCallTree_ != null) {
-            Trace.WriteLine($"Init pending FG");
-
-            Dispatcher.BeginInvoke(async () => {
-                Trace.WriteLine($"Init pending FG in areaa {GraphArea}");
-
-                if (pendingCallTree_ != null) {
-                    await GraphViewer.Initialize(pendingCallTree_, GraphArea);
-                    pendingCallTree_ = null;
-                }
-            }, DispatcherPriority.Background);
+            InitializeCallTree(pendingCallTree_);
+            pendingCallTree_ = null;
         }
+    }
+
+    private void InitializeCallTree(ProfileCallTree callTree) {
+        Dispatcher.BeginInvoke(async () => {
+            if (callTree != null && !GraphViewer.IsInitialized) {
+                await GraphViewer.Initialize(callTree, GraphArea);
+            }
+        }, DispatcherPriority.Background);
     }
 
     public override void OnSessionStart() {
         base.OnSessionStart();
-        Trace.WriteLine($"FG OnSessionStart");
-
+        InitializePendingCallTree();
     }
 
     public async Task Initialize(ProfileCallTree callTree) {
-        try {
-            var x = GraphArea;
-            Trace.WriteLine("Using graph");
-            Trace.WriteLine($"{x}");
-        }
-        catch (Exception ex) {
-            Trace.WriteLine(ex.Message);
-            return;
-        }
-
-        Trace.WriteLine("Creat FG graph");
         await GraphViewer.Initialize(callTree, GraphArea);
     }
 
@@ -137,6 +152,13 @@ public partial class FlameGraphPanel : ToolPanelControl {
         MouseLeftButtonUp += GraphPanel_MouseLeftButtonUp;
         MouseDoubleClick += OnMouseDoubleClick;
         MouseMove += GraphPanel_MouseMove;
+        MouseDown += OnMouseDown;
+    }
+
+    private async void OnMouseDown(object sender, MouseButtonEventArgs e) {
+        if (e.ChangedButton == MouseButton.XButton1) {
+            await RestorePreviousState();
+        }
     }
 
     private async void OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
@@ -147,7 +169,6 @@ public partial class FlameGraphPanel : ToolPanelControl {
         }
     }
 
-    private FlameGraphNode enlargedNode_;
     private double zoomPointX_;
     private double initialWidth_;
     private double initialOffsetX_;
@@ -156,7 +177,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private FlameGraphNode offsetNode_;
 
 
-    private async Task EnlargeNode(FlameGraphNode node, bool saveState = true) {
+    private async Task EnlargeNode(FlameGraphNode node, bool saveState = true, double verticalOffset = double.NaN) {
         if (Utils.IsControlModifierActive()) {
             await ChangeRootNode(node, true);
             return;
@@ -176,8 +197,6 @@ public partial class FlameGraphPanel : ToolPanelControl {
         // cr = maxwidth/area
 
         if (true) {
-            SetMaxWidth(newMaxWidth, true, EnlargeAnimationDuration);
-
             double ratio = ((double)GraphViewer.FlameGraph.RootWeight.Ticks / node.Weight.Ticks);
             double prevRatio = GraphViewer.MaxGraphWidth / GraphAreaWidth;
             double offsetRatio = prevRatio > 0 ? ratio / prevRatio : ratio;
@@ -199,9 +218,20 @@ public partial class FlameGraphPanel : ToolPanelControl {
                     double offset = Math.Min(newNodeX, newMaxWidth);
                     GraphHost.ScrollToHorizontalOffset(offset);
 
-                });
+                    if (!double.IsNaN(verticalOffset)) {
+                        GraphHost.ScrollToVerticalOffset(verticalOffset);
+                    }
+                }, DispatcherPriority.Background);
             };
+
+            SetMaxWidth(newMaxWidth, true, EnlargeAnimationDuration);
             BeginAnimation(FlameGraphOffsetProperty, animation, HandoffBehavior.SnapshotAndReplace);
+
+            if (!double.IsNaN(verticalOffset)) {
+                var animation2 = new DoubleAnimation(GraphHost.VerticalOffset, verticalOffset, TimeSpan.FromMilliseconds(EnlargeAnimationDuration));
+                BeginAnimation(FlameGraphVerticalOffsetProperty, animation2, HandoffBehavior.SnapshotAndReplace);
+
+            }
         }
         else {
             SetMaxWidth(newMaxWidth, false);
@@ -247,7 +277,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             Kind = changeKind,
             MaxGraphWidth = GraphViewer.MaxGraphWidth,
             HorizontalOffset = GraphHost.HorizontalOffset,
-            VerticalOffset = GraphHost.VerticalOffset
+            VerticalOffset = GraphHost.VerticalOffset,
         };
 
         switch (changeKind) {
@@ -273,7 +303,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             case FlameGraphStateKind.EnlargeNode: {
                 // IF there is no node the root node should be selected.
                 var node = state.Node ?? GraphViewer.FlameGraph.RootNode;
-                await EnlargeNode(node, false);
+                await EnlargeNode(node, false, state.VerticalOffset);
                 break;
             }
             case FlameGraphStateKind.ChangeRootNode: {
@@ -398,12 +428,13 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private void AdjustMaxWidth(double amount, bool animate = true, double duration = ZoomAnimationDuration) {
-        double newWidth = Math.Max(0, GraphViewer.MaxGraphWidth + amount);
+        double newWidth = Math.Max(GraphAreaWidth, GraphViewer.MaxGraphWidth + amount);
         SetMaxWidth(newWidth, animate, duration);
     }
 
     private void GraphPanel_PreviewMouseWheel(object sender, MouseWheelEventArgs e) {
-        if (!Utils.IsKeyboardModifierActive()) {
+        if (!Utils.IsKeyboardModifierActive() &&
+            !(e.LeftButton == MouseButtonState.Pressed)) {
             return;
         }
 
@@ -544,16 +575,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     public async Task DisplayFlameGraph() {
-        if (panelVisible_) {
-            Trace.WriteLine($"=> DisplayFlameGraph visible");
-            Dispatcher.BeginInvoke(async () => {
-                await Initialize(Session.ProfileData.CallTree);
-            }, DispatcherPriority.Background);
-        }
-        else {
-            Trace.WriteLine($"=> DisplayFlameGraph not visible");
-            pendingCallTree_ = Session.ProfileData.CallTree;
-        }
+        var callTree = Session.ProfileData.CallTree;
+        SchedulePendingCallTree(callTree);
     }
 
     public override void OnSessionEnd() {

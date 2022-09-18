@@ -23,8 +23,8 @@ public partial class FlameGraphViewer : FrameworkElement {
 
     public bool IsInitialized => initialized_;
     public FlameGraph FlameGraph => flameGraph_;
-    public double MaxGraphWidth => renderer_.maxWidth_;
-    public Rect VisibleArea => renderer_.visibleArea_;
+    public double MaxGraphWidth => renderer_.MaxGraphWidth;
+    public Rect VisibleArea => renderer_.VisibleArea;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
         return type switch
@@ -77,15 +77,16 @@ public partial class FlameGraphViewer : FrameworkElement {
         ResetHighlightedNodes(HighlighingType.Hovered);
     }
 
-    private void HighlightNode(FlameGraphNode node, HighlighingType type, bool includeParents = false) {
+    private void HighlightNode(FlameGraphNode node, HighlighingType type, bool includeParents = false, bool isParent = false) {
         var group = GetHighlightedNodeGroup(type);
         group[node] = node.Style;
 
-        node.Style = PickHoveredNodeStyle(node.Style);
-        node.Draw(renderer_.visibleArea_);
+        node.Style = isParent ? PickHoveredParentNodeStyle(node.Style) :
+                                PickHoveredNodeStyle(node.Style);
+        node.Draw(renderer_.VisibleArea);
 
         if (includeParents && node.Parent != null) {
-            HighlightNode(node.Parent, type, true);
+            HighlightNode(node.Parent, type, includeParents, true);
         }
     }
 
@@ -95,7 +96,7 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         foreach (var pair in group) {
             pair.Key.Style = pair.Value;
-            pair.Key.Draw(renderer_.visibleArea_);
+            pair.Key.Draw(renderer_.VisibleArea);
 
             if (includeParents) {
                 FlameGraphNode parentNode = pair.Key.Parent;
@@ -103,7 +104,7 @@ public partial class FlameGraphViewer : FrameworkElement {
                 while (parentNode != null) {
                     if (group.TryGetValue(parentNode, out var oldStyle)) {
                         parentNode.Style = oldStyle;
-                        parentNode.Draw(renderer_.visibleArea_);
+                        parentNode.Draw(renderer_.VisibleArea);
                     }
 
                     parentNode = parentNode.Parent;
@@ -126,10 +127,16 @@ public partial class FlameGraphViewer : FrameworkElement {
         return new HighlightingStyle(style.BackColor, border);
     }
 
-    private HighlightingStyle PickHoveredNodeStyle(HighlightingStyle style) {
-        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.9f);
+    private HighlightingStyle PickHoveredParentNodeStyle(HighlightingStyle style) {
+        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
         return new HighlightingStyle(newColor, style.Border);
     }
+
+    private HighlightingStyle PickHoveredNodeStyle(HighlightingStyle style) {
+        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.85f);
+        return new HighlightingStyle(newColor, style.Border);
+    }
+
 
     private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
     }
@@ -139,7 +146,6 @@ public partial class FlameGraphViewer : FrameworkElement {
         var graphNode = FindPointedNode(point);
 
         if (graphNode != null) {
-            //Trace.WriteLine($"Over {graphNode.Node?.FunctionName}");
             if (selectedNode_ != graphNode) {
                 ResetHighlightedNodes(HighlighingType.Hovered);
                 ResetHighlightedNodes(HighlighingType.Selected);
@@ -159,20 +165,16 @@ public partial class FlameGraphViewer : FrameworkElement {
             Reset();
         }
 
-        Trace.WriteLine($"Make FG");
-
+        initialized_ = true;
         flameGraph_ = new FlameGraph(callTree);
         await Task.Run(() => flameGraph_.Build(rootNode));
 
-        Trace.WriteLine($"Init with visible {visibleArea}");
-
+        Trace.WriteLine($"Init FG with visible area {visibleArea}");
         renderer_ = new FlameGraphRenderer(flameGraph_, visibleArea);
         graphVisual_ = renderer_.Setup();
         AddVisualChild(graphVisual_);
         AddLogicalChild(graphVisual_);
-        UpdateMaxWidth(renderer_.maxWidth_);
-        Trace.WriteLine($"Done");
-        initialized_ = true;
+        UpdateMaxWidth(renderer_.MaxGraphWidth);
     }
 
     public async Task Initialize(ProfileCallTree callTree, Rect visibleArea) {
@@ -185,11 +187,9 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public void AdjustMaxWidth(double amount) {
-        renderer_.UpdateMaxWidth(renderer_.maxWidth_ + amount);
+        renderer_.UpdateMaxWidth(renderer_.MaxGraphWidth + amount);
         InvalidateMeasure();
     }
-
-    // stack of  prev state to go back, maxWidh, panning, move to FgPanel
 
     public FlameGraphNode FindPointedNode(Point point) {
         var result = VisualTreeHelper.HitTest(this, point);
@@ -222,17 +222,7 @@ public partial class FlameGraphViewer : FrameworkElement {
             return new Size(0, 0);
         }
 
-        var bounds = graphVisual_.ContentBounds;
-        bounds.Union(graphVisual_.DescendantBounds);
-
-        if (bounds.IsEmpty) {
-            // Sometimes (WPF bug?) the bounds are empty.
-            return previousGraphSize_;
-        }
-
-        var graphSize = new Size(bounds.Left + bounds.Width, bounds.Top + bounds.Height);
-        previousGraphSize_ = Size.Empty;
-        return graphSize;
+        return renderer_.GraphArea.Size;
     }
 
     public void Reset() {

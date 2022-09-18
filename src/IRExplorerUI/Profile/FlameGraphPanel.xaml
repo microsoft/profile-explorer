@@ -80,6 +80,8 @@
                         ToolTip="Zoom In (Ctrl+=)">
                         <Image Source="{StaticResource PlusIcon}" />
                     </Button>
+                    <Separator />
+
                     <Button
                         Command="irExplorerUi:GraphCommand.GraphResetWidth"
                         CommandTarget="{Binding ElementName=GraphHost}"

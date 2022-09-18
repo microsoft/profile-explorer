@@ -17,7 +17,7 @@ namespace IRExplorerUI.Profile {
     public class FlameGraphNode {
         internal const double DefaultMargin = 4;
         internal const double ExtraValueMargin = 20;
-        internal const double MinVisibleRectWidth = 2;
+        internal const double MinVisibleRectWidth = 3;
         internal const double MinVisibleWidth = 1;
 
         public FlameGraphNode(ProfileCallTreeNode callTreeNode, TimeSpan weight, int depth) {
@@ -92,6 +92,7 @@ namespace IRExplorerUI.Profile {
                 string label = "";
                 string moduleLabel = null;
                 Brush textColor = TextColor;
+                Brush moduleTextColor = Brushes.DarkBlue;
 
                 //? font color, bold
                 switch(index) {
@@ -100,7 +101,7 @@ namespace IRExplorerUI.Profile {
                             label = CallTreeNode.FunctionName;
 
                             if (true) { //? TODO: option and cache
-                              //?  moduleLabel = CallTreeNode.ModuleName + "!";
+                              moduleLabel = CallTreeNode.ModuleName + "!";
                             }
                         }
                         else {
@@ -139,13 +140,13 @@ namespace IRExplorerUI.Profile {
 
                         dc.PushTransform(new TranslateTransform(x, y + 1));
                         //dc.PushOpacity(0.5);
-                        dc.DrawGlyphRun(textColor, modGlyphs);
+                        dc.DrawGlyphRun(moduleTextColor, modGlyphs);
                         //dc.Pop();
                         dc.Pop();
                     }
 
-                    maxWidth -= modTextSize.Width;
-                    offsetX += modTextSize.Width;
+                    maxWidth -= modTextSize.Width + 1;
+                    offsetX += modTextSize.Width + 1;
                 }
 
                 //? Extend cache to all text parts, saved in array by index
@@ -155,6 +156,8 @@ namespace IRExplorerUI.Profile {
                     double x = offsetX + margin;
                     double y = Bounds.Top + Bounds.Height - Math.Floor(textSize.Height / 2);
 
+                    //! guidelines
+                    //! module text grey, func name demibolt blue
                     dc.PushTransform(new TranslateTransform(x, y + 1));
                     dc.DrawGlyphRun(textColor, glyphs);
                     dc.Pop();
@@ -290,12 +293,13 @@ namespace IRExplorerUI.Profile {
     }
 
     public class FlameGraphRenderer {
-        internal const double DefaultTextSize = 12;
+        internal const double DefaultTextSize = 11;
 
         private FlameGraph flameGraph_;
+        private int maxNodeDepth_;
         private double nodeHeight_;
-        internal double maxWidth_;
-        internal Rect visibleArea_;
+        private double maxWidth_;
+        private Rect visibleArea_;
         private Rect previousVisibleArea_;
         private Typeface font_;
         private double fontSize_;
@@ -307,6 +311,10 @@ namespace IRExplorerUI.Profile {
         private QuadTree<FlameGraphNode> nodesQuadTree_;
 
         public GlyphRunCache GlyphsCache => glyphs_;
+        public double MaxGraphWidth => maxWidth_;
+        public double MaxGraphHeight => (maxNodeDepth_ + 1) * nodeHeight_;
+        public Rect VisibleArea => visibleArea_;
+        public Rect GraphArea => new Rect(0, 0, MaxGraphWidth, MaxGraphHeight);
 
         public FlameGraphRenderer(FlameGraph flameGraph, Rect visibleArea) {
             flameGraph_ = flameGraph;
@@ -316,7 +324,7 @@ namespace IRExplorerUI.Profile {
             defaultBorder_ = ColorPens.GetPen(Colors.Black);
             placeholderColor_ = ColorBrushes.GetBrush(Colors.DarkGray);
 
-            nodeHeight_ = 20; //? Option
+            nodeHeight_ = 18; //? Option
             font_ = new Typeface("Verdana");
             fontSize_ = DefaultTextSize;
         }
@@ -325,6 +333,7 @@ namespace IRExplorerUI.Profile {
             var visual = SetupNodeVisual(flameGraph_.RootNode);
             glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual).PixelsPerDip);
 
+            Trace.WriteLine($"depth {maxNodeDepth_}");
             Redraw(true);
             visual.Drawing?.Freeze();
             return visual;
@@ -381,27 +390,18 @@ namespace IRExplorerUI.Profile {
             using var graphDC = graphVisual_.RenderOpen();
 
             if (!resized && nodesQuadTree_ != null) {
-                Trace.WriteLine($"QD: nodes inside: {nodesQuadTree_.HasNodesInside(visibleArea_)}");
-                int total = 0;
-
-                foreach (var n in nodesQuadTree_.GetNodesInside(visibleArea_)) {
-                    Trace.WriteLine($"   - inside {n.Bounds}, func {n.CallTreeNode?.FunctionName}");
-                    total++;
+                // Update only the visible nodes on scrolling.
+                foreach (var node in nodesQuadTree_.GetNodesInside(visibleArea_)) {
+                    node.Draw(visibleArea_);
                 }
-
-                Trace.WriteLine($"QD inside {total} out of {nodesQuadTree_.Count}");
-                //return;
+                return;
             }
 
+            // Recompute the position of all nodes and rebuild the quad tree.
             nodesQuadTree_ = new QuadTree<FlameGraphNode>();
-            nodesQuadTree_.Bounds = new Rect(0, 0, 1000, maxWidth_); //? Should be depth
-
-            try {
-                UpdateNodeWidth(flameGraph_.RootNode, 0, 0, graphDC, true);
-            }
-            catch (Exception ex) {
-                Trace.WriteLine($"Error: {ex.Message}\n {ex.StackTrace}");
-            }
+            nodesQuadTree_.Bounds = GraphArea;
+            maxNodeDepth_ = 0;
+            UpdateNodeWidth(flameGraph_.RootNode, 0, 0, graphDC, true);
         }
 
         private void UpdateNodeWidth(FlameGraphNode node, double x, double y, DrawingContext graphDC, bool redraw) {
@@ -413,9 +413,13 @@ namespace IRExplorerUI.Profile {
                 nodesQuadTree_.Insert(node, node.Bounds);
             }
 
-            if (redraw && width < FlameGraphNode.MinVisibleRectWidth) {
-                //throw new InvalidOperationException(); //? REMOVE
-                redraw = false;
+            if (redraw) {
+                if (width < FlameGraphNode.MinVisibleRectWidth) {
+                    redraw = false;
+                }
+                else {
+                    maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
+                }
             }
 
             if (node.Children != null) {
