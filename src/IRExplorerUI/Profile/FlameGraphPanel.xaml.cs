@@ -356,6 +356,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
         var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
         if (pointedNode != null) {
+            GraphViewer.ClearSelection(); // Click outside graph is captured here.
             return;
         }
 
@@ -584,5 +585,13 @@ public partial class FlameGraphPanel : ToolPanelControl {
         pendingCallTree_ = null;
         ResetHighlightedNodes();
         GraphViewer.Reset();
+    }
+
+    protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo) {
+        base.OnRenderSizeChanged(sizeInfo);
+
+        if (GraphViewer.IsInitialized && !GraphViewer.IsZoomed) {
+            SetMaxWidth(sizeInfo.NewSize.Width, false);
+        }
     }
 }

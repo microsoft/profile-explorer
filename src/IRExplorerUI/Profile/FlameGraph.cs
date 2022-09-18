@@ -42,6 +42,7 @@ namespace IRExplorerUI.Profile {
         public DrawingVisual Visual { get; set; }
         public HighlightingStyle Style { get; set; }
         public Brush TextColor { get; set; }
+        public Brush ModuleTextColor { get; set; }
         public Brush WeightTextColor { get; set; }
         public Rect Bounds { get; set; }
         public bool IsSelected { get; set; }
@@ -61,15 +62,6 @@ namespace IRExplorerUI.Profile {
             if (Bounds.Width < MinVisibleWidth) {
                 return;
             }
-
-            // Force pixel-snapping to get sharper edges.
-            // var guidelines = new GuidelineSet();
-            // double halfPenWidth = Style.Border.Thickness / 2;
-            // guidelines.GuidelinesX.Add(Bounds.Left + halfPenWidth);
-            // guidelines.GuidelinesX.Add(Bounds.Right + halfPenWidth);
-            // guidelines.GuidelinesY.Add(Bounds.Top + halfPenWidth);
-            // guidelines.GuidelinesY.Add(Bounds.Bottom + halfPenWidth);
-            // dc.PushGuidelineSet(guidelines);
 
             isCleared_ = false;
             dc.DrawRectangle(Style.BackColor, Style.Border, Bounds);
@@ -91,8 +83,8 @@ namespace IRExplorerUI.Profile {
             while (maxWidth > 8 && index < 3 && !trimmed) {
                 string label = "";
                 string moduleLabel = null;
+                bool useNameFont = false;
                 Brush textColor = TextColor;
-                Brush moduleTextColor = Brushes.DarkBlue;
 
                 //? font color, bold
                 switch(index) {
@@ -102,11 +94,21 @@ namespace IRExplorerUI.Profile {
 
                             if (true) { //? TODO: option and cache
                               moduleLabel = CallTreeNode.ModuleName + "!";
+                              var (modText, modGlyphs, modTextTrimmed, modTextSize) = TrimTextToWidth(moduleLabel, maxWidth - margin, false);
+
+                              if (modText.Length > 0) {
+                                  DrawText(modGlyphs, ModuleTextColor, offsetX, margin, modTextSize, dc);
+                              }
+
+                              maxWidth -= modTextSize.Width + 1;
+                              offsetX += modTextSize.Width + 1;
                             }
                         }
                         else {
                             label = "All";
                         }
+
+                        useNameFont = true;
                         break;
                     }
                     case 1: {
@@ -130,37 +132,11 @@ namespace IRExplorerUI.Profile {
                     }
                 };
 
-                //? todo: trim text, tooltip, click event handler, double-click to open func (or instance in tree with filter)
-                if (moduleLabel != null) {
-                    var (modText, modGlyphs, modTextTrimmed, modTextSize) = TrimTextToWidth(moduleLabel, maxWidth - margin);
-
-                    if (modText.Length > 0) {
-                        double x = offsetX + margin;
-                        double y = Bounds.Top + Bounds.Height - Math.Floor(modTextSize.Height / 2);
-
-                        dc.PushTransform(new TranslateTransform(x, y + 1));
-                        //dc.PushOpacity(0.5);
-                        dc.DrawGlyphRun(moduleTextColor, modGlyphs);
-                        //dc.Pop();
-                        dc.Pop();
-                    }
-
-                    maxWidth -= modTextSize.Width + 1;
-                    offsetX += modTextSize.Width + 1;
-                }
-
                 //? Extend cache to all text parts, saved in array by index
-                var (text, glyphs, textTrimmed, textSize) = TrimTextToWidth(label, maxWidth - margin, index == 0);
+                var (text, glyphs, textTrimmed, textSize) = TrimTextToWidth(label, maxWidth - margin, useNameFont, index == 0);
 
                 if (text.Length > 0) {
-                    double x = offsetX + margin;
-                    double y = Bounds.Top + Bounds.Height - Math.Floor(textSize.Height / 2);
-
-                    //! guidelines
-                    //! module text grey, func name demibolt blue
-                    dc.PushTransform(new TranslateTransform(x, y + 1));
-                    dc.DrawGlyphRun(textColor, glyphs);
-                    dc.Pop();
+                    DrawText(glyphs, textColor, offsetX, margin, textSize, dc);
                 }
 
                 trimmed = textTrimmed;
@@ -168,6 +144,26 @@ namespace IRExplorerUI.Profile {
                 offsetX += textSize.Width + margin;
                 index++;
             }
+        }
+
+        private void DrawText(GlyphRun glyphs, Brush textColor, double offsetX, double margin,
+                              Size textSize, DrawingContext dc) {
+            double x = offsetX + margin;
+            double y = Bounds.Top + Bounds.Height / 2 + textSize.Height / 4;
+
+            var rect = glyphs.ComputeAlignmentBox();
+            const double halfPenWidth = 0.5;
+            GuidelineSet guidelines = new GuidelineSet();
+            guidelines.GuidelinesX.Add(rect.Left + halfPenWidth);
+            guidelines.GuidelinesX.Add(rect.Right + halfPenWidth);
+            guidelines.GuidelinesY.Add(rect.Top + halfPenWidth);
+            guidelines.GuidelinesY.Add(rect.Bottom + halfPenWidth);
+
+            dc.PushTransform(new TranslateTransform(x, y));
+            dc.PushGuidelineSet(guidelines);
+            dc.DrawGlyphRun(textColor, glyphs);
+            dc.Pop();
+            dc.Pop();
         }
 
         public void Clear() {
@@ -180,9 +176,11 @@ namespace IRExplorerUI.Profile {
         }
 
         private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
-            TrimTextToWidth(string text, double maxWidth, bool useCache = false) {
+            TrimTextToWidth(string text, double maxWidth, bool useNameFont, bool useCache = false) {
+            var cache = useNameFont ? Owner.NameGlyphsCache : Owner.GlyphsCache;
+
             if (maxWidth <= 0 || string.IsNullOrEmpty(text)) {
-                return ("", Owner.GlyphsCache.GetGlyphs("").Glyphs, true, Size.Empty);
+                return ("", cache.GetGlyphs("").Glyphs, true, Size.Empty);
             }
 
             if (useCache) {
@@ -196,7 +194,7 @@ namespace IRExplorerUI.Profile {
             //  - size is smaller, but less than a delta that's some multiple of avg letter width
             //? could also remember based on # of letter,  letters -> Size mapping
 
-            var (glyphs, textWidth, textHeight) = Owner.GlyphsCache.GetGlyphs(text);
+            var (glyphs, textWidth, textHeight) = cache.GetGlyphs(text);
             bool trimmed = false;
 
             if (textWidth > maxWidth) {
@@ -208,11 +206,11 @@ namespace IRExplorerUI.Profile {
 
                 if (text.Length > extraLetters) {
                     text = text.Substring(0, text.Length - extraLetters) + ".";
-                    (glyphs, textWidth, textHeight) = Owner.GlyphsCache.GetGlyphs(text);
+                    (glyphs, textWidth, textHeight) = cache.GetGlyphs(text);
                 }
                 else {
                     text = "";
-                    (glyphs, textWidth, textHeight) = Owner.GlyphsCache.GetGlyphs(text);
+                    (glyphs, textWidth, textHeight) = cache.GetGlyphs(text);
                     textWidth = maxWidth;
                 }
             }
@@ -293,7 +291,7 @@ namespace IRExplorerUI.Profile {
     }
 
     public class FlameGraphRenderer {
-        internal const double DefaultTextSize = 11;
+        internal const double DefaultTextSize = 12;
 
         private FlameGraph flameGraph_;
         private int maxNodeDepth_;
@@ -302,15 +300,19 @@ namespace IRExplorerUI.Profile {
         private Rect visibleArea_;
         private Rect previousVisibleArea_;
         private Typeface font_;
+        private Typeface nameFont_;
         private double fontSize_;
         private ColorPalette palette_;
         private Pen defaultBorder_;
         private Brush placeholderColor_;
         private DrawingVisual graphVisual_;
         private GlyphRunCache glyphs_;
+        private GlyphRunCache nameGlyphs_;
         private QuadTree<FlameGraphNode> nodesQuadTree_;
 
         public GlyphRunCache GlyphsCache => glyphs_;
+        public GlyphRunCache NameGlyphsCache => nameGlyphs_;
+
         public double MaxGraphWidth => maxWidth_;
         public double MaxGraphHeight => (maxNodeDepth_ + 1) * nodeHeight_;
         public Rect VisibleArea => visibleArea_;
@@ -325,15 +327,16 @@ namespace IRExplorerUI.Profile {
             placeholderColor_ = ColorBrushes.GetBrush(Colors.DarkGray);
 
             nodeHeight_ = 18; //? Option
-            font_ = new Typeface("Verdana");
+            font_ = new Typeface("Segoe UI");
+            nameFont_ = new Typeface(new FontFamily("Segoe UI"), FontStyles.Normal, FontWeights.DemiBold, FontStretch.FromOpenTypeStretch(5));
             fontSize_ = DefaultTextSize;
         }
 
         public DrawingVisual Setup() {
             var visual = SetupNodeVisual(flameGraph_.RootNode);
             glyphs_ = new GlyphRunCache(font_, fontSize_, VisualTreeHelper.GetDpi(visual).PixelsPerDip);
+            nameGlyphs_ = new GlyphRunCache(nameFont_, fontSize_, VisualTreeHelper.GetDpi(visual).PixelsPerDip);
 
-            Trace.WriteLine($"depth {maxNodeDepth_}");
             Redraw(true);
             visual.Drawing?.Freeze();
             return visual;
@@ -359,8 +362,9 @@ namespace IRExplorerUI.Profile {
             int colorIndex = node.Depth % palette_.Count;
             var backColor = palette_[palette_.Count - colorIndex - 1];
             node.Style = new HighlightingStyle(backColor, defaultBorder_);
-            node.TextColor = Brushes.Black;
-            node.WeightTextColor = Brushes.DarkBlue;
+            node.TextColor = Brushes.DarkBlue;
+            node.ModuleTextColor = Brushes.DimGray;
+            node.WeightTextColor = Brushes.DarkGreen;
 
             if (node.Children != null) {
                 foreach (var childNode in node.Children) {
@@ -408,6 +412,7 @@ namespace IRExplorerUI.Profile {
             double width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
             var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);
+            node.Bounds = Utils.SnapToPixels(node.Bounds);
 
             if (node.Bounds.Width > 0 && node.Bounds.Height > 0) {
                 nodesQuadTree_.Insert(node, node.Bounds);
@@ -430,6 +435,7 @@ namespace IRExplorerUI.Profile {
                     //? If multiple children below width, single patterned rect
                     var childNode = node.Children[i];
                     var childWidth = flameGraph_.ScaleWeight(childNode.Weight) * maxWidth_;
+                    childWidth = Utils.SnapToPixels(childWidth);
 
                     if (redrawChildren && childWidth < FlameGraphNode.MinVisibleRectWidth) {
                         double remainingWidth = childWidth;

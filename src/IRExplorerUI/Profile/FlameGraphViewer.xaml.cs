@@ -25,6 +25,7 @@ public partial class FlameGraphViewer : FrameworkElement {
     public FlameGraph FlameGraph => flameGraph_;
     public double MaxGraphWidth => renderer_.MaxGraphWidth;
     public Rect VisibleArea => renderer_.VisibleArea;
+    public bool IsZoomed => Math.Abs(MaxGraphWidth - VisibleArea.Width) > 1;
 
     private Dictionary<FlameGraphNode, HighlightingStyle> GetHighlightedNodeGroup(HighlighingType type) {
         return type switch
@@ -61,11 +62,13 @@ public partial class FlameGraphViewer : FrameworkElement {
                 ResetHighlightedNodes(HighlighingType.Hovered);
                 HighlightNode(graphNode, HighlighingType.Hovered, false);
                 hoveredNode_ = graphNode;
+                e.Handled = true;
             }
         }
         else {
             ResetHighlightedNodes(HighlighingType.Hovered);
             hoveredNode_ = null;
+            e.Handled = true;
         }
     }
 
@@ -151,13 +154,19 @@ public partial class FlameGraphViewer : FrameworkElement {
                 ResetHighlightedNodes(HighlighingType.Selected);
                 HighlightNode(graphNode, HighlighingType.Selected, true);
                 selectedNode_ = graphNode;
+                e.Handled = true;
             }
         }
         else {
-            ResetHighlightedNodes(HighlighingType.Hovered);
-            ResetHighlightedNodes(HighlighingType.Selected, true);
-            selectedNode_ = null;
+            ClearSelection();
+            e.Handled = true;
         }
+    }
+
+    public void ClearSelection() {
+        ResetHighlightedNodes(HighlighingType.Hovered);
+        ResetHighlightedNodes(HighlighingType.Selected, true);
+        selectedNode_ = null;
     }
 
     public async Task Initialize(ProfileCallTree callTree, ProfileCallTreeNode rootNode, Rect visibleArea) {
