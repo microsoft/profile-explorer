@@ -194,7 +194,7 @@ namespace IRExplorerUI {
             DependencyProperty.Register("ShowToolbar", typeof(bool), typeof(CallTreePanel));
 
         private IRTextFunction function_;
-        private ToolTipHoverPreview stackHoverPreview_;
+        private DraggablePopupHoverPreview stackHoverPreview_;
         private ChildFunctionEx profileCallTree_;
         private List<ChildFunctionEx> searchResultNodes_;
         private CallTreeSettings settings_;
@@ -227,13 +227,17 @@ namespace IRExplorerUI {
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
             // https://docs.microsoft.com/en-us/dotnet/desktop/wpf/controls/how-to-position-a-tooltip?view=netframeworkdesktop-4.8
-            stackHoverPreview_ = new ToolTipHoverPreview(CallTree,
+            stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree,
                 mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
                 (previewPoint, element) => {
                     var item = (ListViewItem)element;
                     var funcNode = ((TreeListItem)item).Node?.Tag as ChildFunctionEx;
                     var callNode = funcNode?.CallTreeNode;
-                    return callNode != null ? CreateStackToolTip(callNode) : null;
+                    var text = callNode != null ? CreateStackBackTrace(callNode) : "";
+                    var p = new CallTreeNodePopup(previewPoint, 500, 400, element, Session);
+                    p.PanelTitle = "Backtrace";
+                    p.SetNode(callNode);
+                    return p;
                 });
         }
 
@@ -603,17 +607,13 @@ namespace IRExplorerUI {
             return funcName;
         }
 
-        private string CreateStackToolTip(ProfileCallTreeNode node) {
+        private string CreateStackBackTrace(ProfileCallTreeNode node) {
             var builder = new StringBuilder();
             AppendStackToolTipFrames(node, builder);
             return builder.ToString();
         }
 
         private void AppendStackToolTipFrames(ProfileCallTreeNode node, StringBuilder builder) {
-            if (node.HasCallers) {
-                AppendStackToolTipFrames(node.Callers[0], builder);
-            }
-
             var percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight);
             var funcName = FormatFunctionName(node, 80);
 
@@ -623,6 +623,10 @@ namespace IRExplorerUI {
 
             builder.Append($"{percentage.AsPercentageString(2, false).PadLeft(6)} | {node.Weight.AsMillisecondsString()} | {funcName}");
             builder.AppendLine(funcName);
+
+            if (node.HasCallers) {
+                AppendStackToolTipFrames(node.Callers[0], builder);
+            }
         }
 
         #region IToolPanel
