@@ -102,10 +102,6 @@ namespace IRExplorerUI {
 
             DiffPanel.Summary = summary;
 
-            if (summary != null) {
-                await Update();
-            }
-
             if (!diffModeEnabled_) {
                 MainGrid.ColumnDefinitions[0].Width = new GridLength(1, GridUnitType.Star);
                 MainGrid.ColumnDefinitions[1].Width = new GridLength(2, GridUnitType.Pixel);
@@ -134,6 +130,10 @@ namespace IRExplorerUI {
                 }
 
                 diffModeEnabled_ = false;
+            }
+
+            if (summary != null) {
+                await Update();
             }
         }
 
