@@ -112,12 +112,13 @@ namespace IRExplorerUI {
 
         public static List<(GridViewColumnHeader Header, GridViewColumn Column)> AddListViewColumns(ListView listView, IEnumerable<OptionalColumn> columns,
             IGridViewColumnValueSorter columnSorter = null,
-            string titleSuffix = "", string tooltipSuffix = "", bool useValueConverter = true) {
+            string titleSuffix = "", string tooltipSuffix = "", bool useValueConverter = true, int insertionIndex = -1) {
             var columnHeaders = new List<(GridViewColumnHeader, GridViewColumn)>();
 
             foreach (var column in columns) {
                 if (column.IsVisible) {
-                    columnHeaders.Add(AddListViewColumn(listView, column, columnSorter, titleSuffix, tooltipSuffix, useValueConverter));
+                    columnHeaders.Add(AddListViewColumn(listView, column, columnSorter, titleSuffix, tooltipSuffix, useValueConverter, insertionIndex));
+                    insertionIndex = insertionIndex != -1 ? insertionIndex + 1 : -1;
                 }
             }
 

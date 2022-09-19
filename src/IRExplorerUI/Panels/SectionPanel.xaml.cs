@@ -474,6 +474,7 @@ namespace IRExplorerUI {
             IsFunctionListVisible = true;
             IsSectionListVisible = true;
             ShowSections = true;
+            SectionCountColumnVisible = true;
             SyncDiffedDocuments = true;
             MainGrid.DataContext = this;
             settings_ = App.Settings.SectionSettings;
@@ -962,6 +963,18 @@ namespace IRExplorerUI {
             }
         }
 
+        private bool sectionCountColumnVisible_;
+
+        public bool SectionCountColumnVisible {
+            get => sectionCountColumnVisible_;
+            set {
+                if (sectionCountColumnVisible_ != value) {
+                    sectionCountColumnVisible_ = value;
+                    OnPropertyChange(nameof(SectionCountColumnVisible));
+                }
+            }
+        }
+
         private bool moduleControlsVisible_;
 
         public bool ModuleControlsVisible {
@@ -1238,6 +1251,7 @@ namespace IRExplorerUI {
             ModuleControlsVisible = true;
             IsFunctionListVisible = false;
             IsFunctionListVisible = true;
+            SectionCountColumnVisible = false;
             ShowSections = false;
 
             if (modulesEx.Count > 1) {
@@ -1362,6 +1376,7 @@ namespace IRExplorerUI {
         }
 
         private void ResetSectionPanel() {
+            SectionCountColumnVisible = true;
             ProfileControlsVisible = false;
             ModuleControlsVisible = false;
             SectionList.ItemsSource = null;
@@ -1888,6 +1903,7 @@ namespace IRExplorerUI {
                 }
             }
 
+            Utils.WaitForDebugger();
             throw new InvalidOperationException();
         }
 
@@ -1954,7 +1970,6 @@ namespace IRExplorerUI {
                     panel?.Reset(); // Hide previous func.
                 }
             }
-
 
             await ComputeConsecutiveSectionDiffs();
         }
@@ -2330,8 +2345,6 @@ namespace IRExplorerUI {
         }
 
         private async Task ComputeFunctionStatistics() {
-            return;
-
             using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
             var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
 
@@ -2538,14 +2551,23 @@ namespace IRExplorerUI {
             OptionalColumn.RemoveListViewColumns(FunctionList, CallStatisticsColumns, functionValueSorter_);
             OptionalColumn.RemoveListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
 
-            OptionalColumn.AddListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn);
+            // Insert before the demangled func name column.
+            int insertionIndex = -1;
+
+            if (AlternateNameColumnVisible) {
+                insertionIndex = OptionalColumn.FindListViewColumnIndex("AlternateNameColumnHeader", FunctionList);
+            }
+
+            var list = OptionalColumn.AddListViewColumns(FunctionList, StatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn, insertionIndex);
+            insertionIndex = insertionIndex != -1 ? insertionIndex + list.Count : -1;
 
             if (settings_.IncludeCallGraphStatistics) {
-                OptionalColumn.AddListViewColumns(FunctionList, CallStatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn);
+                var list2 = OptionalColumn.AddListViewColumns(FunctionList, CallStatisticsColumns, functionValueSorter_, titleSuffix, tooltipSuffix, addDiffColumn, insertionIndex);
+                insertionIndex = insertionIndex != -1 ? insertionIndex + list2.Count : -1;
             }
 
             if (addDiffColumn) {
-                OptionalColumn.AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_);
+                OptionalColumn.AddListViewColumns(FunctionList, StatisticsDiffColumns, functionValueSorter_, null, null, false, insertionIndex);
             }
         }
 

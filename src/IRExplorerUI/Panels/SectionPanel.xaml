@@ -362,7 +362,7 @@
                             </GridViewColumn>
                             <GridViewColumn
                                 Width="50"
-                                local:GridViewColumnVisibility.IsVisible="{Binding ProfileControlsVisible, Converter={StaticResource InvertedBool}}"
+                                local:GridViewColumnVisibility.IsVisible="{Binding SectionCountColumnVisible}"
                                 DisplayMemberBinding="{Binding SectionCount}">
                                 <GridViewColumnHeader x:Name="SectionsColumnHeader" Content="Sections" />
                                 <GridViewColumn.HeaderContainerStyle>
