@@ -151,19 +151,19 @@ namespace IRExplorerUI.Profile {
             double x = offsetX + margin;
             double y = Bounds.Top + Bounds.Height / 2 + textSize.Height / 4;
 
-            var rect = glyphs.ComputeAlignmentBox();
-            const double halfPenWidth = 0.5;
-            GuidelineSet guidelines = new GuidelineSet();
-            guidelines.GuidelinesX.Add(rect.Left + halfPenWidth);
-            guidelines.GuidelinesX.Add(rect.Right + halfPenWidth);
-            guidelines.GuidelinesY.Add(rect.Top + halfPenWidth);
-            guidelines.GuidelinesY.Add(rect.Bottom + halfPenWidth);
+            // var rect = glyphs.ComputeAlignmentBox();
+            // const double halfPenWidth = 0;
+            // GuidelineSet guidelines = new GuidelineSet();
+            // guidelines.GuidelinesX.Add(rect.Left + halfPenWidth);
+            // guidelines.GuidelinesX.Add(rect.Right + halfPenWidth);
+            // guidelines.GuidelinesY.Add(rect.Top + halfPenWidth);
+            // guidelines.GuidelinesY.Add(rect.Bottom + halfPenWidth);
 
+            //dc.PushGuidelineSet(guidelines);
             dc.PushTransform(new TranslateTransform(x, y));
-            dc.PushGuidelineSet(guidelines);
             dc.DrawGlyphRun(textColor, glyphs);
             dc.Pop();
-            dc.Pop();
+            //dc.Pop();
         }
 
         public void Clear() {
