@@ -440,7 +440,7 @@ namespace IRExplorerUI {
         private IRTextSummary summary_;
         private IRTextSummary otherSummary_;
         private List<IRTextSectionEx> sections_;
-        private List<IRTextSummary> otherSummaries_;
+        private List<IRTextSummary> moduleSummaries_;
 
         private bool sectionExtensionComputed_;
         private Dictionary<IRTextSection, IRTextSectionEx> sectionExtMap_;
@@ -467,7 +467,7 @@ namespace IRExplorerUI {
             statisticsTask_ = new CancelableTaskInstance();
             callGraphTask_ = new CancelableTaskInstance();
             sections_ = new List<IRTextSectionEx>();
-            otherSummaries_ = new List<IRTextSummary>();
+            moduleSummaries_ = new List<IRTextSummary>();
             sectionExtMap_ = new Dictionary<IRTextSection, IRTextSectionEx>();
             functionExtMap_ = new Dictionary<IRTextFunction, IRTextFunctionEx>();
             annotatedSections_ = new HashSet<IRTextSectionEx>();
@@ -1085,14 +1085,14 @@ namespace IRExplorerUI {
             }
         }
 
-        public void AddOtherSummary(IRTextSummary summary) {
-            otherSummaries_.Add(summary);
+        public void AddModuleSummary(IRTextSummary summary) {
+            moduleSummaries_.Add(summary);
             sectionExtensionComputed_ = false;
         }
 
         public bool HasSummary(IRTextSummary summary) {
             return summary == summary_ ||
-                   otherSummaries_.Contains(summary);
+                   moduleSummaries_.Contains(summary);
         }
 
         public event EventHandler<IRTextFunction> FunctionSwitched;
@@ -1274,25 +1274,20 @@ namespace IRExplorerUI {
             }
         }
 
-        public async Task Update(bool resetUI = false) {
-            if (resetUI) {
-                ResetUI();
-            }
-
+        public async Task Update() {
             if (summary_ != null) {
                 await SetupFunctionList();
             }
         }
 
-        public void ResetUI() {
+        public async Task ResetUI() {
+            await ResetStatistics();
             ResetSectionPanel();
-            ResetStatistics();
         }
 
         public async Task SetupFunctionList(bool analyzeFunctions = true) {
             if (summary_ == null) {
-                ResetSectionPanel();
-                ResetStatistics();
+                await ResetUI();
                 return;
             }
 
@@ -1335,7 +1330,7 @@ namespace IRExplorerUI {
                 // Single document mode.
                 CreateFunctionExtensions(summary_, functionsEx);
 
-                foreach (var otherSummary in otherSummaries_) {
+                foreach (var otherSummary in moduleSummaries_) {
                     CreateFunctionExtensions(otherSummary, functionsEx);
                 }
             }
@@ -1394,7 +1389,10 @@ namespace IRExplorerUI {
             FunctionList.UpdateLayout();
         }
 
-        private void ResetStatistics() {
+        private async Task ResetStatistics() {
+            Trace.WriteLine($"Cancel stats at {DateTime.Now}, ticks {Environment.TickCount64}");
+            await statisticsTask_.CancelTaskAsync();
+            Trace.WriteLine($"Done cancel stats at {DateTime.Now}, ticks {Environment.TickCount64}");
             callGraphCache_ = null;
             functionStatMap_ = null;
         }
@@ -1409,7 +1407,7 @@ namespace IRExplorerUI {
 
             SetupSectionExtension(summary_);
 
-            foreach (var otherSummary in otherSummaries_) {
+            foreach (var otherSummary in moduleSummaries_) {
                 SetupSectionExtension(otherSummary);
             }
 
@@ -2348,6 +2346,10 @@ namespace IRExplorerUI {
             using var cancelableTask = await statisticsTask_.CancelPreviousAndCreateTaskAsync(Session.SessionState.RegisterCancelableTask);
             var functionStatMap = await ComputeFunctionStatisticsImpl(cancelableTask);
 
+            if (cancelableTask.IsCanceled) {
+                return;
+            }
+
             foreach (var pair in functionStatMap) {
                 var functionEx = GetFunctionExtension(pair.Key);
                 functionEx.Statistics = pair.Value;
@@ -2393,12 +2395,18 @@ namespace IRExplorerUI {
                         var sectionStats = ComputeFunctionStatistics(section, loadedDoc.Loader, callGraph);
 
                         if (sectionStats != null) {
+                            if (functionStatMap_ == null) {
+                                Trace.WriteLine($"Null map at {DateTime.Now}, ticks {Environment.TickCount64}");
+#if DEBUG
+                                Utils.WaitForDebugger();
+#endif
+                            }
                             functionStatMap_.TryAdd(function, sectionStats);
                         }
                     }
                     catch (Exception ex) {
-                        Utils.WaitForDebugger();
                         Trace.WriteLine(ex.ToString());
+                        Trace.WriteLine($"Exception stats at {DateTime.Now}, ticks {Environment.TickCount64}");
                     }
                 }, cancelableTask.Token));
             }
@@ -2737,7 +2745,7 @@ namespace IRExplorerUI {
         }
 
         //public async void RemoveSummary(IRTextSummary summary) {
-        //    if (otherSummaries_.Remove(summary_)) {
+        //    if (moduleSummaries_.Remove(summary_)) {
         //        sectionExtensionComputed_ = false;
         //        await SetupFunctionList();
         //    }

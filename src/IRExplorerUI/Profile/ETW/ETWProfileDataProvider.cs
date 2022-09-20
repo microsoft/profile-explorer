@@ -622,11 +622,11 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             }
 
             if (Utils.IsExecutableFile(pair.Value.ModuleDocument.BinaryFile?.FilePath)) {
+
                 if (exeDocument == null) {
                     exeDocument = pair.Value.ModuleDocument;
-                    continue;
                 }
-                else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName)) {
+                else if (pair.Value.ModuleDocument.ModuleName.Contains(imageName, StringComparison.OrdinalIgnoreCase)) {
                     otherDocuments.Add(exeDocument);
                     exeDocument = pair.Value.ModuleDocument;
                     continue;
@@ -973,7 +973,6 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
     public void Dispose() {
         //FunctionDebugInfo?.Dispose();
     }
-
 
     sealed class ResolvedProfileStackFrame {
         public long FrameIP { get; set; }

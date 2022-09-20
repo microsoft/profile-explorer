@@ -129,7 +129,6 @@ namespace IRExplorerUI {
         }
     }
 
-
     public partial class ProfileLoadWindow : Window, INotifyPropertyChanged {
         private CancelableTaskInstance loadTask_;
         private bool isLoadingProfile_;
@@ -453,7 +452,6 @@ namespace IRExplorerUI {
                     App.Settings.AddLoadedProfileSession(report);
                 }
 
-
                 App.SaveApplicationSettings();
             }
 
@@ -508,7 +506,7 @@ namespace IRExplorerUI {
                 }
 
                 if (progressInfo.Processes != null) {
-                    DisplayProcessList(progressInfo.Processes);
+                    DisplayProcessList(progressInfo.Processes, selectedProcSummary_);
                 }
             }));
         }
@@ -542,14 +540,15 @@ namespace IRExplorerUI {
             ProfileFilePath = Utils.CleanupPath(ProfileFilePath);
 
             if (File.Exists(ProfileFilePath)) {
+                using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
+
                 IsLoadingProcessList = true;
                 IsLoadingProfile = true;
                 BinaryFilePath = "";
                 LoadProgressBar.Value = 0;
+                ResetProcessList();
 
-                using var task = await loadTask_.CancelPreviousAndCreateTaskAsync();
                 processList_ = await ETWProfileDataProvider.FindTraceProcesses(ProfileFilePath, options_, ProcessListProgressCallback, task);
-
                 IsLoadingProfile = false;
                 IsLoadingProcessList = false;
 
@@ -561,6 +560,11 @@ namespace IRExplorerUI {
             }
 
             return false;
+        }
+
+        private void ResetProcessList() {
+            processList_ = null;
+            selectedProcSummary_ = null;
         }
 
         private void ApplicationBrowseButton_Click(object sender, RoutedEventArgs e) =>
@@ -653,11 +657,15 @@ namespace IRExplorerUI {
             RecordProgressLabel.Text = status;
         }
 
-        private void DisplayProcessList(List<ProcessSummary> list) {
+        private void DisplayProcessList(List<ProcessSummary> list, ProcessSummary selectedProcSummary = null) {
             list.Sort((a, b) => b.Weight.CompareTo(a.Weight));
             ProcessList.ItemsSource = null;
             ProcessList.ItemsSource = new ListCollectionView(list);
             ShowProcessList = true;
+
+            if (selectedProcSummary != null) {
+                ProcessList.SelectedItem = list.Find(item => item.Process == selectedProcSummary.Process);
+            }
         }
 
         private async void StopCaptureButton_OnClick(object sender, RoutedEventArgs e) {
