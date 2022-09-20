@@ -565,6 +565,12 @@ namespace IRExplorerUI {
             InvalidateMeasure();
         }
 
+        public void ReloadCurrentGraph() {
+            if (graph_ != null) {
+                ReloadGraph(graph_);
+            }
+        }
+
         public void HideGraph() {
             if (graphVisual_ == null) {
                 return; // In case the graph fails to load.

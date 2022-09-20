@@ -67,6 +67,19 @@ namespace IRExplorerCore {
             }
         }
 
+        public async Task CancelTaskAsync() {
+            CancelableTask task = null;
+
+            lock (lockObject_) {
+                task = taskInstance_;
+                taskInstance_ = null;
+            }
+
+            if (task != null) {
+                await CancelTaskAsync(task);
+            }
+        }
+
         private async Task CancelTaskAsync(CancelableTask canceledTask, CancelableTaskDelegate unregisterAction = null) {
             // Cancel the task and wait for it to complete.
             canceledTask.Cancel();

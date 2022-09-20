@@ -60,6 +60,7 @@ namespace IRExplorerUI {
         void OnHidePanel();
         void OnActivatePanel();
         void OnDeactivatePanel();
+        void OnRedrawPanel();
 
         void OnSessionStart();
         void OnSessionEnd();

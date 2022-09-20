@@ -45,6 +45,8 @@ namespace IRExplorerUI {
 
         public virtual void OnDeactivatePanel() { }
 
+        public virtual void OnRedrawPanel() { }
+
         public virtual void OnHidePanel() { }
 
         public virtual void OnShowPanel() { }
