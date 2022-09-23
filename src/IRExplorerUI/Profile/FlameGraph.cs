@@ -112,8 +112,8 @@ namespace IRExplorerUI.Profile {
                         break;
                     }
                     case 1: {
-                        if (ShowWeightPercentage && CallTreeNode != null) {
-                            label = Owner.ScaleWeight(CallTreeNode.Weight).AsPercentageString();
+                        if (ShowWeightPercentage) {
+                            label = Owner.ScaleWeight(Weight).AsPercentageString();
                             margin = ExtraValueMargin;
                             textColor = WeightTextColor;
                         }
@@ -122,8 +122,8 @@ namespace IRExplorerUI.Profile {
                     }
 
                     case 2: {
-                        if (ShowWeight && CallTreeNode != null) {
-                            label = $"({CallTreeNode.Weight.AsMillisecondsString()})";
+                        if (ShowWeight) {
+                            label = $"({Weight.AsMillisecondsString()})";
                             margin = ExtraValueMargin;
                             textColor = WeightTextColor;
                         }

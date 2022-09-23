@@ -951,7 +951,7 @@ namespace IRExplorerUI {
                 SectionPanel.DiffTitle = sessionState_.DiffDocument.ModuleName;
             }
 
-            await SectionPanel.Update();
+            //? TODO: not neeeded await SectionPanel.Update();
 
             if (sessionState_.IsInTwoDocumentsDiffMode) {
                 await ShowSectionPanelDiffs(sessionState_.DiffDocument);

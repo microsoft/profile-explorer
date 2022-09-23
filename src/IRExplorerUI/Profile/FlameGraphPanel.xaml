@@ -94,7 +94,7 @@
 
                     <Separator />
                     <Button
-                        Click="ButtonBase_OnClick"
+                        Click="UndoButtoon_Click"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         Margin="4,0,0,0"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
@@ -104,7 +104,7 @@
                         </StackPanel>
                     </Button>
                     <Button
-                        Click="ButtonBase_OnClick2"
+                        Click="SelectParent_Click"
                         CommandTarget="{Binding ElementName=GraphHost}"
                         ToolTip="Zoom the view to show the entire graph (Ctrl+A)">
                         <StackPanel Orientation="Horizontal">

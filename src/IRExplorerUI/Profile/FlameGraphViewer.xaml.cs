@@ -149,17 +149,21 @@ public partial class FlameGraphViewer : FrameworkElement {
         var graphNode = FindPointedNode(point);
 
         if (graphNode != null) {
-            if (selectedNode_ != graphNode) {
-                ResetHighlightedNodes(HighlighingType.Hovered);
-                ResetHighlightedNodes(HighlighingType.Selected);
-                HighlightNode(graphNode, HighlighingType.Selected, true);
-                selectedNode_ = graphNode;
-                e.Handled = true;
-            }
+            SelectNode(graphNode);
         }
         else {
             ClearSelection();
-            e.Handled = true;
+        }
+
+        e.Handled = true;
+    }
+
+    public void SelectNode(FlameGraphNode graphNode) {
+        if (selectedNode_ != graphNode) {
+            ResetHighlightedNodes(HighlighingType.Hovered);
+            ResetHighlightedNodes(HighlighingType.Selected);
+            HighlightNode(graphNode, HighlighingType.Selected, true);
+            selectedNode_ = graphNode;
         }
     }
 
@@ -223,8 +227,6 @@ public partial class FlameGraphViewer : FrameworkElement {
     protected override Visual GetVisualChild(int index) {
         return graphVisual_;
     }
-
-    private Size previousGraphSize_;
 
     protected override Size MeasureOverride(Size availableSize) {
         if (graphVisual_ == null) {
