@@ -26,21 +26,20 @@ namespace IRExplorerUI.Controls {
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public CallTreeNodePopup(Point position, double width, double height,
+        public CallTreeNodePopup(ProfileCallTreeNode node, Point position, double width, double height,
                                  UIElement referenceElement, ISession session) {
+            CallTreeNode = node;
+            PanelTitle = node.FunctionName;
+
             InitializeComponent();
             Initialize(position, width, height, referenceElement);
             Session = session;
             PanelResizeGrip.ResizedControl = this;
             DataContext = this;
-        }
 
-        public void SetNode(ProfileCallTreeNode node) {
-            node_ = node;
             var stackTrace = CreateStackBackTrace(node);
             TextView.SetText(stackTrace);
         }
-
 
         private string CreateStackBackTrace(ProfileCallTreeNode node) {
             var builder = new StringBuilder();
@@ -94,6 +93,16 @@ namespace IRExplorerUI.Controls {
                 if (panelTitle_ != value) {
                     panelTitle_ = value;
                     OnPropertyChange(nameof(PanelTitle));
+                }
+            }
+        }
+
+        public ProfileCallTreeNode CallTreeNode {
+            get => node_;
+            set {
+                if (node_ != value) {
+                    node_ = value;
+                    OnPropertyChange(nameof(CallTreeNode));
                 }
             }
         }

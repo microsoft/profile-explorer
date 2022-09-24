@@ -10,6 +10,9 @@ using System.Windows.Threading;
 using DocumentFormat.OpenXml.Wordprocessing;
 using Google.Protobuf.WellKnownTypes;
 using IRExplorerCore.Graph;
+using IRExplorerUI.Controls;
+using Microsoft.Diagnostics.Tracing.Stacks;
+
 
 namespace IRExplorerUI.Profile;
 
@@ -92,25 +95,13 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private ProfileCallTree pendingCallTree_; // Tree to show when panel becomes visible.
     private FlameGraphNode enlargedNode_;
     private DateTime lastWheelZoomTime_;
-    //private DraggablePopupHoverPreview stackHoverPreview_;
+    private DraggablePopupHoverPreview stackHoverPreview_;
 
     public FlameGraphPanel() {
         InitializeComponent();
         stateStack_ = new Stack<FlameGraphState>();
         SetupEvents();
-
-        // stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree,
-        //     mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
-        //     (previewPoint, element) => {
-        //         var item = (ListViewItem)element;
-        //         var funcNode = ((TreeListItem)item).Node?.Tag as ChildFunctionEx;
-        //         var callNode = funcNode?.CallTreeNode;
-        //         var text = callNode != null ? CreateStackBackTrace(callNode) : "";
-        //         var p = new CallTreeNodePopup(previewPoint, 500, 400, element, Session);
-        //         p.PanelTitle = "Backtrace";
-        //         p.SetNode(callNode);
-        //         return p;
-        //     });
+        stackHoverPreview_ = new DraggablePopupHoverPreview(GraphViewer, CreateBacktracePopup);
     }
 
     public override ToolPanelKind PanelKind => ToolPanelKind.FlameGraph;
@@ -590,5 +581,17 @@ public partial class FlameGraphPanel : ToolPanelControl {
         if (GraphViewer.IsInitialized && !GraphViewer.IsZoomed) {
             SetMaxWidth(sizeInfo.NewSize.Width, false);
         }
+    }
+
+    private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
+        var pointedNode = GraphViewer.FindPointedNode(mousePoint);
+        var callNode = pointedNode?.CallTreeNode;
+
+        if (callNode != null) {
+            var popup = new CallTreeNodePopup(callNode, previewPoint, 500, 400, GraphViewer, Session);
+            return popup;
+        }
+
+        return null;
     }
 }

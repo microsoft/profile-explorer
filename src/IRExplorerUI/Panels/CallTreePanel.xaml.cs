@@ -227,18 +227,19 @@ namespace IRExplorerUI {
             CallTree.NodeExpanded += CallTreeOnNodeExpanded;
 
             // https://docs.microsoft.com/en-us/dotnet/desktop/wpf/controls/how-to-position-a-tooltip?view=netframeworkdesktop-4.8
-            stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree,
-                mousePoint => (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint),
-                (previewPoint, element) => {
-                    var item = (ListViewItem)element;
-                    var funcNode = ((TreeListItem)item).Node?.Tag as ChildFunctionEx;
-                    var callNode = funcNode?.CallTreeNode;
-                    var text = callNode != null ? CreateStackBackTrace(callNode) : "";
-                    var p = new CallTreeNodePopup(previewPoint, 500, 400, element, Session);
-                    p.PanelTitle = "Backtrace";
-                    p.SetNode(callNode);
-                    return p;
-                });
+            stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree, CreateBacktracePopup);
+        }
+
+        private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
+            var element = (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint);
+            var funcNode = ((TreeListItem)(ListViewItem)element).Node?.Tag as ChildFunctionEx;
+            var callNode = funcNode?.CallTreeNode;
+
+            if (callNode != null) {
+                return new CallTreeNodePopup(callNode, previewPoint, 500, 400, CallTree, Session);
+            }
+
+            return null;
         }
 
         private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
