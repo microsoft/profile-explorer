@@ -292,7 +292,7 @@ namespace IRExplorerCmd {
             GC.SuppressFinalize(this);
         }
 
-        public void AddOtherSummary(IRTextSummary summary) {
+        public void AddModuleSummary(IRTextSummary summary) {
         }
 
         public IRTextFunction FindFunctionWithId(int funcNumber, Guid summaryId) {

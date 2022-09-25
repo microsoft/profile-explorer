@@ -48,7 +48,7 @@ namespace IRExplorerUI {
         public bool SyncDiffedDocuments => MainPanel.SyncDiffedDocuments;
 
         public async Task RefreshMainSummary() {
-            await MainPanel.Update(true);
+            await MainPanel.Update();
         }
 
         public IRTextSummary MainSummary {
@@ -142,8 +142,8 @@ namespace IRExplorerUI {
             await DiffPanel.Update();
         }
 
-        public void AddOtherSummary(IRTextSummary summary) {
-            MainPanel.AddOtherSummary(summary);
+        public void AddModuleSummary(IRTextSummary summary) {
+            MainPanel.AddModuleSummary(summary);
         }
 
         public async Task RefreshDocumentsDiffs() {
@@ -438,7 +438,7 @@ namespace IRExplorerUI {
         public override void OnSessionEnd() {
             SetMainSummary(null).Wait();
             SetDiffSummary(null).Wait();
-            MainPanel.ResetUI();
+            MainPanel.ResetUI(); //? TODO: Await, make OnSessionEnd async
             DiffPanel.ResetUI();
         }
 

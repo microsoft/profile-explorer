@@ -25,33 +25,49 @@ namespace IRExplorerUI {
 
         public void Draw() {
             using var dc = Visual.RenderOpen();
-            double halfPenWidth = Style.Border.Thickness / 2;
+            var graphTag = NodeInfo.Data?.GetTag<GraphNodeTag>();
+
+            // GraphNodeTag may override the colors.
+            var backColor = Style.BackColor;
+            var textColor = TextColor;
+
+            if (graphTag != null) {
+                if (graphTag.BackgroundColor.HasValue) {
+                    backColor = graphTag.BackgroundColor.Value.AsBrush();
+                }
+
+                if (graphTag.LabelFontColor.HasValue) {
+                    //? TODO: Intended only for label, text needs another property
+                    backColor = graphTag.LabelFontColor.Value.AsBrush();
+                }
+            }
 
             var region = new Rect(NodeInfo.CenterX - NodeInfo.Width / 2,
-                                  NodeInfo.CenterY - NodeInfo.Height / 2, NodeInfo.Width, NodeInfo.Height);
+                NodeInfo.CenterY - NodeInfo.Height / 2, NodeInfo.Width, NodeInfo.Height);
 
             // Force pixel-snapping to get sharper edges.
+            double halfPenWidth = Style.Border.Thickness / 2;
             var guidelines = new GuidelineSet();
             guidelines.GuidelinesX.Add(region.Left + halfPenWidth);
             guidelines.GuidelinesX.Add(region.Right + halfPenWidth);
             guidelines.GuidelinesY.Add(region.Top + halfPenWidth);
             guidelines.GuidelinesY.Add(region.Bottom + halfPenWidth);
             dc.PushGuidelineSet(guidelines);
-            dc.DrawRectangle(Style.BackColor, Style.Border, region);
+
+            // Draw node and text.
+            dc.DrawRectangle(backColor, Style.Border, region);
 
             var text = new FormattedText(NodeInfo.Label, CultureInfo.InvariantCulture,
-                                         FlowDirection.LeftToRight, TextFont, DefaultTextSize, TextColor,
+                                         FlowDirection.LeftToRight, TextFont, DefaultTextSize, textColor,
                                          VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
 
             dc.DrawText(text, new Point(NodeInfo.CenterX - text.Width / 2,  
                                         NodeInfo.CenterY - text.Height / 2));
 
             // Display the label under the node if there is a tag.
-            var graphTag = NodeInfo.Data?.GetTag<GraphNodeTag>();
-
             if(graphTag != null && !string.IsNullOrEmpty(graphTag.Label)) {
                 var labelText = new FormattedText(graphTag.Label, CultureInfo.InvariantCulture,
-                                                  FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, TextColor,
+                                                  FlowDirection.LeftToRight, TextFont, DefaultLabelTextSize, textColor,
                                                   VisualTreeHelper.GetDpi(Visual).PixelsPerDip);
                 var textBackground = ColorBrushes.GetBrush(Settings.BackgroundColor);
                 dc.DrawRectangle(textBackground, null, new Rect(NodeInfo.CenterX - labelText.Width / 2,
@@ -59,7 +75,6 @@ namespace IRExplorerUI {
                                                  labelText.Width, labelText.Height));
             
                 //? TODO: Use LabelPlacement
-                //? TODO: Use LabelFontColor if set
                 dc.DrawText(labelText, new Point(NodeInfo.CenterX - labelText.Width / 2,
                                                  region.Bottom + labelText.Height / 4));
             }

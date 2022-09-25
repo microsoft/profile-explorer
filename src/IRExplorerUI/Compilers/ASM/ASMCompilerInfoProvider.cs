@@ -207,6 +207,9 @@ namespace IRExplorerUI.Compilers.ASM {
                 var profileMarker = new ProfileDocumentMarker(profile, Session.ProfileData,
                                                               profileOptions, ir_);
                 document.ColumnData = await profileMarker.Mark(document, function, section.ParentFunction);
+
+                // Redraw the flow graphs, may have loaded before the marker set the node tags.
+                Session.RedrawPanels();
             }
 
             // Annotate instrs. with source line numbers if debug info is available.

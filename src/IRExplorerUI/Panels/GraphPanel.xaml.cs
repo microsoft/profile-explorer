@@ -93,7 +93,6 @@ namespace IRExplorerUI {
             GraphViewer.MaxZoomLevel = MaxZoomLevel;
             SetupEvents();
 
-
             //? TODO: No context menu for expr graph yet, don't show CFG one.
             if (PanelKind == ToolPanelKind.ExpressionGraph) {
                 GraphViewer.ContextMenu = null;
@@ -925,6 +924,10 @@ namespace IRExplorerUI {
         public override void OnRegisterPanel() {
             IsPanelEnabled = false;
             ReloadSettings();
+        }
+
+        public override void OnRedrawPanel() {
+            GraphViewer.ReloadCurrentGraph();
         }
 
         private void ReloadSettings() {
