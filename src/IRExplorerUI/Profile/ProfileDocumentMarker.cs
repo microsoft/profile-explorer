@@ -101,7 +101,6 @@ namespace IRExplorerUI.Compilers.ASM {
             };
         }
 
-
         public static ProfileDocumentMarkerOptions Default => defaultInstance_;
 
         public Color PickBackColor(OptionalColumn column, int colorIndex, double percentage) {
@@ -194,7 +193,6 @@ namespace IRExplorerUI.Compilers.ASM {
 
             return PickIconForOrder(order, percentage);
         }
-
 
         public IconDrawing PickIconForOrder(int order, double percentage) {
             return order switch {
@@ -379,7 +377,6 @@ namespace IRExplorerUI.Compilers.ASM {
                         App.Settings.DocumentSettings.AlternateBackgroundColor;
                 }
 
-
                 bool markOnFlowGraph = options_.IsSignificantValue(i, weightPercentage);
                 var label = $"{weightPercentage.AsPercentageString()}";
                 var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, "");
@@ -406,7 +403,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 document.MarkBlock(block, color, markOnFlowGraph);
 
                 if (weightPercentage > options_.ElementWeightCutoff) {
-                    block.AddTag(GraphNodeTag.MakeLabel(weightPercentage.AsPercentageString()));
+                    block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsPercentageString(), color));
                 }
             }
         }
@@ -495,7 +492,6 @@ namespace IRExplorerUI.Compilers.ASM {
             var percentageColumn = columnData.AddColumn(TIME_PERCENTAGE_COLUMN);
             var timeColumn = columnData.AddColumn(TIME_COLUMN);
 
-
             for (int i = 0; i < elements.Count; i++) {
                 var element = elements[i].Item1;
                 var weight = elements[i].Item2;
@@ -523,7 +519,6 @@ namespace IRExplorerUI.Compilers.ASM {
             if (counterElements.Count == 0) {
                 return columnData;
             }
-
 
             //? TODO: Filter to hide counters
             //? TODO: Order of counters (custom sorting or fixed)
@@ -563,7 +558,6 @@ namespace IRExplorerUI.Compilers.ASM {
                 columnData.AddColumn(counterColumns[k]);
             }
 
-            
             // build lists
             // sort lists by value (parallel)
             // go over lists and assign ValueOrder

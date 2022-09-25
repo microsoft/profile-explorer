@@ -143,7 +143,6 @@ namespace IRExplorerUI.Document {
                                                   (MouseOverOpacity > 0 ? MouseOverOpacity : 1.0) :
                                                   (DefaultOpacity > 0 ? DefaultOpacity : 1.0);
 
-       
         private static readonly Typeface DefaultFont = new Typeface("Consolas");
 
         public event MouseEventHandler OnClick;
@@ -211,13 +210,13 @@ namespace IRExplorerUI.Document {
 
         protected double ComputePositionY(Rect rect, IElementOverlay previousOveraly) {
             if (AlignmentY == VerticalAlignment.Top) {
-                return Utils.SnapToPixels(rect.Top - ComputeHeight(rect) + MarginY);
+                return Utils.SnapToPixels(rect.Top - ComputeHeight(rect) - MarginY);
             }
             else if(AlignmentY == VerticalAlignment.Bottom) {
                 return Utils.SnapToPixels(rect.Bottom + MarginY);
             }
             else {
-                return Utils.SnapToPixels(rect.Top + (rect.Height - ComputeHeight(rect)) / 2 + MarginY);
+                return Utils.SnapToPixels(rect.Top + (rect.Height - ComputeHeight(rect)) / 2);
             }
         }
 

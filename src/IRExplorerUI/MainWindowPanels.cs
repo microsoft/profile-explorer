@@ -712,6 +712,16 @@ namespace IRExplorerUI {
             }
         }
 
+        public void RedrawPanels(params ToolPanelKind[] kinds) {
+            foreach (var (kind, list) in panelHostSet_) {
+                list.ForEach(item => {
+                    if (kinds.Length == 0 || kinds.Contains(item.PanelKind)) {
+                        item.Panel.OnRedrawPanel();
+                    }
+                });
+            }
+        }
+
         private void SwitchCommandFocusToPanel(PanelHostInfo panelHost) {
             var activePanel = FindActivePanel(panelHost.PanelKind);
 
@@ -939,7 +949,8 @@ namespace IRExplorerUI {
                 foreach (var doc in sessionState_.Documents) {
                     if (doc != sessionState_.MainDocument &&
                         doc != sessionState_.DiffDocument) {
-                        SectionPanel.AddOtherSummary(doc.Summary);
+                        // Add optional modules, usually used for profiling.
+                        SectionPanel.AddModuleSummary(doc.Summary);
                     }
                 }
 

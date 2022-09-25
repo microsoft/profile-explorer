@@ -189,9 +189,10 @@ public sealed class ETWEventProcessor : IDisposable {
             // A correct timestamp is needed to locate and download the image.
 
             //Trace.WriteLine($"ImageID: orig {data.OriginalFileName}, QPC {data.TimeStampQPC}");
+            //Trace.WriteLine($"ImageID: timeStamp {data.TimeDateStamp}");
             //Trace.WriteLine($"ImageID: has lastProfileImage {lastProfileImage != null}");
             //Trace.WriteLine($"    matching {lastProfileImage != null && lastProfileImageTime == data.TimeStampQPC}");
-            //
+
             //if (lastProfileImage != null) {
             //    Trace.WriteLine($"    last image: {lastProfileImage.FilePath}");
             //    Trace.WriteLine($"    last orign: {lastProfileImage.OriginalFileName}");
@@ -238,17 +239,20 @@ public sealed class ETWEventProcessor : IDisposable {
             //Trace.WriteLine($"ImageGroup: name {data.FileName}, proc {data.ProcessID}, base {data.ImageBase:X}, size {data.ImageSize:X}, procName {data.ProcessName}, TS {data.TimeStampQPC}");
             //Trace.WriteLine($"   has last {lastImageIdData != null}");
             //Trace.WriteLine($"   matching {lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC}");
-            //
+
             //if (lastImageIdData != null) {
             //    Trace.WriteLine($"    last orign: {lastImageIdData.OriginalFileName}");
-            //    Trace.WriteLine($"    qpc {lastImageIdData.TimeDateStamp} vs current {data.TimeStampQPC}");
+            //    Trace.WriteLine($"    dateStamp {lastImageIdData.TimeDateStamp} vs current {data.TimeDateStamp}");
             //}
-            
+
             if (lastImageIdData != null && lastImageIdData.TimeStampQPC == data.TimeStampQPC) {
                 // The ImageID event showed up earlier in the stream.
                 sawImageId = true;
                 originalName = lastImageIdData.OriginalFileName;
-                timeStamp = lastImageIdData.TimeDateStamp;
+
+                if (timeStamp == 0) {
+                    timeStamp = lastImageIdData.TimeDateStamp;
+                }
             }
             else if (isRealTime_) {
                 // In a capture session, the image is on the local machine,

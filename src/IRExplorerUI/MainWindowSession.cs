@@ -519,8 +519,8 @@ namespace IRExplorerUI {
             //await ShowSectionPanelDiffs(result);
         }
 
-        public void AddOtherSummary(IRTextSummary summary) {
-            SectionPanel.AddOtherSummary(summary);
+        public void AddModuleSummary(IRTextSummary summary) {
+            SectionPanel.AddModuleSummary(summary);
         }
 
         private async Task<LoadedDocument> LoadDocument(string filePath, string modulePath, Guid id,
