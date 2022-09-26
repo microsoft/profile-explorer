@@ -8,26 +8,25 @@ using System.Windows.Media;
 namespace IRExplorerUI {
     class ColorUtils {
         public static Color IncreaseSaturation(Color color, float saturationAdjustment = 2f) {
-            rgbToHsl(color, out float h, out float s, out float l);
+            RGBToHSL(color, out float h, out float s, out float l);
             s = Math.Clamp(s * saturationAdjustment, 0, 1);
             l = Math.Clamp(l * 0.5f, 0, 1);
-            return hslToRgb(h, s, l);
+            return HSLToRGB(h, s, l);
         }
 
         public static Color AdjustLight(Color color, float lightAdjustment) {
-            rgbToHsl(color, out float h, out float s, out float l);
+            RGBToHSL(color, out float h, out float s, out float l);
             l = Math.Clamp(l * lightAdjustment, 0, 1);
-            return hslToRgb(h, s, l);
+            return HSLToRGB(h, s, l);
         }
 
-        public static List<Color> MakeColorPallete(float hue, float saturation,
+        public static List<Color> MakeColorPalette(float hue, float saturation,
             float minLight, float maxLight, int lightSteps) {
             float rangeStep = (maxLight - minLight) / lightSteps;
             var colors = new List<Color>();
 
             for (float light = minLight; light <= maxLight; light += rangeStep) {
-                colors.Add(ColorUtils.hslToRgb(hue, saturation, light));
-
+                colors.Add(HSLToRGB(hue, saturation, light));
             }
 
             return colors;
@@ -83,7 +82,7 @@ namespace IRExplorerUI {
 #endif
         }
 
-        private static void rgbToHsl(Color color, out float h, out float s, out float l) {
+        private static void RGBToHSL(Color color, out float h, out float s, out float l) {
             float r = color.R / 255f;
             float g = color.G / 255f;
             float b = color.B / 255f;
@@ -112,7 +111,7 @@ namespace IRExplorerUI {
             }
         }
 
-        public static Color hslToRgb(float h, float s, float l) {
+        public static Color HSLToRGB(float h, float s, float l) {
             float r, g, b;
 
             if (Math.Abs(s) < double.Epsilon) {
@@ -121,19 +120,19 @@ namespace IRExplorerUI {
             else {
                 float q = l < 0.5f ? l * (1 + s) : l + s - l * s;
                 float p = 2 * l - q;
-                r = hueToRgb(p, q, h + 1f / 3f);
-                g = hueToRgb(p, q, h);
-                b = hueToRgb(p, q, h - 1f / 3f);
+                r = HueToRGB(p, q, h + 1f / 3f);
+                g = HueToRGB(p, q, h);
+                b = HueToRGB(p, q, h - 1f / 3f);
             }
 
-            return Color.FromRgb(to255(r), to255(g), to255(b));
+            return Color.FromRgb(To255(r), To255(g), To255(b));
         }
 
-        private static byte to255(float v) {
+        private static byte To255(float v) {
             return (byte)Math.Min(255, 256 * v);
         }
 
-        private static float hueToRgb(float p, float q, float t) {
+        private static float HueToRGB(float p, float q, float t) {
             if (t < 0f) {
                 t += 1f;
             }

@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
+using DocumentFormat.OpenXml.EMMA;
 
 namespace IRExplorerUI.Profile;
 
 public class GlyphRunCache {
     private static readonly Point ZeroPoint = new Point(0, 0);
     private readonly GlyphTypeface glyphTypeface_;
-    private readonly Dictionary<string, (GlyphRun Glyphs, double TextWidht, double TextHeight)> textGlyphsCache_;
+    private readonly Dictionary<string, List<(double MaxWidth, (GlyphRun Glyphs, double TextWidht, double TextHeight) GlyphInfo)>> textGlyphsCache_;
     private readonly Typeface typeFace_;
     private readonly double textSize_;
     private readonly float pixelsPerDip_;
@@ -19,7 +20,7 @@ public class GlyphRunCache {
         typeFace_ = typeFace;
         textSize_ = textSize;
         pixelsPerDip_ = (float)pixelsPerDip;
-        textGlyphsCache_ = new Dictionary<string, (GlyphRun Glyphs, double TextWidht, double TextHeight)>();
+        textGlyphsCache_ = new Dictionary<string, List<(double MaxWidth, (GlyphRun Glyphs, double TextWidht, double TextHeight) GlyphInfo)>>();
 
         if (!typeFace.TryGetGlyphTypeface(out glyphTypeface_)) {
             throw new InvalidOperationException("Failed to get GlyphTypeface");
@@ -40,11 +41,24 @@ public class GlyphRunCache {
     }
 
     public (GlyphRun Glyphs, double TextWidht, double TextHeight) GetGlyphs(string text) {
-        if (!textGlyphsCache_.TryGetValue(text, out var glyphInfo)) {
-            glyphInfo = MakeGlyphRun(text);
-            textGlyphsCache_[text] = glyphInfo;
+        return GetGlyphs(text, double.MaxValue);
+    }
+
+    public (GlyphRun Glyphs, double TextWidht, double TextHeight)
+        GetGlyphs(string text, double maxWidth) {
+        if (!textGlyphsCache_.TryGetValue(text, out var glyphsList)) {
+            glyphsList = new List<(double MaxWidth, (GlyphRun Glyphs, double TextWidht, double TextHeight) GlyphInfo)>();
+            textGlyphsCache_[text] = glyphsList;
         }
 
+        var index = glyphsList.FindIndex(info => Math.Abs(info.MaxWidth - maxWidth) < double.Epsilon);
+
+        if (index != -1) {
+            return glyphsList[index].GlyphInfo;
+        }
+
+        var glyphInfo = MakeGlyphRun(text);
+        glyphsList.Add((maxWidth, glyphInfo));
         return glyphInfo;
     }
 
