@@ -109,6 +109,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private double GraphAreaHeight=> GraphHost.ViewportHeight;
     private Rect GraphArea => new Rect(0, 0, GraphAreaWidth, GraphAreaHeight);
     private double GraphZoomRatio => GraphViewer.MaxGraphWidth / GraphAreaWidth;
+    private double GraphZoomRatioLog => Math.Log2(GraphZoomRatio + 1);
+    private double CenterZoomPointX => GraphHost.HorizontalOffset + GraphAreaWidth / 2;
 
     public override void OnShowPanel() {
         base.OnShowPanel();
@@ -164,17 +166,24 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private async void OnMouseDoubleClick(object sender, MouseButtonEventArgs e) {
-        var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
+        if (IsMouseOutsideViewport(e)) {
+            return;
+        }
+
+        var point = e.GetPosition(GraphViewer);
+        var pointedNode = GraphViewer.FindPointedNode(point);
 
         if (pointedNode != null) {
             await EnlargeNode(pointedNode);
         }
         else {
+            double zoomPointX = e.GetPosition(GraphViewer).X;
+
             if (Utils.IsShiftModifierActive()) {
-                ZoomOut();
+                ZoomOut(zoomPointX);
             }
             else {
-                ZoomIn();
+                ZoomIn(zoomPointX);
             }
         }
     }
@@ -193,6 +202,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             return;
         }
 
+        // Update the undo stack.
         if (saveState) {
             SaveCurrentState(FlameGraphStateKind.EnlargeNode);
         }
@@ -254,6 +264,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     public async Task ChangeRootNode(FlameGraphNode node, bool saveState = true) {
+        // Update the undo stack.
         if (saveState) {
             SaveCurrentState(FlameGraphStateKind.ChangeRootNode);
         }
@@ -348,16 +359,11 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private void GraphPanel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e) {
         // Start dragging the graph only if the click starts inside the scroll area,
         // excluding the scroll bars, and it in an empty spot.
-        var point = e.GetPosition(GraphHost);
-        Focus();
-
-        if (point.X < 0 ||
-            point.Y < 0 ||
-            point.X >= GraphHost.ViewportWidth ||
-            point.Y >= GraphHost.ViewportHeight) {
+        if (IsMouseOutsideViewport(e)) {
             return;
         }
 
+        var point = e.GetPosition(GraphHost);
         var pointedNode = GraphViewer.FindPointedNode(e.GetPosition(GraphViewer));
 
         if (pointedNode == null) {
@@ -367,8 +373,17 @@ public partial class FlameGraphPanel : ToolPanelControl {
         dragging_ = true;
         draggingStart_ = point;
         draggingViewStart_ = new Point(GraphHost.HorizontalOffset, GraphHost.VerticalOffset); CaptureMouse();
+        Focus();
         CaptureMouse();
         e.Handled = true;
+    }
+
+    private bool IsMouseOutsideViewport(MouseButtonEventArgs e) {
+        var point = e.GetPosition(GraphHost);
+        return point.X < 0 ||
+               point.Y < 0 ||
+               point.X >= GraphHost.ViewportWidth ||
+               point.Y >= GraphHost.ViewportHeight;
     }
 
     private void GraphPanel_PreviewKeyDown(object sender, KeyEventArgs e) {
@@ -399,7 +414,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             case Key.OemPlus:
             case Key.Add: {
                 if (Utils.IsControlModifierActive()) {
-                    ZoomIn();
+                    ZoomIn(CenterZoomPointX);
                     e.Handled = true;
                 }
 
@@ -408,7 +423,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             case Key.OemMinus:
             case Key.Subtract: {
                 if (Utils.IsControlModifierActive()) {
-                    ZoomOut();
+                    ZoomOut(CenterZoomPointX);
                     e.Handled = true;
                 }
 
@@ -444,16 +459,15 @@ public partial class FlameGraphPanel : ToolPanelControl {
             return;
         }
 
-        double amount = ScrollWheelZoomAmount * GraphZoomRatio; // Keep step consistent.
-        double step = amount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
-        double zoomPointX = e.GetPosition(GraphViewer).X;
-
         // Disable animation if scrolling without interruption.
         var time = DateTime.UtcNow;
         var timeElapsed = time - lastWheelZoomTime_;
         bool animate = timeElapsed.TotalMilliseconds > ScrollWheelZoomAnimationDuration;
-
+        double amount = ScrollWheelZoomAmount * GraphZoomRatioLog; // Keep step consistent.
+        double step = amount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
+        double zoomPointX = e.GetPosition(GraphViewer).X;
         AdjustZoom(step, zoomPointX, animate, ScrollWheelZoomAnimationDuration);
+
         lastWheelZoomTime_ = time;
         e.Handled = true;
     }
@@ -482,8 +496,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
         GraphHost.ScrollToHorizontalOffset(offsetAdjustment * zoom - zoomPointX);
     }
 
-    static double Lerp(double end, double end_value, double progress)  {
-        return (end + (end_value - end) * progress);
+    static double Lerp(double start, double end, double progress)  {
+        return (start + (end - start) * progress);
     }
 
     private void AdjustEnlargeNodeOffset(double progress) {
@@ -517,21 +531,19 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private void ExecuteGraphZoomIn(object sender, ExecutedRoutedEventArgs e) {
-        ZoomIn();
+        ZoomIn(CenterZoomPointX);
     }
 
-    private void ZoomIn()     {
-        double zoomPointX = GraphAreaWidth / 2;
-        AdjustZoom(ZoomAmount * GraphZoomRatio, zoomPointX, true, ZoomAnimationDuration);
+    private void ZoomIn(double zoomPointX)     {
+        AdjustZoom(ZoomAmount * GraphZoomRatioLog, zoomPointX, true, ZoomAnimationDuration);
     }
 
     private void ExecuteGraphZoomOut(object sender, ExecutedRoutedEventArgs e) {
-        ZoomOut();
+        ZoomOut(CenterZoomPointX);
     }
 
-    private void ZoomOut()     {
-        double zoomPointX = GraphAreaWidth / 2;
-        AdjustZoom(-ZoomAmount * GraphZoomRatio, zoomPointX, true, ZoomAnimationDuration);
+    private void ZoomOut(double zoomPointX)     {
+        AdjustZoom(-ZoomAmount * GraphZoomRatioLog, zoomPointX, true, ZoomAnimationDuration);
     }
 
     private void PanelToolbarTray_SettingsClicked(object sender, EventArgs e) {
@@ -584,6 +596,9 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
+        //? TODO: Reenable
+        return null;
+
         var pointedNode = GraphViewer.FindPointedNode(mousePoint);
         var callNode = pointedNode?.CallTreeNode;
 

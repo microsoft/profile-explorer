@@ -73,7 +73,7 @@ namespace IRExplorerUI {
             float hue = 0;
 
             for (int i = 0; i < lightSteps; i++) {
-                colors.Add(ColorUtils.hslToRgb(hue, saturation, light));
+                colors.Add(ColorUtils.HSLToRGB(hue, saturation, light));
                 hue += rangeStep;
 
             }
@@ -87,7 +87,7 @@ namespace IRExplorerUI {
             var colors = new List<Color>();
 
             for (float light = minLight; light <= maxLight; light += rangeStep) {
-                colors.Add(ColorUtils.hslToRgb(hue, saturation, light));
+                colors.Add(ColorUtils.HSLToRGB(hue, saturation, light));
 
             }
 

@@ -17,21 +17,20 @@ namespace IRExplorerUI.Profile {
     public class FlameGraphNode {
         internal const double DefaultMargin = 4;
         internal const double ExtraValueMargin = 20;
-        internal const double MinVisibleRectWidth = 3;
+        internal const double MinVisibleRectWidth = 4;
         internal const double MinVisibleWidth = 1;
+        private const int MaxTextParts = 3;
 
         public FlameGraphNode(ProfileCallTreeNode callTreeNode, TimeSpan weight, int depth) {
             CallTreeNode = callTreeNode;
             Weight = weight;
             Depth = depth;
-
             ShowWeight = true;
             ShowWeightPercentage = true;
-            lastWidth_ = double.MaxValue;
         }
 
-        public FlameGraphRenderer Owner { get; set; }
         public ProfileCallTreeNode CallTreeNode { get; }
+        public FlameGraphRenderer Owner { get; set; }
         public FlameGraphNode Parent { get; set; }
         public List<FlameGraphNode> Children { get; set; }
 
@@ -45,21 +44,16 @@ namespace IRExplorerUI.Profile {
         public Brush ModuleTextColor { get; set; }
         public Brush WeightTextColor { get; set; }
         public Rect Bounds { get; set; }
-        public bool IsSelected { get; set; }
-        public bool IsHovered { get; set; }
         public bool ShowWeight { get; set; }
         public bool ShowWeightPercentage { get; set; }
         public bool ShowInclusiveWeight { get; set; }
-
-        private double lastWidth_;
-        private Size lastSize_;
-        private GlyphRun lastGlyphs_;
+        public bool IsDummyNode { get; set; }
         private bool isCleared_;
 
         public void Draw(Rect visibleArea) {
             using var dc = Visual.RenderOpen();
 
-            if (Bounds.Width < MinVisibleWidth) {
+            if (IsDummyNode || Bounds.Width < MinVisibleWidth) {
                 return;
             }
 
@@ -73,35 +67,36 @@ namespace IRExplorerUI.Profile {
 
             // Start the text in the visible area.
             bool startsInView = Bounds.Left >= visibleArea.Left;
-            double offsetX = startsInView? Bounds.Left : visibleArea.Left;
+            double offsetX = startsInView ? Bounds.Left : visibleArea.Left;
             double maxWidth = Bounds.Width - 2 * DefaultMargin;
 
             if (!startsInView) {
                 maxWidth -= visibleArea.Left - Bounds.Left;
             }
 
-            while (maxWidth > 8 && index < 3 && !trimmed) {
+            while (maxWidth > 8 && index < MaxTextParts && !trimmed) {
                 string label = "";
-                string moduleLabel = null;
                 bool useNameFont = false;
                 Brush textColor = TextColor;
 
                 //? font color, bold
-                switch(index) {
+                switch (index) {
                     case 0: {
                         if (CallTreeNode != null) {
                             label = CallTreeNode.FunctionName;
 
-                            if (true) { //? TODO: option and cache
-                              moduleLabel = CallTreeNode.ModuleName + "!";
-                              var (modText, modGlyphs, modTextTrimmed, modTextSize) = TrimTextToWidth(moduleLabel, maxWidth - margin, false);
+                            if (true) {
+                                //? TODO: option and cache
+                                var moduleLabel = CallTreeNode.ModuleName + "!";
+                                var (modText, modGlyphs, modTextTrimmed, modTextSize) =
+                                    TrimTextToWidth(moduleLabel, maxWidth - margin, false);
 
-                              if (modText.Length > 0) {
-                                  DrawText(modGlyphs, ModuleTextColor, offsetX, margin, modTextSize, dc);
-                              }
+                                if (modText.Length > 0) {
+                                    DrawText(modGlyphs, ModuleTextColor, offsetX, margin, modTextSize, dc);
+                                }
 
-                              maxWidth -= modTextSize.Width + 1;
-                              offsetX += modTextSize.Width + 1;
+                                maxWidth -= modTextSize.Width + 1;
+                                offsetX += modTextSize.Width + 1;
                             }
                         }
                         else {
@@ -130,10 +125,14 @@ namespace IRExplorerUI.Profile {
 
                         break;
                     }
-                };
+                    default: {
+                        throw new InvalidOperationException();
+                    }
+                }
 
-                //? Extend cache to all text parts, saved in array by index
-                var (text, glyphs, textTrimmed, textSize) = TrimTextToWidth(label, maxWidth - margin, useNameFont, index == 0);
+                // Trim the text to fit into the remaining space and draw it.
+                var (text, glyphs, textTrimmed, textSize) =
+                    TrimTextToWidth(label, maxWidth - margin, useNameFont);
 
                 if (text.Length > 0) {
                     DrawText(glyphs, textColor, offsetX, margin, textSize, dc);
@@ -147,7 +146,7 @@ namespace IRExplorerUI.Profile {
         }
 
         private void DrawText(GlyphRun glyphs, Brush textColor, double offsetX, double margin,
-                              Size textSize, DrawingContext dc) {
+            Size textSize, DrawingContext dc) {
             double x = offsetX + margin;
             double y = Bounds.Top + Bounds.Height / 2 + textSize.Height / 4;
 
@@ -176,17 +175,11 @@ namespace IRExplorerUI.Profile {
         }
 
         private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
-            TrimTextToWidth(string text, double maxWidth, bool useNameFont, bool useCache = false) {
-            var cache = useNameFont ? Owner.NameGlyphsCache : Owner.GlyphsCache;
+            TrimTextToWidth(string text, double maxWidth, bool useNameFont) {
+            var glyphsCache = useNameFont ? Owner.NameGlyphsCache : Owner.GlyphsCache;
 
             if (maxWidth <= 0 || string.IsNullOrEmpty(text)) {
-                return ("", cache.GetGlyphs("").Glyphs, true, Size.Empty);
-            }
-
-            if (useCache) {
-                if (maxWidth >= lastWidth_) {
-                    return (text, lastGlyphs_, false, lastSize_);
-                }
+                return ("", glyphsCache.GetGlyphs("").Glyphs, true, Size.Empty);
             }
 
             //? TODO: cache measurement and reuse if
@@ -194,7 +187,7 @@ namespace IRExplorerUI.Profile {
             //  - size is smaller, but less than a delta that's some multiple of avg letter width
             //? could also remember based on # of letter,  letters -> Size mapping
 
-            var (glyphs, textWidth, textHeight) = cache.GetGlyphs(text);
+            var (glyphs, textWidth, textHeight) = glyphsCache.GetGlyphs(text, maxWidth);
             bool trimmed = false;
 
             if (textWidth > maxWidth) {
@@ -206,23 +199,12 @@ namespace IRExplorerUI.Profile {
 
                 if (text.Length > extraLetters) {
                     text = text.Substring(0, text.Length - extraLetters) + ".";
-                    (glyphs, textWidth, textHeight) = cache.GetGlyphs(text);
+                    (glyphs, textWidth, textHeight) = glyphsCache.GetGlyphs(text, maxWidth);
                 }
                 else {
                     text = "";
-                    (glyphs, textWidth, textHeight) = cache.GetGlyphs(text);
+                    (glyphs, textWidth, textHeight) = glyphsCache.GetGlyphs(text, maxWidth);
                     textWidth = maxWidth;
-                }
-            }
-
-            if (useCache) {
-                if (!trimmed) {
-                    lastWidth_ = maxWidth;
-                    lastGlyphs_ = glyphs;
-                    lastSize_ = new Size(textWidth, textHeight);
-                }
-                else {
-                    lastWidth_ = Double.MaxValue; // Invalidate.
                 }
             }
 
@@ -257,8 +239,8 @@ namespace IRExplorerUI.Profile {
         }
 
         private FlameGraphNode Build(FlameGraphNode flameNode, TimeSpan weight,
-                                     ICollection<ProfileCallTreeNode> children, int depth) {
-            if(children == null || children.Count == 0) {
+            ICollection<ProfileCallTreeNode> children, int depth) {
+            if (children == null || children.Count == 0) {
                 return flameNode;
             }
 
@@ -306,9 +288,11 @@ namespace IRExplorerUI.Profile {
         private Pen defaultBorder_;
         private Brush placeholderColor_;
         private DrawingVisual graphVisual_;
+        private DrawingVisual dummyNodesVisual_;
         private GlyphRunCache glyphs_;
         private GlyphRunCache nameGlyphs_;
         private QuadTree<FlameGraphNode> nodesQuadTree_;
+        private QuadTree<FlameGraphNode> dummyNodesQuadTree_;
 
         public GlyphRunCache GlyphsCache => glyphs_;
         public GlyphRunCache NameGlyphsCache => nameGlyphs_;
@@ -323,8 +307,10 @@ namespace IRExplorerUI.Profile {
             maxWidth_ = visibleArea.Width;
             visibleArea_ = visibleArea;
             palette_ = ColorPalette.Profile;
+            //palette_ = ColorPalette.MakeScale(0.5f, 0.8f, 0.8f, 1, 10);
+
             defaultBorder_ = ColorPens.GetPen(Colors.Black);
-            placeholderColor_ = ColorBrushes.GetBrush(Colors.DarkGray);
+            placeholderColor_ = ColorBrushes.GetBrush(Colors.Green);
 
             nodeHeight_ = 18; //? Option
             font_ = new Typeface("Segoe UI");
@@ -347,15 +333,13 @@ namespace IRExplorerUI.Profile {
             //? invert graph, tooltips, options struct with node height, font, histogram etc
             //! keyboard, cener zoom if not mouse
             graphVisual_ = new DrawingVisual();
+            dummyNodesVisual_ = new DrawingVisual();
             SetupNodeVisual(node, graphVisual_);
             return graphVisual_;
         }
 
         private DrawingVisual SetupNodeVisual(FlameGraphNode node, DrawingVisual graphVisual) {
-            node.Owner = this;
-            node.Visual = new DrawingVisual();
-            node.Visual.SetValue(FrameworkElement.TagProperty, node);
-            graphVisual.Children.Add(node.Visual);
+            CreateNodeVisual(node, graphVisual);
 
             //? TODO: Palette based on module
             //? int colorIndex = Math.Min(node.Depth, palette_.Count - 1);
@@ -375,6 +359,17 @@ namespace IRExplorerUI.Profile {
             return node.Visual;
         }
 
+        private void CreateNodeVisual(FlameGraphNode node, DrawingVisual graphVisual) {
+            node.Owner = this;
+            node.Visual = new DrawingVisual();
+            node.Visual.SetValue(FrameworkElement.TagProperty, node);
+            graphVisual.Children.Add(node.Visual);
+        }
+
+        private void RemoveNodeVisual(FlameGraphNode node, DrawingVisual graphVisual) {
+            graphVisual.Children.Remove(node.Visual);
+        }
+
         public void UpdateMaxWidth(double maxWidth) {
             maxWidth_ = maxWidth;
             Redraw(true);
@@ -390,79 +385,140 @@ namespace IRExplorerUI.Profile {
             return flameGraph_.ScaleWeight(weight);
         }
 
+        private HashSet<FlameGraphNode> visibleNodes_;
+
         private void Redraw(bool resized) {
             using var graphDC = graphVisual_.RenderOpen();
 
-            if (!resized && nodesQuadTree_ != null) {
-                // Update only the visible nodes on scrolling.
-                foreach (var node in nodesQuadTree_.GetNodesInside(visibleArea_)) {
-                    node.Draw(visibleArea_);
-                }
-                return;
+            if (resized || nodesQuadTree_ == null) {
+                // Recompute the position of all nodes and rebuild the quad tree.
+                nodesQuadTree_ = new QuadTree<FlameGraphNode>();
+                dummyNodesQuadTree_ = new QuadTree<FlameGraphNode>();
+                nodesQuadTree_.Bounds = GraphArea;
+                dummyNodesQuadTree_.Bounds = GraphArea;
+                maxNodeDepth_ = 0;
+                UpdateNodeWidth(flameGraph_.RootNode, 0, 0, true);
             }
 
-            // Recompute the position of all nodes and rebuild the quad tree.
-            nodesQuadTree_ = new QuadTree<FlameGraphNode>();
-            nodesQuadTree_.Bounds = GraphArea;
-            maxNodeDepth_ = 0;
-            UpdateNodeWidth(flameGraph_.RootNode, 0, 0, graphDC, true);
+            var newVisibleNodes = new HashSet<FlameGraphNode>(visibleNodes_?.Count ?? 128);
+
+            // Update only the visible nodes on scrolling.
+            foreach (var node in nodesQuadTree_.GetNodesInside(visibleArea_)) {
+                node.Draw(visibleArea_);
+                newVisibleNodes.Add(node);
+            }
+
+            foreach (var node in dummyNodesQuadTree_.GetNodesInside(visibleArea_)) {
+                graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, node.Bounds);
+            }
+
+            if (visibleNodes_ != null) {
+                foreach (var node in visibleNodes_) {
+                    if (!newVisibleNodes.Contains(node)) {
+                        node.Clear();
+                    }
+                }
+            }
+
+            visibleNodes_ = newVisibleNodes;
         }
 
-        private void UpdateNodeWidth(FlameGraphNode node, double x, double y, DrawingContext graphDC, bool redraw) {
+        private void UpdateNodeWidth(FlameGraphNode node, double x, double y, bool redraw) {
             double width = flameGraph_.ScaleWeight(node.Weight) * maxWidth_;
             var prevBounds = node.Bounds;
             node.Bounds = new Rect(x, y, width, nodeHeight_);
             node.Bounds = Utils.SnapToPixels(node.Bounds);
+            node.IsDummyNode = !redraw;
 
             if (node.Bounds.Width > 0 && node.Bounds.Height > 0) {
                 nodesQuadTree_.Insert(node, node.Bounds);
             }
 
             if (redraw) {
-                if (width < FlameGraphNode.MinVisibleRectWidth) {
-                    redraw = false;
-                }
-                else {
+                //if (node.Bounds.Width >= FlameGraphNode.MinVisibleRectWidth) {
                     maxNodeDepth_ = Math.Max(node.Depth, maxNodeDepth_);
-                }
+                //}
             }
 
             if (node.Children != null) {
-                bool redrawChildren = redraw;
+                // Children are sorted by weight or time.
+                int skippedChildren = 0;
 
-                // Children are sorted by weight.
-                for(int i = 0; i < node.Children.Count; i++) {
+                for (int i = 0; i < node.Children.Count; i++) {
                     //? If multiple children below width, single patterned rect
                     var childNode = node.Children[i];
                     var childWidth = flameGraph_.ScaleWeight(childNode.Weight) * maxWidth_;
                     childWidth = Utils.SnapToPixels(childWidth);
 
-                    if (redrawChildren && childWidth < FlameGraphNode.MinVisibleRectWidth) {
-                        double remainingWidth = childWidth;
 
-                        for (int k = i + 1; k < node.Children.Count; k++) {
-                            remainingWidth += flameGraph_.ScaleWeight(node.Children[k].Weight) * maxWidth_;
+                    if (skippedChildren == 0) {
+                        if (childWidth < FlameGraphNode.MinVisibleRectWidth) {
+                            childNode.IsDummyNode = true;
+                            var replacement = CreateSmallWeightDummyNode(node, x, y, i, out skippedChildren);
                         }
-
-                        var replacement = new Rect(x, y + nodeHeight_, remainingWidth, nodeHeight_);
-                        //? Could make color darker than level
-                        //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
-                        graphDC.DrawRectangle(placeholderColor_, childNode.Style.Border, replacement);
-                        redrawChildren = false;
+                    }
+                    else {
+                        childNode.IsDummyNode = true;
                     }
 
-                    UpdateNodeWidth(childNode, x, y + nodeHeight_, graphDC, redrawChildren);
+                    UpdateNodeWidth(childNode, x, y + nodeHeight_, skippedChildren == 0);
                     x += childWidth;
+
+                    if (skippedChildren > 0) {
+                        childNode.IsDummyNode = true;
+                        skippedChildren--;
+                    }
                 }
             }
+        }
 
-            if (redraw && (node.Bounds.IntersectsWith(visibleArea_) ||
-                           prevBounds.IntersectsWith(previousVisibleArea_))) {
-                node.Draw(visibleArea_);
+        private FlameGraphNode CreateSmallWeightDummyNode(FlameGraphNode node, double x, double y,
+            int startIndex, out int skippedChildren) {
+            TimeSpan totalWeight = TimeSpan.Zero;
+            double totalWidth = 0;
+
+            // Collect all the child nodes that have a small weight
+            // and replace them by one dummy node.
+            int k;
+
+            for (k = startIndex; k < node.Children.Count; k++) {
+                var childNode = node.Children[k];
+                double childWidth = flameGraph_.ScaleWeight(childNode.Weight) * maxWidth_;
+
+                // In case child sorting is not by weight, stop extending the range
+                // when a larger one is found again.
+                if (childWidth > FlameGraphNode.MinVisibleRectWidth) {
+                    break;
+                }
+
+                totalWidth += childWidth;
+                totalWeight += childNode.Weight;
             }
-            else {
-                node.Clear();
+
+            skippedChildren = k - startIndex; // Caller should ignore these children.
+
+            if (totalWidth < FlameGraphNode.MinVisibleRectWidth) {
+                return null; // Nothing to draw.
             }
+
+            var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
+            var dummyNode = new FlameGraphNode(null, totalWeight, 0);
+            dummyNode.IsDummyNode = true;
+            dummyNode.Bounds = replacement;
+            dummyNode.Style = PickDummyNodeStyle(node.Style);
+            dummyNodesQuadTree_.Insert(dummyNode, replacement);
+            //! CreateNodeVisual(dummyNode, dummyNodesVisual_);
+
+            //? Could make color darker than level, or less satureded  better
+            //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
+            return dummyNode;
+        }
+
+        private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {
+            var newColor = ColorUtils.IncreaseSaturation(((SolidColorBrush)style.BackColor).Color, 0.3f);
+            newColor = ColorUtils.AdjustLight(newColor, 2.0f);
+
+            return new HighlightingStyle(newColor, style.Border);
         }
     }
 }
