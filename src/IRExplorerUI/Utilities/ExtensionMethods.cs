@@ -319,8 +319,12 @@ namespace IRExplorerUI {
             return ColorPens.GetBoldPen(color);
         }
 
+        public static string AsTrimmedPercentageString(this double value, int digits = 2, string suffix = "%") {
+            return AsPercentageString(value, digits, true, suffix);
+        }
+
         public static string AsPercentageString(this double value, int digits = 2,
-                                                bool trim = true, string suffix="%") {
+                                                bool trim = false, string suffix="%") {
             value = Math.Round(value * 100, digits);
 
             if (value == 0 && trim) {

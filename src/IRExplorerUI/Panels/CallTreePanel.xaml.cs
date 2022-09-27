@@ -77,7 +77,6 @@ namespace IRExplorerUI {
 
         public ChildFunctionExKind Kind { get; set; }
         public bool IsMarked { get; set; }
-
         public TextSearchResult? SearchResult { get; set; }
         public IRTextFunction Function { get; set; } //? TODO: Could use CallTreeNode.Function
         public ProfileCallTreeNode CallTreeNode { get; set; }
@@ -222,55 +221,62 @@ namespace IRExplorerUI {
         public CallTreePanel() {
             InitializeComponent();
             settings_ = App.Settings.CallTreeSettings;
-
             DataContext = this;
-            CallTree.NodeExpanded += CallTreeOnNodeExpanded;
+            SetupEvents();
+        }
 
-            // https://docs.microsoft.com/en-us/dotnet/desktop/wpf/controls/how-to-position-a-tooltip?view=netframeworkdesktop-4.8
+        private void SetupEvents() {
+            CallTree.NodeExpanded += CallTreeOnNodeExpanded;
             stackHoverPreview_ = new DraggablePopupHoverPreview(CallTree, CreateBacktracePopup);
         }
 
         private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
             var element = (UIElement)CallTree.GetObjectAtPoint<ListViewItem>(mousePoint);
-            var funcNode = ((TreeListItem)(ListViewItem)element).Node?.Tag as ChildFunctionEx;
+
+            if (element is not TreeListItem treeItem) {
+                return null;
+            }
+
+            var funcNode = treeItem.Node?.Tag as ChildFunctionEx;
             var callNode = funcNode?.CallTreeNode;
 
             if (callNode != null) {
-                return new CallTreeNodePopup(callNode, previewPoint, 500, 400, CallTree, Session);
+                //? TODO: Pass parent and stack trace
+                return new CallTreeNodePopup(callNode, null, previewPoint, 500, 400, CallTree, Session);
             }
 
             return null;
         }
 
         private void CallTreeOnNodeExpanded(object sender, TreeNode node) {
-            var funcNode = node.Tag as ChildFunctionEx;
+            if (node.Tag is not ChildFunctionEx funcNode) {
+                return;
+            }
 
-            if (funcNode != null) {
-                // If children not populated yet, there is a single dummy node.
-                if (funcNode.Children.Count == 1 &&
-                    funcNode.Children[0].Kind == ChildFunctionExKind.ChildrenPlaceholder) {
-                    var callNode = funcNode.CallTreeNode;
-                    var visitedNodes = new HashSet<ProfileCallTreeNode>();
+            // If children not populated yet, there is a single dummy node.
+            if (funcNode.Children.Count == 1 &&
+                funcNode.Children[0].Kind == ChildFunctionExKind.ChildrenPlaceholder) {
+                var callNode = funcNode.CallTreeNode;
+                var visitedNodes = new HashSet<ProfileCallTreeNode>();
 
-                    // Remove the dummy node and add the real children.
-                    // If the children have children on their own, new dummy nodes will be used.
-                    funcNode.Children.Clear();
+                // Remove the dummy node and add the real children.
+                // If the children have children on their own, new dummy nodes will be used.
+                funcNode.Children.Clear();
 
-                    if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
-                        var percentageFunc = PickPercentageFunction(callNode.Weight);
+                if (funcNode.Kind == ChildFunctionExKind.CalleeNode && callNode.HasChildren) {
+                    var percentageFunc = PickPercentageFunction(callNode.Weight);
 
-                        foreach (var childNode in callNode.Children) {
-                            CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
-                                                  visitedNodes, percentageFunc);
-                        }
+                    foreach (var childNode in callNode.Children) {
+                        CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
+                            visitedNodes, percentageFunc);
                     }
-                    else if (funcNode.Kind == ChildFunctionExKind.CallerNode && callNode.HasCallers) {
-                        var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
+                }
+                else if (funcNode.Kind == ChildFunctionExKind.CallerNode && callNode.HasCallers) {
+                    var percentageFunc = PickPercentageFunction(Session.ProfileData.ProfileWeight);
 
-                        foreach (var childNode in callNode.Callers) {
-                            CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
-                                visitedNodes, percentageFunc);
-                        }
+                    foreach (var childNode in callNode.Callers) {
+                        CreateProfileCallTree(childNode, funcNode, funcNode.Kind,
+                            visitedNodes, percentageFunc);
                     }
                 }
             }

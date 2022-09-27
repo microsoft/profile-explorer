@@ -48,7 +48,8 @@
                     Margin="4,0,0,0"
                     VerticalAlignment="Center"
                     FontWeight="DemiBold"
-                    Text="{Binding PanelTitle}" />
+                    Text="{Binding Node.FunctionName}"
+                    ToolTip="{Binding Node.FullFunctionName}" />
             </Grid>
             <ToggleButton
                 x:Name="FindButton"
@@ -76,28 +77,68 @@
                     Source="{StaticResource CloseIcon}" />
             </Button>
 
-            <DockPanel Grid.Row="1" Grid.ColumnSpan="3">
+            <DockPanel
+                Grid.Row="1"
+                Grid.ColumnSpan="3"
+                Margin="4,4,0,0">
                 <StackPanel DockPanel.Dock="Top">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Time (inc)" />
+                        <TextBlock Width="70" Text="Time (total)" />
                         <TextBlock
                             Margin="4,0,0,0"
                             FontWeight="DemiBold"
-                            Text="{Binding CallTreeNode.Weight}" />
+                            Text="{Binding Node.Time}" />
+                        <Rectangle
+                            Width="{Binding Path=Node.Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                            Height="16"
+                            Margin="4,0,0,0"
+                            HorizontalAlignment="Left"
+                            Fill="#Aa4343"
+                            Stroke="Black" />
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Time (exc)" />
+                        <TextBlock Width="70" Text="Time (self)" />
                         <TextBlock
                             Margin="4,0,0,0"
                             FontWeight="DemiBold"
-                            Text="{Binding CallTreeNode.ExclusiveWeight}" />
+                            Text="{Binding Node.ExclusiveTime}" />
+                        <Rectangle
+                            Width="{Binding Path=Node.PercentageExclusive, Converter={StaticResource DoubleScaling}, ConverterParameter=100.0}"
+                            Height="16"
+                            Margin="4,0,0,0"
+                            Fill="#4A73C4"
+                            Stroke="Black" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding ParentTimeVisible, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Width="70" Text="Self Weight" />
+                        <TextBlock
+                            Margin="4,0,0,0"
+                            FontWeight="DemiBold"
+                            Text="{Binding Node.SelfTime}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding ParentTimeVisible, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Width="70" Text="Parent Weight" />
+                        <TextBlock
+                            Margin="4,0,0,0"
+                            FontWeight="DemiBold"
+                            Text="{Binding Node.ParentTime}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding ParentTimeVisible, Converter={StaticResource BoolToVisibility}}">
+                        <TextBlock Width="70" Text="Module" />
+                        <TextBlock
+                            Margin="4,0,0,0"
+                            FontWeight="DemiBold"
+                            Text="{Binding Node.ModuleName}" />
                     </StackPanel>
                 </StackPanel>
 
                 <Expander
+                    Margin="0,4,0,4"
                     HorizontalAlignment="Stretch"
                     VerticalAlignment="Stretch"
-                    Header="Backtrace">
+                    Header="Backtrace"
+                    IsExpanded="True">
                     <doc:SearcheableIRDocument
                         x:Name="TextView"
                         HorizontalAlignment="Stretch"
@@ -107,8 +148,6 @@
                 </Expander>
                 <controls:ResizeGrip
                     x:Name="PanelResizeGrip"
-                    Grid.Row="1"
-                    Grid.Column="2"
                     Width="16"
                     Height="16"
                     HorizontalAlignment="Right"

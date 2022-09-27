@@ -386,6 +386,7 @@ namespace IRExplorerUI.Profile {
         }
 
         private HashSet<FlameGraphNode> visibleNodes_;
+        private DrawingBrush placeholderTileBrush_;
 
         private void Redraw(bool resized) {
             using var graphDC = graphVisual_.RenderOpen();
@@ -410,6 +411,7 @@ namespace IRExplorerUI.Profile {
 
             foreach (var node in dummyNodesQuadTree_.GetNodesInside(visibleArea_)) {
                 graphDC.DrawRectangle(node.Style.BackColor, node.Style.Border, node.Bounds);
+                graphDC.DrawRectangle(CreatePlaceholderTiledBrush(8), null, node.Bounds);
             }
 
             if (visibleNodes_ != null) {
@@ -517,8 +519,46 @@ namespace IRExplorerUI.Profile {
         private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {
             var newColor = ColorUtils.IncreaseSaturation(((SolidColorBrush)style.BackColor).Color, 0.3f);
             newColor = ColorUtils.AdjustLight(newColor, 2.0f);
-
             return new HighlightingStyle(newColor, style.Border);
+        }
+
+
+        private DrawingBrush CreatePlaceholderTiledBrush(double tileSize) {
+            // Create the brush once, freeze and reuse it everywhere.
+            if (placeholderTileBrush_ != null) {
+                return placeholderTileBrush_;
+            }
+
+            tileSize = Math.Ceiling(tileSize);
+            var line = new LineSegment(new Point(0, 0), true);
+            line.IsSmoothJoin = false;
+            line.Freeze();
+            var figure = new PathFigure();
+            figure.IsClosed = false;
+            figure.StartPoint = new Point(tileSize, tileSize);
+            figure.Segments.Add(line);
+            figure.Freeze();
+            var geometry = new PathGeometry();
+            geometry.Figures.Add(figure);
+            geometry.Freeze();
+            var drawing = new GeometryDrawing();
+            drawing.Geometry = geometry;
+
+            var penBrush = ColorBrushes.GetBrush(Colors.DimGray);
+            drawing.Pen = new Pen(penBrush, 1.0f);
+            drawing.Freeze();
+            var brush = new DrawingBrush();
+            brush.Drawing = drawing;
+            brush.Stretch = Stretch.None;
+            brush.TileMode = TileMode.Tile;
+            brush.Viewbox = new Rect(0, 0, tileSize, tileSize);
+            brush.ViewboxUnits = BrushMappingMode.Absolute;
+            brush.Viewport = new Rect(0, 0, tileSize, tileSize);
+            brush.ViewportUnits = BrushMappingMode.Absolute;
+            RenderOptions.SetCachingHint(brush, CachingHint.Cache);
+            brush.Freeze();
+            placeholderTileBrush_ = brush;
+            return placeholderTileBrush_;
         }
     }
 }
