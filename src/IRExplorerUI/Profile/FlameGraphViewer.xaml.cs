@@ -86,10 +86,12 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         node.Style = isParent ? PickHoveredParentNodeStyle(node.Style) :
                                 PickHoveredNodeStyle(node.Style);
-        node.Draw(renderer_.VisibleArea);
-
         if (includeParents && node.Parent != null) {
             HighlightNode(node.Parent, type, includeParents, true);
+        }
+
+        if (!isParent) {
+            renderer_.Redraw();
         }
     }
 
@@ -99,7 +101,6 @@ public partial class FlameGraphViewer : FrameworkElement {
 
         foreach (var pair in group) {
             pair.Key.Style = pair.Value;
-            pair.Key.Draw(renderer_.VisibleArea);
 
             if (includeParents) {
                 FlameGraphNode parentNode = pair.Key.Parent;
@@ -107,7 +108,6 @@ public partial class FlameGraphViewer : FrameworkElement {
                 while (parentNode != null) {
                     if (group.TryGetValue(parentNode, out var oldStyle)) {
                         parentNode.Style = oldStyle;
-                        parentNode.Draw(renderer_.VisibleArea);
                     }
 
                     parentNode = parentNode.Parent;
@@ -116,12 +116,13 @@ public partial class FlameGraphViewer : FrameworkElement {
         }
 
         group.Clear();
+        renderer_.Redraw();
     }
 
 
     public void ResetNodeHighlighting() {
-        hoveredNode_?.Clear();
-        selectedNode_?.Clear();
+        ResetHighlightedNodes(HighlighingType.Hovered, true);
+        ResetHighlightedNodes(HighlighingType.Selected, true);
         hoveredNode_ = null;
         selectedNode_ = null;
     }
