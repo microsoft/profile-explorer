@@ -210,7 +210,7 @@ namespace IRExplorerUI {
                         DisplaProfileCallerCalleeTree(function_);
                     }
                     else {
-                        DisplaProfileCallTree();
+                        DisplayProfileCallTree();
                     }
                 }
             }
@@ -334,7 +334,7 @@ namespace IRExplorerUI {
             return weight => (double)weight.Ticks / (double)totalWeight.Ticks;
         }
 
-        public async Task DisplaProfileCallTree() {
+        public async Task DisplayProfileCallTree() {
             if (profileCallTree_ != null) {
                 return;
             }
@@ -810,7 +810,7 @@ namespace IRExplorerUI {
             var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
 
             if (panel != null) {
-                await panel.DisplaProfileCallTree();
+                await panel.DisplayProfileCallTree();
             }
         }
 

@@ -1361,7 +1361,7 @@ namespace IRExplorerUI {
             var result = window.ShowDialog();
 
             if (result.HasValue && result.Value) {
-                await SectionPanel.RefreshMainSummary();
+                await SectionPanel.RefreshModuleSummaries();
                 SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
             }
         }
@@ -1372,7 +1372,7 @@ namespace IRExplorerUI {
             var result = window.ShowDialog();
 
             if (result.HasValue && result.Value) {
-                await SectionPanel.RefreshMainSummary();
+                await SectionPanel.RefreshModuleSummaries();
                 SetOptionalStatus(TimeSpan.FromSeconds(10), "Profile data loaded");
             }
         }

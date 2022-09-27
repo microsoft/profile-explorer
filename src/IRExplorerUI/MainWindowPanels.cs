@@ -943,9 +943,7 @@ namespace IRExplorerUI {
         private async Task SetupSectionPanel() {
             if (SectionPanel.MainSummary == null) {
                 SectionPanel.CompilerInfo = compilerInfo_;
-                await SectionPanel.SetMainSummary(sessionState_.MainDocument.Summary);
-                SectionPanel.MainTitle = sessionState_.MainDocument.ModuleName;
-
+                
                 foreach (var doc in sessionState_.Documents) {
                     if (doc != sessionState_.MainDocument &&
                         doc != sessionState_.DiffDocument) {
@@ -954,6 +952,8 @@ namespace IRExplorerUI {
                     }
                 }
 
+                await SectionPanel.SetMainSummary(sessionState_.MainDocument.Summary);
+                SectionPanel.MainTitle = sessionState_.MainDocument.ModuleName;
                 SectionPanel.OnSessionStart();
             }
 
