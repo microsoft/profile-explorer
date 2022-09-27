@@ -29,6 +29,7 @@ namespace IRExplorerUI.Profile {
             ShowWeightPercentage = true;
         }
 
+        public virtual bool IsGroup => false;
         public ProfileCallTreeNode CallTreeNode { get; }
         public FlameGraphRenderer Owner { get; set; }
         public FlameGraphNode Parent { get; set; }
@@ -50,7 +51,7 @@ namespace IRExplorerUI.Profile {
         public bool IsDummyNode { get; set; }
         private bool isCleared_;
 
-        public void Draw(Rect visibleArea) {
+        public virtual void Draw(Rect visibleArea) {
             using var dc = Visual.RenderOpen();
 
             if (IsDummyNode || Bounds.Width < MinVisibleWidth) {
@@ -212,6 +213,21 @@ namespace IRExplorerUI.Profile {
         }
     }
 
+
+    public class FlameGraphGroupNode : FlameGraphNode {
+        public override bool IsGroup => true;
+        public List<ProfileCallTreeNode> Nodes { get; }
+
+        public FlameGraphGroupNode(List<ProfileCallTreeNode> nodes, TimeSpan weight, int depth) :
+            base(null, weight, depth) {
+            Nodes = nodes;
+
+        }
+
+        public override void Draw(Rect visibleArea) {
+            
+        }
+    }
 
     public class FlameGraph {
         public double MaxWidth { get; set; }
@@ -481,6 +497,7 @@ namespace IRExplorerUI.Profile {
 
             // Collect all the child nodes that have a small weight
             // and replace them by one dummy node.
+            var nodes = new List<ProfileCallTreeNode>(node.Children.Count - startIndex);
             int k;
 
             for (k = startIndex; k < node.Children.Count; k++) {
@@ -493,6 +510,7 @@ namespace IRExplorerUI.Profile {
                     break;
                 }
 
+                nodes.Add(childNode.CallTreeNode);
                 totalWidth += childWidth;
                 totalWeight += childNode.Weight;
             }
@@ -504,16 +522,34 @@ namespace IRExplorerUI.Profile {
             }
 
             var replacement = new Rect(x, y + nodeHeight_, totalWidth, nodeHeight_);
-            var dummyNode = new FlameGraphNode(null, totalWeight, 0);
+            var dummyNode = new FlameGraphGroupNode(nodes, totalWeight, node.Depth);
             dummyNode.IsDummyNode = true;
             dummyNode.Bounds = replacement;
             dummyNode.Style = PickDummyNodeStyle(node.Style);
             dummyNodesQuadTree_.Insert(dummyNode, replacement);
-            //! CreateNodeVisual(dummyNode, dummyNodesVisual_);
+            //CreateNodeVisual(dummyNode, dummyNodesVisual_);
 
             //? Could make color darker than level, or less satureded  better
             //! TODO: Make a fake node that has details (sum of weights, tooltip with child count, etc)
             return dummyNode;
+        }
+
+        public FlameGraphNode HitTestNode(Point point) {
+            if (nodesQuadTree_ != null) {
+                var nodes = nodesQuadTree_.GetNodesInside(new Rect(point, point));
+                foreach (var node in nodes) {
+                    return node;
+                }
+            }
+
+            if (dummyNodesQuadTree_ != null) {
+                var nodes = dummyNodesQuadTree_.GetNodesInside(new Rect(point, point));
+                foreach (var node in nodes) {
+                    return node;
+                }
+            }
+
+            return null;
         }
 
         private HighlightingStyle PickDummyNodeStyle(HighlightingStyle style) {
