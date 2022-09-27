@@ -205,17 +205,19 @@ public partial class FlameGraphViewer : FrameworkElement {
     }
 
     public FlameGraphNode FindPointedNode(Point point) {
-        var result = VisualTreeHelper.HitTest(this, point);
+        return renderer_.HitTestNode(point);
 
-        if (result == null) {
-            return null;
-        }
+        //var result = VisualTreeHelper.HitTest(this, point);
 
-        if (result.VisualHit is DrawingVisual visual) {
-            return visual.ReadLocalValue(TagProperty) as FlameGraphNode;
-        }
+        //if (result == null) {
+        //    return null;
+        //}
 
-        return null;
+        //if (result.VisualHit is DrawingVisual visual) {
+        //    return visual.ReadLocalValue(TagProperty) as FlameGraphNode;
+        //}
+
+        //return null;
     }
 
     protected override int VisualChildrenCount => 1;
