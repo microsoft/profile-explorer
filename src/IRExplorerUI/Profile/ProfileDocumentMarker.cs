@@ -322,7 +322,7 @@ namespace IRExplorerUI.Compilers.ASM {
 
                         var targetNode = callTree.FindNode(target.NodeId);
                         double weightPercentage = callsite.ScaleWeight(target.Weight);
-                        sb.Append($"{weightPercentage.AsPercentageString(2, false).PadLeft(6)} | {target.Weight.AsMillisecondsString()} | {targetNode.FunctionName}");
+                        sb.Append($"{weightPercentage.AsPercentageString().PadLeft(6)} | {target.Weight.AsMillisecondsString()} | {targetNode.FunctionName}");
                     }
 
                     var label = $"Indirect call targets:\n{sb}";
@@ -378,7 +378,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
 
                 bool markOnFlowGraph = options_.IsSignificantValue(i, weightPercentage);
-                var label = $"{weightPercentage.AsPercentageString()}";
+                var label = $"{weightPercentage.AsTrimmedPercentageString()}";
                 var overlay = document.RegisterIconElementOverlay(block, icon, 0, overlayHeight, label, "");
                 overlay.Background = color.AsBrush();
                 overlay.Border = blockPen;
@@ -403,7 +403,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 document.MarkBlock(block, color, markOnFlowGraph);
 
                 if (weightPercentage > options_.ElementWeightCutoff) {
-                    block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsPercentageString(), color));
+                    block.AddTag(GraphNodeTag.MakeColor(weightPercentage.AsTrimmedPercentageString(), color));
                 }
             }
         }
@@ -498,7 +498,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 double weightPercentage = profile_.ScaleWeight(weight);
 
                 var label = weight.AsMillisecondsString();
-                var percentageLabel = weightPercentage.AsPercentageString();
+                var percentageLabel = weightPercentage.AsTrimmedPercentageString();
                 var columnValue = new ElementColumnValue(label, weight.Ticks, weightPercentage, i);
                 var percentageColumnValue = new ElementColumnValue(percentageLabel, weight.Ticks, weightPercentage, i);
                 
@@ -606,7 +606,7 @@ namespace IRExplorerUI.Compilers.ASM {
                         }
 
                         valuePercentage = result.ScaleCounterValue(value, counter);
-                        label = valuePercentage.AsPercentageString();
+                        label = valuePercentage.AsTrimmedPercentageString();
                         tooltip = FormatPerformanceCounter(value, counter);
                     }
 
@@ -656,7 +656,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 return "";
             }
 
-            return metric.Config.IsPercentage ? value.AsPercentageString(2, false) : $"{value:F2}";
+            return metric.Config.IsPercentage ? value.AsPercentageString() : $"{value:F2}";
         }
 
         public static string FormatPerformanceCounter(long value, PerformanceCounterInfo counter) {

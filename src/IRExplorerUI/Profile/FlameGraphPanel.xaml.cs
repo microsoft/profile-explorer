@@ -21,6 +21,41 @@ public partial class FlameGraphPanel : ToolPanelControl {
         DependencyProperty.Register(nameof(FlameGraphWidth), typeof(double), typeof(FlameGraphPanel),
             new PropertyMetadata(0.0, FlameGraphWeightChanged));
 
+    public static DependencyProperty FlameGraphOffsetProperty =
+        DependencyProperty.Register(nameof(FlameGraphOffset), typeof(double), typeof(FlameGraphPanel),
+            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
+
+
+    public static DependencyProperty FlameGraphNodeOffsetProperty =
+        DependencyProperty.Register(nameof(FlameGraphNodeOffsetProperty), typeof(double), typeof(FlameGraphPanel),
+            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
+
+    public static DependencyProperty FlameGraphVerticalOffsetProperty =
+        DependencyProperty.Register(nameof(FlameGraphVerticalOffset), typeof(double), typeof(FlameGraphPanel),
+            new PropertyMetadata(0.0, FlameGraphVerticalOffsetChanged));
+
+    private static void FlameGraphWeightChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphPanel panel) {
+            panel.FlameGraphWidth = (double)e.NewValue;
+        }
+    }
+
+    private static void FlameGraphOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphPanel panel) {
+            if (e.Property == FlameGraphOffsetProperty) {
+                panel.AdjustZoomPointOffset((double)e.NewValue);
+            }
+            else {
+                panel.AdjustEnlargeNodeOffset((double)e.NewValue);
+            }
+        }
+    }
+
+    private static void FlameGraphVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
+        if (d is FlameGraphPanel panel) {
+            panel.GraphHost.ScrollToVerticalOffset((double)e.NewValue);
+        }
+    }
 
     public double FlameGraphWidth {
         get {
@@ -39,43 +74,6 @@ public partial class FlameGraphPanel : ToolPanelControl {
     public double FlameGraphVerticalOffset {
         get => 0;
         set {}
-    }
-
-    private static void FlameGraphWeightChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        if (d is FlameGraphPanel panel) {
-            panel.FlameGraphWidth = (double)e.NewValue;
-        }
-    }
-
-    public static DependencyProperty FlameGraphOffsetProperty =
-        DependencyProperty.Register(nameof(FlameGraphOffset), typeof(double), typeof(FlameGraphPanel),
-            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
-
-
-    public static DependencyProperty FlameGraphNodeOffsetProperty =
-        DependencyProperty.Register(nameof(FlameGraphNodeOffsetProperty), typeof(double), typeof(FlameGraphPanel),
-            new PropertyMetadata(0.0, FlameGraphOffsetChanged));
-
-    public static DependencyProperty FlameGraphVerticalOffsetProperty =
-        DependencyProperty.Register(nameof(FlameGraphVerticalOffset), typeof(double), typeof(FlameGraphPanel),
-            new PropertyMetadata(0.0, FlameGraphVerticalOffsetChanged));
-
-    private static void FlameGraphOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        if (d is FlameGraphPanel panel) {
-            if (e.Property == FlameGraphOffsetProperty) {
-                panel.AdjustZoomPointOffset((double)e.NewValue);
-            }
-            else {
-                panel.AdjustEnlargeNodeOffset((double)e.NewValue);
-            }
-        }
-    }
-
-    private static void FlameGraphVerticalOffsetChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) {
-        if (d is FlameGraphPanel panel) {
-
-            panel.GraphHost.ScrollToVerticalOffset((double)e.NewValue);
-        }
     }
 
     private const double TimePerFrame = 1000.0 / 60; // ~16.6ms per frame at 60Hz.
@@ -597,13 +595,13 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
     private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
         //? TODO: Reenable
-        return null;
+        //return null;
 
         var pointedNode = GraphViewer.FindPointedNode(mousePoint);
         var callNode = pointedNode?.CallTreeNode;
 
         if (callNode != null) {
-            var popup = new CallTreeNodePopup(callNode, previewPoint, 500, 400, GraphViewer, Session);
+            var popup = new CallTreeNodePopup(callNode, pointedNode.Parent?.CallTreeNode, previewPoint, 500, 150, GraphViewer, Session);
             return popup;
         }
 
