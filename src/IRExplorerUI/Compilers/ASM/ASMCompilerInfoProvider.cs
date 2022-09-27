@@ -141,7 +141,7 @@ namespace IRExplorerUI.Compilers.ASM {
                 }
             }
 
-            return null;
+            return DebugFileSearchResult.None;
         }
 
         public async Task<BinaryFileSearchResult> FindBinaryFile(BinaryFileDescriptor binaryFile, SymbolFileSourceOptions options = null) {

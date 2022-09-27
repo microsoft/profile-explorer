@@ -47,7 +47,7 @@ namespace IRExplorerUI {
         public bool HasAnnotatedSections => MainPanel.HasAnnotatedSections || DiffPanel.HasAnnotatedSections;
         public bool SyncDiffedDocuments => MainPanel.SyncDiffedDocuments;
 
-        public async Task RefreshMainSummary() {
+        public async Task RefreshModuleSummaries() {
             await MainPanel.Update();
         }
 

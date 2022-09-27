@@ -1264,7 +1264,7 @@ namespace IRExplorerUI {
             var panel = Session.FindAndActivatePanel(ToolPanelKind.CallTree) as CallTreePanel;
 
             if (panel != null) {
-                await panel.DisplaProfileCallTree();
+                await panel.DisplayProfileCallTree();
             }
 
             var fgPanel = Session.FindAndActivatePanel(ToolPanelKind.FlameGraph) as FlameGraphPanel;
@@ -1274,9 +1274,9 @@ namespace IRExplorerUI {
             }
         }
 
-        public async Task Update() {
+        public async Task Update(bool force = false) {
             if (summary_ != null) {
-                await SetupFunctionList();
+                await SetupFunctionList(force);
             }
         }
 
@@ -1285,24 +1285,35 @@ namespace IRExplorerUI {
             ResetSectionPanel();
         }
 
-        public async Task SetupFunctionList(bool analyzeFunctions = true) {
+        public async Task SetupFunctionList(bool force = false, bool analyzeFunctions = true) {
             if (summary_ == null) {
                 await ResetUI();
                 return;
             }
 
-            if (sectionExtensionComputed_) {
-                return;
+            // Create mappings between each section and their UI counterpart.
+            SetupSectionExtensions(force);
+
+            // Create mappings between each function and their UI counterparts.
+            // In two-document diff mode, also add entries for functions that are found
+            // only in the left or in the right document and mark them as diffs.
+            var functionsEx = SetupFunctionExtensions();
+
+            // Prepare UI.
+            await SetupFunctionListUI(functionsEx);
+
+            // Attach additional data to the UI.
+            await SetFunctionProfileInfo(functionsEx);
+
+            if (analyzeFunctions) {
+                await RunFunctionAnalysis();
             }
+        }
 
-            SetupSectionExtension();
-
-            // Create for each function a wrapper with more properties for the UI.
+        private List<IRTextFunctionEx> SetupFunctionExtensions() {
             var functionsEx = new List<IRTextFunctionEx>();
             int index = 0;
 
-            // In two-document diff mode, also add entries for functions that are found
-            // only in the left or in the right document and mark them as diffs.
             if (otherSummary_ != null) {
                 foreach (var function in summary_.Functions) {
                     //? TODO: Use CreateFunctionExtensions
@@ -1330,29 +1341,29 @@ namespace IRExplorerUI {
                 // Single document mode.
                 CreateFunctionExtensions(summary_, functionsEx);
 
-                foreach (var otherSummary in moduleSummaries_) {
-                    CreateFunctionExtensions(otherSummary, functionsEx);
+                foreach (var moduleSummary in moduleSummaries_) {
+                    CreateFunctionExtensions(moduleSummary, functionsEx);
                 }
             }
 
-            if (FunctionPartVisible) {
-                // Set up the filter used to search the list.
-                var functionFilter = new ListCollectionView(functionsEx);
-                functionFilter.Filter = FilterFunctionList;
-                FunctionList.ItemsSource = functionFilter;
-                SectionList.ItemsSource = null;
+            SetDemangledFunctionNames(functionsEx);
 
-                if (summary_.Functions.Count == 1) {
-                    await SelectFunction(summary_.Functions[0]);
-                }
+            return functionsEx;
+        }
 
-                // Attach additional data to the UI.
-                SetDemangledFunctionNames(functionsEx);
-                await SetFunctionProfileInfo(functionsEx);
+        private async Task SetupFunctionListUI(List<IRTextFunctionEx> functionsEx) {
+            if (!FunctionPartVisible) {
+                return;
             }
 
-            if (analyzeFunctions) {
-                await RunFunctionAnalysis();
+            // Set up the filter used to search the list.
+            var functionFilter = new ListCollectionView(functionsEx);
+            functionFilter.Filter = FilterFunctionList;
+            FunctionList.ItemsSource = functionFilter;
+            SectionList.ItemsSource = null;
+
+            if (summary_.Functions.Count == 1) {
+                await SelectFunction(summary_.Functions[0]);
             }
         }
 
@@ -1397,24 +1408,25 @@ namespace IRExplorerUI {
             functionStatMap_ = null;
         }
 
-        private void SetupSectionExtension(bool force = false) {
+        private bool SetupSectionExtensions(bool force = false) {
             if (sectionExtensionComputed_ && !force) {
-                return;
+                return false;
             }
 
             sectionExtMap_.Clear();
             annotatedSections_.Clear();
 
-            SetupSectionExtension(summary_);
+            SetupSectionExtensions(summary_);
 
-            foreach (var otherSummary in moduleSummaries_) {
-                SetupSectionExtension(otherSummary);
+            foreach (var moduleSummary in moduleSummaries_) {
+                SetupSectionExtensions(moduleSummary);
             }
 
             sectionExtensionComputed_ = true;
+            return true;
         }
 
-        private void SetupSectionExtension(IRTextSummary summary) {
+        private void SetupSectionExtensions(IRTextSummary summary) {
             foreach (var func in summary.Functions) {
                 int index = 0;
 
@@ -1437,7 +1449,7 @@ namespace IRExplorerUI {
         }
 
         public List<IRTextSectionEx> CreateSectionsExtension(bool force = false) {
-            SetupSectionExtension(force);
+            SetupSectionExtensions(force);
             var sections = new List<IRTextSectionEx>();
             int sectionIndex = 0;
 
