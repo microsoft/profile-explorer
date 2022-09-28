@@ -80,7 +80,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
     private const double ZoomAmount = 500;
     private const double ScrollWheelZoomAmount = 300;
     private const double FastPanOffset = 1000;
-    private const double PanOffset = 100;
+    private const double DefaultPanOffset = 100;
     private const double ZoomAnimationDuration = TimePerFrame * 10;
     private const double EnlargeAnimationDuration = TimePerFrame * 20;
     private const double ScrollWheelZoomAnimationDuration = TimePerFrame * 8;
@@ -221,8 +221,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
             var horizontalAnim = new DoubleAnimation(0.0, 1.0, TimeSpan.FromMilliseconds(EnlargeAnimationDuration));
 
-            horizontalAnim.Completed += (sender, args) => {
-                Dispatcher.BeginInvoke(() => {
+            horizontalAnim.Completed += async (sender, args) => {
+                await Dispatcher.BeginInvoke(() => {
                     double newNodeX = node.Bounds.Left;
                     double offset = Math.Min(newNodeX, newMaxWidth);
                     GraphHost.ScrollToHorizontalOffset(offset);
@@ -384,28 +384,37 @@ public partial class FlameGraphPanel : ToolPanelControl {
                point.Y >= GraphHost.ViewportHeight;
     }
 
-    private void GraphPanel_PreviewKeyDown(object sender, KeyEventArgs e) {
-        double offsetX = GraphHost.HorizontalOffset;
-        double offsetY = GraphHost.VerticalOffset;
-
+    private async void GraphPanel_PreviewKeyDown(object sender, KeyEventArgs e) {
         switch (e.Key) {
-            case Key.Right: {
-                offsetX += GetPanOffset();
+            case Key.Left: {
+                ScrollToRelativeOffsets(-PanOffset, 0);
                 e.Handled = true;
                 break;
             }
-            case Key.Left: {
-                offsetX -= GetPanOffset();
+            case Key.Right: {
+                ScrollToRelativeOffsets(PanOffset, 0);
                 e.Handled = true;
                 break;
             }
             case Key.Up: {
-                offsetY -= GetPanOffset();
+                if (Utils.IsControlModifierActive()) {
+                    await NavigateToParentNode();
+                }
+                else {
+                    ScrollToRelativeOffsets(0, -PanOffset);
+                }
+
                 e.Handled = true;
                 break;
             }
             case Key.Down: {
-                offsetY += GetPanOffset();
+                if (Utils.IsControlModifierActive()) {
+                    await NavigateToChildNode();
+                }
+                else {
+                    ScrollToOffsets(0, PanOffset);
+                }
+
                 e.Handled = true;
                 break;
             }
@@ -427,12 +436,26 @@ public partial class FlameGraphPanel : ToolPanelControl {
 
                 return;
             }
+            case Key.Back: {
+                await RestorePreviousState();
+                e.Handled = true;
+                return;
+            }
         }
+    }
 
-        if (e.Handled) {
-            GraphHost.ScrollToHorizontalOffset(offsetX);
-            GraphHost.ScrollToVerticalOffset(offsetY);
-        }
+    private double PanOffset => Utils.IsKeyboardModifierActive() ?
+                                 FastPanOffset : DefaultPanOffset;
+
+    private void ScrollToRelativeOffsets(double adjustmentX, double adjustmentY) {
+        double offsetX = GraphHost.HorizontalOffset;
+        double offsetY = GraphHost.VerticalOffset;
+        ScrollToOffsets(offsetX + adjustmentX, offsetY + adjustmentY);
+    }
+
+    private void ScrollToOffsets(double offsetX, double offsetY) {
+        GraphHost.ScrollToHorizontalOffset(offsetX);
+        GraphHost.ScrollToVerticalOffset(offsetY);
     }
 
     private void SetMaxWidth(double maxWidth, bool animate = true, double duration = ZoomAnimationDuration) {
@@ -509,11 +532,6 @@ public partial class FlameGraphPanel : ToolPanelControl {
         GraphHost.ScrollToHorizontalOffset(offsetAdjustment * zoom - zoomPointX_);
     }
 
-
-    private double GetPanOffset() {
-        return Utils.IsKeyboardModifierActive() ? FastPanOffset : PanOffset;
-    }
-
     private void ExecuteGraphResetWidth(object sender, ExecutedRoutedEventArgs e) {
         //? TODO: Buttons should be disabled
         if (!GraphViewer.IsInitialized) {
@@ -566,10 +584,23 @@ public partial class FlameGraphPanel : ToolPanelControl {
         await RestorePreviousState();
     }
 
-    private void SelectParent_Click(object sender, RoutedEventArgs e) {
-        if (enlargedNode_ != null &&  enlargedNode_.Parent != null) {
+    private async void SelectParent_Click(object sender, RoutedEventArgs e) {
+        await NavigateToParentNode();
+    }
+
+    private async Task NavigateToParentNode() {
+        if (enlargedNode_ != null && enlargedNode_.Parent != null) {
             GraphViewer.SelectNode(enlargedNode_.Parent);
-            EnlargeNode(enlargedNode_.Parent);
+            await EnlargeNode(enlargedNode_.Parent);
+        }
+    }
+
+    private async Task NavigateToChildNode() {
+        if (enlargedNode_ != null && enlargedNode_.HasChildren) {
+            Trace.WriteLine($"Go to child");
+
+            GraphViewer.SelectNode(enlargedNode_.Children[0]);
+            await EnlargeNode(enlargedNode_.Children[0]);
         }
     }
 
@@ -599,15 +630,17 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private DraggablePopup CreateBacktracePopup(Point mousePoint, Point previewPoint) {
-        //? TODO: Reenable
-        //return null;
-
         var pointedNode = GraphViewer.FindPointedNode(mousePoint);
         var callNode = pointedNode?.CallTreeNode;
 
         if (callNode != null) {
-            var popup = new CallTreeNodePopup(callNode, pointedNode.Parent?.CallTreeNode, previewPoint, 500, 150, GraphViewer, Session);
-            return popup;
+            // If popup already opened for this node reuse the instance.
+            if (stackHoverPreview_.PreviewPopup is CallTreeNodePopup popup &&
+                popup.CallTreeNode == callNode) {
+                return popup;
+            }
+
+            return new CallTreeNodePopup(callNode, pointedNode.Parent?.CallTreeNode, previewPoint, 500, 150, GraphViewer, Session);
         }
 
         return null;

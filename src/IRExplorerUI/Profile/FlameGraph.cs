@@ -49,6 +49,8 @@ namespace IRExplorerUI.Profile {
         public bool ShowInclusiveWeight { get; set; }
         public bool IsDummyNode { get; set; }
 
+        public bool HasChildren => Children is { Count: > 0 };
+
         public virtual void Draw(Rect visibleArea, DrawingContext dc) {
             if (IsDummyNode || Bounds.Width < MinVisibleWidth) {
                 return;
@@ -153,7 +155,7 @@ namespace IRExplorerUI.Profile {
             dc.PushTransform(new TranslateTransform(x, y));
             dc.DrawGlyphRun(textColor, glyphs);
             dc.Pop();
-            dc.Pop();
+            dc.Pop(); // PushGuidelineSet
         }
 
         private static GuidelineSet CreateGuidelineSet(Rect rect) {
@@ -220,7 +222,7 @@ namespace IRExplorerUI.Profile {
 
             glyphsCache.CacheGlyphs(glyphInfo, originalText, maxWidth);
 
-            return (text, glyphInfo.Glyphs, trimmed, 
+            return (text, glyphInfo.Glyphs, trimmed,
                     new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
         }
     }
@@ -237,7 +239,7 @@ namespace IRExplorerUI.Profile {
         }
 
         public override void Draw(Rect visibleArea, DrawingContext dc) {
-            
+
         }
     }
 
@@ -369,9 +371,6 @@ namespace IRExplorerUI.Profile {
             var palette = node.CallTreeNode != null ?
                 palettes_[node.CallTreeNode.Kind] :
                 palettes_[ProfileCallTreeNodeKind.Unset];
-
-            //? use module for native/managed, kind only user/kerneel
-            Trace.WriteLine($"kind {node.CallTreeNode?.Kind}: {node.CallTreeNode?.FunctionName}");
 
             int colorIndex = node.Depth % palette.Count;
             var backColor = palette[palette.Count - colorIndex - 1];

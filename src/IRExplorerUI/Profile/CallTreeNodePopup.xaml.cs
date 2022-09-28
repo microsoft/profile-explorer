@@ -76,8 +76,8 @@ namespace IRExplorerUI.Controls {
                 PercentageExclusive = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
             };
 
-            nodeEx.Time = $"{nodeEx.Percentage.AsPercentageString()} ({node.Weight.AsMillisecondsString()})";
-            nodeEx.ExclusiveTime = $"{nodeEx.PercentageExclusive.AsPercentageString()} ({node.ExclusiveWeight.AsMillisecondsString()})";
+            nodeEx.Time = $"{nodeEx.Percentage.AsPercentageString()}  ({node.Weight.AsMillisecondsString()})";
+            nodeEx.ExclusiveTime = $"{nodeEx.PercentageExclusive.AsPercentageString()}  ({node.ExclusiveWeight.AsMillisecondsString()})";
 
             if (parentNode != null) {
                 nodeEx.PercentageParent = (double)node.Weight.Ticks / parentNode.Weight.Ticks;
@@ -152,6 +152,8 @@ namespace IRExplorerUI.Controls {
                 }
             }
         }
+
+        public ProfileCallTreeNode CallTreeNode => Node.CallTreeNode;
 
         public override bool ShouldStartDragging(MouseButtonEventArgs e) {
             if (e.LeftButton == MouseButtonState.Pressed && ToolbarPanel.IsMouseOver) {

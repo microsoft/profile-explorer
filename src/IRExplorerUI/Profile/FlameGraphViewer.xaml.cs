@@ -84,8 +84,14 @@ public partial class FlameGraphViewer : FrameworkElement {
         var group = GetHighlightedNodeGroup(type);
         group[node] = node.Style;
 
-        node.Style = isParent ? PickHoveredParentNodeStyle(node.Style) :
-                                PickHoveredNodeStyle(node.Style);
+        node.Style = type switch {
+            HighlighingType.Hovered => isParent ? PickHoveredParentNodeStyle(node.Style) :
+                                                  PickHoveredNodeStyle(node.Style),
+            HighlighingType.Selected => isParent ? PickSelectedParentNodeStyle(node.Style) :
+                                                   PickSelectedNodeStyle(node.Style),
+            _ => node.Style
+        };
+
         if (includeParents && node.Parent != null) {
             HighlightNode(node.Parent, type, includeParents, true);
         }
@@ -141,6 +147,17 @@ public partial class FlameGraphViewer : FrameworkElement {
         return new HighlightingStyle(newColor, style.Border);
     }
 
+    private HighlightingStyle PickSelectedNodeStyle(HighlightingStyle style) {
+        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.85f);
+        //var newColor = style.BackColor;
+        return new HighlightingStyle(newColor, ColorPens.GetBoldPen(style.Border));
+    }
+
+    private HighlightingStyle PickSelectedParentNodeStyle(HighlightingStyle style) {
+        var newColor = ColorUtils.AdjustLight(((SolidColorBrush)style.BackColor).Color, 0.95f);
+        //var newColor = style.BackColor;
+        return new HighlightingStyle(newColor, style.Border);
+    }
 
     private void OnMouseRightButtonDown(object sender, MouseButtonEventArgs e) {
     }
