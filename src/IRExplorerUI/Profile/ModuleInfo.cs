@@ -24,6 +24,7 @@ namespace IRExplorerUI.Profile {
 
         public bool HasDebugInfo { get; set; }
         public bool Initialized { get; set; }
+        public bool IsManaged { get; set; }
 
         //? TODO: Needed only for inlinee samples
         public Dictionary<string, IRTextFunction> unmangledFuncNamesMap_;
@@ -57,7 +58,7 @@ namespace IRExplorerUI.Profile {
                 return false;
             }
 
-            bool isManagedImage = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
+            IsManaged = binFile.BinaryFile != null && binFile.BinaryFile.IsManagedImage;
             
             var loadedDoc = await session_.LoadBinaryDocument(binFile.FilePath, binaryInfo.ImageName, debugInfo).ConfigureAwait(false);
             
@@ -74,7 +75,7 @@ namespace IRExplorerUI.Profile {
             ModuleDocument = loadedDoc;
             Summary = loadedDoc.Summary;
 
-            if (isManagedImage && debugInfo != null) {
+            if (IsManaged && debugInfo != null) {
                 Trace.TraceInformation($"  Has managed debug {imageName}");
                 DebugInfo = debugInfo;
                 HasDebugInfo = true;

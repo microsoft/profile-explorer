@@ -581,6 +581,11 @@ public partial class FlameGraphPanel : ToolPanelControl {
     public override void OnSessionEnd() {
         base.OnSessionEnd();
         pendingCallTree_ = null;
+
+        if (!GraphViewer.IsInitialized) {
+            return;
+        }
+
         ResetHighlightedNodes();
         GraphViewer.Reset();
     }

@@ -340,7 +340,7 @@ public sealed class ETWEventProcessor : IDisposable {
                     //Trace.WriteLine($"Found kstack {lastKernelStack.StackId} at {lastKernelStack.Timestamp}");
 
 
-                    // Append at the end of the kernel stack.
+                    // Append at the end of the kernel stack, marking a user -> kernel mode transition.
                     kstack = profile.FindStack(lastKernelStack.StackId);
                     int kstackFrameCount = kstack.FrameCount;
                     long[] frames = new long[kstack.FrameCount + data.FrameCount];
@@ -351,6 +351,7 @@ public sealed class ETWEventProcessor : IDisposable {
                     }
 
                     kstack.FramePointers = frames;
+                    kstack.UserModeTransitionIndex = kstackFrameCount; // Frames after index are user mode.
                 }
             }
 
