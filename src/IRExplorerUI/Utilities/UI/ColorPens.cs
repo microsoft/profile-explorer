@@ -48,6 +48,11 @@ namespace IRExplorerUI {
             return GetPen(color, BoldPenThickness);
         }
 
+        public static Pen GetBoldPen(Pen templatePen) {
+            var brush = (SolidColorBrush)templatePen.Brush;
+            return GetPen(brush.Color, BoldPenThickness);
+        }
+
         public static Pen GetBoldPen(string color) {
             return GetPen(Utils.ColorFromString(color), BoldPenThickness);
         }

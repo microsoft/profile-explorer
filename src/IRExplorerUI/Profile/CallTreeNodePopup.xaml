@@ -45,10 +45,11 @@
                 Grid.ColumnSpan="3"
                 Background="{DynamicResource {x:Static SystemColors.GradientInactiveCaptionBrushKey}}">
                 <TextBlock
-                    Margin="4,0,0,0"
+                    Margin="4,0,50,0"
                     VerticalAlignment="Center"
                     FontWeight="DemiBold"
                     Text="{Binding Node.FunctionName}"
+                    TextTrimming="CharacterEllipsis"
                     ToolTip="{Binding Node.FullFunctionName}" />
             </Grid>
             <ToggleButton
@@ -109,21 +110,6 @@
                             Fill="#4A73C4"
                             Stroke="Black" />
                     </StackPanel>
-
-                    <StackPanel Orientation="Horizontal" Visibility="{Binding ParentTimeVisible, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Width="70" Text="Self Weight" />
-                        <TextBlock
-                            Margin="4,0,0,0"
-                            FontWeight="DemiBold"
-                            Text="{Binding Node.SelfTime}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Visibility="{Binding ParentTimeVisible, Converter={StaticResource BoolToVisibility}}">
-                        <TextBlock Width="70" Text="Parent Weight" />
-                        <TextBlock
-                            Margin="4,0,0,0"
-                            FontWeight="DemiBold"
-                            Text="{Binding Node.ParentTime}" />
-                    </StackPanel>
                     <StackPanel Orientation="Horizontal" Visibility="{Binding ParentTimeVisible, Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Width="70" Text="Module" />
                         <TextBlock
@@ -133,19 +119,34 @@
                     </StackPanel>
                 </StackPanel>
 
-                <Expander
-                    Margin="0,4,0,4"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    Header="Backtrace"
-                    IsExpanded="True">
-                    <doc:SearcheableIRDocument
-                        x:Name="TextView"
+                <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                    <TextBlock
+                        Margin="0,0,4,0"
+                        FontWeight="DemiBold"
+                        Text="Backtrace" />
+                    <TextBlock
+                        Margin="4,0,4,0"
+                        FontWeight="DemiBold"
+                        Text="Functions" />
+                    <TextBlock
+                        Margin="4,0,4,0"
+                        FontWeight="DemiBold"
+                        Text="Modules" />
+                    <Expander
+                        Margin="0,4,0,4"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        DockPanel.Dock="Bottom" />
-                </Expander>
+                        Header="Details"
+                        Visibility="Hidden">
+                        <doc:SearcheableIRDocument
+                            x:Name="TextView"
+                            HorizontalAlignment="Stretch"
+                            VerticalAlignment="Stretch"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            DockPanel.Dock="Bottom" />
+                    </Expander>
+                </StackPanel>
+
                 <controls:ResizeGrip
                     x:Name="PanelResizeGrip"
                     Width="16"
