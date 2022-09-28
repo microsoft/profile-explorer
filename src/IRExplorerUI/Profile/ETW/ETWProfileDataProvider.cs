@@ -353,7 +353,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                                 Trace.WriteLine($"  ! no frameImage");
                                             }
 
-                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
+                                            resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown, frameIndex, stack);
                                             isTopFrame = false;
                                             continue;
                                         }
@@ -480,7 +480,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                     }
 
                                     if (textFunction == null) {
-                                        resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown);
+                                        resolvedStack.AddFrame(ResolvedProfileStackFrame.Unknown, frameIndex, stack);
                                         isTopFrame = false;
                                         continue;
                                     }
@@ -514,8 +514,9 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                         //    ProcessInlineeSample(sampleWeight, offset, textFunction, module);
                                         //}
 
-                                        resolvedStack.AddFrame(new ResolvedProfileStackFrame(frameIp, frameRva, funcInfo, 
-                                                                                             textFunction, frameImage, module, profile));
+                                        var resolvedFrame = new ResolvedProfileStackFrame(frameIp, frameRva, funcInfo, 
+                                                                                          textFunction, frameImage, module, profile);
+                                        resolvedStack.AddFrame(resolvedFrame, frameIndex, stack);
                                     }
                                     //}
 
@@ -525,7 +526,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
                                 stack.SetOptionalData(resolvedStack);
                             }
 
-                            UpdateCallTree(resolvedStack, callTree, sampleWeight);
+                            UpdateCallTree(resolvedStack, callTree, sample);
                         }
                     }));
                 }
@@ -577,7 +578,8 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         }
     }
 
-    private void UpdateCallTree(ResolvedProfileStack resolvedStack, ProfileCallTree callTree, TimeSpan sampleWeight) {
+    private void UpdateCallTree(ResolvedProfileStack resolvedStack, ProfileCallTree callTree,
+                                ProfileSample sample) {
         // Build call tree. Note that the call tree methods themselves are thread-safe.
         bool isRootFrame = true;
         ProfileCallTreeNode prevNode = null;
@@ -598,17 +600,31 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
             }
             else {
                 node = callTree.AddChildNode(prevNode, resolvedFrame.DebugInfo, resolvedFrame.Function);
-                prevNode.AddCallSite(node, prevFrame.FrameRVA, sampleWeight);
+                prevNode.AddCallSite(node, prevFrame.FrameRVA, sample.Weight);
             }
 
-            node.AccumulateWeight(sampleWeight);
+            node.AccumulateWeight(sample.Weight);
+
+            // Set the user/kernel-mode context of the function.
+            if (node.Kind == ProfileCallTreeNodeKind.Unset) {
+                if (resolvedFrame.IsKernelCode) {
+                    node.Kind = ProfileCallTreeNodeKind.NativeKernel;
+                }
+                else if(resolvedFrame.Module is { IsManaged: true }) {
+                    node.Kind = ProfileCallTreeNodeKind.Managed;
+                }
+                else {
+                    node.Kind = ProfileCallTreeNodeKind.NativeUser;
+                }
+            }
+
             //node.RecordSample(sample, resolvedFrame); //? Remove
             prevNode = node;
             prevFrame = resolvedFrame;
         }
 
         if (prevNode != null) {
-            prevNode.AccumulateExclusiveWeight(sampleWeight);
+            prevNode.AccumulateExclusiveWeight(sample.Weight);
         }
     }
 
@@ -982,6 +998,7 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         public ProfileImage Image { get; set; }
         public ModuleInfo Module { get; set; }
         public FunctionProfileData Profile { get; set; }
+        public bool IsKernelCode { get; set; }
         public bool IsUnknown => Image == null;
 
         public ResolvedProfileStackFrame() { }
@@ -1006,9 +1023,14 @@ public sealed class ETWProfileDataProvider : IProfileDataProvider, IDisposable {
         public int FrameCount => StackFrames.Count;
 
         private static ConcurrentDictionary<long, ResolvedProfileStackFrame> frameInstances_ = new();
+        private static ConcurrentDictionary<long, ResolvedProfileStackFrame> kernelFrameInstances_ = new();
 
-        public void AddFrame(ResolvedProfileStackFrame frame) {
-            var existingFrame = frameInstances_.GetOrAdd(frame.FrameIP, frame);
+        public void AddFrame(ResolvedProfileStackFrame frame, int frameIndex, ProfileStack stack) {
+            // A stack frame IP can be called from both user and kernel mode code.
+            frame.IsKernelCode = frameIndex < stack.UserModeTransitionIndex;
+            var existingFrame = frame.IsKernelCode ?
+                kernelFrameInstances_.GetOrAdd(frame.FrameIP, frame) :
+                frameInstances_.GetOrAdd(frame.FrameIP, frame);
             StackFrames.Add(existingFrame);
         }
 

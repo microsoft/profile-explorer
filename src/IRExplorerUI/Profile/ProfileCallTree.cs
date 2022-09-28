@@ -383,6 +383,13 @@ public class ProfileCallTree {
     }
 }
 
+public enum ProfileCallTreeNodeKind {
+    Unset,
+    NativeUser,
+    NativeKernel,
+    Managed
+}
+
 [ProtoContract(SkipConstructor = true)]
 public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     [ProtoMember(1)]
@@ -403,6 +410,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     public TimeSpan Weight { get; set; }
     [ProtoMember(7)]
     public TimeSpan ExclusiveWeight { get; set; }
+    [ProtoMember(8)]
+    public ProfileCallTreeNodeKind Kind { get; set; }
 
     public IRTextFunction Function {
         get => functionRef_;
@@ -636,7 +645,8 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         }
 
         return Id == other.Id &&
-               FunctionDebugInfo.Equals(other.FunctionDebugInfo);
+               FunctionDebugInfo.Equals(other.FunctionDebugInfo) &&
+               Kind == other.Kind;
     }
 
     public override bool Equals(object obj) {
@@ -656,7 +666,7 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
     }
 
     public override int GetHashCode() {
-        return HashCode.Combine(Id, FunctionDebugInfo);
+        return HashCode.Combine(Id, FunctionDebugInfo, Kind);
     }
 
     public static bool operator ==(ProfileCallTreeNode left, ProfileCallTreeNode right) {

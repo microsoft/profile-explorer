@@ -41,6 +41,8 @@ public class ProfileStack : IEquatable<ProfileStack> {
     public long[] FramePointers { get; set; }
     [ProtoMember(2)]
     public int ContextId { get; set; }
+    [ProtoMember(3)]
+    public int UserModeTransitionIndex{ get; set; }
 
     public bool IsUnknown => FramePointers == null;
     public int FrameCount => FramePointers.Length;

@@ -54,6 +54,7 @@ namespace IRExplorerUI.Profile {
                 return;
             }
 
+            dc.PushGuidelineSet(CreateGuidelineSet(Bounds));
             dc.DrawRectangle(Style.BackColor, Style.Border, Bounds);
 
             // ...
@@ -75,14 +76,13 @@ namespace IRExplorerUI.Profile {
                 bool useNameFont = false;
                 Brush textColor = TextColor;
 
-                //? font color, bold
                 switch (index) {
                     case 0: {
                         if (CallTreeNode != null) {
                             label = CallTreeNode.FunctionName;
 
                             if (true) {
-                                //? TODO: option and cache
+                                //? TODO: option
                                 var moduleLabel = CallTreeNode.ModuleName + "!";
                                 var (modText, modGlyphs, modTextTrimmed, modTextSize) =
                                     TrimTextToWidth(moduleLabel, maxWidth - margin, false);
@@ -139,6 +139,8 @@ namespace IRExplorerUI.Profile {
                 offsetX += textSize.Width + margin;
                 index++;
             }
+
+            dc.Pop(); // PushGuidelineSet
         }
 
         private void DrawText(GlyphRun glyphs, Brush textColor, double offsetX, double margin,
@@ -146,23 +148,27 @@ namespace IRExplorerUI.Profile {
             double x = offsetX + margin;
             double y = Bounds.Top + Bounds.Height / 2 + textSize.Height / 4;
 
-            // var rect = glyphs.ComputeAlignmentBox();
-            // const double halfPenWidth = 0;
-            // GuidelineSet guidelines = new GuidelineSet();
-            // guidelines.GuidelinesX.Add(rect.Left + halfPenWidth);
-            // guidelines.GuidelinesX.Add(rect.Right + halfPenWidth);
-            // guidelines.GuidelinesY.Add(rect.Top + halfPenWidth);
-            // guidelines.GuidelinesY.Add(rect.Bottom + halfPenWidth);
-
-            //dc.PushGuidelineSet(guidelines);
+            var rect = glyphs.ComputeAlignmentBox();
+            dc.PushGuidelineSet(CreateGuidelineSet(rect));
             dc.PushTransform(new TranslateTransform(x, y));
             dc.DrawGlyphRun(textColor, glyphs);
             dc.Pop();
-            //dc.Pop();
+            dc.Pop();
+        }
+
+        private static GuidelineSet CreateGuidelineSet(Rect rect) {
+            const double halfPenWidth = 0.5f;
+            GuidelineSet guidelines = new GuidelineSet();
+            guidelines.GuidelinesX.Add(rect.Left + halfPenWidth);
+            guidelines.GuidelinesX.Add(rect.Right + halfPenWidth);
+            guidelines.GuidelinesY.Add(rect.Top + halfPenWidth);
+            guidelines.GuidelinesY.Add(rect.Bottom + halfPenWidth);
+            return guidelines;
         }
 
         private (string Text, GlyphRun glyphs, bool Trimmed, Size TextSize)
             TrimTextToWidth(string text, double maxWidth, bool useNameFont) {
+            var originalText = text;
             var glyphsCache = useNameFont ? Owner.NameGlyphsCache : Owner.GlyphsCache;
 
             if (maxWidth <= 0 || string.IsNullOrEmpty(text)) {
@@ -174,28 +180,48 @@ namespace IRExplorerUI.Profile {
             //  - size is smaller, but less than a delta that's some multiple of avg letter width
             //? could also remember based on # of letter,  letters -> Size mapping
 
-            var (glyphs, textWidth, textHeight) = glyphsCache.GetGlyphs(text, maxWidth);
+            var glyphInfo = glyphsCache.GetGlyphs(text, maxWidth);
             bool trimmed = false;
 
-            if (textWidth > maxWidth) {
-                var letterWidth = Math.Ceiling(textWidth / text.Length);
-                var extraWidth = textWidth - maxWidth;
-                var extraLetters = Math.Max(1, (int)Math.Ceiling(extraWidth / letterWidth));
-                extraLetters += 1; // . suffix
+            if (glyphInfo.TextWidth > maxWidth) {
+                // The width of letters is the same only for monospace fonts,
+                // use the glyph width to find where to trim the string instead.
+                double trimmedWidth = 0;
+                int trimmedLength = 0;
+                var widths = glyphInfo.Glyphs.AdvanceWidths;
+
+                double letterWidth = Math.Ceiling(glyphInfo.TextWidth / text.Length);
+                double availableWidth = maxWidth - letterWidth * 2; // Space for ..
+
+                for (trimmedLength = 0; trimmedLength < text.Length; trimmedLength++) {
+                    trimmedWidth += widths[trimmedLength];
+
+                    if (trimmedWidth >= availableWidth) {
+                        break;
+                    }
+                }
+
+                // var letterWidth = Math.Ceiling(glyphInfo.TextWidth / text.Length);
+                // var extraWidth = glyphInfo.TextWidth - maxWidth + 1;
+                // var extraLetters = Math.Max(1, (int)Math.Ceiling(extraWidth / letterWidth));
+                // extraLetters += 1; // . suffix
                 trimmed = true;
 
-                if (text.Length > extraLetters) {
-                    text = text.Substring(0, text.Length - extraLetters) + ".";
-                    (glyphs, textWidth, textHeight) = glyphsCache.GetGlyphs(text, maxWidth);
+                if (trimmedLength > 0) {
+                    text = text.Substring(0, trimmedLength) + "..";
+                    glyphInfo = glyphsCache.GetGlyphs(text, maxWidth);
                 }
                 else {
                     text = "";
-                    (glyphs, textWidth, textHeight) = glyphsCache.GetGlyphs(text, maxWidth);
-                    textWidth = maxWidth;
+                    glyphInfo = glyphsCache.GetGlyphs(text, maxWidth);
+                    glyphInfo.TextWidth = maxWidth;
                 }
             }
 
-            return (text, glyphs, trimmed, new Size(textWidth, textHeight));
+            glyphsCache.CacheGlyphs(glyphInfo, originalText, maxWidth);
+
+            return (text, glyphInfo.Glyphs, trimmed, 
+                    new Size(glyphInfo.TextWidth, glyphInfo.TextHeight));
         }
     }
 
@@ -286,7 +312,7 @@ namespace IRExplorerUI.Profile {
         private Typeface font_;
         private Typeface nameFont_;
         private double fontSize_;
-        private ColorPalette palette_;
+        private Dictionary<ProfileCallTreeNodeKind, ColorPalette> palettes_;
         private Pen defaultBorder_;
         private Brush placeholderColor_;
         private DrawingVisual graphVisual_;
@@ -307,8 +333,15 @@ namespace IRExplorerUI.Profile {
             flameGraph_ = flameGraph;
             maxWidth_ = visibleArea.Width;
             visibleArea_ = visibleArea;
-            palette_ = ColorPalette.Profile;
-            //palette_ = ColorPalette.MakeScale(0.5f, 0.8f, 0.8f, 1, 10);
+            palettes_ = new Dictionary<ProfileCallTreeNodeKind, ColorPalette>();
+
+            palettes_[ProfileCallTreeNodeKind.Unset] = ColorPalette.Profile;
+            palettes_[ProfileCallTreeNodeKind.NativeUser] = ColorPalette.Profile;
+            palettes_[ProfileCallTreeNodeKind.NativeKernel] = ColorPalette.HeatMap;
+            palettes_[ProfileCallTreeNodeKind.Managed] = ColorPalette.HeatMap2;
+
+
+            //palettes_ = ColorPalette.MakeScale(0.5f, 0.8f, 0.8f, 1, 10);
 
             defaultBorder_ = ColorPens.GetPen(Colors.Black);
             placeholderColor_ = ColorBrushes.GetBrush(Colors.Green);
@@ -332,9 +365,16 @@ namespace IRExplorerUI.Profile {
 
         private void SetupNode(FlameGraphNode node) {
             //? TODO: Palette based on module
-            //? int colorIndex = Math.Min(node.Depth, palette_.Count - 1);
-            int colorIndex = node.Depth % palette_.Count;
-            var backColor = palette_[palette_.Count - colorIndex - 1];
+            //? int colorIndex = Math.Min(node.Depth, palettes_.Count - 1);
+            var palette = node.CallTreeNode != null ?
+                palettes_[node.CallTreeNode.Kind] :
+                palettes_[ProfileCallTreeNodeKind.Unset];
+
+            //? use module for native/managed, kind only user/kerneel
+            Trace.WriteLine($"kind {node.CallTreeNode?.Kind}: {node.CallTreeNode?.FunctionName}");
+
+            int colorIndex = node.Depth % palette.Count;
+            var backColor = palette[palette.Count - colorIndex - 1];
             node.Style = new HighlightingStyle(backColor, defaultBorder_);
             node.TextColor = Brushes.DarkBlue;
             node.ModuleTextColor = Brushes.DimGray;
