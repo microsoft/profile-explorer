@@ -19,25 +19,20 @@ using IRExplorerUI.Profile;
 
 namespace IRExplorerUI.Controls {
     public class ProfileCallTreeNodeEx : BindableObject {
-        public ProfileCallTreeNodeEx(ProfileCallTreeNode callTreeNode,
-                                     ProfileCallTreeNode parentCallTreeNode) {
+        public ProfileCallTreeNodeEx(ProfileCallTreeNode callTreeNode) {
             CallTreeNode = callTreeNode;
-            ParentCallTreeNode = parentCallTreeNode;
         }
 
         public ProfileCallTreeNode CallTreeNode { get; }
-        public ProfileCallTreeNode ParentCallTreeNode { get; }
         public string FunctionName { get; set; }
         public string FullFunctionName { get; set; }
         public string ModuleName { get; set; }
         public double Percentage { get; set; }
-        public double PercentageExclusive { get; set; }
-        public double PercentageParent { get; set; }
-        public string Time { get; set; }
-        public string ExclusiveTime { get; set; }
-        public string ParentTime { get; set; }
+        public double ExclusivePercentage { get; set; }
 
-        public bool ParentTimeVisible => PercentageParent > 0;
+        public TimeSpan Weight => CallTreeNode.Weight;
+        public TimeSpan ExclusiveWeight => CallTreeNode.ExclusiveWeight;
+
         //? dummy merged node fields
     }
 
@@ -55,8 +50,7 @@ namespace IRExplorerUI.Controls {
                                  Point position, double width, double height,
                                  UIElement referenceElement, ISession session) {
             Session = session;
-            Node = SetupNodeExtension(node, parentNode);
-            //? for long names, expander?
+            Node = SetupNodeExtension(node);
 
             InitializeComponent();
             Initialize(position, width, height, referenceElement);
@@ -67,22 +61,13 @@ namespace IRExplorerUI.Controls {
             TextView.SetText(stackTrace);
         }
 
-        private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node,
-                                                         ProfileCallTreeNode parentNode) {
-            var nodeEx = new ProfileCallTreeNodeEx(node, parentNode) {
+        private ProfileCallTreeNodeEx SetupNodeExtension(ProfileCallTreeNode node) {
+            var nodeEx = new ProfileCallTreeNodeEx(node) {
                 FullFunctionName = node.FunctionName,
                 FunctionName = FormatFunctionName(node, demangle: true, MaxFunctionNmeLength),
                 ModuleName = FormatModuleName(node, MaxModuleNameLength), Percentage = Session.ProfileData.ScaleFunctionWeight(node.Weight),
-                PercentageExclusive = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
+                ExclusivePercentage = Session.ProfileData.ScaleFunctionWeight(node.ExclusiveWeight),
             };
-
-            nodeEx.Time = $"{nodeEx.Percentage.AsPercentageString()}  ({node.Weight.AsMillisecondsString()})";
-            nodeEx.ExclusiveTime = $"{nodeEx.PercentageExclusive.AsPercentageString()}  ({node.ExclusiveWeight.AsMillisecondsString()})";
-
-            if (parentNode != null) {
-                nodeEx.PercentageParent = (double)node.Weight.Ticks / parentNode.Weight.Ticks;
-                nodeEx.ParentTime = nodeEx.PercentageParent.AsPercentageString();
-            }
 
             return nodeEx;
         }

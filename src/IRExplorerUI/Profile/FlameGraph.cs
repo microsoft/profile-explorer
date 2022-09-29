@@ -345,7 +345,7 @@ namespace IRExplorerUI.Profile {
 
             //palettes_ = ColorPalette.MakeScale(0.5f, 0.8f, 0.8f, 1, 10);
 
-            defaultBorder_ = ColorPens.GetPen(Colors.Black);
+            defaultBorder_ = ColorPens.GetPen(Colors.Black, 0.5);
             placeholderColor_ = ColorBrushes.GetBrush(Colors.Green);
 
             nodeHeight_ = 18; //? Option

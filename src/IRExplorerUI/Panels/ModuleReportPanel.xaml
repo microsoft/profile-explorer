@@ -274,7 +274,7 @@ Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                             Foreground="DimGray"
                             IsHitTestVisible="False"
                             Text="Search functions"
-                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </Grid>
 
                             <Button

@@ -1,14 +1,14 @@
 ﻿<irExplorerUi:ToolPanelControl
-    d:DesignHeight="300"
-    d:DesignWidth="500"
-    mc:Ignorable="d"
     x:Class="IRExplorerUI.Profile.FlameGraphPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:irExplorerUi="clr-namespace:IRExplorerUI"
     xmlns:local="clr-namespace:IRExplorerUI.Profile"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    d:DesignHeight="300"
+    d:DesignWidth="500"
+    mc:Ignorable="d">
     <irExplorerUi:ToolPanelControl.CommandBindings>
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphResetWidth" Executed="ExecuteGraphResetWidth" />
         <CommandBinding Command="irExplorerUi:GraphCommand.GraphFitAll" Executed="ExecuteGraphFitAll" />
@@ -18,24 +18,24 @@
 
     <irExplorerUi:ToolPanelControl.InputBindings>
         <KeyBinding
+            Key="R"
             Command="irExplorerUi:GraphCommand.GraphResetWidth"
             CommandTarget="{Binding ElementName=GraphHost}"
-            Key="R"
             Modifiers="Ctrl" />
         <KeyBinding
+            Key="A"
             Command="irExplorerUi:GraphCommand.GraphFitAll"
             CommandTarget="{Binding ElementName=GraphHost}"
-            Key="A"
             Modifiers="Ctrl" />
         <KeyBinding
+            Key="M"
             Command="irExplorerUi:GraphCommand.MarkBlock"
             CommandTarget="{Binding ElementName=GraphHost}"
-            Key="M"
             Modifiers="Ctrl" />
         <KeyBinding
+            Key="M"
             Command="irExplorerUi:GraphCommand.MarkGroup"
             CommandTarget="{Binding ElementName=GraphHost}"
-            Key="M"
             Modifiers="Shift+Ctrl" />
     </irExplorerUi:ToolPanelControl.InputBindings>
 
@@ -46,31 +46,31 @@
         </Grid.RowDefinitions>
 
         <Grid
-            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+            x:Name="ToolbarHost"
             Grid.Row="0"
             HorizontalAlignment="Stretch"
-            x:Name="ToolbarHost">
+            Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="75" />
             </Grid.ColumnDefinitions>
             <ToolBarTray
-                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
-                DockPanel.Dock="Left"
                 Grid.Column="0"
                 Height="28"
                 HorizontalAlignment="Stretch"
-                IsLocked="True"
-                VerticalAlignment="Top">
+                VerticalAlignment="Top"
+                Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                DockPanel.Dock="Left"
+                IsLocked="True">
                 <ToolBar
-                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     HorizontalAlignment="Stretch"
-                    Loaded="ToolBar_Loaded"
-                    VerticalAlignment="Top">
+                    VerticalAlignment="Top"
+                    Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
+                    Loaded="ToolBar_Loaded">
                     <Button
+                        Margin="4,0,0,0"
                         Command="irExplorerUi:GraphCommand.GraphZoomOut"
                         CommandTarget="{Binding ElementName=GraphHost}"
-                        Margin="4,0,0,0"
                         ToolTip="Zoom Out (Ctrol+_">
                         <Image Source="{StaticResource MinusIcon}" />
                     </Button>
@@ -94,9 +94,9 @@
 
                     <Separator />
                     <Button
+                        Margin="4,0,0,0"
                         Click="UndoButtoon_Click"
                         CommandTarget="{Binding ElementName=GraphHost}"
-                        Margin="4,0,0,0"
                         ToolTip="Zoom the view to fit the graph horizontally (Ctrl+W)">
                         <StackPanel Orientation="Horizontal">
                             <Image Source="{StaticResource DockLeftIcon}" />
@@ -114,18 +114,18 @@
                     </Button>
 
                     <Separator />
-                    <Menu Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}" VerticalAlignment="Center">
+                    <Menu VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}">
                         <MenuItem
+                            Padding="0,2,2,2"
                             Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             BorderBrush="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                             Header="Clear"
-                            OverridesDefaultStyle="True"
-                            Padding="0,2,2,2">
+                            OverridesDefaultStyle="True">
                             <MenuItem.Icon>
                                 <Image
+                                    Width="16"
                                     Height="16"
-                                    Source="{StaticResource RemoveIcon}"
-                                    Width="16" />
+                                    Source="{StaticResource RemoveIcon}" />
                             </MenuItem.Icon>
                             <MenuItem
                                 Command="irExplorerUi:GraphCommand.ClearMarked"
@@ -149,23 +149,23 @@
             </ToolBarTray>
 
             <irExplorerUi:PanelToolbarTray
-                DockPanel.Dock="Right"
                 Grid.Column="1"
+                MaxWidth="75"
+                DockPanel.Dock="Right"
                 HasDuplicateButton="False"
                 HasPinButton="False"
-                MaxWidth="75"
                 SettingsClicked="PanelToolbarTray_SettingsClicked" />
         </Grid>
 
 
         <irExplorerUi:ScrollViewerClickable
-            Background="Gainsboro"
+            x:Name="GraphHost"
             Grid.Row="1"
+            Background="Gainsboro"
             HorizontalScrollBarVisibility="Auto"
             ScrollChanged="GraphHost_OnScrollChanged"
-            VerticalScrollBarVisibility="Auto"
-            x:Name="GraphHost">
-            <local:FlameGraphViewer ContextMenu="{StaticResource GraphContextMenu}" x:Name="GraphViewer" />
+            VerticalScrollBarVisibility="Auto">
+            <local:FlameGraphViewer x:Name="GraphViewer" ContextMenu="{StaticResource GraphContextMenu}" />
         </irExplorerUi:ScrollViewerClickable>
 
     </Grid>

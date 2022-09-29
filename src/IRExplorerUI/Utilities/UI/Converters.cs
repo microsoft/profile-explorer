@@ -83,6 +83,26 @@ class DoubleScalingConverter : IValueConverter {
     }
 }
 
+// This version allows the parameter itself to be bound to another value,
+// such as the with of some UI element., which is not possible with ConverterParameter.
+// https://stackoverflow.com/a/15309844
+class DoubleScalingBoundConverter : IMultiValueConverter {
+    public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture) {
+        double doubleValue = (double)values[0];
+
+        if (doubleValue == 0.0 || Math.Abs(doubleValue) < double.Epsilon) {
+            return 0.0;
+        }
+
+        double maxValue = (double)values[1];
+        return Math.Min(doubleValue * maxValue, maxValue);
+    }
+
+    public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) {
+        return null;
+    }
+}
+
 class TreeViewLineConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) {
         TreeViewItem item = (TreeViewItem)value;
@@ -114,8 +134,8 @@ class ColorBrushOpacityConverter : IValueConverter {
 
 class MillisecondTimeConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
-        if(value is double doubleValue) {
-            return $" {Math.Round(doubleValue, 2)} ms";
+        if(value is TimeSpan timeValue) {
+            return timeValue.AsMillisecondsString();
         }
 
         return value;
@@ -125,6 +145,22 @@ class MillisecondTimeConverter : IValueConverter {
         return null;
     }
 }
+
+
+class PercentageConverter : IValueConverter {
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+        if (value is double doubleValue) {
+            return doubleValue.AsPercentageString();
+        }
+
+        return value;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+        return null;
+    }
+}
+
 
 public class ListToStringConverter : IValueConverter {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {

@@ -128,11 +128,13 @@ public class ProfileData {
     }
         
     public double ScaleFunctionWeight(TimeSpan weight) {
-        return (double)weight.Ticks / (double)ProfileWeight.Ticks;
+        return ProfileWeight.Ticks == 0 ? 0 :
+            (double)weight.Ticks / (double)ProfileWeight.Ticks;
     }
 
     public double ScaleModuleWeight(TimeSpan weight) {
-        return (double)weight.Ticks / (double)TotalWeight.Ticks;
+        return TotalWeight.Ticks == 0 ? 0 :
+            (double)weight.Ticks / (double)TotalWeight.Ticks;
     }
 
     public FunctionProfileData GetFunctionProfile(IRTextFunction function) {

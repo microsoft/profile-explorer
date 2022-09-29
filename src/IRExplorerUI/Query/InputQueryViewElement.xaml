@@ -185,7 +185,7 @@
                 DockPanel.Dock="Right"
                 Source="{StaticResource WarningIcon}"
                 ToolTip="{Binding WarningMessage}"
-                Visibility="{Binding IsWarning, Converter={StaticResource BoolToVisibility}}" />
+                Visibility="{Binding IsWarning, Converter={StaticResource BoolToVisibilityConverter}}" />
 
             <ContentControl
                 Margin="4,0,4,0"

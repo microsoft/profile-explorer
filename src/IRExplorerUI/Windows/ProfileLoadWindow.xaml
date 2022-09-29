@@ -38,8 +38,8 @@
                             <DockPanel HorizontalAlignment="Stretch" ToolTip="{Binding ToolTip}">
                                 <StackPanel DockPanel.Dock="Left">
                                     <TextBlock FontWeight="DemiBold" Text="{Binding Title}" />
-                                    <TextBlock Text="{Binding Description}" Visibility="{Binding ShowDescription, Converter={StaticResource BoolToVisibility}}" />
-                                    <TextBlock Text="{Binding Time}" Visibility="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibility}}" />
+                                    <TextBlock Text="{Binding Description}" Visibility="{Binding ShowDescription, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <TextBlock Text="{Binding Time}" Visibility="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
 
                                 </StackPanel>
                                 <StackPanel
@@ -49,7 +49,7 @@
                                     Orientation="Horizontal">
                                     <StackPanel.Style>
                                         <Style TargetType="{x:Type StackPanel}">
-                                            <Setter Property="Visibility" Value="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibility}}" />
+                                            <Setter Property="Visibility" Value="{Binding IsNewSession, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type ListBoxItem}}, Path=IsMouseOver}" Value="False">
                                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -104,7 +104,7 @@
                 DockPanel.Dock="Right">
                 <TabItem Header="Session">
                     <StackPanel Margin="0,0,0,8" Orientation="Vertical">
-                        <StackPanel x:Name="ProfileCapturePanel" Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibility}}">
+                        <StackPanel x:Name="ProfileCapturePanel" Visibility="{Binding IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
 
                             <TextBlock Margin="8,6,8,0" Text="Profiling target" />
 
@@ -112,14 +112,14 @@
                                 x:Name="StartAppRadioButton"
                                 Margin="8,6,8,0"
                                 Content="Start application"
-                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
+                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.StartProcess}}"
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 ToolTip="Start a new process and record only its profile" />
                             <RadioButton
                                 x:Name="SystemWideRadioButton"
                                 Margin="8,4,8,0"
                                 Content="System-wide"
-                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
+                                IsChecked="{Binding RecordingOptions.SessionKind, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static profile:ProfileSessionKind.SystemWide}}"
                                 IsEnabled="{Binding InputControlsEnabled}"
                                 ToolTip="Profiles every application running on the current machine" />
                             <TextBlock Margin="8,8,8,0" Text="Session name" />
@@ -133,7 +133,7 @@
                                 Text="{Binding Path=RecordingOptions.Title, Mode=TwoWay}" />
                             <Separator Margin="0,8,0,8" />
 
-                            <StackPanel x:Name="StartProcessPanel" Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibility}}">
+                            <StackPanel x:Name="StartProcessPanel" Visibility="{Binding ElementName=StartAppRadioButton, Path=IsChecked, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <TextBlock Margin="8,0,8,0" Text="Application path" />
                                 <Grid Margin="8,4,8,0">
                                     <controls:FileSystemTextBox
@@ -226,7 +226,7 @@
                                     <StackPanel
                                         Margin="0,8,0,0"
                                         Orientation="Horizontal"
-                                        Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibility}}">
+                                        Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                                         <TextBlock Text="Sampling frequency" />
                                         <Slider
                                             x:Name="SamplingFrequencySlider"
@@ -267,7 +267,7 @@
                             <StackPanel
                                 Margin="8,0,0,0"
                                 Orientation="Horizontal"
-                                Visibility="{Binding RequiresElevation, Converter={StaticResource BoolToVisibility}}">
+                                Visibility="{Binding RequiresElevation, Converter={StaticResource BoolToVisibilityConverter}}">
                                 <Button
                                     x:Name="RestartAppButton"
                                     Height="22"
@@ -287,7 +287,7 @@
                             <StackPanel
                                 Margin="8,0,0,0"
                                 Orientation="Horizontal"
-                                Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibility}}">
+                                Visibility="{Binding RequiresElevation, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                                 <Button
                                     x:Name="StartCaptureButton"
                                     Height="22"
@@ -312,11 +312,11 @@
                                     Margin="8,0,0,0"
                                     VerticalAlignment="Center"
                                     Text="Starting recording"
-                                    Visibility="{Binding IsRecordingProfile, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding IsRecordingProfile, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </StackPanel>
                         </StackPanel>
 
-                        <StackPanel x:Name="ProfileLoadPanel" Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibility}}">
+                        <StackPanel x:Name="ProfileLoadPanel" Visibility="{Binding IsRecordMode, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                             <TextBlock Margin="8,8,8,0" Text="Profile data file" />
                             <Grid Margin="8,4,8,0">
                                 <controls:FileSystemTextBox
@@ -383,7 +383,7 @@
                             SelectionMode="Single"
                             VirtualizingStackPanel.IsVirtualizing="True"
                             VirtualizingStackPanel.VirtualizationMode="Recycling"
-                            Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibility}}">
+                            Visibility="{Binding ShowProcessList, Converter={StaticResource BoolToVisibilityConverter}}">
                             <ListView.View>
                                 <GridView>
                                     <GridViewColumn Width="150" DisplayMemberBinding="{Binding Process.Name}">
@@ -449,9 +449,9 @@
                                     Height="4"
                                     HorizontalAlignment="Stretch"
                                     Maximum="100"
-                                    Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}"
+                                    Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}"
                                     Value="40" />
-                                <DockPanel Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibility}}">
+                                <DockPanel Visibility="{Binding IsLoadingProfile, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <TextBlock
                                         x:Name="LoadProgressLabel"
                                         DockPanel.Dock="Left"
@@ -473,7 +473,7 @@
                                     VerticalAlignment="Top"
                                     Click="CancelButton_Click"
                                     Content="Cancel"
-                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <Button
                                     x:Name="LoadButton"
                                     Height="24"
@@ -483,13 +483,13 @@
                                     Click="LoadButton_Click"
                                     Content="Load Profile"
                                     IsEnabled="{Binding InputControlsEnabled}"
-                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding LoadingControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
                 </TabItem>
 
-                <TabItem Header="CPU counters" Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibility}}">
+                <TabItem Header="CPU counters" Visibility="{Binding Path=IsRecordMode, Converter={StaticResource BoolToVisibilityConverter}}">
                     <Grid Margin="0,4,0,8">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
@@ -664,7 +664,7 @@
                                                 Foreground="DimGray"
                                                 IsHitTestVisible="False"
                                                 Text="Filter counters"
-                                                Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                                                Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
                                         </Grid>
                                     </StackPanel>
                                 </Grid>
@@ -783,7 +783,7 @@
                                                 Foreground="DimGray"
                                                 IsHitTestVisible="False"
                                                 Text="Filter metrics"
-                                                Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                                                Visibility="{Binding ElementName=CounterFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
                                         </Grid>
                                     </StackPanel>
                                 </Grid>

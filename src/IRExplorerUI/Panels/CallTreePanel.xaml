@@ -47,7 +47,7 @@
                     <ToggleButton
                         IsChecked="{Binding CombineNodes, ElementName=CalleCalleePanel}"
                         ToolTip="Combine all function instances into one"
-                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
@@ -58,7 +58,7 @@
                         </StackPanel>
                     </ToggleButton>
 
-                    <Button ToolTip="Expand hottest call path" Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibility}}">
+                    <Button ToolTip="Expand hottest call path" Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                         <Image Source="{StaticResource HotFlameIcon}" />
                     </Button>
                     <Separator />
@@ -72,7 +72,7 @@
                     <Button
                         Click="CallTreeButton_OnClick"
                         ToolTip="View complete call tree"
-                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
@@ -85,7 +85,7 @@
                     <Button
                         Click="Button_Click"
                         ToolTip="View flame graph"
-                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal">
                             <Image
                                 Width="16"
@@ -95,7 +95,7 @@
                             <TextBlock Text="Flame Graph" />
                         </StackPanel>
                     </Button>
-                    <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibility}}" />
+                    <Separator Visibility="{Binding IsCallerCalleePanel, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     <Image Source="{StaticResource SearchIcon}" />
                     <Grid Height="24">
@@ -122,7 +122,7 @@
                             Foreground="DimGray"
                             IsHitTestVisible="False"
                             Text="Search functions"
-                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                            Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     </Grid>
 
@@ -142,7 +142,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="Results:"
-                        Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
 
 
                     <TextBlock
@@ -150,7 +150,7 @@
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         Text="{Binding Path=SearchResultText, UpdateSourceTrigger=PropertyChanged}"
-                        Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding ShowSearchSection, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </ToolBar>
             </ToolBarTray>
 
@@ -202,27 +202,13 @@
 
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel
-                                    VerticalAlignment="Center"
-                                    Background="{Binding BackColor}"
-                                    Orientation="Horizontal">
-                                    <Rectangle
-                                        Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                        Height="16"
-                                        Fill="#Aa4343"
-                                        Stroke="Black" />
-                                    <TextBlock Margin="6,2,6,2" Text="{Binding Text}">
-                                        <TextBlock.Style>
-                                            <Style TargetType="{x:Type TextBlock}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                        <Setter Property="FontWeight" Value="Bold" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
+                                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                                    <ContentControl
+                                        HorizontalAlignment="Stretch"
+                                        Content="{Binding}"
+                                        ContentTemplate="{StaticResource ProfilePercentageTemplate}"
+                                        Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                </Border>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>
@@ -238,27 +224,13 @@
 
                         <GridViewColumn.CellTemplate>
                             <DataTemplate>
-                                <StackPanel
-                                    VerticalAlignment="Center"
-                                    Background="{Binding BackColor2}"
-                                    Orientation="Horizontal">
-                                    <Rectangle
-                                        Width="{Binding Path=PercentageExclusive, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                        Height="16"
-                                        Fill="#Aa4343"
-                                        Stroke="Black" />
-                                    <TextBlock Margin="6,2,6,2" Text="{Binding Text2}">
-                                        <TextBlock.Style>
-                                            <Style TargetType="{x:Type TextBlock}">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
-                                                        <Setter Property="FontWeight" Value="Bold" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
+                                <Border HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
+                                    <ContentControl
+                                        HorizontalAlignment="Stretch"
+                                        Content="{Binding}"
+                                        ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}"
+                                        Visibility="{Binding HasCallTreeNode, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                </Border>
                             </DataTemplate>
                         </GridViewColumn.CellTemplate>
                     </GridViewColumn>

@@ -53,7 +53,7 @@
                     BorderThickness="1,1,1,1"
                     Click="ResetButton_Click"
                     Content="Reset"
-                    Visibility="{Binding Path=ShowResetButton, Converter={StaticResource BoolToVisibility}}" />
+                    Visibility="{Binding Path=ShowResetButton, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <Button
                     x:Name="CloseButton"
                     Grid.Column="2"

@@ -21,7 +21,7 @@
                     Source="{Binding Icon}"
                     Stretch="Uniform"
                     ToolTip="{Binding ToolTip}"
-                    Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibility}}" />
+                    Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                 <TextBlock
                     MinWidth="{Binding MinTextWidth}"
@@ -35,7 +35,7 @@
                     ToolTip="{Binding ToolTip}" />
 
                 <Rectangle
-                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
+                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
                     Height="Auto"
                     Margin="4,0,2,0"
                     HorizontalAlignment="Left"
@@ -44,7 +44,7 @@
                     Stroke="{Binding PercentageBarBorderBrush}"
                     StrokeThickness="{Binding PercentageBarBorderThickness}"
                     ToolTip="{Binding ToolTip}"
-                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibility}}" />
+                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
             </StackPanel>
         </Border>
     </DataTemplate>
@@ -69,7 +69,7 @@
                     Text="{Binding PrefixText}"
                     ToolTip="{Binding ToolTip}" />
                 <Rectangle
-                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
+                    Width="{Binding Path=ValuePercentage, Converter={StaticResource DoubleScalingConverter}, ConverterParameter=50.0}"
                     Height="Auto"
                     Margin="4,0,2,0"
                     HorizontalAlignment="Left"
@@ -78,7 +78,7 @@
                     Stroke="{Binding PercentageBarBorderBrush}"
                     StrokeThickness="{Binding PercentageBarBorderThickness}"
                     ToolTip="{Binding ToolTip}"
-                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibility}}" />
+                    Visibility="{Binding Path=ShowPercentageBar, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <TextBlock
                     Margin="4,0,2,0"
                     VerticalAlignment="Center"
@@ -116,7 +116,7 @@
                     VerticalAlignment="Stretch"
                     Source="{Binding Icon}"
                     Stretch="Uniform"
-                    Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibility}}" />
+                    Visibility="{Binding Path=ShowIcon, Converter={StaticResource BoolToVisibilityConverter}}" />
                 <TextBlock
                     VerticalAlignment="Center"
                     FontFamily="Consolas"
@@ -234,19 +234,19 @@
                                     Grid.Column="0"
                                     Foreground="DarkBlue"
                                     Text="Loop nesting"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock
                                     Grid.Row="3"
                                     Grid.Column="0"
                                     Foreground="DarkBlue"
                                     Text="Loop blocks"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock
                                     Grid.Row="4"
                                     Grid.Column="0"
                                     Foreground="DarkBlue"
                                     Text="Loop children"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                                 <TextBlock
                                     Grid.Row="0"
@@ -264,21 +264,21 @@
                                     FontWeight="DemiBold"
                                     Foreground="DarkBlue"
                                     Text="{Binding LoopNesting}"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock
                                     Grid.Row="3"
                                     Grid.Column="1"
                                     FontWeight="DemiBold"
                                     Foreground="DarkBlue"
                                     Text="{Binding LoopBlocks}"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
                                 <TextBlock
                                     Grid.Row="4"
                                     Grid.Column="1"
                                     FontWeight="DemiBold"
                                     Foreground="DarkBlue"
                                     Text="{Binding NestedLoops}"
-                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding Path=InLoop, Converter={StaticResource BoolToVisibilityConverter}}" />
                             </Grid>
                         </Border>
                     </Grid>
@@ -641,4 +641,121 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <SolidColorBrush x:Key="ProfilePercentageBackBrush" Color="#55FFFFFF" />
+    <SolidColorBrush x:Key="ProfilePercentageBrush" Color="#66C43939" />
+    <SolidColorBrush x:Key="ProfilePercentageExclusiveBrush" Color="#663891D1" />
+
+    <DataTemplate x:Key="ProfilePercentageTemplate">
+        <Grid HorizontalAlignment="Stretch">
+            <TextBlock
+                Width="45"
+                Margin="1,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontWeight="DemiBold"
+                Text="{Binding Path=Percentage, Converter={StaticResource PercentageConverter}}">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <Border
+                x:Name="RectBorder"
+                Height="16"
+                Margin="50,0,0,1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Background="{StaticResource ProfilePercentageBackBrush}"
+                BorderBrush="Black"
+                BorderThickness="0.5"
+                CornerRadius="2">
+                <Grid>
+                    <Border
+                        Height="16"
+                        HorizontalAlignment="Left"
+                        Background="{StaticResource ProfilePercentageBrush}"
+                        CornerRadius="2">
+                        <Border.Width>
+                            <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                                <Binding Path="Percentage" />
+                                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                            </MultiBinding>
+                        </Border.Width>
+                    </Border>
+
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontWeight="DemiBold"
+                        Text="{Binding Weight, Converter={StaticResource MillisecondTimeConverter}}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Border>
+        </Grid>
+    </DataTemplate>
+
+
+    <DataTemplate x:Key="ProfileExclusivePercentageTemplate">
+        <Grid HorizontalAlignment="Stretch">
+            <TextBlock
+                Width="45"
+                Margin="1,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                FontWeight="DemiBold"
+                Text="{Binding Path=ExclusivePercentage, Converter={StaticResource PercentageConverter}}">
+                <TextBlock.Style>
+                    <Style TargetType="{x:Type TextBlock}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Path=IsMarked}" Value="True">
+                                <Setter Property="FontWeight" Value="Bold" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+
+            <Border
+                Height="16"
+                Margin="50,0,0,1"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Background="{StaticResource ProfilePercentageBackBrush}"
+                BorderBrush="Black"
+                BorderThickness="0.5"
+                CornerRadius="2">
+                <Grid>
+                    <Border
+                        Height="16"
+                        HorizontalAlignment="Left"
+                        Background="{StaticResource ProfilePercentageExclusiveBrush}"
+                        CornerRadius="2">
+                        <Border.Width>
+                            <MultiBinding Converter="{StaticResource DoubleScalingBoundConverter}">
+                                <Binding Path="ExclusivePercentage" />
+                                <Binding Path="ActualWidth" RelativeSource="{RelativeSource Mode=FindAncestor, AncestorType=Border}" />
+                            </MultiBinding>
+                        </Border.Width>
+                    </Border>
+
+                    <TextBlock
+                        Margin="4,0,0,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        FontWeight="DemiBold"
+                        Text="{Binding ExclusiveWeight, Converter={StaticResource MillisecondTimeConverter}}"
+                        TextTrimming="CharacterEllipsis" />
+                </Grid>
+            </Border>
+        </Grid>
+    </DataTemplate>
+
 </ResourceDictionary>

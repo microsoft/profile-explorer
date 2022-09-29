@@ -5,23 +5,24 @@
     xmlns:utils="clr-namespace:IRExplorerUI.Utilities">
 
     <utils:BoolToVisibilityConverter
-        x:Key="BoolToVisibility"
+        x:Key="BoolToVisibilityConverter"
         False="Collapsed"
         True="Visible" />
     <utils:BoolToVisibilityConverter
-        x:Key="InvertedBoolToVisibility"
+        x:Key="InvertedBoolToVisibilityConverter"
         False="Visible"
         True="Collapsed" />
-    <utils:EnumBooleanConverter x:Key="EnumToBool" />
+    <utils:EnumBooleanConverter x:Key="EnumToBoolConverter" />
     <utils:BoolToParameterConverter x:Key="BooToParameter" />
-    <utils:DoubleScalingConverter x:Key="DoubleScaling" />
+    <utils:DoubleScalingConverter x:Key="DoubleScalingConverter" />
+    <utils:DoubleScalingBoundConverter x:Key="DoubleScalingBoundConverter" />
     <utils:TreeViewLineConverter x:Key="LineConverter" />
-    <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacity" />
-    <utils:MillisecondTimeConverter x:Key="MillisecondTime" />
+    <utils:ColorBrushOpacityConverter x:Key="ColorBrushOpacityConverter" />
+    <utils:MillisecondTimeConverter x:Key="MillisecondTimeConverter" />
+    <utils:PercentageConverter x:Key="PercentageConverter" />
     <utils:ListToStringConverter x:Key="StringListConverter" />
     <utils:ListPairToStringConverter x:Key="StringListPairConverter" />
     <utils:DictionaryToStringConverter x:Key="StringDictionaryConverter" />
     <utils:PerformanceCounterListConverter x:Key="PerformanceCounterConverter" />
-
-    <utils:InvertedBooleanConverter x:Key="InvertedBool" />
+    <utils:InvertedBooleanConverter x:Key="InvertedBoolConverter" />
 </ResourceDictionary>

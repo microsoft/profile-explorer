@@ -39,7 +39,7 @@
                     Foreground="DimGray"
                     IsHitTestVisible="False"
                     Text="Paste sharing link here to open"
-                    Visibility="{Binding ElementName=SharingLinkTextBox, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                    Visibility="{Binding ElementName=SharingLinkTextBox, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
             </Grid>
 
             <ProgressBar

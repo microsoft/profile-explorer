@@ -148,7 +148,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private void SetupEvents() {
-        PreviewMouseWheel += GraphPanel_PreviewMouseWheel;
+        MouseWheel += GraphPanel_PreviewMouseWheel;
         KeyDown += GraphPanel_PreviewKeyDown;
         MouseLeftButtonDown += GraphPanel_MouseLeftButtonDown;
         MouseLeftButtonUp += GraphPanel_MouseLeftButtonUp;
@@ -157,7 +157,13 @@ public partial class FlameGraphPanel : ToolPanelControl {
         MouseDown += OnMouseDown;
     }
 
+    private void HidePreviewPopup() {
+        stackHoverPreview_.Hide();
+    }
+
     private async void OnMouseDown(object sender, MouseButtonEventArgs e) {
+        HidePreviewPopup();
+
         if (e.ChangedButton == MouseButton.XButton1) {
             await RestorePreviousState();
         }
@@ -243,6 +249,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
             }
         }
         else {
+            //? TODO: Remove non-anim path and use anim with 0 duration
             SetMaxWidth(newMaxWidth, false);
             double newNodeX = node.Bounds.Left;
 
@@ -385,6 +392,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private async void GraphPanel_PreviewKeyDown(object sender, KeyEventArgs e) {
+        HidePreviewPopup();
+
         switch (e.Key) {
             case Key.Left: {
                 ScrollToRelativeOffsets(-PanOffset, 0);
@@ -474,6 +483,8 @@ public partial class FlameGraphPanel : ToolPanelControl {
     }
 
     private void GraphPanel_PreviewMouseWheel(object sender, MouseWheelEventArgs e) {
+        HidePreviewPopup();
+
         // Zoom when Ctrl/Alt/Shift or left mouse button are presesed.
         if (!Utils.IsKeyboardModifierActive() &&
             !(e.LeftButton == MouseButtonState.Pressed)) {
@@ -484,6 +495,7 @@ public partial class FlameGraphPanel : ToolPanelControl {
         var time = DateTime.UtcNow;
         var timeElapsed = time - lastWheelZoomTime_;
         bool animate = timeElapsed.TotalMilliseconds > ScrollWheelZoomAnimationDuration;
+
         double amount = ScrollWheelZoomAmount * GraphZoomRatioLog; // Keep step consistent.
         double step = amount * Math.CopySign(1 + e.Delta / 1000.0, e.Delta);
         double zoomPointX = e.GetPosition(GraphViewer).X;

@@ -72,7 +72,7 @@
                         TabIndex="5"
                         ToolTip="Diff output text with other section"
                         Unchecked="DiffToggleButton_Unchecked"
-                        Visibility="{Binding DiffModeButtonVisible, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding DiffModeButtonVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <Image
                             Width="16"
                             Height="16"
@@ -114,13 +114,13 @@
                         Margin="4,0,0,0"
                         VerticalAlignment="Center"
                         Text="Section"
-                        Visibility="{Binding SectionNameVisible, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding SectionNameVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                     <TextBlock
                         Margin="8,0,0,0"
                         VerticalAlignment="Center"
                         FontWeight="DemiBold"
                         Text="{Binding SectionName}"
-                        Visibility="{Binding SectionNameVisible, Converter={StaticResource BoolToVisibility}}" />
+                        Visibility="{Binding SectionNameVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </ToolBar>
             </ToolBarTray>
 
