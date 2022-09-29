@@ -453,7 +453,7 @@
                             <Image Source="{StaticResource SearchIcon}" />
                         </ToggleButton>
 
-                        <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <Separator Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                     </ToolBar>
                 </ToolBarTray>
@@ -479,7 +479,7 @@
                         BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                         BorderThickness="0,1,0,1"
                         DockPanel.Dock="Top"
-                        Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                        Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                         <ToolBarTray
                             x:Name="ProfileToolbar"
                             HorizontalAlignment="Stretch"
@@ -500,7 +500,7 @@
                                     Command="local:DocumentHostCommand.JumpToProfiledElement"
                                     CommandTarget="{Binding ElementName=TextView}"
                                     ToolTip="Jump to hottest profiled instruction"
-                                    Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                                    Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <Image Source="{StaticResource HotFlameIcon}" />
                                 </Button>
                                 <Button
@@ -577,7 +577,7 @@
                                     CommandTarget="{Binding ElementName=TextView}"
                                     IsEnabled="False"
                                     ToolTip="Jump to hottest profiled instruction"
-                                    Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibility}}">
+                                    Visibility="{Binding ProfileVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                                     <Image Source="{StaticResource EyeIcon}" Style="{StaticResource DisabledImageStyle}" />
                                 </Button>
                             </ToolBar>
@@ -957,7 +957,7 @@
                 Grid.Row="3"
                 HasDuplicateButton="false"
                 HasPinButton="false"
-                Visibility="{Binding PassOutputVisible, Converter={StaticResource BoolToVisibility}}" />
+                Visibility="{Binding PassOutputVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
         </Grid>
 
         <Border

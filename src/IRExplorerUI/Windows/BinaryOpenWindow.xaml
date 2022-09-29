@@ -53,7 +53,7 @@
             <Expander
                 Margin="16,8,16,0"
                 IsExpanded="True"
-                Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibility}}">
+                Visibility="{Binding InDiffMode, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Expander.Header>
                     <TextBlock FontWeight="DemiBold" Text="Diff file" />
                 </Expander.Header>
@@ -102,7 +102,7 @@
                     Click="RecentButton_Click"
                     Content="Recent Files"
                     TabIndex="5"
-                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibility}}">
+                    Visibility="{Binding IsLoadingBinary, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                     <Button.ContextMenu>
                         <ContextMenu />
                     </Button.ContextMenu>
@@ -113,9 +113,9 @@
                 Height="4"
                 HorizontalAlignment="Stretch"
                 Maximum="100"
-                Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}"
+                Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibilityConverter}}"
                 Value="40" />
-            <DockPanel Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibility}}">
+            <DockPanel Visibility="{Binding IsLoadingBinary, Converter={StaticResource BoolToVisibilityConverter}}">
                 <TextBlock
                     x:Name="LoadProgressLabel"
                     DockPanel.Dock="Left"

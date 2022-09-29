@@ -68,7 +68,7 @@
                             Background="#01FFFFFF"
                             BorderBrush="{x:Null}"
                             Click="PinPanelButton_Click"
-                            Visibility="{Binding IsPanelDetached, Converter={StaticResource InvertedBoolToVisibility}}">
+                            Visibility="{Binding IsPanelDetached, Converter={StaticResource InvertedBoolToVisibilityConverter}}">
                             <Image
                                 Width="16"
                                 Height="16"
@@ -84,7 +84,7 @@
                             Background="#01FFFFFF"
                             BorderBrush="{x:Null}"
                             Click="ClosePanelButton_Click"
-                            Visibility="{Binding IsPanelDetached, Converter={StaticResource BoolToVisibility}}">
+                            Visibility="{Binding IsPanelDetached, Converter={StaticResource BoolToVisibilityConverter}}">
                             <Image
                                 Width="16"
                                 Height="16"

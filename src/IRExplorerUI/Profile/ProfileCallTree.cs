@@ -449,7 +449,11 @@ public class ProfileCallTreeNode : IEquatable<ProfileCallTreeNode> {
         Dictionary<long, ProfileCallSite> callSites = null) {
         InitializeReferenceMembers();
         FunctionDebugInfo = funcInfo;
-        Function = function;
+
+        if (function != null) { // Happens for dummy nodes used in UI.
+            Function = function;
+        }
+
         children_ = children;
         callers_ = callers;
         callSites_ = callSites;

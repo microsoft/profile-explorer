@@ -83,15 +83,17 @@ namespace IRExplorerUI {
         public TreeNode TreeNode { get; set; } // Associated UI tree node.
         public string FunctionName { get; set; }
         public string ModuleName { get; set; }
-        public string Text { get; set; }
-        public string Text2 { get; set; }
         public Brush TextColor { get; set; }
         public Brush BackColor { get; set; }
         public Brush BackColor2 { get; set; }
         public List<ChildFunctionEx> Children { get; set; }
         public long Time { get; set; }
         public double Percentage { get; set; }
-        public double PercentageExclusive { get; set; }
+        public double ExclusivePercentage { get; set; }
+
+        public bool HasCallTreeNode => CallTreeNode != null;
+        public TimeSpan Weight => HasCallTreeNode ? CallTreeNode.Weight : TimeSpan.Zero;
+        public TimeSpan ExclusiveWeight => HasCallTreeNode ? CallTreeNode.ExclusiveWeight : TimeSpan.Zero;
 
         public ChildFunctionEx(ChildFunctionExKind kind) {
             Children = new List<ChildFunctionEx>();
@@ -531,27 +533,18 @@ namespace IRExplorerUI {
 
         private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node, ChildFunctionExKind kind,
                                                            Func<TimeSpan, double> percentageFunc) {
-            return CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight, kind, percentageFunc);
-        }
-
-        private ChildFunctionEx CreateProfileCallTreeChild(ProfileCallTreeNode node, TimeSpan weight,
-                                                           TimeSpan exclusiveWeight, ChildFunctionExKind kind,
-                                                           Func<TimeSpan, double> percentageFunc) {
-            double weightPercentage = percentageFunc(weight);
-            double exclusiveWeightPercentage = percentageFunc(exclusiveWeight);
+            double weightPercentage = percentageFunc(node.Weight);
+            double exclusiveWeightPercentage = percentageFunc(node.ExclusiveWeight);
             string funcName = FormatFunctionName(node);
-            string toolTip = null;
 
             return new ChildFunctionEx(kind) {
                 Function = node.Function,
                 ModuleName = node.ModuleName,
-                Time = weight.Ticks,
+                Time = node.Weight.Ticks,
                 FunctionName = funcName,
                 CallTreeNode = node,
                 Percentage = weightPercentage,
-                PercentageExclusive = exclusiveWeightPercentage,
-                Text = $"{weightPercentage.AsPercentageString()} ({weight.AsMillisecondsString()})",
-                Text2 = $"{exclusiveWeightPercentage.AsPercentageString()} ({exclusiveWeight.AsMillisecondsString()})",
+                ExclusivePercentage = exclusiveWeightPercentage,
                 TextColor = Brushes.Black,
                 BackColor = ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(weightPercentage),
                 BackColor2 = ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(exclusiveWeightPercentage),
@@ -563,12 +556,14 @@ namespace IRExplorerUI {
             double weightPercentage = percentageFunc(weight);
             double exclusiveWeightPercentage = percentageFunc(exclusiveWeight);
             return new ChildFunctionEx(ChildFunctionExKind.Header) {
+                CallTreeNode = new ProfileCallTreeNode(null, null) {
+                    Weight = weight,
+                    ExclusiveWeight = exclusiveWeight
+                },
                 Time = TimeSpan.MaxValue.Ticks - priority,
                 FunctionName = name,
                 Percentage = weightPercentage,
-                PercentageExclusive = exclusiveWeightPercentage,
-                Text = $"{weightPercentage.AsPercentageString()} ({weight.AsMillisecondsString()})",
-                Text2 = $"{exclusiveWeightPercentage.AsPercentageString()} ({exclusiveWeight.AsMillisecondsString()})",
+                ExclusivePercentage = exclusiveWeightPercentage,
                 TextColor = Brushes.Black,
                 BackColor = ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(weightPercentage),
                 BackColor2 = ProfileDocumentMarkerOptions.Default.PickBrushForPercentage(exclusiveWeightPercentage),
@@ -587,10 +582,8 @@ namespace IRExplorerUI {
 
         private ChildFunctionEx CreateProfileCallTreeInstance(string name, ProfileCallTreeNode node,
                                                               Func<TimeSpan, double> percentageFunc) {
-            var result = CreateProfileCallTreeChild(node, node.Weight, node.ExclusiveWeight,
-                                                    ChildFunctionExKind.Header, percentageFunc);
+            var result = CreateProfileCallTreeChild(node, ChildFunctionExKind.Header, percentageFunc);
             result.FunctionName = name;
-            //result.Time = long.MaxValue;
             result.IsMarked = true;
             return result;
         }

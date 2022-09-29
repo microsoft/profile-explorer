@@ -182,7 +182,7 @@
                     VerticalAlignment="Top"
                     Background="{DynamicResource {x:Static SystemColors.ControlLightBrushKey}}"
                     IsLocked="True"
-                    Visibility="{Binding IsFunctionListVisible, Converter={StaticResource BoolToVisibility}}">
+                    Visibility="{Binding IsFunctionListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
                     <ToolBar
                         Name="FunctionToolbar"
                         Width="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToolBarTray}}, Path=ActualWidth}"
@@ -197,7 +197,7 @@
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             Content="Modules"
                             IsChecked="{Binding ShowModules, Mode=TwoWay}"
-                            Visibility="{Binding ModuleControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                            Visibility="{Binding ModuleControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                         <ToggleButton
                             Margin="-1,0,0,0"
@@ -206,9 +206,9 @@
                             BorderBrush="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}"
                             Content="Sections"
                             IsChecked="{Binding ShowSections, Mode=TwoWay}"
-                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                            Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
 
-                        <Grid Width="8" Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibility}}" />
+                        <Grid Width="8" Visibility="{Binding ProfileControlsVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                         <Image Source="{StaticResource SearchIcon}" ToolBar.OverflowMode="Never" />
 
                         <Grid
@@ -241,7 +241,7 @@
                                 Foreground="DimGray"
                                 IsHitTestVisible="False"
                                 Text="Search functions"
-                                Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                                Visibility="{Binding ElementName=FunctionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
                         </Grid>
 
                         <Button
@@ -261,7 +261,7 @@
                     HasDuplicateButton="False"
                     HasPinButton="False"
                     SettingsClicked="FixedToolbar_SettingsClicked"
-                    Visibility="{Binding IsSectionListVisible, Converter={StaticResource InvertedBoolToVisibility}}" />
+                    Visibility="{Binding IsSectionListVisible, Converter={StaticResource InvertedBoolToVisibilityConverter}}" />
             </Grid>
 
             <Grid
@@ -284,10 +284,10 @@
                     BorderThickness="0,0,0,0"
                     VirtualizingStackPanel.IsVirtualizing="True"
                     VirtualizingStackPanel.VirtualizationMode="Recycling"
-                    Visibility="{Binding ShowModules, Converter={StaticResource BoolToVisibility}}">
+                    Visibility="{Binding ShowModules, Converter={StaticResource BoolToVisibilityConverter}}">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Width="200">
+                            <GridViewColumn Width="180">
                                 <GridViewColumnHeader x:Name="ModuleColumnHeader" Content="Module" />
                                 <GridViewColumn.HeaderContainerStyle>
                                     <Style TargetType="{x:Type GridViewColumnHeader}">
@@ -303,22 +303,16 @@
                                                 DockPanel.Dock="Top"
                                                 FontWeight="DemiBold"
                                                 Text="{Binding Name}" />
-                                            <StackPanel
-                                                VerticalAlignment="Center"
-                                                Background="{Binding BackColor}"
-                                                DockPanel.Dock="Bottom"
-                                                Orientation="Horizontal">
-                                                <Rectangle
-                                                    Width="{Binding Path=Percentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                                    Height="16"
-                                                    Fill="#4A73C4"
-                                                    Stroke="Black" />
-                                                <TextBlock
-                                                    MinWidth="{Binding MinTextWidth}"
-                                                    Margin="6,0,0,0"
-                                                    Text="{Binding Text}" />
 
-                                            </StackPanel>
+                                            <Border
+                                                HorizontalAlignment="Stretch"
+                                                Background="{Binding BackColor}"
+                                                DockPanel.Dock="Bottom">
+                                                <ContentControl
+                                                    HorizontalAlignment="Stretch"
+                                                    Content="{Binding}"
+                                                    ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
+                                            </Border>
                                         </DockPanel>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
@@ -329,6 +323,7 @@
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                             <EventSetter Event="MouseDoubleClick" Handler="ModuleDoubleClick" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         </Style>
                     </ListView.ItemContainerStyle>
                 </ListView>
@@ -395,21 +390,12 @@
 
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel
-                                            VerticalAlignment="Center"
-                                            Background="{Binding BackColor}"
-                                            Orientation="Horizontal">
-                                            <Rectangle
-                                                Width="{Binding Path=ExclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                                Height="16"
-                                                Fill="#Aa4343"
-                                                Stroke="Black" />
-                                            <TextBlock
-                                                Margin="4,0,0,0"
-                                                FontWeight="DemiBold"
-                                                Text="{Binding Path=ExclusivePercentage, StringFormat=p2}" />
-                                            <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText}" />
-                                        </StackPanel>
+                                        <Border HorizontalAlignment="Stretch" Background="{Binding BackColor}">
+                                            <ContentControl
+                                                HorizontalAlignment="Stretch"
+                                                Content="{Binding}"
+                                                ContentTemplate="{StaticResource ProfileExclusivePercentageTemplate}" />
+                                        </Border>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -425,18 +411,12 @@
 
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
-                                        <StackPanel
-                                            VerticalAlignment="Center"
-                                            Background="{Binding BackColor2}"
-                                            Orientation="Horizontal">
-                                            <Rectangle
-                                                Width="{Binding Path=InclusivePercentage, Converter={StaticResource DoubleScaling}, ConverterParameter=50.0}"
-                                                Height="16"
-                                                Fill="#4A73C4"
-                                                Stroke="Black" />
-                                            <TextBlock Margin="4,0,0,0" Text="{Binding Path=InclusivePercentage, StringFormat=p2}" />
-                                            <TextBlock Margin="6,0,0,0" Text="{Binding OptionalDataText2}" />
-                                        </StackPanel>
+                                        <Border HorizontalAlignment="Stretch" Background="{Binding BackColor2}">
+                                            <ContentControl
+                                                HorizontalAlignment="Stretch"
+                                                Content="{Binding}"
+                                                ContentTemplate="{StaticResource ProfilePercentageTemplate}" />
+                                        </Border>
                                     </DataTemplate>
                                 </GridViewColumn.CellTemplate>
                             </GridViewColumn>
@@ -464,17 +444,18 @@
                         <Style BasedOn="{StaticResource FlatListViewItem}" TargetType="{x:Type ListViewItem}">
                             <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}" />
                             <EventSetter Event="MouseDoubleClick" Handler="FunctionDoubleClick" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
 
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
-                                    <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
+                                    <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                                     <Setter Property="FontWeight" Value="DemiBold" />
                                     <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                                     <Setter Property="BorderThickness" Value="1" />
                                 </DataTrigger>
 
                                 <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
-                                    <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
+                                    <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                                     <Setter Property="FontWeight" Value="DemiBold" />
                                     <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                                     <Setter Property="BorderThickness" Value="1" />
@@ -482,7 +463,7 @@
 
                                 <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
                                     <Setter Property="FontWeight" Value="DemiBold" />
-                                    <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
+                                    <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                                     <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                                     <Setter Property="BorderThickness" Value="1" />
                                 </DataTrigger>
@@ -541,35 +522,35 @@
                                 Header="Open File in External Editor"
                                 ToolTip="Opens the IR document in the default external editor" />
 
-                            <Separator Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                            <Separator Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
                                 Command="local:Command.SaveFunctionText"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Copy Diff Function Text"
                                 ToolTip="Copies the text (IR) of all sections for the selected diff function to the clipboard"
-                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
                                 Command="local:Command.SaveFunctionText"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Save Function Text"
                                 ToolTip="Save the text (IR) of all sections for the selected diff function to a file"
-                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
                                 Command="local:Command.SaveFunctionText"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Open Diff File in New IR Explorer Instance"
                                 ToolTip="Opens the diff IR document in a new instance of IR Explorer"
-                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
                             <MenuItem
                                 Command="local:Command.SaveFunctionText"
                                 CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=ContextMenu}, Path=PlacementTarget.SelectedItem}"
                                 CommandTarget="{Binding ElementName=FunctionList}"
                                 Header="Open Diff File in External Editor"
                                 ToolTip="Opens the diff IR document in the default external editor"
-                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibility}}" />
+                                Visibility="{Binding IsInTwoDocumentsMode, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                         </ContextMenu>
                     </ListView.ContextMenu>
@@ -586,9 +567,9 @@
             VerticalAlignment="Stretch"
             Background="{DynamicResource {x:Static SystemColors.ActiveBorderBrushKey}}" />
 
-        <Grid Grid.Column="2" Visibility="{Binding IsSectionListVisible, Converter={StaticResource BoolToVisibility}}">
+        <Grid Grid.Column="2" Visibility="{Binding IsSectionListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
 
-            <Grid x:Name="SectionGrid" Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibility}}">
+            <Grid x:Name="SectionGrid" Visibility="{Binding ShowSections, Converter={StaticResource BoolToVisibilityConverter}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="28" />
                     <RowDefinition Height="*" />
@@ -637,7 +618,7 @@
                                     Foreground="DimGray"
                                     IsHitTestVisible="False"
                                     Text="Search sections"
-                                    Visibility="{Binding ElementName=SectionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibility}}" />
+                                    Visibility="{Binding ElementName=SectionFilter, Path=Text.IsEmpty, Converter={StaticResource BoolToVisibilityConverter}}" />
 
                             </Grid>
                             <Button
@@ -843,14 +824,14 @@
                                 </DataTrigger>
 
                                 <DataTrigger Binding="{Binding Path=IsDeletionDiff}" Value="True">
-                                    <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
+                                    <Setter Property="Background" Value="{Binding Path=MissingSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                                     <Setter Property="FontWeight" Value="DemiBold" />
                                     <Setter Property="BorderBrush" Value="{Binding Path=MissingSectionBrush}" />
                                     <Setter Property="BorderThickness" Value="1" />
                                 </DataTrigger>
 
                                 <DataTrigger Binding="{Binding Path=IsInsertionDiff}" Value="True">
-                                    <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
+                                    <Setter Property="Background" Value="{Binding Path=NewSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                                     <Setter Property="FontWeight" Value="DemiBold" />
                                     <Setter Property="BorderBrush" Value="{Binding Path=NewSectionBrush}" />
                                     <Setter Property="BorderThickness" Value="1" />
@@ -858,7 +839,7 @@
 
                                 <DataTrigger Binding="{Binding Path=HasDiffs}" Value="True">
                                     <Setter Property="FontWeight" Value="DemiBold" />
-                                    <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacity}, ConverterParameter=0.2}" />
+                                    <Setter Property="Background" Value="{Binding Path=ChangedSectionBrush, Converter={StaticResource ColorBrushOpacityConverter}, ConverterParameter=0.2}" />
                                     <Setter Property="BorderBrush" Value="{Binding Path=ChangedSectionBrush}" />
                                     <Setter Property="BorderThickness" Value="1" />
                                 </DataTrigger>

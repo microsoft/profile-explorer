@@ -22,17 +22,27 @@ public abstract class HoverPreview {
     }
 
     private void OnMouseLeave(object sender, MouseEventArgs e) {
-        HidePreviewPopup();
+        HidePreviewPopupDelayed();
     }
 
     protected abstract void OnHidePopup();
     protected abstract void OnShowPopup(Point mousePoint, Point position);
 
+    public void Hide() {
+        HidePreviewPopup(true);
+    }
+
     private void HidePreviewPopup(bool force = false) {
-        if (previewPopup_ != null && (force || !previewPopup_.IsMouseOver)) {
-            OnHidePopup();
-            previewPopup_ = null;
+        if (!ShouldHidePopup(force)) {
+            return;
         }
+
+        OnHidePopup();
+        previewPopup_ = null;
+    }
+
+    private bool ShouldHidePopup(bool force = false) {
+        return previewPopup_ != null && (force || !previewPopup_.IsMouseOver);
     }
 
     private void Hover_MouseHover(object sender, MouseEventArgs e) {
@@ -54,6 +64,7 @@ public abstract class HoverPreview {
     }
 
     private void HidePreviewPopupDelayed() {
+        removeHoveredAction_?.Cancel();
         removeHoveredAction_ = DelayedAction.StartNew(() => {
             if (removeHoveredAction_ != null) {
                 removeHoveredAction_ = null;
@@ -63,13 +74,12 @@ public abstract class HoverPreview {
     }
 
     private void Hover_MouseHoverStopped(object sender, MouseEventArgs e) {
-        //HidePreviewPopupDelayed();
-        HidePreviewPopup();
+        HidePreviewPopupDelayed();
     }
 }
 
 public class DraggablePopupHoverPreview : HoverPreview {
-    private DraggablePopup PreviewPopup => (DraggablePopup)previewPopup_;
+    public DraggablePopup PreviewPopup => (DraggablePopup)previewPopup_;
     private Func<Point, Point, DraggablePopup> createPopup_;
 
     public DraggablePopupHoverPreview(UIElement control,
@@ -78,9 +88,10 @@ public class DraggablePopupHoverPreview : HoverPreview {
     }
 
     protected override void OnShowPopup(Point mousePoint, Point position) {
-        previewPopup_ = CreatePopup(mousePoint, position);
+        var popup = CreatePopup(mousePoint, position);
 
-        if (previewPopup_ != null) {
+        if (popup != null && popup != previewPopup_) {
+            previewPopup_ = popup;
             PreviewPopup.PopupDetached += Popup_PopupDetached;
             PreviewPopup.ShowPopup();
         }
@@ -92,6 +103,7 @@ public class DraggablePopupHoverPreview : HoverPreview {
 
     protected override void OnHidePopup() {
         PreviewPopup.ClosePopup();
+        previewPopup_ = null;
     }
 
     private void Popup_PopupDetached(object sender, EventArgs e) {

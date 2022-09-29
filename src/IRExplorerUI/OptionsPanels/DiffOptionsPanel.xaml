@@ -309,12 +309,12 @@
 
             <TextBlock FontWeight="DemiBold" Text="Default Diff Implementation" />
             <StackPanel Margin="0,4,0,0" Orientation="Vertical">
-                <RadioButton Content="Internal" IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static settings:DiffImplementationKind.Internal}}" />
+                <RadioButton Content="Internal" IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static settings:DiffImplementationKind.Internal}}" />
                 <RadioButton
                     x:Name="ExternalDiffRadioButton"
                     Margin="0,2,0,2"
                     Content="Beyond Compare"
-                    IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBool}, ConverterParameter={x:Static settings:DiffImplementationKind.External}}" />
+                    IsChecked="{Binding DiffImplementation, Converter={StaticResource EnumToBoolConverter}, ConverterParameter={x:Static settings:DiffImplementationKind.External}}" />
                 <DockPanel Margin="0,2,0,2" LastChildFill="True">
                     <TextBlock
                         Margin="20,0,0,0"

@@ -307,13 +307,11 @@ namespace IRExplorerUI {
         public int Index { get; set; }
         public IRTextFunction Function { get; set; }
         public string ModuleName => Function.ParentSummary.ModuleName;
-        public object OptionalData { get; set; }
-        public object OptionalData2 { get; set; }
-        public string OptionalDataText { get; set; }
-        public string OptionalDataText2 { get; set; }
+        public TimeSpan Weight { get; set; }
+        public TimeSpan ExclusiveWeight { get; set; }
         public string AlternateName { get; set; }
         public double ExclusivePercentage { get; set; }
-        public double InclusivePercentage { get; set; }
+        public double Percentage { get; set; }
 
         private bool isMarked_;
         public bool IsMarked {
@@ -354,11 +352,9 @@ namespace IRExplorerUI {
 
     public class ModuleEx {
         public string Name { get; set; }
-        public long Time { get; set; }
-        public string Text { get; set; }
-        public double MinTextWidth { get; set; }
         public Brush BackColor { get; set; }
-        public double Percentage { get; set; }
+        public double ExclusivePercentage { get; set; }
+        public TimeSpan ExclusiveWeight { get; set; }
     }
 
     public enum SectionFieldKind {
@@ -522,21 +518,11 @@ namespace IRExplorerUI {
                                 return direction == ListSortDirection.Ascending ? -result : result;
                             }
                             case FunctionFieldKind.Optional: {
-                                int result = 0;
-
-                                if (functionX.OptionalData != null && functionY.OptionalData != null) {
-                                    result = ((long)functionY.OptionalData).CompareTo((long)functionX.OptionalData);
-                                }
-
+                                int result = functionY.ExclusiveWeight.CompareTo(functionX.ExclusiveWeight);
                                 return direction == ListSortDirection.Ascending ? -result : result;
                             }
                             case FunctionFieldKind.Optional2: {
-                                int result = 0;
-
-                                if (functionX.OptionalData2 != null && functionY.OptionalData2 != null) {
-                                    result = ((long)functionY.OptionalData2).CompareTo((long)functionX.OptionalData2);
-                                }
-
+                                int result = functionY.Weight.CompareTo(functionX.Weight);
                                 return direction == ListSortDirection.Ascending ? -result : result;
                             }
                             case FunctionFieldKind.StatisticSize: {
@@ -670,7 +656,7 @@ namespace IRExplorerUI {
                         switch (field) {
                             case ModuleFieldKind.Name: {
                                 // Always sort modules by time.
-                                int result = moduleY.Time.CompareTo(moduleX.Time);
+                                int result = moduleY.ExclusiveWeight.CompareTo(moduleX.ExclusiveWeight);
                                 return direction == ListSortDirection.Ascending ? -result : result;
                             }
                             default:
@@ -1152,26 +1138,25 @@ namespace IRExplorerUI {
 
             var settings = App.Settings.DocumentSettings;
             var modulesEx = new List<ModuleEx>();
-            double maxWidth = 0;
 
             foreach (var pair in profile.ModuleWeights) {
-                var moduleWeight = pair.Value;
                 double weightPercentage = profile.ScaleModuleWeight(pair.Value);
-                var text = $"{weightPercentage.AsPercentageString()} ({moduleWeight.AsMillisecondsString()})";
-                var moduleInfo = new ModuleEx() { Name = pair.Key, Time = moduleWeight.Ticks, Percentage = weightPercentage, Text = text };
+                var moduleInfo = new ModuleEx() {
+                    Name = pair.Key, 
+                    ExclusivePercentage = weightPercentage, 
+                    ExclusiveWeight = pair.Value
+                };
 
                 modulesEx.Add(moduleInfo);
-                double width = Utils.MeasureString(text, settings.FontName, settings.FontSize).Width;
-                maxWidth = Math.Max(width, maxWidth);
             }
 
             // Add one entry to represent all modules.
             var allWeightPercentage = profile.ScaleFunctionWeight(profile.ProfileWeight);
-            modulesEx.Add(new ModuleEx() { Name = "All", Time = profile.ProfileWeight.Ticks, Percentage = allWeightPercentage, Text = $"{allWeightPercentage.AsPercentageString()} ({profile.ProfileWeight.AsMillisecondsString()})" });
-
-            foreach (var value in modulesEx) {
-                value.MinTextWidth = maxWidth;
-            }
+            modulesEx.Add(new ModuleEx() {
+                Name = "All", 
+                ExclusivePercentage = allWeightPercentage, 
+                ExclusiveWeight = profile.ProfileWeight
+            });
 
             var modulesFilter = new ListCollectionView(modulesEx);
             ModulesList.ItemsSource = modulesFilter;
@@ -1189,22 +1174,13 @@ namespace IRExplorerUI {
 
                 if (funcProfile != null) {
                     double exclusivePercentage = profile.ScaleFunctionWeight(funcProfile.ExclusiveWeight);
-
-                    if (double.IsNaN(exclusivePercentage)) {
-                        exclusivePercentage = 0; // No timing data, better 0 than NaN...
-                    }
-
                     funcEx.ExclusivePercentage = exclusivePercentage;
-                    funcEx.OptionalDataText = $"({funcProfile.ExclusiveWeight.AsMillisecondsString()})";
-                    funcEx.OptionalData = funcProfile.ExclusiveWeight.Ticks;
+                    funcEx.ExclusiveWeight = funcProfile.ExclusiveWeight;
                     funcEx.BackColor = markerOptions.PickBrushForPercentage(exclusivePercentage);
 
-                    //Trace.WriteLine("Perc {exclusivePercentage}, {exclusivePercentage * 100} color {funcEx.BackColor}");
-
                     double percentage = profile.ScaleFunctionWeight(funcProfile.Weight);
-                    funcEx.InclusivePercentage = percentage;
-                    funcEx.OptionalDataText2 = $"({funcProfile.Weight.AsMillisecondsString()})";
-                    funcEx.OptionalData2 = funcProfile.Weight.Ticks;
+                    funcEx.Percentage = percentage;
+                    funcEx.Weight = funcProfile.Weight;
                     funcEx.BackColor2 = markerOptions.PickBrushForPercentage(percentage);
 
                     //? TODO: Can be expensive, do in background
@@ -1241,8 +1217,8 @@ namespace IRExplorerUI {
                     }
                 }
                 else {
-                    funcEx.OptionalData = TimeSpan.Zero.Ticks;
-                    funcEx.OptionalData2 = TimeSpan.Zero.Ticks;
+                    funcEx.ExclusiveWeight = TimeSpan.Zero;
+                    funcEx.Weight = TimeSpan.Zero;
                 }
             }
 
@@ -2654,10 +2630,10 @@ namespace IRExplorerUI {
 
                 if (profileControlsVisible_) {
                     int columnId = 3;
-                    ws.Cell(rowId, columnId + 0).Value = $"{TimeSpan.FromTicks((long)func.OptionalData).TotalMilliseconds}";
+                    ws.Cell(rowId, columnId + 0).Value = $"{func.ExclusiveWeight.TotalMilliseconds}";
                     ws.Cell(rowId, columnId + 1).Value = $"{func.ExclusivePercentage.AsPercentageString(2, false, "")}";
-                    ws.Cell(rowId, columnId + 2).Value = $"{TimeSpan.FromTicks((long)func.OptionalData2).TotalMilliseconds}";
-                    ws.Cell(rowId, columnId + 3).Value = $"{func.InclusivePercentage.AsPercentageString(2, false, "")}";
+                    ws.Cell(rowId, columnId + 2).Value = $"{func.Weight.TotalMilliseconds}";
+                    ws.Cell(rowId, columnId + 3).Value = $"{func.Percentage.AsPercentageString(2, false, "")}";
 
                     if (func.BackColor != null && func.BackColor is SolidColorBrush colorBrush) {
                         var color = XLColor.FromArgb(colorBrush.Color.A, colorBrush.Color.R, colorBrush.Color.G, colorBrush.Color.B);
